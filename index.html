@@ -1,0 +1,915 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta
+  http-equiv="Content-Security-Policy"
+  content="default-src 'self' blob: data:; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https:; media-src 'self' blob: data: https:; frame-src 'self' https://es.educaplay.com;"
+>
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Portal de Gu&iacute;as | Sistemas Teleinform&aacute;ticos | SENA</title>
+<meta name="description" content="Portal de acceso a las gu&iacute;as interactivas del programa Sistemas Teleinform&aacute;ticos.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/site_tokens.css?v=20260409_1">
+<link rel="stylesheet" href="css/shared_shell.css?v=20260409_1">
+<link rel="stylesheet" href="css/page_portal.css?v=20260409_1">
+<script defer src="js/shared_shell.js?v=20260409_1"></script>
+</head>
+<body class="app-shell app-shell--portal">
+
+<!-- ------------------------------------------------------
+     HEADER
+     ------------------------------------------------------ -->
+<header class="header app-hero">
+  <div class="header-inner app-hero__inner">
+
+    <div class="logo-wrap anim-1">
+      <img src="assets/img/sena-logo.png" alt="Logo SENA" width="auto" height="68">
+    </div>
+
+    <div class="badge-programa anim-2">
+      <span class="badge-dot"></span>
+      Sistemas Teleinform&aacute;ticos | 233108 | V1
+    </div>
+
+    <h1 class="anim-3">
+      Fortalecimiento de los Servicios Teleinform&aacute;ticos<br>
+      de Equipos y Redes en las MIPYMES de la Regi&oacute;n
+    </h1>
+
+    <p class="header-subtitle anim-4">
+      Portal de acceso a las gu&iacute;as interactivas por instituci&oacute;n educativa, grupo y ficha.
+      El avance de cada aprendiz queda guardado de forma segura.
+    </p>
+
+    <div class="info-grid anim-5">
+      <div class="info-chip">
+        <span class="label">Programa</span>
+        Sistemas Teleinform&aacute;ticos
+      </div>
+      <div class="info-chip">
+        <span class="label">Codigo</span>
+        233108 | Versi&oacute;n 1
+      </div>
+      <div class="info-chip highlight-chip">
+        <span class="label">Instructor</span>
+        Dubier Orlando Millan Barbosa
+      </div>
+      <div class="info-chip">
+        <span class="label">Correo</span>
+        domillan@sena.edu.co
+      </div>
+    </div>
+
+  </div>
+</header>
+
+<!-- Ola decorativa de transicion -->
+<svg class="wave" viewBox="0 0 1440 40" preserveAspectRatio="none" height="40" aria-hidden="true">
+  <path fill="currentColor" d="M0,20 C360,40 1080,0 1440,20 L1440,40 L0,40 Z"></path>
+</svg>
+
+<!-- ------------------------------------------------------
+     CONTENIDO PRINCIPAL
+     ------------------------------------------------------ -->
+<main class="main app-main portal-grid">
+
+  <!-- Paso 1: instruccion inicial -->
+  <div class="instruction anim-1" data-reveal>
+    <div class="instruction-mark">1</div>
+    <p>
+      <strong>Inicia sesi&oacute;n o crea tu usuario</strong> y luego
+      <strong>selecciona tu instituci&oacute;n educativa y grupo.</strong>
+      El portal activar&aacute; autom&aacute;ticamente las gu&iacute;as disponibles para tu ficha.
+    </p>
+  </div>
+
+  <!-- -- Panel de autenticacion -- -->
+  <div class="section-label">Acceso al Portal</div>
+
+  <div class="auth-panel anim-2" id="portal-access-panel" data-reveal>
+
+    <!-- Mensaje flash (errores / confirmaciones entre paginas) -->
+    <div class="auth-feedback" id="portal-flash"></div>
+
+    <!-- Tarjeta: sesion activa -->
+    <div class="auth-session-card" id="auth-session-card" style="display:none">
+      <div class="auth-session-top">
+        <div>
+          <span class="auth-role" id="auth-session-role">Estudiante</span>
+          <h3 id="auth-session-name">Usuario activo</h3>
+          <p id="auth-session-meta">-</p>
+        </div>
+        <button class="btn-share ghost" type="button" id="auth-session-logout">Cerrar sesi&oacute;n</button>
+      </div>
+      <div class="auth-guide-list" id="auth-session-guides"></div>
+      <p class="auth-inline-note">El avance de las gu&iacute;as se guarda por usuario en este navegador y en la nube.</p>
+      <div class="auth-session-actions" id="auth-session-actions" style="display:none">
+        <a class="btn-share primary" href="calendario-academico-2026.html">Abrir calendario 2026</a>
+        <a class="btn-share secondary" href="panel-administrativo-usuarios.html">Administrar usuarios</a>
+      </div>
+    </div>
+
+    <!-- Tarjeta: visitante (sin sesion) -->
+    <div id="auth-guest-card">
+      <div class="auth-header">
+        <h3>Registro e inicio de sesi&oacute;n</h3>
+        <p>
+          Cada estudiante puede crear su usuario con nombre completo, nombre de usuario,
+      n&uacute;mero de ficha y contrase&ntilde;a. La ficha define autom&aacute;ticamente las gu&iacute;as que puede abrir.
+        </p>
+      </div>
+
+      <!-- Pestanas: Ingresar / Crear usuario / Administrador -->
+      <div class="auth-tabs">
+        <button class="auth-tab active" type="button" data-auth-tab="login">Ingresar</button>
+        <button class="auth-tab"        type="button" data-auth-tab="register">Crear usuario</button>
+        <button class="auth-tab"        type="button" data-auth-tab="admin">Administrador</button>
+      </div>
+
+      <!-- Pestana: Login -->
+      <div class="auth-pane active" data-auth-pane="login">
+        <h4>Ingreso del estudiante</h4>
+        <p>Usa el nombre de usuario y la contrase&ntilde;a que registraste en este navegador.</p>
+        <form class="auth-form" id="auth-login-form" novalidate>
+          <label for="auth-login-user">Nombre de usuario</label>
+          <input class="auth-input" id="auth-login-user" type="text"
+                 maxlength="30" autocomplete="username" spellcheck="false" placeholder="mi.usuario">
+          <label for="auth-login-password">Contrase&ntilde;a</label>
+          <input class="auth-input" id="auth-login-password" type="password"
+                 maxlength="60" autocomplete="current-password" placeholder="********">
+          <button class="auth-submit" type="submit">Iniciar sesi&oacute;n</button>
+        </form>
+        <div class="auth-feedback" id="auth-login-feedback"></div>
+      </div>
+
+      <!-- Pestana: Registro -->
+      <div class="auth-pane" data-auth-pane="register">
+        <h4>Crear usuario del estudiante</h4>
+        <p>La ficha se valida contra las gu&iacute;as disponibles y prepara autom&aacute;ticamente el acceso a tu grupo.</p>
+        <form class="auth-form" id="auth-register-form" novalidate>
+          <label for="auth-register-name">Nombre completo</label>
+          <input class="auth-input" id="auth-register-name" type="text"
+                 maxlength="80" autocomplete="name" placeholder="Nombre Apellido">
+          <label for="auth-register-user">Nombre de usuario</label>
+          <input class="auth-input" id="auth-register-user" type="text"
+                 maxlength="30" autocomplete="username" spellcheck="false" placeholder="nombre.apellido">
+          <label for="auth-register-ficha">N&uacute;mero de ficha</label>
+          <input class="auth-input" id="auth-register-ficha" type="text"
+                 maxlength="10" inputmode="numeric" placeholder="3441939">
+          <label for="auth-register-password">Contrase&ntilde;a</label>
+          <input class="auth-input" id="auth-register-password" type="password"
+                 maxlength="60" autocomplete="new-password" placeholder="M&iacute;nimo 6 caracteres">
+          <button class="auth-submit" type="submit">Crear usuario</button>
+        </form>
+        <div class="auth-feedback" id="auth-register-feedback"></div>
+      </div>
+
+      <!-- Pestana: Admin -->
+      <div class="auth-pane" data-auth-pane="admin">
+        <h4>Acceso administrativo</h4>
+        <p id="auth-admin-help">Ingresa la clave administrativa para usar los m&oacute;dulos restringidos.</p>
+        <form class="auth-form" id="auth-admin-form" novalidate>
+          <label for="auth-admin-password">Clave del administrador</label>
+          <input class="auth-input" id="auth-admin-password" type="password"
+                 maxlength="60" autocomplete="current-password" placeholder="********">
+          <button class="auth-submit" type="submit" id="auth-admin-submit">Ingresar como administrador</button>
+        </form>
+        <div class="auth-feedback" id="auth-admin-feedback"></div>
+      </div>
+    </div>
+
+  </div><!-- /auth-panel -->
+
+  <!-- -- Llamado al calendario (solo admin) -- -->
+  <div class="instruction calendar-callout" id="calendar-callout" style="display:none" data-reveal>
+    <div class="instruction-mark">2</div>
+    <p id="calendar-access-note">
+      <strong>Calendario 2026 disponible.</strong>
+      Consulta el dashboard, el registro completo y los meses programados
+      en la vista HTML conectada al portal.
+    </p>
+    <a class="btn-calendar-link" id="btn-calendar-access" href="calendario-academico-2026.html">
+      Abrir calendario 2026
+    </a>
+  </div>
+
+  <!-- -- Panel de compartir en red local (solo admin) -- -->
+  <div class="section-label" id="share-section-label" style="display:none">Compartir en Red Local</div>
+  <div class="share-panel" id="share-panel" style="display:none" data-reveal>
+    <div class="share-header">
+      <div class="share-icon">Red</div>
+      <div>
+        <h3>Servidor local para la red actual</h3>
+        <p>
+          Cuando actives el servidor desde este PC, el portal detecta autom&aacute;ticamente
+          la red disponible y muestra la URL para abrirla desde otros dispositivos del mismo lugar.
+        </p>
+      </div>
+    </div>
+
+    <div class="share-meta">
+      <div class="share-meta-card">
+        <span class="share-meta-label">Estado del servidor</span>
+        <div class="share-status-line">
+          <span class="share-status-text" id="share-status-text">Sin detectar</span>
+          <span class="share-status-badge is-off" id="share-status-badge">Inactivo</span>
+        </div>
+      </div>
+      <div class="share-meta-card">
+        <span class="share-meta-label">Enlace actual</span>
+        <div class="share-url" id="share-primary-url">Activa el servidor para ver la direcci&oacute;n correcta con puerto.</div>
+      </div>
+    </div>
+
+    <div class="share-actions">
+      <a class="btn-share primary" href="tools/iniciar_servidor_red.cmd" id="btn-share-start">
+        Activar para esta red
+      </a>
+      <button class="btn-share secondary" type="button" onclick="refreshShareStatus()">
+        Actualizar estado
+      </button>
+      <button class="btn-share ghost" type="button" id="btn-share-copy" onclick="copyShareUrl()" disabled>
+        Copiar enlace
+      </button>
+      <button class="btn-share danger" type="button" id="btn-share-stop" onclick="stopShareServer()" disabled>
+        Desactivar
+      </button>
+    </div>
+
+    <p class="share-note" id="share-note">
+      <strong>Importante:</strong> cada vez que cambies de colegio o de Wi-Fi, vuelve a activar el servidor
+      para que detecte la red actual. En el celular abre siempre la direccion completa con el puerto,
+      por ejemplo <code>http://192.168.x.x:8080/</code>.
+      Si el navegador no ejecuta el boton, abre directamente el archivo
+      <code>tools/iniciar_servidor_red.cmd</code>.
+    </p>
+
+    <div class="share-network-list" id="share-network-list">
+      <div class="share-network-empty">Todavia no hay un servidor local detectado.</div>
+    </div>
+  </div><!-- /share-panel -->
+
+  <!-- ------------------------------------------------------
+       INSTITUCIONES EDUCATIVAS
+       ------------------------------------------------------ -->
+  <div class="section-label">Instituciones Educativas</div>
+
+  <!-- -- IE Jhon F. Kennedy -- -->
+  <div class="inst-card" data-reveal>
+    <div class="inst-header">
+      <div class="inst-icon">IE</div>
+      <div>
+        <h2>Instituci&oacute;n Educativa Jhon F. Kennedy</h2>
+        <p>2 grupos vinculados | Calendario A y B</p>
+      </div>
+    </div>
+    <div class="inst-body">
+
+      <div class="groups-grid portal-guides">
+        <button
+          class="group-btn guide-card"
+          type="button"
+          onclick="selectGroup(this)"
+          data-inst="Institucion Educativa Jhon F. Kennedy"
+          data-grado="Decimo"
+          data-grupo="10A"
+          data-ficha="3441939"
+          data-guia="grupo-10a-guia-01-induccion.html"
+        >
+          <span class="guide-card__badge">Guia disponible</span>
+          <div class="group-grade">10<sup>A</sup></div>
+          <div class="group-ficha">Ficha <span>3441939</span></div>
+          <span class="group-nivel nivel-decimo">Decimo</span>
+        </button>
+
+        <button
+          class="group-btn guide-card"
+          type="button"
+          onclick="selectGroup(this)"
+          data-inst="Institucion Educativa Jhon F. Kennedy"
+          data-grado="Decimo"
+          data-grupo="10B"
+          data-ficha="3441942"
+          data-guia="grupo-10b-guia-01-induccion.html"
+        >
+          <span class="guide-card__badge">Guia disponible</span>
+          <div class="group-grade">10<sup>B</sup></div>
+          <div class="group-ficha">Ficha <span>3441942</span></div>
+          <span class="group-nivel nivel-decimo">Decimo</span>
+        </button>
+      </div>
+
+      <!-- Horario JFK -->
+      <button class="btn-horario" type="button" id="btn-horario-jfk" onclick="toggleHorario('jfk')">
+        Ver horario de formacion <span class="hor-arrow">&#9662;</span>
+      </button>
+
+      <div class="horario-panel" id="horario-jfk">
+        <div class="horario-inner">
+          <div class="cal-card cal-a">
+            <div class="cal-title"><span class="cal-badge">Cal. A</span> Calendario A</div>
+            <div class="cal-row"><span class="cal-dot"></span><span class="cal-lbl">Inicio</span><span class="cal-time">6:10 am</span></div>
+            <hr class="cal-sep">
+            <div class="cal-row"><span class="cal-dot"></span><span class="cal-lbl">Restaurante</span><span class="cal-time">7:30 am - 7:50 am</span></div>
+            <hr class="cal-sep">
+            <div class="cal-row"><span class="cal-dot"></span><span class="cal-lbl">Finaliza</span><span class="cal-time">10:10 am</span></div>
+          </div>
+          <div class="cal-card cal-b">
+            <div class="cal-title"><span class="cal-badge">Cal. B</span> Calendario B</div>
+            <div class="cal-row"><span class="cal-dot"></span><span class="cal-lbl">Inicio</span><span class="cal-time">2:10 pm</span></div>
+            <hr class="cal-sep">
+            <div class="cal-row"><span class="cal-dot"></span><span class="cal-lbl">Finaliza</span><span class="cal-time">6:10 pm</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /IE JFK -->
+
+  <!-- -- IE Santa Barbara -- -->
+  <div class="inst-card" data-reveal>
+    <div class="inst-header">
+      <div class="inst-icon">IE</div>
+      <div>
+        <h2>Instituci&oacute;n Educativa Santa B&aacute;rbara</h2>
+        <p>4 grupos vinculados | Grados 10 y 11</p>
+      </div>
+    </div>
+    <div class="inst-body">
+
+      <div class="groups-grid portal-guides">
+        <button
+          class="group-btn guide-card"
+          type="button"
+          onclick="selectGroup(this)"
+          data-inst="Institucion Educativa Santa Barbara"
+          data-grado="Decimo"
+          data-grupo="10A"
+          data-ficha="3441944"
+          data-guia="grupo-10a-guia-01-induccion.html"
+        >
+          <span class="guide-card__badge">Guia disponible</span>
+          <div class="group-grade">10<sup>A</sup></div>
+          <div class="group-ficha">Ficha <span>3441944</span></div>
+          <span class="group-nivel nivel-decimo">Decimo</span>
+        </button>
+
+        <button
+          class="group-btn guide-card"
+          type="button"
+          onclick="selectGroup(this)"
+          data-inst="Institucion Educativa Santa Barbara"
+          data-grado="Decimo"
+          data-grupo="10B"
+          data-ficha="3441950"
+          data-guia="grupo-10b-guia-01-induccion.html"
+        >
+          <span class="guide-card__badge">Guia disponible</span>
+          <div class="group-grade">10<sup>B</sup></div>
+          <div class="group-ficha">Ficha <span>3441950</span></div>
+          <span class="group-nivel nivel-decimo">Decimo</span>
+        </button>
+
+        <button
+          class="group-btn guide-card"
+          type="button"
+          onclick="selectGroup(this)"
+          data-inst="Institucion Educativa Santa Barbara"
+          data-grado="Undecimo"
+          data-grupo="11A"
+          data-ficha="3168850"
+          data-guia="grupo-11a-guia-06-planificar-informacion.html"
+        >
+          <span class="guide-card__badge">Guia disponible</span>
+          <div class="group-grade">11<sup>A</sup></div>
+          <div class="group-ficha">Ficha <span>3168850</span></div>
+          <span class="group-nivel nivel-undecimo">Undecimo</span>
+        </button>
+
+        <button
+          class="group-btn guide-card"
+          type="button"
+          onclick="selectGroup(this)"
+          data-inst="Institucion Educativa Santa Barbara"
+          data-grado="Undecimo"
+          data-grupo="11B"
+          data-ficha="3168852"
+          data-guia="grupo-11b-guia-06-planificar-informacion.html"
+        >
+          <span class="guide-card__badge">Guia disponible</span>
+          <div class="group-grade">11<sup>B</sup></div>
+          <div class="group-ficha">Ficha <span>3168852</span></div>
+          <span class="group-nivel nivel-undecimo">Undecimo</span>
+        </button>
+      </div>
+
+      <!-- Horario Santa Barbara -->
+      <button class="btn-horario" type="button" id="btn-horario-sb" onclick="toggleHorario('sb')">
+        Ver horario de formacion <span class="hor-arrow">&#9662;</span>
+      </button>
+
+      <div class="horario-panel" id="horario-sb">
+        <!-- Pestanas por grupo -->
+        <div class="hor-tabs">
+          <button class="hor-tab active" type="button" onclick="switchHorTab(this, 'hor-sb-10a')">10<sup>A</sup></button>
+          <button class="hor-tab"        type="button" onclick="switchHorTab(this, 'hor-sb-10b')">10<sup>B</sup></button>
+          <button class="hor-tab"        type="button" onclick="switchHorTab(this, 'hor-sb-11a')">11<sup>A</sup></button>
+          <button class="hor-tab"        type="button" onclick="switchHorTab(this, 'hor-sb-11b')">11<sup>B</sup></button>
+        </div>
+
+        <!-- 10A -->
+        <div class="hor-group-panel active" id="hor-sb-10a">
+          <div class="hor-day">
+            <div class="hor-day-name">Lunes</div>
+            <div class="hor-slots">
+              <span class="hor-slot">7:00 am - 9:55 am</span>
+              <span class="hor-slot">2:15 pm - 4:15 pm</span>
+            </div>
+          </div>
+          <div class="hor-day">
+              <div class="hor-day-name">Mi&eacute;rcoles</div>
+            <div class="hor-slots">
+              <span class="hor-slot">7:00 am - 7:55 am</span>
+              <span class="hor-slot">2:15 pm - 4:15 pm</span>
+            </div>
+          </div>
+          <div class="hor-day">
+            <div class="hor-day-name">Viernes</div>
+            <div class="hor-slots">
+              <span class="hor-slot">9:00 am - 9:55 am</span>
+              <span class="hor-slot">12:05 pm - 1:55 pm</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 10B -->
+        <div class="hor-group-panel" id="hor-sb-10b">
+          <div class="hor-day">
+            <div class="hor-day-name">Lunes</div>
+            <div class="hor-slots"><span class="hor-slot">12:05 pm - 1:55 pm</span></div>
+          </div>
+          <div class="hor-day">
+            <div class="hor-day-name">Martes</div>
+            <div class="hor-slots">
+              <span class="hor-slot">7:00 am - 9:55 am</span>
+              <span class="hor-slot">2:15 pm - 4:15 pm</span>
+            </div>
+          </div>
+          <div class="hor-day">
+            <div class="hor-day-name">Jueves</div>
+            <div class="hor-slots">
+              <span class="hor-slot">7:00 am - 7:55 am</span>
+              <span class="hor-slot">9:55 am - 10:50 am</span>
+              <span class="hor-slot">2:15 pm - 4:15 pm</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 11A -->
+        <div class="hor-group-panel" id="hor-sb-11a">
+          <div class="hor-day">
+            <div class="hor-day-name">Lunes</div>
+            <div class="hor-slots">
+              <span class="hor-slot">9:00 am - 9:55 am</span>
+              <span class="hor-slot">2:15 pm - 4:15 pm</span>
+            </div>
+          </div>
+          <div class="hor-day">
+            <div class="hor-day-name">Martes</div>
+            <div class="hor-slots">
+              <span class="hor-slot">7:00 am - 8:50 am</span>
+              <span class="hor-slot">10:50 am - 1:00 pm</span>
+            </div>
+          </div>
+          <div class="hor-day">
+              <div class="hor-day-name">Mi&eacute;rcoles</div>
+            <div class="hor-slots"><span class="hor-slot">9:00 am - 9:55 am</span></div>
+          </div>
+          <div class="hor-day">
+            <div class="hor-day-name">Jueves</div>
+            <div class="hor-slots"><span class="hor-slot">2:15 pm - 4:15 pm</span></div>
+          </div>
+          <div class="hor-day">
+            <div class="hor-day-name">Viernes</div>
+            <div class="hor-slots"><span class="hor-slot">7:00 am - 7:55 am</span></div>
+          </div>
+        </div>
+
+        <!-- 11B -->
+        <div class="hor-group-panel" id="hor-sb-11b">
+          <div class="hor-day">
+            <div class="hor-day-name">Lunes</div>
+            <div class="hor-slots">
+              <span class="hor-slot">7:00 am - 7:55 am</span>
+              <span class="hor-slot">9:55 am - 10:50 am</span>
+            </div>
+          </div>
+          <div class="hor-day">
+            <div class="hor-day-name">Martes</div>
+            <div class="hor-slots"><span class="hor-slot">2:15 pm - 4:15 pm</span></div>
+          </div>
+          <div class="hor-day">
+              <div class="hor-day-name">Mi&eacute;rcoles</div>
+            <div class="hor-slots">
+              <span class="hor-slot">10:50 am - 11:45 am</span>
+              <span class="hor-slot">2:15 pm - 4:15 pm</span>
+            </div>
+          </div>
+          <div class="hor-day">
+            <div class="hor-day-name">Jueves</div>
+            <div class="hor-slots"><span class="hor-slot">7:00 am - 10:50 am</span></div>
+          </div>
+        </div>
+      </div><!-- /horario-sb -->
+
+    </div>
+  </div><!-- /IE Santa Barbara -->
+
+  <!-- ------------------------------------------------------
+       PANEL CTA | ACCESO A LA GUIA SELECCIONADA
+       ------------------------------------------------------ -->
+  <div class="cta-panel" id="cta-panel" data-reveal>
+    <h3>Grupo seleccionado</h3>
+    <p>Verifica tus datos antes de ingresar a la gu&iacute;a de aprendizaje.</p>
+
+    <div class="selected-info">
+      <div class="row"><span class="lbl">Instituci&oacute;n</span><span class="val" id="si-inst">-</span></div>
+      <div class="row"><span class="lbl">Grupo</span><span class="val" id="si-grupo">-</span></div>
+      <div class="row"><span class="lbl">Ficha</span><span class="val"><b id="si-ficha">-</b></span></div>
+      <div class="row"><span class="lbl">Gu&iacute;a</span><span class="val" id="si-guia">-</span></div>
+    </div>
+
+    <!-- Selector de guia cuando el grupo tiene mas de una -->
+    <div class="guide-options" id="guide-options"></div>
+
+    <a class="btn-enter" id="btn-enter" href="#">
+      Ingresar a la gu&iacute;a <span class="arrow">&rarr;</span>
+    </a>
+    <p class="access-note" id="access-note">
+      Inicia sesi&oacute;n para abrir las gu&iacute;as habilitadas seg&uacute;n tu usuario.
+    </p>
+  </div>
+
+</main>
+
+<!-- ------------------------------------------------------
+     FOOTER
+     ------------------------------------------------------ -->
+<footer class="footer" data-reveal>
+  <span>SENA</span> | Servicio Nacional de Aprendizaje &nbsp;|&nbsp;
+  Sistemas Teleinform&aacute;ticos | C&oacute;digo 233108 V1 &nbsp;|&nbsp;
+  Portal de gu&iacute;as interactivas &nbsp;|&nbsp;
+  <a href="mailto:domillan@sena.edu.co">domillan@sena.edu.co</a>
+</footer>
+
+<!-- ------------------------------------------------------
+     SCRIPTS INLINE | Logica del portal
+     ------------------------------------------------------ -->
+<script>
+  /* -- Mapas de datos ----------------------------------- */
+  const SHARE_PORT = 8080;
+  let currentShareUrl = "";
+
+  function getPortalAuth() {
+    return window.portalAuth || null;
+  }
+
+  function getGuideNames() {
+    return getPortalAuth()?.GUIDE_TITLES || {};
+  }
+
+  function getGuideTitle(file) {
+    return getGuideNames()[file] || file || "-";
+  }
+
+  function getFichaMap() {
+    return Object.fromEntries(
+      Object.entries(getPortalAuth()?.FICHA_MAP || {}).map(([ficha, info]) => [
+        ficha,
+        {
+          inst: info.inst,
+          grupo: info.grupo,
+          guia: (info.guias && info.guias[0]) || "",
+        },
+      ])
+    );
+  }
+
+  function buildShareEndpoint(pathname) {
+    const endpoint = /^https?:$/i.test(window.location.protocol)
+      ? new URL(pathname, window.location.origin)
+      : new URL(`http://localhost:${SHARE_PORT}${pathname}`);
+    const session = getPortalAuth()?.getCurrentSession?.() || null;
+    if (session?.role === "admin" && session.token) {
+      endpoint.searchParams.set("token", session.token);
+    }
+    return endpoint;
+  }
+
+  /* -- Servidor de red local ---------------------------- */
+  function canUseLocalShareLauncher() {
+    return window.location.protocol.toLowerCase() === "file:";
+  }
+
+  function configureShareStartButton() {
+    const btn = document.getElementById("btn-share-start");
+    if (canUseLocalShareLauncher()) {
+      btn.classList.remove("is-disabled");
+      btn.setAttribute("href", "tools/iniciar_servidor_red.cmd");
+      btn.removeAttribute("aria-disabled");
+      btn.removeAttribute("title");
+      btn.textContent = "Activar para esta red";
+    } else {
+      btn.classList.add("is-disabled");
+      btn.setAttribute("href", "#");
+      btn.setAttribute("aria-disabled", "true");
+      btn.setAttribute("title", "Este boton solo se puede lanzar desde el PC abriendo el index local.");
+      btn.textContent = "Activar desde el PC";
+    }
+  }
+
+  function normalizeShareProfiles(networkProfiles) {
+    if (Array.isArray(networkProfiles)) {
+      return networkProfiles.reduce((items, entry) => {
+        Array.isArray(entry) ? items.push(...entry) : items.push(entry);
+        return items;
+      }, []);
+    }
+    return networkProfiles && typeof networkProfiles === "object" ? [networkProfiles] : [];
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
+    );
+  }
+
+  function getShareStatusEndpoint() {
+    return buildShareEndpoint("/__share_status.json");
+  }
+
+  function getShareStopEndpoint() {
+    return buildShareEndpoint("/__stop");
+  }
+
+  function resetSharePanelForNonAdmin() {
+    currentShareUrl = "";
+    document.getElementById("share-status-text").textContent = "Solo administrador";
+    document.getElementById("share-status-badge").textContent = "Restringido";
+    document.getElementById("share-status-badge").className = "share-status-badge is-off";
+    document.getElementById("share-primary-url").textContent = "Informacion visible solo para el administrador.";
+    document.getElementById("share-network-list").innerHTML =
+      '<div class="share-network-empty">La informacion de red local solo se muestra al administrador.</div>';
+    document.getElementById("btn-share-copy").disabled = true;
+    document.getElementById("btn-share-stop").disabled = true;
+    document.getElementById("share-note").innerHTML =
+      '<strong>Acceso restringido:</strong> este bloque solo esta disponible para la sesion administrativa.';
+  }
+
+  function setShareInactive(message) {
+    currentShareUrl = "";
+    document.getElementById("share-status-text").textContent = message || "Sin detectar";
+    document.getElementById("share-status-badge").textContent = "Inactivo";
+    document.getElementById("share-status-badge").className = "share-status-badge is-off";
+    document.getElementById("share-primary-url").textContent = "Activa el servidor para ver la direcci\u00f3n correcta con puerto.";
+    document.getElementById("share-network-list").innerHTML =
+      '<div class="share-network-empty">Todavia no hay un servidor local detectado.</div>';
+    document.getElementById("btn-share-copy").disabled = true;
+    document.getElementById("btn-share-stop").disabled = true;
+    document.getElementById("share-note").innerHTML =
+      '<strong>Importante:</strong> activa el servidor desde este PC. Cuando quede encendido, aqu\u00ed aparecer\u00e1 la red actual y la direcci\u00f3n exacta para usar en el celular.';
+  }
+
+  function setShareActive(data) {
+    const profiles   = normalizeShareProfiles(data.networkProfiles);
+    const primaryUrl = data.primaryUrl || data.localhostUrl
+      || (profiles[0] && Array.isArray(profiles[0].urls) ? profiles[0].urls[0] : "") || "";
+    const hasPublic  = profiles.some((p) => String(p.networkCategory || "").toLowerCase() === "public");
+
+    currentShareUrl = primaryUrl;
+    document.getElementById("share-status-text").textContent = "Servidor local activo";
+    document.getElementById("share-status-badge").textContent = "Activo";
+    document.getElementById("share-status-badge").className = "share-status-badge is-on";
+    document.getElementById("share-primary-url").textContent = primaryUrl || "http://localhost:8080/";
+    document.getElementById("btn-share-copy").disabled = !primaryUrl;
+    document.getElementById("btn-share-stop").disabled = false;
+    document.getElementById("share-note").innerHTML = hasPublic
+      ? '<strong>Atenci\u00f3n:</strong> la red activa est\u00e1 marcada como p\u00fablica en Windows. C\u00e1mbiala a <strong>Privada</strong> si el celular no puede abrir la p\u00e1gina.'
+      : '<strong>Listo:</strong> el portal detect\u00f3 la red actual. Comparte una de las direcciones de abajo con el celular u otros equipos.';
+
+    if (!profiles.length) {
+      document.getElementById("share-network-list").innerHTML =
+        '<div class="share-network-empty">El servidor esta activo pero no se pudo leer el perfil de red actual.</div>';
+      return;
+    }
+
+    document.getElementById("share-network-list").innerHTML = profiles.map((profile) => {
+      const urls      = Array.isArray(profile.urls) ? profile.urls : [];
+      const category  = escapeHtml(profile.networkCategory || "Sin categoria");
+      const warnClass = String(profile.networkCategory || "").toLowerCase() === "public" ? " warn" : "";
+      return `
+        <div class="share-network-card">
+          <div class="share-network-top">
+            <div class="share-network-name">${escapeHtml(profile.networkName || "Red sin nombre")}</div>
+            <div class="share-network-meta">
+              <span class="share-tag">${escapeHtml(profile.interfaceAlias || "Interfaz")}</span>
+              <span class="share-tag${warnClass}">${category}</span>
+            </div>
+          </div>
+          <div class="share-url-list">
+            ${urls.map((u) => `<div class="share-url-item">${escapeHtml(u)}</div>`).join("")}
+          </div>
+        </div>`;
+    }).join("");
+  }
+
+  async function refreshShareStatus() {
+    try {
+      const requestUrl = getShareStatusEndpoint();
+      requestUrl.searchParams.set("t", String(Date.now()));
+      const res = await fetch(requestUrl, { cache: "no-store" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setShareActive(await res.json());
+    } catch {
+      setShareInactive("Servidor no activo");
+    }
+  }
+
+  async function copyShareUrl() {
+    if (!currentShareUrl) return;
+    try {
+      await navigator.clipboard.writeText(currentShareUrl);
+      alert(`Enlace copiado:\n${currentShareUrl}`);
+    } catch {
+      window.prompt("Copia manualmente este enlace:", currentShareUrl);
+    }
+  }
+
+  async function stopShareServer() {
+    try {
+      const requestUrl = getShareStopEndpoint();
+      requestUrl.searchParams.set("t", String(Date.now()));
+      await fetch(requestUrl, { cache: "no-store" });
+      setTimeout(refreshShareStatus, 900);
+    } catch {
+      setShareInactive("Servidor detenido");
+    }
+  }
+
+  /* -- Horarios ----------------------------------------- */
+  function toggleHorario(id) {
+    const panel = document.getElementById("horario-" + id);
+    const btn   = document.getElementById("btn-horario-" + id);
+    const open  = panel.classList.toggle("open");
+    btn.classList.toggle("open", open);
+    btn.querySelector(".hor-arrow").textContent = open ? "\u25B4" : "\u25BE";
+  }
+
+  function switchHorTab(btn, panelId) {
+    const container = btn.closest(".horario-panel");
+    container.querySelectorAll(".hor-tab").forEach((t) => t.classList.remove("active"));
+    container.querySelectorAll(".hor-group-panel").forEach((p) => p.classList.remove("active"));
+    btn.classList.add("active");
+    container.querySelector("#" + panelId).classList.add("active");
+  }
+
+  /* -- Seleccion de grupo ------------------------------- */
+  function selectGroup(btn) {
+    const session = window.portalAuth?.getCurrentSession?.();
+    if (session?.role === "student" && btn.dataset.ficha !== session.user.ficha) {
+      alert("Tu usuario solo puede abrir las gu\u00edas asociadas a su propia ficha.");
+      return;
+    }
+
+    document.querySelectorAll(".group-btn.active").forEach((el) => el.classList.remove("active"));
+    btn.classList.add("active");
+
+    const { inst, grado, grupo, ficha, guia } = btn.dataset;
+    localStorage.setItem("sena_ficha", ficha);
+    localStorage.setItem("sena_grupo", grupo);
+    localStorage.setItem("sena_inst",  inst);
+
+    showCTA(inst, grupo, ficha, guia);
+  }
+
+  function showCTA(inst, grupo, ficha, guia) {
+    document.getElementById("si-inst").textContent = inst;
+    document.getElementById("si-grupo").textContent = grupo;
+    document.getElementById("si-ficha").textContent = ficha;
+    renderGuideOptions(inst, grupo, ficha, guia);
+
+    const panel = document.getElementById("cta-panel");
+    panel.classList.add("visible");
+    panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  function renderGuideOptions(inst, grupo, ficha, guia) {
+    const container = document.getElementById("guide-options");
+    const guides    = getPortalAuth()?.getGuidesForFicha?.(ficha) || [guia];
+    const selected  = guides.includes(guia) ? guia : guides[0];
+
+    container.textContent = "";
+    guides.forEach((file) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = `guide-chip${file === selected ? " active" : ""}`;
+      button.dataset.guide = file;
+      button.textContent = getGuideTitle(file);
+      button.addEventListener("click", () => {
+        selectGuideOption(button, file, inst, grupo, ficha);
+      });
+      container.appendChild(button);
+    });
+
+    setGuideEntry(inst, grupo, ficha, selected);
+  }
+
+  function selectGuideOption(btn, guia, inst, grupo, ficha) {
+    document.querySelectorAll(".guide-chip").forEach((c) => c.classList.remove("active"));
+    btn.classList.add("active");
+    setGuideEntry(inst, grupo, ficha, guia);
+  }
+
+  function setGuideEntry(inst, grupo, ficha, guia) {
+    document.getElementById("si-guia").textContent = getGuideTitle(guia);
+
+    const params      = new URLSearchParams({ ficha, inst, grupo });
+    const target      = guia + "?" + params.toString();
+    const enterButton = document.getElementById("btn-enter");
+    const session     = getPortalAuth()?.getCurrentSession?.() || null;
+
+    let accessState = "login-required";
+    if (session?.role === "admin") {
+      accessState = "ready";
+    } else if (session?.role === "student") {
+      accessState = session.user?.ficha === ficha ? "ready" : "forbidden";
+    }
+
+    const canOpen = accessState === "ready";
+    enterButton.href              = canOpen ? target : "#";
+    enterButton.dataset.target    = target;
+    enterButton.dataset.ficha     = ficha;
+    enterButton.dataset.grupo     = grupo;
+    enterButton.dataset.accessState = accessState;
+    enterButton.setAttribute("aria-disabled", canOpen ? "false" : "true");
+    enterButton.classList.toggle("is-disabled", !canOpen);
+  }
+
+  /* -- Inicializacion ----------------------------------- */
+  document.addEventListener("DOMContentLoaded", () => {
+    const ficha   = localStorage.getItem("sena_ficha");
+    const session = getPortalAuth()?.getCurrentSession?.() || null;
+    const fichaMap = getFichaMap();
+
+    if (session?.role === "admin") {
+      configureShareStartButton();
+      refreshShareStatus();
+      setInterval(refreshShareStatus, 15000);
+    }
+
+    if (!ficha || !fichaMap[ficha]) return;
+
+    const { inst, grupo, guia } = fichaMap[ficha];
+    document.querySelectorAll(".group-btn[data-ficha]").forEach((btn) => {
+      if (btn.dataset.ficha === ficha) btn.classList.add("active");
+    });
+    showCTA(inst, grupo, ficha, guia);
+  });
+
+  /* -- Clic en boton de entrada ------------------------- */
+  document.getElementById("btn-enter").addEventListener("click", (event) => {
+    const btn         = event.currentTarget;
+    const target      = btn.dataset.target;
+    const ficha       = btn.dataset.ficha;
+    const accessState = btn.dataset.accessState || "";
+
+    if (accessState === "login-required") {
+      event.preventDefault();
+      alert("Primero crea tu usuario o inicia sesi\u00f3n para abrir la gu\u00eda.");
+      return;
+    }
+    if (accessState === "forbidden") {
+      event.preventDefault();
+      alert("Tu usuario solo puede abrir las gu\u00edas de su propia ficha.");
+      return;
+    }
+    if (!target || !ficha) {
+      event.preventDefault();
+      alert("Primero selecciona tu grupo en el panel de instituciones.");
+    }
+  });
+</script>
+
+<!-- Modulos externos (auth + Firebase) -->
+<script src="js/portal_auth.js?v=20260324_6" defer></script>
+<script src="js/firebase_db.js?v=20260326_7" defer></script>
+<script src="js/index_auth.js?v=20260324_4" defer></script>
+
+</body>
+</html>
+

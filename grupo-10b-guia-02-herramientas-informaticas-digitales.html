@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta
+  http-equiv="Content-Security-Policy"
+  content="default-src 'self' blob: data:; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https:; media-src 'self' blob: data: https:; frame-src 'self' https://es.educaplay.com;"
+>
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Guia 2 - Operar Herramientas Informaticas y Digitales | Grupo 10B</title>
+<meta
+  name="description"
+  content="Version interactiva de la Guia 2 para el grupo 10B del programa Sistemas Teleinformaticos - Institucion Educativa Jhon F. Kennedy."
+>
+<script defer src="js/portal_auth.js?v=20260324_6"></script>
+<script defer src="js/firebase_db.js?v=20260326_7"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/site_tokens.css?v=20260409_1">
+  <link rel="stylesheet" href="css/shared_shell.css?v=20260409_1">
+  <link rel="stylesheet" href="css/guia_template.css?v=20260409_1">
+  <script defer src="js/shared_shell.js?v=20260409_1"></script>
+  <script defer src="js/script_guia2.js?v=20260408_2"></script>
+  <script defer src="js/guia_template.js?v=20260409_1"></script>
+</head>
+<body
+  class="app-shell app-shell--guide"
+  data-default-ficha="3441942"
+  data-default-inst="Institucion Educativa Jhon F. Kennedy"
+  data-default-grupo="10B"
+>
+<button class="hamburger" onclick="toggleSidebar()" aria-label="Menu">&#9776;</button>
+<button class="btn-sb-expand" onclick="showSidebar()" title="Mostrar barra lateral">&#9776;</button>
+
+<div class="layout app-layout">
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="badge">SENA &middot; FPI</div>
+      <h2>Guia 2 - Operar Herramientas Informaticas y Digitales</h2>
+      <p>Sistemas Teleinformaticos</p>
+      <button class="btn-sb-collapse" onclick="hideSidebar()" title="Ocultar barra lateral">&#9664;</button>
+    </div>
+
+    <div class="sidebar-ficha" id="sb-ficha-ok" style="display:none">
+      <div class="sf-label">Tu grupo</div>
+      <div class="sf-inst" id="sb-inst"></div>
+      <div class="sf-meta" id="sb-grupo-meta"></div>
+      <div class="sf-badge" id="sb-badge"></div>
+    </div>
+    <div class="sidebar-noficha" id="sb-ficha-warn">
+      <a href="index.html">Inicio | Seleccionar grupo / ficha</a>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span>Progreso</span>
+        <span id="progressValue">0%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <p class="progress-note">El avance se guarda localmente en este navegador.</p>
+      <button type="button" class="reset-button" id="resetProgress">Reiniciar respuestas</button>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Informaci&oacute;n</div>
+      <a class="nav-link active" href="#identificacion" onclick="setActive(this)">
+        <span class="icon">&#128203;</span> Identificaci&oacute;n
+      </a>
+      <a class="nav-link" href="#presentacion" onclick="setActive(this)">
+        <span class="icon">&#128075;</span> Presentaci&oacute;n
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Actividades</div>
+      <a class="nav-link" href="#reflexion" onclick="setActive(this)">
+        <span class="icon">&#128172;</span> 3.1 Reflexi&oacute;n Inicial
+        <span class="check">&#10003;</span>
+      </a>
+      <a class="nav-link" href="#contexto" onclick="setActive(this)">
+        <span class="icon">&#128269;</span> 3.2 Contextualizaci&oacute;n
+        <span class="check">&#10003;</span>
+      </a>
+      <a class="nav-link" href="#apropiacion" onclick="setActive(this)">
+        <span class="icon">&#128218;</span> 3.3 Apropiaci&oacute;n
+        <span class="check">&#10003;</span>
+      </a>
+      <a class="nav-link" href="#transferencia" onclick="setActive(this)">
+        <span class="icon">&#128640;</span> 3.4 Transferencia
+        <span class="check">&#10003;</span>
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Recursos</div>
+      <a class="nav-link" href="#evidencias" onclick="setActive(this)">
+        <span class="icon">&#128202;</span> Evidencias
+      </a>
+      <a class="nav-link" href="#glosario" onclick="setActive(this)">
+        <span class="icon">&#128214;</span> Glosario
+      </a>
+      <a class="nav-link" href="#referencias" onclick="setActive(this)">
+        <span class="icon">&#128279;</span> Referencias
+      </a>
+      <a class="nav-link" href="#material-apoyo" onclick="setActive(this)">
+        <span class="icon">&#128194;</span> Material de Apoyo
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Guia asignada</div>
+      <a class="nav-guide current" href="grupo-10b-guia-02-herramientas-informaticas-digitales.html" data-current-file="grupo-10b-guia-02-herramientas-informaticas-digitales.html">
+        <span class="g-icon">&#128215;</span>
+        <span class="g-info">
+          <span class="g-num">Guia 2</span>
+          <span class="g-name">Operar herramientas informaticas y digitales | 10B</span>
+        </span>
+        <span class="g-tag actual">Actual</span>
+      </a>
+      <a class="nav-guide" href="grupo-10b-guia-01-induccion.html" data-current-file="grupo-10b-guia-01-induccion.html">
+        <span class="g-icon">&#128215;</span>
+        <span class="g-info">
+          <span class="g-num">Guia 1</span>
+          <span class="g-name">Induccion | 10B</span>
+        </span>
+        <span class="g-tag linked">Abrir</span>
+      </a>
+    </div>
+
+    <a class="nav-home-link" href="calendario-academico-2026.html">&#128197; <span>Calendario 2026</span></a>
+    <a class="nav-home-link" href="index.html">&#127968; <span>Volver al Inicio</span></a>
+  </nav>
+
+  <div class="main app-main">
+    <div class="topbar">
+      <div class="topbar-title">
+        <strong>Guia 2 - Operar Herramientas Informaticas y Digitales</strong>
+      </div>
+      <div class="topbar-meta">
+        <span class="meta-item"><span>&#9201;</span><span>60 horas</span></span>
+        <span class="meta-item"><span>&#128197;</span><span>2026</span></span>
+        <span class="meta-item"><span>&#127979;</span><span id="topbarCampus">Jhon F. Kennedy | 10B</span></span>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="hero" id="inicio">
+        <div class="tag">Guia 2 | Fase: An&aacute;lisis</div>
+        <h1>Operar herramientas informaticas y digitales</h1>
+        <p>
+          En esta guia diagnosticaras necesidades digitales reales, reconocer&aacute;s herramientas TIC,
+          clasificar&aacute;s archivos, comparar&aacute;s sistemas operativos y documentar&aacute;s procedimientos
+          t&eacute;cnicos con criterio profesional.
+        </p>
+        <div class="hero-meta">
+          <div class="hero-meta-item">&#127963; SENA &mdash; Servicio Nacional de Aprendizaje</div>
+          <div class="hero-meta-item">&#128205; Competencia: Operar herramientas informaticas y digitales</div>
+          <div class="hero-meta-item">&#9201; 60 horas</div>
+          <div class="hero-meta-item">&#127891; C&oacute;digo: 233108 &middot; V1</div>
+        </div>
+      </div>
+
+      <div id="identificacion" class="section-title">Identificaci&oacute;n de la Gu&iacute;a</div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#e8f5e9">&#128203;</div>
+            <div>
+              <h3>Datos del Programa de Formaci&oacute;n</h3>
+              <p>Informaci&oacute;n oficial del programa y la competencia</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="table-scroll">
+            <table class="data-table ident-table">
+              <tbody>
+                <tr><td>Denominaci&oacute;n del Programa</td><td>Sistemas Teleinform&aacute;ticos</td></tr>
+                <tr><td>C&oacute;digo del Programa</td><td>233108 &middot; Versi&oacute;n 1</td></tr>
+                <tr><td>Nombre del Proyecto Formativo</td><td>Alfabetizaci&oacute;n Digital, Asesor&iacute;a T&eacute;cnica y Ciberseguridad para la Mejora de Actividades Productivas Locales en la Zona de Influencia del CIAS.</td></tr>
+                <tr><td>Fase del Proyecto</td><td>An&aacute;lisis</td></tr>
+                <tr><td>Actividad del Proyecto</td><td>Diagnosticar necesidades digitales, t&eacute;cnicas y de seguridad inform&aacute;tica en actores productivos locales.</td></tr>
+                <tr><td>Competencia</td><td>220501121 - Operar herramientas inform&aacute;ticas y digitales de acuerdo con protocolos y manuales t&eacute;cnicos.</td></tr>
+                <tr><td>Resultado de Aprendizaje</td><td>RAP 01 - Caracterizar herramientas inform&aacute;ticas seg&uacute;n contexto tecnol&oacute;gico de la organizaci&oacute;n.</td></tr>
+                <tr><td>Duraci&oacute;n</td><td>60 Horas</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="presentacion" class="section-title">Presentaci&oacute;n</div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#e3f2fd">&#128075;</div>
+            <div>
+              <h3>Bienvenida a la Gu&iacute;a</h3>
+              <p>Contexto, prop&oacute;sito y alcance de la Gu&iacute;a 2</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <p class="intro-text" style="text-align:justify">
+            Ya conoces el entorno: sabes manejar un computador, has explorado internet y seguramente
+            has ayudado a alguien con un problema t&eacute;cnico. Esa experiencia previa no es casualidad:
+            es el punto de partida de esta gu&iacute;a. El RAP 01 te invita a transformar ese conocimiento
+            cotidiano en competencia profesional: aprender&aacute;s a caracterizar con criterio t&eacute;cnico
+            las herramientas inform&aacute;ticas y digitales que usan las instituciones educativas y los actores
+            productivos del Occidente de Boyac&aacute;, a identificar sus extensiones, requerimientos de hardware
+            y software, y a seleccionar la herramienta adecuada para cada necesidad real. No memorizar&aacute;s
+            definiciones: las pondr&aacute;s a trabajar desde la primera sesi&oacute;n, con casos reales del CIAS,
+            en equipo y con autonom&iacute;a.
+          </p>
+          <p class="intro-text" style="text-align:justify">
+            A lo largo de las 60 horas de esta gu&iacute;a construir&aacute;s tu competencia de manera progresiva
+            y significativa: reflexionar&aacute;s sobre situaciones concretas, profundizar&aacute;s en los contenidos
+            con tus compa&ntilde;eros, practicar&aacute;s en el laboratorio y, al final, aplicar&aacute;s todo lo
+            aprendido dise&ntilde;ando una soluci&oacute;n digital real para un actor productivo de tu comunidad.
+            Cada actividad est&aacute; pensada para que crezcas no solo como t&eacute;cnico, sino como profesional
+            que escucha, analiza, propone y documenta. El Occidente de Boyac&aacute; necesita t&eacute;cnicos que
+            act&uacute;en con m&eacute;todo y responsabilidad, y eso es exactamente lo que esta gu&iacute;a te forma
+            para ser.
+          </p>
+          <div class="quote">
+            "El Occidente de Boyac&aacute; necesita t&eacute;cnicos que act&uacute;en con m&eacute;todo y responsabilidad."
+            <cite>Gu&iacute;a 2 - Operar herramientas inform&aacute;ticas y digitales</cite>
+          </div>
+        </div>
+      </div>
+
+      <div id="reflexion" class="section-title">3.1 &middot; Actividades de Reflexi&oacute;n Inicial</div>
+      <div class="info-box green" style="margin-bottom:16px">
+        <div class="label">&#129482; ACTIVIDADES PARA ROMPER EL HIELO:</div>
+        <p>Antes de entrar al caso t&eacute;cnico, estas dos actividades r&aacute;pidas te ayudan a activar lo que ya sabes y conectar con tus compa&ntilde;eros. No hay respuestas incorrectas, hay puntos de partida diferentes.</p>
+      </div>
+      <div class="card open cat-reflexion">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128172;</div>
+            <div>
+              <h3>Actividades de Reflexi&oacute;n Inicial</h3>
+              <p>3 actividades &middot; Duraci&oacute;n aproximada: 1 hora</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.1.1</span>
+              <span class="activity-title">ACTIVIDAD 1: &#129513; Sopa de Letras</span>
+              <span class="mission-chip">Mision de arranque</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text">Realice la b&uacute;squeda en la siguiente sopa de letras, las palabras asociadas a los sistemas operativos y en espec&iacute;fico a la tem&aacute;tica de restauraci&oacute;n y formateo.</p>
+              <div class="game-frame-wrap">
+                <iframe referrerpolicy="strict-origin-when-cross-origin" allow="fullscreen; autoplay; allow-top-navigation-by-user-activation" allowfullscreen width="795" height="690" frameborder="0" src="https://es.educaplay.com/juego/27988460-operar_herramientas_informaticas_y_digitales_de_acuerdo_con_protocolos_y_manuales_tecnicos.html"></iframe>
+              </div>
+              <div class="activity-qr-actions">
+                <button class="btn-qr" type="button" data-activity-qr="guia2-sopa">Abrir en movil - Ver QR</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.1.2</span>
+              <span class="activity-title">Actividad 2: &#129513; En la siguiente tabla, haga coincidir el nombre con su concepto</span>
+              <span class="mission-chip">Mision de arranque</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text">En la siguiente tabla, haga coincidir el nombre con su concepto correspondiente.</p>
+              <div class="game-frame-wrap">
+                <iframe referrerpolicy="strict-origin-when-cross-origin" allow="fullscreen; autoplay; allow-top-navigation-by-user-activation" allowfullscreen width="795" height="690" frameborder="0" src="https://es.educaplay.com/juego/27988974-operar_herramientas_informaticas_y_digitales_de_acuerdo_con_protocolos_y_manuales_tecnicos.html"></iframe>
+              </div>
+              <div class="activity-qr-actions">
+                <button class="btn-qr" type="button" data-activity-qr="guia2-relaciona">Abrir en movil - Ver QR</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.1.3</span>
+              <span class="activity-title">Situaci&oacute;n problema (Verificaci&oacute;n de operatividad tras ensamble de equipos nuevos)</span>
+              <span class="mission-chip">Mision de arranque</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <article class="case-card case-hero">
+                <div class="subsection-head">
+                  <span class="case-label">Situaci&oacute;n problema</span>
+                  <p>Verificaci&oacute;n de operatividad tras ensamble de equipos nuevos.</p>
+                </div>
+                <p style="text-align:justify">
+                  En la sala de sistemas del CIAS llega una solicitud: la instituci&oacute;n educativa aliada
+                  del municipio acaba de recibir quince (15) computadores nuevos donados por el municipio.
+                  Los ensamblan con cuidado. Los encienden. Y en la pantalla de varios equipos aparece
+                  uno de estos mensajes de advertencia; exactamente lo que un t&eacute;cnico en sistemas
+                  teleinform&aacute;ticos debe saber resolver.
+                </p>
+                <p style="text-align:justify">
+                  Una vez finalizado el ensamble, los equipos se encienden para verificar su funcionamiento.
+                  Sin embargo, al iniciar, en la pantalla de varios equipos aparece uno de estos mensajes
+                  de advertencia:
+                </p>
+                <div class="diagnosis-gallery">
+                  <figure class="media-card">
+                    <img
+                      src="assets/img/no-bootable-device.jpeg"
+                      alt="Mensaje No Bootable Device"
+                    >
+                    <figcaption>[ No Bootable Device ]</figcaption>
+                  </figure>
+                  <figure class="media-card">
+                    <img
+                      src="assets/img/operating-system-not-found.jpeg"
+                      alt="Mensaje Operating System Not Found"
+                    >
+                    <figcaption>[ Operating System Not Found ]</figcaption>
+                  </figure>
+                </div>
+                <p style="text-align:justify">
+                  Como t&eacute;cnico en sistemas teleinform&aacute;ticos, debes verificar qu&eacute; elementos o partes
+                  del sistema est&aacute;n faltantes o no est&aacute;n instalados correctamente, y proponer las acciones
+                  necesarias para asegurar la operatividad total de los equipos.
+                </p>
+              </article>
+
+              <div class="checklist-card compact-card" style="margin-top:16px;">
+                <h3>ACTIVIDAD (QU&Eacute; DEBES HACER)</h3>
+                <p>Trabajar&aacute;s en equipo de m&aacute;ximo 3 personas para responder esta situaci&oacute;n problema en 3 pasos.</p>
+                <p>Completen una Bit&aacute;cora de diagn&oacute;stico inicial (en Word/Google Docs o a mano y luego digitada), registrando:</p>
+                <ul class="note-list">
+                  <li>&iquest;Qu&eacute; pasa al encender cada equipo? (s&iacute;ntomas observables)</li>
+                  <li>&iquest;Qu&eacute; mensaje aparece en pantalla?</li>
+                  <li>&iquest;Qu&eacute; otras evidencias detectas? (luces, pitidos, ventilador, pantalla negra)</li>
+                </ul>
+              </div>
+
+              <div class="checklist-card compact-card">
+                <h3>AN&Aacute;LISIS Y PROPUESTA (20-25 min)</h3>
+                <p>En la misma bit&aacute;cora, responde de manera argumentada:</p>
+                <ul class="note-list">
+                  <li>Posibles causas (m&iacute;nimo 3) que expliquen el fallo del arranque.</li>
+                  <li>Plan de revisi&oacute;n ordenado (m&iacute;nimo 5 pasos), priorizando acciones seguras antes que invasivas.</li>
+                  <li>Herramientas digitales que usar&iacute;as para documentar y entregar el caso (m&iacute;nimo 3) y por qu&eacute;. Ejemplo: Google Drive para guardar, Docs para redactar, Teams o correo para enviar.</li>
+                  <li>Una acci&oacute;n que NO realizar&iacute;as de inmediato y su justificaci&oacute;n. Ejemplo: formatear sin respaldo previo.</li>
+                </ul>
+              </div>
+
+              <div class="support-column" style="margin-top:16px;">
+                <div class="checklist-card compact-card">
+                  <h4>&iexcl;ATENCI&Oacute;N!</h4>
+                  <p>
+                    <strong>ARCHIVO DE APOYO</strong><br>
+                    Puede utilizar el documento
+                    <a href="assets/materiales/guia2/Bitacora_Para_Caso.docx" target="_blank" rel="noopener">"Bitacora_Para_Caso.docx"</a>
+                    como plantilla.
+                  </p>
+                </div>
+                <div class="support-card">
+                  <p style="text-align:justify;margin-bottom:16px">
+                    <strong>3.</strong>
+                    <strong>SOCIALIZACI&Oacute;N (5 min por grupo).</strong>
+                    Cada equipo presenta su diagn&oacute;stico y propuesta al grupo. El instructor consolida
+                    los hallazgos en el tablero y conecta la situaci&oacute;n con los contenidos de la sesi&oacute;n.
+                    Toma nota de las ideas de los dem&aacute;s equipos: pueden ser mejores que las tuyas.
+                  </p>
+                  <img src="assets/img/socializacion.png" alt="Indicaciones visuales para la socializacion del caso">
+                </div>
+                <div class="checklist-card compact-card">
+                  <h4>TIP PRO</h4>
+                  <p>Una bit&aacute;cora de diagn&oacute;stico bien hecha es la diferencia entre un t&eacute;cnico que adivina y uno que analiza.</p>
+                  <p>En el campo laboral, documentar un problema es tan importante como resolverlo.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="contexto" class="section-title">3.2 &middot; Contextualizaci&oacute;n e Identificaci&oacute;n de Conocimientos</div>
+      <div class="info-box blue" style="margin-bottom:16px">
+        <p>En esta actividad explorar&aacute;s el panorama tecnol&oacute;gico del Magdalena Medio y el Occidente de Boyac&aacute;, identificar&aacute;s las herramientas que ya existen en tu entorno y reconocer&aacute;s cu&aacute;les son las necesidades reales de los actores productivos locales en materia de alfabetizaci&oacute;n digital. Al mismo tiempo, tus conocimientos previos ser&aacute;n el punto de partida.</p>
+      </div>
+      <div class="card open cat-contexto">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128269;</div>
+            <div>
+              <h3>Actividades de Contextualizaci&oacute;n e Identificaci&oacute;n de Conocimientos</h3>
+              <p>2 actividades &middot; Duraci&oacute;n aproximada: 6 horas</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.2.1</span>
+              <span class="activity-title">Cuestionario de conocimientos previos</span>
+              <span class="mission-chip">Mision diagnostica</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <div class="info-box green" style="margin-bottom:16px">
+                <div class="label">&iquest;SAB&Iacute;AS QUE...?</div>
+                <p>El sector productivo del Magdalena Medio usa a diario herramientas como Google Drive, WhatsApp Business, formularios de Google y correo electr&oacute;nico, pero pocas personas saben cu&aacute;l es la m&aacute;s adecuada para cada tarea.</p>
+                <p>Reconocer y clasificar herramientas es la primera competencia de un t&eacute;cnico en sistemas teleinform&aacute;ticos del CIAS.</p>
+              </div>
+              <p class="intro-text" style="text-align:justify">Responde de manera individual el cuestionario de conocimientos previos que te entregar&aacute; el instructor. Este instrumento tiene 10 preguntas sobre herramientas TIC, suite ofim&aacute;tica y gesti&oacute;n de la informaci&oacute;n. No es una evaluaci&oacute;n de calificaci&oacute;n: es un diagn&oacute;stico para conocer tu punto de partida. T&oacute;mate 15 minutos para responderlo con honestidad.</p>
+              <div class="info-box blue" style="margin-bottom:16px">
+                <div class="label">Respaldo para clase</div>
+                <p>Si en clase no est&aacute; disponible el servidor web local, responde este mismo cuestionario desde el siguiente Formulario de Google.</p>
+                <p>Usa esta opci&oacute;n cuando el instructor lo indique. Las respuestas enviadas por este medio se revisan directamente en Google Forms.</p>
+                <div class="activity-qr-actions" style="margin-top:12px">
+                  <a class="btn-drive" href="https://docs.google.com/forms/d/e/1FAIpQLSep05Y_zCcRSGPFNGLpI6t7EiXrdw-qrSEP6MHKm5D0oUJ-yQ/viewform?usp=publish-editor" target="_blank" rel="noopener noreferrer">Abrir Formulario de Google &#8599;</a>
+                </div>
+              </div>
+
+              <div class="checklist-card compact-card">
+                <h3>1. &iquest;Cu&aacute;l de las siguientes opciones describe mejor qu&eacute; es una herramienta TIC?</h3>
+                <ul class="note-list">
+                  <li>Un programa para jugar videojuegos en el computador.</li>
+                  <li>Cualquier tecnolog&iacute;a que permite crear, almacenar, transmitir o gestionar informaci&oacute;n.</li>
+                  <li>&Uacute;nicamente el hardware del computador (teclado, mouse, pantalla).</li>
+                  <li>Solo las aplicaciones de redes sociales.</li>
+                </ul>
+                <label style="display:block;margin-top:12px;">
+                  <span>Tu respuesta</span>
+                  <textarea rows="3" data-store="contexto-q1" data-track placeholder="Escribe la opci&oacute;n correcta y explica brevemente tu decisi&oacute;n."></textarea>
+                </label>
+              </div>
+
+              <div class="checklist-card compact-card">
+                <h3>2. Relaciona cada herramienta con su funci&oacute;n principal. Escribe el n&uacute;mero en el espacio.</h3>
+                <div class="table-scroll">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th>Herramienta</th>
+                        <th>Respuesta</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Google Drive</th>
+                        <td><input type="text" data-store="contexto-rel-drive" data-track placeholder="Escribe el n&uacute;mero"></td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Microsoft Excel</th>
+                        <td><input type="text" data-store="contexto-rel-excel" data-track placeholder="Escribe el n&uacute;mero"></td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Canva</th>
+                        <td><input type="text" data-store="contexto-rel-canva" data-track placeholder="Escribe el n&uacute;mero"></td>
+                      </tr>
+                      <tr>
+                        <th scope="row">WhatsApp Business</th>
+                        <td><input type="text" data-store="contexto-rel-whatsapp" data-track placeholder="Escribe el n&uacute;mero"></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="info-box" style="margin-top:12px">
+                  <div class="label">Funciones</div>
+                  <ul class="note-list">
+                    <li>1. Crear presentaciones visuales.</li>
+                    <li>2. Almacenar y compartir archivos en la nube.</li>
+                    <li>3. Organizar datos en tablas y hacer c&aacute;lculos.</li>
+                    <li>4. Comunicarse con clientes de un negocio.</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="checklist-card compact-card">
+                <h3>3. Un tendero de Puerto Boyac&aacute; quiere llevar el control de sus ventas diarias en el computador. &iquest;Qu&eacute; herramienta de la suite ofim&aacute;tica le recomendar&iacute;as? &iquest;Por qu&eacute;?</h3>
+                <textarea rows="4" data-store="contexto-tendero" data-track placeholder="Describe qu&eacute; herramienta le recomendar&iacute;as y por qu&eacute;."></textarea>
+              </div>
+
+              <div class="checklist-card compact-card">
+                <h3>4. &iquest;Cu&aacute;l de estas acciones NO es posible hacer con un procesador de texto como Microsoft Word o Writer de LibreOffice?</h3>
+                <ul class="note-list">
+                  <li>Escribir y formatear un documento con t&iacute;tulos y p&aacute;rrafos.</li>
+                  <li>Insertar im&aacute;genes y tablas en un documento.</li>
+                  <li>Crear una base de datos con miles de registros de clientes.</li>
+                  <li>Revisar la ortograf&iacute;a y gram&aacute;tica de un texto.</li>
+                </ul>
+                <label style="display:block;margin-top:12px;">
+                  <span>Tu respuesta</span>
+                  <textarea rows="3" data-store="contexto-q4" data-track placeholder="Escribe la acci&oacute;n que NO es posible y explica tu respuesta."></textarea>
+                </label>
+              </div>
+
+              <div class="checklist-card compact-card">
+                <h3>5. Un docente quiere enviar el mismo mensaje a 30 estudiantes adjuntando un PDF. &iquest;Qu&eacute; herramienta(s) usar&iacute;as? Marca todas las que apliquen.</h3>
+                <div class="table-scroll">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th>Herramienta</th>
+                        <th>&iquest;La usar&iacute;as?</th>
+                        <th>&iquest;Por qu&eacute; la usar&iacute;as?</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Correo electr&oacute;nico (Gmail, Outlook)</th>
+                        <td><input type="text" data-store="contexto-docente-correo-si" data-track placeholder="S&iacute; / No"></td>
+                        <td><textarea rows="2" data-store="contexto-docente-correo-porque" data-track placeholder="Explica tu respuesta."></textarea></td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Google Classroom o plataforma educativa</th>
+                        <td><input type="text" data-store="contexto-docente-classroom-si" data-track placeholder="S&iacute; / No"></td>
+                        <td><textarea rows="2" data-store="contexto-docente-classroom-porque" data-track placeholder="Explica tu respuesta."></textarea></td>
+                      </tr>
+                      <tr>
+                        <th scope="row">WhatsApp con lista de difusi&oacute;n</th>
+                        <td><input type="text" data-store="contexto-docente-whatsapp-si" data-track placeholder="S&iacute; / No"></td>
+                        <td><textarea rows="2" data-store="contexto-docente-whatsapp-porque" data-track placeholder="Explica tu respuesta."></textarea></td>
+                      </tr>
+                      <tr>
+                        <th scope="row">USB copiado uno por uno</th>
+                        <td><input type="text" data-store="contexto-docente-usb-si" data-track placeholder="S&iacute; / No"></td>
+                        <td><textarea rows="2" data-store="contexto-docente-usb-porque" data-track placeholder="Explica tu respuesta."></textarea></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="checklist-card compact-card">
+                <h3>6. &iquest;Qu&eacute; significa "guardar en la nube"?</h3>
+                <p>Expl&iacute;calo con tus propias palabras como si se lo explicaras a un comerciante del mercado de Pauna que nunca ha usado internet.</p>
+                <textarea rows="4" data-store="contexto-nube" data-track placeholder="Explica qu&eacute; significa guardar en la nube."></textarea>
+              </div>
+
+              <div class="checklist-card compact-card">
+                <h3>7. Ordena los siguientes pasos para crear una copia de seguridad (backup). Escribe los n&uacute;meros 1, 2, 3 y 4 en el orden correcto.</h3>
+                <div class="table-scroll">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th>Paso</th>
+                        <th>Orden</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Verificar que el archivo se abri&oacute; correctamente en la ubicaci&oacute;n de respaldo</th>
+                        <td><input type="text" data-store="contexto-backup-verificar" data-track placeholder="1-4"></td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Seleccionar el archivo que deseas respaldar</th>
+                        <td><input type="text" data-store="contexto-backup-seleccionar" data-track placeholder="1-4"></td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Copiar o subir el archivo a una memoria USB o servicio en la nube</th>
+                        <td><input type="text" data-store="contexto-backup-copiar" data-track placeholder="1-4"></td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Confirmar que el archivo original sigue disponible en su ubicaci&oacute;n original</th>
+                        <td><input type="text" data-store="contexto-backup-confirmar" data-track placeholder="1-4"></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="checklist-card compact-card">
+                <h3>8. &iquest;Cu&aacute;l de estas situaciones representa un problema de gesti&oacute;n de la informaci&oacute;n?</h3>
+                <ul class="note-list">
+                  <li>El computador se apag&oacute; por falta de energ&iacute;a el&eacute;ctrica.</li>
+                  <li>La impresora no tiene tinta.</li>
+                  <li>Los archivos de ventas del &uacute;ltimo a&ntilde;o est&aacute;n sin nombre, mezclados con fotos personales y sin carpetas organizadas.</li>
+                  <li>El internet del municipio es lento.</li>
+                </ul>
+                <label style="display:block;margin-top:12px;">
+                  <span>Tu respuesta</span>
+                  <textarea rows="3" data-store="contexto-info-problem" data-track placeholder="Escribe la situaci&oacute;n correcta y explica por qu&eacute;."></textarea>
+                </label>
+              </div>
+
+              <div class="checklist-card compact-card">
+                <h3>9. De las siguientes herramientas digitales, &iquest;cu&aacute;les has usado alguna vez? Marca y escribe para qu&eacute; la usaste.</h3>
+                <div class="table-scroll">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th>Herramienta</th>
+                        <th>&iquest;La usar&iacute;as?</th>
+                        <th>&iquest;Por qu&eacute; la usar&iacute;as?</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Microsoft Word o Writer</th>
+                        <td><input type="text" data-store="contexto-uso-word-si" data-track placeholder="S&iacute; / No"></td>
+                        <td><textarea rows="2" data-store="contexto-uso-word-porque" data-track placeholder="Describe para qu&eacute; la usaste."></textarea></td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Microsoft Excel o Calc</th>
+                        <td><input type="text" data-store="contexto-uso-excel-si" data-track placeholder="S&iacute; / No"></td>
+                        <td><textarea rows="2" data-store="contexto-uso-excel-porque" data-track placeholder="Describe para qu&eacute; la usaste."></textarea></td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Google Drive</th>
+                        <td><input type="text" data-store="contexto-uso-drive-si" data-track placeholder="S&iacute; / No"></td>
+                        <td><textarea rows="2" data-store="contexto-uso-drive-porque" data-track placeholder="Describe para qu&eacute; la usaste."></textarea></td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Correo electr&oacute;nico</th>
+                        <td><input type="text" data-store="contexto-uso-correo-si" data-track placeholder="S&iacute; / No"></td>
+                        <td><textarea rows="2" data-store="contexto-uso-correo-porque" data-track placeholder="Describe para qu&eacute; la usaste."></textarea></td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Zoom o Google Meet</th>
+                        <td><input type="text" data-store="contexto-uso-meet-si" data-track placeholder="S&iacute; / No"></td>
+                        <td><textarea rows="2" data-store="contexto-uso-meet-porque" data-track placeholder="Describe para qu&eacute; la usaste."></textarea></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="checklist-card compact-card">
+                <h3>10. Un emprendedor de Otanche guarda sus fotos, listas de precios y datos de clientes en una sola carpeta llamada "cosas" en el escritorio. &iquest;Qu&eacute; le recomendar&iacute;as para organizar mejor su informaci&oacute;n?</h3>
+                <p>Describe al menos dos acciones concretas.</p>
+                <textarea rows="4" data-store="contexto-otanche" data-track placeholder="Escribe al menos dos acciones concretas para organizar mejor la informaci&oacute;n."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.2.2</span>
+              <span class="activity-title">Fichas de casos y Matriz de Diagn&oacute;stico Digital</span>
+              <span class="mission-chip">Mision diagnostica</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text" style="text-align:justify">El instructor presenta tres fichas de casos: "Tienda Don Ramiro en Puerto Boyac&aacute;", "Cultivo Familiar en Otanche" y "Emprendimiento de artesan&iacute;as en Pauna". Cada ficha describe una situaci&oacute;n real de un actor productivo con sus dificultades tecnol&oacute;gicas espec&iacute;ficas. Lee con detenimiento la ficha que te asigne el instructor.</p>
+              <p class="intro-text" style="text-align:justify">Forma un equipo de trabajo con tres compa&ntilde;eros a quienes se les asignaron las otras fichas. Presenten brevemente su caso al equipo (m&aacute;ximo 3 minutos cada uno) y respondan juntos:</p>
+
+              <div class="checklist-card compact-card">
+                <ul class="note-list">
+                  <li>&iquest;Qu&eacute; herramientas digitales tiene disponibles este actor?</li>
+                  <li>&iquest;Cu&aacute;les desconoce?</li>
+                  <li>&iquest;Cu&aacute;les necesitar&iacute;a aprender a usar?</li>
+                </ul>
+              </div>
+
+              <div class="diagnosis-points" style="margin:16px 0;">
+                <div class="diagnosis-point">
+                  <strong>Tienda Don Ramiro en Puerto Boyac&aacute;</strong>
+                  <p>Lee la ficha asignada por el instructor y registra el diagn&oacute;stico digital del caso.</p>
+                </div>
+                <div class="diagnosis-point">
+                  <strong>Cultivo Familiar en Otanche</strong>
+                  <p>Lee la ficha asignada por el instructor y registra el diagn&oacute;stico digital del caso.</p>
+                </div>
+                <div class="diagnosis-point">
+                  <strong>Emprendimiento de artesan&iacute;as en Pauna</strong>
+                  <p>Lee la ficha asignada por el instructor y registra el diagn&oacute;stico digital del caso.</p>
+                </div>
+              </div>
+
+              <div class="table-scroll">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Actor productivo</th>
+                      <th>Herramientas que usa</th>
+                      <th>Herramientas que desconoce</th>
+                      <th>Herramientas recomendadas</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <th scope="row">Tienda Don Ramiro en Puerto Boyac&aacute;</th>
+                      <td><textarea rows="4" data-store="matriz-tienda-usa" data-track placeholder="Registra qu&eacute; herramientas tiene disponibles este actor."></textarea></td>
+                      <td><textarea rows="4" data-store="matriz-tienda-desconoce" data-track placeholder="Registra cu&aacute;les desconoce."></textarea></td>
+                      <td><textarea rows="4" data-store="matriz-tienda-recomienda" data-track placeholder="Registra cu&aacute;les necesitar&iacute;a aprender a usar."></textarea></td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Cultivo Familiar en Otanche</th>
+                      <td><textarea rows="4" data-store="matriz-cultivo-usa" data-track placeholder="Registra qu&eacute; herramientas tiene disponibles este actor."></textarea></td>
+                      <td><textarea rows="4" data-store="matriz-cultivo-desconoce" data-track placeholder="Registra cu&aacute;les desconoce."></textarea></td>
+                      <td><textarea rows="4" data-store="matriz-cultivo-recomienda" data-track placeholder="Registra cu&aacute;les necesitar&iacute;a aprender a usar."></textarea></td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Emprendimiento de artesan&iacute;as en Pauna</th>
+                      <td><textarea rows="4" data-store="matriz-artesanias-usa" data-track placeholder="Registra qu&eacute; herramientas tiene disponibles este actor."></textarea></td>
+                      <td><textarea rows="4" data-store="matriz-artesanias-desconoce" data-track placeholder="Registra cu&aacute;les desconoce."></textarea></td>
+                      <td><textarea rows="4" data-store="matriz-artesanias-recomienda" data-track placeholder="Registra cu&aacute;les necesitar&iacute;a aprender a usar."></textarea></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="support-column" style="margin-top:16px;">
+                <div class="checklist-card compact-card">
+                  <h4>Socializaci&oacute;n de la matriz</h4>
+                  <p>Cada equipo socializa su Matriz de Diagn&oacute;stico ante el grupo en no m&aacute;s de 5 minutos. El instructor consolida los hallazgos en un mapa digital en el tablero, que servir&aacute; como hilo conductor para todas las actividades posteriores de la gu&iacute;a.</p>
+                </div>
+                <div class="checklist-card compact-card">
+                  <h4>Mapa de contenidos y cronograma</h4>
+                  <p>El instructor presenta el mapa de contenidos y el cronograma de trabajo de las 60 horas de formaci&oacute;n, explicando c&oacute;mo cada tema que estudiar&aacute;s responde a una necesidad real identificada en los diagn&oacute;sticos del paso anterior. Revisa el mapa y anota en tu cuaderno de aprendizaje tres compromisos personales para este proceso formativo.</p>
+                  <label style="display:block;margin-top:12px;">
+                    <span>Tres compromisos personales para este proceso formativo</span>
+                    <textarea rows="5" data-store="contexto-compromisos" data-track placeholder="Escribe tres compromisos personales para este proceso formativo."></textarea>
+                  </label>
+                </div>
+                <div class="checklist-card compact-card">
+                  <h4>&#128221; &iexcl;RETO! Demuestra lo que sabes</h4>
+                  <label style="display:block;margin-top:8px;">
+                    <span>&iquest;Cu&aacute;l de los tres casos te gener&oacute; m&aacute;s dudas t&eacute;cnicas? &iquest;Por qu&eacute;?</span>
+                    <textarea rows="4" data-store="contexto-reto-caso" data-track placeholder="Explica cu&aacute;l caso te gener&oacute; m&aacute;s dudas t&eacute;cnicas y por qu&eacute;."></textarea>
+                  </label>
+                  <label style="display:block;margin-top:12px;">
+                    <span>&iquest;Qu&eacute; herramienta digital que t&uacute; ya usas podr&iacute;a resolver el mayor problema de ese actor productivo?</span>
+                    <textarea rows="4" data-store="contexto-reto-herramienta" data-track placeholder="Explica qu&eacute; herramienta digital ya usas y c&oacute;mo ayudar&iacute;a a resolver el problema."></textarea>
+                  </label>
+                  <p style="margin-top:12px;">Esa respuesta ser&aacute; tu punto de partida para la Misi&oacute;n Final de esta gu&iacute;a.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="apropiacion" class="section-title">3.3 &middot; Actividades de Apropiaci&oacute;n</div>
+      <div class="info-box blue" style="margin-bottom:16px">
+        <p>Aqu&iacute; aprender&aacute;s haciendo: clasificar&aacute;s archivos, sustentar&aacute;s requerimientos t&eacute;cnicos y aplicar&aacute;s herramientas ofim&aacute;ticas y colaborativas en un caso real.</p>
+      </div>
+      <div class="card open cat-apropiacion">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128218;</div>
+            <div>
+              <h3>Actividades de Apropiaci&oacute;n</h3>
+              <p>3 actividades &middot; Duraci&oacute;n aproximada: 18 horas</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.3.1</span>
+              <span class="activity-title">Caracterizacion tecnica de archivos y sistemas operativos</span>
+              <span class="mission-chip">Mision tecnica</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <div class="warning-box">
+                <strong>Importante</strong>
+                <p>Solo se permite el uso e instalacion de herramientas licenciadas o de codigo abierto. Registra la fuente consultada para cada sistema operativo en la matriz.</p>
+              </div>
+
+              <div class="subsection-head" style="margin-top:16px;">
+                <h3>Actividad 1: Extensiones de archivo</h3>
+                <p>Completa el programa asociado, clasifica la extension y describe su uso principal o el riesgo que representa.</p>
+              </div>
+              <div class="table-scroll">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Extension</th>
+                      <th>Programa / referencia</th>
+                      <th>Descripcion o tipo de archivo</th>
+                    </tr>
+                  </thead>
+                  <tbody id="extensionTable"></tbody>
+                </table>
+              </div>
+              <button class="btn-export-word" type="button" onclick="openGuide5ExportModal('extensions')">
+                &#128196; Exportar actividad a Word
+              </button>
+
+              <datalist id="programSuggestions">
+                <option value="Microsoft Word"></option>
+                <option value="Microsoft Excel"></option>
+                <option value="Microsoft Access"></option>
+                <option value="Microsoft Project"></option>
+                <option value="Microsoft PowerPoint"></option>
+                <option value="Microsoft Publisher"></option>
+                <option value="Adobe Acrobat Reader"></option>
+                <option value="WinRAR"></option>
+                <option value="VLC Media Player"></option>
+                <option value="Windows"></option>
+                <option value="Navegador web"></option>
+              </datalist>
+
+              <div class="info-box" style="margin-top:16px">
+                <div class="label">Recuerda</div>
+                <ul class="note-list">
+                  <li>Agrupa las extensiones por categorias y se&ntilde;ala cu&aacute;les representan riesgo de seguridad.</li>
+                  <li>No abras archivos ejecutables o de origen desconocido sin verificar procedencia y necesidad.</li>
+                  <li>Documenta ejemplos reales vistos en el explorador de archivos del sistema.</li>
+                </ul>
+              </div>
+
+              <div class="subsection-head" style="margin-top:20px;">
+                <h3>Actividad 2: Requerimientos minimos de sistemas operativos</h3>
+                <p>Investiga procesador, RAM, espacio en disco y la fuente consultada para sustentar tu recomendacion t&eacute;cnica.</p>
+              </div>
+              <div class="table-scroll">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Sistema operativo</th>
+                      <th>Procesador</th>
+                      <th>RAM</th>
+                      <th>Espacio en disco</th>
+                      <th>Fuente</th>
+                    </tr>
+                  </thead>
+                  <tbody id="systemTable"></tbody>
+                </table>
+              </div>
+              <button class="btn-export-word" type="button" onclick="openGuide5ExportModal('systems')">
+                &#128196; Exportar actividad a Word
+              </button>
+
+              <div class="form-grid" style="margin-top:16px;">
+                <label>
+                  <span>&iquest;Qu&eacute; sistema tiene los requerimientos m&aacute;s bajos?</span>
+                  <textarea rows="3" data-store="systems-lowest" data-track placeholder="Escribe el sistema y justifica tu respuesta con datos."></textarea>
+                </label>
+                <label>
+                  <span>&iquest;Qu&eacute; sistema tiene los requerimientos m&aacute;s altos?</span>
+                  <textarea rows="3" data-store="systems-highest" data-track placeholder="Escribe el sistema y justifica tu respuesta con datos."></textarea>
+                </label>
+                <label>
+                  <span>Recomendacion tecnica para un equipo de baja gama</span>
+                  <textarea rows="4" data-store="systems-recommendation" data-track placeholder="Argumenta qu&eacute; sistema operativo conviene instalar y por qu&eacute; para un actor productivo con recursos limitados."></textarea>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.3.2</span>
+              <span class="activity-title">Suite ofimatica en accion para un negocio real</span>
+              <span class="mission-chip">Mision tecnica</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text">Ahora vas a integrar Word, Excel, Drive y correo electr&oacute;nico en un flujo de trabajo completo para uno de los actores productivos analizados.</p>
+              <div class="panel-grid">
+                <form class="work-form" autocomplete="off">
+                  <div class="form-intro">
+                    <span>Producto ofimatico</span>
+                    <h3>Organiza la evidencia del caso</h3>
+                    <p>Planea aqu&iacute; el documento, el control en hoja de calculo y el cierre formal de la actividad.</p>
+                  </div>
+                  <div class="form-grid">
+                    <label>
+                      <span>Negocio o actor productivo seleccionado</span>
+                      <input type="text" data-store="suite-negocio" data-track placeholder="Ejemplo: Tienda Don Ramiro">
+                    </label>
+                    <label>
+                      <span>Documento en Word / Writer</span>
+                      <textarea rows="4" data-store="suite-word" data-track placeholder="Describe qu&eacute; incluir&aacute; tu documento: encabezado, descripcion, tabla, conclusion, etc."></textarea>
+                    </label>
+                    <label>
+                      <span>Archivo en Excel / Calc</span>
+                      <textarea rows="4" data-store="suite-excel" data-track placeholder="Resume la estructura de ventas, formulas, resumen y grafico que vas a construir."></textarea>
+                    </label>
+                    <label>
+                      <span>Carpeta de Drive y trabajo colaborativo</span>
+                      <textarea rows="4" data-store="suite-drive" data-track placeholder="Indica el nombre de la carpeta, qu&eacute; archivos subir&aacute;s y c&oacute;mo compartir&aacute;s con tu equipo."></textarea>
+                    </label>
+                    <label>
+                      <span>Correo formal al instructor</span>
+                      <textarea rows="4" data-store="suite-email" data-track placeholder="Escribe la idea central del asunto, saludo, descripci&oacute;n del adjunto y despedida profesional."></textarea>
+                    </label>
+                    <label>
+                      <span>Copia de seguridad del trabajo</span>
+                      <textarea rows="4" data-store="suite-backup" data-track placeholder="Explica c&oacute;mo respaldar&aacute;s los archivos y c&oacute;mo verificar&aacute;s que quedaron disponibles."></textarea>
+                    </label>
+                  </div>
+                </form>
+                <aside class="support-column">
+                  <div class="checklist-card compact-card">
+                    <h4>Entregables esperados</h4>
+                    <ul class="mini-list">
+                      <li>Documento .docx con diagn&oacute;stico digital del negocio.</li>
+                      <li>Hoja .xlsx con 15 ventas ficticias, formulas y grafico.</li>
+                      <li>Carpeta de Drive compartida con el equipo.</li>
+                      <li>Correo formal con adjuntos y enlace correspondiente.</li>
+                    </ul>
+                  </div>
+                  <div class="info-box green">
+                    <div class="label">Logro desbloqueado</div>
+                    <p>Si completas este flujo, ya sabes crear, organizar, calcular, colaborar en la nube y respaldar informaci&oacute;n.</p>
+                  </div>
+                </aside>
+              </div>
+            </div>
+          </div>
+
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.3.3</span>
+              <span class="activity-title">Herramientas colaborativas y comunicacion digital profesional</span>
+              <span class="mission-chip">Mision tecnica</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text">La otra mitad de la competencia est&aacute; en el trabajo colaborativo: comparar servicios, reunirte con tu equipo, compartir archivos y presentar evidencias de manera profesional.</p>
+              <div class="table-scroll">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Plataforma o ecosistema</th>
+                      <th>Funcion principal</th>
+                      <th>Ventaja clave</th>
+                      <th>Limitacion o cuidado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <th scope="row">Microsoft 365</th>
+                      <td><textarea rows="3" data-store="collab-ms-function" data-track placeholder="Teams, SharePoint, OneDrive..."></textarea></td>
+                      <td><textarea rows="3" data-store="collab-ms-advantage" data-track placeholder="Escribe su mayor ventaja."></textarea></td>
+                      <td><textarea rows="3" data-store="collab-ms-limit" data-track placeholder="Menciona una limitacion o cuidado."></textarea></td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Google Workspace</th>
+                      <td><textarea rows="3" data-store="collab-google-function" data-track placeholder="Meet, Drive, Docs..."></textarea></td>
+                      <td><textarea rows="3" data-store="collab-google-advantage" data-track placeholder="Escribe su mayor ventaja."></textarea></td>
+                      <td><textarea rows="3" data-store="collab-google-limit" data-track placeholder="Menciona una limitacion o cuidado."></textarea></td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Herramientas independientes</th>
+                      <td><textarea rows="3" data-store="collab-other-function" data-track placeholder="Zoom, WeTransfer, Canva..."></textarea></td>
+                      <td><textarea rows="3" data-store="collab-other-advantage" data-track placeholder="Escribe su mayor ventaja."></textarea></td>
+                      <td><textarea rows="3" data-store="collab-other-limit" data-track placeholder="Menciona una limitacion o cuidado."></textarea></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="form-grid" style="margin-top:16px;">
+                <label>
+                  <span>Practica de Meet o Teams</span>
+                  <textarea rows="4" data-store="collab-meeting" data-track placeholder="Describe qu&eacute; compartiste en pantalla, qu&eacute; comentaste y c&oacute;mo enviaste el enlace al grupo."></textarea>
+                </label>
+                <label>
+                  <span>Presentacion o pieza visual en Canva</span>
+                  <textarea rows="4" data-store="collab-canva" data-track placeholder="Resume las 5 diapositivas o el contenido visual que dise&ntilde;aste para el negocio."></textarea>
+                </label>
+                <label>
+                  <span>Transferencia de archivo grande</span>
+                  <textarea rows="4" data-store="collab-transfer" data-track placeholder="Indica qu&eacute; archivo enviaste, con qu&eacute; herramienta y qu&eacute; evidencias guardaste."></textarea>
+                </label>
+                <label>
+                  <span>Autoevaluacion de competencias digitales</span>
+                  <textarea rows="4" data-store="collab-selfcheck" data-track placeholder="Escribe qu&eacute; dominas, qu&eacute; necesitas reforzar y qu&eacute; a&uacute;n no practicas suficiente."></textarea>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="transferencia" class="section-title">3.4 &middot; Actividades de Transferencia del Conocimiento</div>
+      <div class="info-box blue" style="margin-bottom:16px">
+        <p>Esta actividad integradora consolida el diagn&oacute;stico, la investigaci&oacute;n y la documentaci&oacute;n t&eacute;cnica en un producto final organizado.</p>
+      </div>
+      <div class="card open cat-transferencia">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128640;</div>
+            <div>
+              <h3>Actividades de Transferencia</h3>
+              <p>2 actividades e informe &middot; Duraci&oacute;n aproximada: 32 horas</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.4.1</span>
+              <span class="activity-title">Guia de instalacion y evidencia tecnica</span>
+              <span class="mission-chip">Mision aplicada</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <div class="subsection-head">
+                <h3>Actividad 1: Guia de instalacion de sistemas operativos</h3>
+                <p>Elabora una guia de instalacion paso a paso con capturas de pantalla y evidencias claras de cada fase.</p>
+              </div>
+
+              <div class="info-box" style="margin-bottom:16px">
+                <div class="label">Indicaciones esenciales</div>
+                <ul class="note-list">
+                  <li>Parte A: instala Linux en VirtualBox con la distribucion asignada por tu instructor.</li>
+                  <li>Evidencia la tabla de particiones requerida: <code>/home</code>, <code>swap</code>, <code>/boot</code> y <code>/</code>.</li>
+                  <li>Parte B: instala Windows en VirtualBox con el sistema operativo designado por tu instructor.</li>
+                  <li>Evidencia el manejo de particiones primaria, logica y extendida, segun corresponda.</li>
+                  <li>En ambos casos toma capturas de configuracion, particionado, instalacion, primer inicio y verificacion.</li>
+                </ul>
+              </div>
+
+              <div class="transfer-grid">
+                <article class="transfer-card">
+                  <h3>Parte A: Linux en VirtualBox</h3>
+                  <p>Usa la distribucion asignada por tu instructor e incluye evidencia del particionado <code>/home</code>, <code>swap</code>, <code>/boot</code> y <code>/</code>.</p>
+                  <ul class="note-list">
+                    <li>Configure la maquina virtual de acuerdo con la practica asignada.</li>
+                    <li>Documente el particionado requerido del sistema Linux.</li>
+                    <li>Capture cada fase de la instalacion paso a paso.</li>
+                    <li>Verifique y evidencie el primer inicio del sistema.</li>
+                  </ul>
+                </article>
+
+                <article class="transfer-card">
+                  <h3>Parte B: Windows en VirtualBox</h3>
+                  <p>Evidencia el manejo de particiones primaria, logica y extendida segun corresponda para la practica asignada.</p>
+                  <ul class="note-list">
+                    <li>Configure la maquina virtual para la instalacion de Windows.</li>
+                    <li>Documente el manejo de particiones y almacenamiento.</li>
+                    <li>Capture la instalacion paso a paso.</li>
+                    <li>Verifique el arranque y el funcionamiento del sistema.</li>
+                  </ul>
+                </article>
+              </div>
+
+              <div class="subsection-head" style="margin-top:20px;">
+                <h3>Actividad 2: Desarrollo del taller complementario</h3>
+                <p>Realiza las actividades relacionadas en el documento <strong>Taller 1_Guia5</strong> complementarias a la guia de aprendizaje. Al finalizar, adjunta los resultados al documento de evidencia.</p>
+              </div>
+
+              <div class="info-box" style="margin-top:16px">
+                <div class="label">Instalador base para la practica</div>
+                <p>Abre el instalador de VirtualBox antes de iniciar la evidencia tecnica y usalo como apoyo para crear las maquinas virtuales de Linux y Windows.</p>
+                <div class="drive-action-group">
+                  <a class="btn-drive" href="assets/materiales/guia2/VirtualBox-7.2.6a-172322-Win.exe" target="_blank" rel="noopener noreferrer">&#128187; Abrir instalador de VirtualBox &#8599;</a>
+                </div>
+              </div>
+
+              <div class="subsection-head" style="margin-top:20px;">
+                <h3>Informe tecnico (Documento bajo normas IEEE)</h3>
+                <p>Elabora un informe tecnico bajo normas IEEE que incluya todo el desarrollo del taller, es decir, las Actividades 1 y 2, con sus respectivas evidencias: capturas, tablas y respuestas.</p>
+              </div>
+
+              <div class="panel-grid panel-grid-single" style="margin-top:16px;">
+                <article class="checklist-card">
+                  <h3>Informe tecnico bajo normas IEEE</h3>
+                  <p>El informe final debe integrar el desarrollo de las Actividades 1 y 2 con sus respectivas evidencias: capturas, tablas, respuestas y conclusiones.</p>
+                  <h4>Antes de enviar</h4>
+                  <ul class="note-list">
+                    <li>Verifica que respondiste todos los puntos solicitados.</li>
+                    <li>Incluye capturas de pantalla claras y bien organizadas.</li>
+                    <li>Cuida la ortografia y la redaccion tecnica del documento.</li>
+                    <li>Revisa que el formato IEEE este completo.</li>
+                    <li>Usa el nombre de archivo <code>Guia5_Taller1_NombreAprendiz.doc</code>.</li>
+                    <li>Entrega el archivo final en el enlace dispuesto por tu instructor.</li>
+                  </ul>
+                  <div class="info-box" style="margin-top:16px">
+                    <div class="label">Nota importante</div>
+                    <p>La estructura minima del documento debe incluir los siguientes apartados:</p>
+                    <ul class="note-list">
+                      <li>Abstract (resumen en ingles).</li>
+                      <li>Keywords (palabras clave).</li>
+                      <li>Introduccion: explica de que trata el documento.</li>
+                      <li>Contenido: desarrollo de las actividades planteadas.</li>
+                      <li>Conclusiones: explica que aprendiste en la practica.</li>
+                      <li>Bibliografia presentada bajo normas IEEE.</li>
+                    </ul>
+                  </div>
+                </article>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="evidencias" class="section-title">Planteamiento de Evidencias de Aprendizaje</div>
+      <div class="card open cat-evaluacion">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128202;</div>
+            <div>
+              <h3>Evidencias y Criterios de Evaluaci&oacute;n</h3>
+              <p>Resumen de lo que debe entregar y c&oacute;mo ser&aacute; evaluado</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Fase del proyecto</th>
+                  <th>Actividad del proyecto</th>
+                  <th>Actividad de aprendizaje</th>
+                  <th>Evidencias</th>
+                  <th>Criterios de evaluacion</th>
+                  <th>Tecnicas e instrumentos</th>
+                </tr>
+              </thead>
+              <tbody id="evidenceTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="glosario" class="section-title">Glosario de T&eacute;rminos</div>
+      <div class="card open cat-glosario">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128214;</div>
+            <div>
+              <h3>Glosario de T&eacute;rminos</h3>
+              <p>Definiciones clave para comprender la gu&iacute;a y sus actividades</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <label class="search-box">
+            <span>Buscar termino</span>
+            <input type="search" id="glossarySearch" placeholder="Ejemplo: BIOS, backup, particion, hipervisor">
+          </label>
+          <div class="glossary-grid" id="glossaryGrid"></div>
+        </div>
+      </div>
+
+      <div id="referencias" class="section-title">Referentes Bibliogr&aacute;ficos</div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#ede7f6">&#128279;</div>
+            <div>
+              <h3>Referencias Bibliogr&aacute;ficas</h3>
+              <p>Fuentes consultadas para orientar esta gu&iacute;a y sus actividades</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <ol class="reference-list">
+            <li>Servicio Nacional de Aprendizaje (SENA). Guia de aprendizaje - Formato GFPI-F-135.</li>
+            <li>Oracle. Oracle VM VirtualBox User Manual.</li>
+            <li>VMware. Workstation / Player Documentation.</li>
+            <li>Microsoft. Documentacion oficial de instalacion y soporte de Windows 10 y Windows 11.</li>
+            <li>Canonical Ltd. Ubuntu Documentation.</li>
+            <li>Linux Foundation. Filesystem Hierarchy Standard.</li>
+            <li>IEEE. IEEE Editorial Style Manual / IEEE Style Guide.</li>
+            <li>NIST. Computer Security Resource Center.</li>
+            <li>Google. Centro de ayuda de Google Drive.</li>
+            <li>Microsoft. Centro de ayuda de Microsoft Teams y SharePoint.</li>
+          </ol>
+        </div>
+      </div>
+
+      <div id="material-apoyo" class="section-title">Material de Apoyo</div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#e8f0fe">&#128194;</div>
+            <div>
+              <h3>Material de Apoyo y Recursos</h3>
+              <p>Recursos visuales y orientaciones para acompa&ntilde;ar el desarrollo de la gu&iacute;a</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="info-box">
+            <div class="label">Ruta local del material</div>
+            <p>
+              Este material se abre desde la ruta
+              <code class="support-path">assets/materiales/guia2</code>.
+            </p>
+          </div>
+
+          <div class="material-heading">Plantillas de trabajo</div>
+          <div class="resource-grid" id="supportTemplatesGrid"></div>
+
+          <div class="material-heading">Documentos y guias de consulta</div>
+          <div class="resource-grid" id="supportDocsGrid"></div>
+
+          <div class="material-heading">Herramientas y software</div>
+          <div class="resource-grid" id="supportToolsGrid"></div>
+
+          <div class="panel-grid" style="margin-top:16px;">
+            <div class="support-card">
+              <img src="assets/img/no-bootable-device.jpeg" alt="Error no bootable device">
+              <p>Referencia visual 1: mensaje clasico cuando el equipo no encuentra un medio valido de arranque.</p>
+            </div>
+            <div class="support-card">
+              <img src="assets/img/sopa-letras.png" alt="Sopa de letras">
+              <p>Referencia visual 2: material de apoyo para la actividad de contextualizacion y vocabulario tecnico.</p>
+            </div>
+            <div class="notes-card">
+              <h3>Sugerencias de uso</h3>
+              <ul class="note-list">
+                <li>Usa la bitacora y el taller como base para estructurar tus entregas.</li>
+                <li>Consulta VirtualBox y Linux Boot Process antes de la practica de instalacion.</li>
+                <li>Apoya el informe final con los documentos de normas IEEE y ciberseguridad.</li>
+                <li>Guarda evidencias con nombres claros dentro de tu portafolio de aprendizaje.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="guide5-export-modal" onclick="if(event.target===this)closeGuide5ExportModal()">
+  <div class="modal-box">
+    <h3 id="guide5-export-title">&#128196; Exportar actividad a Word</h3>
+    <p id="guide5-export-description">Ingresa tu nombre completo para guardar el documento.</p>
+
+    <div class="modal-ficha-warn" id="guide5-export-warn" style="display:none">
+      &#9888;&#65039; <strong>No has seleccionado tu ficha.</strong><br>
+      Regresa a <a href="index.html">la p&aacute;gina de inicio</a> y elige tu instituci&oacute;n y grupo antes de exportar.
+    </div>
+
+    <div class="modal-ficha-ok" id="guide5-export-ok" style="display:none">
+      <div class="mf-label">&#128206; El archivo se guardar&aacute; como:</div>
+      <div class="mf-file" id="guide5-export-filename">Nombre_Ficha.doc</div>
+    </div>
+
+    <input
+      id="guide5-export-name"
+      type="text"
+      placeholder="Nombre y apellidos del aprendiz"
+      maxlength="80"
+      oninput="updateGuide5ExportFilenamePreview()"
+      onkeydown="if(event.key==='Enter')doGuide5ExportWord()"
+    >
+    <div class="modal-error-msg" id="guide5-export-error">Por favor ingresa tu nombre antes de continuar.</div>
+
+    <div class="modal-actions">
+      <button class="modal-btn-cancel" type="button" onclick="closeGuide5ExportModal()">Cancelar</button>
+      <button class="modal-btn-ok" type="button" id="guide5-export-ok-btn" onclick="doGuide5ExportWord()">&#11015; Descargar Word</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>
