@@ -1739,6 +1739,71 @@ img {
   gap: 1.15rem;
 }
 
+@media (min-width: 960px) {
+  .app-shell--portal .header-inner.app-hero__inner {
+    grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.92fr);
+    column-gap: clamp(2rem, 4vw, 4.5rem);
+    row-gap: 1rem;
+    align-items: center;
+    min-height: clamp(32rem, 70vh, 44rem);
+    padding-bottom: 1.25rem;
+  }
+
+  .app-shell--portal .logo-wrap,
+  .app-shell--portal .badge-programa,
+  .app-shell--portal .header h1,
+  .app-shell--portal .header-subtitle {
+    grid-column: 1;
+  }
+
+  .app-shell--portal .logo-wrap {
+    align-self: end;
+  }
+
+  .app-shell--portal .header h1 {
+    max-width: 11ch;
+    font-size: clamp(3rem, 4.35vw, 4.85rem);
+  }
+
+  .app-shell--portal .header-subtitle {
+    max-width: 35rem;
+    font-size: 1.06rem;
+  }
+
+  .app-shell--portal .info-grid {
+    grid-column: 2;
+    grid-row: 1 / span 4;
+    align-self: center;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    max-width: 32rem;
+    margin-left: auto;
+    padding: 1.15rem;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: calc(var(--radius-lg) - 2px);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%),
+      radial-gradient(circle at top right, rgba(245, 183, 0, 0.12), transparent 42%);
+    box-shadow:
+      0 26px 56px rgba(4, 20, 13, 0.22),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(10px);
+  }
+
+  .app-shell--portal .info-chip {
+    min-height: 126px;
+    padding: 1rem 1.1rem;
+    display: grid;
+    align-content: start;
+    gap: 0.38rem;
+  }
+
+  .app-shell--portal .info-chip .label {
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+  }
+}
+
 .app-shell--portal .section-label {
   margin: 0.5rem 0 0;
   color: var(--brand-700);
@@ -2070,6 +2135,7 @@ img {
 
 @media (max-width: 900px) {
   .app-shell--portal .header-inner.app-hero__inner {
+    grid-template-columns: 1fr;
     justify-items: center;
     text-align: center;
   }
@@ -2080,6 +2146,19 @@ img {
 
   .app-shell--portal .header h1 {
     max-width: 18ch;
+  }
+
+  .app-shell--portal .info-grid {
+    grid-column: auto;
+    grid-row: auto;
+    max-width: none;
+    margin-left: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    backdrop-filter: none;
   }
 }
 
