@@ -452,7 +452,8 @@ code {
 
 .content {
   padding: 32px 36px;
-  max-width: 960px;
+  width: min(1180px, calc(100vw - var(--sidebar-w) - 88px));
+  max-width: none;
 }
 
 .hero {
@@ -497,14 +498,14 @@ code {
   font-family: var(--font-display);
   margin-bottom: 8px;
   line-height: 1.2;
-  max-width: 620px;
+  max-width: 760px;
 }
 
 .hero p {
   font-size: 14px;
   opacity: 0.9;
   line-height: 1.6;
-  max-width: 700px;
+  max-width: 860px;
 }
 
 .hero-meta {
@@ -1815,6 +1816,7 @@ body.sb-hidden .btn-sb-expand {
 
   .content {
     padding: 20px 16px;
+    width: auto;
   }
 
   .hero {
