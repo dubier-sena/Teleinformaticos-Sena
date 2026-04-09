@@ -1510,6 +1510,11 @@ function hydrateFields() {
       return;
     }
 
+    if (field.type === "radio") {
+      field.checked = String(state[key]) === String(field.value);
+      return;
+    }
+
     field.value = state[key];
   });
 }
@@ -1518,6 +1523,10 @@ function bindEvents() {
   document.addEventListener("input", (event) => {
     const field = event.target.closest("[data-store]");
     if (!field) {
+      return;
+    }
+
+    if (field.type === "radio" && !field.checked) {
       return;
     }
 
@@ -1534,6 +1543,10 @@ function bindEvents() {
   document.addEventListener("change", (event) => {
     const field = event.target.closest("[data-store]");
     if (!field) {
+      return;
+    }
+
+    if (field.type === "radio" && !field.checked) {
       return;
     }
 
@@ -1663,13 +1676,23 @@ function updateProgress() {
   const trackedFields = Array.from(document.querySelectorAll("[data-track]"));
   const trackedButtons = Array.from(document.querySelectorAll("[data-track-button]"));
   const activityChecks = Array.from(document.querySelectorAll(".activity-check"));
+  const radioStoreKeys = new Set(
+    trackedFields.filter((field) => field.type === "radio").map((field) => field.dataset.store)
+  );
 
-  const completedFields = trackedFields.filter((field) => {
+  const completedNonRadioFields = trackedFields.filter((field) => {
+    if (field.type === "radio") {
+      return false;
+    }
     if (field.type === "checkbox") {
       return field.checked;
     }
     return field.value.trim().length > 0;
   }).length;
+
+  const completedRadioGroups = Array.from(radioStoreKeys).filter((key) =>
+    trackedFields.some((field) => field.type === "radio" && field.dataset.store === key && field.checked)
+  ).length;
 
   const completedButtons = trackedButtons.filter(
     (button) => button.dataset.trackButton === "true"
@@ -1678,8 +1701,12 @@ function updateProgress() {
     button.classList.contains("checked")
   ).length;
 
-  const total = trackedFields.length + trackedButtons.length + activityChecks.length;
-  const completed = completedFields + completedButtons + completedChecks;
+  const total =
+    trackedFields.filter((field) => field.type !== "radio").length +
+    radioStoreKeys.size +
+    trackedButtons.length +
+    activityChecks.length;
+  const completed = completedNonRadioFields + completedRadioGroups + completedButtons + completedChecks;
   const rawPercent = total ? Math.round((completed / total) * 100) : 0;
   const percent = completed > 0 && rawPercent === 0 ? 1 : rawPercent;
 

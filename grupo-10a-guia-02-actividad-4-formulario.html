@@ -98,6 +98,42 @@
     width: 100%;
   }
 
+  .activity4-choice-group {
+    display: grid;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .activity4-choice {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1px solid var(--sena-border);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.92);
+    cursor: pointer;
+    transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+  }
+
+  .activity4-choice:hover {
+    border-color: rgba(15, 191, 100, 0.45);
+    background: rgba(241, 252, 245, 0.95);
+    transform: translateY(-1px);
+  }
+
+  .activity4-choice input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    flex: 0 0 auto;
+  }
+
+  .activity4-choice span {
+    line-height: 1.6;
+    color: var(--text);
+  }
+
   .activity4-identity-note {
     margin-top: 14px;
     font-size: 13px;
@@ -256,16 +292,48 @@
           <div class="activity4-form-grid">
             <article class="checklist-card compact-card question-card">
               <h3>1. &iquest;Cu&aacute;l de las siguientes opciones describe mejor qu&eacute; es una herramienta TIC?</h3>
-              <ul class="note-list">
-                <li>Un programa para jugar videojuegos en el computador.</li>
-                <li>Cualquier tecnolog&iacute;a que permite crear, almacenar, transmitir o gestionar informaci&oacute;n.</li>
-                <li>&Uacute;nicamente el hardware del computador (teclado, mouse, pantalla).</li>
-                <li>Solo las aplicaciones de redes sociales.</li>
-              </ul>
-              <label style="display:block;margin-top:12px;">
-                <span>Tu respuesta</span>
-                <textarea rows="4" data-store="contexto-q1" data-track placeholder="Escribe la opci&oacute;n correcta y explica brevemente tu decisi&oacute;n."></textarea>
-              </label>
+              <div class="activity4-choice-group" role="radiogroup" aria-label="Pregunta 1">
+                <label class="activity4-choice">
+                  <input
+                    type="radio"
+                    name="contexto-q1"
+                    data-store="contexto-q1"
+                    data-track
+                    value="Un programa para jugar videojuegos en el computador."
+                  >
+                  <span>Un programa para jugar videojuegos en el computador.</span>
+                </label>
+                <label class="activity4-choice">
+                  <input
+                    type="radio"
+                    name="contexto-q1"
+                    data-store="contexto-q1"
+                    data-track
+                    value="Cualquier tecnologia que permite crear, almacenar, transmitir o gestionar informacion."
+                  >
+                  <span>Cualquier tecnolog&iacute;a que permite crear, almacenar, transmitir o gestionar informaci&oacute;n.</span>
+                </label>
+                <label class="activity4-choice">
+                  <input
+                    type="radio"
+                    name="contexto-q1"
+                    data-store="contexto-q1"
+                    data-track
+                    value="Unicamente el hardware del computador (teclado, mouse, pantalla)."
+                  >
+                  <span>&Uacute;nicamente el hardware del computador (teclado, mouse, pantalla).</span>
+                </label>
+                <label class="activity4-choice">
+                  <input
+                    type="radio"
+                    name="contexto-q1"
+                    data-store="contexto-q1"
+                    data-track
+                    value="Solo las aplicaciones de redes sociales."
+                  >
+                  <span>Solo las aplicaciones de redes sociales.</span>
+                </label>
+              </div>
             </article>
 
             <article class="checklist-card compact-card question-card">
