@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta
   http-equiv="Content-Security-Policy"
   content="default-src 'self' blob: data:; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https:; media-src 'self' blob: data: https:;"
@@ -33,13 +36,17 @@
   }
 
   .activity4-form-grid {
-    display: grid;
-    grid-template-columns: 1fr;
+    display: flex !important;
+    flex-direction: column !important;
     gap: 18px;
   }
 
+  .activity4-form-grid > article {
+    width: 100%;
+  }
+
   .activity4-form-grid .span-full {
-    grid-column: 1 / -1;
+    grid-column: auto;
   }
 
   .activity4-actions {
