@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta
+  http-equiv="Content-Security-Policy"
+  content="default-src 'self' blob: data:; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https:; media-src 'self' blob: data: https:;"
+>
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Actividad 4 - Formulario | Guia 2 | Grupo 10B</title>
+<meta
+  name="description"
+  content="Formulario independiente de la Actividad 4 de la Guia 2 para el grupo 10B del programa Sistemas Teleinformaticos."
+>
+<script defer src="js/portal_auth.js?v=20260324_6"></script>
+<script defer src="js/firebase_db.js?v=20260326_7"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/site_tokens.css?v=20260409_1">
+<link rel="stylesheet" href="css/shared_shell.css?v=20260409_1">
+<link rel="stylesheet" href="css/guia_template.css?v=20260409_2">
+<style>
+  .activity4-form-page .app-main {
+    width: min(1180px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 24px 0 56px;
+  }
+
+  .activity4-form-page .content {
+    max-width: none;
+  }
+
+  .activity4-form-grid {
+    display: grid;
+    gap: 18px;
+  }
+
+  .activity4-form-grid .span-full {
+    grid-column: 1 / -1;
+  }
+
+  .activity4-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .activity4-actions a,
+  .activity4-actions button {
+    text-decoration: none;
+  }
+
+  .activity4-progress {
+    display: grid;
+    gap: 12px;
+  }
+
+  .activity4-progress .progress-label {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-weight: 700;
+    color: var(--text-strong);
+  }
+
+  .activity4-progress .progress-bar-bg {
+    background: rgba(11, 47, 33, 0.08);
+    border-radius: 999px;
+    height: 12px;
+    overflow: hidden;
+  }
+
+  .activity4-progress .progress-bar {
+    height: 100%;
+    width: 0;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #0fb86c 0%, #55d88f 100%);
+    transition: width 180ms ease;
+  }
+
+  .activity4-form-page .question-card h3 {
+    margin-bottom: 10px;
+  }
+
+  .activity4-form-page textarea,
+  .activity4-form-page input[type="text"] {
+    width: 100%;
+  }
+
+  @media (min-width: 960px) {
+    .activity4-form-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+</style>
+<script defer src="js/script_guia2.js?v=20260409_4"></script>
+</head>
+<body
+  class="app-shell app-shell--guide activity4-form-page"
+  data-default-ficha="3441942"
+  data-default-inst="Institucion Educativa Jhon F. Kennedy"
+  data-default-grupo="10B"
+>
+  <div class="main app-main">
+    <div class="topbar">
+      <div class="topbar-title">
+        <strong>Actividad 4 · Formulario independiente</strong>
+      </div>
+      <div class="topbar-meta">
+        <span class="meta-item"><span>&#9201;</span><span>15 minutos</span></span>
+        <span class="meta-item"><span>&#128197;</span><span>2026</span></span>
+        <span class="meta-item"><span>&#127979;</span><span>Jhon F. Kennedy | 10B</span></span>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="hero" id="inicio">
+        <div class="tag">Guia 2 | Actividad 4</div>
+        <h1>Diagn&oacute;stico inicial del contexto digital local</h1>
+        <p>
+          Completa aqu&iacute; los 10 puntos del cuestionario de conocimientos previos. Tus respuestas
+          se guardan autom&aacute;ticamente en la misma Gu&iacute;a 2, as&iacute; que el administrador las podr&aacute;
+          revisar desde el panel sin cambiar el seguimiento actual.
+        </p>
+        <div class="hero-meta">
+          <div class="hero-meta-item">&#127891; Guia 2 &middot; Actividad 4</div>
+          <div class="hero-meta-item">&#128220; 10 preguntas</div>
+          <div class="hero-meta-item">&#128274; Guardado autom&aacute;tico</div>
+          <div class="hero-meta-item">&#127758; Respaldo disponible en Google Forms</div>
+        </div>
+      </div>
+
+      <div class="panel-grid" style="margin-top:20px;">
+        <article class="checklist-card">
+          <h3>Acciones r&aacute;pidas</h3>
+          <p>Responde primero este formulario local. Si en clase no hay forma de usar el portal, puedes usar el respaldo en Google Forms.</p>
+          <div class="activity4-actions">
+            <a class="btn-drive" href="grupo-10b-guia-02-herramientas-informaticas-digitales.html#contexto">Volver a la Guia 2</a>
+            <a class="btn-drive" href="https://docs.google.com/forms/d/e/1FAIpQLSep05Y_zCcRSGPFNGLpI6t7EiXrdw-qrSEP6MHKm5D0oUJ-yQ/viewform?usp=publish-editor" target="_blank" rel="noopener noreferrer">Abrir Google Forms &#8599;</a>
+          </div>
+        </article>
+
+        <article class="checklist-card">
+          <h3>Progreso del formulario</h3>
+          <div class="activity4-progress">
+            <div class="progress-label">
+              <span>Avance actual</span>
+              <span id="progressValue">0%</span>
+            </div>
+            <div class="progress-bar-bg">
+              <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <p class="progress-note">Cada respuesta se guarda en este navegador y se sincroniza con la misma Gu&iacute;a 2.</p>
+            <button type="button" class="reset-button" id="resetProgress">Reiniciar respuestas</button>
+          </div>
+        </article>
+      </div>
+
+      <div class="section-title">Formulario de la Actividad 4</div>
+      <div class="card open">
+        <div class="card-header">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#e3f2fd">&#129517;</div>
+            <div>
+              <h3>Cuestionario de conocimientos previos</h3>
+              <p>Diagn&oacute;stico individual de herramientas TIC, ofim&aacute;tica y gesti&oacute;n de la informaci&oacute;n</p>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="info-box green" style="margin-bottom:16px">
+            <div class="label">&iquest;SAB&Iacute;AS QUE...?</div>
+            <p>El sector productivo del Magdalena Medio usa a diario herramientas como Google Drive, WhatsApp Business, formularios de Google y correo electr&oacute;nico, pero pocas personas saben cu&aacute;l es la m&aacute;s adecuada para cada tarea.</p>
+            <p>Reconocer y clasificar herramientas es la primera competencia de un t&eacute;cnico en sistemas teleinform&aacute;ticos del CIAS.</p>
+          </div>
+
+          <div class="activity4-form-grid">
+            <article class="checklist-card compact-card question-card">
+              <h3>1. &iquest;Cu&aacute;l de las siguientes opciones describe mejor qu&eacute; es una herramienta TIC?</h3>
+              <ul class="note-list">
+                <li>Un programa para jugar videojuegos en el computador.</li>
+                <li>Cualquier tecnolog&iacute;a que permite crear, almacenar, transmitir o gestionar informaci&oacute;n.</li>
+                <li>&Uacute;nicamente el hardware del computador (teclado, mouse, pantalla).</li>
+                <li>Solo las aplicaciones de redes sociales.</li>
+              </ul>
+              <label style="display:block;margin-top:12px;">
+                <span>Tu respuesta</span>
+                <textarea rows="4" data-store="contexto-q1" data-track placeholder="Escribe la opci&oacute;n correcta y explica brevemente tu decisi&oacute;n."></textarea>
+              </label>
+            </article>
+
+            <article class="checklist-card compact-card question-card">
+              <h3>2. Relaciona cada herramienta con su funci&oacute;n principal. Escribe el n&uacute;mero en el espacio.</h3>
+              <div class="table-scroll">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Herramienta</th>
+                      <th>Respuesta</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <th scope="row">Google Drive</th>
+                      <td><input type="text" data-store="contexto-rel-drive" data-track placeholder="Escribe el n&uacute;mero"></td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Microsoft Excel</th>
+                      <td><input type="text" data-store="contexto-rel-excel" data-track placeholder="Escribe el n&uacute;mero"></td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Canva</th>
+                      <td><input type="text" data-store="contexto-rel-canva" data-track placeholder="Escribe el n&uacute;mero"></td>
+                    </tr>
+                    <tr>
+                      <th scope="row">WhatsApp Business</th>
+                      <td><input type="text" data-store="contexto-rel-whatsapp" data-track placeholder="Escribe el n&uacute;mero"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="info-box" style="margin-top:12px">
+                <div class="label">Funciones</div>
+                <ul class="note-list">
+                  <li>1. Crear presentaciones visuales.</li>
+                  <li>2. Almacenar y compartir archivos en la nube.</li>
+                  <li>3. Organizar datos en tablas y hacer c&aacute;lculos.</li>
+                  <li>4. Comunicarse con clientes de un negocio.</li>
+                </ul>
+              </div>
+            </article>
+
+            <article class="checklist-card compact-card question-card">
+              <h3>3. Un tendero de Puerto Boyac&aacute; quiere llevar el control de sus ventas diarias en el computador. &iquest;Qu&eacute; herramienta de la suite ofim&aacute;tica le recomendar&iacute;as? &iquest;Por qu&eacute;?</h3>
+              <textarea rows="5" data-store="contexto-tendero" data-track placeholder="Describe qu&eacute; herramienta le recomendar&iacute;as y por qu&eacute;."></textarea>
+            </article>
+
+            <article class="checklist-card compact-card question-card">
+              <h3>4. &iquest;Cu&aacute;l de estas acciones NO es posible hacer con un procesador de texto como Microsoft Word o Writer de LibreOffice?</h3>
+              <ul class="note-list">
+                <li>Escribir y formatear un documento con t&iacute;tulos y p&aacute;rrafos.</li>
+                <li>Insertar im&aacute;genes y tablas en un documento.</li>
+                <li>Crear una base de datos con miles de registros de clientes.</li>
+                <li>Revisar la ortograf&iacute;a y gram&aacute;tica de un texto.</li>
+              </ul>
+              <label style="display:block;margin-top:12px;">
+                <span>Tu respuesta</span>
+                <textarea rows="4" data-store="contexto-q4" data-track placeholder="Escribe la acci&oacute;n que NO es posible y explica tu respuesta."></textarea>
+              </label>
+            </article>
+
+            <article class="checklist-card compact-card question-card span-full">
+              <h3>5. Un docente quiere enviar el mismo mensaje a 30 estudiantes adjuntando un PDF. &iquest;Qu&eacute; herramienta(s) usar&iacute;as? Marca todas las que apliquen.</h3>
+              <div class="table-scroll">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Herramienta</th>
+                      <th>&iquest;La usar&iacute;as?</th>
+                      <th>&iquest;Por qu&eacute; la usar&iacute;as?</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <th scope="row">Correo electr&oacute;nico (Gmail, Outlook)</th>
+                      <td><input type="text" data-store="contexto-docente-correo-si" data-track placeholder="S&iacute; / No"></td>
+                      <td><textarea rows="2" data-store="contexto-docente-correo-porque" data-track placeholder="Explica tu respuesta."></textarea></td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Google Classroom o plataforma educativa</th>
+                      <td><input type="text" data-store="contexto-docente-classroom-si" data-track placeholder="S&iacute; / No"></td>
+                      <td><textarea rows="2" data-store="contexto-docente-classroom-porque" data-track placeholder="Explica tu respuesta."></textarea></td>
+                    </tr>
+                    <tr>
+                      <th scope="row">WhatsApp con lista de difusi&oacute;n</th>
+                      <td><input type="text" data-store="contexto-docente-whatsapp-si" data-track placeholder="S&iacute; / No"></td>
+                      <td><textarea rows="2" data-store="contexto-docente-whatsapp-porque" data-track placeholder="Explica tu respuesta."></textarea></td>
+                    </tr>
+                    <tr>
+                      <th scope="row">USB copiado uno por uno</th>
+                      <td><input type="text" data-store="contexto-docente-usb-si" data-track placeholder="S&iacute; / No"></td>
+                      <td><textarea rows="2" data-store="contexto-docente-usb-porque" data-track placeholder="Explica tu respuesta."></textarea></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+
+            <article class="checklist-card compact-card question-card">
+              <h3>6. &iquest;Qu&eacute; significa &quot;guardar en la nube&quot;?</h3>
+              <p>Expl&iacute;calo con tus propias palabras como si se lo explicaras a un comerciante del mercado de Pauna que nunca ha usado internet.</p>
+              <textarea rows="5" data-store="contexto-nube" data-track placeholder="Explica qu&eacute; significa guardar en la nube."></textarea>
+            </article>
+
+            <article class="checklist-card compact-card question-card">
+              <h3>7. Ordena los siguientes pasos para crear una copia de seguridad (backup). Escribe los n&uacute;meros 1, 2, 3 y 4 en el orden correcto.</h3>
+              <div class="table-scroll">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Paso</th>
+                      <th>Orden</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <th scope="row">Verificar que el archivo se abri&oacute; correctamente en la ubicaci&oacute;n de respaldo</th>
+                      <td><input type="text" data-store="contexto-backup-verificar" data-track placeholder="1-4"></td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Seleccionar el archivo que deseas respaldar</th>
+                      <td><input type="text" data-store="contexto-backup-seleccionar" data-track placeholder="1-4"></td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Copiar o subir el archivo a una memoria USB o servicio en la nube</th>
+                      <td><input type="text" data-store="contexto-backup-copiar" data-track placeholder="1-4"></td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Confirmar que el archivo original sigue disponible en su ubicaci&oacute;n original</th>
+                      <td><input type="text" data-store="contexto-backup-confirmar" data-track placeholder="1-4"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+
+            <article class="checklist-card compact-card question-card">
+              <h3>8. &iquest;Cu&aacute;l de estas situaciones representa un problema de gesti&oacute;n de la informaci&oacute;n?</h3>
+              <ul class="note-list">
+                <li>El computador se apag&oacute; por falta de energ&iacute;a el&eacute;ctrica.</li>
+                <li>La impresora no tiene tinta.</li>
+                <li>Los archivos de ventas del &uacute;ltimo a&ntilde;o est&aacute;n sin nombre, mezclados con fotos personales y sin carpetas organizadas.</li>
+                <li>El internet del municipio es lento.</li>
+              </ul>
+              <label style="display:block;margin-top:12px;">
+                <span>Tu respuesta</span>
+                <textarea rows="4" data-store="contexto-info-problem" data-track placeholder="Escribe la situaci&oacute;n correcta y explica por qu&eacute;."></textarea>
+              </label>
+            </article>
+
+            <article class="checklist-card compact-card question-card span-full">
+              <h3>9. De las siguientes herramientas digitales, &iquest;cu&aacute;les has usado alguna vez? Marca y escribe para qu&eacute; la usaste.</h3>
+              <div class="table-scroll">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Herramienta</th>
+                      <th>&iquest;La usar&iacute;as?</th>
+                      <th>&iquest;Por qu&eacute; la usar&iacute;as?</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <th scope="row">Microsoft Word o Writer</th>
+                      <td><input type="text" data-store="contexto-uso-word-si" data-track placeholder="S&iacute; / No"></td>
+                      <td><textarea rows="2" data-store="contexto-uso-word-porque" data-track placeholder="Describe para qu&eacute; la usaste."></textarea></td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Microsoft Excel o Calc</th>
+                      <td><input type="text" data-store="contexto-uso-excel-si" data-track placeholder="S&iacute; / No"></td>
+                      <td><textarea rows="2" data-store="contexto-uso-excel-porque" data-track placeholder="Describe para qu&eacute; la usaste."></textarea></td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Google Drive</th>
+                      <td><input type="text" data-store="contexto-uso-drive-si" data-track placeholder="S&iacute; / No"></td>
+                      <td><textarea rows="2" data-store="contexto-uso-drive-porque" data-track placeholder="Describe para qu&eacute; la usaste."></textarea></td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Correo electr&oacute;nico</th>
+                      <td><input type="text" data-store="contexto-uso-correo-si" data-track placeholder="S&iacute; / No"></td>
+                      <td><textarea rows="2" data-store="contexto-uso-correo-porque" data-track placeholder="Describe para qu&eacute; la usaste."></textarea></td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Zoom o Google Meet</th>
+                      <td><input type="text" data-store="contexto-uso-meet-si" data-track placeholder="S&iacute; / No"></td>
+                      <td><textarea rows="2" data-store="contexto-uso-meet-porque" data-track placeholder="Describe para qu&eacute; la usaste."></textarea></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+
+            <article class="checklist-card compact-card question-card span-full">
+              <h3>10. Un emprendedor de Otanche guarda sus fotos, listas de precios y datos de clientes en una sola carpeta llamada &quot;cosas&quot; en el escritorio. &iquest;Qu&eacute; le recomendar&iacute;as para organizar mejor su informaci&oacute;n?</h3>
+              <p>Describe al menos dos acciones concretas.</p>
+              <textarea rows="5" data-store="contexto-otanche" data-track placeholder="Escribe al menos dos acciones concretas para organizar mejor la informaci&oacute;n."></textarea>
+            </article>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
