@@ -164,115 +164,109 @@ const systems = [
 
 const evidenceRows = [
   {
-    phase: "Evaluacion",
+    phase: "An?lisis",
     project:
-      "Reconocimiento inicial de saberes, conceptos y criterios de diagnostico tecnico en el contexto educativo.",
-    learning: "3.1 Actividades de reflexion inicial",
-    evidence:
-      "Sopa de letras, tabla de coincidencias y bitacora de diagnostico inicial diligenciadas.",
-    criteria:
-      "Reconoce terminologia basica, relaciona herramientas digitales con su funcion e identifica causas probables para una falla de arranque.",
-    methods:
-      "Tecnicas: taller practico y revision de producto. Instrumentos: lista de chequeo y lista de cotejo.",
-  },
-  {
-    phase: "Evaluacion",
-    project:
-      "Caracterizacion del contexto regional, los conocimientos previos y las necesidades digitales de actores productivos locales.",
+      "Diagnosticar necesidades digitales, t?cnicas y de seguridad inform?tica en actores productivos locales (Proyecto 3478260).",
     learning:
-      "3.2 Actividades de contextualizacion e identificacion de conocimientos necesarios para el aprendizaje",
+      "Actividades 1, 2 y 3: sopa de letras, relaci?n herramienta-funci?n y situaci?n problema de fallo de arranque.",
     evidence:
-      "Cuestionario diagnostico, matriz de diagnostico digital y compromisos personales del proceso formativo.",
+      "Sopa de letras resuelta, tabla de coincidencias completada y bit?cora de diagn?stico inicial con s?ntomas, causas probables, plan de revisi?n, herramientas digitales propuestas y acci?n que no se realizar?a.",
     criteria:
-      "Reconoce herramientas TIC del entorno, identifica necesidades reales de los actores productivos y propone recomendaciones iniciales con criterio tecnico.",
+      "Reconoce terminolog?a b?sica de sistemas operativos, restauraci?n y formateo. Clasifica herramientas digitales seg?n su funci?n. Identifica causas probables de fallos de arranque y propone un plan de revisi?n ordenado.",
     methods:
-      "Tecnicas: cuestionario, analisis de casos y revision de producto. Instrumentos: lista de cotejo y matriz de diagnostico.",
+      "T?cnica: valoraci?n de conocimiento aplicado. Instrumento: Lista de chequeo LC-01.",
   },
   {
-    phase: "Evaluacion",
+    phase: "An?lisis",
     project:
-      "Caracterizacion tecnica de herramientas informaticas, archivos, software, suite ofimatica y trabajo colaborativo.",
-    learning: "3.3 Actividades de apropiacion",
+      "Diagnosticar necesidades digitales, t?cnicas y de seguridad inform?tica en actores productivos locales (Proyecto 3478260).",
+    learning:
+      "Actividad 4: diagn?stico inicial del contexto digital local.",
     evidence:
-      "Tabla de extensiones diligenciada, matriz de requerimientos minimos, diagnostico digital en ofimatica y comparativo de herramientas colaborativas.",
+      "Cuestionario de conocimientos previos resuelto, an?lisis de fichas de casos locales y matriz de diagn?stico digital diligenciada.",
     criteria:
-      "Clasifica extensiones segun tipo y programa asociado, reconoce riesgos basicos, sustenta requisitos minimos con fuente y selecciona herramientas colaborativas segun la necesidad.",
+      "Identifica herramientas TIC y su funci?n en contextos reales. Reconoce necesidades digitales de actores productivos locales y propone herramientas pertinentes seg?n el caso.",
     methods:
-      "Tecnicas: taller practico y revision documental. Instrumentos: lista de chequeo y rubrica corta.",
+      "T?cnica: taller diagn?stico. Instrumento: Lista de chequeo LC-01.",
   },
   {
-    phase: "Evaluacion",
+    phase: "An?lisis",
     project:
-      "Implementacion y verificacion en ambiente controlado siguiendo procedimientos.",
-    learning: "3.4 Actividades de transferencia del conocimiento",
+      "Diagnosticar necesidades digitales, t?cnicas y de seguridad inform?tica en actores productivos locales (Proyecto 3478260).",
+    learning:
+      "Actividades 5, 6, 7, 8 y 9: extensiones de archivo, requerimientos de sistemas operativos, suite ofim?tica, herramientas colaborativas y ciberseguridad b?sica.",
     evidence:
-      "Guia de instalacion con capturas, Taller 1_Guia5 resuelto e informe tecnico IEEE con evidencias.",
+      "Tabla de extensiones organizada con riesgos identificados, matriz de requerimientos m?nimos con fuentes, productos ofim?ticos funcionales, pr?ctica colaborativa y gu?a b?sica de ciberseguridad con lista de verificaci?n.",
     criteria:
-      "Sigue procedimientos, configura particiones, verifica el sistema instalado y presenta un informe con estructura IEEE.",
+      "Clasifica extensiones de archivo e identifica riesgos de seguridad. Determina requerimientos m?nimos de sistemas operativos. Elabora productos ofim?ticos funcionales, usa herramientas colaborativas y orienta en buenas pr?cticas de ciberseguridad adaptadas al contexto local.",
     methods:
-      "Tecnicas: observacion y revision de producto final. Instrumentos: lista de chequeo de instalacion, rubrica IEEE y verificacion de evidencias.",
+      "T?cnica: desempe?o en taller pr?ctico y revisi?n documental. Instrumento: Lista de chequeo LC-02.",
+  },
+  {
+    phase: "An?lisis",
+    project:
+      "Diagnosticar necesidades digitales, t?cnicas y de seguridad inform?tica en actores productivos locales (Proyecto 3478260).",
+    learning:
+      "Actividad 10: dise?o y construcci?n de soluci?n digital para actor productivo local.",
+    evidence:
+      "Perfil digital del actor productivo, herramienta digital personalizada funcional, gu?a de uso r?pido, presentaci?n oral y portafolio digital organizado en Google Drive.",
+    criteria:
+      "Caracteriza herramientas inform?ticas seg?n el contexto tecnol?gico del actor productivo. Selecciona herramientas pertinentes, construye una soluci?n digital funcional y presenta el proceso con claridad t?cnica y enfoque de usuario.",
+    methods:
+      "T?cnica: verificaci?n de producto y sustentaci?n. Instrumento: Lista de chequeo LC-03.",
   },
 ];
 
 const glossaryTerms = [
-  ["Arranque (Boot)", "Proceso que realiza el computador al encender para cargar el sistema operativo."],
-  ["BIOS", "Programa basico de la placa base que inicia el hardware y permite configurar el arranque del equipo."],
-  ["UEFI", "Version moderna del BIOS que permite un arranque mas seguro y rapido."],
-  ["Orden de arranque (Boot Order)", "Prioridad de dispositivos desde donde el equipo intenta iniciar."],
-  ["Sistema operativo (SO)", "Software principal que administra el computador y permite usar programas."],
-  ["Distribucion Linux", "Version de Linux con programas y configuraciones propias, como Ubuntu o Linux Lite."],
-  ["Imagen ISO", "Archivo que contiene una copia completa de instalacion de un sistema operativo o software."],
-  ["Particion", "Division logica del disco duro o SSD para organizar el almacenamiento."],
-  ["/ (raiz)", "Particion principal en Linux donde se instalan los archivos esenciales del sistema."],
-  ["/home", "Particion o carpeta donde se guardan los archivos de los usuarios en Linux."],
-  ["/boot", "Particion o carpeta de Linux con los archivos necesarios para iniciar el sistema."],
-  ["swap", "Espacio en disco que Linux usa como memoria adicional cuando la RAM no alcanza."],
-  ["Particion primaria", "Particion principal desde la cual puede arrancar un sistema operativo."],
-  ["Particion extendida", "Particion especial que permite crear varias particiones dentro de ella."],
-  ["Particion logica", "Particion creada dentro de una extendida para datos o instalaciones."],
-  ["Maquina virtual (VM)", "Computador virtual que corre un sistema operativo sin afectar el sistema real."],
-  ["VirtualBox", "Programa que permite crear y administrar maquinas virtuales."],
-  ["Hipervisor", "Software que administra las maquinas virtuales y el uso de recursos."],
-  ["Requisitos minimos", "Caracteristicas basicas de hardware necesarias para que un sistema operativo funcione."],
-  ["CPU (Procesador)", "Componente que ejecuta instrucciones y actua como cerebro del computador."],
-  ["RAM", "Memoria temporal usada por el equipo para trabajar; mas RAM permite mas tareas simultaneas."],
-  ["Almacenamiento (Disco/SSD)", "Espacio donde se guardan archivos, sistemas operativos y programas."],
-  ["Extension de archivo", "Parte final del nombre de un archivo que indica su tipo, por ejemplo .pdf o .jpg."],
-  ["Controlador (Driver)", "Software que permite que un dispositivo funcione correctamente."],
-  ["Copia de seguridad (Backup)", "Copia de archivos importantes para evitar perdida de informacion."],
-  ["Formateo", "Proceso de preparar un disco o particion; puede borrar informacion si no hay respaldo."],
-  ["Restauracion", "Accion de recuperar el sistema o archivos a un estado anterior."],
-  ["Nube (Cloud)", "Servicio en internet para guardar, compartir y acceder a archivos desde cualquier dispositivo."],
-  ["Antivirus", "Programa que ayuda a detectar y eliminar software malicioso."],
-  ["Firewall (Cortafuegos)", "Sistema que controla conexiones de red para bloquear accesos no autorizados."],
-  ["Malware", "Software malicioso que puede danar el equipo o robar informacion."],
-  ["Phishing", "Engano para obtener datos mediante correos o enlaces falsos."],
-  ["Herramienta digital", "Aplicacion o servicio que facilita comunicacion, colaboracion y gestion de informacion."],
+  ["Arranque (Boot)", "Proceso que realiza el computador al encender para cargar el sistema operativo desde el dispositivo de almacenamiento."],
+  ["BIOS / UEFI", "Software b?sico de la placa base que inicia el hardware al encender el equipo. UEFI es su versi?n moderna, m?s segura y r?pida."],
+  ["Orden de arranque (Boot Order)", "Prioridad de dispositivos desde los que el equipo intenta iniciar el sistema operativo: disco duro, USB, DVD o red."],
+  ["Sistema operativo (SO)", "Software principal que administra el hardware del computador y permite ejecutar aplicaciones. Ejemplos: Windows, Linux y macOS."],
+  ["Distribuci?n Linux", "Versi?n de Linux empaquetada con programas y configuraciones propias. Ejemplos: Ubuntu, Linux Lite, Fedora y Debian."],
+  ["Imagen ISO", "Archivo que contiene una copia completa de instalaci?n de un sistema operativo, listo para grabar o montar en una m?quina virtual."],
+  ["Partici?n", "Divisi?n l?gica del disco duro o SSD para organizar el almacenamiento como si fueran discos independientes."],
+  ["/ (ra?z) | /home | /boot | swap", "Particiones est?ndar de Linux: ra?z para archivos esenciales del sistema, home para archivos de usuario, boot para archivos de arranque y swap como memoria virtual en disco."],
+  ["M?quina virtual (VM)", "Entorno de computador simulado dentro del equipo real, que permite instalar y probar sistemas operativos sin afectar el sistema anfitri?n."],
+  ["VirtualBox", "Programa gratuito de Oracle para crear y administrar m?quinas virtuales en Windows, Linux y macOS."],
+  ["Hipervisor", "Software que administra las m?quinas virtuales y controla el acceso a recursos f?sicos como CPU, RAM y disco del equipo anfitri?n."],
+  ["Requisitos m?nimos de SO", "Caracter?sticas b?sicas de hardware necesarias para que un sistema operativo funcione: procesador, RAM y espacio en disco."],
+  ["Extensi?n de archivo", "Parte final del nombre de un archivo que indica su tipo y el programa con que se abre. Ejemplos: .pdf, .docx, .xlsx, .exe y .png."],
+  ["Controlador (Driver)", "Software que permite al sistema operativo comunicarse correctamente con un dispositivo de hardware."],
+  ["Suite ofim?tica", "Conjunto de programas para tareas de oficina: procesador de texto, hoja de c?lculo y presentaciones. Ejemplos: Microsoft Office, LibreOffice y Google Workspace."],
+  ["Herramienta colaborativa", "Aplicaci?n que permite trabajar simult?neamente con otras personas en documentos o proyectos desde cualquier ubicaci?n. Ejemplos: Google Docs, Teams y Zoom."],
+  ["Nube (Cloud)", "Infraestructura de servidores en internet para guardar, acceder y compartir archivos desde cualquier dispositivo conectado."],
+  ["Ciberseguridad", "Conjunto de pr?cticas y tecnolog?as para proteger redes, equipos y datos de ataques o accesos no autorizados."],
+  ["Malware / Phishing", "Malware es software malicioso que da?a equipos o roba informaci?n. Phishing es un enga?o por correo o enlace falso para obtener contrase?as."],
+  ["Copia de seguridad (Backup)", "Duplicado de archivos importantes guardado en lugar seguro para recuperarlos ante p?rdida, da?o o error del sistema."],
+  ["Formateo", "Proceso de preparar un disco o partici?n; puede borrar toda la informaci?n si no hay respaldo previo."],
+  ["Restauraci?n", "Acci?n de recuperar el sistema o archivos a un estado funcional anterior usando copias de seguridad o puntos de restauraci?n."],
+  ["Normas IEEE", "Est?ndares del Instituto de Ingenieros El?ctricos y Electr?nicos para documentar informes t?cnicos con estructura, citas y referencias uniformes."],
+  ["Actor productivo", "Persona o grupo que desarrolla actividades econ?micas en una comunidad: comerciante, emprendedor, agricultor, artesano o prestador de servicios."],
 ];
 
 const supportTemplates = [
   {
-    title: "Guia 2 base de aprendizaje",
+    title: "Gu?a 2 base de aprendizaje",
     file: "Guia_2_OperarHerramientas.docx",
     type: "DOCX local",
     description:
-      "Documento oficial actualizado con la estructura, actividades y evidencias de la guia 2.",
-    cta: "Abrir guia",
+      "Documento oficial actualizado con la estructura, actividades y evidencias de la Gu?a 2.",
+    cta: "Abrir gu?a",
   },
   {
-    title: "Bitacora para el caso",
+    title: "Bit?cora para el caso",
     file: "Bitacora_Para_Caso.docx",
     type: "DOCX local",
     description:
-      "Plantilla de apoyo para registrar sintomas, causas probables y pasos de revision del caso.",
-    cta: "Abrir bitacora",
+      "Plantilla de apoyo para registrar s?ntomas, causas probables y pasos de revisi?n del caso.",
+    cta: "Abrir bit?cora",
   },
   {
-    title: "Taller 1_Guia5",
-    file: "taller 1_guia5.docx",
+    title: "Taller 1_Guia2",
+    file: "Taller_1_Guia2.docx",
     type: "DOCX local",
     description:
-      "Documento de apoyo para desarrollar la actividad complementaria y anexarla a la evidencia final.",
+      "Documento complementario de pr?ctica asociado a la Gu?a 2 para reforzar el trabajo del aprendiz.",
     cta: "Abrir taller",
   },
 ];
@@ -371,37 +365,37 @@ const supportTools = [
 const GUIDE5_DRIVE_ACTIVITY_TARGETS = [
   {
     activityNumber: "3.1.3",
-    panelKey: "guide5-3-1-1",
+    panelKey: "guide2-3-1-3",
     description:
-      "Cuando termines la bitacora o el documento final de analisis, subelo a la carpeta de Drive correspondiente a tu ficha.",
-    note: "Entrega sugerida: bitacora individual o informe final de analisis del caso.",
+      "Cuando termines la bit?cora o el documento final de an?lisis, s?belo a la carpeta de Drive correspondiente a tu ficha.",
+    note: "Entrega sugerida: bit?cora individual o informe final de an?lisis del caso.",
   },
   {
-    activityNumber: "3.3.1",
-    panelKey: "guide5-3-3-1",
+    activityNumber: "3.3.3",
+    panelKey: "guide2-3-3-3",
     description:
-      "Sube a Drive la version consolidada de extensiones, requerimientos minimos y los productos de ofimatica o colaboracion que ya tengas listos.",
+      "Sube a Drive el diagn?stico digital del negocio, el archivo de Excel, la carpeta compartida y las evidencias colaborativas de la actividad ofim?tica.",
     note:
-      "Entrega sugerida: tablas diligenciadas, diagnostico digital en Word/Excel y comparativo de herramientas colaborativas.",
+      "Entrega sugerida: documento .docx, archivo .xlsx, enlace de Drive y correo formal de entrega.",
   },
   {
     activityNumber: "3.4.1",
-    panelKey: "guide5-3-4-1",
+    panelKey: "guide2-3-4-1",
     description:
-      "Sube a Drive la guia de instalacion, las capturas y el informe tecnico final de esta actividad integradora.",
-    note: "Entrega sugerida: guia de instalacion, evidencias tecnicas e informe en formato IEEE.",
+      "Sube a Drive el perfil digital, la herramienta construida, la gu?a de uso r?pido y la presentaci?n final de la soluci?n digital.",
+    note: "Entrega sugerida: portafolio final organizado en las carpetas 01 a 04 y compartido con el instructor.",
   },
 ];
 
 const ACTIVITY_QR_DATA = {
   "guia2-sopa": {
-    title: "ACTIVIDAD 1: Sopa de Letras",
+    title: "ACTIVIDAD 1: Sopa de letras de conceptos b?sicos",
     url: "https://es.educaplay.com/juego/27988460-operar_herramientas_informaticas_y_digitales_de_acuerdo_con_protocolos_y_manuales_tecnicos.html",
     image: "assets/img/guia2-qr-sopa-de-letras.png",
     cta: "Abrir ACTIVIDAD 1 en Educaplay",
   },
   "guia2-relaciona": {
-    title: "Actividad 2: En la siguiente tabla, haga coincidir el nombre con su concepto",
+    title: "Actividad 2: Relaciona la herramienta con su funci?n",
     url: "https://es.educaplay.com/juego/27988974-operar_herramientas_informaticas_y_digitales_de_acuerdo_con_protocolos_y_manuales_tecnicos.html",
     image: "assets/img/guia2-qr-relaciona-concepto.png",
     cta: "Abrir ACTIVIDAD 2 en Educaplay",
@@ -1112,15 +1106,15 @@ function buildMaterialHref(item) {
 
 const guide5ExportConfig = {
   extensions: {
-    title: "Actividad 1: Extensiones de archivo",
-    filePrefix: "Guia2_Actividad1_Extensiones_Archivo",
+    title: "Actividad 5: Extensiones de archivo",
+    filePrefix: "Guia2_Actividad5_Extensiones_Archivo",
     description: "Exporta la tabla diligenciada de extensiones de archivo a un documento Word.",
   },
   systems: {
-    title: "Actividad 2: Requerimientos minimos de sistemas operativos",
-    filePrefix: "Guia2_Actividad2_Requerimientos_Minimos",
+    title: "Actividad 6: Requerimientos m?nimos de sistemas operativos",
+    filePrefix: "Guia2_Actividad6_Requerimientos_Minimos",
     description:
-      "Exporta la matriz diligenciada de requerimientos minimos de sistemas operativos a un documento Word.",
+      "Exporta la matriz diligenciada de requerimientos m?nimos de sistemas operativos a un documento Word.",
   },
 };
 
