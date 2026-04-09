@@ -18,7 +18,11 @@ for (const file of files) {
     'data-store="contexto-rel-canva"',
     'data-store="contexto-rel-whatsapp"',
     "<select",
-    "Selecciona el numero",
+    "Selecciona la funcion",
+    "Crear presentaciones visuales.",
+    "Almacenar y compartir archivos en la nube.",
+    "Organizar datos en tablas y hacer calculos.",
+    "Comunicarse con clientes de un negocio.",
   ];
 
   for (const marker of required) {
@@ -33,6 +37,11 @@ for (const file of files) {
     'type="text" data-store="contexto-rel-excel"',
     'type="text" data-store="contexto-rel-canva"',
     'type="text" data-store="contexto-rel-whatsapp"',
+    "<div class=\"label\">Funciones</div>",
+    "1. Crear presentaciones visuales.",
+    "2. Almacenar y compartir archivos en la nube.",
+    "3. Organizar datos en tablas y hacer c&aacute;lculos.",
+    "4. Comunicarse con clientes de un negocio.",
   ];
 
   for (const marker of banned) {
@@ -47,4 +56,4 @@ if (failed) {
   process.exit(1);
 }
 
-console.log("OK: La pregunta 2 de Actividad 4 usa opciones desplegables.");
+console.log("OK: La pregunta 2 de Actividad 4 usa respuestas desplegables completas.");
