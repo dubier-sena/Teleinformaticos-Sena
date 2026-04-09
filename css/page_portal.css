@@ -2071,15 +2071,33 @@ img {
   box-shadow: 0 22px 40px rgba(4, 20, 13, 0.28);
 }
 
-.app-shell--portal .cta-panel > p,
-.app-shell--portal .cta-panel .selected-info .val,
-.app-shell--portal .access-note {
-  color: rgba(237, 246, 241, 0.76);
+.app-shell--portal .cta-panel h3 {
+  color: #f7fffa;
 }
 
-.app-shell--portal .selected-info .lbl,
+.app-shell--portal .cta-panel > p,
+.app-shell--portal .access-note {
+  color: rgba(237, 246, 241, 0.84);
+}
+
+.app-shell--portal .selected-info {
+  color: var(--text-strong);
+}
+
+.app-shell--portal .selected-info .row {
+  color: var(--text-strong);
+}
+
+.app-shell--portal .selected-info .lbl {
+  color: var(--brand-700);
+}
+
+.app-shell--portal .selected-info .val {
+  color: var(--text-muted);
+}
+
 .app-shell--portal .selected-info .val b {
-  color: #fff;
+  color: var(--text-strong);
 }
 
 .app-shell--portal .guide-options {
