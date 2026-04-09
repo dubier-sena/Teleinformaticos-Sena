@@ -260,6 +260,17 @@
     return `
       <div class="answers-grid">
         <article class="answer-card">
+          <h3>Identificacion registrada en el formulario.</h3>
+          ${renderAnswerTable(
+            ["Campo", "Respuesta del aprendiz"],
+            [
+              ["Nombre completo", state["actividad4:nombre_completo"]],
+              ["Numero de ficha", state["actividad4:ficha"]],
+            ]
+          )}
+        </article>
+
+        <article class="answer-card">
           <h3>1. \u00bfCu\u00e1l de las siguientes opciones describe mejor qu\u00e9 es una herramienta TIC?</h3>
           ${renderAnswerValue(state["contexto-q1"])}
         </article>
