@@ -408,6 +408,8 @@ let state = loadState();
 let cloudStateSyncTimer = null;
 let cloudStateRetryTimer = null;
 let pendingCloudStateSnapshot = null;
+const ACTIVITY4_IDENTITY_NAME_KEY = "actividad4:nombre_completo";
+const ACTIVITY4_IDENTITY_FICHA_KEY = "actividad4:ficha";
 
 document.addEventListener("DOMContentLoaded", () => {
   renderStatefulSections();
@@ -416,8 +418,10 @@ document.addEventListener("DOMContentLoaded", () => {
   renderGlossary();
   renderSupportMaterials();
   renderDriveDeliveryPanel();
+  prefillActivity4Identity();
   hydrateFields();
   bindEvents();
+  syncActivity4IdentityUi();
   updateProgress();
   setupScrollSpy();
   initializeCloudStateSync();
@@ -1142,6 +1146,74 @@ function getGuideSelection() {
   return portalAuth ? portalAuth.getCurrentSelection(defaults) : defaults;
 }
 
+function getActivity4IdentityFields() {
+  return {
+    name: document.querySelector(`[data-store="${ACTIVITY4_IDENTITY_NAME_KEY}"]`),
+    ficha: document.querySelector(`[data-store="${ACTIVITY4_IDENTITY_FICHA_KEY}"]`),
+  };
+}
+
+function hasActivity4Identity() {
+  const fullName = String(state[ACTIVITY4_IDENTITY_NAME_KEY] ?? "").trim();
+  const ficha = String(state[ACTIVITY4_IDENTITY_FICHA_KEY] ?? "").trim();
+  return Boolean(fullName && ficha);
+}
+
+function prefillActivity4Identity() {
+  const fields = getActivity4IdentityFields();
+  if (!fields.name && !fields.ficha) {
+    return;
+  }
+
+  const session = portalAuth?.getCurrentSession?.();
+  const selection = getGuideSelection();
+  let changed = false;
+
+  const suggestedName = session?.user?.fullName || "";
+  const suggestedFicha = session?.user?.ficha || selection.ficha || "";
+
+  if (!String(state[ACTIVITY4_IDENTITY_NAME_KEY] ?? "").trim() && suggestedName) {
+    state[ACTIVITY4_IDENTITY_NAME_KEY] = suggestedName;
+    changed = true;
+  }
+
+  if (!String(state[ACTIVITY4_IDENTITY_FICHA_KEY] ?? "").trim() && suggestedFicha) {
+    state[ACTIVITY4_IDENTITY_FICHA_KEY] = suggestedFicha;
+    changed = true;
+  }
+
+  if (changed) {
+    saveState();
+  }
+}
+
+function syncActivity4IdentityUi() {
+  const note = document.getElementById("activity4IdentityNote");
+  const questionnaire = document.getElementById("activity4Questionnaire");
+  if (!note && !questionnaire) {
+    return;
+  }
+
+  const ready = hasActivity4Identity();
+
+  if (note) {
+    note.textContent = ready
+      ? "Identificacion lista. Ya puedes responder el cuestionario."
+      : "Completa nombre completo y numero de ficha para comenzar.";
+    note.classList.toggle("is-ready", ready);
+  }
+
+  if (!questionnaire) {
+    return;
+  }
+
+  questionnaire.classList.toggle("is-locked", !ready);
+  questionnaire.setAttribute("aria-disabled", ready ? "false" : "true");
+  questionnaire.querySelectorAll("[data-store], input, textarea, select, button").forEach((field) => {
+    field.disabled = !ready;
+  });
+}
+
 function sanitizeFileName(value) {
   return String(value || "")
     .replace(/[^a-zA-Z0-9\u00C0-\u024F\s_-]/g, "")
@@ -1451,6 +1523,12 @@ function bindEvents() {
 
     state[field.dataset.store] = field.type === "checkbox" ? field.checked : field.value;
     saveState();
+    if (
+      field.dataset.store === ACTIVITY4_IDENTITY_NAME_KEY ||
+      field.dataset.store === ACTIVITY4_IDENTITY_FICHA_KEY
+    ) {
+      syncActivity4IdentityUi();
+    }
   });
 
   document.addEventListener("change", (event) => {
@@ -1468,6 +1546,12 @@ function bindEvents() {
       }
     }
     saveState();
+    if (
+      field.dataset.store === ACTIVITY4_IDENTITY_NAME_KEY ||
+      field.dataset.store === ACTIVITY4_IDENTITY_FICHA_KEY
+    ) {
+      syncActivity4IdentityUi();
+    }
   });
 
   const wordBank = document.getElementById("wordBank");

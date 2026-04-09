@@ -97,6 +97,35 @@
   .activity4-form-page input[type="text"] {
     width: 100%;
   }
+
+  .activity4-identity-note {
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .activity4-identity-note.is-ready {
+    color: #0d7a45;
+    font-weight: 700;
+  }
+
+  .activity4-questionnaire-lock {
+    display: none;
+    margin-bottom: 14px;
+  }
+
+  .activity4-questionnaire.is-locked .activity4-questionnaire-lock {
+    display: block;
+  }
+
+  .activity4-questionnaire.is-locked .card {
+    opacity: 0.55;
+  }
+
+  .activity4-questionnaire.is-locked .card-body {
+    pointer-events: none;
+    user-select: none;
+  }
 </style>
 <script defer src="js/script_guia2.js?v=20260409_4"></script>
 </head>
@@ -135,6 +164,46 @@
         </div>
       </div>
 
+      <div class="card open" id="activity4IdentityCard" style="margin-top:20px;">
+        <div class="card-header">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#e8fff3">&#128100;</div>
+            <div>
+              <h3>Identificacion del aprendiz</h3>
+              <p>Completa primero estos datos para habilitar el cuestionario.</p>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="form-grid activity4-identity-grid">
+            <label>
+              <span>Nombre completo</span>
+              <input
+                type="text"
+                data-store="actividad4:nombre_completo"
+                data-track
+                autocomplete="name"
+                placeholder="Escribe tu nombre completo"
+              >
+            </label>
+            <label>
+              <span>Numero de ficha</span>
+              <input
+                type="text"
+                data-store="actividad4:ficha"
+                data-track
+                inputmode="numeric"
+                autocomplete="off"
+                placeholder="Ejemplo: 3441942"
+              >
+            </label>
+          </div>
+          <div class="activity4-identity-note" id="activity4IdentityNote">
+            Completa nombre completo y numero de ficha para comenzar.
+          </div>
+        </div>
+      </div>
+
       <div class="panel-grid" style="margin-top:20px;">
         <article class="checklist-card">
           <h3>Acciones r&aacute;pidas</h3>
@@ -161,6 +230,11 @@
         </article>
       </div>
 
+      <div class="activity4-questionnaire is-locked" id="activity4Questionnaire">
+      <div class="activity4-questionnaire-lock info-box">
+        <div class="label">Completa tu identificacion</div>
+        <p>Para responder el cuestionario, primero diligencia tu nombre completo y tu numero de ficha en el bloque inicial.</p>
+      </div>
       <div class="section-title">Formulario de la Actividad 4</div>
       <div class="card open">
         <div class="card-header">
@@ -392,6 +466,7 @@
             </article>
           </div>
         </div>
+      </div>
       </div>
     </div>
   </div>
