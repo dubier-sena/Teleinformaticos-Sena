@@ -12,15 +12,21 @@ const expectations = [
   "max-width: 12.6ch;",
   "font-size: clamp(2.9rem, 3.6vw, 4.2rem);",
   "max-width: min(100%, 430px);",
-  "margin-top: 0;"
+  "@media (max-width: 1099px) {",
+  "max-width: min(100%, 760px);",
+  "@media (min-width: 641px) and (max-width: 1099px) {",
+  "grid-template-columns: repeat(2, minmax(220px, 1fr));",
+  "@media (max-width: 640px) {",
+  ".app-shell--portal .info-grid {",
+  "grid-template-columns: 1fr;"
 ];
 
 const missing = expectations.filter((snippet) => !css.includes(snippet));
 
 if (missing.length) {
-  console.error("Desktop hero layout regression detected.");
+  console.error("Responsive portal layout regression detected.");
   missing.forEach((snippet) => console.error(`Missing: ${snippet}`));
   process.exit(1);
 }
 
-console.log("Desktop hero layout markers present.");
+console.log("Responsive portal layout markers present.");
