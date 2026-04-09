@@ -27,19 +27,19 @@ const portalCss = readProjectFile("css/page_portal.css");
 
 const portalChecks = [
   {
-    pattern: /href="css\/site_tokens\.css\?v=20260409_1"/,
+    pattern: /href="css\/site_tokens\.css\?v=20260409_\d+"/,
     message: "Portal missing shared token import.",
   },
   {
-    pattern: /href="css\/shared_shell\.css\?v=20260409_1"/,
+    pattern: /href="css\/shared_shell\.css\?v=20260409_\d+"/,
     message: "Portal missing shared shell stylesheet import.",
   },
   {
-    pattern: /href="css\/page_portal\.css\?v=20260409_1"/,
+    pattern: /href="css\/page_portal\.css\?v=20260409_\d+"/,
     message: "Portal missing portal page stylesheet import.",
   },
   {
-    pattern: /<script[^>]*defer[^>]*src="js\/shared_shell\.js\?v=20260409_1"/i,
+    pattern: /<script[^>]*defer[^>]*src="js\/shared_shell\.js\?v=20260409_\d+"/i,
     message: "Portal missing shared shell script import with defer.",
   },
   {
@@ -171,27 +171,27 @@ console.log("Portal shared shell markers present.");
 
 assertMatch(
   guideHtml,
-  /href="css\/site_tokens\.css\?v=20260409_1"/,
+  /href="css\/site_tokens\.css\?v=20260409_\d+"/,
   "Pilot guide is not connected to shared tokens yet."
 );
 assertMatch(
   guideHtml,
-  /href="css\/shared_shell\.css\?v=20260409_1"/,
+  /href="css\/shared_shell\.css\?v=20260409_\d+"/,
   "Pilot guide is missing the shared shell stylesheet import."
 );
 assertMatch(
   guideHtml,
-  /href="css\/guia_template\.css\?v=20260409_1"/,
+  /href="css\/guia_template\.css\?v=20260409_\d+"/,
   "Pilot guide is missing the versioned guide stylesheet import."
 );
 assertMatch(
   guideHtml,
-  /<script[^>]*defer[^>]*src="js\/shared_shell\.js\?v=20260409_1"/i,
+  /<script[^>]*defer[^>]*src="js\/shared_shell\.js\?v=20260409_\d+"/i,
   "Pilot guide is missing the shared shell script import with defer."
 );
 assertMatch(
   guideHtml,
-  /<script[^>]*defer[^>]*src="js\/guia_template\.js\?v=20260409_1"/i,
+  /<script[^>]*defer[^>]*src="js\/guia_template\.js\?v=20260409_\d+"/i,
   "Pilot guide is missing the versioned guia_template.js import."
 );
 assertMatch(
