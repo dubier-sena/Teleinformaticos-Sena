@@ -1,0 +1,30 @@
+/* css/site_tokens.css */
+:root {
+  --font-display: "Outfit", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Inter", "Segoe UI", system-ui, sans-serif;
+
+  --bg-canvas: #edf3ef;
+  --surface-1: #ffffff;
+  --surface-2: #f5faf7;
+  --surface-dark: #071a12;
+
+  --brand-700: #0a5c31;
+  --brand-600: #007934;
+  --brand-500: #0fbf64;
+  --brand-300: #9fe3b7;
+  --accent-gold: #f5b700;
+
+  --text-strong: #102117;
+  --text-muted: #5f7468;
+  --border-soft: #d6e2da;
+
+  --radius-sm: 10px;
+  --radius-md: 18px;
+  --radius-lg: 28px;
+
+  --shadow-sm: 0 6px 18px rgba(7, 26, 18, 0.08);
+  --shadow-md: 0 14px 36px rgba(7, 26, 18, 0.12);
+
+  --motion-fast: 160ms ease;
+  --motion-base: 240ms ease;
+}

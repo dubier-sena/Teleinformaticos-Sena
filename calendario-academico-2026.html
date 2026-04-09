@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta
+  http-equiv="Content-Security-Policy"
+  content="default-src 'self' blob: data:; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https:; media-src 'self' blob: data: https:; frame-src 'self' https://es.educaplay.com;"
+/>
+<meta name="referrer" content="strict-origin-when-cross-origin"/>
+<meta
+  name="description"
+  content="Calendario 2026 funcional en HTML con dashboard, registro editable y vista mensual conectado al portal de gu&iacute;as."
+/>
+<title>Calendario 2026 | Sistemas Teleinformaticos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="css/site_tokens.css?v=20260409_1"/>
+<link rel="stylesheet" href="css/shared_shell.css?v=20260409_1"/>
+<link rel="stylesheet" href="css/page_calendar.css?v=20260409_1"/>
+<script src="js/portal_auth.js?v=20260324_6"></script>
+<script src="js/firebase_db.js?v=20260326_7" defer></script>
+<script src="js/shared_shell.js?v=20260409_1" defer></script>
+<script>
+if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "index.html" })) {
+  document.documentElement.innerHTML = "";
+  throw new Error("Acceso administrativo requerido.");
+}
+</script>
+</head>
+<body class="app-shell app-shell--calendar">
+<header id="header" class="app-hero calendar-hero">
+  <div class="app-hero__inner calendar-hero__inner">
+    <div class="calendar-hero__panel">
+      <div id="header-top">
+        <div class="calendar-hero__copy">
+          <div class="calendar-kicker">Laboratorio tecnologico SENA</div>
+          <div id="title">Calendario Pro 2026</div>
+          <div id="subtitle">Sistemas Teleinformaticos · I.E. Jhon F. Kennedy · I.E. Santa Barbara · 23 Feb - 27 Nov</div>
+          <div class="calendar-chip-row">
+            <div class="calendar-hero__chip">
+              <span class="calendar-hero__chip-label">Entorno</span>
+              <span class="calendar-hero__chip-value">B1. SENA tecnico</span>
+            </div>
+            <div class="calendar-hero__chip">
+              <span class="calendar-hero__chip-label">Uso</span>
+              <span class="calendar-hero__chip-value">Panel administrativo sincronizado</span>
+            </div>
+            <div class="calendar-hero__chip">
+              <span class="calendar-hero__chip-label">Cobertura</span>
+              <span class="calendar-hero__chip-value">Dashboard, registro y vista mensual</span>
+            </div>
+          </div>
+        </div>
+        <div class="calendar-hero__actions">
+          <a class="hbtn hbtn-link" href="index.html">Volver al indice</a>
+          <button type="button" class="hbtn" id="firebase-sync-button" onclick="syncFirebaseState(true)">Guardar en Firebase ahora</button>
+          <button type="button" class="hbtn" id="firebase-load-button" onclick="loadLatestFromFirebase()">Cargar ultimo de Firebase</button>
+          <button type="button" class="hbtn" id="calendar-reset-button" onclick="resetCalendar()">Restaurar base inicial</button>
+          <div id="save-chip">Base inicial cargada</div>
+          <div id="sync-chip" class="sync-chip offline">Firebase verificando</div>
+        </div>
+      </div>
+      <div id="sync-help">El calendario del administrador se sincroniza con Firebase y conserva un respaldo local en este navegador.</div>
+      <div id="nav"></div>
+    </div>
+  </div>
+</header>
+<main class="app-main calendar-main-shell">
+  <section class="calendar-stage app-card" data-reveal>
+    <div id="main"></div>
+  </section>
+</main>
+
+<!-- Modal -->
+<div id="modal-bg">
+  <div id="modal">
+    <div id="modal-hdr">
+      <div class="modal-top">
+        <div>
+          <div id="m-title" class="modal-title"></div>
+          <div id="m-sub" class="modal-subtitle"></div>
+        </div>
+        <button type="button" class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div id="m-hr" class="modal-hour"></div>
+    </div>
+    <div id="modal-body">
+      <label class="modal-lbl">Estado de la clase</label>
+      <div id="est-opts" class="est-opts"></div>
+      <div id="prev-chip" class="prev-chip"></div>
+
+      <label class="modal-lbl">Observación</label>
+      <select id="m-obs-sel" class="modal-sel" onchange="document.getElementById('m-obs-inp').value=this.value"></select>
+      <input  id="m-obs-inp" class="modal-inp" placeholder="O escriba una observación personalizada…"/>
+
+      <div id="grade-section" style="display:none;">
+        <label class="modal-lbl">Grado asignado</label>
+        <select id="m-grado" class="modal-sel"></select>
+        <div class="grade-note">Este cambio se aplica a todas las franjas de esa clase.</div>
+      </div>
+
+      <div id="act-section" style="display:none;">
+        <label class="modal-lbl modal-lbl--accent">📋 Actividad / Tarea</label>
+        <input id="m-act-nombre" class="modal-inp modal-inp--spaced" placeholder="Nombre de la actividad o tarea…"/>
+        <label class="modal-lbl modal-lbl--accent">📅 Fecha de entrega</label>
+        <input id="m-act-fecha" type="date" class="modal-date"/>
+        <div id="act-preview" class="act-preview"></div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick="closeModal()">Cancelar</button>
+        <button type="button" class="btn-save"   onclick="saveModal()">💾 Guardar cambio</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="data/calendario_2026_records.js"></script>
+<script src="data/calendario_2026_seed.js"></script>
+<script>
+// ════════════════════════════════════════════════════════════════
+// CONSTANTES
+// ════════════════════════════════════════════════════════════════
+const JFK='I.E. Jhon F. Kennedy', SB='I.E. Santa Bárbara';
+// FIX: usar hora 23:59 para que el día 27 Nov esté DENTRO del contrato
+const CONTRACT_END   = new Date(2026,10,27,23,59,59);
+const CONTRACT_START = new Date(2026,1,23);
+const STORAGE_KEY    = 'sena-calendario-pro-2026-v2';
+const LEGACY_STORAGE_KEY = 'sena-calendario-pro-2026-v1';
+const FIREBASE_CALENDAR_DOC = 'calendario_2026_admin';
+const FIREBASE_REFRESH_MS = 7000;
+
+const FESTIVOS=new Set(['2026-03-23','2026-05-01','2026-05-18','2026-06-08','2026-06-15',
+  '2026-07-20','2026-08-07','2026-08-17','2026-10-12','2026-11-02','2026-11-16']);
+const RECESOS=new Set(['2026-03-30','2026-03-31','2026-04-01','2026-04-02','2026-04-03',
+  '2026-04-04','2026-04-05','2026-06-22','2026-06-23','2026-06-24','2026-06-25','2026-06-26',
+  '2026-06-27','2026-06-28','2026-06-29','2026-06-30','2026-07-01','2026-07-02','2026-07-03',
+  '2026-07-04','2026-07-05','2026-10-05','2026-10-06','2026-10-07','2026-10-08','2026-10-09',
+  '2026-10-10','2026-10-11']);
+const SPECIAL={
+  '2026-02-23':{tipo:'DESPLAZAMIENTO',label:'🚗 Desplazamiento',c:'#F9A825',bg:'#FFF8E1'},
+  '2026-02-24':{tipo:'REUNIÓN RECTOR', label:'🤝 Reunión con Rector',c:'#AD1457',bg:'#FCE4EC'}
+};
+
+const SBH={
+  '10A':{0:'7:00am–9:55am / 2:15pm–4:15pm',2:'7:00am–7:55am / 2:15pm–4:15pm',4:'9:00am–9:55am / 12:05pm–1:55pm'},
+  '10B':{0:'12:05pm–1:55pm',1:'7:00am–9:55am / 2:15pm–4:15pm',3:'7:00am–7:55am; 9:55am–10:50am / 2:15pm–4:15pm'},
+  '11A':{0:'9:00am–9:55am; 2:15pm–4:15pm',1:'7:00am–8:50am; 10:50am–1:00pm',2:'9:00am–9:55am',3:'2:15pm–4:15pm',4:'7:00am–7:55am'},
+  '11B':{0:'7:00am–7:55am; 9:55am–10:50am',1:'2:15pm–4:15pm',2:'10:50am–11:45am; 2:15pm–4:15pm',3:'7:00am–10:50am',4:'—'}
+};
+const jhr=m=>m<=6?'6:10am–10:10am':'2:10pm–6:10pm';
+
+const GC={
+  [JFK+'-10A']:{dk:'#1565C0',lt:'#DBEAFE'},
+  [JFK+'-10B']:{dk:'#0277BD',lt:'#BAE6FD'},
+  [SB +'-10A']:{dk:'#2E7D32',lt:'#DCFCE7'},
+  [SB +'-10B']:{dk:'#388E3C',lt:'#D1FAE5'},
+  [SB +'-11A']:{dk:'#6A1B9A',lt:'#F3E8FF'},
+  [SB +'-11B']:{dk:'#7B1FA2',lt:'#FAE8FF'}
+};
+const GRADE_OPTIONS={
+  [JFK]:['10A','10B'],
+  [SB]:['10A','10B','11A','11B']
+};
+
+const SS={
+  'Activa':           {bg:'#EFF6FF',tc:'#1e40af',bc:'#3b82f6',em:'📅'},
+  'Impartida':        {bg:'#F0FDF4',tc:'#14532d',bc:'#22c55e',em:'✔'},
+  'Cancelada':        {bg:'#FEF2F2',tc:'#7f1d1d',bc:'#ef4444',em:'❌'},
+  'Sin programación': {bg:'#EEF2FF',tc:'#3730a3',bc:'#6366f1',em:'🏢'},
+  'Recuperada':       {bg:'#FFF7ED',tc:'#7c2d12',bc:'#f97316',em:'🔄'},
+  'No aplica':        {bg:'#F9FAFB',tc:'#6b7280',bc:'#d1d5db',em:'—'},
+  'SEDE SENA':        {bg:'#EEF2FF',tc:'#3730a3',bc:'#6366f1',em:'🏢'},
+  'DESPLAZAMIENTO':   {bg:'#FFFBEB',tc:'#78350f',bc:'#f59e0b',em:'🚗'},
+};
+
+const OBS=['','Clase impartida con normalidad','Cumplir horario en el Sena','Sin novedad',
+  'Clase cancelada por paro','Clase cancelada por evento institucional',
+  'Sin programación en institución','Clase recuperada – nueva fecha',
+  'Permiso personal','Desplazamiento','Reunión institucional','Actividad con jefe SENA','Viaje a Otanche'];
+
+const MN=['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const MF=['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DN=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+const MONTHS=[2,3,4,5,6,7,8,9,10,11];
+
+// ════════════════════════════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════════════════════════════
+const fmtD=d=>{const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${dd}`;};
+const parseD=s=>new Date(s+'T12:00:00');
+const addD=(d,n)=>{const r=new Date(d);r.setDate(r.getDate()+n);return r;};
+const iwd=d=>{const w=d.getDay();return w===0?6:w-1;};
+const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e;};
+const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+const fmtActFecha=s=>{if(!s)return '';const[y,m,d]=s.split('-');return `${d}/${m}/${y}`;};
+const getHorarioSortValue=record=>{
+  const label=String(record?.horario||'');
+  const match=label.match(/(\d{1,2}):(\d{2})(am|pm)/i);
+  if(!match)return 9999;
+  let hour=Number(match[1])%12;
+  if(match[3].toLowerCase()==='pm')hour+=12;
+  return hour*60+Number(match[2]);
+};
+const compareRecordsBySchedule=(a,b)=>{
+  const dateCmp=String(a.fecha||'').localeCompare(String(b.fecha||''));
+  if(dateCmp)return dateCmp;
+  const timeCmp=getHorarioSortValue(a)-getHorarioSortValue(b);
+  if(timeCmp)return timeCmp;
+  const rowCmp=(Number(a.sourceRow)||0)-(Number(b.sourceRow)||0);
+  if(rowCmp)return rowCmp;
+  return String(a.id||'').localeCompare(String(b.id||''));
+};
+
+// ════════════════════════════════════════════════════════════════
+// DATASET BASE DEL CALENDARIO
+// Los registros fuente se expanden por franja horaria para que cada bloque
+// quede como una clase independiente dentro del calendario editable.
+// ════════════════════════════════════════════════════════════════
+function splitHorarioSlots(horario){
+  if(!horario||horario==='—')return ['—'];
+  return String(horario)
+    .split(/\s*(?:\/|;|\r?\n)+\s*/)
+    .map(slot=>slot.trim())
+    .filter(Boolean);
+}
+
+function expandRecords(records){
+  const expanded=[];
+  records.forEach((record)=>{
+    const baseRecord={...record,baseId:record.id,slotIndex:1,slotCount:1};
+    if(record.tipo!=='CLASE'){
+      expanded.push(baseRecord);
+      return;
+    }
+
+    const slots=splitHorarioSlots(record.horario);
+    if(slots.length<=1){
+      expanded.push({...baseRecord,horario:slots[0]||record.horario});
+      return;
+    }
+
+    slots.forEach((slot,index)=>{
+      expanded.push({
+        ...baseRecord,
+        id:`${record.id}|franja${index+1}`,
+        horario:slot,
+        slotIndex:index+1,
+        slotCount:slots.length
+      });
+    });
+  });
+  return expanded;
+}
+
+function buildInitialState(seed,records){
+  const initial={};
+  records.forEach((record)=>{
+    const seedState=seed[record.id]||seed[record.baseId||record.id];
+    if(seedState){
+      initial[record.id]=JSON.parse(JSON.stringify(seedState));
+    }
+  });
+  return initial;
+}
+
+const SOURCE_RECORDS=(Array.isArray(window.CALENDAR_2026_RECORDS)?window.CALENDAR_2026_RECORDS:[])
+  .map((record,index)=>({...record,sourceRow:index+4}));
+const RECORDS=expandRecords(SOURCE_RECORDS);
+const INITIAL_STATE=buildInitialState(window.CALENDAR_2026_INITIAL_STATE||{},RECORDS);
+const RECORD_IDS=new Set(RECORDS.map(record=>record.id));
+const RECORDS_BY_BASE_ID=RECORDS.reduce((acc,record)=>{
+  const baseId=record.baseId||record.id;
+  (acc[baseId]=acc[baseId]||[]).push(record);
+  return acc;
+},{});
+
+function normalizeStateEntries(source){
+  const normalized={};
+  Object.entries(source||{}).forEach(([key,value])=>{
+    if(RECORD_IDS.has(key)){
+      normalized[key]=value;
+      return;
+    }
+    const matches=RECORDS_BY_BASE_ID[key];
+    if(matches){
+      matches.forEach((record)=>{
+        normalized[record.id]=JSON.parse(JSON.stringify(value));
+      });
+    }
+  });
+  return normalized;
+}
+
+// ════════════════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════════════════
+let estados=JSON.parse(JSON.stringify(INITIAL_STATE));
+let curView='dash', curMonth=3;
+let modalRec=null, modalCurEstado='';
+let firebaseSyncAvailable=false;
+let syncTimer=null;
+let pendingCalendarSnapshot=null;
+let lastRemoteCalendarSource='';
+let lastRemoteCalendarMessage='';
+
+const getE=r=>estados[r.id]?.estado??r.defE;
+const getO=r=>estados[r.id]?.obs??r.defO;
+const getAct=r=>estados[r.id]?.act||null; // {nombre, fecha}
+const getG=r=>estados[r.id]?.grado??r.grado;
+
+function getGradeOptionsForRecord(record){
+  const baseOptions=GRADE_OPTIONS[record.colegio]||[];
+  return Array.from(new Set([...baseOptions,getG(record),record.grado].filter(grade=>grade&&grade!=='—')));
+}
+
+function applyGradeToRecord(record,grade){
+  const next={...(estados[record.id]||{})};
+  if(!grade||grade===record.grado){
+    delete next.grado;
+  } else {
+    next.grado=grade;
+  }
+  estados[record.id]=next;
+}
+
+// ════════════════════════════════════════════════════════════════
+// STORAGE
+// ════════════════════════════════════════════════════════════════
+const cloneInitialState=()=>JSON.parse(JSON.stringify(INITIAL_STATE));
+
+function getCalendarActor(){
+  const session=window.portalAuth?.getCurrentSession?.();
+  return session?.user?.fullName||session?.user?.username||'Administrador';
+}
+
+function setSaveChip(text,saving){
+  const chip=document.getElementById('save-chip');
+  if(!chip)return;
+  chip.textContent=text;
+  chip.classList.toggle('saving',Boolean(saving));
+}
+
+function buildSyncStatePayload(){
+  const payload={};
+  RECORDS.forEach((record)=>{
+    const current={...(estados[record.id]||{})};
+    current.sourceRow=record.sourceRow;
+    if(record.tipo==='CLASE'){
+      current.grado=getG(record);
+    }
+    payload[record.id]=current;
+  });
+  return payload;
+}
+
+function buildCalendarSnapshot(){
+  return {
+    calendarId:FIREBASE_CALENDAR_DOC,
+    version:2,
+    updatedAt:new Date().toISOString(),
+    updatedBy:getCalendarActor(),
+    state:buildSyncStatePayload()
+  };
+}
+
+function normalizeCalendarSnapshot(raw){
+  if(!raw||typeof raw!=='object')return null;
+  const source=(raw.state&&typeof raw.state==='object')?raw.state:raw;
+  return {
+    calendarId:raw.calendarId||FIREBASE_CALENDAR_DOC,
+    version:Number(raw.version)||1,
+    updatedAt:typeof raw.updatedAt==='string'?raw.updatedAt:'',
+    updatedBy:typeof raw.updatedBy==='string'?raw.updatedBy:'',
+    state:normalizeStateEntries(source)
+  };
+}
+
+function persistLocalSnapshot(snapshot){
+  const normalized=normalizeCalendarSnapshot(snapshot);
+  if(!normalized)return;
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify(normalized));}catch(e){}
+}
+
+function readLocalSnapshot(){
+  try{
+    const current=localStorage.getItem(STORAGE_KEY);
+    if(current){
+      return normalizeCalendarSnapshot(JSON.parse(current));
+    }
+  }catch(e){}
+
+  try{
+    const legacy=localStorage.getItem(LEGACY_STORAGE_KEY);
+    if(legacy){
+      return normalizeCalendarSnapshot({
+        calendarId:FIREBASE_CALENDAR_DOC,
+        version:1,
+        updatedAt:'',
+        updatedBy:'',
+        state:JSON.parse(legacy)
+      });
+    }
+  }catch(e){}
+
+  return null;
+}
+
+function applyCalendarSnapshot(snapshot){
+  estados=cloneInitialState();
+  const normalized=normalizeCalendarSnapshot(snapshot);
+  if(normalized){
+    Object.assign(estados,normalized.state);
+  }
+}
+
+function snapshotTime(snapshot){
+  const value=Date.parse(snapshot?.updatedAt||'');
+  return Number.isFinite(value)?value:0;
+}
+
+function formatSnapshotMeta(snapshot){
+  const parts=[];
+  if(snapshot?.updatedBy)parts.push(`Responsable: ${snapshot.updatedBy}`);
+  if(snapshot?.updatedAt){
+    try{
+      parts.push(`Fecha: ${new Date(snapshot.updatedAt).toLocaleString('es-CO')}`);
+    }catch(error){}
+  }
+  return parts.join('\n');
+}
+
+function getAdminCalendarSession(){
+  if(!window.portalAuth||typeof window.portalAuth.getCurrentSession!=='function')return null;
+  const session=window.portalAuth.getCurrentSession();
+  if(!session||session.role!=='admin'||!session.token)return null;
+  return session;
+}
+
+async function calendarApiRequest(method,{snapshot=null,refresh=false,force=false,timeoutMs=20000}={}){
+  if(!window.portalAuth||typeof window.portalAuth.getSharedStoreStatus!=='function')return null;
+  if(!/^https?:$/i.test(window.location.protocol))return null;
+
+  let sharedStatus=null;
+  try{
+    sharedStatus=await window.portalAuth.getSharedStoreStatus(force);
+  }catch(error){
+    return null;
+  }
+
+  if(!sharedStatus?.available)return null;
+  const session=getAdminCalendarSession();
+  if(!session)return null;
+
+  const url=new URL('/api/admin/calendar',window.location.origin);
+  url.searchParams.set('calendarId',FIREBASE_CALENDAR_DOC);
+  url.searchParams.set('_',String(Date.now()));
+  if(refresh){
+    url.searchParams.set('refresh','1');
+  }
+
+  const headers={
+    Accept:'application/json',
+    'X-Portal-Token':session.token
+  };
+  const requestOptions={
+    method,
+    headers,
+    cache:'no-store'
+  };
+
+  if(method==='POST'){
+    headers['Content-Type']='application/json';
+    requestOptions.body=JSON.stringify({
+      calendarId:FIREBASE_CALENDAR_DOC,
+      snapshot
+    });
+  }
+
+  let controller=null;
+  let timerId=null;
+  if(typeof AbortController!=='undefined'){
+    controller=new AbortController();
+    requestOptions.signal=controller.signal;
+    timerId=window.setTimeout(()=>controller.abort(),timeoutMs);
+  }
+
+  try{
+    const response=await fetch(url.toString(),requestOptions);
+    const text=await response.text();
+    let payload={};
+    try{
+      payload=text?JSON.parse(text):{};
+    }catch(error){
+      payload={ ok:response.ok, message:text||'Respuesta no valida del servidor compartido.' };
+    }
+    payload.status=response.status;
+    if(typeof payload.ok!=='boolean'){
+      payload.ok=response.ok;
+    }
+    return payload;
+  }catch(error){
+    return {
+      ok:false,
+      message:error?.message||'No fue posible conectar con el servidor compartido.'
+    };
+  }finally{
+    if(timerId){
+      window.clearTimeout(timerId);
+    }
+  }
+}
+
+async function loadFirebaseSnapshot(force){
+  lastRemoteCalendarSource='';
+  lastRemoteCalendarMessage='';
+
+  const sharedResult=await calendarApiRequest('GET',{ refresh:force, force, timeoutMs:22000 });
+  if(sharedResult&&sharedResult.ok){
+    const sharedSnapshot=normalizeCalendarSnapshot(sharedResult.snapshot);
+    lastRemoteCalendarSource=sharedResult.source||'network';
+    lastRemoteCalendarMessage=sharedResult.message||'';
+    if(sharedSnapshot){
+      firebaseSyncAvailable=true;
+      setSyncStatus(sharedResult.source==='firebase'?'Firebase conectado':'Servidor compartido activo','online');
+      return sharedSnapshot;
+    }
+    if(sharedResult.source==='network'){
+      firebaseSyncAvailable=true;
+      setSyncStatus('Servidor compartido activo','online');
+      return null;
+    }
+  }
+
+  if(!window._firebaseDb||typeof window._firebaseDb.cloudGetCalendar!=='function'){
+    setSyncStatus('Firebase no disponible','offline');
+    return null;
+  }
+
+  if(force&&typeof window._firebaseDb.resetCache==='function'){
+    window._firebaseDb.resetCache();
+  }
+
+  let ok=false;
+  if(typeof window._firebaseDb.checkAvailability==='function'){
+    try{
+      ok=await window._firebaseDb.checkAvailability();
+    }catch(error){
+      ok=false;
+    }
+  }
+
+  try{
+    const snapshot=normalizeCalendarSnapshot(await window._firebaseDb.cloudGetCalendar(FIREBASE_CALENDAR_DOC));
+    if(snapshot){
+      firebaseSyncAvailable=true;
+      lastRemoteCalendarSource='firebase';
+      setSyncStatus('Firebase conectado','online');
+      return snapshot;
+    }
+
+    if(ok){
+      firebaseSyncAvailable=true;
+      lastRemoteCalendarSource='firebase';
+      setSyncStatus('Firebase conectado','online');
+      return null;
+    }
+  }catch(error){
+  }
+
+  firebaseSyncAvailable=false;
+  setSyncStatus('Firebase no disponible','offline');
+  return null;
+}
+
+async function loadData(){
+  const localSnapshot=readLocalSnapshot();
+  applyCalendarSnapshot(localSnapshot);
+  setSaveChip(localSnapshot?'💾 Cambios locales cargados':'Base inicial cargada',false);
+
+  const remoteSnapshot=await loadFirebaseSnapshot(false);
+  if(remoteSnapshot){
+    if(!localSnapshot||snapshotTime(remoteSnapshot)>=snapshotTime(localSnapshot)){
+      applyCalendarSnapshot(remoteSnapshot);
+      persistLocalSnapshot(remoteSnapshot);
+      setSaveChip(
+        lastRemoteCalendarSource==='network'
+          ? (remoteSnapshot.updatedAt?'☁ Calendario cargado desde la red':'Base cargada desde la red')
+          : (remoteSnapshot.updatedAt?'☁ Calendario cargado desde Firebase':'Base cargada desde Firebase'),
+        false
+      );
+    }else{
+      pendingCalendarSnapshot=buildCalendarSnapshot();
+      scheduleFirebaseSync();
+      setSaveChip('💾 Cambios locales conservados',false);
+    }
+    return;
+  }
+
+  if(localSnapshot){
+    setSaveChip('💾 Cambios locales cargados',false);
+  }
+}
+
+function saveData(){
+  pendingCalendarSnapshot=buildCalendarSnapshot();
+  persistLocalSnapshot(pendingCalendarSnapshot);
+  setSaveChip('💾 Guardado local',true);
+  scheduleFirebaseSync();
+  setTimeout(()=>{
+    if(pendingCalendarSnapshot){
+      setSaveChip('💾 Guardado local',false);
+    }
+  },600);
+}
+function exportarDatos(){
+  const json=JSON.stringify(buildCalendarSnapshot(),null,2);
+  const blob=new Blob([json],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='calendario_2026_cambios_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();URL.revokeObjectURL(a.href);
+}
+function importarDatos(ev){
+  const f=ev.target.files[0];if(!f)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const imported=normalizeCalendarSnapshot(JSON.parse(e.target.result));
+      if(!imported)throw new Error('Sin datos');
+      applyCalendarSnapshot(imported);
+      pendingCalendarSnapshot=buildCalendarSnapshot();
+      persistLocalSnapshot(pendingCalendarSnapshot);
+      saveData();render();
+      alert('✅ Calendario importado correctamente.');
+    }catch(err){alert('❌ Archivo no válido.');}
+  };
+  reader.readAsText(f);
+  ev.target.value='';
+}
+function resetCalendar(){
+  if(!confirm('Se restaurara el calendario a la base inicial y se reemplazara tambien en Firebase.'))return;
+  try{
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(LEGACY_STORAGE_KEY);
+  }catch(e){}
+  estados=cloneInitialState();
+  pendingCalendarSnapshot=buildCalendarSnapshot();
+  persistLocalSnapshot(pendingCalendarSnapshot);
+  setSaveChip('Base inicial restaurada',false);
+  syncFirebaseState(true);
+  render();
+}
+
+async function loadLatestFromFirebase(){
+  const localSnapshot=readLocalSnapshot();
+  const shouldReplace=confirm(
+    localSnapshot
+      ? 'Se cargara la ultima version disponible en Firebase y se reemplazaran los cambios locales actuales. Deseas continuar?'
+      : 'Se cargara la ultima version disponible en Firebase. Deseas continuar?'
+  );
+  if(!shouldReplace)return false;
+
+  clearTimeout(syncTimer);
+  setSyncStatus('Buscando ultima version de Firebase...','syncing');
+  setSaveChip('☁ Cargando desde Firebase…',true);
+
+  const remoteSnapshot=await loadFirebaseSnapshot(true);
+  if(!remoteSnapshot){
+    setSaveChip(localSnapshot?'💾 Cambios locales conservados':'Base inicial cargada',false);
+    if(lastRemoteCalendarSource==='network'){
+      alert('No se encontro una copia nueva en Firebase en este momento. El servidor compartido ya conserva la ultima version disponible para esta red.');
+    }else{
+      alert('No se encontro una version remota disponible en Firebase para cargar en este momento.');
+    }
+    return false;
+  }
+
+  pendingCalendarSnapshot=null;
+  firebaseSyncAvailable=true;
+  applyCalendarSnapshot(remoteSnapshot);
+  persistLocalSnapshot(remoteSnapshot);
+  render();
+  setSyncStatus(lastRemoteCalendarSource==='network'?'Servidor compartido activo':'Firebase conectado','online');
+  setSaveChip(lastRemoteCalendarSource==='network'?'☁ Ultima version compartida cargada':'☁ Ultima version de Firebase cargada',false);
+
+  const meta=formatSnapshotMeta(remoteSnapshot);
+  if(lastRemoteCalendarSource==='network'){
+    alert(meta ? `Se cargo la ultima version disponible en el servidor compartido de esta red.\n\n${meta}` : 'Se cargo la ultima version disponible en el servidor compartido de esta red.');
+  }else{
+    alert(meta ? `Se cargo la ultima version disponible en Firebase.\n\n${meta}` : 'Se cargo la ultima version disponible en Firebase.');
+  }
+  return true;
+}
+
+function setSyncStatus(text,mode){
+  const chip=document.getElementById('sync-chip');
+  if(!chip)return;
+  chip.textContent=text;
+  chip.className=`sync-chip ${mode}`;
+}
+
+function configureDeploymentMode(){
+  const syncHelp=document.getElementById('sync-help');
+  const syncChip=document.getElementById('sync-chip');
+  const syncButton=document.getElementById('firebase-sync-button');
+  const loadButton=document.getElementById('firebase-load-button');
+  const resetButton=document.getElementById('calendar-reset-button');
+
+  if(syncChip)syncChip.style.display='';
+  if(syncHelp){
+    syncHelp.innerHTML='El calendario del administrador se sincroniza con el servidor compartido de esta red y, cuando esta disponible, tambien conserva una copia en Firebase.';
+  }
+  if(resetButton){
+    resetButton.textContent='Restaurar base inicial';
+  }
+  if(syncButton){
+    syncButton.style.display='';
+  }
+  if(loadButton){
+    loadButton.style.display='';
+  }
+}
+
+function scheduleFirebaseSync(){
+  clearTimeout(syncTimer);
+  syncTimer=setTimeout(()=>{syncFirebaseState(false);},700);
+}
+
+async function syncFirebaseState(force){
+  const snapshot=pendingCalendarSnapshot||buildCalendarSnapshot();
+  pendingCalendarSnapshot=snapshot;
+
+  const sharedResult=await calendarApiRequest('POST',{ snapshot, force, timeoutMs:25000 });
+  if(sharedResult&&sharedResult.ok){
+    const normalizedSnapshot=normalizeCalendarSnapshot(sharedResult.snapshot||snapshot)||snapshot;
+    pendingCalendarSnapshot=null;
+    firebaseSyncAvailable=true;
+    persistLocalSnapshot(normalizedSnapshot);
+    setSyncStatus(sharedResult.remoteSaved===false?'Servidor compartido activo':'Firebase conectado','online');
+    setSaveChip(sharedResult.remoteSaved===false?'✅ Guardado compartido':'✅ Guardado en Firebase',false);
+    return true;
+  }
+
+  if(!window._firebaseDb||typeof window._firebaseDb.cloudSaveCalendar!=='function'){
+    setSyncStatus('Firebase no disponible','offline');
+    setSaveChip('💾 Guardado local',false);
+    if(force){
+      alert('Firebase no esta disponible en esta version del portal. Tus cambios si quedaron guardados en este navegador.');
+    }
+    return false;
+  }
+
+  let ok=false;
+  if(typeof window._firebaseDb.checkAvailability==='function'){
+    try{
+      ok=await window._firebaseDb.checkAvailability();
+    }catch(error){
+      ok=false;
+    }
+  }
+
+  setSyncStatus(ok?'Sincronizando Firebase...':'Verificando Firebase...','syncing');
+  setSaveChip('☁ Guardando en Firebase…',true);
+  let syncError='No fue posible guardar en Firebase.';
+
+  try{
+    const saved=await window._firebaseDb.cloudSaveCalendar(FIREBASE_CALENDAR_DOC,snapshot);
+    if(!saved){
+      throw new Error('Firebase no confirmo el guardado.');
+    }
+
+    firebaseSyncAvailable=true;
+    pendingCalendarSnapshot=null;
+    setSyncStatus('Firebase conectado','online');
+    setSaveChip('✅ Guardado en Firebase',false);
+    return true;
+  }catch(error){
+    syncError=error?.message||syncError;
+    firebaseSyncAvailable=false;
+    setSyncStatus('Firebase no disponible','offline');
+    setSaveChip('💾 Guardado local',false);
+    if(force){
+      alert(`No fue posible guardar en Firebase.\n\n${syncError}\n\nTus cambios si quedaron guardados en este navegador.`);
+    }
+    return false;
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+// NAV
+// ════════════════════════════════════════════════════════════════
+function buildNav(){
+  const nav=document.getElementById('nav');nav.innerHTML='';
+  const tabs=[
+    {k:'dash',l:'📊 Dashboard'},
+    {k:'reg', l:'📋 Registro'},
+    {k:'all', l:'📆 Todos los meses'},
+    ...MONTHS.map(m=>({k:'m'+m,l:MN[m],m}))
+  ];
+  tabs.forEach(({k,l,m})=>{
+    const btn=el('button','nav-btn',l);
+    const active=k==='dash'?curView==='dash':k==='reg'?curView==='reg':k==='all'?curView==='all':curView==='cal'&&curMonth===m;
+    if(active)btn.classList.add('active');
+    btn.onclick=()=>{if(m){curMonth=m;curView='cal';}else curView=k;render();};
+    nav.appendChild(btn);
+  });
+}
+
+// ════════════════════════════════════════════════════════════════
+// DASHBOARD
+// ════════════════════════════════════════════════════════════════
+function renderDash(){
+  const main=document.getElementById('main');main.innerHTML='';
+  const clases=RECORDS.filter(r=>r.tipo==='CLASE');
+  const t={
+    total:clases.length,
+    imp:clases.filter(r=>getE(r)==='Impartida').length,
+    act:clases.filter(r=>getE(r)==='Activa').length,
+    ko:clases.filter(r=>getE(r)==='Cancelada').length,
+    sena:RECORDS.filter(r=>r.tipo==='SENA').length,
+    sabSena:RECORDS.filter(r=>r.tipo==='SÁBADO'&&getE(r)==='SEDE SENA').length,
+    domDesp:RECORDS.filter(r=>r.tipo==='DOMINGO'&&getE(r)==='DESPLAZAMIENTO').length,
+    conAct:RECORDS.filter(r=>getAct(r)?.nombre).length,
+  };
+  const pct=t.total>0?Math.round(t.imp/t.total*100):0;
+
+  const kpiCard=el('div','card');
+  kpiCard.innerHTML=`<div class="card-title">Resumen General del Contrato</div>
+  <div class="kpi-grid" id="kpi-grid"></div>
+  <div class="prog-box">
+    <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+      <span style="font-weight:700;color:var(--navy);font-size:14px;">Avance: clases impartidas</span>
+      <span style="font-weight:900;color:var(--ok);font-size:18px;">${pct}%</span>
+    </div>
+    <div class="pbar"><div class="pbar-fill" style="width:${pct}%"></div></div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--gray);">
+      <span>${t.imp} impartidas de ${t.total} programadas</span>
+      <span>${t.total-t.imp-t.ko} pendientes · 📋 ${t.conAct} con actividad asignada</span>
+    </div>
+  </div>`;
+  main.appendChild(kpiCard);
+
+  [{l:'Total clases',v:t.total,c:'#1e40af',bg:'#EFF6FF',em:'📚'},
+   {l:'✔ Impartidas',v:t.imp,  c:'#14532d',bg:'#F0FDF4',em:'✔'},
+   {l:'Programadas', v:t.act,  c:'#1e3a8a',bg:'#DBEAFE',em:'📅'},
+   {l:'Canceladas',  v:t.ko,   c:'#7f1d1d',bg:'#FEF2F2',em:'❌'},
+   {l:'Días SENA',   v:t.sena, c:'#312e81',bg:'#EEF2FF',em:'🏢'},
+   {l:'Sáb. SENA',   v:t.sabSena,c:'#3730a3',bg:'#EEF2FF',em:'📅'},
+   {l:'Dom. Desp.',  v:t.domDesp,c:'#78350f',bg:'#FFFBEB',em:'🚗'},
+   {l:'Con actividad',v:t.conAct,c:'#065f46',bg:'#D1FAE5',em:'📋'},
+  ].forEach(({l,v,c,bg,em})=>{
+    const d=el('div','kpi');
+    d.style.cssText=`background:${bg};border-color:${c}33;color:${c};`;
+    d.innerHTML=`<div style="font-size:22px">${em}</div><div class="kpi-n">${v}</div><div class="kpi-l">${l}</div>`;
+    kpiCard.querySelector('#kpi-grid').appendChild(d);
+  });
+
+  // Grade grid
+  const gg2=el('div','card');
+  gg2.innerHTML='<div class="card-title">Detalle por Grado</div><div class="grade-grid" id="gg"></div>';
+  main.appendChild(gg2);
+  const gg=gg2.querySelector('#gg');
+  [[JFK,'10A'],[JFK,'10B'],[SB,'10A'],[SB,'10B'],[SB,'11A'],[SB,'11B']].forEach(([col,g])=>{
+    const k=col+'-'+g;
+    const recs=RECORDS.filter(r=>r.colegio===col&&getG(r)===g&&r.tipo==='CLASE');
+    const byE=e=>recs.filter(r=>getE(r)===e).length;
+    const s={total:recs.length,imp:byE('Impartida'),act:byE('Activa'),ko:byE('Cancelada'),sp:byE('Sin programación'),rec:byE('Recuperada')};
+    const gc=GC[k]||{dk:'#374151',lt:'#F3F4F6'};
+    const p=s.total>0?Math.round(s.imp/s.total*100):0;
+    const lbl=col.includes('Kennedy')?'JFK':'SB';
+    const inst=col.includes('Kennedy')?'Kennedy':'Santa Bárbara';
+    const card=el('div','gc');
+    card.style.borderColor=gc.dk+'33';
+    card.innerHTML=`
+      <div class="gc-head" style="background:${gc.dk}">
+        <div style="font-size:16px;font-weight:900">${lbl} · ${g}</div>
+        <div style="font-size:10px;opacity:.75">${inst}</div>
+      </div>
+      <div class="gc-body">
+        <div style="display:flex;align-items:center;gap:12px;padding-bottom:10px;border-bottom:1px solid #F1F5F9;margin-bottom:6px;">
+          <div style="font-size:28px;font-weight:900;color:${gc.dk}">${s.imp}</div>
+          <div><div style="font-size:13px;font-weight:700;color:${gc.dk}">✔ Impartidas</div>
+          <div style="font-size:11px;color:var(--gray)">de ${s.total} programadas</div></div>
+        </div>
+        <div class="mini-grid">
+          <div class="ms" style="background:#DBEAFE"><div class="ms-n" style="color:#1e40af">${s.act}</div><div class="ms-l" style="color:#1e40af">Activas</div></div>
+          <div class="ms" style="background:#FEF2F2"><div class="ms-n" style="color:#7f1d1d">${s.ko}</div><div class="ms-l" style="color:#7f1d1d">Canceladas</div></div>
+          <div class="ms" style="background:#EEF2FF"><div class="ms-n" style="color:#3730a3">${s.sp}</div><div class="ms-l" style="color:#3730a3">Sin prog.</div></div>
+          <div class="ms" style="background:#FFF7ED"><div class="ms-n" style="color:#7c2d12">${s.rec}</div><div class="ms-l" style="color:#7c2d12">Recup.</div></div>
+        </div>
+        <div class="pbar"><div class="pbar-fill" style="width:${p}%;background:${gc.dk};"></div></div>
+        <div style="text-align:right;font-size:11px;color:${gc.dk};font-weight:700;margin-top:3px">${p}%</div>
+      </div>`;
+    gg.appendChild(card);
+  });
+
+  // Month nav
+  const mn=el('div','card');
+  mn.innerHTML='<div class="card-title">Ir al mes</div><div id="mnav" style="display:flex;flex-wrap:wrap;gap:8px;"></div>';
+  main.appendChild(mn);
+  MONTHS.forEach(m=>{
+    const b=el('button');
+    b.textContent='📅 '+MF[m];
+    b.style.cssText='padding:10px 18px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;cursor:pointer;font-weight:700;color:#1e40af;font-size:13px;transition:background .15s;';
+    b.onmouseover=()=>b.style.background='#DBEAFE';
+    b.onmouseout=()=>b.style.background='#EFF6FF';
+    b.onclick=()=>{curMonth=m;curView='cal';render();};
+    mn.querySelector('#mnav').appendChild(b);
+  });
+}
+
+// ════════════════════════════════════════════════════════════════
+// REGISTRO
+// ════════════════════════════════════════════════════════════════
+let regFilter={q:'',tipo:'',estado:''};
+function renderReg(){
+  const main=document.getElementById('main');main.innerHTML='';
+  const fbar=el('div','filter-bar');
+
+  const inp=el('input','fi fi-search');inp.placeholder='🔍  Buscar…';inp.value=regFilter.q;
+  inp.oninput=e=>{regFilter.q=e.target.value;redrawRegTables(main,tipoSel,estSel,inp);};
+  fbar.appendChild(inp);
+
+  const tipoSel=el('select','fi');
+  tipoSel.innerHTML='<option value="">Todo tipo</option><option>CLASE</option><option>SENA</option><option>SÁBADO</option><option>DOMINGO</option><option>DESPLAZAMIENTO</option><option>REUNIÓN RECTOR</option>';
+  tipoSel.value=regFilter.tipo;
+  tipoSel.onchange=e=>{regFilter.tipo=e.target.value;redrawRegTables(main,tipoSel,estSel,inp);};
+  fbar.appendChild(tipoSel);
+
+  const estSel=el('select','fi');
+  estSel.innerHTML='<option value="">Todo estado</option>'+
+    ['Activa','Impartida','Cancelada','Sin programación','Recuperada','No aplica','SEDE SENA','DESPLAZAMIENTO']
+    .map(x=>`<option>${x}</option>`).join('');
+  estSel.value=regFilter.estado;
+  estSel.onchange=e=>{regFilter.estado=e.target.value;redrawRegTables(main,tipoSel,estSel,inp);};
+  fbar.appendChild(estSel);
+
+  const clr=el('button','btn-sm','✕ Limpiar');
+  clr.onclick=()=>{regFilter={q:'',tipo:'',estado:''};inp.value='';tipoSel.value='';estSel.value='';redrawRegTables(main,tipoSel,estSel,inp);};
+  fbar.appendChild(clr);
+
+  const cnt=el('span');cnt.id='reg-cnt';cnt.style.cssText='margin-left:auto;font-size:12px;color:var(--gray);';
+  fbar.appendChild(cnt);
+  main.appendChild(fbar);
+  redrawRegTables(main,tipoSel,estSel,inp);
+}
+
+function redrawRegTables(main,tipoSel,estSel,inp){
+  main.querySelectorAll('.reg-sec').forEach(e=>e.remove());
+  const q=(inp.value||'').toLowerCase(),tipo=tipoSel.value,estado=estSel.value;
+  const pass=r=>{
+    if(tipo&&r.tipo!==tipo)return false;
+    if(estado&&getE(r)!==estado)return false;
+    if(q&&!(r.colegio+' '+getG(r)+' '+r.fecha+' '+r.dia+' '+r.mes).toLowerCase().includes(q))return false;
+    return true;
+  };
+  const hab=RECORDS.filter(r=>!r.finde&&pass(r)).sort(compareRecordsBySchedule);
+  const fin=RECORDS.filter(r=> r.finde&&pass(r)).sort(compareRecordsBySchedule);
+  const cnt=main.querySelector('#reg-cnt');
+  if(cnt)cnt.textContent=(hab.length+fin.length)+' registros';
+  buildRegSection(main,'📅 Días Hábiles',hab,false);
+  if(fin.length)buildRegSection(main,'🗓️ Fines de Semana',fin,true);
+}
+
+function buildRegSection(main,label,recs,finde){
+  if(!recs.length)return;
+  const sec=el('div','reg-sec');sec.style.marginTop='16px';
+  const wrap=el('div','tbl-wrap');
+  wrap.appendChild(el('div','tbl-hdr',label+` <span style="opacity:.6;font-size:11px;font-weight:400">(${recs.length})</span>`));
+  const scr=el('div');scr.style.overflowX='auto';
+  const tbl=el('table');
+  tbl.innerHTML=`<thead><tr>${['#','Fecha','Mes','Institución','Grado','Horario','Día','Tipo','Estado','Observación','Actividad','Entrega'].map(h=>`<th>${h}</th>`).join('')}</tr></thead>`;
+  const tbody=el('tbody');
+  recs.forEach((r,i)=>{
+    const e=getE(r),o=getO(r),act=getAct(r),ss=SS[e]||SS['Activa'];
+    const grade=getG(r);
+    const gc=GC[r.colegio+'-'+grade];
+    const shC=r.colegio.includes('Kennedy')?'JFK':r.colegio.includes('Santa')?'SB':r.colegio;
+    const instB=gc?`<span style="background:${gc.lt};color:${gc.dk};padding:2px 7px;border-radius:5px;font-weight:700;font-size:11px;">${shC}</span>`:`<span style="font-size:11px;color:#9ca3af">${r.colegio}</span>`;
+    const gradoB=gc?`<span style="background:${gc.dk};color:#fff;padding:2px 7px;border-radius:5px;font-weight:700;font-size:11px;">${grade}</span>`:'—';
+    const eB=`<span class="sbadge" style="background:${ss.bg};color:${ss.tc};border-color:${ss.bc};${e==='Cancelada'?'text-decoration:line-through':''}">${ss.em} ${escapeHtml(e)}</span>`;
+    const actB=act?.nombre?`<span style="font-size:11px;color:#065f46;font-weight:600">📋 ${escapeHtml(act.nombre)}</span>`:'';
+    const entB=act?.fecha?`<span style="font-size:11px;color:#065f46;font-weight:700">📅 ${escapeHtml(fmtActFecha(act.fecha))}</span>`:'';
+    const tr=el('tr');
+    if(e==='Impartida')tr.className='tr-imp';
+    else if(e==='Cancelada')tr.className='tr-ko';
+    tr.innerHTML=`<td><span style="color:#9ca3af;font-size:11px">${i+1}</span></td>
+      <td><b>${escapeHtml(r.fecha.split('-').reverse().join('/'))}</b></td>
+      <td style="font-size:11px;color:var(--gray)">${escapeHtml((r.mes||'').slice(0,3))}</td>
+      <td>${instB}</td><td>${gradoB}</td>
+      <td style="font-size:11px;max-width:150px">${escapeHtml(r.horario||'')}</td>
+      <td style="font-size:11px;color:var(--gray)">${escapeHtml((r.dia||'').slice(0,3))}</td>
+      <td><span style="font-size:10px;background:#EEF2FF;color:#3730a3;padding:2px 7px;border-radius:10px;font-weight:700">${escapeHtml(r.tipo)}</span></td>
+      <td>${eB}</td>
+      <td style="font-size:11px;color:#374151;max-width:170px">${escapeHtml(o)}</td>
+      <td>${actB}</td><td>${entB}</td>`;
+    tr.style.cursor='pointer';
+    tr.onclick=()=>openModal(r);
+    tbody.appendChild(tr);
+  });
+  tbl.appendChild(tbody);scr.appendChild(tbl);wrap.appendChild(scr);sec.appendChild(wrap);main.appendChild(sec);
+}
+
+// ════════════════════════════════════════════════════════════════
+// CALENDAR HELPERS
+// ════════════════════════════════════════════════════════════════
+const LEG_ITEMS=[
+  ['✔ Impartida','#F0FDF4','#14532d'],['📅 Activa','#DBEAFE','#1e40af'],
+  ['❌ Cancelada','#FEF2F2','#7f1d1d'],['⬜ Sin prog. → 🏢','#EEF2FF','#3730a3'],
+  ['🏢 Sede SENA','#EEF2FF','#3730a3'],['🚗 Desplaz.','#FFFBEB','#78350f'],
+  ['🎉 Festivo','#FFFDE7','#b45309'],['☀️ Receso','#FFF7ED','#9a3412'],
+];
+
+function buildLegend(){
+  const leg=el('div','legend');
+  LEG_ITEMS.forEach(([l,bg,c])=>{
+    const s=el('span','leg',l);s.style.cssText=`background:${bg};color:${c};border-color:${c}33;`;
+    leg.appendChild(s);
+  });
+  return leg;
+}
+
+function isDesplazamientoReason(record){
+  const stateText=String(getE(record)||'').toLowerCase();
+  const obsText=String(getO(record)||'').toLowerCase();
+  return /desplaz|otanche/.test(`${stateText} ${obsText}`);
+}
+
+// FIX: determine cell state for a day based on ALL classes
+// Returns: 'all-sp' | 'all-desp' | 'all-ko' | 'some-ko' | 'imp' | 'rec' | 'act' | null
+function dayCellState(clases){
+  if(!clases.length)return null;
+  const states=clases.map(r=>getE(r));
+  if(states.every(e=>e==='Sin programación'))return 'all-sp';
+  if(states.every(e=>e==='Cancelada')&&clases.every(r=>isDesplazamientoReason(r)))return 'all-desp';
+  if(states.every(e=>e==='Cancelada'))return 'all-ko';
+  if(states.some(e=>e==='Cancelada'))return 'some-ko';
+  if(states.every(e=>e==='Impartida'))return 'imp';
+  if(states.some(e=>e==='Impartida'))return 'some-imp';
+  if(states.some(e=>e==='Recuperada'))return 'rec';
+  return 'act';
+}
+
+function buildCalMonth(m){
+  const firstDay=new Date(2026,m-1,1),nDays=new Date(2026,m,0).getDate(),startWd=iwd(firstDay);
+  const dm={};
+  RECORDS.forEach(r=>{
+    const d=parseD(r.fecha);
+    if(d.getFullYear()===2026&&d.getMonth()+1===m){const day=d.getDate();(dm[day]=dm[day]||[]).push(r);}
+  });
+
+  const wrap=el('div','cal-wrap');
+  const grid=el('div','cal-grid');
+
+  // Day headers
+  DN.forEach((d,i)=>{
+    const dh=el('div','cal-dh',d.slice(0,3).toUpperCase());
+    dh.style.background=i<5?'#1e40af':i===5?'#374151':'#111827';
+    grid.appendChild(dh);
+  });
+  // Blanks
+  for(let i=0;i<startWd;i++)grid.appendChild(el('div','cal-blank'));
+
+  for(let day=1;day<=nDays;day++){
+    const s=`2026-${String(m).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const d=parseD(s),wd=iwd(d);
+    const isWe=wd>=5,isFuera=d>CONTRACT_END;
+    const isFest=FESTIVOS.has(s),isRec=RECESOS.has(s),isSp=!!SPECIAL[s];
+    const PRIord={'CLASE':0,'SENA':1,'SÁBADO':2,'DOMINGO':3};
+    const recs=(dm[day]||[]).sort((a,b)=>{
+      const typeCmp=(PRIord[a.tipo]??9)-(PRIord[b.tipo]??9);
+      if(typeCmp)return typeCmp;
+      return compareRecordsBySchedule(a,b);
+    });
+    const clases=recs.filter(r=>r.tipo==='CLASE');
+    const senaR=recs.find(r=>r.tipo==='SENA');
+    const weR=recs.find(r=>r.finde);
+    const weE=weR?getE(weR):'No aplica';
+
+    const cell=el('div','cal-cell');
+    cell.appendChild(el('div','cal-day',String(day)));
+
+    let bg='#fff',brd='#E5E7EB',brdW=1;
+
+    if(isFuera){
+      bg='#F3F4F6';brd='#D1D5DB';
+      cell.appendChild(el('div','cal-note','<span style="color:#9ca3af;font-style:italic;font-size:9px;">Fuera contrato</span>'));
+    } else if(isRec){
+      bg='#FFF7ED';brd='#FDBA74';
+      cell.appendChild(el('div','cal-note','<span style="color:#c2410c">☀️ Receso</span>'));
+    } else if(isFest){
+      bg='#FFFDE7';brd='#FCD34D';
+      cell.appendChild(el('div','cal-note','<span style="color:#b45309">🎉 Festivo</span>'));
+    } else if(isSp){
+      const sp=SPECIAL[s];bg=sp.bg;brd=sp.c;brdW=2;
+      const n=el('div','cal-note',`<span style="color:${sp.c};cursor:pointer">${sp.label}</span>`);
+      n.onclick=()=>openModal(recs[0]);cell.appendChild(n);
+    } else if(isWe){
+      if(weE==='SEDE SENA'){bg='#EEF2FF';brd='#6366f1';brdW=2;}
+      else if(weE==='DESPLAZAMIENTO'){bg='#FFFBEB';brd='#f59e0b';brdW=2;}
+      else{bg='#F9FAFB';brd='#E5E7EB';}
+      const n=el('div','cal-note');
+      if(weE==='SEDE SENA')n.innerHTML='<span style="font-size:11px;font-weight:900;color:#3730a3;cursor:pointer">🏢 SEDE SENA</span>';
+      else if(weE==='DESPLAZAMIENTO')n.innerHTML='<span style="font-size:10px;font-weight:900;color:#78350f;cursor:pointer">🚗 DESPLAZ. A OTANCHE</span>';
+      else n.innerHTML='<span style="font-size:10px;color:#9ca3af">No laboral</span>';
+      if(weR){n.style.cursor='pointer';n.onclick=()=>openModal(weR);}
+      cell.appendChild(n);
+    } else if(clases.length){
+      const cs=dayCellState(clases);
+
+      // ── FIX: Si TODAS las clases del día son "Sin programación" → mostrar 🏢 SEDE SENA ──
+      if(cs==='all-sp'){
+        bg='#EEF2FF';brd='#6366f1';brdW=2;
+        const n=el('div','');
+        n.style.cssText='margin-top:6px;cursor:pointer;';
+        n.innerHTML='<div style="font-size:13px;font-weight:900;color:#3730a3">🏢 SEDE SENA</div><div style="font-size:9px;color:#6366f1;margin-top:2px">Sin programación</div>';
+        n.onclick=()=>openModal(clases[0]);
+        cell.appendChild(n);
+      } else if(cs==='all-desp'){
+        bg='#FFFBEB';brd='#f59e0b';brdW=2;
+        const n=el('div','');
+        n.style.cssText='margin-top:6px;cursor:pointer;';
+        n.innerHTML='<div style="font-size:13px;font-weight:900;color:#78350f">🚗 Desplazamiento</div><div style="font-size:9px;color:#b45309;margin-top:2px">Clases canceladas por desplazamiento</div>';
+        n.onclick=()=>openModal(clases[0]);
+        cell.appendChild(n);
+      } else {
+        const gc=GC[clases[0].colegio+'-'+getG(clases[0])];
+        if(gc){bg=gc.lt;brd=gc.dk;brdW=2;}
+        if(cs==='all-ko'){bg='#FEF2F2';brd='#ef4444';brdW=2;}
+
+        clases.forEach(r=>{
+          const e=getE(r),grade=getG(r),gc2=GC[r.colegio+'-'+grade]||{dk:'#374151',lt:'#F3F4F6'};
+          const act=getAct(r);
+          const sh=r.colegio.includes('Kennedy')?'JFK':'SB';
+          const isDesplazamiento=isDesplazamientoReason(r);
+          // ── FIX: si solo ESTA clase es Sin programación → mostrar 🏢 en su píldora ──
+          const emap={
+            Activa:           {bg:gc2.lt,    tc:gc2.dk,  str:false},
+            Impartida:        {bg:'#BBF7D0',  tc:'#14532d',str:false},
+            Cancelada:        isDesplazamiento?{bg:'#FFFBEB',tc:'#78350f',str:false}:{bg:'#FECACA',tc:'#7f1d1d',str:true},
+            'Sin programación':{bg:'#EEF2FF', tc:'#3730a3',str:false},
+            Recuperada:       {bg:'#FED7AA',  tc:'#7c2d12',str:false},
+          };
+          const es=emap[e]||{bg:gc2.lt,tc:gc2.dk,str:false};
+          const pill=el('div','class-pill');
+          pill.style.cssText=`background:${es.bg};border-left-color:${es.tc};margin-top:3px;`;
+          const lbl=e==='Sin programación'?'🏢 '+sh+' '+grade:
+                    e==='Impartida'?'✔ '+sh+' '+grade:
+                    e==='Cancelada'&&isDesplazamiento?'🚗 '+sh+' '+grade:
+                    sh+' '+grade;
+          pill.innerHTML=`<div class="cp-lbl" style="color:${es.tc};${es.str?'text-decoration:line-through':''}">${escapeHtml(lbl)}</div>
+            <div class="cp-hr">${escapeHtml(r.horario||'')}</div>`;
+          if(act?.nombre){
+            pill.innerHTML+=`<div class="cp-act">📋 ${escapeHtml(act.nombre.slice(0,18))}${act.nombre.length>18?'…':''}</div>`;
+            if(act?.fecha)pill.innerHTML+=`<div class="act-badge">🗓 ${escapeHtml(fmtActFecha(act.fecha))}</div>`;
+          }
+          pill.onclick=()=>openModal(r);
+          cell.appendChild(pill);
+        });
+      }
+      cell.style.cssText+=`background:${bg};border:${brdW}px solid ${brd};${brdW>1?'box-shadow:0 2px 8px rgba(0,0,0,.08);':''}`;
+    } else if(senaR){
+      bg='#EEF2FF';brd='#6366f1';brdW=2;
+      const n=el('div','cal-note','<span style="font-size:11px;font-weight:900;color:#3730a3;cursor:pointer">🏢 SEDE SENA</span>');
+      n.onclick=()=>openModal(senaR);cell.appendChild(n);
+    }
+
+    if(!clases.length||dayCellState(clases)==='all-sp'||dayCellState(clases)==='all-desp'||dayCellState(clases)==='all-ko'){
+      cell.style.background=bg;
+      cell.style.border=`${brdW}px solid ${brd}`;
+      if(brdW>1)cell.style.boxShadow='0 2px 8px rgba(0,0,0,.08)';
+    }
+    grid.appendChild(cell);
+  }
+
+  wrap.appendChild(grid);
+  return wrap;
+}
+
+// ════════════════════════════════════════════════════════════════
+// SINGLE MONTH VIEW
+// ════════════════════════════════════════════════════════════════
+function renderCal(){
+  const main=document.getElementById('main');main.innerHTML='';
+  const card=el('div','card');
+  const hrow=el('div');hrow.style.cssText='display:flex;align-items:center;gap:14px;margin-bottom:12px;flex-wrap:wrap;';
+  const ht=el('div');ht.style.cssText='font-size:18px;font-weight:900;color:var(--navy);';
+  ht.textContent='📅 '+MF[curMonth]+' 2026';
+  hrow.appendChild(ht);card.appendChild(hrow);
+  card.appendChild(buildLegend());
+  card.appendChild(buildCalMonth(curMonth));
+  card.appendChild(el('p','','<span style="font-size:11px;color:#9ca3af;display:block;text-align:center;margin-top:10px;">💡 Haga clic en cualquier celda para cambiar su estado</span>'));
+  main.appendChild(card);
+}
+
+// ════════════════════════════════════════════════════════════════
+// ALL MONTHS VIEW
+// ════════════════════════════════════════════════════════════════
+function renderAll(){
+  const main=document.getElementById('main');main.innerHTML='';
+  const hcard=el('div','card');
+  hcard.style.marginBottom='10px';
+  hcard.innerHTML='<div class="card-title" style="margin-bottom:4px;">📆 Vista completa del contrato 2026</div><div style="font-size:12px;color:var(--gray)">Todos los meses de un vistazo · Haga clic en cualquier día para editar</div>';
+  main.appendChild(hcard);
+
+  MONTHS.forEach(m=>{
+    const card=el('div','card');
+    card.style.marginBottom='16px';
+    const title=el('div','cal-month-title','📅 '+MF[m]+' 2026');
+    card.appendChild(title);
+    card.appendChild(buildCalMonth(m));
+    main.appendChild(card);
+  });
+}
+
+// ════════════════════════════════════════════════════════════════
+// MODAL
+// ════════════════════════════════════════════════════════════════
+function refreshModalBtns(opts){
+  const eo=document.getElementById('est-opts');eo.innerHTML='';
+  opts.forEach(opt=>{
+    const ss=SS[opt]||SS['Activa'];
+    const active=opt===modalCurEstado;
+    const btn=document.createElement('button');
+    btn.type='button';btn.className='est-btn';
+    btn.innerHTML=`${ss.em} ${opt}`;
+    btn.style.color=active?'#fff':ss.tc;
+    btn.style.background=active?ss.bc:'#F9FAFB';
+    btn.style.borderColor=active?ss.bc:'#E5E7EB';
+    btn.addEventListener('click',function(ev){ev.stopPropagation();modalCurEstado=opt;refreshModalBtns(opts);});
+    eo.appendChild(btn);
+  });
+  const ss=SS[modalCurEstado]||SS['Activa'];
+  const pc=document.getElementById('prev-chip');
+  pc.style.cssText=`background:${ss.bg};border-color:${ss.bc};`;
+  pc.innerHTML=`<span class="dot" style="background:${ss.bc}"></span><span style="color:${ss.tc}">${modalCurEstado}</span>`;
+}
+
+function openModal(r){
+  modalRec=r;modalCurEstado=getE(r);
+  const o=getO(r),act=getAct(r)||{},grade=getG(r);
+  const isFinde=r.finde,isSENA=r.tipo==='SENA';
+
+  document.getElementById('m-title').textContent=
+    r.colegio.includes('Kennedy')?`JFK · Grado ${grade}`:
+    r.colegio.includes('Santa')?`SB · Grado ${grade}`:r.colegio;
+  document.getElementById('m-sub').textContent=
+    `${r.fecha.split('-').reverse().join('/')} · ${r.dia} · ${r.mes}${r.slotCount>1?` · Clase ${r.slotIndex} de ${r.slotCount}`:''}`;
+  const hrDiv=document.getElementById('m-hr');
+  if(r.horario&&r.horario!=='—'){hrDiv.textContent='🕐 '+r.horario;hrDiv.style.display='inline-block';}
+  else hrDiv.style.display='none';
+
+  const opts=isFinde?['No aplica','SEDE SENA','DESPLAZAMIENTO']:
+    ['Activa','Impartida','Cancelada','Sin programación','Recuperada'];
+  refreshModalBtns(opts);
+
+  const obsSel=document.getElementById('m-obs-sel');
+  obsSel.innerHTML=OBS.map(op=>`<option value="${op}">${op||'— Sin observación —'}</option>`).join('');
+  obsSel.value=o;
+  document.getElementById('m-obs-inp').value=o;
+
+  const gradeSec=document.getElementById('grade-section');
+  const gradeSel=document.getElementById('m-grado');
+  if(r.tipo==='CLASE'){
+    const gradeOptions=getGradeOptionsForRecord(r);
+    gradeSel.innerHTML=gradeOptions.map(option=>`<option value="${option}">${option}</option>`).join('');
+    gradeSel.value=gradeOptions.includes(grade)?grade:(gradeOptions[0]||grade);
+    gradeSec.style.display='block';
+  } else {
+    gradeSel.innerHTML='';
+    gradeSec.style.display='none';
+  }
+
+  // Actividad — solo para clases
+  const actSec=document.getElementById('act-section');
+  if(r.tipo==='CLASE'){
+    actSec.style.display='block';
+    document.getElementById('m-act-nombre').value=act.nombre||'';
+    document.getElementById('m-act-fecha').value=act.fecha||'';
+    updateActPreview();
+  } else {
+    actSec.style.display='none';
+  }
+
+  document.getElementById('modal-bg').classList.add('open');
+}
+
+function updateActPreview(){
+  const nombre=document.getElementById('m-act-nombre').value;
+  const fecha=document.getElementById('m-act-fecha').value;
+  const prev=document.getElementById('act-preview');
+  if(nombre||fecha){
+    prev.innerHTML=`<span style="background:#D1FAE5;color:#065f46;padding:4px 10px;border-radius:8px;font-weight:700;">
+      📋 ${nombre||'Sin nombre'} ${fecha?'· Entrega: '+fmtActFecha(fecha):'· Sin fecha'}</span>`;
+  } else {
+    prev.innerHTML='';
+  }
+}
+document.getElementById('m-act-nombre').addEventListener('input',updateActPreview);
+document.getElementById('m-act-fecha').addEventListener('change',updateActPreview);
+
+function closeModal(){document.getElementById('modal-bg').classList.remove('open');modalRec=null;}
+function saveModal(){
+  if(!modalRec)return;
+  const obs=document.getElementById('m-obs-inp').value.trim()||document.getElementById('m-obs-sel').value;
+  const actNombre=document.getElementById('m-act-nombre').value.trim();
+  const actFecha=document.getElementById('m-act-fecha').value;
+  const act=(actNombre||actFecha)?{nombre:actNombre,fecha:actFecha}:null;
+  estados[modalRec.id]={...(estados[modalRec.id]||{}),estado:modalCurEstado,obs,act};
+  if(modalRec.tipo==='CLASE'){
+    applyGradeToRecord(modalRec,document.getElementById('m-grado').value||getG(modalRec));
+    estados[modalRec.id]={...(estados[modalRec.id]||{}),estado:modalCurEstado,obs,act};
+  }
+  saveData();closeModal();render();
+}
+document.getElementById('modal-bg').addEventListener('click',e=>{if(e.target===document.getElementById('modal-bg'))closeModal();});
+
+// ════════════════════════════════════════════════════════════════
+// RENDER
+// ════════════════════════════════════════════════════════════════
+function render(){
+  buildNav();
+  if(curView==='dash')renderDash();
+  else if(curView==='reg')renderReg();
+  else if(curView==='all')renderAll();
+  else renderCal();
+}
+
+configureDeploymentMode();
+(async function bootstrapCalendar(){
+  await loadData();
+  render();
+  if(window._firebaseDb&&typeof window._firebaseDb.checkAvailability==='function'){
+    setInterval(()=>{
+      if(!pendingCalendarSnapshot){
+        loadFirebaseSnapshot(true).then((remoteSnapshot)=>{
+          const localSnapshot=readLocalSnapshot();
+          if(remoteSnapshot&&(!localSnapshot||snapshotTime(remoteSnapshot)>snapshotTime(localSnapshot))){
+            applyCalendarSnapshot(remoteSnapshot);
+            persistLocalSnapshot(remoteSnapshot);
+            setSaveChip('☁ Cambios remotos cargados',false);
+            render();
+          }
+        }).catch(()=>{});
+      }
+    },FIREBASE_REFRESH_MS);
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+/* css/shared_shell.css */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+html:not(.shell-ready) [data-reveal],
+html.shell-ready [data-reveal] {
+  opacity: 0;
+  transform: translateY(18px);
+}
+
+html.shell-ready [data-reveal] {
+  transition:
+    opacity var(--motion-base),
+    transform var(--motion-base);
+  transition-delay: calc(var(--reveal-index, 0) * 60ms);
+}
+
+html.shell-ready [data-reveal].is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  color: var(--text-strong);
+  background:
+    radial-gradient(circle at top right, rgba(15, 191, 100, 0.12), transparent 28%),
+    linear-gradient(180deg, #f4f8f5 0%, var(--bg-canvas) 100%);
+}
+
+.app-shell {
+  min-height: 100vh;
+}
+
+.app-hero {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #04140d 0%, #0a2c1c 54%, #0d3f28 100%);
+  color: #fff;
+}
+
+.app-hero__inner,
+.app-main {
+  width: min(1200px, calc(100% - 32px));
+  margin: 0 auto;
+}
+
+.app-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.app-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-weight: 700;
+  transition: transform var(--motion-fast), background var(--motion-fast);
+}
+
+.app-btn:hover {
+  transform: translateY(-1px);
+}
+
+.app-btn:focus-visible {
+  outline: 3px solid rgba(245, 183, 0, 0.4);
+  outline-offset: 3px;
+}
+
+.app-btn--primary {
+  background: linear-gradient(135deg, var(--brand-700), var(--brand-500));
+  color: #fff;
+}
+
+.app-btn--ghost {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  html:not(.shell-ready) [data-reveal],
+  html.shell-ready [data-reveal],
+  html.shell-ready [data-reveal].is-visible {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .app-btn,
+  .app-btn:hover {
+    transition: none;
+    transform: none;
+  }
+}

@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta
+  http-equiv="Content-Security-Policy"
+  content="default-src 'self' blob: data:; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https:; media-src 'self' blob: data: https:; frame-src 'self' https://es.educaplay.com;"
+>
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Panel Administrativo | Portal de Gu&iacute;as</title>
+<meta
+  name="description"
+  content="Panel administrativo para revisar usuarios, contrase&ntilde;as y progreso por gu&iacute;a."
+>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/site_tokens.css?v=20260409_1">
+<link rel="stylesheet" href="css/shared_shell.css?v=20260409_1">
+<link rel="stylesheet" href="css/page_admin.css?v=20260409_1">
+<script src="js/portal_auth.js?v=20260324_6"></script>
+<script src="js/firebase_db.js?v=20260326_7"></script>
+<script defer src="js/shared_shell.js?v=20260409_1"></script>
+<script>
+if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "index.html" })) {
+  document.documentElement.innerHTML = "";
+  throw new Error("Acceso administrativo requerido.");
+}
+</script>
+</head>
+<body class="app-shell app-shell--admin">
+  <header class="hero app-hero">
+    <div class="hero-inner app-hero__inner">
+      <div class="hero-top" data-reveal>
+        <div>
+          <div class="badge">Panel Administrativo</div>
+          <h1>Gestion de usuarios y avances</h1>
+          <p>
+            Desde aqui el administrador puede revisar los aprendices creados en este navegador,
+            cambiar contrasenas y reiniciar avances por guia cuando sea necesario.
+          </p>
+        </div>
+        <div class="hero-actions">
+          <a class="hero-link" href="index.html">Volver al portal</a>
+          <a class="hero-link primary" href="calendario-academico-2026.html">Abrir calendario</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <svg class="wave" viewBox="0 0 1440 40" preserveAspectRatio="none" height="40" aria-hidden="true">
+    <path fill="currentColor" d="M0,20 C360,40 1080,0 1440,20 L1440,40 L0,40 Z"></path>
+  </svg>
+
+  <main class="main app-main admin-main">
+    <section class="summary-grid" id="summary-grid" data-reveal>
+      <article class="summary-card">
+        <span class="summary-label">Usuarios creados</span>
+        <div class="summary-value" id="summary-users">0</div>
+      </article>
+      <article class="summary-card">
+        <span class="summary-label">Con avance registrado</span>
+        <div class="summary-value" id="summary-active">0</div>
+      </article>
+      <article class="summary-card">
+        <span class="summary-label">Fichas activas</span>
+        <div class="summary-value" id="summary-fichas">0</div>
+      </article>
+      <article class="summary-card">
+        <span class="summary-label">Administrador</span>
+        <div class="summary-value" id="summary-admin">Protegido</div>
+      </article>
+    </section>
+
+    <section class="panel" data-reveal>
+      <h2>Contexto de almacenamiento</h2>
+      <p id="storage-context-copy">
+        Este panel intentara leer primero los usuarios y avances compartidos por la red local. Si el
+        servidor no esta activo, mostrara la informacion disponible en este navegador.
+      </p>
+      <div class="toolbar">
+        <input id="user-search" type="search" placeholder="Buscar por nombre, usuario, ficha o grupo">
+        <button class="btn secondary" type="button" id="refresh-users">Actualizar listado</button>
+      </div>
+      <div class="admin-feedback" id="admin-feedback"></div>
+    </section>
+
+    <section class="users-grid" id="users-container" data-reveal></section>
+  </main>
+
+  <div class="modal-shell" id="guide2-responses-modal" hidden>
+    <div class="modal-backdrop" data-close-guide2-modal></div>
+    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="guide2-responses-title">
+      <div class="modal-header">
+        <div>
+          <h2 id="guide2-responses-title">Respuestas del cuestionario 3.2.1</h2>
+          <p id="guide2-responses-subtitle">Consulta administrativa de la Guía 2.</p>
+        </div>
+        <button class="modal-close" type="button" data-close-guide2-modal aria-label="Cerrar">×</button>
+      </div>
+      <div class="modal-meta" id="guide2-responses-meta"></div>
+      <div class="modal-body" id="guide2-responses-body"></div>
+    </section>
+  </div>
+
+  <script src="js/admin_usuarios.js?v=20260408_1"></script>
+</body>
+</html>
