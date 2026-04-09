@@ -24,7 +24,12 @@ body.app-shell--calendar {
 }
 
 .app-shell--calendar .app-main {
-  width: min(1440px, calc(100% - 32px));
+  width: min(1480px, calc(100% - 40px));
+}
+
+.app-shell--calendar .app-hero__inner {
+  width: min(1480px, calc(100% - 40px));
+  margin: 0 auto;
 }
 
 #header {
@@ -91,7 +96,7 @@ body.app-shell--calendar {
 }
 
 .calendar-hero__copy {
-  max-width: 700px;
+  max-width: 860px;
 }
 
 .calendar-kicker {

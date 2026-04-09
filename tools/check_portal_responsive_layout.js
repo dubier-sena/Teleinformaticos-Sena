@@ -5,13 +5,13 @@ const cssPath = path.join(__dirname, "..", "css", "page_portal.css");
 const css = fs.readFileSync(cssPath, "utf8");
 
 const expectations = [
-  "width: min(1180px, calc(100% - 40px));",
+  "width: min(1480px, calc(100% - 48px));",
   "@media (min-width: 1100px) {",
-  "grid-template-columns: minmax(0, 1fr) minmax(360px, 430px);",
+  "grid-template-columns: minmax(0, 1.22fr) minmax(360px, 420px);",
   "align-items: center;",
-  "max-width: 12.6ch;",
-  "font-size: clamp(2.9rem, 3.6vw, 4.2rem);",
-  "max-width: min(100%, 430px);",
+  "max-width: 15.4ch;",
+  "font-size: clamp(3rem, 3.7vw, 4.5rem);",
+  "max-width: min(100%, 420px);",
   "@media (max-width: 1099px) {",
   "max-width: min(100%, 760px);",
   "@media (min-width: 641px) and (max-width: 1099px) {",
