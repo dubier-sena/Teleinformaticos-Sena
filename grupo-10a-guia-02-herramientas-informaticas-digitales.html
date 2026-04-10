@@ -20,9 +20,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/site_tokens.css?v=20260409_1">
   <link rel="stylesheet" href="css/shared_shell.css?v=20260409_1">
-  <link rel="stylesheet" href="css/guia_template.css?v=20260409_5">
+  <link rel="stylesheet" href="css/guia_template.css?v=20260409_6">
   <script defer src="js/shared_shell.js?v=20260409_1"></script>
-  <script defer src="js/script_guia2.js?v=20260409_7"></script>
+  <script defer src="js/script_guia2.js?v=20260409_8"></script>
   <script defer src="js/guia_template.js?v=20260409_1"></script>
 </head>
 <body
@@ -283,8 +283,10 @@
                   <span class="word-search-max">Puntaje maximo: 10000</span>
                 </div>
                 <p class="word-search-help">Pulsa <strong>Comenzar</strong>, espera la <strong>Cuenta regresiva</strong> de 3 segundos y arrastra desde la primera hasta la &uacute;ltima letra de cada palabra. El ranking ordena por mayor puntaje y, en empate, por menor tiempo.</p>
-                <div class="word-search-layout">
-                  <div class="word-search-board" id="wordSearchBoard" aria-label="Sopa de letras de conceptos b&aacute;sicos"></div>
+                <div class="word-search-layout word-search-arena">
+                  <div class="word-search-board-shell">
+                    <div class="word-search-board" id="wordSearchBoard" aria-label="Sopa de letras de conceptos b&aacute;sicos"></div>
+                  </div>
                   <aside class="word-search-side">
                     <div class="word-search-panel">
                       <h4>Palabras a buscar</h4>
