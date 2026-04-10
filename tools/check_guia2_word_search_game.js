@@ -23,6 +23,10 @@ for (const page of pages) {
     "Comenzar",
     "Cuenta regresiva",
     "Puntaje maximo: 10000",
+    'class="word-search-layout word-search-arena"',
+    'class="word-search-board-shell"',
+    "css/guia_template.css?v=20260409_6",
+    "js/script_guia2.js?v=20260409_8",
   ];
 
   for (const marker of required) {
@@ -50,6 +54,11 @@ const scriptMarkers = [
   "renderWordSearchTargets",
   "publishWordSearchLeaderboard",
   "renderWordSearchLeaderboard",
+  "renderWordSearchCountdownOverlay",
+  "pulseWordSearchMetric",
+  "wordSearchCountdownPhase",
+  "is-counting-down",
+  "is-updating",
   "pointerdown",
   "pointerup",
   "mistakes",
@@ -71,8 +80,25 @@ for (const marker of ["Errores", "Puntaje", "Palabras encontradas"]) {
   }
 }
 
+const css = fs.readFileSync(path.join(root, "css", "guia_template.css"), "utf8");
+const cssMarkers = [
+  ".word-search-board-shell",
+  ".word-search-game.is-counting-down",
+  ".word-search-stat.is-updating",
+  "@keyframes wordSearchCountdownPop",
+  "@keyframes wordSearchRingPulse",
+  "@keyframes wordSearchMetricPulse",
+];
+
+for (const marker of cssMarkers) {
+  if (!css.includes(marker)) {
+    console.error(`[FAIL] css/guia_template.css no contiene animacion/distribucion: ${marker}`);
+    failed = true;
+  }
+}
+
 if (failed) {
   process.exit(1);
 }
 
-console.log("OK: Guia 2 incluye sopa de letras local con palabras visibles, penalizacion y Top 5.");
+console.log("OK: Guia 2 incluye sopa de letras local con palabras visibles, penalizacion, Top 5 y contador animado.");

@@ -419,6 +419,7 @@ let wordSearchTimer = null;
 let wordSearchCountdownTimer = null;
 let wordSearchCountdownValue = 0;
 let wordSearchCountdownVariant = 0;
+let wordSearchCountdownPhase = "idle";
 const ACTIVITY4_IDENTITY_NAME_KEY = "actividad4:nombre_completo";
 const ACTIVITY4_IDENTITY_FICHA_KEY = "actividad4:ficha";
 
@@ -1054,17 +1055,48 @@ function setWordSearchStatus(message) {
   }
 }
 
+function pulseWordSearchMetric(element) {
+  const metric = element?.closest?.(".word-search-stat") || element;
+  if (!metric) {
+    return;
+  }
+
+  metric.classList.remove("is-updating");
+  void metric.offsetWidth;
+  metric.classList.add("is-updating");
+  window.setTimeout(() => {
+    metric.classList.remove("is-updating");
+  }, 420);
+}
+
+function updateWordSearchMetric(id, value, options) {
+  const element = document.getElementById(id);
+  if (!element) {
+    return;
+  }
+
+  const nextValue = String(value);
+  if (element.textContent !== nextValue) {
+    element.textContent = nextValue;
+    if (!options || options.pulse !== false) {
+      pulseWordSearchMetric(element);
+    }
+  }
+}
+
 function clearWordSearchCountdown() {
   window.clearInterval(wordSearchCountdownTimer);
   wordSearchCountdownTimer = null;
   wordSearchCountdownValue = 0;
   wordSearchCountdownVariant = 0;
+  wordSearchCountdownPhase = "idle";
 }
 
 function startWordSearchCountdown(variant) {
   clearWordSearchCountdown();
   wordSearchCountdownVariant = normalizeWordSearchVariant(variant);
   wordSearchCountdownValue = 3;
+  wordSearchCountdownPhase = "countdown";
   renderWordSearchGame();
   setWordSearchStatus("Cuenta regresiva: 3 segundos para iniciar.");
 
@@ -1082,6 +1114,7 @@ function startWordSearchCountdown(variant) {
 
 function finishWordSearchCountdown() {
   const variant = wordSearchCountdownVariant || getWordSearchState().variant || 1;
+  wordSearchCountdownPhase = "go";
   clearWordSearchCountdown();
   setWordSearchState({
     ...buildWordSearchPlayerMeta(),
@@ -1309,12 +1342,7 @@ function renderWordSearchBoard(gameState) {
 
   if (!gameState.startedAt) {
     board.innerHTML = wordSearchCountdownTimer
-      ? `
-        <div class="word-search-countdown" aria-live="polite">
-          <span>Cuenta regresiva</span>
-          <strong>${escapeHtml(wordSearchCountdownValue)}</strong>
-        </div>
-      `
+      ? renderWordSearchCountdownOverlay()
       : `
         <div class="word-search-ready">
           <strong>Sopa 15 x 15</strong>
@@ -1379,11 +1407,30 @@ function renderWordSearchTargets(gameState) {
     .join("");
 }
 
+function renderWordSearchCountdownOverlay() {
+  const value = Math.max(1, Number(wordSearchCountdownValue) || 1);
+
+  return `
+    <div class="word-search-countdown" aria-live="polite" data-countdown-phase="${escapeHtml(wordSearchCountdownPhase)}">
+      <span>Cuenta regresiva</span>
+      <strong id="wordSearchCountdownMeter" aria-label="${escapeHtml(`Faltan ${value} segundos`)}">
+        <b>${escapeHtml(value)}</b>
+      </strong>
+      <em>Prepara el mouse o el dedo para comenzar.</em>
+    </div>
+  `;
+}
+
 function refreshWordSearchTime() {
   const gameState = getWordSearchState();
   const time = document.getElementById("wordSearchTime");
+  const isLive = Boolean(gameState.startedAt && !gameState.completedAt);
+
   if (time) {
-    time.textContent = formatWordSearchTime(getWordSearchElapsedMs(gameState));
+    const nextTime = formatWordSearchTime(getWordSearchElapsedMs(gameState));
+    const stat = time.closest(".word-search-stat");
+    stat?.classList.toggle("is-timer-live", isLive);
+    updateWordSearchMetric("wordSearchTime", nextTime, { pulse: isLive });
   }
 }
 
@@ -1395,10 +1442,11 @@ function renderWordSearchGame() {
 
   const gameState = getWordSearchState();
   const puzzle = getWordSearchPuzzle(gameState.variant);
-  const score = document.getElementById("wordSearchScore");
-  const count = document.getElementById("wordSearchCount");
-  const mistakes = document.getElementById("wordSearchMistakes");
   const startButton = document.getElementById("wordSearchStart");
+
+  container.classList.toggle("is-counting-down", Boolean(wordSearchCountdownTimer));
+  container.classList.toggle("is-running", Boolean(gameState.startedAt && !gameState.completedAt));
+  container.classList.toggle("is-completed", Boolean(gameState.completedAt));
 
   renderWordSearchBoard(gameState);
   renderWordSearchTargets(gameState);
@@ -1406,15 +1454,10 @@ function renderWordSearchGame() {
   renderWordSearchLeaderboard(readWordSearchLeaderboard());
   refreshWordSearchTime();
 
-  if (score) {
-    score.textContent = String(gameState.score);
-  }
-  if (count) {
-    count.textContent = `${gameState.found.length} / ${puzzle.targets.length}`;
-  }
-  if (mistakes) {
-    mistakes.textContent = String(gameState.mistakes);
-  }
+  updateWordSearchMetric("wordSearchScore", gameState.score);
+  updateWordSearchMetric("wordSearchCount", `${gameState.found.length} / ${puzzle.targets.length}`);
+  updateWordSearchMetric("wordSearchMistakes", gameState.mistakes);
+
   if (startButton) {
     startButton.disabled = Boolean(wordSearchCountdownTimer || (gameState.startedAt && !gameState.completedAt));
     startButton.textContent =
