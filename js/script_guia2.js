@@ -515,6 +515,7 @@ let cloudStateRetryTimer = null;
 let pendingCloudStateSnapshot = null;
 let wordSearchPuzzleCache = {};
 let wordSearchSelectionStart = null;
+let wordSearchLastSelectionCells = [];
 let wordSearchIsDragging = false;
 let wordSearchTimer = null;
 let wordSearchCountdownTimer = null;
@@ -1138,6 +1139,66 @@ function findWordSearchMatch(cells) {
   });
 }
 
+function sameWordSearchCell(a, b) {
+  return a && b && Number(a.row) === Number(b.row) && Number(a.col) === Number(b.col);
+}
+
+function matchWordSearchPlacementInCells(cells, placementCells) {
+  if (!Array.isArray(cells) || !Array.isArray(placementCells) || cells.length < placementCells.length) {
+    return null;
+  }
+
+  for (let offset = 0; offset <= cells.length - placementCells.length; offset += 1) {
+    const slice = cells.slice(offset, offset + placementCells.length);
+    const forward = slice.every((cell, index) => sameWordSearchCell(cell, placementCells[index]));
+    if (forward) {
+      return slice;
+    }
+
+    const backward = slice.every((cell, index) =>
+      sameWordSearchCell(cell, placementCells[placementCells.length - 1 - index])
+    );
+    if (backward) {
+      return slice;
+    }
+  }
+
+  return null;
+}
+
+function findWordSearchSelectionMatch(cells) {
+  const gameState = getWordSearchState();
+  const puzzle = getWordSearchPuzzle(gameState.variant);
+  const foundWords = new Set(gameState.found);
+  const exactMatch = findWordSearchMatch(cells);
+
+  if (exactMatch) {
+    return {
+      target: exactMatch,
+      cells: puzzle.placements[exactMatch.word]?.cells || cells,
+    };
+  }
+
+  for (const target of puzzle.targets) {
+    if (foundWords.has(target.word)) {
+      continue;
+    }
+
+    const matchedCells = matchWordSearchPlacementInCells(
+      cells,
+      puzzle.placements[target.word]?.cells || []
+    );
+    if (matchedCells) {
+      return {
+        target,
+        cells: matchedCells,
+      };
+    }
+  }
+
+  return null;
+}
+
 function cellKey(cell) {
   return `${cell.row}:${cell.col}`;
 }
@@ -1254,6 +1315,7 @@ function startWordSearchGame() {
 
   const variant = pickWordSearchVariant();
   wordSearchSelectionStart = null;
+  wordSearchLastSelectionCells = [];
   wordSearchIsDragging = false;
   setWordSearchState({
     ...buildWordSearchPlayerMeta(),
@@ -1278,6 +1340,7 @@ function resetWordSearchGame() {
 
   clearWordSearchCountdown();
   wordSearchSelectionStart = null;
+  wordSearchLastSelectionCells = [];
   wordSearchIsDragging = false;
   state[WORD_SEARCH_STATE_KEY] = {
     found: [],
@@ -1343,6 +1406,7 @@ function beginWordSearchSelection(button) {
   }
 
   wordSearchSelectionStart = start;
+  wordSearchLastSelectionCells = [start];
   wordSearchIsDragging = true;
   markWordSearchSelection([start]);
   setWordSearchStatus("Sigue arrastrando hasta la ultima letra y suelta para validar.");
@@ -1361,6 +1425,7 @@ function previewWordSearchSelection(button) {
 
   const selectedCells = getWordSearchLineCells(wordSearchSelectionStart, end);
   if (selectedCells.length) {
+    wordSearchLastSelectionCells = selectedCells;
     markWordSearchSelection(selectedCells);
   }
 }
@@ -1378,38 +1443,39 @@ function finishWordSearchSelection(button) {
   wordSearchIsDragging = false;
   wordSearchSelectionStart = null;
 
-  if (!end) {
-    clearWordSearchSelection();
-    return;
+  let selectedCells = end ? getWordSearchLineCells(start, end) : [];
+  if (!selectedCells.length && wordSearchLastSelectionCells.length > 1) {
+    selectedCells = wordSearchLastSelectionCells;
   }
 
-  const selectedCells = getWordSearchLineCells(start, end);
   if (!selectedCells.length) {
-    setWordSearchState({
-      mistakes: gameState.mistakes + 1,
-    });
     clearWordSearchSelection();
-    setWordSearchStatus(`Seleccion incorrecta: -${WORD_SEARCH_ERROR_PENALTY} puntos. Selecciona una linea horizontal, vertical o diagonal.`);
+    wordSearchLastSelectionCells = [];
+    setWordSearchStatus("No se conto como error. Intenta soltar el dedo sobre la ultima letra de la palabra.");
     return;
   }
 
   if (selectedCells.length <= 1) {
     clearWordSearchSelection();
+    wordSearchLastSelectionCells = [];
     setWordSearchStatus("Arrastra sobre varias letras para seleccionar una palabra completa.");
     return;
   }
 
   markWordSearchSelection(selectedCells);
-  const match = findWordSearchMatch(selectedCells);
-  if (!match) {
+  const matchedSelection = findWordSearchSelectionMatch(selectedCells);
+  if (!matchedSelection) {
     setWordSearchState({
       mistakes: gameState.mistakes + 1,
     });
+    wordSearchLastSelectionCells = [];
     window.setTimeout(clearWordSearchSelection, 350);
     setWordSearchStatus(`Esa seleccion no coincide: -${WORD_SEARCH_ERROR_PENALTY} puntos. Intenta con otra palabra.`);
     return;
   }
 
+  const match = matchedSelection.target;
+  markWordSearchSelection(matchedSelection.cells);
   const found = [...gameState.found, match.word];
   const puzzle = getWordSearchPuzzle(gameState.variant);
   const completed = found.length >= puzzle.targets.length;
@@ -1428,9 +1494,11 @@ function finishWordSearchSelection(button) {
   if (completed) {
     publishWordSearchLeaderboard(getWordSearchState());
     setWordSearchStatus("Excelente. Completaste la sopa y tu puntaje entro al ranking.");
+    wordSearchLastSelectionCells = [];
     return;
   }
 
+  wordSearchLastSelectionCells = [];
   setWordSearchStatus(`Encontraste: ${match.label}. Sigue buscando.`);
 }
 
@@ -1800,13 +1868,7 @@ function initializeWordSearchGame() {
   });
   board?.addEventListener("pointerup", (event) => {
     const button = getWordSearchCellFromPointerEvent(event);
-    if (button) {
-      finishWordSearchSelection(button);
-    } else {
-      wordSearchIsDragging = false;
-      wordSearchSelectionStart = null;
-      clearWordSearchSelection();
-    }
+    finishWordSearchSelection(button);
     if (board.hasPointerCapture?.(event.pointerId)) {
       board.releasePointerCapture(event.pointerId);
     }
@@ -1815,6 +1877,7 @@ function initializeWordSearchGame() {
   board?.addEventListener("pointercancel", () => {
     wordSearchIsDragging = false;
     wordSearchSelectionStart = null;
+    wordSearchLastSelectionCells = [];
     clearWordSearchSelection();
   });
   window.clearInterval(wordSearchTimer);

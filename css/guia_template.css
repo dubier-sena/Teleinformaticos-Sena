@@ -2848,6 +2848,143 @@ body.sb-hidden .btn-sb-expand {
   }
 }
 
+@media (max-width: 640px) {
+  .word-search-game,
+  .matching-game {
+    padding: 12px;
+    border-color: rgba(15, 122, 65, 0.14);
+    background: linear-gradient(180deg, #ffffff 0%, #f8fcf9 100%);
+    box-shadow: 0 10px 26px rgba(10, 92, 49, 0.08);
+  }
+
+  .word-search-game::before,
+  .matching-game::before {
+    opacity: 0.35;
+  }
+
+  .word-search-help,
+  .matching-game-help {
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  .word-search-top,
+  .matching-game-top {
+    gap: 8px;
+  }
+
+  .word-search-stat,
+  .matching-game-stat {
+    border-radius: 14px;
+    padding: 10px 12px;
+  }
+
+  .word-search-stat strong,
+  .matching-game-stat strong {
+    font-size: 20px;
+  }
+
+  .word-search-actions,
+  .matching-game-actions {
+    gap: 8px;
+  }
+
+  .word-search-actions .btn-drive,
+  .word-search-actions .btn-qr,
+  .matching-game-actions .btn-drive,
+  .matching-game-actions .btn-qr {
+    flex: 1 1 132px;
+    justify-content: center;
+    padding-inline: 12px;
+  }
+
+  .word-search-board-shell {
+    overflow-x: auto;
+    padding: 3px;
+    background: #dcefe3;
+    box-shadow: 0 12px 26px rgba(7, 26, 18, 0.12);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .word-search-board-shell::before {
+    opacity: 0.25;
+  }
+
+  .word-search-board {
+    width: max(100%, 390px);
+    gap: 3px;
+    padding: 9px;
+    border-radius: 14px;
+    background: #123826;
+    min-height: 0;
+  }
+
+  .word-search-cell {
+    min-height: 22px;
+    border-radius: 6px;
+    border-color: rgba(18, 56, 38, 0.16);
+    background: #fbfffc;
+    font-size: 13px;
+  }
+
+  .word-search-cell:hover,
+  .word-search-cell.is-selected {
+    background: #dbeafe;
+    border-color: #60a5fa;
+    transform: scale(1.04);
+  }
+
+  .word-search-cell.is-found {
+    background: #12824c;
+  }
+
+  .word-search-panel,
+  .matching-game-panel {
+    border-radius: 14px;
+    padding: 12px;
+  }
+
+  .word-search-found-list .found-word,
+  .word-search-target-list .target-word {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .matching-game-board {
+    min-height: auto;
+    gap: 8px;
+    padding: 10px;
+    border: 1px solid #d6eadf;
+    background: #f2faf5;
+    box-shadow: 0 12px 26px rgba(7, 26, 18, 0.1);
+  }
+
+  .matching-game-board.is-waiting,
+  .matching-game-board.is-countdown {
+    min-height: 280px;
+    background:
+      linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+      #103522;
+  }
+
+  .matching-game-tool,
+  .matching-game-option {
+    min-height: 52px;
+    border-radius: 14px;
+    padding: 13px 14px;
+    box-shadow: none;
+  }
+
+  .matching-game-tool span {
+    font-size: 16px;
+  }
+
+  .matching-game-option {
+    font-size: 14px;
+  }
+}
+
 @media print {
   .sidebar,
   .topbar,
