@@ -1262,6 +1262,48 @@
     };
   }
 
+  function updateStudentFicha(usernameKey, newFicha) {
+    if (!isAdminSession()) {
+      return {
+        ok: false,
+        message: "Solo el administrador puede corregir fichas.",
+      };
+    }
+
+    const normalizedKey = normalizeUsername(usernameKey);
+    const cleanFicha = normalizeFicha(newFicha);
+    const selection = getSelectionForFicha(cleanFicha);
+    if (!getFichaInfo(cleanFicha)) {
+      return {
+        ok: false,
+        message: "La ficha seleccionada no existe en el portal.",
+      };
+    }
+
+    const users = getUsers();
+    const index = users.findIndex((item) => item.usernameKey === normalizedKey);
+    if (index === -1) {
+      return {
+        ok: false,
+        message: "No se encontro el usuario solicitado.",
+      };
+    }
+
+    users[index] = {
+      ...users[index],
+      ficha: cleanFicha,
+      inst: selection.inst,
+      grupo: selection.grupo,
+      updatedAt: new Date().toISOString(),
+    };
+    saveUsers(users);
+
+    return {
+      ok: true,
+      user: users[index],
+    };
+  }
+
   function resetStudentGuideProgress(usernameKey, fileName) {
     if (!isAdminSession()) {
       return {
@@ -1377,6 +1419,7 @@ window.portalAuth = {
     clearSelection,
     writeGuideProgress,
     updateStudentPassword,
+    updateStudentFicha,
     resetStudentGuideProgress,
     resetStudentAllProgress,
   };
@@ -1403,6 +1446,7 @@ window.portalAuth = {
     loginStudent: auth.loginStudent,
     loginAdmin: auth.loginAdmin,
     updateStudentPassword: auth.updateStudentPassword,
+    updateStudentFicha: auth.updateStudentFicha,
     resetStudentGuideProgress: auth.resetStudentGuideProgress,
     resetStudentAllProgress: auth.resetStudentAllProgress,
     getStudentsWithProgress: auth.getStudentsWithProgress,
@@ -2549,6 +2593,62 @@ window.portalAuth = {
     }, {
       preservePasswordHash: true,
     });
+    bumpNetworkSyncSignature();
+
+    return {
+      ok: true,
+      user: sanitizeUser(getLocalUser(cleanUsernameKey)),
+    };
+  };
+
+  auth.updateStudentFicha = async function updateStudentFichaPatched(usernameKey, newFicha) {
+    const cleanUsernameKey = normalizeUsername(usernameKey);
+    const cleanFicha = normalizeFicha(newFicha);
+    const selection = auth.getSelectionForFicha(cleanFicha);
+
+    if (!auth.getFichaInfo(cleanFicha)) {
+      return {
+        ok: false,
+        message: "La ficha seleccionada no existe en el portal.",
+      };
+    }
+
+    const status = await getSharedStoreStatus();
+    if (!status.available) {
+      const localResult = original.updateStudentFicha.call(auth, cleanUsernameKey, cleanFicha);
+      bumpNetworkSyncSignature();
+      return localResult;
+    }
+
+    const session = getCurrentSessionPatched();
+    const result = await apiRequest("/api/admin/ficha", {
+      method: "POST",
+      token: session && session.token,
+      body: {
+        usernameKey: cleanUsernameKey,
+        ficha: cleanFicha,
+      },
+    });
+
+    if (!result.ok) {
+      return result;
+    }
+
+    const existing = getLocalUser(cleanUsernameKey);
+    upsertLocalUser(
+      {
+        ...(existing || {}),
+        ...(result.user || {}),
+        usernameKey: cleanUsernameKey,
+        ficha: cleanFicha,
+        inst: selection.inst,
+        grupo: selection.grupo,
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        preservePasswordHash: true,
+      }
+    );
     bumpNetworkSyncSignature();
 
     return {

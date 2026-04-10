@@ -12,7 +12,8 @@ a {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -233,7 +234,8 @@ input {
 }
 
 .toolbar input,
-.password-row input {
+.password-row input,
+.ficha-row select {
   flex: 1 1 280px;
   min-height: 46px;
   padding: 0 14px;
@@ -247,7 +249,8 @@ input {
 }
 
 .toolbar input:focus,
-.password-row input:focus {
+.password-row input:focus,
+.ficha-row select:focus {
   outline: none;
   border-color: rgba(15, 191, 100, 0.55);
   box-shadow: 0 0 0 4px rgba(15, 191, 100, 0.14);
@@ -378,12 +381,17 @@ input {
 }
 
 .password-row,
+.ficha-row,
 .user-actions,
 .progress-actions {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
   align-items: center;
+}
+
+.ficha-row select {
+  cursor: pointer;
 }
 
 .user-note {
@@ -441,6 +449,41 @@ input {
   font-size: 12px;
   color: var(--text-muted);
   margin-top: 10px;
+}
+
+.word-search-admin-summary {
+  display: grid;
+  gap: 5px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(15, 191, 100, 0.24);
+  background: linear-gradient(135deg, rgba(15, 191, 100, 0.1), rgba(245, 183, 0, 0.08));
+  color: var(--text-strong);
+}
+
+.word-search-admin-summary span {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.word-search-admin-summary strong {
+  color: var(--admin-accent-dark);
+  font-size: 14px;
+}
+
+.word-search-admin-summary small {
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.word-search-admin-summary.is-empty,
+.word-search-admin-summary.is-loading {
+  background: #f8fbff;
+  border-color: #dbe5f0;
 }
 
 .empty-state {
@@ -652,6 +695,7 @@ body.modal-open {
 
   .hero-actions,
   .password-row,
+  .ficha-row,
   .user-actions,
   .progress-actions {
     flex-direction: column;

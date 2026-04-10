@@ -4,9 +4,15 @@ const path = require("path");
 const projectRoot = process.cwd();
 const adminHtmlPath = path.join(projectRoot, "panel-administrativo-usuarios.html");
 const adminJsPath = path.join(projectRoot, "js", "admin_usuarios.js");
-const guidePaths = [
-  path.join(projectRoot, "grupo-10a-guia-02-herramientas-informaticas-digitales.html"),
-  path.join(projectRoot, "grupo-10b-guia-02-herramientas-informaticas-digitales.html"),
+const guidePages = [
+  {
+    guidePath: path.join(projectRoot, "grupo-10a-guia-02-herramientas-informaticas-digitales.html"),
+    formPath: path.join(projectRoot, "grupo-10a-guia-02-actividad-4-formulario.html"),
+  },
+  {
+    guidePath: path.join(projectRoot, "grupo-10b-guia-02-herramientas-informaticas-digitales.html"),
+    formPath: path.join(projectRoot, "grupo-10b-guia-02-actividad-4-formulario.html"),
+  },
 ];
 
 function read(filePath) {
@@ -34,13 +40,20 @@ const questionnaireFields = [
   'data-store="contexto-otanche"',
 ];
 
-guidePaths.forEach((guidePath) => {
+guidePages.forEach(({ guidePath, formPath }) => {
   const guideHtml = read(guidePath);
+  const formHtml = read(formPath);
+  assertIncludes(
+    guideHtml,
+    path.basename(formPath),
+    `enlace al formulario independiente en ${path.basename(guidePath)}`
+  );
+
   questionnaireFields.forEach((key) => {
     assertIncludes(
-      guideHtml,
+      formHtml,
       key,
-      `campo del cuestionario 3.2.1 en ${path.basename(guidePath)}`
+      `campo del cuestionario 3.2.1 en ${path.basename(formPath)}`
     );
   });
 });
