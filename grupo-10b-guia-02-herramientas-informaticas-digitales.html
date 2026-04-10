@@ -20,9 +20,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/site_tokens.css?v=20260409_1">
   <link rel="stylesheet" href="css/shared_shell.css?v=20260409_1">
-  <link rel="stylesheet" href="css/guia_template.css?v=20260409_3">
+  <link rel="stylesheet" href="css/guia_template.css?v=20260409_4">
   <script defer src="js/shared_shell.js?v=20260409_1"></script>
-  <script defer src="js/script_guia2.js?v=20260409_5"></script>
+  <script defer src="js/script_guia2.js?v=20260409_6"></script>
   <script defer src="js/guia_template.js?v=20260409_1"></script>
 </head>
 <body
@@ -272,6 +272,10 @@
                     <span>Encontradas</span>
                     <strong id="wordSearchCount">0 / 0</strong>
                   </div>
+                  <div class="word-search-stat">
+                    <span>Errores</span>
+                    <strong id="wordSearchMistakes">0</strong>
+                  </div>
                 </div>
                 <div class="word-search-actions">
                   <button class="btn-drive" type="button" id="wordSearchStart">Iniciar actividad</button>
@@ -282,6 +286,10 @@
                 <div class="word-search-layout">
                   <div class="word-search-board" id="wordSearchBoard" aria-label="Sopa de letras de conceptos b&aacute;sicos"></div>
                   <aside class="word-search-side">
+                    <div class="word-search-panel">
+                      <h4>Palabras a buscar</h4>
+                      <div class="word-search-target-list" id="wordSearchTargets"></div>
+                    </div>
                     <div class="word-search-panel">
                       <h4>Palabras encontradas por el aprendiz</h4>
                       <div class="word-search-found-list" id="wordSearchFound">A&uacute;n no hay palabras encontradas.</div>

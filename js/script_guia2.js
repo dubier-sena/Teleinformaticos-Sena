@@ -401,6 +401,7 @@ const ACTIVITY_QR_DATA = {
 const WORD_SEARCH_ACTIVITY_ID = "guia2-sopa";
 const WORD_SEARCH_STATE_KEY = "wordSearch:guia2-sopa";
 const WORD_SEARCH_MAX_SCORE = 10000;
+const WORD_SEARCH_ERROR_PENALTY = 200;
 const WORD_SEARCH_GRID_SIZE = 20;
 const WORD_SEARCH_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const WORD_SEARCH_LEADERBOARD_SCOPE = "leaderboard:guia2-sopa";
@@ -857,11 +858,13 @@ function getWordSearchState() {
         .filter((word) => validWords.has(word))
     )
   );
+  const mistakes = Math.max(0, Number(saved.mistakes) || 0);
 
   return {
     found,
     foundLabels: found.map((word) => puzzle.placements[word]?.label || word),
-    score: calculateWordSearchScore(found.length, puzzle.targets.length),
+    mistakes,
+    score: calculateWordSearchScore(found.length, puzzle.targets.length, mistakes),
     startedAt: saved.startedAt || "",
     completedAt: saved.completedAt || "",
     elapsedMs: Number(saved.elapsedMs) || 0,
@@ -875,11 +878,13 @@ function getWordSearchState() {
   };
 }
 
-function calculateWordSearchScore(foundCount, total) {
+function calculateWordSearchScore(foundCount, total, mistakes) {
   if (!total) {
     return 0;
   }
-  return Math.min(WORD_SEARCH_MAX_SCORE, Math.round((foundCount / total) * WORD_SEARCH_MAX_SCORE));
+  const baseScore = Math.round((foundCount / total) * WORD_SEARCH_MAX_SCORE);
+  const penalty = Math.max(0, Number(mistakes) || 0) * WORD_SEARCH_ERROR_PENALTY;
+  return Math.max(0, Math.min(WORD_SEARCH_MAX_SCORE, baseScore - penalty));
 }
 
 function getWordSearchElapsedMs(gameState) {
@@ -944,13 +949,18 @@ function setWordSearchState(next) {
         )
       )
     : current.found;
+  const mistakes =
+    Object.prototype.hasOwnProperty.call(next, "mistakes")
+      ? Math.max(0, Number(next.mistakes) || 0)
+      : current.mistakes;
 
   state[WORD_SEARCH_STATE_KEY] = {
     ...current,
     ...next,
     found,
     foundLabels: found.map((word) => puzzle.placements[word]?.label || word),
-    score: calculateWordSearchScore(found.length, puzzle.targets.length),
+    mistakes,
+    score: calculateWordSearchScore(found.length, puzzle.targets.length, mistakes),
     updatedAt: new Date().toISOString(),
   };
   saveState();
@@ -1021,7 +1031,7 @@ function setWordSearchStatus(message) {
 
 function startWordSearchGame() {
   const current = getWordSearchState();
-  if (current.completedAt && current.score >= WORD_SEARCH_MAX_SCORE) {
+  if (current.completedAt) {
     setWordSearchStatus("Actividad completada. Puedes reiniciar si deseas mejorar el tiempo.");
     return;
   }
@@ -1056,6 +1066,7 @@ function resetWordSearchGame() {
     completedAt: "",
     elapsedMs: 0,
     leaderboardPublishedAt: "",
+    mistakes: 0,
     updatedAt: new Date().toISOString(),
   };
   saveState();
@@ -1071,7 +1082,7 @@ function handleWordSearchCellClick(button) {
   }
 
   let gameState = getWordSearchState();
-  if (gameState.completedAt && gameState.score >= WORD_SEARCH_MAX_SCORE) {
+  if (gameState.completedAt) {
     setWordSearchStatus("Ya encontraste todas las palabras. Reinicia solo si quieres mejorar el tiempo.");
     return;
   }
@@ -1097,18 +1108,24 @@ function handleWordSearchCellClick(button) {
 
   const selectedCells = getWordSearchLineCells(wordSearchStartCell, clicked);
   if (!selectedCells.length) {
+    setWordSearchState({
+      mistakes: gameState.mistakes + 1,
+    });
     wordSearchStartCell = clicked;
     markWordSearchSelection([clicked]);
-    setWordSearchStatus("Selecciona una linea horizontal, vertical o diagonal.");
+    setWordSearchStatus(`Seleccion incorrecta: -${WORD_SEARCH_ERROR_PENALTY} puntos. Selecciona una linea horizontal, vertical o diagonal.`);
     return;
   }
 
   markWordSearchSelection(selectedCells);
   const match = findWordSearchMatch(selectedCells);
   if (!match) {
+    setWordSearchState({
+      mistakes: gameState.mistakes + 1,
+    });
     wordSearchStartCell = null;
     window.setTimeout(clearWordSearchSelection, 350);
-    setWordSearchStatus("Esa seleccion no coincide. Intenta con otra palabra.");
+    setWordSearchStatus(`Esa seleccion no coincide: -${WORD_SEARCH_ERROR_PENALTY} puntos. Intenta con otra palabra.`);
     return;
   }
 
@@ -1186,6 +1203,25 @@ function renderWordSearchFound(gameState) {
     .join("");
 }
 
+function renderWordSearchTargets(gameState) {
+  const targetBox = document.getElementById("wordSearchTargets");
+  if (!targetBox) {
+    return;
+  }
+
+  const foundWords = new Set(gameState.found);
+  targetBox.innerHTML = getWordSearchPuzzle().targets
+    .map((target) => {
+      const isFound = foundWords.has(target.word);
+      return `
+        <span class="target-word ${isFound ? "is-found" : ""}">
+          ${escapeHtml(target.label)}
+        </span>
+      `;
+    })
+    .join("");
+}
+
 function refreshWordSearchTime() {
   const gameState = getWordSearchState();
   const time = document.getElementById("wordSearchTime");
@@ -1204,9 +1240,11 @@ function renderWordSearchGame() {
   const gameState = getWordSearchState();
   const score = document.getElementById("wordSearchScore");
   const count = document.getElementById("wordSearchCount");
+  const mistakes = document.getElementById("wordSearchMistakes");
   const startButton = document.getElementById("wordSearchStart");
 
   renderWordSearchBoard(gameState);
+  renderWordSearchTargets(gameState);
   renderWordSearchFound(gameState);
   renderWordSearchLeaderboard(readWordSearchLeaderboard());
   refreshWordSearchTime();
@@ -1217,10 +1255,13 @@ function renderWordSearchGame() {
   if (count) {
     count.textContent = `${gameState.found.length} / ${puzzle.targets.length}`;
   }
+  if (mistakes) {
+    mistakes.textContent = String(gameState.mistakes);
+  }
   if (startButton) {
     startButton.disabled = Boolean(gameState.startedAt && !gameState.completedAt);
     startButton.textContent =
-      gameState.completedAt && gameState.score >= WORD_SEARCH_MAX_SCORE
+      gameState.completedAt
         ? "Actividad completada"
         : gameState.startedAt
           ? "Actividad en curso"
@@ -2435,7 +2476,7 @@ function updateProgress() {
   ).length;
   const completedWordSearchGames = wordSearchGames.filter(() => {
     const gameState = getWordSearchState();
-    return gameState.score >= WORD_SEARCH_MAX_SCORE;
+    return Boolean(gameState.completedAt);
   }).length;
 
   const total =
