@@ -23,7 +23,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/site_tokens.css?v=20260409_1">
 <link rel="stylesheet" href="css/shared_shell.css?v=20260409_1">
-<link rel="stylesheet" href="css/guia_template.css?v=20260409_2">
+<link rel="stylesheet" href="css/guia_template.css?v=20260409_3">
 <style>
   .activity4-form-page .app-main {
     width: min(1180px, calc(100% - 32px));
@@ -163,7 +163,7 @@
     user-select: none;
   }
 </style>
-<script defer src="js/script_guia2.js?v=20260409_4"></script>
+<script defer src="js/script_guia2.js?v=20260409_5"></script>
 </head>
 <body
   class="app-shell app-shell--guide activity4-form-page"
@@ -407,16 +407,48 @@
 
             <article class="checklist-card compact-card question-card">
               <h3>4. &iquest;Cu&aacute;l de estas acciones NO es posible hacer con un procesador de texto como Microsoft Word o Writer de LibreOffice?</h3>
-              <ul class="note-list">
-                <li>Escribir y formatear un documento con t&iacute;tulos y p&aacute;rrafos.</li>
-                <li>Insertar im&aacute;genes y tablas en un documento.</li>
-                <li>Crear una base de datos con miles de registros de clientes.</li>
-                <li>Revisar la ortograf&iacute;a y gram&aacute;tica de un texto.</li>
-              </ul>
-              <label style="display:block;margin-top:12px;">
-                <span>Tu respuesta</span>
-                <textarea rows="4" data-store="contexto-q4" data-track placeholder="Escribe la acci&oacute;n que NO es posible y explica tu respuesta."></textarea>
-              </label>
+              <div class="activity4-choice-group" role="radiogroup" aria-label="Pregunta 4">
+                <label class="activity4-choice">
+                  <input
+                    type="radio"
+                    name="contexto-q4"
+                    data-store="contexto-q4"
+                    data-track
+                    value="Escribir y formatear un documento con titulos y parrafos."
+                  >
+                  <span>Escribir y formatear un documento con t&iacute;tulos y p&aacute;rrafos.</span>
+                </label>
+                <label class="activity4-choice">
+                  <input
+                    type="radio"
+                    name="contexto-q4"
+                    data-store="contexto-q4"
+                    data-track
+                    value="Insertar imagenes y tablas en un documento."
+                  >
+                  <span>Insertar im&aacute;genes y tablas en un documento.</span>
+                </label>
+                <label class="activity4-choice">
+                  <input
+                    type="radio"
+                    name="contexto-q4"
+                    data-store="contexto-q4"
+                    data-track
+                    value="Crear una base de datos con miles de registros de clientes."
+                  >
+                  <span>Crear una base de datos con miles de registros de clientes.</span>
+                </label>
+                <label class="activity4-choice">
+                  <input
+                    type="radio"
+                    name="contexto-q4"
+                    data-store="contexto-q4"
+                    data-track
+                    value="Revisar la ortografia y gramatica de un texto."
+                  >
+                  <span>Revisar la ortograf&iacute;a y gram&aacute;tica de un texto.</span>
+                </label>
+              </div>
             </article>
 
             <article class="checklist-card compact-card question-card span-full">

@@ -390,12 +390,6 @@ const GUIDE5_DRIVE_ACTIVITY_TARGETS = [
 ];
 
 const ACTIVITY_QR_DATA = {
-  "guia2-sopa": {
-    title: "ACTIVIDAD 1: Sopa de letras de conceptos b?sicos",
-    url: "https://es.educaplay.com/juego/27988460-operar_herramientas_informaticas_y_digitales_de_acuerdo_con_protocolos_y_manuales_tecnicos.html",
-    image: "assets/img/guia2-qr-sopa-de-letras.png",
-    cta: "Abrir ACTIVIDAD 1 en Educaplay",
-  },
   "guia2-relaciona": {
     title: "Actividad 2: Relaciona la herramienta con su funci?n",
     url: "https://es.educaplay.com/juego/27988974-operar_herramientas_informaticas_y_digitales_de_acuerdo_con_protocolos_y_manuales_tecnicos.html",
@@ -404,10 +398,21 @@ const ACTIVITY_QR_DATA = {
   },
 };
 
+const WORD_SEARCH_ACTIVITY_ID = "guia2-sopa";
+const WORD_SEARCH_STATE_KEY = "wordSearch:guia2-sopa";
+const WORD_SEARCH_MAX_SCORE = 10000;
+const WORD_SEARCH_GRID_SIZE = 20;
+const WORD_SEARCH_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const WORD_SEARCH_LEADERBOARD_SCOPE = "leaderboard:guia2-sopa";
+const WORD_SEARCH_LOCAL_LEADERBOARD_KEY = `guia2_word_search_leaderboard_${PAGE_KEY}_${WORD_SEARCH_ACTIVITY_ID}`;
+
 let state = loadState();
 let cloudStateSyncTimer = null;
 let cloudStateRetryTimer = null;
 let pendingCloudStateSnapshot = null;
+let wordSearchPuzzle = null;
+let wordSearchStartCell = null;
+let wordSearchTimer = null;
 const ACTIVITY4_IDENTITY_NAME_KEY = "actividad4:nombre_completo";
 const ACTIVITY4_IDENTITY_FICHA_KEY = "actividad4:ficha";
 
@@ -420,6 +425,7 @@ document.addEventListener("DOMContentLoaded", () => {
   renderDriveDeliveryPanel();
   prefillActivity4Identity();
   hydrateFields();
+  initializeWordSearchGame();
   bindEvents();
   syncActivity4IdentityUi();
   updateProgress();
@@ -480,6 +486,7 @@ function saveState() {
 
 function renderStatefulSections() {
   renderWordBank();
+  renderWordSearchGame();
   renderMatchingTable();
   renderExtensionTable();
   renderSystemTable();
@@ -701,6 +708,731 @@ function slugify(value) {
     .replace(/[^a-zA-Z0-9]+/g, "-")
     .replace(/^-|-$/g, "")
     .toLowerCase();
+}
+
+function normalizeWordSearchText(value) {
+  return String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9]/g, "")
+    .toUpperCase();
+}
+
+function hashString(value) {
+  let hash = 2166136261;
+  String(value || "").split("").forEach((char) => {
+    hash ^= char.charCodeAt(0);
+    hash = Math.imul(hash, 16777619);
+  });
+  return hash >>> 0;
+}
+
+function createSeededRandom(seed) {
+  let value = seed >>> 0;
+  return () => {
+    value += 0x6d2b79f5;
+    let next = value;
+    next = Math.imul(next ^ (next >>> 15), next | 1);
+    next ^= next + Math.imul(next ^ (next >>> 7), next | 61);
+    return ((next ^ (next >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function getWordSearchTargets() {
+  return wordList
+    .map((label) => ({
+      label,
+      word: normalizeWordSearchText(label),
+    }))
+    .filter((item) => item.word.length > 0)
+    .sort((a, b) => b.word.length - a.word.length || a.label.localeCompare(b.label));
+}
+
+function buildWordSearchPuzzle() {
+  const size = WORD_SEARCH_GRID_SIZE;
+  const grid = Array.from({ length: size }, () => Array(size).fill(""));
+  const placements = {};
+  const targets = getWordSearchTargets();
+  const directions = [
+    [0, 1],
+    [1, 0],
+    [1, 1],
+    [-1, 1],
+    [0, -1],
+    [-1, 0],
+    [-1, -1],
+    [1, -1],
+  ];
+  const random = createSeededRandom(
+    hashString(`${WORD_SEARCH_ACTIVITY_ID}:${wordList.join("|")}`)
+  );
+
+  const canPlace = (word, row, col, rowStep, colStep) => {
+    for (let index = 0; index < word.length; index += 1) {
+      const nextRow = row + rowStep * index;
+      const nextCol = col + colStep * index;
+      if (nextRow < 0 || nextRow >= size || nextCol < 0 || nextCol >= size) {
+        return false;
+      }
+      if (grid[nextRow][nextCol] && grid[nextRow][nextCol] !== word[index]) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const place = (target, row, col, rowStep, colStep) => {
+    placements[target.word] = {
+      label: target.label,
+      cells: [],
+    };
+    for (let index = 0; index < target.word.length; index += 1) {
+      const nextRow = row + rowStep * index;
+      const nextCol = col + colStep * index;
+      grid[nextRow][nextCol] = target.word[index];
+      placements[target.word].cells.push({ row: nextRow, col: nextCol });
+    }
+  };
+
+  targets.forEach((target) => {
+    let placed = false;
+
+    for (let attempt = 0; attempt < 900 && !placed; attempt += 1) {
+      const [rowStep, colStep] = directions[Math.floor(random() * directions.length)];
+      const row = Math.floor(random() * size);
+      const col = Math.floor(random() * size);
+      if (canPlace(target.word, row, col, rowStep, colStep)) {
+        place(target, row, col, rowStep, colStep);
+        placed = true;
+      }
+    }
+
+    for (let row = 0; row < size && !placed; row += 1) {
+      for (let col = 0; col < size && !placed; col += 1) {
+        for (let index = 0; index < directions.length && !placed; index += 1) {
+          const [rowStep, colStep] = directions[index];
+          if (canPlace(target.word, row, col, rowStep, colStep)) {
+            place(target, row, col, rowStep, colStep);
+            placed = true;
+          }
+        }
+      }
+    }
+  });
+
+  for (let row = 0; row < size; row += 1) {
+    for (let col = 0; col < size; col += 1) {
+      if (!grid[row][col]) {
+        grid[row][col] = WORD_SEARCH_ALPHABET[Math.floor(random() * WORD_SEARCH_ALPHABET.length)];
+      }
+    }
+  }
+
+  return {
+    size,
+    grid,
+    targets: targets.filter((target) => placements[target.word]),
+    placements,
+  };
+}
+
+function getWordSearchPuzzle() {
+  if (!wordSearchPuzzle) {
+    wordSearchPuzzle = buildWordSearchPuzzle();
+  }
+  return wordSearchPuzzle;
+}
+
+function getWordSearchState() {
+  const puzzle = getWordSearchPuzzle();
+  const validWords = new Set(puzzle.targets.map((target) => target.word));
+  const saved =
+    state[WORD_SEARCH_STATE_KEY] && typeof state[WORD_SEARCH_STATE_KEY] === "object"
+      ? state[WORD_SEARCH_STATE_KEY]
+      : {};
+  const found = Array.from(
+    new Set(
+      (Array.isArray(saved.found) ? saved.found : [])
+        .map((word) => normalizeWordSearchText(word))
+        .filter((word) => validWords.has(word))
+    )
+  );
+
+  return {
+    found,
+    foundLabels: found.map((word) => puzzle.placements[word]?.label || word),
+    score: calculateWordSearchScore(found.length, puzzle.targets.length),
+    startedAt: saved.startedAt || "",
+    completedAt: saved.completedAt || "",
+    elapsedMs: Number(saved.elapsedMs) || 0,
+    leaderboardPublishedAt: saved.leaderboardPublishedAt || "",
+    playerKey: saved.playerKey || "",
+    playerName: saved.playerName || "",
+    ficha: saved.ficha || "",
+    grupo: saved.grupo || "",
+    inst: saved.inst || "",
+    updatedAt: saved.updatedAt || "",
+  };
+}
+
+function calculateWordSearchScore(foundCount, total) {
+  if (!total) {
+    return 0;
+  }
+  return Math.min(WORD_SEARCH_MAX_SCORE, Math.round((foundCount / total) * WORD_SEARCH_MAX_SCORE));
+}
+
+function getWordSearchElapsedMs(gameState) {
+  if (!gameState?.startedAt) {
+    return Math.max(0, Number(gameState?.elapsedMs) || 0);
+  }
+
+  if (gameState.completedAt && gameState.elapsedMs) {
+    return Math.max(0, Number(gameState.elapsedMs) || 0);
+  }
+
+  const started = Date.parse(gameState.startedAt);
+  if (!Number.isFinite(started)) {
+    return Math.max(0, Number(gameState.elapsedMs) || 0);
+  }
+
+  const finished = Date.parse(gameState.completedAt || "");
+  const endTime = Number.isFinite(finished) ? finished : Date.now();
+  return Math.max(0, endTime - started);
+}
+
+function formatWordSearchTime(ms) {
+  const totalSeconds = Math.max(0, Math.floor((Number(ms) || 0) / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const two = (value) => String(value).padStart(2, "0");
+  return hours ? `${hours}:${two(minutes)}:${two(seconds)}` : `${two(minutes)}:${two(seconds)}`;
+}
+
+function buildWordSearchPlayerMeta() {
+  const session = portalAuth?.getCurrentSession?.();
+  const selection = getGuideSelection();
+  const usernameKey = session?.user?.usernameKey || session?.usernameKey || "";
+  const playerName =
+    session?.user?.fullName ||
+    session?.user?.username ||
+    state[ACTIVITY4_IDENTITY_NAME_KEY] ||
+    "Aprendiz";
+  const ficha = session?.user?.ficha || state[ACTIVITY4_IDENTITY_FICHA_KEY] || selection.ficha || "";
+  const grupo = session?.user?.grupo || selection.grupo || "";
+  const inst = session?.user?.inst || selection.inst || "";
+
+  return {
+    playerKey: usernameKey || `${PAGE_KEY}:${normalizeWordSearchText(playerName)}:${ficha}`,
+    playerName,
+    ficha,
+    grupo,
+    inst,
+  };
+}
+
+function setWordSearchState(next) {
+  const puzzle = getWordSearchPuzzle();
+  const current = getWordSearchState();
+  const found = Array.isArray(next.found)
+    ? Array.from(
+        new Set(
+          next.found
+            .map((word) => normalizeWordSearchText(word))
+            .filter((word) => puzzle.placements[word])
+        )
+      )
+    : current.found;
+
+  state[WORD_SEARCH_STATE_KEY] = {
+    ...current,
+    ...next,
+    found,
+    foundLabels: found.map((word) => puzzle.placements[word]?.label || word),
+    score: calculateWordSearchScore(found.length, puzzle.targets.length),
+    updatedAt: new Date().toISOString(),
+  };
+  saveState();
+  renderWordSearchGame();
+}
+
+function getWordSearchLineCells(start, end) {
+  const puzzle = getWordSearchPuzzle();
+  const rowDiff = end.row - start.row;
+  const colDiff = end.col - start.col;
+  const rowStep = Math.sign(rowDiff);
+  const colStep = Math.sign(colDiff);
+  const isStraight = rowDiff === 0 || colDiff === 0 || Math.abs(rowDiff) === Math.abs(colDiff);
+
+  if (!isStraight) {
+    return [];
+  }
+
+  const length = Math.max(Math.abs(rowDiff), Math.abs(colDiff)) + 1;
+  return Array.from({ length }, (_, index) => ({
+    row: start.row + rowStep * index,
+    col: start.col + colStep * index,
+    letter: puzzle.grid[start.row + rowStep * index]?.[start.col + colStep * index] || "",
+  }));
+}
+
+function findWordSearchMatch(cells) {
+  const puzzle = getWordSearchPuzzle();
+  const gameState = getWordSearchState();
+  const foundWords = new Set(gameState.found);
+  const letters = cells.map((cell) => cell.letter).join("");
+  const reversed = letters.split("").reverse().join("");
+
+  return puzzle.targets.find((target) => {
+    if (foundWords.has(target.word)) {
+      return false;
+    }
+    return target.word === letters || target.word === reversed;
+  });
+}
+
+function cellKey(cell) {
+  return `${cell.row}:${cell.col}`;
+}
+
+function clearWordSearchSelection() {
+  document
+    .querySelectorAll(".word-search-cell.is-selected")
+    .forEach((cell) => cell.classList.remove("is-selected"));
+}
+
+function markWordSearchSelection(cells) {
+  clearWordSearchSelection();
+  const keys = new Set(cells.map(cellKey));
+  document.querySelectorAll(".word-search-cell").forEach((button) => {
+    const row = Number(button.dataset.row);
+    const col = Number(button.dataset.col);
+    button.classList.toggle("is-selected", keys.has(`${row}:${col}`));
+  });
+}
+
+function setWordSearchStatus(message) {
+  const status = document.getElementById("wordSearchStatus");
+  if (status) {
+    status.textContent = message;
+  }
+}
+
+function startWordSearchGame() {
+  const current = getWordSearchState();
+  if (current.completedAt && current.score >= WORD_SEARCH_MAX_SCORE) {
+    setWordSearchStatus("Actividad completada. Puedes reiniciar si deseas mejorar el tiempo.");
+    return;
+  }
+
+  if (current.startedAt) {
+    setWordSearchStatus("La actividad ya esta en curso. Selecciona la primera y ultima letra.");
+    return;
+  }
+
+  setWordSearchState({
+    ...buildWordSearchPlayerMeta(),
+    startedAt: new Date().toISOString(),
+    completedAt: "",
+    elapsedMs: 0,
+    leaderboardPublishedAt: "",
+  });
+  setWordSearchStatus("Cronometro activo. Selecciona la primera y ultima letra de cada palabra.");
+}
+
+function resetWordSearchGame() {
+  const current = getWordSearchState();
+  if ((current.startedAt || current.found.length) && !window.confirm("Se reiniciara la sopa de letras y el tiempo. Deseas continuar?")) {
+    return;
+  }
+
+  wordSearchStartCell = null;
+  state[WORD_SEARCH_STATE_KEY] = {
+    found: [],
+    foundLabels: [],
+    score: 0,
+    startedAt: "",
+    completedAt: "",
+    elapsedMs: 0,
+    leaderboardPublishedAt: "",
+    updatedAt: new Date().toISOString(),
+  };
+  saveState();
+  renderWordSearchGame();
+  setWordSearchStatus("Pulsa iniciar para activar el cronometro.");
+}
+
+function handleWordSearchCellClick(button) {
+  const row = Number(button.dataset.row);
+  const col = Number(button.dataset.col);
+  if (!Number.isFinite(row) || !Number.isFinite(col)) {
+    return;
+  }
+
+  let gameState = getWordSearchState();
+  if (gameState.completedAt && gameState.score >= WORD_SEARCH_MAX_SCORE) {
+    setWordSearchStatus("Ya encontraste todas las palabras. Reinicia solo si quieres mejorar el tiempo.");
+    return;
+  }
+
+  if (!gameState.startedAt) {
+    setWordSearchState({
+      ...buildWordSearchPlayerMeta(),
+      startedAt: new Date().toISOString(),
+      completedAt: "",
+      elapsedMs: 0,
+      leaderboardPublishedAt: "",
+    });
+    gameState = getWordSearchState();
+  }
+
+  const clicked = { row, col };
+  if (!wordSearchStartCell) {
+    wordSearchStartCell = clicked;
+    markWordSearchSelection([clicked]);
+    setWordSearchStatus("Ahora selecciona la ultima letra de la palabra.");
+    return;
+  }
+
+  const selectedCells = getWordSearchLineCells(wordSearchStartCell, clicked);
+  if (!selectedCells.length) {
+    wordSearchStartCell = clicked;
+    markWordSearchSelection([clicked]);
+    setWordSearchStatus("Selecciona una linea horizontal, vertical o diagonal.");
+    return;
+  }
+
+  markWordSearchSelection(selectedCells);
+  const match = findWordSearchMatch(selectedCells);
+  if (!match) {
+    wordSearchStartCell = null;
+    window.setTimeout(clearWordSearchSelection, 350);
+    setWordSearchStatus("Esa seleccion no coincide. Intenta con otra palabra.");
+    return;
+  }
+
+  const found = [...gameState.found, match.word];
+  const puzzle = getWordSearchPuzzle();
+  const completed = found.length >= puzzle.targets.length;
+  const now = new Date().toISOString();
+  const elapsedMs = completed ? getWordSearchElapsedMs(gameState) : gameState.elapsedMs;
+
+  wordSearchStartCell = null;
+  setWordSearchState({
+    ...buildWordSearchPlayerMeta(),
+    found,
+    completedAt: completed ? now : "",
+    elapsedMs,
+    leaderboardPublishedAt: completed ? now : gameState.leaderboardPublishedAt,
+    lastFoundAt: now,
+  });
+
+  if (completed) {
+    publishWordSearchLeaderboard(getWordSearchState());
+    setWordSearchStatus("Excelente. Completaste la sopa y tu puntaje entro al ranking.");
+    return;
+  }
+
+  setWordSearchStatus(`Encontraste: ${match.label}. Sigue buscando.`);
+}
+
+function renderWordSearchBoard(gameState) {
+  const board = document.getElementById("wordSearchBoard");
+  if (!board) {
+    return;
+  }
+
+  const puzzle = getWordSearchPuzzle();
+  const foundCells = new Set();
+  gameState.found.forEach((word) => {
+    puzzle.placements[word]?.cells.forEach((cell) => foundCells.add(cellKey(cell)));
+  });
+
+  board.style.setProperty("--word-search-size", String(puzzle.size));
+  board.innerHTML = puzzle.grid
+    .map((row, rowIndex) =>
+      row
+        .map((letter, colIndex) => {
+          const isFound = foundCells.has(`${rowIndex}:${colIndex}`);
+          return `
+            <button
+              class="word-search-cell ${isFound ? "is-found" : ""}"
+              type="button"
+              data-row="${rowIndex}"
+              data-col="${colIndex}"
+              aria-label="Fila ${rowIndex + 1}, columna ${colIndex + 1}, letra ${letter}"
+            >${escapeHtml(letter)}</button>
+          `;
+        })
+        .join("")
+    )
+    .join("");
+}
+
+function renderWordSearchFound(gameState) {
+  const foundBox = document.getElementById("wordSearchFound");
+  if (!foundBox) {
+    return;
+  }
+
+  if (!gameState.foundLabels.length) {
+    foundBox.textContent = "Aun no hay palabras encontradas.";
+    return;
+  }
+
+  foundBox.innerHTML = gameState.foundLabels
+    .map((label) => `<span class="found-word">${escapeHtml(label)}</span>`)
+    .join("");
+}
+
+function refreshWordSearchTime() {
+  const gameState = getWordSearchState();
+  const time = document.getElementById("wordSearchTime");
+  if (time) {
+    time.textContent = formatWordSearchTime(getWordSearchElapsedMs(gameState));
+  }
+}
+
+function renderWordSearchGame() {
+  const container = document.querySelector(`[data-word-search="${WORD_SEARCH_ACTIVITY_ID}"]`);
+  if (!container) {
+    return;
+  }
+
+  const puzzle = getWordSearchPuzzle();
+  const gameState = getWordSearchState();
+  const score = document.getElementById("wordSearchScore");
+  const count = document.getElementById("wordSearchCount");
+  const startButton = document.getElementById("wordSearchStart");
+
+  renderWordSearchBoard(gameState);
+  renderWordSearchFound(gameState);
+  renderWordSearchLeaderboard(readWordSearchLeaderboard());
+  refreshWordSearchTime();
+
+  if (score) {
+    score.textContent = String(gameState.score);
+  }
+  if (count) {
+    count.textContent = `${gameState.found.length} / ${puzzle.targets.length}`;
+  }
+  if (startButton) {
+    startButton.disabled = Boolean(gameState.startedAt && !gameState.completedAt);
+    startButton.textContent =
+      gameState.completedAt && gameState.score >= WORD_SEARCH_MAX_SCORE
+        ? "Actividad completada"
+        : gameState.startedAt
+          ? "Actividad en curso"
+          : "Iniciar actividad";
+  }
+}
+
+function normalizeWordSearchLeaderboardEntry(entry) {
+  if (!entry || typeof entry !== "object") {
+    return null;
+  }
+
+  const score = Number(entry.score) || 0;
+  const elapsedMs = Math.max(0, Number(entry.elapsedMs) || 0);
+  if (score <= 0) {
+    return null;
+  }
+
+  return {
+    id: entry.id || `${entry.playerKey || "anon"}:${entry.completedAt || entry.updatedAt || Date.now()}`,
+    playerKey: entry.playerKey || entry.id || "",
+    playerName: entry.playerName || "Aprendiz",
+    ficha: entry.ficha || "",
+    grupo: entry.grupo || "",
+    inst: entry.inst || "",
+    score,
+    elapsedMs,
+    foundCount: Number(entry.foundCount) || 0,
+    totalWords: Number(entry.totalWords) || getWordSearchPuzzle().targets.length,
+    completedAt: entry.completedAt || "",
+    updatedAt: entry.updatedAt || entry.completedAt || "",
+  };
+}
+
+function isBetterWordSearchEntry(candidate, current) {
+  if (!current) {
+    return true;
+  }
+  if (candidate.score !== current.score) {
+    return candidate.score > current.score;
+  }
+  if (candidate.elapsedMs !== current.elapsedMs) {
+    return candidate.elapsedMs < current.elapsedMs;
+  }
+  return Date.parse(candidate.updatedAt || "") > Date.parse(current.updatedAt || "");
+}
+
+function mergeWordSearchLeaderboard(...lists) {
+  const bestByPlayer = new Map();
+  lists
+    .flat()
+    .map(normalizeWordSearchLeaderboardEntry)
+    .filter(Boolean)
+    .forEach((entry) => {
+      const key = entry.playerKey || entry.id;
+      const current = bestByPlayer.get(key);
+      if (isBetterWordSearchEntry(entry, current)) {
+        bestByPlayer.set(key, entry);
+      }
+    });
+
+  return Array.from(bestByPlayer.values()).sort((a, b) => {
+    if (b.score !== a.score) {
+      return b.score - a.score;
+    }
+    if (a.elapsedMs !== b.elapsedMs) {
+      return a.elapsedMs - b.elapsedMs;
+    }
+    return String(a.playerName).localeCompare(String(b.playerName));
+  });
+}
+
+function readWordSearchLeaderboard() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(WORD_SEARCH_LOCAL_LEADERBOARD_KEY) || "[]");
+    return mergeWordSearchLeaderboard(Array.isArray(saved) ? saved : []).slice(0, 20);
+  } catch {
+    return [];
+  }
+}
+
+function saveWordSearchLeaderboard(entries) {
+  try {
+    localStorage.setItem(
+      WORD_SEARCH_LOCAL_LEADERBOARD_KEY,
+      JSON.stringify(mergeWordSearchLeaderboard(entries).slice(0, 20))
+    );
+  } catch {
+  }
+}
+
+function buildWordSearchLeaderboardEntry(gameState) {
+  const meta = buildWordSearchPlayerMeta();
+  return {
+    id: `${meta.playerKey}:${gameState.completedAt || new Date().toISOString()}`,
+    ...meta,
+    score: gameState.score,
+    elapsedMs: getWordSearchElapsedMs(gameState),
+    foundCount: gameState.found.length,
+    totalWords: getWordSearchPuzzle().targets.length,
+    completedAt: gameState.completedAt || "",
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+function renderWordSearchLeaderboard(entries) {
+  const leaderboard = document.getElementById("wordSearchLeaderboard");
+  if (!leaderboard) {
+    return;
+  }
+
+  const topEntries = mergeWordSearchLeaderboard(entries).slice(0, 5);
+  if (!topEntries.length) {
+    leaderboard.innerHTML = "<li>Sin registros todavia.</li>";
+    return;
+  }
+
+  leaderboard.innerHTML = topEntries
+    .map(
+      (entry) => `
+        <li>
+          <strong>${escapeHtml(entry.playerName)}</strong>
+          ${escapeHtml(String(entry.score))} pts
+          <span>(${escapeHtml(formatWordSearchTime(entry.elapsedMs))})</span>
+        </li>
+      `
+    )
+    .join("");
+}
+
+async function loadWordSearchLeaderboard() {
+  renderWordSearchLeaderboard(readWordSearchLeaderboard());
+  if (!window._firebaseDb || typeof window._firebaseDb.cloudGetGuideData !== "function") {
+    return;
+  }
+
+  try {
+    const snapshot = await window._firebaseDb.cloudGetGuideData(
+      WORD_SEARCH_LEADERBOARD_SCOPE,
+      GUIDE_DATA_FILE
+    );
+    const cloudEntries = Array.isArray(snapshot?.state?.entries) ? snapshot.state.entries : [];
+    const merged = mergeWordSearchLeaderboard(readWordSearchLeaderboard(), cloudEntries).slice(0, 20);
+    saveWordSearchLeaderboard(merged);
+    renderWordSearchLeaderboard(merged);
+  } catch {
+  }
+}
+
+async function publishWordSearchLeaderboard(gameState) {
+  const entry = buildWordSearchLeaderboardEntry(gameState);
+  const localEntries = mergeWordSearchLeaderboard(readWordSearchLeaderboard(), [entry]).slice(0, 20);
+  saveWordSearchLeaderboard(localEntries);
+  renderWordSearchLeaderboard(localEntries);
+
+  if (
+    !window._firebaseDb ||
+    typeof window._firebaseDb.cloudGetGuideData !== "function" ||
+    typeof window._firebaseDb.cloudSaveGuideData !== "function"
+  ) {
+    return;
+  }
+
+  try {
+    const snapshot = await window._firebaseDb.cloudGetGuideData(
+      WORD_SEARCH_LEADERBOARD_SCOPE,
+      GUIDE_DATA_FILE
+    );
+    const cloudEntries = Array.isArray(snapshot?.state?.entries) ? snapshot.state.entries : [];
+    const merged = mergeWordSearchLeaderboard(cloudEntries, localEntries, [entry]).slice(0, 20);
+    const saved = await window._firebaseDb.cloudSaveGuideData(
+      WORD_SEARCH_LEADERBOARD_SCOPE,
+      GUIDE_DATA_FILE,
+      {
+        scopeKey: WORD_SEARCH_LEADERBOARD_SCOPE,
+        fileName: GUIDE_DATA_FILE,
+        updatedAt: new Date().toISOString(),
+        updatedBy: "leaderboard",
+        state: { entries: merged },
+      }
+    );
+    if (saved) {
+      saveWordSearchLeaderboard(merged);
+      renderWordSearchLeaderboard(merged);
+    }
+  } catch {
+  }
+}
+
+function initializeWordSearchGame() {
+  const container = document.querySelector(`[data-word-search="${WORD_SEARCH_ACTIVITY_ID}"]`);
+  if (!container) {
+    return;
+  }
+
+  renderWordSearchGame();
+  if (container.dataset.wordSearchReady === "1") {
+    return;
+  }
+
+  container.dataset.wordSearchReady = "1";
+  document.getElementById("wordSearchStart")?.addEventListener("click", startWordSearchGame);
+  document.getElementById("wordSearchReset")?.addEventListener("click", resetWordSearchGame);
+  document.getElementById("wordSearchBoard")?.addEventListener("click", (event) => {
+    const button = event.target.closest(".word-search-cell");
+    if (button) {
+      handleWordSearchCellClick(button);
+    }
+  });
+  window.clearInterval(wordSearchTimer);
+  wordSearchTimer = window.setInterval(refreshWordSearchTime, 1000);
+  loadWordSearchLeaderboard();
 }
 
 function renderWordBank() {
@@ -1676,6 +2408,7 @@ function updateProgress() {
   const trackedFields = Array.from(document.querySelectorAll("[data-track]"));
   const trackedButtons = Array.from(document.querySelectorAll("[data-track-button]"));
   const activityChecks = Array.from(document.querySelectorAll(".activity-check"));
+  const wordSearchGames = Array.from(document.querySelectorAll("[data-word-search]"));
   const radioStoreKeys = new Set(
     trackedFields.filter((field) => field.type === "radio").map((field) => field.dataset.store)
   );
@@ -1700,13 +2433,23 @@ function updateProgress() {
   const completedChecks = activityChecks.filter((button) =>
     button.classList.contains("checked")
   ).length;
+  const completedWordSearchGames = wordSearchGames.filter(() => {
+    const gameState = getWordSearchState();
+    return gameState.score >= WORD_SEARCH_MAX_SCORE;
+  }).length;
 
   const total =
     trackedFields.filter((field) => field.type !== "radio").length +
     radioStoreKeys.size +
     trackedButtons.length +
-    activityChecks.length;
-  const completed = completedNonRadioFields + completedRadioGroups + completedButtons + completedChecks;
+    activityChecks.length +
+    wordSearchGames.length;
+  const completed =
+    completedNonRadioFields +
+    completedRadioGroups +
+    completedButtons +
+    completedChecks +
+    completedWordSearchGames;
   const rawPercent = total ? Math.round((completed / total) * 100) : 0;
   const percent = completed > 0 && rawPercent === 0 ? 1 : rawPercent;
 

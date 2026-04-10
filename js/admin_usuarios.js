@@ -14,6 +14,7 @@
     },
   };
   const GUIDE2_RESPONSE_KEYS = [
+    "wordSearch:guia2-sopa",
     "contexto-q1",
     "contexto-rel-drive",
     "contexto-rel-excel",
@@ -82,6 +83,15 @@
       hour: "2-digit",
       minute: "2-digit",
     });
+  }
+
+  function formatDurationMs(value) {
+    const totalSeconds = Math.max(0, Math.floor((Number(value) || 0) / 1000));
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    const two = (number) => String(number).padStart(2, "0");
+    return hours ? `${hours}:${two(minutes)}:${two(seconds)}` : `${two(minutes)}:${two(seconds)}`;
   }
 
   function readJson(value, fallback) {
@@ -256,9 +266,39 @@
     `;
   }
 
+  function renderWordSearchResult(state) {
+    const result =
+      state?.["wordSearch:guia2-sopa"] && typeof state["wordSearch:guia2-sopa"] === "object"
+        ? state["wordSearch:guia2-sopa"]
+        : {};
+    const words = Array.isArray(result.foundLabels)
+      ? result.foundLabels
+      : Array.isArray(result.found)
+        ? result.found
+        : [];
+    const score = Number(result.score) || 0;
+    const elapsedMs = Number(result.elapsedMs) || 0;
+
+    return renderAnswerTable(
+      ["Dato", "Resultado"],
+      [
+        ["Puntaje", score ? `${score} / 10000` : "Sin registro"],
+        ["Tiempo usado", elapsedMs ? formatDurationMs(elapsedMs) : "Sin registro"],
+        ["Palabras encontradas", words.length ? words.join(", ") : "Sin registro"],
+        ["Total de palabras", words.length ? String(words.length) : "Sin registro"],
+        ["Fecha de finalizacion", result.completedAt ? formatDate(result.completedAt) : "Sin registro"],
+      ]
+    );
+  }
+
   function renderGuide2ResponsesBody(state) {
     return `
       <div class="answers-grid">
+        <article class="answer-card">
+          <h3>Actividad 1. Sopa de letras de conceptos basicos.</h3>
+          ${renderWordSearchResult(state)}
+        </article>
+
         <article class="answer-card">
           <h3>Identificacion registrada en el formulario.</h3>
           ${renderAnswerTable(
@@ -391,7 +431,7 @@
       return;
     }
 
-    title.textContent = options.title || "Respuestas del cuestionario 3.2.1";
+    title.textContent = options.title || "Resultados de la Guia 2";
     subtitle.textContent = options.subtitle || "Consulta administrativa de la Guia 2.";
     meta.textContent = options.meta || "";
     body.innerHTML = options.bodyHtml || '<div class="response-status">Sin contenido disponible.</div>';
@@ -421,7 +461,7 @@
     }
 
     openGuide2ResponsesModal({
-      title: "Respuestas del cuestionario 3.2.1",
+      title: "Resultados de la Guia 2",
       subtitle: `${user.fullName} | ${auth.getGuideTitle(fileName)}`,
       meta: "Cargando respuestas guardadas...",
       bodyHtml: '<div class="response-status">Consultando la copia sincronizada y el respaldo local del aprendiz.</div>',
@@ -437,11 +477,11 @@
 
     if (!snapshot) {
       openGuide2ResponsesModal({
-        title: "Respuestas del cuestionario 3.2.1",
+        title: "Resultados de la Guia 2",
         subtitle: `${user.fullName} | ${guideConfig?.title || auth.getGuideTitle(fileName)}`,
         meta: metaParts.join(" | "),
         bodyHtml:
-          '<div class="response-status">Este aprendiz aun no tiene respuestas guardadas en el punto 3.2.1 de la Guia 2 o la sincronizacion todavia no se ha completado.</div>',
+          '<div class="response-status">Este aprendiz aun no tiene resultados guardados en la Guia 2 o la sincronizacion todavia no se ha completado.</div>',
       });
       return;
     }
@@ -455,7 +495,7 @@
     }
 
     openGuide2ResponsesModal({
-      title: "Respuestas del cuestionario 3.2.1",
+      title: "Resultados de la Guia 2",
       subtitle: `${user.fullName} | ${guideConfig?.title || auth.getGuideTitle(fileName)}`,
       meta: metaParts.join(" | "),
       bodyHtml: renderGuide2ResponsesBody(snapshot.state || {}),
@@ -537,7 +577,7 @@
             guide2Config
               ? `<button class="btn secondary" type="button" data-view-guide2="${escapeHtml(
                   guide.fileName
-                )}" data-user="${escapeHtml(user.usernameKey)}">Ver respuestas 3.2.1</button>`
+                )}" data-user="${escapeHtml(user.usernameKey)}">Ver resultados Guia 2</button>`
               : ""
           }
           <button class="btn warn" type="button" data-reset-guide="${escapeHtml(
