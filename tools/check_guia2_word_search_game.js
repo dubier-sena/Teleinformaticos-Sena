@@ -20,6 +20,8 @@ for (const page of pages) {
     'id="wordSearchTargets"',
     'id="wordSearchLeaderboard"',
     "Palabras a buscar",
+    "Comenzar",
+    "Cuenta regresiva",
     "Puntaje maximo: 10000",
   ];
 
@@ -40,10 +42,16 @@ const script = fs.readFileSync(path.join(root, "js", "script_guia2.js"), "utf8")
 const scriptMarkers = [
   "WORD_SEARCH_MAX_SCORE = 10000",
   "WORD_SEARCH_ERROR_PENALTY = 200",
+  "WORD_SEARCH_GRID_SIZE = 15",
+  "WORD_SEARCH_VARIANT_COUNT = 2",
+  "startWordSearchCountdown",
+  "finishWordSearchSelection",
   "initializeWordSearchGame",
   "renderWordSearchTargets",
   "publishWordSearchLeaderboard",
   "renderWordSearchLeaderboard",
+  "pointerdown",
+  "pointerup",
   "mistakes",
   "wordSearch:guia2-sopa",
 ];

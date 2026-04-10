@@ -402,7 +402,8 @@ const WORD_SEARCH_ACTIVITY_ID = "guia2-sopa";
 const WORD_SEARCH_STATE_KEY = "wordSearch:guia2-sopa";
 const WORD_SEARCH_MAX_SCORE = 10000;
 const WORD_SEARCH_ERROR_PENALTY = 200;
-const WORD_SEARCH_GRID_SIZE = 20;
+const WORD_SEARCH_GRID_SIZE = 15;
+const WORD_SEARCH_VARIANT_COUNT = 2;
 const WORD_SEARCH_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const WORD_SEARCH_LEADERBOARD_SCOPE = "leaderboard:guia2-sopa";
 const WORD_SEARCH_LOCAL_LEADERBOARD_KEY = `guia2_word_search_leaderboard_${PAGE_KEY}_${WORD_SEARCH_ACTIVITY_ID}`;
@@ -411,9 +412,13 @@ let state = loadState();
 let cloudStateSyncTimer = null;
 let cloudStateRetryTimer = null;
 let pendingCloudStateSnapshot = null;
-let wordSearchPuzzle = null;
-let wordSearchStartCell = null;
+let wordSearchPuzzleCache = {};
+let wordSearchSelectionStart = null;
+let wordSearchIsDragging = false;
 let wordSearchTimer = null;
+let wordSearchCountdownTimer = null;
+let wordSearchCountdownValue = 0;
+let wordSearchCountdownVariant = 0;
 const ACTIVITY4_IDENTITY_NAME_KEY = "actividad4:nombre_completo";
 const ACTIVITY4_IDENTITY_FICHA_KEY = "actividad4:ficha";
 
@@ -749,7 +754,20 @@ function getWordSearchTargets() {
     .sort((a, b) => b.word.length - a.word.length || a.label.localeCompare(b.label));
 }
 
-function buildWordSearchPuzzle() {
+function normalizeWordSearchVariant(value) {
+  const variant = Number(value) || 1;
+  if (variant < 1 || variant > WORD_SEARCH_VARIANT_COUNT) {
+    return 1;
+  }
+  return Math.floor(variant);
+}
+
+function pickWordSearchVariant() {
+  return Math.floor(Math.random() * WORD_SEARCH_VARIANT_COUNT) + 1;
+}
+
+function buildWordSearchPuzzle(variant) {
+  const variantId = normalizeWordSearchVariant(variant);
   const size = WORD_SEARCH_GRID_SIZE;
   const grid = Array.from({ length: size }, () => Array(size).fill(""));
   const placements = {};
@@ -765,7 +783,7 @@ function buildWordSearchPuzzle() {
     [1, -1],
   ];
   const random = createSeededRandom(
-    hashString(`${WORD_SEARCH_ACTIVITY_ID}:${wordList.join("|")}`)
+    hashString(`${WORD_SEARCH_ACTIVITY_ID}:variant-${variantId}:${wordList.join("|")}`)
   );
 
   const canPlace = (word, row, col, rowStep, colStep) => {
@@ -798,7 +816,7 @@ function buildWordSearchPuzzle() {
   targets.forEach((target) => {
     let placed = false;
 
-    for (let attempt = 0; attempt < 900 && !placed; attempt += 1) {
+    for (let attempt = 0; attempt < 2000 && !placed; attempt += 1) {
       const [rowStep, colStep] = directions[Math.floor(random() * directions.length)];
       const row = Math.floor(random() * size);
       const col = Math.floor(random() * size);
@@ -830,6 +848,7 @@ function buildWordSearchPuzzle() {
   }
 
   return {
+    variant: variantId,
     size,
     grid,
     targets: targets.filter((target) => placements[target.word]),
@@ -837,20 +856,22 @@ function buildWordSearchPuzzle() {
   };
 }
 
-function getWordSearchPuzzle() {
-  if (!wordSearchPuzzle) {
-    wordSearchPuzzle = buildWordSearchPuzzle();
+function getWordSearchPuzzle(variant) {
+  const variantId = normalizeWordSearchVariant(variant);
+  if (!wordSearchPuzzleCache[variantId]) {
+    wordSearchPuzzleCache[variantId] = buildWordSearchPuzzle(variantId);
   }
-  return wordSearchPuzzle;
+  return wordSearchPuzzleCache[variantId];
 }
 
 function getWordSearchState() {
-  const puzzle = getWordSearchPuzzle();
-  const validWords = new Set(puzzle.targets.map((target) => target.word));
   const saved =
     state[WORD_SEARCH_STATE_KEY] && typeof state[WORD_SEARCH_STATE_KEY] === "object"
       ? state[WORD_SEARCH_STATE_KEY]
       : {};
+  const variant = normalizeWordSearchVariant(saved.variant || 1);
+  const puzzle = getWordSearchPuzzle(variant);
+  const validWords = new Set(puzzle.targets.map((target) => target.word));
   const found = Array.from(
     new Set(
       (Array.isArray(saved.found) ? saved.found : [])
@@ -863,6 +884,7 @@ function getWordSearchState() {
   return {
     found,
     foundLabels: found.map((word) => puzzle.placements[word]?.label || word),
+    variant,
     mistakes,
     score: calculateWordSearchScore(found.length, puzzle.targets.length, mistakes),
     startedAt: saved.startedAt || "",
@@ -938,8 +960,9 @@ function buildWordSearchPlayerMeta() {
 }
 
 function setWordSearchState(next) {
-  const puzzle = getWordSearchPuzzle();
   const current = getWordSearchState();
+  const variant = normalizeWordSearchVariant(next.variant || current.variant || 1);
+  const puzzle = getWordSearchPuzzle(variant);
   const found = Array.isArray(next.found)
     ? Array.from(
         new Set(
@@ -959,6 +982,7 @@ function setWordSearchState(next) {
     ...next,
     found,
     foundLabels: found.map((word) => puzzle.placements[word]?.label || word),
+    variant,
     mistakes,
     score: calculateWordSearchScore(found.length, puzzle.targets.length, mistakes),
     updatedAt: new Date().toISOString(),
@@ -968,7 +992,8 @@ function setWordSearchState(next) {
 }
 
 function getWordSearchLineCells(start, end) {
-  const puzzle = getWordSearchPuzzle();
+  const gameState = getWordSearchState();
+  const puzzle = getWordSearchPuzzle(gameState.variant);
   const rowDiff = end.row - start.row;
   const colDiff = end.col - start.col;
   const rowStep = Math.sign(rowDiff);
@@ -988,8 +1013,8 @@ function getWordSearchLineCells(start, end) {
 }
 
 function findWordSearchMatch(cells) {
-  const puzzle = getWordSearchPuzzle();
   const gameState = getWordSearchState();
+  const puzzle = getWordSearchPuzzle(gameState.variant);
   const foundWords = new Set(gameState.found);
   const letters = cells.map((cell) => cell.letter).join("");
   const reversed = letters.split("").reverse().join("");
@@ -1029,6 +1054,44 @@ function setWordSearchStatus(message) {
   }
 }
 
+function clearWordSearchCountdown() {
+  window.clearInterval(wordSearchCountdownTimer);
+  wordSearchCountdownTimer = null;
+  wordSearchCountdownValue = 0;
+  wordSearchCountdownVariant = 0;
+}
+
+function startWordSearchCountdown(variant) {
+  clearWordSearchCountdown();
+  wordSearchCountdownVariant = normalizeWordSearchVariant(variant);
+  wordSearchCountdownValue = 3;
+  renderWordSearchGame();
+  setWordSearchStatus("Cuenta regresiva: 3 segundos para iniciar.");
+
+  wordSearchCountdownTimer = window.setInterval(() => {
+    wordSearchCountdownValue -= 1;
+    if (wordSearchCountdownValue <= 0) {
+      finishWordSearchCountdown();
+      return;
+    }
+
+    renderWordSearchGame();
+    setWordSearchStatus(`Cuenta regresiva: ${wordSearchCountdownValue} segundos para iniciar.`);
+  }, 1000);
+}
+
+function finishWordSearchCountdown() {
+  const variant = wordSearchCountdownVariant || getWordSearchState().variant || 1;
+  clearWordSearchCountdown();
+  setWordSearchState({
+    ...buildWordSearchPlayerMeta(),
+    variant,
+    startedAt: new Date().toISOString(),
+    countdownStartedAt: "",
+  });
+  setWordSearchStatus("Cronometro activo. Arrastra desde la primera hasta la ultima letra de cada palabra.");
+}
+
 function startWordSearchGame() {
   const current = getWordSearchState();
   if (current.completedAt) {
@@ -1036,19 +1099,32 @@ function startWordSearchGame() {
     return;
   }
 
-  if (current.startedAt) {
-    setWordSearchStatus("La actividad ya esta en curso. Selecciona la primera y ultima letra.");
+  if (wordSearchCountdownTimer) {
+    setWordSearchStatus(`Cuenta regresiva: ${wordSearchCountdownValue} segundos para iniciar.`);
     return;
   }
 
+  if (current.startedAt) {
+    setWordSearchStatus("La actividad ya esta en curso. Arrastra desde la primera hasta la ultima letra.");
+    return;
+  }
+
+  const variant = pickWordSearchVariant();
+  wordSearchSelectionStart = null;
+  wordSearchIsDragging = false;
   setWordSearchState({
     ...buildWordSearchPlayerMeta(),
-    startedAt: new Date().toISOString(),
+    variant,
+    found: [],
+    foundLabels: [],
+    startedAt: "",
+    countdownStartedAt: new Date().toISOString(),
     completedAt: "",
     elapsedMs: 0,
+    mistakes: 0,
     leaderboardPublishedAt: "",
   });
-  setWordSearchStatus("Cronometro activo. Selecciona la primera y ultima letra de cada palabra.");
+  startWordSearchCountdown(variant);
 }
 
 function resetWordSearchGame() {
@@ -1057,12 +1133,16 @@ function resetWordSearchGame() {
     return;
   }
 
-  wordSearchStartCell = null;
+  clearWordSearchCountdown();
+  wordSearchSelectionStart = null;
+  wordSearchIsDragging = false;
   state[WORD_SEARCH_STATE_KEY] = {
     found: [],
     foundLabels: [],
+    variant: normalizeWordSearchVariant(current.variant),
     score: 0,
     startedAt: "",
+    countdownStartedAt: "",
     completedAt: "",
     elapsedMs: 0,
     leaderboardPublishedAt: "",
@@ -1071,49 +1151,108 @@ function resetWordSearchGame() {
   };
   saveState();
   renderWordSearchGame();
-  setWordSearchStatus("Pulsa iniciar para activar el cronometro.");
+  setWordSearchStatus("Pulsa Comenzar para activar la cuenta regresiva.");
 }
 
-function handleWordSearchCellClick(button) {
-  const row = Number(button.dataset.row);
-  const col = Number(button.dataset.col);
+function getWordSearchCellFromPointerEvent(event) {
+  const element = document.elementFromPoint(event.clientX, event.clientY);
+  return element?.closest?.(".word-search-cell") || null;
+}
+
+function getWordSearchCellPosition(button) {
+  const row = Number(button?.dataset?.row);
+  const col = Number(button?.dataset?.col);
   if (!Number.isFinite(row) || !Number.isFinite(col)) {
-    return;
+    return null;
   }
 
-  let gameState = getWordSearchState();
-  if (gameState.completedAt) {
-    setWordSearchStatus("Ya encontraste todas las palabras. Reinicia solo si quieres mejorar el tiempo.");
-    return;
+  return { row, col };
+}
+
+function canSelectWordSearch(gameState) {
+  if (wordSearchCountdownTimer) {
+    setWordSearchStatus(`Cuenta regresiva: ${wordSearchCountdownValue} segundos para iniciar.`);
+    return false;
   }
 
   if (!gameState.startedAt) {
-    setWordSearchState({
-      ...buildWordSearchPlayerMeta(),
-      startedAt: new Date().toISOString(),
-      completedAt: "",
-      elapsedMs: 0,
-      leaderboardPublishedAt: "",
-    });
-    gameState = getWordSearchState();
+    setWordSearchStatus("Primero pulsa Comenzar y espera la cuenta regresiva.");
+    return false;
   }
 
-  const clicked = { row, col };
-  if (!wordSearchStartCell) {
-    wordSearchStartCell = clicked;
-    markWordSearchSelection([clicked]);
-    setWordSearchStatus("Ahora selecciona la ultima letra de la palabra.");
+  if (gameState.completedAt) {
+    setWordSearchStatus("Ya encontraste todas las palabras. Reinicia solo si quieres mejorar el tiempo.");
+    return false;
+  }
+
+  return true;
+}
+
+function beginWordSearchSelection(button) {
+  const gameState = getWordSearchState();
+  if (!canSelectWordSearch(gameState)) {
+    return false;
+  }
+
+  const start = getWordSearchCellPosition(button);
+  if (!start) {
+    return false;
+  }
+
+  wordSearchSelectionStart = start;
+  wordSearchIsDragging = true;
+  markWordSearchSelection([start]);
+  setWordSearchStatus("Sigue arrastrando hasta la ultima letra y suelta para validar.");
+  return true;
+}
+
+function previewWordSearchSelection(button) {
+  if (!wordSearchIsDragging || !wordSearchSelectionStart) {
     return;
   }
 
-  const selectedCells = getWordSearchLineCells(wordSearchStartCell, clicked);
+  const end = getWordSearchCellPosition(button);
+  if (!end) {
+    return;
+  }
+
+  const selectedCells = getWordSearchLineCells(wordSearchSelectionStart, end);
+  if (selectedCells.length) {
+    markWordSearchSelection(selectedCells);
+  }
+}
+
+function finishWordSearchSelection(button) {
+  let gameState = getWordSearchState();
+  if (!wordSearchIsDragging || !wordSearchSelectionStart || !canSelectWordSearch(gameState)) {
+    wordSearchIsDragging = false;
+    wordSearchSelectionStart = null;
+    return;
+  }
+
+  const end = getWordSearchCellPosition(button);
+  const start = wordSearchSelectionStart;
+  wordSearchIsDragging = false;
+  wordSearchSelectionStart = null;
+
+  if (!end) {
+    clearWordSearchSelection();
+    return;
+  }
+
+  const selectedCells = getWordSearchLineCells(start, end);
   if (!selectedCells.length) {
     setWordSearchState({
       mistakes: gameState.mistakes + 1,
     });
-    wordSearchStartCell = clicked;
-    markWordSearchSelection([clicked]);
+    clearWordSearchSelection();
     setWordSearchStatus(`Seleccion incorrecta: -${WORD_SEARCH_ERROR_PENALTY} puntos. Selecciona una linea horizontal, vertical o diagonal.`);
+    return;
+  }
+
+  if (selectedCells.length <= 1) {
+    clearWordSearchSelection();
+    setWordSearchStatus("Arrastra sobre varias letras para seleccionar una palabra completa.");
     return;
   }
 
@@ -1123,19 +1262,17 @@ function handleWordSearchCellClick(button) {
     setWordSearchState({
       mistakes: gameState.mistakes + 1,
     });
-    wordSearchStartCell = null;
     window.setTimeout(clearWordSearchSelection, 350);
     setWordSearchStatus(`Esa seleccion no coincide: -${WORD_SEARCH_ERROR_PENALTY} puntos. Intenta con otra palabra.`);
     return;
   }
 
   const found = [...gameState.found, match.word];
-  const puzzle = getWordSearchPuzzle();
+  const puzzle = getWordSearchPuzzle(gameState.variant);
   const completed = found.length >= puzzle.targets.length;
   const now = new Date().toISOString();
   const elapsedMs = completed ? getWordSearchElapsedMs(gameState) : gameState.elapsedMs;
 
-  wordSearchStartCell = null;
   setWordSearchState({
     ...buildWordSearchPlayerMeta(),
     found,
@@ -1160,13 +1297,33 @@ function renderWordSearchBoard(gameState) {
     return;
   }
 
-  const puzzle = getWordSearchPuzzle();
+  const puzzle = getWordSearchPuzzle(gameState.variant);
   const foundCells = new Set();
   gameState.found.forEach((word) => {
     puzzle.placements[word]?.cells.forEach((cell) => foundCells.add(cellKey(cell)));
   });
 
   board.style.setProperty("--word-search-size", String(puzzle.size));
+  board.classList.toggle("is-waiting", !gameState.startedAt);
+  board.classList.toggle("is-countdown", Boolean(wordSearchCountdownTimer));
+
+  if (!gameState.startedAt) {
+    board.innerHTML = wordSearchCountdownTimer
+      ? `
+        <div class="word-search-countdown" aria-live="polite">
+          <span>Cuenta regresiva</span>
+          <strong>${escapeHtml(wordSearchCountdownValue)}</strong>
+        </div>
+      `
+      : `
+        <div class="word-search-ready">
+          <strong>Sopa 15 x 15</strong>
+          <span>Pulsa Comenzar para recibir una de las 2 sopas disponibles.</span>
+        </div>
+      `;
+    return;
+  }
+
   board.innerHTML = puzzle.grid
     .map((row, rowIndex) =>
       row
@@ -1210,7 +1367,7 @@ function renderWordSearchTargets(gameState) {
   }
 
   const foundWords = new Set(gameState.found);
-  targetBox.innerHTML = getWordSearchPuzzle().targets
+  targetBox.innerHTML = getWordSearchPuzzle(gameState.variant).targets
     .map((target) => {
       const isFound = foundWords.has(target.word);
       return `
@@ -1236,8 +1393,8 @@ function renderWordSearchGame() {
     return;
   }
 
-  const puzzle = getWordSearchPuzzle();
   const gameState = getWordSearchState();
+  const puzzle = getWordSearchPuzzle(gameState.variant);
   const score = document.getElementById("wordSearchScore");
   const count = document.getElementById("wordSearchCount");
   const mistakes = document.getElementById("wordSearchMistakes");
@@ -1259,13 +1416,15 @@ function renderWordSearchGame() {
     mistakes.textContent = String(gameState.mistakes);
   }
   if (startButton) {
-    startButton.disabled = Boolean(gameState.startedAt && !gameState.completedAt);
+    startButton.disabled = Boolean(wordSearchCountdownTimer || (gameState.startedAt && !gameState.completedAt));
     startButton.textContent =
-      gameState.completedAt
+      wordSearchCountdownTimer
+        ? `Comienza en ${wordSearchCountdownValue}`
+        : gameState.completedAt
         ? "Actividad completada"
         : gameState.startedAt
           ? "Actividad en curso"
-          : "Iniciar actividad";
+          : "Comenzar";
   }
 }
 
@@ -1287,10 +1446,11 @@ function normalizeWordSearchLeaderboardEntry(entry) {
     ficha: entry.ficha || "",
     grupo: entry.grupo || "",
     inst: entry.inst || "",
+    variant: normalizeWordSearchVariant(entry.variant || 1),
     score,
     elapsedMs,
     foundCount: Number(entry.foundCount) || 0,
-    totalWords: Number(entry.totalWords) || getWordSearchPuzzle().targets.length,
+    totalWords: Number(entry.totalWords) || getWordSearchPuzzle(1).targets.length,
     completedAt: entry.completedAt || "",
     updatedAt: entry.updatedAt || entry.completedAt || "",
   };
@@ -1361,7 +1521,8 @@ function buildWordSearchLeaderboardEntry(gameState) {
     score: gameState.score,
     elapsedMs: getWordSearchElapsedMs(gameState),
     foundCount: gameState.found.length,
-    totalWords: getWordSearchPuzzle().targets.length,
+    totalWords: getWordSearchPuzzle(gameState.variant).targets.length,
+    variant: gameState.variant,
     completedAt: gameState.completedAt || "",
     updatedAt: new Date().toISOString(),
   };
@@ -1465,11 +1626,43 @@ function initializeWordSearchGame() {
   container.dataset.wordSearchReady = "1";
   document.getElementById("wordSearchStart")?.addEventListener("click", startWordSearchGame);
   document.getElementById("wordSearchReset")?.addEventListener("click", resetWordSearchGame);
-  document.getElementById("wordSearchBoard")?.addEventListener("click", (event) => {
-    const button = event.target.closest(".word-search-cell");
-    if (button) {
-      handleWordSearchCellClick(button);
+  const board = document.getElementById("wordSearchBoard");
+  board?.addEventListener("pointerdown", (event) => {
+    const button = getWordSearchCellFromPointerEvent(event);
+    if (!button || !beginWordSearchSelection(button)) {
+      return;
     }
+    board.setPointerCapture?.(event.pointerId);
+    event.preventDefault();
+  });
+  board?.addEventListener("pointermove", (event) => {
+    if (!wordSearchIsDragging) {
+      return;
+    }
+    const button = getWordSearchCellFromPointerEvent(event);
+    if (button) {
+      previewWordSearchSelection(button);
+    }
+    event.preventDefault();
+  });
+  board?.addEventListener("pointerup", (event) => {
+    const button = getWordSearchCellFromPointerEvent(event);
+    if (button) {
+      finishWordSearchSelection(button);
+    } else {
+      wordSearchIsDragging = false;
+      wordSearchSelectionStart = null;
+      clearWordSearchSelection();
+    }
+    if (board.hasPointerCapture?.(event.pointerId)) {
+      board.releasePointerCapture(event.pointerId);
+    }
+    event.preventDefault();
+  });
+  board?.addEventListener("pointercancel", () => {
+    wordSearchIsDragging = false;
+    wordSearchSelectionStart = null;
+    clearWordSearchSelection();
   });
   window.clearInterval(wordSearchTimer);
   wordSearchTimer = window.setInterval(refreshWordSearchTime, 1000);

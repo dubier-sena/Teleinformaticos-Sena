@@ -289,6 +289,7 @@
       ["Dato", "Resultado"],
       [
         ["Puntaje", hasResult ? `${score} / 10000` : "Sin registro"],
+        ["Sopa asignada", hasResult ? `Version ${Number(result.variant) || 1}` : "Sin registro"],
         ["Errores", hasResult ? String(Number(result.mistakes) || 0) : "Sin registro"],
         ["Tiempo usado", elapsedMs ? formatDurationMs(elapsedMs) : "Sin registro"],
         ["Palabras encontradas", words.length ? words.join(", ") : "Sin registro"],
