@@ -516,6 +516,7 @@ let pendingCloudStateSnapshot = null;
 let wordSearchPuzzleCache = {};
 let wordSearchSelectionStart = null;
 let wordSearchLastSelectionCells = [];
+let wordSearchFullscreenActive = false;
 let wordSearchIsDragging = false;
 let wordSearchTimer = null;
 let wordSearchCountdownTimer = null;
@@ -1360,6 +1361,36 @@ function resetWordSearchGame() {
   setWordSearchStatus("Pulsa Comenzar para activar la cuenta regresiva.");
 }
 
+function setWordSearchFullscreen(active) {
+  const container = document.querySelector(`[data-word-search="${WORD_SEARCH_ACTIVITY_ID}"]`);
+  const button = document.getElementById("wordSearchFullscreen");
+  if (!container) {
+    return;
+  }
+
+  wordSearchFullscreenActive = Boolean(active);
+  container.classList.toggle("is-fullscreen", wordSearchFullscreenActive);
+  document.body.classList.toggle("word-search-fullscreen-lock", wordSearchFullscreenActive);
+
+  if (button) {
+    button.textContent = wordSearchFullscreenActive ? "Salir pantalla completa" : "Pantalla completa";
+    button.setAttribute("aria-pressed", String(wordSearchFullscreenActive));
+  }
+
+  if (wordSearchFullscreenActive) {
+    window.setTimeout(() => {
+      document.getElementById("wordSearchBoard")?.scrollIntoView({
+        block: "center",
+        inline: "center",
+      });
+    }, 80);
+  }
+}
+
+function toggleWordSearchFullscreen() {
+  setWordSearchFullscreen(!wordSearchFullscreenActive);
+}
+
 function getWordSearchCellFromPointerEvent(event) {
   const element = document.elementFromPoint(event.clientX, event.clientY);
   return element?.closest?.(".word-search-cell") || null;
@@ -1631,6 +1662,7 @@ function renderWordSearchGame() {
   renderWordSearchFound(gameState);
   renderWordSearchLeaderboard(readWordSearchLeaderboard());
   refreshWordSearchTime();
+  setWordSearchFullscreen(wordSearchFullscreenActive);
 
   updateWordSearchMetric("wordSearchScore", gameState.score);
   updateWordSearchMetric("wordSearchCount", `${gameState.found.length} / ${puzzle.targets.length}`);
@@ -1847,6 +1879,12 @@ function initializeWordSearchGame() {
   container.dataset.wordSearchReady = "1";
   document.getElementById("wordSearchStart")?.addEventListener("click", startWordSearchGame);
   document.getElementById("wordSearchReset")?.addEventListener("click", resetWordSearchGame);
+  document.getElementById("wordSearchFullscreen")?.addEventListener("click", toggleWordSearchFullscreen);
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && wordSearchFullscreenActive) {
+      setWordSearchFullscreen(false);
+    }
+  });
   const board = document.getElementById("wordSearchBoard");
   board?.addEventListener("pointerdown", (event) => {
     const button = getWordSearchCellFromPointerEvent(event);
