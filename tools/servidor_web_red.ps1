@@ -1646,6 +1646,55 @@ function Handle-ApiRequest {
       return $true
     }
 
+    "/api/admin/ficha" {
+      if ($method -ne "POST") {
+        Write-JsonResponse -Stream $Stream -StatusCode 405 -StatusText "Method Not Allowed" -Payload @{ ok = $false; message = "Metodo no permitido." }
+        return $true
+      }
+
+      $token = Resolve-RequestToken -Headers $Request["Headers"] -Uri $Uri -Body $body
+      $session = Get-SessionByToken $token
+      if (-not $session -or (Normalize-Text $session["role"]) -ne "admin") {
+        Write-JsonResponse -Stream $Stream -StatusCode 401 -StatusText "Unauthorized" -Payload @{
+          ok = $false
+          message = "La sesion administrativa no es valida."
+        }
+        return $true
+      }
+
+      $usernameKey = Normalize-Username $body["usernameKey"]
+      $ficha = Normalize-Ficha $body["ficha"]
+      $selection = Get-FichaInfo $ficha
+      if (-not $usernameKey -or -not $selection) {
+        Write-JsonResponse -Stream $Stream -StatusCode 400 -StatusText "Bad Request" -Payload @{
+          ok = $false
+          message = "La ficha seleccionada no existe en el portal."
+        }
+        return $true
+      }
+
+      $user = Get-UserByUsernameKey $usernameKey
+      if (-not $user) {
+        Write-JsonResponse -Stream $Stream -StatusCode 404 -StatusText "Not Found" -Payload @{
+          ok = $false
+          message = "No se encontro el usuario solicitado."
+        }
+        return $true
+      }
+
+      $user["ficha"] = $ficha
+      $user["inst"] = $selection["inst"]
+      $user["grupo"] = $selection["grupo"]
+      $user["updatedAt"] = [DateTimeOffset]::UtcNow.ToString("o")
+      Save-PortalStore
+
+      Write-JsonResponse -Stream $Stream -StatusCode 200 -StatusText "OK" -Payload @{
+        ok = $true
+        user = (Sanitize-UserForClient $user)
+      }
+      return $true
+    }
+
     "/api/admin/reset-guide" {
       if ($method -ne "POST") {
         Write-JsonResponse -Stream $Stream -StatusCode 405 -StatusText "Method Not Allowed" -Payload @{ ok = $false; message = "Metodo no permitido." }

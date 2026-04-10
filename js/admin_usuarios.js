@@ -5,6 +5,7 @@
   }
 
   let allUsers = [];
+  let guide2WordSearchSummaries = {};
   const GUIDE2_RESPONSE_FILES = {
     "grupo-10a-guia-02-herramientas-informaticas-digitales.html": {
       cloudFileName: "10a_guia2.html",
@@ -224,6 +225,90 @@
     };
   }
 
+  function getGuide2SummaryKey(usernameKey, fileName) {
+    return `${String(usernameKey || "").trim().toLowerCase()}::${fileName}`;
+  }
+
+  function getWordSearchResult(state) {
+    return state?.["wordSearch:guia2-sopa"] && typeof state["wordSearch:guia2-sopa"] === "object"
+      ? state["wordSearch:guia2-sopa"]
+      : {};
+  }
+
+  function getWordSearchWords(result) {
+    if (Array.isArray(result.foundLabels)) {
+      return result.foundLabels;
+    }
+    if (Array.isArray(result.found)) {
+      return result.found;
+    }
+    return [];
+  }
+
+  function hasWordSearchResult(result, words) {
+    return Boolean(
+      result.startedAt ||
+        result.completedAt ||
+        (Array.isArray(words) && words.length) ||
+        Number(result.mistakes)
+    );
+  }
+
+  function extractWordSearchSummary(snapshot, user) {
+    const state = snapshot?.state || {};
+    const result = getWordSearchResult(state);
+    const words = getWordSearchWords(result);
+    if (!hasWordSearchResult(result, words)) {
+      return null;
+    }
+
+    return {
+      playerName: result.playerName || state["actividad4:nombre_completo"] || user.fullName,
+      username: user.username,
+      ficha: state["actividad4:ficha"] || user.ficha,
+      score: Number(result.score) || 0,
+      elapsedMs: Number(result.elapsedMs) || 0,
+      mistakes: Number(result.mistakes) || 0,
+      variant: Number(result.variant) || 1,
+      words,
+      completed: Boolean(result.completedAt),
+      completedAt: result.completedAt || "",
+      updatedAt: snapshot?.updatedAt || result.completedAt || result.startedAt || "",
+    };
+  }
+
+  async function hydrateGuide2WordSearchSummaries(users) {
+    const nextSummaries = {};
+    const tasks = [];
+
+    users.forEach((user) => {
+      (user.progress?.guides || []).forEach((guide) => {
+        if (!getGuide2ResponseConfig(guide.fileName)) {
+          return;
+        }
+
+        const key = getGuide2SummaryKey(user.usernameKey, guide.fileName);
+        tasks.push(
+          loadGuide2Responses(user.usernameKey, guide.fileName)
+            .then(({ snapshot }) => {
+              nextSummaries[key] = extractWordSearchSummary(snapshot, user);
+            })
+            .catch(() => {
+              nextSummaries[key] = null;
+            })
+        );
+      });
+    });
+
+    if (!tasks.length) {
+      guide2WordSearchSummaries = {};
+      return;
+    }
+
+    await Promise.all(tasks);
+    guide2WordSearchSummaries = nextSummaries;
+  }
+
   function renderAnswerValue(value) {
     const text = String(value ?? "").trim();
     if (!text) {
@@ -266,28 +351,20 @@
     `;
   }
 
-  function renderWordSearchResult(state) {
-    const result =
-      state?.["wordSearch:guia2-sopa"] && typeof state["wordSearch:guia2-sopa"] === "object"
-        ? state["wordSearch:guia2-sopa"]
-        : {};
-    const words = Array.isArray(result.foundLabels)
-      ? result.foundLabels
-      : Array.isArray(result.found)
-        ? result.found
-        : [];
+  function renderWordSearchResult(state, context) {
+    const result = getWordSearchResult(state);
+    const words = getWordSearchWords(result);
     const score = Number(result.score) || 0;
     const elapsedMs = Number(result.elapsedMs) || 0;
-    const hasResult = Boolean(
-      result.startedAt ||
-        result.completedAt ||
-        words.length ||
-        Number(result.mistakes)
-    );
+    const hasResult = hasWordSearchResult(result, words);
+    const user = context?.user || {};
 
     return renderAnswerTable(
       ["Dato", "Resultado"],
       [
+        ["Aprendiz que realizo", result.playerName || state["actividad4:nombre_completo"] || user.fullName],
+        ["Usuario", user.username || result.playerKey || "Sin registro"],
+        ["Ficha registrada", state["actividad4:ficha"] || user.ficha || "Sin registro"],
         ["Puntaje", hasResult ? `${score} / 10000` : "Sin registro"],
         ["Sopa asignada", hasResult ? `Version ${Number(result.variant) || 1}` : "Sin registro"],
         ["Errores", hasResult ? String(Number(result.mistakes) || 0) : "Sin registro"],
@@ -299,12 +376,12 @@
     );
   }
 
-  function renderGuide2ResponsesBody(state) {
+  function renderGuide2ResponsesBody(state, context) {
     return `
       <div class="answers-grid">
         <article class="answer-card">
           <h3>Actividad 1. Sopa de letras de conceptos basicos.</h3>
-          ${renderWordSearchResult(state)}
+          ${renderWordSearchResult(state, context)}
         </article>
 
         <article class="answer-card">
@@ -506,7 +583,7 @@
       title: "Resultados de la Guia 2",
       subtitle: `${user.fullName} | ${guideConfig?.title || auth.getGuideTitle(fileName)}`,
       meta: metaParts.join(" | "),
-      bodyHtml: renderGuide2ResponsesBody(snapshot.state || {}),
+      bodyHtml: renderGuide2ResponsesBody(snapshot.state || {}, { user, guide }),
     });
   }
 
@@ -540,6 +617,55 @@
       grupo: user.grupo,
     });
     return `${fileName}?${params.toString()}`;
+  }
+
+  function renderFichaOptions(selectedFicha) {
+    return Object.entries(auth.FICHA_MAP || {})
+      .map(([ficha, info]) => {
+        const selected = ficha === String(selectedFicha || "") ? " selected" : "";
+        const label = `${ficha} - ${info.inst} | Grupo ${info.grupo}`;
+        return `<option value="${escapeHtml(ficha)}"${selected}>${escapeHtml(label)}</option>`;
+      })
+      .join("");
+  }
+
+  function renderWordSearchAdminSummary(user, fileName) {
+    const key = getGuide2SummaryKey(user.usernameKey, fileName);
+    const summary = guide2WordSearchSummaries[key];
+
+    if (summary === undefined) {
+      return `
+        <div class="word-search-admin-summary is-loading">
+          <span>Actividad 1 - Sopa de letras</span>
+          <strong>Consultando quien realizo la actividad...</strong>
+        </div>
+      `;
+    }
+
+    if (!summary) {
+      return `
+        <div class="word-search-admin-summary is-empty">
+          <span>Actividad 1 - Sopa de letras</span>
+          <strong>Realizo sopa: Sin registro</strong>
+          <small>Aprendiz: ${escapeHtml(user.fullName)} | Ficha ${escapeHtml(user.ficha)}</small>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="word-search-admin-summary">
+        <span>Actividad 1 - Sopa de letras</span>
+        <strong>Realizo sopa: ${summary.completed ? "Si" : "En proceso"}</strong>
+        <small>
+          Aprendiz: ${escapeHtml(summary.playerName)} |
+          Ficha ${escapeHtml(summary.ficha)} |
+          Puntaje ${escapeHtml(summary.score)} / 10000 |
+          Tiempo ${escapeHtml(formatDurationMs(summary.elapsedMs))} |
+          Errores ${escapeHtml(summary.mistakes)} |
+          Palabras ${escapeHtml(summary.words.length)}
+        </small>
+      </div>
+    `;
   }
 
   function renderSummary(users) {
@@ -593,6 +719,7 @@
           )}" data-user="${escapeHtml(user.usernameKey)}">Reiniciar gu\u00eda</button>
         </div>
         <div class="progress-source">${escapeHtml(sourceText)}</div>
+        ${guide2Config ? renderWordSearchAdminSummary(user, guide.fileName) : ""}
       </article>
     `;
   }
@@ -632,6 +759,17 @@
           >
           <button class="btn primary" type="submit">Actualizar</button>
         </form>
+
+        <div class="user-section-title" style="margin-top:16px">Corregir ficha</div>
+        <form class="ficha-row" data-ficha-form="${escapeHtml(user.usernameKey)}">
+          <select name="ficha" aria-label="Nueva ficha para ${escapeHtml(user.fullName)}">
+            ${renderFichaOptions(user.ficha)}
+          </select>
+          <button class="btn secondary" type="submit">Actualizar ficha</button>
+        </form>
+        <div class="user-note">
+          Al corregir la ficha se actualizan automaticamente la institucion, el grupo y las guias visibles.
+        </div>
 
         <div class="user-note">
           Si necesitas reiniciar el trabajo del aprendiz, puedes borrar una gu\u00eda concreta o todo su avance.
@@ -698,6 +836,9 @@
       );
     }
 
+    guide2WordSearchSummaries = {};
+    renderUsers();
+    await hydrateGuide2WordSearchSummaries(allUsers);
     renderUsers();
   }
 
@@ -721,6 +862,32 @@
       input.value = "";
     }
     setFeedback(`Contrase\u00f1a actualizada para ${user.fullName}.`, "success");
+    await refreshUsers();
+  }
+
+  async function handleFichaSubmit(form) {
+    const usernameKey = form.getAttribute("data-ficha-form") || "";
+    const select = form.querySelector("select[name='ficha']");
+    const ficha = select?.value || "";
+    const user = allUsers.find((item) => item.usernameKey === usernameKey);
+    if (!user) {
+      setFeedback("No se encontro el usuario solicitado.", "error");
+      return;
+    }
+
+    if (ficha === user.ficha) {
+      setFeedback(`La ficha de ${user.fullName} ya esta registrada como ${ficha}.`, "success");
+      return;
+    }
+
+    const result = await auth.updateStudentFicha(usernameKey, ficha);
+    if (!result.ok) {
+      setFeedback(result.message, "error");
+      return;
+    }
+
+    const updatedFicha = result.user?.ficha || ficha;
+    setFeedback(`Ficha actualizada para ${user.fullName}. Nueva ficha: ${updatedFicha}.`, "success");
     await refreshUsers();
   }
 
@@ -785,13 +952,18 @@
     });
 
     document.addEventListener("submit", async (event) => {
-      const form = event.target.closest("[data-password-form]");
-      if (!form) {
+      const passwordForm = event.target.closest("[data-password-form]");
+      if (passwordForm) {
+        event.preventDefault();
+        await handlePasswordSubmit(passwordForm);
         return;
       }
 
-      event.preventDefault();
-      await handlePasswordSubmit(form);
+      const fichaForm = event.target.closest("[data-ficha-form]");
+      if (fichaForm) {
+        event.preventDefault();
+        await handleFichaSubmit(fichaForm);
+      }
     });
 
     document.addEventListener("click", async (event) => {
