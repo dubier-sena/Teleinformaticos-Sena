@@ -450,6 +450,63 @@ code {
   gap: 4px;
 }
 
+.guide-schedule-item {
+  max-width: 280px;
+  padding: 7px 10px;
+  border: 1px solid rgba(0, 122, 51, 0.16);
+  border-radius: 999px;
+  background: rgba(236, 253, 245, 0.82);
+  color: #053b22;
+  box-shadow: 0 8px 22px rgba(1, 47, 28, 0.06);
+}
+
+.guide-schedule-item--class {
+  border-color: rgba(0, 122, 51, 0.22);
+  background: rgba(220, 252, 231, 0.92);
+}
+
+.guide-schedule-item--delivery {
+  border-color: rgba(202, 138, 4, 0.26);
+  background: rgba(254, 249, 195, 0.92);
+  color: #422006;
+}
+
+.guide-schedule-item.is-empty {
+  border-color: rgba(100, 116, 139, 0.16);
+  background: rgba(248, 250, 252, 0.86);
+  color: #475569;
+}
+
+.guide-schedule-item strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 9px;
+  line-height: 1;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.guide-schedule-copy {
+  min-width: 0;
+}
+
+.guide-schedule-copy > span {
+  display: block;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.guide-schedule-dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  border-radius: 999px;
+  background: currentColor;
+  box-shadow: 0 0 0 4px rgba(0, 122, 51, 0.08);
+}
+
 .content {
   padding: 32px 36px;
   width: min(1180px, calc(100vw - var(--sidebar-w) - 88px));
@@ -2770,6 +2827,19 @@ body.sb-hidden .btn-sb-expand {
     padding-left: 60px;
     gap: 6px;
     flex-wrap: wrap;
+  }
+
+  .topbar-meta {
+    gap: 8px;
+  }
+
+  .guide-schedule-item {
+    max-width: calc(100vw - 92px);
+    flex: 1 1 100%;
+  }
+
+  .guide-schedule-copy > span {
+    max-width: calc(100vw - 150px);
   }
 
   .btn-sb-collapse,

@@ -16,7 +16,13 @@
   const GUIDE_UI_SYNC_DELAY_MS = 1200;
   const GUIDE_UI_REFRESH_MS = 8000;
   const GUIDE_REVEAL_SELECTOR = ".activity, .card, .support-card, .checklist-card";
+  const GUIDE_CALENDAR_DOC = "calendario_2026_admin";
+  const GUIDE_CALENDAR_STORAGE_KEY = "sena-calendario-pro-2026-v2";
+  const GUIDE_CALENDAR_LEGACY_STORAGE_KEY = "sena-calendario-pro-2026-v1";
   let guideRevealObserver = null;
+  let guideCalendarState = null;
+  let guideCalendarRemotePromise = null;
+  let guideCalendarRemoteLoaded = false;
 
   if (portalAuth && !portalAuth.requireFileAccess(pageFile, { redirectUrl: "index.html" })) {
     return;
@@ -261,6 +267,388 @@
     return String(inst || "").replace(/^Institucion Educativa\s+/i, "").trim();
   }
 
+  function normalizeGuideText(value) {
+    return String(value || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
+  }
+
+  function guideInstitutionKey(value) {
+    const normalized = normalizeGuideText(value);
+    if (normalized.indexOf("kennedy") !== -1) {
+      return "kennedy";
+    }
+    if (normalized.indexOf("santa") !== -1 && normalized.indexOf("barbara") !== -1) {
+      return "santa-barbara";
+    }
+    return normalized;
+  }
+
+  function cloneGuideCalendarValue(value) {
+    try {
+      return JSON.parse(JSON.stringify(value));
+    } catch (error) {
+      return value && typeof value === "object" ? Object.assign({}, value) : value;
+    }
+  }
+
+  function getGuideCalendarRecords() {
+    return Array.isArray(window.CALENDAR_2026_RECORDS) ? window.CALENDAR_2026_RECORDS : [];
+  }
+
+  function getGuideCalendarBaseState() {
+    const source =
+      window.CALENDAR_2026_INITIAL_STATE && typeof window.CALENDAR_2026_INITIAL_STATE === "object"
+        ? window.CALENDAR_2026_INITIAL_STATE
+        : {};
+    return normalizeGuideCalendarEntries(source);
+  }
+
+  function normalizeGuideCalendarEntries(source) {
+    const normalized = {};
+    const records = getGuideCalendarRecords();
+    const recordIds = new Set(records.map((record) => record.id));
+    const recordsByBaseId = records.reduce(function (acc, record) {
+      const baseId = record.baseId || record.id;
+      if (!acc[baseId]) {
+        acc[baseId] = [];
+      }
+      acc[baseId].push(record);
+      return acc;
+    }, {});
+
+    Object.entries(source || {}).forEach(function ([key, value]) {
+      if (recordIds.has(key)) {
+        normalized[key] = cloneGuideCalendarValue(value);
+        return;
+      }
+
+      const expandedRecords = recordsByBaseId[key];
+      if (expandedRecords) {
+        expandedRecords.forEach(function (record) {
+          normalized[record.id] = cloneGuideCalendarValue(value);
+        });
+      }
+    });
+
+    return normalized;
+  }
+
+  function normalizeGuideCalendarSnapshot(raw) {
+    if (!raw || typeof raw !== "object") {
+      return null;
+    }
+    const source = raw.state && typeof raw.state === "object" ? raw.state : raw;
+    return {
+      calendarId: raw.calendarId || GUIDE_CALENDAR_DOC,
+      version: Number(raw.version) || 1,
+      updatedAt: typeof raw.updatedAt === "string" ? raw.updatedAt : "",
+      updatedBy: typeof raw.updatedBy === "string" ? raw.updatedBy : "",
+      state: normalizeGuideCalendarEntries(source),
+    };
+  }
+
+  function readGuideCalendarLocalSnapshot() {
+    try {
+      const current = localStorage.getItem(GUIDE_CALENDAR_STORAGE_KEY);
+      if (current) {
+        return normalizeGuideCalendarSnapshot(JSON.parse(current));
+      }
+    } catch (error) {
+    }
+
+    try {
+      const legacy = localStorage.getItem(GUIDE_CALENDAR_LEGACY_STORAGE_KEY);
+      if (legacy) {
+        return normalizeGuideCalendarSnapshot({
+          calendarId: GUIDE_CALENDAR_DOC,
+          version: 1,
+          updatedAt: "",
+          updatedBy: "",
+          state: JSON.parse(legacy),
+        });
+      }
+    } catch (error) {
+    }
+
+    return null;
+  }
+
+  function guideCalendarSnapshotTime(snapshot) {
+    const value = Date.parse(snapshot?.updatedAt || "");
+    return Number.isFinite(value) ? value : 0;
+  }
+
+  function mergeGuideCalendarSnapshots(localSnapshot, remoteSnapshot) {
+    const state = Object.assign({}, getGuideCalendarBaseState());
+    const latestSnapshot =
+      remoteSnapshot && guideCalendarSnapshotTime(remoteSnapshot) >= guideCalendarSnapshotTime(localSnapshot)
+        ? remoteSnapshot
+        : localSnapshot;
+    if (latestSnapshot?.state) {
+      Object.assign(state, latestSnapshot.state);
+    }
+    return state;
+  }
+
+  function getGuideCalendarState() {
+    if (!guideCalendarState) {
+      guideCalendarState = mergeGuideCalendarSnapshots(readGuideCalendarLocalSnapshot(), null);
+    }
+    return guideCalendarState;
+  }
+
+  async function loadGuideCalendarState() {
+    if (guideCalendarRemotePromise) {
+      return guideCalendarRemotePromise;
+    }
+
+    guideCalendarRemotePromise = (async function () {
+      const localSnapshot = readGuideCalendarLocalSnapshot();
+      let remoteSnapshot = null;
+
+      if (window._firebaseDb && typeof window._firebaseDb.cloudGetCalendar === "function") {
+        try {
+          remoteSnapshot = normalizeGuideCalendarSnapshot(
+            await window._firebaseDb.cloudGetCalendar(GUIDE_CALENDAR_DOC)
+          );
+        } catch (error) {
+          remoteSnapshot = null;
+        }
+      }
+
+      guideCalendarState = mergeGuideCalendarSnapshots(localSnapshot, remoteSnapshot);
+      guideCalendarRemoteLoaded = true;
+      return guideCalendarState;
+    })();
+
+    return guideCalendarRemotePromise;
+  }
+
+  function getGuideCalendarEntry(record) {
+    const entry = getGuideCalendarState()[record.id] || {};
+    return {
+      estado: entry.estado || record.defE || "",
+      obs: entry.obs || record.defO || "",
+      act: entry.act || null,
+      grado: entry.grado || record.grado || "",
+    };
+  }
+
+  function getGuideTodayKey() {
+    if (window.GUIDE_SCHEDULE_TODAY_OVERRIDE) {
+      return String(window.GUIDE_SCHEDULE_TODAY_OVERRIDE);
+    }
+
+    const today = new Date();
+    return [
+      today.getFullYear(),
+      String(today.getMonth() + 1).padStart(2, "0"),
+      String(today.getDate()).padStart(2, "0"),
+    ].join("-");
+  }
+
+  function getGuideScheduleTimeValue(record) {
+    const match = String(record?.horario || "").match(/(\d{1,2}):(\d{2})(am|pm)/i);
+    if (!match) {
+      return 9999;
+    }
+    let hour = Number(match[1]) % 12;
+    if (match[3].toLowerCase() === "pm") {
+      hour += 12;
+    }
+    return hour * 60 + Number(match[2]);
+  }
+
+  function compareGuideScheduleRecords(a, b) {
+    const dateCompare = String(a.fecha || "").localeCompare(String(b.fecha || ""));
+    if (dateCompare) {
+      return dateCompare;
+    }
+    const timeCompare = getGuideScheduleTimeValue(a) - getGuideScheduleTimeValue(b);
+    if (timeCompare) {
+      return timeCompare;
+    }
+    return String(a.id || "").localeCompare(String(b.id || ""));
+  }
+
+  function matchesGuideScheduleSelection(record, selection) {
+    const entry = getGuideCalendarEntry(record);
+    const selectedGroup = normalizeGroup(selection?.grupo);
+    const recordGroup = normalizeGroup(entry.grado || record.grado);
+    if (!selectedGroup || !recordGroup || selectedGroup !== recordGroup) {
+      return false;
+    }
+    return guideInstitutionKey(record.colegio) === guideInstitutionKey(selection?.inst);
+  }
+
+  function isGuideClassAvailable(record) {
+    const estado = normalizeGuideText(getGuideCalendarEntry(record).estado);
+    return !["cancelada", "sin programacion", "no aplica", "novedad"].includes(estado);
+  }
+
+  function findNextGuideClass(selection) {
+    const today = getGuideTodayKey();
+    return getGuideCalendarRecords()
+      .filter(function (record) {
+        return (
+          record.tipo === "CLASE" &&
+          String(record.fecha || "") >= today &&
+          matchesGuideScheduleSelection(record, selection) &&
+          isGuideClassAvailable(record)
+        );
+      })
+      .sort(compareGuideScheduleRecords)[0] || null;
+  }
+
+  function findNextGuideDelivery(selection) {
+    const today = getGuideTodayKey();
+    const deliveries = [];
+
+    getGuideCalendarRecords().forEach(function (record) {
+      if (
+        record.tipo !== "CLASE" ||
+        !matchesGuideScheduleSelection(record, selection) ||
+        !isGuideClassAvailable(record)
+      ) {
+        return;
+      }
+
+      const act = getGuideCalendarEntry(record).act;
+      if (!act || (!act.nombre && !act.fecha)) {
+        return;
+      }
+
+      const dueDate = String(act.fecha || record.fecha || "");
+      if (dueDate && dueDate < today) {
+        return;
+      }
+
+      deliveries.push({
+        record,
+        act,
+        dueDate,
+      });
+    });
+
+    return (
+      deliveries.sort(function (a, b) {
+        const dueCompare = String(a.dueDate || "").localeCompare(String(b.dueDate || ""));
+        if (dueCompare) {
+          return dueCompare;
+        }
+        return compareGuideScheduleRecords(a.record, b.record);
+      })[0] || null
+    );
+  }
+
+  function formatGuideDate(isoDate) {
+    const parts = String(isoDate || "").split("-");
+    if (parts.length !== 3) {
+      return "Fecha pendiente";
+    }
+
+    const label = parts[2] + "/" + parts[1] + "/" + parts[0];
+    return isoDate === getGuideTodayKey() ? "Hoy " + label : label;
+  }
+
+  function ensureGuideScheduleMeta() {
+    const meta = document.querySelector(".topbar-meta");
+    if (!meta) {
+      return null;
+    }
+
+    let classItem = document.getElementById("guideScheduleNextClass");
+    let deliveryItem = document.getElementById("guideScheduleNextDelivery");
+
+    if (!classItem) {
+      classItem = document.createElement("span");
+      classItem.id = "guideScheduleNextClass";
+      meta.appendChild(classItem);
+    }
+
+    if (!deliveryItem) {
+      deliveryItem = document.createElement("span");
+      deliveryItem.id = "guideScheduleNextDelivery";
+      meta.appendChild(deliveryItem);
+    }
+
+    return { classItem, deliveryItem };
+  }
+
+  function renderGuideScheduleItem(element, type, title, body, isEmpty) {
+    element.className =
+      "meta-item guide-schedule-item guide-schedule-item--" +
+      type +
+      (isEmpty ? " is-empty" : "");
+    element.title = title + ": " + body;
+    element.innerHTML =
+      '<span class="guide-schedule-dot" aria-hidden="true"></span>' +
+      '<span class="guide-schedule-copy"><strong>' +
+      escapeHtml(title) +
+      '</strong><span>' +
+      escapeHtml(body) +
+      "</span></span>";
+  }
+
+  function renderGuideScheduleSummary(selection, options) {
+    if (!getGuideCalendarRecords().length) {
+      return;
+    }
+
+    const nodes = ensureGuideScheduleMeta();
+    if (!nodes) {
+      return;
+    }
+
+    const nextClass = findNextGuideClass(selection);
+    if (nextClass) {
+      const classBody = [formatGuideDate(nextClass.fecha), nextClass.horario]
+        .filter(Boolean)
+        .join(" - ");
+      renderGuideScheduleItem(nodes.classItem, "class", "Proxima clase", classBody, false);
+    } else {
+      renderGuideScheduleItem(
+        nodes.classItem,
+        "class",
+        "Proxima clase",
+        "Sin fecha programada",
+        true
+      );
+    }
+
+    const nextDelivery = findNextGuideDelivery(selection);
+    if (nextDelivery) {
+      const deliveryBody = [
+        nextDelivery.act?.nombre || "Actividad sin nombre",
+        nextDelivery.dueDate ? formatGuideDate(nextDelivery.dueDate) : "Sin fecha",
+      ]
+        .filter(Boolean)
+        .join(" - ");
+      renderGuideScheduleItem(nodes.deliveryItem, "delivery", "Entrega pendiente", deliveryBody, false);
+    } else {
+      renderGuideScheduleItem(
+        nodes.deliveryItem,
+        "delivery",
+        "Sin entrega proxima",
+        "No hay actividad con fecha pendiente",
+        true
+      );
+    }
+
+    if (!options?.skipRemote && !guideCalendarRemoteLoaded) {
+      loadGuideCalendarState()
+        .then(function () {
+          renderGuideScheduleSummary(selection, { skipRemote: true });
+        })
+        .catch(function () {
+        });
+    }
+  }
+
   function getGuideDisplayMeta(fileName, selection) {
     const rawTitle = portalAuth?.getGuideTitle(fileName) || fileName;
     const match = String(rawTitle).match(/^Gu(?:i|\u00ed)a\s*([0-9]+)\s*-\s*(.+?)(?:\s*\|\s*Grupo\s+(.+))?$/i);
@@ -408,6 +796,7 @@
     if (topbarText) {
       setText("topbarCampus", topbarText);
     }
+    renderGuideScheduleSummary(selection);
 
     const heroText =
       formatGrupo(selection.grupo) +
