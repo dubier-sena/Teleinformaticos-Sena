@@ -16,7 +16,10 @@ for (const page of pages) {
     'id="wordSearchBoard"',
     'id="wordSearchFound"',
     'id="wordSearchScore"',
+    'id="wordSearchMistakes"',
+    'id="wordSearchTargets"',
     'id="wordSearchLeaderboard"',
+    "Palabras a buscar",
     "Puntaje maximo: 10000",
   ];
 
@@ -36,9 +39,12 @@ for (const page of pages) {
 const script = fs.readFileSync(path.join(root, "js", "script_guia2.js"), "utf8");
 const scriptMarkers = [
   "WORD_SEARCH_MAX_SCORE = 10000",
+  "WORD_SEARCH_ERROR_PENALTY = 200",
   "initializeWordSearchGame",
+  "renderWordSearchTargets",
   "publishWordSearchLeaderboard",
   "renderWordSearchLeaderboard",
+  "mistakes",
   "wordSearch:guia2-sopa",
 ];
 
@@ -49,8 +55,16 @@ for (const marker of scriptMarkers) {
   }
 }
 
+const admin = fs.readFileSync(path.join(root, "js", "admin_usuarios.js"), "utf8");
+for (const marker of ["Errores", "Puntaje", "Palabras encontradas"]) {
+  if (!admin.includes(marker)) {
+    console.error(`[FAIL] js/admin_usuarios.js no muestra resultado de sopa: ${marker}`);
+    failed = true;
+  }
+}
+
 if (failed) {
   process.exit(1);
 }
 
-console.log("OK: Guia 2 incluye sopa de letras local con puntaje y Top 5.");
+console.log("OK: Guia 2 incluye sopa de letras local con palabras visibles, penalizacion y Top 5.");

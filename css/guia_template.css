@@ -1529,7 +1529,7 @@ code {
 
 .word-search-top {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
   margin-bottom: 14px;
 }
@@ -1640,19 +1640,32 @@ code {
   color: var(--text);
 }
 
-.word-search-found-list {
+.word-search-found-list,
+.word-search-target-list {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.word-search-found-list .found-word {
+.word-search-found-list .found-word,
+.word-search-target-list .target-word {
   border-radius: 999px;
   background: rgba(15, 191, 100, 0.13);
   color: var(--sena-green-dark);
   font-size: 12px;
   font-weight: 800;
   padding: 6px 10px;
+}
+
+.word-search-target-list .target-word {
+  background: rgba(12, 42, 28, 0.08);
+  color: var(--text);
+}
+
+.word-search-target-list .target-word.is-found {
+  background: rgba(15, 191, 100, 0.16);
+  color: var(--sena-green-dark);
+  text-decoration: line-through;
 }
 
 .word-search-leaderboard {

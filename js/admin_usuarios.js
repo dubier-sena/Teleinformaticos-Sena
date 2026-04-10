@@ -278,11 +278,18 @@
         : [];
     const score = Number(result.score) || 0;
     const elapsedMs = Number(result.elapsedMs) || 0;
+    const hasResult = Boolean(
+      result.startedAt ||
+        result.completedAt ||
+        words.length ||
+        Number(result.mistakes)
+    );
 
     return renderAnswerTable(
       ["Dato", "Resultado"],
       [
-        ["Puntaje", score ? `${score} / 10000` : "Sin registro"],
+        ["Puntaje", hasResult ? `${score} / 10000` : "Sin registro"],
+        ["Errores", hasResult ? String(Number(result.mistakes) || 0) : "Sin registro"],
         ["Tiempo usado", elapsedMs ? formatDurationMs(elapsedMs) : "Sin registro"],
         ["Palabras encontradas", words.length ? words.join(", ") : "Sin registro"],
         ["Total de palabras", words.length ? String(words.length) : "Sin registro"],
