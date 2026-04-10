@@ -20,9 +20,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/site_tokens.css?v=20260409_1">
   <link rel="stylesheet" href="css/shared_shell.css?v=20260409_1">
-  <link rel="stylesheet" href="css/guia_template.css?v=20260409_2">
+  <link rel="stylesheet" href="css/guia_template.css?v=20260409_3">
   <script defer src="js/shared_shell.js?v=20260409_1"></script>
-  <script defer src="js/script_guia2.js?v=20260409_4"></script>
+  <script defer src="js/script_guia2.js?v=20260409_5"></script>
   <script defer src="js/guia_template.js?v=20260409_1"></script>
 </head>
 <body
@@ -258,11 +258,43 @@
             </div>
             <div class="activity-body">
               <p class="intro-text">Realice la b&uacute;squeda en la siguiente sopa de letras, las palabras asociadas a los sistemas operativos y en espec&iacute;fico a la tem&aacute;tica de restauraci&oacute;n y formateo.</p>
-              <div class="game-frame-wrap">
-                <iframe referrerpolicy="strict-origin-when-cross-origin" allow="fullscreen; autoplay; allow-top-navigation-by-user-activation" allowfullscreen width="795" height="690" frameborder="0" src="https://es.educaplay.com/juego/27988460-operar_herramientas_informaticas_y_digitales_de_acuerdo_con_protocolos_y_manuales_tecnicos.html"></iframe>
-              </div>
-              <div class="activity-qr-actions">
-                <button class="btn-qr" type="button" data-activity-qr="guia2-sopa">Abrir en movil - Ver QR</button>
+              <div class="word-search-game" data-word-search="guia2-sopa">
+                <div class="word-search-top">
+                  <div class="word-search-stat">
+                    <span>Puntaje</span>
+                    <strong id="wordSearchScore">0</strong>
+                  </div>
+                  <div class="word-search-stat">
+                    <span>Tiempo</span>
+                    <strong id="wordSearchTime">00:00</strong>
+                  </div>
+                  <div class="word-search-stat">
+                    <span>Encontradas</span>
+                    <strong id="wordSearchCount">0 / 0</strong>
+                  </div>
+                </div>
+                <div class="word-search-actions">
+                  <button class="btn-drive" type="button" id="wordSearchStart">Iniciar actividad</button>
+                  <button class="btn-qr" type="button" id="wordSearchReset">Reiniciar sopa</button>
+                  <span class="word-search-max">Puntaje maximo: 10000</span>
+                </div>
+                <p class="word-search-help">Selecciona la primera y la &uacute;ltima letra de cada palabra. El ranking ordena por mayor puntaje y, en empate, por menor tiempo.</p>
+                <div class="word-search-layout">
+                  <div class="word-search-board" id="wordSearchBoard" aria-label="Sopa de letras de conceptos b&aacute;sicos"></div>
+                  <aside class="word-search-side">
+                    <div class="word-search-panel">
+                      <h4>Palabras encontradas por el aprendiz</h4>
+                      <div class="word-search-found-list" id="wordSearchFound">A&uacute;n no hay palabras encontradas.</div>
+                    </div>
+                    <div class="word-search-panel">
+                      <h4>Top 5 de puntajes</h4>
+                      <ol class="word-search-leaderboard" id="wordSearchLeaderboard">
+                        <li>Sin registros todav&iacute;a.</li>
+                      </ol>
+                    </div>
+                  </aside>
+                </div>
+                <div class="word-search-status" id="wordSearchStatus">Pulsa iniciar para activar el cron&oacute;metro.</div>
               </div>
             </div>
           </div>
