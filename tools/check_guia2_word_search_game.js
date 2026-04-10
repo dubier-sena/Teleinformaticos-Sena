@@ -25,8 +25,8 @@ for (const page of pages) {
     "Puntaje maximo: 10000",
     'class="word-search-layout word-search-arena"',
     'class="word-search-board-shell"',
-    "css/guia_template.css?v=20260409_6",
-    "js/script_guia2.js?v=20260409_8",
+    "css/guia_template.css?v=20260410_1",
+    "js/script_guia2.js?v=20260410_1",
   ];
 
   for (const marker of required) {

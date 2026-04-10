@@ -6,6 +6,7 @@
 
   let allUsers = [];
   let guide2WordSearchSummaries = {};
+  let guide2MatchingGameSummaries = {};
   const GUIDE2_RESPONSE_FILES = {
     "grupo-10a-guia-02-herramientas-informaticas-digitales.html": {
       cloudFileName: "10a_guia2.html",
@@ -16,6 +17,7 @@
   };
   const GUIDE2_RESPONSE_KEYS = [
     "wordSearch:guia2-sopa",
+    "matchingGame:guia2-relaciona",
     "contexto-q1",
     "contexto-rel-drive",
     "contexto-rel-excel",
@@ -235,6 +237,13 @@
       : {};
   }
 
+  function getMatchingGameResult(state) {
+    return state?.["matchingGame:guia2-relaciona"] &&
+      typeof state["matchingGame:guia2-relaciona"] === "object"
+      ? state["matchingGame:guia2-relaciona"]
+      : {};
+  }
+
   function getWordSearchWords(result) {
     if (Array.isArray(result.foundLabels)) {
       return result.foundLabels;
@@ -250,6 +259,22 @@
       result.startedAt ||
         result.completedAt ||
         (Array.isArray(words) && words.length) ||
+        Number(result.mistakes)
+    );
+  }
+
+  function getMatchingGamePairs(result) {
+    if (Array.isArray(result.matchedPairs)) {
+      return result.matchedPairs;
+    }
+    return [];
+  }
+
+  function hasMatchingGameResult(result, pairs) {
+    return Boolean(
+      result.startedAt ||
+        result.completedAt ||
+        (Array.isArray(pairs) && pairs.length) ||
         Number(result.mistakes)
     );
   }
@@ -277,8 +302,33 @@
     };
   }
 
+  function extractMatchingGameSummary(snapshot, user) {
+    const state = snapshot?.state || {};
+    const result = getMatchingGameResult(state);
+    const pairs = getMatchingGamePairs(result);
+    if (!hasMatchingGameResult(result, pairs)) {
+      return null;
+    }
+
+    return {
+      playerName: result.playerName || state["actividad4:nombre_completo"] || user.fullName,
+      username: user.username,
+      ficha: state["actividad4:ficha"] || user.ficha,
+      score: Number(result.score) || 0,
+      elapsedMs: Number(result.elapsedMs) || 0,
+      mistakes: Number(result.mistakes) || 0,
+      variant: Number(result.variant) || 1,
+      correctCount: Number(result.correctCount) || pairs.length || 0,
+      totalPairs: Number(result.totalPairs) || 0,
+      completed: Boolean(result.completedAt),
+      completedAt: result.completedAt || "",
+      updatedAt: snapshot?.updatedAt || result.completedAt || result.startedAt || "",
+    };
+  }
+
   async function hydrateGuide2WordSearchSummaries(users) {
     const nextSummaries = {};
+    const nextMatchingSummaries = {};
     const tasks = [];
 
     users.forEach((user) => {
@@ -292,9 +342,11 @@
           loadGuide2Responses(user.usernameKey, guide.fileName)
             .then(({ snapshot }) => {
               nextSummaries[key] = extractWordSearchSummary(snapshot, user);
+              nextMatchingSummaries[key] = extractMatchingGameSummary(snapshot, user);
             })
             .catch(() => {
               nextSummaries[key] = null;
+              nextMatchingSummaries[key] = null;
             })
         );
       });
@@ -302,11 +354,13 @@
 
     if (!tasks.length) {
       guide2WordSearchSummaries = {};
+      guide2MatchingGameSummaries = {};
       return;
     }
 
     await Promise.all(tasks);
     guide2WordSearchSummaries = nextSummaries;
+    guide2MatchingGameSummaries = nextMatchingSummaries;
   }
 
   function renderAnswerValue(value) {
@@ -376,12 +430,47 @@
     );
   }
 
+  function renderMatchingGameResult(state, context) {
+    const result = getMatchingGameResult(state);
+    const pairs = getMatchingGamePairs(result);
+    const score = Number(result.score) || 0;
+    const elapsedMs = Number(result.elapsedMs) || 0;
+    const hasResult = hasMatchingGameResult(result, pairs);
+    const user = context?.user || {};
+    const correctCount = Number(result.correctCount) || pairs.length || 0;
+    const totalPairs = Number(result.totalPairs) || 0;
+    const pairText = pairs
+      .map((pair) => `${pair.tool || "Herramienta"}: ${pair.answer || "Sin respuesta"}`)
+      .join(" | ");
+
+    return renderAnswerTable(
+      ["Dato", "Resultado"],
+      [
+        ["Aprendiz que realizo", result.playerName || state["actividad4:nombre_completo"] || user.fullName],
+        ["Usuario", user.username || result.playerKey || "Sin registro"],
+        ["Ficha registrada", state["actividad4:ficha"] || user.ficha || "Sin registro"],
+        ["Puntaje", hasResult ? `${score} / 10000` : "Sin registro"],
+        ["Version asignada", hasResult ? `Version ${Number(result.variant) || 1}` : "Sin registro"],
+        ["Respuestas correctas", hasResult ? `${correctCount} / ${totalPairs || correctCount}` : "Sin registro"],
+        ["Errores", hasResult ? String(Number(result.mistakes) || 0) : "Sin registro"],
+        ["Tiempo usado", elapsedMs ? formatDurationMs(elapsedMs) : "Sin registro"],
+        ["Parejas correctas", pairText || "Sin registro"],
+        ["Fecha de finalizacion", result.completedAt ? formatDate(result.completedAt) : "Sin registro"],
+      ]
+    );
+  }
+
   function renderGuide2ResponsesBody(state, context) {
     return `
       <div class="answers-grid">
         <article class="answer-card">
           <h3>Actividad 1. Sopa de letras de conceptos basicos.</h3>
           ${renderWordSearchResult(state, context)}
+        </article>
+
+        <article class="answer-card">
+          <h3>Actividad 2. Relaciona la herramienta con su funcion.</h3>
+          ${renderMatchingGameResult(state, context)}
         </article>
 
         <article class="answer-card">
@@ -668,6 +757,44 @@
     `;
   }
 
+  function renderMatchingGameAdminSummary(user, fileName) {
+    const key = getGuide2SummaryKey(user.usernameKey, fileName);
+    const summary = guide2MatchingGameSummaries[key];
+
+    if (summary === undefined) {
+      return `
+        <div class="word-search-admin-summary is-loading">
+          <span>Actividad 2 - Relaciona funciones</span>
+          <strong>Consultando quien realizo la actividad...</strong>
+        </div>
+      `;
+    }
+
+    if (!summary) {
+      return `
+        <div class="word-search-admin-summary is-empty">
+          <span>Actividad 2 - Relaciona funciones</span>
+          <strong>Actividad 2: Sin registro</strong>
+          <small>Aprendiz: ${escapeHtml(user.fullName)} | Ficha ${escapeHtml(user.ficha)}</small>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="word-search-admin-summary">
+        <span>Actividad 2 - Relaciona funciones</span>
+        <strong>${summary.completed ? "Actividad completada" : "Actividad iniciada"} por ${escapeHtml(summary.playerName)}</strong>
+        <small>
+          Ficha ${escapeHtml(summary.ficha)} |
+          Puntaje ${escapeHtml(summary.score)} / 10000 |
+          Tiempo ${escapeHtml(formatDurationMs(summary.elapsedMs))} |
+          Errores ${escapeHtml(summary.mistakes)} |
+          Correctas ${escapeHtml(summary.correctCount)} / ${escapeHtml(summary.totalPairs || summary.correctCount)}
+        </small>
+      </div>
+    `;
+  }
+
   function renderSummary(users) {
     const fichas = new Set(users.map((user) => user.ficha));
     const activeUsers = users.filter((user) => (user.progress?.percent || 0) > 0);
@@ -720,6 +847,7 @@
         </div>
         <div class="progress-source">${escapeHtml(sourceText)}</div>
         ${guide2Config ? renderWordSearchAdminSummary(user, guide.fileName) : ""}
+        ${guide2Config ? renderMatchingGameAdminSummary(user, guide.fileName) : ""}
       </article>
     `;
   }
@@ -837,6 +965,7 @@
     }
 
     guide2WordSearchSummaries = {};
+    guide2MatchingGameSummaries = {};
     renderUsers();
     await hydrateGuide2WordSearchSummaries(allUsers);
     renderUsers();

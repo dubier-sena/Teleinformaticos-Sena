@@ -407,6 +407,107 @@ const WORD_SEARCH_VARIANT_COUNT = 2;
 const WORD_SEARCH_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const WORD_SEARCH_LEADERBOARD_SCOPE = "leaderboard:guia2-sopa";
 const WORD_SEARCH_LOCAL_LEADERBOARD_KEY = `guia2_word_search_leaderboard_${PAGE_KEY}_${WORD_SEARCH_ACTIVITY_ID}`;
+const MATCHING_GAME_ACTIVITY_ID = "guia2-relaciona";
+const MATCHING_GAME_STATE_KEY = "matchingGame:guia2-relaciona";
+const MATCHING_GAME_MAX_SCORE = 10000;
+const MATCHING_GAME_ERROR_PENALTY = 250;
+const MATCHING_GAME_VARIANT_COUNT = 2;
+const MATCHING_GAME_LEADERBOARD_SCOPE = "leaderboard:guia2-relaciona";
+const MATCHING_GAME_LOCAL_LEADERBOARD_KEY = `guia2_matching_game_leaderboard_${PAGE_KEY}_${MATCHING_GAME_ACTIVITY_ID}`;
+const MATCHING_GAME_VARIANTS = [
+  {
+    id: 1,
+    label: "Version 1",
+    pairs: [
+      {
+        id: "google-drive",
+        tool: "Google Drive",
+        answer: "Almacenar y compartir archivos en la nube.",
+      },
+      {
+        id: "microsoft-excel",
+        tool: "Microsoft Excel",
+        answer: "Organizar datos en tablas y hacer calculos.",
+      },
+      {
+        id: "canva",
+        tool: "Canva",
+        answer: "Crear presentaciones e imagenes visuales.",
+      },
+      {
+        id: "whatsapp-business",
+        tool: "WhatsApp Business",
+        answer: "Comunicarse con clientes de un negocio.",
+      },
+      {
+        id: "microsoft-word",
+        tool: "Microsoft Word",
+        answer: "Redactar y dar formato a documentos.",
+      },
+      {
+        id: "google-meet",
+        tool: "Google Meet",
+        answer: "Realizar reuniones o clases virtuales.",
+      },
+      {
+        id: "gmail",
+        tool: "Gmail",
+        answer: "Enviar y recibir correos electronicos.",
+      },
+      {
+        id: "google-forms",
+        tool: "Google Forms",
+        answer: "Crear cuestionarios y recolectar respuestas.",
+      },
+    ],
+  },
+  {
+    id: 2,
+    label: "Version 2",
+    pairs: [
+      {
+        id: "libreoffice-writer",
+        tool: "LibreOffice Writer",
+        answer: "Crear documentos de texto.",
+      },
+      {
+        id: "powerpoint",
+        tool: "Microsoft PowerPoint",
+        answer: "Crear presentaciones con diapositivas.",
+      },
+      {
+        id: "google-calendar",
+        tool: "Google Calendar",
+        answer: "Programar eventos y recordatorios.",
+      },
+      {
+        id: "zoom",
+        tool: "Zoom",
+        answer: "Realizar videollamadas y compartir pantalla.",
+      },
+      {
+        id: "onedrive",
+        tool: "OneDrive",
+        answer: "Guardar archivos en la nube de Microsoft.",
+      },
+      {
+        id: "microsoft-teams",
+        tool: "Microsoft Teams",
+        answer: "Chat, reuniones y trabajo colaborativo.",
+      },
+      {
+        id: "google-sheets",
+        tool: "Google Sheets",
+        answer: "Crear hojas de calculo colaborativas.",
+      },
+      {
+        id: "trello",
+        tool: "Trello",
+        answer: "Organizar tareas en tableros.",
+      },
+    ],
+  },
+];
 
 let state = loadState();
 let cloudStateSyncTimer = null;
@@ -420,6 +521,13 @@ let wordSearchCountdownTimer = null;
 let wordSearchCountdownValue = 0;
 let wordSearchCountdownVariant = 0;
 let wordSearchCountdownPhase = "idle";
+let matchingGameSelectedTool = "";
+let matchingGameWrongPair = null;
+let matchingGameTimer = null;
+let matchingGameCountdownTimer = null;
+let matchingGameCountdownValue = 0;
+let matchingGameCountdownVariant = 0;
+let matchingGameCountdownPhase = "idle";
 const ACTIVITY4_IDENTITY_NAME_KEY = "actividad4:nombre_completo";
 const ACTIVITY4_IDENTITY_FICHA_KEY = "actividad4:ficha";
 
@@ -433,6 +541,7 @@ document.addEventListener("DOMContentLoaded", () => {
   prefillActivity4Identity();
   hydrateFields();
   initializeWordSearchGame();
+  initializeMatchingGame();
   bindEvents();
   syncActivity4IdentityUi();
   updateProgress();
@@ -494,6 +603,7 @@ function saveState() {
 function renderStatefulSections() {
   renderWordBank();
   renderWordSearchGame();
+  renderMatchingGame();
   renderMatchingTable();
   renderExtensionTable();
   renderSystemTable();
@@ -1712,6 +1822,764 @@ function initializeWordSearchGame() {
   loadWordSearchLeaderboard();
 }
 
+function normalizeMatchingGameVariant(value) {
+  const variant = Number(value) || 1;
+  if (variant < 1 || variant > MATCHING_GAME_VARIANT_COUNT) {
+    return 1;
+  }
+  return Math.floor(variant);
+}
+
+function pickMatchingGameVariant() {
+  return Math.floor(Math.random() * MATCHING_GAME_VARIANT_COUNT) + 1;
+}
+
+function getMatchingGameVariant(variant) {
+  const variantId = normalizeMatchingGameVariant(variant);
+  return MATCHING_GAME_VARIANTS.find((item) => item.id === variantId) || MATCHING_GAME_VARIANTS[0];
+}
+
+function getMatchingGamePairs(variant) {
+  return getMatchingGameVariant(variant).pairs;
+}
+
+function getMatchingGameOptions(variant) {
+  const pairs = getMatchingGamePairs(variant);
+  const random = createSeededRandom(hashString(`${MATCHING_GAME_ACTIVITY_ID}:options:${variant}`));
+  return pairs
+    .map((pair) => ({ ...pair, sort: random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ sort, ...pair }) => pair);
+}
+
+function sanitizeMatchingGameMatches(source, variant) {
+  const pairs = getMatchingGamePairs(variant);
+  const validIds = new Set(pairs.map((pair) => pair.id));
+  const matches = {};
+
+  Object.entries(source || {}).forEach(([toolId, optionId]) => {
+    if (validIds.has(toolId) && toolId === optionId) {
+      matches[toolId] = optionId;
+    }
+  });
+
+  return matches;
+}
+
+function calculateMatchingGameScore(correctCount, total, mistakes) {
+  if (!total) {
+    return 0;
+  }
+  const baseScore = Math.round((correctCount / total) * MATCHING_GAME_MAX_SCORE);
+  const penalty = Math.max(0, Number(mistakes) || 0) * MATCHING_GAME_ERROR_PENALTY;
+  return Math.max(0, Math.min(MATCHING_GAME_MAX_SCORE, baseScore - penalty));
+}
+
+function getMatchingGameMatchedPairs(variant, matches) {
+  return getMatchingGamePairs(variant)
+    .filter((pair) => matches[pair.id] === pair.id)
+    .map((pair) => ({
+      tool: pair.tool,
+      answer: pair.answer,
+    }));
+}
+
+function getMatchingGameState() {
+  const saved =
+    state[MATCHING_GAME_STATE_KEY] && typeof state[MATCHING_GAME_STATE_KEY] === "object"
+      ? state[MATCHING_GAME_STATE_KEY]
+      : {};
+  const variant = normalizeMatchingGameVariant(saved.variant || 1);
+  const pairs = getMatchingGamePairs(variant);
+  const matches = sanitizeMatchingGameMatches(saved.matches, variant);
+  const correctCount = Object.keys(matches).length;
+  const mistakes = Math.max(0, Number(saved.mistakes) || 0);
+
+  return {
+    variant,
+    matches,
+    matchedPairs: getMatchingGameMatchedPairs(variant, matches),
+    correctCount,
+    totalPairs: pairs.length,
+    mistakes,
+    score: calculateMatchingGameScore(correctCount, pairs.length, mistakes),
+    startedAt: saved.startedAt || "",
+    completedAt: saved.completedAt || "",
+    elapsedMs: Number(saved.elapsedMs) || 0,
+    leaderboardPublishedAt: saved.leaderboardPublishedAt || "",
+    playerKey: saved.playerKey || "",
+    playerName: saved.playerName || "",
+    ficha: saved.ficha || "",
+    grupo: saved.grupo || "",
+    inst: saved.inst || "",
+    updatedAt: saved.updatedAt || "",
+  };
+}
+
+function getMatchingGameElapsedMs(gameState) {
+  if (!gameState?.startedAt) {
+    return Math.max(0, Number(gameState?.elapsedMs) || 0);
+  }
+
+  if (gameState.completedAt && gameState.elapsedMs) {
+    return Math.max(0, Number(gameState.elapsedMs) || 0);
+  }
+
+  const started = Date.parse(gameState.startedAt);
+  if (!Number.isFinite(started)) {
+    return Math.max(0, Number(gameState.elapsedMs) || 0);
+  }
+
+  const finished = Date.parse(gameState.completedAt || "");
+  const endTime = Number.isFinite(finished) ? finished : Date.now();
+  return Math.max(0, endTime - started);
+}
+
+function buildMatchingGamePlayerMeta() {
+  return buildWordSearchPlayerMeta();
+}
+
+function setMatchingGameState(next) {
+  const current = getMatchingGameState();
+  const variant = normalizeMatchingGameVariant(next.variant || current.variant || 1);
+  const matches = Object.prototype.hasOwnProperty.call(next, "matches")
+    ? sanitizeMatchingGameMatches(next.matches, variant)
+    : sanitizeMatchingGameMatches(current.matches, variant);
+  const pairs = getMatchingGamePairs(variant);
+  const correctCount = Object.keys(matches).length;
+  const mistakes =
+    Object.prototype.hasOwnProperty.call(next, "mistakes")
+      ? Math.max(0, Number(next.mistakes) || 0)
+      : current.mistakes;
+
+  state[MATCHING_GAME_STATE_KEY] = {
+    ...current,
+    ...next,
+    variant,
+    matches,
+    matchedPairs: getMatchingGameMatchedPairs(variant, matches),
+    correctCount,
+    totalPairs: pairs.length,
+    mistakes,
+    score: calculateMatchingGameScore(correctCount, pairs.length, mistakes),
+    updatedAt: new Date().toISOString(),
+  };
+  saveState();
+  renderMatchingGame();
+}
+
+function setMatchingGameStatus(message) {
+  const status = document.getElementById("matchingGameStatus");
+  if (status) {
+    status.textContent = message;
+  }
+}
+
+function pulseMatchingGameMetric(element) {
+  const metric = element?.closest?.(".matching-game-stat") || element;
+  if (!metric) {
+    return;
+  }
+
+  metric.classList.remove("is-updating");
+  void metric.offsetWidth;
+  metric.classList.add("is-updating");
+  window.setTimeout(() => {
+    metric.classList.remove("is-updating");
+  }, 420);
+}
+
+function updateMatchingGameMetric(id, value, options) {
+  const element = document.getElementById(id);
+  if (!element) {
+    return;
+  }
+
+  const nextValue = String(value);
+  if (element.textContent !== nextValue) {
+    element.textContent = nextValue;
+    if (!options || options.pulse !== false) {
+      pulseMatchingGameMetric(element);
+    }
+  }
+}
+
+function clearMatchingGameCountdown() {
+  window.clearInterval(matchingGameCountdownTimer);
+  matchingGameCountdownTimer = null;
+  matchingGameCountdownValue = 0;
+  matchingGameCountdownVariant = 0;
+  matchingGameCountdownPhase = "idle";
+}
+
+function isMatchingGameCountingDown() {
+  return Boolean(matchingGameCountdownTimer || matchingGameCountdownPhase === "countdown");
+}
+
+function startMatchingGameCountdown(variant) {
+  clearMatchingGameCountdown();
+  matchingGameCountdownVariant = normalizeMatchingGameVariant(variant);
+  matchingGameCountdownValue = 3;
+  matchingGameCountdownPhase = "countdown";
+  renderMatchingGame();
+  setMatchingGameStatus("Cuenta regresiva: 3 segundos para iniciar.");
+
+  matchingGameCountdownTimer = window.setInterval(() => {
+    matchingGameCountdownValue -= 1;
+    if (matchingGameCountdownValue <= 0) {
+      finishMatchingGameCountdown();
+      return;
+    }
+
+    renderMatchingGame();
+    setMatchingGameStatus(`Cuenta regresiva: ${matchingGameCountdownValue} segundos para iniciar.`);
+  }, 1000);
+}
+
+function finishMatchingGameCountdown() {
+  const variant = matchingGameCountdownVariant || getMatchingGameState().variant || 1;
+  clearMatchingGameCountdown();
+  setMatchingGameState({
+    ...buildMatchingGamePlayerMeta(),
+    variant,
+    startedAt: new Date().toISOString(),
+    countdownStartedAt: "",
+  });
+  setMatchingGameStatus("Cronometro activo. Selecciona una herramienta y luego su funcion.");
+}
+
+function startMatchingGame() {
+  const current = getMatchingGameState();
+  if (current.completedAt) {
+    setMatchingGameStatus("Actividad completada. Puedes reiniciar si deseas mejorar el tiempo.");
+    return;
+  }
+
+  if (isMatchingGameCountingDown()) {
+    setMatchingGameStatus(`Cuenta regresiva: ${matchingGameCountdownValue} segundos para iniciar.`);
+    return;
+  }
+
+  if (current.startedAt) {
+    setMatchingGameStatus("La actividad ya esta en curso. Completa las parejas pendientes.");
+    return;
+  }
+
+  const variant = pickMatchingGameVariant();
+  matchingGameSelectedTool = "";
+  matchingGameWrongPair = null;
+  setMatchingGameState({
+    ...buildMatchingGamePlayerMeta(),
+    variant,
+    matches: {},
+    matchedPairs: [],
+    startedAt: "",
+    countdownStartedAt: new Date().toISOString(),
+    completedAt: "",
+    elapsedMs: 0,
+    mistakes: 0,
+    leaderboardPublishedAt: "",
+  });
+  startMatchingGameCountdown(variant);
+}
+
+function resetMatchingGame() {
+  const current = getMatchingGameState();
+  const hasProgress = current.startedAt || current.correctCount || current.mistakes;
+  if (hasProgress && !window.confirm("Se reiniciara la Actividad 2 y el tiempo. Deseas continuar?")) {
+    return;
+  }
+
+  clearMatchingGameCountdown();
+  matchingGameSelectedTool = "";
+  matchingGameWrongPair = null;
+  state[MATCHING_GAME_STATE_KEY] = {
+    variant: normalizeMatchingGameVariant(current.variant),
+    matches: {},
+    matchedPairs: [],
+    correctCount: 0,
+    totalPairs: getMatchingGamePairs(current.variant).length,
+    score: 0,
+    startedAt: "",
+    countdownStartedAt: "",
+    completedAt: "",
+    elapsedMs: 0,
+    leaderboardPublishedAt: "",
+    mistakes: 0,
+    updatedAt: new Date().toISOString(),
+  };
+  saveState();
+  renderMatchingGame();
+  setMatchingGameStatus("Pulsa Comenzar para activar la cuenta regresiva.");
+}
+
+function canUseMatchingGame(gameState) {
+  if (isMatchingGameCountingDown()) {
+    setMatchingGameStatus(`Cuenta regresiva: ${matchingGameCountdownValue} segundos para iniciar.`);
+    return false;
+  }
+
+  if (!gameState.startedAt) {
+    setMatchingGameStatus("Primero pulsa Comenzar y espera la cuenta regresiva.");
+    return false;
+  }
+
+  if (gameState.completedAt) {
+    setMatchingGameStatus("Ya completaste todas las parejas. Reinicia solo si quieres mejorar el tiempo.");
+    return false;
+  }
+
+  return true;
+}
+
+function selectMatchingTool(toolId) {
+  const gameState = getMatchingGameState();
+  if (!canUseMatchingGame(gameState)) {
+    return;
+  }
+
+  const pair = getMatchingGamePairs(gameState.variant).find((item) => item.id === toolId);
+  if (!pair) {
+    return;
+  }
+
+  if (gameState.matches[toolId]) {
+    setMatchingGameStatus(`${pair.tool} ya esta relacionado correctamente.`);
+    return;
+  }
+
+  matchingGameSelectedTool = toolId;
+  matchingGameWrongPair = null;
+  renderMatchingGame();
+  setMatchingGameStatus(`Seleccionaste ${pair.tool}. Ahora elige su funcion.`);
+}
+
+function selectMatchingAnswer(answerId) {
+  let gameState = getMatchingGameState();
+  if (!canUseMatchingGame(gameState)) {
+    return;
+  }
+
+  if (!matchingGameSelectedTool) {
+    setMatchingGameStatus("Haz clic primero en una herramienta y luego en su funcion.");
+    return;
+  }
+
+  if (Object.values(gameState.matches).includes(answerId)) {
+    setMatchingGameStatus("Esa funcion ya fue usada correctamente. Elige otra opcion.");
+    return;
+  }
+
+  const selectedPair = getMatchingGamePairs(gameState.variant).find(
+    (pair) => pair.id === matchingGameSelectedTool
+  );
+  const selectedOption = getMatchingGamePairs(gameState.variant).find((pair) => pair.id === answerId);
+  if (!selectedPair || !selectedOption) {
+    return;
+  }
+
+  if (selectedPair.id !== answerId) {
+    matchingGameWrongPair = {
+      toolId: selectedPair.id,
+      optionId: answerId,
+    };
+    setMatchingGameState({
+      mistakes: gameState.mistakes + 1,
+    });
+    setMatchingGameStatus(
+      `Relacion incorrecta: -${MATCHING_GAME_ERROR_PENALTY} puntos. Revisa la funcion de ${selectedPair.tool}.`
+    );
+    window.setTimeout(() => {
+      matchingGameWrongPair = null;
+      renderMatchingGame();
+    }, 560);
+    return;
+  }
+
+  const matches = {
+    ...gameState.matches,
+    [selectedPair.id]: answerId,
+  };
+  const completed = Object.keys(matches).length >= gameState.totalPairs;
+  const now = new Date().toISOString();
+  const elapsedMs = completed ? getMatchingGameElapsedMs(gameState) : gameState.elapsedMs;
+  matchingGameSelectedTool = "";
+  matchingGameWrongPair = null;
+
+  setMatchingGameState({
+    ...buildMatchingGamePlayerMeta(),
+    matches,
+    completedAt: completed ? now : "",
+    elapsedMs,
+    leaderboardPublishedAt: completed ? now : gameState.leaderboardPublishedAt,
+    lastMatchedAt: now,
+  });
+
+  if (completed) {
+    publishMatchingGameLeaderboard(getMatchingGameState());
+    setMatchingGameStatus("Excelente. Completaste las relaciones y tu puntaje entro al ranking.");
+    return;
+  }
+
+  setMatchingGameStatus(`Correcto: ${selectedPair.tool} se relaciona con "${selectedPair.answer}"`);
+}
+
+function renderMatchingGameBoard(gameState) {
+  const board = document.getElementById("matchingGameBoard");
+  if (!board) {
+    return;
+  }
+
+  const isCountingDown = isMatchingGameCountingDown();
+  board.classList.toggle("is-waiting", !gameState.startedAt);
+  board.classList.toggle("is-countdown", isCountingDown);
+
+  if (!gameState.startedAt) {
+    board.innerHTML = isCountingDown
+      ? renderMatchingGameCountdownOverlay()
+      : `
+        <div class="matching-game-ready">
+          <strong>Actividad 2</strong>
+          <span>Pulsa Comenzar para recibir una de las 2 versiones disponibles.</span>
+        </div>
+      `;
+    return;
+  }
+
+  board.innerHTML = getMatchingGamePairs(gameState.variant)
+    .map((pair, index) => {
+      const isMatched = gameState.matches[pair.id] === pair.id;
+      const isSelected = matchingGameSelectedTool === pair.id;
+      const isWrong = matchingGameWrongPair?.toolId === pair.id;
+      return `
+        <button
+          class="matching-game-tool ${isMatched ? "is-locked" : ""} ${isSelected ? "is-selected" : ""} ${isWrong ? "is-wrong" : ""}"
+          type="button"
+          data-matching-tool="${escapeHtml(pair.id)}"
+          ${isMatched ? "disabled" : ""}
+          style="--matching-index:${index}"
+        >
+          <span>${escapeHtml(pair.tool)}</span>
+          <em>${isMatched ? escapeHtml(pair.answer) : isSelected ? "Elige una funcion disponible" : "Pendiente por relacionar"}</em>
+        </button>
+      `;
+    })
+    .join("");
+}
+
+function renderMatchingGameOptions(gameState) {
+  const options = document.getElementById("matchingGameOptions");
+  if (!options) {
+    return;
+  }
+
+  if (!gameState.startedAt) {
+    options.innerHTML = '<p class="matching-game-placeholder">Las funciones aparecen despues de la cuenta regresiva.</p>';
+    return;
+  }
+
+  const usedOptions = new Set(Object.values(gameState.matches));
+  options.innerHTML = getMatchingGameOptions(gameState.variant)
+    .map((pair, index) => {
+      const isUsed = usedOptions.has(pair.id);
+      const isWrong = matchingGameWrongPair?.optionId === pair.id;
+      return `
+        <button
+          class="matching-game-option ${isUsed ? "is-used" : ""} ${isWrong ? "is-wrong" : ""}"
+          type="button"
+          data-matching-option="${escapeHtml(pair.id)}"
+          ${isUsed ? "disabled" : ""}
+          style="--matching-index:${index}"
+        >
+          ${escapeHtml(pair.answer)}
+        </button>
+      `;
+    })
+    .join("");
+}
+
+function renderMatchingGameCountdownOverlay() {
+  const value = Math.max(1, Number(matchingGameCountdownValue) || 1);
+
+  return `
+    <div class="matching-game-countdown" aria-live="polite" data-countdown-phase="${escapeHtml(matchingGameCountdownPhase)}">
+      <span>Cuenta regresiva</span>
+      <strong aria-label="${escapeHtml(`Faltan ${value} segundos`)}">
+        <b>${escapeHtml(value)}</b>
+      </strong>
+      <em>Observa las herramientas y prepara la primera relacion.</em>
+    </div>
+  `;
+}
+
+function refreshMatchingGameTime() {
+  const gameState = getMatchingGameState();
+  const time = document.getElementById("matchingGameTime");
+  const isLive = Boolean(gameState.startedAt && !gameState.completedAt);
+
+  if (time) {
+    const nextTime = formatWordSearchTime(getMatchingGameElapsedMs(gameState));
+    const stat = time.closest(".matching-game-stat");
+    stat?.classList.toggle("is-timer-live", isLive);
+    updateMatchingGameMetric("matchingGameTime", nextTime, { pulse: isLive });
+  }
+}
+
+function renderMatchingGame() {
+  const container = document.querySelector(`[data-matching-game="${MATCHING_GAME_ACTIVITY_ID}"]`);
+  if (!container) {
+    return;
+  }
+
+  const gameState = getMatchingGameState();
+  const startButton = document.getElementById("matchingGameStart");
+  const isCountingDown = isMatchingGameCountingDown();
+
+  container.classList.toggle("is-counting-down", isCountingDown);
+  container.classList.toggle("is-running", Boolean(gameState.startedAt && !gameState.completedAt));
+  container.classList.toggle("is-completed", Boolean(gameState.completedAt));
+
+  renderMatchingGameBoard(gameState);
+  renderMatchingGameOptions(gameState);
+  renderMatchingGameLeaderboard(readMatchingGameLeaderboard());
+  refreshMatchingGameTime();
+
+  updateMatchingGameMetric("matchingGameScore", gameState.score);
+  updateMatchingGameMetric("matchingGameCorrect", `${gameState.correctCount} / ${gameState.totalPairs}`);
+  updateMatchingGameMetric("matchingGameMistakes", gameState.mistakes);
+
+  if (startButton) {
+    startButton.disabled = Boolean(isCountingDown || (gameState.startedAt && !gameState.completedAt));
+    startButton.textContent =
+      isCountingDown
+        ? `Comienza en ${matchingGameCountdownValue}`
+        : gameState.completedAt
+        ? "Actividad completada"
+        : gameState.startedAt
+          ? "Actividad en curso"
+          : "Comenzar";
+  }
+}
+
+function normalizeMatchingGameLeaderboardEntry(entry) {
+  if (!entry || typeof entry !== "object") {
+    return null;
+  }
+
+  const score = Number(entry.score) || 0;
+  const elapsedMs = Math.max(0, Number(entry.elapsedMs) || 0);
+  if (score <= 0) {
+    return null;
+  }
+
+  return {
+    id: entry.id || `${entry.playerKey || "anon"}:${entry.completedAt || entry.updatedAt || Date.now()}`,
+    playerKey: entry.playerKey || entry.id || "",
+    playerName: entry.playerName || "Aprendiz",
+    ficha: entry.ficha || "",
+    grupo: entry.grupo || "",
+    inst: entry.inst || "",
+    variant: normalizeMatchingGameVariant(entry.variant || 1),
+    score,
+    elapsedMs,
+    correctCount: Number(entry.correctCount) || 0,
+    totalPairs: Number(entry.totalPairs) || getMatchingGamePairs(1).length,
+    mistakes: Number(entry.mistakes) || 0,
+    completedAt: entry.completedAt || "",
+    updatedAt: entry.updatedAt || entry.completedAt || "",
+  };
+}
+
+function isBetterMatchingGameEntry(candidate, current) {
+  if (!current) {
+    return true;
+  }
+  if (candidate.score !== current.score) {
+    return candidate.score > current.score;
+  }
+  if (candidate.elapsedMs !== current.elapsedMs) {
+    return candidate.elapsedMs < current.elapsedMs;
+  }
+  return Date.parse(candidate.updatedAt || "") > Date.parse(current.updatedAt || "");
+}
+
+function mergeMatchingGameLeaderboard(...lists) {
+  const bestByPlayer = new Map();
+  lists
+    .flat()
+    .map(normalizeMatchingGameLeaderboardEntry)
+    .filter(Boolean)
+    .forEach((entry) => {
+      const key = entry.playerKey || entry.id;
+      const current = bestByPlayer.get(key);
+      if (isBetterMatchingGameEntry(entry, current)) {
+        bestByPlayer.set(key, entry);
+      }
+    });
+
+  return Array.from(bestByPlayer.values()).sort((a, b) => {
+    if (b.score !== a.score) {
+      return b.score - a.score;
+    }
+    if (a.elapsedMs !== b.elapsedMs) {
+      return a.elapsedMs - b.elapsedMs;
+    }
+    return String(a.playerName).localeCompare(String(b.playerName));
+  });
+}
+
+function readMatchingGameLeaderboard() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(MATCHING_GAME_LOCAL_LEADERBOARD_KEY) || "[]");
+    return mergeMatchingGameLeaderboard(Array.isArray(saved) ? saved : []).slice(0, 20);
+  } catch {
+    return [];
+  }
+}
+
+function saveMatchingGameLeaderboard(entries) {
+  try {
+    localStorage.setItem(
+      MATCHING_GAME_LOCAL_LEADERBOARD_KEY,
+      JSON.stringify(mergeMatchingGameLeaderboard(entries).slice(0, 20))
+    );
+  } catch {
+  }
+}
+
+function buildMatchingGameLeaderboardEntry(gameState) {
+  const meta = buildMatchingGamePlayerMeta();
+  return {
+    id: `${meta.playerKey}:${gameState.completedAt || new Date().toISOString()}`,
+    ...meta,
+    score: gameState.score,
+    elapsedMs: getMatchingGameElapsedMs(gameState),
+    correctCount: gameState.correctCount,
+    totalPairs: gameState.totalPairs,
+    mistakes: gameState.mistakes,
+    variant: gameState.variant,
+    completedAt: gameState.completedAt || "",
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+function renderMatchingGameLeaderboard(entries) {
+  const leaderboard = document.getElementById("matchingGameLeaderboard");
+  if (!leaderboard) {
+    return;
+  }
+
+  const topEntries = mergeMatchingGameLeaderboard(entries).slice(0, 5);
+  if (!topEntries.length) {
+    leaderboard.innerHTML = "<li>Sin registros todavia.</li>";
+    return;
+  }
+
+  leaderboard.innerHTML = topEntries
+    .map(
+      (entry) => `
+        <li>
+          <strong>${escapeHtml(entry.playerName)}</strong>
+          ${escapeHtml(String(entry.score))} pts
+          <span>(${escapeHtml(formatWordSearchTime(entry.elapsedMs))})</span>
+        </li>
+      `
+    )
+    .join("");
+}
+
+async function loadMatchingGameLeaderboard() {
+  renderMatchingGameLeaderboard(readMatchingGameLeaderboard());
+  if (!window._firebaseDb || typeof window._firebaseDb.cloudGetGuideData !== "function") {
+    return;
+  }
+
+  try {
+    const snapshot = await window._firebaseDb.cloudGetGuideData(
+      MATCHING_GAME_LEADERBOARD_SCOPE,
+      GUIDE_DATA_FILE
+    );
+    const cloudEntries = Array.isArray(snapshot?.state?.entries) ? snapshot.state.entries : [];
+    const merged = mergeMatchingGameLeaderboard(readMatchingGameLeaderboard(), cloudEntries).slice(0, 20);
+    saveMatchingGameLeaderboard(merged);
+    renderMatchingGameLeaderboard(merged);
+  } catch {
+  }
+}
+
+async function publishMatchingGameLeaderboard(gameState) {
+  const entry = buildMatchingGameLeaderboardEntry(gameState);
+  const localEntries = mergeMatchingGameLeaderboard(readMatchingGameLeaderboard(), [entry]).slice(0, 20);
+  saveMatchingGameLeaderboard(localEntries);
+  renderMatchingGameLeaderboard(localEntries);
+
+  if (
+    !window._firebaseDb ||
+    typeof window._firebaseDb.cloudGetGuideData !== "function" ||
+    typeof window._firebaseDb.cloudSaveGuideData !== "function"
+  ) {
+    return;
+  }
+
+  try {
+    const snapshot = await window._firebaseDb.cloudGetGuideData(
+      MATCHING_GAME_LEADERBOARD_SCOPE,
+      GUIDE_DATA_FILE
+    );
+    const cloudEntries = Array.isArray(snapshot?.state?.entries) ? snapshot.state.entries : [];
+    const merged = mergeMatchingGameLeaderboard(cloudEntries, localEntries, [entry]).slice(0, 20);
+    const saved = await window._firebaseDb.cloudSaveGuideData(
+      MATCHING_GAME_LEADERBOARD_SCOPE,
+      GUIDE_DATA_FILE,
+      {
+        scopeKey: MATCHING_GAME_LEADERBOARD_SCOPE,
+        fileName: GUIDE_DATA_FILE,
+        updatedAt: new Date().toISOString(),
+        updatedBy: "leaderboard",
+        state: { entries: merged },
+      }
+    );
+    if (saved) {
+      saveMatchingGameLeaderboard(merged);
+      renderMatchingGameLeaderboard(merged);
+    }
+  } catch {
+  }
+}
+
+function initializeMatchingGame() {
+  const container = document.querySelector(`[data-matching-game="${MATCHING_GAME_ACTIVITY_ID}"]`);
+  if (!container) {
+    return;
+  }
+
+  renderMatchingGame();
+  if (container.dataset.matchingGameReady === "1") {
+    return;
+  }
+
+  container.dataset.matchingGameReady = "1";
+  document.getElementById("matchingGameStart")?.addEventListener("click", startMatchingGame);
+  document.getElementById("matchingGameReset")?.addEventListener("click", resetMatchingGame);
+  document.getElementById("matchingGameBoard")?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-matching-tool]");
+    if (!button) {
+      return;
+    }
+    selectMatchingTool(button.dataset.matchingTool || "");
+  });
+  document.getElementById("matchingGameOptions")?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-matching-option]");
+    if (!button) {
+      return;
+    }
+    selectMatchingAnswer(button.dataset.matchingOption || "");
+  });
+  window.clearInterval(matchingGameTimer);
+  matchingGameTimer = window.setInterval(refreshMatchingGameTime, 1000);
+  loadMatchingGameLeaderboard();
+}
+
 function renderWordBank() {
   const bank = document.getElementById("wordBank");
   if (!bank) {
@@ -2686,6 +3554,7 @@ function updateProgress() {
   const trackedButtons = Array.from(document.querySelectorAll("[data-track-button]"));
   const activityChecks = Array.from(document.querySelectorAll(".activity-check"));
   const wordSearchGames = Array.from(document.querySelectorAll("[data-word-search]"));
+  const matchingGames = Array.from(document.querySelectorAll("[data-matching-game]"));
   const radioStoreKeys = new Set(
     trackedFields.filter((field) => field.type === "radio").map((field) => field.dataset.store)
   );
@@ -2714,19 +3583,25 @@ function updateProgress() {
     const gameState = getWordSearchState();
     return Boolean(gameState.completedAt);
   }).length;
+  const completedMatchingGames = matchingGames.filter(() => {
+    const gameState = getMatchingGameState();
+    return Boolean(gameState.completedAt);
+  }).length;
 
   const total =
     trackedFields.filter((field) => field.type !== "radio").length +
     radioStoreKeys.size +
     trackedButtons.length +
     activityChecks.length +
-    wordSearchGames.length;
+    wordSearchGames.length +
+    matchingGames.length;
   const completed =
     completedNonRadioFields +
     completedRadioGroups +
     completedButtons +
     completedChecks +
-    completedWordSearchGames;
+    completedWordSearchGames +
+    completedMatchingGames;
   const rawPercent = total ? Math.round((completed / total) * 100) : 0;
   const percent = completed > 0 && rawPercent === 0 ? 1 : rawPercent;
 
