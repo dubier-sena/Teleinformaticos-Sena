@@ -27,8 +27,8 @@ for (const page of pages) {
     "Top 5 de puntajes",
     "Funciones disponibles",
     "Haz clic primero en una herramienta",
-    "css/guia_template.css?v=20260410_2",
-    "js/script_guia2.js?v=20260410_2",
+    "css/guia_template.css?v=20260410_3",
+    "js/script_guia2.js?v=20260410_3",
   ];
 
   for (const marker of required) {
