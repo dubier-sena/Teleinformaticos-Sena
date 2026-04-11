@@ -8,19 +8,19 @@
   content="default-src 'self' blob: data:; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https:; media-src 'self' blob: data: https:; frame-src 'self' https://es.educaplay.com;"
 >
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<title>Panel Administrativo | Portal de Gu&iacute;as</title>
+<title>Panel Administrativo | Portal de Guias</title>
 <meta
   name="description"
-  content="Panel administrativo para revisar usuarios, contrase&ntilde;as y progreso por gu&iacute;a."
+  content="Panel administrativo para revisar usuarios, contrasenas y progreso por guia."
 >
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/site_tokens.css?v=20260409_1">
 <link rel="stylesheet" href="css/shared_shell.css?v=20260409_1">
-<link rel="stylesheet" href="css/page_admin.css?v=20260409_2">
+<link rel="stylesheet" href="css/page_admin.css?v=20260411_2">
 <script src="js/portal_auth.js?v=20260409_2"></script>
-<script src="js/firebase_db.js?v=20260326_7"></script>
+<script src="js/firebase_db.js?v=20260410_1"></script>
 <script defer src="js/shared_shell.js?v=20260409_1"></script>
 <script>
 if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "index.html" })) {
@@ -43,6 +43,7 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
         </div>
         <div class="hero-actions">
           <a class="hero-link" href="index.html">Volver al portal</a>
+          <a class="hero-link" href="etapa-productiva-admin.html">Etapa productiva</a>
           <a class="hero-link primary" href="calendario-academico-2026.html">Abrir calendario</a>
         </div>
       </div>
@@ -56,8 +57,9 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
   <main class="main app-main admin-main">
     <section class="summary-grid" id="summary-grid" data-reveal>
       <article class="summary-card">
-        <span class="summary-label">Usuarios creados</span>
+        <span class="summary-label" id="summary-users-label">Aprendices registrados</span>
         <div class="summary-value" id="summary-users">0</div>
+        <span class="summary-context" id="summary-users-context">Todas las fichas</span>
       </article>
       <article class="summary-card">
         <span class="summary-label">Con avance registrado</span>
@@ -81,9 +83,34 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
       </p>
       <div class="toolbar">
         <input id="user-search" type="search" placeholder="Buscar por nombre, usuario, ficha o grupo">
+        <label class="toolbar-select" for="ficha-filter">
+          <span>Filtrar ficha</span>
+          <select id="ficha-filter" aria-label="Filtrar aprendices por ficha">
+            <option value="">Todas las fichas</option>
+          </select>
+        </label>
+        <span class="filter-chip" id="filter-ficha-count">0 aprendices registrados</span>
         <button class="btn secondary" type="button" id="refresh-users">Actualizar listado</button>
       </div>
       <div class="admin-feedback" id="admin-feedback"></div>
+    </section>
+
+    <section class="panel admin-module-entry" id="productive-stage-access-panel" data-reveal>
+      <div class="admin-module-entry__content">
+        <div class="admin-module-entry__copy">
+          <div class="admin-module-entry__badge">Grados 11</div>
+          <h2>Etapa Productiva</h2>
+          <p>
+            El importador y el catalogo de informes de retroalimentacion ahora viven en una pagina
+            administrativa dedicada para trabajar con mas espacio y mejor organizacion.
+          </p>
+        </div>
+        <div class="admin-module-entry__actions">
+          <a class="btn primary" href="etapa-productiva-admin.html" id="open-productive-stage-admin">
+            Abrir etapa productiva
+          </a>
+        </div>
+      </div>
     </section>
 
     <section class="users-grid" id="users-container" data-reveal></section>
@@ -95,15 +122,15 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
       <div class="modal-header">
         <div>
           <h2 id="guide2-responses-title">Respuestas del cuestionario 3.2.1</h2>
-          <p id="guide2-responses-subtitle">Consulta administrativa de la Guía 2.</p>
+          <p id="guide2-responses-subtitle">Consulta administrativa de la Guia 2.</p>
         </div>
-        <button class="modal-close" type="button" data-close-guide2-modal aria-label="Cerrar">×</button>
+        <button class="modal-close" type="button" data-close-guide2-modal aria-label="Cerrar">x</button>
       </div>
       <div class="modal-meta" id="guide2-responses-meta"></div>
       <div class="modal-body" id="guide2-responses-body"></div>
     </section>
   </div>
 
-  <script src="js/admin_usuarios.js?v=20260409_6"></script>
+  <script src="js/admin_usuarios.js?v=20260411_2"></script>
 </body>
 </html>

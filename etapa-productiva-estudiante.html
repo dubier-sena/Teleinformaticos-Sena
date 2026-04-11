@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta
+  http-equiv="Content-Security-Policy"
+  content="default-src 'self' blob: data:; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https:; media-src 'self' blob: data: https:; frame-src 'self' https://es.educaplay.com;"
+>
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Mi proyecto | Etapa Productiva</title>
+<meta
+  name="description"
+  content="Vista privada para que el aprendiz consulte su proyecto de etapa productiva y los informes de retroalimentacion."
+>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/site_tokens.css?v=20260409_1">
+<link rel="stylesheet" href="css/shared_shell.css?v=20260409_1">
+<link rel="stylesheet" href="css/page_productive_stage_student.css?v=20260411_1">
+<script src="js/portal_auth.js?v=20260409_2"></script>
+<script src="js/firebase_db.js?v=20260410_1"></script>
+<script defer src="js/shared_shell.js?v=20260409_1"></script>
+<script defer src="js/productive_stage_store.js?v=20260411_2"></script>
+<script defer src="js/productive_stage_student.js?v=20260411_1"></script>
+</head>
+<body class="app-shell app-shell--productive-stage-student">
+  <header class="app-hero productive-stage-student-hero">
+    <div class="app-hero__inner productive-stage-student-hero__inner">
+      <div class="productive-stage-student-hero__copy" data-reveal>
+        <div class="student-badge">Etapa Productiva</div>
+        <h1>Mi proyecto y retroalimentacion</h1>
+        <p id="student-project-intro">
+          Consulta unicamente el proyecto vinculado a tu grupo y revisa el historial de informes registrados por el instructor.
+        </p>
+      </div>
+      <div class="productive-stage-student-hero__actions" data-reveal>
+        <a class="app-btn app-btn--ghost" href="index.html">Volver al portal</a>
+        <a class="app-btn app-btn--primary" href="calendario-academico-2026.html">Abrir calendario</a>
+      </div>
+    </div>
+  </header>
+
+  <svg class="wave" viewBox="0 0 1440 40" preserveAspectRatio="none" height="40" aria-hidden="true">
+    <path fill="currentColor" d="M0,20 C360,40 1080,0 1440,20 L1440,40 L0,40 Z"></path>
+  </svg>
+
+  <main class="app-main productive-stage-student" id="productive-stage-student-shell">
+    <section class="app-card student-project-card" id="student-project-status" data-reveal>
+      <div class="student-project-card__header">
+        <div>
+          <h2 id="student-project-heading">Cargando proyecto...</h2>
+          <p id="student-project-meta">Validando sesion y consultando informacion segura.</p>
+        </div>
+        <span class="student-project-chip" id="student-project-status-chip">Protegido</span>
+      </div>
+    </section>
+
+    <section class="student-project-grid">
+      <section class="app-card student-project-panel" id="student-project-summary" data-reveal>
+        <h3>Resumen del proyecto</h3>
+        <div class="student-project-panel__body" id="student-project-summary-body">
+          <p class="student-project-placeholder">Todavia no hay informacion para mostrar.</p>
+        </div>
+      </section>
+
+      <section class="app-card student-project-panel" id="student-project-reports" data-reveal>
+        <h3>Historial de informes</h3>
+        <div class="student-project-panel__body" id="student-project-reports-body">
+          <p class="student-project-placeholder">Todavia no hay informes disponibles.</p>
+        </div>
+      </section>
+    </section>
+  </main>
+</body>
+</html>

@@ -37,7 +37,7 @@ assertIncludes(server, '$user["grupo"] = $selection["grupo"]', "persistencia de 
 
 assertIncludes(adminCss, ".ficha-row", "estilos del formulario de ficha");
 assertIncludes(adminHtml, "portal_auth.js?v=20260409_2", "cache actualizado de autenticacion");
-assertIncludes(adminHtml, "admin_usuarios.js?v=20260409_6", "cache actualizado del panel admin");
-assertIncludes(adminHtml, "page_admin.css?v=20260409_2", "cache actualizado de estilos admin");
+assertIncludes(adminHtml, "admin_usuarios.js?v=20260411_1", "cache actualizado del panel admin");
+assertIncludes(adminHtml, "page_admin.css?v=20260411_1", "cache actualizado de estilos admin");
 
 console.log("OK: el panel admin muestra quien realizo la actividad y permite corregir ficha.");

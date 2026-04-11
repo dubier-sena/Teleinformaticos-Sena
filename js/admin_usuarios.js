@@ -144,7 +144,7 @@
   }
 
   function snapshotTime(snapshot) {
-    const parsed = Date.parse(snapshot?.updatedAt || "");
+    const parsed = Date.parse(snapshot?.updatedAt || snapshot?.importedAt || snapshot?.completedAt || "");
     return Number.isFinite(parsed) ? parsed : 0;
   }
 
@@ -718,6 +718,41 @@
       .join("");
   }
 
+  function renderFichaFilterOptions(selectedFicha) {
+    const fichasWithUsers = new Set(allUsers.map((user) => String(user.ficha || "")));
+    const fichaOptions = Object.entries(auth.FICHA_MAP || {})
+      .filter(([ficha]) => fichasWithUsers.has(ficha))
+      .map(([ficha, info]) => {
+        const total = allUsers.filter((user) => String(user.ficha || "") === ficha).length;
+        const selected = ficha === String(selectedFicha || "") ? " selected" : "";
+        const label = `${ficha} - Grupo ${info.grupo} (${total})`;
+        return `<option value="${escapeHtml(ficha)}"${selected}>${escapeHtml(label)}</option>`;
+      })
+      .join("");
+
+    return `<option value="">Todas las fichas</option>${fichaOptions}`;
+  }
+
+  function getSelectedFichaFilter() {
+    return String(getById("ficha-filter")?.value || "");
+  }
+
+  function updateFichaFilterOptions() {
+    const select = getById("ficha-filter");
+    if (!select) {
+      return;
+    }
+
+    const selectedFicha = getSelectedFichaFilter();
+    select.innerHTML = renderFichaFilterOptions(selectedFicha);
+
+    if (selectedFicha && !Array.from(select.options).some((option) => option.value === selectedFicha)) {
+      select.value = "";
+      return;
+    }
+    select.value = selectedFicha;
+  }
+
   function renderWordSearchAdminSummary(user, fileName) {
     const key = getGuide2SummaryKey(user.usernameKey, fileName);
     const summary = guide2WordSearchSummaries[key];
@@ -798,11 +833,22 @@
   function renderSummary(users) {
     const fichas = new Set(users.map((user) => user.ficha));
     const activeUsers = users.filter((user) => (user.progress?.percent || 0) > 0);
+    const selectedFicha = getSelectedFichaFilter();
+    const fichaInfo = selectedFicha ? auth.getFichaInfo?.(selectedFicha) : null;
+    const context = selectedFicha
+      ? `Aprendices registrados en ficha ${selectedFicha}${
+          fichaInfo?.grupo ? " | Grupo " + fichaInfo.grupo : ""
+        }`
+      : "Todas las fichas";
 
     getById("summary-users").textContent = String(users.length);
     getById("summary-active").textContent = String(activeUsers.length);
     getById("summary-fichas").textContent = String(fichas.size);
     getById("summary-admin").textContent = "Protegido";
+    getById("summary-users-context").textContent = context;
+    getById("filter-ficha-count").textContent = `${users.length} aprendiz${
+      users.length === 1 ? "" : "es"
+    } registrado${users.length === 1 ? "" : "s"}`;
   }
 
   function renderEmptyState(message) {
@@ -919,11 +965,15 @@
 
   function getFilteredUsers() {
     const search = (getById("user-search")?.value || "").trim().toLowerCase();
-    if (!search) {
-      return allUsers;
-    }
+    const selectedFicha = getSelectedFichaFilter();
 
     return allUsers.filter((user) => {
+      if (selectedFicha && String(user.ficha || "") !== selectedFicha) {
+        return false;
+      }
+      if (!search) {
+        return true;
+      }
       const haystack = [user.fullName, user.username, user.ficha, user.grupo, user.inst]
         .join(" ")
         .toLowerCase();
@@ -932,8 +982,9 @@
   }
 
   function renderUsers() {
+    updateFichaFilterOptions();
     const users = getFilteredUsers();
-    renderSummary(allUsers);
+    renderSummary(users);
 
     if (!users.length) {
       renderEmptyState("No hay usuarios que coincidan con la b\u00fasqueda actual.");
@@ -1077,6 +1128,10 @@
     });
 
     getById("user-search")?.addEventListener("input", () => {
+      renderUsers();
+    });
+
+    getById("ficha-filter")?.addEventListener("change", () => {
       renderUsers();
     });
 

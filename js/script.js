@@ -956,44 +956,12 @@ function closeDriveFolderQR() {
   }
 }
 
-function createDriveDeliveryPanel(config) {
-  const wrapper = document.createElement("div");
-  wrapper.className = "info-box drive-submit-box";
-  wrapper.setAttribute("data-drive-panel", config.panelKey);
-  wrapper.style.marginTop = "16px";
-  wrapper.innerHTML = `
-    <div class="label">Entrega de esta actividad en Drive</div>
-    <p>${escapeHtml(config.description)}</p>
-    <div class="drive-action-group">
-      <button class="btn-drive" type="button">Subir al portafolio de Drive</button>
-      <button class="btn-qr" type="button">Abrir en movil - Ver QR</button>
-    </div>
-    <div class="drive-helper-note">${escapeHtml(config.note)} La carpeta se define automaticamente segun la ficha activa del grupo 11.</div>
-  `;
-
-  const [driveButton, qrButton] = wrapper.querySelectorAll("button");
-  driveButton?.addEventListener("click", openDriveFolder);
-  qrButton?.addEventListener("click", showDriveFolderQR);
-  return wrapper;
-}
-
-function findActivityBodyByNumber(activityNumber) {
-  const activity = Array.from(document.querySelectorAll(".activity")).find((item) => {
-    const number = item.querySelector(".activity-num")?.textContent?.trim() || "";
-    return number === activityNumber;
-  });
-
-  return activity?.querySelector(".activity-body") || null;
-}
-
 function renderDriveDeliveryPanel() {
-  GUIDE5_DRIVE_ACTIVITY_TARGETS.forEach((config) => {
-    const activityBody = findActivityBodyByNumber(config.activityNumber);
-    if (!activityBody || activityBody.querySelector(`[data-drive-panel='${config.panelKey}']`)) {
-      return;
-    }
-
-    activityBody.appendChild(createDriveDeliveryPanel(config));
+  window.sharedDriveDelivery?.appendDriveDeliveryPanels({
+    targets: GUIDE5_DRIVE_ACTIVITY_TARGETS,
+    helperSuffix: "La carpeta se define automaticamente segun la ficha activa.",
+    onDriveClick: openDriveFolder,
+    onQrClick: showDriveFolderQR,
   });
 }
 

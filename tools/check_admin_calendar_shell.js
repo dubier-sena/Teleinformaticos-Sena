@@ -16,7 +16,7 @@ const pageChecks = [
         message: "missing shared shell stylesheet import",
       },
       {
-        pattern: /href="css\/page_admin\.css\?v=20260409_1"/,
+        pattern: /href="css\/page_admin\.css\?v=20260411_1"/,
         message: "missing admin page stylesheet import",
       },
       {
@@ -111,7 +111,7 @@ const pageChecks = [
         message: "missing shared shell stylesheet import",
       },
       {
-        pattern: /href="css\/page_calendar\.css\?v=20260409_1"/,
+        pattern: /href="css\/page_calendar\.css\?v=20260411_2"/,
         message: "missing calendar page stylesheet import",
       },
       {
@@ -161,10 +161,6 @@ const pageChecks = [
       {
         pattern: /id="save-chip"/,
         message: "missing save chip hook",
-      },
-      {
-        pattern: /id="sync-help"/,
-        message: "missing sync help hook",
       },
       {
         pattern: /id="nav"/,

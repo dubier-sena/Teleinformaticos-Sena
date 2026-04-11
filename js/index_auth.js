@@ -47,6 +47,10 @@
     });
   }
 
+  function canAccessProductiveStage(session) {
+    return session?.role === "student" && ["3168850", "3168852"].includes(String(session.user?.ficha || ""));
+  }
+
   function showFlashMessage() {
     const flash = auth.consumeFlashMessage();
     if (!flash) {
@@ -125,6 +129,7 @@
     setVisible(getById("auth-guest-card"), true);
     setVisible(getById("auth-session-card"), false);
     setVisible(getById("auth-session-actions"), false);
+    setVisible(getById("auth-student-actions"), false);
     hideCtaPanel();
     updateAccessNote("Inicia sesi\u00f3n o crea tu usuario para abrir las gu\u00edas habilitadas por tu ficha.");
     document.querySelectorAll(".group-btn.active").forEach((button) => {
@@ -157,6 +162,8 @@
     const meta = getById("auth-session-meta");
     const guides = getById("auth-session-guides");
     const actions = getById("auth-session-actions");
+    const studentActions = getById("auth-student-actions");
+    const productiveStageButton = getById("btn-productive-stage-access");
 
     setVisible(getById("auth-guest-card"), false);
     setVisible(getById("auth-session-card"), true);
@@ -176,6 +183,7 @@
         "Panel de usuarios",
       ]);
       setVisible(actions, true);
+      setVisible(studentActions, false);
       updateAccessNote("Como administrador puedes abrir cualquier gu\u00eda y administrar usuarios.");
       return;
     }
@@ -184,11 +192,17 @@
     role.textContent = "Estudiante";
     name.textContent = user.fullName;
     meta.textContent = `${user.username} | Ficha ${user.ficha} | ${user.inst} | Grupo ${user.grupo}`;
-    renderGuideChips(
-      guides,
-      auth.getGuidesForFicha(user.ficha).map((file) => auth.getGuideTitle(file))
-    );
+    const guideLabels = auth.getGuidesForFicha(user.ficha).map((file) => auth.getGuideTitle(file));
+    if (canAccessProductiveStage(session)) {
+      guideLabels.push("Mi proyecto de etapa productiva");
+    }
+    renderGuideChips(guides, guideLabels);
     setVisible(actions, false);
+    setVisible(studentActions, canAccessProductiveStage(session));
+    if (productiveStageButton) {
+      productiveStageButton.href = "etapa-productiva-estudiante.html";
+      productiveStageButton.textContent = "Mi proyecto y retroalimentacion";
+    }
     updateAccessNote("Tu usuario solo puede abrir las gu\u00edas asociadas a su ficha.");
   }
 
