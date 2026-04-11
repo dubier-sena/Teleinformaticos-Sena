@@ -364,7 +364,7 @@ const supportTools = [
   },
 ];
 
-const GUIDE5_DRIVE_ACTIVITY_TARGETS = [
+const GUIDE2_DRIVE_ACTIVITY_TARGETS = [
   {
     activityNumber: "3.1.3",
     panelKey: "guide2-3-1-3",
@@ -404,6 +404,7 @@ const WORD_SEARCH_MAX_SCORE = 10000;
 const WORD_SEARCH_ERROR_PENALTY = 200;
 const WORD_SEARCH_GRID_SIZE = 15;
 const WORD_SEARCH_VARIANT_COUNT = 2;
+const WORD_SEARCH_FOUND_COLOR_COUNT = 8;
 const WORD_SEARCH_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const WORD_SEARCH_LEADERBOARD_SCOPE = "leaderboard:guia2-sopa";
 const WORD_SEARCH_LOCAL_LEADERBOARD_KEY = `guia2_word_search_leaderboard_${PAGE_KEY}_${WORD_SEARCH_ACTIVITY_ID}`;
@@ -517,6 +518,7 @@ let wordSearchPuzzleCache = {};
 let wordSearchSelectionStart = null;
 let wordSearchLastSelectionCells = [];
 let wordSearchFullscreenActive = false;
+let wordSearchFullscreenPlaceholder = null;
 let wordSearchIsDragging = false;
 let wordSearchTimer = null;
 let wordSearchCountdownTimer = null;
@@ -977,6 +979,14 @@ function getWordSearchPuzzle(variant) {
   return wordSearchPuzzleCache[variantId];
 }
 
+function getWordSearchFoundColorClass(word, foundWords) {
+  const index = (foundWords || []).indexOf(word);
+  if (index < 0) {
+    return "";
+  }
+  return `word-found-color-${(index % WORD_SEARCH_FOUND_COLOR_COUNT) + 1}`;
+}
+
 function getWordSearchState() {
   const saved =
     state[WORD_SEARCH_STATE_KEY] && typeof state[WORD_SEARCH_STATE_KEY] === "object"
@@ -1361,6 +1371,32 @@ function resetWordSearchGame() {
   setWordSearchStatus("Pulsa Comenzar para activar la cuenta regresiva.");
 }
 
+function moveWordSearchToFullscreenLayer(container) {
+  if (!container || container.parentElement === document.body) {
+    return;
+  }
+
+  if (!wordSearchFullscreenPlaceholder) {
+    wordSearchFullscreenPlaceholder = document.createElement("div");
+    wordSearchFullscreenPlaceholder.className = "word-search-fullscreen-placeholder";
+    wordSearchFullscreenPlaceholder.setAttribute("aria-hidden", "true");
+  }
+
+  if (!wordSearchFullscreenPlaceholder.parentNode) {
+    container.parentNode.insertBefore(wordSearchFullscreenPlaceholder, container);
+  }
+  document.body.appendChild(container);
+}
+
+function restoreWordSearchFromFullscreenLayer(container) {
+  if (!container || !wordSearchFullscreenPlaceholder?.parentNode) {
+    return;
+  }
+
+  wordSearchFullscreenPlaceholder.parentNode.insertBefore(container, wordSearchFullscreenPlaceholder);
+  wordSearchFullscreenPlaceholder.remove();
+}
+
 function setWordSearchFullscreen(active) {
   const container = document.querySelector(`[data-word-search="${WORD_SEARCH_ACTIVITY_ID}"]`);
   const button = document.getElementById("wordSearchFullscreen");
@@ -1369,7 +1405,14 @@ function setWordSearchFullscreen(active) {
   }
 
   wordSearchFullscreenActive = Boolean(active);
+  if (wordSearchFullscreenActive) {
+    moveWordSearchToFullscreenLayer(container);
+  } else {
+    restoreWordSearchFromFullscreenLayer(container);
+  }
+
   container.classList.toggle("is-fullscreen", wordSearchFullscreenActive);
+  document.documentElement.classList.toggle("word-search-fullscreen-lock", wordSearchFullscreenActive);
   document.body.classList.toggle("word-search-fullscreen-lock", wordSearchFullscreenActive);
 
   if (button) {
@@ -1379,10 +1422,7 @@ function setWordSearchFullscreen(active) {
 
   if (wordSearchFullscreenActive) {
     window.setTimeout(() => {
-      document.getElementById("wordSearchBoard")?.scrollIntoView({
-        block: "center",
-        inline: "center",
-      });
+      container.scrollTo({ top: 0, left: 0 });
     }, 80);
   }
 }
@@ -1540,9 +1580,10 @@ function renderWordSearchBoard(gameState) {
   }
 
   const puzzle = getWordSearchPuzzle(gameState.variant);
-  const foundCells = new Set();
+  const foundCells = new Map();
   gameState.found.forEach((word) => {
-    puzzle.placements[word]?.cells.forEach((cell) => foundCells.add(cellKey(cell)));
+    const colorClass = getWordSearchFoundColorClass(word, gameState.found);
+    puzzle.placements[word]?.cells.forEach((cell) => foundCells.set(cellKey(cell), colorClass));
   });
 
   board.style.setProperty("--word-search-size", String(puzzle.size));
@@ -1565,13 +1606,14 @@ function renderWordSearchBoard(gameState) {
     .map((row, rowIndex) =>
       row
         .map((letter, colIndex) => {
-          const isFound = foundCells.has(`${rowIndex}:${colIndex}`);
+          const foundColorClass = foundCells.get(`${rowIndex}:${colIndex}`) || "";
           return `
             <button
-              class="word-search-cell ${isFound ? "is-found" : ""}"
+              class="word-search-cell ${foundColorClass ? "is-found " + foundColorClass : ""}"
               type="button"
               data-row="${rowIndex}"
               data-col="${colIndex}"
+              data-found-color="${escapeHtml(foundColorClass)}"
               aria-label="Fila ${rowIndex + 1}, columna ${colIndex + 1}, letra ${letter}"
             >${escapeHtml(letter)}</button>
           `;
@@ -1593,7 +1635,10 @@ function renderWordSearchFound(gameState) {
   }
 
   foundBox.innerHTML = gameState.foundLabels
-    .map((label) => `<span class="found-word">${escapeHtml(label)}</span>`)
+    .map(
+      (label, index) =>
+        `<span class="found-word word-found-color-${(index % WORD_SEARCH_FOUND_COLOR_COUNT) + 1}">${escapeHtml(label)}</span>`
+    )
     .join("");
 }
 
@@ -1607,8 +1652,9 @@ function renderWordSearchTargets(gameState) {
   targetBox.innerHTML = getWordSearchPuzzle(gameState.variant).targets
     .map((target) => {
       const isFound = foundWords.has(target.word);
+      const colorClass = getWordSearchFoundColorClass(target.word, gameState.found);
       return `
-        <span class="target-word ${isFound ? "is-found" : ""}">
+        <span class="target-word ${isFound ? "is-found " + colorClass : ""}">
           ${escapeHtml(target.label)}
         </span>
       `;
@@ -3025,44 +3071,12 @@ function closeActivityQR() {
   }
 }
 
-function createDriveDeliveryPanel(config) {
-  const wrapper = document.createElement("div");
-  wrapper.className = "info-box drive-submit-box";
-  wrapper.setAttribute("data-drive-panel", config.panelKey);
-  wrapper.style.marginTop = "16px";
-  wrapper.innerHTML = `
-    <div class="label">Entrega de esta actividad en Drive</div>
-    <p>${escapeHtml(config.description)}</p>
-    <div class="drive-action-group">
-      <button class="btn-drive" type="button">Subir al portafolio de Drive</button>
-      <button class="btn-qr" type="button">Abrir en movil - Ver QR</button>
-    </div>
-    <div class="drive-helper-note">${escapeHtml(config.note)} La carpeta se define automaticamente segun la ficha activa del grupo 11.</div>
-  `;
-
-  const [driveButton, qrButton] = wrapper.querySelectorAll("button");
-  driveButton?.addEventListener("click", openDriveFolder);
-  qrButton?.addEventListener("click", showDriveFolderQR);
-  return wrapper;
-}
-
-function findActivityBodyByNumber(activityNumber) {
-  const activity = Array.from(document.querySelectorAll(".activity")).find((item) => {
-    const number = item.querySelector(".activity-num")?.textContent?.trim() || "";
-    return number === activityNumber;
-  });
-
-  return activity?.querySelector(".activity-body") || null;
-}
-
 function renderDriveDeliveryPanel() {
-  GUIDE5_DRIVE_ACTIVITY_TARGETS.forEach((config) => {
-    const activityBody = findActivityBodyByNumber(config.activityNumber);
-    if (!activityBody || activityBody.querySelector(`[data-drive-panel='${config.panelKey}']`)) {
-      return;
-    }
-
-    activityBody.appendChild(createDriveDeliveryPanel(config));
+  window.sharedDriveDelivery?.appendDriveDeliveryPanels({
+    targets: GUIDE2_DRIVE_ACTIVITY_TARGETS,
+    helperSuffix: "La carpeta se define automaticamente segun la ficha activa.",
+    onDriveClick: openDriveFolder,
+    onQrClick: showDriveFolderQR,
   });
 }
 

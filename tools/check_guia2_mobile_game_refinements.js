@@ -15,16 +15,22 @@ function assertIncludes(content, marker, label) {
 }
 
 [
+  "WORD_SEARCH_FOUND_COLOR_COUNT = 8",
   "let wordSearchLastSelectionCells = [];",
   "let wordSearchFullscreenActive = false;",
+  "let wordSearchFullscreenPlaceholder = null;",
+  "function getWordSearchFoundColorClass",
   "function matchWordSearchPlacementInCells",
   "function findWordSearchSelectionMatch",
+  "function moveWordSearchToFullscreenLayer",
+  "function restoreWordSearchFromFullscreenLayer",
   "function setWordSearchFullscreen",
   "function toggleWordSearchFullscreen",
   "wordSearchLastSelectionCells.length > 1",
   "const matchedSelection = findWordSearchSelectionMatch(selectedCells);",
   "markWordSearchSelection(matchedSelection.cells);",
   "wordSearchFullscreen",
+  "data-found-color",
 ].forEach((marker) => assertIncludes(script, marker, "tolerancia tactil de sopa de letras"));
 
 [
@@ -45,8 +51,12 @@ function assertIncludes(content, marker, label) {
   ".word-search-game,",
   ".matching-game {",
   "body.word-search-fullscreen-lock",
+  "html.word-search-fullscreen-lock",
+  ".word-search-fullscreen-placeholder",
   ".word-search-game.is-fullscreen",
   ".word-search-game.is-fullscreen .word-search-board",
+  ".word-search-cell.word-found-color-1",
+  ".word-search-cell.word-found-color-8",
   ".word-search-board-shell",
   "width: 100%;",
   "font-size: clamp(10px, 3.2vw, 13px);",

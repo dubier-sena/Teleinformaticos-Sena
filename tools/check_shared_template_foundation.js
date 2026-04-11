@@ -6,6 +6,7 @@ const requiredFiles = [
   "css/site_tokens.css",
   "css/shared_shell.css",
   "js/shared_shell.js",
+  "js/shared_drive_delivery.js",
 ];
 
 for (const relativePath of requiredFiles) {

@@ -2,30 +2,26 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ── Usuarios del portal ──────────────────────────────────────────────────
-    // La REST API de firebase_db.js no usa Firebase Auth (no hay token).
-    // La seguridad real reside en la UI del portal y en la clave hash SHA-256.
-    // Se permite acceso sin autenticacion para que la sincronizacion funcione.
+    // Seguridad por defecto:
+    // Este cliente estatico no debe operar con Firestore abierto.
+    // Solo habilita accesos cuando exista una capa segura adicional
+    // (Firebase Auth o un backend intermedio).
     match /sena_portal_users/{usernameKey} {
-      allow read, write: if true;
+      allow read, write: if false;
     }
 
-    // ── Progreso de los aprendices ───────────────────────────────────────────
     match /sena_portal_progress/{usernameKey} {
-      allow read, write: if true;
+      allow read, write: if false;
     }
 
-    // ── Calendario 2026 ──────────────────────────────────────────────────────
     match /sena_portal_calendar/{calendarId} {
-      allow read, write: if true;
+      allow read, write: if false;
     }
 
-    // ── Estado de guias interactivas ─────────────────────────────────────────
     match /sena_portal_guide_state/{docId} {
-      allow read, write: if true;
+      allow read, write: if false;
     }
 
-    // ── Denegar cualquier otra coleccion ─────────────────────────────────────
     match /{document=**} {
       allow read, write: if false;
     }

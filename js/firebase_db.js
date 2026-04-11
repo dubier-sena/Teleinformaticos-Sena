@@ -5,10 +5,10 @@
  * al cambiar de equipo o navegador. Usa Firebase Firestore como base de
  * datos gratuita en la nube, sin necesidad de servidor propio.
  *
- * CONFIGURACION (ver instrucciones al final del archivo):
- *   1. Crea un proyecto en https://console.firebase.google.com/
- *   2. Activa Firestore Database
- *   3. Reemplaza FIREBASE_PROJECT_ID y FIREBASE_API_KEY con tus datos
+ * CONFIGURACION SEGURA:
+ *   1. Define window.PORTAL_FIREBASE_CONFIG antes de cargar este script
+ *      o usa localStorage["sena_portal_firebase_runtime_v1"].
+ *   2. No publiques projectId ni apiKey reales en GitHub.
  *
  * AVISO DE SEGURIDAD:
  *   Este modulo usa la API REST de Firestore solo con apiKey publica.
@@ -24,8 +24,41 @@
   // ════════════════════════════════════════════════════════════════════════════
   //  CONFIGURACION — Rellena con los datos de tu proyecto Firebase
   // ════════════════════════════════════════════════════════════════════════════
-  var FIREBASE_PROJECT_ID = "sena-portal"; // ej: "sena-portal-abc12"
-  var FIREBASE_API_KEY    = "AIzaSyC0zKUJGVcT0aYcujZyrRBtsbVo1VjBkAA";    // ej: "AIzaSyA..."
+  var FIREBASE_RUNTIME_STORAGE_KEY = "sena_portal_firebase_runtime_v1";
+
+  function normalizeRuntimeValue(value) {
+    return typeof value === "string" ? value.trim() : "";
+  }
+
+  function normalizeRuntimeFirebaseConfig(rawConfig) {
+    var source = rawConfig && typeof rawConfig === "object" ? rawConfig : {};
+    return {
+      enabled: source.enabled === true,
+      projectId: normalizeRuntimeValue(source.projectId),
+      apiKey: normalizeRuntimeValue(source.apiKey),
+    };
+  }
+
+  function readStoredRuntimeFirebaseConfig() {
+    try {
+      var raw = window.localStorage.getItem(FIREBASE_RUNTIME_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function getRuntimeFirebaseConfig() {
+    if (window.PORTAL_FIREBASE_CONFIG && typeof window.PORTAL_FIREBASE_CONFIG === "object") {
+      return normalizeRuntimeFirebaseConfig(window.PORTAL_FIREBASE_CONFIG);
+    }
+    return normalizeRuntimeFirebaseConfig(readStoredRuntimeFirebaseConfig());
+  }
+
+  var firebaseRuntime = getRuntimeFirebaseConfig();
+  var FIREBASE_ENABLED = firebaseRuntime.enabled;
+  var FIREBASE_PROJECT_ID = firebaseRuntime.projectId;
+  var FIREBASE_API_KEY = firebaseRuntime.apiKey;
   // ════════════════════════════════════════════════════════════════════════════
 
   // Nombres de colecciones en Firestore
@@ -50,16 +83,18 @@
   var CHECK_TIMEOUT_MS = 10000;
 
   // URL base de la API REST de Firestore
-  var BASE_URL = "https://firestore.googleapis.com/v1/projects/" +
-    FIREBASE_PROJECT_ID + "/databases/(default)/documents";
+  var BASE_URL = "";
 
   // ── Estado interno ──────────────────────────────────────────────────────────
   var isConfigured = (
-    FIREBASE_PROJECT_ID !== "YOUR_PROJECT_ID" &&
-    FIREBASE_API_KEY    !== "YOUR_API_KEY"    &&
-    FIREBASE_PROJECT_ID.length > 0            &&
+    FIREBASE_ENABLED === true &&
+    FIREBASE_PROJECT_ID.length > 0 &&
     FIREBASE_API_KEY.length > 0
   );
+  BASE_URL = isConfigured
+    ? "https://firestore.googleapis.com/v1/projects/" +
+      FIREBASE_PROJECT_ID + "/databases/(default)/documents"
+    : "";
   var availabilityCache = null; // null = sin verificar | true | false
   var checkInProgress   = null;
   var progressTimers    = {};
@@ -799,9 +834,6 @@
   // API de depuracion (solo disponible en consola del navegador)
   window._firebaseDb = {
     checkAvailability: checkAvailability,
-    cloudGetUser:      cloudGetUser,
-    cloudListUsers:    cloudListUsers,
-    cloudGetProgress:  cloudGetProgress,
     cloudGetCalendar:  cloudGetCalendar,
     cloudSaveCalendar: cloudSaveCalendar,
     cloudGetGuideData: cloudGetGuideData,
@@ -809,13 +841,14 @@
     cloudGetGuideUiState: cloudGetGuideUiState,
     cloudSaveGuideUiState: cloudSaveGuideUiState,
     isConfigured:      function () { return isConfigured; },
+    getMode:           function () { return isConfigured ? "firebase" : "safe-local"; },
     resetCache:        function () { availabilityCache = null; },
   };
 
   if (isConfigured) {
-    console.info("[firebase_db] Firebase configurado para: " + FIREBASE_PROJECT_ID);
+    console.info("[firebase_db] Sincronizacion cloud habilitada desde configuracion runtime.");
   } else {
-    console.info("[firebase_db] Firebase no configurado. Edita FIREBASE_PROJECT_ID y FIREBASE_API_KEY en js/firebase_db.js");
+    console.info("[firebase_db] Sincronizacion cloud deshabilitada por seguridad. Se usa almacenamiento local o red.");
   }
 })();
 
@@ -837,12 +870,8 @@
    rules_version = '2';
    service cloud.firestore {
      match /databases/{database}/documents {
-       match /sena_portal_users/{userId} {
-         allow read: if true;
-         allow write: if request.resource.data.usernameKey == userId;
-       }
-       match /sena_portal_progress/{userId} {
-         allow read, write: if true;
+       match /{document=**} {
+         allow read, write: if false;
        }
      }
    }
@@ -854,17 +883,20 @@
    9. Registra la app con cualquier apodo → "Registrar app"
    10. Firebase te mostrara un objeto firebaseConfig similar a este:
        const firebaseConfig = {
-         apiKey:            "AIzaSyA...",
-         authDomain:        "sena-portal.firebaseapp.com",
-         projectId:         "sena-portal",
-         storageBucket:     "sena-portal.appspot.com",
+         apiKey:            "tu-api-key-web",
+         authDomain:        "tu-proyecto.firebaseapp.com",
+         projectId:         "tu-project-id-web",
+         storageBucket:     "tu-proyecto.appspot.com",
          messagingSenderId: "123456789",
          appId:             "1:123456789:web:abc123"
        };
 
    11. En este archivo (firebase_db.js), reemplaza al inicio:
-       var FIREBASE_PROJECT_ID = "sena-portal";   // <-- valor de projectId
-       var FIREBASE_API_KEY    = "AIzaSyA...";     // <-- valor de apiKey
+       localStorage.setItem("sena_portal_firebase_runtime_v1", JSON.stringify({
+         enabled: true,
+         projectId: "tu-project-id-web",
+         apiKey: "tu-api-key-web"
+       }));
 
    12. Sube los cambios a GitHub Pages y prueba registrando un usuario.
        Para verificar que funciona, abre la consola del navegador (F12)

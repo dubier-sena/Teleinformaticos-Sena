@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta
+  http-equiv="Content-Security-Policy"
+  content="default-src 'self' blob: data:; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https:; media-src 'self' blob: data: https:; frame-src 'self' https://es.educaplay.com;"
+>
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Etapa Productiva | Portal de Guias</title>
+<meta
+  name="description"
+  content="Modulo administrativo para importar y revisar informes de retroalimentacion de etapa productiva."
+>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/site_tokens.css?v=20260409_1">
+<link rel="stylesheet" href="css/shared_shell.css?v=20260409_1">
+<link rel="stylesheet" href="css/page_admin.css?v=20260411_2">
+<link rel="stylesheet" href="css/page_productive_stage_admin.css?v=20260411_1">
+<script src="js/portal_auth.js?v=20260409_2"></script>
+<script src="js/firebase_db.js?v=20260410_1"></script>
+<script defer src="js/shared_shell.js?v=20260409_1"></script>
+<script defer src="js/vendor/mammoth.browser.min.js?v=20260411_1"></script>
+<script defer src="js/productive_stage_import.js?v=20260411_1"></script>
+<script defer src="js/productive_stage_store.js?v=20260411_2"></script>
+<script>
+if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "index.html" })) {
+  document.documentElement.innerHTML = "";
+  throw new Error("Acceso administrativo requerido.");
+}
+</script>
+</head>
+<body class="app-shell app-shell--admin app-shell--productive-stage">
+  <header class="hero app-hero">
+    <div class="hero-inner app-hero__inner">
+      <div class="hero-top productive-stage-hero-top" data-reveal>
+        <div class="productive-stage-hero-copy">
+          <div class="badge">Etapa Productiva</div>
+          <h1>Informes de Retroalimentacion</h1>
+          <p>
+            Importa el informe DOCX de grados 11, conviertelo en proyectos individuales y consulta el
+            historial por ficha, estado, estudiante o tipo de informe desde una pagina dedicada.
+          </p>
+          <div class="productive-stage-hero-chips" aria-label="Cobertura del modulo">
+            <span class="productive-stage-chip">Grados 11A y 11B</span>
+            <span class="productive-stage-chip">Importacion DOCX</span>
+            <span class="productive-stage-chip">Visibilidad solo admin</span>
+          </div>
+        </div>
+        <div class="hero-actions">
+          <a class="hero-link" href="panel-administrativo-usuarios.html">Volver al panel</a>
+          <a class="hero-link" href="index.html">Volver al portal</a>
+          <a class="hero-link primary" href="calendario-academico-2026.html">Abrir calendario</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <svg class="wave" viewBox="0 0 1440 40" preserveAspectRatio="none" height="40" aria-hidden="true">
+    <path fill="currentColor" d="M0,20 C360,40 1080,0 1440,20 L1440,40 L0,40 Z"></path>
+  </svg>
+
+  <main class="main app-main admin-main productive-stage-admin-main">
+    <section class="panel productive-stage-admin-shell" id="productive-stage-panel" data-reveal>
+      <div class="productive-stage-admin-shell__top">
+        <div>
+          <h2>Catalogo de proyectos e informes</h2>
+          <p id="productive-stage-storage-copy">
+            Este modulo intentara leer primero los datos compartidos por la red local. Si no estan disponibles,
+            mostrara la copia local guardada en este navegador.
+          </p>
+        </div>
+        <button class="btn secondary" type="button" id="productive-stage-refresh-button">Actualizar modulo</button>
+      </div>
+
+      <div class="productive-stage-header">
+        <div>
+          <h2>Importar informe DOCX</h2>
+          <p>
+            Sube el informe consolidado para generar o actualizar el catalogo de etapa productiva.
+          </p>
+        </div>
+        <div class="productive-stage-import">
+          <input id="productive-stage-file" type="file" accept=".docx" aria-label="Seleccionar informe DOCX">
+          <button class="btn primary" type="button" id="productive-stage-import-button">Importar informe</button>
+        </div>
+      </div>
+
+      <div class="admin-feedback" id="productive-stage-feedback"></div>
+
+      <div class="productive-stage-summary" id="productive-stage-summary">
+        <article class="productive-stage-kpi">
+          <span class="productive-stage-kpi__label">Proyectos</span>
+          <strong class="productive-stage-kpi__value" id="productive-stage-summary-total">0</strong>
+        </article>
+        <article class="productive-stage-kpi">
+          <span class="productive-stage-kpi__label">Informes</span>
+          <strong class="productive-stage-kpi__value" id="productive-stage-summary-reports">0</strong>
+        </article>
+        <article class="productive-stage-kpi">
+          <span class="productive-stage-kpi__label">Completos</span>
+          <strong class="productive-stage-kpi__value" id="productive-stage-summary-complete">0</strong>
+        </article>
+        <article class="productive-stage-kpi">
+          <span class="productive-stage-kpi__label">Alertas</span>
+          <strong class="productive-stage-kpi__value" id="productive-stage-summary-alerts">0</strong>
+        </article>
+      </div>
+
+      <div class="productive-stage-toolbar">
+        <input
+          id="productive-stage-filter-query"
+          type="search"
+          placeholder="Buscar por proyecto o estudiante"
+          aria-label="Buscar proyecto o estudiante"
+        >
+        <label class="toolbar-select" for="productive-stage-filter-ficha">
+          <span>Filtrar ficha</span>
+          <select id="productive-stage-filter-ficha" aria-label="Filtrar proyectos por ficha">
+            <option value="">Todas las fichas</option>
+          </select>
+        </label>
+        <label class="toolbar-select" for="productive-stage-filter-status">
+          <span>Estado</span>
+          <select id="productive-stage-filter-status" aria-label="Filtrar proyectos por estado">
+            <option value="">Todos los estados</option>
+            <option value="Completo">Completo</option>
+            <option value="Parcial">Parcial</option>
+            <option value="Incompleto">Incompleto</option>
+            <option value="Sin estado">Sin estado</option>
+          </select>
+        </label>
+        <label class="toolbar-select" for="productive-stage-filter-type">
+          <span>Tipo</span>
+          <select id="productive-stage-filter-type" aria-label="Filtrar por tipo de informe">
+            <option value="">Todos los informes</option>
+            <option value="Retroalimentacion">Retroalimentacion</option>
+            <option value="Avance">Avance</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="productive-stage-last-import" id="productive-stage-last-import">
+        Aun no se ha importado ningun informe de etapa productiva.
+      </div>
+      <div class="productive-stage-projects" id="productive-stage-projects"></div>
+    </section>
+  </main>
+
+  <div class="modal-shell" id="productive-stage-detail-modal" hidden>
+    <div class="modal-backdrop" data-close-productive-stage-modal></div>
+    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="productive-stage-detail-title">
+      <div class="modal-header">
+        <div>
+          <h2 id="productive-stage-detail-title">Detalle del proyecto</h2>
+          <p id="productive-stage-detail-subtitle">Revision de importacion</p>
+        </div>
+        <button class="modal-close" type="button" data-close-productive-stage-modal aria-label="Cerrar">x</button>
+      </div>
+      <div class="modal-meta" id="productive-stage-detail-meta"></div>
+      <div class="modal-body" id="productive-stage-detail-body"></div>
+    </section>
+  </div>
+
+  <script src="js/productive_stage_admin.js?v=20260411_1"></script>
+</body>
+</html>
