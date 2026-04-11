@@ -8,6 +8,8 @@ firebase-debug.*.log
 .agents/
 .claude/
 memory/
+js/firebase_runtime.local.js
+config/firebase.runtime.local.json
 
 # Archivos locales demasiado grandes para GitHub (>100 MB)
 assets/materiales/guia2/VirtualBox-7.2.6a-172322-Win.exe

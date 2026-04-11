@@ -438,17 +438,43 @@
     };
   }
 
+  function formatGuideScheduleDateKey(date) {
+    return [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, "0"),
+      String(date.getDate()).padStart(2, "0"),
+    ].join("-");
+  }
+
+  function getGuideScheduleNowDate() {
+    if (window.GUIDE_SCHEDULE_NOW_OVERRIDE) {
+      const overrideDate = new Date(window.GUIDE_SCHEDULE_NOW_OVERRIDE);
+      if (!Number.isNaN(overrideDate.getTime())) {
+        return overrideDate;
+      }
+    }
+
+    return new Date();
+  }
+
   function getGuideTodayKey() {
     if (window.GUIDE_SCHEDULE_TODAY_OVERRIDE) {
       return String(window.GUIDE_SCHEDULE_TODAY_OVERRIDE);
     }
 
-    const today = new Date();
-    return [
-      today.getFullYear(),
-      String(today.getMonth() + 1).padStart(2, "0"),
-      String(today.getDate()).padStart(2, "0"),
-    ].join("-");
+    return formatGuideScheduleDateKey(getGuideScheduleNowDate());
+  }
+
+  function getGuideNowMinutes() {
+    if (window.GUIDE_SCHEDULE_MINUTES_OVERRIDE !== undefined) {
+      const minutes = Number(window.GUIDE_SCHEDULE_MINUTES_OVERRIDE);
+      if (Number.isFinite(minutes)) {
+        return minutes;
+      }
+    }
+
+    const now = getGuideScheduleNowDate();
+    return now.getHours() * 60 + now.getMinutes();
   }
 
   function getGuideScheduleTimeValue(record) {
@@ -461,6 +487,30 @@
       hour += 12;
     }
     return hour * 60 + Number(match[2]);
+  }
+
+  function parseGuideScheduleRange(record) {
+    const match = String(record?.horario || "").match(
+      /(\d{1,2}):(\d{2})(am|pm)\D+(\d{1,2}):(\d{2})(am|pm)/i
+    );
+    if (!match) {
+      return null;
+    }
+
+    let startHour = Number(match[1]) % 12;
+    if (match[3].toLowerCase() === "pm") {
+      startHour += 12;
+    }
+
+    let endHour = Number(match[4]) % 12;
+    if (match[6].toLowerCase() === "pm") {
+      endHour += 12;
+    }
+
+    return {
+      start: startHour * 60 + Number(match[2]),
+      end: endHour * 60 + Number(match[5]),
+    };
   }
 
   function compareGuideScheduleRecords(a, b) {
@@ -490,13 +540,47 @@
     return !["cancelada", "sin programacion", "no aplica", "novedad"].includes(estado);
   }
 
-  function findNextGuideClass(selection) {
+  function isGuideClassAfterNow(record) {
     const today = getGuideTodayKey();
+    const classDate = String(record.fecha || "");
+    if (classDate > today) {
+      return true;
+    }
+    if (classDate < today) {
+      return false;
+    }
+    return getGuideScheduleTimeValue(record) > getGuideNowMinutes();
+  }
+
+  function findCurrentGuideClass(selection) {
+    const today = getGuideTodayKey();
+    const nowMinutes = getGuideNowMinutes();
+
+    return (
+      getGuideCalendarRecords()
+        .filter(function (record) {
+          if (
+            record.tipo !== "CLASE" ||
+            String(record.fecha || "") !== today ||
+            !matchesGuideScheduleSelection(record, selection) ||
+            !isGuideClassAvailable(record)
+          ) {
+            return false;
+          }
+
+          const range = parseGuideScheduleRange(record);
+          return range ? nowMinutes >= range.start && nowMinutes <= range.end : false;
+        })
+        .sort(compareGuideScheduleRecords)[0] || null
+    );
+  }
+
+  function findNextGuideClass(selection) {
     return getGuideCalendarRecords()
       .filter(function (record) {
         return (
           record.tipo === "CLASE" &&
-          String(record.fecha || "") >= today &&
+          isGuideClassAfterNow(record) &&
           matchesGuideScheduleSelection(record, selection) &&
           isGuideClassAvailable(record)
         );
@@ -604,8 +688,21 @@
       return;
     }
 
+    const currentClass = findCurrentGuideClass(selection);
     const nextClass = findNextGuideClass(selection);
-    if (nextClass) {
+
+    if (currentClass) {
+      const currentBody = [formatGuideDate(currentClass.fecha), currentClass.horario]
+        .filter(Boolean)
+        .join(" - ");
+      renderGuideScheduleItem(
+        nodes.classItem,
+        "class",
+        "Estoy dentro de la hora de clase",
+        currentBody,
+        false
+      );
+    } else if (nextClass) {
       const classBody = [formatGuideDate(nextClass.fecha), nextClass.horario]
         .filter(Boolean)
         .join(" - ");
@@ -620,21 +717,44 @@
       );
     }
 
-    const nextDelivery = findNextGuideDelivery(selection);
-    if (nextDelivery) {
-      const deliveryBody = [
-        nextDelivery.act?.nombre || "Actividad sin nombre",
-        nextDelivery.dueDate ? formatGuideDate(nextDelivery.dueDate) : "Sin fecha",
-      ]
+    if (currentClass && nextClass) {
+      const nextClassBody = [formatGuideDate(nextClass.fecha), nextClass.horario]
         .filter(Boolean)
         .join(" - ");
-      renderGuideScheduleItem(nodes.deliveryItem, "delivery", "Entrega pendiente", deliveryBody, false);
+      renderGuideScheduleItem(nodes.deliveryItem, "class", "Proxima clase", nextClassBody, false);
     } else {
+      const nextDelivery = findNextGuideDelivery(selection);
+      if (nextDelivery) {
+        const deliveryBody = [
+          nextDelivery.act?.nombre || "Actividad sin nombre",
+          nextDelivery.dueDate ? formatGuideDate(nextDelivery.dueDate) : "Sin fecha",
+        ]
+          .filter(Boolean)
+          .join(" - ");
+        renderGuideScheduleItem(
+          nodes.deliveryItem,
+          "delivery",
+          "Entrega pendiente",
+          deliveryBody,
+          false
+        );
+      } else {
+        renderGuideScheduleItem(
+          nodes.deliveryItem,
+          "delivery",
+          "Sin entrega proxima",
+          "No hay actividad con fecha pendiente",
+          true
+        );
+      }
+    }
+
+    if (currentClass && !nextClass) {
       renderGuideScheduleItem(
         nodes.deliveryItem,
-        "delivery",
-        "Sin entrega proxima",
-        "No hay actividad con fecha pendiente",
+        "class",
+        "Proxima clase",
+        "Sin fecha programada",
         true
       );
     }
@@ -714,6 +834,40 @@
           );
         })
         .join("");
+  }
+
+  function renderProductiveStageLink(selection) {
+    const existing = document.querySelector("[data-productive-stage-link]");
+    const canShow = ["3168850", "3168852"].includes(String(selection?.ficha || "").trim());
+
+    if (!canShow) {
+      if (existing) {
+        existing.remove();
+      }
+      return;
+    }
+
+    if (existing) {
+      return;
+    }
+
+    const homeLinks = Array.from(document.querySelectorAll(".nav-home-link"));
+    const referenceLink = homeLinks.length ? homeLinks[0] : null;
+    const link = document.createElement("a");
+    link.className = "nav-home-link";
+    link.href = "etapa-productiva-estudiante.html";
+    link.setAttribute("data-productive-stage-link", "true");
+    link.innerHTML = "&#128188; <span>Mi proyecto</span>";
+
+    if (referenceLink && referenceLink.parentNode) {
+      referenceLink.parentNode.insertBefore(link, referenceLink);
+      return;
+    }
+
+    const sidebar = document.getElementById("sidebar");
+    if (sidebar) {
+      sidebar.appendChild(link);
+    }
   }
 
   function syncSelectionWithUrl(defaults) {
@@ -815,6 +969,7 @@
     }
 
     renderAssignedGuides(selection);
+    renderProductiveStageLink(selection);
 
     document.querySelectorAll("[data-current-file]").forEach((link) => {
       const file = link.dataset.currentFile || (window.location.pathname.split("/").pop() || "");

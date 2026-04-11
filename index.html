@@ -16,7 +16,7 @@
 
 <link rel="stylesheet" href="css/site_tokens.css?v=20260409_1">
 <link rel="stylesheet" href="css/shared_shell.css?v=20260409_1">
-<link rel="stylesheet" href="css/page_portal.css?v=20260409_8">
+<link rel="stylesheet" href="css/page_portal.css?v=20260411_2">
 <script defer src="js/shared_shell.js?v=20260409_1"></script>
 </head>
 <body class="app-shell app-shell--portal">
@@ -31,30 +31,18 @@
       <img src="assets/img/sena-logo.png" alt="Logo SENA" width="auto" height="68">
     </div>
 
-    <div class="badge-programa anim-2">
-      <span class="badge-dot"></span>
-      Sistemas Teleinform&aacute;ticos | 233108 | V1
+    <h1 class="anim-2">Sistemas Teleinform&aacute;ticos</h1>
+
+    <div class="hero-welcome anim-4">
+      ¡Hola a todos! 👋 ¡Bienvenidos a una nueva aventura de aprendizaje! 🚀 Que sea un año genial y lleno de éxitos
     </div>
 
-    <h1 class="anim-3">
-      Fortalecimiento de los Servicios Teleinform&aacute;ticos<br>
-      de Equipos y Redes en las MIPYMES de la Regi&oacute;n
-    </h1>
-
-    <p class="header-subtitle anim-4">
+    <p class="header-subtitle anim-3">
       Portal de acceso a las gu&iacute;as interactivas por instituci&oacute;n educativa, grupo y ficha.
       El avance de cada aprendiz queda guardado de forma segura.
     </p>
 
     <div class="info-grid anim-5">
-      <div class="info-chip">
-        <span class="label">Programa</span>
-        Sistemas Teleinform&aacute;ticos
-      </div>
-      <div class="info-chip">
-        <span class="label">Codigo</span>
-        233108 | Versi&oacute;n 1
-      </div>
       <div class="info-chip highlight-chip">
         <span class="label">Instructor</span>
         Dubier Orlando Millan Barbosa
@@ -108,6 +96,11 @@
       </div>
       <div class="auth-guide-list" id="auth-session-guides"></div>
       <p class="auth-inline-note">El avance de las gu&iacute;as se guarda por usuario en este navegador y en la nube.</p>
+      <div class="auth-session-actions" id="auth-student-actions" style="display:none">
+        <a class="btn-share secondary" id="btn-productive-stage-access" href="etapa-productiva-estudiante.html">
+          Mi proyecto y retroalimentacion
+        </a>
+      </div>
       <div class="auth-session-actions" id="auth-session-actions" style="display:none">
         <a class="btn-share primary" href="calendario-academico-2026.html">Abrir calendario 2026</a>
         <a class="btn-share secondary" href="panel-administrativo-usuarios.html">Administrar usuarios</a>
@@ -604,10 +597,6 @@
     const endpoint = /^https?:$/i.test(window.location.protocol)
       ? new URL(pathname, window.location.origin)
       : new URL(`http://localhost:${SHARE_PORT}${pathname}`);
-    const session = getPortalAuth()?.getCurrentSession?.() || null;
-    if (session?.role === "admin" && session.token) {
-      endpoint.searchParams.set("token", session.token);
-    }
     return endpoint;
   }
 
@@ -907,8 +896,8 @@
 
 <!-- Modulos externos (auth + Firebase) -->
 <script src="js/portal_auth.js?v=20260324_6" defer></script>
-<script src="js/firebase_db.js?v=20260326_7" defer></script>
-<script src="js/index_auth.js?v=20260324_4" defer></script>
+<script src="js/firebase_db.js?v=20260410_1" defer></script>
+<script src="js/index_auth.js?v=20260411_1" defer></script>
 
 </body>
 </html>

@@ -207,6 +207,17 @@ select {
   color: var(--text-strong);
 }
 
+.summary-context {
+  position: relative;
+  z-index: 1;
+  display: block;
+  margin-top: 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
 .panel {
   padding: 22px 24px;
   margin-bottom: 18px;
@@ -229,11 +240,12 @@ select {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: end;
   margin-top: 16px;
 }
 
 .toolbar input,
+.toolbar-select select,
 .password-row input,
 .ficha-row select {
   flex: 1 1 280px;
@@ -249,11 +261,46 @@ select {
 }
 
 .toolbar input:focus,
+.toolbar-select select:focus,
 .password-row input:focus,
 .ficha-row select:focus {
   outline: none;
   border-color: rgba(15, 191, 100, 0.55);
   box-shadow: 0 0 0 4px rgba(15, 191, 100, 0.14);
+}
+
+.toolbar-select {
+  display: grid;
+  gap: 6px;
+  flex: 1 1 260px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.toolbar-select select {
+  width: 100%;
+  cursor: pointer;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: #eef8f2;
+  border: 1px solid #b8e0c6;
+  color: var(--admin-accent-dark);
+  font-size: 13px;
+  font-weight: 800;
 }
 
 .btn {
@@ -324,6 +371,43 @@ select {
   background: #fef2f2;
   border-color: #fecaca;
   color: var(--admin-warn);
+}
+
+.admin-module-entry__content {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.admin-module-entry__copy {
+  display: grid;
+  gap: 8px;
+  max-width: 760px;
+}
+
+.admin-module-entry__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  width: fit-content;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: #eef8f2;
+  border: 1px solid #b8e0c6;
+  color: var(--admin-accent-dark);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.admin-module-entry__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .users-grid {
@@ -694,6 +778,7 @@ body.modal-open {
   }
 
   .hero-actions,
+  .admin-module-entry__actions,
   .password-row,
   .ficha-row,
   .user-actions,
