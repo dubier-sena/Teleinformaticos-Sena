@@ -8,6 +8,8 @@ firebase-debug.*.log
 .agents/
 .claude/
 memory/
+docs/
+skills-lock.json
 js/firebase_runtime.local.js
 config/firebase.runtime.local.json
 
