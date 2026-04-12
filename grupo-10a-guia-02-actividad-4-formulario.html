@@ -18,8 +18,6 @@
 >
 <script defer src="js/portal_auth.js?v=20260324_6"></script>
   <script defer src="js/firebase_db.js?v=20260410_1"></script>
-<script defer src="js/project_integrations.js?v=20260411_1"></script>
-<script defer src="js/shared_apps_script_delivery.js?v=20260411_1"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
@@ -166,8 +164,8 @@
   }
 </style>
 <script defer src="js/shared_drive_delivery.js?v=20260410_1"></script>
-<script defer src="js/script_guia2.js?v=20260410_5"></script>
-<script defer src="js/activity_delivery.js?v=20260411_1"></script>
+<script defer src="js/script_guia2.js?v=20260411_6"></script>
+<script defer src="js/activity4_admin_report.js?v=20260411_1"></script>
 </head>
 <body
   class="app-shell app-shell--guide activity4-form-page"
@@ -268,41 +266,6 @@
             <button type="button" class="reset-button" id="resetProgress">Reiniciar respuestas</button>
           </div>
         </article>
-      </div>
-
-      <div class="card open" style="margin-top:20px;">
-        <div class="card-header">
-          <div class="card-header-left">
-            <div class="card-icon" style="background:#eef8ff">&#128228;</div>
-            <div>
-              <h3>Entregar actividad</h3>
-              <p>Selecciona el archivo final y el portal lo enviar&aacute; al Google Apps Script configurado para guardarlo en la carpeta de Drive de tu ficha.</p>
-            </div>
-          </div>
-        </div>
-        <div class="card-body delivery-upload-card" data-activity-delivery="guia2-actividad4">
-          <div class="delivery-upload-grid">
-            <label>
-              <span>Archivo a entregar</span>
-              <input type="file" data-delivery-file accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.zip">
-              <div class="delivery-upload-file" data-delivery-file-name>Aun no has seleccionado archivo.</div>
-            </label>
-            <div class="delivery-upload-meta">
-              <div data-delivery-identity></div>
-            </div>
-          </div>
-          <div class="info-box" style="margin:0">
-            <div class="label">Ruta esperada en Drive</div>
-            <p data-delivery-path>Ruta pendiente de completar con nombre y ficha.</p>
-          </div>
-          <div class="delivery-upload-actions">
-            <button type="button" class="btn-drive" data-delivery-send>Entregar actividad</button>
-            <a class="delivery-upload-link" href="#" data-delivery-result-link hidden target="_blank" rel="noopener noreferrer">Abrir archivo en Drive</a>
-          </div>
-          <div class="delivery-upload-status" data-delivery-status>
-            Completa tu nombre, tu ficha y selecciona el archivo para activar la entrega.
-          </div>
-        </div>
       </div>
 
       <div class="activity4-questionnaire is-locked" id="activity4Questionnaire">

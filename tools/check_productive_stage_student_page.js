@@ -31,7 +31,7 @@ function assertIncludes(source, expected, label) {
 assertIncludes(html, 'id="productive-stage-student-shell"', "shell principal del estudiante");
 assertIncludes(html, 'id="student-project-summary"', "resumen del proyecto");
 assertIncludes(html, 'id="student-project-reports"', "listado de informes");
-assertIncludes(html, 'src="js/productive_stage_store.js?v=20260411_2"', "store de etapa productiva");
+assertIncludes(html, 'src="js/productive_stage_store.js?v=20260411_4"', "store de etapa productiva");
 assertIncludes(js, '["3168850", "3168852"]', "fichas permitidas para etapa productiva");
 assertIncludes(js, "renderStudentProjectView", "render principal del estudiante");
 assertIncludes(js, "renderEmptyState", "estado vacio del estudiante");

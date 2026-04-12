@@ -1,6 +1,7 @@
 (function () {
   const auth = window.portalAuth || null;
   const store = window.productiveStageStore || null;
+  const projectDelivery = window.productiveStageProjectDelivery || null;
   const ALLOWED_FICHAS = ["3168850", "3168852"];
 
   function getById(id) {
@@ -239,6 +240,18 @@
     }
   }
 
+  function renderSupportModules(snapshot, viewModel, session) {
+    if (!projectDelivery || typeof projectDelivery.render !== "function") {
+      return;
+    }
+
+    projectDelivery.render({
+      snapshot: snapshot,
+      viewModel: viewModel,
+      session: session,
+    });
+  }
+
   function buildStudentViewModel(snapshot, usernameKey, session) {
     const projects = store.getStudentProjects(snapshot, usernameKey).sort(function (left, right) {
       return Date.parse(right.updatedAt || 0) - Date.parse(left.updatedAt || 0);
@@ -292,6 +305,7 @@
     const snapshot = await store.loadSnapshot();
     const viewModel = buildStudentViewModel(snapshot, usernameKey, session);
     renderStudentProjectView(viewModel);
+    renderSupportModules(snapshot, viewModel, session);
   }
 
   document.addEventListener("DOMContentLoaded", function () {

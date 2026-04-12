@@ -4,6 +4,8 @@
     return;
   }
 
+  const sharedDelivery = window.sharedAppsScriptDelivery || null;
+
   let allUsers = [];
   let productiveStageSnapshot =
     window.productiveStageStore && typeof window.productiveStageStore.createEmptySnapshot === "function"
@@ -16,6 +18,7 @@
           lastImportSummary: null,
           updatedAt: "",
         };
+  let currentDetailProjectId = "";
 
   function getById(id) {
     return document.getElementById(id);
@@ -97,6 +100,30 @@
     return Array.isArray(productiveStageSnapshot && productiveStageSnapshot.lastImportSummary && productiveStageSnapshot.lastImportSummary.alerts)
       ? productiveStageSnapshot.lastImportSummary.alerts
       : [];
+  }
+
+  function getProjectParticipants(project) {
+    const names = Array.isArray(project && project.studentNames) ? project.studentNames : [];
+    const keys = Array.isArray(project && project.studentUsernameKeys) ? project.studentUsernameKeys : [];
+
+    return names
+      .map(function (name, index) {
+        return {
+          name: String(name || "").trim(),
+          usernameKey: String(keys[index] || "").trim(),
+        };
+      })
+      .filter(function (participant) {
+        return participant.name;
+      });
+  }
+
+  function getProjectInfo(project) {
+    const fichaInfo = auth.getFichaInfo && auth.getFichaInfo(project && project.ficha);
+    return {
+      institucion: (project && project.inst) || (fichaInfo && fichaInfo.inst) || "",
+      grupo: (project && project.grupo) || (fichaInfo && fichaInfo.grupo) || "",
+    };
   }
 
   function getProductiveStageStatusClass(status) {
@@ -281,12 +308,95 @@
     container.innerHTML = projects.map(buildProductiveStageCard).join("");
   }
 
+  function buildProductiveStageDeliveryHistoryMarkup(projectId) {
+    const deliveries =
+      store && typeof store.getProjectDeliveries === "function"
+        ? store.getProjectDeliveries(productiveStageSnapshot, projectId)
+        : [];
+
+    if (!deliveries.length) {
+      return '<p class="productive-stage-placeholder">Todavia no se ha cargado ningun avance para este proyecto.</p>';
+    }
+
+    return (
+      '<div class="productive-stage-delivery-history">' +
+      deliveries
+        .map(function (delivery) {
+          return (
+            '<article class="productive-stage-delivery-history__item">' +
+              '<div class="productive-stage-delivery-history__top">' +
+                '<strong>' + escapeHtml(delivery.savedFileName || "Archivo registrado") + "</strong>" +
+                "<span>" + escapeHtml(formatDate(delivery.uploadedAt)) + "</span>" +
+              "</div>" +
+              "<p>Registrado por " + escapeHtml(delivery.uploadedByName || "Aprendiz del grupo") + "</p>" +
+              (delivery.driveUrl
+                ? '<a class="productive-stage-delivery-history__link" href="' +
+                    escapeHtml(delivery.driveUrl) +
+                    '" target="_blank" rel="noopener noreferrer">Abrir archivo en Drive</a>'
+                : "") +
+            "</article>"
+          );
+        })
+        .join("") +
+      "</div>"
+    );
+  }
+
+  function updateProductiveStageDeliverySummary(project) {
+    const studentSelect = getById("productive-stage-delivery-student");
+    const fileInput = getById("productive-stage-delivery-file");
+    const summaryPath = getById("productive-stage-delivery-path");
+    const meta = getById("productive-stage-delivery-meta");
+    const participantName = String(studentSelect && studentSelect.value || "").trim();
+    const file = fileInput && fileInput.files ? fileInput.files[0] : null;
+    const fileNamePreview =
+      sharedDelivery && typeof sharedDelivery.buildDeliveryFileNamePreview === "function"
+        ? sharedDelivery.buildDeliveryFileNamePreview(participantName || "Aprendiz", "Avance-Proyecto", file && file.name)
+        : (file && file.name) || "Archivo pendiente";
+    const info = getProjectInfo(project);
+
+    if (meta) {
+      meta.innerHTML =
+        "<strong>Proyecto:</strong> " +
+        escapeHtml(project.projectTitle || "Proyecto sin titulo") +
+        "<br><strong>Ficha:</strong> " +
+        escapeHtml(project.ficha || "Sin ficha") +
+        "<br><strong>Grupo:</strong> " +
+        escapeHtml(info.grupo || project.grado || "Sin grupo") +
+        "<br><strong>Institucion:</strong> " +
+        escapeHtml(info.institucion || "Sin institucion") +
+        "<br><strong>Aprendiz que registra:</strong> " +
+        escapeHtml(participantName || "Selecciona un integrante");
+    }
+
+    if (summaryPath) {
+      summaryPath.textContent = participantName
+        ? "Archivo previsto: Ficha " +
+          escapeHtml(project.ficha || "SIN_FICHA") +
+          " / " +
+          escapeHtml(fileNamePreview)
+        : "Selecciona el integrante que registra el avance para generar el nombre final del archivo.";
+    }
+  }
+
+  function setProductiveStageDeliveryStatus(message, type) {
+    const status = getById("productive-stage-delivery-status");
+    if (!status) {
+      return;
+    }
+
+    status.className = "productive-stage-delivery-status" + (type ? " is-" + type : "");
+    status.textContent = message;
+  }
+
   function closeProductiveStageDetailModal() {
     const modal = getById("productive-stage-detail-modal");
     if (!modal || modal.hidden) {
       return;
     }
     modal.hidden = true;
+    modal.removeAttribute("data-project-id");
+    currentDetailProjectId = "";
     document.body.classList.remove("modal-open");
   }
 
@@ -309,6 +419,7 @@
     const alerts = getProductiveStageAlerts().filter(function (alert) {
       return alert.projectTitle === project.projectTitle;
     });
+    const participants = getProjectParticipants(project);
 
     getById("productive-stage-detail-title").textContent = project.projectTitle || "Detalle del proyecto";
     getById("productive-stage-detail-subtitle").textContent =
@@ -375,18 +486,183 @@
               "</ul>"
             : '<div class="response-status">No hay alertas para este proyecto.</div>') +
         "</article>" +
+        '<article class="answer-card productive-stage-delivery-card">' +
+          "<h3>Avance del proyecto</h3>" +
+          '<p class="productive-stage-delivery-copy">Selecciona el aprendiz del grupo que registra el avance y sube el archivo de apoyo directamente al Drive de la ficha.</p>' +
+          '<label class="productive-stage-delivery-field">' +
+            "<span>Aprendiz que registra</span>" +
+            '<select id="productive-stage-delivery-student">' +
+              (participants.length
+                ? participants
+                    .map(function (participant) {
+                      return (
+                        '<option value="' +
+                        escapeHtml(participant.name) +
+                        '" data-username-key="' +
+                        escapeHtml(participant.usernameKey || "") +
+                        '">' +
+                        escapeHtml(participant.name) +
+                        "</option>"
+                      );
+                    })
+                    .join("")
+                : '<option value="">Sin integrantes detectados</option>') +
+            "</select>" +
+          "</label>" +
+          '<label class="productive-stage-delivery-field">' +
+            "<span>Archivo del avance</span>" +
+            '<input id="productive-stage-delivery-file" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.zip">' +
+          "</label>" +
+          '<div class="productive-stage-delivery-meta" id="productive-stage-delivery-meta"></div>' +
+          '<div class="productive-stage-delivery-path" id="productive-stage-delivery-path"></div>' +
+          '<div class="productive-stage-delivery-actions">' +
+            '<button class="btn primary" type="button" id="productive-stage-delivery-submit"' +
+              (participants.length ? "" : " disabled") +
+            ">Registrar avance en Drive</button>" +
+          "</div>" +
+          '<div class="productive-stage-delivery-status" id="productive-stage-delivery-status">' +
+            (participants.length
+              ? "Selecciona el archivo del avance para enviarlo al Drive de la ficha."
+              : "No hay integrantes detectados para registrar el avance de este proyecto.") +
+          "</div>" +
+          '<div class="productive-stage-delivery-history-wrap">' +
+            "<h4>Historial compartido del proyecto</h4>" +
+            buildProductiveStageDeliveryHistoryMarkup(project.id) +
+          "</div>" +
+        "</article>" +
       "</div>";
 
+    modal.dataset.projectId = project.id;
+    currentDetailProjectId = project.id;
     modal.hidden = false;
     document.body.classList.add("modal-open");
+
+    getById("productive-stage-delivery-student")?.addEventListener("change", function () {
+      updateProductiveStageDeliverySummary(project);
+    });
+    getById("productive-stage-delivery-file")?.addEventListener("change", function () {
+      updateProductiveStageDeliverySummary(project);
+    });
+    getById("productive-stage-delivery-submit")?.addEventListener("click", handleProductiveStageDeliverySubmit);
+
+    updateProductiveStageDeliverySummary(project);
+    if (!participants.length) {
+      setProductiveStageDeliveryStatus(
+        "No hay integrantes detectados para registrar el avance de este proyecto.",
+        "warning"
+      );
+    }
+  }
+
+  async function handleProductiveStageDeliverySubmit() {
+    const modal = getById("productive-stage-detail-modal");
+    const projectId = String((modal && modal.dataset.projectId) || currentDetailProjectId || "").trim();
+    const project = getProductiveStageProjects().find(function (item) {
+      return item.id === projectId;
+    });
+    const studentSelect = getById("productive-stage-delivery-student");
+    const fileInput = getById("productive-stage-delivery-file");
+    const submitButton = getById("productive-stage-delivery-submit");
+    const file = fileInput && fileInput.files ? fileInput.files[0] : null;
+
+    if (!project || !store || !sharedDelivery) {
+      setProductiveStageDeliveryStatus(
+        "No fue posible preparar la entrega del avance desde la vista administrativa.",
+        "error"
+      );
+      return;
+    }
+
+    const participantName = String(studentSelect && studentSelect.value || "").trim();
+    const selectedOption = studentSelect && studentSelect.options ? studentSelect.options[studentSelect.selectedIndex] : null;
+    const usernameKey = String(selectedOption && selectedOption.dataset && selectedOption.dataset.usernameKey || "").trim();
+    const info = getProjectInfo(project);
+
+    if (!participantName) {
+      setProductiveStageDeliveryStatus("Selecciona el aprendiz que registra el avance.", "error");
+      return;
+    }
+
+    try {
+      sharedDelivery.validateFile(file);
+    } catch (error) {
+      setProductiveStageDeliveryStatus(error && error.message ? error.message : "Archivo invalido.", "error");
+      return;
+    }
+
+    submitButton && submitButton.setAttribute("disabled", "disabled");
+    setProductiveStageDeliveryStatus("Subiendo avance del proyecto a Drive...", "loading");
+
+    try {
+      const fileBase64 = await sharedDelivery.readFileAsBase64(file);
+      const response = await sharedDelivery.uploadToAppsScript({
+        guideLabel: "Etapa Productiva",
+        activityLabel: "Avance-Proyecto",
+        activityNumber: "",
+        activityTitle: project.projectTitle || "Proyecto",
+        fileName: file.name,
+        mimeType: file.type || "application/octet-stream",
+        fileBase64: fileBase64,
+        fullName: participantName,
+        ficha: project.ficha || "",
+        grupo: info.grupo || project.grado || "",
+        institucion: info.institucion || "",
+        pageFile: window.location.pathname.split("/").pop() || "",
+        submittedAt: new Date().toISOString(),
+        projectId: project.id,
+        projectTitle: project.projectTitle || "Proyecto",
+      });
+
+      const uploadedAt = new Date().toISOString();
+      const nextSnapshot = store.appendProjectDeliveryToSnapshot(productiveStageSnapshot, {
+        deliveryId: project.id + ":" + uploadedAt,
+        projectId: project.id,
+        projectTitle: project.projectTitle || "Proyecto",
+        uploadedAt: uploadedAt,
+        uploadedByName: participantName,
+        uploadedByUsernameKey: usernameKey,
+        driveUrl: response.driveUrl || "",
+        savedFileName: response.savedFileName || file.name,
+      });
+      const saveResult = await store.saveSnapshot(nextSnapshot);
+      productiveStageSnapshot = nextSnapshot;
+      renderProductiveStageSection();
+      openProductiveStageDetailModal(project.id);
+
+      if (!saveResult.ok) {
+        setProductiveStageDeliveryStatus(
+          "El archivo quedo en Drive, pero el historial no se pudo guardar en este momento.",
+          "warning"
+        );
+      } else if (saveResult.savedCloud === false && saveResult.savedLocal) {
+        setProductiveStageDeliveryStatus(
+          "El archivo quedo en Drive y el historial se guardo localmente en este navegador.",
+          "warning"
+        );
+      } else {
+        setProductiveStageDeliveryStatus(
+          "Avance registrado correctamente y visible para el proyecto.",
+          "success"
+        );
+      }
+    } catch (error) {
+      setProductiveStageDeliveryStatus(
+        error && error.message ? error.message : "No fue posible completar la entrega del avance.",
+        "error"
+      );
+    } finally {
+        submitButton && submitButton.removeAttribute("disabled");
+    }
   }
 
   async function loadProductiveStageSnapshot() {
     if (!window.productiveStageStore || typeof window.productiveStageStore.loadSnapshot !== "function") {
       productiveStageSnapshot = {
+        schemaVersion: 2,
         projects: [],
         reports: [],
         imports: [],
+        deliveries: [],
         studentIndex: {},
         lastImportSummary: null,
         updatedAt: "",

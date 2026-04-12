@@ -38,12 +38,12 @@ assertIncludes(
 );
 assertIncludes(
   pageHtml,
-  'src="js/productive_stage_import.js?v=20260411_1"',
+  'src="js/productive_stage_import.js?v=20260411_2"',
   "parser de etapa productiva en la nueva pagina"
 );
 assertIncludes(
   pageHtml,
-  'src="js/productive_stage_store.js?v=20260411_2"',
+  'src="js/productive_stage_store.js?v=20260411_4"',
   "almacenamiento de etapa productiva en la nueva pagina"
 );
 assertIncludes(pageHtml, 'id="productive-stage-panel"', "contenedor principal de etapa productiva");

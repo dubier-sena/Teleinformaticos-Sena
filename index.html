@@ -16,7 +16,7 @@
 
 <link rel="stylesheet" href="css/site_tokens.css?v=20260409_1">
 <link rel="stylesheet" href="css/shared_shell.css?v=20260409_1">
-<link rel="stylesheet" href="css/page_portal.css?v=20260411_2">
+<link rel="stylesheet" href="css/page_portal.css?v=20260411_4">
 <script defer src="js/shared_shell.js?v=20260409_1"></script>
 </head>
 <body class="app-shell app-shell--portal">
@@ -540,6 +540,16 @@
     <!-- Selector de guia cuando el grupo tiene mas de una -->
     <div class="guide-options" id="guide-options"></div>
 
+    <div class="productive-stage-cta-wrap" id="productive-stage-cta-wrap" style="display:none">
+      <a
+        class="btn-share secondary btn-productive-stage-cta"
+        id="btn-productive-stage-cta"
+        href="etapa-productiva-estudiante.html"
+      >
+        Ver etapa productiva
+      </a>
+    </div>
+
     <a class="btn-enter" id="btn-enter" href="#">
       Ingresar a la gu&iacute;a <span class="arrow">&rarr;</span>
     </a>
@@ -824,6 +834,66 @@
     setGuideEntry(inst, grupo, ficha, guia);
   }
 
+  function canShowProductiveStageForFicha(ficha, session) {
+    const fichaValue = String(ficha || "");
+    if (!["3168850", "3168852"].includes(fichaValue)) {
+      return false;
+    }
+
+    if (session?.role === "admin") {
+      return true;
+    }
+
+    return session?.role === "student" && String(session.user?.ficha || "") === fichaValue;
+  }
+
+  function updateProductiveStageCta(ficha, inst, grupo, accessState) {
+    const wrap = document.getElementById("productive-stage-cta-wrap");
+    const button = document.getElementById("btn-productive-stage-cta");
+    const session = getPortalAuth()?.getCurrentSession?.() || null;
+    const visible = canShowProductiveStageForFicha(ficha, session);
+
+    if (!wrap || !button) {
+      return;
+    }
+
+    wrap.style.display = visible ? "" : "none";
+    if (!visible) {
+      button.removeAttribute("data-ficha");
+      button.removeAttribute("data-inst");
+      button.removeAttribute("data-grupo");
+      return;
+    }
+
+    if (session?.role === "admin") {
+      button.href = "etapa-productiva-admin.html";
+      button.textContent = "Administrar etapa productiva";
+    } else {
+      button.href = "etapa-productiva-estudiante.html";
+      button.textContent = "Ver etapa productiva";
+    }
+    button.dataset.ficha = ficha;
+    button.dataset.inst = inst;
+    button.dataset.grupo = grupo;
+  }
+
+  function refreshSelectedGroupPanel() {
+    const ficha = localStorage.getItem("sena_ficha");
+    const fichaMap = getFichaMap();
+
+    if (!ficha || !fichaMap[ficha]) {
+      return;
+    }
+
+    const { inst, grupo, guia } = fichaMap[ficha];
+    const activeButton = document.querySelector(`.group-btn[data-ficha="${ficha}"]`);
+    if (activeButton) {
+      document.querySelectorAll(".group-btn.active").forEach((btn) => btn.classList.remove("active"));
+      activeButton.classList.add("active");
+    }
+    showCTA(inst, grupo, ficha, guia);
+  }
+
   function setGuideEntry(inst, grupo, ficha, guia) {
     document.getElementById("si-guia").textContent = getGuideTitle(guia);
 
@@ -847,28 +917,22 @@
     enterButton.dataset.accessState = accessState;
     enterButton.setAttribute("aria-disabled", canOpen ? "false" : "true");
     enterButton.classList.toggle("is-disabled", !canOpen);
+    updateProductiveStageCta(ficha, inst, grupo, accessState);
   }
 
   /* -- Inicializacion ----------------------------------- */
   document.addEventListener("DOMContentLoaded", () => {
-    const ficha   = localStorage.getItem("sena_ficha");
     const session = getPortalAuth()?.getCurrentSession?.() || null;
-    const fichaMap = getFichaMap();
 
     if (session?.role === "admin") {
       configureShareStartButton();
       refreshShareStatus();
       setInterval(refreshShareStatus, 15000);
     }
-
-    if (!ficha || !fichaMap[ficha]) return;
-
-    const { inst, grupo, guia } = fichaMap[ficha];
-    document.querySelectorAll(".group-btn[data-ficha]").forEach((btn) => {
-      if (btn.dataset.ficha === ficha) btn.classList.add("active");
-    });
-    showCTA(inst, grupo, ficha, guia);
+    refreshSelectedGroupPanel();
   });
+
+  window.refreshSelectedGroupPanel = refreshSelectedGroupPanel;
 
   /* -- Clic en boton de entrada ------------------------- */
   document.getElementById("btn-enter").addEventListener("click", (event) => {
@@ -897,7 +961,7 @@
 <!-- Modulos externos (auth + Firebase) -->
 <script src="js/portal_auth.js?v=20260324_6" defer></script>
 <script src="js/firebase_db.js?v=20260410_1" defer></script>
-<script src="js/index_auth.js?v=20260411_1" defer></script>
+<script src="js/index_auth.js?v=20260411_2" defer></script>
 
 </body>
 </html>

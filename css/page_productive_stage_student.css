@@ -122,6 +122,11 @@
   gap: 18px;
 }
 
+.student-project-grid--support {
+  margin-top: 18px;
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .student-project-panel {
   padding: 22px 24px;
 }
@@ -262,6 +267,189 @@
   margin-top: 6px;
 }
 
+.student-project-downloads {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.student-project-download-card,
+.student-project-delivery-card,
+.student-project-delivery-history__item {
+  border-radius: var(--radius-sm);
+  border: 1px solid #dcefe3;
+  background: #f8fcf9;
+}
+
+.student-project-download-card {
+  padding: 16px;
+  display: grid;
+  gap: 10px;
+}
+
+.student-project-download-card__type {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #eef8f2;
+  color: var(--brand-700);
+  border: 1px solid #d1e7d9;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.student-project-download-card h4,
+.student-project-delivery-history-wrap h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-strong);
+}
+
+.student-project-download-card p,
+.student-project-delivery-card__intro p,
+.student-project-delivery-history__item p {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.65;
+}
+
+.student-project-download-card__actions,
+.student-project-delivery-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.student-project-download-card__actions .app-btn,
+.student-project-delivery-actions .app-btn {
+  min-height: 46px;
+}
+
+.student-project-delivery-card,
+.student-project-delivery-history-wrap {
+  padding: 18px;
+}
+
+.student-project-delivery-card {
+  display: grid;
+  gap: 14px;
+}
+
+.student-project-delivery-meta,
+.student-project-delivery-path {
+  padding: 14px 15px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #dcefe3;
+  background: #fdfefe;
+  color: var(--text-strong);
+  line-height: 1.65;
+}
+
+.student-project-delivery-path {
+  background: linear-gradient(135deg, #09291c, #0b472f);
+  color: #e7fff1;
+  word-break: break-word;
+}
+
+.student-project-delivery-field {
+  display: grid;
+  gap: 8px;
+}
+
+.student-project-delivery-field span {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.student-project-delivery-field input[type="file"] {
+  width: 100%;
+  min-height: 50px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px dashed #b9d9c4;
+  background: #fbfefc;
+  color: var(--text-strong);
+  font: inherit;
+}
+
+.student-project-delivery-status {
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #dce8e1;
+  background: #f7faf8;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.student-project-delivery-status.is-loading {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+.student-project-delivery-status.is-success {
+  background: #edfdf3;
+  border-color: #b7e4c7;
+  color: #0f6b3c;
+}
+
+.student-project-delivery-status.is-warning {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #92400e;
+}
+
+.student-project-delivery-status.is-error {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #b42318;
+}
+
+.student-project-delivery-history-wrap {
+  display: grid;
+  gap: 12px;
+}
+
+.student-project-delivery-history {
+  display: grid;
+  gap: 12px;
+}
+
+.student-project-delivery-history__item {
+  padding: 15px 16px;
+}
+
+.student-project-delivery-history__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.student-project-delivery-history__top span {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.student-project-delivery-history__link {
+  color: var(--brand-700);
+  font-weight: 700;
+  text-decoration: none;
+}
+
 .student-status {
   display: inline-flex;
   align-items: center;
@@ -337,5 +525,9 @@
 
   .productive-stage-student-hero__actions .app-btn {
     width: 100%;
+  }
+
+  .student-project-downloads {
+    grid-template-columns: 1fr;
   }
 }
