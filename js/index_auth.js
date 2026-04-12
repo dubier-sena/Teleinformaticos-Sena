@@ -222,6 +222,10 @@
     if (session.role === "student") {
       restrictGroupsForStudent(session);
     }
+
+    if (typeof window.refreshSelectedGroupPanel === "function") {
+      window.refreshSelectedGroupPanel();
+    }
   }
 
   async function handleStudentRegister(event) {

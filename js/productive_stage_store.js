@@ -5,6 +5,14 @@
   }
   root.productiveStageStore = factory();
 })(typeof self !== "undefined" ? self : this, function () {
+  const runtimeScope =
+    typeof self !== "undefined"
+      ? self
+      : typeof window !== "undefined"
+        ? window
+        : typeof globalThis !== "undefined"
+          ? globalThis
+          : {};
   const LOCAL_KEY = "sena_portal_admin_productive_stage_v1";
   const SCOPE_KEY = "admin:productive-stage";
   const FILE_NAME = "productive-stage-catalog";
@@ -42,11 +50,12 @@
 
   function createEmptySnapshot() {
     return {
-      schemaVersion: 1,
+      schemaVersion: 2,
       updatedAt: "",
       projects: [],
       reports: [],
       imports: [],
+      deliveries: [],
       studentIndex: {},
       lastImportSummary: null,
     };
@@ -100,6 +109,23 @@
       });
   }
 
+  function getProjectDeliveries(snapshot, projectId) {
+    const normalizedSnapshot = Object.assign(createEmptySnapshot(), snapshot || {});
+    if (!projectId) {
+      return [];
+    }
+
+    return (Array.isArray(normalizedSnapshot.deliveries) ? normalizedSnapshot.deliveries : [])
+      .filter(function (delivery) {
+        return delivery.projectId === projectId;
+      })
+      .sort(function (left, right) {
+        const rightTime = Date.parse((right && (right.uploadedAt || right.createdAt)) || "");
+        const leftTime = Date.parse((left && (left.uploadedAt || left.createdAt)) || "");
+        return (Number.isFinite(rightTime) ? rightTime : 0) - (Number.isFinite(leftTime) ? leftTime : 0);
+      });
+  }
+
   function readLocalSnapshot() {
     if (typeof localStorage === "undefined") {
       return createEmptySnapshot();
@@ -117,14 +143,14 @@
 
   async function readCloudSnapshot() {
     if (
-      !root._firebaseDb ||
-      typeof root._firebaseDb.cloudGetGuideData !== "function"
+      !runtimeScope._firebaseDb ||
+      typeof runtimeScope._firebaseDb.cloudGetGuideData !== "function"
     ) {
       return null;
     }
 
     try {
-      return await root._firebaseDb.cloudGetGuideData(SCOPE_KEY, FILE_NAME);
+      return await runtimeScope._firebaseDb.cloudGetGuideData(SCOPE_KEY, FILE_NAME);
     } catch (error) {
       return null;
     }
@@ -132,14 +158,14 @@
 
   async function writeCloudSnapshot(snapshot) {
     if (
-      !root._firebaseDb ||
-      typeof root._firebaseDb.cloudSaveGuideData !== "function"
+      !runtimeScope._firebaseDb ||
+      typeof runtimeScope._firebaseDb.cloudSaveGuideData !== "function"
     ) {
       return false;
     }
 
     try {
-      return await root._firebaseDb.cloudSaveGuideData(SCOPE_KEY, FILE_NAME, snapshot);
+      return await runtimeScope._firebaseDb.cloudSaveGuideData(SCOPE_KEY, FILE_NAME, snapshot);
     } catch (error) {
       return false;
     }
@@ -150,6 +176,7 @@
     const nextProjects = Array.isArray(base.projects) ? base.projects.slice() : [];
     const nextReports = Array.isArray(base.reports) ? base.reports.slice() : [];
     const nextImports = Array.isArray(base.imports) ? base.imports.slice() : [];
+    const nextDeliveries = Array.isArray(base.deliveries) ? base.deliveries.slice() : [];
 
     (importResult.projects || []).forEach(function (project) {
       const index = nextProjects.findIndex(function (item) {
@@ -183,11 +210,12 @@
     });
 
     return {
-      schemaVersion: 1,
+      schemaVersion: 2,
       updatedAt: importResult.importedAt,
       projects: nextProjects,
       reports: nextReports,
       imports: nextImports,
+      deliveries: nextDeliveries,
       studentIndex: buildStudentIndex(nextProjects),
       lastImportSummary: {
         importBatchId: importResult.importBatchId,
@@ -197,6 +225,44 @@
         alerts: importResult.alerts || [],
       },
     };
+  }
+
+  function appendProjectDeliveryToSnapshot(previousSnapshot, deliveryRecord) {
+    const base = Object.assign(createEmptySnapshot(), previousSnapshot || {});
+    const nextDeliveries = Array.isArray(base.deliveries) ? base.deliveries.slice() : [];
+    const normalizedRecord = Object.assign(
+      {
+        deliveryId: "",
+        projectId: "",
+        projectTitle: "",
+        uploadedAt: new Date().toISOString(),
+        uploadedByName: "",
+        uploadedByUsernameKey: "",
+        driveUrl: "",
+        savedFileName: "",
+      },
+      deliveryRecord || {}
+    );
+
+    if (!normalizedRecord.deliveryId || !normalizedRecord.projectId) {
+      return base;
+    }
+
+    const index = nextDeliveries.findIndex(function (item) {
+      return item.deliveryId === normalizedRecord.deliveryId;
+    });
+
+    if (index >= 0) {
+      nextDeliveries[index] = Object.assign({}, nextDeliveries[index], normalizedRecord);
+    } else {
+      nextDeliveries.push(normalizedRecord);
+    }
+
+    return Object.assign({}, base, {
+      schemaVersion: 2,
+      updatedAt: normalizedRecord.uploadedAt || base.updatedAt,
+      deliveries: nextDeliveries,
+    });
   }
 
   async function loadSnapshot() {
@@ -233,5 +299,7 @@
     getStudentProjectIds: getStudentProjectIds,
     getStudentProjects: getStudentProjects,
     getProjectReports: getProjectReports,
+    getProjectDeliveries: getProjectDeliveries,
+    appendProjectDeliveryToSnapshot: appendProjectDeliveryToSnapshot,
   };
 });

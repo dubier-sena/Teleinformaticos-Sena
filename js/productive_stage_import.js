@@ -5,6 +5,14 @@
   }
   root.productiveStageImport = factory();
 })(typeof self !== "undefined" ? self : this, function () {
+  const runtimeScope =
+    typeof self !== "undefined"
+      ? self
+      : typeof window !== "undefined"
+        ? window
+        : typeof globalThis !== "undefined"
+          ? globalThis
+          : {};
   const STATUS_MAP = {
     completo: "Completo",
     parcial: "Parcial",
@@ -380,10 +388,10 @@
     if (!arrayBuffer) {
       throw new Error("No se recibio contenido del archivo DOCX.");
     }
-    if (!root.mammoth || typeof root.mammoth.extractRawText !== "function") {
+    if (!runtimeScope.mammoth || typeof runtimeScope.mammoth.extractRawText !== "function") {
       throw new Error("La libreria Mammoth no esta disponible en el navegador.");
     }
-    const result = await root.mammoth.extractRawText({ arrayBuffer: arrayBuffer });
+    const result = await runtimeScope.mammoth.extractRawText({ arrayBuffer: arrayBuffer });
     return normalizeReportText((result && result.value) || "");
   }
 
