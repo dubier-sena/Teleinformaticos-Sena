@@ -408,16 +408,23 @@
 
   async function cloudGetGuideData(scopeKey, fileName) {
     if (!scopeKey || !fileName) return null;
-    return readGuideStateDoc(GUIDE_DATA_FALLBACK_PREFIX, scopeKey, fileName);
+    var doc = await readGuideStateDoc(GUIDE_DATA_FALLBACK_PREFIX, scopeKey, fileName);
+    if (!doc) return null;
+    if (typeof doc.snapshotJson === "string") {
+      try { return JSON.parse(doc.snapshotJson); } catch (e) {}
+    }
+    return doc;
   }
 
   async function cloudSaveGuideData(scopeKey, fileName, snapshot) {
     if (!scopeKey || !fileName) return false;
-    var payload = Object.assign({}, snapshot || {}, {
+    var updatedAt = (snapshot && snapshot.updatedAt) || new Date().toISOString();
+    var payload = {
       scopeKey: scopeKey,
       fileName: fileName,
-      updatedAt: (snapshot && snapshot.updatedAt) || new Date().toISOString(),
-    });
+      updatedAt: updatedAt,
+      snapshotJson: JSON.stringify(snapshot || {}),
+    };
     return saveGuideStateDoc(
       GUIDE_DATA_FALLBACK_PREFIX,
       "guide-data",
