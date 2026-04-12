@@ -7,15 +7,19 @@ const css = fs.readFileSync(cssPath, "utf8");
 const expectations = [
   "width: min(1480px, calc(100% - 48px));",
   "@media (min-width: 1100px) {",
-  "grid-template-columns: 1fr;",
-  "justify-items: center;",
-  "text-align: center;",
+  "grid-template-columns: minmax(0, 1.08fr) minmax(360px, 0.92fr);",
+  "justify-items: stretch;",
+  "text-align: left;",
   "align-items: center;",
-  ".app-shell--portal .hero-welcome {",
-  "max-width: 10.5ch;",
-  "font-size: clamp(3.05rem, 4vw, 4.5rem);",
-  "max-width: min(100%, 760px);",
-  "margin-inline: auto;"
+  ".app-shell--portal .header h1 {",
+  "grid-column: 1;",
+  "max-width: 8.6ch;",
+  "font-size: clamp(3.2rem, 4.6vw, 5rem);",
+  ".app-shell--portal .info-grid {",
+  "grid-column: 2;",
+  "grid-row: 1 / span 4;",
+  "max-width: 460px;",
+  "margin-left: auto;"
 ];
 
 const missing = expectations.filter((snippet) => !css.includes(snippet));

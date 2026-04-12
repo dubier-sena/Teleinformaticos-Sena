@@ -3779,4 +3779,25 @@ function setupScrollSpy() {
   });
 }
 
+function getActivity4ReportSnapshot() {
+  return {
+    pageFile: PAGE_FILE,
+    guideDataFile: GUIDE_DATA_FILE,
+    state: { ...state },
+    meta: readStateMeta(),
+    identity: {
+      fullName: String(state[ACTIVITY4_IDENTITY_NAME_KEY] ?? "").trim(),
+      ficha: String(state[ACTIVITY4_IDENTITY_FICHA_KEY] ?? "").trim(),
+    },
+    selection: getGuideSelection(),
+  };
+}
+
+window.guia2Activity4ReportSource = {
+  isActivity4FormPage() {
+    return document.body?.classList.contains("activity4-form-page") || false;
+  },
+  getSnapshot: getActivity4ReportSnapshot,
+};
+
 
