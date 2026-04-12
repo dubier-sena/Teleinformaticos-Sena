@@ -142,45 +142,6 @@
     body.innerHTML = buildResourcesMarkup();
   }
 
-  function renderProjectDeliveryStatus(message, type) {
-    const status = getById("student-project-delivery-status");
-    if (!status) {
-      return;
-    }
-
-    status.className = "student-project-delivery-status" + (type ? ` is-${type}` : "");
-    status.textContent = message;
-  }
-
-  function updateProjectDeliverySummary(project, session) {
-    const projectMeta = getById("student-project-delivery-meta");
-    const summaryPath = getById("student-project-delivery-path");
-    const fileInput = getById("student-project-delivery-file");
-    const file = fileInput?.files?.[0] || null;
-    const fullName = String(session?.user?.fullName || "").trim();
-    const previewName =
-      typeof sharedDelivery?.buildDeliveryFileNamePreview === "function"
-        ? sharedDelivery.buildDeliveryFileNamePreview(fullName || "Aprendiz", "Avance-Proyecto", file?.name || ".ext")
-        : (file?.name || "Archivo pendiente");
-
-    if (projectMeta) {
-      projectMeta.innerHTML = project
-        ? `
-            <strong>Proyecto:</strong> ${escapeHtml(project.projectTitle || "Proyecto sin titulo")}<br>
-            <strong>Ficha:</strong> ${escapeHtml(project.ficha || session?.user?.ficha || "Sin ficha")}<br>
-            <strong>Grupo:</strong> ${escapeHtml(project.grupo || session?.user?.grupo || "Sin grupo")}<br>
-            <strong>Integrante que sube:</strong> ${escapeHtml(fullName || "No identificado")}
-          `
-        : '<strong>Proyecto:</strong> pendiente de vincular';
-    }
-
-    if (summaryPath) {
-      summaryPath.textContent = project
-        ? `Archivo previsto: ${previewName}`
-        : "Cuando tu proyecto este vinculado, aqui veras el archivo final que se enviara a Drive.";
-    }
-  }
-
   function renderProjectDelivery() {
     const body = getById("student-project-delivery-body");
     if (!body) {
@@ -203,10 +164,6 @@
           </p>
         </div>
       `;
-      renderProjectDeliveryStatus(
-        "Todavia no hay proyecto vinculado para habilitar la entrega del avance.",
-        "warning"
-      );
       return;
     }
 
@@ -214,24 +171,19 @@
       <div class="student-project-delivery-card">
         <div class="student-project-delivery-card__intro">
           <p>
-            Un integrante del grupo puede subir el avance del proyecto. El historial quedara visible para todos
-            los aprendices vinculados a este proyecto.
+            Un integrante del grupo puede subir el avance del proyecto. El historial quedara visible
+            para todos los aprendices vinculados a este proyecto.
           </p>
         </div>
-        <div class="student-project-delivery-meta" id="student-project-delivery-meta"></div>
-        <label class="student-project-delivery-field">
-          <span>Archivo del avance</span>
-          <input id="student-project-delivery-file" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.zip">
-        </label>
-        <div class="student-project-delivery-path" id="student-project-delivery-path"></div>
         <div class="student-project-delivery-actions">
-          <button class="app-btn app-btn--primary" type="button" id="student-project-delivery-submit"${uploadEnabled ? "" : " disabled"}>
+          <button class="app-btn app-btn--primary" type="button" id="student-project-delivery-open"${uploadEnabled ? "" : " disabled"}>
             Subir avance del proyecto
           </button>
         </div>
-        <div class="student-project-delivery-status" id="student-project-delivery-status">
-          Selecciona el archivo del avance para enviarlo de forma segura.
-        </div>
+        ${!uploadEnabled ? `
+          <div class="student-project-delivery-status is-warning">
+            La subida del avance esta disponible solo para la sesion del aprendiz vinculada al proyecto.
+          </div>` : ""}
       </div>
       <div class="student-project-delivery-history-wrap">
         <h4>Historial compartido del proyecto</h4>
@@ -239,103 +191,26 @@
       </div>
     `;
 
-      updateProjectDeliverySummary(project, session);
-    if (!uploadEnabled) {
-      renderProjectDeliveryStatus(
-        "La subida del avance esta disponible solo para la sesion del aprendiz vinculada al proyecto.",
-        "warning"
-      );
+    if (uploadEnabled) {
+      getById("student-project-delivery-open")?.addEventListener("click", function () {
+        openProjectDeliveryModal(project, session);
+      });
     }
-    getById("student-project-delivery-file")?.addEventListener("change", function () {
-      updateProjectDeliverySummary(project, session);
-    });
-    getById("student-project-delivery-submit")?.addEventListener("click", handleProjectDeliverySubmit);
   }
 
-  async function handleProjectDeliverySubmit() {
-    const project = getMainProject(currentState.viewModel);
-    const session = currentState.session;
-    const fileInput = getById("student-project-delivery-file");
-    const file = fileInput?.files?.[0] || null;
-
-    if (!project || !session || !isStudentUploader(session) || !store || !sharedDelivery) {
-      renderProjectDeliveryStatus(
-        "No fue posible preparar la entrega del avance desde esta sesion.",
-        "error"
-      );
+  function openProjectDeliveryModal(project, session) {
+    if (!sharedDelivery || typeof sharedDelivery.openDeliveryModal !== "function") {
       return;
     }
-
-    try {
-      sharedDelivery.validateFile(file);
-    } catch (error) {
-      renderProjectDeliveryStatus(error.message, "error");
-      return;
-    }
-
-    const submitButton = getById("student-project-delivery-submit");
-    submitButton?.setAttribute("disabled", "disabled");
-    renderProjectDeliveryStatus("Subiendo avance del proyecto a Drive...", "loading");
-
-    try {
-      const fileBase64 = await sharedDelivery.readFileAsBase64(file);
-      const response = await sharedDelivery.uploadToAppsScript({
-        guideLabel: "Etapa Productiva",
-        activityLabel: "Avance-Proyecto",
-        activityNumber: "",
-        activityTitle: project.projectTitle || "Proyecto",
-        fileName: file.name,
-        mimeType: file.type || "application/octet-stream",
-        fileBase64: fileBase64,
-        fullName: session.user.fullName,
-        ficha: project.ficha || session.user.ficha,
-        grupo: project.grupo || session.user.grupo,
-        institucion: project.inst || session.user.inst,
-        pageFile: window.location.pathname.split("/").pop() || "",
-        submittedAt: new Date().toISOString(),
-        projectId: project.id,
-        projectTitle: project.projectTitle || "Proyecto",
-      });
-
-      const uploadedAt = new Date().toISOString();
-      const nextSnapshot = store.appendProjectDeliveryToSnapshot(currentState.snapshot, {
-        deliveryId: `${project.id}:${uploadedAt}`,
-        projectId: project.id,
-        projectTitle: project.projectTitle || "Proyecto",
-        uploadedAt: uploadedAt,
-        uploadedByName: session.user.fullName,
-        uploadedByUsernameKey: session.user.usernameKey,
-        driveUrl: response.driveUrl || "",
-        savedFileName: response.savedFileName || file.name,
-      });
-
-      const saveResult = await store.saveSnapshot(nextSnapshot);
-      currentState.snapshot = nextSnapshot;
-      renderProjectDelivery();
-      if (!saveResult.ok) {
-        renderProjectDeliveryStatus(
-          "El archivo quedo en Drive, pero no fue posible guardar el historial del proyecto en este momento.",
-          "warning"
-        );
-      } else if (saveResult.savedCloud === false && saveResult.savedLocal) {
-        renderProjectDeliveryStatus(
-          "El archivo quedo en Drive y el historial se guardo localmente en este navegador.",
-          "warning"
-        );
-      } else {
-        renderProjectDeliveryStatus(
-          "Avance registrado correctamente y visible para el proyecto.",
-          "success"
-        );
-      }
-    } catch (error) {
-      renderProjectDeliveryStatus(
-        error?.message || "No fue posible completar la entrega del avance.",
-        "error"
-      );
-    } finally {
-      submitButton?.removeAttribute("disabled");
-    }
+    sharedDelivery.openDeliveryModal({
+      guideLabel: "Etapa Productiva",
+      activityLabel: "Avance del Proyecto",
+      activityTitle: project.projectTitle || "Proyecto",
+      activityNumber: "",
+      projectId: project.id,
+      ficha: project.ficha || session?.user?.ficha || "",
+      grupo: project.grupo || session?.user?.grupo || "",
+    });
   }
 
   function render(state) {
@@ -355,6 +230,6 @@
   window.productiveStageProjectDelivery = {
     render: render,
     renderProjectResources: renderProjectResources,
-    handleProjectDeliverySubmit: handleProjectDeliverySubmit,
+    openProjectDeliveryModal: openProjectDeliveryModal,
   };
 })();
