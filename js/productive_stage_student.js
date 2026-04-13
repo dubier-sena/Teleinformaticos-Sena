@@ -272,6 +272,54 @@
     };
   }
 
+  function renderAdminOverview(snapshot) {
+    const projects = Array.isArray(snapshot?.projects) ? snapshot.projects : [];
+
+    setHeaderState(
+      "Vista administrativa — Etapa Productiva",
+      `${projects.length} proyecto(s) en el catalogo`,
+      "Admin"
+    );
+
+    const summary = getById("student-project-summary-body");
+    const reports = getById("student-project-reports-body");
+
+    if (summary) {
+      if (!projects.length) {
+        summary.innerHTML = '<p class="student-project-placeholder">No hay proyectos importados aun. Importa un informe DOCX desde el panel administrativo.</p>';
+      } else {
+        summary.innerHTML = projects.map(function (project) {
+          const projectReports = store.getProjectReports(snapshot, project.id);
+          const studentKeys = Array.isArray(project.studentUsernameKeys) ? project.studentUsernameKeys : [];
+          const previewLinks = studentKeys.map(function (key) {
+            return `<a class="student-integrant-chip" style="text-decoration:none;cursor:pointer" href="etapa-productiva-estudiante.html?student=${encodeURIComponent(key)}">${escapeHtml(key)}</a>`;
+          }).join("");
+
+          return `
+            <div class="student-project-summary-item">
+              <strong>${escapeHtml(project.ficha || "Sin ficha")} · ${escapeHtml(project.grado || "")} · ${escapeHtml(project.grupo || "")}</strong>
+              <span style="font-size:1rem;font-weight:700;color:var(--text-strong);margin-bottom:6px;display:block">${escapeHtml(project.projectTitle || "Proyecto sin titulo")}</span>
+              <span class="${getStatusClass(project.currentStatus)}" style="margin-bottom:8px">${escapeHtml(project.currentStatus || "Sin estado")}</span>
+              <div style="margin-top:8px;font-size:12px;color:var(--text-muted)">${projectReports.length} informe(s) · Ver como aprendiz:</div>
+              <div class="student-integrant-list" style="margin-top:6px">
+                ${previewLinks || '<span class="student-project-placeholder" style="font-size:12px">Sin aprendices vinculados</span>'}
+              </div>
+            </div>
+          `;
+        }).join("");
+      }
+    }
+
+    if (reports) {
+      reports.innerHTML = '<p class="student-project-placeholder">Selecciona un aprendiz en "Resumen del proyecto" para ver su vista individual.</p>';
+    }
+
+    const intro = getById("student-project-intro");
+    if (intro) {
+      intro.textContent = "Vista administrativa. Haz clic en el nombre de un aprendiz para previsualizar su pagina de proyecto.";
+    }
+  }
+
   async function initializeStudentProductiveStagePage() {
     if (!auth || !store) {
       renderEmptyState(
@@ -293,16 +341,13 @@
     }
 
     const usernameKey = resolveStudentUsernameKey(session);
+    const snapshot = await store.loadSnapshot();
+
     if (session.role === "admin" && !usernameKey) {
-      renderEmptyState(
-        "Previsualizacion administrativa",
-        "Como administrador puedes abrir esta pagina con el parametro ?student=usuario para revisar una vista privada puntual.",
-        "Admin"
-      );
+      renderAdminOverview(snapshot);
       return;
     }
 
-    const snapshot = await store.loadSnapshot();
     const viewModel = buildStudentViewModel(snapshot, usernameKey, session);
     renderStudentProjectView(viewModel);
     renderSupportModules(snapshot, viewModel, session);
