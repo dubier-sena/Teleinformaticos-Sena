@@ -1773,10 +1773,92 @@ img {
 .app-shell--portal .main.app-main.portal-grid {
   width: min(1480px, calc(100% - 48px));
   max-width: none;
-  margin: -2.25rem auto 0;
+  margin: 0 auto;
   padding: 0 0 5.5rem;
   display: grid;
   gap: 1.15rem;
+}
+
+/* ── Portal hero intro ── */
+.portal-hero {
+  padding: 2rem 0 0.5rem;
+}
+
+.portal-hero__logo {
+  height: 56px;
+  width: auto;
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.portal-hero__title {
+  font-family: var(--font-display, "Outfit", sans-serif);
+  font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  color: var(--forest, #071a0d);
+  line-height: 1.1;
+  margin-bottom: 0.5rem;
+}
+
+.portal-hero__title span {
+  color: var(--green, #007934);
+}
+
+.portal-hero__sub {
+  font-size: 14px;
+  color: var(--muted, #5e7a5e);
+  max-width: 640px;
+  line-height: 1.65;
+  margin-bottom: 1rem;
+}
+
+.portal-hero__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.portal-hero__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 121, 52, 0.07);
+  border: 1px solid rgba(0, 121, 52, 0.14);
+  color: var(--text-2, #2d4a2d);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 13px;
+  border-radius: 999px;
+}
+
+/* ── Portal 2-column layout ── */
+.portal-col--auth,
+.portal-col--content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+/* Institutions first at all screen sizes */
+.portal-hero         { order: 0; }
+.portal-col--content { order: 1; }
+.portal-col--auth    { order: 2; }
+
+@media (min-width: 820px) {
+  .app-shell--portal .main.app-main.portal-grid {
+    grid-template-columns: 1fr clamp(280px, 26%, 360px);
+    align-items: start;
+  }
+
+  .portal-hero {
+    grid-column: 1 / -1;
+  }
+
+  .portal-col--auth {
+    position: sticky;
+    top: calc(var(--navbar-height, 60px) + 1rem);
+  }
 }
 
 @media (min-width: 1100px) {
@@ -1885,11 +1967,17 @@ img {
 }
 
 .app-shell--portal .calendar-callout {
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
   border-left: 0;
   background:
     linear-gradient(135deg, rgba(10, 92, 49, 0.08), rgba(245, 183, 0, 0.08)),
     var(--surface-1);
+}
+
+.app-shell--portal .calendar-callout p {
+  margin: 0;
 }
 
 .app-shell--portal .auth-panel,
@@ -1960,7 +2048,8 @@ img {
 
 .app-shell--portal .btn-calendar-link,
 .app-shell--portal .btn-share,
-.app-shell--portal .btn-enter {
+.app-shell--portal .btn-enter,
+.app-shell--portal .auth-submit {
   border-radius: 999px;
 }
 
@@ -2109,14 +2198,19 @@ img {
   margin: -0.1rem 0 1rem;
 }
 
-.app-shell--portal .btn-productive-stage-cta {
+.app-shell--portal .btn-productive-stage-cta,
+.app-shell--portal #btn-productive-stage-student-view {
   border-color: rgba(255, 255, 255, 0.16);
   background: rgba(255, 255, 255, 0.1);
   color: #f5fbf7;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  width: 100%;
+  min-height: 50px;
+  justify-content: center;
 }
 
-.app-shell--portal .btn-productive-stage-cta:hover {
+.app-shell--portal .btn-productive-stage-cta:hover,
+.app-shell--portal #btn-productive-stage-student-view:hover {
   border-color: rgba(255, 255, 255, 0.28);
   background: rgba(255, 255, 255, 0.16);
   color: #ffffff;

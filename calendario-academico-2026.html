@@ -16,12 +16,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="css/site_tokens.css?v=20260409_1"/>
-<link rel="stylesheet" href="css/shared_shell.css?v=20260409_1"/>
-<link rel="stylesheet" href="css/page_calendar.css?v=20260411_2"/>
+<link rel="stylesheet" href="css/site_tokens.css?v=20260412_2"/>
+<link rel="stylesheet" href="css/shared_shell.css?v=20260412_2"/>
+<link rel="stylesheet" href="css/page_calendar.css?v=20260412_2"/>
 <script src="js/portal_auth.js?v=20260324_6"></script>
   <script src="js/firebase_db.js?v=20260410_1" defer></script>
-<script src="js/shared_shell.js?v=20260409_1" defer></script>
+<script src="js/shared_shell.js?v=20260412_2" defer></script>
 <script>
 if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "index.html" })) {
   document.documentElement.innerHTML = "";
@@ -41,7 +41,6 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
         </div>
         <div class="calendar-hero__actions">
           <div class="calendar-hero__actions-row">
-            <a class="hbtn hbtn-link" href="index.html">Volver al portal</a>
             <button type="button" class="hbtn" id="firebase-sync-button" onclick="syncFirebaseState(true)">Guardar</button>
             <button type="button" class="hbtn" id="firebase-load-button" onclick="loadLatestFromFirebase()">Cargar</button>
             <button type="button" class="hbtn" id="calendar-reset-button" onclick="resetCalendar()">Restaurar</button>
