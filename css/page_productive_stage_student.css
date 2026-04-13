@@ -2,8 +2,12 @@
   min-height: 100vh;
 }
 
+.app-shell--productive-stage-student .wave {
+  display: none;
+}
+
 .productive-stage-student-hero {
-  padding: 40px 0 74px;
+  padding: 40px 0 40px;
 }
 
 .productive-stage-student-hero__inner {
@@ -62,7 +66,7 @@
 }
 
 .productive-stage-student {
-  margin-top: -38px;
+  margin-top: 0;
   padding-bottom: 52px;
 }
 
@@ -118,13 +122,17 @@
 
 .student-project-grid {
   display: grid;
-  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.25fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 18px;
 }
 
-.student-project-grid--support {
+.student-project-panel--full {
   margin-top: 18px;
-  grid-template-columns: minmax(0, 1fr);
+}
+
+.student-project-panel--full .student-project-panel__body {
+  display: grid;
+  gap: 14px;
 }
 
 .student-project-panel {

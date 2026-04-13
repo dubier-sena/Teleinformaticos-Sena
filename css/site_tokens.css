@@ -27,4 +27,6 @@
 
   --motion-fast: 160ms ease;
   --motion-base: 240ms ease;
+
+  --navbar-height: 60px;
 }

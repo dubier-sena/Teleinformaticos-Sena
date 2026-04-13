@@ -88,9 +88,9 @@ code {
   width: var(--sidebar-w);
   background: linear-gradient(180deg, #04140d 0%, #0a2618 38%, var(--sena-dark) 100%);
   position: fixed;
-  top: 0;
+  top: var(--navbar-height, 60px);
   left: 0;
-  height: 100vh;
+  height: calc(100vh - var(--navbar-height, 60px));
   overflow-y: auto;
   z-index: 100;
   display: flex;
@@ -172,7 +172,7 @@ code {
 .btn-sb-expand {
   display: none;
   position: fixed;
-  top: 14px;
+  top: calc(var(--navbar-height, 60px) + 14px);
   left: 0;
   z-index: 300;
   background: var(--sena-green);
@@ -2978,7 +2978,7 @@ body.word-search-fullscreen-lock {
 .hamburger {
   display: none;
   position: fixed;
-  top: 12px;
+  top: calc(var(--navbar-height, 60px) + 12px);
   left: 12px;
   z-index: 200;
   background: var(--sena-green);

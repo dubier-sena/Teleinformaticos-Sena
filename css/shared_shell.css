@@ -36,6 +36,11 @@ body {
     linear-gradient(180deg, #f4f8f5 0%, var(--bg-canvas) 100%);
 }
 
+/* Offset for the fixed navbar */
+body.app-shell {
+  padding-top: var(--navbar-height, 60px);
+}
+
 .app-shell {
   min-height: 100vh;
 }
@@ -93,6 +98,335 @@ body {
   color: #fff;
 }
 
+/* ══════════════════════════════════════════════════════
+   APP NAVBAR — Design A (SENA Academy · Top Bar)
+══════════════════════════════════════════════════════ */
+.app-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 500;
+  height: var(--navbar-height, 60px);
+  background: #ffffff;
+  border-bottom: 1px solid var(--border-soft, #d6e2da);
+  box-shadow: 0 2px 8px rgba(10, 44, 28, 0.06);
+}
+
+.app-navbar__inner {
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+  width: min(1280px, calc(100% - 32px));
+  margin: 0 auto;
+  gap: 0;
+}
+
+/* ── Logo ── */
+.app-navbar__logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: var(--brand-600, #007934);
+  font-family: var(--font-display, "Outfit", sans-serif);
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  padding-right: 28px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.app-navbar__logo:hover {
+  color: var(--brand-700, #0a5c31);
+  text-decoration: none;
+}
+
+.app-navbar__logo strong {
+  font-weight: 900;
+}
+
+.app-navbar__logo-leaf {
+  font-size: 18px;
+}
+
+.app-navbar__logo-img {
+  height: 28px;
+  width: auto;
+  display: block;
+  flex-shrink: 0;
+}
+
+/* ── Nav links container ── */
+.app-navbar__links {
+  display: flex;
+  align-items: stretch;
+  flex: 1;
+  gap: 0;
+}
+
+/* ── Individual link ── */
+.app-navbar__link {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 14px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-muted, #5f7468);
+  text-decoration: none;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 140ms ease, border-color 140ms ease, background 140ms ease;
+  white-space: nowrap;
+}
+
+.app-navbar__link:hover {
+  color: var(--brand-600, #007934);
+  background: rgba(0, 121, 52, 0.04);
+  text-decoration: none;
+}
+
+.app-navbar__link.is-active {
+  color: var(--brand-600, #007934);
+  border-bottom-color: var(--accent-gold, #f5b700);
+  font-weight: 700;
+}
+
+/* ── Dropdown wrapper ── */
+.app-navbar__drop {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+
+.app-navbar__drop-btn {
+  gap: 4px;
+}
+
+.app-navbar__caret {
+  font-size: 10px;
+  opacity: 0.65;
+  transition: transform 160ms ease;
+}
+
+.app-navbar__drop.is-open > .app-navbar__drop-btn .app-navbar__caret {
+  transform: rotate(180deg);
+}
+
+.app-navbar__drop.is-open > .app-navbar__drop-btn {
+  color: var(--brand-600, #007934);
+  background: rgba(0, 121, 52, 0.04);
+}
+
+/* ── Dropdown panel ── */
+.app-navbar__drop-panel {
+  position: absolute;
+  top: calc(100% + 1px);
+  left: 0;
+  min-width: 220px;
+  background: #ffffff;
+  border: 1px solid var(--border-soft, #d6e2da);
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(10, 44, 28, 0.13);
+  padding: 8px;
+  display: none;
+  z-index: 600;
+  animation: navbar-drop-in 140ms ease;
+}
+
+@keyframes navbar-drop-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.app-navbar__drop.is-open > .app-navbar__drop-panel {
+  display: block;
+}
+
+.app-navbar__drop-group {
+  padding: 4px 0;
+}
+
+.app-navbar__drop-group + .app-navbar__drop-group {
+  border-top: 1px solid var(--border-soft, #d6e2da);
+  margin-top: 4px;
+  padding-top: 8px;
+}
+
+.app-navbar__drop-heading {
+  display: block;
+  padding: 2px 10px 6px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted, #5f7468);
+}
+
+.app-navbar__drop-link {
+  display: block;
+  padding: 7px 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-strong, #102117);
+  text-decoration: none;
+  border-radius: 8px;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.app-navbar__drop-link:hover {
+  background: rgba(0, 121, 52, 0.07);
+  color: var(--brand-600, #007934);
+  text-decoration: none;
+}
+
+/* ── Right end: user + hamburger ── */
+.app-navbar__end {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.app-navbar__user {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: rgba(0, 121, 52, 0.08);
+  border: 1px solid rgba(0, 121, 52, 0.18);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--brand-700, #0a5c31);
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-navbar__user-role {
+  background: var(--brand-600, #007934);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+
+.app-navbar__user-role--admin {
+  background: var(--accent-gold, #f5b700);
+  color: #000;
+}
+
+/* ── Hamburger (mobile only) ── */
+.app-navbar__hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: none;
+  border: 1px solid var(--border-soft, #d6e2da);
+  border-radius: 9px;
+  cursor: pointer;
+  color: var(--text-strong, #102117);
+  transition: background 140ms ease;
+}
+
+.app-navbar__hamburger:hover {
+  background: rgba(0, 121, 52, 0.06);
+}
+
+.app-navbar__hamburger span {
+  display: block;
+  width: 18px;
+  height: 2px;
+  background: currentColor;
+  border-radius: 2px;
+  transition: transform 200ms ease, opacity 200ms ease;
+}
+
+.app-navbar__hamburger.is-open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.app-navbar__hamburger.is-open span:nth-child(2) { opacity: 0; }
+.app-navbar__hamburger.is-open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* ── Mobile navbar ── */
+@media (max-width: 768px) {
+  .app-navbar__hamburger {
+    display: flex;
+  }
+
+  .app-navbar__links {
+    display: none;
+    position: fixed;
+    top: var(--navbar-height, 60px);
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border-bottom: 1px solid var(--border-soft, #d6e2da);
+    box-shadow: 0 8px 24px rgba(10, 44, 28, 0.12);
+    flex-direction: column;
+    align-items: stretch;
+    padding: 8px;
+    gap: 2px;
+    z-index: 499;
+    max-height: calc(100vh - var(--navbar-height, 60px));
+    overflow-y: auto;
+  }
+
+  .app-navbar__links.is-open {
+    display: flex;
+  }
+
+  .app-navbar__link {
+    height: auto;
+    padding: 11px 14px;
+    border-radius: 10px;
+    border-bottom: none;
+    font-size: 14px;
+  }
+
+  .app-navbar__link.is-active {
+    background: rgba(0, 121, 52, 0.08);
+    border-bottom: none;
+    color: var(--brand-600, #007934);
+  }
+
+  .app-navbar__drop {
+    flex-direction: column;
+  }
+
+  .app-navbar__drop-btn {
+    border-radius: 10px;
+  }
+
+  .app-navbar__drop-panel {
+    position: static;
+    box-shadow: none;
+    border: none;
+    background: rgba(0, 121, 52, 0.04);
+    border-radius: 10px;
+    margin-top: 2px;
+    margin-left: 8px;
+    animation: none;
+  }
+
+  .app-navbar__user {
+    max-width: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -110,5 +444,9 @@ body {
   .app-btn:hover {
     transition: none;
     transform: none;
+  }
+
+  .app-navbar__drop-panel {
+    animation: none;
   }
 }

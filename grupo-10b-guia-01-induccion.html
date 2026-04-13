@@ -12,14 +12,16 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/site_tokens.css?v=20260409_1">
-<link rel="stylesheet" href="css/shared_shell.css?v=20260409_1">
+<link rel="stylesheet" href="css/site_tokens.css?v=20260412_2">
+<link rel="stylesheet" href="css/shared_shell.css?v=20260412_2">
 <link rel="preload" as="script" href="js/portal_auth.js?v=20260324_6">
 <script defer src="js/portal_auth.js?v=20260324_6"></script>
   <script defer src="js/firebase_db.js?v=20260410_1"></script>
 <script defer src="js/project_integrations.js?v=20260411_1"></script>
 <script defer src="js/shared_apps_script_delivery.js?v=20260411_1"></script>
-<script defer src="js/shared_shell.js?v=20260409_1"></script>
+<script defer src="js/shared_shell.js?v=20260412_2"></script>
+<script defer src="data/calendario_2026_records.js?v=20260410_1"></script>
+<script defer src="data/calendario_2026_seed.js?v=20260410_1"></script>
 <title>Guía de Aprendizaje — Inducción | Grupo 10B</title>
 <style>
   /* ── Variables ── */
@@ -54,7 +56,7 @@
   .sidebar {
     width: var(--sidebar-w);
     background: var(--sena-dark);
-    position: fixed; top: 0; left: 0; height: 100vh;
+    position: fixed; top: var(--navbar-height, 60px); left: 0; height: calc(100vh - var(--navbar-height, 60px));
     overflow-y: auto; z-index: 100;
     display: flex; flex-direction: column;
     transition: transform .3s ease;
@@ -105,12 +107,20 @@
   .topbar {
     background: #fff; border-bottom: 1px solid var(--sena-border);
     padding: 12px 28px; display: flex; align-items: center; justify-content: space-between;
-    position: sticky; top: 0; z-index: 50; box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    position: sticky; top: var(--navbar-height, 60px); z-index: 50; box-shadow: 0 1px 4px rgba(0,0,0,.06);
   }
   .topbar-title { font-size: 14px; color: var(--text-muted); }
   .topbar-title strong { color: var(--sena-green); }
-  .topbar-meta { font-size: 12px; color: var(--text-muted); display: flex; gap: 16px; }
-  .topbar-meta span::before { margin-right: 4px; }
+  .topbar-meta { font-size: 12px; color: var(--text-muted); display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .topbar-meta .meta-item { display: inline-flex; align-items: center; gap: 4px; }
+  .guide-schedule-item { max-width: 280px; padding: 7px 10px; border: 1px solid rgba(0,122,51,.16); border-radius: 999px; background: rgba(236,253,245,.82); color: #053b22; box-shadow: 0 8px 22px rgba(1,47,28,.06); }
+  .guide-schedule-item--class { border-color: rgba(0,122,51,.22); background: rgba(220,252,231,.92); }
+  .guide-schedule-item--delivery { border-color: rgba(202,138,4,.26); background: rgba(254,249,195,.92); color: #422006; }
+  .guide-schedule-item.is-empty { border-color: rgba(100,116,139,.16); background: rgba(248,250,252,.86); color: #475569; }
+  .guide-schedule-item strong { display: block; font-family: var(--font-display); font-size: 9px; line-height: 1; letter-spacing: .12em; text-transform: uppercase; }
+  .guide-schedule-copy { min-width: 0; }
+  .guide-schedule-copy > span { display: block; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .guide-schedule-dot { width: 8px; height: 8px; flex: 0 0 8px; border-radius: 999px; background: currentColor; box-shadow: 0 0 0 4px rgba(0,122,51,.08); }
 
   /* ── Content ── */
   .content { padding: 32px 36px; max-width: 960px; }
@@ -789,7 +799,7 @@
   }
   .reset-button:hover { background: rgba(255,255,255,.14); }
 </style>
-<link rel="stylesheet" href="css/guia_template.css?v=20260409_2">
+<link rel="stylesheet" href="css/guia_template.css?v=20260412_2">
 </head>
 <body
   class="app-shell app-shell--guide"
@@ -929,9 +939,9 @@
         <strong>Guia 1 - Induccion</strong>
       </div>
       <div class="topbar-meta">
-        <span>⏱ 48 horas</span>
-        <span>📅 2026</span>
-        <span>🏫 CIAS Puerto Boyacá</span>
+        <span class="meta-item"><span>⏱</span><span>48 horas</span></span>
+        <span class="meta-item"><span>📅</span><span>2026</span></span>
+        <span class="meta-item"><span>🏫</span><span id="topbarCampus">CIAS Puerto Boyacá</span></span>
       </div>
     </div>
 
@@ -2470,6 +2480,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     window.location.reload();
   });
+  initTopbarSchedule();
 });
 
 // ═══════════════════════════════════════════
@@ -2897,6 +2908,45 @@ function doExportWordDC() {
   a.click();
   URL.revokeObjectURL(url);
   closeExportModalDC();
+}
+
+// ── Topbar schedule rendering ──
+function _escHtml(v) { return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function _normTxt(v) { return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim(); }
+function _instKey(v) { const n=_normTxt(v); if(n.indexOf('kennedy')!==-1) return 'kennedy'; if(n.indexOf('santa')!==-1&&n.indexOf('barbara')!==-1) return 'santa-barbara'; return n; }
+function _normGrupo(v) { return String(v||'').trim().replace(/^grupo\s+/i,'').toUpperCase(); }
+function _shortInst(v) { return String(v||'').replace(/^Institucion Educativa\s+/i,'').trim(); }
+function _calRecords() { return Array.isArray(window.CALENDAR_2026_RECORDS)?window.CALENDAR_2026_RECORDS:[]; }
+function _calState() { try { const s=localStorage.getItem('sena-calendario-pro-2026-v2'); return s?JSON.parse(s)||{}:{}; } catch(e){ return {}; } }
+function _calEntry(r) { const s=_calState(),e=s[r.id]||{}; return {estado:e.estado||r.defE||'',act:e.act||null}; }
+function _dateKey(d) { return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-'); }
+function _todayKey() { return _dateKey(new Date()); }
+function _nowMin() { const n=new Date(); return n.getHours()*60+n.getMinutes(); }
+function _timeVal(r) { const m=String(r?.horario||'').match(/(\d{1,2}):(\d{2})(am|pm)/i); if(!m) return 9999; let h=Number(m[1])%12; if(m[3].toLowerCase()==='pm') h+=12; return h*60+Number(m[2]); }
+function _parseRange(r) { const m=String(r?.horario||'').match(/(\d{1,2}):(\d{2})(am|pm)\D+(\d{1,2}):(\d{2})(am|pm)/i); if(!m) return null; let s=Number(m[1])%12; if(m[3].toLowerCase()==='pm') s+=12; let e=Number(m[4])%12; if(m[6].toLowerCase()==='pm') e+=12; return {start:s*60+Number(m[2]),end:e*60+Number(m[5])}; }
+function _cmpRec(a,b) { return String(a.fecha||'').localeCompare(String(b.fecha||''))||(_timeVal(a)-_timeVal(b)); }
+function _matchSel(r,sel) { const sg=_normGrupo(sel?.grupo),rg=_normGrupo(_calEntry(r).grado||r.grado); if(!sg||!rg||sg!==rg) return false; return _instKey(r.colegio)===_instKey(sel?.inst); }
+function _isAvail(r) { return !['cancelada','sin programacion','no aplica','novedad'].includes(_normTxt(_calEntry(r).estado)); }
+function _isAfterNow(r) { const t=_todayKey(),d=String(r.fecha||''); if(d>t) return true; if(d<t) return false; return _timeVal(r)>_nowMin(); }
+function _fmtDate(iso) { const p=String(iso||'').split('-'); if(p.length!==3) return 'Fecha pendiente'; const l=p[2]+'/'+p[1]+'/'+p[0]; return iso===_todayKey()?'Hoy '+l:l; }
+function _findCurrent(sel) { const t=_todayKey(),n=_nowMin(); return _calRecords().filter(r=>{ if(r.tipo!=='CLASE'||String(r.fecha||'')!==t||!_matchSel(r,sel)||!_isAvail(r)) return false; const rng=_parseRange(r); return rng?n>=rng.start&&n<=rng.end:false; }).sort(_cmpRec)[0]||null; }
+function _findNext(sel) { return _calRecords().filter(r=>r.tipo==='CLASE'&&_isAfterNow(r)&&_matchSel(r,sel)&&_isAvail(r)).sort(_cmpRec)[0]||null; }
+function _findDelivery(sel) { const t=_todayKey(),f=[]; _calRecords().forEach(r=>{ if(r.tipo!=='CLASE'||!_matchSel(r,sel)||!_isAvail(r)) return; const act=_calEntry(r).act; if(!act||(!act.nombre&&!act.fecha)) return; const due=String(act.fecha||r.fecha||''); if(due&&due<t) return; f.push({r,act,due}); }); return f.sort((a,b)=>String(a.due||'').localeCompare(String(b.due||''))||_cmpRec(a.r,b.r))[0]||null; }
+function _ensureChips() { const meta=document.querySelector('.topbar-meta'); if(!meta) return null; let cls=document.getElementById('guideScheduleNextClass'),dlv=document.getElementById('guideScheduleNextDelivery'); if(!cls){cls=document.createElement('span');cls.id='guideScheduleNextClass';meta.appendChild(cls);} if(!dlv){dlv=document.createElement('span');dlv.id='guideScheduleNextDelivery';meta.appendChild(dlv);} return {cls,dlv}; }
+function _renderChip(el,type,title,body,empty) { el.className='meta-item guide-schedule-item guide-schedule-item--'+type+(empty?' is-empty':''); el.title=title+': '+body; el.innerHTML='<span class="guide-schedule-dot" aria-hidden="true"></span><span class="guide-schedule-copy"><strong>'+_escHtml(title)+'</strong><span>'+_escHtml(body)+'</span></span>'; }
+function initTopbarSchedule() {
+  const sel = (portalAuth&&portalAuth.getCurrentSelection)?portalAuth.getCurrentSelection({ficha:'',inst:'',grupo:''}):{ inst:localStorage.getItem('sena_inst')||'', grupo:localStorage.getItem('sena_grupo')||'', ficha:localStorage.getItem('sena_ficha')||'' };
+  const campusEl=document.getElementById('topbarCampus');
+  if(campusEl){ const txt=[_shortInst(sel.inst),sel.grupo].filter(Boolean).join(' | '); if(txt) campusEl.textContent=txt; }
+  if(!_calRecords().length) return;
+  const chips=_ensureChips(); if(!chips) return;
+  const cur=_findCurrent(sel),nxt=_findNext(sel);
+  if(cur) _renderChip(chips.cls,'class','Estoy en clase',[_fmtDate(cur.fecha),cur.horario].filter(Boolean).join(' - '),false);
+  else if(nxt) _renderChip(chips.cls,'class','Proxima clase',[_fmtDate(nxt.fecha),nxt.horario].filter(Boolean).join(' - '),false);
+  else _renderChip(chips.cls,'class','Proxima clase','Sin fecha programada',true);
+  if(cur&&nxt) _renderChip(chips.dlv,'class','Proxima clase',[_fmtDate(nxt.fecha),nxt.horario].filter(Boolean).join(' - '),false);
+  else { const dlv=_findDelivery(sel); if(dlv) _renderChip(chips.dlv,'delivery','Entrega pendiente',[dlv.act?.nombre||'Actividad sin nombre',dlv.due?_fmtDate(dlv.due):'Sin fecha'].filter(Boolean).join(' - '),false); else _renderChip(chips.dlv,'delivery','Sin entrega proxima','No hay actividad pendiente',true); }
+  if(cur&&!nxt) _renderChip(chips.dlv,'class','Proxima clase','Sin fecha programada',true);
 }
 </script>
 

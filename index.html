@@ -14,69 +14,32 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-<link rel="stylesheet" href="css/site_tokens.css?v=20260409_1">
-<link rel="stylesheet" href="css/shared_shell.css?v=20260409_1">
-<link rel="stylesheet" href="css/page_portal.css?v=20260411_4">
-<script defer src="js/shared_shell.js?v=20260409_1"></script>
+<link rel="stylesheet" href="css/site_tokens.css?v=20260412_2">
+<link rel="stylesheet" href="css/shared_shell.css?v=20260412_2">
+<link rel="stylesheet" href="css/page_portal.css?v=20260412_3">
+<script defer src="js/shared_shell.js?v=20260412_2"></script>
 </head>
 <body class="app-shell app-shell--portal">
-
-<!-- ------------------------------------------------------
-     HEADER
-     ------------------------------------------------------ -->
-<header class="header app-hero">
-  <div class="header-inner app-hero__inner">
-
-    <div class="logo-wrap anim-1">
-      <img src="assets/img/sena-logo.png" alt="Logo SENA" width="auto" height="68">
-    </div>
-
-    <h1 class="anim-2">Sistemas Teleinform&aacute;ticos</h1>
-
-    <div class="hero-welcome anim-4">
-      ¡Hola a todos! 👋 ¡Bienvenidos a una nueva aventura de aprendizaje! 🚀 Que sea un año genial y lleno de éxitos
-    </div>
-
-    <p class="header-subtitle anim-3">
-      Portal de acceso a las gu&iacute;as interactivas por instituci&oacute;n educativa, grupo y ficha.
-      El avance de cada aprendiz queda guardado de forma segura.
-    </p>
-
-    <div class="info-grid anim-5">
-      <div class="info-chip highlight-chip">
-        <span class="label">Instructor</span>
-        Dubier Orlando Millan Barbosa
-      </div>
-      <div class="info-chip">
-        <span class="label">Correo</span>
-        domillan@sena.edu.co
-      </div>
-    </div>
-
-  </div>
-</header>
-
-<!-- Ola decorativa de transicion -->
-<svg class="wave" viewBox="0 0 1440 40" preserveAspectRatio="none" height="40" aria-hidden="true">
-  <path fill="currentColor" d="M0,20 C360,40 1080,0 1440,20 L1440,40 L0,40 Z"></path>
-</svg>
 
 <!-- ------------------------------------------------------
      CONTENIDO PRINCIPAL
      ------------------------------------------------------ -->
 <main class="main app-main portal-grid">
 
-  <!-- Paso 1: instruccion inicial -->
-  <div class="instruction anim-1" data-reveal>
-    <div class="instruction-mark">1</div>
-    <p>
-      <strong>Inicia sesi&oacute;n o crea tu usuario</strong> y luego
-      <strong>selecciona tu instituci&oacute;n educativa y grupo.</strong>
-      El portal activar&aacute; autom&aacute;ticamente las gu&iacute;as disponibles para tu ficha.
-    </p>
+  <!-- ── Encabezado del portal ── -->
+  <div class="portal-hero">
+    <img class="portal-hero__logo" src="assets/img/sena-logo.png" alt="Logo SENA" height="56">
+    <h1 class="portal-hero__title">Sistemas <span>Teleinform&aacute;ticos</span></h1>
+    <p class="portal-hero__sub">Selecciona tu instituci&oacute;n y grupo para acceder a las gu&iacute;as de aprendizaje &middot; El avance de cada aprendiz queda guardado de forma segura.</p>
+    <div class="portal-hero__chips">
+      <span class="portal-hero__chip">👨‍🏫 Dubier Orlando Millan Barbosa</span>
+      <span class="portal-hero__chip">✉️ domillan@sena.edu.co</span>
+    </div>
   </div>
 
-  <!-- -- Panel de autenticacion -- -->
+  <!-- ── Col izquierda: Acceso + herramientas admin ── -->
+  <div class="portal-col portal-col--auth">
+
   <div class="section-label">Acceso al Portal</div>
 
   <div class="auth-panel anim-2" id="portal-access-panel" data-reveal>
@@ -180,13 +143,11 @@
 
   <!-- -- Llamado al calendario (solo admin) -- -->
   <div class="instruction calendar-callout" id="calendar-callout" style="display:none" data-reveal>
-    <div class="instruction-mark">2</div>
     <p id="calendar-access-note">
       <strong>Calendario 2026 disponible.</strong>
-      Consulta el dashboard, el registro completo y los meses programados
-      en la vista HTML conectada al portal.
+      Consulta el dashboard, el registro completo y los meses programados.
     </p>
-    <a class="btn-calendar-link" id="btn-calendar-access" href="calendario-academico-2026.html">
+    <a class="btn-share primary" id="btn-calendar-access" href="calendario-academico-2026.html">
       Abrir calendario 2026
     </a>
   </div>
@@ -246,6 +207,11 @@
       <div class="share-network-empty">Todavia no hay un servidor local detectado.</div>
     </div>
   </div><!-- /share-panel -->
+
+  </div><!-- /portal-col--auth -->
+
+  <!-- ── Col derecha: Instituciones educativas ── -->
+  <div class="portal-col portal-col--content">
 
   <!-- ------------------------------------------------------
        INSTITUCIONES EDUCATIVAS
@@ -523,6 +489,7 @@
     </div>
   </div><!-- /IE Santa Barbara -->
 
+
   <!-- ------------------------------------------------------
        PANEL CTA | ACCESO A LA GUIA SELECCIONADA
        ------------------------------------------------------ -->
@@ -565,6 +532,8 @@
       Inicia sesi&oacute;n para abrir las gu&iacute;as habilitadas seg&uacute;n tu usuario.
     </p>
   </div>
+
+  </div><!-- /portal-col--content -->
 
 </main>
 
