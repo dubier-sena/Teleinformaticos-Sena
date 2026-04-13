@@ -548,6 +548,14 @@
       >
         Ver etapa productiva
       </a>
+      <a
+        class="btn-share secondary"
+        id="btn-productive-stage-student-view"
+        href="etapa-productiva-estudiante.html"
+        style="display:none"
+      >
+        Ver proyectos de aprendices
+      </a>
     </div>
 
     <a class="btn-enter" id="btn-enter" href="#">
@@ -850,6 +858,7 @@
   function updateProductiveStageCta(ficha, inst, grupo, accessState) {
     const wrap = document.getElementById("productive-stage-cta-wrap");
     const button = document.getElementById("btn-productive-stage-cta");
+    const btnStudentView = document.getElementById("btn-productive-stage-student-view");
     const session = getPortalAuth()?.getCurrentSession?.() || null;
     const visible = canShowProductiveStageForFicha(ficha, session);
 
@@ -868,9 +877,14 @@
     if (session?.role === "admin") {
       button.href = "etapa-productiva-admin.html";
       button.textContent = "Administrar etapa productiva";
+      if (btnStudentView) {
+        btnStudentView.style.display = "";
+        btnStudentView.href = "etapa-productiva-estudiante.html";
+      }
     } else {
       button.href = "etapa-productiva-estudiante.html";
       button.textContent = "Ver etapa productiva";
+      if (btnStudentView) btnStudentView.style.display = "none";
     }
     button.dataset.ficha = ficha;
     button.dataset.inst = inst;
