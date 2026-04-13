@@ -295,17 +295,19 @@ const supportDocuments = [
 const supportTools = [
   {
     title: "7-Zip",
-    file: "7z2600-x64.exe",
-    type: "EXE local",
+    href: "https://drive.google.com/drive/folders/19AY6LsSHM--2VVXp4_Bzzjz2SVyAiSMc?usp=sharing",
+    type: "Drive",
     description:
       "Utilidad de compresion y descompresion para organizar evidencias y paquetes de trabajo.",
+    cta: "Abrir en Drive ↗",
   },
   {
     title: "CPU-Z",
-    file: "cpu-z_2.18-en.exe",
-    type: "EXE local",
+    href: "https://drive.google.com/drive/folders/19AY6LsSHM--2VVXp4_Bzzjz2SVyAiSMc?usp=sharing",
+    type: "Drive",
     description:
       "Herramienta de diagnostico para identificar procesador, memoria y componentes del sistema.",
+    cta: "Abrir en Drive ↗",
   },
   {
     title: "CrystalDiskInfo",
@@ -323,10 +325,11 @@ const supportTools = [
   },
   {
     title: "CmapTools",
-    file: "Win64CmapTools_v6.04_09-24-19.exe",
-    type: "EXE local",
+    href: "https://drive.google.com/drive/folders/19AY6LsSHM--2VVXp4_Bzzjz2SVyAiSMc?usp=sharing",
+    type: "Drive",
     description:
       "Aplicacion recomendada para el mapa conceptual solicitado en la guia.",
+    cta: "Abrir en Drive ↗",
   },
 ];
 
