@@ -852,7 +852,14 @@
   }
 
   function renderEmptyState(message) {
-    const container = getById("users-container");
+    const tab = getActiveTab();
+    const id =
+      tab === "avances"
+        ? "progress-container"
+        : tab === "actividades"
+        ? "activities-container"
+        : "users-container";
+    const container = getById(id);
     if (!container) {
       return;
     }
@@ -899,7 +906,6 @@
   }
 
   function buildUserCard(user) {
-    const guides = user.progress?.guides || [];
     const createdText = formatDate(user.createdAt);
     const updatedText = formatDate(user.updatedAt);
     const overall = user.progress?.percent || 0;
@@ -946,18 +952,13 @@
         </div>
 
         <div class="user-note">
-          Si necesitas reiniciar el trabajo del aprendiz, puedes borrar una gu\u00eda concreta o todo su avance.
+          Para ver el avance por gu\u00eda o reiniciar actividades espec\u00edficas, usa la pesta\u00f1a "Avance de guias".
         </div>
 
         <div class="user-actions" style="margin-top:12px">
           <button class="btn warn" type="button" data-reset-all="${escapeHtml(
             user.usernameKey
           )}">Reiniciar todo el avance</button>
-        </div>
-
-        <div class="user-section-title" style="margin-top:18px">Avance por gu\u00eda</div>
-        <div class="progress-grid">
-          ${guides.map((guide) => buildProgressCard(user, guide)).join("")}
         </div>
       </article>
     `;
@@ -981,22 +982,185 @@
     });
   }
 
-  function renderUsers() {
-    updateFichaFilterOptions();
-    const users = getFilteredUsers();
-    renderSummary(users);
+  function getActiveTab() {
+    const btn = document.querySelector(".admin-tab.is-active");
+    return btn ? String(btn.dataset.tab || "usuarios") : "usuarios";
+  }
 
+  function setActiveTab(tabId) {
+    document.querySelectorAll(".admin-tab").forEach((btn) => {
+      btn.classList.toggle("is-active", btn.dataset.tab === tabId);
+    });
+    document.querySelectorAll("[data-tab-panel]").forEach((panel) => {
+      panel.hidden = panel.dataset.tabPanel !== tabId;
+    });
+  }
+
+  function renderUsersTab(users) {
     if (!users.length) {
       renderEmptyState("No hay usuarios que coincidan con la b\u00fasqueda actual.");
       return;
     }
-
     const container = getById("users-container");
     if (!container) {
       return;
     }
-
     container.innerHTML = users.map((user) => buildUserCard(user)).join("");
+  }
+
+  function buildProgressUserCard(user) {
+    const guides = user.progress?.guides || [];
+    const overall = user.progress?.percent || 0;
+    return `
+      <article class="user-card" data-user-card="${escapeHtml(user.usernameKey)}">
+        <div class="user-top">
+          <div>
+            <h3>${escapeHtml(user.fullName)}</h3>
+            <div class="user-meta">
+              <div>Usuario: <strong>${escapeHtml(user.username)}</strong></div>
+              <div>Ficha ${escapeHtml(user.ficha)} | ${escapeHtml(user.grupo)} | ${escapeHtml(user.inst)}</div>
+            </div>
+          </div>
+          <div class="user-badge">${overall}%</div>
+        </div>
+        <div class="user-section-title" style="margin-top:12px">Avance por gu\u00eda</div>
+        <div class="progress-grid">
+          ${guides.map((guide) => buildProgressCard(user, guide)).join("")}
+        </div>
+      </article>
+    `;
+  }
+
+  function renderProgressTab(users) {
+    const container = getById("progress-container");
+    if (!container) {
+      return;
+    }
+    if (!users.length) {
+      container.innerHTML = '<div class="empty-state">No hay usuarios que coincidan con la b\u00fasqueda actual.</div>';
+      return;
+    }
+    container.innerHTML = users.map((user) => buildProgressUserCard(user)).join("");
+  }
+
+  function buildActivitiesTableRows(rows, type) {
+    return rows
+      .map(({ summary, user, guide }) => {
+        const viewBtn = `<button class="btn ghost" type="button"
+          data-view-guide2="${escapeHtml(guide.fileName)}"
+          data-user="${escapeHtml(user.usernameKey)}">Ver soluci\u00f3n</button>`;
+        if (type === "wordsearch") {
+          return `<tr>
+            <td>${escapeHtml(summary.playerName || user.fullName)}</td>
+            <td>${escapeHtml(summary.ficha || user.ficha)}</td>
+            <td>${escapeHtml(user.grupo)}</td>
+            <td>${escapeHtml(String(summary.score))} / 10000</td>
+            <td>${summary.elapsedMs ? escapeHtml(formatDurationMs(summary.elapsedMs)) : "\u2014"}</td>
+            <td>${escapeHtml(String(summary.mistakes))}</td>
+            <td>${escapeHtml(String(summary.words?.length || 0))}: ${escapeHtml((summary.words || []).join(", ") || "\u2014")}</td>
+            <td>${summary.completedAt ? escapeHtml(formatDate(summary.completedAt)) : "\u2014"}</td>
+            <td>${viewBtn}</td>
+          </tr>`;
+        }
+        const correctCount = summary.correctCount || 0;
+        const totalPairs = summary.totalPairs || correctCount;
+        return `<tr>
+          <td>${escapeHtml(summary.playerName || user.fullName)}</td>
+          <td>${escapeHtml(summary.ficha || user.ficha)}</td>
+          <td>${escapeHtml(user.grupo)}</td>
+          <td>${escapeHtml(String(summary.score))} / 10000</td>
+          <td>${summary.elapsedMs ? escapeHtml(formatDurationMs(summary.elapsedMs)) : "\u2014"}</td>
+          <td>${escapeHtml(String(summary.mistakes))}</td>
+          <td>${escapeHtml(String(correctCount))} / ${escapeHtml(String(totalPairs))}</td>
+          <td>${summary.completedAt ? escapeHtml(formatDate(summary.completedAt)) : "\u2014"}</td>
+          <td>${viewBtn}</td>
+        </tr>`;
+      })
+      .join("");
+  }
+
+  function buildActivitiesTable(rows, type) {
+    const headers =
+      type === "wordsearch"
+        ? ["Aprendiz", "Ficha", "Grupo", "Puntaje", "Tiempo", "Errores", "Palabras encontradas", "Fecha", ""]
+        : ["Aprendiz", "Ficha", "Grupo", "Puntaje", "Tiempo", "Errores", "Parejas correctas", "Fecha", ""];
+
+    if (!rows.length) {
+      return '<p class="activities-empty">Sin resultados registrados.</p>';
+    }
+
+    return `
+      <div class="answer-table-wrap">
+        <table class="answer-table activities-table">
+          <thead><tr>${headers.map((h) => `<th>${escapeHtml(h)}</th>`).join("")}</tr></thead>
+          <tbody>${buildActivitiesTableRows(rows, type)}</tbody>
+        </table>
+      </div>`;
+  }
+
+  function renderActivitiesTab(users) {
+    const container = getById("activities-container");
+    if (!container) {
+      return;
+    }
+
+    const wordSearchRows = [];
+    const matchingRows = [];
+
+    users.forEach((user) => {
+      (user.progress?.guides || []).forEach((guide) => {
+        if (!getGuide2ResponseConfig(guide.fileName)) {
+          return;
+        }
+        const key = getGuide2SummaryKey(user.usernameKey, guide.fileName);
+        const ws = guide2WordSearchSummaries[key];
+        const mg = guide2MatchingGameSummaries[key];
+        if (ws) {
+          wordSearchRows.push({ summary: ws, user, guide });
+        }
+        if (mg) {
+          matchingRows.push({ summary: mg, user, guide });
+        }
+      });
+    });
+
+    const stillLoading =
+      users.some((user) =>
+        (user.progress?.guides || []).some((guide) => {
+          if (!getGuide2ResponseConfig(guide.fileName)) {
+            return false;
+          }
+          const key = getGuide2SummaryKey(user.usernameKey, guide.fileName);
+          return !(key in guide2WordSearchSummaries);
+        })
+      );
+
+    const loadingHtml = '<p class="activities-loading">Cargando resultados\u2026</p>';
+
+    container.innerHTML = `
+      <section class="panel">
+        <h2>Actividad 1 \u2014 Sopa de letras</h2>
+        ${stillLoading ? loadingHtml : buildActivitiesTable(wordSearchRows, "wordsearch")}
+      </section>
+      <section class="panel">
+        <h2>Actividad 2 \u2014 Relacionar funciones</h2>
+        ${stillLoading ? loadingHtml : buildActivitiesTable(matchingRows, "matching")}
+      </section>
+    `;
+  }
+
+  function renderUsers() {
+    updateFichaFilterOptions();
+    const users = getFilteredUsers();
+    renderSummary(users);
+    const tab = getActiveTab();
+    if (tab === "avances") {
+      renderProgressTab(users);
+    } else if (tab === "actividades") {
+      renderActivitiesTab(users);
+    } else {
+      renderUsersTab(users);
+    }
   }
 
   async function refreshUsers() {
@@ -1123,6 +1287,13 @@
   }
 
   function bindEvents() {
+    document.querySelectorAll(".admin-tab").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        setActiveTab(btn.dataset.tab);
+        renderUsers();
+      });
+    });
+
     getById("refresh-users")?.addEventListener("click", () => {
       refreshUsers();
     });

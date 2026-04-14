@@ -792,3 +792,95 @@ body.modal-open {
     width: 100%;
   }
 }
+
+/* ── Pestañas del panel administrativo ──────────────────────────── */
+.admin-tabs {
+  display: flex;
+  gap: 2px;
+  border-bottom: 2px solid var(--border-soft);
+  margin-bottom: 24px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.admin-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.admin-tab {
+  flex-shrink: 0;
+  padding: 12px 22px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  border-radius: 8px 8px 0 0;
+  letter-spacing: -0.01em;
+}
+
+.admin-tab:hover {
+  color: var(--text-strong);
+  background: var(--neutral-50, #f8faf9);
+}
+
+.admin-tab.is-active {
+  color: var(--admin-accent-dark);
+  border-bottom-color: var(--admin-accent);
+  background: #f4fbf7;
+}
+
+/* ── Panel de actividades (pestaña 3) ───────────────────────────── */
+.activities-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.activities-panel .panel {
+  margin-bottom: 0;
+}
+
+.activities-empty,
+.activities-loading {
+  padding: 24px 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.activities-table {
+  width: 100%;
+  font-size: 13px;
+}
+
+.activities-table th {
+  white-space: nowrap;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.activities-table td {
+  vertical-align: middle;
+}
+
+.activities-table td:nth-child(7) {
+  max-width: 260px;
+  white-space: normal;
+  line-height: 1.4;
+}
+
+@media (max-width: 768px) {
+  .admin-tabs {
+    margin-bottom: 16px;
+  }
+
+  .admin-tab {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+}
