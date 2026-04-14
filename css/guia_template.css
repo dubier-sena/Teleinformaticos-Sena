@@ -3229,6 +3229,12 @@ body.sb-hidden .btn-sb-expand {
     font-size: 14px;
   }
 
+  .word-search-game.is-fullscreen {
+    /* Reducir padding lateral para dar más espacio a la cuadrícula */
+    padding-left: max(4px, env(safe-area-inset-left));
+    padding-right: max(4px, env(safe-area-inset-right));
+  }
+
   .word-search-game.is-fullscreen .word-search-top {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 6px;
@@ -3253,18 +3259,21 @@ body.sb-hidden .btn-sb-expand {
   }
 
   .word-search-game.is-fullscreen .word-search-board-shell {
-    width: min(100%, calc(100vw - 24px));
+    /* Máximo ancho posible en móvil para celdas más grandes */
+    width: min(100%, calc(100vw - 8px));
   }
 
   .word-search-game.is-fullscreen .word-search-board {
     width: 100%;
     gap: 2px;
-    padding: 6px;
+    padding: 4px;
   }
 
   .word-search-game.is-fullscreen .word-search-cell {
-    min-height: 0;
-    font-size: clamp(12px, 4vw, 16px);
+    /* min-height evita celdas demasiado pequeñas en cuadrículas grandes */
+    min-height: 22px;
+    border-radius: 5px;
+    font-size: clamp(11px, 4.5vw, 16px);
   }
 
   .word-search-game.is-fullscreen .word-search-side {
