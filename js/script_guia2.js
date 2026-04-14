@@ -3800,4 +3800,10 @@ window.guia2Activity4ReportSource = {
   getSnapshot: getActivity4ReportSnapshot,
 };
 
+window.guia2WordSearch = {
+  getPuzzle: getWordSearchPuzzle,
+  foundColorCount: WORD_SEARCH_FOUND_COLOR_COUNT,
+  getFoundColorClass: getWordSearchFoundColorClass,
+};
+
 
