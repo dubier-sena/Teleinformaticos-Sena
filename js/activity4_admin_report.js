@@ -99,6 +99,11 @@
     );
   }
 
+  var WORD_SEARCH_FOUND_COLORS = [
+    "#0f766e", "#2563eb", "#7c3aed", "#be123c",
+    "#b45309", "#15803d", "#0369a1", "#a21caf",
+  ];
+
   function getWordSearchResult(state) {
     return state && typeof state["wordSearch:guia2-sopa"] === "object" ? state["wordSearch:guia2-sopa"] : {};
   }
@@ -113,6 +118,65 @@
     return [];
   }
 
+  function renderWordSearchGrid(result) {
+    var api = window.guia2WordSearch;
+    if (!api || typeof api.getPuzzle !== "function") {
+      return '<p style="color:#71877f;font-size:13px;margin:0">La grilla se muestra al abrir el reporte desde el formulario de la Actividad 4.</p>';
+    }
+    var variant = Number(result.variant) || 1;
+    var puzzle = api.getPuzzle(variant);
+    var found = Array.isArray(result.found) ? result.found : [];
+    var foundColorCount = api.foundColorCount || 8;
+
+    var cellColors = {};
+    found.forEach(function (word, index) {
+      var placement = puzzle.placements[word];
+      if (!placement) { return; }
+      var color = WORD_SEARCH_FOUND_COLORS[index % foundColorCount];
+      placement.cells.forEach(function (cell) {
+        cellColors[cell.row + ":" + cell.col] = color;
+      });
+    });
+
+    var cellBase = "display:inline-flex;align-items:center;justify-content:center;" +
+      "width:21px;height:21px;font-size:9.5px;font-weight:700;border-radius:4px;" +
+      "border:1px solid rgba(0,0,0,0.07);font-family:monospace;line-height:1;";
+
+    var rows = puzzle.grid.map(function (row, rowIndex) {
+      var cells = row.map(function (letter, colIndex) {
+        var key = rowIndex + ":" + colIndex;
+        var color = cellColors[key];
+        var extra = color
+          ? "background:" + color + ";color:#fff;border-color:" + color + ";"
+          : "background:#eef3f0;color:#2a3d33;";
+        return '<span style="' + cellBase + extra + '">' + escapeHtml(letter) + '</span>';
+      }).join("");
+      return '<div style="display:flex;gap:2px;">' + cells + "</div>";
+    }).join("");
+
+    var labels = Array.isArray(result.foundLabels) ? result.foundLabels : found;
+    var legend = labels.map(function (label, index) {
+      var color = WORD_SEARCH_FOUND_COLORS[index % foundColorCount];
+      return '<span style="display:inline-flex;align-items:center;gap:5px;margin:2px 6px 2px 0;">' +
+        '<span style="width:11px;height:11px;border-radius:3px;background:' + color + ';flex-shrink:0;display:inline-block;"></span>' +
+        '<span style="font-size:11px;font-weight:600;color:#1a3329;">' + escapeHtml(label) + "</span>" +
+        "</span>";
+    }).join("");
+
+    var notFoundCount = puzzle.targets.length - found.length;
+    var notFoundNote = notFoundCount > 0
+      ? '<p style="margin:8px 0 0;font-size:12px;color:#71877f;">' +
+          notFoundCount + ' palabra(s) sin encontrar (celdas grises sin resaltar).' +
+        '</p>'
+      : '<p style="margin:8px 0 0;font-size:12px;color:#0b8c42;font-weight:700;">Sopa completada al 100%.</p>';
+
+    return '<div style="overflow:auto;margin-bottom:4px;">' +
+      '<div style="display:grid;gap:2px;width:fit-content;">' + rows + "</div>" +
+      "</div>" +
+      (legend ? '<div style="margin-top:8px;display:flex;flex-wrap:wrap;">' + legend + "</div>" : "") +
+      notFoundNote;
+  }
+
   function renderWordSearchResult(state, context) {
     const result = getWordSearchResult(state);
     const words = getWordSearchWords(result);
@@ -120,7 +184,7 @@
     const elapsedMs = Number(result.elapsedMs) || 0;
     const wordsText = words.length ? words.join(" | ") : "Sin palabras registradas";
 
-    return renderAnswerTable(
+    const statsTable = renderAnswerTable(
       ["Dato", "Resultado"],
       [
         ["Aprendiz que realizo", result.playerName || context.fullName],
@@ -129,10 +193,18 @@
         ["Sopa asignada", result.variant ? `Version ${Number(result.variant) || 1}` : "Sin registro"],
         ["Errores", result.completedAt || result.startedAt ? String(Number(result.mistakes) || 0) : "Sin registro"],
         ["Tiempo usado", elapsedMs ? formatDurationMs(elapsedMs) : "Sin registro"],
-        ["Palabras encontradas", wordsText],
+        ["Palabras encontradas", `${words.length} — ${wordsText}`],
         ["Fecha de finalizacion", result.completedAt ? formatDate(result.completedAt) : "Sin registro"],
       ]
     );
+
+    const gridSection =
+      '<div style="margin-top:14px;">' +
+      '<p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#0b2f21;">Sopa resuelta por el aprendiz:</p>' +
+      renderWordSearchGrid(result) +
+      "</div>";
+
+    return statsTable + gridSection;
   }
 
   function getMatchingGameResult(state) {
@@ -152,13 +224,8 @@
     const elapsedMs = Number(result.elapsedMs) || 0;
     const correctCount = Number(result.correctCount) || pairs.length;
     const totalPairs = Number(result.totalPairs) || 0;
-    const pairText = pairs
-      .map(function (pair) {
-        return `${pair.tool || "Herramienta"}: ${pair.answer || "Sin respuesta"}`;
-      })
-      .join(" | ");
 
-    return renderAnswerTable(
+    const statsTable = renderAnswerTable(
       ["Dato", "Resultado"],
       [
         ["Aprendiz que realizo", result.playerName || context.fullName],
@@ -168,10 +235,35 @@
         ["Respuestas correctas", result.completedAt || correctCount ? `${correctCount} / ${totalPairs || correctCount}` : "Sin registro"],
         ["Errores", result.completedAt || result.startedAt ? String(Number(result.mistakes) || 0) : "Sin registro"],
         ["Tiempo usado", elapsedMs ? formatDurationMs(elapsedMs) : "Sin registro"],
-        ["Parejas correctas", pairText || "Sin registro"],
         ["Fecha de finalizacion", result.completedAt ? formatDate(result.completedAt) : "Sin registro"],
       ]
     );
+
+    let pairsSection = "";
+    if (pairs.length) {
+      const pairRows = pairs.map(function (pair) {
+        const isCorrect = pair.correct !== false;
+        const badge = isCorrect
+          ? '<span style="color:#0b8c42;font-weight:700;">✓ Correcto</span>'
+          : '<span style="color:#be123c;font-weight:700;">✗ Incorrecto</span>';
+        return "<tr>" +
+          "<td>" + escapeHtml(pair.tool || "Herramienta") + "</td>" +
+          "<td>" + escapeHtml(pair.answer || "Sin respuesta") + "</td>" +
+          "<td>" + badge + "</td>" +
+          "</tr>";
+      }).join("");
+
+      pairsSection =
+        '<div style="margin-top:14px;">' +
+        '<p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#0b2f21;">Parejas respondidas por el aprendiz:</p>' +
+        '<div class="activity4-admin-report-table-wrap">' +
+        '<table class="activity4-admin-report-table">' +
+        "<thead><tr><th>Herramienta</th><th>Funcion asignada</th><th>Estado</th></tr></thead>" +
+        "<tbody>" + pairRows + "</tbody>" +
+        "</table></div></div>";
+    }
+
+    return statsTable + pairsSection;
   }
 
   function renderGuide2ResponsesBody(state, context) {
