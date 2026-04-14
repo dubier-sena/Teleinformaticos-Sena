@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta
+  http-equiv="Content-Security-Policy"
+  content="default-src 'self' blob: data:; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https:; media-src 'self' blob: data: https:;"
+>
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Ficha de Caso | Actividad 4 | Guía 2 | Grupo 10B</title>
+<meta name="description" content="Ficha de caso asignada para la Actividad 4 de la Guía 2 – Grupo 10B.">
+<script defer src="js/portal_auth.js?v=20260324_6"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/site_tokens.css?v=20260412_2">
+<link rel="stylesheet" href="css/shared_shell.css?v=20260412_2">
+<link rel="stylesheet" href="css/guia_template.css?v=20260413_1">
+<style>
+  .ficha-page .app-main {
+    padding: 24px 0 64px;
+  }
+  .ficha-page .content {
+    width: min(860px, calc(100% - 48px));
+    margin: 0 auto;
+    max-width: none;
+  }
+
+  @keyframes fichaReveal {
+    from { opacity: 0; transform: translateY(18px) scale(.98); }
+    to   { opacity: 1; transform: translateY(0)   scale(1); }
+  }
+  .ficha-reveal { animation: fichaReveal .45s ease both; }
+
+  .ficha-cover {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 48px 24px;
+    background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%);
+    border-radius: 16px;
+    color: #fff;
+    text-align: center;
+    margin-bottom: 28px;
+    box-shadow: 0 6px 28px rgba(99,60,220,.35);
+  }
+  .ficha-cover h2 { font-size: 1.45rem; font-weight: 800; margin: 0; }
+  .ficha-cover p  { font-size: .95rem; opacity: .88; margin: 0; max-width: 440px; }
+  .ficha-cover .reveal-btn {
+    padding: 14px 36px;
+    background: #fff;
+    color: #7c3aed;
+    font-weight: 800;
+    font-size: 1rem;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0,0,0,.18);
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
+  .ficha-cover .reveal-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.22); }
+  .ficha-cover .dice { font-size: 3.5rem; animation: spin 1.2s ease-out; }
+  @keyframes spin {
+    0%   { transform: rotate(0deg) scale(.6); opacity:0; }
+    60%  { transform: rotate(380deg) scale(1.15); opacity:1; }
+    100% { transform: rotate(360deg) scale(1); }
+  }
+
+  .ficha-card {
+    border-radius: 14px; overflow: hidden;
+    box-shadow: 0 3px 18px rgba(0,0,0,.10);
+    border: 2px solid var(--ficha-color, #2563eb);
+    background: #fff;
+  }
+  .ficha-card-header {
+    background: var(--ficha-color, #2563eb); color: #fff;
+    padding: 18px 22px; display: flex; align-items: center; gap: 14px;
+  }
+  .ficha-card-header .ficha-emoji { font-size: 2.4rem; line-height: 1; }
+  .ficha-card-header .ficha-tag { font-size: .72rem; font-weight: 700; opacity: .82; text-transform: uppercase; letter-spacing: .07em; }
+  .ficha-card-header .ficha-title { font-size: 1.28rem; font-weight: 800; line-height: 1.2; margin: 2px 0; }
+  .ficha-card-header .ficha-loc { font-size: .84rem; opacity: .88; }
+
+  .ficha-meta-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    border-bottom: 1px solid #e2e8f0;
+    background: var(--ficha-color-light, #eff6ff);
+  }
+  .ficha-meta-item { padding: 11px 18px; border-right: 1px solid #e2e8f020; }
+  .ficha-meta-item:last-child { border-right: none; }
+  .ficha-meta-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--ficha-color, #2563eb); margin-bottom: 3px; }
+  .ficha-meta-value { font-size: .9rem; color: #1e293b; }
+
+  .ficha-section { padding: 16px 20px; border-bottom: 1px solid #e2e8f0; }
+  .ficha-section:last-child { border-bottom: none; }
+  .ficha-section-title { font-size: .73rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 9px; }
+  .ficha-desc { font-size: .93rem; color: #334155; line-height: 1.7; text-align: justify; margin: 0; }
+
+  .herramientas-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border-bottom: 1px solid #e2e8f0; }
+  .herramientas-col { padding: 14px 18px; }
+  .herramientas-col:first-child { border-right: 1px solid #e2e8f0; background: #f0fdf4; }
+  .herramientas-col:last-child  { background: #fef2f2; }
+  .herramientas-col ul { margin: 0; padding-left: 18px; font-size: .88rem; color: #1e293b; line-height: 1.75; }
+  .herramientas-col-title { font-size: .73rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; }
+  .col-usa .herramientas-col-title { color: #16a34a; }
+  .col-no  .herramientas-col-title { color: #dc2626; }
+
+  .problemas-list { margin: 0; padding-left: 20px; font-size: .9rem; color: #1e293b; line-height: 1.8; }
+  .preguntas-list { margin: 0; padding: 0; list-style: none; font-size: .9rem; color: #1e293b; line-height: 1.8; display: flex; flex-direction: column; gap: 10px; }
+  .pregunta-item { padding: 10px 14px; background: rgba(255,255,255,.7); border-radius: 8px; border-left: 3px solid var(--ficha-color, #2563eb); }
+  .pregunta-item strong { color: var(--ficha-color, #2563eb); }
+
+  .notes-area {
+    width: 100%; min-height: 96px;
+    border: 1px solid #cbd5e1; border-radius: 8px;
+    padding: 10px 14px; font-size: .9rem;
+    font-family: inherit; resize: vertical;
+    background: #fff; color: #1e293b; box-sizing: border-box;
+  }
+  .notes-area:focus { outline: 2px solid var(--ficha-color, #2563eb); border-color: transparent; }
+
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 9px 18px; background: #f1f5f9; color: #475569;
+    font-weight: 600; font-size: .88rem; border-radius: 8px;
+    text-decoration: none; transition: background .15s ease; margin-bottom: 20px;
+  }
+  .back-btn:hover { background: #e2e8f0; }
+
+  @media (max-width: 600px) {
+    .herramientas-grid { grid-template-columns: 1fr; }
+    .herramientas-col:first-child { border-right: none; border-bottom: 1px solid #e2e8f0; }
+    .ficha-meta-grid { grid-template-columns: 1fr; }
+  }
+</style>
+<script defer src="js/fichas_casos.js?v=20260414_1"></script>
+</head>
+<body
+  class="app-shell app-shell--guide ficha-page"
+  data-default-ficha="3441942"
+  data-default-inst="Institucion Educativa Jhon F. Kennedy"
+  data-default-grupo="10B"
+>
+  <div class="main app-main">
+    <div class="topbar">
+      <div class="topbar-title">
+        <strong>Actividad 4 · Ficha de caso</strong>
+      </div>
+      <div class="topbar-meta">
+        <span class="meta-item"><span>&#127979;</span><span>Jhon F. Kennedy | 10B</span></span>
+        <span class="meta-item"><span>&#128197;</span><span>2026</span></span>
+      </div>
+    </div>
+
+    <div class="content">
+      <a href="grupo-10b-guia-02-herramientas-informaticas-digitales.html#contextualizacion" class="back-btn">
+        &#8592; Volver a la Guía 2
+      </a>
+
+      <!-- Cover -->
+      <div class="ficha-cover" id="ficha-cover">
+        <div class="dice">🎲</div>
+        <h2>Tu ficha de caso te espera</h2>
+        <p>Se te asignó aleatoriamente una de las tres fichas de casos del Magdalena Medio. Haz clic para descubrirla.</p>
+        <button class="reveal-btn" id="reveal-btn" onclick="revelarFicha()">
+          ✨ Descubrir mi ficha
+        </button>
+      </div>
+
+      <!-- Ficha content -->
+      <div id="ficha-content" style="display:none;" class="ficha-reveal">
+
+        <div id="ficha-badge" style="
+          display:flex; align-items:center; gap:14px;
+          padding:14px 20px; border-radius:12px; margin-bottom:22px;
+          border: 2px solid #94a3b8; background:#f8fafc;
+        ">
+          <span id="ficha-badge-emoji" style="font-size:1.8rem;"></span>
+          <div>
+            <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;">Tu ficha asignada</div>
+            <div id="ficha-badge-nombre" style="font-size:1.05rem;font-weight:800;color:#1e293b;"></div>
+            <div id="ficha-badge-ubicacion" style="font-size:.82rem;color:#64748b;"></div>
+          </div>
+        </div>
+
+        <div class="ficha-card" id="ficha-card">
+
+          <div class="ficha-card-header">
+            <span class="ficha-emoji" id="fc-emoji"></span>
+            <div>
+              <div class="ficha-tag" id="fc-tag"></div>
+              <div class="ficha-title" id="fc-title"></div>
+              <div class="ficha-loc" id="fc-loc"></div>
+            </div>
+          </div>
+
+          <div class="ficha-meta-grid">
+            <div class="ficha-meta-item">
+              <div class="ficha-meta-label">👤 Actor productivo</div>
+              <div class="ficha-meta-value" id="fc-actor"></div>
+            </div>
+            <div class="ficha-meta-item">
+              <div class="ficha-meta-label">📍 Municipio</div>
+              <div class="ficha-meta-value" id="fc-municipio"></div>
+            </div>
+            <div class="ficha-meta-item">
+              <div class="ficha-meta-label">🏭 Actividad económica</div>
+              <div class="ficha-meta-value" id="fc-actividad"></div>
+            </div>
+          </div>
+
+          <div class="ficha-section">
+            <div class="ficha-section-title" style="color:#0f172a;">📋 Descripción de la situación</div>
+            <p class="ficha-desc" id="fc-desc"></p>
+          </div>
+
+          <div class="herramientas-grid">
+            <div class="herramientas-col col-usa">
+              <div class="herramientas-col-title">✅ Herramientas que USA</div>
+              <ul id="fc-usa"></ul>
+            </div>
+            <div class="herramientas-col col-no">
+              <div class="herramientas-col-title">❌ Herramientas que DESCONOCE</div>
+              <ul id="fc-desconoce"></ul>
+            </div>
+          </div>
+
+          <div class="ficha-section" style="background:#fffbeb;">
+            <div class="ficha-section-title" style="color:#d97706;">⚠️ Problemas tecnológicos identificados</div>
+            <ol class="problemas-list" id="fc-problemas"></ol>
+          </div>
+
+          <div class="ficha-section" id="fc-preguntas-section">
+            <div class="ficha-section-title" id="fc-preguntas-title">💬 Preguntas guía para tu equipo</div>
+            <ul class="preguntas-list" id="fc-preguntas"></ul>
+          </div>
+
+          <div class="ficha-section">
+            <div class="ficha-section-title" style="color:#475569;">✏️ Mis notas sobre este caso</div>
+            <textarea class="notes-area" id="fc-notas"
+              placeholder="Escribe aquí tus observaciones, ideas y análisis sobre este caso…"></textarea>
+          </div>
+
+        </div><!-- /ficha-card -->
+
+        <div style="margin-top:20px; display:flex; gap:12px; flex-wrap:wrap;">
+          <a href="grupo-10b-guia-02-herramientas-informaticas-digitales.html#contextualizacion" style="
+            display:inline-flex; align-items:center; gap:8px;
+            padding:11px 22px; background:#f1f5f9; color:#475569;
+            font-weight:700; font-size:.9rem; border-radius:10px;
+            text-decoration:none; transition:background .15s;
+          " onmouseover="this.style.background='#e2e8f0'"
+             onmouseout="this.style.background='#f1f5f9'">
+            &#8592; Volver a la Guía 2
+          </a>
+        </div>
+
+      </div><!-- /ficha-content -->
+    </div>
+  </div>
+
+<script>
+(function () {
+  const NOTES_KEY = "guia2_ficha_caso_notas";
+
+  function revelarFicha() {
+    const fc = window.fichasCasos;
+    if (!fc) { setTimeout(revelarFicha, 120); return; }
+
+    const idx = fc.getAssignedFichaIdx();
+    const f = fc.FICHAS[idx];
+
+    const card = document.getElementById("ficha-card");
+    card.style.setProperty("--ficha-color", f.color);
+    card.style.setProperty("--ficha-color-light", f.colorLight);
+    card.style.borderColor = f.color;
+
+    const badge = document.getElementById("ficha-badge");
+    badge.style.borderColor = f.color;
+    badge.style.background = f.colorLight;
+
+    document.getElementById("ficha-badge-emoji").textContent = f.emoji;
+    document.getElementById("ficha-badge-nombre").textContent = f.nombre;
+    document.getElementById("ficha-badge-ubicacion").textContent = f.ubicacion;
+    badge.querySelector("div > div:first-child").style.color = f.color;
+
+    document.getElementById("fc-emoji").textContent = f.emoji;
+    document.getElementById("fc-tag").textContent = f.titulo;
+    document.getElementById("fc-title").textContent = f.nombre;
+    document.getElementById("fc-loc").textContent = f.ubicacion;
+    document.getElementById("fc-actor").textContent = f.actor;
+    document.getElementById("fc-municipio").textContent = f.municipio;
+    document.getElementById("fc-actividad").textContent = f.actividad;
+    document.getElementById("fc-desc").textContent = f.descripcion;
+
+    document.getElementById("fc-usa").innerHTML = f.usa.map(t => `<li>${esc(t)}</li>`).join("");
+    document.getElementById("fc-desconoce").innerHTML = f.desconoce.map(t => `<li>${esc(t)}</li>`).join("");
+    document.getElementById("fc-problemas").innerHTML = f.problemas.map(t => `<li>${esc(t)}</li>`).join("");
+
+    const letras = ["A","B","C","D","E"];
+    document.getElementById("fc-preguntas").innerHTML = f.preguntas.map((t, i) => `
+      <li class="pregunta-item" style="border-left-color:${f.color}">
+        <strong style="color:${f.color}">${letras[i]})</strong> ${esc(t)}
+      </li>`).join("");
+
+    document.getElementById("fc-preguntas-title").style.color = f.color;
+    document.querySelectorAll(".ficha-meta-label").forEach(el => el.style.color = f.color);
+
+    const notasEl = document.getElementById("fc-notas");
+    const savedNotes = localStorage.getItem(NOTES_KEY + "_" + idx);
+    if (savedNotes) notasEl.value = savedNotes;
+    notasEl.addEventListener("input", () => {
+      localStorage.setItem(NOTES_KEY + "_" + idx, notasEl.value);
+    });
+
+    document.getElementById("ficha-cover").style.display = "none";
+    const content = document.getElementById("ficha-content");
+    content.style.display = "block";
+  }
+
+  function esc(str) {
+    return String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+
+  window.revelarFicha = revelarFicha;
+})();
+</script>
+
+</body>
+</html>
