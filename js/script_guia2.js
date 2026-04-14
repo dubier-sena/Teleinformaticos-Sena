@@ -1926,6 +1926,12 @@ function initializeWordSearchGame() {
   document.getElementById("wordSearchStart")?.addEventListener("click", startWordSearchGame);
   document.getElementById("wordSearchReset")?.addEventListener("click", resetWordSearchGame);
   document.getElementById("wordSearchFullscreen")?.addEventListener("click", toggleWordSearchFullscreen);
+
+  // En móvil (<600 px) activar pantalla completa automáticamente para que
+  // las celdas sean más grandes y la selección táctil sea precisa.
+  if (window.innerWidth < 600 && !wordSearchFullscreenActive) {
+    window.setTimeout(() => setWordSearchFullscreen(true), 300);
+  }
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && wordSearchFullscreenActive) {
       setWordSearchFullscreen(false);
