@@ -550,7 +550,12 @@
   }
 
   function injectButton() {
-    if (!source || typeof source.isActivity4FormPage !== "function") {
+    if (!auth || !source || typeof source.isActivity4FormPage !== "function") {
+      return;
+    }
+
+    const session = auth.getCurrentSession && auth.getCurrentSession();
+    if (!session || session.role !== "admin") {
       return;
     }
 
@@ -563,14 +568,10 @@
       return;
     }
 
-    // Determinar si el usuario es admin para ajustar el texto del botón
-    const session = auth && auth.getCurrentSession && auth.getCurrentSession();
-    const isAdmin = session && session.role === "admin";
-
     const button = document.createElement("button");
     button.type = "button";
     button.className = "btn-drive";
-    button.textContent = isAdmin ? "Ver reporte del aprendiz" : "Ver informe del aprendiz";
+    button.textContent = "Ver reporte del aprendiz";
     button.setAttribute("data-admin-report-trigger", "true");
     button.addEventListener("click", handleOpenReport);
     actions.appendChild(button);
