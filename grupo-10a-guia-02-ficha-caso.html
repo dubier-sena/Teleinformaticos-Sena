@@ -199,6 +199,45 @@
   }
   .back-btn:hover { background: #e2e8f0; }
 
+  /* ── Respuestas individuales ── */
+  .respuesta-item {
+    margin-bottom: 20px;
+  }
+  .respuesta-item:last-child { margin-bottom: 0; }
+  .respuesta-label {
+    display: block;
+    font-size: .85rem;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 7px;
+    line-height: 1.55;
+  }
+  .respuesta-pregunta {
+    font-weight: 400;
+    color: #475569;
+  }
+
+  /* ── Botón exportar Word ── */
+  .export-word-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 22px;
+    background: #2563eb;
+    color: #fff;
+    font-weight: 700;
+    font-size: .9rem;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    transition: background .15s ease, transform .15s ease;
+  }
+  .export-word-btn:hover {
+    background: #1d4ed8;
+    transform: translateY(-1px);
+  }
+  .export-word-btn:active { transform: translateY(0); }
+
   @media (max-width: 600px) {
     .herramientas-grid { grid-template-columns: 1fr; }
     .herramientas-col:first-child { border-right: none; border-bottom: 1px solid #e2e8f0; }
@@ -309,15 +348,16 @@
             <ul class="preguntas-list" id="fc-preguntas"></ul>
           </div>
 
-          <div class="ficha-section">
-            <div class="ficha-section-title" style="color:#475569;">✏️ Mis notas sobre este caso</div>
-            <textarea class="notes-area" id="fc-notas"
-              placeholder="Escribe aquí tus observaciones, ideas y análisis sobre este caso…"></textarea>
+          <div class="ficha-section" id="fc-respuestas-section">
+            <div class="ficha-section-title" style="color:#0f172a;">✏️ Mis respuestas a las preguntas guía</div>
+            <div id="fc-respuestas-container">
+              <!-- Las textareas se generan dinámicamente al revelar la ficha -->
+            </div>
           </div>
 
         </div><!-- /ficha-card -->
 
-        <div style="margin-top:20px; display:flex; gap:12px; flex-wrap:wrap;">
+        <div style="margin-top:20px; display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
           <a href="grupo-10a-guia-02-herramientas-informaticas-digitales.html#contextualizacion" style="
             display:inline-flex; align-items:center; gap:8px;
             padding:11px 22px; background:#f1f5f9; color:#475569;
@@ -327,6 +367,9 @@
              onmouseout="this.style.background='#f1f5f9'">
             &#8592; Volver a la Guía 2
           </a>
+          <button type="button" class="export-word-btn" id="export-word-btn" onclick="exportarWord()">
+            📄 Descargar respuestas en Word
+          </button>
         </div>
 
       </div><!-- /ficha-content -->
@@ -335,21 +378,20 @@
 
 <script>
 (function () {
-  const NOTES_KEY = "guia2_ficha_caso_notas";
+  const RESP_KEY = "guia2_ficha_caso_resp";
+  let _fichaIdx = -1;
+  let _ficha = null;
 
   function revelarFicha() {
-    // Obtener ficha asignada (ya calculada por fichas_casos.js)
     const fc = window.fichasCasos;
-    if (!fc) {
-      // Si el script no cargó aún, esperar
-      setTimeout(revelarFicha, 120);
-      return;
-    }
+    if (!fc) { setTimeout(revelarFicha, 120); return; }
 
     const idx = fc.getAssignedFichaIdx();
     const f = fc.FICHAS[idx];
+    _fichaIdx = idx;
+    _ficha = f;
 
-    // Aplicar colores CSS
+    // Colores
     const card = document.getElementById("ficha-card");
     card.style.setProperty("--ficha-color", f.color);
     card.style.setProperty("--ficha-color-light", f.colorLight);
@@ -376,57 +418,156 @@
     document.getElementById("fc-actor").textContent = f.actor;
     document.getElementById("fc-municipio").textContent = f.municipio;
     document.getElementById("fc-actividad").textContent = f.actividad;
-
-    // Descripción
     document.getElementById("fc-desc").textContent = f.descripcion;
 
-    // Herramientas
-    const usa = document.getElementById("fc-usa");
-    usa.innerHTML = f.usa.map(t => `<li>${esc(t)}</li>`).join("");
-    const desc = document.getElementById("fc-desconoce");
-    desc.innerHTML = f.desconoce.map(t => `<li>${esc(t)}</li>`).join("");
+    // Herramientas y problemas
+    document.getElementById("fc-usa").innerHTML = f.usa.map(t => `<li>${esc(t)}</li>`).join("");
+    document.getElementById("fc-desconoce").innerHTML = f.desconoce.map(t => `<li>${esc(t)}</li>`).join("");
+    document.getElementById("fc-problemas").innerHTML = f.problemas.map(t => `<li>${esc(t)}</li>`).join("");
 
-    // Problemas
-    const prob = document.getElementById("fc-problemas");
-    prob.innerHTML = f.problemas.map(t => `<li>${esc(t)}</li>`).join("");
-
-    // Preguntas
-    const preg = document.getElementById("fc-preguntas");
+    // Preguntas guía (solo lectura)
     const letras = ["A", "B", "C", "D", "E"];
-    preg.innerHTML = f.preguntas.map((t, i) => `
+    document.getElementById("fc-preguntas").innerHTML = f.preguntas.map((t, i) => `
       <li class="pregunta-item" style="border-left-color:${f.color}">
         <strong style="color:${f.color}">${letras[i]})</strong> ${esc(t)}
       </li>`).join("");
-
-    // CSS vars en preguntas
     document.getElementById("fc-preguntas-title").style.color = f.color;
-
-    // Meta items color
     document.querySelectorAll(".ficha-meta-label").forEach(el => el.style.color = f.color);
 
-    // Notas (persistencia simple)
-    const notasEl = document.getElementById("fc-notas");
-    const savedNotes = localStorage.getItem(NOTES_KEY + "_" + idx);
-    if (savedNotes) notasEl.value = savedNotes;
-    notasEl.addEventListener("input", () => {
-      localStorage.setItem(NOTES_KEY + "_" + idx, notasEl.value);
-    });
+    // Textareas individuales de respuesta
+    renderRespuestas(f, idx);
 
     // Mostrar ficha, ocultar cover
     document.getElementById("ficha-cover").style.display = "none";
-    const content = document.getElementById("ficha-content");
-    content.style.display = "block";
+    document.getElementById("ficha-content").style.display = "block";
+  }
+
+  function renderRespuestas(ficha, fichaIdx) {
+    const container = document.getElementById("fc-respuestas-container");
+    const letras = ["A", "B", "C", "D", "E"];
+    container.innerHTML = "";
+
+    ficha.preguntas.forEach(function (preg, i) {
+      const savedKey = RESP_KEY + "_" + fichaIdx + "_" + i;
+      const savedVal = localStorage.getItem(savedKey) || "";
+
+      const wrapper = document.createElement("div");
+      wrapper.className = "respuesta-item";
+
+      const label = document.createElement("label");
+      label.className = "respuesta-label";
+      label.setAttribute("for", "fc-resp-" + i);
+      label.innerHTML =
+        "<strong style=\"color:" + ficha.color + "\">" + letras[i] + ")</strong> " +
+        "<span class=\"respuesta-pregunta\">" + esc(preg) + "</span>";
+
+      const ta = document.createElement("textarea");
+      ta.className = "notes-area";
+      ta.id = "fc-resp-" + i;
+      ta.rows = 4;
+      ta.placeholder = "Escribe tu respuesta a la pregunta " + letras[i] + "\u2026";
+      ta.value = savedVal;
+      ta.addEventListener("input", (function (key) {
+        return function () { localStorage.setItem(key, ta.value); };
+      })(savedKey));
+
+      wrapper.appendChild(label);
+      wrapper.appendChild(ta);
+      container.appendChild(wrapper);
+    });
+  }
+
+  function exportarWord() {
+    if (!_ficha) {
+      alert("Primero debes revelar tu ficha de caso antes de exportar.");
+      return;
+    }
+
+    // Nombre del aprendiz desde la sesión o localStorage
+    var session = window.portalAuth && window.portalAuth.getCurrentSession
+      ? window.portalAuth.getCurrentSession() : null;
+    var nombre =
+      (session && (session.user && (session.user.displayName || session.user.name || session.user.username)))
+      || "Aprendiz";
+
+    var letras = ["A", "B", "C", "D", "E"];
+    var filas = "";
+    _ficha.preguntas.forEach(function (preg, i) {
+      var ta = document.getElementById("fc-resp-" + i);
+      var val = ta ? ta.value.trim() : "";
+      var valHtml = val
+        ? escWord(val).replace(/\n/g, "<br>")
+        : "<em style=\"color:#94a3b8\">(sin respuesta)</em>";
+
+      filas +=
+        "<tr>" +
+        "<td style=\"padding:10px 14px;border:1px solid #cbd5e1;background:#f8fafc;width:44%;vertical-align:top;\">" +
+        "<strong style=\"color:" + _ficha.color + "\">" + letras[i] + ")</strong> " + escWord(preg) +
+        "</td>" +
+        "<td style=\"padding:10px 14px;border:1px solid #cbd5e1;vertical-align:top;\">" +
+        valHtml +
+        "</td></tr>";
+    });
+
+    var fecha = new Date().toLocaleDateString("es-CO", {
+      weekday: "long", year: "numeric", month: "long", day: "numeric"
+    });
+
+    var html =
+      "<html xmlns:o='urn:schemas-microsoft-com:office:office'" +
+      " xmlns:w='urn:schemas-microsoft-com:office:word'" +
+      " xmlns='http://www.w3.org/TR/REC-html40'>\n" +
+      "<head><meta charset='utf-8'><title>Respuestas Ficha de Caso</title>\n" +
+      "<style>\n" +
+      "body{font-family:Calibri,Arial,sans-serif;font-size:12pt;margin:2.5cm;color:#1e293b;}\n" +
+      "h1{font-size:18pt;color:#1e293b;margin-bottom:4pt;}\n" +
+      "h2{font-size:13pt;margin-top:20pt;margin-bottom:8pt;color:#334155;}\n" +
+      "p{margin:4pt 0;line-height:1.5;}\n" +
+      "table{border-collapse:collapse;width:100%;margin-top:10pt;}\n" +
+      "th{background:" + _ficha.color + ";color:#fff;padding:9px 14px;text-align:left;font-size:10pt;}\n" +
+      ".bloque-info{border-left:5px solid " + _ficha.color + ";padding:10pt 14pt;background:#f8fafc;margin:14pt 0;}\n" +
+      ".pie{margin-top:28pt;font-size:9pt;color:#94a3b8;}\n" +
+      "</style></head>\n" +
+      "<body>\n" +
+      "<h1>" + _ficha.emoji + " Actividad 4 &middot; Ficha de Caso</h1>\n" +
+      "<p style=\"font-size:10pt;color:#64748b;\">Gu&iacute;a 2 &ndash; Herramientas Inform&aacute;ticas Digitales &middot; SENA &middot; " + escWord(fecha) + "</p>\n" +
+      "<div class='bloque-info'>\n" +
+      "<p><strong>Aprendiz:</strong> " + escWord(nombre) + "</p>\n" +
+      "<p><strong>Ficha asignada:</strong> " + escWord(_ficha.nombre) + " &mdash; " + escWord(_ficha.titulo) + "</p>\n" +
+      "<p><strong>Ubicaci&oacute;n:</strong> " + escWord(_ficha.ubicacion) + "</p>\n" +
+      "<p><strong>Actor productivo:</strong> " + escWord(_ficha.actor) + "</p>\n" +
+      "</div>\n" +
+      "<h2>Preguntas gu&iacute;a y respuestas del aprendiz</h2>\n" +
+      "<table><thead><tr>" +
+      "<th style='width:44%'>Pregunta gu&iacute;a</th>" +
+      "<th>Respuesta del aprendiz</th>" +
+      "</tr></thead><tbody>" + filas + "</tbody></table>\n" +
+      "<p class='pie'>Documento generado desde el portal educativo SENA &middot; Sistemas Teleinform&aacute;ticos &middot; " + new Date().getFullYear() + "</p>\n" +
+      "</body></html>";
+
+    var blob = new Blob(["\ufeff", html], { type: "application/msword" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "respuestas-ficha-caso-" + _ficha.id + "-" +
+      nombre.replace(/\s+/g, "-").toLowerCase().replace(/[^a-z0-9\-]/g, "") + ".doc";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 3000);
   }
 
   function esc(str) {
     return String(str)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+  function escWord(str) {
+    return String(str)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
 
-  // Exponer para el botón
   window.revelarFicha = revelarFicha;
+  window.exportarWord = exportarWord;
 })();
 </script>
 
