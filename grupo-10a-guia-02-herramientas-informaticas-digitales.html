@@ -30,6 +30,7 @@
   <script defer src="data/calendario_2026_seed.js?v=20260410_1"></script>
 <script defer src="js/script_guia2.js?v=20260413_1"></script>
   <script defer src="js/guia_template.js?v=20260411_1"></script>
+  <script defer src="js/fichas_casos.js?v=20260414_1"></script>
 </head>
 <body
   class="app-shell app-shell--guide"
@@ -527,7 +528,13 @@
                   </div>
                 </li>
                 <li style="margin-bottom:10px;">Forma un equipo de trabajo con tres compa&ntilde;eros a quienes se les asignaron las otras fichas. Presenten brevemente su caso al equipo (m&aacute;ximo 3 minutos cada uno) y respondan juntos: &iquest;Qu&eacute; herramientas digitales tiene disponibles este actor? &iquest;Cu&aacute;les desconoce? &iquest;Cu&aacute;les necesitar&iacute;a aprender a usar?</li>
-                <li style="margin-bottom:10px;">Con tu equipo, completa la <strong>Matriz de Diagn&oacute;stico Digital</strong> (formato entregado por el instructor o disponible m&aacute;s abajo en esta gu&iacute;a). Esta matriz tiene cuatro columnas: Actor productivo, Herramientas que usa, Herramientas que desconoce, y Herramientas recomendadas. Llena la informaci&oacute;n de los cuatro casos analizados.</li>
+                <li style="margin-bottom:10px;">Con tu equipo, completa la <strong>Matriz de Diagn&oacute;stico Digital</strong> (formato entregado por el instructor o disponible m&aacute;s abajo en esta gu&iacute;a). Esta matriz tiene cuatro columnas: Actor productivo, Herramientas que usa, Herramientas que desconoce, y Herramientas recomendadas. Llena la informaci&oacute;n de los cuatro casos analizados.
+                  <div style="margin-top:12px;">
+                    <button type="button" class="btn-drive" onclick="descargarMatrizWord()" style="border:none;cursor:pointer;">
+                      &#128202; Descargar Matriz de Diagn&oacute;stico Digital
+                    </button>
+                  </div>
+                </li>
                 <li style="margin-bottom:10px;">Cada equipo socializa su Matriz de Diagn&oacute;stico ante el grupo en no m&aacute;s de 5 minutos. El instructor consolida los hallazgos en un mapa digital en el tablero, que servir&aacute; como hilo conductor para todas las actividades posteriores de la gu&iacute;a.</li>
                 <li>El instructor presenta el mapa de contenidos y el cronograma de trabajo de las 60 horas de formaci&oacute;n, explicando c&oacute;mo cada tema que estudiar&aacute;s responde a una necesidad real identificada en los diagn&oacute;sticos del paso anterior. Revisa el mapa y anota en tu cuaderno de aprendizaje tres compromisos personales para este proceso formativo.</li>
               </ol>
@@ -1344,5 +1351,125 @@
     </div>
   </div>
 </div>
+
+<script>
+(function () {
+  "use strict";
+
+  function descargarMatrizWord() {
+    var fc = window.fichasCasos;
+    if (!fc || !fc.FICHAS) {
+      alert("Cargando datos de las fichas de caso, intenta de nuevo en un momento.");
+      return;
+    }
+
+    var fichas = fc.FICHAS;
+    var asignadoIdx = -1;
+    var saved = localStorage.getItem(fc.FICHA_ASIGNADA_KEY);
+    if (saved !== null) {
+      var idx = parseInt(saved, 10);
+      if (idx >= 0 && idx < fichas.length) asignadoIdx = idx;
+    }
+
+    // Nombre del aprendiz
+    var session = window.portalAuth && window.portalAuth.getCurrentSession
+      ? window.portalAuth.getCurrentSession() : null;
+    var nombre = (session && session.user &&
+      (session.user.displayName || session.user.name || session.user.username))
+      || "Aprendiz";
+
+    var fecha = new Date().toLocaleDateString("es-CO", {
+      weekday: "long", year: "numeric", month: "long", day: "numeric"
+    });
+
+    // Construir filas de la matriz
+    var filas = fichas.map(function (f, i) {
+      var esMia = (i === asignadoIdx);
+      var marcaHtml = esMia
+        ? ' <span style="background:' + f.color + ';color:#fff;padding:1px 7px;border-radius:4px;font-size:9pt;vertical-align:middle;">Tu ficha</span>'
+        : "";
+      var bgRow = esMia ? 'background:' + f.colorLight + ';' : '';
+
+      var usaHtml = f.usa.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("");
+      var desconoceHtml = f.desconoce.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("");
+
+      return (
+        "<tr style='" + bgRow + "'>" +
+        "<td style='padding:10px 13px;border:1px solid #cbd5e1;vertical-align:top;width:18%;'>" +
+          "<span style='font-size:1.3rem;'>" + f.emoji + "</span><br>" +
+          "<strong style='color:" + f.color + ";'>" + esc(f.nombre) + "</strong>" + marcaHtml + "<br>" +
+          "<span style='font-size:9pt;color:#64748b;'>" + esc(f.actor) + "</span><br>" +
+          "<span style='font-size:9pt;color:#94a3b8;'>" + esc(f.municipio) + "</span>" +
+        "</td>" +
+        "<td style='padding:10px 13px;border:1px solid #cbd5e1;vertical-align:top;width:26%;font-size:10pt;'>" +
+          "<ul style='margin:0;padding-left:16px;line-height:1.6;'>" + usaHtml + "</ul>" +
+        "</td>" +
+        "<td style='padding:10px 13px;border:1px solid #cbd5e1;vertical-align:top;width:26%;font-size:10pt;'>" +
+          "<ul style='margin:0;padding-left:16px;line-height:1.6;'>" + desconoceHtml + "</ul>" +
+        "</td>" +
+        "<td style='padding:10px 13px;border:1px solid #cbd5e1;vertical-align:top;width:30%;background:#fffbeb;font-size:10pt;'>" +
+          "<span style='color:#94a3b8;font-style:italic;font-size:9pt;'>Completa con tu equipo&hellip;</span>" +
+        "</td>" +
+        "</tr>"
+      );
+    }).join("");
+
+    var html =
+      "<html xmlns:o='urn:schemas-microsoft-com:office:office'" +
+      " xmlns:w='urn:schemas-microsoft-com:office:word'" +
+      " xmlns='http://www.w3.org/TR/REC-html40'>\n" +
+      "<head><meta charset='utf-8'><title>Matriz de Diagn&oacute;stico Digital</title>\n" +
+      "<style>\n" +
+      "body{font-family:Calibri,Arial,sans-serif;font-size:11pt;margin:2cm;color:#1e293b;}\n" +
+      "h1{font-size:17pt;color:#0f172a;margin-bottom:2pt;}\n" +
+      "h2{font-size:11pt;color:#334155;margin-top:0;font-weight:400;}\n" +
+      "p{margin:3pt 0;font-size:10pt;}\n" +
+      "table{border-collapse:collapse;width:100%;margin-top:12pt;}\n" +
+      "th{background:#1e293b;color:#fff;padding:9px 13px;text-align:left;font-size:10pt;font-weight:700;}\n" +
+      ".info-bloque{border-left:5px solid #0f172a;padding:8pt 12pt;background:#f8fafc;margin:12pt 0;}\n" +
+      ".pie{margin-top:24pt;font-size:8pt;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:6pt;}\n" +
+      "</style></head>\n" +
+      "<body>\n" +
+      "<h1>&#128202; Matriz de Diagn&oacute;stico Digital</h1>\n" +
+      "<h2>Actividad 3.2.2 &mdash; Gu&iacute;a 2 &middot; Herramientas Inform&aacute;ticas Digitales &middot; SENA</h2>\n" +
+      "<div class='info-bloque'>\n" +
+      "<p><strong>Aprendiz:</strong> " + esc(nombre) + "</p>\n" +
+      "<p><strong>Fecha de generaci&oacute;n:</strong> " + esc(fecha) + "</p>\n" +
+      "<p><strong>Instruccion:</strong> Completa la columna &ldquo;Herramientas recomendadas&rdquo; con tu equipo. " +
+        "La fila resaltada corresponde a tu ficha de caso asignada.</p>\n" +
+      "</div>\n" +
+      "<table>\n" +
+      "<thead><tr>" +
+        "<th style='width:18%;'>Actor productivo</th>" +
+        "<th style='width:26%;'>Herramientas que USA</th>" +
+        "<th style='width:26%;'>Herramientas que DESCONOCE</th>" +
+        "<th style='width:30%;background:#92400e;'>Herramientas recomendadas <br><span style='font-size:8pt;font-weight:400;'>(completar en equipo)</span></th>" +
+      "</tr></thead>\n" +
+      "<tbody>" + filas + "</tbody>\n" +
+      "</table>\n" +
+      "<p class='pie'>Generado desde el portal educativo SENA &middot; Sistemas Teleinform&aacute;ticos &middot; " +
+        new Date().getFullYear() + "</p>\n" +
+      "</body></html>";
+
+    var blob = new Blob(["\ufeff", html], { type: "application/msword" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "matriz-diagnostico-digital-" +
+      nombre.replace(/\s+/g, "-").toLowerCase().replace(/[^a-z0-9\-]/g, "") + ".doc";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 3000);
+  }
+
+  function esc(str) {
+    return String(str)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  window.descargarMatrizWord = descargarMatrizWord;
+})();
+</script>
 </body>
 </html>
