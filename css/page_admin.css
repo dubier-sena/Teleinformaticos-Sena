@@ -793,6 +793,11 @@ body.modal-open {
   }
 }
 
+/* El atributo hidden es anulado por display:grid/.users-grid — se fuerza aqui */
+[data-tab-panel][hidden] {
+  display: none !important;
+}
+
 /* ── Pestañas del panel administrativo ──────────────────────────── */
 .admin-tabs {
   display: flex;
