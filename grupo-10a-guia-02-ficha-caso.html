@@ -505,10 +505,13 @@
     // Textareas individuales de respuesta
     renderRespuestas(f, idx);
 
-    // Restaurar bloqueo si ya fue guardado
+    // Restaurar bloqueo si ya fue guardado (esta PC)
     var savedLock = localStorage.getItem(LOCK_KEY);
     if (savedLock) {
       setTimeout(function () { applyLock(savedLock); }, 60);
+    } else {
+      // PC nueva: intentar recuperar respuestas guardadas desde Firestore
+      tryRestoreFromCloud(f, idx);
     }
 
     // Mostrar ficha, ocultar cover
@@ -638,6 +641,32 @@
   function escWord(str) {
     return String(str)
       .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  /* ── Restaura respuestas desde Firestore (PC nueva) ── */
+  function tryRestoreFromCloud(ficha, fichaIdx) {
+    if (!window._firebaseDb || typeof window._firebaseDb.cloudGetGuideData !== "function") return;
+    var session = window.portalAuth && window.portalAuth.getCurrentSession
+      ? window.portalAuth.getCurrentSession() : null;
+    var usernameKey = session && session.user && session.user.usernameKey;
+    if (!usernameKey) return;
+    var CLOUD_FILE = "grupo-10a-guia-02-ficha-caso.html";
+    window._firebaseDb.cloudGetGuideData("student:" + usernameKey, CLOUD_FILE)
+      .then(function (snap) {
+        if (!snap || !snap.savedAt) return;
+        // Restaurar los textos en los textareas
+        var estado = snap.state || {};
+        ficha.preguntas.forEach(function (_, i) {
+          var ta = document.getElementById("fc-resp-" + i);
+          if (ta && estado["resp_" + i] != null) {
+            ta.value = estado["resp_" + i];
+          }
+        });
+        // Sincronizar localStorage para que futuras visitas en esta PC no llamen a Firestore
+        localStorage.setItem(LOCK_KEY, snap.savedAt);
+        applyLock(snap.savedAt);
+      })
+      .catch(function () {});
   }
 
   /* ── Aplica el bloqueo visual y funcional ── */
