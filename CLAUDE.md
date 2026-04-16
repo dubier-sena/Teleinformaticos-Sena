@@ -4,13 +4,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Static educational portal for SENA (Colombian vocational training) — "Sistemas Teleinformáticos" program. Serves groups 10A, 10B, 11A, 11B with interactive learning guides, activity tracking, and admin management. No build pipeline; pure vanilla JS + HTML + CSS deployed via Firebase Hosting.
+Static educational portal for SENA (Colombian vocational training) — "Sistemas Teleinformáticos" program. Serves groups 10A, 10B, 11A, 11B with interactive learning guides, activity tracking, and admin management. No build pipeline; pure vanilla JS + HTML + CSS published via **GitHub Pages**. Firebase is used **only as database** (Firestore) — not for hosting.
 
 ## Deployment
 
 ```bash
-firebase deploy          # Deploy to Firebase Hosting + Firestore rules
-firebase deploy --only hosting   # Hosting only (skip Firestore rules)
+# Publicar el sitio (GitHub Pages)
+git add <archivos> && git commit -m "mensaje" && git push origin main
+# URL: https://dubier-sena.github.io/Teleinformaticos-Sena/
+
+# Desplegar solo reglas/índices de Firestore
+firebase deploy --only firestore
 ```
 
 There is no build step, npm, or bundler. Edits to source files are deployed directly.
@@ -19,7 +23,7 @@ There is no build step, npm, or bundler. Edits to source files are deployed dire
 
 ### Static Site Structure
 - **No framework, no bundler** — plain HTML files link JS/CSS via `<script>` and `<link>` tags with manual cache-busting query strings in the format `?v=YYYYMMDD_N` (e.g., `?v=20260412_2`). When modifying a JS or CSS file, bump the version string in every HTML file that references it.
-- Firebase Hosting serves all files with `Cache-Control: no-store, max-age=0`.
+- GitHub Pages serves all static files. The `Cache-Control` headers are set via `<meta http-equiv>` tags in each HTML file.
 
 ### Authentication & State
 - `js/portal_auth.js` — core auth, session management, user registry, SHA-256 password hashing. Admin credentials are hardcoded here.
