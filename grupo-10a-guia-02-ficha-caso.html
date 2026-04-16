@@ -14,6 +14,8 @@
 <title>Ficha de Caso | Actividad 4 | Guía 2 | Grupo 10A</title>
 <meta name="description" content="Ficha de caso asignada para la Actividad 4 de la Guía 2 – Grupo 10A.">
 <script defer src="js/portal_auth.js?v=20260324_6"></script>
+<script src="js/firebase-config.js?v=20260414_1"></script>
+<script defer src="js/firebase_db.js?v=20260410_1"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
@@ -675,6 +677,34 @@
     });
     localStorage.setItem(LOCK_KEY, fecha);
     applyLock(fecha);
+
+    // ── Guardar en Firestore para que el admin pueda ver las respuestas ──
+    (function () {
+      var CLOUD_FILE = "grupo-10a-guia-02-ficha-caso.html";
+      if (!window._firebaseDb || typeof window._firebaseDb.cloudSaveGuideData !== "function") return;
+      var session = window.portalAuth && window.portalAuth.getCurrentSession
+        ? window.portalAuth.getCurrentSession() : null;
+      var usernameKey = session && session.user && session.user.usernameKey;
+      if (!usernameKey) return;
+      var respuestas = {};
+      _ficha.preguntas.forEach(function (preg, i) {
+        var ta = document.getElementById("fc-resp-" + i);
+        respuestas["resp_" + i] = ta ? ta.value.trim() : "";
+        respuestas["preg_" + i] = preg;
+      });
+      window._firebaseDb.cloudSaveGuideData(
+        "student:" + usernameKey,
+        CLOUD_FILE,
+        {
+          state: respuestas,
+          fichaIdx: _fichaIdx,
+          fichaNombre: _ficha.nombre,
+          fichaEmoji: _ficha.emoji,
+          savedAt: fecha,
+          updatedAt: new Date().toISOString()
+        }
+      ).catch(function () {});
+    })();
   }
 
   window.revelarFicha = revelarFicha;

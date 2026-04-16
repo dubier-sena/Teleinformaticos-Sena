@@ -7,6 +7,13 @@
   let allUsers = [];
   let guide2WordSearchSummaries = {};
   let guide2MatchingGameSummaries = {};
+  let fichaCasoSummaries = {};
+
+  const FICHA_CASO_FILES = {
+    "10A": "grupo-10a-guia-02-ficha-caso.html",
+    "10B": "grupo-10b-guia-02-ficha-caso.html",
+  };
+
   const GUIDE2_RESPONSE_FILES = {
     "grupo-10a-guia-02-herramientas-informaticas-digitales.html": {
       cloudFileName: "10a_guia2.html",
@@ -362,6 +369,178 @@
     guide2WordSearchSummaries = nextSummaries;
     guide2MatchingGameSummaries = nextMatchingSummaries;
   }
+
+  // ── Ficha de caso ──────────────────────────────────────────────────────────
+
+  function getFichaCasoFileName(user) {
+    const grupo = String(user?.grupo || "").toUpperCase().trim();
+    return FICHA_CASO_FILES[grupo] || null;
+  }
+
+  async function readFichaCasoSnapshot(usernameKey, cloudFileName) {
+    if (
+      !window._firebaseDb ||
+      typeof window._firebaseDb.cloudGetGuideData !== "function"
+    ) {
+      return null;
+    }
+    try {
+      const snapshot = await window._firebaseDb.cloudGetGuideData(
+        getGuide2ScopeKey(usernameKey),
+        cloudFileName
+      );
+      return snapshot || null;
+    } catch {
+      return null;
+    }
+  }
+
+  async function hydrateFichaCasoSummaries(users) {
+    const next = {};
+    const tasks = users
+      .filter((user) => getFichaCasoFileName(user))
+      .map((user) => {
+        const cloudFileName = getFichaCasoFileName(user);
+        return readFichaCasoSnapshot(user.usernameKey, cloudFileName)
+          .then((snapshot) => {
+            next[user.usernameKey] = snapshot || null;
+          })
+          .catch(() => {
+            next[user.usernameKey] = null;
+          });
+      });
+
+    if (!tasks.length) {
+      fichaCasoSummaries = {};
+      return;
+    }
+
+    await Promise.all(tasks);
+    fichaCasoSummaries = next;
+  }
+
+  function renderFichaCasoAnswersBody(snapshot, user) {
+    const state = snapshot?.state || {};
+    const preguntas = [];
+    const respuestas = [];
+    let i = 0;
+    while (state["preg_" + i] !== undefined) {
+      preguntas.push(state["preg_" + i]);
+      respuestas.push(state["resp_" + i] || "");
+      i++;
+    }
+
+    const letras = ["A", "B", "C", "D", "E"];
+    const rows = preguntas.map((preg, idx) => [
+      `${letras[idx] || idx + 1}) ${preg}`,
+      respuestas[idx] || "",
+    ]);
+
+    return `
+      <div class="answers-grid">
+        <article class="answer-card">
+          <h3>Ficha asignada</h3>
+          ${renderAnswerTable(
+            ["Campo", "Valor"],
+            [
+              ["Ficha", snapshot?.fichaNombre || "Sin registro"],
+              ["Guardado el", snapshot?.savedAt || formatDate(snapshot?.updatedAt)],
+              ["Aprendiz", user.fullName || user.username],
+              ["Grupo", user.grupo],
+            ]
+          )}
+        </article>
+        <article class="answer-card" style="grid-column:1/-1">
+          <h3>Respuestas a las preguntas gu\u00eda</h3>
+          ${rows.length
+            ? renderAnswerTable(["Pregunta", "Respuesta del aprendiz"], rows)
+            : '<div class="answer-value empty">Sin preguntas registradas.</div>'}
+        </article>
+      </div>
+    `;
+  }
+
+  async function handleViewFichaCaso(button) {
+    const usernameKey = button.getAttribute("data-ficha-caso-user") || "";
+    const user = allUsers.find((u) => u.usernameKey === usernameKey);
+    if (!user) {
+      setFeedback("No se encontró el usuario.", "error");
+      return;
+    }
+
+    openGuide2ResponsesModal({
+      title: "Ficha de Caso \u2014 Actividad 4",
+      subtitle: `${user.fullName} | Grupo ${user.grupo}`,
+      meta: "Cargando respuestas guardadas\u2026",
+      bodyHtml: '<div class="response-status">Consultando Firestore\u2026</div>',
+    });
+
+    const cloudFileName = getFichaCasoFileName(user);
+    const snapshot = cloudFileName
+      ? await readFichaCasoSnapshot(usernameKey, cloudFileName)
+      : null;
+
+    if (!snapshot || !snapshot.state) {
+      openGuide2ResponsesModal({
+        title: "Ficha de Caso \u2014 Actividad 4",
+        subtitle: `${user.fullName} | Grupo ${user.grupo}`,
+        meta: `Aprendiz: ${user.fullName} | Grupo: ${user.grupo} | Ficha: ${user.ficha}`,
+        bodyHtml:
+          '<div class="response-status">Este aprendiz a\u00fan no ha guardado sus respuestas de la ficha de caso.</div>',
+      });
+      return;
+    }
+
+    const metaParts = [
+      `Aprendiz: ${user.fullName}`,
+      `Grupo: ${user.grupo}`,
+      `Ficha: ${snapshot.fichaNombre || user.ficha}`,
+      `Guardado: ${snapshot.savedAt || formatDate(snapshot.updatedAt)}`,
+    ];
+
+    openGuide2ResponsesModal({
+      title: "Ficha de Caso \u2014 Actividad 4",
+      subtitle: `${user.fullName} | Grupo ${user.grupo}`,
+      meta: metaParts.join(" | "),
+      bodyHtml: renderFichaCasoAnswersBody(snapshot, user),
+    });
+  }
+
+  function buildFichaCasoTable(rows) {
+    if (!rows.length) {
+      return '<p class="activities-loading">Ning\u00fan aprendiz ha guardado respuestas de la ficha de caso a\u00fan.</p>';
+    }
+    const headerHtml = ["Aprendiz", "Ficha asignada", "Grupo", "Fecha guardado", ""].map(
+      (h) => `<th>${escapeHtml(h)}</th>`
+    ).join("");
+    const rowHtml = rows.map(({ user, snapshot }) => {
+      const fichaNombre = snapshot?.fichaNombre || "Sin registro";
+      const emoji = snapshot?.fichaEmoji || "";
+      const savedAt = snapshot?.savedAt || formatDate(snapshot?.updatedAt) || "Sin registro";
+      return `
+        <tr>
+          <td>${escapeHtml(user.fullName || user.username)}</td>
+          <td>${escapeHtml(emoji ? emoji + " " + fichaNombre : fichaNombre)}</td>
+          <td>${escapeHtml(user.grupo)}</td>
+          <td>${escapeHtml(savedAt)}</td>
+          <td>
+            <button class="btn ghost" type="button"
+              data-ficha-caso-user="${escapeHtml(user.usernameKey)}">
+              Ver respuestas
+            </button>
+          </td>
+        </tr>`;
+    }).join("");
+    return `
+      <div class="answer-table-wrap">
+        <table class="answer-table activities-table">
+          <thead><tr>${headerHtml}</tr></thead>
+          <tbody>${rowHtml}</tbody>
+        </table>
+      </div>`;
+  }
+
+  // ── Fin Ficha de caso ──────────────────────────────────────────────────────
 
   function renderAnswerValue(value) {
     const text = String(value ?? "").trim();
@@ -1135,6 +1314,20 @@
         })
       );
 
+    // Ficha de caso rows
+    const fichaCasoRows = [];
+    const fichaCasoLoading = users
+      .filter((user) => getFichaCasoFileName(user))
+      .some((user) => !(user.usernameKey in fichaCasoSummaries));
+
+    users.forEach((user) => {
+      if (!getFichaCasoFileName(user)) return;
+      const snapshot = fichaCasoSummaries[user.usernameKey];
+      if (snapshot && snapshot.state) {
+        fichaCasoRows.push({ user, snapshot });
+      }
+    });
+
     const loadingHtml = '<p class="activities-loading">Cargando resultados\u2026</p>';
 
     container.innerHTML = `
@@ -1145,6 +1338,10 @@
       <section class="panel">
         <h2>Actividad 2 \u2014 Relacionar funciones</h2>
         ${stillLoading ? loadingHtml : buildActivitiesTable(matchingRows, "matching")}
+      </section>
+      <section class="panel">
+        <h2>Actividad 4 \u2014 Ficha de caso (respuestas guardadas)</h2>
+        ${fichaCasoLoading ? loadingHtml : buildFichaCasoTable(fichaCasoRows)}
       </section>
     `;
   }
@@ -1181,8 +1378,12 @@
 
     guide2WordSearchSummaries = {};
     guide2MatchingGameSummaries = {};
+    fichaCasoSummaries = {};
     renderUsers();
-    await hydrateGuide2WordSearchSummaries(allUsers);
+    await Promise.all([
+      hydrateGuide2WordSearchSummaries(allUsers),
+      hydrateFichaCasoSummaries(allUsers),
+    ]);
     renderUsers();
   }
 
@@ -1331,6 +1532,12 @@
       const viewGuide2Button = event.target.closest("[data-view-guide2]");
       if (viewGuide2Button) {
         await handleViewGuide2Responses(viewGuide2Button);
+        return;
+      }
+
+      const viewFichaCasoButton = event.target.closest("[data-ficha-caso-user]");
+      if (viewFichaCasoButton) {
+        await handleViewFichaCaso(viewFichaCasoButton);
         return;
       }
 
