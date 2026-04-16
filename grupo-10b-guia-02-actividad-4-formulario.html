@@ -165,9 +165,78 @@
     pointer-events: none;
     user-select: none;
   }
+
+  /* ── Botón guardar y bloquear ── */
+  .activity4-submit-wrap {
+    display: flex;
+    justify-content: flex-end;
+    padding: 20px 0 6px;
+  }
+  .activity4-submit-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 30px;
+    background: linear-gradient(135deg, #0fb86c 0%, #0a9457 100%);
+    color: #fff;
+    font-weight: 700;
+    font-size: 1rem;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(15,184,108,.32);
+    transition: opacity .18s ease, transform .18s ease;
+    font-family: inherit;
+  }
+  .activity4-submit-btn:hover:not(:disabled) {
+    opacity: .9;
+    transform: translateY(-1px);
+  }
+  .activity4-submit-btn:disabled {
+    background: #94a3b8;
+    box-shadow: none;
+    cursor: default;
+    transform: none;
+    opacity: 1;
+  }
+
+  /* ── Banner de confirmación ── */
+  .activity4-submitted-banner {
+    display: none;
+    align-items: center;
+    gap: 12px;
+    margin-top: 18px;
+    padding: 14px 18px;
+    background: #f0fdf4;
+    border: 2px solid #16a34a;
+    border-radius: 12px;
+    color: #15803d;
+    font-weight: 600;
+    font-size: .93rem;
+    line-height: 1.5;
+  }
+  .activity4-submitted-banner.is-visible { display: flex; }
+  .activity4-submitted-banner .banner-icon { font-size: 1.5rem; flex-shrink: 0; }
+
+  /* ── Inputs bloqueados tras guardar ── */
+  .form-is-submitted input:not([type="radio"]),
+  .form-is-submitted textarea,
+  .form-is-submitted select {
+    background: #f8fafc !important;
+    color: #475569 !important;
+    cursor: not-allowed;
+  }
+  .form-is-submitted .activity4-choice {
+    pointer-events: none;
+    opacity: .8;
+  }
+  .form-is-submitted .activity4-choice input[type="radio"]:checked ~ span {
+    font-weight: 700;
+    color: #0a9457;
+  }
 </style>
 <script defer src="js/shared_drive_delivery.js?v=20260410_1"></script>
-<script defer src="js/script_guia2.js?v=20260413_1"></script>
+<script defer src="js/script_guia2.js?v=20260416_1"></script>
 <script defer src="js/activity4_admin_report.js?v=20260415_1"></script>
 <script defer src="js/activity_delivery.js?v=20260411_1"></script>
 </head>
@@ -660,11 +729,103 @@
               <p>Describe al menos dos acciones concretas.</p>
               <textarea rows="5" data-store="contexto-otanche" data-track placeholder="Escribe al menos dos acciones concretas para organizar mejor la informaci&oacute;n."></textarea>
             </article>
+          </div><!-- /activity4-form-grid -->
+
+          <!-- Banner: formulario ya guardado -->
+          <div class="activity4-submitted-banner" id="activity4SubmittedBanner">
+            <span class="banner-icon">&#9989;</span>
+            <div>
+              <strong>Formulario guardado</strong><br>
+              Tus respuestas quedaron registradas el <span id="activity4SubmittedDate"></span>.
+              Ya no es posible modificarlas.
+            </div>
           </div>
-        </div>
+
+          <!-- Botón guardar y finalizar -->
+          <div class="activity4-submit-wrap">
+            <button type="button" class="activity4-submit-btn" id="activity4SubmitBtn" onclick="guardarFormulario()">
+              &#10003;&nbsp; Guardar y finalizar formulario
+            </button>
+          </div>
+
+        </div><!-- /card-body -->
       </div>
       </div>
     </div>
   </div>
 </body>
+
+<script>
+(function () {
+  "use strict";
+  var LOCK_KEY = "actividad4_formulario_submitted_10B";
+
+  /* ── Aplica el bloqueo visual y funcional ── */
+  function applyLock(fechaGuardado) {
+    // Deshabilitar todos los inputs dentro del cuestionario e identidad
+    var areas = [
+      document.getElementById("activity4Questionnaire"),
+      document.getElementById("activity4IdentityCard")
+    ];
+    areas.forEach(function (container) {
+      if (!container) return;
+      container.querySelectorAll("input, textarea, select").forEach(function (el) {
+        el.disabled = true;
+      });
+      container.classList.add("form-is-submitted");
+    });
+
+    // Ocultar botón de reiniciar respuestas
+    var resetBtn = document.getElementById("resetProgress");
+    if (resetBtn) resetBtn.style.display = "none";
+
+    // Cambiar estado del botón de guardar
+    var submitBtn = document.getElementById("activity4SubmitBtn");
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = "&#10003;&nbsp; Formulario ya guardado";
+    }
+
+    // Mostrar banner de confirmación con fecha
+    var banner = document.getElementById("activity4SubmittedBanner");
+    var dateSpan = document.getElementById("activity4SubmittedDate");
+    if (banner) banner.classList.add("is-visible");
+    if (dateSpan) dateSpan.textContent = fechaGuardado;
+  }
+
+  /* ── Guarda y bloquea al hacer clic ── */
+  function guardarFormulario() {
+    if (localStorage.getItem(LOCK_KEY)) return; // ya fue guardado
+
+    var confirmar = window.confirm(
+      "\u00BFConfirmas que quieres guardar y finalizar el formulario?\n\n" +
+      "Una vez guardado ya no podr\u00E1s modificar tus respuestas."
+    );
+    if (!confirmar) return;
+
+    var fecha = new Date().toLocaleString("es-CO", {
+      day: "2-digit", month: "long", year: "numeric",
+      hour: "2-digit", minute: "2-digit"
+    });
+    localStorage.setItem(LOCK_KEY, fecha);
+    applyLock(fecha);
+
+    // Forzar guardado inmediato en Firestore (script_guia2.js sincroniza todos los data-store)
+    if (typeof window.guia2SyncNow === "function") {
+      window.guia2SyncNow();
+    }
+  }
+
+  /* ── Al cargar la página: restaura el bloqueo si ya fue guardado ── */
+  window.addEventListener("load", function () {
+    var fecha = localStorage.getItem(LOCK_KEY);
+    if (fecha) {
+      // Espera un tick extra para que script_guia2.js haya restaurado los valores
+      setTimeout(function () { applyLock(fecha); }, 250);
+    }
+  });
+
+  window.guardarFormulario = guardarFormulario;
+})();
+</script>
 </html>
