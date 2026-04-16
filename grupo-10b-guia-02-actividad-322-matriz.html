@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta
+  http-equiv="Content-Security-Policy"
+  content="default-src 'self' blob: data:; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https:; media-src 'self' blob: data: https:;"
+>
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Matriz de Diagnóstico Digital | Actividad 3.2.2 | Guía 2 | Grupo 10B</title>
+<meta name="description" content="Matriz de Diagnóstico Digital - Fichas de casos y compromisos del proceso. Guía 2 – Grupo 10B.">
+<script defer src="js/portal_auth.js?v=20260324_6"></script>
+<script src="js/firebase-config.js?v=20260414_1"></script>
+<script defer src="js/firebase_db.js?v=20260410_1"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/site_tokens.css?v=20260412_2">
+<link rel="stylesheet" href="css/shared_shell.css?v=20260412_2">
+<link rel="stylesheet" href="css/guia_template.css?v=20260413_1">
+<style>
+  .matriz-page .app-main { padding: 24px 0 64px; }
+  .matriz-page .content {
+    width: min(960px, calc(100% - 48px));
+    margin: 0 auto;
+    max-width: none;
+  }
+
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 9px 18px; background: #f1f5f9; color: #475569;
+    font-weight: 600; font-size: .88rem; border-radius: 8px;
+    text-decoration: none; transition: background .15s ease; margin-bottom: 24px;
+  }
+  .back-btn:hover { background: #e2e8f0; }
+
+  .page-hero {
+    background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+    border-radius: 16px;
+    color: #fff;
+    padding: 32px 28px;
+    margin-bottom: 28px;
+    box-shadow: 0 6px 28px rgba(8,145,178,.30);
+  }
+  .page-hero h1 { font-size: 1.5rem; font-weight: 800; margin: 0 0 8px; }
+  .page-hero p  { font-size: .95rem; opacity: .90; margin: 0; max-width: 600px; line-height: 1.6; }
+  .page-hero .hero-chips { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+  .page-hero .chip {
+    background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.30);
+    color: #fff; font-size: .78rem; font-weight: 600;
+    padding: 4px 12px; border-radius: 20px;
+  }
+
+  .section-block {
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 10px rgba(0,0,0,.06);
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .section-block-header {
+    padding: 16px 22px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .section-block-header .section-icon { font-size: 1.4rem; }
+  .section-block-header h2 { font-size: 1rem; font-weight: 700; color: #1e293b; margin: 0; }
+  .section-block-header p  { font-size: .83rem; color: #64748b; margin: 2px 0 0; }
+  .section-block-body { padding: 20px 22px; }
+
+  .intro-steps { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 16px 20px; margin-bottom: 16px; }
+  .intro-steps p { margin: 0 0 8px; font-size: .93rem; color: #0c4a6e; line-height: 1.6; }
+  .intro-steps p:last-child { margin: 0; }
+  .intro-steps ul { margin: 6px 0 0 0; padding-left: 20px; font-size: .91rem; color: #0c4a6e; line-height: 1.75; }
+
+  .casos-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px; margin-bottom: 20px;
+  }
+  .caso-pill {
+    background: #f0fdfa; border: 1.5px solid #5eead4;
+    border-radius: 10px; padding: 12px 14px;
+  }
+  .caso-pill strong { font-size: .88rem; color: #0f766e; display: block; margin-bottom: 4px; }
+  .caso-pill p { font-size: .82rem; color: #334155; margin: 0; line-height: 1.5; }
+
+  .download-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 20px; }
+  .btn-download {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 20px; background: #0891b2; color: #fff;
+    font-weight: 700; font-size: .88rem; border-radius: 9px;
+    border: none; cursor: pointer; text-decoration: none;
+    transition: background .15s ease, transform .15s ease;
+    font-family: inherit;
+  }
+  .btn-download:hover { background: #0e7490; transform: translateY(-1px); }
+
+  /* Tabla */
+  .table-wrap { overflow-x: auto; }
+  .matriz-table { width: 100%; border-collapse: collapse; min-width: 640px; }
+  .matriz-table th, .matriz-table td {
+    border: 1px solid #cbd5e1; padding: 10px 13px; font-size: .88rem;
+    vertical-align: top; text-align: left;
+  }
+  .matriz-table thead th {
+    background: #0891b2; color: #fff; font-weight: 700;
+    font-size: .8rem; text-transform: uppercase; letter-spacing: .04em;
+  }
+  .matriz-table tbody th {
+    background: #f0f9ff; font-weight: 700; color: #0c4a6e;
+    font-size: .85rem; width: 22%;
+  }
+  .matriz-table tbody tr:nth-child(even) td { background: #f8fafc; }
+  .matriz-table textarea {
+    width: 100%; min-height: 80px; border: 1px solid #cbd5e1;
+    border-radius: 6px; padding: 8px 10px; font-size: .86rem;
+    font-family: inherit; resize: vertical; box-sizing: border-box;
+    background: #fff; color: #1e293b;
+  }
+  .matriz-table textarea:focus { outline: 2px solid #0891b2; border-color: transparent; }
+
+  .card-support {
+    background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+    padding: 16px 18px; margin-bottom: 14px;
+  }
+  .card-support:last-child { margin-bottom: 0; }
+  .card-support h4 { font-size: .9rem; font-weight: 700; color: #1e293b; margin: 0 0 8px; }
+  .card-support p { font-size: .88rem; color: #475569; margin: 0 0 10px; line-height: 1.6; }
+  .card-support p:last-child { margin: 0; }
+  .card-support label { display: block; }
+  .card-support label span { display: block; font-size: .85rem; font-weight: 600; color: #334155; margin-bottom: 7px; }
+  .card-support textarea {
+    width: 100%; border: 1px solid #cbd5e1; border-radius: 8px;
+    padding: 10px 13px; font-size: .88rem; font-family: inherit;
+    resize: vertical; box-sizing: border-box; background: #fff; color: #1e293b;
+  }
+  .card-support textarea:focus { outline: 2px solid #0891b2; border-color: transparent; }
+
+  .reto-card {
+    background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%);
+    border: 1.5px solid #fde047;
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-top: 4px;
+  }
+  .reto-card h4 { color: #854d0e; font-size: .95rem; font-weight: 800; margin: 0 0 12px; }
+  .reto-card label { display: block; margin-bottom: 14px; }
+  .reto-card label:last-child { margin-bottom: 0; }
+  .reto-card label span { display: block; font-size: .87rem; font-weight: 600; color: #713f12; margin-bottom: 7px; }
+  .reto-card textarea {
+    width: 100%; border: 1px solid #fde047; border-radius: 8px;
+    padding: 10px 13px; font-size: .88rem; font-family: inherit;
+    resize: vertical; box-sizing: border-box; background: #fffbeb; color: #1e293b;
+  }
+  .reto-card textarea:focus { outline: 2px solid #ca8a04; border-color: transparent; }
+  .reto-card .reto-footer { font-size: .84rem; color: #92400e; margin-top: 12px; font-style: italic; }
+
+  @media (max-width: 640px) {
+    .casos-grid { grid-template-columns: 1fr; }
+    .page-hero { padding: 24px 20px; }
+    .section-block-body { padding: 16px; }
+  }
+
+  /* Barra de guardado */
+  .save-bar {
+    display: flex; align-items: center; gap: 12px;
+    background: #f8fafc; border: 1px solid #e2e8f0;
+    border-radius: 10px; padding: 10px 16px;
+    margin-bottom: 20px; flex-wrap: wrap;
+  }
+  .btn-save {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 8px 18px; background: #0891b2; color: #fff;
+    font-weight: 700; font-size: .86rem; border-radius: 8px;
+    border: none; cursor: pointer; font-family: inherit;
+    transition: background .15s ease;
+  }
+  .btn-save:hover:not(:disabled) { background: #0e7490; }
+  .btn-save:disabled { opacity: .6; cursor: not-allowed; }
+  .save-status { font-size: .84rem; font-weight: 600; }
+  .save-status.saving { color: #0891b2; }
+  .save-status.ok     { color: #16a34a; }
+  .save-status.warn   { color: #d97706; }
+  .save-status.error  { color: #dc2626; }
+  .save-hint { font-size: .8rem; color: #94a3b8; margin-left: auto; }
+
+  /* Panel de exportación */
+  .export-panel {
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border: 1.5px solid #86efac; border-radius: 14px;
+    padding: 22px 24px; margin-bottom: 20px;
+  }
+  .export-panel h3 { font-size: 1rem; font-weight: 800; color: #15803d; margin: 0 0 6px; }
+  .export-panel p  { font-size: .88rem; color: #166534; margin: 0 0 16px; line-height: 1.6; }
+  .export-actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  .btn-export {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 11px 22px; background: #16a34a; color: #fff;
+    font-weight: 700; font-size: .9rem; border-radius: 9px;
+    border: none; cursor: pointer; font-family: inherit;
+    transition: background .15s ease, transform .15s ease;
+  }
+  .btn-export:hover { background: #15803d; transform: translateY(-1px); }
+  .drive-link-panel { display: none; margin-top: 14px; }
+</style>
+<script defer src="js/shared_shell.js?v=20260412_2"></script>
+<script defer src="js/script_guia2.js?v=20260416_2"></script>
+</head>
+<body
+  class="app-shell app-shell--guide matriz-page"
+  data-default-ficha="3441942"
+  data-default-inst="Institucion Educativa Jhon F. Kennedy"
+  data-default-grupo="10B"
+>
+  <div class="main app-main">
+    <div class="topbar">
+      <div class="topbar-title">
+        <strong>3.2.2 · Matriz de Diagnóstico Digital</strong>
+      </div>
+      <div class="topbar-meta">
+        <span class="meta-item"><span>&#127979;</span><span>Jhon F. Kennedy | 10B</span></span>
+        <span class="meta-item"><span>&#128197;</span><span>2026</span></span>
+      </div>
+    </div>
+
+    <div class="content">
+      <a href="grupo-10b-guia-02-herramientas-informaticas-digitales.html#contextualizacion" class="back-btn">
+        &#8592; Volver a la Guía 2
+      </a>
+
+      <!-- Barra de guardado -->
+      <div class="save-bar">
+        <input type="hidden" id="field-322-finalizada" data-store="322-finalizada">
+        <input type="hidden" id="field-322-finalizada-at" data-store="322-finalizada-at">
+        <button type="button" class="btn-save" id="btn-guardar" onclick="finalizarMatriz()">
+          &#128274; Guardar y finalizar actividad
+        </button>
+        <span class="save-status" id="save-status"></span>
+        <span class="save-hint">Las respuestas también se guardan automáticamente al escribir.</span>
+      </div>
+
+      <!-- Hero -->
+      <div class="page-hero">
+        <h1>&#128202; Fichas de casos &amp; Matriz de Diagnóstico Digital</h1>
+        <p>Completa la matriz con el diagnóstico digital de los cuatro actores productivos del Magdalena Medio. Esta información será el hilo conductor de toda la guía.</p>
+        <div class="hero-chips">
+          <span class="chip">3.2.2 · Contextualización</span>
+          <span class="chip">Misión diagnóstica</span>
+          <span class="chip">Grupo 10B</span>
+        </div>
+      </div>
+
+      <!-- Bloque 1: Instrucciones -->
+      <div class="section-block">
+        <div class="section-block-header">
+          <span class="section-icon">&#128221;</span>
+          <div>
+            <h2>Descripción paso a paso</h2>
+            <p>Lee las instrucciones antes de comenzar a llenar la matriz</p>
+          </div>
+        </div>
+        <div class="section-block-body">
+          <div class="intro-steps">
+            <p>Lee con detenimiento la ficha de caso que se te asignó. Puedes abrirla desde el botón que aparece en el paso 2 de la Actividad 4.</p>
+            <p>Forma un equipo de trabajo con tres compañeros a quienes se les asignaron las otras fichas. Presenten brevemente su caso al equipo (máximo 3 minutos cada uno) y respondan juntos:</p>
+            <ul>
+              <li>¿Qué herramientas digitales tiene disponibles este actor?</li>
+              <li>¿Cuáles desconoce?</li>
+              <li>¿Cuáles necesitaría aprender a usar?</li>
+            </ul>
+          </div>
+
+          <div class="casos-grid">
+            <div class="caso-pill">
+              <strong>&#127978; Tienda Don Ramiro</strong>
+              <p>Puerto Boyacá — Registra su diagnóstico digital en la matriz.</p>
+            </div>
+            <div class="caso-pill">
+              <strong>&#127807; Cultivo Familiar</strong>
+              <p>Otanche — Registra su diagnóstico digital en la matriz.</p>
+            </div>
+            <div class="caso-pill">
+              <strong>&#127775; Emprendimiento de Artesanías</strong>
+              <p>Pauna — Registra su diagnóstico digital en la matriz.</p>
+            </div>
+          </div>
+
+          <div class="download-row">
+            <button type="button" class="btn-download" onclick="descargarMatrizWord()">
+              &#128202; Descargar Matriz de Diagnóstico Digital
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bloque 2: Tabla -->
+      <div class="section-block">
+        <div class="section-block-header">
+          <span class="section-icon">&#128203;</span>
+          <div>
+            <h2>Matriz de Diagnóstico Digital</h2>
+            <p>Completa las cuatro columnas para cada actor productivo analizado</p>
+          </div>
+        </div>
+        <div class="section-block-body">
+          <div class="table-wrap">
+            <table class="matriz-table">
+              <thead>
+                <tr>
+                  <th>Actor productivo</th>
+                  <th>Herramientas que usa</th>
+                  <th>Herramientas que desconoce</th>
+                  <th>Herramientas recomendadas</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">Tienda Don Ramiro en Puerto Boyacá</th>
+                  <td><textarea rows="4" data-store="matriz-tienda-usa" data-track placeholder="Registra qué herramientas tiene disponibles este actor."></textarea></td>
+                  <td><textarea rows="4" data-store="matriz-tienda-desconoce" data-track placeholder="Registra cuáles desconoce."></textarea></td>
+                  <td><textarea rows="4" data-store="matriz-tienda-recomienda" data-track placeholder="Registra cuáles necesitaría aprender a usar."></textarea></td>
+                </tr>
+                <tr>
+                  <th scope="row">Cultivo Familiar en Otanche</th>
+                  <td><textarea rows="4" data-store="matriz-cultivo-usa" data-track placeholder="Registra qué herramientas tiene disponibles este actor."></textarea></td>
+                  <td><textarea rows="4" data-store="matriz-cultivo-desconoce" data-track placeholder="Registra cuáles desconoce."></textarea></td>
+                  <td><textarea rows="4" data-store="matriz-cultivo-recomienda" data-track placeholder="Registra cuáles necesitaría aprender a usar."></textarea></td>
+                </tr>
+                <tr>
+                  <th scope="row">Emprendimiento de artesanías en Pauna</th>
+                  <td><textarea rows="4" data-store="matriz-artesanias-usa" data-track placeholder="Registra qué herramientas tiene disponibles este actor."></textarea></td>
+                  <td><textarea rows="4" data-store="matriz-artesanias-desconoce" data-track placeholder="Registra cuáles desconoce."></textarea></td>
+                  <td><textarea rows="4" data-store="matriz-artesanias-recomienda" data-track placeholder="Registra cuáles necesitaría aprender a usar."></textarea></td>
+                </tr>
+                <tr>
+                  <th scope="row">Caso adicional asignado por el instructor</th>
+                  <td><textarea rows="4" data-store="matriz-extra-usa" data-track placeholder="Registra qué herramientas usa este caso adicional."></textarea></td>
+                  <td><textarea rows="4" data-store="matriz-extra-desconoce" data-track placeholder="Registra cuáles desconoce este caso adicional."></textarea></td>
+                  <td><textarea rows="4" data-store="matriz-extra-recomienda" data-track placeholder="Registra qué herramientas recomendarías para este caso adicional."></textarea></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bloque 3: Socialización y compromisos -->
+      <div class="section-block">
+        <div class="section-block-header">
+          <span class="section-icon">&#128483;</span>
+          <div>
+            <h2>Socialización, mapa de contenidos y compromisos</h2>
+            <p>Cierre de la actividad diagnóstica</p>
+          </div>
+        </div>
+        <div class="section-block-body">
+          <div class="card-support">
+            <h4>Socialización de la matriz</h4>
+            <p>Cada equipo socializa su Matriz de Diagnóstico ante el grupo en no más de 5 minutos. El instructor consolida los hallazgos en un mapa digital en el tablero, que servirá como hilo conductor para todas las actividades posteriores de la guía.</p>
+          </div>
+          <div class="card-support">
+            <h4>Mapa de contenidos y cronograma</h4>
+            <p>El instructor presenta el mapa de contenidos y el cronograma de trabajo de las 60 horas de formación, explicando cómo cada tema que estudiarás responde a una necesidad real identificada en los diagnósticos del paso anterior.</p>
+            <label style="margin-top:12px;">
+              <span>Tres compromisos personales para este proceso formativo</span>
+              <textarea rows="5" data-store="contexto-compromisos" data-track placeholder="Escribe tres compromisos personales para este proceso formativo."></textarea>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bloque 4: Reto -->
+      <div class="section-block">
+        <div class="section-block-header">
+          <span class="section-icon">&#127942;</span>
+          <div>
+            <h2>¡RETO! Demuestra lo que sabes</h2>
+            <p>Reflexión final sobre los casos analizados</p>
+          </div>
+        </div>
+        <div class="section-block-body">
+          <div class="reto-card">
+            <h4>&#128221; ¡RETO! Demuestra lo que sabes</h4>
+            <label>
+              <span>¿Cuál de los tres casos te generó más dudas técnicas? ¿Por qué?</span>
+              <textarea rows="4" data-store="contexto-reto-caso" data-track placeholder="Explica cuál caso te generó más dudas técnicas y por qué."></textarea>
+            </label>
+            <label>
+              <span>¿Qué herramienta digital que tú ya usas podría resolver el mayor problema de ese actor productivo?</span>
+              <textarea rows="4" data-store="contexto-reto-herramienta" data-track placeholder="Explica qué herramienta digital ya usas y cómo ayudaría a resolver el problema."></textarea>
+            </label>
+            <p class="reto-footer">Esa respuesta será tu punto de partida para la Misión Final de esta guía.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel de exportación y entrega -->
+      <div class="export-panel">
+        <h3>&#128196; Exportar y subir a Drive</h3>
+        <p>Cuando termines de diligenciar la matriz, exporta el documento con tus respuestas y súbelo a la carpeta de Drive correspondiente a tu ficha de aprendiz.</p>
+        <div class="export-actions">
+          <button type="button" class="btn-export" onclick="exportarMatriz()">
+            &#128202; Exportar Matriz (.doc)
+          </button>
+        </div>
+        <div class="drive-link-panel" id="drive-link-panel"></div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /app-main -->
+
+<script>
+/* ── Descarga plantilla Word vacía ─────────────────────────────────────── */
+function descargarMatrizWord() {
+  var a = document.createElement("a");
+  a.href = "assets/materiales/guia2/MatrizDiagnosticoDigital.docx";
+  a.download = "MatrizDiagnosticoDigital.docx";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+/* ── Bloqueo de campos ─────────────────────────────────────────────────── */
+function lockMatriz(finalizedAt) {
+  document.querySelectorAll("textarea[data-store]").forEach(function(el) {
+    el.disabled = true;
+    el.style.background = "#f1f5f9";
+    el.style.color = "#64748b";
+    el.style.cursor = "not-allowed";
+  });
+  var btn = document.getElementById("btn-guardar");
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = "\u2713 Actividad finalizada";
+    btn.style.background = "#16a34a";
+    btn.style.cursor = "default";
+  }
+  var savebar = document.querySelector(".save-bar");
+  if (savebar) {
+    var dateStr = "";
+    if (finalizedAt) {
+      try {
+        dateStr = " el " + new Date(finalizedAt).toLocaleString("es-CO", {
+          year:"numeric", month:"short", day:"numeric",
+          hour:"2-digit", minute:"2-digit"
+        });
+      } catch(e) {}
+    }
+    var banner = document.createElement("div");
+    banner.style.cssText = "background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:13px 18px;margin-bottom:16px;font-size:.9rem;color:#15803d;font-weight:700;";
+    banner.textContent = "\uD83D\uDD12 Actividad 3.2.2 finalizada" + dateStr + ". Tus respuestas han sido enviadas y no pueden modificarse.";
+    savebar.parentNode.insertBefore(banner, savebar);
+  }
+}
+
+function checkLockState() {
+  var field   = document.getElementById("field-322-finalizada");
+  var fieldAt = document.getElementById("field-322-finalizada-at");
+  if (field && (field.value === "true" || field.value === "1")) {
+    lockMatriz(fieldAt ? fieldAt.value : "");
+  }
+}
+
+/* ── Finalizar actividad ───────────────────────────────────────────────── */
+async function finalizarMatriz() {
+  if (!window.confirm("¿Finalizar la actividad 3.2.2?\n\nUna vez guardada, tus respuestas quedarán bloqueadas y no podrás modificarlas.")) {
+    return;
+  }
+  var btn    = document.getElementById("btn-guardar");
+  var status = document.getElementById("save-status");
+  if (btn) btn.disabled = true;
+  if (status) { status.textContent = "Guardando\u2026"; status.className = "save-status saving"; }
+
+  var now = new Date().toISOString();
+  var fFin = document.getElementById("field-322-finalizada");
+  var fAt  = document.getElementById("field-322-finalizada-at");
+
+  if (fFin) { fFin.value = "true"; fFin.dispatchEvent(new Event("input", { bubbles: true })); }
+  if (fAt)  { fAt.value  = now;    fAt.dispatchEvent(new Event("input",  { bubbles: true })); }
+
+  await new Promise(function(r) { setTimeout(r, 400); });
+
+  try {
+    if (typeof window.guia2SyncNow === "function") {
+      await window.guia2SyncNow();
+    }
+    if (status) { status.textContent = "\u2713 Guardado en Firestore"; status.className = "save-status ok"; }
+    lockMatriz(now);
+  } catch(e) {
+    if (fFin) { fFin.value = ""; fFin.dispatchEvent(new Event("input", { bubbles: true })); }
+    if (fAt)  { fAt.value  = ""; fAt.dispatchEvent(new Event("input",  { bubbles: true })); }
+    if (status) { status.textContent = "\u2717 Error al guardar. Reintenta."; status.className = "save-status error"; }
+    if (btn) btn.disabled = false;
+    return;
+  }
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+  setTimeout(checkLockState, 1500);
+});
+
+/* ── Exportar Matrix (.doc) ────────────────────────────────────────────── */
+var MATRIZ_DRIVE_FOLDERS = {
+  "3441939": "https://drive.google.com/drive/folders/1SLkk986REOKGEFaCyWV7rSeudj7lnUMs?usp=drive_link",
+  "3441942": "https://drive.google.com/drive/folders/1cv0DkFXhkMw22AddqIgC354DhUUHcQck?usp=drive_link"
+};
+
+function getMatrizSelection() {
+  var body = document.body;
+  var defaults = { ficha: body.dataset.defaultFicha || "", inst: body.dataset.defaultInst || "", grupo: body.dataset.defaultGrupo || "" };
+  return (window.portalAuth && typeof window.portalAuth.getCurrentSelection === "function")
+    ? window.portalAuth.getCurrentSelection(defaults) : defaults;
+}
+
+function getFieldVal(storeKey) {
+  var el = document.querySelector('[data-store="' + storeKey + '"]');
+  return (el && el.value.trim()) ? el.value.trim() : "(Sin respuesta)";
+}
+
+function escapeW(v) {
+  return String(v || "")
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;").replace(/'/g,"&#39;")
+    .replace(/\n/g,"<br>");
+}
+
+function exportarMatriz() {
+  var sel    = getMatrizSelection();
+  var session = window.portalAuth && typeof window.portalAuth.getCurrentSession === "function"
+    ? window.portalAuth.getCurrentSession() : null;
+  var nombre = (session && session.user && session.user.fullName) || (sel.grupo + " - Aprendiz");
+  var ficha  = sel.ficha || "Sin ficha";
+  var inst   = sel.inst  || "Instituci\u00f3n Educativa";
+  var grupo  = sel.grupo || "";
+  var hoy    = new Date().toLocaleDateString("es-CO", { year:"numeric", month:"long", day:"numeric" });
+
+  function fila(actor, k1, k2, k3) {
+    return "<tr><th scope='row'>" + escapeW(actor) + "</th>"
+      + "<td>" + escapeW(getFieldVal(k1)) + "</td>"
+      + "<td>" + escapeW(getFieldVal(k2)) + "</td>"
+      + "<td>" + escapeW(getFieldVal(k3)) + "</td></tr>";
+  }
+
+  var html = "<!DOCTYPE html>\n"
+    + "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>\n"
+    + "<head><meta charset='utf-8'>\n"
+    + "<title>Matriz de Diagn\u00f3stico Digital - " + escapeW(nombre) + "</title>\n"
+    + "<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>90</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument></xml><![endif]-->\n"
+    + "<style>\n"
+    + "  @page { margin: 2.5cm; }\n"
+    + "  body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; color: #1a1a1a; }\n"
+    + "  .hdr { text-align: center; border-bottom: 2px solid #0891b2; padding-bottom: 8pt; margin-bottom: 14pt; }\n"
+    + "  .hdr h1 { margin: 0 0 4pt; font-size: 15pt; color: #0891b2; }\n"
+    + "  .hdr p { margin: 2pt 0; font-size: 10pt; }\n"
+    + "  .meta { width: 100%; border-collapse: collapse; margin-bottom: 16pt; }\n"
+    + "  .meta td { border: 1px solid #d1d5db; padding: 6pt; }\n"
+    + "  .meta .lbl { font-weight: 700; background: #f0f9ff; width: 28%; }\n"
+    + "  .data { width: 100%; border-collapse: collapse; margin-bottom: 14pt; }\n"
+    + "  .data th, .data td { border: 1px solid #9ca3af; padding: 7pt; vertical-align: top; }\n"
+    + "  .data thead th { background: #0891b2; color: #fff; font-weight: 700; text-align: left; font-size: 9pt; }\n"
+    + "  .data tbody th { background: #f0f9ff; font-weight: 700; font-size: 9pt; width: 22%; }\n"
+    + "  h2 { font-size: 11pt; color: #0891b2; margin: 12pt 0 4pt; }\n"
+    + "  .resp { white-space: pre-wrap; font-size: 10pt; margin: 0; }\n"
+    + "  .nota { font-size: 9pt; color: #6b7280; margin-top: 12pt; }\n"
+    + "</style></head>\n"
+    + "<body>\n"
+    + "  <div class='hdr'>\n"
+    + "    <h1>Matriz de Diagn\u00f3stico Digital</h1>\n"
+    + "    <p>3.2.2 &middot; Fichas de casos, Matriz de Diagn\u00f3stico Digital y compromisos del proceso</p>\n"
+    + "    <p>Gu\u00eda 2 &ndash; Operar Herramientas Inform\u00e1ticas y Digitales &middot; Sistemas Teleinform\u00e1ticos</p>\n"
+    + "  </div>\n"
+    + "  <table class='meta'>\n"
+    + "    <tr><td class='lbl'>Aprendiz</td><td>" + escapeW(nombre) + "</td></tr>\n"
+    + "    <tr><td class='lbl'>Instituci\u00f3n</td><td>" + escapeW(inst) + "</td></tr>\n"
+    + "    <tr><td class='lbl'>Grupo</td><td>" + escapeW(grupo) + "</td></tr>\n"
+    + "    <tr><td class='lbl'>Ficha</td><td>" + escapeW(ficha) + "</td></tr>\n"
+    + "    <tr><td class='lbl'>Fecha de exportaci\u00f3n</td><td>" + escapeW(hoy) + "</td></tr>\n"
+    + "  </table>\n"
+    + "  <table class='data'>\n"
+    + "    <thead><tr><th>Actor productivo</th><th>Herramientas que usa</th><th>Herramientas que desconoce</th><th>Herramientas recomendadas</th></tr></thead>\n"
+    + "    <tbody>\n"
+    + fila("Tienda Don Ramiro en Puerto Boyac\u00e1","matriz-tienda-usa","matriz-tienda-desconoce","matriz-tienda-recomienda") + "\n"
+    + fila("Cultivo Familiar en Otanche","matriz-cultivo-usa","matriz-cultivo-desconoce","matriz-cultivo-recomienda") + "\n"
+    + fila("Emprendimiento de artesan\u00edas en Pauna","matriz-artesanias-usa","matriz-artesanias-desconoce","matriz-artesanias-recomienda") + "\n"
+    + fila("Caso adicional asignado por el instructor","matriz-extra-usa","matriz-extra-desconoce","matriz-extra-recomienda") + "\n"
+    + "    </tbody>\n"
+    + "  </table>\n"
+    + "  <h2>Compromisos personales para este proceso formativo</h2>\n"
+    + "  <p class='resp'>" + escapeW(getFieldVal("contexto-compromisos")) + "</p>\n"
+    + "  <h2>Reto: \u00bfCu\u00e1l caso te gener\u00f3 m\u00e1s dudas t\u00e9cnicas?</h2>\n"
+    + "  <p class='resp'>" + escapeW(getFieldVal("contexto-reto-caso")) + "</p>\n"
+    + "  <h2>Reto: \u00bfQu\u00e9 herramienta digital ya usas podr\u00eda ayudar?</h2>\n"
+    + "  <p class='resp'>" + escapeW(getFieldVal("contexto-reto-herramienta")) + "</p>\n"
+    + "  <p class='nota'>Exportado desde la gu\u00eda interactiva SENA &middot; Verifica la informaci\u00f3n antes de la entrega final.</p>\n"
+    + "</body></html>";
+
+  var safeNombre = nombre.replace(/[^a-zA-Z0-9\u00C0-\u024F ]/g,"").trim().replace(/\s+/g,"_") || "Aprendiz";
+  var safeFicha  = ficha.replace(/[^a-zA-Z0-9]/g,"") || "SinFicha";
+  var fileName   = "MatrizDiagnostico_" + safeNombre + "_" + safeFicha + ".doc";
+
+  var blob = new Blob(["\ufeff", html], { type:"application/msword" });
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement("a");
+  a.href = url; a.download = fileName;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+
+  var panel = document.getElementById("drive-link-panel");
+  if (panel) {
+    var driveUrl = MATRIZ_DRIVE_FOLDERS[sel.ficha] || "";
+    if (driveUrl) {
+      panel.innerHTML = "<p style='font-size:.86rem;color:#15803d;font-weight:600;margin:0 0 8px;'>Archivo descargado. Ahora s\u00fabelo a tu carpeta de Drive:</p>"
+        + "<a href='" + driveUrl + "' target='_blank' rel='noopener noreferrer' class='btn-export' style='background:#15803d;text-decoration:none;'>"
+        + "&#128194; Abrir carpeta de Drive (Ficha " + escapeW(sel.ficha) + ") &#8599;</a>";
+    } else {
+      panel.innerHTML = "<p style='font-size:.86rem;color:#166534;margin:0;'>Archivo descargado. S\u00fabelo a la carpeta de Drive de tu ficha de aprendiz.</p>";
+    }
+    panel.style.display = "block";
+  }
+}
+</script>
+
+</body>
+</html>

@@ -8,6 +8,7 @@
   let guide2WordSearchSummaries = {};
   let guide2MatchingGameSummaries = {};
   let fichaCasoSummaries = {};
+  let matriz322Summaries = {};
 
   const FICHA_CASO_FILES = {
     "10A": "grupo-10a-guia-02-ficha-caso.html",
@@ -350,6 +351,17 @@
             .then(({ snapshot }) => {
               nextSummaries[key] = extractWordSearchSummary(snapshot, user);
               nextMatchingSummaries[key] = extractMatchingGameSummary(snapshot, user);
+              const st = snapshot?.state || {};
+              if (st["322-finalizada"] === true || st["322-finalizada"] === "true") {
+                matriz322Summaries[user.usernameKey] = {
+                  fullName: user.fullName,
+                  username: user.username,
+                  grupo: user.grupo,
+                  ficha: user.ficha,
+                  finalizadaAt: st["322-finalizada-at"] || snapshot?.updatedAt || "",
+                  state: st,
+                };
+              }
             })
             .catch(() => {
               nextSummaries[key] = null;
@@ -541,6 +553,98 @@
   }
 
   // ── Fin Ficha de caso ──────────────────────────────────────────────────────
+
+  // ── Matriz 3.2.2 ────────────────────────────────────────────────────────────
+
+  const MATRIZ322_ACTORS = [
+    { label: "Tienda Don Ramiro (Puerto Boyac\u00e1)", usa: "matriz-tienda-usa", desconoce: "matriz-tienda-desconoce", recomienda: "matriz-tienda-recomienda" },
+    { label: "Cultivo Familiar (Otanche)",              usa: "matriz-cultivo-usa", desconoce: "matriz-cultivo-desconoce", recomienda: "matriz-cultivo-recomienda" },
+    { label: "Artesan\u00edas (Pauna)",                 usa: "matriz-artesanias-usa", desconoce: "matriz-artesanias-desconoce", recomienda: "matriz-artesanias-recomienda" },
+    { label: "Caso adicional del instructor",           usa: "matriz-extra-usa", desconoce: "matriz-extra-desconoce", recomienda: "matriz-extra-recomienda" },
+  ];
+
+  function buildMatriz322Table(rows) {
+    if (!rows.length) {
+      return '<p class="activities-loading">Ning\u00fan aprendiz ha finalizado la Matriz 3.2.2 a\u00fan.</p>';
+    }
+    const headerHtml = ["Aprendiz", "Grupo", "Ficha", "Fecha finalizado", ""].map(
+      (h) => `<th>${escapeHtml(h)}</th>`
+    ).join("");
+    const rowHtml = rows.map(({ summary }) => `
+      <tr>
+        <td>${escapeHtml(summary.fullName || summary.username)}</td>
+        <td>${escapeHtml(summary.grupo)}</td>
+        <td>${escapeHtml(summary.ficha)}</td>
+        <td>${escapeHtml(formatDate(summary.finalizadaAt))}</td>
+        <td>
+          <button class="btn ghost" type="button"
+            data-matriz322-user="${escapeHtml(summary.username)}">
+            Ver respuestas
+          </button>
+        </td>
+      </tr>`
+    ).join("");
+    return `
+      <div class="answer-table-wrap">
+        <table class="answer-table activities-table">
+          <thead><tr>${headerHtml}</tr></thead>
+          <tbody>${rowHtml}</tbody>
+        </table>
+      </div>`;
+  }
+
+  function openMatriz322Modal(summary) {
+    const st = summary.state || {};
+    const val = (k) => {
+      const v = String(st[k] || "").trim();
+      return v ? escapeHtml(v).replace(/\r?\n/g, "<br>") : "<em>Sin respuesta</em>";
+    };
+
+    const matrizRows = MATRIZ322_ACTORS.map((a) => `
+      <tr>
+        <th scope="row" style="background:#f0f9ff;font-size:.82rem;width:22%;">${escapeHtml(a.label)}</th>
+        <td style="font-size:.82rem;">${val(a.usa)}</td>
+        <td style="font-size:.82rem;">${val(a.desconoce)}</td>
+        <td style="font-size:.82rem;">${val(a.recomienda)}</td>
+      </tr>`
+    ).join("");
+
+    const bodyHtml = `
+      <div class="answer-table-wrap" style="margin-bottom:16px;">
+        <table class="answer-table" style="min-width:580px;">
+          <thead>
+            <tr>
+              <th>Actor productivo</th>
+              <th>Herramientas que usa</th>
+              <th>Herramientas que desconoce</th>
+              <th>Herramientas recomendadas</th>
+            </tr>
+          </thead>
+          <tbody>${matrizRows}</tbody>
+        </table>
+      </div>
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px 16px;margin-bottom:10px;">
+        <strong style="display:block;font-size:.85rem;color:#1e293b;margin-bottom:6px;">Compromisos personales</strong>
+        <div style="font-size:.87rem;color:#334155;white-space:pre-wrap;">${val("contexto-compromisos")}</div>
+      </div>
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px 16px;margin-bottom:10px;">
+        <strong style="display:block;font-size:.85rem;color:#1e293b;margin-bottom:6px;">Reto: ¿Cuál caso generó más dudas técnicas?</strong>
+        <div style="font-size:.87rem;color:#334155;white-space:pre-wrap;">${val("contexto-reto-caso")}</div>
+      </div>
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px 16px;">
+        <strong style="display:block;font-size:.85rem;color:#1e293b;margin-bottom:6px;">Reto: ¿Qué herramienta digital ya usa el aprendiz?</strong>
+        <div style="font-size:.87rem;color:#334155;white-space:pre-wrap;">${val("contexto-reto-herramienta")}</div>
+      </div>`;
+
+    openGuide2ResponsesModal({
+      title: "Matriz 3.2.2 \u2014 Diagn\u00f3stico Digital",
+      subtitle: `${summary.fullName} | Grupo ${summary.grupo}`,
+      meta: `Aprendiz: ${escapeHtml(summary.fullName)} | Grupo: ${escapeHtml(summary.grupo)} | Ficha: ${escapeHtml(summary.ficha)} | Finalizado: ${escapeHtml(formatDate(summary.finalizadaAt))}`,
+      bodyHtml,
+    });
+  }
+
+  // ── Fin Matriz 3.2.2 ─────────────────────────────────────────────────────────
 
   function renderAnswerValue(value) {
     const text = String(value ?? "").trim();
@@ -1330,6 +1434,14 @@
 
     const loadingHtml = '<p class="activities-loading">Cargando resultados\u2026</p>';
 
+    const matriz322Rows = [];
+    users.forEach((user) => {
+      const summary = matriz322Summaries[user.usernameKey];
+      if (summary) {
+        matriz322Rows.push({ summary });
+      }
+    });
+
     container.innerHTML = `
       <section class="panel">
         <h2>Actividad 1 \u2014 Sopa de letras</h2>
@@ -1342,6 +1454,10 @@
       <section class="panel">
         <h2>Actividad 4 \u2014 Ficha de caso (respuestas guardadas)</h2>
         ${fichaCasoLoading ? loadingHtml : buildFichaCasoTable(fichaCasoRows)}
+      </section>
+      <section class="panel">
+        <h2>Actividad 3.2.2 \u2014 Matriz de Diagn\u00f3stico Digital (finalizadas)</h2>
+        ${stillLoading ? loadingHtml : buildMatriz322Table(matriz322Rows)}
       </section>
     `;
   }
@@ -1538,6 +1654,19 @@
       const viewFichaCasoButton = event.target.closest("[data-ficha-caso-user]");
       if (viewFichaCasoButton) {
         await handleViewFichaCaso(viewFichaCasoButton);
+        return;
+      }
+
+      const viewMatriz322Button = event.target.closest("[data-matriz322-user]");
+      if (viewMatriz322Button) {
+        const username = viewMatriz322Button.getAttribute("data-matriz322-user");
+        const user = allUsers.find((u) => u.username === username || u.usernameKey === username);
+        if (user) {
+          const summary = matriz322Summaries[user.usernameKey];
+          if (summary) {
+            openMatriz322Modal(summary);
+          }
+        }
         return;
       }
 
