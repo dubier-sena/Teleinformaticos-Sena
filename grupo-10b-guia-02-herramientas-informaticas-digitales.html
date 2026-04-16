@@ -28,7 +28,7 @@
   <script defer src="js/shared_drive_delivery.js?v=20260410_2"></script>
   <script defer src="data/calendario_2026_records.js?v=20260410_1"></script>
   <script defer src="data/calendario_2026_seed.js?v=20260410_1"></script>
-<script defer src="js/script_guia2.js?v=20260416_1"></script>
+<script defer src="js/script_guia2.js?v=20260416_2"></script>
   <script defer src="js/guia_template.js?v=20260411_1"></script>
   <script defer src="js/fichas_casos.js?v=20260414_1"></script>
 </head>
@@ -529,10 +529,17 @@
                 </li>
                 <li style="margin-bottom:10px;">Forma un equipo de trabajo con tres compa&ntilde;eros a quienes se les asignaron las otras fichas. Presenten brevemente su caso al equipo (m&aacute;ximo 3 minutos cada uno) y respondan juntos: &iquest;Qu&eacute; herramientas digitales tiene disponibles este actor? &iquest;Cu&aacute;les desconoce? &iquest;Cu&aacute;les necesitar&iacute;a aprender a usar?</li>
                 <li style="margin-bottom:10px;">Con tu equipo, completa la <strong>Matriz de Diagn&oacute;stico Digital</strong> (formato entregado por el instructor o disponible m&aacute;s abajo en esta gu&iacute;a). Esta matriz tiene cuatro columnas: Actor productivo, Herramientas que usa, Herramientas que desconoce, y Herramientas recomendadas. Llena la informaci&oacute;n de los cuatro casos analizados.
-                  <div style="margin-top:12px;">
-                    <button type="button" class="btn-drive" onclick="descargarMatrizWord()" style="border:none;cursor:pointer;">
+                  <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
+                    <button type="button" class="btn-drive" onclick="descargarMatrizWord()" style="flex:1;min-width:200px;border:none;cursor:pointer;justify-content:center;">
                       &#128202; Descargar Matriz de Diagn&oacute;stico Digital
                     </button>
+                    <a href="grupo-10b-guia-02-actividad-322-matriz.html" class="btn-drive" style="
+                      flex:1;min-width:200px;justify-content:center;
+                      background:linear-gradient(135deg,#0891b2 0%,#0e7490 100%);
+                      text-decoration:none;
+                    ">
+                      &#128202; Abrir Matriz de Diagn&oacute;stico Digital &#8594;
+                    </a>
                   </div>
                 </li>
                 <li style="margin-bottom:10px;">Cada equipo socializa su Matriz de Diagn&oacute;stico ante el grupo en no m&aacute;s de 5 minutos. El instructor consolida los hallazgos en un mapa digital en el tablero, que servir&aacute; como hilo conductor para todas las actividades posteriores de la gu&iacute;a.</li>
@@ -549,110 +556,6 @@
             </div>
           </div>
 
-          <div class="activity open mission-card">
-            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
-              <span class="activity-num">3.2.2</span>
-              <span class="activity-title">Fichas de casos, Matriz de Diagn&oacute;stico Digital y compromisos del proceso</span>
-              <span class="mission-chip">Mision diagnostica</span>
-              <span class="activity-toggle">&#9662;</span>
-            </div>
-            <div class="activity-body">
-              <div class="subsection-head">
-                <h3>Descripci&oacute;n paso a paso</h3>
-              </div>
-              <p class="intro-text" style="text-align:justify">Lee con detenimiento la ficha de caso que se te asign&oacute;. Puedes abrirla desde el bot&oacute;n que aparece en el paso 2 de la Actividad 4.</p>
-              <p class="intro-text" style="text-align:justify">Forma un equipo de trabajo con tres compa&ntilde;eros a quienes se les asignaron las otras fichas. Presenten brevemente su caso al equipo (m&aacute;ximo 3 minutos cada uno) y respondan juntos:</p>
-
-              <div class="checklist-card compact-card">
-                <ul class="note-list">
-                  <li>&iquest;Qu&eacute; herramientas digitales tiene disponibles este actor?</li>
-                  <li>&iquest;Cu&aacute;les desconoce?</li>
-                  <li>&iquest;Cu&aacute;les necesitar&iacute;a aprender a usar?</li>
-                </ul>
-              </div>
-
-              <div class="diagnosis-points" style="margin:16px 0;">
-                <div class="diagnosis-point">
-                  <strong>Tienda Don Ramiro en Puerto Boyac&aacute;</strong>
-                  <p>Registra el diagn&oacute;stico digital de este caso en la matriz de abajo.</p>
-                </div>
-                <div class="diagnosis-point">
-                  <strong>Cultivo Familiar en Otanche</strong>
-                  <p>Registra el diagn&oacute;stico digital de este caso en la matriz de abajo.</p>
-                </div>
-                <div class="diagnosis-point">
-                  <strong>Emprendimiento de artesan&iacute;as en Pauna</strong>
-                  <p>Registra el diagn&oacute;stico digital de este caso en la matriz de abajo.</p>
-                </div>
-              </div>
-
-              <div class="table-scroll">
-                <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th>Actor productivo</th>
-                      <th>Herramientas que usa</th>
-                      <th>Herramientas que desconoce</th>
-                      <th>Herramientas recomendadas</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <th scope="row">Tienda Don Ramiro en Puerto Boyac&aacute;</th>
-                      <td><textarea rows="4" data-store="matriz-tienda-usa" data-track placeholder="Registra qu&eacute; herramientas tiene disponibles este actor."></textarea></td>
-                      <td><textarea rows="4" data-store="matriz-tienda-desconoce" data-track placeholder="Registra cu&aacute;les desconoce."></textarea></td>
-                      <td><textarea rows="4" data-store="matriz-tienda-recomienda" data-track placeholder="Registra cu&aacute;les necesitar&iacute;a aprender a usar."></textarea></td>
-                    </tr>
-                    <tr>
-                      <th scope="row">Cultivo Familiar en Otanche</th>
-                      <td><textarea rows="4" data-store="matriz-cultivo-usa" data-track placeholder="Registra qu&eacute; herramientas tiene disponibles este actor."></textarea></td>
-                      <td><textarea rows="4" data-store="matriz-cultivo-desconoce" data-track placeholder="Registra cu&aacute;les desconoce."></textarea></td>
-                      <td><textarea rows="4" data-store="matriz-cultivo-recomienda" data-track placeholder="Registra cu&aacute;les necesitar&iacute;a aprender a usar."></textarea></td>
-                    </tr>
-                    <tr>
-                      <th scope="row">Emprendimiento de artesan&iacute;as en Pauna</th>
-                      <td><textarea rows="4" data-store="matriz-artesanias-usa" data-track placeholder="Registra qu&eacute; herramientas tiene disponibles este actor."></textarea></td>
-                      <td><textarea rows="4" data-store="matriz-artesanias-desconoce" data-track placeholder="Registra cu&aacute;les desconoce."></textarea></td>
-                      <td><textarea rows="4" data-store="matriz-artesanias-recomienda" data-track placeholder="Registra cu&aacute;les necesitar&iacute;a aprender a usar."></textarea></td>
-                    </tr>
-                    <tr>
-                      <th scope="row">Caso adicional asignado por el instructor</th>
-                      <td><textarea rows="4" data-store="matriz-extra-usa" data-track placeholder="Registra qu&eacute; herramientas usa este caso adicional."></textarea></td>
-                      <td><textarea rows="4" data-store="matriz-extra-desconoce" data-track placeholder="Registra cu&aacute;les desconoce este caso adicional."></textarea></td>
-                      <td><textarea rows="4" data-store="matriz-extra-recomienda" data-track placeholder="Registra qu&eacute; herramientas recomendar&iacute;as para este caso adicional."></textarea></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <div class="support-column" style="margin-top:16px;">
-                <div class="checklist-card compact-card">
-                  <h4>Socializaci&oacute;n de la matriz</h4>
-                  <p>Cada equipo socializa su Matriz de Diagn&oacute;stico ante el grupo en no m&aacute;s de 5 minutos. El instructor consolida los hallazgos en un mapa digital en el tablero, que servir&aacute; como hilo conductor para todas las actividades posteriores de la gu&iacute;a.</p>
-                </div>
-                <div class="checklist-card compact-card">
-                  <h4>Mapa de contenidos y cronograma</h4>
-                  <p>El instructor presenta el mapa de contenidos y el cronograma de trabajo de las 60 horas de formaci&oacute;n, explicando c&oacute;mo cada tema que estudiar&aacute;s responde a una necesidad real identificada en los diagn&oacute;sticos del paso anterior. Revisa el mapa y anota en tu cuaderno de aprendizaje tres compromisos personales para este proceso formativo.</p>
-                  <label style="display:block;margin-top:12px;">
-                    <span>Tres compromisos personales para este proceso formativo</span>
-                    <textarea rows="5" data-store="contexto-compromisos" data-track placeholder="Escribe tres compromisos personales para este proceso formativo."></textarea>
-                  </label>
-                </div>
-                <div class="checklist-card compact-card">
-                  <h4>&#128221; &iexcl;RETO! Demuestra lo que sabes</h4>
-                  <label style="display:block;margin-top:8px;">
-                    <span>&iquest;Cu&aacute;l de los tres casos te gener&oacute; m&aacute;s dudas t&eacute;cnicas? &iquest;Por qu&eacute;?</span>
-                    <textarea rows="4" data-store="contexto-reto-caso" data-track placeholder="Explica cu&aacute;l caso te gener&oacute; m&aacute;s dudas t&eacute;cnicas y por qu&eacute;."></textarea>
-                  </label>
-                  <label style="display:block;margin-top:12px;">
-                    <span>&iquest;Qu&eacute; herramienta digital que t&uacute; ya usas podr&iacute;a resolver el mayor problema de ese actor productivo?</span>
-                    <textarea rows="4" data-store="contexto-reto-herramienta" data-track placeholder="Explica qu&eacute; herramienta digital ya usas y c&oacute;mo ayudar&iacute;a a resolver el problema."></textarea>
-                  </label>
-                  <p style="margin-top:12px;">Esa respuesta ser&aacute; tu punto de partida para la Misi&oacute;n Final de esta gu&iacute;a.</p>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 

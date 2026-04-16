@@ -2,8 +2,10 @@ const PAGE_FILE = window.location.pathname.split("/").pop().toLowerCase() || "gu
 const STORAGE_FILE_ALIASES = {
   "grupo-10a-guia-02-herramientas-informaticas-digitales.html": "10a_guia2.html",
   "grupo-10a-guia-02-actividad-4-formulario.html": "10a_guia2.html",
+  "grupo-10a-guia-02-actividad-322-matriz.html": "10a_guia2.html",
   "grupo-10b-guia-02-herramientas-informaticas-digitales.html": "10b_guia2.html",
   "grupo-10b-guia-02-actividad-4-formulario.html": "10b_guia2.html",
+  "grupo-10b-guia-02-actividad-322-matriz.html": "10b_guia2.html",
   "grupo-11a-guia-05-herramientas-informaticas-digitales.html": "11a_guia.html",
   "grupo-11b-guia-05-herramientas-informaticas-digitales.html": "11b_guia.html",
   "plantilla-grado-11-guia-05-herramientas-informaticas-digitales.html": "grado_guia.html",
