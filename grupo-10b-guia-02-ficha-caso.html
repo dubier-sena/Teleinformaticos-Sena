@@ -172,6 +172,54 @@
   }
   .export-word-btn:active { transform: translateY(0); }
 
+  /* ── Botón guardar respuestas ── */
+  .ficha-submit-wrap {
+    display: flex;
+    justify-content: flex-end;
+    padding: 16px 0 4px;
+  }
+  .ficha-submit-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 26px;
+    background: linear-gradient(135deg, #0fb86c 0%, #0a9457 100%);
+    color: #fff;
+    font-weight: 700;
+    font-size: .95rem;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(15,184,108,.32);
+    transition: opacity .18s ease, transform .18s ease;
+    font-family: inherit;
+  }
+  .ficha-submit-btn:hover:not(:disabled) { opacity: .9; transform: translateY(-1px); }
+  .ficha-submit-btn:disabled {
+    background: #94a3b8;
+    box-shadow: none;
+    cursor: default;
+    transform: none;
+    opacity: 1;
+  }
+
+  /* ── Banner de confirmación ── */
+  .ficha-submitted-banner {
+    display: none;
+    align-items: center;
+    gap: 12px;
+    margin-top: 14px;
+    padding: 12px 16px;
+    background: #f0fdf4;
+    border: 2px solid #16a34a;
+    border-radius: 12px;
+    color: #15803d;
+    font-weight: 600;
+    font-size: .9rem;
+    line-height: 1.5;
+  }
+  .ficha-submitted-banner.is-visible { display: flex; }
+
   @media (max-width: 600px) {
     .herramientas-grid { grid-template-columns: 1fr; }
     .herramientas-col:first-child { border-right: none; border-bottom: 1px solid #e2e8f0; }
@@ -285,6 +333,23 @@
             <div id="fc-respuestas-container">
               <!-- Las textareas se generan dinámicamente al revelar la ficha -->
             </div>
+
+            <!-- Banner de confirmación -->
+            <div class="ficha-submitted-banner" id="ficha-submitted-banner">
+              <span style="font-size:1.4rem;flex-shrink:0;">&#9989;</span>
+              <div>
+                <strong>Respuestas guardadas</strong><br>
+                Registradas el <span id="ficha-submitted-date"></span>.
+                Ya no es posible modificarlas.
+              </div>
+            </div>
+
+            <!-- Botón guardar y finalizar -->
+            <div class="ficha-submit-wrap">
+              <button type="button" class="ficha-submit-btn" id="ficha-submit-btn" onclick="guardarRespuestas()">
+                &#10003;&nbsp; Guardar y finalizar respuestas
+              </button>
+            </div>
           </div>
 
         </div><!-- /ficha-card -->
@@ -311,6 +376,7 @@
 <script>
 (function () {
   const RESP_KEY = "guia2_ficha_caso_resp";
+  const LOCK_KEY = "guia2_ficha_caso_submitted_10B";
   let _fichaIdx = -1;
   let _ficha = null;
 
@@ -368,6 +434,12 @@
 
     // Textareas individuales de respuesta
     renderRespuestas(f, idx);
+
+    // Restaurar bloqueo si ya fue guardado
+    var savedLock = localStorage.getItem(LOCK_KEY);
+    if (savedLock) {
+      setTimeout(function () { applyLock(savedLock); }, 60);
+    }
 
     // Mostrar ficha, ocultar cover
     document.getElementById("ficha-cover").style.display = "none";
@@ -498,8 +570,56 @@
       .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
 
+  /* ── Aplica el bloqueo visual y funcional ── */
+  function applyLock(fecha) {
+    // Deshabilitar todos los textareas de respuesta
+    var container = document.getElementById("fc-respuestas-container");
+    if (container) {
+      container.querySelectorAll("textarea").forEach(function (ta) {
+        ta.disabled = true;
+      });
+    }
+
+    // Cambiar estado del botón guardar
+    var btn = document.getElementById("ficha-submit-btn");
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = "&#10003;&nbsp; Respuestas ya guardadas";
+    }
+
+    // Mostrar banner con fecha
+    var banner = document.getElementById("ficha-submitted-banner");
+    var dateSpan = document.getElementById("ficha-submitted-date");
+    if (banner) banner.classList.add("is-visible");
+    if (dateSpan) dateSpan.textContent = fecha;
+  }
+
+  /* ── Guarda y bloquea al hacer clic ── */
+  function guardarRespuestas() {
+    if (localStorage.getItem(LOCK_KEY)) return;
+
+    if (!_ficha) {
+      alert("Primero debes revelar tu ficha de caso antes de guardar.");
+      return;
+    }
+
+    var confirmar = window.confirm(
+      "\u00BFConfirmas que quieres guardar y finalizar tus respuestas?\n\n" +
+      "Una vez guardado ya no podr\u00E1s modificarlas."
+    );
+    if (!confirmar) return;
+
+    var fecha = new Date().toLocaleString("es-CO", {
+      day: "2-digit", month: "long", year: "numeric",
+      hour: "2-digit", minute: "2-digit"
+    });
+    localStorage.setItem(LOCK_KEY, fecha);
+    applyLock(fecha);
+  }
+
   window.revelarFicha = revelarFicha;
   window.exportarWord = exportarWord;
+  window.guardarRespuestas = guardarRespuestas;
 })();
 </script>
 
