@@ -3812,4 +3812,8 @@ window.guia2WordSearch = {
   getFoundColorClass: getWordSearchFoundColorClass,
 };
 
+// Expone una función para forzar sincronización inmediata con Firestore
+// (usada por guardarFormulario() al finalizar la Actividad 4)
+window.guia2SyncNow = () => syncCloudState(true);
+
 

@@ -234,7 +234,7 @@
   }
 </style>
 <script defer src="js/shared_drive_delivery.js?v=20260410_1"></script>
-<script defer src="js/script_guia2.js?v=20260413_1"></script>
+<script defer src="js/script_guia2.js?v=20260416_1"></script>
 <script defer src="js/activity4_admin_report.js?v=20260415_1"></script>
 </head>
 <body
@@ -770,6 +770,11 @@
     });
     localStorage.setItem(LOCK_KEY, fecha);
     applyLock(fecha);
+
+    // Forzar guardado inmediato en Firestore (script_guia2.js sincroniza todos los data-store)
+    if (typeof window.guia2SyncNow === "function") {
+      window.guia2SyncNow();
+    }
   }
 
   /* ── Al cargar la página: restaura el bloqueo si ya fue guardado ── */
