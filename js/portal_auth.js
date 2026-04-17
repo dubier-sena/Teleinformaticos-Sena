@@ -26,6 +26,10 @@
       "Guía 5 - Operar herramientas informáticas y digitales | Grupo 11B",
     "grupo-11b-guia-06-planificar-informacion.html":
       "Guía 6 - Planificar la información | Grupo 11B",
+    "santa-barbara-10a-guia-02-redes-rap01.html":
+      "Guía 2 - Definir los parámetros y recursos de la red de acuerdo con normativa de telecomunicaciones | Grupo 10A",
+    "santa-barbara-10b-guia-02-redes-rap01.html":
+      "Guía 2 - Definir los parámetros y recursos de la red de acuerdo con normativa de telecomunicaciones | Grupo 10B",
   };
 
   Object.assign(GUIDE_TITLES, {
@@ -126,12 +130,12 @@
     "3441944": {
       inst: "Institucion Educativa Santa Barbara",
       grupo: "10A",
-      guias: ["grupo-10a-guia-01-induccion.html"],
+      guias: ["grupo-10a-guia-01-induccion.html", "santa-barbara-10a-guia-02-redes-rap01.html"],
     },
     "3441950": {
       inst: "Institucion Educativa Santa Barbara",
       grupo: "10B",
-      guias: ["grupo-10b-guia-01-induccion.html"],
+      guias: ["grupo-10b-guia-01-induccion.html", "santa-barbara-10b-guia-02-redes-rap01.html"],
     },
     "3168850": {
       inst: "Institucion Educativa Santa Barbara",

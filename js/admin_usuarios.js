@@ -9,6 +9,12 @@
   let guide2MatchingGameSummaries = {};
   let fichaCasoSummaries = {};
   let matriz322Summaries = {};
+  let redesSocializacionSummaries = {};
+
+  const REDES_SB_CLOUD_FILES = {
+    "3441944": "sb_10a_redes.html",
+    "3441950": "sb_10b_redes.html",
+  };
 
   const FICHA_CASO_FILES = {
     "10A": "grupo-10a-guia-02-ficha-caso.html",
@@ -1381,6 +1387,49 @@
       </div>`;
   }
 
+  async function hydrateRedesSocializacionSummaries(users) {
+    const tasks = users
+      .filter((u) => REDES_SB_CLOUD_FILES[u.ficha])
+      .map(async (user) => {
+        if (user.usernameKey in redesSocializacionSummaries) return;
+        const cloudFileName = REDES_SB_CLOUD_FILES[user.ficha];
+        try {
+          const snapshot = await window._firebaseDb?.cloudGetGuideData?.(
+            getGuide2ScopeKey(user.usernameKey),
+            cloudFileName
+          );
+          redesSocializacionSummaries[user.usernameKey] =
+            snapshot?.state ? { text: String(snapshot.state["reflexion-socializacion"] || ""), locked: Boolean(snapshot.state["reflexion-socializacion-locked"]), updatedAt: snapshot.updatedAt || "", user } : null;
+        } catch {
+          redesSocializacionSummaries[user.usernameKey] = null;
+        }
+      });
+    await Promise.all(tasks);
+  }
+
+  function buildRedesSocializacionTable(rows) {
+    if (!rows.length) {
+      return '<p class="activities-loading">Ning\u00fan aprendiz de Santa B\u00e1rbara ha enviado notas de socializaci\u00f3n a\u00fan.</p>';
+    }
+    const headers = ["Aprendiz", "Ficha", "Grupo", "Notas enviadas", "Estado", "Fecha"];
+    return `
+      <div class="answer-table-wrap">
+        <table class="answer-table activities-table">
+          <thead><tr>${headers.map((h) => `<th>${escapeHtml(h)}</th>`).join("")}</tr></thead>
+          <tbody>${rows.map(({ summary }) => `
+            <tr>
+              <td>${escapeHtml(summary.user.fullName || summary.user.usernameKey)}</td>
+              <td>${escapeHtml(summary.user.ficha)}</td>
+              <td>${escapeHtml(summary.user.grupo)}</td>
+              <td style="max-width:340px;white-space:pre-wrap;word-break:break-word">${escapeHtml(summary.text || "(sin respuesta)")}</td>
+              <td>${summary.locked ? '<span style="color:#2e7d32;font-weight:600">\u2705 Enviado</span>' : '<span style="color:#b45309">\u23f3 Pendiente</span>'}</td>
+              <td>${formatDate(summary.updatedAt)}</td>
+            </tr>`).join("")}
+          </tbody>
+        </table>
+      </div>`;
+  }
+
   function renderActivitiesTab(users) {
     const container = getById("activities-container");
     if (!container) {
@@ -1442,6 +1491,13 @@
       }
     });
 
+    const redesSbUsers = users.filter((u) => REDES_SB_CLOUD_FILES[u.ficha]);
+    const redesLoading = redesSbUsers.some((u) => !(u.usernameKey in redesSocializacionSummaries));
+    const redesRows = redesSbUsers
+      .map((u) => redesSocializacionSummaries[u.usernameKey])
+      .filter(Boolean)
+      .map((summary) => ({ summary }));
+
     container.innerHTML = `
       <section class="panel">
         <h2>Actividad 1 \u2014 Sopa de letras</h2>
@@ -1458,6 +1514,10 @@
       <section class="panel">
         <h2>Actividad 3.2.2 \u2014 Matriz de Diagn\u00f3stico Digital (finalizadas)</h2>
         ${stillLoading ? loadingHtml : buildMatriz322Table(matriz322Rows)}
+      </section>
+      <section class="panel">
+        <h2>Socializaci\u00f3n 3.1.1 \u2014 Santa B\u00e1rbara (notas enviadas)</h2>
+        ${redesLoading ? loadingHtml : buildRedesSocializacionTable(redesRows)}
       </section>
     `;
   }
@@ -1495,10 +1555,12 @@
     guide2WordSearchSummaries = {};
     guide2MatchingGameSummaries = {};
     fichaCasoSummaries = {};
+    redesSocializacionSummaries = {};
     renderUsers();
     await Promise.all([
       hydrateGuide2WordSearchSummaries(allUsers),
       hydrateFichaCasoSummaries(allUsers),
+      hydrateRedesSocializacionSummaries(allUsers),
     ]);
     renderUsers();
   }

@@ -10,6 +10,8 @@
     "grupo-11b-guia-06-planificar-informacion.html": "11b_guia6.html",
     "plantilla-grado-11-guia-05-herramientas-informaticas-digitales.html": "grado_guia.html",
     "plantilla-grado-11-guia-06-planificar-informacion.html": "grado_guia6.html",
+    "santa-barbara-10a-guia-02-redes-rap01.html": "sb_10a_redes.html",
+    "santa-barbara-10b-guia-02-redes-rap01.html": "sb_10b_redes.html",
   };
   const pageStateFile = storageFileAliases[pageFile] || pageFile;
   const pageName = pageStateFile.replace(/\.html$/i, "");

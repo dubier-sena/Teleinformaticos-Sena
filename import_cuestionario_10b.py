@@ -4,6 +4,8 @@ for group 10B students (ficha 3441942 or 3441950).
 """
 
 import json
+import os
+from pathlib import Path
 import re
 import unicodedata
 import datetime
@@ -14,10 +16,34 @@ import urllib.error
 
 # ── Config ────────────────────────────────────────────────────────────────────
 XLSX_PATH = r"C:/Users/PC/Downloads/CUESTIONARIO DE CONOCIMIENTOS PREVIOS (respuestas).xlsx"
-API_KEY   = "AIzaSyC0zKUJGVcT0aYcujZyrRBtsbVo1VjBkAA"
 PROJECT   = "sena-portal"
 BASE_URL  = f"https://firestore.googleapis.com/v1/projects/{PROJECT}/databases/(default)/documents"
 FICHAS_10B = {"3441942", "3441950"}
+
+
+def load_local_env():
+    """Load simple KEY=VALUE pairs from a local .env file if present."""
+    env_path = Path(__file__).resolve().parent / ".env"
+    if not env_path.exists():
+        return
+    for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        if not key or key in os.environ:
+            continue
+        os.environ[key] = value.strip().strip('"').strip("'")
+
+
+load_local_env()
+API_KEY = os.getenv("FIREBASE_API_KEY", "").strip()
+if not API_KEY:
+    raise RuntimeError(
+        "Missing FIREBASE_API_KEY environment variable. "
+        "Set it in a local .env file or your shell environment before running this import."
+    )
 
 # Excel column index (0-based) -> data-store key
 COL_MAP = {
