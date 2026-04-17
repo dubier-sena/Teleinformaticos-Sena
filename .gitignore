@@ -1,3 +1,4 @@
+CLAUDE.md
 tmp/
 Thumbs.db
 .DS_Store
@@ -12,6 +13,10 @@ docs/
 skills-lock.json
 js/firebase_runtime.local.js
 config/firebase.runtime.local.json
+.env
+.env.*
+!.env.example
+__pycache__/
 
 # Archivos locales demasiado grandes para GitHub (>100 MB)
 assets/materiales/guia2/VirtualBox-7.2.6a-172322-Win.exe
