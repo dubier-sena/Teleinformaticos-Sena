@@ -1387,6 +1387,43 @@
       </div>`;
   }
 
+  async function unlockRedesStudent(usernameKey, ficha, displayName) {
+    const cloudFileName = REDES_SB_CLOUD_FILES[ficha];
+    if (!cloudFileName || !window._firebaseDb?.cloudGetGuideData || !window._firebaseDb?.cloudSaveGuideData) {
+      alert("Firebase no disponible.");
+      return;
+    }
+    if (!confirm(`¿Desbloquear campos de "${displayName}" para que pueda editar de nuevo?`)) return;
+
+    try {
+      const snapshot = await window._firebaseDb.cloudGetGuideData(
+        getGuide2ScopeKey(usernameKey), cloudFileName
+      );
+      const updatedState = { ...(snapshot?.state || snapshot?.data || {}) };
+      delete updatedState["bloqueA-locked"];
+      delete updatedState["bloqueB-locked"];
+      delete updatedState["bloqueC-locked"];
+      delete updatedState["reflexion-311-locked"];
+      delete updatedState["reflexion-socializacion-locked"];
+
+      await window._firebaseDb.cloudSaveGuideData(
+        getGuide2ScopeKey(usernameKey),
+        cloudFileName,
+        { data: updatedState, updatedAt: new Date().toISOString() }
+      );
+
+      if (redesSocializacionSummaries[usernameKey]) {
+        redesSocializacionSummaries[usernameKey].locked = false;
+      }
+      renderUsers();
+      alert(`Campos desbloqueados. ${displayName} puede editar de nuevo.`);
+    } catch (err) {
+      alert("Error al desbloquear: " + (err?.message || "intenta de nuevo."));
+    }
+  }
+
+  window.unlockRedesStudent = unlockRedesStudent;
+
   async function hydrateRedesSocializacionSummaries(users) {
     const tasks = users
       .filter((u) => REDES_SB_CLOUD_FILES[u.ficha])
@@ -1411,7 +1448,7 @@
     if (!rows.length) {
       return '<p class="activities-loading">Ning\u00fan aprendiz de Santa B\u00e1rbara ha enviado notas de socializaci\u00f3n a\u00fan.</p>';
     }
-    const headers = ["Aprendiz", "Ficha", "Grupo", "Notas enviadas", "Estado", "Fecha"];
+    const headers = ["Aprendiz", "Ficha", "Grupo", "Notas enviadas", "Estado", "Fecha", ""];
     return `
       <div class="answer-table-wrap">
         <table class="answer-table activities-table">
@@ -1424,6 +1461,7 @@
               <td style="max-width:340px;white-space:pre-wrap;word-break:break-word">${escapeHtml(summary.text || "(sin respuesta)")}</td>
               <td>${summary.locked ? '<span style="color:#2e7d32;font-weight:600">\u2705 Enviado</span>' : '<span style="color:#b45309">\u23f3 Pendiente</span>'}</td>
               <td>${formatDate(summary.updatedAt)}</td>
+              <td>${summary.locked ? `<button class="btn ghost" type="button" onclick="unlockRedesStudent('${escapeHtml(summary.user.usernameKey)}','${escapeHtml(summary.user.ficha)}','${escapeHtml(summary.user.fullName || summary.user.usernameKey)}')">\uD83D\uDD13 Desbloquear</button>` : ""}</td>
             </tr>`).join("")}
           </tbody>
         </table>

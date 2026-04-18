@@ -255,8 +255,13 @@ function hydrateFieldsRedes() {
     if (field.type === "radio") { field.checked = String(state[key]) === String(field.value); return; }
     field.value = state[key];
   });
+  restoreImagenBloqueA();
+  restoreImagenBloqueB();
   applyReflexionLock();
   applyReflexionSocializacionLock();
+  applyBloqueALock();
+  applyBloqueBLock();
+  applyBloqueCLock();
 }
 
 function applyReflexionSocializacionLock() {
@@ -269,6 +274,272 @@ function applyReflexionSocializacionLock() {
   if (status) status.style.display = "block";
 }
 
+const BLOQUEA_KEYS = ["bloqueA-1", "bloqueA-2", "bloqueA-3"];
+
+function applyBloqueALock() {
+  if (!state["bloqueA-locked"]) return;
+  BLOQUEA_KEYS.forEach((k) => {
+    const el = document.querySelector(`[data-store="${k}"]`);
+    if (el) { el.disabled = true; el.style.opacity = "0.75"; }
+  });
+  const input = document.getElementById("bloqueAImagenInput");
+  if (input) input.disabled = true;
+  const label = document.getElementById("bloqueAImagenLabel");
+  if (label) { label.style.opacity = "0.5"; label.style.pointerEvents = "none"; }
+  const btn = document.getElementById("btnGuardarBloqueA");
+  if (btn) { btn.disabled = true; btn.textContent = "\u2705 Respuestas guardadas"; }
+  const status = document.getElementById("bloqueAStatus");
+  if (status) status.style.display = "block";
+}
+
+function _getDriveThumbnailUrl(driveUrl) {
+  const m = driveUrl && driveUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  return m ? `https://drive.google.com/thumbnail?id=${m[1]}&sz=w500` : null;
+}
+
+function restoreImagenBloqueA() {
+  const driveUrl = state["bloqueA-imagen-url"];
+  const localBase64 = state["bloqueA-imagen"];
+  const img = document.getElementById("bloqueAImagenImg");
+  const preview = document.getElementById("bloqueAImagenPreview");
+  const nombre = document.getElementById("bloqueAImagenNombre");
+  if (driveUrl) {
+    const thumb = _getDriveThumbnailUrl(driveUrl);
+    if (img) img.src = thumb || driveUrl;
+    if (preview) preview.style.display = "block";
+    if (nombre) nombre.innerHTML =
+      `<a href="${driveUrl}" target="_blank" rel="noopener" style="color:#1e40af">&#128194; Ver imagen en Drive</a>` +
+      ` &mdash; ${state["bloqueA-imagen-nombre"] || "imagen guardada"}`;
+  } else if (localBase64) {
+    if (img) img.src = localBase64;
+    if (preview) preview.style.display = "block";
+    if (nombre) nombre.textContent = state["bloqueA-imagen-nombre"] || "imagen adjunta";
+  }
+}
+
+window.subirImagenBloqueA = async function (input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) {
+    alert("La imagen es demasiado grande (máx. 5 MB). Usa una foto más pequeña o comprímela.");
+    input.value = "";
+    return;
+  }
+  const label = document.getElementById("bloqueAImagenLabel");
+  const originalLabel = label ? label.innerHTML : "";
+  if (label) { label.innerHTML = "&#9203; Subiendo imagen..."; label.style.pointerEvents = "none"; }
+
+  try {
+    const delivery = window.sharedAppsScriptDelivery;
+    if (!delivery || typeof delivery.uploadToAppsScript !== "function") {
+      throw new Error("El sistema de entrega no está disponible.");
+    }
+    const session = portalAuth.getCurrentSession();
+    const usernameKey = ((session && (session.usernameKey || session.username)) || "desconocido")
+      .toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
+    const ficha = (session && session.ficha) || "0000";
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+    const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+    const fileName = `bloqueA_${ficha}_${usernameKey}_${dateStr}.${ext}`;
+
+    // Show local preview immediately while uploading
+    const reader = new FileReader();
+    const localBase64 = await new Promise((res) => { reader.onload = (e) => res(e.target.result); reader.readAsDataURL(file); });
+    state["bloqueA-imagen"] = localBase64;
+    state["bloqueA-imagen-nombre"] = fileName;
+    saveStateRedes();
+    restoreImagenBloqueA();
+
+    // Upload to Drive
+    const fileBase64 = localBase64.split(",").pop();
+    const response = await delivery.uploadToAppsScript({
+      guideLabel: "Guia 2",
+      activityLabel: "Bloque A — Producto Individual",
+      activityNumber: "3.2.A",
+      activityTitle: "Producto Individual — Esquema LAN/MAN/WAN",
+      fileName,
+      mimeType: file.type || "image/jpeg",
+      fileBase64,
+      fullName: (session && session.fullName) || usernameKey,
+      ficha,
+    });
+
+    if (response && response.driveUrl) {
+      state["bloqueA-imagen-url"] = response.driveUrl;
+      saveStateRedes();
+      await saveToCloudRedes();
+      restoreImagenBloqueA(); // refresh to show Drive link
+    }
+
+    if (label) { label.innerHTML = "&#128247; Cambiar imagen"; label.style.pointerEvents = ""; }
+  } catch (err) {
+    alert("Error al subir imagen: " + ((err && err.message) || "Intenta de nuevo."));
+    if (label) { label.innerHTML = originalLabel; label.style.pointerEvents = ""; }
+  }
+};
+
+window.guardarBloqueA = async function () {
+  const empty = BLOQUEA_KEYS.slice(0, 3).filter((k) => !String(state[k] || "").trim());
+  if (empty.length > 0) {
+    alert("Responde las 3 preguntas antes de guardar.");
+    return;
+  }
+  const btn = document.getElementById("btnGuardarBloqueA");
+  if (btn) { btn.disabled = true; btn.textContent = "Guardando\u2026"; }
+  state["bloqueA-locked"] = true;
+  saveStateRedes();
+  await saveToCloudRedes();
+  applyBloqueALock();
+};
+
+// ---------------------------------------------------------------------------
+// Bloque B
+// ---------------------------------------------------------------------------
+const BLOQUEB_KEYS = ["bloqueB-1", "bloqueB-2", "bloqueB-3"];
+
+function applyBloqueBLock() {
+  if (!state["bloqueB-locked"]) return;
+  BLOQUEB_KEYS.forEach((k) => {
+    const el = document.querySelector(`[data-store="${k}"]`);
+    if (el) { el.disabled = true; el.style.opacity = "0.75"; }
+  });
+  const input = document.getElementById("bloqueBImagenInput");
+  if (input) input.disabled = true;
+  const label = document.getElementById("bloqueBImagenLabel");
+  if (label) { label.style.opacity = "0.5"; label.style.pointerEvents = "none"; }
+  const btn = document.getElementById("btnGuardarBloqueB");
+  if (btn) { btn.disabled = true; btn.textContent = "\u2705 Respuestas guardadas"; }
+  const status = document.getElementById("bloqueBStatus");
+  if (status) status.style.display = "block";
+}
+
+function restoreImagenBloqueB() {
+  const driveUrl = state["bloqueB-imagen-url"];
+  const localBase64 = state["bloqueB-imagen"];
+  const img = document.getElementById("bloqueBImagenImg");
+  const preview = document.getElementById("bloqueBImagenPreview");
+  const nombre = document.getElementById("bloqueBImagenNombre");
+  if (driveUrl) {
+    const m = driveUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    const thumb = m ? `https://drive.google.com/thumbnail?id=${m[1]}&sz=w500` : null;
+    if (img) img.src = thumb || driveUrl;
+    if (preview) preview.style.display = "block";
+    if (nombre) nombre.innerHTML =
+      `<a href="${driveUrl}" target="_blank" rel="noopener" style="color:#1e40af">&#128194; Ver imagen en Drive</a>` +
+      ` &mdash; ${state["bloqueB-imagen-nombre"] || "imagen guardada"}`;
+  } else if (localBase64) {
+    if (img) img.src = localBase64;
+    if (preview) preview.style.display = "block";
+    if (nombre) nombre.textContent = state["bloqueB-imagen-nombre"] || "imagen adjunta";
+  }
+}
+
+window.subirImagenBloqueB = async function (input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) {
+    alert("La imagen es demasiado grande (máx. 5 MB). Usa una foto más pequeña o comprímela.");
+    input.value = "";
+    return;
+  }
+  const label = document.getElementById("bloqueBImagenLabel");
+  const originalLabel = label ? label.innerHTML : "";
+  if (label) { label.innerHTML = "&#9203; Subiendo imagen..."; label.style.pointerEvents = "none"; }
+
+  try {
+    const delivery = window.sharedAppsScriptDelivery;
+    if (!delivery || typeof delivery.uploadToAppsScript !== "function") {
+      throw new Error("El sistema de entrega no está disponible.");
+    }
+    const session = portalAuth.getCurrentSession();
+    const usernameKey = ((session && (session.usernameKey || session.username)) || "desconocido")
+      .toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
+    const ficha = (session && session.ficha) || "0000";
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+    const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+    const fileName = `bloqueB_${ficha}_${usernameKey}_${dateStr}.${ext}`;
+
+    const reader = new FileReader();
+    const localBase64 = await new Promise((res) => { reader.onload = (e) => res(e.target.result); reader.readAsDataURL(file); });
+    state["bloqueB-imagen"] = localBase64;
+    state["bloqueB-imagen-nombre"] = fileName;
+    saveStateRedes();
+    restoreImagenBloqueB();
+
+    const fileBase64 = localBase64.split(",").pop();
+    const response = await delivery.uploadToAppsScript({
+      guideLabel: "Guia 2",
+      activityLabel: "Bloque B — Producto Individual",
+      activityNumber: "3.2.B",
+      activityTitle: "Producto Individual — Topologías de red",
+      fileName,
+      mimeType: file.type || "image/jpeg",
+      fileBase64,
+      fullName: (session && session.fullName) || usernameKey,
+      ficha,
+    });
+
+    if (response && response.driveUrl) {
+      state["bloqueB-imagen-url"] = response.driveUrl;
+      saveStateRedes();
+      await saveToCloudRedes();
+      restoreImagenBloqueB();
+    }
+
+    if (label) { label.innerHTML = "&#128247; Cambiar imagen"; label.style.pointerEvents = ""; }
+  } catch (err) {
+    alert("Error al subir imagen: " + ((err && err.message) || "Intenta de nuevo."));
+    if (label) { label.innerHTML = originalLabel; label.style.pointerEvents = ""; }
+  }
+};
+
+window.guardarBloqueB = async function () {
+  const empty = BLOQUEB_KEYS.filter((k) => !String(state[k] || "").trim());
+  if (empty.length > 0) {
+    alert("Responde las 3 preguntas antes de guardar.");
+    return;
+  }
+  const btn = document.getElementById("btnGuardarBloqueB");
+  if (btn) { btn.disabled = true; btn.textContent = "Guardando\u2026"; }
+  state["bloqueB-locked"] = true;
+  saveStateRedes();
+  await saveToCloudRedes();
+  applyBloqueBLock();
+};
+
+// ---------------------------------------------------------------------------
+// Bloque C
+// ---------------------------------------------------------------------------
+const BLOQUEC_KEYS = ["bloqueC-1", "bloqueC-2", "bloqueC-3"];
+
+function applyBloqueCLock() {
+  if (!state["bloqueC-locked"]) return;
+  document.querySelectorAll('[data-store^="bloqueC-"]').forEach((el) => {
+    el.disabled = true;
+    el.style.opacity = "0.75";
+  });
+  const btn = document.getElementById("btnGuardarBloqueC");
+  if (btn) { btn.disabled = true; btn.textContent = "\u2705 Respuestas guardadas"; }
+  const status = document.getElementById("bloqueCStatus");
+  if (status) status.style.display = "block";
+}
+
+window.guardarBloqueC = async function () {
+  const empty = BLOQUEC_KEYS.filter((k) => !String(state[k] || "").trim());
+  if (empty.length > 0) {
+    alert("Responde las 3 preguntas antes de guardar.");
+    return;
+  }
+  const btn = document.getElementById("btnGuardarBloqueC");
+  if (btn) { btn.disabled = true; btn.textContent = "Guardando\u2026"; }
+  state["bloqueC-locked"] = true;
+  saveStateRedes();
+  await saveToCloudRedes();
+  applyBloqueCLock();
+};
+
 window.enviarSocializacion311 = async function () {
   if (!String(state["reflexion-socializacion"] || "").trim()) {
     alert("Escribe tus notas de la socialización antes de enviar.");
@@ -279,13 +550,7 @@ window.enviarSocializacion311 = async function () {
 
   state["reflexion-socializacion-locked"] = true;
   saveStateRedes();
-
-  if (window.syncGuideStateToCloud) {
-    const sel = getGuideSelectionRedes();
-    if (sel.ficha) {
-      await window.syncGuideStateToCloud(GUIDE_DATA_FILE_REDES, sel, buildCloudSnapshotRedes());
-    }
-  }
+  await saveToCloudRedes();
   applyReflexionSocializacionLock();
 };
 
@@ -365,33 +630,68 @@ function bindEventsRedes() {
 }
 
 // ---------------------------------------------------------------------------
-// Cloud sync (compatible with firebase_db.js if present)
+// Cloud sync — usa _firebaseDb directamente (igual que script_guia2.js)
 // ---------------------------------------------------------------------------
-let _pendingCloudSnapshot = null;
 let _cloudSyncTimer = null;
 let _cloudRefreshTimer = null;
 
+const LOCK_KEYS_REDES = [
+  "bloqueA-locked",
+  "bloqueB-locked",
+  "bloqueC-locked",
+  "reflexion-311-locked",
+  "reflexion-socializacion-locked",
+];
+
+function getCloudScopeKeyRedes() {
+  const session = _portalAuth?.getCurrentSession?.();
+  if (!session) return "";
+  if (session.role === "admin") return `admin:${session.usernameKey || session.user?.usernameKey || "admin"}`;
+  if (session.role === "student") return `student:${session.user?.usernameKey || ""}`;
+  return "";
+}
+
+const IMAGE_KEYS_REDES = ["bloqueA-imagen", "bloqueB-imagen"]; // Excluir base64 local del sync a Firebase; las URLs de Drive sí se guardan
+
 function buildCloudSnapshotRedes() {
-  return { data: { ...state }, updatedAt: new Date().toISOString() };
+  const data = { ...state };
+  IMAGE_KEYS_REDES.forEach((k) => delete data[k]);
+  return { data, updatedAt: new Date().toISOString() };
+}
+
+function applyAllLocksRedes() {
+  applyReflexionLock();
+  applyReflexionSocializacionLock();
+  applyBloqueALock();
+  applyBloqueBLock();
+  applyBloqueCLock();
+}
+
+function enforceLockFlagsFromRemote(remoteData) {
+  // Los flags de bloqueo en Firebase son autoritativos: si Firebase dice bloqueado, siempre se aplica
+  LOCK_KEYS_REDES.forEach((k) => { if (remoteData[k]) state[k] = true; });
+}
+
+async function saveToCloudRedes() {
+  const scopeKey = getCloudScopeKeyRedes();
+  if (!scopeKey || !window._firebaseDb?.cloudSaveGuideData) return false;
+  try {
+    return await window._firebaseDb.cloudSaveGuideData(scopeKey, GUIDE_DATA_FILE_REDES, buildCloudSnapshotRedes());
+  } catch { return false; }
 }
 
 function scheduleCloudSyncRedes() {
   clearTimeout(_cloudSyncTimer);
-  _cloudSyncTimer = setTimeout(async () => {
-    if (!window.syncGuideStateToCloud) return;
-    const sel = getGuideSelectionRedes();
-    if (!sel.ficha) return;
-    await window.syncGuideStateToCloud?.(GUIDE_DATA_FILE_REDES, sel, buildCloudSnapshotRedes());
-  }, CLOUD_SYNC_DELAY_REDES);
+  _cloudSyncTimer = setTimeout(saveToCloudRedes, CLOUD_SYNC_DELAY_REDES);
 }
 
 async function initCloudSyncRedes() {
-  if (!window.syncGuideStateFromCloud) return;
-  const sel = getGuideSelectionRedes();
-  if (!sel.ficha) return;
+  const scopeKey = getCloudScopeKeyRedes();
+  if (!scopeKey || !window._firebaseDb?.cloudGetGuideData) return;
   try {
-    const remote = await window.syncGuideStateFromCloud(GUIDE_DATA_FILE_REDES, sel);
+    const remote = await window._firebaseDb.cloudGetGuideData(scopeKey, GUIDE_DATA_FILE_REDES);
     if (remote?.data && Object.keys(remote.data).length > 0) {
+      enforceLockFlagsFromRemote(remote.data);
       const localTime = Number(localStorage.getItem(STORAGE_META_KEY_REDES) || 0);
       const remoteTime = Date.parse(remote.updatedAt || "") || 0;
       if (remoteTime > localTime) {
@@ -399,16 +699,21 @@ async function initCloudSyncRedes() {
         saveStateRedes();
         hydrateFieldsRedes();
         updateProgressRedes();
+      } else {
+        applyAllLocksRedes(); // aunque el local sea más nuevo, respeta bloqueos de Firebase
       }
     }
     _cloudRefreshTimer = setInterval(async () => {
-      const refreshed = await window.syncGuideStateFromCloud(GUIDE_DATA_FILE_REDES, sel);
-      if (refreshed?.data) {
-        state = { ...state, ...refreshed.data };
-        saveStateRedes();
-        hydrateFieldsRedes();
-        updateProgressRedes();
-      }
+      try {
+        const refreshed = await window._firebaseDb.cloudGetGuideData(scopeKey, GUIDE_DATA_FILE_REDES);
+        if (refreshed?.data) {
+          enforceLockFlagsFromRemote(refreshed.data);
+          state = { ...state, ...refreshed.data };
+          saveStateRedes();
+          hydrateFieldsRedes();
+          updateProgressRedes();
+        }
+      } catch {}
     }, CLOUD_REFRESH_REDES);
   } catch {}
 }
@@ -454,13 +759,7 @@ window.guardarReflexion311 = async function () {
 
   state["reflexion-311-locked"] = true;
   saveStateRedes();
-
-  if (window.syncGuideStateToCloud) {
-    const sel = getGuideSelectionRedes();
-    if (sel.ficha) {
-      await window.syncGuideStateToCloud(GUIDE_DATA_FILE_REDES, sel, buildCloudSnapshotRedes());
-    }
-  }
+  await saveToCloudRedes();
   applyReflexionLock();
 };
 

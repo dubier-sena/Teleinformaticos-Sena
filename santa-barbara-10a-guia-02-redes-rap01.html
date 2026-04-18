@@ -28,7 +28,7 @@
 <script defer src="js/shared_drive_delivery.js?v=20260410_2"></script>
 <script defer src="data/calendario_2026_records.js?v=20260410_1"></script>
 <script defer src="data/calendario_2026_seed.js?v=20260410_1"></script>
-<script defer src="js/script_guia_redes.js?v=20260417_1"></script>
+<script defer src="js/script_guia_redes.js?v=20260418_1"></script>
 <script defer src="js/guia_template.js?v=20260411_1"></script>
 </head>
 <body
@@ -382,7 +382,7 @@
               <div class="checklist-card compact-card">
                 <h3>Mientras observas, responde en el formulario:</h3>
               </div>
-              <div class="form-grid" style="margin-top:12px">
+              <div class="form-grid" style="margin-top:12px;grid-template-columns:1fr">
                 <label>
                   <span>1. &iquest;Qu&eacute; tipo de red tiene la papeler&iacute;a de Carmen? &iquest;Por qu&eacute;?</span>
                   <textarea rows="3" data-store="bloqueA-1" data-track placeholder="Justifica con base en la cobertura geogr&aacute;fica y el n&uacute;mero de dispositivos."></textarea>
@@ -400,11 +400,26 @@
                 <h3>&#128196; Producto individual</h3>
                 <p>Dibuja o construye digitalmente un esquema de 3 c&iacute;rculos conc&eacute;ntricos
                 (LAN &rarr; MAN &rarr; WAN). En cada c&iacute;rculo escribe un ejemplo real de una empresa o
-                instituci&oacute;n de Boyac&aacute;. Incluye este producto en tu PDF de entrega.</p>
-                <label style="display:block;margin-top:10px">
-                  <span>Describe tu esquema (qu&eacute; ejemplos usaste en cada c&iacute;rculo)</span>
-                  <textarea rows="3" data-store="bloqueA-producto" data-track placeholder="Ejemplo: LAN = sala de sistemas del colegio; MAN = red de la Gobernaci&oacute;n de Boyac&aacute;; WAN = Internet"></textarea>
-                </label>
+                instituci&oacute;n de Boyac&aacute;. Sube la foto o captura de tu esquema.</p>
+                <div style="margin-top:12px">
+                  <label id="bloqueAImagenLabel" style="display:inline-flex;align-items:center;gap:8px;background:#f1f5f9;border:2px dashed #94a3b8;border-radius:10px;padding:10px 16px;cursor:pointer;font-size:0.9rem;font-weight:600;color:#1e40af">
+                    &#128247; Subir imagen del esquema
+                    <input type="file" id="bloqueAImagenInput" accept="image/*" style="display:none" onchange="subirImagenBloqueA(this)">
+                  </label>
+                  <div id="bloqueAImagenPreview" style="display:none;margin-top:10px">
+                    <img id="bloqueAImagenImg" style="max-width:100%;max-height:360px;border-radius:8px;border:1px solid #e2e8f0;display:block" alt="Esquema del aprendiz">
+                    <p id="bloqueAImagenNombre" style="font-size:0.78rem;color:#64748b;margin-top:4px"></p>
+                  </div>
+                </div>
+              </div>
+              <div style="margin-top:16px">
+                <button type="button" id="btnGuardarBloqueA" onclick="guardarBloqueA()"
+                  style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                  &#128190; Guardar respuestas
+                </button>
+              </div>
+              <div id="bloqueAStatus" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                &#9989; Respuestas guardadas en Firebase. Ya no se pueden modificar.
               </div>
             </div>
           </div>
@@ -418,13 +433,17 @@
               <span class="activity-toggle">&#9662;</span>
             </div>
             <div class="activity-body">
-              <div class="info-box green" style="margin-bottom:16px">
-                <div class="label">&#127909; Video de referencia</div>
-                <p><strong>Topolog&iacute;as de red &mdash; estrella, &aacute;rbol, bus y anillo explicadas</strong></p>
-                <div class="label" style="margin-top:10px">&#128295; Herramienta pr&aacute;ctica</div>
-                <p>Draw.io &mdash; dibuja cada topolog&iacute;a en l&iacute;nea en <a href="https://app.diagrams.net" target="_blank" rel="noopener">app.diagrams.net</a></p>
+              <div style="margin-bottom:16px">
+                <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:10px">
+                  <iframe src="https://player.vimeo.com/video/1184281085?title=0&amp;byline=0&amp;portrait=0&amp;badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479"
+                    style="position:absolute;top:0;left:0;width:100%;height:100%"
+                    frameborder="0" allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    title="Topolog&iacute;as de red &mdash; estrella, &aacute;rbol, bus y anillo explicadas"></iframe>
+                </div>
+                <p style="margin-top:8px;font-size:0.82rem;color:#64748b">&#128295; Herramienta pr&aacute;ctica: Draw.io &mdash; dibuja cada topolog&iacute;a en <a href="https://app.diagrams.net" target="_blank" rel="noopener">app.diagrams.net</a></p>
               </div>
-              <div class="form-grid" style="margin-top:12px">
+              <div class="form-grid" style="margin-top:12px;grid-template-columns:1fr">
                 <label>
                   <span>1. &iquest;Por qu&eacute; la topolog&iacute;a estrella es la m&aacute;s usada en oficinas y MiPymes?</span>
                   <textarea rows="3" data-store="bloqueB-1" data-track placeholder="Menciona al menos dos ventajas que hacen a la estrella la opci&oacute;n preferida."></textarea>
@@ -441,11 +460,26 @@
               <div class="checklist-card compact-card" style="margin-top:16px">
                 <h3>&#128196; Producto individual</h3>
                 <p>En Draw.io (o a mano en papel) dibuja las 4 topolog&iacute;as (bus, estrella, &aacute;rbol, anillo).
-                Debajo de cada una escribe una ventaja y una desventaja. Exporta como imagen o PDF.</p>
-                <label style="display:block;margin-top:10px">
-                  <span>Anota aqu&iacute; las ventajas y desventajas que incluiste en tu diagrama</span>
-                  <textarea rows="5" data-store="bloqueB-producto" data-track placeholder="Bus: ventaja..., desventaja... / Estrella: ventaja..., desventaja... / etc."></textarea>
-                </label>
+                Debajo de cada una escribe una ventaja y una desventaja. Sube la foto o captura de tu diagrama.</p>
+                <div style="margin-top:12px">
+                  <label id="bloqueBImagenLabel" style="display:inline-flex;align-items:center;gap:8px;background:#f1f5f9;border:2px dashed #94a3b8;border-radius:10px;padding:10px 16px;cursor:pointer;font-size:0.9rem;font-weight:600;color:#1e40af">
+                    &#128247; Subir imagen del diagrama
+                    <input type="file" id="bloqueBImagenInput" accept="image/*" style="display:none" onchange="subirImagenBloqueB(this)">
+                  </label>
+                  <div id="bloqueBImagenPreview" style="display:none;margin-top:10px">
+                    <img id="bloqueBImagenImg" style="max-width:100%;max-height:360px;border-radius:8px;border:1px solid #e2e8f0;display:block" alt="Diagrama del aprendiz">
+                    <p id="bloqueBImagenNombre" style="font-size:0.78rem;color:#64748b;margin-top:4px"></p>
+                  </div>
+                </div>
+              </div>
+              <div style="margin-top:16px">
+                <button type="button" id="btnGuardarBloqueB" onclick="guardarBloqueB()"
+                  style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                  &#128190; Guardar respuestas
+                </button>
+              </div>
+              <div id="bloqueBStatus" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                &#9989; Respuestas guardadas en Firebase. Ya no se pueden modificar.
               </div>
             </div>
           </div>
@@ -459,13 +493,17 @@
               <span class="activity-toggle">&#9662;</span>
             </div>
             <div class="activity-body">
-              <div class="info-box green" style="margin-bottom:16px">
-                <div class="label">&#127909; Video de referencia</div>
-                <p><strong>Cables de red: UTP, fibra &oacute;ptica y Wi-Fi &mdash; comparativa</strong></p>
-                <div class="label" style="margin-top:10px">&#128221; Referencia t&eacute;cnica</div>
-                <p>Est&aacute;ndar TIA/EIA-568 &mdash; categor&iacute;as de cable UTP (Cat5e, Cat6, Cat6A)</p>
+              <div style="margin-bottom:16px">
+                <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:10px">
+                  <iframe src="https://player.vimeo.com/video/1184302771?title=0&amp;byline=0&amp;portrait=0&amp;badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479"
+                    style="position:absolute;top:0;left:0;width:100%;height:100%"
+                    frameborder="0" allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    title="Categor&iacute;as de cables UTP &mdash; Diferencias y conceptos b&aacute;sicos"></iframe>
+                </div>
+                <p style="margin-top:8px;font-size:0.82rem;color:#64748b">&#128221; Referencia t&eacute;cnica: Est&aacute;ndar TIA/EIA-568 &mdash; categor&iacute;as de cable UTP (Cat5e, Cat6, Cat6A)</p>
               </div>
-              <div class="form-grid" style="margin-top:12px">
+              <div class="form-grid" style="margin-top:12px;grid-template-columns:1fr">
                 <label>
                   <span>1. &iquest;Por qu&eacute; el cable Cat6 es mejor que el Cat5e? &iquest;Qu&eacute; diferencia hace en la pr&aacute;ctica?</span>
                   <textarea rows="3" data-store="bloqueC-1" data-track placeholder="Compara velocidad m&aacute;xima, frecuencia y distancia en condiciones similares."></textarea>
@@ -481,7 +519,7 @@
               </div>
               <div class="checklist-card compact-card" style="margin-top:16px">
                 <h3>&#128196; Producto individual &mdash; Tabla comparativa de medios</h3>
-                <p>Completa la siguiente tabla comparativa en tu cuaderno o documento digital:</p>
+                <p>Completa la siguiente tabla comparativa:</p>
                 <div class="table-scroll" style="margin-top:10px">
                   <table class="data-table">
                     <thead>
@@ -522,6 +560,15 @@
                     </tbody>
                   </table>
                 </div>
+              </div>
+              <div style="margin-top:16px">
+                <button type="button" id="btnGuardarBloqueC" onclick="guardarBloqueC()"
+                  style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                  &#128190; Guardar respuestas
+                </button>
+              </div>
+              <div id="bloqueCStatus" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                &#9989; Respuestas guardadas en Firebase. Ya no se pueden modificar.
               </div>
             </div>
           </div>
