@@ -257,11 +257,14 @@ function hydrateFieldsRedes() {
   });
   restoreImagenBloqueA();
   restoreImagenBloqueB();
+  restoreImagenBloqueE();
   applyReflexionLock();
   applyReflexionSocializacionLock();
   applyBloqueALock();
   applyBloqueBLock();
   applyBloqueCLock();
+  applyBloqueDLock();
+  applyBloqueELock();
 }
 
 function applyReflexionSocializacionLock() {
@@ -540,6 +543,417 @@ window.guardarBloqueC = async function () {
   applyBloqueCLock();
 };
 
+// ---------------------------------------------------------------------------
+// Bloque D — tab de videos
+// ---------------------------------------------------------------------------
+window.showVideoBloqueD = function (n) {
+  const active   = "flex:1;padding:8px 12px;border-radius:8px;border:2px solid #2e7d32;cursor:pointer;font-size:0.85rem;font-weight:600;font-family:inherit;background:#2e7d32;color:#fff";
+  const inactive = "flex:1;padding:8px 12px;border-radius:8px;border:2px solid #2e7d32;cursor:pointer;font-size:0.85rem;font-weight:600;font-family:inherit;background:#e8f5e9;color:#1b5e20";
+  const v1 = document.getElementById("videoD-1");
+  const v2 = document.getElementById("videoD-2");
+  const b1 = document.getElementById("tabD-btn-1");
+  const b2 = document.getElementById("tabD-btn-2");
+  if (v1) v1.style.display = n === 1 ? "block" : "none";
+  if (v2) v2.style.display = n === 2 ? "block" : "none";
+  if (b1) b1.style.cssText = n === 1 ? active : inactive;
+  if (b2) b2.style.cssText = n === 2 ? active : inactive;
+};
+
+// ---------------------------------------------------------------------------
+// Bloque D
+const BLOQUED_KEYS = ["bloqueD-1", "bloqueD-2", "bloqueD-3"];
+
+function applyBloqueDLock() {
+  if (!state["bloqueD-locked"]) return;
+  document.querySelectorAll('[data-store^="bloqueD-"]').forEach((el) => {
+    el.disabled = true;
+    el.style.opacity = "0.75";
+  });
+  const btn = document.getElementById("btnGuardarBloqueD");
+  if (btn) { btn.disabled = true; btn.textContent = "\u2705 Respuestas guardadas"; }
+  const status = document.getElementById("bloqueDStatus");
+  if (status) status.style.display = "block";
+}
+
+window.guardarBloqueD = async function () {
+  const empty = BLOQUED_KEYS.filter((k) => !String(state[k] || "").trim());
+  if (empty.length > 0) {
+    alert("Responde las 3 preguntas antes de guardar.");
+    return;
+  }
+  const btn = document.getElementById("btnGuardarBloqueD");
+  if (btn) { btn.disabled = true; btn.textContent = "Guardando\u2026"; }
+  state["bloqueD-locked"] = true;
+  saveStateRedes();
+  await saveToCloudRedes();
+  applyBloqueDLock();
+};
+
+// ---------------------------------------------------------------------------
+// Bloque E
+// ---------------------------------------------------------------------------
+const BLOQUEE_KEYS = ["bloqueE-1", "bloqueE-2", "bloqueE-3"];
+
+function applyBloqueELock() {
+  if (!state["bloqueE-locked"]) return;
+  document.querySelectorAll('[data-store^="bloqueE-"]').forEach((el) => {
+    el.disabled = true;
+    el.style.opacity = "0.75";
+  });
+  const input = document.getElementById("bloqueEImagenInput");
+  if (input) input.disabled = true;
+  const label = document.getElementById("bloqueEImagenLabel");
+  if (label) { label.style.opacity = "0.5"; label.style.pointerEvents = "none"; }
+  const btn = document.getElementById("btnGuardarBloqueE");
+  if (btn) { btn.disabled = true; btn.textContent = "\u2705 Respuestas guardadas"; }
+  const status = document.getElementById("bloqueEStatus");
+  if (status) status.style.display = "block";
+}
+
+function restoreImagenBloqueE() {
+  const driveUrl = state["bloqueE-imagen-url"];
+  const localBase64 = state["bloqueE-imagen"];
+  const img = document.getElementById("bloqueEImagenImg");
+  const preview = document.getElementById("bloqueEImagenPreview");
+  const nombre = document.getElementById("bloqueEImagenNombre");
+  if (driveUrl) {
+    const m = driveUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    const thumb = m ? `https://drive.google.com/thumbnail?id=${m[1]}&sz=w500` : null;
+    if (img) img.src = thumb || driveUrl;
+    if (preview) preview.style.display = "block";
+    if (nombre) nombre.innerHTML =
+      `<a href="${driveUrl}" target="_blank" rel="noopener" style="color:#1e40af">&#128194; Ver imagen en Drive</a>` +
+      ` &mdash; ${state["bloqueE-imagen-nombre"] || "imagen guardada"}`;
+  } else if (localBase64) {
+    if (img) img.src = localBase64;
+    if (preview) preview.style.display = "block";
+    if (nombre) nombre.textContent = state["bloqueE-imagen-nombre"] || "imagen adjunta";
+  }
+}
+
+window.subirImagenBloqueE = async function (input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) {
+    alert("La imagen es demasiado grande (máx. 5 MB). Usa una foto más pequeña o comprímela.");
+    input.value = "";
+    return;
+  }
+  const label = document.getElementById("bloqueEImagenLabel");
+  const originalLabel = label ? label.innerHTML : "";
+  if (label) { label.innerHTML = "&#9203; Subiendo imagen..."; label.style.pointerEvents = "none"; }
+
+  try {
+    const delivery = window.sharedAppsScriptDelivery;
+    if (!delivery || typeof delivery.uploadToAppsScript !== "function") {
+      throw new Error("El sistema de entrega no está disponible.");
+    }
+    const session = portalAuth.getCurrentSession();
+    const usernameKey = ((session && (session.usernameKey || session.username)) || "desconocido")
+      .toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
+    const ficha = (session && session.ficha) || "0000";
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+    const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+    const fileName = `bloqueE_${ficha}_${usernameKey}_${dateStr}.${ext}`;
+
+    const reader = new FileReader();
+    const localBase64 = await new Promise((res) => { reader.onload = (e) => res(e.target.result); reader.readAsDataURL(file); });
+    state["bloqueE-imagen"] = localBase64;
+    state["bloqueE-imagen-nombre"] = fileName;
+    saveStateRedes();
+    restoreImagenBloqueE();
+
+    const fileBase64 = localBase64.split(",").pop();
+    const response = await delivery.uploadToAppsScript({
+      guideLabel: "Guia 2",
+      activityLabel: "Bloque E — Producto Individual",
+      activityNumber: "3.2.1.E",
+      activityTitle: "Producto Individual — Diagrama OSI",
+      fileName,
+      mimeType: file.type || "image/jpeg",
+      fileBase64,
+      fullName: (session && session.fullName) || usernameKey,
+      ficha,
+    });
+
+    if (response && response.driveUrl) {
+      state["bloqueE-imagen-url"] = response.driveUrl;
+      saveStateRedes();
+      await saveToCloudRedes();
+      restoreImagenBloqueE();
+    }
+
+    if (label) { label.innerHTML = "&#128247; Cambiar imagen"; label.style.pointerEvents = ""; }
+  } catch (err) {
+    alert("Error al subir imagen: " + ((err && err.message) || "Intenta de nuevo."));
+    if (label) { label.innerHTML = originalLabel; label.style.pointerEvents = ""; }
+  }
+};
+
+window.guardarBloqueE = async function () {
+  const empty = BLOQUEE_KEYS.filter((k) => !String(state[k] || "").trim());
+  if (empty.length > 0) {
+    alert("Responde las 3 preguntas antes de guardar.");
+    return;
+  }
+  const btn = document.getElementById("btnGuardarBloqueE");
+  if (btn) { btn.disabled = true; btn.textContent = "Guardando\u2026"; }
+  state["bloqueE-locked"] = true;
+  saveStateRedes();
+  await saveToCloudRedes();
+  applyBloqueELock();
+};
+
+// ---------------------------------------------------------------------------
+// Exportar PDF 3.2.1 — Exploración Contextual
+// ---------------------------------------------------------------------------
+async function _loadScriptBlob(url) {
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error("No se pudo descargar la librería de PDF.");
+  const text = await resp.text();
+  const blobUrl = URL.createObjectURL(new Blob([text], { type: "text/javascript" }));
+  await new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = blobUrl;
+    s.onload = () => { URL.revokeObjectURL(blobUrl); resolve(); };
+    s.onerror = () => { URL.revokeObjectURL(blobUrl); reject(new Error("Error al cargar librería de PDF.")); };
+    document.head.appendChild(s);
+  });
+}
+
+window.exportarPDFContextualizacion = async function (evt) {
+  const btn = evt && evt.currentTarget ? evt.currentTarget
+    : document.querySelector('[onclick="exportarPDFContextualizacion(event)"], [onclick="exportarPDFContextualizacion()"]');
+  const origHTML = btn ? btn.innerHTML : "";
+  if (btn) { btn.disabled = true; btn.innerHTML = "&#9203; Generando PDF\u2026"; }
+
+  try {
+    if (!window.jspdf) {
+      await _loadScriptBlob("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
+    }
+    if (!window._jspdf_autotable_loaded) {
+      await _loadScriptBlob("https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js");
+      window._jspdf_autotable_loaded = true;
+    }
+
+    const session = window._portalAuth?.getCurrentSession?.() || portalAuth?.getCurrentSession?.();
+    const fullName = (session && session.fullName) || "Aprendiz";
+    const ficha    = (session && session.ficha)    || "0000";
+    const grupo    = document.body.dataset.defaultGrupo || "";
+    const fecha    = new Date().toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric" });
+    const fileName = `Exploracion_Contextual_${fullName.replace(/\s+/g, "_")}_${ficha}.pdf`;
+
+    function val(key) { return String(state[key] || "").trim() || "(sin respuesta)"; }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: "mm", format: "a4" });
+    const ML = 14, MR = 14, UW = 210 - ML - MR;
+    let y = 15;
+
+    function checkY(needed) {
+      if (y + needed > 282) { doc.addPage(); y = 15; drawRunningHeader(); }
+    }
+
+    function drawRunningHeader() {
+      doc.setFillColor(27, 94, 32);
+      doc.rect(0, 0, 210, 10, "F");
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(255, 255, 255);
+      doc.text("Exploracion Visual por Bloques Tematicos — 3.2.1  |  Guia 2 — Redes RAP01", ML, 7);
+      doc.setTextColor(33, 33, 33);
+      y = Math.max(y, 16);
+    }
+
+    function addBlockTitle(num, title) {
+      checkY(13);
+      doc.setFillColor(232, 245, 233);
+      doc.rect(ML, y, UW, 8.5, "F");
+      doc.setFillColor(46, 125, 50);
+      doc.rect(ML, y, 2.5, 8.5, "F");
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(27, 94, 32);
+      doc.text(`${num} — ${title}`, ML + 5, y + 6);
+      doc.setTextColor(33, 33, 33);
+      y += 12;
+    }
+
+    function addQuestion(q, key) {
+      const answer = val(key);
+      doc.setFontSize(8.5);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(71, 85, 105);
+      const qLines = doc.splitTextToSize(q, UW);
+      checkY(qLines.length * 4.5 + 14);
+      doc.text(qLines, ML, y);
+      y += qLines.length * 4.5 + 1;
+      const aLines = doc.splitTextToSize(answer, UW - 6);
+      const aH = Math.max(7, aLines.length * 4.5 + 4);
+      doc.setFillColor(248, 250, 252);
+      doc.setDrawColor(226, 232, 240);
+      doc.roundedRect(ML, y, UW, aH, 1.5, 1.5, "FD");
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(33, 33, 33);
+      doc.text(aLines, ML + 3, y + 4.5);
+      y += aH + 4;
+    }
+
+    function addProductLabel(label) {
+      checkY(8);
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(30, 64, 175);
+      doc.text(`Producto — ${label}`, ML, y);
+      doc.setTextColor(33, 33, 33);
+      y += 6;
+    }
+
+    function addImage(b64Key) {
+      const b64Full = state[b64Key];
+      if (!b64Full) {
+        checkY(7);
+        doc.setFontSize(8.5);
+        doc.setFont("helvetica", "italic");
+        doc.setTextColor(148, 163, 184);
+        doc.text("Sin imagen adjunta.", ML, y);
+        y += 6;
+        return;
+      }
+      try {
+        const mimeM = b64Full.match(/^data:image\/([a-zA-Z]+);base64,/);
+        const fmt = mimeM ? mimeM[1].toUpperCase().replace("JPG", "JPEG") : "JPEG";
+        const maxW = 120, maxH = 65;
+        checkY(maxH + 5);
+        doc.addImage(b64Full, fmt, ML, y, maxW, maxH, undefined, "FAST");
+        y += maxH + 5;
+      } catch (_) {
+        doc.setFontSize(8.5); doc.setFont("helvetica", "italic"); doc.setTextColor(148, 163, 184);
+        doc.text("Imagen no disponible localmente.", ML, y); y += 6;
+      }
+    }
+
+    // ── Portada ──
+    drawRunningHeader();
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(27, 94, 32);
+    doc.text("Exploracion Visual por Bloques Tematicos", ML, y);
+    y += 7;
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(100, 116, 139);
+    doc.text(`${fullName}   |   Ficha: ${ficha}   |   Grupo: ${grupo}   |   ${fecha}`, ML, y);
+    y += 5;
+    doc.setDrawColor(226, 232, 240);
+    doc.line(ML, y, 210 - MR, y);
+    y += 7;
+
+    // ── Bloque A ──
+    addBlockTitle("3.2.1.A", "Tipos de redes: LAN, MAN y WAN");
+    addQuestion("1. ¿Que tipo de red tiene la papeleria de Carmen? ¿Por que?", "bloqueA-1");
+    addQuestion("2. ¿Que red usa el SENA para conectar todas sus regionales?", "bloqueA-2");
+    addQuestion("3. ¿En que se diferencia una LAN de una WAN en velocidad y costo?", "bloqueA-3");
+    addProductLabel("Esquema 3 circulos concentricos");
+    addImage("bloqueA-imagen");
+
+    // ── Bloque B ──
+    addBlockTitle("3.2.1.B", "Topologias de red");
+    addQuestion("1. ¿Por que la topologia estrella es la mas usada en oficinas y MiPymes?", "bloqueB-1");
+    addQuestion("2. ¿Que ocurre si se dana el switch central en una topologia estrella?", "bloqueB-2");
+    addQuestion("3. ¿En que situacion elegirias la topologia arbol en lugar de la estrella?", "bloqueB-3");
+    addProductLabel("Diagrama de topologias");
+    addImage("bloqueB-imagen");
+
+    // ── Bloque C ──
+    addBlockTitle("3.2.1.C", "Medios de transmision");
+    addQuestion("1. ¿Por que el cable Cat6 es mejor que el Cat5e?", "bloqueC-1");
+    addQuestion("2. ¿En que situacion instalarias fibra optica en lugar de UTP?", "bloqueC-2");
+    addQuestion("3. ¿Cual es la distancia maxima de un cable UTP y que pasa si se supera?", "bloqueC-3");
+    addProductLabel("Tabla comparativa de medios");
+    checkY(38);
+    doc.autoTable({
+      startY: y, margin: { left: ML, right: MR },
+      head: [["Medio", "Velocidad max.", "Distancia max.", "Costo", "Interferencia", "Cuando usarlo"]],
+      body: [
+        ["Cable UTP",   val("bloqueC-utp-vel"),  val("bloqueC-utp-dist"),  val("bloqueC-utp-costo"),  val("bloqueC-utp-int"),  val("bloqueC-utp-uso")],
+        ["Fibra optica",val("bloqueC-fo-vel"),   val("bloqueC-fo-dist"),   val("bloqueC-fo-costo"),   val("bloqueC-fo-int"),   val("bloqueC-fo-uso")],
+        ["Wi-Fi",       val("bloqueC-wifi-vel"), val("bloqueC-wifi-dist"), val("bloqueC-wifi-costo"), val("bloqueC-wifi-int"), val("bloqueC-wifi-uso")],
+      ],
+      styles: { fontSize: 7.5, cellPadding: 2 },
+      headStyles: { fillColor: [241, 245, 249], textColor: [30, 41, 59], fontStyle: "bold" },
+      theme: "grid",
+    });
+    y = doc.lastAutoTable.finalY + 6;
+
+    // ── Bloque D ──
+    addBlockTitle("3.2.1.D", "Dispositivos de interconexion");
+    addQuestion("1. ¿Por que el hub ya no se usa en redes modernas?", "bloqueD-1");
+    addQuestion("2. ¿En que capa del modelo OSI opera el switch? ¿Y el router?", "bloqueD-2");
+    addQuestion("3. ¿Cuando necesitas un router y cuando te basta con un switch?", "bloqueD-3");
+    addProductLabel("Cuadro comparativo de dispositivos");
+    checkY(42);
+    doc.autoTable({
+      startY: y, margin: { left: ML, right: MR },
+      head: [["Dispositivo", "Capa OSI", "Funcion principal", "Cuando usarlo"]],
+      body: [
+        ["Hub",         val("bloqueD-hub-capa"),    val("bloqueD-hub-func"),    val("bloqueD-hub-uso")],
+        ["Switch",      val("bloqueD-switch-capa"), val("bloqueD-switch-func"), val("bloqueD-switch-uso")],
+        ["Router",      val("bloqueD-router-capa"), val("bloqueD-router-func"), val("bloqueD-router-uso")],
+        ["Access Point",val("bloqueD-ap-capa"),     val("bloqueD-ap-func"),     val("bloqueD-ap-uso")],
+      ],
+      styles: { fontSize: 7.5, cellPadding: 2 },
+      headStyles: { fillColor: [241, 245, 249], textColor: [30, 41, 59], fontStyle: "bold" },
+      columnStyles: { 2: { cellWidth: 55 }, 3: { cellWidth: 55 } },
+      theme: "grid",
+    });
+    y = doc.lastAutoTable.finalY + 6;
+
+    // ── Bloque E ──
+    addBlockTitle("3.2.1.E", "Modelo OSI y TCP/IP");
+    addQuestion("1. ¿Que hace la capa de Red (capa 3)? ¿Que protocolo opera en ella?", "bloqueE-1");
+    addQuestion("2. ¿En que capa trabaja el switch? ¿Y el router?", "bloqueE-2");
+    addQuestion("3. ¿Que relacion hay entre el modelo OSI y lo que ves cuando navegas?", "bloqueE-3");
+    addProductLabel("Diagrama de 7 capas OSI");
+    addImage("bloqueE-imagen");
+
+    // ── Subir al Drive ──
+    const pdfBase64 = doc.output("datauristring").split(",").pop();
+    const delivery = window.sharedAppsScriptDelivery;
+    if (!delivery || typeof delivery.uploadToAppsScript !== "function") {
+      throw new Error("El sistema de entrega no está disponible.");
+    }
+    const response = await delivery.uploadToAppsScript({
+      guideLabel: "Guia 2",
+      activityLabel: "Exploracion Contextual 3.2.1",
+      activityNumber: "3.2.1",
+      activityTitle: "Exploracion Visual por Bloques Tematicos",
+      fileName,
+      mimeType: "application/pdf",
+      fileBase64: pdfBase64,
+      fullName, ficha, grupo,
+      submittedAt: new Date().toISOString(),
+    });
+
+    if (btn) {
+      if (response && response.driveUrl) {
+        btn.innerHTML = `&#9989; PDF entregado &mdash; <a href="${response.driveUrl}" target="_blank" rel="noopener" style="color:#fff;text-decoration:underline">Ver en Drive</a>`;
+        btn.style.background = "linear-gradient(135deg,#1b5e20,#2e7d32)";
+      } else {
+        btn.innerHTML = "&#9989; PDF entregado en Drive";
+        btn.style.background = "linear-gradient(135deg,#1b5e20,#2e7d32)";
+      }
+      btn.disabled = false;
+    }
+
+  } catch (err) {
+    alert("Error al generar el PDF: " + ((err && err.message) || "Intenta de nuevo."));
+    if (btn) { btn.disabled = false; btn.innerHTML = origHTML; }
+  }
+};
+
 window.enviarSocializacion311 = async function () {
   if (!String(state["reflexion-socializacion"] || "").trim()) {
     alert("Escribe tus notas de la socialización antes de enviar.");
@@ -639,6 +1053,8 @@ const LOCK_KEYS_REDES = [
   "bloqueA-locked",
   "bloqueB-locked",
   "bloqueC-locked",
+  "bloqueD-locked",
+  "bloqueE-locked",
   "reflexion-311-locked",
   "reflexion-socializacion-locked",
 ];
@@ -665,6 +1081,8 @@ function applyAllLocksRedes() {
   applyBloqueALock();
   applyBloqueBLock();
   applyBloqueCLock();
+  applyBloqueDLock();
+  applyBloqueELock();
 }
 
 function enforceLockFlagsFromRemote(remoteData) {
