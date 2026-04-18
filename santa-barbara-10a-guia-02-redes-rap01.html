@@ -349,7 +349,7 @@
           <div class="card-header-left">
             <div class="card-icon">&#128269;</div>
             <div>
-              <h3>Exploraci&oacute;n visual por bloques tem&aacute;ticos</h3>
+              <h3>3.2.1 &middot; Exploraci&oacute;n visual por bloques tem&aacute;ticos</h3>
               <p>5 bloques + mapa mental + socializaci&oacute;n entre pares</p>
             </div>
           </div>
@@ -360,7 +360,7 @@
           <!-- BLOQUE A -->
           <div class="activity open mission-card">
             <div class="activity-header" onclick="toggleActivity(this.parentElement)">
-              <span class="activity-num">3.2.A</span>
+              <span class="activity-num">3.2.1.A</span>
               <span class="activity-title">&#127760; Bloque A &mdash; Tipos de redes: LAN, MAN y WAN</span>
               <span class="mission-chip">Mision diagnostica</span>
               <span class="activity-toggle">&#9662;</span>
@@ -427,7 +427,7 @@
           <!-- BLOQUE B -->
           <div class="activity open mission-card">
             <div class="activity-header" onclick="toggleActivity(this.parentElement)">
-              <span class="activity-num">3.2.B</span>
+              <span class="activity-num">3.2.1.B</span>
               <span class="activity-title">&#128336; Bloque B &mdash; Topolog&iacute;as de red</span>
               <span class="mission-chip">Mision diagnostica</span>
               <span class="activity-toggle">&#9662;</span>
@@ -487,7 +487,7 @@
           <!-- BLOQUE C -->
           <div class="activity open mission-card">
             <div class="activity-header" onclick="toggleActivity(this.parentElement)">
-              <span class="activity-num">3.2.C</span>
+              <span class="activity-num">3.2.1.C</span>
               <span class="activity-title">&#128268; Bloque C &mdash; Medios de transmisi&oacute;n</span>
               <span class="mission-chip">Mision diagnostica</span>
               <span class="activity-toggle">&#9662;</span>
@@ -576,7 +576,7 @@
           <!-- BLOQUE D -->
           <div class="activity open mission-card">
             <div class="activity-header" onclick="toggleActivity(this.parentElement)">
-              <span class="activity-num">3.2.D</span>
+              <span class="activity-num">3.2.1.D</span>
               <span class="activity-title">&#128268; Bloque D &mdash; Dispositivos de interconexion</span>
               <span class="mission-chip">Mision diagnostica</span>
               <span class="activity-toggle">&#9662;</span>
@@ -584,10 +584,36 @@
             <div class="activity-body">
               <div class="info-box green" style="margin-bottom:16px">
                 <div class="label">&#127909; Videos de referencia</div>
-                <p><strong>Hub vs Switch vs Router &mdash; &iquest;cu&aacute;l es la diferencia?</strong></p>
-                <p><strong>&iquest;C&oacute;mo funciona un switch? &mdash; tabla MAC explicada</strong></p>
+                <div style="display:flex;gap:8px;margin:10px 0 12px">
+                  <button type="button" id="tabD-btn-1" onclick="showVideoBloqueD(1)"
+                    style="flex:1;padding:8px 12px;border-radius:8px;border:2px solid #2e7d32;cursor:pointer;font-size:0.85rem;font-weight:600;font-family:inherit;background:#2e7d32;color:#fff">
+                    &#127757; Hub, Switch &amp; Router
+                  </button>
+                  <button type="button" id="tabD-btn-2" onclick="showVideoBloqueD(2)"
+                    style="flex:1;padding:8px 12px;border-radius:8px;border:2px solid #2e7d32;cursor:pointer;font-size:0.85rem;font-weight:600;font-family:inherit;background:#e8f5e9;color:#1b5e20">
+                    &#128268; C&oacute;mo funciona un Switch
+                  </button>
+                </div>
+                <div id="videoD-1">
+                  <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:8px">
+                    <iframe src="https://player.vimeo.com/video/1184304714?title=0&amp;byline=0&amp;portrait=0&amp;badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479"
+                      style="position:absolute;top:0;left:0;width:100%;height:100%;border:0"
+                      allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"
+                      referrerpolicy="strict-origin-when-cross-origin"
+                      title="Explicaci&oacute;n de Hub, Switch &amp; Router &mdash; Cu&aacute;l es la diferencia"></iframe>
+                  </div>
+                </div>
+                <div id="videoD-2" style="display:none">
+                  <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:8px">
+                    <iframe src="https://player.vimeo.com/video/1184304743?title=0&amp;byline=0&amp;portrait=0&amp;badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479"
+                      style="position:absolute;top:0;left:0;width:100%;height:100%;border:0"
+                      allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"
+                      referrerpolicy="strict-origin-when-cross-origin"
+                      title="C&oacute;mo funcionan los Switches en redes LAN"></iframe>
+                  </div>
+                </div>
               </div>
-              <div class="form-grid" style="margin-top:12px">
+              <div class="form-grid" style="margin-top:12px;grid-template-columns:1fr">
                 <label>
                   <span>1. &iquest;Por qu&eacute; el hub ya no se usa en redes modernas?</span>
                   <textarea rows="3" data-store="bloqueD-1" data-track placeholder="Explica la diferencia entre compartir y conmutar el ancho de banda."></textarea>
@@ -642,13 +668,22 @@
                   </table>
                 </div>
               </div>
+              <div style="margin-top:16px">
+                <button type="button" id="btnGuardarBloqueD" onclick="guardarBloqueD()"
+                  style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                  &#128190; Guardar respuestas
+                </button>
+              </div>
+              <div id="bloqueDStatus" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                &#9989; Respuestas guardadas en Firebase. Ya no se pueden modificar.
+              </div>
             </div>
           </div>
 
           <!-- BLOQUE E -->
           <div class="activity open mission-card">
             <div class="activity-header" onclick="toggleActivity(this.parentElement)">
-              <span class="activity-num">3.2.E</span>
+              <span class="activity-num">3.2.1.E</span>
               <span class="activity-title">&#127760; Bloque E &mdash; Modelo OSI y TCP/IP</span>
               <span class="mission-chip">Mision diagnostica</span>
               <span class="activity-toggle">&#9662;</span>
@@ -656,11 +691,18 @@
             <div class="activity-body">
               <div class="info-box green" style="margin-bottom:16px">
                 <div class="label">&#127909; Video de referencia</div>
-                <p><strong>Modelo OSI explicado de forma sencilla</strong></p>
+                <p><strong>Qu&eacute; es el Modelo OSI &mdash; Explicado de manera sencilla</strong></p>
+                <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:8px;margin-top:8px">
+                  <iframe src="https://player.vimeo.com/video/1184421227?title=0&amp;byline=0&amp;portrait=0&amp;badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479"
+                    style="position:absolute;top:0;left:0;width:100%;height:100%;border:0"
+                    allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    title="Qu&eacute; es el Modelo OSI &mdash; Explicado de manera sencilla"></iframe>
+                </div>
                 <div class="label" style="margin-top:10px">&#127758; Recurso interactivo</div>
                 <p>Cisco Skills for All &mdash; Networking Basics, M&oacute;dulo 3</p>
               </div>
-              <div class="form-grid" style="margin-top:12px">
+              <div class="form-grid" style="margin-top:12px;grid-template-columns:1fr">
                 <label>
                   <span>1. &iquest;Qu&eacute; hace la capa de Red (capa 3)? &iquest;Qu&eacute; protocolo opera en ella?</span>
                   <textarea rows="3" data-store="bloqueE-1" data-track placeholder="Describe la funci&oacute;n y menciona el protocolo principal que opera en capa 3."></textarea>
@@ -677,19 +719,44 @@
               <div class="checklist-card compact-card" style="margin-top:16px">
                 <h3>&#128196; Producto individual &mdash; Diagrama de 7 capas OSI</h3>
                 <p>Dibuja un diagrama vertical de las 7 capas OSI. Para cada capa anota: nombre, funci&oacute;n en una frase, dispositivo o protocolo que opera en ella, y un ejemplo de uso cotidiano.</p>
-                <label style="display:block;margin-top:10px">
-                  <span>Resume aqu&iacute; las 7 capas con su dispositivo/protocolo y ejemplo cotidiano</span>
-                  <textarea rows="10" data-store="bloqueE-producto" data-track placeholder="Capa 7 - Aplicaci&oacute;n: HTTP/HTTPS - abrir YouTube&#10;Capa 6 - Presentaci&oacute;n: SSL/TLS - cifrar la conexi&oacute;n&#10;..."></textarea>
-                </label>
+                <div style="margin-top:12px">
+                  <label id="bloqueEImagenLabel" style="display:inline-flex;align-items:center;gap:8px;background:#f1f5f9;border:2px dashed #94a3b8;border-radius:10px;padding:10px 16px;cursor:pointer;font-size:0.9rem;font-weight:600;color:#1e40af">
+                    &#128247; Subir imagen del diagrama OSI
+                    <input type="file" id="bloqueEImagenInput" accept="image/*" style="display:none" onchange="subirImagenBloqueE(this)">
+                  </label>
+                  <div id="bloqueEImagenPreview" style="display:none;margin-top:10px">
+                    <img id="bloqueEImagenImg" style="max-width:100%;max-height:360px;border-radius:8px;border:1px solid #e2e8f0;display:block" alt="Diagrama OSI del aprendiz">
+                    <p id="bloqueEImagenNombre" style="font-size:0.78rem;color:#64748b;margin-top:4px"></p>
+                  </div>
+                </div>
+              </div>
+              <div style="margin-top:16px">
+                <button type="button" id="btnGuardarBloqueE" onclick="guardarBloqueE()"
+                  style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                  &#128190; Guardar respuestas
+                </button>
+              </div>
+              <div id="bloqueEStatus" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                &#9989; Respuestas guardadas en Firebase. Ya no se pueden modificar.
               </div>
             </div>
+          </div>
+
+          <!-- EXPORTAR PDF 3.2.1 -->
+          <div style="margin:8px 0 20px;padding:20px;background:linear-gradient(135deg,#eff6ff,#dbeafe);border-radius:14px;border:1px solid #bfdbfe;text-align:center">
+            <p style="font-size:0.9rem;font-weight:600;color:#1e3a8a;margin:0 0 12px">&#128196; Cuando hayas completado los 5 bloques, genera tu entrega en PDF</p>
+            <button type="button" onclick="exportarPDFContextualizacion()"
+              style="display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,#1e3a8a,#1d4ed8);color:#fff;border:none;border-radius:12px;padding:12px 28px;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 4px 14px rgba(29,78,216,0.35)">
+              &#128196; Generar PDF &mdash; Exploraci&oacute;n Contextual
+            </button>
+            <p style="font-size:0.78rem;color:#3b82f6;margin:10px 0 0">Incluye respuestas y productos individuales de los bloques A &ndash; E</p>
           </div>
 
           <!-- MAPA MENTAL -->
           <div class="activity open mission-card">
             <div class="activity-header" onclick="toggleActivity(this.parentElement)">
-              <span class="activity-num">3.2.F</span>
-              <span class="activity-title">&#128161; Mapa mental integrador de fundamentos de redes</span>
+              <span class="activity-num">3.2.2</span>
+              <span class="activity-title">&#128101; Mapa mental integrador de fundamentos de redes</span>
               <span class="mission-chip">Mision integradora</span>
               <span class="activity-toggle">&#9662;</span>
             </div>
@@ -701,8 +768,11 @@
               </p>
               <div class="checklist-card compact-card">
                 <h3>Estructura sugerida del mapa mental</h3>
+                <div style="display:flex;align-items:center;gap:10px;background:#f0fdf4;border:2px solid #2e7d32;border-radius:10px;padding:10px 14px;margin-bottom:10px">
+                  <span style="font-size:1.3rem">&#11093;</span>
+                  <span style="font-weight:700;color:#1b5e20;font-size:0.95rem">Nodo central: REDES INFORM&Aacute;TICAS</span>
+                </div>
                 <ul class="note-list">
-                  <li><strong>Nodo central:</strong> REDES INFORM&Aacute;TICAS</li>
                   <li><strong>Rama 1 &mdash; Tipos de red:</strong> LAN / MAN / WAN con ejemplo de MiPyme boyacense en cada una.</li>
                   <li><strong>Rama 2 &mdash; Topolog&iacute;as:</strong> estrella, &aacute;rbol, bus, anillo con &iacute;cono visual y caso de uso.</li>
                   <li><strong>Rama 3 &mdash; Medios de transmisi&oacute;n:</strong> UTP / fibra / Wi-Fi con est&aacute;ndar y distancia m&aacute;xima.</li>
@@ -711,23 +781,52 @@
                   <li>El mapa debe mostrar al menos <strong>2 conexiones cruzadas</strong> entre ramas.</li>
                 </ul>
               </div>
-              <div class="info-box blue" style="margin-top:16px">
-                <div class="label">Herramientas sugeridas</div>
-                <p>MindMeister (en l&iacute;nea) &middot; CmapTools (instalable) &middot; Canva &mdash; Mapa mental &middot; Draw.io</p>
-              </div>
-              <div class="form-grid" style="margin-top:12px">
-                <label>
-                  <span>Herramienta que usaste y descripci&oacute;n breve del mapa</span>
-                  <textarea rows="3" data-store="mapaM-herramienta" data-track placeholder="Indica la herramienta y describe c&oacute;mo organizaste las ramas y las conexiones cruzadas."></textarea>
-                </label>
-                <label>
-                  <span>&iquest;Cu&aacute;les fueron las 2 conexiones cruzadas que incluyste?</span>
-                  <textarea rows="3" data-store="mapaM-conexiones" data-track placeholder="Ejemplo: switch &harr; topolog&iacute;a estrella &harr; LAN; UTP Cat6 &harr; capa 1 OSI."></textarea>
-                </label>
+              <div class="checklist-card compact-card" style="margin-top:16px">
+                <h3>&#128295; Herramientas sugeridas</h3>
+                <div class="table-scroll" style="margin-top:10px">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th>Herramienta</th>
+                        <th>Tipo</th>
+                        <th>Enlace</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><strong>MindMeister</strong></td>
+                        <td><em>En l&iacute;nea &mdash; colaborativo</em></td>
+                        <td><a href="https://www.mindmeister.com" target="_blank" rel="noopener">mindmeister.com</a></td>
+                      </tr>
+                      <tr>
+                        <td><strong>CmapTools</strong></td>
+                        <td><em>Instalable &mdash; offline disponible</em></td>
+                        <td><a href="https://cmap.ihmc.us" target="_blank" rel="noopener">cmap.ihmc.us</a></td>
+                      </tr>
+                      <tr>
+                        <td><strong>Canva &mdash; Mapa mental</strong></td>
+                        <td><em>En l&iacute;nea &mdash; plantillas visuales</em></td>
+                        <td><a href="https://www.canva.com/mind-map" target="_blank" rel="noopener">canva.com/mind-map</a></td>
+                      </tr>
+                      <tr>
+                        <td><strong>Draw.io</strong></td>
+                        <td><em>En l&iacute;nea &mdash; muy flexible</em></td>
+                        <td><a href="https://app.diagrams.net" target="_blank" rel="noopener">app.diagrams.net</a></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
               <div class="warning-box" style="margin-top:12px">
                 <strong>&#9888; Entrega:</strong> Exporta el mapa como imagen (PNG) o PDF. Nombre del archivo:
                 <code>MapaMental_Redes_NombreAprendiz_FICHA.pdf</code>
+              </div>
+              <div style="margin-top:14px">
+                <button type="button" class="btn-drive"
+                  style="min-height:unset;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;display:inline-flex;align-items:center;gap:8px"
+                  onclick="window.sharedAppsScriptDelivery.openDeliveryModal({guideLabel:'Guia 2',activityNumber:'3.2.2',activityTitle:'Mapa mental integrador de fundamentos de redes',activityLabel:'Actividad 3.2.2'})">
+                  &#128193; Subir mapa mental al Drive
+                </button>
               </div>
             </div>
           </div>
