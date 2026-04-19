@@ -1,0 +1,2095 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contenido Teórico — Redes | Guía 2 | I.E. Santa Barbara</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ── TOKENS ── */
+:root {
+  --font-display: "Outfit", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --bg: #edf3ef;
+  --surface: #ffffff;
+  --surface-2: #f5faf7;
+  --brand-700: #0a5c31;
+  --brand-600: #007934;
+  --brand-500: #0fbf64;
+  --brand-300: #9fe3b7;
+  --brand-100: #e6f7ed;
+  --accent-gold: #f5b700;
+  --accent-blue: #1a73e8;
+  --accent-purple: #7c3aed;
+  --accent-orange: #ea580c;
+  --accent-red: #dc2626;
+  --text-strong: #102117;
+  --text-muted: #5f7468;
+  --border: #d6e2da;
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --shadow-sm: 0 4px 14px rgba(7,26,18,.08);
+  --shadow-md: 0 10px 30px rgba(7,26,18,.12);
+  --motion: 240ms ease;
+}
+
+/* ── RESET & BASE ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text-strong);
+  min-height: 100vh;
+}
+
+/* ── TOP NAV ── */
+.top-nav {
+  background: var(--brand-700);
+  color: #fff;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow-md);
+}
+.top-nav a.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--brand-300);
+  text-decoration: none;
+  font-size: .85rem;
+  font-weight: 600;
+  border: 1.5px solid var(--brand-300);
+  border-radius: 8px;
+  padding: 6px 12px;
+  transition: all var(--motion);
+  white-space: nowrap;
+}
+.top-nav a.back-btn:hover { background: var(--brand-300); color: var(--brand-700); }
+.top-nav-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  flex: 1;
+}
+.top-nav-badge {
+  background: var(--brand-500);
+  color: var(--brand-700);
+  font-size: .75rem;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+/* ── LAYOUT ── */
+.page-wrap { max-width: 1100px; margin: 0 auto; padding: 32px 20px 80px; }
+
+/* ── HERO ── */
+.page-hero {
+  background: linear-gradient(135deg, var(--brand-700) 0%, #1a5c42 100%);
+  color: #fff;
+  border-radius: var(--radius-lg);
+  padding: 48px 40px;
+  margin-bottom: 40px;
+  position: relative;
+  overflow: hidden;
+}
+.page-hero::before {
+  content: "";
+  position: absolute; inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239fe3b7' fill-opacity='0.07'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+.page-hero-tag {
+  display: inline-block;
+  background: rgba(255,255,255,.15);
+  border: 1px solid rgba(255,255,255,.3);
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-size: .8rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  margin-bottom: 16px;
+}
+.page-hero h1 {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  font-weight: 800;
+  line-height: 1.2;
+  margin-bottom: 12px;
+}
+.page-hero p { font-size: 1rem; opacity: .85; max-width: 620px; }
+.topic-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 24px;
+}
+.topic-chips a {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.25);
+  color: #fff;
+  text-decoration: none;
+  font-size: .8rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 20px;
+  transition: all var(--motion);
+}
+.topic-chips a:hover { background: var(--brand-500); color: var(--brand-700); border-color: var(--brand-500); }
+
+/* ── SECTION DIVIDER ── */
+.section-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 48px 0 20px;
+}
+.section-label-bar {
+  width: 4px; height: 28px;
+  background: var(--brand-500);
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.section-label h2 {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--brand-700);
+}
+.section-label span {
+  font-size: .8rem;
+  font-weight: 700;
+  background: var(--brand-100);
+  color: var(--brand-600);
+  padding: 3px 10px;
+  border-radius: 12px;
+  margin-left: auto;
+}
+
+/* ── CARDS ── */
+.card {
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 24px;
+  cursor: pointer;
+  transition: background var(--motion);
+  user-select: none;
+}
+.card-header:hover { background: var(--surface-2); }
+.card-icon-circle {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+.card-title { flex: 1; }
+.card-title h3 {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+.card-title p { font-size: .82rem; color: var(--text-muted); margin-top: 2px; }
+.card-chevron {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  transition: transform var(--motion);
+}
+.card.collapsed .card-chevron { transform: rotate(-90deg); }
+.card-body {
+  padding: 0 24px 24px;
+  border-top: 1px solid var(--border);
+  padding-top: 20px;
+}
+.card.collapsed .card-body { display: none; }
+
+/* ── T1: LAN MAN WAN ── */
+.red-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.red-card {
+  border-radius: var(--radius-sm);
+  padding: 20px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all var(--motion);
+  position: relative;
+  overflow: hidden;
+}
+.red-card::before {
+  content: attr(data-icon);
+  position: absolute;
+  right: 16px; top: 14px;
+  font-size: 2.4rem;
+  opacity: .18;
+}
+.red-card.pan { background: #f0fdf4; border-color: #86efac; }
+.red-card.lan { background: #e0f2fe; border-color: #7dd3fc; }
+.red-card.man { background: #fef9c3; border-color: #fde047; }
+.red-card.wan { background: #fce7f3; border-color: #f9a8d4; }
+.red-card:hover, .red-card.selected { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+.red-card.pan.selected { border-color: #16a34a; }
+.red-card.lan.selected { border-color: #0284c7; }
+.red-card.man.selected { border-color: #ca8a04; }
+.red-card.wan.selected { border-color: #db2777; }
+.red-card-badge {
+  display: inline-block;
+  font-size: .7rem;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  letter-spacing: .06em;
+}
+.pan .red-card-badge { background: #16a34a; color: #fff; }
+.lan .red-card-badge { background: #0284c7; color: #fff; }
+.man .red-card-badge { background: #ca8a04; color: #fff; }
+.wan .red-card-badge { background: #db2777; color: #fff; }
+.red-card h4 {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.red-card p { font-size: .83rem; color: #374151; line-height: 1.5; }
+.red-detail-box {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px 20px;
+  display: none;
+  animation: fadeIn .25s ease;
+}
+.red-detail-box.visible { display: block; }
+.red-detail-box h4 { font-weight: 700; margin-bottom: 10px; color: var(--brand-700); }
+.detail-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 6px;
+  font-size: .85rem;
+}
+.detail-row strong { width: 120px; color: var(--text-muted); font-weight: 600; flex-shrink: 0; }
+
+/* ── T2: TOPOLOGIAS ── */
+.topo-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.topo-tab {
+  padding: 8px 18px;
+  border-radius: 20px;
+  border: 2px solid var(--border);
+  background: var(--surface-2);
+  font-size: .85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--motion);
+  color: var(--text-strong);
+}
+.topo-tab:hover { border-color: var(--brand-500); }
+.topo-tab.active { background: var(--brand-600); color: #fff; border-color: var(--brand-600); }
+.topo-panel { display: none; }
+.topo-panel.active { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+@media (max-width: 640px) { .topo-panel.active { grid-template-columns: 1fr; } }
+.topo-svg-wrap {
+  background: #f0fdf4;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+.topo-svg-wrap svg { max-width: 100%; height: auto; }
+.topo-info h4 {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--brand-700);
+  margin-bottom: 8px;
+}
+.topo-info p { font-size: .85rem; line-height: 1.6; margin-bottom: 10px; }
+.pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+.pros, .cons {
+  background: var(--surface-2);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: .82rem;
+}
+.pros { border-left: 3px solid #16a34a; }
+.cons { border-left: 3px solid #dc2626; }
+.pros strong { color: #16a34a; }
+.cons strong { color: #dc2626; }
+.pros li, .cons li { margin-left: 14px; margin-top: 4px; }
+
+/* ── T3: CABLES ── */
+.cable-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.cable-card {
+  border-radius: var(--radius-sm);
+  padding: 18px;
+  border: 2px solid transparent;
+  transition: all var(--motion);
+  cursor: pointer;
+}
+.cable-card.utp { background: #fffbeb; border-color: #fde68a; }
+.cable-card.fibra { background: #f0fdf4; border-color: #86efac; }
+.cable-card.wifi { background: #eff6ff; border-color: #bfdbfe; }
+.cable-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+.cable-card h4 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  margin-bottom: 4px;
+  font-size: .95rem;
+}
+.cable-card .cable-icon { font-size: 2rem; margin-bottom: 8px; display: block; }
+.cable-card p { font-size: .82rem; color: var(--text-muted); line-height: 1.5; }
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .85rem;
+}
+.compare-table th {
+  background: var(--brand-700);
+  color: #fff;
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 600;
+}
+.compare-table th:first-child { border-radius: 8px 0 0 0; }
+.compare-table th:last-child { border-radius: 0 8px 0 0; }
+.compare-table td {
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.compare-table tr:last-child td:first-child { border-radius: 0 0 0 8px; }
+.compare-table tr:last-child td:last-child { border-radius: 0 0 8px 0; }
+.compare-table tr:nth-child(even) td { background: var(--surface-2); }
+.badge-win {
+  background: #dcfce7;
+  color: #16a34a;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-size: .78rem;
+}
+
+/* ── T4: HUB SWITCH ROUTER ── */
+.device-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.device-card {
+  border-radius: var(--radius-sm);
+  padding: 20px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all var(--motion);
+  text-align: center;
+}
+.device-card.hub { background: #fef2f2; border-color: #fca5a5; }
+.device-card.switch { background: #f0fdf4; border-color: #86efac; }
+.device-card.router { background: #eff6ff; border-color: #93c5fd; }
+.device-card.selected, .device-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+.device-card.hub.selected { border-color: #dc2626; }
+.device-card.switch.selected { border-color: #16a34a; }
+.device-card.router.selected { border-color: #2563eb; }
+.device-icon { font-size: 2.8rem; margin-bottom: 10px; display: block; }
+.device-card h4 { font-family: var(--font-display); font-size: 1rem; font-weight: 700; margin-bottom: 6px; }
+.device-card .layer-badge {
+  display: inline-block;
+  font-size: .72rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 12px;
+  margin-top: 4px;
+}
+.hub .layer-badge { background: #fca5a5; color: #7f1d1d; }
+.switch .layer-badge { background: #86efac; color: #14532d; }
+.router .layer-badge { background: #93c5fd; color: #1e3a8a; }
+.device-detail {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px 20px;
+  display: none;
+  animation: fadeIn .25s ease;
+}
+.device-detail.visible { display: block; }
+.device-detail h4 { font-weight: 700; color: var(--brand-700); margin-bottom: 10px; }
+.feature-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.feature-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: .85rem;
+  line-height: 1.5;
+}
+.feature-list li::before {
+  content: "▸";
+  color: var(--brand-500);
+  font-size: .9rem;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ── T5: TABLA MAC ── */
+.mac-sim {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.mac-sim h4 { font-weight: 700; margin-bottom: 12px; color: var(--brand-700); }
+.network-diagram {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  flex-wrap: wrap;
+  margin: 20px 0;
+  position: relative;
+}
+.net-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: transform var(--motion);
+  padding: 0 8px;
+}
+.net-node:hover { transform: scale(1.05); }
+.net-node .node-box {
+  width: 52px; height: 52px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  border: 2px solid var(--border);
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--motion);
+}
+.net-node.active .node-box { border-color: var(--brand-500); box-shadow: 0 0 0 3px var(--brand-300); }
+.net-node.sending .node-box { border-color: var(--accent-gold); box-shadow: 0 0 0 3px #fde68a; }
+.net-node .node-label { font-size: .72rem; font-weight: 600; color: var(--text-muted); }
+.net-node .node-mac { font-size: .65rem; font-family: monospace; color: var(--text-muted); }
+.switch-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+}
+.switch-node .sw-box {
+  background: var(--brand-600);
+  color: #fff;
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-size: .85rem;
+  font-weight: 700;
+  box-shadow: var(--shadow-md);
+}
+.net-line {
+  width: 30px; height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.net-line.active { background: var(--brand-500); }
+.mac-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.mac-btn {
+  padding: 8px 16px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  font-size: .82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--motion);
+  color: var(--text-strong);
+}
+.mac-btn:hover { border-color: var(--brand-500); }
+.mac-btn.primary { background: var(--brand-600); color: #fff; border-color: var(--brand-600); }
+.mac-btn.primary:hover { background: var(--brand-700); border-color: var(--brand-700); }
+.mac-table-wrap { overflow-x: auto; }
+.mac-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .82rem;
+  font-family: monospace;
+}
+.mac-table th {
+  background: #1e293b;
+  color: #94a3b8;
+  padding: 8px 14px;
+  text-align: left;
+  font-size: .75rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.mac-table td {
+  padding: 7px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #1e293b;
+}
+.mac-table tr:hover td { background: #f8fafc; }
+.mac-table .new-row td { background: #dcfce7 !important; }
+.mac-log {
+  background: #1e293b;
+  color: #94a3b8;
+  border-radius: 8px;
+  padding: 14px 16px;
+  font-family: monospace;
+  font-size: .78rem;
+  line-height: 1.7;
+  max-height: 160px;
+  overflow-y: auto;
+  margin-top: 14px;
+}
+.mac-log .log-ok { color: #4ade80; }
+.mac-log .log-info { color: #60a5fa; }
+.mac-log .log-warn { color: #fbbf24; }
+
+/* ── T6: OSI ── */
+.osi-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+@media (max-width: 640px) { .osi-container { grid-template-columns: 1fr; } }
+.osi-model h4, .tcp-model h4 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  margin-bottom: 12px;
+  font-size: .95rem;
+  text-align: center;
+}
+.osi-layer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  margin-bottom: 4px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all var(--motion);
+  border: 2px solid transparent;
+}
+.osi-layer:hover { transform: translateX(4px); }
+.osi-layer.selected { border-color: currentColor; box-shadow: var(--shadow-sm); }
+.osi-layer-num {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: rgba(0,0,0,.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .75rem;
+  font-weight: 800;
+  flex-shrink: 0;
+  color: inherit;
+}
+.osi-layer-name { font-weight: 700; font-size: .85rem; }
+.osi-layer-en { font-size: .72rem; opacity: .7; margin-left: auto; }
+.layer-7 { background: #fce7f3; color: #9d174d; }
+.layer-6 { background: #f5f3ff; color: #6d28d9; }
+.layer-5 { background: #eff6ff; color: #1d4ed8; }
+.layer-4 { background: #f0fdf4; color: #166534; }
+.layer-3 { background: #fefce8; color: #854d0e; }
+.layer-2 { background: #fff7ed; color: #9a3412; }
+.layer-1 { background: #fef2f2; color: #991b1b; }
+.tcp-layer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  margin-bottom: 6px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all var(--motion);
+  border: 2px solid transparent;
+}
+.tcp-layer:hover { transform: translateX(4px); }
+.tcp-layer.selected { border-color: currentColor; }
+.tcp-layer-icon { font-size: 1.4rem; }
+.tcp-layer-name { font-weight: 700; font-size: .88rem; }
+.tcp-layer-desc { font-size: .75rem; opacity: .75; }
+.tcp-4 { background: #fce7f3; color: #9d174d; }
+.tcp-3 { background: #eff6ff; color: #1d4ed8; }
+.tcp-2 { background: #f0fdf4; color: #166534; }
+.tcp-1 { background: #fef2f2; color: #991b1b; }
+.layer-detail-box {
+  margin-top: 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  display: none;
+  animation: fadeIn .25s ease;
+}
+.layer-detail-box.visible { display: block; }
+.layer-detail-box h5 { font-weight: 700; margin-bottom: 8px; color: var(--brand-700); font-size: .9rem; }
+.layer-detail-box p { font-size: .83rem; line-height: 1.6; margin-bottom: 8px; }
+.protocol-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.protocol-chip {
+  background: var(--brand-100);
+  color: var(--brand-700);
+  font-size: .75rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 12px;
+}
+.osi-tcp-compare {
+  margin-top: 20px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+}
+.osi-tcp-compare h5 { font-weight: 700; margin-bottom: 12px; color: var(--brand-700); }
+.mapping-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: .82rem;
+}
+.mapping-osi { display: flex; flex-direction: column; gap: 2px; width: 140px; }
+.mapping-osi span {
+  padding: 3px 8px;
+  border-radius: 5px;
+  font-size: .75rem;
+  font-weight: 600;
+}
+.mapping-arrow { font-size: 1rem; color: var(--text-muted); flex-shrink: 0; }
+.mapping-tcp { font-weight: 700; font-size: .85rem; }
+
+/* ── UTILS ── */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.info-note {
+  background: var(--brand-100);
+  border-left: 4px solid var(--brand-500);
+  border-radius: 0 8px 8px 0;
+  padding: 12px 16px;
+  font-size: .83rem;
+  line-height: 1.6;
+  margin-top: 16px;
+  color: var(--brand-700);
+}
+.info-note strong { font-weight: 700; }
+.scroll-top-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: var(--brand-600);
+  color: #fff;
+  border: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--motion);
+  z-index: 99;
+}
+.scroll-top-btn.visible { display: flex; }
+.scroll-top-btn:hover { background: var(--brand-700); transform: translateY(-2px); }
+</style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<nav class="top-nav">
+  <a href="javascript:history.back()" class="back-btn">&#8592; Volver a la Guía</a>
+  <div class="top-nav-title">Contenido Teórico — Redes y Telecomunicaciones</div>
+  <div class="top-nav-badge">Guía 2</div>
+</nav>
+
+<div class="page-wrap">
+
+  <!-- HERO -->
+  <div class="page-hero">
+    <div class="page-hero-tag">&#128218; Material de Apoyo Interactivo</div>
+    <h1>Fundamentos de Redes<br>de Computadores</h1>
+    <p>Explora los conceptos clave del RAP 01 con ejemplos visuales e interactivos. Haz clic en cada elemento para profundizar.</p>
+    <div class="topic-chips">
+      <a href="#t1">&#127760; LAN, MAN y WAN</a>
+      <a href="#t2">&#128256; Topologías</a>
+      <a href="#t3">&#128268; Cables de red</a>
+      <a href="#t4">&#128421; Hub vs Switch vs Router</a>
+      <a href="#t5">&#128196; Tabla MAC</a>
+      <a href="#t6">&#128336; Modelo OSI y TCP/IP</a>
+    </div>
+  </div>
+
+  <!-- ══════════════ T1: LAN MAN WAN ══════════════ -->
+  <div id="t1" class="section-label">
+    <div class="section-label-bar"></div>
+    <h2>&#127760; Tipos de redes: LAN, MAN y WAN</h2>
+    <span>Tema 1</span>
+  </div>
+
+  <div class="card" id="card-t1">
+    <div class="card-header" onclick="toggleCard('card-t1')">
+      <div class="card-icon-circle" style="background:#e0f2fe">&#127760;</div>
+      <div class="card-title">
+        <h3>PAN, LAN, MAN y WAN — explicación visual</h3>
+        <p>Haz clic en cada tipo de red para ver sus características</p>
+      </div>
+      <span class="card-chevron">&#9662;</span>
+    </div>
+    <div class="card-body">
+
+      <!-- ESCALA VISUAL SIEMPRE VISIBLE -->
+      <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:18px 20px;margin-bottom:20px">
+        <p style="font-size:.78rem;font-weight:700;color:var(--text-muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:14px">&#128207; Escala de cobertura — de menor a mayor</p>
+        <div style="display:flex;align-items:flex-end;gap:0;overflow-x:auto;padding-bottom:4px">
+
+          <!-- PAN -->
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;min-width:90px">
+            <div style="font-size:1.6rem">&#128241;</div>
+            <div style="width:100%;height:38px;background:#86efac;border-radius:6px 6px 0 0;display:flex;align-items:center;justify-content:center">
+              <span style="font-size:.7rem;font-weight:800;color:#14532d">PAN</span>
+            </div>
+            <div style="font-size:.72rem;font-weight:700;color:#16a34a">~10 m</div>
+            <div style="font-size:.7rem;color:var(--text-muted);text-align:center;line-height:1.4">Auriculares<br>Bluetooth</div>
+          </div>
+
+          <!-- Flecha -->
+          <div style="flex-shrink:0;font-size:1.2rem;color:var(--border);padding:0 4px;margin-bottom:48px">&#8250;</div>
+
+          <!-- LAN -->
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;min-width:90px">
+            <div style="font-size:1.6rem">&#127978;</div>
+            <div style="width:100%;height:60px;background:#7dd3fc;border-radius:6px 6px 0 0;display:flex;align-items:center;justify-content:center">
+              <span style="font-size:.7rem;font-weight:800;color:#075985">LAN</span>
+            </div>
+            <div style="font-size:.72rem;font-weight:700;color:#0284c7">~1 km</div>
+            <div style="font-size:.7rem;color:var(--text-muted);text-align:center;line-height:1.4">Red del<br>colegio</div>
+          </div>
+
+          <!-- Flecha -->
+          <div style="flex-shrink:0;font-size:1.2rem;color:var(--border);padding:0 4px;margin-bottom:48px">&#8250;</div>
+
+          <!-- MAN -->
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;min-width:90px">
+            <div style="font-size:1.6rem">&#127961;</div>
+            <div style="width:100%;height:90px;background:#fde047;border-radius:6px 6px 0 0;display:flex;align-items:center;justify-content:center">
+              <span style="font-size:.7rem;font-weight:800;color:#713f12">MAN</span>
+            </div>
+            <div style="font-size:.72rem;font-weight:700;color:#ca8a04">~100 km</div>
+            <div style="font-size:.7rem;color:var(--text-muted);text-align:center;line-height:1.4">Red de<br>una ciudad</div>
+          </div>
+
+          <!-- Flecha -->
+          <div style="flex-shrink:0;font-size:1.2rem;color:var(--border);padding:0 4px;margin-bottom:48px">&#8250;</div>
+
+          <!-- WAN -->
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;min-width:90px">
+            <div style="font-size:1.6rem">&#127758;</div>
+            <div style="width:100%;height:128px;background:#f9a8d4;border-radius:6px 6px 0 0;display:flex;align-items:center;justify-content:center">
+              <span style="font-size:.7rem;font-weight:800;color:#831843">WAN</span>
+            </div>
+            <div style="font-size:.72rem;font-weight:700;color:#db2777">+100 km</div>
+            <div style="font-size:.7rem;color:var(--text-muted);text-align:center;line-height:1.4">Internet<br>(todo el mundo)</div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="red-grid">
+        <div class="red-card pan" data-icon="📱" onclick="showRed('pan')">
+          <span class="red-card-badge">PAN</span>
+          <h4>Red de Área Personal</h4>
+          <p>Conecta dispositivos personales en un radio de pocos metros.</p>
+        </div>
+        <div class="red-card lan" data-icon="🏠" onclick="showRed('lan')">
+          <span class="red-card-badge">LAN</span>
+          <h4>Red de Área Local</h4>
+          <p>Cubre un espacio pequeño: un aula, una oficina o un edificio.</p>
+        </div>
+        <div class="red-card man" data-icon="🏙️" onclick="showRed('man')">
+          <span class="red-card-badge">MAN</span>
+          <h4>Red de Área Metropolitana</h4>
+          <p>Conecta varios edificios o barrios dentro de una ciudad.</p>
+        </div>
+        <div class="red-card wan" data-icon="🌍" onclick="showRed('wan')">
+          <span class="red-card-badge">WAN</span>
+          <h4>Red de Área Amplia</h4>
+          <p>Une países y continentes. Internet es la WAN más grande.</p>
+        </div>
+      </div>
+
+      <div class="red-detail-box" id="detail-pan">
+        <h4>&#128241; Red PAN (Personal Area Network)</h4>
+        <div class="detail-row"><strong>Cobertura</strong> Hasta ~10 m (alrededor de una persona)</div>
+        <div class="detail-row"><strong>Velocidad</strong> 1 Mbps – 3 Gbps (según tecnología)</div>
+        <div class="detail-row"><strong>Propietario</strong> El usuario personal</div>
+        <div class="detail-row"><strong>Tecnología</strong> Bluetooth, USB, Infrarrojo, Zigbee</div>
+        <div class="detail-row"><strong>Costo</strong> Muy bajo</div>
+        <div class="info-note"><strong>Dato clave:</strong> Bluetooth 5.0 puede alcanzar hasta 3 Gbps en condiciones ideales y un rango de 40 m en campo abierto.</div>
+      </div>
+      <div class="red-detail-box" id="detail-lan">
+        <h4>&#128205; Red LAN (Local Area Network)</h4>
+        <div class="detail-row"><strong>Cobertura</strong> Hasta ~1 km (aula, oficina, edificio)</div>
+        <div class="detail-row"><strong>Velocidad</strong> 100 Mbps – 10 Gbps</div>
+        <div class="detail-row"><strong>Propietario</strong> Una sola organización</div>
+        <div class="detail-row"><strong>Tecnología</strong> Ethernet (cable) / Wi-Fi</div>
+        <div class="detail-row"><strong>Costo</strong> Bajo</div>
+        <div class="detail-row"><strong>Ejemplo real</strong> La red del aula de sistemas de tu colegio</div>
+        <div class="info-note"><strong>Dato clave:</strong> En una LAN todos los equipos comparten el mismo rango de IP. Por ejemplo: 192.168.1.x</div>
+      </div>
+      <div class="red-detail-box" id="detail-man">
+        <h4>&#127961; Red MAN (Metropolitan Area Network)</h4>
+        <div class="detail-row"><strong>Cobertura</strong> 1 km – 100 km (ciudad o campus)</div>
+        <div class="detail-row"><strong>Velocidad</strong> 10 Mbps – 1 Gbps</div>
+        <div class="detail-row"><strong>Propietario</strong> Empresa de telecomunicaciones</div>
+        <div class="detail-row"><strong>Tecnología</strong> Fibra óptica, WiMAX</div>
+        <div class="detail-row"><strong>Costo</strong> Medio</div>
+        <div class="detail-row"><strong>Ejemplo real</strong> La red que conecta las sedes de un banco en Medellín</div>
+        <div class="info-note"><strong>Dato clave:</strong> Las alcaldías suelen usar MAN para conectar sus diferentes entidades dentro de la ciudad.</div>
+      </div>
+      <div class="red-detail-box" id="detail-wan">
+        <h4>&#127758; Red WAN (Wide Area Network)</h4>
+        <div class="detail-row"><strong>Cobertura</strong> +100 km (países, continentes)</div>
+        <div class="detail-row"><strong>Velocidad</strong> Variable (depende del proveedor)</div>
+        <div class="detail-row"><strong>Propietario</strong> Múltiples proveedores (ISP)</div>
+        <div class="detail-row"><strong>Tecnología</strong> Fibra submarina, satélite, MPLS</div>
+        <div class="detail-row"><strong>Costo</strong> Alto</div>
+        <div class="detail-row"><strong>Ejemplo real</strong> Internet — conecta millones de LAN y MAN en el mundo</div>
+        <div class="info-note"><strong>Dato clave:</strong> Para conectarte a Internet desde tu casa, un ISP (Claro, Tigo, ETB) te conecta su WAN con tu LAN doméstica.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ T2: TOPOLOGIAS ══════════════ -->
+  <div id="t2" class="section-label">
+    <div class="section-label-bar"></div>
+    <h2>&#128256; Topologías de red</h2>
+    <span>Tema 2</span>
+  </div>
+
+  <div class="card" id="card-t2">
+    <div class="card-header" onclick="toggleCard('card-t2')">
+      <div class="card-icon-circle" style="background:#f0fdf4">&#128256;</div>
+      <div class="card-title">
+        <h3>Estrella, árbol, bus y anillo — diagramas interactivos</h3>
+        <p>Selecciona una topología para ver su diagrama y características</p>
+      </div>
+      <span class="card-chevron">&#9662;</span>
+    </div>
+    <div class="card-body">
+      <div class="topo-tabs">
+        <button class="topo-tab active" onclick="showTopo('estrella', this)">&#11088; Estrella</button>
+        <button class="topo-tab" onclick="showTopo('arbol', this)">&#127795; Árbol</button>
+        <button class="topo-tab" onclick="showTopo('bus', this)">&#128652; Bus</button>
+        <button class="topo-tab" onclick="showTopo('anillo', this)">&#11835; Anillo</button>
+      </div>
+
+      <!-- ESTRELLA -->
+      <div class="topo-panel active" id="topo-estrella">
+        <div class="topo-svg-wrap">
+          <svg viewBox="0 0 200 200" width="240" height="240" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <filter id="glow-s"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              <!-- Rutas de paquetes: PC origen → SW → PC destino -->
+              <path id="ep1" d="M 100 32 L 100 100 L 100 168"/>
+              <path id="ep2" d="M 168 52 L 100 100 L 32 148"/>
+              <path id="ep3" d="M 32 52 L 100 100 L 168 148"/>
+            </defs>
+            <!-- Cables -->
+            <line x1="100" y1="80" x2="100" y2="40" stroke="#9fe3b7" stroke-width="2.5"/>
+            <line x1="120" y1="90" x2="160" y2="60" stroke="#9fe3b7" stroke-width="2.5"/>
+            <line x1="120" y1="110" x2="160" y2="140" stroke="#9fe3b7" stroke-width="2.5"/>
+            <line x1="100" y1="120" x2="100" y2="160" stroke="#9fe3b7" stroke-width="2.5"/>
+            <line x1="80" y1="110" x2="40" y2="140" stroke="#9fe3b7" stroke-width="2.5"/>
+            <line x1="80" y1="90" x2="40" y2="60" stroke="#9fe3b7" stroke-width="2.5"/>
+            <!-- Onda de pulso en SW cuando llega paquete -->
+            <circle cx="100" cy="100" r="22" fill="none" stroke="#0fbf64" stroke-width="3" opacity="0">
+              <animate attributeName="r"      values="22;22;30;38;22;22;30;38;22;22;30;38;22" keyTimes="0;0.10;0.133;0.20;0.30;0.43;0.467;0.53;0.63;0.76;0.800;0.87;1" dur="4.5s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="0;0;0.8;0;0;0;0.8;0;0;0;0.8;0;0"       keyTimes="0;0.10;0.133;0.20;0.30;0.43;0.467;0.53;0.63;0.76;0.800;0.87;1" dur="4.5s" repeatCount="indefinite"/>
+            </circle>
+            <!-- Switch — cambia color al recibir -->
+            <rect x="80" y="80" width="40" height="40" rx="6" stroke="#0a5c31" stroke-width="2">
+              <animate attributeName="fill" values="#007934;#007934;#0fbf64;#007934;#007934;#0fbf64;#007934;#007934;#0fbf64;#007934"
+                keyTimes="0;0.11;0.133;0.25;0.44;0.467;0.60;0.77;0.800;1" dur="4.5s" repeatCount="indefinite"/>
+            </rect>
+            <text x="100" y="104" text-anchor="middle" fill="white" font-size="10" font-weight="bold">SW</text>
+            <!-- PC Nodos — pulsan al recibir -->
+            <!-- PC Top: recibe en t=0 y envía (inicio p1) -->
+            <circle cx="100" cy="32" r="14" stroke="#2563eb" stroke-width="2">
+              <animate attributeName="fill" values="#fde047;#bfdbfe;#bfdbfe;#bfdbfe;#bfdbfe;#bfdbfe;#bfdbfe" keyTimes="0;0.04;0.267;0.50;0.75;0.95;1" dur="4.5s" repeatCount="indefinite"/>
+            </circle>
+            <text x="100" y="36" text-anchor="middle" fill="#1e40af" font-size="10">PC</text>
+            <!-- PC TR: envía p2 -->
+            <circle cx="168" cy="52" r="14" stroke="#2563eb" stroke-width="2">
+              <animate attributeName="fill" values="#bfdbfe;#bfdbfe;#bfdbfe;#fde047;#bfdbfe;#bfdbfe;#bfdbfe" keyTimes="0;0.267;0.30;0.333;0.40;0.95;1" dur="4.5s" repeatCount="indefinite"/>
+            </circle>
+            <text x="168" y="56" text-anchor="middle" fill="#1e40af" font-size="10">PC</text>
+            <!-- PC BR: recibe p3 -->
+            <circle cx="168" cy="148" r="14" stroke="#2563eb" stroke-width="2">
+              <animate attributeName="fill" values="#bfdbfe;#bfdbfe;#bfdbfe;#bfdbfe;#bfdbfe;#bfdbfe;#4ade80;#bfdbfe" keyTimes="0;0.267;0.50;0.63;0.667;0.90;0.933;1" dur="4.5s" repeatCount="indefinite"/>
+            </circle>
+            <text x="168" y="152" text-anchor="middle" fill="#1e40af" font-size="10">PC</text>
+            <!-- PC Bottom: recibe p1 -->
+            <circle cx="100" cy="168" r="14" stroke="#2563eb" stroke-width="2">
+              <animate attributeName="fill" values="#bfdbfe;#bfdbfe;#4ade80;#bfdbfe;#bfdbfe;#bfdbfe;#bfdbfe" keyTimes="0;0.23;0.267;0.35;0.50;0.95;1" dur="4.5s" repeatCount="indefinite"/>
+            </circle>
+            <text x="100" y="172" text-anchor="middle" fill="#1e40af" font-size="10">PC</text>
+            <!-- PC BL: recibe p2 -->
+            <circle cx="32" cy="148" r="14" stroke="#2563eb" stroke-width="2">
+              <animate attributeName="fill" values="#bfdbfe;#bfdbfe;#bfdbfe;#bfdbfe;#4ade80;#bfdbfe;#bfdbfe" keyTimes="0;0.267;0.50;0.567;0.600;0.67;1" dur="4.5s" repeatCount="indefinite"/>
+            </circle>
+            <text x="32" y="152" text-anchor="middle" fill="#1e40af" font-size="10">PC</text>
+            <!-- PC TL: envía p3 -->
+            <circle cx="32" cy="52" r="14" stroke="#2563eb" stroke-width="2">
+              <animate attributeName="fill" values="#bfdbfe;#bfdbfe;#bfdbfe;#bfdbfe;#bfdbfe;#bfdbfe;#fde047;#bfdbfe" keyTimes="0;0.267;0.50;0.60;0.633;0.667;0.70;1" dur="4.5s" repeatCount="indefinite"/>
+            </circle>
+            <text x="32" y="56" text-anchor="middle" fill="#1e40af" font-size="10">PC</text>
+            <!-- Paquete 1 (dorado): Top→SW→Bottom -->
+            <circle r="5" fill="#f5b700" filter="url(#glow-s)">
+              <animateMotion dur="4.5s" repeatCount="indefinite" keyTimes="0;0.267;1" keyPoints="0;1;1" calcMode="linear"><mpath href="#ep1"/></animateMotion>
+              <animate attributeName="opacity" values="1;1;0;0" keyTimes="0;0.267;0.30;1" dur="4.5s" repeatCount="indefinite"/>
+            </circle>
+            <!-- Paquete 2 (naranja): TR→SW→BL -->
+            <circle r="5" fill="#f97316" filter="url(#glow-s)">
+              <animateMotion dur="4.5s" repeatCount="indefinite" keyTimes="0;0.333;0.600;1" keyPoints="0;0;1;1" calcMode="linear"><mpath href="#ep2"/></animateMotion>
+              <animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.30;0.333;0.600;0.633;1" dur="4.5s" repeatCount="indefinite"/>
+            </circle>
+            <!-- Paquete 3 (morado): TL→SW→BR -->
+            <circle r="5" fill="#a855f7" filter="url(#glow-s)">
+              <animateMotion dur="4.5s" repeatCount="indefinite" keyTimes="0;0.667;0.933;1" keyPoints="0;0;1;1" calcMode="linear"><mpath href="#ep3"/></animateMotion>
+              <animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.633;0.667;0.933;0.967;1" dur="4.5s" repeatCount="indefinite"/>
+            </circle>
+          </svg>
+        </div>
+        <div class="topo-info">
+          <h4>&#11088; Topología Estrella</h4>
+          <p>Todos los equipos se conectan a un dispositivo central (switch o hub). Si un cable falla, solo ese equipo pierde conexión.</p>
+          <p><strong>Uso real:</strong> La mayoría de redes LAN modernas usan esta topología.</p>
+          <div class="pros-cons">
+            <div class="pros">
+              <strong>&#10003; Ventajas</strong>
+              <ul>
+                <li>Fácil de instalar</li>
+                <li>Fallo aislado</li>
+                <li>Fácil de agregar equipos</li>
+              </ul>
+            </div>
+            <div class="cons">
+              <strong>&#10007; Desventajas</strong>
+              <ul>
+                <li>Punto central crítico</li>
+                <li>Más cable necesario</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ÁRBOL -->
+      <div class="topo-panel" id="topo-arbol">
+        <div class="topo-svg-wrap">
+          <svg viewBox="0 0 220 200" width="260" height="240" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <filter id="glow-a"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              <!-- Ruta: PC-izq → SW-izq → Router → SW-der → PC-der -->
+              <path id="ap1" d="M 30 158 L 60 92 L 110 24 L 160 92 L 190 158"/>
+              <!-- Ruta inversa: PC-der → SW-der → Router → SW-izq → PC-izq -->
+              <path id="ap2" d="M 190 158 L 160 92 L 110 24 L 60 92 L 30 158"/>
+            </defs>
+            <!-- Cables verticales -->
+            <line x1="110" y1="38" x2="60" y2="80" stroke="#9fe3b7" stroke-width="2.5"/>
+            <line x1="110" y1="38" x2="160" y2="80" stroke="#9fe3b7" stroke-width="2.5"/>
+            <line x1="50" y1="104" x2="30" y2="145" stroke="#9fe3b7" stroke-width="2"/>
+            <line x1="60" y1="104" x2="60" y2="145" stroke="#9fe3b7" stroke-width="2"/>
+            <line x1="70" y1="104" x2="90" y2="145" stroke="#9fe3b7" stroke-width="2"/>
+            <line x1="150" y1="104" x2="130" y2="145" stroke="#9fe3b7" stroke-width="2"/>
+            <line x1="160" y1="104" x2="160" y2="145" stroke="#9fe3b7" stroke-width="2"/>
+            <line x1="170" y1="104" x2="190" y2="145" stroke="#9fe3b7" stroke-width="2"/>
+            <!-- Router — pulsa cuando pasa paquete -->
+            <rect x="90" y="10" width="40" height="28" rx="5" stroke="#0a5c31" stroke-width="2">
+              <animate attributeName="fill" values="#007934;#007934;#0fbf64;#007934;#007934;#0fbf64;#007934"
+                keyTimes="0;0.28;0.333;0.45;0.78;0.833;1" dur="3s" repeatCount="indefinite"/>
+            </rect>
+            <text x="110" y="28" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Router</text>
+            <!-- Switch izquierdo — pulsa -->
+            <rect x="38" y="80" width="44" height="24" rx="4" stroke="#007934" stroke-width="1.5">
+              <animate attributeName="fill" values="#0fbf64;#0fbf64;#007934;#007934;#0fbf64;#007934;#0fbf64"
+                keyTimes="0;0.07;0.17;0.78;0.87;0.93;1" dur="3s" repeatCount="indefinite"/>
+            </rect>
+            <text x="60" y="95" text-anchor="middle" fill="white" font-size="8" font-weight="bold">Switch</text>
+            <!-- Switch derecho — pulsa -->
+            <rect x="138" y="80" width="44" height="24" rx="4" stroke="#007934" stroke-width="1.5">
+              <animate attributeName="fill" values="#0fbf64;#007934;#007934;#0fbf64;#0fbf64;#007934;#0fbf64"
+                keyTimes="0;0.10;0.43;0.50;0.57;0.90;1" dur="3s" repeatCount="indefinite"/>
+            </rect>
+            <text x="160" y="95" text-anchor="middle" fill="white" font-size="8" font-weight="bold">Switch</text>
+            <!-- PCs izquierda -->
+            <circle cx="30" cy="158" r="12" stroke="#2563eb" stroke-width="1.5">
+              <animate attributeName="fill" values="#fde047;#bfdbfe;#bfdbfe;#bfdbfe;#4ade80;#bfdbfe"
+                keyTimes="0;0.06;0.50;0.90;0.967;1" dur="3s" repeatCount="indefinite"/>
+            </circle>
+            <text x="30" y="162" text-anchor="middle" fill="#1e40af" font-size="8">PC</text>
+            <circle cx="60" cy="158" r="12" fill="#bfdbfe" stroke="#2563eb" stroke-width="1.5"/>
+            <text x="60" y="162" text-anchor="middle" fill="#1e40af" font-size="8">PC</text>
+            <circle cx="90" cy="158" r="12" fill="#bfdbfe" stroke="#2563eb" stroke-width="1.5"/>
+            <text x="90" y="162" text-anchor="middle" fill="#1e40af" font-size="8">PC</text>
+            <!-- PCs derecha -->
+            <circle cx="130" cy="158" r="12" fill="#bfdbfe" stroke="#2563eb" stroke-width="1.5"/>
+            <text x="130" y="162" text-anchor="middle" fill="#1e40af" font-size="8">PC</text>
+            <circle cx="160" cy="158" r="12" fill="#bfdbfe" stroke="#2563eb" stroke-width="1.5"/>
+            <text x="160" y="162" text-anchor="middle" fill="#1e40af" font-size="8">PC</text>
+            <circle cx="190" cy="158" r="12" stroke="#2563eb" stroke-width="1.5">
+              <animate attributeName="fill" values="#bfdbfe;#bfdbfe;#4ade80;#bfdbfe;#bfdbfe;#fde047;#bfdbfe"
+                keyTimes="0;0.43;0.50;0.57;0.90;0.967;1" dur="3s" repeatCount="indefinite"/>
+            </circle>
+            <text x="190" y="162" text-anchor="middle" fill="#1e40af" font-size="8">PC</text>
+            <!-- Paquete 1: izq → der (dorado) -->
+            <circle r="5" fill="#f5b700" filter="url(#glow-a)">
+              <animateMotion dur="3s" repeatCount="indefinite" keyTimes="0;0.40;1" keyPoints="0;1;1" calcMode="linear"><mpath href="#ap1"/></animateMotion>
+              <animate attributeName="opacity" values="1;1;0;0" keyTimes="0;0.40;0.45;1" dur="3s" repeatCount="indefinite"/>
+            </circle>
+            <!-- Paquete 2: der → izq (cian), desplazado 1.5s -->
+            <circle r="5" fill="#22d3ee" filter="url(#glow-a)">
+              <animateMotion dur="3s" repeatCount="indefinite" keyTimes="0;0.50;0.90;1" keyPoints="0;0;1;1" calcMode="linear"><mpath href="#ap2"/></animateMotion>
+              <animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.47;0.50;0.90;0.93;1" dur="3s" repeatCount="indefinite"/>
+            </circle>
+          </svg>
+        </div>
+        <div class="topo-info">
+          <h4>&#127795; Topología Árbol (Jerárquica)</h4>
+          <p>Combina la topología estrella en varios niveles. Un dispositivo raíz (router) conecta switches, y estos conectan los equipos finales.</p>
+          <p><strong>Uso real:</strong> Redes empresariales y universitarias grandes.</p>
+          <div class="pros-cons">
+            <div class="pros">
+              <strong>&#10003; Ventajas</strong>
+              <ul>
+                <li>Muy escalable</li>
+                <li>Segmentación lógica</li>
+                <li>Fácil de administrar</li>
+              </ul>
+            </div>
+            <div class="cons">
+              <strong>&#10007; Desventajas</strong>
+              <ul>
+                <li>Si el raíz falla, todo cae</li>
+                <li>Más compleja de instalar</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BUS -->
+      <div class="topo-panel" id="topo-bus">
+        <div class="topo-svg-wrap">
+          <svg viewBox="0 0 240 160" width="280" height="190" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <filter id="glow-b"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              <!-- Ruta L→R y R→L sobre el bus -->
+              <path id="bp1" d="M 20 80 L 220 80"/>
+              <path id="bp2" d="M 220 80 L 20 80"/>
+            </defs>
+            <!-- Bus principal -->
+            <line x1="20" y1="80" x2="220" y2="80" stroke="#f59e0b" stroke-width="5" stroke-linecap="round"/>
+            <!-- Terminadores -->
+            <rect x="10" y="74" width="10" height="12" rx="2" fill="#92400e"/>
+            <rect x="220" y="74" width="10" height="12" rx="2" fill="#92400e"/>
+            <!-- Derivaciones -->
+            <line x1="60"  y1="80" x2="60"  y2="40" stroke="#fcd34d" stroke-width="2" stroke-dasharray="4"/>
+            <line x1="110" y1="80" x2="110" y2="40" stroke="#fcd34d" stroke-width="2" stroke-dasharray="4"/>
+            <line x1="160" y1="80" x2="160" y2="40" stroke="#fcd34d" stroke-width="2" stroke-dasharray="4"/>
+            <line x1="60"  y1="80" x2="60"  y2="120" stroke="#fcd34d" stroke-width="2" stroke-dasharray="4"/>
+            <line x1="110" y1="80" x2="110" y2="120" stroke="#fcd34d" stroke-width="2" stroke-dasharray="4"/>
+            <!-- Nodos — se iluminan cuando el broadcast los alcanza -->
+            <!-- PC(60,28): fracción x=(60-20)/200=0.20 → t=0.20 en ciclo 3s -->
+            <circle cx="60" cy="28" r="12" stroke="#2563eb" stroke-width="1.5">
+              <animate attributeName="fill" values="#fde047;#fde047;#4ade80;#bfdbfe;#bfdbfe;#bfdbfe;#bfdbfe;#4ade80;#bfdbfe"
+                keyTimes="0;0.03;0.07;0.15;0.50;0.70;0.73;0.77;1" dur="3s" repeatCount="indefinite"/>
+            </circle>
+            <text x="60" y="32" text-anchor="middle" fill="#1e40af" font-size="8">PC</text>
+            <!-- PC(110,28): fracción=0.45 → t=0.45 -->
+            <circle cx="110" cy="28" r="12" stroke="#2563eb" stroke-width="1.5">
+              <animate attributeName="fill" values="#bfdbfe;#bfdbfe;#4ade80;#bfdbfe;#bfdbfe;#bfdbfe;#4ade80;#bfdbfe"
+                keyTimes="0;0.42;0.45;0.52;0.50;0.92;0.95;1" dur="3s" repeatCount="indefinite"/>
+            </circle>
+            <text x="110" y="32" text-anchor="middle" fill="#1e40af" font-size="8">PC</text>
+            <!-- PC(160,28): fracción=0.70 → t=0.70 -->
+            <circle cx="160" cy="28" r="12" stroke="#2563eb" stroke-width="1.5">
+              <animate attributeName="fill" values="#bfdbfe;#bfdbfe;#4ade80;#bfdbfe;#bfdbfe;#fde047;#bfdbfe"
+                keyTimes="0;0.67;0.70;0.78;0.95;0.97;1" dur="3s" repeatCount="indefinite"/>
+            </circle>
+            <text x="160" y="32" text-anchor="middle" fill="#1e40af" font-size="8">PC</text>
+            <!-- PC(60,132) -->
+            <circle cx="60" cy="132" r="12" stroke="#2563eb" stroke-width="1.5">
+              <animate attributeName="fill" values="#fde047;#fde047;#4ade80;#bfdbfe;#bfdbfe;#bfdbfe;#4ade80;#bfdbfe"
+                keyTimes="0;0.03;0.07;0.15;0.50;0.70;0.77;1" dur="3s" repeatCount="indefinite"/>
+            </circle>
+            <text x="60" y="136" text-anchor="middle" fill="#1e40af" font-size="8">PC</text>
+            <!-- PC(110,132) -->
+            <circle cx="110" cy="132" r="12" stroke="#2563eb" stroke-width="1.5">
+              <animate attributeName="fill" values="#bfdbfe;#bfdbfe;#4ade80;#bfdbfe;#bfdbfe;#bfdbfe;#4ade80;#bfdbfe"
+                keyTimes="0;0.42;0.45;0.52;0.50;0.92;0.95;1" dur="3s" repeatCount="indefinite"/>
+            </circle>
+            <text x="110" y="136" text-anchor="middle" fill="#1e40af" font-size="8">PC</text>
+            <!-- Paquete 1: L→R (broadcast izq→der, dorado) -->
+            <circle r="5" fill="#f5b700" filter="url(#glow-b)">
+              <animateMotion dur="3s" repeatCount="indefinite" keyTimes="0;0.40;1" keyPoints="0;1;1" calcMode="linear"><mpath href="#bp1"/></animateMotion>
+              <animate attributeName="opacity" values="1;1;0;0" keyTimes="0;0.40;0.43;1" dur="3s" repeatCount="indefinite"/>
+            </circle>
+            <!-- Paquete 2: R→L (broadcast der→izq, naranja), desfasado 1.5s -->
+            <circle r="5" fill="#f97316" filter="url(#glow-b)">
+              <animateMotion dur="3s" repeatCount="indefinite" keyTimes="0;0.50;0.90;1" keyPoints="0;0;1;1" calcMode="linear"><mpath href="#bp2"/></animateMotion>
+              <animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.47;0.50;0.90;0.93;1" dur="3s" repeatCount="indefinite"/>
+            </circle>
+          </svg>
+        </div>
+        <div class="topo-info">
+          <h4>&#128652; Topología Bus</h4>
+          <p>Todos los equipos se conectan a un único cable central llamado <em>backbone</em>. Los extremos tienen terminadores para evitar rebotes de señal.</p>
+          <p><strong>Uso real:</strong> Redes antiguas (coaxial Ethernet 10Base2). Hoy casi en desuso.</p>
+          <div class="pros-cons">
+            <div class="pros">
+              <strong>&#10003; Ventajas</strong>
+              <ul>
+                <li>Poco cable</li>
+                <li>Fácil de instalar</li>
+              </ul>
+            </div>
+            <div class="cons">
+              <strong>&#10007; Desventajas</strong>
+              <ul>
+                <li>Si el bus falla, cae toda la red</li>
+                <li>Colisiones frecuentes</li>
+                <li>Difícil de diagnosticar</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ANILLO -->
+      <div class="topo-panel" id="topo-anillo">
+        <div class="topo-svg-wrap">
+          <svg viewBox="0 0 200 200" width="240" height="240" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <filter id="glow-r"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              <!-- Círculo completo en sentido horario desde el tope -->
+              <path id="ring-path" d="M 100 30 A 70 70 0 0 1 170 100 A 70 70 0 0 1 100 170 A 70 70 0 0 1 30 100 A 70 70 0 0 1 100 30"/>
+              <marker id="arr-r" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+                <path d="M 0 0 L 6 3 L 0 6 Z" fill="#7c3aed"/>
+              </marker>
+            </defs>
+            <!-- Anillo base (trazo discontinuo) -->
+            <circle cx="100" cy="100" r="70" fill="none" stroke="#c084fc" stroke-width="3" stroke-dasharray="8 4"/>
+            <!-- Arco indicador de dirección -->
+            <path d="M 116 32 A 70 70 0 0 1 155 54" fill="none" stroke="#7c3aed" stroke-width="2.5" marker-end="url(#arr-r)"/>
+            <!-- Nodos — se iluminan cuando el token pasa (cada 1/6 del ciclo = 0.667s) -->
+            <!-- Nodo 0: (100,30) → t=0/6=0 -->
+            <circle cx="100" cy="30" r="14" stroke="#7c3aed" stroke-width="2">
+              <animate attributeName="fill" values="#fde047;#f5f3ff;#f5f3ff;#f5f3ff;#f5f3ff;#f5f3ff;#fde047"
+                keyTimes="0;0.08;0.20;0.40;0.60;0.92;1" dur="3s" repeatCount="indefinite"/>
+            </circle>
+            <text x="100" y="34" text-anchor="middle" fill="#6d28d9" font-size="9" font-weight="bold">PC</text>
+            <!-- Nodo 1: (168,65) → t=1/6=0.167 -->
+            <circle cx="168" cy="65" r="14" stroke="#7c3aed" stroke-width="2">
+              <animate attributeName="fill" values="#f5f3ff;#fde047;#f5f3ff;#f5f3ff;#f5f3ff;#f5f3ff;#f5f3ff"
+                keyTimes="0;0.167;0.25;0.40;0.60;0.80;1" dur="3s" repeatCount="indefinite"/>
+            </circle>
+            <text x="168" y="69" text-anchor="middle" fill="#6d28d9" font-size="9" font-weight="bold">PC</text>
+            <!-- Nodo 2: (168,135) → t=2/6=0.333 -->
+            <circle cx="168" cy="135" r="14" stroke="#7c3aed" stroke-width="2">
+              <animate attributeName="fill" values="#f5f3ff;#f5f3ff;#fde047;#f5f3ff;#f5f3ff;#f5f3ff;#f5f3ff"
+                keyTimes="0;0.25;0.333;0.42;0.60;0.80;1" dur="3s" repeatCount="indefinite"/>
+            </circle>
+            <text x="168" y="139" text-anchor="middle" fill="#6d28d9" font-size="9" font-weight="bold">PC</text>
+            <!-- Nodo 3: (100,170) → t=3/6=0.500 -->
+            <circle cx="100" cy="170" r="14" stroke="#7c3aed" stroke-width="2">
+              <animate attributeName="fill" values="#f5f3ff;#f5f3ff;#f5f3ff;#fde047;#f5f3ff;#f5f3ff;#f5f3ff"
+                keyTimes="0;0.40;0.42;0.500;0.58;0.80;1" dur="3s" repeatCount="indefinite"/>
+            </circle>
+            <text x="100" y="174" text-anchor="middle" fill="#6d28d9" font-size="9" font-weight="bold">PC</text>
+            <!-- Nodo 4: (32,135) → t=4/6=0.667 -->
+            <circle cx="32" cy="135" r="14" stroke="#7c3aed" stroke-width="2">
+              <animate attributeName="fill" values="#f5f3ff;#f5f3ff;#f5f3ff;#f5f3ff;#fde047;#f5f3ff;#f5f3ff"
+                keyTimes="0;0.58;0.60;0.667;0.75;0.92;1" dur="3s" repeatCount="indefinite"/>
+            </circle>
+            <text x="32" y="139" text-anchor="middle" fill="#6d28d9" font-size="9" font-weight="bold">PC</text>
+            <!-- Nodo 5: (32,65) → t=5/6=0.833 -->
+            <circle cx="32" cy="65" r="14" stroke="#7c3aed" stroke-width="2">
+              <animate attributeName="fill" values="#f5f3ff;#f5f3ff;#f5f3ff;#f5f3ff;#f5f3ff;#fde047;#f5f3ff"
+                keyTimes="0;0.75;0.80;0.833;0.92;0.96;1" dur="3s" repeatCount="indefinite"/>
+            </circle>
+            <text x="32" y="69" text-anchor="middle" fill="#6d28d9" font-size="9" font-weight="bold">PC</text>
+            <!-- TOKEN — dot que circula continuamente por el anillo -->
+            <circle r="6" fill="#a855f7" filter="url(#glow-r)">
+              <animateMotion dur="3s" repeatCount="indefinite" calcMode="linear">
+                <mpath href="#ring-path"/>
+              </animateMotion>
+            </circle>
+            <!-- Estela del token -->
+            <circle r="4" fill="#c084fc" opacity="0.5">
+              <animateMotion dur="3s" repeatCount="indefinite" calcMode="linear" begin="0.08s">
+                <mpath href="#ring-path"/>
+              </animateMotion>
+            </circle>
+            <circle r="2.5" fill="#e9d5ff" opacity="0.35">
+              <animateMotion dur="3s" repeatCount="indefinite" calcMode="linear" begin="0.16s">
+                <mpath href="#ring-path"/>
+              </animateMotion>
+            </circle>
+          </svg>
+        </div>
+        <div class="topo-info">
+          <h4>&#11835; Topología Anillo</h4>
+          <p>Los equipos se conectan en un círculo cerrado. Los datos viajan en una dirección usando un <em>token</em>. Solo el equipo con el token puede transmitir.</p>
+          <p><strong>Uso real:</strong> Redes Token Ring (IBM), redes FDDI de fibra óptica.</p>
+          <div class="pros-cons">
+            <div class="pros">
+              <strong>&#10003; Ventajas</strong>
+              <ul>
+                <li>Sin colisiones</li>
+                <li>Rendimiento predecible</li>
+              </ul>
+            </div>
+            <div class="cons">
+              <strong>&#10007; Desventajas</strong>
+              <ul>
+                <li>Un fallo afecta toda la red</li>
+                <li>Difícil de ampliar</li>
+                <li>Hoy casi obsoleta</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ T3: CABLES ══════════════ -->
+  <div id="t3" class="section-label">
+    <div class="section-label-bar"></div>
+    <h2>&#128268; Cables de red: UTP, fibra óptica y Wi-Fi</h2>
+    <span>Tema 3</span>
+  </div>
+
+  <div class="card" id="card-t3">
+    <div class="card-header" onclick="toggleCard('card-t3')">
+      <div class="card-icon-circle" style="background:#fffbeb">&#128268;</div>
+      <div class="card-title">
+        <h3>Comparativa de medios de transmisión</h3>
+        <p>UTP, fibra óptica y Wi-Fi — cuándo usar cada uno</p>
+      </div>
+      <span class="card-chevron">&#9662;</span>
+    </div>
+    <div class="card-body">
+      <div class="cable-grid">
+        <div class="cable-card utp" onclick="highlightRow('utp')">
+          <span class="cable-icon">&#128268;</span>
+          <h4>Cable UTP</h4>
+          <p>Par trenzado sin apantallamiento. El más común en redes LAN. Categorías Cat5e, Cat6, Cat6a.</p>
+        </div>
+        <div class="cable-card fibra" onclick="highlightRow('fibra')">
+          <span class="cable-icon">&#10024;</span>
+          <h4>Fibra Óptica</h4>
+          <p>Transmite luz en vez de electricidad. Larga distancia, alta velocidad, inmune a interferencias.</p>
+        </div>
+        <div class="cable-card wifi" onclick="highlightRow('wifi')">
+          <span class="cable-icon">&#128246;</span>
+          <h4>Wi-Fi</h4>
+          <p>Transmisión inalámbrica. Estándares 802.11ac (Wi-Fi 5), 802.11ax (Wi-Fi 6).</p>
+        </div>
+      </div>
+
+      <div class="mac-table-wrap">
+        <table class="compare-table">
+          <thead>
+            <tr>
+              <th>Característica</th>
+              <th>&#128268; UTP</th>
+              <th>&#10024; Fibra óptica</th>
+              <th>&#128246; Wi-Fi</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr id="row-velocidad">
+              <td><strong>Velocidad máx.</strong></td>
+              <td>10 Gbps (Cat6a)</td>
+              <td><span class="badge-win">100 Gbps+</span></td>
+              <td>9.6 Gbps (Wi-Fi 6)</td>
+            </tr>
+            <tr id="row-distancia">
+              <td><strong>Distancia máx.</strong></td>
+              <td>100 m</td>
+              <td><span class="badge-win">80 km+</span></td>
+              <td>~100 m (interior)</td>
+            </tr>
+            <tr id="row-interferencia">
+              <td><strong>Interferencia</strong></td>
+              <td>Media (EMI)</td>
+              <td><span class="badge-win">Ninguna</span></td>
+              <td>Alta (2.4 GHz)</td>
+            </tr>
+            <tr id="row-costo">
+              <td><strong>Costo instalación</strong></td>
+              <td><span class="badge-win">Bajo</span></td>
+              <td>Alto</td>
+              <td>Medio</td>
+            </tr>
+            <tr id="row-seguridad">
+              <td><strong>Seguridad física</strong></td>
+              <td><span class="badge-win">Alta</span></td>
+              <td><span class="badge-win">Alta</span></td>
+              <td>Media (WPA3)</td>
+            </tr>
+            <tr id="row-uso">
+              <td><strong>Uso principal</strong></td>
+              <td>LAN en edificios</td>
+              <td>Backbone, ISP</td>
+              <td>Áreas públicas, hogar</td>
+            </tr>
+            <tr id="row-conector">
+              <td><strong>Conector</strong></td>
+              <td>RJ-45</td>
+              <td>LC / SC / ST</td>
+              <td>Sin conector</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- CATEGORÍAS UTP -->
+      <div style="margin-top:22px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+          <span style="font-size:1.2rem">&#128268;</span>
+          <h4 style="font-family:var(--font-display);font-size:1rem;font-weight:800;color:var(--brand-700)">Categorías de Cable UTP — haz clic para ver detalles</h4>
+        </div>
+
+        <!-- Barra de velocidad visual -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:16px" id="utp-cat-grid">
+
+          <div class="utp-cat-btn" onclick="showUtpCat('cat3')" data-cat="cat3"
+               style="background:#fef2f2;border:2px solid #fca5a5;border-radius:10px;padding:12px 10px;cursor:pointer;text-align:center;transition:all .2s">
+            <div style="font-size:.7rem;font-weight:800;color:#991b1b;letter-spacing:.05em">CAT 3</div>
+            <div style="font-size:1.1rem;font-weight:900;color:#7f1d1d;margin:4px 0">10 Mbps</div>
+            <div style="height:5px;border-radius:3px;background:#fca5a5;margin-top:6px">
+              <div style="width:3%;height:100%;background:#dc2626;border-radius:3px"></div>
+            </div>
+          </div>
+
+          <div class="utp-cat-btn" onclick="showUtpCat('cat5')" data-cat="cat5"
+               style="background:#fff7ed;border:2px solid #fed7aa;border-radius:10px;padding:12px 10px;cursor:pointer;text-align:center;transition:all .2s">
+            <div style="font-size:.7rem;font-weight:800;color:#9a3412;letter-spacing:.05em">CAT 5</div>
+            <div style="font-size:1.1rem;font-weight:900;color:#7c2d12;margin:4px 0">100 Mbps</div>
+            <div style="height:5px;border-radius:3px;background:#fed7aa;margin-top:6px">
+              <div style="width:12%;height:100%;background:#ea580c;border-radius:3px"></div>
+            </div>
+          </div>
+
+          <div class="utp-cat-btn" onclick="showUtpCat('cat5e')" data-cat="cat5e"
+               style="background:#fefce8;border:2px solid #fde047;border-radius:10px;padding:12px 10px;cursor:pointer;text-align:center;transition:all .2s">
+            <div style="font-size:.7rem;font-weight:800;color:#854d0e;letter-spacing:.05em">CAT 5e</div>
+            <div style="font-size:1.1rem;font-weight:900;color:#713f12;margin:4px 0">1 Gbps</div>
+            <div style="height:5px;border-radius:3px;background:#fde047;margin-top:6px">
+              <div style="width:25%;height:100%;background:#ca8a04;border-radius:3px"></div>
+            </div>
+          </div>
+
+          <div class="utp-cat-btn" onclick="showUtpCat('cat6')" data-cat="cat6"
+               style="background:#f0fdf4;border:2px solid #86efac;border-radius:10px;padding:12px 10px;cursor:pointer;text-align:center;transition:all .2s">
+            <div style="font-size:.7rem;font-weight:800;color:#166534;letter-spacing:.05em">CAT 6</div>
+            <div style="font-size:1.1rem;font-weight:900;color:#14532d;margin:4px 0">1 Gbps</div>
+            <div style="height:5px;border-radius:3px;background:#86efac;margin-top:6px">
+              <div style="width:40%;height:100%;background:#16a34a;border-radius:3px"></div>
+            </div>
+          </div>
+
+          <div class="utp-cat-btn" onclick="showUtpCat('cat6a')" data-cat="cat6a"
+               style="background:#eff6ff;border:2px solid #93c5fd;border-radius:10px;padding:12px 10px;cursor:pointer;text-align:center;transition:all .2s">
+            <div style="font-size:.7rem;font-weight:800;color:#1e40af;letter-spacing:.05em">CAT 6A</div>
+            <div style="font-size:1.1rem;font-weight:900;color:#1e3a8a;margin:4px 0">10 Gbps</div>
+            <div style="height:5px;border-radius:3px;background:#93c5fd;margin-top:6px">
+              <div style="width:65%;height:100%;background:#2563eb;border-radius:3px"></div>
+            </div>
+          </div>
+
+          <div class="utp-cat-btn" onclick="showUtpCat('cat7')" data-cat="cat7"
+               style="background:#faf5ff;border:2px solid #d8b4fe;border-radius:10px;padding:12px 10px;cursor:pointer;text-align:center;transition:all .2s">
+            <div style="font-size:.7rem;font-weight:800;color:#6d28d9;letter-spacing:.05em">CAT 7</div>
+            <div style="font-size:1.1rem;font-weight:900;color:#5b21b6;margin:4px 0">10 Gbps</div>
+            <div style="height:5px;border-radius:3px;background:#d8b4fe;margin-top:6px">
+              <div style="width:80%;height:100%;background:#7c3aed;border-radius:3px"></div>
+            </div>
+          </div>
+
+          <div class="utp-cat-btn" onclick="showUtpCat('cat8')" data-cat="cat8"
+               style="background:#fff1f2;border:2px solid #fda4af;border-radius:10px;padding:12px 10px;cursor:pointer;text-align:center;transition:all .2s">
+            <div style="font-size:.7rem;font-weight:800;color:#be123c;letter-spacing:.05em">CAT 8</div>
+            <div style="font-size:1.1rem;font-weight:900;color:#9f1239;margin:4px 0">40 Gbps</div>
+            <div style="height:5px;border-radius:3px;background:#fda4af;margin-top:6px">
+              <div style="width:100%;height:100%;background:#e11d48;border-radius:3px"></div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Panel de detalle de categoría -->
+        <div id="utp-cat-detail" style="display:none;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px 20px;animation:fadeIn .2s ease">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+            <div id="ucd-badge" style="font-size:.75rem;font-weight:800;padding:4px 12px;border-radius:12px"></div>
+            <h5 id="ucd-title" style="font-family:var(--font-display);font-weight:800;font-size:1rem;color:var(--brand-700)"></h5>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:12px">
+            <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 14px">
+              <div style="font-size:.72rem;color:var(--text-muted);font-weight:600;margin-bottom:2px">VELOCIDAD</div>
+              <div id="ucd-speed" style="font-weight:800;font-size:1rem;color:var(--text-strong)"></div>
+            </div>
+            <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 14px">
+              <div style="font-size:.72rem;color:var(--text-muted);font-weight:600;margin-bottom:2px">FRECUENCIA</div>
+              <div id="ucd-freq" style="font-weight:800;font-size:1rem;color:var(--text-strong)"></div>
+            </div>
+            <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 14px">
+              <div style="font-size:.72rem;color:var(--text-muted);font-weight:600;margin-bottom:2px">DISTANCIA MÁX.</div>
+              <div id="ucd-dist" style="font-weight:800;font-size:1rem;color:var(--text-strong)"></div>
+            </div>
+            <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 14px">
+              <div style="font-size:.72rem;color:var(--text-muted);font-weight:600;margin-bottom:2px">AÑO ESTÁNDAR</div>
+              <div id="ucd-year" style="font-weight:800;font-size:1rem;color:var(--text-strong)"></div>
+            </div>
+          </div>
+          <p id="ucd-desc" style="font-size:.84rem;line-height:1.6;color:var(--text-muted)"></p>
+        </div>
+      </div>
+
+      <div class="info-note" style="margin-top:16px">
+        <strong>Tip técnico:</strong> La norma TIA/EIA-568 define cómo cablear un edificio. Los cables UTP tienen dos estándares de crimpado: T568A y T568B. En Colombia la mayoría de instalaciones usan T568B.
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ T4: HUB SWITCH ROUTER ══════════════ -->
+  <div id="t4" class="section-label">
+    <div class="section-label-bar"></div>
+    <h2>&#128421; Hub vs Switch vs Router</h2>
+    <span>Tema 4</span>
+  </div>
+
+  <div class="card" id="card-t4">
+    <div class="card-header" onclick="toggleCard('card-t4')">
+      <div class="card-icon-circle" style="background:#fef2f2">&#128421;</div>
+      <div class="card-title">
+        <h3>¿Cuál es la diferencia entre Hub, Switch y Router?</h3>
+        <p>Haz clic en cada dispositivo para ver su funcionamiento</p>
+      </div>
+      <span class="card-chevron">&#9662;</span>
+    </div>
+    <div class="card-body">
+      <div class="device-grid">
+        <div class="device-card hub" onclick="showDevice('hub')">
+          <span class="device-icon">&#128272;</span>
+          <h4>Hub</h4>
+          <p style="font-size:.8rem;color:#4b5563">Capa 1 — Física</p>
+          <span class="layer-badge">Capa 1</span>
+        </div>
+        <div class="device-card switch" onclick="showDevice('switch')">
+          <span class="device-icon">&#128421;</span>
+          <h4>Switch</h4>
+          <p style="font-size:.8rem;color:#4b5563">Capa 2 — Enlace de datos</p>
+          <span class="layer-badge">Capa 2</span>
+        </div>
+        <div class="device-card router" onclick="showDevice('router')">
+          <span class="device-icon">&#127760;</span>
+          <h4>Router</h4>
+          <p style="font-size:.8rem;color:#4b5563">Capa 3 — Red</p>
+          <span class="layer-badge">Capa 3</span>
+        </div>
+      </div>
+
+      <div class="device-detail" id="detail-hub">
+        <h4>&#128272; Hub — Concentrador</h4>
+        <ul class="feature-list">
+          <li>Opera en la Capa 1 (Física) del modelo OSI.</li>
+          <li>Recibe un paquete y lo reenvía a <strong>todos</strong> los puertos sin distinción.</li>
+          <li>Genera muchas colisiones — todos comparten el mismo dominio de colisión.</li>
+          <li>No tiene ninguna inteligencia: no lee direcciones MAC ni IP.</li>
+          <li>Prácticamente obsoleto — reemplazado por el switch.</li>
+          <li>Analogía: como hablar en voz alta en un salón — todos escuchan, aunque el mensaje no sea para ellos.</li>
+        </ul>
+      </div>
+      <div class="device-detail" id="detail-switch">
+        <h4>&#128421; Switch — Conmutador</h4>
+        <ul class="feature-list">
+          <li>Opera en la Capa 2 (Enlace de datos) del modelo OSI.</li>
+          <li>Lee la dirección MAC destino y envía el paquete <strong>solo</strong> al puerto correcto.</li>
+          <li>Mantiene una <strong>tabla MAC</strong> (CAM table) para aprender qué equipos están en cada puerto.</li>
+          <li>Cada puerto tiene su propio dominio de colisión → sin colisiones.</li>
+          <li>Dispositivo fundamental en toda red LAN moderna.</li>
+          <li>Analogía: como entregar cartas — las llevas exactamente a la puerta correcta.</li>
+        </ul>
+      </div>
+      <div class="device-detail" id="detail-router">
+        <h4>&#127760; Router — Enrutador</h4>
+        <ul class="feature-list">
+          <li>Opera en la Capa 3 (Red) del modelo OSI.</li>
+          <li>Lee la dirección <strong>IP</strong> de destino para decidir la mejor ruta.</li>
+          <li>Conecta redes diferentes (por ejemplo, tu LAN con Internet).</li>
+          <li>Separa dominios de broadcast — cada interfaz es una red diferente.</li>
+          <li>Ejecuta protocolos de enrutamiento: OSPF, BGP, RIP.</li>
+          <li>Analogía: como el GPS — conoce todos los caminos y elige el mejor para llegar al destino.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ T5: TABLA MAC ══════════════ -->
+  <div id="t5" class="section-label">
+    <div class="section-label-bar"></div>
+    <h2>&#128196; ¿Cómo funciona un switch? — Tabla MAC</h2>
+    <span>Tema 5</span>
+  </div>
+
+  <div class="card" id="card-t5">
+    <div class="card-header" onclick="toggleCard('card-t5')">
+      <div class="card-icon-circle" style="background:#f0fdf4">&#128196;</div>
+      <div class="card-title">
+        <h3>Simulador de tabla MAC (CAM Table)</h3>
+        <p>Simula cómo un switch aprende y reenvía tramas</p>
+      </div>
+      <span class="card-chevron">&#9662;</span>
+    </div>
+    <div class="card-body">
+      <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:16px">
+        La <strong>tabla MAC</strong> (también llamada CAM Table) es la memoria del switch. Asocia cada dirección MAC con el puerto donde está conectado el equipo. Usa los botones para simular transmisiones.
+      </p>
+
+      <!-- Diagrama de red -->
+      <div class="network-diagram" id="net-diagram">
+        <div class="net-node" id="node-PC1">
+          <div class="node-box">&#128187;</div>
+          <div class="node-label">PC1</div>
+          <div class="node-mac">AA:BB:01</div>
+        </div>
+        <div class="net-line" id="line-1"></div>
+        <div class="net-node" id="node-PC2">
+          <div class="node-box">&#128187;</div>
+          <div class="node-label">PC2</div>
+          <div class="node-mac">AA:BB:02</div>
+        </div>
+        <div class="net-line" id="line-2"></div>
+        <div class="switch-node">
+          <div class="sw-box">&#128421; SWITCH</div>
+          <div style="font-size:.72rem;color:var(--text-muted);margin-top:4px">Puerto 1-2-3-4</div>
+        </div>
+        <div class="net-line" id="line-3"></div>
+        <div class="net-node" id="node-PC3">
+          <div class="node-box">&#128187;</div>
+          <div class="node-label">PC3</div>
+          <div class="node-mac">AA:BB:03</div>
+        </div>
+        <div class="net-line" id="line-4"></div>
+        <div class="net-node" id="node-PC4">
+          <div class="node-box">&#128187;</div>
+          <div class="node-label">PC4</div>
+          <div class="node-mac">AA:BB:04</div>
+        </div>
+      </div>
+
+      <div class="mac-controls">
+        <button class="mac-btn" onclick="simSend('PC1','PC3')">PC1 &#8594; PC3</button>
+        <button class="mac-btn" onclick="simSend('PC2','PC4')">PC2 &#8594; PC4</button>
+        <button class="mac-btn" onclick="simSend('PC3','PC1')">PC3 &#8594; PC1</button>
+        <button class="mac-btn" onclick="simSend('PC4','PC2')">PC4 &#8594; PC2</button>
+        <button class="mac-btn" onclick="simSend('PC1','PC2')">PC1 &#8594; PC2</button>
+        <button class="mac-btn primary" onclick="resetMac()">&#8635; Reiniciar</button>
+      </div>
+
+      <div class="mac-table-wrap">
+        <table class="mac-table">
+          <thead>
+            <tr>
+              <th>MAC Address</th>
+              <th>Puerto</th>
+              <th>Equipo</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="mac-tbody">
+            <tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:16px">La tabla está vacía. Simula una transmisión para aprender rutas.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="mac-log" id="mac-log">
+        <span style="color:#64748b">// Log de eventos del switch — simulador</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ T6: OSI ══════════════ -->
+  <div id="t6" class="section-label">
+    <div class="section-label-bar"></div>
+    <h2>&#128336; Modelo OSI y TCP/IP</h2>
+    <span>Tema 6</span>
+  </div>
+
+  <div class="card" id="card-t6">
+    <div class="card-header" onclick="toggleCard('card-t6')">
+      <div class="card-icon-circle" style="background:#f5f3ff">&#128336;</div>
+      <div class="card-title">
+        <h3>Capas OSI y TCP/IP — interactivo</h3>
+        <p>Haz clic en cada capa para ver protocolos y funciones</p>
+      </div>
+      <span class="card-chevron">&#9662;</span>
+    </div>
+    <div class="card-body">
+      <div class="osi-container">
+        <!-- OSI -->
+        <div class="osi-model">
+          <h4>&#128336; Modelo OSI (7 capas)</h4>
+          <div class="osi-layer layer-7" onclick="showOsiLayer(7)" id="osi-7">
+            <div class="osi-layer-num">7</div>
+            <div class="osi-layer-name">Aplicación</div>
+            <div class="osi-layer-en">Application</div>
+          </div>
+          <div class="osi-layer layer-6" onclick="showOsiLayer(6)" id="osi-6">
+            <div class="osi-layer-num">6</div>
+            <div class="osi-layer-name">Presentación</div>
+            <div class="osi-layer-en">Presentation</div>
+          </div>
+          <div class="osi-layer layer-5" onclick="showOsiLayer(5)" id="osi-5">
+            <div class="osi-layer-num">5</div>
+            <div class="osi-layer-name">Sesión</div>
+            <div class="osi-layer-en">Session</div>
+          </div>
+          <div class="osi-layer layer-4" onclick="showOsiLayer(4)" id="osi-4">
+            <div class="osi-layer-num">4</div>
+            <div class="osi-layer-name">Transporte</div>
+            <div class="osi-layer-en">Transport</div>
+          </div>
+          <div class="osi-layer layer-3" onclick="showOsiLayer(3)" id="osi-3">
+            <div class="osi-layer-num">3</div>
+            <div class="osi-layer-name">Red</div>
+            <div class="osi-layer-en">Network</div>
+          </div>
+          <div class="osi-layer layer-2" onclick="showOsiLayer(2)" id="osi-2">
+            <div class="osi-layer-num">2</div>
+            <div class="osi-layer-name">Enlace de datos</div>
+            <div class="osi-layer-en">Data Link</div>
+          </div>
+          <div class="osi-layer layer-1" onclick="showOsiLayer(1)" id="osi-1">
+            <div class="osi-layer-num">1</div>
+            <div class="osi-layer-name">Física</div>
+            <div class="osi-layer-en">Physical</div>
+          </div>
+        </div>
+
+        <!-- TCP/IP -->
+        <div class="tcp-model">
+          <h4>&#127760; Modelo TCP/IP (4 capas)</h4>
+          <div class="tcp-layer tcp-4" onclick="showTcpLayer(4)" id="tcp-4">
+            <div class="tcp-layer-icon">&#128161;</div>
+            <div>
+              <div class="tcp-layer-name">Aplicación</div>
+              <div class="tcp-layer-desc">OSI 5, 6, 7</div>
+            </div>
+          </div>
+          <div class="tcp-layer tcp-3" onclick="showTcpLayer(3)" id="tcp-3">
+            <div class="tcp-layer-icon">&#128694;</div>
+            <div>
+              <div class="tcp-layer-name">Transporte</div>
+              <div class="tcp-layer-desc">OSI 4</div>
+            </div>
+          </div>
+          <div class="tcp-layer tcp-2" onclick="showTcpLayer(2)" id="tcp-2">
+            <div class="tcp-layer-icon">&#127760;</div>
+            <div>
+              <div class="tcp-layer-name">Internet</div>
+              <div class="tcp-layer-desc">OSI 3</div>
+            </div>
+          </div>
+          <div class="tcp-layer tcp-1" onclick="showTcpLayer(1)" id="tcp-1">
+            <div class="tcp-layer-icon">&#128268;</div>
+            <div>
+              <div class="tcp-layer-name">Acceso a la red</div>
+              <div class="tcp-layer-desc">OSI 1, 2</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detail box -->
+      <div class="layer-detail-box" id="layer-detail">
+        <h5 id="layer-detail-title">Selecciona una capa</h5>
+        <p id="layer-detail-desc"></p>
+        <div id="layer-detail-extra"></div>
+      </div>
+
+      <!-- Correspondencia -->
+      <div class="osi-tcp-compare">
+        <h5>&#128260; Correspondencia OSI ↔ TCP/IP</h5>
+        <div class="mapping-row">
+          <div class="mapping-osi">
+            <span style="background:#fce7f3;color:#9d174d">7 — Aplicación</span>
+            <span style="background:#f5f3ff;color:#6d28d9">6 — Presentación</span>
+            <span style="background:#eff6ff;color:#1d4ed8">5 — Sesión</span>
+          </div>
+          <div class="mapping-arrow">&#8594;</div>
+          <div class="mapping-tcp" style="color:#9d174d">Aplicación (TCP/IP)</div>
+        </div>
+        <div class="mapping-row">
+          <div class="mapping-osi">
+            <span style="background:#f0fdf4;color:#166534">4 — Transporte</span>
+          </div>
+          <div class="mapping-arrow">&#8594;</div>
+          <div class="mapping-tcp" style="color:#166534">Transporte (TCP/IP)</div>
+        </div>
+        <div class="mapping-row">
+          <div class="mapping-osi">
+            <span style="background:#fefce8;color:#854d0e">3 — Red</span>
+          </div>
+          <div class="mapping-arrow">&#8594;</div>
+          <div class="mapping-tcp" style="color:#854d0e">Internet (TCP/IP)</div>
+        </div>
+        <div class="mapping-row">
+          <div class="mapping-osi">
+            <span style="background:#fff7ed;color:#9a3412">2 — Enlace datos</span>
+            <span style="background:#fef2f2;color:#991b1b">1 — Física</span>
+          </div>
+          <div class="mapping-arrow">&#8594;</div>
+          <div class="mapping-tcp" style="color:#991b1b">Acceso a la red (TCP/IP)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end page-wrap -->
+
+<button class="scroll-top-btn" id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">&#8679;</button>
+
+<script>
+/* ── TOGGLE CARD ── */
+function toggleCard(id) {
+  const c = document.getElementById(id);
+  c.classList.toggle('collapsed');
+}
+
+/* ── T1: LAN MAN WAN ── */
+function showRed(type) {
+  document.querySelectorAll('.red-card').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.red-detail-box').forEach(b => b.classList.remove('visible'));
+  const card = document.querySelector('.red-card.' + type);
+  if (card) card.classList.add('selected');
+  const detail = document.getElementById('detail-' + type);
+  if (detail) detail.classList.add('visible');
+}
+
+/* ── T2: TOPOLOGIAS ── */
+function showTopo(name, btn) {
+  document.querySelectorAll('.topo-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.topo-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('topo-' + name).classList.add('active');
+}
+
+/* ── T4: DISPOSITIVOS ── */
+function showDevice(type) {
+  document.querySelectorAll('.device-card').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.device-detail').forEach(b => b.classList.remove('visible'));
+  const card = document.querySelector('.device-card.' + type);
+  if (card) card.classList.add('selected');
+  const detail = document.getElementById('detail-' + type);
+  if (detail) detail.classList.add('visible');
+}
+
+/* ── T3: HIGHLIGHT ROW ── */
+function highlightRow(type) {
+  document.querySelectorAll('.compare-table td').forEach(td => td.style.background = '');
+}
+
+/* ── T3: CATEGORÍAS UTP ── */
+const utpData = {
+  cat3:  { label:'CAT 3',  speed:'10 Mbps',  freq:'16 MHz',   dist:'100 m', year:'1991', bg:'#fef2f2', color:'#991b1b',
+            desc:'La primera categoría ampliamente usada. Solo sirve para telefonía analógica y redes Ethernet 10Base-T muy antiguas. Hoy completamente obsoleta en redes de datos.' },
+  cat5:  { label:'CAT 5',  speed:'100 Mbps', freq:'100 MHz',  dist:'100 m', year:'1995', bg:'#fff7ed', color:'#9a3412',
+            desc:'Permitió Fast Ethernet (100Base-TX). Reemplazada por Cat5e. Ya no se instala, pero aún se encuentra en edificios viejos. No soporta Gigabit de forma confiable.' },
+  cat5e: { label:'CAT 5e', speed:'1 Gbps',   freq:'100 MHz',  dist:'100 m', year:'1999', bg:'#fefce8', color:'#854d0e',
+            desc:'La "e" es de enhanced (mejorada). Reduce el crosstalk entre pares. Es la más instalada en hogares y pymes de Colombia. Soporta Gigabit Ethernet (1000Base-T) perfectamente.' },
+  cat6:  { label:'CAT 6',  speed:'1 Gbps',   freq:'250 MHz',  dist:'100 m', year:'2002', bg:'#f0fdf4', color:'#166534',
+            desc:'Mayor ancho de banda que Cat5e. Tiene un separador de pares interno (spline) que reduce interferencias. Soporta 10 Gbps pero solo hasta 55 m. Recomendada para instalaciones nuevas.' },
+  cat6a: { label:'CAT 6A', speed:'10 Gbps',  freq:'500 MHz',  dist:'100 m', year:'2008', bg:'#eff6ff', color:'#1e40af',
+            desc:'La "A" es de Augmented. Soporta 10 Gbps a los 100 m completos. Cable más grueso y rígido. Usada en centros de datos, universidades y empresas. Estándar TIA/EIA-568-C.' },
+  cat7:  { label:'CAT 7',  speed:'10 Gbps',  freq:'600 MHz',  dist:'100 m', year:'2010', bg:'#faf5ff', color:'#6d28d9',
+            desc:'Incluye apantallamiento por par (S/FTP). Técnicamente no es estándar TIA (es ISO/IEC 11801). Usa conector GG45 o TERA en lugar de RJ-45. Poco usada en instalaciones reales.' },
+  cat8:  { label:'CAT 8',  speed:'40 Gbps',  freq:'2000 MHz', dist:'30 m',  year:'2016', bg:'#fff1f2', color:'#be123c',
+            desc:'Diseñada exclusivamente para centros de datos y conexiones entre switches de alto rendimiento. Distancia máxima 30 m. Usa RJ-45 o conector TERA. Muy costosa.' },
+};
+
+function showUtpCat(cat) {
+  const d = utpData[cat];
+  // Resaltar botón activo
+  document.querySelectorAll('.utp-cat-btn').forEach(b => {
+    b.style.transform = '';
+    b.style.boxShadow = '';
+  });
+  const btn = document.querySelector('[data-cat="' + cat + '"]');
+  if (btn) { btn.style.transform = 'translateY(-3px)'; btn.style.boxShadow = '0 8px 20px rgba(0,0,0,.15)'; }
+  // Rellenar panel
+  document.getElementById('ucd-badge').textContent = d.label;
+  document.getElementById('ucd-badge').style.background = d.bg;
+  document.getElementById('ucd-badge').style.color = d.color;
+  document.getElementById('ucd-badge').style.border = '1.5px solid ' + d.color;
+  document.getElementById('ucd-title').textContent = 'Categoría ' + d.label + ' — ' + d.speed;
+  document.getElementById('ucd-speed').textContent = d.speed;
+  document.getElementById('ucd-freq').textContent = d.freq;
+  document.getElementById('ucd-dist').textContent = d.dist;
+  document.getElementById('ucd-year').textContent = d.year;
+  document.getElementById('ucd-desc').textContent = d.desc;
+  const panel = document.getElementById('utp-cat-detail');
+  panel.style.display = 'block';
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+/* ── T5: MAC SIMULATOR ── */
+const macTable = {};
+const portMap = { PC1: 1, PC2: 2, PC3: 3, PC4: 4 };
+const macMap = { PC1: 'AA:BB:01', PC2: 'AA:BB:02', PC3: 'AA:BB:03', PC4: 'AA:BB:04' };
+let logLines = ['<span style="color:#64748b">// Log de eventos del switch — simulador</span>'];
+
+function addLog(msg, type) {
+  const cls = type === 'ok' ? 'log-ok' : type === 'info' ? 'log-info' : 'log-warn';
+  logLines.push('<span class="' + cls + '">' + msg + '</span>');
+  if (logLines.length > 20) logLines.shift();
+  const el = document.getElementById('mac-log');
+  el.innerHTML = logLines.join('<br>');
+  el.scrollTop = el.scrollHeight;
+}
+
+function renderMacTable() {
+  const tbody = document.getElementById('mac-tbody');
+  const keys = Object.keys(macTable);
+  if (keys.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:16px">La tabla está vacía.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = keys.map(mac => {
+    const { port, device, fresh } = macTable[mac];
+    const cls = fresh ? ' class="new-row"' : '';
+    return `<tr${cls}><td>${mac}</td><td>Puerto ${port}</td><td>${device}</td><td>${fresh ? '&#127381; Aprendida ahora' : '&#128204; Conocida'}</td></tr>`;
+  }).join('');
+  setTimeout(() => {
+    Object.keys(macTable).forEach(mac => { if (macTable[mac]) macTable[mac].fresh = false; });
+    renderMacTable();
+  }, 1500);
+}
+
+function highlightNodes(sender, receiver) {
+  document.querySelectorAll('.net-node, .net-line').forEach(el => {
+    el.classList.remove('active', 'sending');
+  });
+  const sNode = document.getElementById('node-' + sender);
+  const rNode = document.getElementById('node-' + receiver);
+  const sLine = document.getElementById('line-' + portMap[sender]);
+  const rLine = document.getElementById('line-' + portMap[receiver]);
+  if (sNode) sNode.classList.add('sending');
+  if (rNode) rNode.classList.add('active');
+  if (sLine) sLine.classList.add('active');
+  if (rLine) rLine.classList.add('active');
+  setTimeout(() => {
+    document.querySelectorAll('.net-node, .net-line').forEach(el => {
+      el.classList.remove('active', 'sending');
+    });
+  }, 2000);
+}
+
+function simSend(from, to) {
+  const srcMac = macMap[from];
+  const dstMac = macMap[to];
+  const srcPort = portMap[from];
+  const dstPort = portMap[to];
+
+  // Aprender MAC de origen
+  const srcNew = !macTable[srcMac];
+  if (srcNew) {
+    macTable[srcMac] = { port: srcPort, device: from, fresh: true };
+    addLog(`[APRENDE] ${from} (${srcMac}) está en Puerto ${srcPort}`, 'ok');
+  }
+
+  // Verificar si conoce el destino
+  if (macTable[dstMac]) {
+    addLog(`[ENVÍO] ${from} → ${to}: Puerto ${srcPort} → Puerto ${dstPort} (unicast)`, 'info');
+    highlightNodes(from, to);
+  } else {
+    addLog(`[FLOOD] ${from} → ${to}: MAC desconocida → envía a TODOS los puertos`, 'warn');
+    // Flood: iluminar todos
+    document.querySelectorAll('.net-node').forEach(n => n.classList.add('active'));
+    document.querySelectorAll('.net-line').forEach(l => l.classList.add('active'));
+    setTimeout(() => {
+      document.querySelectorAll('.net-node, .net-line').forEach(el => el.classList.remove('active'));
+    }, 2000);
+  }
+
+  renderMacTable();
+}
+
+function resetMac() {
+  Object.keys(macTable).forEach(k => delete macTable[k]);
+  logLines = ['<span style="color:#64748b">// Log reiniciado.</span>'];
+  document.getElementById('mac-log').innerHTML = logLines[0];
+  renderMacTable();
+  document.querySelectorAll('.net-node, .net-line').forEach(el => el.classList.remove('active', 'sending'));
+}
+
+/* ── T6: OSI LAYERS ── */
+const osiData = {
+  7: {
+    title: 'Capa 7 — Aplicación (Application)',
+    desc: 'Es la interfaz entre la red y el usuario final. Aquí operan los programas que usas a diario: navegadores, clientes de correo, apps de chat. Esta capa define cómo las aplicaciones acceden a la red y el formato de los mensajes.',
+    protocols: ['HTTP/HTTPS', 'FTP', 'SMTP', 'POP3', 'IMAP', 'DNS', 'Telnet', 'SSH', 'SNMP'],
+    device: 'Servidores web, aplicaciones'
+  },
+  6: {
+    title: 'Capa 6 — Presentación (Presentation)',
+    desc: 'Traduce, cifra y comprime los datos. Asegura que la información enviada por una aplicación pueda ser leída por otra, sin importar el sistema operativo o hardware.',
+    protocols: ['SSL/TLS', 'JPEG', 'PNG', 'MP3', 'MPEG', 'ASCII', 'UTF-8'],
+    device: 'Codificadores, gateways de cifrado'
+  },
+  5: {
+    title: 'Capa 5 — Sesión (Session)',
+    desc: 'Establece, mantiene y termina las sesiones de comunicación entre aplicaciones. Controla el diálogo: quién habla y cuándo.',
+    protocols: ['NetBIOS', 'RPC', 'SQL sessions', 'NFS', 'SMB'],
+    device: 'Gateways de sesión'
+  },
+  4: {
+    title: 'Capa 4 — Transporte (Transport)',
+    desc: 'Garantiza la entrega fiable de datos de extremo a extremo. TCP garantiza entrega ordenada; UDP sacrifica fiabilidad por velocidad. Usa números de puerto para identificar aplicaciones.',
+    protocols: ['TCP', 'UDP', 'SCTP', 'DCCP'],
+    device: 'Firewall (inspeccion de puertos)'
+  },
+  3: {
+    title: 'Capa 3 — Red (Network)',
+    desc: 'Se encarga del enrutamiento: determina el mejor camino entre dos redes diferentes. Usa direcciones IP (lógicas) para identificar equipos en cualquier lugar del mundo.',
+    protocols: ['IP (v4/v6)', 'ICMP', 'OSPF', 'BGP', 'RIP', 'ARP'],
+    device: 'Router, switch L3'
+  },
+  2: {
+    title: 'Capa 2 — Enlace de datos (Data Link)',
+    desc: 'Transmite tramas entre equipos en la misma red física. Usa direcciones MAC (físicas). Detecta y corrige errores de la capa física. Se divide en LLC y MAC.',
+    protocols: ['Ethernet', 'Wi-Fi 802.11', 'PPP', 'VLAN 802.1Q', 'STP'],
+    device: 'Switch, bridge, tarjeta de red'
+  },
+  1: {
+    title: 'Capa 1 — Física (Physical)',
+    desc: 'Transmite bits a través del medio físico: cable, fibra o aire. Define voltajes, frecuencias, pines y conectores. No entiende de datos, solo de 0s y 1s.',
+    protocols: ['Ethernet 10Base-T', 'USB', 'Bluetooth', 'RS-232'],
+    device: 'Hub, repetidor, cable UTP, fibra, antena'
+  }
+};
+
+const tcpData = {
+  4: {
+    title: 'Capa Aplicación — TCP/IP',
+    desc: 'Agrupa las capas OSI 5, 6 y 7. Aquí viven los protocolos que usan directamente las aplicaciones del usuario.',
+    protocols: ['HTTP', 'FTP', 'DNS', 'SMTP', 'SSH', 'TLS']
+  },
+  3: {
+    title: 'Capa Transporte — TCP/IP',
+    desc: 'Equivale a la Capa 4 OSI. TCP y UDP son los dos grandes protocolos. TCP es confiable y orientado a conexión; UDP es rápido sin garantía.',
+    protocols: ['TCP', 'UDP', 'SCTP']
+  },
+  2: {
+    title: 'Capa Internet — TCP/IP',
+    desc: 'Equivale a la Capa 3 OSI. El protocolo IP es el rey aquí: asigna direcciones y enruta paquetes por múltiples redes.',
+    protocols: ['IPv4', 'IPv6', 'ICMP', 'ARP', 'BGP', 'OSPF']
+  },
+  1: {
+    title: 'Capa Acceso a la red — TCP/IP',
+    desc: 'Agrupa las capas OSI 1 y 2. Define cómo los datos viajan en el medio físico y cómo se direccionan dentro de la red local.',
+    protocols: ['Ethernet', '802.11 Wi-Fi', 'PPP', 'DSL', 'Frame Relay']
+  }
+};
+
+function showOsiLayer(num) {
+  document.querySelectorAll('.osi-layer').forEach(l => l.classList.remove('selected'));
+  document.querySelectorAll('.tcp-layer').forEach(l => l.classList.remove('selected'));
+  document.getElementById('osi-' + num).classList.add('selected');
+  const data = osiData[num];
+  showLayerDetail(data.title, data.desc, data.protocols, '&#128421; Dispositivo: ' + data.device);
+}
+
+function showTcpLayer(num) {
+  document.querySelectorAll('.osi-layer').forEach(l => l.classList.remove('selected'));
+  document.querySelectorAll('.tcp-layer').forEach(l => l.classList.remove('selected'));
+  document.getElementById('tcp-' + num).classList.add('selected');
+  const data = tcpData[num];
+  showLayerDetail(data.title, data.desc, data.protocols, '');
+}
+
+function showLayerDetail(title, desc, protocols, extra) {
+  const box = document.getElementById('layer-detail');
+  document.getElementById('layer-detail-title').textContent = title;
+  document.getElementById('layer-detail-desc').textContent = desc;
+  document.getElementById('layer-detail-extra').innerHTML =
+    '<div class="protocol-chips">' +
+    protocols.map(p => `<span class="protocol-chip">${p}</span>`).join('') +
+    '</div>' +
+    (extra ? `<p style="margin-top:10px;font-size:.82rem;color:var(--text-muted)">${extra}</p>` : '');
+  box.classList.add('visible');
+  box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+/* ── SCROLL TOP ── */
+window.addEventListener('scroll', () => {
+  const btn = document.getElementById('scrollTopBtn');
+  btn.classList.toggle('visible', window.scrollY > 400);
+});
+</script>
+</body>
+</html>
