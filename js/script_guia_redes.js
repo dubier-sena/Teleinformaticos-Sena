@@ -709,15 +709,11 @@ window.guardarBloqueE = async function () {
 // Exportar PDF 3.2.1 — Exploración Contextual
 // ---------------------------------------------------------------------------
 async function _loadScriptBlob(url) {
-  const resp = await fetch(url);
-  if (!resp.ok) throw new Error("No se pudo descargar la librería de PDF.");
-  const text = await resp.text();
-  const blobUrl = URL.createObjectURL(new Blob([text], { type: "text/javascript" }));
   await new Promise((resolve, reject) => {
     const s = document.createElement("script");
-    s.src = blobUrl;
-    s.onload = () => { URL.revokeObjectURL(blobUrl); resolve(); };
-    s.onerror = () => { URL.revokeObjectURL(blobUrl); reject(new Error("Error al cargar librería de PDF.")); };
+    s.src = url;
+    s.onload = resolve;
+    s.onerror = () => reject(new Error("Error al cargar librería de PDF."));
     document.head.appendChild(s);
   });
 }
@@ -1208,63 +1204,6 @@ h1{font-size:16pt;color:#1b5e20}h2{font-size:13pt}p{margin:6pt 0;line-height:1.5
   a.click();
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
-};
-
-window.abrirDriveReflexion311 = async function () {
-  const empty = REFLEXION_311_KEYS.filter((k) => !String(state[k] || "").trim());
-  if (empty.length > 0) {
-    alert("Responde todas las preguntas antes de subir al Drive.");
-    return;
-  }
-
-  const delivery = window.sharedAppsScriptDelivery;
-  if (!delivery) { alert("El sistema de entrega no está disponible."); return; }
-
-  const session = window.portalAuth?.getCurrentSession?.();
-  const sel = getGuideSelectionRedes();
-  const fullName = session?.user?.fullName || "";
-  const ficha = session?.user?.ficha || sel.ficha || "";
-  if (!fullName || !ficha) { alert("Inicia sesión para subir el archivo al Drive."); return; }
-
-  const btn = document.getElementById("btnDriveReflexion311");
-  if (btn) { btn.disabled = true; btn.textContent = "Subiendo…"; }
-
-  try {
-    const rows = REFLEXION_311_KEYS.map((k, i) => `
-      <p><b>${escapeHtml(REFLEXION_311_LABELS[i])}</b></p>
-      <p style="margin-left:20px;white-space:pre-wrap">${escapeHtml(String(state[k] || "(sin respuesta)"))}</p><br>`).join("");
-    const html = `<html xmlns:o='urn:schemas-microsoft-com:office:office'
-      xmlns:w='urn:schemas-microsoft-com:office:word'
-      xmlns='http://www.w3.org/TR/REC-html40'>
-<head><meta charset='utf-8'><title>Reflexión 3.1.1</title>
-<style>body{font-family:Calibri,Arial;font-size:12pt;margin:2cm}
-h1{font-size:16pt;color:#1b5e20}h2{font-size:13pt}p{margin:6pt 0;line-height:1.5}</style>
-</head><body>
-<h1>Actividad 3.1.1 – Reflexión Individual Escrita</h1>
-<h2>Caso: La papelería de la señora Carmen</h2>
-<p>Institución: ${escapeHtml(sel.inst || "")} &nbsp;|&nbsp; Grupo: ${escapeHtml(sel.grupo || "")} &nbsp;|&nbsp; Ficha: ${escapeHtml(ficha)}</p>
-<hr>${rows}</body></html>`;
-
-    const fileName = `Reflexion_311_Carmen_${ficha}.doc`;
-    const file = new File(["\ufeff" + html], fileName, { type: "application/msword" });
-    const fileBase64 = await delivery.readFileAsBase64(file);
-    await delivery.uploadToAppsScript({
-      guideLabel: "Guia 2",
-      activityLabel: "Actividad 3.1.1",
-      activityNumber: "3.1.1",
-      activityTitle: "Reflexión Individual - Caso Carmen",
-      fileName,
-      mimeType: "application/msword",
-      fileBase64,
-      fullName,
-      ficha,
-    });
-    alert("¡Archivo subido exitosamente al Drive!");
-  } catch (err) {
-    alert("Error al subir: " + (err?.message || "Intenta de nuevo."));
-  } finally {
-    if (btn) { btn.disabled = false; btn.textContent = "📁 Subir al Drive"; }
-  }
 };
 
 // ---------------------------------------------------------------------------
