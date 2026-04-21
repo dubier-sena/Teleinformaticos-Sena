@@ -1780,6 +1780,338 @@ window.getGuideState = () => state;
 window.saveGuideState = saveStateRedes;
 
 // ---------------------------------------------------------------------------
+// Floating Theory Panel — Blocks 3.3.1 / 3.3.2 / 3.3.3
+// ---------------------------------------------------------------------------
+(function injectTeoriaPanelStyles() {
+  const s = document.createElement("style");
+  s.textContent = `
+    @keyframes tp-popIn { from{transform:scale(0);opacity:0} to{transform:scale(1);opacity:1} }
+    @keyframes tp-slideL { from{transform:translateX(-40px);opacity:0} to{transform:translateX(0);opacity:1} }
+    @keyframes tp-slideR { from{transform:translateX(40px);opacity:0} to{transform:translateX(0);opacity:1} }
+    @keyframes tp-fadeUp { from{transform:translateY(18px);opacity:0} to{transform:translateY(0);opacity:1} }
+    @keyframes tp-bar    { from{width:0} to{width:var(--tw)} }
+    .tp-octet{display:inline-flex;align-items:center;justify-content:center;width:54px;height:54px;
+      background:#fff;border:2px solid #2e7d32;border-radius:8px;font-size:1.25rem;font-weight:700;
+      color:#1b5e20;box-shadow:0 2px 8px rgba(46,125,50,.15)}
+    .tp-lbl{font-size:.7rem;color:#78909c;text-align:center;margin-top:3px;font-weight:600;letter-spacing:.04em}
+    .tp-h{font-size:.78rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#2e7d32;margin:0 0 8px}
+    .tp-card{background:#f1f8e9;border-radius:10px;padding:14px}
+    .tp-sec{margin-bottom:20px}
+    .dns-step{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;animation:tp-fadeUp .4s both}
+    .dns-num{width:26px;height:26px;background:#2e7d32;color:#fff;border-radius:50%;display:flex;
+      align-items:center;justify-content:center;font-weight:700;font-size:.8rem;flex-shrink:0}
+  `;
+  document.head.appendChild(s);
+})();
+
+const TEORIA_PANEL_CONTENTS = {
+  ip1: {
+    title: "📡 IPv4 — Estructura y direccionamiento",
+    html: `
+      <div class="tp-sec">
+        <p class="tp-h">¿Qué es una dirección IPv4?</p>
+        <div class="tp-card">
+          <p style="color:#37474f;font-size:.9rem;line-height:1.65;margin:0 0 12px">
+            Una <strong>dirección IPv4</strong> es un número de 32 bits que identifica de forma única
+            a cada dispositivo en una red. Se escribe en cuatro grupos (octetos) separados por puntos.
+          </p>
+          <p class="tp-h">Ejemplo: 192.168.1.100</p>
+          <div style="display:flex;justify-content:center;align-items:flex-start;gap:6px;flex-wrap:wrap;margin:8px 0 4px">
+            <div><div class="tp-octet" style="animation:tp-popIn .4s .1s both">192</div><div class="tp-lbl">8 bits</div></div>
+            <div style="font-size:1.6rem;color:#2e7d32;line-height:3">.</div>
+            <div><div class="tp-octet" style="animation:tp-popIn .4s .3s both">168</div><div class="tp-lbl">8 bits</div></div>
+            <div style="font-size:1.6rem;color:#2e7d32;line-height:3">.</div>
+            <div><div class="tp-octet" style="animation:tp-popIn .4s .5s both">1</div><div class="tp-lbl">8 bits</div></div>
+            <div style="font-size:1.6rem;color:#2e7d32;line-height:3">.</div>
+            <div><div class="tp-octet" style="animation:tp-popIn .4s .7s both">100</div><div class="tp-lbl">8 bits</div></div>
+          </div>
+          <p style="color:#78909c;font-size:.78rem;text-align:center;margin:4px 0 0">Total: 32 bits = 4 × 8 bits</p>
+        </div>
+      </div>
+      <div class="tp-sec">
+        <p class="tp-h">🔢 Decimal ↔ Binario</p>
+        <div class="tp-card">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.85rem">
+            <div style="padding:8px;background:#fff;border-radius:6px;text-align:center">
+              <div style="font-weight:700;color:#1b5e20;font-size:1.1rem">192</div>
+              <div style="color:#78909c;font-size:.75rem;letter-spacing:.03em">1100 0000</div>
+            </div>
+            <div style="padding:8px;background:#fff;border-radius:6px;text-align:center">
+              <div style="font-weight:700;color:#1b5e20;font-size:1.1rem">168</div>
+              <div style="color:#78909c;font-size:.75rem;letter-spacing:.03em">1010 1000</div>
+            </div>
+            <div style="padding:8px;background:#fff;border-radius:6px;text-align:center">
+              <div style="font-weight:700;color:#1b5e20;font-size:1.1rem">1</div>
+              <div style="color:#78909c;font-size:.75rem;letter-spacing:.03em">0000 0001</div>
+            </div>
+            <div style="padding:8px;background:#fff;border-radius:6px;text-align:center">
+              <div style="font-weight:700;color:#1b5e20;font-size:1.1rem">100</div>
+              <div style="color:#78909c;font-size:.75rem;letter-spacing:.03em">0110 0100</div>
+            </div>
+          </div>
+          <p style="color:#546e7a;font-size:.78rem;margin:8px 0 0;text-align:center">Cada octeto puede ser de 0 a 255</p>
+        </div>
+      </div>
+      <div class="tp-sec">
+        <p class="tp-h">🏘️ Parte de Red vs Parte de Host</p>
+        <div class="tp-card">
+          <div style="display:flex;border-radius:8px;overflow:hidden;margin-bottom:10px">
+            <div style="flex:3;background:#1b5e20;color:#fff;padding:10px 8px;text-align:center;animation:tp-slideL .5s .6s both;font-size:.85rem">
+              <div style="font-weight:700">192.168.1</div>
+              <div style="font-size:.72rem;opacity:.85">Parte de RED</div>
+            </div>
+            <div style="flex:1;background:#f57c00;color:#fff;padding:10px 8px;text-align:center;animation:tp-slideR .5s .8s both;font-size:.85rem">
+              <div style="font-weight:700">100</div>
+              <div style="font-size:.72rem;opacity:.85">HOST</div>
+            </div>
+          </div>
+          <p style="color:#37474f;font-size:.83rem;line-height:1.5;margin:0">
+            Con máscara <strong>/24 (255.255.255.0)</strong>: los primeros 3 octetos = red,
+            el último = dispositivo individual. Permite hasta <strong>254 hosts</strong> en la misma red.
+          </p>
+        </div>
+      </div>
+      <div class="tp-sec">
+        <p class="tp-h">📋 Ejemplo: Red de Carmen's Cafetería</p>
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:.82rem">
+            <thead><tr style="background:#1b5e20;color:#fff">
+              <th style="padding:7px 10px;text-align:left">Dispositivo</th>
+              <th style="padding:7px 10px;text-align:left">IP</th>
+              <th style="padding:7px 10px;text-align:left">Función</th>
+            </tr></thead>
+            <tbody>
+              <tr style="background:#f1f8e9"><td style="padding:6px 10px">Router</td><td style="padding:6px 10px">192.168.1.1</td><td style="padding:6px 10px">Puerta de enlace</td></tr>
+              <tr><td style="padding:6px 10px">PC Caja</td><td style="padding:6px 10px">192.168.1.10</td><td style="padding:6px 10px">Registro de ventas</td></tr>
+              <tr style="background:#f1f8e9"><td style="padding:6px 10px">Tablet</td><td style="padding:6px 10px">192.168.1.20</td><td style="padding:6px 10px">Tomar pedidos</td></tr>
+              <tr><td style="padding:6px 10px">Impresora</td><td style="padding:6px 10px">192.168.1.30</td><td style="padding:6px 10px">Facturas</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `
+  },
+  ip2: {
+    title: "🗂️ Clases de IP y direcciones privadas",
+    html: `
+      <div class="tp-sec">
+        <p class="tp-h">Las 3 clases de uso frecuente</p>
+        <div class="tp-card" style="padding:16px">
+          <div style="margin-bottom:14px;animation:tp-fadeUp .4s .1s both">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+              <span style="font-weight:700;color:#1b5e20;font-size:.9rem">Clase A</span>
+              <span style="font-size:.78rem;color:#78909c">1.0.0.0 – 126.255.255.255</span>
+            </div>
+            <div style="background:#e0e0e0;border-radius:4px;height:22px;overflow:hidden">
+              <div style="--tw:100%;width:0;height:100%;background:linear-gradient(90deg,#1b5e20,#4caf50);animation:tp-bar 1s .3s forwards;border-radius:4px;display:flex;align-items:center;padding-left:8px">
+                <span style="color:#fff;font-size:.72rem;font-weight:700;white-space:nowrap">~16 millones de hosts</span>
+              </div>
+            </div>
+          </div>
+          <div style="margin-bottom:14px;animation:tp-fadeUp .4s .3s both">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+              <span style="font-weight:700;color:#1565c0;font-size:.9rem">Clase B</span>
+              <span style="font-size:.78rem;color:#78909c">128.0.0.0 – 191.255.255.255</span>
+            </div>
+            <div style="background:#e0e0e0;border-radius:4px;height:22px;overflow:hidden">
+              <div style="--tw:65%;width:0;height:100%;background:linear-gradient(90deg,#1565c0,#42a5f5);animation:tp-bar 1s .5s forwards;border-radius:4px;display:flex;align-items:center;padding-left:8px">
+                <span style="color:#fff;font-size:.72rem;font-weight:700;white-space:nowrap">~65 mil hosts</span>
+              </div>
+            </div>
+          </div>
+          <div style="animation:tp-fadeUp .4s .5s both">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+              <span style="font-weight:700;color:#6a1b9a;font-size:.9rem">Clase C</span>
+              <span style="font-size:.78rem;color:#78909c">192.0.0.0 – 223.255.255.255</span>
+            </div>
+            <div style="background:#e0e0e0;border-radius:4px;height:22px;overflow:hidden">
+              <div style="--tw:28%;width:0;height:100%;background:linear-gradient(90deg,#6a1b9a,#ba68c8);animation:tp-bar 1s .7s forwards;border-radius:4px;display:flex;align-items:center;padding-left:8px">
+                <span style="color:#fff;font-size:.72rem;font-weight:700;white-space:nowrap">254 hosts</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tp-sec">
+        <p class="tp-h">🔒 Rangos privados (no salen a Internet)</p>
+        <div class="tp-card">
+          <table style="width:100%;border-collapse:collapse;font-size:.82rem">
+            <thead><tr style="background:#1b5e20;color:#fff">
+              <th style="padding:7px 10px;text-align:left">Clase</th>
+              <th style="padding:7px 10px;text-align:left">Rango privado</th>
+              <th style="padding:7px 10px;text-align:left">Máscara</th>
+            </tr></thead>
+            <tbody>
+              <tr style="background:#f1f8e9"><td style="padding:6px 10px">A</td><td style="padding:6px 10px">10.0.0.0 – 10.255.255.255</td><td style="padding:6px 10px">/8</td></tr>
+              <tr><td style="padding:6px 10px">B</td><td style="padding:6px 10px">172.16.0.0 – 172.31.255.255</td><td style="padding:6px 10px">/12</td></tr>
+              <tr style="background:#f1f8e9"><td style="padding:6px 10px">C</td><td style="padding:6px 10px">192.168.0.0 – 192.168.255.255</td><td style="padding:6px 10px">/24</td></tr>
+            </tbody>
+          </table>
+          <p style="color:#37474f;font-size:.8rem;margin:8px 0 0;line-height:1.5">
+            💡 Tu casa, la cafetería, el colegio usan IPs <strong>privadas</strong>.
+            El router hace NAT para convertirlas en la IP pública que ve Internet.
+          </p>
+        </div>
+      </div>
+      <div class="tp-sec">
+        <p class="tp-h">🏪 Caso: MiPyme — Distribuidora Valeria</p>
+        <div class="tp-card">
+          <p style="color:#37474f;font-size:.85rem;line-height:1.55;margin:0 0 10px">
+            La distribuidora tiene 8 equipos. El administrador eligió <strong>Clase C</strong> con la red
+            <code style="background:#c8e6c9;padding:2px 5px;border-radius:4px">192.168.0.0/24</code>
+          </p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:.8rem">
+            <div style="background:#fff;padding:8px;border-radius:6px;border-left:3px solid #2e7d32">
+              <div style="font-weight:700;color:#1b5e20">Router/Gateway</div>
+              <div style="color:#546e7a">192.168.0.1</div>
+            </div>
+            <div style="background:#fff;padding:8px;border-radius:6px;border-left:3px solid #2e7d32">
+              <div style="font-weight:700;color:#1b5e20">Servidor NAS</div>
+              <div style="color:#546e7a">192.168.0.5</div>
+            </div>
+            <div style="background:#fff;padding:8px;border-radius:6px;border-left:3px solid #f57c00">
+              <div style="font-weight:700;color:#e65100">PCs Inventario</div>
+              <div style="color:#546e7a">192.168.0.10–17</div>
+            </div>
+            <div style="background:#fff;padding:8px;border-radius:6px;border-left:3px solid #1565c0">
+              <div style="font-weight:700;color:#1565c0">Impresoras</div>
+              <div style="color:#546e7a">192.168.0.20–22</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `
+  },
+  ip3: {
+    title: "🚪 Gateway y DNS — Cómo salen tus datos a Internet",
+    html: `
+      <div class="tp-sec">
+        <p class="tp-h">🚪 ¿Qué es el Gateway?</p>
+        <div class="tp-card">
+          <p style="color:#37474f;font-size:.9rem;line-height:1.65;margin:0 0 12px">
+            El <strong>gateway</strong> es el dispositivo (generalmente el router) que conecta tu red local
+            con redes externas como Internet. Es la "puerta de salida" que todo paquete debe cruzar.
+          </p>
+          <svg viewBox="0 0 340 85" style="width:100%;max-width:340px;display:block;margin:0 auto 8px" aria-hidden="true">
+            <defs>
+              <marker id="tparr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L6,3 z" fill="#2e7d32"/>
+              </marker>
+            </defs>
+            <!-- PC -->
+            <rect x="6" y="22" width="44" height="32" rx="4" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.5"/>
+            <rect x="13" y="26" width="30" height="18" rx="2" fill="#a5d6a7"/>
+            <rect x="19" y="46" width="18" height="4" rx="1" fill="#81c784"/>
+            <text x="28" y="68" text-anchor="middle" font-size="8" fill="#1b5e20" font-weight="600">PC</text>
+            <line x1="50" y1="38" x2="78" y2="38" stroke="#2e7d32" stroke-width="1.5" marker-end="url(#tparr)"/>
+            <!-- Switch -->
+            <rect x="78" y="25" width="44" height="26" rx="4" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5"/>
+            <circle cx="90" cy="38" r="3" fill="#42a5f5"/>
+            <circle cx="100" cy="38" r="3" fill="#42a5f5"/>
+            <circle cx="110" cy="38" r="3" fill="#42a5f5"/>
+            <text x="100" y="65" text-anchor="middle" font-size="8" fill="#1565c0" font-weight="600">Switch</text>
+            <line x1="122" y1="38" x2="150" y2="38" stroke="#2e7d32" stroke-width="1.5" marker-end="url(#tparr)"/>
+            <!-- Router -->
+            <ellipse cx="174" cy="38" rx="24" ry="16" fill="#fff8e1" stroke="#f57c00" stroke-width="1.5"/>
+            <text x="174" y="36" text-anchor="middle" font-size="7.5" fill="#e65100" font-weight="700">Router</text>
+            <text x="174" y="46" text-anchor="middle" font-size="7" fill="#e65100">Gateway</text>
+            <text x="174" y="68" text-anchor="middle" font-size="7.5" fill="#e65100" font-weight="600">192.168.1.1</text>
+            <!-- animated dashed arrow to internet -->
+            <line x1="198" y1="38" x2="228" y2="38" stroke="#f57c00" stroke-width="2" stroke-dasharray="5,3">
+              <animate attributeName="stroke-dashoffset" from="0" to="-16" dur=".9s" repeatCount="indefinite"/>
+            </line>
+            <!-- Internet cloud -->
+            <ellipse cx="268" cy="33" rx="22" ry="13" fill="#e1f5fe" stroke="#0288d1" stroke-width="1.5"/>
+            <ellipse cx="256" cy="40" rx="14" ry="9" fill="#e1f5fe" stroke="#0288d1" stroke-width="1.5"/>
+            <ellipse cx="280" cy="41" rx="14" ry="8" fill="#e1f5fe" stroke="#0288d1" stroke-width="1.5"/>
+            <text x="268" y="38" text-anchor="middle" font-size="10" fill="#0277bd">🌐</text>
+            <text x="268" y="68" text-anchor="middle" font-size="8" fill="#0277bd" font-weight="600">Internet</text>
+            <!-- moving packet -->
+            <circle r="5" fill="#f57c00" opacity=".9">
+              <animateMotion dur="2s" repeatCount="indefinite" path="M 50 38 L 228 38"/>
+            </circle>
+          </svg>
+          <p style="color:#546e7a;font-size:.8rem;text-align:center;margin:0">PC → Switch → Router (gateway) → Internet</p>
+        </div>
+      </div>
+      <div class="tp-sec">
+        <p class="tp-h">🔗 ¿Qué es el DNS?</p>
+        <div class="tp-card">
+          <p style="color:#37474f;font-size:.9rem;line-height:1.65;margin:0 0 10px">
+            El <strong>DNS</strong> (Sistema de Nombres de Dominio) traduce nombres como
+            <code style="background:#c8e6c9;padding:2px 5px;border-radius:4px">www.sena.edu.co</code>
+            a la IP real del servidor. Es como una <em>agenda telefónica de Internet</em>.
+          </p>
+          <p style="font-weight:700;color:#2e7d32;font-size:.82rem;margin:0 0 8px">Pasos de una consulta DNS:</p>
+          <div class="dns-step" style="animation-delay:.1s">
+            <div class="dns-num">1</div>
+            <div style="color:#37474f;font-size:.85rem;line-height:1.5">Tu PC escribe <strong>www.sena.edu.co</strong> en el navegador</div>
+          </div>
+          <div class="dns-step" style="animation-delay:.3s">
+            <div class="dns-num">2</div>
+            <div style="color:#37474f;font-size:.85rem;line-height:1.5">El sistema operativo pregunta al <strong>servidor DNS</strong> (ej. 8.8.8.8 de Google)</div>
+          </div>
+          <div class="dns-step" style="animation-delay:.5s">
+            <div class="dns-num">3</div>
+            <div style="color:#37474f;font-size:.85rem;line-height:1.5">El DNS responde con la <strong>IP del servidor</strong> (ej. 181.53.210.100)</div>
+          </div>
+          <div class="dns-step" style="animation-delay:.7s">
+            <div class="dns-num">4</div>
+            <div style="color:#37474f;font-size:.85rem;line-height:1.5">Tu PC se conecta directamente a esa IP y carga la página</div>
+          </div>
+        </div>
+      </div>
+      <div class="tp-sec">
+        <p class="tp-h">⚙️ Configuración típica de red</p>
+        <div class="tp-card">
+          <table style="width:100%;border-collapse:collapse;font-size:.82rem">
+            <thead><tr style="background:#1b5e20;color:#fff">
+              <th style="padding:7px 10px;text-align:left">Parámetro</th>
+              <th style="padding:7px 10px;text-align:left">Valor ejemplo</th>
+              <th style="padding:7px 10px;text-align:left">Qué hace</th>
+            </tr></thead>
+            <tbody>
+              <tr style="background:#f1f8e9"><td style="padding:6px 10px">IP equipo</td><td style="padding:6px 10px">192.168.1.50</td><td style="padding:6px 10px">Identifica al PC</td></tr>
+              <tr><td style="padding:6px 10px">Máscara</td><td style="padding:6px 10px">255.255.255.0</td><td style="padding:6px 10px">Delimita la red</td></tr>
+              <tr style="background:#f1f8e9"><td style="padding:6px 10px">Gateway</td><td style="padding:6px 10px">192.168.1.1</td><td style="padding:6px 10px">Salida a Internet</td></tr>
+              <tr><td style="padding:6px 10px">DNS</td><td style="padding:6px 10px">8.8.8.8</td><td style="padding:6px 10px">Traduce nombres</td></tr>
+            </tbody>
+          </table>
+          <p style="color:#546e7a;font-size:.78rem;margin:8px 0 0">
+            💡 El gateway y el DNS suelen ser la misma IP del router en redes domésticas y de pequeñas empresas.
+          </p>
+        </div>
+      </div>
+    `
+  }
+};
+
+window.abrirTeoriaPanel = function (tipo) {
+  const panel    = document.getElementById("teoria-panel");
+  const backdrop = document.getElementById("teoria-backdrop");
+  const title    = document.getElementById("teoria-panel-title");
+  const body     = document.getElementById("teoria-panel-body");
+  const content  = TEORIA_PANEL_CONTENTS[tipo];
+  if (!panel || !content) return;
+  title.textContent = content.title;
+  body.innerHTML    = content.html;
+  panel.style.transform            = "translateX(0)";
+  backdrop.style.opacity           = "1";
+  backdrop.style.pointerEvents     = "auto";
+  document.body.style.overflow     = "hidden";
+};
+
+window.cerrarTeoriaPanel = function () {
+  const panel    = document.getElementById("teoria-panel");
+  const backdrop = document.getElementById("teoria-backdrop");
+  if (!panel) return;
+  panel.style.transform        = "translateX(110%)";
+  backdrop.style.opacity       = "0";
+  backdrop.style.pointerEvents = "none";
+  document.body.style.overflow = "";
+};
+
+// ---------------------------------------------------------------------------
 // Init
 // ---------------------------------------------------------------------------
 document.addEventListener("DOMContentLoaded", () => {
