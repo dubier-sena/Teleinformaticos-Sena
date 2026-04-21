@@ -983,6 +983,19 @@
                   </div>
                 </div>
               </div>
+              <div style="margin-top:16px">
+                <button type="button" onclick="abrirTeoriaPanel('ip1')"
+                  style="display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,#007934,#0a5c31);color:#fff;border:none;padding:13px 22px;border-radius:12px;font-weight:700;font-size:.9rem;box-shadow:0 6px 18px rgba(7,26,18,.18);cursor:pointer;font-family:inherit;transition:all .2s ease"
+                  onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 10px 28px rgba(7,26,18,.25)'"
+                  onmouseout="this.style.transform='';this.style.boxShadow='0 6px 18px rgba(7,26,18,.18)'">
+                  <span style="font-size:1.3rem">📚</span>
+                  <span>
+                    <span style="display:block;font-size:.75rem;font-weight:600;opacity:.8;letter-spacing:.04em">MATERIAL DE APOYO INTERACTIVO</span>
+                    Estructura de una dirección IPv4
+                  </span>
+                  <span style="margin-left:6px;font-size:1rem;opacity:.7">→</span>
+                </button>
+              </div>
               <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center">
                 <button type="button" id="btnGuardarIP1" onclick="guardarBloqueIP1()"
                   style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
@@ -1083,6 +1096,19 @@
                   </table>
                 </div>
               </div>
+              <div style="margin-top:16px">
+                <button type="button" onclick="abrirTeoriaPanel('ip2')"
+                  style="display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,#007934,#0a5c31);color:#fff;border:none;padding:13px 22px;border-radius:12px;font-weight:700;font-size:.9rem;box-shadow:0 6px 18px rgba(7,26,18,.18);cursor:pointer;font-family:inherit;transition:all .2s ease"
+                  onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 10px 28px rgba(7,26,18,.25)'"
+                  onmouseout="this.style.transform='';this.style.boxShadow='0 6px 18px rgba(7,26,18,.18)'">
+                  <span style="font-size:1.3rem">📚</span>
+                  <span>
+                    <span style="display:block;font-size:.75rem;font-weight:600;opacity:.8;letter-spacing:.04em">MATERIAL DE APOYO INTERACTIVO</span>
+                    Clases de IP y direcciones privadas
+                  </span>
+                  <span style="margin-left:6px;font-size:1rem;opacity:.7">→</span>
+                </button>
+              </div>
               <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center">
                 <button type="button" id="btnGuardarIP2" onclick="guardarBloqueIP2()"
                   style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
@@ -1175,6 +1201,19 @@
                     <p id="ip3ImagenNombre" style="font-size:0.78rem;color:#64748b;margin-top:4px"></p>
                   </div>
                 </div>
+              </div>
+              <div style="margin-top:16px">
+                <button type="button" onclick="abrirTeoriaPanel('ip3')"
+                  style="display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,#007934,#0a5c31);color:#fff;border:none;padding:13px 22px;border-radius:12px;font-weight:700;font-size:.9rem;box-shadow:0 6px 18px rgba(7,26,18,.18);cursor:pointer;font-family:inherit;transition:all .2s ease"
+                  onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 10px 28px rgba(7,26,18,.25)'"
+                  onmouseout="this.style.transform='';this.style.boxShadow='0 6px 18px rgba(7,26,18,.18)'">
+                  <span style="font-size:1.3rem">📚</span>
+                  <span>
+                    <span style="display:block;font-size:.75rem;font-weight:600;opacity:.8;letter-spacing:.04em">MATERIAL DE APOYO INTERACTIVO</span>
+                    Gateway, DNS y parámetros de red
+                  </span>
+                  <span style="margin-left:6px;font-size:1rem;opacity:.7">→</span>
+                </button>
               </div>
               <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center">
                 <button type="button" id="btnGuardarIP3" onclick="guardarBloqueIP3()"
@@ -1681,5 +1720,14 @@
     </div>
   </div>
 </div>
+<!-- ===== Floating Theory Panel ===== -->
+<div id="teoria-panel" style="position:fixed;top:0;right:0;width:min(500px,100vw);height:100dvh;background:#f8fafc;box-shadow:-4px 0 32px rgba(0,0,0,.22);z-index:9999;transform:translateX(110%);transition:transform .35s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;font-family:inherit">
+  <div style="background:linear-gradient(135deg,#007934,#0a5c31);color:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+    <div id="teoria-panel-title" style="font-weight:700;font-size:1rem;line-height:1.3"></div>
+    <button onclick="cerrarTeoriaPanel()" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:12px">✕</button>
+  </div>
+  <div id="teoria-panel-body" style="flex:1;overflow-y:auto;padding:20px 18px"></div>
+</div>
+<div id="teoria-backdrop" onclick="cerrarTeoriaPanel()" style="position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9998;opacity:0;pointer-events:none;transition:opacity .35s"></div>
 </body>
 </html>
