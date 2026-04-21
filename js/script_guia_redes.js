@@ -141,9 +141,44 @@ function loadStateRedes() {
   }
 }
 
-function saveStateRedes() {
+function readStateMetaRedes() {
+  try {
+    const saved = localStorage.getItem(STORAGE_META_KEY_REDES);
+    if (!saved) return {};
+
+    try {
+      const parsed = JSON.parse(saved);
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch {
+      const numeric = Number(saved);
+      return Number.isFinite(numeric) && numeric > 0
+        ? { updatedAt: new Date(numeric).toISOString() }
+        : {};
+    }
+  } catch {
+    return {};
+  }
+}
+
+function saveStateMetaRedes(meta) {
+  try {
+    if (!meta) {
+      localStorage.removeItem(STORAGE_META_KEY_REDES);
+      return;
+    }
+    localStorage.setItem(STORAGE_META_KEY_REDES, JSON.stringify(meta));
+  } catch {}
+}
+
+function saveStateRedes(options) {
   try {
     localStorage.setItem(STORAGE_KEY_REDES, JSON.stringify(state));
+    if (options && options.updatedAt) {
+      saveStateMetaRedes({ updatedAt: options.updatedAt });
+    } else {
+      saveStateMetaRedes({ updatedAt: new Date().toISOString() });
+    }
+    scheduleCloudSyncRedes();
   } catch {}
 }
 
@@ -1078,6 +1113,25 @@ function buildCloudSnapshotRedes() {
   return { data, updatedAt: new Date().toISOString() };
 }
 
+function snapshotTimeRedes(value) {
+  const parsed = Date.parse(value?.updatedAt || "");
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function localSnapshotTimeRedes() {
+  return snapshotTimeRedes(readStateMetaRedes());
+}
+
+function applyCloudSnapshotRedes(snapshot) {
+  const remoteData = snapshot?.data && typeof snapshot.data === "object" ? snapshot.data : {};
+  state = { ...state, ...remoteData };
+  saveStateRedes({
+    updatedAt: snapshot?.updatedAt || new Date().toISOString(),
+  });
+  hydrateFieldsRedes();
+  updateProgressRedes();
+}
+
 function applyAllLocksRedes() {
   applyReflexionLock();
   applyReflexionSocializacionLock();
@@ -1113,15 +1167,11 @@ async function initCloudSyncRedes() {
     const remote = await window._firebaseDb.cloudGetGuideData(scopeKey, GUIDE_DATA_FILE_REDES);
     if (remote?.data && Object.keys(remote.data).length > 0) {
       enforceLockFlagsFromRemote(remote.data);
-      const localTime = Number(localStorage.getItem(STORAGE_META_KEY_REDES) || 0);
-      const remoteTime = Date.parse(remote.updatedAt || "") || 0;
-      if (remoteTime > localTime) {
-        state = { ...state, ...remote.data };
-        saveStateRedes();
-        hydrateFieldsRedes();
-        updateProgressRedes();
+      if (snapshotTimeRedes(remote) > localSnapshotTimeRedes()) {
+        applyCloudSnapshotRedes(remote);
       } else {
         applyAllLocksRedes(); // aunque el local sea más nuevo, respeta bloqueos de Firebase
+        scheduleCloudSyncRedes();
       }
     }
     _cloudRefreshTimer = setInterval(async () => {
@@ -1129,10 +1179,11 @@ async function initCloudSyncRedes() {
         const refreshed = await window._firebaseDb.cloudGetGuideData(scopeKey, GUIDE_DATA_FILE_REDES);
         if (refreshed?.data) {
           enforceLockFlagsFromRemote(refreshed.data);
-          state = { ...state, ...refreshed.data };
-          saveStateRedes();
-          hydrateFieldsRedes();
-          updateProgressRedes();
+          if (snapshotTimeRedes(refreshed) > localSnapshotTimeRedes()) {
+            applyCloudSnapshotRedes(refreshed);
+          } else {
+            applyAllLocksRedes();
+          }
         }
       } catch {}
     }, CLOUD_REFRESH_REDES);
