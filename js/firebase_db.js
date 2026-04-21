@@ -81,6 +81,12 @@
   var SYNC_DELAY_MS    = 1200; // Espera antes de enviar progreso a Firebase (debounce)
   var API_TIMEOUT_MS   = 15000;
   var CHECK_TIMEOUT_MS = 10000;
+  var FIRESTORE_BUDGET_STORAGE_KEY = "sena_portal_firestore_budget_v1";
+  var FIRESTORE_DAILY_BUDGET_LIMITS = {
+    read: { warn: 30000, restrict: 40000, block: 45000 },
+    write: { warn: 8000, restrict: 12000, block: 16000 },
+    delete: { warn: 100, restrict: 300, block: 500 },
+  };
 
   // URL base de la API REST de Firestore
   var BASE_URL = "";
@@ -98,6 +104,173 @@
   var availabilityCache = null; // null = sin verificar | true | false
   var checkInProgress   = null;
   var progressTimers    = {};
+  var firestoreBudgetCache = null;
+
+  function getBudgetDateKey(date) {
+    var value = date instanceof Date ? date : new Date();
+    return [
+      value.getFullYear(),
+      String(value.getMonth() + 1).padStart(2, "0"),
+      String(value.getDate()).padStart(2, "0"),
+    ].join("-");
+  }
+
+  function normalizeBudgetCount(value) {
+    return Math.max(0, Math.round(Number(value) || 0));
+  }
+
+  function createEmptyFirestoreBudgetState(dateKey) {
+    return {
+      dateKey: dateKey || getBudgetDateKey(new Date()),
+      counts: {
+        read: 0,
+        write: 0,
+        delete: 0,
+      },
+      notices: {},
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  function normalizeFirestoreBudgetState(rawState, dateKey) {
+    var currentDateKey = dateKey || getBudgetDateKey(new Date());
+    var source = rawState && typeof rawState === "object" ? rawState : null;
+    if (!source || source.dateKey !== currentDateKey) {
+      return createEmptyFirestoreBudgetState(currentDateKey);
+    }
+    return {
+      dateKey: currentDateKey,
+      counts: {
+        read: normalizeBudgetCount(source.counts && source.counts.read),
+        write: normalizeBudgetCount(source.counts && source.counts.write),
+        delete: normalizeBudgetCount(source.counts && source.counts.delete),
+      },
+      notices: source.notices && typeof source.notices === "object" ? source.notices : {},
+      updatedAt: typeof source.updatedAt === "string" ? source.updatedAt : new Date().toISOString(),
+    };
+  }
+
+  function readStoredFirestoreBudgetState() {
+    try {
+      var raw = window.localStorage.getItem(FIRESTORE_BUDGET_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function persistFirestoreBudgetState(state) {
+    firestoreBudgetCache = state;
+    try {
+      window.localStorage.setItem(FIRESTORE_BUDGET_STORAGE_KEY, JSON.stringify(state));
+    } catch (error) {
+    }
+  }
+
+  function getFirestoreBudgetState() {
+    var dateKey = getBudgetDateKey(new Date());
+    var state = normalizeFirestoreBudgetState(readStoredFirestoreBudgetState(), dateKey);
+    var shouldPersist =
+      !firestoreBudgetCache ||
+      firestoreBudgetCache.dateKey !== state.dateKey ||
+      JSON.stringify(firestoreBudgetCache.counts || {}) !== JSON.stringify(state.counts || {});
+    firestoreBudgetCache = state;
+    if (shouldPersist) {
+      persistFirestoreBudgetState(state);
+    }
+    return state;
+  }
+
+  function getFirestoreBudgetLevel(kind, count) {
+    var limits = FIRESTORE_DAILY_BUDGET_LIMITS[kind] || FIRESTORE_DAILY_BUDGET_LIMITS.read;
+    var value = normalizeBudgetCount(count);
+    if (value >= limits.block) return "block";
+    if (value >= limits.restrict) return "restrict";
+    if (value >= limits.warn) return "warn";
+    return "ok";
+  }
+
+  function budgetLevelRank(level) {
+    if (level === "block") return 3;
+    if (level === "restrict") return 2;
+    if (level === "warn") return 1;
+    return 0;
+  }
+
+  function maybeWarnBudgetLevel(kind, state) {
+    var level = getFirestoreBudgetLevel(kind, state.counts[kind]);
+    var previous = String((state.notices && state.notices[kind]) || "ok");
+    if (budgetLevelRank(level) <= budgetLevelRank(previous) || level === "ok") {
+      return;
+    }
+    state.notices[kind] = level;
+    console.warn(
+      "[firebase_db] Presupuesto diario en nivel " +
+      level +
+      " para " +
+      kind +
+      ": " +
+      state.counts[kind] +
+      "/" +
+      FIRESTORE_DAILY_BUDGET_LIMITS[kind].block
+    );
+  }
+
+  function buildFirestoreBudgetStatus(state) {
+    var budgetState = state || getFirestoreBudgetState();
+    var levels = {
+      read: getFirestoreBudgetLevel("read", budgetState.counts.read),
+      write: getFirestoreBudgetLevel("write", budgetState.counts.write),
+      delete: getFirestoreBudgetLevel("delete", budgetState.counts.delete),
+    };
+    return {
+      dateKey: budgetState.dateKey,
+      updatedAt: budgetState.updatedAt,
+      counts: {
+        read: budgetState.counts.read,
+        write: budgetState.counts.write,
+        delete: budgetState.counts.delete,
+      },
+      levels: levels,
+      limits: FIRESTORE_DAILY_BUDGET_LIMITS,
+      shouldDeferCloudReads: levels.read === "restrict" || levels.read === "block",
+      shouldSkipGuideUiCloudSave: levels.write === "restrict" || levels.write === "block",
+      shouldBlockCloudWrites: levels.write === "block",
+      shouldBlockCloudDeletes: levels.delete === "block",
+    };
+  }
+
+  function getFirestoreBudgetStatus() {
+    return buildFirestoreBudgetStatus(getFirestoreBudgetState());
+  }
+
+  function registerFirestoreOperation(kind, amount) {
+    var normalizedKind = FIRESTORE_DAILY_BUDGET_LIMITS[kind] ? kind : "read";
+    var increment = normalizeBudgetCount(amount);
+    if (increment <= 0) {
+      return getFirestoreBudgetStatus();
+    }
+    var state = getFirestoreBudgetState();
+    state.counts[normalizedKind] = normalizeBudgetCount(state.counts[normalizedKind] + increment);
+    state.updatedAt = new Date().toISOString();
+    maybeWarnBudgetLevel(normalizedKind, state);
+    persistFirestoreBudgetState(state);
+    return buildFirestoreBudgetStatus(state);
+  }
+
+  function shouldDeferCloudReads() {
+    var status = getFirestoreBudgetStatus();
+    return status.levels.read === "restrict" || status.levels.read === "block";
+  }
+
+  function shouldSkipGuideUiCloudSave() {
+    var status = getFirestoreBudgetStatus();
+    return status.levels.write === "restrict" || status.levels.write === "block";
+  }
+
+  function shouldBlockCloudWrites() {
+    return getFirestoreBudgetStatus().levels.write === "block";
+  }
 
   // ════════════════════════════════════════════════════════════════════════════
   //  SERIALIZACION FIRESTORE
@@ -191,14 +364,20 @@
         { method: "GET", cache: "no-store" },
         API_TIMEOUT_MS
       );
-      if (res.status === 404) return null;
-      if (!res.ok)            return null;
-      return fromFsDoc(await res.json());
+      if (res.status === 404) {
+        registerFirestoreOperation("read", 1);
+        return null;
+      }
+      if (!res.ok) return null;
+      var payload = await res.json();
+      registerFirestoreOperation("read", 1);
+      return fromFsDoc(payload);
     } catch (e) { return null; }
   }
 
   // PATCH (upsert completo) de un documento.
   async function fsPatch(collection, docId, data) {
+    if (shouldBlockCloudWrites()) return false;
     try {
       var res = await fetchWithTimeout(
         docUrl(collection, docId),
@@ -209,12 +388,14 @@
         },
         API_TIMEOUT_MS
       );
+      if (res.ok) registerFirestoreOperation("write", 1);
       return res.ok;
     } catch (e) { return false; }
   }
 
   // PATCH con updateMask: actualiza solo el campo indicado sin borrar los demas.
   async function fsUpdateField(collection, docId, fieldName, fieldValue) {
+    if (shouldBlockCloudWrites()) return false;
     try {
       var body = { fields: {} };
       body.fields[fieldName] = toFsValue(fieldValue);
@@ -227,6 +408,7 @@
         },
         API_TIMEOUT_MS
       );
+      if (res.ok) registerFirestoreOperation("write", 1);
       return res.ok;
     } catch (e) { return false; }
   }
@@ -238,7 +420,9 @@
       var res = await fetchWithTimeout(url, { method: "GET", cache: "no-store" }, API_TIMEOUT_MS);
       if (!res.ok) return [];
       var payload = await res.json();
-      return (payload.documents || []).map(fromFsDoc).filter(Boolean);
+      var docs = (payload.documents || []).map(fromFsDoc).filter(Boolean);
+      registerFirestoreOperation("read", Math.max(1, docs.length));
+      return docs;
     } catch (e) { return []; }
   }
 
@@ -264,6 +448,7 @@
       if (!res.ok) return [];
       var results = await res.json();
       if (!Array.isArray(results)) return [];
+      registerFirestoreOperation("read", Math.max(1, docIds.length));
       return results.map(function (r) { return r.found ? fromFsDoc(r.found) : null; }).filter(Boolean);
     } catch (e) { return []; }
   }
@@ -284,6 +469,7 @@
         var url = docUrl(COL_PROGRESS, AVAILABILITY_DOC_ID);
         var res = await fetchWithTimeout(url, { method: "GET", cache: "no-store" }, CHECK_TIMEOUT_MS);
         var ok = res.ok || res.status === 200 || res.status === 404;
+        if (ok) registerFirestoreOperation("read", 1);
         if (ok) availabilityCache = true; // Solo cachear si funciono
         return ok;
       } catch (e) {
@@ -439,6 +625,7 @@
 
   async function cloudSaveGuideUiState(scopeKey, fileName, snapshot) {
     if (!scopeKey || !fileName) return false;
+    if (shouldSkipGuideUiCloudSave()) return false;
     var payload = Object.assign({}, snapshot || {}, {
       scopeKey: scopeKey,
       fileName: fileName,
@@ -845,6 +1032,9 @@
     cloudSaveGuideData: cloudSaveGuideData,
     cloudGetGuideUiState: cloudGetGuideUiState,
     cloudSaveGuideUiState: cloudSaveGuideUiState,
+    shouldDeferCloudReads: shouldDeferCloudReads,
+    shouldSkipGuideUiCloudSave: shouldSkipGuideUiCloudSave,
+    getBudgetStatus:    getFirestoreBudgetStatus,
     isConfigured:      function () { return isConfigured; },
     getMode:           function () { return isConfigured ? "firebase" : "safe-local"; },
     resetCache:        function () { availabilityCache = null; },
