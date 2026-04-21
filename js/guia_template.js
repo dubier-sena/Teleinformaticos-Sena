@@ -16,7 +16,8 @@
   const pageStateFile = storageFileAliases[pageFile] || pageFile;
   const pageName = pageStateFile.replace(/\.html$/i, "");
   const GUIDE_UI_SYNC_DELAY_MS = 1200;
-  const GUIDE_UI_REFRESH_MS = 8000;
+  const GUIDE_UI_REFRESH_MS = 60000;
+  const GUIDE_CALENDAR_REMOTE_REFRESH_MS = 15 * 60 * 1000;
   const GUIDE_REVEAL_SELECTOR = ".activity, .card, .support-card, .checklist-card";
   const GUIDE_CALENDAR_DOC = "calendario_2026_admin";
   const GUIDE_CALENDAR_STORAGE_KEY = "sena-calendario-pro-2026-v2";
@@ -165,6 +166,9 @@
     if (!getCloudScopeKey() || !pendingGuideUiSnapshot) {
       return;
     }
+    if (window._firebaseDb?.shouldSkipGuideUiCloudSave?.()) {
+      return;
+    }
 
     window.clearTimeout(guideUiRetryTimer);
     guideUiRetryTimer = window.setTimeout(function () {
@@ -175,6 +179,9 @@
   async function loadGuideUiCloudSnapshot(force) {
     const scopeKey = getCloudScopeKey();
     if (!scopeKey || !window._firebaseDb || typeof window._firebaseDb.cloudGetGuideUiState !== "function") {
+      return null;
+    }
+    if (!force && window._firebaseDb?.shouldDeferCloudReads?.()) {
       return null;
     }
 
@@ -197,6 +204,15 @@
 
     const snapshot = pendingGuideUiSnapshot || buildGuideUiSnapshot();
     pendingGuideUiSnapshot = snapshot;
+    if (window._firebaseDb?.shouldSkipGuideUiCloudSave?.()) {
+      pendingGuideUiSnapshot = null;
+      window.clearTimeout(guideUiRetryTimer);
+      saveGuideUiMeta({
+        updatedAt: snapshot.updatedAt,
+        updatedBy: snapshot.updatedBy,
+      });
+      return false;
+    }
 
     try {
       const saved = await window._firebaseDb.cloudSaveGuideUiState(scopeKey, pageStateFile, snapshot);
@@ -379,9 +395,29 @@
     return null;
   }
 
+  function saveGuideCalendarLocalSnapshot(snapshot) {
+    const normalized = normalizeGuideCalendarSnapshot(snapshot);
+    if (!normalized) {
+      return;
+    }
+
+    try {
+      localStorage.setItem(GUIDE_CALENDAR_STORAGE_KEY, JSON.stringify(normalized));
+    } catch (error) {
+    }
+  }
+
   function guideCalendarSnapshotTime(snapshot) {
     const value = Date.parse(snapshot?.updatedAt || "");
     return Number.isFinite(value) ? value : 0;
+  }
+
+  function isGuideCalendarSnapshotFresh(snapshot) {
+    const updatedAt = guideCalendarSnapshotTime(snapshot);
+    if (!updatedAt) {
+      return false;
+    }
+    return Date.now() - updatedAt <= GUIDE_CALENDAR_REMOTE_REFRESH_MS;
   }
 
   function mergeGuideCalendarSnapshots(localSnapshot, remoteSnapshot) {
@@ -410,6 +446,17 @@
 
     guideCalendarRemotePromise = (async function () {
       const localSnapshot = readGuideCalendarLocalSnapshot();
+      if (localSnapshot && isGuideCalendarSnapshotFresh(localSnapshot)) {
+        guideCalendarState = mergeGuideCalendarSnapshots(localSnapshot, null);
+        guideCalendarRemoteLoaded = true;
+        return guideCalendarState;
+      }
+      if (window._firebaseDb?.shouldDeferCloudReads?.()) {
+        guideCalendarState = mergeGuideCalendarSnapshots(localSnapshot, null);
+        guideCalendarRemoteLoaded = true;
+        return guideCalendarState;
+      }
+
       let remoteSnapshot = null;
 
       if (window._firebaseDb && typeof window._firebaseDb.cloudGetCalendar === "function") {
@@ -417,6 +464,9 @@
           remoteSnapshot = normalizeGuideCalendarSnapshot(
             await window._firebaseDb.cloudGetCalendar(GUIDE_CALENDAR_DOC)
           );
+          if (remoteSnapshot) {
+            saveGuideCalendarLocalSnapshot(remoteSnapshot);
+          }
         } catch (error) {
           remoteSnapshot = null;
         }
@@ -1053,6 +1103,10 @@
     return window.innerWidth <= 768;
   }
 
+  function isGuideDocumentVisible() {
+    return typeof document === "undefined" || document.visibilityState !== "hidden";
+  }
+
   function applyResponsiveSidebarState() {
     const sidebar = document.getElementById("sidebar");
     const hiddenByPreference = localStorage.getItem(templateStorageKey("sidebar_hidden")) === "1";
@@ -1274,6 +1328,10 @@
     }
 
     window.setInterval(async function () {
+      if (!isGuideDocumentVisible()) {
+        return;
+      }
+
       if (pendingGuideUiSnapshot) {
         return;
       }

@@ -14,7 +14,7 @@ const STORAGE_KEY_REDES = _portalAuth
 const STORAGE_META_KEY_REDES = STORAGE_KEY_REDES + "__meta";
 const SCOPED_STORAGE_ENABLED_REDES = STORAGE_KEY_REDES !== LEGACY_STORAGE_KEY_REDES;
 const CLOUD_SYNC_DELAY_REDES = 1200;
-const CLOUD_REFRESH_REDES = 8000;
+const CLOUD_REFRESH_REDES = 60000;
 
 const DRIVE_FOLDERS_REDES = {};
 const DRIVE_LINK_REFLEXION_311 = ""; // TODO: reemplazar con el enlace del Drive
@@ -1205,6 +1205,13 @@ async function initCloudSyncRedes() {
       }
     }
     _cloudRefreshTimer = setInterval(async () => {
+      if (document.hidden) {
+        return;
+      }
+      if (window._firebaseDb?.shouldDeferCloudReads?.()) {
+        return;
+      }
+
       try {
         const refreshed = await window._firebaseDb.cloudGetGuideData(scopeKey, GUIDE_DATA_FILE_REDES);
         if (refreshed?.data) {
