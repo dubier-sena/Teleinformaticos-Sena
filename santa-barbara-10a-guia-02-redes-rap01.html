@@ -309,7 +309,7 @@
                 </button>
                 <button type="button" class="btn-drive"
                   style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit;min-height:unset;border-radius:10px"
-                  onclick="window.sharedAppsScriptDelivery.openDeliveryModal({guideLabel:'Guia 2',activityNumber:'3.1.1',activityTitle:'Reflexión Individual — Caso Carmen',activityLabel:'Actividad 3.1.1'})">
+                  onclick="subirReflexion311AlDrive()">
                   &#128193; Subir al Drive
                 </button>
               </div>
@@ -851,26 +851,52 @@
           <!-- SOCIALIZACION -->
           <div class="activity open mission-card">
             <div class="activity-header" onclick="toggleActivity(this.parentElement)">
-              <span class="activity-num">3.2.G</span>
+              <span class="activity-num">3.2.1.G</span>
               <span class="activity-title">&#128483; Socializaci&oacute;n y revisi&oacute;n entre pares</span>
               <span class="mission-chip">Mision colaborativa</span>
               <span class="activity-toggle">&#9662;</span>
             </div>
             <div class="activity-body">
-              <p class="intro-text">En equipos de 3 aprendices comparen sus mapas mentales y productos de exploraci&oacute;n. El objetivo NO es una exposici&oacute;n formal: es identificar diferencias, discutir criterios y consolidar una visi&oacute;n com&uacute;n.</p>
-              <div class="form-grid" style="margin-top:12px">
+              <p class="intro-text">En equipos de 3 aprendices comparen sus mapas mentales y productos de exploraci&oacute;n. El objetivo <strong>NO</strong> es hacer una exposici&oacute;n formal: es identificar diferencias, discutir criterios y consolidar una visi&oacute;n com&uacute;n.</p>
+              <div class="checklist-card compact-card">
+                <h3>Su equipo debe realizar lo siguiente:</h3>
+              </div>
+              <div class="form-grid" style="margin-top:12px;grid-template-columns:1fr">
                 <label>
-                  <span>3 diferencias significativas que encontraron entre los 3 mapas</span>
+                  <span>1. Compare con sus compa&ntilde;eros los 3 mapas mentales e identifique al menos 3 diferencias significativas. An&oacute;telas.</span>
                   <textarea rows="4" data-store="social-diferencias" data-track placeholder="Diferencia 1: ... / Diferencia 2: ... / Diferencia 3: ..."></textarea>
                 </label>
                 <label>
-                  <span>2 conceptos que cada integrante no ten&iacute;a claro &mdash; &iquest;pudieron resolverlos entre el equipo?</span>
+                  <span>2. Entre los 3 mapas, elija la representaci&oacute;n visual m&aacute;s completa para cada rama y justifique la elecci&oacute;n t&eacute;cnicamente.</span>
+                  <textarea rows="4" data-store="social-representacion" data-track placeholder="Ej. Rama &laquo;Topolog&iacute;as&raquo;: elegimos el mapa de Juan porque inclu&iacute;a la comparaci&oacute;n entre estrella y bus con ventajas y desventajas..."></textarea>
+                  <div style="margin-top:8px">
+                    <label id="socialMapaLabel" style="display:inline-flex;align-items:center;gap:8px;background:#f1f5f9;border:2px dashed #94a3b8;border-radius:10px;padding:10px 16px;cursor:pointer;font-size:0.9rem;font-weight:600;color:#1e40af">
+                      &#128247; Subir mapa elegido por el equipo
+                      <input type="file" id="socialMapaInput" accept="image/*" style="display:none" onchange="subirImagenSocial(this)">
+                    </label>
+                    <div id="socialMapaPreview" style="display:none;margin-top:10px">
+                      <img id="socialMapaImg" style="max-width:100%;max-height:360px;border-radius:8px;border:1px solid #e2e8f0;display:block" alt="Mapa elegido por el equipo">
+                      <p id="socialMapaNombre" style="font-size:0.78rem;color:#64748b;margin-top:4px"></p>
+                    </div>
+                  </div>
+                </label>
+                <label>
+                  <span>3. Identifique 2 conceptos que cada integrante no ten&iacute;a claro e intente resolverlos entre el equipo antes de consultar al instructor.</span>
                   <textarea rows="4" data-store="social-dudas" data-track placeholder="Concepto 1: ... / Concepto 2: ... / &iquest;Se resolvi&oacute;? ..."></textarea>
                 </label>
                 <label>
-                  <span>Pregunta t&eacute;cnica genuina que el equipo no pudo resolver solo para plantear al instructor</span>
+                  <span>4. Prepare 1 pregunta t&eacute;cnica genuina que el equipo no pudo resolver solo y pl&aacute;ntela al instructor en la plenaria final.</span>
                   <textarea rows="3" data-store="social-pregunta" data-track placeholder="Escribe la pregunta con precisi&oacute;n t&eacute;cnica."></textarea>
                 </label>
+              </div>
+              <div style="margin-top:16px">
+                <button type="button" id="btnGuardarSocial" onclick="guardarSocializacion()"
+                  style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                  &#128190; Guardar respuestas
+                </button>
+              </div>
+              <div id="socialStatus" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                &#9989; Respuestas guardadas en Firebase. Ya no se pueden modificar.
               </div>
               <div class="warning-box" style="margin-top:12px">
                 <strong>&#9888; Entrega de los 5 productos individuales:</strong> compilados en un solo PDF titulado
@@ -911,11 +937,25 @@
             <div class="activity-body">
               <div class="info-box green" style="margin-bottom:16px">
                 <div class="label">&#127909; Video de referencia</div>
+                <p><strong>Direcciones IP e Internet</strong></p>
+                <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:8px;margin-top:8px">
+                  <iframe src="https://player.vimeo.com/video/1185039094?title=0&amp;byline=0&amp;portrait=0&amp;badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479"
+                    style="position:absolute;top:0;left:0;width:100%;height:100%;border:0"
+                    allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    title="Direcciones IP e Internet"></iframe>
+                </div>
+                <div class="label" style="margin-top:14px">&#128250; Video complementario</div>
                 <p><strong>Direcci&oacute;n IP &mdash; &iquest;qu&eacute; es y c&oacute;mo funciona? (explicaci&oacute;n visual)</strong></p>
-                <div class="label" style="margin-top:10px">&#128221; Recurso adicional</div>
-                <p>Cisco Skills for All &mdash; Networking Basics, M&oacute;dulo 5 (IP Addressing)</p>
+                <a href="https://www.youtube.com/watch?v=L6bDA5FK6gs" target="_blank" rel="noopener"
+                  style="display:inline-flex;align-items:center;gap:8px;margin-top:8px;padding:9px 16px;background:#ff0000;color:#fff;border-radius:8px;font-size:0.88rem;font-weight:600;text-decoration:none">
+                  &#9654; Ver en YouTube
+                </a>
               </div>
-              <div class="form-grid">
+              <div class="checklist-card compact-card">
+                <h3>Mientras observas, responde en el formulario:</h3>
+              </div>
+              <div class="form-grid" style="margin-top:12px;grid-template-columns:1fr">
                 <label>
                   <span>1. Una direcci&oacute;n IP tiene 4 n&uacute;meros separados por puntos (ej. 192.168.1.10). &iquest;Qu&eacute; representa cada n&uacute;mero?</span>
                   <textarea rows="3" data-store="ip1-1" data-track placeholder="Explica qu&eacute; es un octeto y qu&eacute; valor m&iacute;nimo y m&aacute;ximo puede tener."></textarea>
@@ -929,13 +969,33 @@
                   <textarea rows="3" data-store="ip1-3" data-track placeholder="Explica qu&eacute; conflicto ocurrir&iacute;a y cu&aacute;l ser&iacute;a el s&iacute;ntoma observable."></textarea>
                 </label>
               </div>
-              <div class="checklist-card compact-card" style="margin-top:12px">
+              <div class="checklist-card compact-card" style="margin-top:16px">
                 <h3>&#128196; Producto individual</h3>
                 <p>Dibuja la direcci&oacute;n IP <strong>192.168.1.45 / 255.255.255.0</strong> y etiqueta visualmente cu&aacute;les octetos corresponden a la parte de red y cu&aacute;les al host. Usa colores o flechas.</p>
-                <label style="display:block;margin-top:10px">
-                  <span>Describe tu diagrama &mdash; &iquest;qu&eacute; octetos son red y cu&aacute;les son host?</span>
-                  <textarea rows="3" data-store="ip1-producto" data-track placeholder="Ejemplo: octetos 1-2-3 = parte de red (192.168.1), octeto 4 = parte de host (45)."></textarea>
-                </label>
+                <div style="margin-top:12px">
+                  <label id="ip1ImagenLabel" style="display:inline-flex;align-items:center;gap:8px;background:#f1f5f9;border:2px dashed #94a3b8;border-radius:10px;padding:10px 16px;cursor:pointer;font-size:0.9rem;font-weight:600;color:#1e40af">
+                    &#128247; Subir imagen del diagrama
+                    <input type="file" id="ip1ImagenInput" accept="image/*" style="display:none" onchange="subirImagenBloqueIP1(this)">
+                  </label>
+                  <div id="ip1ImagenPreview" style="display:none;margin-top:10px">
+                    <img id="ip1ImagenImg" style="max-width:100%;max-height:360px;border-radius:8px;border:1px solid #e2e8f0;display:block" alt="Diagrama IPv4 del aprendiz">
+                    <p id="ip1ImagenNombre" style="font-size:0.78rem;color:#64748b;margin-top:4px"></p>
+                  </div>
+                </div>
+              </div>
+              <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+                <button type="button" id="btnGuardarIP1" onclick="guardarBloqueIP1()"
+                  style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                  &#128190; Guardar respuestas
+                </button>
+                <button type="button" class="btn-drive"
+                  style="min-height:unset;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;display:inline-flex;align-items:center;gap:8px"
+                  onclick="subirBloqueIP1AlDrive()">
+                  &#128193; Subir al Drive
+                </button>
+              </div>
+              <div id="ip1Status" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                &#9989; Respuestas guardadas en Firebase. Ya no se pueden modificar.
               </div>
             </div>
           </div>
@@ -951,9 +1011,25 @@
             <div class="activity-body">
               <div class="info-box green" style="margin-bottom:16px">
                 <div class="label">&#127909; Video de referencia</div>
+                <p><strong>Trucos para cinco clases de IPv4</strong></p>
+                <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:8px;margin-top:8px">
+                  <iframe src="https://player.vimeo.com/video/1185039876?title=0&amp;byline=0&amp;portrait=0&amp;badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479"
+                    style="position:absolute;top:0;left:0;width:100%;height:100%;border:0"
+                    allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    title="Trucos para cinco clases de IPv4"></iframe>
+                </div>
+                <div class="label" style="margin-top:14px">&#128250; Video complementario</div>
                 <p><strong>Clases de IP: A, B y C &mdash; explicaci&oacute;n con ejemplos</strong></p>
+                <a href="https://www.youtube.com/watch?v=vcArZIAmnYQ" target="_blank" rel="noopener"
+                  style="display:inline-flex;align-items:center;gap:8px;margin-top:8px;padding:9px 16px;background:#ff0000;color:#fff;border-radius:8px;font-size:0.88rem;font-weight:600;text-decoration:none">
+                  &#9654; Ver en YouTube
+                </a>
               </div>
-              <div class="form-grid">
+              <div class="checklist-card compact-card">
+                <h3>Mientras observas, responde en el formulario:</h3>
+              </div>
+              <div class="form-grid" style="margin-top:12px;grid-template-columns:1fr">
                 <label>
                   <span>1. &iquest;C&oacute;mo sabes con solo mirar el primer n&uacute;mero si una IP es Clase A, B o C?</span>
                   <textarea rows="3" data-store="ip2-1" data-track placeholder="Describe los rangos del primer octeto para cada clase."></textarea>
@@ -967,7 +1043,7 @@
                   <textarea rows="3" data-store="ip2-3" data-track placeholder="Menciona los tres rangos privados y explica para qu&eacute; se usan internamente."></textarea>
                 </label>
               </div>
-              <div class="checklist-card compact-card" style="margin-top:12px">
+              <div class="checklist-card compact-card" style="margin-top:16px">
                 <h3>&#128196; Producto individual &mdash; Tabla de referencia r&aacute;pida de clases IP</h3>
                 <p class="info-text">Guarda esta tabla &mdash; la necesitar&aacute;s en el Ejercicio 5 del taller.</p>
                 <div class="table-scroll" style="margin-top:10px">
@@ -1007,6 +1083,20 @@
                   </table>
                 </div>
               </div>
+              <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+                <button type="button" id="btnGuardarIP2" onclick="guardarBloqueIP2()"
+                  style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                  &#128190; Guardar respuestas
+                </button>
+                <button type="button" class="btn-drive"
+                  style="min-height:unset;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;display:inline-flex;align-items:center;gap:8px"
+                  onclick="subirBloqueIP2AlDrive()">
+                  &#128193; Subir al Drive
+                </button>
+              </div>
+              <div id="ip2Status" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                &#9989; Respuestas guardadas en Firebase. Ya no se pueden modificar.
+              </div>
             </div>
           </div>
 
@@ -1021,10 +1111,44 @@
             <div class="activity-body">
               <div class="info-box green" style="margin-bottom:16px">
                 <div class="label">&#127909; Videos de referencia</div>
-                <p><strong>&iquest;Qu&eacute; es la puerta de enlace (gateway) y para qu&eacute; sirve?</strong></p>
-                <p><strong>&iquest;Qu&eacute; es el DNS y c&oacute;mo funciona?</strong></p>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 12px">
+                  <button type="button" id="tabIP3-btn-1" onclick="showVideoBloqueIP3(1)"
+                    style="flex:1;min-width:140px;padding:8px 12px;border-radius:8px;border:2px solid #2e7d32;cursor:pointer;font-size:0.85rem;font-weight:600;font-family:inherit;background:#2e7d32;color:#fff">
+                    &#128682; Gateway &mdash; SENA
+                  </button>
+                  <button type="button" id="tabIP3-btn-3" onclick="showVideoBloqueIP3(3)"
+                    style="flex:1;min-width:140px;padding:8px 12px;border-radius:8px;border:2px solid #2e7d32;cursor:pointer;font-size:0.85rem;font-weight:600;font-family:inherit;background:#e8f5e9;color:#1b5e20">
+                    &#128279; DNS &mdash; SENA
+                  </button>
+                </div>
+                <div id="videoIP3-1">
+                  <div style="position:relative;padding-bottom:75%;height:0;overflow:hidden;border-radius:8px">
+                    <iframe src="https://player.vimeo.com/video/1185045216?h=0&amp;badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479"
+                      style="position:absolute;top:0;left:0;width:100%;height:100%;border:0"
+                      allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"
+                      title="Explicaci&oacute;n de la puerta de enlace predeterminada"></iframe>
+                  </div>
+                </div>
+                <div id="videoIP3-3" style="display:none">
+                  <div style="position:relative;padding-bottom:75%;height:0;overflow:hidden;border-radius:8px">
+                    <iframe src="https://player.vimeo.com/video/1185045260?h=0&amp;badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479"
+                      style="position:absolute;top:0;left:0;width:100%;height:100%;border:0"
+                      allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"
+                      title="C&oacute;mo funciona un servidor DNS (sistema de nombres de dominio)"></iframe>
+                  </div>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">
+                  <a href="https://www.youtube.com/watch?v=pCcJFdYNamc" target="_blank" rel="noopener"
+                    style="display:inline-flex;align-items:center;gap:8px;padding:9px 16px;background:#ff0000;color:#fff;border-radius:8px;font-size:0.88rem;font-weight:600;text-decoration:none">
+                    &#9654; Gateway en YouTube
+                  </a>
+                  <a href="https://www.youtube.com/watch?v=mpQZVYPuDGU" target="_blank" rel="noopener"
+                    style="display:inline-flex;align-items:center;gap:8px;padding:9px 16px;background:#ff0000;color:#fff;border-radius:8px;font-size:0.88rem;font-weight:600;text-decoration:none">
+                    &#9654; DNS en YouTube
+                  </a>
+                </div>
               </div>
-              <div class="form-grid">
+              <div class="form-grid" style="margin-top:12px;grid-template-columns:1fr">
                 <label>
                   <span>1. &iquest;Qu&eacute; pasar&iacute;a si configuras mal el gateway en un computador? &iquest;Podr&iacute;as navegar en internet?</span>
                   <textarea rows="3" data-store="ip3-1" data-track placeholder="Distingue entre conectividad local (red LAN) y conectividad a internet."></textarea>
@@ -1038,13 +1162,33 @@
                   <textarea rows="3" data-store="ip3-3" data-track placeholder="Piensa en qu&eacute; operaciones s&iacute; funcionan y cu&aacute;les no sin DNS."></textarea>
                 </label>
               </div>
-              <div class="checklist-card compact-card" style="margin-top:12px">
+              <div class="checklist-card compact-card" style="margin-top:16px">
                 <h3>&#128196; Producto individual &mdash; Diagrama de par&aacute;metros de red</h3>
-                <p>Dibuja un diagrama con 3 computadores, 1 switch, 1 router e internet. Etiqueta d&oacute;nde act&uacute;a cada par&aacute;metro: IP, m&aacute;scara, gateway, DNS.</p>
-                <label style="display:block;margin-top:10px">
-                  <span>Describe brevemente tu diagrama y c&oacute;mo etiquetaste cada par&aacute;metro</span>
-                  <textarea rows="3" data-store="ip3-producto" data-track placeholder="Ej: IP identifica cada PC, m&aacute;scara agrupa la red, gateway es la IP del router, DNS se configura en cada equipo."></textarea>
-                </label>
+                <p>Dibuja un diagrama con 3 computadores, 1 switch, 1 router e internet. Etiqueta d&oacute;nde act&uacute;a cada par&aacute;metro: IP, m&aacute;scara, gateway, DNS. Luego s&uacute;belo aqu&iacute;.</p>
+                <div style="margin-top:12px">
+                  <label id="ip3ImagenLabel" style="display:inline-flex;align-items:center;gap:8px;background:#f1f5f9;border:2px dashed #94a3b8;border-radius:10px;padding:10px 16px;cursor:pointer;font-size:0.9rem;font-weight:600;color:#1e40af">
+                    &#128247; Subir imagen del diagrama
+                    <input type="file" id="ip3ImagenInput" accept="image/*" style="display:none" onchange="subirImagenBloqueIP3(this)">
+                  </label>
+                  <div id="ip3ImagenPreview" style="display:none;margin-top:10px">
+                    <img id="ip3ImagenImg" style="max-width:100%;max-height:360px;border-radius:8px;border:1px solid #e2e8f0;display:block" alt="Diagrama de parámetros de red">
+                    <p id="ip3ImagenNombre" style="font-size:0.78rem;color:#64748b;margin-top:4px"></p>
+                  </div>
+                </div>
+              </div>
+              <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+                <button type="button" id="btnGuardarIP3" onclick="guardarBloqueIP3()"
+                  style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                  &#128190; Guardar respuestas
+                </button>
+                <button type="button" class="btn-drive"
+                  style="min-height:unset;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;display:inline-flex;align-items:center;gap:8px"
+                  onclick="subirBloqueIP3AlDrive()">
+                  &#128193; Subir al Drive
+                </button>
+              </div>
+              <div id="ip3Status" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                &#9989; Respuestas guardadas en Firebase. Ya no se pueden modificar.
               </div>
             </div>
           </div>
