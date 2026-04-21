@@ -215,6 +215,40 @@ function getGuideSelectionRedes() {
   };
 }
 
+function getDeliveryIdentityRedes() {
+  const bodyEl = document.body || {};
+  const defaults = {
+    ficha: bodyEl.dataset?.defaultFicha || "",
+    inst: bodyEl.dataset?.defaultInst || "",
+    grupo: bodyEl.dataset?.defaultGrupo || "",
+  };
+  const auth = _portalAuth || window.portalAuth || null;
+  const session = auth?.getCurrentSession?.() || null;
+  const selection = auth?.getCurrentSelection?.(defaults) || defaults;
+  const user = session && session.user ? session.user : null;
+  const usernameSource =
+    (session && session.usernameKey) ||
+    (user && (user.usernameKey || user.username)) ||
+    "desconocido";
+  const usernameKey = String(usernameSource || "desconocido")
+    .toLowerCase()
+    .replace(/\s+/g, "_")
+    .replace(/[^a-z0-9_]/g, "") || "desconocido";
+  const fullName = String((user && user.fullName) || "").trim();
+  const ficha = String((user && user.ficha) || selection.ficha || defaults.ficha || "").trim();
+
+  return {
+    session,
+    user,
+    selection,
+    usernameKey: usernameKey || "desconocido",
+    fullName: fullName || usernameKey || "Aprendiz",
+    ficha: ficha || "0000",
+    grupo: String((user && user.grupo) || selection.grupo || defaults.grupo || "").trim(),
+    inst: String((user && user.inst) || selection.inst || defaults.inst || "").trim(),
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Render
 // ---------------------------------------------------------------------------
@@ -379,10 +413,9 @@ window.subirImagenBloqueA = async function (input) {
     if (!delivery || typeof delivery.uploadToAppsScript !== "function") {
       throw new Error("El sistema de entrega no está disponible.");
     }
-    const session = portalAuth.getCurrentSession();
-    const usernameKey = ((session && (session.usernameKey || session.username)) || "desconocido")
-      .toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
-    const ficha = (session && session.ficha) || "0000";
+    const identity = getDeliveryIdentityRedes();
+    const usernameKey = identity.usernameKey;
+    const ficha = identity.ficha || "0000";
     const now = new Date();
     const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
     const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
@@ -406,7 +439,7 @@ window.subirImagenBloqueA = async function (input) {
       fileName,
       mimeType: file.type || "image/jpeg",
       fileBase64,
-      fullName: (session && session.fullName) || usernameKey,
+      fullName: identity.fullName || identity.usernameKey || "Aprendiz",
       ficha,
     });
 
@@ -497,10 +530,9 @@ window.subirImagenBloqueB = async function (input) {
     if (!delivery || typeof delivery.uploadToAppsScript !== "function") {
       throw new Error("El sistema de entrega no está disponible.");
     }
-    const session = portalAuth.getCurrentSession();
-    const usernameKey = ((session && (session.usernameKey || session.username)) || "desconocido")
-      .toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
-    const ficha = (session && session.ficha) || "0000";
+    const identity = getDeliveryIdentityRedes();
+    const usernameKey = identity.usernameKey;
+    const ficha = identity.ficha || "0000";
     const now = new Date();
     const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
     const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
@@ -522,7 +554,7 @@ window.subirImagenBloqueB = async function (input) {
       fileName,
       mimeType: file.type || "image/jpeg",
       fileBase64,
-      fullName: (session && session.fullName) || usernameKey,
+      fullName: identity.fullName || identity.usernameKey || "Aprendiz",
       ficha,
     });
 
@@ -690,10 +722,9 @@ window.subirImagenBloqueE = async function (input) {
     if (!delivery || typeof delivery.uploadToAppsScript !== "function") {
       throw new Error("El sistema de entrega no está disponible.");
     }
-    const session = portalAuth.getCurrentSession();
-    const usernameKey = ((session && (session.usernameKey || session.username)) || "desconocido")
-      .toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
-    const ficha = (session && session.ficha) || "0000";
+    const identity = getDeliveryIdentityRedes();
+    const usernameKey = identity.usernameKey;
+    const ficha = identity.ficha || "0000";
     const now = new Date();
     const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
     const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
@@ -715,7 +746,7 @@ window.subirImagenBloqueE = async function (input) {
       fileName,
       mimeType: file.type || "image/jpeg",
       fileBase64,
-      fullName: (session && session.fullName) || usernameKey,
+      fullName: identity.fullName || identity.usernameKey || "Aprendiz",
       ficha,
     });
 
@@ -1538,10 +1569,9 @@ window.subirImagenBloqueIP3 = async function (input) {
     if (!delivery || typeof delivery.uploadToAppsScript !== "function") {
       throw new Error("El sistema de entrega no est\u00e1 disponible.");
     }
-    const session = portalAuth.getCurrentSession();
-    const usernameKey = ((session && (session.usernameKey || session.username)) || "desconocido")
-      .toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
-    const ficha = (session && session.ficha) || "0000";
+    const identity = getDeliveryIdentityRedes();
+    const usernameKey = identity.usernameKey;
+    const ficha = identity.ficha || "0000";
     const now = new Date();
     const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
     const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
@@ -1563,7 +1593,7 @@ window.subirImagenBloqueIP3 = async function (input) {
       fileName,
       mimeType: file.type || "image/jpeg",
       fileBase64,
-      fullName: (session && session.fullName) || usernameKey,
+      fullName: identity.fullName || identity.usernameKey || "Aprendiz",
       ficha,
     });
 
@@ -1650,10 +1680,9 @@ window.subirImagenBloqueIP1 = async function (input) {
     if (!delivery || typeof delivery.uploadToAppsScript !== "function") {
       throw new Error("El sistema de entrega no est\u00e1 disponible.");
     }
-    const session = portalAuth.getCurrentSession();
-    const usernameKey = ((session && (session.usernameKey || session.username)) || "desconocido")
-      .toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
-    const ficha = (session && session.ficha) || "0000";
+    const identity = getDeliveryIdentityRedes();
+    const usernameKey = identity.usernameKey;
+    const ficha = identity.ficha || "0000";
     const now = new Date();
     const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
     const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
@@ -1675,7 +1704,7 @@ window.subirImagenBloqueIP1 = async function (input) {
       fileName,
       mimeType: file.type || "image/jpeg",
       fileBase64,
-      fullName: (session && session.fullName) || usernameKey,
+      fullName: identity.fullName || identity.usernameKey || "Aprendiz",
       ficha,
     });
 
@@ -1763,10 +1792,9 @@ window.subirImagenSocial = async function (input) {
     if (!delivery || typeof delivery.uploadToAppsScript !== "function") {
       throw new Error("El sistema de entrega no est\u00e1 disponible.");
     }
-    const session = portalAuth.getCurrentSession();
-    const usernameKey = ((session && (session.usernameKey || session.username)) || "desconocido")
-      .toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
-    const ficha = (session && session.ficha) || "0000";
+    const identity = getDeliveryIdentityRedes();
+    const usernameKey = identity.usernameKey;
+    const ficha = identity.ficha || "0000";
     const now = new Date();
     const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
     const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
@@ -1788,7 +1816,7 @@ window.subirImagenSocial = async function (input) {
       fileName,
       mimeType: file.type || "image/jpeg",
       fileBase64,
-      fullName: (session && session.fullName) || usernameKey,
+      fullName: identity.fullName || identity.usernameKey || "Aprendiz",
       ficha,
     });
 
