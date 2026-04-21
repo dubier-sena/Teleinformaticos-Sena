@@ -1029,7 +1029,15 @@
     });
   }
 
+  function shouldBypassAccessGuardsForLocalPreview() {
+    return /^file:$/i.test(String(window.location.protocol || ""));
+  }
+
   function requireFileAccess(fileName, options) {
+    if (shouldBypassAccessGuardsForLocalPreview()) {
+      return true;
+    }
+
     if (canAccessFile(fileName)) {
       return true;
     }
@@ -1046,6 +1054,10 @@
   }
 
   function requireAdminAccess(options) {
+    if (shouldBypassAccessGuardsForLocalPreview()) {
+      return true;
+    }
+
     if (isAdminSession()) {
       return true;
     }
@@ -2059,6 +2071,10 @@ window.portalAuth = {
   }
 
   function requireFileAccessPatched(fileName, options) {
+    if (shouldBypassAccessGuardsForLocalPreview()) {
+      return true;
+    }
+
     if (canAccessFilePatched(fileName)) {
       return true;
     }
@@ -2075,6 +2091,10 @@ window.portalAuth = {
   }
 
   function requireAdminAccessPatched(options) {
+    if (shouldBypassAccessGuardsForLocalPreview()) {
+      return true;
+    }
+
     if (isAdminSessionPatched()) {
       return true;
     }
