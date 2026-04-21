@@ -725,19 +725,15 @@ async function _loadScriptBlob(url) {
   });
 }
 
-window.exportarPDFContextualizacion = async function (evt) {
+window.exportarWordContextualizacion = async function (evt) {
   const btn = evt && evt.currentTarget ? evt.currentTarget
-    : document.querySelector('[onclick="exportarPDFContextualizacion(event)"], [onclick="exportarPDFContextualizacion()"]');
+    : document.querySelector('[onclick*="exportarWordContextualizacion"]');
   const origHTML = btn ? btn.innerHTML : "";
-  if (btn) { btn.disabled = true; btn.innerHTML = "&#9203; Generando PDF\u2026"; }
+  if (btn) { btn.disabled = true; btn.innerHTML = "&#9203; Generando Word\u2026"; }
 
   try {
-    if (!window.jspdf) {
-      await _loadScriptBlob("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
-    }
-    if (!window._jspdf_autotable_loaded) {
-      await _loadScriptBlob("https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js");
-      window._jspdf_autotable_loaded = true;
+    if (!window.docx) {
+      await _loadScriptBlob("https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.min.js");
     }
 
     const session = window._portalAuth?.getCurrentSession?.() || portalAuth?.getCurrentSession?.();
@@ -745,185 +741,171 @@ window.exportarPDFContextualizacion = async function (evt) {
     const ficha    = (session && session.ficha)    || "0000";
     const grupo    = document.body.dataset.defaultGrupo || "";
     const fecha    = new Date().toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric" });
-    const fileName = `Exploracion_Contextual_${fullName.replace(/\s+/g, "_")}_${ficha}.pdf`;
+    const fileName = `Exploracion_Contextual_${fullName.replace(/\s+/g, "_")}_${ficha}.docx`;
 
     function val(key) { return String(state[key] || "").trim() || "(sin respuesta)"; }
 
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ unit: "mm", format: "a4" });
-    const ML = 14, MR = 14, UW = 210 - ML - MR;
-    let y = 15;
+    const { Document, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, ImageRun, Packer } = window.docx;
 
-    function checkY(needed) {
-      if (y + needed > 282) { doc.addPage(); y = 15; drawRunningHeader(); }
+    function makeBlockTitle(num, title) {
+      return new Paragraph({
+        children: [new TextRun({ text: `${num} \u2014 ${title}`, bold: true, size: 24, color: "1B5E20" })],
+        spacing: { before: 320, after: 120 },
+      });
     }
 
-    function drawRunningHeader() {
-      doc.setFillColor(27, 94, 32);
-      doc.rect(0, 0, 210, 10, "F");
-      doc.setFontSize(8);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(255, 255, 255);
-      doc.text("Exploracion Visual por Bloques Tematicos — 3.2.1  |  Guia 2 — Redes RAP01", ML, 7);
-      doc.setTextColor(33, 33, 33);
-      y = Math.max(y, 16);
+    function makeQuestion(q, key) {
+      return [
+        new Paragraph({
+          children: [new TextRun({ text: q, bold: true, size: 19, color: "475569" })],
+          spacing: { before: 120, after: 60 },
+        }),
+        new Paragraph({
+          children: [new TextRun({ text: val(key), size: 20 })],
+          indent: { left: 300 },
+          spacing: { after: 140 },
+        }),
+      ];
     }
 
-    function addBlockTitle(num, title) {
-      checkY(13);
-      doc.setFillColor(232, 245, 233);
-      doc.rect(ML, y, UW, 8.5, "F");
-      doc.setFillColor(46, 125, 50);
-      doc.rect(ML, y, 2.5, 8.5, "F");
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(27, 94, 32);
-      doc.text(`${num} — ${title}`, ML + 5, y + 6);
-      doc.setTextColor(33, 33, 33);
-      y += 12;
+    function makeProductLabel(label) {
+      return new Paragraph({
+        children: [new TextRun({ text: `Producto \u2014 ${label}`, bold: true, size: 20, color: "1E40AF" })],
+        spacing: { before: 200, after: 80 },
+      });
     }
 
-    function addQuestion(q, key) {
-      const answer = val(key);
-      doc.setFontSize(8.5);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(71, 85, 105);
-      const qLines = doc.splitTextToSize(q, UW);
-      checkY(qLines.length * 4.5 + 14);
-      doc.text(qLines, ML, y);
-      y += qLines.length * 4.5 + 1;
-      const aLines = doc.splitTextToSize(answer, UW - 6);
-      const aH = Math.max(7, aLines.length * 4.5 + 4);
-      doc.setFillColor(248, 250, 252);
-      doc.setDrawColor(226, 232, 240);
-      doc.roundedRect(ML, y, UW, aH, 1.5, 1.5, "FD");
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(8.5);
-      doc.setTextColor(33, 33, 33);
-      doc.text(aLines, ML + 3, y + 4.5);
-      y += aH + 4;
-    }
-
-    function addProductLabel(label) {
-      checkY(8);
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(30, 64, 175);
-      doc.text(`Producto — ${label}`, ML, y);
-      doc.setTextColor(33, 33, 33);
-      y += 6;
-    }
-
-    function addImage(b64Key) {
+    async function makeImageParagraph(b64Key) {
       const b64Full = state[b64Key];
       if (!b64Full) {
-        checkY(7);
-        doc.setFontSize(8.5);
-        doc.setFont("helvetica", "italic");
-        doc.setTextColor(148, 163, 184);
-        doc.text("Sin imagen adjunta.", ML, y);
-        y += 6;
-        return;
+        return new Paragraph({
+          children: [new TextRun({ text: "(Sin imagen adjunta)", italics: true, size: 19, color: "94A3B8" })],
+          spacing: { after: 160 },
+        });
       }
       try {
-        const mimeM = b64Full.match(/^data:image\/([a-zA-Z]+);base64,/);
-        const fmt = mimeM ? mimeM[1].toUpperCase().replace("JPG", "JPEG") : "JPEG";
-        const maxW = 120, maxH = 65;
-        checkY(maxH + 5);
-        doc.addImage(b64Full, fmt, ML, y, maxW, maxH, undefined, "FAST");
-        y += maxH + 5;
+        const b64Data = b64Full.split(",").pop();
+        const binary = atob(b64Data);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        return new Paragraph({
+          children: [new ImageRun({ data: bytes, transformation: { width: 400, height: 220 } })],
+          spacing: { after: 200 },
+        });
       } catch (_) {
-        doc.setFontSize(8.5); doc.setFont("helvetica", "italic"); doc.setTextColor(148, 163, 184);
-        doc.text("Imagen no disponible localmente.", ML, y); y += 6;
+        return new Paragraph({
+          children: [new TextRun({ text: "(Imagen no disponible)", italics: true, size: 19, color: "94A3B8" })],
+          spacing: { after: 160 },
+        });
       }
     }
 
-    // ── Portada ──
-    drawRunningHeader();
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(27, 94, 32);
-    doc.text("Exploracion Visual por Bloques Tematicos", ML, y);
-    y += 7;
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(100, 116, 139);
-    doc.text(`${fullName}   |   Ficha: ${ficha}   |   Grupo: ${grupo}   |   ${fecha}`, ML, y);
-    y += 5;
-    doc.setDrawColor(226, 232, 240);
-    doc.line(ML, y, 210 - MR, y);
-    y += 7;
+    function makeTable(head, rows) {
+      return new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        rows: [
+          new TableRow({
+            tableHeader: true,
+            children: head.map(h => new TableCell({
+              children: [new Paragraph({ children: [new TextRun({ text: h, bold: true, size: 18 })] })],
+            })),
+          }),
+          ...rows.map(row => new TableRow({
+            children: row.map(cell => new TableCell({
+              children: [new Paragraph({ children: [new TextRun({ text: cell, size: 18 })] })],
+            })),
+          })),
+        ],
+      });
+    }
 
-    // ── Bloque A ──
-    addBlockTitle("3.2.1.A", "Tipos de redes: LAN, MAN y WAN");
-    addQuestion("1. ¿Que tipo de red tiene la papeleria de Carmen? ¿Por que?", "bloqueA-1");
-    addQuestion("2. ¿Que red usa el SENA para conectar todas sus regionales?", "bloqueA-2");
-    addQuestion("3. ¿En que se diferencia una LAN de una WAN en velocidad y costo?", "bloqueA-3");
-    addProductLabel("Esquema 3 circulos concentricos");
-    addImage("bloqueA-imagen");
+    const imgA = await makeImageParagraph("bloqueA-imagen");
+    const imgB = await makeImageParagraph("bloqueB-imagen");
+    const imgE = await makeImageParagraph("bloqueE-imagen");
 
-    // ── Bloque B ──
-    addBlockTitle("3.2.1.B", "Topologias de red");
-    addQuestion("1. ¿Por que la topologia estrella es la mas usada en oficinas y MiPymes?", "bloqueB-1");
-    addQuestion("2. ¿Que ocurre si se dana el switch central en una topologia estrella?", "bloqueB-2");
-    addQuestion("3. ¿En que situacion elegirias la topologia arbol en lugar de la estrella?", "bloqueB-3");
-    addProductLabel("Diagrama de topologias");
-    addImage("bloqueB-imagen");
+    const doc = new Document({
+      sections: [{
+        children: [
+          // Encabezado
+          new Paragraph({
+            children: [new TextRun({ text: "Exploracion Visual por Bloques Tematicos", bold: true, size: 32, color: "1B5E20" })],
+            spacing: { after: 80 },
+          }),
+          new Paragraph({
+            children: [new TextRun({ text: `Guia 2 \u2014 Redes RAP01  |  Actividad 3.2.1`, size: 19, color: "475569" })],
+            spacing: { after: 60 },
+          }),
+          new Paragraph({
+            children: [new TextRun({ text: `${fullName}   |   Ficha: ${ficha}   |   Grupo: ${grupo}   |   ${fecha}`, size: 19, color: "64748B" })],
+            spacing: { after: 240 },
+          }),
 
-    // ── Bloque C ──
-    addBlockTitle("3.2.1.C", "Medios de transmision");
-    addQuestion("1. ¿Por que el cable Cat6 es mejor que el Cat5e?", "bloqueC-1");
-    addQuestion("2. ¿En que situacion instalarias fibra optica en lugar de UTP?", "bloqueC-2");
-    addQuestion("3. ¿Cual es la distancia maxima de un cable UTP y que pasa si se supera?", "bloqueC-3");
-    addProductLabel("Tabla comparativa de medios");
-    checkY(38);
-    doc.autoTable({
-      startY: y, margin: { left: ML, right: MR },
-      head: [["Medio", "Velocidad max.", "Distancia max.", "Costo", "Interferencia", "Cuando usarlo"]],
-      body: [
-        ["Cable UTP",   val("bloqueC-utp-vel"),  val("bloqueC-utp-dist"),  val("bloqueC-utp-costo"),  val("bloqueC-utp-int"),  val("bloqueC-utp-uso")],
-        ["Fibra optica",val("bloqueC-fo-vel"),   val("bloqueC-fo-dist"),   val("bloqueC-fo-costo"),   val("bloqueC-fo-int"),   val("bloqueC-fo-uso")],
-        ["Wi-Fi",       val("bloqueC-wifi-vel"), val("bloqueC-wifi-dist"), val("bloqueC-wifi-costo"), val("bloqueC-wifi-int"), val("bloqueC-wifi-uso")],
-      ],
-      styles: { fontSize: 7.5, cellPadding: 2 },
-      headStyles: { fillColor: [241, 245, 249], textColor: [30, 41, 59], fontStyle: "bold" },
-      theme: "grid",
+          // Bloque A
+          makeBlockTitle("3.2.1.A", "Tipos de redes: LAN, MAN y WAN"),
+          ...makeQuestion("1. \u00bfQue tipo de red tiene la papeleria de Carmen? \u00bfPor que?", "bloqueA-1"),
+          ...makeQuestion("2. \u00bfQue red usa el SENA para conectar todas sus regionales?", "bloqueA-2"),
+          ...makeQuestion("3. \u00bfEn que se diferencia una LAN de una WAN en velocidad y costo?", "bloqueA-3"),
+          makeProductLabel("Esquema 3 circulos concentricos"),
+          imgA,
+
+          // Bloque B
+          makeBlockTitle("3.2.1.B", "Topologias de red"),
+          ...makeQuestion("1. \u00bfPor que la topologia estrella es la mas usada en oficinas y MiPymes?", "bloqueB-1"),
+          ...makeQuestion("2. \u00bfQue ocurre si se dana el switch central en una topologia estrella?", "bloqueB-2"),
+          ...makeQuestion("3. \u00bfEn que situacion elegirias la topologia arbol en lugar de la estrella?", "bloqueB-3"),
+          makeProductLabel("Diagrama de topologias"),
+          imgB,
+
+          // Bloque C
+          makeBlockTitle("3.2.1.C", "Medios de transmision"),
+          ...makeQuestion("1. \u00bfPor que el cable Cat6 es mejor que el Cat5e?", "bloqueC-1"),
+          ...makeQuestion("2. \u00bfEn que situacion instalarias fibra optica en lugar de UTP?", "bloqueC-2"),
+          ...makeQuestion("3. \u00bfCual es la distancia maxima de un cable UTP y que pasa si se supera?", "bloqueC-3"),
+          makeProductLabel("Tabla comparativa de medios"),
+          makeTable(
+            ["Medio", "Velocidad max.", "Distancia max.", "Costo", "Interferencia", "Cuando usarlo"],
+            [
+              ["Cable UTP",    val("bloqueC-utp-vel"),  val("bloqueC-utp-dist"),  val("bloqueC-utp-costo"),  val("bloqueC-utp-int"),  val("bloqueC-utp-uso")],
+              ["Fibra optica", val("bloqueC-fo-vel"),   val("bloqueC-fo-dist"),   val("bloqueC-fo-costo"),   val("bloqueC-fo-int"),   val("bloqueC-fo-uso")],
+              ["Wi-Fi",        val("bloqueC-wifi-vel"), val("bloqueC-wifi-dist"), val("bloqueC-wifi-costo"), val("bloqueC-wifi-int"), val("bloqueC-wifi-uso")],
+            ]
+          ),
+
+          // Bloque D
+          makeBlockTitle("3.2.1.D", "Dispositivos de interconexion"),
+          ...makeQuestion("1. \u00bfPor que el hub ya no se usa en redes modernas?", "bloqueD-1"),
+          ...makeQuestion("2. \u00bfEn que capa del modelo OSI opera el switch? \u00bfY el router?", "bloqueD-2"),
+          ...makeQuestion("3. \u00bfCuando necesitas un router y cuando te basta con un switch?", "bloqueD-3"),
+          makeProductLabel("Cuadro comparativo de dispositivos"),
+          makeTable(
+            ["Dispositivo", "Capa OSI", "Funcion principal", "Cuando usarlo"],
+            [
+              ["Hub",          val("bloqueD-hub-capa"),    val("bloqueD-hub-func"),    val("bloqueD-hub-uso")],
+              ["Switch",       val("bloqueD-switch-capa"), val("bloqueD-switch-func"), val("bloqueD-switch-uso")],
+              ["Router",       val("bloqueD-router-capa"), val("bloqueD-router-func"), val("bloqueD-router-uso")],
+              ["Access Point", val("bloqueD-ap-capa"),     val("bloqueD-ap-func"),     val("bloqueD-ap-uso")],
+            ]
+          ),
+
+          // Bloque E
+          makeBlockTitle("3.2.1.E", "Modelo OSI y TCP/IP"),
+          ...makeQuestion("1. \u00bfQue hace la capa de Red (capa 3)? \u00bfQue protocolo opera en ella?", "bloqueE-1"),
+          ...makeQuestion("2. \u00bfEn que capa trabaja el switch? \u00bfY el router?", "bloqueE-2"),
+          ...makeQuestion("3. \u00bfQue relacion hay entre el modelo OSI y lo que ves cuando navegas?", "bloqueE-3"),
+          makeProductLabel("Diagrama de 7 capas OSI"),
+          imgE,
+        ],
+      }],
     });
-    y = doc.lastAutoTable.finalY + 6;
 
-    // ── Bloque D ──
-    addBlockTitle("3.2.1.D", "Dispositivos de interconexion");
-    addQuestion("1. ¿Por que el hub ya no se usa en redes modernas?", "bloqueD-1");
-    addQuestion("2. ¿En que capa del modelo OSI opera el switch? ¿Y el router?", "bloqueD-2");
-    addQuestion("3. ¿Cuando necesitas un router y cuando te basta con un switch?", "bloqueD-3");
-    addProductLabel("Cuadro comparativo de dispositivos");
-    checkY(42);
-    doc.autoTable({
-      startY: y, margin: { left: ML, right: MR },
-      head: [["Dispositivo", "Capa OSI", "Funcion principal", "Cuando usarlo"]],
-      body: [
-        ["Hub",         val("bloqueD-hub-capa"),    val("bloqueD-hub-func"),    val("bloqueD-hub-uso")],
-        ["Switch",      val("bloqueD-switch-capa"), val("bloqueD-switch-func"), val("bloqueD-switch-uso")],
-        ["Router",      val("bloqueD-router-capa"), val("bloqueD-router-func"), val("bloqueD-router-uso")],
-        ["Access Point",val("bloqueD-ap-capa"),     val("bloqueD-ap-func"),     val("bloqueD-ap-uso")],
-      ],
-      styles: { fontSize: 7.5, cellPadding: 2 },
-      headStyles: { fillColor: [241, 245, 249], textColor: [30, 41, 59], fontStyle: "bold" },
-      columnStyles: { 2: { cellWidth: 55 }, 3: { cellWidth: 55 } },
-      theme: "grid",
+    const blob = await Packer.toBlob(doc);
+    const fileBase64 = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(",").pop());
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
     });
-    y = doc.lastAutoTable.finalY + 6;
 
-    // ── Bloque E ──
-    addBlockTitle("3.2.1.E", "Modelo OSI y TCP/IP");
-    addQuestion("1. ¿Que hace la capa de Red (capa 3)? ¿Que protocolo opera en ella?", "bloqueE-1");
-    addQuestion("2. ¿En que capa trabaja el switch? ¿Y el router?", "bloqueE-2");
-    addQuestion("3. ¿Que relacion hay entre el modelo OSI y lo que ves cuando navegas?", "bloqueE-3");
-    addProductLabel("Diagrama de 7 capas OSI");
-    addImage("bloqueE-imagen");
-
-    // ── Subir al Drive ──
-    const pdfBase64 = doc.output("datauristring").split(",").pop();
     const delivery = window.sharedAppsScriptDelivery;
     if (!delivery || typeof delivery.uploadToAppsScript !== "function") {
       throw new Error("El sistema de entrega no está disponible.");
@@ -934,25 +916,25 @@ window.exportarPDFContextualizacion = async function (evt) {
       activityNumber: "3.2.1",
       activityTitle: "Exploracion Visual por Bloques Tematicos",
       fileName,
-      mimeType: "application/pdf",
-      fileBase64: pdfBase64,
+      mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      fileBase64,
       fullName, ficha, grupo,
       submittedAt: new Date().toISOString(),
     });
 
     if (btn) {
       if (response && response.driveUrl) {
-        btn.innerHTML = `&#9989; PDF entregado &mdash; <a href="${response.driveUrl}" target="_blank" rel="noopener" style="color:#fff;text-decoration:underline">Ver en Drive</a>`;
+        btn.innerHTML = `&#9989; Word entregado &mdash; <a href="${response.driveUrl}" target="_blank" rel="noopener" style="color:#fff;text-decoration:underline">Ver en Drive</a>`;
         btn.style.background = "linear-gradient(135deg,#1b5e20,#2e7d32)";
       } else {
-        btn.innerHTML = "&#9989; PDF entregado en Drive";
+        btn.innerHTML = "&#9989; Word entregado en Drive";
         btn.style.background = "linear-gradient(135deg,#1b5e20,#2e7d32)";
       }
       btn.disabled = false;
     }
 
   } catch (err) {
-    alert("Error al generar el PDF: " + ((err && err.message) || "Intenta de nuevo."));
+    alert("Error al generar el Word: " + ((err && err.message) || "Intenta de nuevo."));
     if (btn) { btn.disabled = false; btn.innerHTML = origHTML; }
   }
 };
