@@ -1986,10 +1986,10 @@ window.portalAuth = {
 
   function getStorageContextMessage(mode) {
     if (mode === "network") {
-      return "Este panel esta leyendo usuarios y avances compartidos desde la red local actual.";
+      return "Este panel esta leyendo usuarios y avances desde el almacenamiento compartido del portal.";
     }
 
-    return "Este panel muestra la copia guardada en este mismo navegador. Si la pagina no esta abierta por la red local, aqui no apareceran los registros creados desde otros equipos.";
+    return "Este panel muestra la copia guardada en este mismo navegador. Si no hay almacenamiento compartido disponible, aqui solo apareceran los registros creados desde este equipo.";
   }
 
   async function getStorageContext() {

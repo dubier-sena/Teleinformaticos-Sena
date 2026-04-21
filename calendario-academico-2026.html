@@ -483,7 +483,7 @@ async function calendarApiRequest(method,{snapshot=null,refresh=false,force=fals
     try{
       payload=text?JSON.parse(text):{};
     }catch(error){
-      payload={ ok:response.ok, message:text||'Respuesta no valida del servidor compartido.' };
+      payload={ ok:response.ok, message:text||'Respuesta no valida del almacenamiento compartido.' };
     }
     payload.status=response.status;
     if(typeof payload.ok!=='boolean'){
@@ -493,7 +493,7 @@ async function calendarApiRequest(method,{snapshot=null,refresh=false,force=fals
   }catch(error){
     return {
       ok:false,
-      message:error?.message||'No fue posible conectar con el servidor compartido.'
+      message:error?.message||'No fue posible conectar con el almacenamiento compartido.'
     };
   }finally{
     if(timerId){
@@ -513,12 +513,12 @@ async function loadFirebaseSnapshot(force){
     lastRemoteCalendarMessage=sharedResult.message||'';
     if(sharedSnapshot){
       firebaseSyncAvailable=true;
-      setSyncStatus(sharedResult.source==='firebase'?'Firebase conectado':'Servidor compartido activo','online');
+      setSyncStatus(sharedResult.source==='firebase'?'Firebase conectado':'Almacenamiento compartido activo','online');
       return sharedSnapshot;
     }
     if(sharedResult.source==='network'){
       firebaseSyncAvailable=true;
-      setSyncStatus('Servidor compartido activo','online');
+      setSyncStatus('Almacenamiento compartido activo','online');
       return null;
     }
   }
@@ -660,7 +660,7 @@ async function loadLatestFromFirebase(){
   if(!remoteSnapshot){
     setSaveChip(localSnapshot?'💾 Cambios locales conservados':'Base inicial cargada',false);
     if(lastRemoteCalendarSource==='network'){
-      alert('No se encontro una copia nueva en Firebase en este momento. El servidor compartido ya conserva la ultima version disponible para esta red.');
+      alert('No se encontro una copia nueva en Firebase en este momento. El almacenamiento compartido ya conserva la ultima version disponible.');
     }else{
       alert('No se encontro una version remota disponible en Firebase para cargar en este momento.');
     }
@@ -672,12 +672,12 @@ async function loadLatestFromFirebase(){
   applyCalendarSnapshot(remoteSnapshot);
   persistLocalSnapshot(remoteSnapshot);
   render();
-  setSyncStatus(lastRemoteCalendarSource==='network'?'Servidor compartido activo':'Firebase conectado','online');
+  setSyncStatus(lastRemoteCalendarSource==='network'?'Almacenamiento compartido activo':'Firebase conectado','online');
   setSaveChip(lastRemoteCalendarSource==='network'?'☁ Ultima version compartida cargada':'☁ Ultima version de Firebase cargada',false);
 
   const meta=formatSnapshotMeta(remoteSnapshot);
   if(lastRemoteCalendarSource==='network'){
-    alert(meta ? `Se cargo la ultima version disponible en el servidor compartido de esta red.\n\n${meta}` : 'Se cargo la ultima version disponible en el servidor compartido de esta red.');
+    alert(meta ? `Se cargo la ultima version disponible en el almacenamiento compartido.\n\n${meta}` : 'Se cargo la ultima version disponible en el almacenamiento compartido.');
   }else{
     alert(meta ? `Se cargo la ultima version disponible en Firebase.\n\n${meta}` : 'Se cargo la ultima version disponible en Firebase.');
   }
@@ -724,7 +724,7 @@ async function syncFirebaseState(force){
     pendingCalendarSnapshot=null;
     firebaseSyncAvailable=true;
     persistLocalSnapshot(normalizedSnapshot);
-    setSyncStatus(sharedResult.remoteSaved===false?'Servidor compartido activo':'Firebase conectado','online');
+    setSyncStatus(sharedResult.remoteSaved===false?'Almacenamiento compartido activo':'Firebase conectado','online');
     setSaveChip(sharedResult.remoteSaved===false?'✅ Guardado compartido':'✅ Guardado en Firebase',false);
     return true;
   }

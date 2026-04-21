@@ -152,62 +152,6 @@
     </a>
   </div>
 
-  <!-- -- Panel de compartir en red local (solo admin) -- -->
-  <div class="section-label" id="share-section-label" style="display:none">Compartir en Red Local</div>
-  <div class="share-panel" id="share-panel" style="display:none" data-reveal>
-    <div class="share-header">
-      <div class="share-icon">Red</div>
-      <div>
-        <h3>Servidor local para la red actual</h3>
-        <p>
-          Cuando actives el servidor desde este PC, el portal detecta autom&aacute;ticamente
-          la red disponible y muestra la URL para abrirla desde otros dispositivos del mismo lugar.
-        </p>
-      </div>
-    </div>
-
-    <div class="share-meta">
-      <div class="share-meta-card">
-        <span class="share-meta-label">Estado del servidor</span>
-        <div class="share-status-line">
-          <span class="share-status-text" id="share-status-text">Sin detectar</span>
-          <span class="share-status-badge is-off" id="share-status-badge">Inactivo</span>
-        </div>
-      </div>
-      <div class="share-meta-card">
-        <span class="share-meta-label">Enlace actual</span>
-        <div class="share-url" id="share-primary-url">Activa el servidor para ver la direcci&oacute;n correcta con puerto.</div>
-      </div>
-    </div>
-
-    <div class="share-actions">
-      <a class="btn-share primary" href="tools/iniciar_servidor_red.cmd" id="btn-share-start">
-        Activar para esta red
-      </a>
-      <button class="btn-share secondary" type="button" onclick="refreshShareStatus()">
-        Actualizar estado
-      </button>
-      <button class="btn-share ghost" type="button" id="btn-share-copy" onclick="copyShareUrl()" disabled>
-        Copiar enlace
-      </button>
-      <button class="btn-share danger" type="button" id="btn-share-stop" onclick="stopShareServer()" disabled>
-        Desactivar
-      </button>
-    </div>
-
-    <p class="share-note" id="share-note">
-      <strong>Importante:</strong> cada vez que cambies de colegio o de Wi-Fi, vuelve a activar el servidor
-      para que detecte la red actual. En el celular abre siempre la direccion completa con el puerto,
-      por ejemplo <code>http://192.168.x.x:8080/</code>.
-      Si el navegador no ejecuta el boton, abre directamente el archivo
-      <code>tools/iniciar_servidor_red.cmd</code>.
-    </p>
-
-    <div class="share-network-list" id="share-network-list">
-      <div class="share-network-empty">Todavia no hay un servidor local detectado.</div>
-    </div>
-  </div><!-- /share-panel -->
-
   </div><!-- /portal-col--auth -->
 
   <!-- ── Col derecha: Instituciones educativas ── -->
@@ -552,9 +496,6 @@
      ------------------------------------------------------ -->
 <script>
   /* -- Mapas de datos ----------------------------------- */
-  const SHARE_PORT = 8080;
-  let currentShareUrl = "";
-
   function getPortalAuth() {
     return window.portalAuth || null;
   }
@@ -578,163 +519,6 @@
         },
       ])
     );
-  }
-
-  function buildShareEndpoint(pathname) {
-    const endpoint = /^https?:$/i.test(window.location.protocol)
-      ? new URL(pathname, window.location.origin)
-      : new URL(`http://localhost:${SHARE_PORT}${pathname}`);
-    return endpoint;
-  }
-
-  /* -- Servidor de red local ---------------------------- */
-  function canUseLocalShareLauncher() {
-    return window.location.protocol.toLowerCase() === "file:";
-  }
-
-  function configureShareStartButton() {
-    const btn = document.getElementById("btn-share-start");
-    if (canUseLocalShareLauncher()) {
-      btn.classList.remove("is-disabled");
-      btn.setAttribute("href", "tools/iniciar_servidor_red.cmd");
-      btn.removeAttribute("aria-disabled");
-      btn.removeAttribute("title");
-      btn.textContent = "Activar para esta red";
-    } else {
-      btn.classList.add("is-disabled");
-      btn.setAttribute("href", "#");
-      btn.setAttribute("aria-disabled", "true");
-      btn.setAttribute("title", "Este boton solo se puede lanzar desde el PC abriendo el index local.");
-      btn.textContent = "Activar desde el PC";
-    }
-  }
-
-  function normalizeShareProfiles(networkProfiles) {
-    if (Array.isArray(networkProfiles)) {
-      return networkProfiles.reduce((items, entry) => {
-        Array.isArray(entry) ? items.push(...entry) : items.push(entry);
-        return items;
-      }, []);
-    }
-    return networkProfiles && typeof networkProfiles === "object" ? [networkProfiles] : [];
-  }
-
-  function escapeHtml(value) {
-    return String(value ?? "").replace(/[&<>"']/g, (c) =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
-    );
-  }
-
-  function getShareStatusEndpoint() {
-    return buildShareEndpoint("/__share_status.json");
-  }
-
-  function getShareStopEndpoint() {
-    return buildShareEndpoint("/__stop");
-  }
-
-  function resetSharePanelForNonAdmin() {
-    currentShareUrl = "";
-    document.getElementById("share-status-text").textContent = "Solo administrador";
-    document.getElementById("share-status-badge").textContent = "Restringido";
-    document.getElementById("share-status-badge").className = "share-status-badge is-off";
-    document.getElementById("share-primary-url").textContent = "Informacion visible solo para el administrador.";
-    document.getElementById("share-network-list").innerHTML =
-      '<div class="share-network-empty">La informacion de red local solo se muestra al administrador.</div>';
-    document.getElementById("btn-share-copy").disabled = true;
-    document.getElementById("btn-share-stop").disabled = true;
-    document.getElementById("share-note").innerHTML =
-      '<strong>Acceso restringido:</strong> este bloque solo esta disponible para la sesion administrativa.';
-  }
-
-  function setShareInactive(message) {
-    currentShareUrl = "";
-    document.getElementById("share-status-text").textContent = message || "Sin detectar";
-    document.getElementById("share-status-badge").textContent = "Inactivo";
-    document.getElementById("share-status-badge").className = "share-status-badge is-off";
-    document.getElementById("share-primary-url").textContent = "Activa el servidor para ver la direcci\u00f3n correcta con puerto.";
-    document.getElementById("share-network-list").innerHTML =
-      '<div class="share-network-empty">Todavia no hay un servidor local detectado.</div>';
-    document.getElementById("btn-share-copy").disabled = true;
-    document.getElementById("btn-share-stop").disabled = true;
-    document.getElementById("share-note").innerHTML =
-      '<strong>Importante:</strong> activa el servidor desde este PC. Cuando quede encendido, aqu\u00ed aparecer\u00e1 la red actual y la direcci\u00f3n exacta para usar en el celular.';
-  }
-
-  function setShareActive(data) {
-    const profiles   = normalizeShareProfiles(data.networkProfiles);
-    const primaryUrl = data.primaryUrl || data.localhostUrl
-      || (profiles[0] && Array.isArray(profiles[0].urls) ? profiles[0].urls[0] : "") || "";
-    const hasPublic  = profiles.some((p) => String(p.networkCategory || "").toLowerCase() === "public");
-
-    currentShareUrl = primaryUrl;
-    document.getElementById("share-status-text").textContent = "Servidor local activo";
-    document.getElementById("share-status-badge").textContent = "Activo";
-    document.getElementById("share-status-badge").className = "share-status-badge is-on";
-    document.getElementById("share-primary-url").textContent = primaryUrl || "http://localhost:8080/";
-    document.getElementById("btn-share-copy").disabled = !primaryUrl;
-    document.getElementById("btn-share-stop").disabled = false;
-    document.getElementById("share-note").innerHTML = hasPublic
-      ? '<strong>Atenci\u00f3n:</strong> la red activa est\u00e1 marcada como p\u00fablica en Windows. C\u00e1mbiala a <strong>Privada</strong> si el celular no puede abrir la p\u00e1gina.'
-      : '<strong>Listo:</strong> el portal detect\u00f3 la red actual. Comparte una de las direcciones de abajo con el celular u otros equipos.';
-
-    if (!profiles.length) {
-      document.getElementById("share-network-list").innerHTML =
-        '<div class="share-network-empty">El servidor esta activo pero no se pudo leer el perfil de red actual.</div>';
-      return;
-    }
-
-    document.getElementById("share-network-list").innerHTML = profiles.map((profile) => {
-      const urls      = Array.isArray(profile.urls) ? profile.urls : [];
-      const category  = escapeHtml(profile.networkCategory || "Sin categoria");
-      const warnClass = String(profile.networkCategory || "").toLowerCase() === "public" ? " warn" : "";
-      return `
-        <div class="share-network-card">
-          <div class="share-network-top">
-            <div class="share-network-name">${escapeHtml(profile.networkName || "Red sin nombre")}</div>
-            <div class="share-network-meta">
-              <span class="share-tag">${escapeHtml(profile.interfaceAlias || "Interfaz")}</span>
-              <span class="share-tag${warnClass}">${category}</span>
-            </div>
-          </div>
-          <div class="share-url-list">
-            ${urls.map((u) => `<div class="share-url-item">${escapeHtml(u)}</div>`).join("")}
-          </div>
-        </div>`;
-    }).join("");
-  }
-
-  async function refreshShareStatus() {
-    try {
-      const requestUrl = getShareStatusEndpoint();
-      requestUrl.searchParams.set("t", String(Date.now()));
-      const res = await fetch(requestUrl, { cache: "no-store" });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setShareActive(await res.json());
-    } catch {
-      setShareInactive("Servidor no activo");
-    }
-  }
-
-  async function copyShareUrl() {
-    if (!currentShareUrl) return;
-    try {
-      await navigator.clipboard.writeText(currentShareUrl);
-      alert(`Enlace copiado:\n${currentShareUrl}`);
-    } catch {
-      window.prompt("Copia manualmente este enlace:", currentShareUrl);
-    }
-  }
-
-  async function stopShareServer() {
-    try {
-      const requestUrl = getShareStopEndpoint();
-      requestUrl.searchParams.set("t", String(Date.now()));
-      await fetch(requestUrl, { cache: "no-store" });
-      setTimeout(refreshShareStatus, 900);
-    } catch {
-      setShareInactive("Servidor detenido");
-    }
   }
 
   /* -- Horarios ----------------------------------------- */
@@ -905,13 +689,6 @@
 
   /* -- Inicializacion ----------------------------------- */
   document.addEventListener("DOMContentLoaded", () => {
-    const session = getPortalAuth()?.getCurrentSession?.() || null;
-
-    if (session?.role === "admin") {
-      configureShareStartButton();
-      refreshShareStatus();
-      setInterval(refreshShareStatus, 15000);
-    }
     refreshSelectedGroupPanel();
   });
 

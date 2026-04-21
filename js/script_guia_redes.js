@@ -35,7 +35,7 @@ const evidenceRows = [
     phase: "Analisis",
     project: "Diagnosticar el estado de la infraestructura de redes y equipos informaticos y solicitudes de servicio tecnico presente en el entorno de trabajo.",
     learning: "Exploracion visual Bloques A-E (LAN/MAN/WAN, topologias, medios, dispositivos, OSI/TCP-IP).",
-    evidence: "Producto: Exploracion_Contextual_NombreAprendiz_FICHA.pdf (5 productos compilados).",
+    evidence: "Producto: Exploracion_Contextual_NombreAprendiz_FICHA.docx (5 productos compilados).",
     criteria: "Clasifica tipos de redes y topologias segun el caso. Selecciona medios y dispositivos de interconexion segun necesidad. Relaciona capas OSI con dispositivos y protocolos.",
     methods: "Tecnica: Evaluacion de producto. Instrumento: Rubrica analitica (calidad tecnica, completitud y presentacion).",
   },
@@ -43,7 +43,7 @@ const evidenceRows = [
     phase: "Analisis",
     project: "Diagnosticar el estado de la infraestructura de redes y equipos informaticos y solicitudes de servicio tecnico presente en el entorno de trabajo.",
     learning: "Mapa mental integrador de fundamentos de redes.",
-    evidence: "Producto: MapaMental_Redes_NombreAprendiz_FICHA.pdf (o PNG).",
+    evidence: "Producto: MapaMental_Redes_NombreAprendiz_FICHA.png o .pdf.",
     criteria: "Integra conceptos en una representacion visual coherente. Incluye conexiones cruzadas y ejemplos aplicados a MiPymes. Presenta claridad visual y vocabulario tecnico apropiado.",
     methods: "Tecnica: Evaluacion de producto. Instrumento: Rubrica (integracion, exactitud y diseno).",
   },
@@ -713,14 +713,14 @@ window.guardarBloqueE = async function () {
 };
 
 // ---------------------------------------------------------------------------
-// Exportar PDF 3.2.1 — Exploración Contextual
+// Exportar Word 3.2.1 — Exploración Contextual
 // ---------------------------------------------------------------------------
 async function _loadScriptBlob(url) {
   await new Promise((resolve, reject) => {
     const s = document.createElement("script");
     s.src = url;
     s.onload = resolve;
-    s.onerror = () => reject(new Error("Error al cargar librería de PDF."));
+    s.onerror = () => reject(new Error("Error al cargar librería de Word."));
     document.head.appendChild(s);
   });
 }
@@ -737,8 +737,9 @@ window.exportarWordContextualizacion = async function (evt) {
     }
 
     const session = window._portalAuth?.getCurrentSession?.() || portalAuth?.getCurrentSession?.();
-    const fullName = (session && session.fullName) || "Aprendiz";
-    const ficha    = (session && session.ficha)    || "0000";
+    const user = session && session.user ? session.user : null;
+    const fullName = (user && user.fullName) || "Aprendiz";
+    const ficha    = (user && user.ficha)    || "0000";
     const grupo    = document.body.dataset.defaultGrupo || "";
     const fecha    = new Date().toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric" });
     const fileName = `Exploracion_Contextual_${fullName.replace(/\s+/g, "_")}_${ficha}.docx`;
