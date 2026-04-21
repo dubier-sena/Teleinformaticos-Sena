@@ -1525,6 +1525,10 @@ window.portalAuth = {
     return `${STORAGE_PREFIX}:${scope}:${area}:${key}`;
   }
 
+  function shouldBypassAccessGuardsForLocalPreview() {
+    return /^file:$/i.test(String(window.location.protocol || ""));
+  }
+
   function getStudentScope(usernameKey) {
     return `student:${sanitizeScopePart(usernameKey)}`;
   }

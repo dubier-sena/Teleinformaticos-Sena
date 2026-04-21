@@ -24,4 +24,16 @@ assert(
   "Los guards de acceso base y parchados deben permitir navegacion local sin redirigir al index."
 );
 
+const patchStart = portalAuthJs.indexOf("const auth = window.portalAuth;");
+const requireFileAccessPatchedStart = portalAuthJs.indexOf("function requireFileAccessPatched(fileName, options) {");
+assert(
+  patchStart >= 0 && requireFileAccessPatchedStart > patchStart,
+  "Debe existir el bloque parcheado de portal_auth para validar el bypass local."
+);
+const patchedPrelude = portalAuthJs.slice(patchStart, requireFileAccessPatchedStart);
+assert(
+  patchedPrelude.includes("function shouldBypassAccessGuardsForLocalPreview() {"),
+  "El bloque parcheado de portal_auth debe declarar su propio helper de bypass local para no depender del cierre anterior."
+);
+
 console.log("OK: portal_auth permite navegar el proyecto en file:// sin rebotar al index.");
