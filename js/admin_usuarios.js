@@ -1585,7 +1585,7 @@
     } catch (error) {
       allUsers = auth.getStudentsWithProgress();
       setFeedback(
-        "No fue posible leer el servidor compartido. Se muestra la copia local disponible.",
+        "No fue posible leer el almacenamiento compartido. Se muestra la copia local disponible.",
         "error"
       );
     }

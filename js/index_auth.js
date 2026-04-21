@@ -96,11 +96,6 @@
   function updateSensitivePanels(session) {
     const isAdmin = session?.role === "admin";
     setVisible(getById("calendar-callout"), isAdmin);
-    setVisible(getById("share-panel"), isAdmin);
-    setVisible(getById("share-section-label"), isAdmin);
-    if (!isAdmin && typeof window.resetSharePanelForNonAdmin === "function") {
-      window.resetSharePanelForNonAdmin();
-    }
   }
 
   function restrictGroupsForStudent(session) {
@@ -150,7 +145,7 @@
     }
 
     help.textContent =
-      "Ingresa la clave administrativa para ver el calendario, el panel de red local y la gesti\u00f3n de aprendices.";
+      "Ingresa la clave administrativa para ver el calendario y la gesti\u00f3n de aprendices.";
     submit.disabled = false;
     passwordInput.disabled = false;
     submit.textContent = "Ingresar como administrador";
@@ -176,7 +171,7 @@
       role.textContent = "Administrador";
       name.textContent = "Acceso administrativo activo";
       meta.textContent =
-        "Acceso completo al portal, calendario, red local y gestion de usuarios.";
+        "Acceso completo al portal, calendario y gestion de usuarios.";
       renderGuideChips(guides, [
         "Todas las gu\u00edas",
         "Calendario 2026",
@@ -243,7 +238,7 @@
     }
 
     auth.setFlashMessage(
-      "Usuario creado correctamente. El acceso y el progreso quedar\u00e1n guardados en este equipo y, si la p\u00e1gina est\u00e1 en la red local, tambi\u00e9n en el panel administrativo.",
+      "Usuario creado correctamente. El acceso y el progreso quedar\u00e1n guardados en este equipo y en el panel administrativo.",
       "success"
     );
     window.location.reload();
