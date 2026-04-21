@@ -716,11 +716,24 @@ window.guardarBloqueE = async function () {
 // Exportar Word 3.2.1 — Exploración Contextual
 // ---------------------------------------------------------------------------
 async function _loadScriptBlob(url) {
+  const response = await fetch(url, { cache: "force-cache" });
+  if (!response.ok) {
+    throw new Error("Error al descargar librería de Word.");
+  }
+  const scriptText = await response.text();
+
   await new Promise((resolve, reject) => {
+    const blobUrl = URL.createObjectURL(new Blob([scriptText], { type: "text/javascript" }));
     const s = document.createElement("script");
-    s.src = url;
-    s.onload = resolve;
-    s.onerror = () => reject(new Error("Error al cargar librería de Word."));
+    s.src = blobUrl;
+    s.onload = function () {
+      URL.revokeObjectURL(blobUrl);
+      resolve();
+    };
+    s.onerror = function () {
+      URL.revokeObjectURL(blobUrl);
+      reject(new Error("Error al cargar librería de Word."));
+    };
     document.head.appendChild(s);
   });
 }
