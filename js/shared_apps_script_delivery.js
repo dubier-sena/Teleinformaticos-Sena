@@ -44,13 +44,23 @@
     return match ? match[1].toLowerCase() : "";
   }
 
-  function normalizeLearnerLabel(value) {
-    var firstToken = normalizeText(value).split(/\s+/).filter(Boolean)[0] || "Aprendiz";
-    var cleaned = String(firstToken)
+  function sanitizeFileSegment(value, fallback) {
+    var cleaned = sanitizeLabel(value, fallback)
+      .replace(/\s+/g, "_")
       .replace(/[^a-z0-9]+/gi, "_")
       .replace(/^_+|_+$/g, "");
 
-    return cleaned || "Aprendiz";
+    return cleaned || fallback || "";
+  }
+
+  function normalizeLearnerLabel(value, mode) {
+    var normalized = normalizeText(value);
+    var source =
+      mode === "full"
+        ? normalized
+        : normalized.split(/\s+/).filter(Boolean)[0] || "Aprendiz";
+
+    return sanitizeFileSegment(source, "Aprendiz") || "Aprendiz";
   }
 
   function normalizeActivitySegment(value) {
@@ -65,13 +75,70 @@
     return normalizedSuffix ? "Actividad-" + normalizedSuffix : "Actividad";
   }
 
-  function buildDeliveryFileNamePreview(fullName, activityLabel, fileName) {
-    return (
-      normalizeLearnerLabel(fullName) +
-      "_" +
-      normalizeActivitySegment(activityLabel) +
-      getFileExtension(fileName || ".ext")
-    );
+  function getAllowedExtensions(context) {
+    var integrationsAllowed = Array.isArray(getIntegrations().allowedUploadExtensions)
+      ? getIntegrations().allowedUploadExtensions
+          .map(function (extension) {
+            return String(extension || "").trim().toLowerCase();
+          })
+          .filter(Boolean)
+      : [];
+    var contextAllowed =
+      context && Array.isArray(context.allowedExtensions)
+        ? context.allowedExtensions
+            .map(function (extension) {
+              return String(extension || "").trim().toLowerCase();
+            })
+            .filter(Boolean)
+        : [];
+
+    if (!contextAllowed.length) {
+      return integrationsAllowed;
+    }
+
+    var normalizedContext = contextAllowed.filter(function (extension, index, list) {
+      return list.indexOf(extension) === index;
+    });
+    if (!integrationsAllowed.length) {
+      return normalizedContext;
+    }
+
+    return normalizedContext.filter(function (extension) {
+      return integrationsAllowed.indexOf(extension) >= 0;
+    });
+  }
+
+  function getFileNamePrefix(context) {
+    return context && context.fileNamePrefix
+      ? sanitizeFileSegment(context.fileNamePrefix, "")
+      : "";
+  }
+
+  function getLearnerNameMode(context) {
+    return context && context.learnerNameMode === "full" ? "full" : "firstToken";
+  }
+
+  function buildDeliveryFileNamePreview(fullName, contextOrActivityLabel, fileName, ficha) {
+    var context =
+      contextOrActivityLabel && typeof contextOrActivityLabel === "object"
+        ? contextOrActivityLabel
+        : { activityLabel: contextOrActivityLabel };
+    var extension = getFileExtension(fileName || ".ext");
+    var prefix = getFileNamePrefix(context);
+    var learnerLabel = normalizeLearnerLabel(fullName, getLearnerNameMode(context));
+
+    if (prefix) {
+      return (
+        prefix +
+        "_" +
+        learnerLabel +
+        "_" +
+        sanitizeFileSegment((context && context.ficha) || ficha, "SIN_FICHA") +
+        extension
+      );
+    }
+
+    return learnerLabel + "_" + normalizeActivitySegment(context.activityLabel) + extension;
   }
 
   function getDefaultSelection() {
@@ -185,12 +252,12 @@
     }
   }
 
-  function getAcceptedFileTypes() {
-    var allowed = getIntegrations().allowedUploadExtensions;
-    return Array.isArray(allowed) ? allowed.join(",") : "";
+  function getAcceptedFileTypes(context) {
+    var allowed = getAllowedExtensions(context);
+    return allowed.length ? allowed.join(",") : "";
   }
 
-  function validateFile(file) {
+  function validateFile(file, context) {
     var integrations = getIntegrations();
 
     if (!file) {
@@ -201,9 +268,7 @@
       throw new Error("El archivo supera el tamano maximo permitido para esta entrega.");
     }
 
-    var allowed = Array.isArray(integrations.allowedUploadExtensions)
-      ? integrations.allowedUploadExtensions
-      : [];
+    var allowed = getAllowedExtensions(context);
     if (allowed.length) {
       var lowerName = String(file.name || "").toLowerCase();
       var matches = allowed.some(function (extension) {
@@ -269,7 +334,12 @@
       "Ficha " +
       sanitizeLabel(identity.ficha, "SIN_FICHA") +
       " / " +
-      buildDeliveryFileNamePreview(identity.fullName, context.activityLabel, fileName)
+      buildDeliveryFileNamePreview(
+        identity.fullName,
+        Object.assign({}, context || {}, { ficha: identity.ficha }),
+        fileName,
+        identity.ficha
+      )
     );
   }
 
@@ -531,8 +601,9 @@
     var file = nodes.fileInput && nodes.fileInput.files ? nodes.fileInput.files[0] : null;
     var previewName = buildDeliveryFileNamePreview(
       fullName || "Aprendiz",
-      currentContext.activityLabel,
-      (file && file.name) || ".ext"
+      Object.assign({}, currentContext || {}, { ficha: ficha }),
+      (file && file.name) || ".ext",
+      ficha
     );
     var route = fullName && ficha
       ? buildDestinationPreview(
@@ -608,6 +679,9 @@
       currentContext.activityLabel || currentContext.activityNumber,
       "Actividad"
     );
+    currentContext.allowedExtensions = getAllowedExtensions(currentContext);
+    currentContext.fileNamePrefix = getFileNamePrefix(currentContext);
+    currentContext.learnerNameMode = getLearnerNameMode(currentContext);
 
     var nodes = getModalNodes();
     var identity = getCurrentIdentity();
@@ -622,7 +696,7 @@
     nodes.nameInput.readOnly = !!usingStudentSession;
     nodes.fichaInput.readOnly = !!usingStudentSession;
     nodes.fileInput.value = "";
-    nodes.fileInput.accept = getAcceptedFileTypes();
+    nodes.fileInput.accept = getAcceptedFileTypes(currentContext);
     nodes.fileName.textContent = "Aun no has seleccionado archivo.";
     nodes.submit.removeAttribute("disabled");
     updateModalSummary();
@@ -651,7 +725,7 @@
     }
 
     try {
-      validateFile(file);
+      validateFile(file, currentContext);
     } catch (error) {
       setStatus(nodes.status, error.message, "error");
       return;
@@ -675,6 +749,9 @@
         grupo: identity.grupo,
         institucion: identity.institucion,
         pageFile: identity.pageFile,
+        allowedExtensions: currentContext.allowedExtensions,
+        fileNamePrefix: currentContext.fileNamePrefix || "",
+        learnerNameMode: currentContext.learnerNameMode || "firstToken",
         submittedAt: new Date().toISOString(),
       };
 

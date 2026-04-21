@@ -46,7 +46,7 @@ function doPost(e) {
       });
     }
 
-    validateUploadExtension(fileName);
+    validateUploadExtension(fileName, payload.allowedExtensions);
     const fileBytes = Utilities.base64Decode(fileBase64);
     if (!fileBytes.length || fileBytes.length > MAX_UPLOAD_BYTES) {
       return jsonResponse({
@@ -56,7 +56,7 @@ function doPost(e) {
     }
 
     const rootFolder = DriveApp.getFolderById(rootFolderId);
-    const finalFileName = buildDeliveryFileName(fullName, activityLabel, fileName);
+    const finalFileName = buildDeliveryFileName(fullName, ficha, activityLabel, fileName, payload);
 
     const blob = Utilities.newBlob(
       fileBytes,
@@ -87,9 +87,21 @@ function sanitizeLabel(value, fallback) {
     .trim() || fallback || "";
 }
 
-function buildDeliveryFileName(fullName, activityLabel, originalFileName) {
+function sanitizeFileSegment(value, fallback) {
+  return sanitizeLabel(value, fallback)
+    .replace(/\s+/g, "_")
+    .replace(/[^a-z0-9]+/gi, "_")
+    .replace(/^_+|_+$/g, "") || fallback || "";
+}
+
+function buildDeliveryFileName(fullName, ficha, activityLabel, originalFileName, payload) {
   const extension = getFileExtension(originalFileName);
-  const learnerLabel = normalizeLearnerLabel(fullName);
+  const prefix = sanitizeFileSegment(payload.fileNamePrefix, "");
+  const learnerLabel = normalizeLearnerLabel(fullName, payload.learnerNameMode);
+  if (prefix) {
+    const fichaLabel = sanitizeFileSegment(ficha, "SIN_FICHA");
+    return `${prefix}_${learnerLabel}_${fichaLabel}${extension}`;
+  }
   const activitySegment = normalizeActivitySegment(activityLabel);
   return `${learnerLabel}_${activitySegment}${extension}`;
 }
@@ -100,15 +112,13 @@ function getFileExtension(value) {
   return extensionMatch ? extensionMatch[1].toLowerCase() : "";
 }
 
-function normalizeLearnerLabel(value) {
-  const firstToken = String(value || "")
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)[0] || "Aprendiz";
+function normalizeLearnerLabel(value, mode) {
+  const normalized = String(value || "").trim();
+  const source = mode === "full"
+    ? normalized
+    : normalized.split(/\s+/).filter(Boolean)[0] || "Aprendiz";
 
-  return String(firstToken)
-    .replace(/[^a-z0-9]+/gi, "_")
-    .replace(/^_+|_+$/g, "") || "Aprendiz";
+  return sanitizeFileSegment(source, "Aprendiz") || "Aprendiz";
 }
 
 function normalizeActivitySegment(value) {
@@ -123,9 +133,23 @@ function normalizeActivitySegment(value) {
   return normalizedSuffix ? `Actividad-${normalizedSuffix}` : "Actividad";
 }
 
-function validateUploadExtension(fileName) {
+function normalizeAllowedExtensions(values) {
+  return Array.isArray(values)
+    ? values
+        .map((extension) => String(extension || "").trim().toLowerCase())
+        .filter((extension, index, list) =>
+          /^\.[a-z0-9]+$/.test(extension) && list.indexOf(extension) === index
+        )
+    : [];
+}
+
+function validateUploadExtension(fileName, allowedExtensions) {
   const lowerName = String(fileName || "").toLowerCase();
-  const isAllowed = ALLOWED_EXTENSIONS.some((extension) => lowerName.endsWith(extension));
+  const activityAllowed = normalizeAllowedExtensions(allowedExtensions).filter((extension) =>
+    ALLOWED_EXTENSIONS.includes(extension)
+  );
+  const effectiveAllowed = activityAllowed.length ? activityAllowed : ALLOWED_EXTENSIONS;
+  const isAllowed = effectiveAllowed.some((extension) => lowerName.endsWith(extension));
   if (!isAllowed) {
     throw new Error("La extension del archivo no esta permitida para esta entrega.");
   }

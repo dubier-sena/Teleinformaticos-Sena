@@ -46,9 +46,7 @@ $requiredFiles = @(
   "js/script_guia6.js",
   "js/script_induccion.js",
   "js/guia_template.js",
-  "js/index_auth.js",
-  "tools/servidor_web_red.ps1",
-  "tools/prueba_carga_servidor_local.ps1"
+  "js/index_auth.js"
 )
 
 $unexpectedRootFiles = @(

@@ -679,16 +679,16 @@
     try {
       allUsers = await auth.fetchStudentsWithProgress();
       setStorageContext(
-        "Este modulo esta usando la copia compartida disponible en la red local para vincular aprendices e informes."
+        "Este modulo esta usando el almacenamiento compartido del portal para vincular aprendices e informes."
       );
       setProductiveStageFeedback("", "success");
     } catch (error) {
       allUsers = auth.getStudentsWithProgress();
       setStorageContext(
-        "No fue posible leer el servidor compartido. Se usara la copia local disponible en este navegador."
+        "No fue posible leer el almacenamiento compartido. Se usara la copia local disponible en este navegador."
       );
       setProductiveStageFeedback(
-        "No fue posible leer el servidor compartido. Se muestra la copia local disponible para etapa productiva.",
+        "No fue posible leer el almacenamiento compartido. Se muestra la copia local disponible para etapa productiva.",
         "error"
       );
     }
