@@ -258,6 +258,9 @@ function hydrateFieldsRedes() {
   restoreImagenBloqueA();
   restoreImagenBloqueB();
   restoreImagenBloqueE();
+  restoreImagenSocial();
+  restoreImagenBloqueIP1();
+  restoreImagenBloqueIP3();
   applyReflexionLock();
   applyReflexionSocializacionLock();
   applyBloqueALock();
@@ -265,6 +268,10 @@ function hydrateFieldsRedes() {
   applyBloqueCLock();
   applyBloqueDLock();
   applyBloqueELock();
+  applySocialLock();
+  applyBloqueIP1Lock();
+  applyBloqueIP2Lock();
+  applyBloqueIP3Lock();
 }
 
 function applyReflexionSocializacionLock() {
@@ -1053,6 +1060,10 @@ const LOCK_KEYS_REDES = [
   "bloqueE-locked",
   "reflexion-311-locked",
   "reflexion-socializacion-locked",
+  "social-locked",
+  "ip1-locked",
+  "ip2-locked",
+  "ip3-locked",
 ];
 
 function getCloudScopeKeyRedes() {
@@ -1063,7 +1074,7 @@ function getCloudScopeKeyRedes() {
   return "";
 }
 
-const IMAGE_KEYS_REDES = ["bloqueA-imagen", "bloqueB-imagen"]; // Excluir base64 local del sync a Firebase; las URLs de Drive sí se guardan
+const IMAGE_KEYS_REDES = ["bloqueA-imagen", "bloqueB-imagen", "social-mapa", "ip1-imagen", "ip3-imagen"]; // Excluir base64 local del sync a Firebase; las URLs de Drive sí se guardan
 
 function buildCloudSnapshotRedes() {
   const data = { ...state };
@@ -1177,7 +1188,7 @@ window.guardarReflexion311 = async function () {
   applyReflexionLock();
 };
 
-window.exportarReflexion311 = function () {
+function buildReflexion311WordFile() {
   const sel = getGuideSelectionRedes();
   const rows = REFLEXION_311_KEYS.map((k, i) => `
     <p><b>${escapeHtml(REFLEXION_311_LABELS[i])}</b></p>
@@ -1195,15 +1206,571 @@ h1{font-size:16pt;color:#1b5e20}h2{font-size:13pt}p{margin:6pt 0;line-height:1.5
 <p>Institución: ${escapeHtml(sel.inst || "")} &nbsp;|&nbsp; Grupo: ${escapeHtml(sel.grupo || "")} &nbsp;|&nbsp; Ficha: ${escapeHtml(sel.ficha || "")}</p>
 <hr>${rows}</body></html>`;
 
+  const fileName = `Reflexion_311_Carmen_${sel.ficha || "sin_ficha"}.doc`;
   const blob = new Blob(["\ufeff", html], { type: "application/msword" });
-  const url = URL.createObjectURL(blob);
+  return new File([blob], fileName, { type: "application/msword" });
+}
+
+window.exportarReflexion311 = function () {
+  const file = buildReflexion311WordFile();
+  const url = URL.createObjectURL(file);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `Reflexion_311_Carmen_${sel.ficha || "sin_ficha"}.doc`;
+  a.download = file.name;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
+window.subirReflexion311AlDrive = function () {
+  const file = buildReflexion311WordFile();
+
+  window.sharedAppsScriptDelivery.openDeliveryModal({
+    guideLabel: "Guia 2",
+    activityNumber: "3.1.1",
+    activityTitle: "Reflexión Individual — Caso Carmen",
+    activityLabel: "Actividad 3.1.1",
+  });
+
+  // Inyectar el archivo generado en el input del modal (que ya fue abierto y limpiado)
+  setTimeout(() => {
+    const fileInput = document.querySelector("[data-shared-apps-file]");
+    if (!fileInput) return;
+    try {
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      fileInput.files = dt.files;
+      fileInput.dispatchEvent(new Event("change", { bubbles: true }));
+    } catch (_) {
+      // DataTransfer no disponible: el usuario deberá seleccionar el archivo manualmente
+    }
+  }, 80);
+};
+
+// ---------------------------------------------------------------------------
+// Word / Drive — Bloques IP1, IP2, IP3
+// ---------------------------------------------------------------------------
+function buildBloqueIP1WordFile() {
+  const sel = getGuideSelectionRedes();
+  const labels = [
+    "1. Una dirección IP tiene 4 números separados por puntos (ej. 192.168.1.10). ¿Qué representa cada número?",
+    "2. ¿Qué significa que una dirección IP tiene una parte de red y una parte de host?",
+    "3. ¿Por qué no puede haber dos dispositivos con la misma IP en la misma red?",
+  ];
+  const rows = BLOQUE_IP1_KEYS.map((k, i) => `
+    <p><b>${escapeHtml(labels[i])}</b></p>
+    <p style="margin-left:20px;white-space:pre-wrap">${escapeHtml(String(state[k] || "(sin respuesta)"))}</p><br>`).join("");
+  const imgSection = state["ip1-imagen-url"]
+    ? `<h2>Producto — Diagrama IPv4</h2><p><a href="${state["ip1-imagen-url"]}">Ver diagrama en Drive</a></p>`
+    : "";
+  const html = `<html xmlns:o='urn:schemas-microsoft-com:office:office'
+    xmlns:w='urn:schemas-microsoft-com:office:word'
+    xmlns='http://www.w3.org/TR/REC-html40'>
+<head><meta charset='utf-8'><title>Bloque 1 IPv4</title>
+<style>body{font-family:Calibri,Arial;font-size:12pt;margin:2cm}
+h1{font-size:16pt;color:#1b5e20}h2{font-size:13pt}p{margin:6pt 0;line-height:1.5}</style>
+</head><body>
+<h1>Actividad 3.3.1 \u2013 Bloque 1 \u2014 Estructura de una direcci\u00f3n IPv4</h1>
+<p>Instituci\u00f3n: ${escapeHtml(sel.inst || "")} &nbsp;|&nbsp; Grupo: ${escapeHtml(sel.grupo || "")} &nbsp;|&nbsp; Ficha: ${escapeHtml(sel.ficha || "")}</p>
+<hr>${rows}${imgSection}</body></html>`;
+  const fileName = `Bloque1_IPv4_${sel.ficha || "sin_ficha"}.doc`;
+  const blob = new Blob(["\ufeff", html], { type: "application/msword" });
+  return new File([blob], fileName, { type: "application/msword" });
+}
+
+window.subirBloqueIP1AlDrive = function () {
+  const file = buildBloqueIP1WordFile();
+  window.sharedAppsScriptDelivery.openDeliveryModal({
+    guideLabel: "Guia 2",
+    activityNumber: "3.3.1",
+    activityTitle: "Bloque 1 \u2014 Estructura de una direcci\u00f3n IPv4",
+    activityLabel: "Actividad 3.3.1",
+  });
+  setTimeout(() => {
+    const fileInput = document.querySelector("[data-shared-apps-file]");
+    if (!fileInput) return;
+    try { const dt = new DataTransfer(); dt.items.add(file); fileInput.files = dt.files; fileInput.dispatchEvent(new Event("change", { bubbles: true })); } catch (_) {}
+  }, 80);
+};
+
+function buildBloqueIP2WordFile() {
+  const sel = getGuideSelectionRedes();
+  const labels = [
+    "1. \u00bfC\u00f3mo sabes con solo mirar el primer n\u00famero si una IP es Clase A, B o C?",
+    "2. \u00bfPor qu\u00e9 las MiPymes casi siempre usan direcciones Clase C?",
+    "3. \u00bfQu\u00e9 son las direcciones privadas y por qu\u00e9 no se pueden usar en internet directamente?",
+  ];
+  const rows = ["ip2-1", "ip2-2", "ip2-3"].map((k, i) => `
+    <p><b>${escapeHtml(labels[i])}</b></p>
+    <p style="margin-left:20px;white-space:pre-wrap">${escapeHtml(String(state[k] || "(sin respuesta)"))}</p><br>`).join("");
+  const tableRows = [
+    ["A", "ip2-claseA-mask", "ip2-claseA-hosts", "ip2-claseA-uso"],
+    ["B", "ip2-claseB-mask", "ip2-claseB-hosts", "ip2-claseB-uso"],
+    ["C", "ip2-claseC-mask", "ip2-claseC-hosts", "ip2-claseC-uso"],
+  ].map(([cls, mask, hosts, uso]) =>
+    `<tr><td><b>Clase ${escapeHtml(cls)}</b></td><td>${escapeHtml(String(state[mask] || ""))}</td><td>${escapeHtml(String(state[hosts] || ""))}</td><td>${escapeHtml(String(state[uso] || ""))}</td></tr>`
+  ).join("");
+  const tableSection = `<h2>Cuadro comparativo de clases IP</h2>
+<table border="1" cellpadding="6" style="border-collapse:collapse;width:100%;font-size:11pt">
+  <tr style="background:#c8e6c9"><th>Clase</th><th>M\u00e1scara</th><th>Hosts posibles</th><th>Uso t\u00edpico</th></tr>
+  ${tableRows}
+</table>`;
+  const html = `<html xmlns:o='urn:schemas-microsoft-com:office:office'
+    xmlns:w='urn:schemas-microsoft-com:office:word'
+    xmlns='http://www.w3.org/TR/REC-html40'>
+<head><meta charset='utf-8'><title>Bloque 2 Clases IP</title>
+<style>body{font-family:Calibri,Arial;font-size:12pt;margin:2cm}
+h1{font-size:16pt;color:#1b5e20}h2{font-size:13pt}p{margin:6pt 0;line-height:1.5}</style>
+</head><body>
+<h1>Actividad 3.3.2 \u2013 Bloque 2 \u2014 Clases de IP y direcciones privadas</h1>
+<p>Instituci\u00f3n: ${escapeHtml(sel.inst || "")} &nbsp;|&nbsp; Grupo: ${escapeHtml(sel.grupo || "")} &nbsp;|&nbsp; Ficha: ${escapeHtml(sel.ficha || "")}</p>
+<hr>${rows}${tableSection}</body></html>`;
+  const fileName = `Bloque2_ClasesIP_${sel.ficha || "sin_ficha"}.doc`;
+  const blob = new Blob(["\ufeff", html], { type: "application/msword" });
+  return new File([blob], fileName, { type: "application/msword" });
+}
+
+window.subirBloqueIP2AlDrive = function () {
+  const file = buildBloqueIP2WordFile();
+  window.sharedAppsScriptDelivery.openDeliveryModal({
+    guideLabel: "Guia 2",
+    activityNumber: "3.3.2",
+    activityTitle: "Bloque 2 \u2014 Clases de IP y direcciones privadas",
+    activityLabel: "Actividad 3.3.2",
+  });
+  setTimeout(() => {
+    const fileInput = document.querySelector("[data-shared-apps-file]");
+    if (!fileInput) return;
+    try { const dt = new DataTransfer(); dt.items.add(file); fileInput.files = dt.files; fileInput.dispatchEvent(new Event("change", { bubbles: true })); } catch (_) {}
+  }, 80);
+};
+
+function buildBloqueIP3WordFile() {
+  const sel = getGuideSelectionRedes();
+  const labels = [
+    "1. \u00bfQu\u00e9 pasar\u00eda si configuras mal el gateway en un computador? \u00bfPodr\u00edas navegar en internet?",
+    "2. \u00bfPara qu\u00e9 sirve el DNS? \u00bfQu\u00e9 pasar\u00eda si no existiera y tuvieras que recordar las IPs de todos los sitios?",
+    "3. \u00bfPuede un computador funcionar en red local sin tener configurado el DNS? \u00bfPor qu\u00e9?",
+  ];
+  const rows = BLOQUE_IP3_KEYS.map((k, i) => `
+    <p><b>${escapeHtml(labels[i])}</b></p>
+    <p style="margin-left:20px;white-space:pre-wrap">${escapeHtml(String(state[k] || "(sin respuesta)"))}</p><br>`).join("");
+  const imgSection = state["ip3-imagen-url"]
+    ? `<h2>Producto — Diagrama de par\u00e1metros de red</h2><p><a href="${state["ip3-imagen-url"]}">Ver diagrama en Drive</a></p>`
+    : "";
+  const html = `<html xmlns:o='urn:schemas-microsoft-com:office:office'
+    xmlns:w='urn:schemas-microsoft-com:office:word'
+    xmlns='http://www.w3.org/TR/REC-html40'>
+<head><meta charset='utf-8'><title>Bloque 3 Gateway y DNS</title>
+<style>body{font-family:Calibri,Arial;font-size:12pt;margin:2cm}
+h1{font-size:16pt;color:#1b5e20}h2{font-size:13pt}p{margin:6pt 0;line-height:1.5}</style>
+</head><body>
+<h1>Actividad 3.3.3 \u2013 Bloque 3 \u2014 Par\u00e1metros de red: IP, m\u00e1scara, gateway y DNS</h1>
+<p>Instituci\u00f3n: ${escapeHtml(sel.inst || "")} &nbsp;|&nbsp; Grupo: ${escapeHtml(sel.grupo || "")} &nbsp;|&nbsp; Ficha: ${escapeHtml(sel.ficha || "")}</p>
+<hr>${rows}${imgSection}</body></html>`;
+  const fileName = `Bloque3_GatewayDNS_${sel.ficha || "sin_ficha"}.doc`;
+  const blob = new Blob(["\ufeff", html], { type: "application/msword" });
+  return new File([blob], fileName, { type: "application/msword" });
+}
+
+window.subirBloqueIP3AlDrive = function () {
+  const file = buildBloqueIP3WordFile();
+  window.sharedAppsScriptDelivery.openDeliveryModal({
+    guideLabel: "Guia 2",
+    activityNumber: "3.3.3",
+    activityTitle: "Bloque 3 \u2014 Par\u00e1metros de red: IP, m\u00e1scara, gateway y DNS",
+    activityLabel: "Actividad 3.3.3",
+  });
+  setTimeout(() => {
+    const fileInput = document.querySelector("[data-shared-apps-file]");
+    if (!fileInput) return;
+    try { const dt = new DataTransfer(); dt.items.add(file); fileInput.files = dt.files; fileInput.dispatchEvent(new Event("change", { bubbles: true })); } catch (_) {}
+  }, 80);
+};
+
+// ---------------------------------------------------------------------------
+// Bloque IP2 — Clases de IP y direcciones privadas (3.3.2)
+// ---------------------------------------------------------------------------
+const BLOQUE_IP2_KEYS = [
+  "ip2-1", "ip2-2", "ip2-3",
+  "ip2-claseA-mask", "ip2-claseA-hosts", "ip2-claseA-uso",
+  "ip2-claseB-mask", "ip2-claseB-hosts", "ip2-claseB-uso",
+  "ip2-claseC-mask", "ip2-claseC-hosts", "ip2-claseC-uso",
+];
+
+function applyBloqueIP2Lock() {
+  if (!state["ip2-locked"]) return;
+  document.querySelectorAll("[data-store^='ip2-']").forEach((el) => {
+    el.disabled = true; el.style.opacity = "0.75";
+  });
+  const btn = document.getElementById("btnGuardarIP2");
+  if (btn) { btn.disabled = true; btn.textContent = "\u2705 Respuestas guardadas"; }
+  const status = document.getElementById("ip2Status");
+  if (status) status.style.display = "block";
+}
+
+window.guardarBloqueIP2 = async function () {
+  const empty = ["ip2-1", "ip2-2", "ip2-3"].filter((k) => !String(state[k] || "").trim());
+  if (empty.length > 0) {
+    alert("Responde las 3 preguntas antes de guardar.");
+    return;
+  }
+  const btn = document.getElementById("btnGuardarIP2");
+  if (btn) { btn.disabled = true; btn.textContent = "Guardando\u2026"; }
+  state["ip2-locked"] = true;
+  saveStateRedes();
+  await saveToCloudRedes();
+  applyBloqueIP2Lock();
+};
+
+window.showVideoBloqueIP3 = function (n) {
+  const active   = "flex:1;min-width:140px;padding:8px 12px;border-radius:8px;border:2px solid #2e7d32;cursor:pointer;font-size:0.85rem;font-weight:600;font-family:inherit;background:#2e7d32;color:#fff";
+  const inactive = "flex:1;min-width:140px;padding:8px 12px;border-radius:8px;border:2px solid #2e7d32;cursor:pointer;font-size:0.85rem;font-weight:600;font-family:inherit;background:#e8f5e9;color:#1b5e20";
+  [1, 3].forEach((i) => {
+    const v = document.getElementById(`videoIP3-${i}`);
+    const b = document.getElementById(`tabIP3-btn-${i}`);
+    if (v) v.style.display = i === n ? "block" : "none";
+    if (b) b.style.cssText = i === n ? active : inactive;
+  });
+};
+
+// ---------------------------------------------------------------------------
+// Bloque IP3 — Parámetros de red: IP, máscara, gateway y DNS (3.3.3)
+// ---------------------------------------------------------------------------
+const BLOQUE_IP3_KEYS = ["ip3-1", "ip3-2", "ip3-3"];
+
+function applyBloqueIP3Lock() {
+  if (!state["ip3-locked"]) return;
+  BLOQUE_IP3_KEYS.forEach((k) => {
+    const el = document.querySelector(`[data-store="${k}"]`);
+    if (el) { el.disabled = true; el.style.opacity = "0.75"; }
+  });
+  const input = document.getElementById("ip3ImagenInput");
+  if (input) input.disabled = true;
+  const label = document.getElementById("ip3ImagenLabel");
+  if (label) { label.style.opacity = "0.5"; label.style.pointerEvents = "none"; }
+  const btn = document.getElementById("btnGuardarIP3");
+  if (btn) { btn.disabled = true; btn.textContent = "\u2705 Respuestas guardadas"; }
+  const status = document.getElementById("ip3Status");
+  if (status) status.style.display = "block";
+}
+
+function restoreImagenBloqueIP3() {
+  const driveUrl = state["ip3-imagen-url"];
+  const localBase64 = state["ip3-imagen"];
+  const img = document.getElementById("ip3ImagenImg");
+  const preview = document.getElementById("ip3ImagenPreview");
+  const nombre = document.getElementById("ip3ImagenNombre");
+  if (driveUrl) {
+    const thumb = _getDriveThumbnailUrl(driveUrl);
+    if (img) img.src = thumb || driveUrl;
+    if (preview) preview.style.display = "block";
+    if (nombre) nombre.innerHTML =
+      `<a href="${driveUrl}" target="_blank" rel="noopener">Ver en Drive</a> \u2014 ${state["ip3-imagen-nombre"] || "imagen adjunta"}`;
+  } else if (localBase64) {
+    if (img) img.src = localBase64;
+    if (preview) preview.style.display = "block";
+    if (nombre) nombre.textContent = state["ip3-imagen-nombre"] || "imagen adjunta";
+  }
+}
+
+window.subirImagenBloqueIP3 = async function (input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) {
+    alert("La imagen es demasiado grande (m\u00e1x. 5 MB). Usa una foto m\u00e1s peque\u00f1a o comp\u00edmela.");
+    input.value = "";
+    return;
+  }
+  const label = document.getElementById("ip3ImagenLabel");
+  const originalLabel = label ? label.innerHTML : "";
+  if (label) { label.innerHTML = "&#9203; Subiendo imagen..."; label.style.pointerEvents = "none"; }
+  try {
+    const delivery = window.sharedAppsScriptDelivery;
+    if (!delivery || typeof delivery.uploadToAppsScript !== "function") {
+      throw new Error("El sistema de entrega no est\u00e1 disponible.");
+    }
+    const session = portalAuth.getCurrentSession();
+    const usernameKey = ((session && (session.usernameKey || session.username)) || "desconocido")
+      .toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
+    const ficha = (session && session.ficha) || "0000";
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+    const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+    const fileName = `ip3_${ficha}_${usernameKey}_${dateStr}.${ext}`;
+
+    const reader = new FileReader();
+    const localBase64 = await new Promise((res) => { reader.onload = (e) => res(e.target.result); reader.readAsDataURL(file); });
+    state["ip3-imagen"] = localBase64;
+    state["ip3-imagen-nombre"] = fileName;
+    saveStateRedes();
+    restoreImagenBloqueIP3();
+
+    const fileBase64 = localBase64.split(",").pop();
+    const response = await delivery.uploadToAppsScript({
+      guideLabel: "Guia 2",
+      activityLabel: "Bloque 3 \u2014 Producto Individual",
+      activityNumber: "3.3.3",
+      activityTitle: "Producto Individual \u2014 Diagrama de par\u00e1metros de red",
+      fileName,
+      mimeType: file.type || "image/jpeg",
+      fileBase64,
+      fullName: (session && session.fullName) || usernameKey,
+      ficha,
+    });
+
+    if (response && response.driveUrl) {
+      state["ip3-imagen-url"] = response.driveUrl;
+      saveStateRedes();
+      await saveToCloudRedes();
+      restoreImagenBloqueIP3();
+    }
+    if (label) { label.innerHTML = "&#128247; Cambiar imagen"; label.style.pointerEvents = ""; }
+  } catch (err) {
+    alert("Error al subir imagen: " + ((err && err.message) || "Intenta de nuevo."));
+    if (label) { label.innerHTML = originalLabel; label.style.pointerEvents = ""; }
+  }
+};
+
+window.guardarBloqueIP3 = async function () {
+  const empty = BLOQUE_IP3_KEYS.filter((k) => !String(state[k] || "").trim());
+  if (empty.length > 0) {
+    alert("Responde las 3 preguntas antes de guardar.");
+    return;
+  }
+  const btn = document.getElementById("btnGuardarIP3");
+  if (btn) { btn.disabled = true; btn.textContent = "Guardando\u2026"; }
+  state["ip3-locked"] = true;
+  saveStateRedes();
+  await saveToCloudRedes();
+  applyBloqueIP3Lock();
+};
+
+// ---------------------------------------------------------------------------
+// Bloque IP1 — Estructura de una dirección IPv4 (3.3.1)
+// ---------------------------------------------------------------------------
+const BLOQUE_IP1_KEYS = ["ip1-1", "ip1-2", "ip1-3"];
+
+function applyBloqueIP1Lock() {
+  if (!state["ip1-locked"]) return;
+  BLOQUE_IP1_KEYS.forEach((k) => {
+    const el = document.querySelector(`[data-store="${k}"]`);
+    if (el) { el.disabled = true; el.style.opacity = "0.75"; }
+  });
+  const input = document.getElementById("ip1ImagenInput");
+  if (input) input.disabled = true;
+  const label = document.getElementById("ip1ImagenLabel");
+  if (label) { label.style.opacity = "0.5"; label.style.pointerEvents = "none"; }
+  const btn = document.getElementById("btnGuardarIP1");
+  if (btn) { btn.disabled = true; btn.textContent = "\u2705 Respuestas guardadas"; }
+  const status = document.getElementById("ip1Status");
+  if (status) status.style.display = "block";
+}
+
+function restoreImagenBloqueIP1() {
+  const driveUrl = state["ip1-imagen-url"];
+  const localBase64 = state["ip1-imagen"];
+  const img = document.getElementById("ip1ImagenImg");
+  const preview = document.getElementById("ip1ImagenPreview");
+  const nombre = document.getElementById("ip1ImagenNombre");
+  if (driveUrl) {
+    const thumb = _getDriveThumbnailUrl(driveUrl);
+    if (img) img.src = thumb || driveUrl;
+    if (preview) preview.style.display = "block";
+    if (nombre) nombre.innerHTML =
+      `<a href="${driveUrl}" target="_blank" rel="noopener">Ver en Drive</a> \u2014 ${state["ip1-imagen-nombre"] || "imagen adjunta"}`;
+  } else if (localBase64) {
+    if (img) img.src = localBase64;
+    if (preview) preview.style.display = "block";
+    if (nombre) nombre.textContent = state["ip1-imagen-nombre"] || "imagen adjunta";
+  }
+}
+
+window.subirImagenBloqueIP1 = async function (input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) {
+    alert("La imagen es demasiado grande (m\u00e1x. 5 MB). Usa una foto m\u00e1s peque\u00f1a o comp\u00edmela.");
+    input.value = "";
+    return;
+  }
+  const label = document.getElementById("ip1ImagenLabel");
+  const originalLabel = label ? label.innerHTML : "";
+  if (label) { label.innerHTML = "&#9203; Subiendo imagen..."; label.style.pointerEvents = "none"; }
+  try {
+    const delivery = window.sharedAppsScriptDelivery;
+    if (!delivery || typeof delivery.uploadToAppsScript !== "function") {
+      throw new Error("El sistema de entrega no est\u00e1 disponible.");
+    }
+    const session = portalAuth.getCurrentSession();
+    const usernameKey = ((session && (session.usernameKey || session.username)) || "desconocido")
+      .toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
+    const ficha = (session && session.ficha) || "0000";
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+    const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+    const fileName = `ip1_${ficha}_${usernameKey}_${dateStr}.${ext}`;
+
+    const reader = new FileReader();
+    const localBase64 = await new Promise((res) => { reader.onload = (e) => res(e.target.result); reader.readAsDataURL(file); });
+    state["ip1-imagen"] = localBase64;
+    state["ip1-imagen-nombre"] = fileName;
+    saveStateRedes();
+    restoreImagenBloqueIP1();
+
+    const fileBase64 = localBase64.split(",").pop();
+    const response = await delivery.uploadToAppsScript({
+      guideLabel: "Guia 2",
+      activityLabel: "Bloque 1 \u2014 Producto Individual",
+      activityNumber: "3.3.1",
+      activityTitle: "Producto Individual \u2014 Diagrama IPv4",
+      fileName,
+      mimeType: file.type || "image/jpeg",
+      fileBase64,
+      fullName: (session && session.fullName) || usernameKey,
+      ficha,
+    });
+
+    if (response && response.driveUrl) {
+      state["ip1-imagen-url"] = response.driveUrl;
+      saveStateRedes();
+      await saveToCloudRedes();
+      restoreImagenBloqueIP1();
+    }
+    if (label) { label.innerHTML = "&#128247; Cambiar imagen"; label.style.pointerEvents = ""; }
+  } catch (err) {
+    alert("Error al subir imagen: " + ((err && err.message) || "Intenta de nuevo."));
+    if (label) { label.innerHTML = originalLabel; label.style.pointerEvents = ""; }
+  }
+};
+
+window.guardarBloqueIP1 = async function () {
+  const empty = BLOQUE_IP1_KEYS.filter((k) => !String(state[k] || "").trim());
+  if (empty.length > 0) {
+    alert("Responde las preguntas antes de guardar.");
+    return;
+  }
+  const btn = document.getElementById("btnGuardarIP1");
+  if (btn) { btn.disabled = true; btn.textContent = "Guardando\u2026"; }
+  state["ip1-locked"] = true;
+  saveStateRedes();
+  await saveToCloudRedes();
+  applyBloqueIP1Lock();
+};
+
+// ---------------------------------------------------------------------------
+// Socialización 3.2.1.G
+// ---------------------------------------------------------------------------
+const SOCIAL_KEYS = ["social-diferencias", "social-representacion", "social-dudas", "social-pregunta"];
+
+function applySocialLock() {
+  if (!state["social-locked"]) return;
+  SOCIAL_KEYS.forEach((k) => {
+    const el = document.querySelector(`[data-store="${k}"]`);
+    if (el) { el.disabled = true; el.style.opacity = "0.75"; }
+  });
+  const input = document.getElementById("socialMapaInput");
+  if (input) input.disabled = true;
+  const label = document.getElementById("socialMapaLabel");
+  if (label) { label.style.opacity = "0.5"; label.style.pointerEvents = "none"; }
+  const btn = document.getElementById("btnGuardarSocial");
+  if (btn) { btn.disabled = true; btn.textContent = "\u2705 Respuestas guardadas"; }
+  const status = document.getElementById("socialStatus");
+  if (status) status.style.display = "block";
+}
+
+function restoreImagenSocial() {
+  const driveUrl = state["social-mapa-url"];
+  const localBase64 = state["social-mapa"];
+  const img = document.getElementById("socialMapaImg");
+  const preview = document.getElementById("socialMapaPreview");
+  const nombre = document.getElementById("socialMapaNombre");
+  if (driveUrl) {
+    const thumb = _getDriveThumbnailUrl(driveUrl);
+    if (img) img.src = thumb || driveUrl;
+    if (preview) preview.style.display = "block";
+    if (nombre) nombre.innerHTML =
+      `<a href="${driveUrl}" target="_blank" rel="noopener">Ver en Drive</a> \u2014 ${state["social-mapa-nombre"] || "mapa adjunto"}`;
+  } else if (localBase64) {
+    if (img) img.src = localBase64;
+    if (preview) preview.style.display = "block";
+    if (nombre) nombre.textContent = state["social-mapa-nombre"] || "imagen adjunta";
+  }
+}
+
+window.subirImagenSocial = async function (input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) {
+    alert("La imagen es demasiado grande (m\u00e1x. 5 MB). Usa una foto m\u00e1s peque\u00f1a o comp\u00edmela.");
+    input.value = "";
+    return;
+  }
+  const label = document.getElementById("socialMapaLabel");
+  const originalLabel = label ? label.innerHTML : "";
+  if (label) { label.innerHTML = "&#9203; Subiendo imagen..."; label.style.pointerEvents = "none"; }
+
+  try {
+    const delivery = window.sharedAppsScriptDelivery;
+    if (!delivery || typeof delivery.uploadToAppsScript !== "function") {
+      throw new Error("El sistema de entrega no est\u00e1 disponible.");
+    }
+    const session = portalAuth.getCurrentSession();
+    const usernameKey = ((session && (session.usernameKey || session.username)) || "desconocido")
+      .toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
+    const ficha = (session && session.ficha) || "0000";
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+    const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+    const fileName = `social_mapa_${ficha}_${usernameKey}_${dateStr}.${ext}`;
+
+    const reader = new FileReader();
+    const localBase64 = await new Promise((res) => { reader.onload = (e) => res(e.target.result); reader.readAsDataURL(file); });
+    state["social-mapa"] = localBase64;
+    state["social-mapa-nombre"] = fileName;
+    saveStateRedes();
+    restoreImagenSocial();
+
+    const fileBase64 = localBase64.split(",").pop();
+    const response = await delivery.uploadToAppsScript({
+      guideLabel: "Guia 2",
+      activityLabel: "Socializaci\u00f3n 3.2.1.G \u2014 Mapa elegido",
+      activityNumber: "3.2.1.G",
+      activityTitle: "Mapa mental \u2014 representaci\u00f3n visual m\u00e1s completa",
+      fileName,
+      mimeType: file.type || "image/jpeg",
+      fileBase64,
+      fullName: (session && session.fullName) || usernameKey,
+      ficha,
+    });
+
+    if (response && response.driveUrl) {
+      state["social-mapa-url"] = response.driveUrl;
+      saveStateRedes();
+      await saveToCloudRedes();
+      restoreImagenSocial();
+    }
+
+    if (label) { label.innerHTML = "&#128247; Cambiar imagen"; label.style.pointerEvents = ""; }
+  } catch (err) {
+    alert("Error al subir imagen: " + ((err && err.message) || "Intenta de nuevo."));
+    if (label) { label.innerHTML = originalLabel; label.style.pointerEvents = ""; }
+  }
+};
+
+window.guardarSocializacion = async function () {
+  const empty = SOCIAL_KEYS.filter((k) => !String(state[k] || "").trim());
+  if (empty.length > 0) {
+    alert("Responde las 4 preguntas antes de guardar.");
+    return;
+  }
+  const btn = document.getElementById("btnGuardarSocial");
+  if (btn) { btn.disabled = true; btn.textContent = "Guardando\u2026"; }
+  state["social-locked"] = true;
+  saveStateRedes();
+  await saveToCloudRedes();
+  applySocialLock();
 };
 
 // ---------------------------------------------------------------------------
