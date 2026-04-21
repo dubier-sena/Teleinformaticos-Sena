@@ -204,7 +204,6 @@
         docUrl(collection, docId),
         {
           method:  "PATCH",
-          keepalive: true,
           headers: { "Content-Type": "application/json" },
           body:    JSON.stringify(toFsDoc(data)),
         },
@@ -223,7 +222,6 @@
         docUrl(collection, docId, "updateMask.fieldPaths=" + encodeURIComponent(fieldName)),
         {
           method:  "PATCH",
-          keepalive: true,
           headers: { "Content-Type": "application/json" },
           body:    JSON.stringify(body),
         },
