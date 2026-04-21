@@ -15,6 +15,27 @@
     "3441944": "sb_10a_redes.html",
     "3441950": "sb_10b_redes.html",
   };
+  const REDES_SB_GUIDE_FILES = {
+    "santa-barbara-10a-guia-02-redes-rap01.html": "sb_10a_redes.html",
+    "santa-barbara-10b-guia-02-redes-rap01.html": "sb_10b_redes.html",
+  };
+  const REDES_SB_GUIDE_FILES_BY_FICHA = {
+    "3441944": "santa-barbara-10a-guia-02-redes-rap01.html",
+    "3441950": "santa-barbara-10b-guia-02-redes-rap01.html",
+  };
+  const REDES_SB_LOCK_KEYS = [
+    "reflexion-socializacion-locked",
+    "reflexion-311-locked",
+    "bloqueA-locked",
+    "bloqueB-locked",
+    "bloqueC-locked",
+    "bloqueD-locked",
+    "bloqueE-locked",
+    "ip1-locked",
+    "ip2-locked",
+    "ip3-locked",
+    "social-locked",
+  ];
 
   const FICHA_CASO_FILES = {
     "10A": "grupo-10a-guia-02-ficha-caso.html",
@@ -243,6 +264,42 @@
 
   function getGuide2SummaryKey(usernameKey, fileName) {
     return `${String(usernameKey || "").trim().toLowerCase()}::${fileName}`;
+  }
+
+  function isRedesSbGuideFile(fileName) {
+    return Boolean(REDES_SB_GUIDE_FILES[fileName]);
+  }
+
+  function getRedesGuideCloudFileName(fileName, ficha) {
+    return REDES_SB_GUIDE_FILES[fileName] || REDES_SB_CLOUD_FILES[String(ficha || "").trim()] || "";
+  }
+
+  function getRedesGuidePageFileByFicha(ficha) {
+    return REDES_SB_GUIDE_FILES_BY_FICHA[String(ficha || "").trim()] || "";
+  }
+
+  function getRedesGuideLocalStorageKey(usernameKey, fileName) {
+    const cloudFileName = getRedesGuideCloudFileName(fileName, "");
+    if (!cloudFileName || typeof auth.getStudentStorageKey !== "function") {
+      return "";
+    }
+    const storageKeyBase = `guia_interactiva_${cloudFileName.replace(/[^a-z0-9]+/g, "_")}`;
+    return auth.getStudentStorageKey(usernameKey, storageKeyBase, {
+      area: "guide-data",
+    });
+  }
+
+  function clearRedesGuideLocks(snapshotState) {
+    const nextState =
+      snapshotState && typeof snapshotState === "object" ? { ...snapshotState } : {};
+    let changed = false;
+    REDES_SB_LOCK_KEYS.forEach((key) => {
+      if (Object.prototype.hasOwnProperty.call(nextState, key)) {
+        changed = true;
+        delete nextState[key];
+      }
+    });
+    return { state: nextState, changed };
   }
 
   function getWordSearchResult(state) {
@@ -1183,6 +1240,13 @@
                 )}" data-user="${escapeHtml(user.usernameKey)}">Ver resultados Guia 2</button>`
               : ""
           }
+          ${
+            isRedesSbGuideFile(guide.fileName)
+              ? `<button class="btn secondary" type="button" data-unlock-redes-guide="${escapeHtml(
+                  guide.fileName
+                )}" data-user="${escapeHtml(user.usernameKey)}">Habilitar edicion</button>`
+              : ""
+          }
           <button class="btn warn" type="button" data-reset-guide="${escapeHtml(
             guide.fileName
           )}" data-user="${escapeHtml(user.usernameKey)}">Reiniciar gu\u00eda</button>
@@ -1387,39 +1451,81 @@
       </div>`;
   }
 
-  async function unlockRedesStudent(usernameKey, ficha, displayName) {
-    const cloudFileName = REDES_SB_CLOUD_FILES[ficha];
-    if (!cloudFileName || !window._firebaseDb?.cloudGetGuideData || !window._firebaseDb?.cloudSaveGuideData) {
-      alert("Firebase no disponible.");
+  async function unlockRedesGuideProgress(usernameKey, fileName, displayName) {
+    const user = allUsers.find((item) => item.usernameKey === usernameKey) || null;
+    const cloudFileName = getRedesGuideCloudFileName(fileName, user?.ficha);
+    if (!cloudFileName) {
+      setFeedback("No fue posible identificar la guia de redes a desbloquear.", "error");
       return;
     }
-    if (!confirm(`¿Desbloquear campos de "${displayName}" para que pueda editar de nuevo?`)) return;
+
+    if (!confirm(`¿Habilitar nuevamente la edicion de la guia de redes para "${displayName}"?`)) {
+      return;
+    }
+
+    const updatedAt = new Date().toISOString();
+    let changed = false;
 
     try {
-      const snapshot = await window._firebaseDb.cloudGetGuideData(
-        getGuide2ScopeKey(usernameKey), cloudFileName
-      );
-      const updatedState = { ...(snapshot?.state || snapshot?.data || {}) };
-      delete updatedState["bloqueA-locked"];
-      delete updatedState["bloqueB-locked"];
-      delete updatedState["bloqueC-locked"];
-      delete updatedState["reflexion-311-locked"];
-      delete updatedState["reflexion-socializacion-locked"];
+      const localStorageKey = getRedesGuideLocalStorageKey(usernameKey, fileName);
+      const localState = localStorageKey
+        ? readJson(localStorage.getItem(localStorageKey), null)
+        : null;
 
-      await window._firebaseDb.cloudSaveGuideData(
-        getGuide2ScopeKey(usernameKey),
-        cloudFileName,
-        { data: updatedState, updatedAt: new Date().toISOString() }
-      );
+      if (localStorageKey && localState && typeof localState === "object") {
+        const localUnlock = clearRedesGuideLocks(localState);
+        if (localUnlock.changed) {
+          changed = true;
+          localStorage.setItem(localStorageKey, JSON.stringify(localUnlock.state));
+          localStorage.setItem(
+            `${localStorageKey}__meta`,
+            JSON.stringify({ updatedAt, updatedBy: "admin-redes-unlock" })
+          );
+        }
+      }
+
+      if (window._firebaseDb?.cloudGetGuideData && window._firebaseDb?.cloudSaveGuideData) {
+        const scopeKey = getGuide2ScopeKey(usernameKey);
+        const snapshot = await window._firebaseDb.cloudGetGuideData(scopeKey, cloudFileName);
+        const cloudUnlock = clearRedesGuideLocks(snapshot?.state || snapshot?.data || {});
+        if (cloudUnlock.changed) {
+          changed = true;
+          await window._firebaseDb.cloudSaveGuideData(scopeKey, cloudFileName, {
+            ...(snapshot && typeof snapshot === "object" ? snapshot : {}),
+            state: cloudUnlock.state,
+            updatedAt,
+            updatedBy: "admin-redes-unlock",
+          });
+        }
+      }
 
       if (redesSocializacionSummaries[usernameKey]) {
         redesSocializacionSummaries[usernameKey].locked = false;
+        redesSocializacionSummaries[usernameKey].updatedAt = updatedAt;
       }
+
       renderUsers();
-      alert(`Campos desbloqueados. ${displayName} puede editar de nuevo.`);
+      setFeedback(
+        changed
+          ? `Edicion habilitada para ${displayName} en la Guia 2 redes.`
+          : `No se encontraron bloqueos activos para ${displayName} en la Guia 2 redes.`,
+        "success"
+      );
     } catch (err) {
-      alert("Error al desbloquear: " + (err?.message || "intenta de nuevo."));
+      setFeedback(`No fue posible habilitar la edicion: ${err?.message || "intenta de nuevo."}`, "error");
     }
+  }
+
+  async function unlockRedesStudent(usernameKey, ficha, displayName) {
+    const fileName = getRedesGuidePageFileByFicha(ficha);
+    if (!fileName) {
+      setFeedback("No fue posible ubicar la guia de redes asociada a esa ficha.", "error");
+      return;
+    }
+    await unlockRedesGuideProgress(usernameKey, fileName, displayName);
+    return;
+    if (!confirm(`¿Desbloquear campos de "${displayName}" para que pueda editar de nuevo?`)) return;
+
   }
 
   window.unlockRedesStudent = unlockRedesStudent;
@@ -1767,6 +1873,19 @@
             openMatriz322Modal(summary);
           }
         }
+        return;
+      }
+
+      const unlockRedesGuideButton = event.target.closest("[data-unlock-redes-guide]");
+      if (unlockRedesGuideButton) {
+        const usernameKey = unlockRedesGuideButton.getAttribute("data-user") || "";
+        const fileName = unlockRedesGuideButton.getAttribute("data-unlock-redes-guide") || "";
+        const user = allUsers.find((item) => item.usernameKey === usernameKey);
+        if (!user || !fileName) {
+          setFeedback("No fue posible identificar la guia de redes a desbloquear.", "error");
+          return;
+        }
+        await unlockRedesGuideProgress(usernameKey, fileName, user.fullName || user.usernameKey);
         return;
       }
 
