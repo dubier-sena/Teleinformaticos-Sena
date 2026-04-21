@@ -18,6 +18,10 @@ function expectIncludes(source, snippet, message) {
 const page10A = read("santa-barbara-10a-guia-02-redes-rap01.html");
 const page10B = read("santa-barbara-10b-guia-02-redes-rap01.html");
 const guideJs = read(path.join("js", "script_guia_redes.js"));
+const exportStart = guideJs.indexOf("window.exportarWordContextualizacion = async function");
+const exportEnd = guideJs.indexOf("window.enviarSocializacion311 = async function");
+assert(exportStart >= 0 && exportEnd > exportStart, "No se encontro el bloque del exportador Word contextual.");
+const exportChunk = guideJs.slice(exportStart, exportEnd);
 
 for (const [label, page] of [
   ["10A", page10A],
@@ -51,19 +55,32 @@ for (const [label, page] of [
 }
 
 expectIncludes(
-  guideJs,
-  'const user = session && session.user ? session.user : null;',
-  "La exportacion contextual debe resolver la identidad desde session.user."
+  exportChunk,
+  "const identity = getDeliveryIdentityRedes();",
+  "La exportacion contextual debe reutilizar la identidad normalizada de la guia."
 );
 expectIncludes(
-  guideJs,
-  'const fullName = (user && user.fullName) || "Aprendiz";',
-  "La exportacion contextual debe usar el nombre completo real del aprendiz."
+  exportChunk,
+  'const fullName = identity.fullName || identity.usernameKey || "Aprendiz";',
+  "La exportacion contextual debe usar el nombre resuelto por la identidad normalizada."
 );
 expectIncludes(
-  guideJs,
-  'const ficha    = (user && user.ficha)    || "0000";',
-  "La exportacion contextual debe usar la ficha real del aprendiz."
+  exportChunk,
+  'const ficha    = identity.ficha || "0000";',
+  "La exportacion contextual debe usar la ficha del usuario o de la seleccion activa."
+);
+expectIncludes(
+  exportChunk,
+  'const grupo    = identity.grupo || document.body.dataset.defaultGrupo || "";',
+  "La exportacion contextual debe conservar el grupo activo incluso en modo admin."
+);
+assert(
+  !exportChunk.includes('const user = session && session.user ? session.user : null;'),
+  "La exportacion contextual ya no debe depender solo de session.user porque en modo admin no existe."
+);
+assert(
+  !exportChunk.includes('const ficha    = (user && user.ficha)    || "0000";'),
+  "La exportacion contextual no debe caer en ficha 0000 cuando la guia se abre como admin."
 );
 expectIncludes(
   guideJs,

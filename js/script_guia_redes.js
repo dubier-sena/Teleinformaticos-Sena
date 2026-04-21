@@ -815,11 +815,10 @@ window.exportarWordContextualizacion = async function (evt) {
       await _loadScriptBlob("https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.min.js");
     }
 
-    const session = window._portalAuth?.getCurrentSession?.() || portalAuth?.getCurrentSession?.();
-    const user = session && session.user ? session.user : null;
-    const fullName = (user && user.fullName) || "Aprendiz";
-    const ficha    = (user && user.ficha)    || "0000";
-    const grupo    = document.body.dataset.defaultGrupo || "";
+    const identity = getDeliveryIdentityRedes();
+    const fullName = identity.fullName || identity.usernameKey || "Aprendiz";
+    const ficha    = identity.ficha || "0000";
+    const grupo    = identity.grupo || document.body.dataset.defaultGrupo || "";
     const fecha    = new Date().toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric" });
     const fileName = `Exploracion_Contextual_${fullName.replace(/\s+/g, "_")}_${ficha}.docx`;
 
