@@ -74,6 +74,26 @@ expectIncludes(
   'const grupo    = identity.grupo || document.body.dataset.defaultGrupo || "";',
   "La exportacion contextual debe conservar el grupo activo incluso en modo admin."
 );
+expectIncludes(
+  exportChunk,
+  'window.sharedAppsScriptDelivery.openDeliveryModal({',
+  "La exportacion contextual debe abrir el modal compartido de entrega segura."
+);
+expectIncludes(
+  exportChunk,
+  'activityNumber: "3.2.1"',
+  "La exportacion contextual debe abrir el modal con la actividad 3.2.1."
+);
+expectIncludes(
+  exportChunk,
+  'const fileInput = document.querySelector("[data-shared-apps-file]");',
+  "La exportacion contextual debe precargar el archivo generado en el input compartido."
+);
+expectIncludes(
+  exportChunk,
+  'const dt = new DataTransfer();',
+  "La exportacion contextual debe usar DataTransfer para inyectar el .docx al modal."
+);
 assert(
   !exportChunk.includes('const user = session && session.user ? session.user : null;'),
   "La exportacion contextual ya no debe depender solo de session.user porque en modo admin no existe."
@@ -81,6 +101,10 @@ assert(
 assert(
   !exportChunk.includes('const ficha    = (user && user.ficha)    || "0000";'),
   "La exportacion contextual no debe caer en ficha 0000 cuando la guia se abre como admin."
+);
+assert(
+  !exportChunk.includes("uploadToAppsScript"),
+  "La exportacion contextual ya no debe subir el Word directamente; debe usar el modal compartido."
 );
 expectIncludes(
   guideJs,

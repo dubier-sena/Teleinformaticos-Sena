@@ -10,6 +10,7 @@
   let fichaCasoSummaries = {};
   let matriz322Summaries = {};
   let redesSocializacionSummaries = {};
+  let redesQuizSummaries = {};
 
   const REDES_SB_CLOUD_FILES = {
     "3441944": "sb_10a_redes.html",
@@ -287,6 +288,112 @@
     return auth.getStudentStorageKey(usernameKey, storageKeyBase, {
       area: "guide-data",
     });
+  }
+
+  function readRedesGuideLocalSnapshot(usernameKey, fileName, ficha) {
+    const resolvedFileName = fileName || getRedesGuidePageFileByFicha(ficha);
+    const storageKey = getRedesGuideLocalStorageKey(usernameKey, resolvedFileName);
+    if (!storageKey) {
+      return null;
+    }
+
+    const data = readJson(localStorage.getItem(storageKey), null);
+    if (!data || typeof data !== "object") {
+      return null;
+    }
+
+    const meta = readJson(localStorage.getItem(`${storageKey}__meta`), null);
+    return {
+      data,
+      updatedAt: meta?.updatedAt || "",
+      updatedBy: meta?.updatedBy || "",
+      sourceLabel: "Copia local disponible en este navegador",
+    };
+  }
+
+  async function readRedesGuideCloudSnapshot(usernameKey, fileName, ficha) {
+    if (
+      !window._firebaseDb ||
+      typeof window._firebaseDb.cloudGetGuideData !== "function"
+    ) {
+      return null;
+    }
+
+    const cloudFileName = getRedesGuideCloudFileName(fileName, ficha);
+    if (!cloudFileName) {
+      return null;
+    }
+
+    try {
+      const snapshot = await window._firebaseDb.cloudGetGuideData(
+        getGuide2ScopeKey(usernameKey),
+        cloudFileName
+      );
+      if (!snapshot || typeof snapshot !== "object") {
+        return null;
+      }
+
+      return {
+        ...snapshot,
+        data:
+          snapshot.data && typeof snapshot.data === "object"
+            ? snapshot.data
+            : snapshot.state && typeof snapshot.state === "object"
+              ? snapshot.state
+              : {},
+        sourceLabel: "Sincronizacion compartida",
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  async function loadRedesGuideSnapshot(usernameKey, fileName, ficha) {
+    const [cloudSnapshot, localSnapshot] = await Promise.all([
+      readRedesGuideCloudSnapshot(usernameKey, fileName, ficha),
+      Promise.resolve(readRedesGuideLocalSnapshot(usernameKey, fileName, ficha)),
+    ]);
+    return pickLatestSnapshot(cloudSnapshot, localSnapshot);
+  }
+
+  function getRedesQuizQuestions(variant) {
+    const bank = window.REDES_QUIZ_VARIANTS || {};
+    return Array.isArray(bank[variant]) ? bank[variant] : [];
+  }
+
+  function extractRedesQuizSummary(snapshot, user) {
+    const state =
+      snapshot?.data && typeof snapshot.data === "object"
+        ? snapshot.data
+        : snapshot?.state && typeof snapshot.state === "object"
+          ? snapshot.state
+          : {};
+    const attempt =
+      state?.["quiz-redes-321h"] && typeof state["quiz-redes-321h"] === "object"
+        ? state["quiz-redes-321h"]
+        : null;
+    if (!attempt) {
+      return null;
+    }
+
+    return {
+      user,
+      variant: String(attempt.variant || "").trim(),
+      startedAt: attempt.startedAt || "",
+      completedAt: attempt.completedAt || "",
+      submittedAt: attempt.submittedAt || attempt.completedAt || snapshot?.updatedAt || "",
+      score: Number(attempt.score) || 0,
+      maxScore: Number(attempt.maxScore) || 100,
+      warningCount: Number(attempt.warningCount) || 0,
+      status: String(attempt.status || (attempt.locked ? "completed" : "in_progress")),
+      answers: attempt.answers && typeof attempt.answers === "object" ? { ...attempt.answers } : {},
+      results: attempt.results && typeof attempt.results === "object" ? { ...attempt.results } : {},
+      evidenceEvents: Array.isArray(attempt.evidenceEvents) ? attempt.evidenceEvents.slice() : [],
+      terminatedByVisibility: Boolean(attempt.terminatedByVisibility),
+      locked: Boolean(attempt.locked),
+      sourceLabel: snapshot?.sourceLabel || "",
+      updatedAt: attempt.submittedAt || snapshot?.updatedAt || "",
+    };
   }
 
   function clearRedesGuideLocks(snapshotState) {
@@ -1550,6 +1657,166 @@
     await Promise.all(tasks);
   }
 
+  async function hydrateRedesQuizSummaries(users) {
+    const tasks = users
+      .filter((u) => REDES_SB_CLOUD_FILES[u.ficha])
+      .map(async (user) => {
+        if (user.usernameKey in redesQuizSummaries) return;
+        const fileName = getRedesGuidePageFileByFicha(user.ficha);
+        const snapshot = await loadRedesGuideSnapshot(user.usernameKey, fileName, user.ficha);
+        redesQuizSummaries[user.usernameKey] = snapshot ? extractRedesQuizSummary(snapshot, user) : null;
+      });
+    await Promise.all(tasks);
+  }
+
+  function getRedesQuizStatusLabel(summary) {
+    if (summary.status === "terminated_visibility") {
+      return '<span style="color:#b45309;font-weight:700">Finalizado por visibilidad</span>';
+    }
+    if (summary.locked || summary.status === "completed") {
+      return '<span style="color:#166534;font-weight:700">Completado</span>';
+    }
+    return '<span style="color:#1d4ed8;font-weight:700">En progreso</span>';
+  }
+
+  function buildRedesQuizTable(rows) {
+    if (!rows.length) {
+      return '<p class="activities-loading">Ningun aprendiz de Santa Barbara ha presentado el quiz 3.2.1.H aun.</p>';
+    }
+    const headers = [
+      "Aprendiz",
+      "Ficha",
+      "Grupo",
+      "Variante",
+      "Inicio",
+      "Finalizacion",
+      "Fecha de presentacion",
+      "Puntaje",
+      "Advertencias",
+      "Estado",
+      "",
+    ];
+    return `
+      <div class="answer-table-wrap">
+        <table class="answer-table activities-table">
+          <thead><tr>${headers.map((h) => `<th>${escapeHtml(h)}</th>`).join("")}</tr></thead>
+          <tbody>${rows.map(({ summary }) => `
+            <tr>
+              <td>${escapeHtml(summary.user.fullName || summary.user.usernameKey)}</td>
+              <td>${escapeHtml(summary.user.ficha)}</td>
+              <td>${escapeHtml(summary.user.grupo)}</td>
+              <td>${escapeHtml(summary.variant || "Sin asignar")}</td>
+              <td>${escapeHtml(formatDate(summary.startedAt))}</td>
+              <td>${escapeHtml(formatDate(summary.completedAt))}</td>
+              <td>${escapeHtml(formatDate(summary.submittedAt))}</td>
+              <td>${escapeHtml(String(summary.score))} / ${escapeHtml(String(summary.maxScore || 100))}</td>
+              <td>${escapeHtml(String(summary.warningCount))}</td>
+              <td>${getRedesQuizStatusLabel(summary)}</td>
+              <td>
+                <button class="btn ghost" type="button" data-view-redes-quiz="${escapeHtml(summary.user.usernameKey)}">
+                  Ver detalle
+                </button>
+              </td>
+            </tr>`).join("")}
+          </tbody>
+        </table>
+      </div>`;
+  }
+
+  function renderRedesQuizDetail(summary) {
+    const questions = getRedesQuizQuestions(summary.variant);
+    const rows = questions.map((question, index) => {
+      const selectedIndex = Number(summary.answers?.[question.id]);
+      const selectedText =
+        Number.isInteger(selectedIndex) && question.options?.[selectedIndex]
+          ? question.options[selectedIndex]
+          : "(sin respuesta)";
+      const correctText = question.options?.[question.correctIndex] || "Sin respuesta correcta";
+      return [
+        `${index + 1}. ${question.prompt}`,
+        selectedText,
+        correctText,
+        summary.results?.[question.id] ? "Correcta" : "Incorrecta",
+      ];
+    });
+
+    const evidenceHtml = summary.evidenceEvents.length
+      ? `<div class="answer-card">
+          <h3>Evidencia de visibilidad</h3>
+          <ul style="margin:0;padding-left:18px;line-height:1.7">
+            ${summary.evidenceEvents.map((event) => `
+              <li>
+                Advertencia ${escapeHtml(String(event.warningNumber || "?"))}
+                &mdash; ${escapeHtml(formatDate(event.timestamp))}
+                &mdash; estado ${escapeHtml(event.visibilityState || "hidden")}
+              </li>`).join("")}
+          </ul>
+        </div>`
+      : `<div class="answer-card">
+          <h3>Evidencia de visibilidad</h3>
+          <p>Sin advertencias registradas.</p>
+        </div>`;
+
+    return `
+      <div class="guide2-response-grid">
+        <article class="answer-card">
+          <h3>Resumen del intento</h3>
+          ${renderAnswerTable(
+            ["Campo", "Valor"],
+            [
+              ["Variante", summary.variant || "Sin asignar"],
+              ["Inicio", formatDate(summary.startedAt)],
+              ["Finalizacion", formatDate(summary.completedAt)],
+              ["Fecha de presentacion", formatDate(summary.submittedAt)],
+              ["Puntaje", `${summary.score} / ${summary.maxScore || 100}`],
+              ["Advertencias", String(summary.warningCount)],
+              [
+                "Estado",
+                summary.status === "terminated_visibility"
+                  ? "Finalizado por visibilidad"
+                  : summary.locked
+                    ? "Completado"
+                    : "En progreso",
+              ],
+              ["Origen", summary.sourceLabel || "Sin registro"],
+            ]
+          )}
+        </article>
+        <article class="answer-card">
+          <h3>Preguntas y respuestas</h3>
+          ${renderAnswerTable(
+            ["Pregunta", "Respuesta del aprendiz", "Respuesta correcta", "Resultado"],
+            rows
+          )}
+        </article>
+        ${evidenceHtml}
+      </div>
+    `;
+  }
+
+  async function handleViewRedesQuiz(button) {
+    const usernameKey = button.getAttribute("data-view-redes-quiz") || "";
+    const summary = redesQuizSummaries[usernameKey] || null;
+    const user = allUsers.find((item) => item.usernameKey === usernameKey) || summary?.user || null;
+
+    if (!summary || !user) {
+      setFeedback("No fue posible cargar el detalle del quiz de redes.", "error");
+      return;
+    }
+
+    openGuide2ResponsesModal({
+      title: "Quiz 3.2.1.H - Redes Santa Barbara",
+      subtitle: `${user.fullName || user.usernameKey} | Variante ${summary.variant || "Sin asignar"}`,
+      meta: [
+        `Aprendiz: ${user.fullName || user.usernameKey}`,
+        `Grupo: ${user.grupo}`,
+        `Ficha: ${user.ficha}`,
+        `Fecha de presentacion: ${formatDate(summary.submittedAt)}`,
+      ].join(" | "),
+      bodyHtml: renderRedesQuizDetail(summary),
+    });
+  }
+
   function buildRedesSocializacionTable(rows) {
     if (!rows.length) {
       return '<p class="activities-loading">Ning\u00fan aprendiz de Santa B\u00e1rbara ha enviado notas de socializaci\u00f3n a\u00fan.</p>';
@@ -1641,6 +1908,11 @@
       .map((u) => redesSocializacionSummaries[u.usernameKey])
       .filter(Boolean)
       .map((summary) => ({ summary }));
+    const redesQuizLoading = redesSbUsers.some((u) => !(u.usernameKey in redesQuizSummaries));
+    const redesQuizRows = redesSbUsers
+      .map((u) => redesQuizSummaries[u.usernameKey])
+      .filter(Boolean)
+      .map((summary) => ({ summary }));
 
     container.innerHTML = `
       <section class="panel">
@@ -1658,6 +1930,10 @@
       <section class="panel">
         <h2>Actividad 3.2.2 \u2014 Matriz de Diagn\u00f3stico Digital (finalizadas)</h2>
         ${stillLoading ? loadingHtml : buildMatriz322Table(matriz322Rows)}
+      </section>
+      <section class="panel">
+        <h2>Quiz 3.2.1.H - Redes Santa Barbara</h2>
+        ${redesQuizLoading ? loadingHtml : buildRedesQuizTable(redesQuizRows)}
       </section>
       <section class="panel">
         <h2>Socializaci\u00f3n 3.1.1 \u2014 Santa B\u00e1rbara (notas enviadas)</h2>
@@ -1700,11 +1976,13 @@
     guide2MatchingGameSummaries = {};
     fichaCasoSummaries = {};
     redesSocializacionSummaries = {};
+    redesQuizSummaries = {};
     renderUsers();
     await Promise.all([
       hydrateGuide2WordSearchSummaries(allUsers),
       hydrateFichaCasoSummaries(allUsers),
       hydrateRedesSocializacionSummaries(allUsers),
+      hydrateRedesQuizSummaries(allUsers),
     ]);
     renderUsers();
   }
@@ -1854,6 +2132,12 @@
       const viewGuide2Button = event.target.closest("[data-view-guide2]");
       if (viewGuide2Button) {
         await handleViewGuide2Responses(viewGuide2Button);
+        return;
+      }
+
+      const viewRedesQuizButton = event.target.closest("[data-view-redes-quiz]");
+      if (viewRedesQuizButton) {
+        await handleViewRedesQuiz(viewRedesQuizButton);
         return;
       }
 
