@@ -1280,9 +1280,29 @@ function applyAllLocksRedes() {
   applyBloqueIP3Lock();
 }
 
-function enforceLockFlagsFromRemote(remoteData) {
-  // Los flags de bloqueo en Firebase son autoritativos: si Firebase dice bloqueado, siempre se aplica
-  LOCK_KEYS_REDES.forEach((k) => { if (remoteData[k]) state[k] = true; });
+function syncAuthoritativeLockFlagsFromRemoteRedes(remoteData) {
+  const syncResult =
+    _redesLockSync && typeof _redesLockSync.syncAuthoritativeLockFlagsOnlyRedes === "function"
+      ? _redesLockSync.syncAuthoritativeLockFlagsOnlyRedes(state, remoteData, LOCK_KEYS_REDES)
+      : (() => {
+          const nextState = state && typeof state === "object" ? { ...state } : {};
+          let changed = false;
+          LOCK_KEYS_REDES.forEach((key) => {
+            if (remoteData && remoteData[key]) {
+              if (!nextState[key]) changed = true;
+              nextState[key] = true;
+              return;
+            }
+            if (Object.prototype.hasOwnProperty.call(nextState, key)) {
+              changed = true;
+              delete nextState[key];
+            }
+          });
+          return { state: nextState, changed };
+        })();
+
+  state = syncResult.state;
+  return syncResult;
 }
 
 async function saveToCloudRedes() {
@@ -1304,12 +1324,22 @@ async function initCloudSyncRedes() {
   try {
     const remote = await window._firebaseDb.cloudGetGuideData(scopeKey, GUIDE_DATA_FILE_REDES);
     if (remote?.data && Object.keys(remote.data).length > 0) {
-      enforceLockFlagsFromRemote(remote.data);
+      const lockSync = snapshotTimeRedes(remote) > localSnapshotTimeRedes()
+        ? null
+        : syncAuthoritativeLockFlagsFromRemoteRedes(remote.data);
       if (snapshotTimeRedes(remote) > localSnapshotTimeRedes()) {
         applyCloudSnapshotRedes(remote);
       } else {
-        applyAllLocksRedes(); // aunque el local sea más nuevo, respeta bloqueos de Firebase
-        scheduleCloudSyncRedes();
+        applyAllLocksRedes(); // aunque el local sea más nuevo, Firebase sigue mandando el estado de bloqueo
+        renderQuizRedesStatus();
+        updateProgressRedes();
+        if (lockSync?.changed) {
+          saveStateRedes({
+            updatedAt: readStateMetaRedes().updatedAt || new Date().toISOString(),
+          });
+        } else {
+          scheduleCloudSyncRedes();
+        }
       }
     }
     _cloudRefreshTimer = setInterval(async () => {
@@ -1323,11 +1353,20 @@ async function initCloudSyncRedes() {
       try {
         const refreshed = await window._firebaseDb.cloudGetGuideData(scopeKey, GUIDE_DATA_FILE_REDES);
         if (refreshed?.data) {
-          enforceLockFlagsFromRemote(refreshed.data);
+          const lockSync = snapshotTimeRedes(refreshed) > localSnapshotTimeRedes()
+            ? null
+            : syncAuthoritativeLockFlagsFromRemoteRedes(refreshed.data);
           if (snapshotTimeRedes(refreshed) > localSnapshotTimeRedes()) {
             applyCloudSnapshotRedes(refreshed);
           } else {
             applyAllLocksRedes();
+            renderQuizRedesStatus();
+            updateProgressRedes();
+            if (lockSync?.changed) {
+              saveStateRedes({
+                updatedAt: readStateMetaRedes().updatedAt || new Date().toISOString(),
+              });
+            }
           }
         }
       } catch {}

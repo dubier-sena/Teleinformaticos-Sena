@@ -418,6 +418,28 @@
     return { state: nextState, changed };
   }
 
+  function buildRedesGuideSnapshotPayload(snapshot, nextState, updatedAt, updatedBy) {
+    if (typeof window.redesLockSync?.buildRedesGuideSnapshot === "function") {
+      return window.redesLockSync.buildRedesGuideSnapshot(snapshot, nextState, {
+        updatedAt,
+        updatedBy,
+      });
+    }
+
+    const safeSnapshot =
+      snapshot && typeof snapshot === "object" ? { ...snapshot } : {};
+    const safeState =
+      nextState && typeof nextState === "object" ? { ...nextState } : {};
+
+    return {
+      ...safeSnapshot,
+      data: safeState,
+      state: safeState,
+      updatedAt,
+      updatedBy,
+    };
+  }
+
   function getRedesQuizConfig(quizKey) {
     const cleanQuizKey = String(quizKey || "").trim();
     return REDES_ADMIN_QUIZ_CONFIGS.find((config) => config.key === cleanQuizKey) || null;
@@ -1732,12 +1754,16 @@
         const cloudUnlock = clearRedesGuideLocks(snapshot?.state || snapshot?.data || {});
         if (cloudUnlock.changed) {
           changed = true;
-          await window._firebaseDb.cloudSaveGuideData(scopeKey, cloudFileName, {
-            ...(snapshot && typeof snapshot === "object" ? snapshot : {}),
-            state: cloudUnlock.state,
-            updatedAt,
-            updatedBy: "admin-redes-unlock",
-          });
+          await window._firebaseDb.cloudSaveGuideData(
+            scopeKey,
+            cloudFileName,
+            buildRedesGuideSnapshotPayload(
+              snapshot,
+              cloudUnlock.state,
+              updatedAt,
+              "admin-redes-unlock"
+            )
+          );
         }
       }
 
