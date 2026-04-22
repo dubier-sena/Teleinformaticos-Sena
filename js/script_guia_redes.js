@@ -1225,6 +1225,7 @@ const LOCK_KEYS_REDES = [
   "ip1-locked",
   "ip2-locked",
   "ip3-locked",
+  "taller-ip-ej1-locked",
 ];
 
 function getCloudScopeKeyRedes() {
@@ -1278,6 +1279,7 @@ function applyAllLocksRedes() {
   applyBloqueIP1Lock();
   applyBloqueIP2Lock();
   applyBloqueIP3Lock();
+  applyTallerIPEj1Lock();
 }
 
 function syncAuthoritativeLockFlagsFromRemoteRedes(remoteData) {
@@ -1628,6 +1630,49 @@ window.guardarBloqueIP2 = async function () {
   saveStateRedes();
   await saveToCloudRedes();
   applyBloqueIP2Lock();
+};
+
+// ---------------------------------------------------------------------------
+// Taller IP — Ejercicio 1 (3.3.4)
+// ---------------------------------------------------------------------------
+const TALLER_IP_EJ1_KEYS = [
+  "ej1-a-clase",
+  "ej1-a-mask",
+  "ej1-b-clase",
+  "ej1-b-mask",
+  "ej1-c-clase",
+  "ej1-c-mask",
+  "ej1-d-clase",
+  "ej1-d-mask",
+];
+
+function applyTallerIPEj1Lock() {
+  const locked = Boolean(state["taller-ip-ej1-locked"]);
+  document.querySelectorAll("[data-store^='ej1-']").forEach((el) => {
+    el.disabled = locked;
+    el.style.opacity = locked ? "0.75" : "";
+  });
+  const btn = document.getElementById("btnGuardarTallerIPEj1");
+  if (btn) {
+    btn.disabled = locked;
+    btn.textContent = locked ? "\u2705 Respuestas guardadas" : "\uD83D\uDCBE Guardar respuestas";
+  }
+  const status = document.getElementById("tallerIPEj1Status");
+  if (status) status.style.display = locked ? "block" : "none";
+}
+
+window.guardarTallerIPEj1 = async function () {
+  const empty = TALLER_IP_EJ1_KEYS.filter((k) => !String(state[k] || "").trim());
+  if (empty.length > 0) {
+    alert("Completa todas las respuestas del Ejercicio 1 antes de guardar.");
+    return;
+  }
+  const btn = document.getElementById("btnGuardarTallerIPEj1");
+  if (btn) { btn.disabled = true; btn.textContent = "Guardando\u2026"; }
+  state["taller-ip-ej1-locked"] = true;
+  saveStateRedes();
+  await saveToCloudRedes();
+  applyTallerIPEj1Lock();
 };
 
 window.showVideoBloqueIP3 = function (n) {
@@ -2151,6 +2196,41 @@ const TEORIA_PANEL_CONTENTS = {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+      <div class="tp-sec">
+        <p class="tp-h">Mascara por defecto con ejemplos</p>
+        <div class="tp-card">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px">
+            <div style="background:#fff;padding:12px;border-radius:8px;border-left:4px solid #2e7d32">
+              <div style="font-weight:800;color:#1b5e20;margin-bottom:4px">Clase A</div>
+              <div style="font-size:.82rem;color:#546e7a;margin-bottom:6px">Mascara por defecto: <strong>255.0.0.0</strong> /8</div>
+              <div style="font-size:.8rem;color:#37474f;line-height:1.5">
+                Ejemplo: <code style="background:#f1f8e9;padding:2px 5px;border-radius:4px">10.5.20.1</code><br>
+                Red por defecto: <strong>10.0.0.0</strong>
+              </div>
+            </div>
+            <div style="background:#fff;padding:12px;border-radius:8px;border-left:4px solid #1565c0">
+              <div style="font-weight:800;color:#1565c0;margin-bottom:4px">Clase B</div>
+              <div style="font-size:.82rem;color:#546e7a;margin-bottom:6px">Mascara por defecto: <strong>255.255.0.0</strong> /16</div>
+              <div style="font-size:.8rem;color:#37474f;line-height:1.5">
+                Ejemplo: <code style="background:#e3f2fd;padding:2px 5px;border-radius:4px">172.20.0.1</code><br>
+                Red por defecto: <strong>172.20.0.0</strong>
+              </div>
+            </div>
+            <div style="background:#fff;padding:12px;border-radius:8px;border-left:4px solid #6a1b9a">
+              <div style="font-weight:800;color:#6a1b9a;margin-bottom:4px">Clase C</div>
+              <div style="font-size:.82rem;color:#546e7a;margin-bottom:6px">Mascara por defecto: <strong>255.255.255.0</strong> /24</div>
+              <div style="font-size:.8rem;color:#37474f;line-height:1.5">
+                Ejemplo: <code style="background:#f3e5f5;padding:2px 5px;border-radius:4px">192.168.1.50</code><br>
+                Red por defecto: <strong>192.168.1.0</strong>
+              </div>
+            </div>
+          </div>
+          <p style="color:#546e7a;font-size:.8rem;margin:10px 0 0;line-height:1.55">
+            Regla rapida: la mascara por defecto te dice cuantos octetos pertenecen a la red.
+            Clase A usa 1 octeto de red, Clase B usa 2 y Clase C usa 3.
+          </p>
         </div>
       </div>
       <div class="tp-sec">

@@ -29,7 +29,7 @@
 <script defer src="data/calendario_2026_records.js?v=20260410_1"></script>
 <script defer src="data/calendario_2026_seed.js?v=20260410_1"></script>
 <script defer src="js/redes_lock_sync.js?v=20260422_2"></script>
-<script defer src="js/script_guia_redes.js?v=20260422_2"></script>
+<script defer src="js/script_guia_redes.js?v=20260422_3"></script>
 <script defer src="js/guia_template.js?v=20260411_1"></script>
 </head>
 <body
@@ -1294,6 +1294,19 @@
                 <h3>Ejercicio 1 &mdash; Identificar clases de direcciones IP</h3>
                 <p>Identifica la clase a la que pertenece cada direcci&oacute;n IP y escribe su m&aacute;scara por defecto.</p>
                 <div class="info-box" style="margin:10px 0 10px 0"><p>&#128161; Clase A: primer octeto 1&ndash;126 &middot; Clase B: 128&ndash;191 &middot; Clase C: 192&ndash;223</p></div>
+                <div style="margin:14px 0 12px">
+                  <button type="button" onclick="abrirTeoriaPanel('ip2')"
+                    style="display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,#007934,#0a5c31);color:#fff;border:none;padding:13px 22px;border-radius:12px;font-weight:700;font-size:.9rem;box-shadow:0 6px 18px rgba(7,26,18,.18);cursor:pointer;font-family:inherit;transition:all .2s ease"
+                    onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 10px 28px rgba(7,26,18,.25)'"
+                    onmouseout="this.style.transform='';this.style.boxShadow='0 6px 18px rgba(7,26,18,.18)'">
+                    <span style="font-size:1.3rem">&#128218;</span>
+                    <span>
+                      <span style="display:block;font-size:.75rem;font-weight:600;opacity:.8;letter-spacing:.04em">MATERIAL DE APOYO INTERACTIVO</span>
+                      Tipos de Clase de IP con ejemplos
+                    </span>
+                    <span style="margin-left:6px;font-size:1rem;opacity:.7">&#8594;</span>
+                  </button>
+                </div>
                 <div class="table-scroll">
                   <table class="data-table">
                     <thead>
@@ -1322,6 +1335,15 @@
                       </tr>
                     </tbody>
                   </table>
+                </div>
+                <div style="margin-top:16px">
+                  <button type="button" id="btnGuardarTallerIPEj1" onclick="guardarTallerIPEj1()"
+                    style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                    &#128190; Guardar respuestas
+                  </button>
+                </div>
+                <div id="tallerIPEj1Status" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                  &#9989; Respuestas guardadas en Firebase. Ya no se pueden modificar.
                 </div>
               </div>
 
