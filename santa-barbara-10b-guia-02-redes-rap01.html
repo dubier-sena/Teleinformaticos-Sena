@@ -905,6 +905,33 @@
             </div>
           </div>
 
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.2.1.H</span>
+              <span class="activity-title">&#129504; Quiz individual de fundamentos de redes</span>
+              <span class="mission-chip">Mision individual</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text">
+                Presenta un quiz individual de 10 preguntas sobre los bloques <strong>A</strong> a <strong>E</strong>.
+                La variante se asigna al azar y el sistema vigila cambios de pesta&ntilde;a con Page Visibility API.
+              </p>
+              <div class="warning-box" style="margin-top:12px">
+                <strong>&#9888; Regla de integridad:</strong> el quiz tiene puntaje m&aacute;ximo de <strong>100</strong>.
+                Hay <strong>2 advertencias por cambio de pesta&ntilde;a</strong>; en la segunda advertencia se env&iacute;a
+                autom&aacute;ticamente lo que lleves contestado y ya no podr&aacute;s responder m&aacute;s.
+              </div>
+              <div id="quizRedesStatus" class="info-box blue" style="margin-top:14px;display:none"></div>
+              <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+                <a id="quizRedesActionLink" class="btn-drive" href="santa-barbara-10b-guia-02-redes-rap01-quiz.html"
+                  style="min-height:unset;border-radius:10px;padding:10px 20px;font-size:0.95rem;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none">
+                  &#128218; Presentar quiz aleatorio
+                </a>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
 

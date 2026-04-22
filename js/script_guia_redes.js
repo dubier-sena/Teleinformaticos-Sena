@@ -50,6 +50,14 @@ const evidenceRows = [
   {
     phase: "Analisis",
     project: "Diagnosticar el estado de la infraestructura de redes y equipos informaticos y solicitudes de servicio tecnico presente en el entorno de trabajo.",
+    learning: "Quiz individual de fundamentos de redes (3.2.1.H).",
+    evidence: "Resultado registrado en plataforma con puntaje sobre 100 y evidencia de advertencias por cambio de pestana.",
+    criteria: "Reconoce conceptos clave sobre tipos de redes, topologias, medios de transmision, dispositivos de interconexion y modelo OSI/TCP-IP.",
+    methods: "Tecnica: Prueba objetiva. Instrumento: Quiz de seleccion multiple con control de integridad por visibilidad.",
+  },
+  {
+    phase: "Analisis",
+    project: "Diagnosticar el estado de la infraestructura de redes y equipos informaticos y solicitudes de servicio tecnico presente en el entorno de trabajo.",
     learning: "Taller de direccionamiento IP (Ejercicios 1-5) + verificacion ipconfig /all.",
     evidence: "Producto: Taller_IP_NombreAprendiz_FICHA.pdf + captura de pantalla ipconfig (Ejercicio 4).",
     criteria: "Identifica clase y mascara por defecto de IPv4. Determina red/host y asigna IPs validas evitando red/broadcast. Explica funcion de IP, mascara, gateway y DNS. Muestra procedimiento y justifica decisiones.",
@@ -268,6 +276,68 @@ function renderEvidenceTable() {
       </tr>`
     )
     .join("");
+}
+
+function formatQuizDateRedes(value) {
+  if (!value) return "Sin registro";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "Sin registro";
+  return parsed.toLocaleString("es-CO", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function getQuizStatusLabelRedes(attempt) {
+  if (!attempt || typeof attempt !== "object") return "Pendiente";
+  if (attempt.status === "terminated_visibility") return "Finalizado por visibilidad";
+  if (attempt.locked || attempt.status === "completed") return "Completado";
+  if (attempt.startedAt) return "En progreso";
+  return "Pendiente";
+}
+
+function renderQuizRedesStatus() {
+  const panel = document.getElementById("quizRedesStatus");
+  const actionLink = document.getElementById("quizRedesActionLink");
+  const attempt = state?.["quiz-redes-321h"];
+
+  if (!panel || !actionLink) {
+    return;
+  }
+
+  if (!attempt || typeof attempt !== "object") {
+    panel.style.display = "none";
+    actionLink.innerHTML = "&#128218; Presentar quiz aleatorio";
+    return;
+  }
+
+  const statusLabel = getQuizStatusLabelRedes(attempt);
+  const variant = String(attempt.variant || "Sin asignar");
+  const warningCount = Number(attempt.warningCount) || 0;
+  const score = Number(attempt.score) || 0;
+  const maxScore = Number(attempt.maxScore) || 100;
+  const submittedAt = attempt.submittedAt || attempt.completedAt || "";
+
+  panel.style.display = "block";
+  panel.innerHTML =
+    `<div class="label">&#128221; Estado del quiz 3.2.1.H</div>` +
+    `<p style="margin:8px 0 0"><strong>Estado:</strong> ${escapeHtml(statusLabel)} | ` +
+    `<strong>Variante:</strong> ${escapeHtml(variant)} | ` +
+    `<strong>Advertencias:</strong> ${escapeHtml(String(warningCount))} / 2</p>` +
+    (attempt.locked
+      ? `<p style="margin:8px 0 0"><strong>Puntaje:</strong> ${escapeHtml(String(score))} / ${escapeHtml(String(maxScore))} | ` +
+        `<strong>Presentado:</strong> ${escapeHtml(formatQuizDateRedes(submittedAt))}</p>`
+      : `<p style="margin:8px 0 0">Tienes un intento iniciado. Si vuelves a entrar, continuaras con la misma variante asignada.</p>`);
+
+  if (attempt.locked) {
+    actionLink.innerHTML = "&#128065; Ver quiz presentado";
+    return;
+  }
+
+  actionLink.innerHTML = "&#9205; Continuar quiz";
 }
 
 function renderGlossary() {
@@ -978,38 +1048,43 @@ window.exportarWordContextualizacion = async function (evt) {
     });
 
     const blob = await Packer.toBlob(doc);
-    const fileBase64 = await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result.split(",").pop());
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
+    const file = new File([blob], fileName, {
+      type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     });
 
-    const delivery = window.sharedAppsScriptDelivery;
-    if (!delivery || typeof delivery.uploadToAppsScript !== "function") {
+    if (
+      !window.sharedAppsScriptDelivery ||
+      typeof window.sharedAppsScriptDelivery.openDeliveryModal !== "function"
+    ) {
       throw new Error("El sistema de entrega no está disponible.");
     }
-    const response = await delivery.uploadToAppsScript({
+
+    window.sharedAppsScriptDelivery.openDeliveryModal({
       guideLabel: "Guia 2",
-      activityLabel: "Exploracion Contextual 3.2.1",
+      activityLabel: "Actividad 3.2.1",
       activityNumber: "3.2.1",
       activityTitle: "Exploracion Visual por Bloques Tematicos",
-      fileName,
-      mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      fileBase64,
-      fullName, ficha, grupo,
-      submittedAt: new Date().toISOString(),
+      allowedExtensions: [".docx"],
+      fileNamePrefix: "Exploracion_Contextual",
+      learnerNameMode: "full",
     });
 
-    if (btn) {
-      if (response && response.driveUrl) {
-        btn.innerHTML = `&#9989; Word entregado &mdash; <a href="${response.driveUrl}" target="_blank" rel="noopener" style="color:#fff;text-decoration:underline">Ver en Drive</a>`;
-        btn.style.background = "linear-gradient(135deg,#1b5e20,#2e7d32)";
-      } else {
-        btn.innerHTML = "&#9989; Word entregado en Drive";
-        btn.style.background = "linear-gradient(135deg,#1b5e20,#2e7d32)";
+    setTimeout(() => {
+      const fileInput = document.querySelector("[data-shared-apps-file]");
+      if (!fileInput) return;
+      try {
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        fileInput.files = dt.files;
+        fileInput.dispatchEvent(new Event("change", { bubbles: true }));
+      } catch (_) {
+        // Si DataTransfer no está disponible, el modal queda abierto para selección manual.
       }
+    }, 80);
+
+    if (btn) {
       btn.disabled = false;
+      btn.innerHTML = origHTML;
     }
 
   } catch (err) {
@@ -1159,6 +1234,7 @@ function applyCloudSnapshotRedes(snapshot) {
     updatedAt: snapshot?.updatedAt || new Date().toISOString(),
   });
   hydrateFieldsRedes();
+  renderQuizRedesStatus();
   updateProgressRedes();
 }
 
@@ -2198,6 +2274,7 @@ window.cerrarTeoriaPanel = function () {
 document.addEventListener("DOMContentLoaded", () => {
   state = loadStateRedes();
   renderEvidenceTable();
+  renderQuizRedesStatus();
   renderGlossary();
   renderSupportMaterialsRedes();
   renderTopbarCampus();
