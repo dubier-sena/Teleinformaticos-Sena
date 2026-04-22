@@ -35,6 +35,7 @@
     "ip1-locked",
     "ip2-locked",
     "ip3-locked",
+    "taller-ip-ej1-locked",
     "social-locked",
   ];
   const REDES_ADMIN_QUIZ_CONFIGS = Array.isArray(window.redesQuizUnlock?.REDES_ADMIN_QUIZ_CONFIGS)
