@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta
+  http-equiv="Content-Security-Policy"
+  content="default-src 'self' blob: data:; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https:; media-src 'self' blob: data: https:; frame-src 'self' https://player.vimeo.com https://www.youtube.com;"
+>
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Quiz 3.2.1.H | Redes Santa Barbara 10A</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/site_tokens.css?v=20260412_2">
+<link rel="stylesheet" href="css/shared_shell.css?v=20260412_2">
+<link rel="stylesheet" href="css/page_redes_quiz.css?v=20260421_1">
+<script src="js/portal_auth.js?v=20260417_1"></script>
+<script src="js/firebase-config.js?v=20260414_1"></script>
+<script src="js/firebase_db.js?v=20260410_1"></script>
+<script defer src="js/redes_quiz_bank.js?v=20260421_1"></script>
+<script defer src="js/script_redes_quiz.js?v=20260421_1"></script>
+</head>
+<body
+  class="app-shell redes-quiz-page"
+  data-quiz-group="10A"
+  data-quiz-ficha="3441944"
+  data-quiz-cloud-file="sb_10a_redes.html"
+  data-quiz-page-file="santa-barbara-10a-guia-02-redes-rap01.html"
+  data-quiz-back-link="santa-barbara-10a-guia-02-redes-rap01.html#contexto"
+>
+  <main class="redes-quiz-shell">
+    <section class="redes-quiz-hero">
+      <div class="redes-quiz-kicker">Guia 2 &middot; Actividad 3.2.1.H</div>
+      <h1>Quiz individual de fundamentos de redes</h1>
+      <p>
+        Presenta un quiz aleatorio de 10 preguntas sobre tipos de redes, topologias, medios de transmision,
+        dispositivos de interconexion y modelo OSI / TCP/IP. El intento usa Page Visibility API y se
+        finaliza automaticamente en la segunda salida de pestana.
+      </p>
+    </section>
+
+    <section class="redes-quiz-grid">
+      <div class="redes-quiz-card">
+        <h2>Reglas del intento</h2>
+        <ul class="redes-quiz-rules">
+          <li>El quiz usa una variante al azar entre <strong>A</strong>, <strong>B</strong> y <strong>C</strong> al momento de iniciar.</li>
+          <li>Son 10 preguntas de seleccion multiple con puntaje maximo de 100.</li>
+          <li>Hay 2 advertencias por cambio de pestana. En la segunda advertencia el sistema envia lo contestado y bloquea el intento.</li>
+          <li>Cuando el intento queda finalizado, ya no se permite contestar mas.</li>
+        </ul>
+        <div class="redes-quiz-actions">
+          <button type="button" class="redes-quiz-button" id="quizStartBtn">Iniciar quiz</button>
+          <a class="redes-quiz-link" id="quizBackLink" href="santa-barbara-10a-guia-02-redes-rap01.html#contexto">Volver a la guia</a>
+        </div>
+        <div class="redes-quiz-status" id="quizStatus">Listo para iniciar. La variante se asignara al azar cuando pulses "Iniciar quiz".</div>
+        <div class="redes-quiz-alert" id="quizAlertPanel"></div>
+        <div class="redes-quiz-lock" id="quizLockBanner"></div>
+      </div>
+
+      <aside class="redes-quiz-card">
+        <h3>Seguimiento del intento</h3>
+        <div class="redes-quiz-stats">
+          <div class="redes-quiz-stat">
+            <span>Variante</span>
+            <strong id="quizVariant">Sin asignar</strong>
+          </div>
+          <div class="redes-quiz-stat">
+            <span>Respondidas</span>
+            <strong id="quizAnswered">0 / 10</strong>
+          </div>
+          <div class="redes-quiz-stat">
+            <span>Advertencias</span>
+            <strong id="quizWarnings">0 / 2</strong>
+          </div>
+          <div class="redes-quiz-stat">
+            <span>Puntaje</span>
+            <strong id="quizScore">Pendiente</strong>
+          </div>
+        </div>
+        <div class="redes-quiz-actions">
+          <button type="button" class="redes-quiz-button secondary" id="quizSubmitBtn" disabled>Enviar y finalizar</button>
+        </div>
+      </aside>
+    </section>
+
+    <section class="redes-quiz-card" style="margin-top:22px">
+      <h2>Cuestionario</h2>
+      <div class="redes-quiz-empty" id="quizEmptyState">
+        Pulsa <strong>Iniciar quiz</strong> para cargar la variante aleatoria y comenzar el intento. Esta pagina mantiene
+        las preguntas fuera del HTML estatico y las renderiza dinamicamente.
+      </div>
+      <div class="redes-quiz-question-list" id="quizQuestions" hidden></div>
+    </section>
+  </main>
+</body>
+</html>
