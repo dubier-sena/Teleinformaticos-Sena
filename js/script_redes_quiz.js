@@ -1,12 +1,11 @@
 (function () {
   "use strict";
 
+  const auth = window.portalAuth || null;
+  const body = document.body || {};
   const QUIZ_STORAGE_KEY = String(body.dataset.quizStorageKey || "quiz-redes-321h").trim();
   const WARNING_LIMIT = 2;
   const CLOUD_SYNC_DELAY_MS = 600;
-
-  const auth = window.portalAuth || null;
-  const body = document.body || {};
 
   const config = {
     group: String(body.dataset.quizGroup || "").trim(),
