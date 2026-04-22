@@ -43,12 +43,24 @@
     return auth && typeof auth.getCurrentSession === "function" ? auth.getCurrentSession() : null;
   }
 
+  function isAdminPreview() {
+    const session = getCurrentSession();
+    return Boolean(session && session.role === "admin");
+  }
+
   function getStudentUser() {
     const session = getCurrentSession();
     if (!session || session.role !== "student" || !session.user) {
       return null;
     }
     return session.user;
+  }
+
+  function getEffectiveUser() {
+    if (isAdminPreview()) {
+      return { usernameKey: "__admin_preview__", name: "Admin (vista previa)" };
+    }
+    return getStudentUser();
   }
 
   function getScopeKey() {
@@ -244,7 +256,7 @@
   }
 
   async function persistAttempt(forceCloud) {
-    if (!attempt) {
+    if (!attempt || isAdminPreview()) {
       return;
     }
     const updatedAt = new Date().toISOString();
@@ -430,7 +442,7 @@
     renderQuestions();
     renderLockedState();
 
-    const hasSession = Boolean(getStudentUser());
+    const hasSession = Boolean(getEffectiveUser());
     if (!hasSession) {
       if (ui.startBtn) {
         ui.startBtn.disabled = true;
@@ -440,6 +452,10 @@
       }
       setStatus("Debes ingresar al portal como aprendiz para presentar este quiz.");
       return;
+    }
+
+    if (isAdminPreview()) {
+      setStatus("Vista previa de administrador — las respuestas no se guardan.");
     }
 
     if (!attempt) {
@@ -509,7 +525,7 @@
   }
 
   async function startQuiz() {
-    const user = getStudentUser();
+    const user = getEffectiveUser();
     if (!user) {
       setStatus("Debes ingresar al portal como aprendiz para presentar este quiz.");
       return;
