@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const QUIZ_STORAGE_KEY = "quiz-redes-321h";
+  const QUIZ_STORAGE_KEY = String(body.dataset.quizStorageKey || "quiz-redes-321h").trim();
   const WARNING_LIMIT = 2;
   const CLOUD_SYNC_DELAY_MS = 600;
 
@@ -149,9 +149,8 @@
   }
 
   function getVariantBank() {
-    return window.REDES_QUIZ_VARIANTS && typeof window.REDES_QUIZ_VARIANTS === "object"
-      ? window.REDES_QUIZ_VARIANTS
-      : {};
+    const varName = String(body.dataset.quizBankVar || "REDES_QUIZ_VARIANTS").trim();
+    return window[varName] && typeof window[varName] === "object" ? window[varName] : {};
   }
 
   function chooseRandomVariant() {

@@ -1409,144 +1409,112 @@ window.subirReflexion311AlDrive = function () {
 };
 
 // ---------------------------------------------------------------------------
-// Word / Drive — Bloques IP1, IP2, IP3
+// Generar Word combinado — Bloques IP 1–3 (3.3.1 / 3.3.2 / 3.3.3)
 // ---------------------------------------------------------------------------
-function buildBloqueIP1WordFile() {
-  const sel = getGuideSelectionRedes();
-  const labels = [
-    "1. Una dirección IP tiene 4 números separados por puntos (ej. 192.168.1.10). ¿Qué representa cada número?",
-    "2. ¿Qué significa que una dirección IP tiene una parte de red y una parte de host?",
-    "3. ¿Por qué no puede haber dos dispositivos con la misma IP en la misma red?",
-  ];
-  const rows = BLOQUE_IP1_KEYS.map((k, i) => `
-    <p><b>${escapeHtml(labels[i])}</b></p>
-    <p style="margin-left:20px;white-space:pre-wrap">${escapeHtml(String(state[k] || "(sin respuesta)"))}</p><br>`).join("");
-  const imgSection = state["ip1-imagen-url"]
-    ? `<h2>Producto — Diagrama IPv4</h2><p><a href="${state["ip1-imagen-url"]}">Ver diagrama en Drive</a></p>`
-    : "";
-  const html = `<html xmlns:o='urn:schemas-microsoft-com:office:office'
-    xmlns:w='urn:schemas-microsoft-com:office:word'
-    xmlns='http://www.w3.org/TR/REC-html40'>
-<head><meta charset='utf-8'><title>Bloque 1 IPv4</title>
+window.exportarWordBloques123IP = function (evt) {
+  const btn = evt && evt.currentTarget ? evt.currentTarget
+    : document.querySelector('[onclick*="exportarWordBloques123IP"]');
+  const origHTML = btn ? btn.innerHTML : "";
+  if (btn) { btn.disabled = true; btn.innerHTML = "&#9203; Generando Word\u2026"; }
+
+  try {
+    const sel = getGuideSelectionRedes();
+    const fullName = sel.fullName || sel.usernameKey || "Aprendiz";
+    const ficha    = sel.ficha || "0000";
+
+    function val(key) { return escapeHtml(String(state[key] || "(sin respuesta)")); }
+
+    // ---- Bloque 1 ----
+    const b1Labels = [
+      "1. Una direcci\u00f3n IP tiene 4 n\u00fameros separados por puntos (ej. 192.168.1.10). \u00bfQu\u00e9 representa cada n\u00famero?",
+      "2. \u00bfQu\u00e9 significa que una direcci\u00f3n IP tiene una parte de red y una parte de host?",
+      "3. \u00bfPor qu\u00e9 no puede haber dos dispositivos con la misma IP en la misma red?",
+    ];
+    const b1Rows = BLOQUE_IP1_KEYS.map((k, i) => `
+      <p><b>${b1Labels[i]}</b></p>
+      <p style="margin-left:20px;white-space:pre-wrap">${val(k)}</p><br>`).join("");
+    const b1Img = state["ip1-imagen-url"]
+      ? `<h3>Producto \u2014 Diagrama IPv4</h3><p><a href="${state["ip1-imagen-url"]}">Ver diagrama en Drive</a></p>`
+      : "<h3>Producto \u2014 Diagrama IPv4</h3><p><i>(Sin imagen adjunta)</i></p>";
+
+    // ---- Bloque 2 ----
+    const b2Labels = [
+      "1. \u00bfC\u00f3mo sabes con solo mirar el primer n\u00famero si una IP es Clase A, B o C?",
+      "2. \u00bfPor qu\u00e9 las MiPymes casi siempre usan direcciones Clase C?",
+      "3. \u00bfQu\u00e9 son las direcciones privadas y por qu\u00e9 no se pueden usar en internet directamente?",
+    ];
+    const b2Rows = ["ip2-1", "ip2-2", "ip2-3"].map((k, i) => `
+      <p><b>${b2Labels[i]}</b></p>
+      <p style="margin-left:20px;white-space:pre-wrap">${val(k)}</p><br>`).join("");
+    const b2Table = [
+      ["A", "ip2-claseA-mask", "ip2-claseA-hosts", "ip2-claseA-uso"],
+      ["B", "ip2-claseB-mask", "ip2-claseB-hosts", "ip2-claseB-uso"],
+      ["C", "ip2-claseC-mask", "ip2-claseC-hosts", "ip2-claseC-uso"],
+    ].map(([cls, mask, hosts, uso]) =>
+      `<tr><td><b>${cls}</b></td><td>${val(mask)}</td><td>${val(hosts)}</td><td>${val(uso)}</td></tr>`
+    ).join("");
+
+    // ---- Bloque 3 ----
+    const b3Labels = [
+      "1. \u00bfQu\u00e9 pasar\u00eda si configuras mal el gateway en un computador? \u00bfPodr\u00edas navegar en internet?",
+      "2. \u00bfPara qu\u00e9 sirve el DNS? \u00bfQu\u00e9 pasar\u00eda si no existiera y tuvieras que recordar las IPs de todos los sitios?",
+      "3. \u00bfPuede un computador funcionar en red local sin tener configurado el DNS? \u00bfPor qu\u00e9?",
+    ];
+    const b3Rows = BLOQUE_IP3_KEYS.map((k, i) => `
+      <p><b>${b3Labels[i]}</b></p>
+      <p style="margin-left:20px;white-space:pre-wrap">${val(k)}</p><br>`).join("");
+    const b3Img = state["ip3-imagen-url"]
+      ? `<h3>Producto \u2014 Diagrama de par\u00e1metros de red</h3><p><a href="${state["ip3-imagen-url"]}">Ver diagrama en Drive</a></p>`
+      : "<h3>Producto \u2014 Diagrama de par\u00e1metros de red</h3><p><i>(Sin imagen adjunta)</i></p>";
+
+    const fecha = new Date().toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric" });
+    const html = `<html xmlns:o='urn:schemas-microsoft-com:office:office'
+      xmlns:w='urn:schemas-microsoft-com:office:word'
+      xmlns='http://www.w3.org/TR/REC-html40'>
+<head><meta charset='utf-8'><title>Bloques IP 1-3</title>
 <style>body{font-family:Calibri,Arial;font-size:12pt;margin:2cm}
-h1{font-size:16pt;color:#1b5e20}h2{font-size:13pt}p{margin:6pt 0;line-height:1.5}</style>
+h1{font-size:16pt;color:#1b5e20}h2{font-size:13pt;color:#1b5e20;border-bottom:1px solid #c8e6c9;padding-bottom:4pt}
+h3{font-size:11pt;color:#1e40af}p{margin:6pt 0;line-height:1.5}
+table{border-collapse:collapse;width:100%}th,td{border:1px solid #ccc;padding:5pt;font-size:11pt}
+th{background:#c8e6c9}</style>
 </head><body>
-<h1>Actividad 3.3.1 \u2013 Bloque 1 \u2014 Estructura de una direcci\u00f3n IPv4</h1>
-<p>Instituci\u00f3n: ${escapeHtml(sel.inst || "")} &nbsp;|&nbsp; Grupo: ${escapeHtml(sel.grupo || "")} &nbsp;|&nbsp; Ficha: ${escapeHtml(sel.ficha || "")}</p>
-<hr>${rows}${imgSection}</body></html>`;
-  const fileName = `Bloque1_IPv4_${sel.ficha || "sin_ficha"}.doc`;
-  const blob = new Blob(["\ufeff", html], { type: "application/msword" });
-  return new File([blob], fileName, { type: "application/msword" });
-}
-
-window.subirBloqueIP1AlDrive = function () {
-  const file = buildBloqueIP1WordFile();
-  window.sharedAppsScriptDelivery.openDeliveryModal({
-    guideLabel: "Guia 2",
-    activityNumber: "3.3.1",
-    activityTitle: "Bloque 1 \u2014 Estructura de una direcci\u00f3n IPv4",
-    activityLabel: "Actividad 3.3.1",
-  });
-  setTimeout(() => {
-    const fileInput = document.querySelector("[data-shared-apps-file]");
-    if (!fileInput) return;
-    try { const dt = new DataTransfer(); dt.items.add(file); fileInput.files = dt.files; fileInput.dispatchEvent(new Event("change", { bubbles: true })); } catch (_) {}
-  }, 80);
-};
-
-function buildBloqueIP2WordFile() {
-  const sel = getGuideSelectionRedes();
-  const labels = [
-    "1. \u00bfC\u00f3mo sabes con solo mirar el primer n\u00famero si una IP es Clase A, B o C?",
-    "2. \u00bfPor qu\u00e9 las MiPymes casi siempre usan direcciones Clase C?",
-    "3. \u00bfQu\u00e9 son las direcciones privadas y por qu\u00e9 no se pueden usar en internet directamente?",
-  ];
-  const rows = ["ip2-1", "ip2-2", "ip2-3"].map((k, i) => `
-    <p><b>${escapeHtml(labels[i])}</b></p>
-    <p style="margin-left:20px;white-space:pre-wrap">${escapeHtml(String(state[k] || "(sin respuesta)"))}</p><br>`).join("");
-  const tableRows = [
-    ["A", "ip2-claseA-mask", "ip2-claseA-hosts", "ip2-claseA-uso"],
-    ["B", "ip2-claseB-mask", "ip2-claseB-hosts", "ip2-claseB-uso"],
-    ["C", "ip2-claseC-mask", "ip2-claseC-hosts", "ip2-claseC-uso"],
-  ].map(([cls, mask, hosts, uso]) =>
-    `<tr><td><b>Clase ${escapeHtml(cls)}</b></td><td>${escapeHtml(String(state[mask] || ""))}</td><td>${escapeHtml(String(state[hosts] || ""))}</td><td>${escapeHtml(String(state[uso] || ""))}</td></tr>`
-  ).join("");
-  const tableSection = `<h2>Cuadro comparativo de clases IP</h2>
-<table border="1" cellpadding="6" style="border-collapse:collapse;width:100%;font-size:11pt">
+<h1>Actividad 3.3 \u2013 Direccionamiento IP (Bloques 1\u20133)</h1>
+<p>Aprendiz: <b>${escapeHtml(fullName)}</b> &nbsp;|&nbsp; Ficha: ${escapeHtml(ficha)} &nbsp;|&nbsp; Grupo: ${escapeHtml(sel.grupo || "")} &nbsp;|&nbsp; ${fecha}</p>
+<hr>
+<h2>Bloque 1 (3.3.1) \u2014 Estructura de una direcci\u00f3n IPv4</h2>
+${b1Rows}${b1Img}
+<h2>Bloque 2 (3.3.2) \u2014 Clases de IP y direcciones privadas</h2>
+${b2Rows}
+<h3>Tabla de referencia r\u00e1pida de clases IP</h3>
+<table>
   <tr style="background:#c8e6c9"><th>Clase</th><th>M\u00e1scara</th><th>Hosts posibles</th><th>Uso t\u00edpico</th></tr>
-  ${tableRows}
-</table>`;
-  const html = `<html xmlns:o='urn:schemas-microsoft-com:office:office'
-    xmlns:w='urn:schemas-microsoft-com:office:word'
-    xmlns='http://www.w3.org/TR/REC-html40'>
-<head><meta charset='utf-8'><title>Bloque 2 Clases IP</title>
-<style>body{font-family:Calibri,Arial;font-size:12pt;margin:2cm}
-h1{font-size:16pt;color:#1b5e20}h2{font-size:13pt}p{margin:6pt 0;line-height:1.5}</style>
-</head><body>
-<h1>Actividad 3.3.2 \u2013 Bloque 2 \u2014 Clases de IP y direcciones privadas</h1>
-<p>Instituci\u00f3n: ${escapeHtml(sel.inst || "")} &nbsp;|&nbsp; Grupo: ${escapeHtml(sel.grupo || "")} &nbsp;|&nbsp; Ficha: ${escapeHtml(sel.ficha || "")}</p>
-<hr>${rows}${tableSection}</body></html>`;
-  const fileName = `Bloque2_ClasesIP_${sel.ficha || "sin_ficha"}.doc`;
-  const blob = new Blob(["\ufeff", html], { type: "application/msword" });
-  return new File([blob], fileName, { type: "application/msword" });
-}
+  ${b2Table}
+</table><br>
+<h2>Bloque 3 (3.3.3) \u2014 Par\u00e1metros de red: IP, m\u00e1scara, gateway y DNS</h2>
+${b3Rows}${b3Img}
+</body></html>`;
 
-window.subirBloqueIP2AlDrive = function () {
-  const file = buildBloqueIP2WordFile();
-  window.sharedAppsScriptDelivery.openDeliveryModal({
-    guideLabel: "Guia 2",
-    activityNumber: "3.3.2",
-    activityTitle: "Bloque 2 \u2014 Clases de IP y direcciones privadas",
-    activityLabel: "Actividad 3.3.2",
-  });
-  setTimeout(() => {
-    const fileInput = document.querySelector("[data-shared-apps-file]");
-    if (!fileInput) return;
-    try { const dt = new DataTransfer(); dt.items.add(file); fileInput.files = dt.files; fileInput.dispatchEvent(new Event("change", { bubbles: true })); } catch (_) {}
-  }, 80);
-};
+    const fileName = `BloqueIP_1-3_${escapeHtml(fullName).replace(/\s+/g, "_")}_${ficha}.doc`;
+    const blob = new Blob(["\ufeff", html], { type: "application/msword" });
+    const file = new File([blob], fileName, { type: "application/msword" });
 
-function buildBloqueIP3WordFile() {
-  const sel = getGuideSelectionRedes();
-  const labels = [
-    "1. \u00bfQu\u00e9 pasar\u00eda si configuras mal el gateway en un computador? \u00bfPodr\u00edas navegar en internet?",
-    "2. \u00bfPara qu\u00e9 sirve el DNS? \u00bfQu\u00e9 pasar\u00eda si no existiera y tuvieras que recordar las IPs de todos los sitios?",
-    "3. \u00bfPuede un computador funcionar en red local sin tener configurado el DNS? \u00bfPor qu\u00e9?",
-  ];
-  const rows = BLOQUE_IP3_KEYS.map((k, i) => `
-    <p><b>${escapeHtml(labels[i])}</b></p>
-    <p style="margin-left:20px;white-space:pre-wrap">${escapeHtml(String(state[k] || "(sin respuesta)"))}</p><br>`).join("");
-  const imgSection = state["ip3-imagen-url"]
-    ? `<h2>Producto — Diagrama de par\u00e1metros de red</h2><p><a href="${state["ip3-imagen-url"]}">Ver diagrama en Drive</a></p>`
-    : "";
-  const html = `<html xmlns:o='urn:schemas-microsoft-com:office:office'
-    xmlns:w='urn:schemas-microsoft-com:office:word'
-    xmlns='http://www.w3.org/TR/REC-html40'>
-<head><meta charset='utf-8'><title>Bloque 3 Gateway y DNS</title>
-<style>body{font-family:Calibri,Arial;font-size:12pt;margin:2cm}
-h1{font-size:16pt;color:#1b5e20}h2{font-size:13pt}p{margin:6pt 0;line-height:1.5}</style>
-</head><body>
-<h1>Actividad 3.3.3 \u2013 Bloque 3 \u2014 Par\u00e1metros de red: IP, m\u00e1scara, gateway y DNS</h1>
-<p>Instituci\u00f3n: ${escapeHtml(sel.inst || "")} &nbsp;|&nbsp; Grupo: ${escapeHtml(sel.grupo || "")} &nbsp;|&nbsp; Ficha: ${escapeHtml(sel.ficha || "")}</p>
-<hr>${rows}${imgSection}</body></html>`;
-  const fileName = `Bloque3_GatewayDNS_${sel.ficha || "sin_ficha"}.doc`;
-  const blob = new Blob(["\ufeff", html], { type: "application/msword" });
-  return new File([blob], fileName, { type: "application/msword" });
-}
+    window.sharedAppsScriptDelivery.openDeliveryModal({
+      guideLabel: "Guia 2",
+      activityNumber: "3.3",
+      activityTitle: "Direccionamiento IP \u2014 Bloques 1\u20133",
+      activityLabel: "Actividad 3.3",
+    });
+    setTimeout(() => {
+      const fileInput = document.querySelector("[data-shared-apps-file]");
+      if (!fileInput) return;
+      try { const dt = new DataTransfer(); dt.items.add(file); fileInput.files = dt.files; fileInput.dispatchEvent(new Event("change", { bubbles: true })); } catch (_) {}
+    }, 80);
 
-window.subirBloqueIP3AlDrive = function () {
-  const file = buildBloqueIP3WordFile();
-  window.sharedAppsScriptDelivery.openDeliveryModal({
-    guideLabel: "Guia 2",
-    activityNumber: "3.3.3",
-    activityTitle: "Bloque 3 \u2014 Par\u00e1metros de red: IP, m\u00e1scara, gateway y DNS",
-    activityLabel: "Actividad 3.3.3",
-  });
-  setTimeout(() => {
-    const fileInput = document.querySelector("[data-shared-apps-file]");
-    if (!fileInput) return;
-    try { const dt = new DataTransfer(); dt.items.add(file); fileInput.files = dt.files; fileInput.dispatchEvent(new Event("change", { bubbles: true })); } catch (_) {}
-  }, 80);
+    if (btn) { btn.disabled = false; btn.innerHTML = origHTML; }
+  } catch (err) {
+    alert("Error al generar el Word: " + ((err && err.message) || "Intenta de nuevo."));
+    if (btn) { btn.disabled = false; btn.innerHTML = origHTML; }
+  }
 };
 
 // ---------------------------------------------------------------------------
