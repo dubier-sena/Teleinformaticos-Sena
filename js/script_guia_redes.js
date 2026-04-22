@@ -7,6 +7,7 @@ const STORAGE_FILE_ALIASES_REDES = {
 const GUIDE_DATA_FILE_REDES = STORAGE_FILE_ALIASES_REDES[PAGE_FILE_REDES] || PAGE_FILE_REDES;
 const PAGE_KEY_REDES = GUIDE_DATA_FILE_REDES.replace(/[^a-z0-9]+/g, "_");
 const _portalAuth = window.portalAuth || null;
+const _redesLockSync = window.redesLockSync || null;
 const LEGACY_STORAGE_KEY_REDES = "guia_interactiva_" + PAGE_KEY_REDES;
 const STORAGE_KEY_REDES = _portalAuth
   ? _portalAuth.getScopedStorageKey(LEGACY_STORAGE_KEY_REDES, { area: "guide-data" })
@@ -414,31 +415,37 @@ function hydrateFieldsRedes() {
 }
 
 function applyReflexionSocializacionLock() {
-  if (!state["reflexion-socializacion-locked"]) return;
+  const locked = Boolean(state["reflexion-socializacion-locked"]);
   const ta = document.getElementById("socializacionTextarea311");
-  if (ta) { ta.disabled = true; ta.style.opacity = "0.75"; }
+  if (ta) { ta.disabled = locked; ta.style.opacity = locked ? "0.75" : ""; }
   const btn = document.getElementById("btnEnviarSocializacion");
-  if (btn) { btn.disabled = true; btn.textContent = "\u2705 Enviado"; }
+  if (btn) { btn.disabled = locked; btn.textContent = locked ? "\u2705 Enviado" : "\uD83D\uDCE4 Enviar"; }
   const status = document.getElementById("socializacionStatus311");
-  if (status) status.style.display = "block";
+  if (status) status.style.display = locked ? "block" : "none";
 }
 
 const BLOQUEA_KEYS = ["bloqueA-1", "bloqueA-2", "bloqueA-3"];
 
 function applyBloqueALock() {
-  if (!state["bloqueA-locked"]) return;
+  const locked = Boolean(state["bloqueA-locked"]);
   BLOQUEA_KEYS.forEach((k) => {
     const el = document.querySelector(`[data-store="${k}"]`);
-    if (el) { el.disabled = true; el.style.opacity = "0.75"; }
+    if (el) { el.disabled = locked; el.style.opacity = locked ? "0.75" : ""; }
   });
   const input = document.getElementById("bloqueAImagenInput");
-  if (input) input.disabled = true;
+  if (input) input.disabled = locked;
   const label = document.getElementById("bloqueAImagenLabel");
-  if (label) { label.style.opacity = "0.5"; label.style.pointerEvents = "none"; }
+  if (label) {
+    label.style.opacity = locked ? "0.5" : "";
+    label.style.pointerEvents = locked ? "none" : "";
+  }
   const btn = document.getElementById("btnGuardarBloqueA");
-  if (btn) { btn.disabled = true; btn.textContent = "\u2705 Respuestas guardadas"; }
+  if (btn) {
+    btn.disabled = locked;
+    btn.textContent = locked ? "\u2705 Respuestas guardadas" : "\uD83D\uDCBE Guardar respuestas";
+  }
   const status = document.getElementById("bloqueAStatus");
-  if (status) status.style.display = "block";
+  if (status) status.style.display = locked ? "block" : "none";
 }
 
 function _getDriveThumbnailUrl(driveUrl) {
@@ -547,19 +554,25 @@ window.guardarBloqueA = async function () {
 const BLOQUEB_KEYS = ["bloqueB-1", "bloqueB-2", "bloqueB-3"];
 
 function applyBloqueBLock() {
-  if (!state["bloqueB-locked"]) return;
+  const locked = Boolean(state["bloqueB-locked"]);
   BLOQUEB_KEYS.forEach((k) => {
     const el = document.querySelector(`[data-store="${k}"]`);
-    if (el) { el.disabled = true; el.style.opacity = "0.75"; }
+    if (el) { el.disabled = locked; el.style.opacity = locked ? "0.75" : ""; }
   });
   const input = document.getElementById("bloqueBImagenInput");
-  if (input) input.disabled = true;
+  if (input) input.disabled = locked;
   const label = document.getElementById("bloqueBImagenLabel");
-  if (label) { label.style.opacity = "0.5"; label.style.pointerEvents = "none"; }
+  if (label) {
+    label.style.opacity = locked ? "0.5" : "";
+    label.style.pointerEvents = locked ? "none" : "";
+  }
   const btn = document.getElementById("btnGuardarBloqueB");
-  if (btn) { btn.disabled = true; btn.textContent = "\u2705 Respuestas guardadas"; }
+  if (btn) {
+    btn.disabled = locked;
+    btn.textContent = locked ? "\u2705 Respuestas guardadas" : "\uD83D\uDCBE Guardar respuestas";
+  }
   const status = document.getElementById("bloqueBStatus");
-  if (status) status.style.display = "block";
+  if (status) status.style.display = locked ? "block" : "none";
 }
 
 function restoreImagenBloqueB() {
@@ -662,15 +675,18 @@ window.guardarBloqueB = async function () {
 const BLOQUEC_KEYS = ["bloqueC-1", "bloqueC-2", "bloqueC-3"];
 
 function applyBloqueCLock() {
-  if (!state["bloqueC-locked"]) return;
+  const locked = Boolean(state["bloqueC-locked"]);
   document.querySelectorAll('[data-store^="bloqueC-"]').forEach((el) => {
-    el.disabled = true;
-    el.style.opacity = "0.75";
+    el.disabled = locked;
+    el.style.opacity = locked ? "0.75" : "";
   });
   const btn = document.getElementById("btnGuardarBloqueC");
-  if (btn) { btn.disabled = true; btn.textContent = "\u2705 Respuestas guardadas"; }
+  if (btn) {
+    btn.disabled = locked;
+    btn.textContent = locked ? "\u2705 Respuestas guardadas" : "\uD83D\uDCBE Guardar respuestas";
+  }
   const status = document.getElementById("bloqueCStatus");
-  if (status) status.style.display = "block";
+  if (status) status.style.display = locked ? "block" : "none";
 }
 
 window.guardarBloqueC = async function () {
@@ -708,15 +724,18 @@ window.showVideoBloqueD = function (n) {
 const BLOQUED_KEYS = ["bloqueD-1", "bloqueD-2", "bloqueD-3"];
 
 function applyBloqueDLock() {
-  if (!state["bloqueD-locked"]) return;
+  const locked = Boolean(state["bloqueD-locked"]);
   document.querySelectorAll('[data-store^="bloqueD-"]').forEach((el) => {
-    el.disabled = true;
-    el.style.opacity = "0.75";
+    el.disabled = locked;
+    el.style.opacity = locked ? "0.75" : "";
   });
   const btn = document.getElementById("btnGuardarBloqueD");
-  if (btn) { btn.disabled = true; btn.textContent = "\u2705 Respuestas guardadas"; }
+  if (btn) {
+    btn.disabled = locked;
+    btn.textContent = locked ? "\u2705 Respuestas guardadas" : "\uD83D\uDCBE Guardar respuestas";
+  }
   const status = document.getElementById("bloqueDStatus");
-  if (status) status.style.display = "block";
+  if (status) status.style.display = locked ? "block" : "none";
 }
 
 window.guardarBloqueD = async function () {
@@ -739,19 +758,25 @@ window.guardarBloqueD = async function () {
 const BLOQUEE_KEYS = ["bloqueE-1", "bloqueE-2", "bloqueE-3"];
 
 function applyBloqueELock() {
-  if (!state["bloqueE-locked"]) return;
+  const locked = Boolean(state["bloqueE-locked"]);
   document.querySelectorAll('[data-store^="bloqueE-"]').forEach((el) => {
-    el.disabled = true;
-    el.style.opacity = "0.75";
+    el.disabled = locked;
+    el.style.opacity = locked ? "0.75" : "";
   });
   const input = document.getElementById("bloqueEImagenInput");
-  if (input) input.disabled = true;
+  if (input) input.disabled = locked;
   const label = document.getElementById("bloqueEImagenLabel");
-  if (label) { label.style.opacity = "0.5"; label.style.pointerEvents = "none"; }
+  if (label) {
+    label.style.opacity = locked ? "0.5" : "";
+    label.style.pointerEvents = locked ? "none" : "";
+  }
   const btn = document.getElementById("btnGuardarBloqueE");
-  if (btn) { btn.disabled = true; btn.textContent = "\u2705 Respuestas guardadas"; }
+  if (btn) {
+    btn.disabled = locked;
+    btn.textContent = locked ? "\u2705 Respuestas guardadas" : "\uD83D\uDCBE Guardar respuestas";
+  }
   const status = document.getElementById("bloqueEStatus");
-  if (status) status.style.display = "block";
+  if (status) status.style.display = locked ? "block" : "none";
 }
 
 function restoreImagenBloqueE() {
@@ -1229,7 +1254,10 @@ function localSnapshotTimeRedes() {
 
 function applyCloudSnapshotRedes(snapshot) {
   const remoteData = snapshot?.data && typeof snapshot.data === "object" ? snapshot.data : {};
-  state = { ...state, ...remoteData };
+  state =
+    _redesLockSync && typeof _redesLockSync.syncRemoteLockFlagsRedes === "function"
+      ? _redesLockSync.syncRemoteLockFlagsRedes(state, remoteData, LOCK_KEYS_REDES)
+      : { ...state, ...remoteData };
   saveStateRedes({
     updatedAt: snapshot?.updatedAt || new Date().toISOString(),
   });
@@ -1246,6 +1274,10 @@ function applyAllLocksRedes() {
   applyBloqueCLock();
   applyBloqueDLock();
   applyBloqueELock();
+  applySocialLock();
+  applyBloqueIP1Lock();
+  applyBloqueIP2Lock();
+  applyBloqueIP3Lock();
 }
 
 function enforceLockFlagsFromRemote(remoteData) {
@@ -1322,15 +1354,18 @@ const REFLEXION_311_LABELS = [
 ];
 
 function applyReflexionLock() {
-  if (!state["reflexion-311-locked"]) return;
+  const locked = Boolean(state["reflexion-311-locked"]);
   document.querySelectorAll("#reflexionForm311 [data-store]").forEach((f) => {
-    f.disabled = true;
-    f.style.opacity = "0.75";
+    f.disabled = locked;
+    f.style.opacity = locked ? "0.75" : "";
   });
   const btn = document.getElementById("btnGuardarReflexion");
-  if (btn) { btn.disabled = true; btn.textContent = "✅ Respuestas enviadas"; }
+  if (btn) {
+    btn.disabled = locked;
+    btn.textContent = locked ? "✅ Respuestas enviadas" : "\uD83D\uDCBE Guardar respuestas";
+  }
   const status = document.getElementById("reflexionStatus311");
-  if (status) status.style.display = "block";
+  if (status) status.style.display = locked ? "block" : "none";
 }
 
 window.guardarReflexion311 = async function () {
@@ -1528,14 +1563,18 @@ const BLOQUE_IP2_KEYS = [
 ];
 
 function applyBloqueIP2Lock() {
-  if (!state["ip2-locked"]) return;
+  const locked = Boolean(state["ip2-locked"]);
   document.querySelectorAll("[data-store^='ip2-']").forEach((el) => {
-    el.disabled = true; el.style.opacity = "0.75";
+    el.disabled = locked;
+    el.style.opacity = locked ? "0.75" : "";
   });
   const btn = document.getElementById("btnGuardarIP2");
-  if (btn) { btn.disabled = true; btn.textContent = "\u2705 Respuestas guardadas"; }
+  if (btn) {
+    btn.disabled = locked;
+    btn.textContent = locked ? "\u2705 Respuestas guardadas" : "\uD83D\uDCBE Guardar respuestas";
+  }
   const status = document.getElementById("ip2Status");
-  if (status) status.style.display = "block";
+  if (status) status.style.display = locked ? "block" : "none";
 }
 
 window.guardarBloqueIP2 = async function () {
@@ -1569,19 +1608,25 @@ window.showVideoBloqueIP3 = function (n) {
 const BLOQUE_IP3_KEYS = ["ip3-1", "ip3-2", "ip3-3"];
 
 function applyBloqueIP3Lock() {
-  if (!state["ip3-locked"]) return;
+  const locked = Boolean(state["ip3-locked"]);
   BLOQUE_IP3_KEYS.forEach((k) => {
     const el = document.querySelector(`[data-store="${k}"]`);
-    if (el) { el.disabled = true; el.style.opacity = "0.75"; }
+    if (el) { el.disabled = locked; el.style.opacity = locked ? "0.75" : ""; }
   });
   const input = document.getElementById("ip3ImagenInput");
-  if (input) input.disabled = true;
+  if (input) input.disabled = locked;
   const label = document.getElementById("ip3ImagenLabel");
-  if (label) { label.style.opacity = "0.5"; label.style.pointerEvents = "none"; }
+  if (label) {
+    label.style.opacity = locked ? "0.5" : "";
+    label.style.pointerEvents = locked ? "none" : "";
+  }
   const btn = document.getElementById("btnGuardarIP3");
-  if (btn) { btn.disabled = true; btn.textContent = "\u2705 Respuestas guardadas"; }
+  if (btn) {
+    btn.disabled = locked;
+    btn.textContent = locked ? "\u2705 Respuestas guardadas" : "\uD83D\uDCBE Guardar respuestas";
+  }
   const status = document.getElementById("ip3Status");
-  if (status) status.style.display = "block";
+  if (status) status.style.display = locked ? "block" : "none";
 }
 
 function restoreImagenBloqueIP3() {
@@ -1680,19 +1725,25 @@ window.guardarBloqueIP3 = async function () {
 const BLOQUE_IP1_KEYS = ["ip1-1", "ip1-2", "ip1-3"];
 
 function applyBloqueIP1Lock() {
-  if (!state["ip1-locked"]) return;
+  const locked = Boolean(state["ip1-locked"]);
   BLOQUE_IP1_KEYS.forEach((k) => {
     const el = document.querySelector(`[data-store="${k}"]`);
-    if (el) { el.disabled = true; el.style.opacity = "0.75"; }
+    if (el) { el.disabled = locked; el.style.opacity = locked ? "0.75" : ""; }
   });
   const input = document.getElementById("ip1ImagenInput");
-  if (input) input.disabled = true;
+  if (input) input.disabled = locked;
   const label = document.getElementById("ip1ImagenLabel");
-  if (label) { label.style.opacity = "0.5"; label.style.pointerEvents = "none"; }
+  if (label) {
+    label.style.opacity = locked ? "0.5" : "";
+    label.style.pointerEvents = locked ? "none" : "";
+  }
   const btn = document.getElementById("btnGuardarIP1");
-  if (btn) { btn.disabled = true; btn.textContent = "\u2705 Respuestas guardadas"; }
+  if (btn) {
+    btn.disabled = locked;
+    btn.textContent = locked ? "\u2705 Respuestas guardadas" : "\uD83D\uDCBE Guardar respuestas";
+  }
   const status = document.getElementById("ip1Status");
-  if (status) status.style.display = "block";
+  if (status) status.style.display = locked ? "block" : "none";
 }
 
 function restoreImagenBloqueIP1() {
@@ -1791,19 +1842,25 @@ window.guardarBloqueIP1 = async function () {
 const SOCIAL_KEYS = ["social-diferencias", "social-representacion", "social-dudas", "social-pregunta"];
 
 function applySocialLock() {
-  if (!state["social-locked"]) return;
+  const locked = Boolean(state["social-locked"]);
   SOCIAL_KEYS.forEach((k) => {
     const el = document.querySelector(`[data-store="${k}"]`);
-    if (el) { el.disabled = true; el.style.opacity = "0.75"; }
+    if (el) { el.disabled = locked; el.style.opacity = locked ? "0.75" : ""; }
   });
   const input = document.getElementById("socialMapaInput");
-  if (input) input.disabled = true;
+  if (input) input.disabled = locked;
   const label = document.getElementById("socialMapaLabel");
-  if (label) { label.style.opacity = "0.5"; label.style.pointerEvents = "none"; }
+  if (label) {
+    label.style.opacity = locked ? "0.5" : "";
+    label.style.pointerEvents = locked ? "none" : "";
+  }
   const btn = document.getElementById("btnGuardarSocial");
-  if (btn) { btn.disabled = true; btn.textContent = "\u2705 Respuestas guardadas"; }
+  if (btn) {
+    btn.disabled = locked;
+    btn.textContent = locked ? "\u2705 Respuestas guardadas" : "\uD83D\uDCBE Guardar respuestas";
+  }
   const status = document.getElementById("socialStatus");
-  if (status) status.style.display = "block";
+  if (status) status.style.display = locked ? "block" : "none";
 }
 
 function restoreImagenSocial() {
