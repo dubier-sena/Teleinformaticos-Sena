@@ -393,6 +393,19 @@
     } catch (e) { return false; }
   }
 
+  async function fsDelete(collection, docId) {
+    if (shouldBlockCloudDeletes()) return false;
+    try {
+      var res = await fetchWithTimeout(
+        docUrl(collection, docId),
+        { method: "DELETE" },
+        API_TIMEOUT_MS
+      );
+      if (res.ok || res.status === 404) registerFirestoreOperation("delete", 1);
+      return res.ok || res.status === 404;
+    } catch (e) { return false; }
+  }
+
   // PATCH con updateMask: actualiza solo el campo indicado sin borrar los demas.
   async function fsUpdateField(collection, docId, fieldName, fieldValue) {
     if (shouldBlockCloudWrites()) return false;
@@ -527,6 +540,137 @@
   // Reemplaza el documento de progreso con uno vacio (borra todo el avance).
   async function cloudClearAllProgress(usernameKey) {
     return fsPatch(COL_PROGRESS, usernameKey, { _clearedAt: new Date().toISOString() });
+  }
+
+  function buildStudentScopeKeyVariants(usernameKey) {
+    var normalized = String(usernameKey || "").trim().toLowerCase();
+    if (!normalized) return [];
+    var variants = [
+      "student:" + normalized,
+      "student:" + normalized.replace(/[^a-z0-9_-]+/g, "-"),
+    ];
+    var seen = {};
+    return variants.filter(function (scopeKey) {
+      if (!scopeKey || seen[scopeKey]) return false;
+      seen[scopeKey] = true;
+      return true;
+    });
+  }
+
+  function getKnownStudentGuideStateFiles() {
+    return [
+      "10a_guia.html",
+      "10b_guia.html",
+      "10a_guia2.html",
+      "10b_guia2.html",
+      "11a_guia.html",
+      "11b_guia.html",
+      "11a_guia6.html",
+      "11b_guia6.html",
+      "sb_10a_redes.html",
+      "sb_10b_redes.html",
+      "santa-barbara-10a-guia-02-redes-rap01.html",
+      "santa-barbara-10b-guia-02-redes-rap01.html",
+      "grupo-10a-guia-01-induccion.html",
+      "grupo-10b-guia-01-induccion.html",
+      "grupo-10a-guia-02-herramientas-informaticas-digitales.html",
+      "grupo-10b-guia-02-herramientas-informaticas-digitales.html",
+      "grupo-11a-guia-05-herramientas-informaticas-digitales.html",
+      "grupo-11b-guia-05-herramientas-informaticas-digitales.html",
+      "grupo-11a-guia-06-planificar-informacion.html",
+      "grupo-11b-guia-06-planificar-informacion.html",
+      "grupo-10a-guia-02-ficha-caso.html",
+      "grupo-10b-guia-02-ficha-caso.html",
+    ];
+  }
+
+  async function copyStudentGuideStateSnapshots(currentUsernameKey, nextUsernameKey) {
+    if (!currentUsernameKey || !nextUsernameKey || currentUsernameKey === nextUsernameKey) {
+      return true;
+    }
+
+    var oldScopes = buildStudentScopeKeyVariants(currentUsernameKey);
+    var newScopes = buildStudentScopeKeyVariants(nextUsernameKey);
+    var files = getKnownStudentGuideStateFiles();
+    for (var fileIndex = 0; fileIndex < files.length; fileIndex += 1) {
+      var fileName = files[fileIndex];
+      var guideDataSnapshot = null;
+      var guideUiSnapshot = null;
+
+      for (var oldIndex = 0; oldIndex < oldScopes.length; oldIndex += 1) {
+        var oldScope = oldScopes[oldIndex];
+        if (!guideDataSnapshot) {
+          guideDataSnapshot = await cloudGetGuideData(oldScope, fileName);
+        }
+        if (!guideUiSnapshot) {
+          guideUiSnapshot = await cloudGetGuideUiState(oldScope, fileName);
+        }
+        if (guideDataSnapshot && guideUiSnapshot) {
+          break;
+        }
+      }
+
+      if (!guideDataSnapshot && !guideUiSnapshot) {
+        continue;
+      }
+
+      for (var newIndex = 0; newIndex < newScopes.length; newIndex += 1) {
+        var newScope = newScopes[newIndex];
+        if (guideDataSnapshot) {
+          await cloudSaveGuideData(
+            newScope,
+            fileName,
+            Object.assign({}, guideDataSnapshot, {
+              scopeKey: newScope,
+              fileName: fileName,
+            })
+          );
+        }
+        if (guideUiSnapshot) {
+          await cloudSaveGuideUiState(
+            newScope,
+            fileName,
+            Object.assign({}, guideUiSnapshot, {
+              scopeKey: newScope,
+              fileName: fileName,
+            })
+          );
+        }
+      }
+    }
+
+    return true;
+  }
+
+  async function syncStudentProfileToFirebase(previousUsernameKey, user) {
+    var currentKey = String(previousUsernameKey || "").trim().toLowerCase();
+    var nextUser = user && typeof user === "object" ? Object.assign({}, user) : null;
+    var nextKey = String(nextUser && nextUser.usernameKey || "").trim().toLowerCase();
+    if (!nextUser || !nextKey) return false;
+
+    nextUser.usernameKey = nextKey;
+    nextUser.updatedAt = nextUser.updatedAt || new Date().toISOString();
+
+    var savedUser = await cloudSaveUser(nextUser);
+    if (!savedUser) return false;
+
+    if (!currentKey || currentKey === nextKey) {
+      return true;
+    }
+
+    var previousProgress = await cloudGetProgress(currentKey);
+    var nextProgress = await cloudGetProgress(nextKey);
+    var mergedProgress = Object.assign({}, previousProgress || {}, nextProgress || {}, {
+      _usernameKey: nextKey,
+    });
+    if (Object.keys(mergedProgress).length > 1) {
+      await fsPatch(COL_PROGRESS, nextKey, mergedProgress);
+    }
+
+    await copyStudentGuideStateSnapshots(currentKey, nextKey);
+    await fsDelete(COL_USERS, currentKey);
+    await fsDelete(COL_PROGRESS, currentKey);
+    return true;
   }
 
   function calendarFallbackDocId(calendarId) {
@@ -712,6 +856,8 @@
     loginStudent:              auth.loginStudent,
     writeGuideProgress:        auth.writeGuideProgress,
     updateStudentPassword:     auth.updateStudentPassword,
+    updateStudentFicha:        auth.updateStudentFicha,
+    updateStudentAccount:      auth.updateStudentAccount,
     resetStudentGuideProgress: auth.resetStudentGuideProgress,
     resetStudentAllProgress:   auth.resetStudentAllProgress,
     fetchStudentsWithProgress: auth.fetchStudentsWithProgress,
@@ -825,6 +971,40 @@
           }
         } catch (e) { /* silencioso */ }
       });
+    }
+    return result;
+  };
+
+  auth.updateStudentFicha = async function (usernameKey, newFicha) {
+    if (typeof prev.updateStudentFicha !== "function") {
+      return { ok: false, message: "La edicion de ficha no esta disponible." };
+    }
+
+    var result = await prev.updateStudentFicha.call(auth, usernameKey, newFicha);
+    if (result && result.ok) {
+      var ok = await checkAvailability();
+      if (ok && result.user) {
+        try {
+          await syncStudentProfileToFirebase(usernameKey, result.user);
+        } catch (e) { /* silencioso */ }
+      }
+    }
+    return result;
+  };
+
+  auth.updateStudentAccount = async function (usernameKey, data) {
+    if (typeof prev.updateStudentAccount !== "function") {
+      return { ok: false, message: "La edicion de usuarios no esta disponible." };
+    }
+
+    var result = await prev.updateStudentAccount.call(auth, usernameKey, data);
+    if (result && result.ok) {
+      var ok = await checkAvailability();
+      if (ok && result.user) {
+        try {
+          await syncStudentProfileToFirebase(result.previousUsernameKey || usernameKey, result.user);
+        } catch (e) { /* silencioso */ }
+      }
     }
     return result;
   };
