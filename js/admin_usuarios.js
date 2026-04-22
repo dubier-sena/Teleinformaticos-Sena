@@ -37,6 +37,15 @@
     "ip3-locked",
     "social-locked",
   ];
+  const REDES_ADMIN_QUIZ_CONFIGS = Array.isArray(window.redesQuizUnlock?.REDES_ADMIN_QUIZ_CONFIGS)
+    ? window.redesQuizUnlock.REDES_ADMIN_QUIZ_CONFIGS.map((config) => ({
+        key: String(config?.key || "").trim(),
+        label: String(config?.label || "Quiz de redes").trim(),
+      })).filter((config) => config.key)
+    : [
+        { key: "quiz-redes-321h", label: "Quiz 3.2.1.H" },
+        { key: "quiz-redes-33h", label: "Quiz IP" },
+      ];
 
   const FICHA_CASO_FILES = {
     "10A": "grupo-10a-guia-02-ficha-caso.html",
@@ -407,6 +416,55 @@
       }
     });
     return { state: nextState, changed };
+  }
+
+  function getRedesQuizConfig(quizKey) {
+    const cleanQuizKey = String(quizKey || "").trim();
+    return REDES_ADMIN_QUIZ_CONFIGS.find((config) => config.key === cleanQuizKey) || null;
+  }
+
+  function reopenRedesQuizState(snapshotState, quizKey, updatedAt) {
+    if (typeof window.redesQuizUnlock?.reopenRedesQuizAttempt === "function") {
+      return window.redesQuizUnlock.reopenRedesQuizAttempt(snapshotState, quizKey, updatedAt);
+    }
+
+    const nextState =
+      snapshotState && typeof snapshotState === "object" ? { ...snapshotState } : {};
+    const cleanQuizKey = String(quizKey || "").trim();
+    const previousAttempt =
+      cleanQuizKey && nextState[cleanQuizKey] && typeof nextState[cleanQuizKey] === "object"
+        ? { ...nextState[cleanQuizKey] }
+        : null;
+
+    if (!previousAttempt) {
+      return { state: nextState, changed: false, found: false };
+    }
+
+    const nextAttempt = {
+      ...previousAttempt,
+      completedAt: "",
+      submittedAt: "",
+      updatedAt: String(updatedAt || previousAttempt.updatedAt || "").trim(),
+      score: 0,
+      maxScore: Number(previousAttempt.maxScore) || 100,
+      warningCount: 0,
+      terminatedByVisibility: false,
+      status: previousAttempt.startedAt ? "in_progress" : "ready",
+      answers:
+        previousAttempt.answers && typeof previousAttempt.answers === "object"
+          ? { ...previousAttempt.answers }
+          : {},
+      results: {},
+      evidenceEvents: [],
+      locked: false,
+    };
+
+    nextState[cleanQuizKey] = nextAttempt;
+    return {
+      state: nextState,
+      changed: JSON.stringify(previousAttempt) !== JSON.stringify(nextAttempt),
+      found: true,
+    };
   }
 
   function getWordSearchResult(state) {
@@ -1171,6 +1229,38 @@
       .join("");
   }
 
+  function formatInstitutionShortName(value) {
+    return String(value || "")
+      .replace(/^Institucion Educativa\s+/i, "")
+      .trim();
+  }
+
+  function formatGuideRouteName(fileName) {
+    const title = String(auth.getGuideTitle(fileName) || fileName)
+      .split("|")[0]
+      .trim();
+    return title.replace(/^Gu(?:i|\u00ed)a\s+\d+\s*-\s*/i, "").trim() || title;
+  }
+
+  function renderGuideAssignmentOptions(selectedFicha) {
+    return Object.entries(auth.FICHA_MAP || {})
+      .map(([ficha, info]) => {
+        const selected = ficha === String(selectedFicha || "") ? " selected" : "";
+        const guideSummary = (info.guias || [])
+          .map((fileName) => formatGuideRouteName(fileName))
+          .filter(Boolean)
+          .join(" + ");
+        const label = [
+          `Grupo ${info.grupo}`,
+          formatInstitutionShortName(info.inst) || info.inst,
+          guideSummary || "Ruta sin guias",
+          `Ficha ${ficha}`,
+        ].join(" | ");
+        return `<option value="${escapeHtml(ficha)}"${selected}>${escapeHtml(label)}</option>`;
+      })
+      .join("");
+  }
+
   function renderFichaFilterOptions(selectedFicha) {
     const fichasWithUsers = new Set(allUsers.map((user) => String(user.ficha || "")));
     const fichaOptions = Object.entries(auth.FICHA_MAP || {})
@@ -1323,6 +1413,18 @@
   function buildProgressCard(user, guide) {
     const fillWidth = Math.max(0, Math.min(100, Number(guide.percent) || 0));
     const guide2Config = getGuide2ResponseConfig(guide.fileName);
+    const isRedesGuide = isRedesSbGuideFile(guide.fileName);
+    const redesQuizButtons = isRedesGuide
+      ? REDES_ADMIN_QUIZ_CONFIGS.map(
+          (config) => `<button
+                class="btn secondary"
+                type="button"
+                data-unlock-redes-quiz="${escapeHtml(config.key)}"
+                data-guide-file="${escapeHtml(guide.fileName)}"
+                data-user="${escapeHtml(user.usernameKey)}"
+              >${escapeHtml(`Reabrir ${config.label}`)}</button>`
+        ).join("")
+      : "";
     const sourceText =
       guide.source === "meta" || guide.source === "network"
         ? `\u00daltima actualizaci\u00f3n: ${formatDate(guide.updatedAt)}`
@@ -1348,12 +1450,13 @@
               : ""
           }
           ${
-            isRedesSbGuideFile(guide.fileName)
+            isRedesGuide
               ? `<button class="btn secondary" type="button" data-unlock-redes-guide="${escapeHtml(
                   guide.fileName
                 )}" data-user="${escapeHtml(user.usernameKey)}">Habilitar edicion</button>`
               : ""
           }
+          ${redesQuizButtons}
           <button class="btn warn" type="button" data-reset-guide="${escapeHtml(
             guide.fileName
           )}" data-user="${escapeHtml(user.usernameKey)}">Reiniciar gu\u00eda</button>
@@ -1388,7 +1491,47 @@
           <div class="user-badge">${overall}%</div>
         </div>
 
-        <div class="user-section-title">Cambiar contrase\u00f1a</div>
+        <div class="user-section-title">Editar usuario</div>
+        <form class="account-form" data-account-form="${escapeHtml(user.usernameKey)}">
+          <div class="account-grid">
+            <label class="account-field">
+              <span>Nombre completo</span>
+              <input
+                type="text"
+                name="fullName"
+                minlength="6"
+                maxlength="120"
+                value="${escapeHtml(user.fullName)}"
+                placeholder="Nombre completo del aprendiz"
+              >
+            </label>
+            <label class="account-field">
+              <span>Usuario</span>
+              <input
+                type="text"
+                name="username"
+                minlength="3"
+                maxlength="30"
+                value="${escapeHtml(user.username)}"
+                placeholder="Usuario de ingreso"
+              >
+            </label>
+            <label class="account-field">
+              <span>Guia / grupo</span>
+              <select name="ficha" aria-label="Guia o grupo para ${escapeHtml(user.fullName)}">
+                ${renderGuideAssignmentOptions(user.ficha)}
+              </select>
+            </label>
+          </div>
+          <div class="user-actions">
+            <button class="btn secondary" type="submit">Guardar datos</button>
+          </div>
+        </form>
+        <div class="user-note">
+          Al cambiar la guia o el grupo se actualizan automaticamente la ficha, la institucion y las guias visibles.
+        </div>
+
+        <div class="user-section-title" style="margin-top:16px">Cambiar contrase\u00f1a</div>
         <form class="password-row" data-password-form="${escapeHtml(user.usernameKey)}">
           <input
             type="password"
@@ -1399,16 +1542,8 @@
           >
           <button class="btn primary" type="submit">Actualizar</button>
         </form>
-
-        <div class="user-section-title" style="margin-top:16px">Corregir ficha</div>
-        <form class="ficha-row" data-ficha-form="${escapeHtml(user.usernameKey)}">
-          <select name="ficha" aria-label="Nueva ficha para ${escapeHtml(user.fullName)}">
-            ${renderFichaOptions(user.ficha)}
-          </select>
-          <button class="btn secondary" type="submit">Actualizar ficha</button>
-        </form>
         <div class="user-note">
-          Al corregir la ficha se actualizan automaticamente la institucion, el grupo y las guias visibles.
+          La contrase\u00f1a se cambia por separado para evitar errores al actualizar otros datos.
         </div>
 
         <div class="user-note">
@@ -1623,6 +1758,78 @@
     }
   }
 
+  async function unlockRedesQuizProgress(usernameKey, fileName, quizKey, displayName) {
+    const user = allUsers.find((item) => item.usernameKey === usernameKey) || null;
+    const quizConfig = getRedesQuizConfig(quizKey);
+    const cloudFileName = getRedesGuideCloudFileName(fileName, user?.ficha);
+    if (!quizConfig || !cloudFileName) {
+      setFeedback("No fue posible identificar el quiz de redes a reabrir.", "error");
+      return;
+    }
+
+    if (!confirm(`¿Reabrir ${quizConfig.label} para "${displayName}"?`)) {
+      return;
+    }
+
+    const updatedAt = new Date().toISOString();
+    const updatedBy = `admin-redes-quiz-unlock:${quizConfig.key}`;
+
+    try {
+      const localStorageKey = getRedesGuideLocalStorageKey(usernameKey, fileName);
+      const localState = localStorageKey
+        ? readJson(localStorage.getItem(localStorageKey), null)
+        : null;
+      const scopeKey = getGuide2ScopeKey(usernameKey);
+      const cloudSnapshot = window._firebaseDb?.cloudGetGuideData
+        ? await window._firebaseDb.cloudGetGuideData(scopeKey, cloudFileName)
+        : null;
+      const cloudState =
+        cloudSnapshot?.state && typeof cloudSnapshot.state === "object"
+          ? cloudSnapshot.state
+          : cloudSnapshot?.data && typeof cloudSnapshot.data === "object"
+            ? cloudSnapshot.data
+            : null;
+
+      const localReopen = reopenRedesQuizState(localState, quizKey, updatedAt);
+      const cloudReopen = reopenRedesQuizState(cloudState, quizKey, updatedAt);
+      const baseReopen = localReopen.found ? localReopen : cloudReopen;
+
+      if (!baseReopen.found) {
+        setFeedback(`No se encontro un intento guardado de ${quizConfig.label} para ${displayName}.`, "error");
+        return;
+      }
+
+      if (localStorageKey) {
+        localStorage.setItem(localStorageKey, JSON.stringify(baseReopen.state));
+        localStorage.setItem(
+          `${localStorageKey}__meta`,
+          JSON.stringify({ updatedAt, updatedBy })
+        );
+      }
+
+      if (window._firebaseDb?.cloudSaveGuideData) {
+        await window._firebaseDb.cloudSaveGuideData(scopeKey, cloudFileName, {
+          ...(cloudSnapshot && typeof cloudSnapshot === "object" ? cloudSnapshot : {}),
+          state: baseReopen.state,
+          data: baseReopen.state,
+          updatedAt,
+          updatedBy,
+        });
+      }
+
+      delete redesQuizSummaries[usernameKey];
+      await refreshUsers();
+      setFeedback(
+        baseReopen.changed
+          ? `${quizConfig.label} reabierto para ${displayName}.`
+          : `${quizConfig.label} ya estaba habilitado para ${displayName}.`,
+        "success"
+      );
+    } catch (err) {
+      setFeedback(`No fue posible reabrir ${quizConfig.label}: ${err?.message || "intenta de nuevo."}`, "error");
+    }
+  }
+
   async function unlockRedesStudent(usernameKey, ficha, displayName) {
     const fileName = getRedesGuidePageFileByFicha(ficha);
     if (!fileName) {
@@ -1700,7 +1907,9 @@
       <div class="answer-table-wrap">
         <table class="answer-table activities-table">
           <thead><tr>${headers.map((h) => `<th>${escapeHtml(h)}</th>`).join("")}</tr></thead>
-          <tbody>${rows.map(({ summary }) => `
+          <tbody>${rows.map(({ summary }) => {
+            const guideFileName = getRedesGuidePageFileByFicha(summary.user.ficha);
+            return `
             <tr>
               <td>${escapeHtml(summary.user.fullName || summary.user.usernameKey)}</td>
               <td>${escapeHtml(summary.user.ficha)}</td>
@@ -1713,11 +1922,25 @@
               <td>${escapeHtml(String(summary.warningCount))}</td>
               <td>${getRedesQuizStatusLabel(summary)}</td>
               <td>
-                <button class="btn ghost" type="button" data-view-redes-quiz="${escapeHtml(summary.user.usernameKey)}">
-                  Ver detalle
-                </button>
+                <div style="display:grid;gap:8px">
+                  <button class="btn ghost" type="button" data-view-redes-quiz="${escapeHtml(summary.user.usernameKey)}">
+                    Ver detalle
+                  </button>
+                  ${
+                    guideFileName
+                      ? `<button
+                          class="btn secondary"
+                          type="button"
+                          data-unlock-redes-quiz="quiz-redes-321h"
+                          data-guide-file="${escapeHtml(guideFileName)}"
+                          data-user="${escapeHtml(summary.user.usernameKey)}"
+                        >Reabrir quiz</button>`
+                      : ""
+                  }
+                </div>
               </td>
-            </tr>`).join("")}
+            </tr>`;
+          }).join("")}
           </tbody>
         </table>
       </div>`;
@@ -2010,9 +2233,13 @@
     await refreshUsers();
   }
 
-  async function handleFichaSubmit(form) {
-    const usernameKey = form.getAttribute("data-ficha-form") || "";
+  async function handleAccountSubmit(form) {
+    const usernameKey = form.getAttribute("data-account-form") || "";
+    const fullNameInput = form.querySelector("input[name='fullName']");
+    const usernameInput = form.querySelector("input[name='username']");
     const select = form.querySelector("select[name='ficha']");
+    const fullName = fullNameInput?.value || "";
+    const username = usernameInput?.value || "";
     const ficha = select?.value || "";
     const user = allUsers.find((item) => item.usernameKey === usernameKey);
     if (!user) {
@@ -2020,19 +2247,43 @@
       return;
     }
 
-    if (ficha === user.ficha) {
-      setFeedback(`La ficha de ${user.fullName} ya esta registrada como ${ficha}.`, "success");
+    const unchanged =
+      fullName.trim() === String(user.fullName || "").trim() &&
+      username.trim() === String(user.username || "").trim() &&
+      ficha === String(user.ficha || "");
+    if (unchanged) {
+      setFeedback(`No hay cambios pendientes para ${user.fullName}.`, "success");
       return;
     }
 
-    const result = await auth.updateStudentFicha(usernameKey, ficha);
+    const result = await auth.updateStudentAccount(usernameKey, {
+      fullName,
+      username,
+      ficha,
+    });
     if (!result.ok) {
       setFeedback(result.message, "error");
       return;
     }
 
-    const updatedFicha = result.user?.ficha || ficha;
-    setFeedback(`Ficha actualizada para ${user.fullName}. Nueva ficha: ${updatedFicha}.`, "success");
+    const updatedUser = result.user || {};
+    const detail = [];
+    if (String(updatedUser.fullName || "") !== String(user.fullName || "")) {
+      detail.push(`nombre: ${updatedUser.fullName}`);
+    }
+    if (String(updatedUser.username || "") !== String(user.username || "")) {
+      detail.push(`usuario: ${updatedUser.username}`);
+    }
+    if (String(updatedUser.ficha || "") !== String(user.ficha || "")) {
+      detail.push(
+        `guia/grupo: ${updatedUser.grupo || user.grupo || ""} (${updatedUser.ficha || ficha})`
+      );
+    }
+
+    setFeedback(
+      `Datos actualizados para ${updatedUser.fullName || user.fullName}.${detail.length ? ` Cambios: ${detail.join(" | ")}.` : ""}`,
+      "success"
+    );
     await refreshUsers();
   }
 
@@ -2108,17 +2359,18 @@
     });
 
     document.addEventListener("submit", async (event) => {
+      const accountForm = event.target.closest("[data-account-form]");
+      if (accountForm) {
+        event.preventDefault();
+        await handleAccountSubmit(accountForm);
+        return;
+      }
+
       const passwordForm = event.target.closest("[data-password-form]");
       if (passwordForm) {
         event.preventDefault();
         await handlePasswordSubmit(passwordForm);
         return;
-      }
-
-      const fichaForm = event.target.closest("[data-ficha-form]");
-      if (fichaForm) {
-        event.preventDefault();
-        await handleFichaSubmit(fichaForm);
       }
     });
 
@@ -2170,6 +2422,20 @@
           return;
         }
         await unlockRedesGuideProgress(usernameKey, fileName, user.fullName || user.usernameKey);
+        return;
+      }
+
+      const unlockRedesQuizButton = event.target.closest("[data-unlock-redes-quiz]");
+      if (unlockRedesQuizButton) {
+        const usernameKey = unlockRedesQuizButton.getAttribute("data-user") || "";
+        const fileName = unlockRedesQuizButton.getAttribute("data-guide-file") || "";
+        const quizKey = unlockRedesQuizButton.getAttribute("data-unlock-redes-quiz") || "";
+        const user = allUsers.find((item) => item.usernameKey === usernameKey);
+        if (!user || !fileName || !quizKey) {
+          setFeedback("No fue posible identificar el quiz de redes a reabrir.", "error");
+          return;
+        }
+        await unlockRedesQuizProgress(usernameKey, fileName, quizKey, user.fullName || user.usernameKey);
         return;
       }
 

@@ -258,6 +258,46 @@
     });
   }
 
+  function renameScopedStorageScope(currentScope, nextScope) {
+    const fromScope = sanitizeScopePart(currentScope);
+    const toScope = sanitizeScopePart(nextScope);
+    if (!fromScope || !toScope || fromScope === toScope) {
+      return 0;
+    }
+
+    const sourcePrefix = `${STORAGE_PREFIX}:${fromScope}:`;
+    const targetPrefix = `${STORAGE_PREFIX}:${toScope}:`;
+    const entries = [];
+
+    Object.keys(localStorage).forEach((key) => {
+      if (key.indexOf(sourcePrefix) !== 0) {
+        return;
+      }
+
+      entries.push({
+        key,
+        value: localStorage.getItem(key),
+      });
+    });
+
+    entries.forEach((entry) => {
+      localStorage.setItem(
+        `${targetPrefix}${entry.key.slice(sourcePrefix.length)}`,
+        entry.value
+      );
+      localStorage.removeItem(entry.key);
+    });
+
+    return entries.length;
+  }
+
+  function renameStudentScopedStorage(currentUsernameKey, nextUsernameKey) {
+    return renameScopedStorageScope(
+      getStudentScope(currentUsernameKey),
+      getStudentScope(nextUsernameKey)
+    );
+  }
+
   function getUsers() {
     const users = readJson(USERS_KEY, []);
     return Array.isArray(users) ? users : [];
@@ -1278,6 +1318,126 @@
     };
   }
 
+  function validateStudentAccountUpdate(data) {
+    const fullName = normalizeText(data?.fullName);
+    const username = normalizeText(data?.username);
+    const usernameKey = normalizeUsername(data?.username);
+    const ficha = normalizeFicha(data?.ficha);
+
+    if (fullName.length < 6) {
+      return {
+        ok: false,
+        message: "Ingresa el nombre completo del aprendiz.",
+      };
+    }
+
+    if (!/^[a-z0-9._-]{3,30}$/i.test(username)) {
+      return {
+        ok: false,
+        message:
+          "El nombre de usuario debe tener entre 3 y 30 caracteres y solo usar letras, numeros, punto, guion o guion bajo.",
+      };
+    }
+
+    if (usernameKey === ADMIN_PROFILE.usernameKey) {
+      return {
+        ok: false,
+        message: "Ese nombre de usuario esta reservado para el administrador.",
+      };
+    }
+
+    if (!getFichaInfo(ficha)) {
+      return {
+        ok: false,
+        message: "La ficha seleccionada no existe en el portal.",
+      };
+    }
+
+    return {
+      ok: true,
+      fullName,
+      username,
+      usernameKey,
+      ficha,
+    };
+  }
+
+  function updateStudentAccount(usernameKey, data) {
+    if (!isAdminSession()) {
+      return {
+        ok: false,
+        message: "Solo el administrador puede editar usuarios.",
+      };
+    }
+
+    const normalizedKey = normalizeUsername(usernameKey);
+    const validation = validateStudentAccountUpdate(data);
+    if (!validation.ok) {
+      return validation;
+    }
+
+    const users = getUsers();
+    const index = users.findIndex((item) => item.usernameKey === normalizedKey);
+    if (index === -1) {
+      return {
+        ok: false,
+        message: "No se encontro el usuario solicitado.",
+      };
+    }
+
+    if (
+      users.some(
+        (item, itemIndex) =>
+          itemIndex !== index && item.usernameKey === validation.usernameKey
+      )
+    ) {
+      return {
+        ok: false,
+        message: "Ese nombre de usuario ya existe. Usa otro diferente.",
+      };
+    }
+
+    const selection = getSelectionForFicha(validation.ficha);
+    const previousUser = users[index];
+    const nextUser = {
+      ...previousUser,
+      fullName: validation.fullName,
+      username: validation.username,
+      usernameKey: validation.usernameKey,
+      ficha: validation.ficha,
+      inst: selection.inst,
+      grupo: selection.grupo,
+      updatedAt: new Date().toISOString(),
+    };
+
+    users[index] = nextUser;
+    saveUsers(users);
+
+    if (validation.usernameKey !== normalizedKey) {
+      renameStudentScopedStorage(normalizedKey, validation.usernameKey);
+
+      const session = readJson(SESSION_KEY, null);
+      if (
+        session &&
+        session.role === "student" &&
+        normalizeUsername(session.usernameKey) === normalizedKey
+      ) {
+        writeJson(SESSION_KEY, {
+          ...session,
+          usernameKey: validation.usernameKey,
+          loggedAt: session.loggedAt || new Date().toISOString(),
+        });
+        applySelection(getSelectionForFicha(nextUser.ficha));
+      }
+    }
+
+    return {
+      ok: true,
+      user: nextUser,
+      previousUsernameKey: normalizedKey,
+    };
+  }
+
   function updateStudentFicha(usernameKey, newFicha) {
     if (!isAdminSession()) {
       return {
@@ -1434,6 +1594,7 @@ window.portalAuth = {
     applySelection,
     clearSelection,
     writeGuideProgress,
+    updateStudentAccount,
     updateStudentPassword,
     updateStudentFicha,
     resetStudentGuideProgress,
@@ -1461,6 +1622,7 @@ window.portalAuth = {
     registerStudent: auth.registerStudent,
     loginStudent: auth.loginStudent,
     loginAdmin: auth.loginAdmin,
+    updateStudentAccount: auth.updateStudentAccount,
     updateStudentPassword: auth.updateStudentPassword,
     updateStudentFicha: auth.updateStudentFicha,
     resetStudentGuideProgress: auth.resetStudentGuideProgress,
@@ -2627,6 +2789,28 @@ window.portalAuth = {
       ok: true,
       user: sanitizeUser(getLocalUser(cleanUsernameKey)),
     };
+  };
+
+  auth.updateStudentAccount = async function updateStudentAccountPatched(usernameKey, data) {
+    if (typeof original.updateStudentAccount !== "function") {
+      return {
+        ok: false,
+        message: "La edicion de usuarios no esta disponible.",
+      };
+    }
+
+    const cleanUsernameKey = normalizeUsername(usernameKey);
+    const payload = {
+      fullName: normalizeText(data && data.fullName),
+      username: normalizeText(data && data.username),
+      ficha: normalizeFicha(data && data.ficha),
+    };
+
+    const localResult = original.updateStudentAccount.call(auth, cleanUsernameKey, payload);
+    if (localResult && localResult.ok) {
+      bumpNetworkSyncSignature();
+    }
+    return localResult;
   };
 
   auth.updateStudentFicha = async function updateStudentFichaPatched(usernameKey, newFicha) {

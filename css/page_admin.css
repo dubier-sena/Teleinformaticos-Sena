@@ -247,7 +247,9 @@ select {
 .toolbar input,
 .toolbar-select select,
 .password-row input,
-.ficha-row select {
+.ficha-row select,
+.account-field input,
+.account-field select {
   flex: 1 1 280px;
   min-height: 46px;
   padding: 0 14px;
@@ -263,7 +265,9 @@ select {
 .toolbar input:focus,
 .toolbar-select select:focus,
 .password-row input:focus,
-.ficha-row select:focus {
+.ficha-row select:focus,
+.account-field input:focus,
+.account-field select:focus {
   outline: none;
   border-color: rgba(15, 191, 100, 0.55);
   box-shadow: 0 0 0 4px rgba(15, 191, 100, 0.14);
@@ -474,6 +478,31 @@ select {
   align-items: center;
 }
 
+.account-form {
+  display: grid;
+  gap: 12px;
+}
+
+.account-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.account-field {
+  display: grid;
+  gap: 6px;
+}
+
+.account-field span {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.account-field select,
 .ficha-row select {
   cursor: pointer;
 }
