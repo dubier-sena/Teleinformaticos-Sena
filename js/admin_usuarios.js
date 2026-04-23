@@ -36,6 +36,10 @@
     "ip2-locked",
     "ip3-locked",
     "taller-ip-ej1-locked",
+    "taller-ip-ej2-locked",
+    "taller-ip-ej3-locked",
+    "taller-ip-ej4-locked",
+    "taller-ip-ej5-locked",
     "social-locked",
   ];
   const REDES_ADMIN_QUIZ_CONFIGS = Array.isArray(window.redesQuizUnlock?.REDES_ADMIN_QUIZ_CONFIGS)

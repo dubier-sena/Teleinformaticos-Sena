@@ -141,6 +141,49 @@
     return learnerLabel + "_" + normalizeActivitySegment(context.activityLabel) + extension;
   }
 
+  function buildGuideFolderLabel(context) {
+    return sanitizeLabel(
+      (context && context.guideLabel) || getGuideLabelFromDocument(),
+      "Guia"
+    );
+  }
+
+  function buildActivityFolderLabel(context) {
+    var activityNumber = sanitizeLabel(context && context.activityNumber, "");
+    var activityTitle = sanitizeLabel(
+      context && (context.activityTitle || context.activityLabel),
+      "Actividad"
+    );
+
+    if (activityNumber && activityTitle) {
+      var normalizedLabel = ("Actividad " + activityNumber).toLowerCase();
+      var normalizedTitle = activityTitle.toLowerCase();
+
+      if (normalizedTitle === normalizedLabel || normalizedTitle === activityNumber.toLowerCase()) {
+        return activityNumber;
+      }
+
+      return activityNumber + " - " + activityTitle;
+    }
+
+    return activityNumber || activityTitle;
+  }
+
+  function buildDestinationFolderPreview(identity, context) {
+    var segments = ["Ficha " + sanitizeLabel(identity.ficha, "SIN_FICHA")];
+    var guideLabel = buildGuideFolderLabel(context);
+    var activityLabel = buildActivityFolderLabel(context);
+
+    if (guideLabel) {
+      segments.push(guideLabel);
+    }
+    if (activityLabel) {
+      segments.push(activityLabel);
+    }
+
+    return segments.join(" / ");
+  }
+
   function getDefaultSelection() {
     var body = document.body || {};
     return {
@@ -331,8 +374,7 @@
 
   function buildDestinationPreview(identity, context, fileName) {
     return (
-      "Ficha " +
-      sanitizeLabel(identity.ficha, "SIN_FICHA") +
+      buildDestinationFolderPreview(identity, context) +
       " / " +
       buildDeliveryFileNamePreview(
         identity.fullName,
@@ -690,7 +732,7 @@
 
     nodes.title.textContent = "Entrega segura - " + currentContext.activityLabel;
     nodes.subtitle.textContent =
-      "Se enviara el archivo a la carpeta base de la ficha usando el formulario propio del proyecto.";
+      "Se enviara el archivo a la carpeta correspondiente de la ficha usando el formulario propio del proyecto.";
     nodes.nameInput.value = identity.fullName || "";
     nodes.fichaInput.value = identity.ficha || "";
     nodes.nameInput.readOnly = !!usingStudentSession;
@@ -732,7 +774,7 @@
     }
 
     nodes.submit.setAttribute("disabled", "disabled");
-    setStatus(nodes.status, "Subiendo archivo a la carpeta base de la ficha...", "loading");
+    setStatus(nodes.status, "Subiendo archivo a la carpeta correspondiente de Drive...", "loading");
 
     try {
       var fileBase64 = await readFileAsBase64(file);
@@ -756,9 +798,15 @@
       };
 
       var response = await uploadToAppsScript(payload);
+      if (response.folderPath && nodes.path) {
+        nodes.path.textContent =
+          response.folderPath +
+          (response.savedFileName ? " / " + response.savedFileName : "");
+      }
       setStatus(
         nodes.status,
-        (response.message || "Entrega registrada correctamente en la carpeta de la ficha.") +
+        (response.message || "Entrega registrada correctamente en la carpeta correspondiente.") +
+          (response.folderPath ? " Ruta: " + response.folderPath + "." : "") +
           (response.savedFileName ? " Archivo guardado como: " + response.savedFileName : ""),
         "success"
       );
@@ -812,6 +860,7 @@
 
   window.sharedAppsScriptDelivery = {
     buildDeliveryFileNamePreview: buildDeliveryFileNamePreview,
+    buildDestinationFolderPreview: buildDestinationFolderPreview,
     buildDestinationPreview: buildDestinationPreview,
     getActivityContextFromNode: getActivityContextFromNode,
     injectButtonsIntoExistingGroups: injectButtonsIntoExistingGroups,

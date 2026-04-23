@@ -29,7 +29,7 @@
 <script defer src="data/calendario_2026_records.js?v=20260410_1"></script>
 <script defer src="data/calendario_2026_seed.js?v=20260410_1"></script>
 <script defer src="js/redes_lock_sync.js?v=20260422_2"></script>
-<script defer src="js/script_guia_redes.js?v=20260422_3"></script>
+<script defer src="js/script_guia_redes.js?v=20260422_8"></script>
 <script defer src="js/guia_template.js?v=20260411_1"></script>
 </head>
 <body
@@ -1351,6 +1351,19 @@
               <div class="checklist-card compact-card" style="margin-top:16px">
                 <h3>Ejercicio 2 &mdash; Analizar una direcci&oacute;n IP</h3>
                 <div class="info-box" style="margin:10px 0"><p><strong>IP: 192.168.10.45 &nbsp;&nbsp; M&aacute;scara: 255.255.255.0</strong></p></div>
+                <div style="margin:14px 0 12px">
+                  <button type="button" onclick="abrirTeoriaPanel('ip4')"
+                    style="display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,#007934,#0a5c31);color:#fff;border:none;padding:13px 22px;border-radius:12px;font-weight:700;font-size:.9rem;box-shadow:0 6px 18px rgba(7,26,18,.18);cursor:pointer;font-family:inherit;transition:all .2s ease"
+                    onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 10px 28px rgba(7,26,18,.25)'"
+                    onmouseout="this.style.transform='';this.style.boxShadow='0 6px 18px rgba(7,26,18,.18)'">
+                    <span style="font-size:1.3rem">&#128218;</span>
+                    <span>
+                      <span style="display:block;font-size:.75rem;font-weight:600;opacity:.8;letter-spacing:.04em">MATERIAL DE APOYO INTERACTIVO</span>
+                      Analizar una direcci&oacute;n IP paso a paso
+                    </span>
+                    <span style="margin-left:6px;font-size:1rem;opacity:.7">&#8594;</span>
+                  </button>
+                </div>
                 <div class="form-grid">
                   <label>
                     <span>&iquest;A qu&eacute; clase pertenece?</span>
@@ -1369,12 +1382,34 @@
                     <input type="text" data-store="ej2-privada" data-track placeholder="Privada / P&uacute;blica &mdash; porque...">
                   </label>
                 </div>
+                <div style="margin-top:16px">
+                  <button type="button" id="btnGuardarTallerIPEj2" onclick="guardarTallerIPEj2()"
+                    style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                    &#128190; Guardar respuestas
+                  </button>
+                </div>
+                <div id="tallerIPEj2Status" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                  &#9989; Respuestas guardadas en Firebase. Ya no se pueden modificar.
+                </div>
               </div>
 
               <!-- EJ 3 -->
               <div class="checklist-card compact-card" style="margin-top:16px">
                 <h3>Ejercicio 3 &mdash; Asignaci&oacute;n de IP a la Ferretera El Tornillo</h3>
                 <div class="info-box" style="margin:10px 0"><p><strong>Red: 192.168.1.0 &nbsp;&nbsp; M&aacute;scara: 255.255.255.0 &nbsp;&nbsp; Gateway: 192.168.1.1</strong></p></div>
+                <div style="margin:14px 0 12px">
+                  <button type="button" onclick="abrirTeoriaPanel('ip5')"
+                    style="display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,#007934,#0a5c31);color:#fff;border:none;padding:13px 22px;border-radius:12px;font-weight:700;font-size:.9rem;box-shadow:0 6px 18px rgba(7,26,18,.18);cursor:pointer;font-family:inherit;transition:all .2s ease"
+                    onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 10px 28px rgba(7,26,18,.25)'"
+                    onmouseout="this.style.transform='';this.style.boxShadow='0 6px 18px rgba(7,26,18,.18)'">
+                    <span style="font-size:1.3rem">&#128218;</span>
+                    <span>
+                      <span style="display:block;font-size:.75rem;font-weight:600;opacity:.8;letter-spacing:.04em">MATERIAL DE APOYO INTERACTIVO</span>
+                      Asignar IPs en una red local paso a paso
+                    </span>
+                    <span style="margin-left:6px;font-size:1rem;opacity:.7">&#8594;</span>
+                  </button>
+                </div>
                 <div class="table-scroll">
                   <table class="data-table">
                     <thead>
@@ -1396,36 +1431,93 @@
                   <span>Justifica: &iquest;por qu&eacute; elegiste empezar desde esa IP y no desde otra?</span>
                   <textarea rows="3" data-store="ej3-justifica" data-track placeholder="Recuerda que .0 es la direcci&oacute;n de red y .255 es broadcast. Ambas est&aacute;n reservadas."></textarea>
                 </label>
+                <div style="margin-top:16px">
+                  <button type="button" id="btnGuardarTallerIPEj3" onclick="guardarTallerIPEj3()"
+                    style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                    &#128190; Guardar respuestas
+                  </button>
+                </div>
+                <div id="tallerIPEj3Status" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                  &#9989; Respuestas guardadas en Firebase. Ya no se pueden modificar.
+                </div>
               </div>
 
               <!-- EJ 4 -->
               <div class="checklist-card compact-card" style="margin-top:16px">
                 <h3>Ejercicio 4 &mdash; Verificar par&aacute;metros de red en tu computador</h3>
-                <ol class="note-list">
-                  <li>Presiona <kbd>Windows + R</kbd>, escribe <code>cmd</code> y presiona Enter.</li>
-                  <li>Escribe el comando <code>ipconfig /all</code> y presiona Enter.</li>
-                  <li>Toma una captura de pantalla del resultado.</li>
-                </ol>
-                <div class="form-grid" style="margin-top:12px">
-                  <label>
-                    <span>Direcci&oacute;n IPv4 que aparece &mdash; &iquest;para qu&eacute; sirve?</span>
+                <div style="display:grid;gap:10px;margin-top:12px">
+                  <div style="display:flex;gap:12px;align-items:flex-start;padding:12px 14px;background:#f4fbf6;border:1px solid #cfe8d4;border-radius:12px">
+                    <div style="width:30px;height:30px;border-radius:999px;background:#1b5e20;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0">1</div>
+                    <div>
+                      <strong style="display:block;color:#1b5e20">Abrir la consola</strong>
+                      <span style="color:#37474f;font-size:.9rem">Presiona <kbd>Windows + R</kbd>, escribe <code>cmd</code> y presiona Enter.</span>
+                    </div>
+                  </div>
+                  <div style="display:flex;gap:12px;align-items:flex-start;padding:12px 14px;background:#f4fbf6;border:1px solid #cfe8d4;border-radius:12px">
+                    <div style="width:30px;height:30px;border-radius:999px;background:#1b5e20;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0">2</div>
+                    <div>
+                      <strong style="display:block;color:#1b5e20">Ejecutar el comando</strong>
+                      <span style="color:#37474f;font-size:.9rem">Escribe <code>ipconfig /all</code> y presiona Enter para ver los par&aacute;metros de red.</span>
+                    </div>
+                  </div>
+                  <div style="display:flex;gap:12px;align-items:flex-start;padding:12px 14px;background:#f4fbf6;border:1px solid #cfe8d4;border-radius:12px">
+                    <div style="width:30px;height:30px;border-radius:999px;background:#1b5e20;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0">3</div>
+                    <div>
+                      <strong style="display:block;color:#1b5e20">Tomar el pantallazo</strong>
+                      <span style="color:#37474f;font-size:.9rem">Captura la pantalla donde se vea claramente la IPv4, la m&aacute;scara, el gateway y los DNS.</span>
+                    </div>
+                  </div>
+                </div>
+                <div style="margin-top:14px;padding:14px;border:1px dashed #9ccc65;border-radius:12px;background:#fbfff7">
+                  <input type="file" id="ej4CapturaInput" accept="image/*" style="display:none" onchange="subirPantallazoTallerIPEj4(this)">
+                  <button type="button" id="btnSubirTallerIPEj4" onclick="document.getElementById('ej4CapturaInput').click()"
+                    style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#2e7d32,#43a047);color:#fff;border:none;border-radius:10px;padding:10px 18px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                    &#128248; Subir pantallazo de ipconfig /all
+                  </button>
+                  <div id="tallerIPEj4Preview" style="display:none;margin-top:12px">
+                    <img id="tallerIPEj4Img" alt="Pantallazo ipconfig" style="width:100%;max-width:420px;border-radius:10px;border:1px solid #c8e6c9;display:block">
+                    <div id="tallerIPEj4Nombre" style="margin-top:8px;color:#2f4f4f;font-size:.85rem"></div>
+                  </div>
+                </div>
+                <div style="margin:14px 0 12px">
+                  <button type="button" onclick="abrirTeoriaPanel('ip6')"
+                    style="display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,#007934,#0a5c31);color:#fff;border:none;padding:13px 22px;border-radius:12px;font-weight:700;font-size:.9rem;box-shadow:0 6px 18px rgba(7,26,18,.18);cursor:pointer;font-family:inherit;transition:all .2s ease"
+                    onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 10px 28px rgba(7,26,18,.25)'"
+                    onmouseout="this.style.transform='';this.style.boxShadow='0 6px 18px rgba(7,26,18,.18)'">
+                    <span style="font-size:1.3rem">&#128218;</span>
+                    <span>
+                      <span style="display:block;font-size:.75rem;font-weight:600;opacity:.8;letter-spacing:.04em">MATERIAL DE APOYO INTERACTIVO</span>
+                      Interpretar IPv4, m&aacute;scara, gateway y DNS
+                    </span>
+                    <span style="margin-left:6px;font-size:1rem;opacity:.7">&#8594;</span>
+                  </button>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:12px;margin-top:14px">
+                  <label style="display:block">
+                    <span style="display:block;margin-bottom:6px;font-weight:600">Direcci&oacute;n IPv4 que aparece &mdash; &iquest;para qu&eacute; sirve?</span>
                     <textarea rows="2" data-store="ej4-ipv4" data-track placeholder="IP: ___.___.___.___  &mdash;  Sirve para..."></textarea>
                   </label>
-                  <label>
-                    <span>M&aacute;scara de subred &mdash; &iquest;para qu&eacute; sirve?</span>
+                  <label style="display:block">
+                    <span style="display:block;margin-bottom:6px;font-weight:600">M&aacute;scara de subred &mdash; &iquest;para qu&eacute; sirve?</span>
                     <textarea rows="2" data-store="ej4-mask" data-track placeholder="M&aacute;scara: ___.___.___.___  &mdash;  Sirve para..."></textarea>
                   </label>
-                  <label>
-                    <span>Puerta de enlace predeterminada &mdash; &iquest;para qu&eacute; sirve?</span>
+                  <label style="display:block">
+                    <span style="display:block;margin-bottom:6px;font-weight:600">Puerta de enlace predeterminada &mdash; &iquest;para qu&eacute; sirve?</span>
                     <textarea rows="2" data-store="ej4-gw" data-track placeholder="Gateway: ___.___.___.___  &mdash;  Sirve para..."></textarea>
                   </label>
-                  <label>
-                    <span>Servidores DNS &mdash; &iquest;para qu&eacute; sirven?</span>
+                  <label style="display:block">
+                    <span style="display:block;margin-bottom:6px;font-weight:600">Servidores DNS &mdash; &iquest;para qu&eacute; sirven?</span>
                     <textarea rows="2" data-store="ej4-dns" data-track placeholder="DNS: ___.___.___.___  &mdash;  Sirven para..."></textarea>
                   </label>
                 </div>
-                <div class="info-box" style="margin-top:10px">
-                  <p>No olvides adjuntar la captura de pantalla de <code>ipconfig /all</code> en tu entrega PDF.</p>
+                <div style="margin-top:16px">
+                  <button type="button" id="btnGuardarTallerIPEj4" onclick="guardarTallerIPEj4()"
+                    style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                    &#128190; Guardar respuestas
+                  </button>
+                </div>
+                <div id="tallerIPEj4Status" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                  &#9989; Respuestas guardadas en Firebase. Ya no se pueden modificar.
                 </div>
               </div>
 
@@ -1434,6 +1526,19 @@
                 <h3>Ejercicio 5 &mdash; Elegir la clase de IP correcta para cada caso</h3>
                 <div class="info-box" style="margin:10px 0">
                   <p>&#128161; Clase A: hasta 16.777.214 hosts &middot; Clase B: hasta 65.534 hosts &middot; Clase C: hasta 254 hosts</p>
+                </div>
+                <div style="margin:14px 0 12px">
+                  <button type="button" onclick="abrirTeoriaPanel('ip7')"
+                    style="display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,#007934,#0a5c31);color:#fff;border:none;padding:13px 22px;border-radius:12px;font-weight:700;font-size:.9rem;box-shadow:0 6px 18px rgba(7,26,18,.18);cursor:pointer;font-family:inherit;transition:all .2s ease"
+                    onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 10px 28px rgba(7,26,18,.25)'"
+                    onmouseout="this.style.transform='';this.style.boxShadow='0 6px 18px rgba(7,26,18,.18)'">
+                    <span style="font-size:1.3rem">&#128218;</span>
+                    <span>
+                      <span style="display:block;font-size:.75rem;font-weight:600;opacity:.8;letter-spacing:.04em">MATERIAL DE APOYO INTERACTIVO</span>
+                      Elegir la clase IP seg&uacute;n cantidad de dispositivos
+                    </span>
+                    <span style="margin-left:6px;font-size:1rem;opacity:.7">&#8594;</span>
+                  </button>
                 </div>
                 <div class="table-scroll">
                   <table class="data-table">
@@ -1483,11 +1588,24 @@
                     </tbody>
                   </table>
                 </div>
+                <div style="margin-top:16px">
+                  <button id="btnGuardarTallerIPEj5" type="button" onclick="guardarTallerIPEj5()"
+                    style="background:#2e7d32;color:#fff;border:none;padding:12px 22px;border-radius:10px;font-weight:700;cursor:pointer">
+                    &#128190; Guardar respuestas
+                  </button>
+                </div>
+                <div id="tallerIPEj5Status" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                  &#9989; Respuestas guardadas en Firebase. Ya no se pueden modificar.
+                </div>
               </div>
 
-              <div class="warning-box" style="margin-top:16px">
-                <strong>&#9888; Entrega:</strong> Documento PDF con todos los ejercicios resueltos mostrando el procedimiento. Incluir captura de <code>ipconfig /all</code> del Ejercicio 4. Nombre:
-                <code>Taller_IP_NombreAprendiz_FICHA.pdf</code>
+              <div style="margin:8px 0 20px;padding:20px;background:linear-gradient(135deg,#eff6ff,#dbeafe);border-radius:14px;border:1px solid #bfdbfe;text-align:center">
+                <p style="font-size:0.9rem;font-weight:600;color:#1e3a8a;margin:0 0 12px">&#128196; Cuando hayas completado los 5 ejercicios, genera tu entrega en Word y súbela al Drive</p>
+                <button type="button" onclick="exportarWordTallerIP(event)"
+                  style="display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,#1e3a8a,#1d4ed8);color:#fff;border:none;border-radius:12px;padding:12px 28px;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 4px 14px rgba(29,78,216,0.35)">
+                  &#128196; Generar Word &mdash; Taller IP
+                </button>
+                <p style="font-size:0.78rem;color:#3b82f6;margin:10px 0 0">Incluye respuestas de los ejercicios 1 &ndash; 5 y el pantallazo del Ejercicio 4</p>
               </div>
             </div>
           </div>
