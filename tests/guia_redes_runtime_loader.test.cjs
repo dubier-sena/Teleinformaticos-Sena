@@ -38,6 +38,7 @@ const EXPECTED_CONTEXTS = {
 
 function createHarness({
   contextKey = "sb-redes-10a",
+  runtimeTemplate = "guia-redes-rap01",
   pathname = "/santa-barbara-10a-guia-02-redes-rap01.html",
   registryOk = true,
   partialOk = true,
@@ -139,7 +140,7 @@ function createHarness({
   };
 
   const runtimeWindow = {
-    __GUIDE_CONTEXT__: { key: contextKey, template: "guia-redes-rap01" },
+    __GUIDE_CONTEXT__: { key: contextKey, template: runtimeTemplate },
     location: { pathname },
     initGuiaTemplateShell() {
       templateInitCalls += 1;
@@ -277,6 +278,12 @@ for (const scenario of [
     name: "pageFile mismatch",
     options: {
       pathname: "/santa-barbara-10a-guia-02-redes-ip-quiz.html",
+    },
+  },
+  {
+    name: "template mismatch",
+    options: {
+      runtimeTemplate: "guia-redes-otro-template",
     },
   },
   {

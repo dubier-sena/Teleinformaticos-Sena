@@ -3,29 +3,25 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 
-const HTML_FILES = [
-  "santa-barbara-10a-guia-02-redes-rap01.html",
-  "santa-barbara-10b-guia-02-redes-rap01.html",
-];
+const SHARED_HTML = fs.readFileSync(
+  path.join(__dirname, "..", "partials", "guia-redes-rap01-content.html"),
+  "utf8"
+);
 
 test("el laboratorio 1 de transferencia presenta una estructura guiada y espacios para evidencias", () => {
-  HTML_FILES.forEach((fileName) => {
-    const html = fs.readFileSync(path.join(__dirname, "..", fileName), "utf8");
-
-    assert.match(html, /Objetivo del laboratorio/);
-    assert.match(html, /Lo que vas a construir/);
-    assert.match(html, /Equipos y recursos que debes agregar/);
-    assert.match(html, /Tabla de direccionamiento sugerida/);
-    assert.match(html, /Evidencias visuales obligatorias/);
-    assert.match(html, /An(?:a|á|&aacute;)lisis del laboratorio/);
-    assert.match(html, /btnSubirLab1Ping1/);
-    assert.match(html, /btnSubirLab1Ping2/);
-    assert.match(html, /btnSubirLab1Broadcast/);
-    assert.match(html, /btnSubirLab1Ipconfig/);
-    assert.match(html, /btnGuardarLab1/);
-    assert.match(html, /btnEntregaLab1Pkt/);
-    assert.match(html, /lab1Status/);
-  });
+  assert.match(SHARED_HTML, /Objetivo del laboratorio/);
+  assert.match(SHARED_HTML, /Lo que vas a construir/);
+  assert.match(SHARED_HTML, /Equipos y recursos que debes agregar/);
+  assert.match(SHARED_HTML, /Tabla de direccionamiento sugerida/);
+  assert.match(SHARED_HTML, /Evidencias visuales obligatorias/);
+  assert.match(SHARED_HTML, /An(?:a|Ã¡|&aacute;)lisis del laboratorio/);
+  assert.match(SHARED_HTML, /btnSubirLab1Ping1/);
+  assert.match(SHARED_HTML, /btnSubirLab1Ping2/);
+  assert.match(SHARED_HTML, /btnSubirLab1Broadcast/);
+  assert.match(SHARED_HTML, /btnSubirLab1Ipconfig/);
+  assert.match(SHARED_HTML, /btnGuardarLab1/);
+  assert.match(SHARED_HTML, /btnEntregaLab1Pkt/);
+  assert.match(SHARED_HTML, /lab1Status/);
 });
 
 test("el laboratorio 1 integra carga de pantallazos, guardado y desbloqueo admin", () => {

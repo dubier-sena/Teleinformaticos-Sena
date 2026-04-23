@@ -3,36 +3,32 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 
-const HTML_FILES = [
-  "santa-barbara-10a-guia-02-redes-rap01.html",
-  "santa-barbara-10b-guia-02-redes-rap01.html",
-];
+const SHARED_HTML = fs.readFileSync(
+  path.join(__dirname, "..", "partials", "guia-redes-rap01-content.html"),
+  "utf8"
+);
 
 test("el laboratorio 3 hibrida presenta una estructura guiada y espacios para evidencias", () => {
-  HTML_FILES.forEach((fileName) => {
-    const html = fs.readFileSync(path.join(__dirname, "..", fileName), "utf8");
-
-    assert.match(html, /3\.4\.3/);
-    assert.match(html, /Laboratorio 3/);
-    assert.match(html, /red h(?:i|&iacute;|ÃƒÂ­)brida/i);
-    assert.match(html, /estrella/i);
-    assert.match(html, /(?:arbol|&aacute;rbol|ÃƒÂ¡rbol)/i);
-    assert.match(html, /fibra (?:optica|&oacute;ptica|ÃƒÂ³ptica)/i);
-    assert.match(html, /Wi-?Fi/i);
-    assert.match(html, /Objetivo del laboratorio/);
-    assert.match(html, /Lo que vas a construir/);
-    assert.match(html, /Equipos y recursos que debes agregar/);
-    assert.match(html, /Tabla de direccionamiento sugerida/);
-    assert.match(html, /Evidencias visuales obligatorias/);
-    assert.match(html, /An(?:a|ÃƒÂ¡|&aacute;)lisis del laboratorio/);
-    assert.match(html, /btnSubirLab3Topologia/);
-    assert.match(html, /btnSubirLab3PingBloques/);
-    assert.match(html, /btnSubirLab3PingWifi/);
-    assert.match(html, /btnSubirLab3IpconfigWifi/);
-    assert.match(html, /btnGuardarLab3/);
-    assert.match(html, /btnEntregaLab3Pkt/);
-    assert.match(html, /lab3Status/);
-  });
+  assert.match(SHARED_HTML, /3\.4\.3/);
+  assert.match(SHARED_HTML, /Laboratorio 3/);
+  assert.match(SHARED_HTML, /red h(?:i|&iacute;|ÃƒÆ’Ã‚Â­)brida/i);
+  assert.match(SHARED_HTML, /estrella/i);
+  assert.match(SHARED_HTML, /(?:arbol|&aacute;rbol|ÃƒÆ’Ã‚Â¡rbol)/i);
+  assert.match(SHARED_HTML, /fibra (?:optica|&oacute;ptica|ÃƒÆ’Ã‚Â³ptica)/i);
+  assert.match(SHARED_HTML, /Wi-?Fi/i);
+  assert.match(SHARED_HTML, /Objetivo del laboratorio/);
+  assert.match(SHARED_HTML, /Lo que vas a construir/);
+  assert.match(SHARED_HTML, /Equipos y recursos que debes agregar/);
+  assert.match(SHARED_HTML, /Tabla de direccionamiento sugerida/);
+  assert.match(SHARED_HTML, /Evidencias visuales obligatorias/);
+  assert.match(SHARED_HTML, /An(?:a|ÃƒÆ’Ã‚Â¡|&aacute;)lisis del laboratorio/);
+  assert.match(SHARED_HTML, /btnSubirLab3Topologia/);
+  assert.match(SHARED_HTML, /btnSubirLab3PingBloques/);
+  assert.match(SHARED_HTML, /btnSubirLab3PingWifi/);
+  assert.match(SHARED_HTML, /btnSubirLab3IpconfigWifi/);
+  assert.match(SHARED_HTML, /btnGuardarLab3/);
+  assert.match(SHARED_HTML, /btnEntregaLab3Pkt/);
+  assert.match(SHARED_HTML, /lab3Status/);
 });
 
 test("el laboratorio 3 integra carga de pantallazos, guardado y entrega final", () => {
