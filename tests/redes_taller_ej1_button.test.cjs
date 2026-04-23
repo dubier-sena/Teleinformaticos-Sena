@@ -3,10 +3,14 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 
-const HTML_FILES = [
+const WRAPPER_FILES = [
   "santa-barbara-10a-guia-02-redes-rap01.html",
   "santa-barbara-10b-guia-02-redes-rap01.html",
 ];
+const SHARED_HTML = fs.readFileSync(
+  path.join(__dirname, "..", "partials", "guia-redes-rap01-content.html"),
+  "utf8"
+);
 
 function getPanelBlock(script, panelKey) {
   const start = script.indexOf(`${panelKey}: {`);
@@ -20,21 +24,24 @@ function getPanelBlock(script, panelKey) {
   return script.slice(start, end);
 }
 
-test("el ejercicio 1 del taller IP incluye boton y estado de guardado en ambas guias", () => {
-  HTML_FILES.forEach((fileName) => {
-    const html = fs.readFileSync(path.join(__dirname, "..", fileName), "utf8");
-    assert.match(html, /id="btnGuardarTallerIPEj1"/);
-    assert.match(html, /onclick="guardarTallerIPEj1\(\)"/);
-    assert.match(html, /id="tallerIPEj1Status"/);
-  });
+test("el ejercicio 1 del taller IP incluye boton y estado de guardado en la guia compartida", () => {
+  assert.match(SHARED_HTML, /id="btnGuardarTallerIPEj1"/);
+  assert.match(SHARED_HTML, /onclick="guardarTallerIPEj1\(\)"/);
+  assert.match(SHARED_HTML, /id="tallerIPEj1Status"/);
 });
 
-test("el ejercicio 1 del taller IP incluye un boton de apoyo interactivo para clases de IP", () => {
-  HTML_FILES.forEach((fileName) => {
+test("el ejercicio 1 del taller IP incluye un boton de apoyo interactivo para clases de IP en la guia compartida", () => {
+  assert.match(SHARED_HTML, /onclick="abrirTeoriaPanel\('ip2'\)"/);
+  assert.match(SHARED_HTML, /MATERIAL DE APOYO INTERACTIVO/);
+  assert.match(SHARED_HTML, /Tipos de Clase de IP con ejemplos/);
+});
+
+test("los wrappers de Guia 2 Redes siguen siendo shells validos", () => {
+  WRAPPER_FILES.forEach((fileName) => {
     const html = fs.readFileSync(path.join(__dirname, "..", fileName), "utf8");
-    assert.match(html, /onclick="abrirTeoriaPanel\('ip2'\)"/);
-    assert.match(html, /MATERIAL DE APOYO INTERACTIVO/);
-    assert.match(html, /Tipos de Clase de IP con ejemplos/);
+    assert.match(html, /window\.__GUIDE_CONTEXT__/);
+    assert.match(html, /id="guide-root"/);
+    assert.match(html, /guide_runtime_loader\.js/);
   });
 });
 
@@ -59,7 +66,7 @@ test("el panel teorico de clases IP muestra mascaras por defecto con ejemplos co
     "utf8"
   );
 
-  assert.match(guideScript, /M[aÃ¡]scara por defecto/);
+  assert.match(guideScript, /M[aÃƒÂ¡]scara por defecto/);
   assert.match(guideScript, /255\.0\.0\.0/);
   assert.match(guideScript, /255\.255\.0\.0/);
   assert.match(guideScript, /255\.255\.255\.0/);
@@ -68,15 +75,12 @@ test("el panel teorico de clases IP muestra mascaras por defecto con ejemplos co
   assert.match(guideScript, /192\.168\.1\.50/);
 });
 
-test("el ejercicio 2 del taller IP incluye boton de apoyo y guardado en ambas guias", () => {
-  HTML_FILES.forEach((fileName) => {
-    const html = fs.readFileSync(path.join(__dirname, "..", fileName), "utf8");
-    assert.match(html, /onclick="abrirTeoriaPanel\('ip4'\)"/);
-    assert.match(html, /Analizar una direcci(?:o|Ã³|&oacute;)n IP paso a paso/);
-    assert.match(html, /id="btnGuardarTallerIPEj2"/);
-    assert.match(html, /onclick="guardarTallerIPEj2\(\)"/);
-    assert.match(html, /id="tallerIPEj2Status"/);
-  });
+test("el ejercicio 2 del taller IP incluye boton de apoyo y guardado en la guia compartida", () => {
+  assert.match(SHARED_HTML, /onclick="abrirTeoriaPanel\('ip4'\)"/);
+  assert.match(SHARED_HTML, /Analizar una direcci(?:o|ÃƒÂ³|&oacute;)n IP paso a paso/);
+  assert.match(SHARED_HTML, /id="btnGuardarTallerIPEj2"/);
+  assert.match(SHARED_HTML, /onclick="guardarTallerIPEj2\(\)"/);
+  assert.match(SHARED_HTML, /id="tallerIPEj2Status"/);
 });
 
 test("el ejercicio 2 del taller IP queda integrado con lock y panel teorico contextual", () => {
@@ -93,7 +97,7 @@ test("el ejercicio 2 del taller IP queda integrado con lock y panel teorico cont
   assert.match(guideScript, /taller-ip-ej2-locked/);
   assert.match(guideScript, /window\.guardarTallerIPEj2\s*=\s*async function/);
   assert.match(adminScript, /taller-ip-ej2-locked/);
-  assert.match(ip4Panel, /Analizar una direcci[oÃ³]n IP paso a paso/);
+  assert.match(ip4Panel, /Analizar una direcci[oÃƒÂ³]n IP paso a paso/);
   assert.match(ip4Panel, /ejemplo guiado/i);
   assert.match(ip4Panel, /150\.20\.8\.12/);
   assert.match(ip4Panel, /255\.255\.0\.0/);
@@ -103,15 +107,12 @@ test("el ejercicio 2 del taller IP queda integrado con lock y panel teorico cont
   assert.doesNotMatch(ip4Panel, /192\.168\.10\.45/);
 });
 
-test("el ejercicio 3 del taller IP incluye boton de apoyo y guardado en ambas guias", () => {
-  HTML_FILES.forEach((fileName) => {
-    const html = fs.readFileSync(path.join(__dirname, "..", fileName), "utf8");
-    assert.match(html, /onclick="abrirTeoriaPanel\('ip5'\)"/);
-    assert.match(html, /Asignar IPs en una red local paso a paso/);
-    assert.match(html, /id="btnGuardarTallerIPEj3"/);
-    assert.match(html, /onclick="guardarTallerIPEj3\(\)"/);
-    assert.match(html, /id="tallerIPEj3Status"/);
-  });
+test("el ejercicio 3 del taller IP incluye boton de apoyo y guardado en la guia compartida", () => {
+  assert.match(SHARED_HTML, /onclick="abrirTeoriaPanel\('ip5'\)"/);
+  assert.match(SHARED_HTML, /Asignar IPs en una red local paso a paso/);
+  assert.match(SHARED_HTML, /id="btnGuardarTallerIPEj3"/);
+  assert.match(SHARED_HTML, /onclick="guardarTallerIPEj3\(\)"/);
+  assert.match(SHARED_HTML, /id="tallerIPEj3Status"/);
 });
 
 test("el ejercicio 3 del taller IP queda integrado con lock y panel teorico con ejemplo diferente", () => {
@@ -137,22 +138,19 @@ test("el ejercicio 3 del taller IP queda integrado con lock y panel teorico con 
   assert.match(ip5Panel, /empezar en \.10/i);
 });
 
-test("el ejercicio 4 del taller IP presenta pasos claros, apoyo y carga de pantallazo en ambas guias", () => {
-  HTML_FILES.forEach((fileName) => {
-    const html = fs.readFileSync(path.join(__dirname, "..", fileName), "utf8");
-    const uploadIndex = html.indexOf("btnSubirTallerIPEj4");
-    const supportIndex = html.indexOf("abrirTeoriaPanel('ip6')");
-    assert.notEqual(uploadIndex, -1);
-    assert.notEqual(supportIndex, -1);
-    assert.ok(uploadIndex < supportIndex, "el boton de subir pantallazo debe aparecer antes del material de apoyo");
-    assert.match(html, /onclick="abrirTeoriaPanel\('ip6'\)"/);
-    assert.match(html, /Interpretar IPv4, m(?:a|Ã¡|&aacute;)scara, gateway y DNS/);
-    assert.match(html, /btnSubirTallerIPEj4/);
-    assert.match(html, /ej4CapturaInput/);
-    assert.match(html, /tallerIPEj4Preview/);
-    assert.match(html, /btnGuardarTallerIPEj4/);
-    assert.match(html, /tallerIPEj4Status/);
-  });
+test("el ejercicio 4 del taller IP presenta pasos claros, apoyo y carga de pantallazo en la guia compartida", () => {
+  const uploadIndex = SHARED_HTML.indexOf("btnSubirTallerIPEj4");
+  const supportIndex = SHARED_HTML.indexOf("abrirTeoriaPanel('ip6')");
+  assert.notEqual(uploadIndex, -1);
+  assert.notEqual(supportIndex, -1);
+  assert.ok(uploadIndex < supportIndex, "el boton de subir pantallazo debe aparecer antes del material de apoyo");
+  assert.match(SHARED_HTML, /onclick="abrirTeoriaPanel\('ip6'\)"/);
+  assert.match(SHARED_HTML, /Interpretar IPv4, m(?:a|ÃƒÂ¡|&aacute;)scara, gateway y DNS/);
+  assert.match(SHARED_HTML, /btnSubirTallerIPEj4/);
+  assert.match(SHARED_HTML, /ej4CapturaInput/);
+  assert.match(SHARED_HTML, /tallerIPEj4Preview/);
+  assert.match(SHARED_HTML, /btnGuardarTallerIPEj4/);
+  assert.match(SHARED_HTML, /tallerIPEj4Status/);
 });
 
 test("el ejercicio 4 del taller IP queda integrado con lock, pantallazo y panel teorico guiado", () => {
@@ -171,7 +169,7 @@ test("el ejercicio 4 del taller IP queda integrado con lock, pantallazo y panel 
   assert.match(guideScript, /window\.guardarTallerIPEj4\s*=\s*async function/);
   assert.match(adminScript, /taller-ip-ej4-locked/);
   assert.match(ip6Panel, /ip6:/);
-  assert.match(ip6Panel, /Interpretar IPv4, m[aÃ¡]scara, gateway y DNS/);
+  assert.match(ip6Panel, /Interpretar IPv4, m[aÃƒÂ¡]scara, gateway y DNS/);
   assert.match(ip6Panel, /ejemplo guiado/i);
   assert.match(ip6Panel, /10\.0\.5\.23/);
   assert.match(ip6Panel, /255\.255\.255\.0/);
@@ -181,15 +179,12 @@ test("el ejercicio 4 del taller IP queda integrado con lock, pantallazo y panel 
   assert.doesNotMatch(ip6Panel, /192\.168\.10\.45/);
 });
 
-test("el ejercicio 5 del taller IP incluye boton de apoyo y guardado en ambas guias", () => {
-  HTML_FILES.forEach((fileName) => {
-    const html = fs.readFileSync(path.join(__dirname, "..", fileName), "utf8");
-    assert.match(html, /onclick="abrirTeoriaPanel\('ip7'\)"/);
-    assert.match(html, /Elegir la clase IP seg(?:u|ÃƒÂº|&uacute;)n cantidad de dispositivos/);
-    assert.match(html, /id="btnGuardarTallerIPEj5"/);
-    assert.match(html, /onclick="guardarTallerIPEj5\(\)"/);
-    assert.match(html, /id="tallerIPEj5Status"/);
-  });
+test("el ejercicio 5 del taller IP incluye boton de apoyo y guardado en la guia compartida", () => {
+  assert.match(SHARED_HTML, /onclick="abrirTeoriaPanel\('ip7'\)"/);
+  assert.match(SHARED_HTML, /Elegir la clase IP seg(?:u|ÃƒÆ’Ã‚Âº|&uacute;)n cantidad de dispositivos/);
+  assert.match(SHARED_HTML, /id="btnGuardarTallerIPEj5"/);
+  assert.match(SHARED_HTML, /onclick="guardarTallerIPEj5\(\)"/);
+  assert.match(SHARED_HTML, /id="tallerIPEj5Status"/);
 });
 
 test("el ejercicio 5 del taller IP queda integrado con lock y panel teorico con ejemplo diferente", () => {
@@ -207,7 +202,7 @@ test("el ejercicio 5 del taller IP queda integrado con lock y panel teorico con 
   assert.match(guideScript, /window\.guardarTallerIPEj5\s*=\s*async function/);
   assert.match(adminScript, /taller-ip-ej5-locked/);
   assert.match(ip7Panel, /ip7:/);
-  assert.match(ip7Panel, /Elegir la clase IP seg[uÃƒÂº]n cantidad de dispositivos/);
+  assert.match(ip7Panel, /Elegir la clase IP seg[uÃƒÆ’Ã‚Âº]n cantidad de dispositivos/);
   assert.match(ip7Panel, /elige la clase mas pequena/i);
   assert.match(ip7Panel, /120 dispositivos/);
   assert.match(ip7Panel, /900 dispositivos/);
@@ -220,13 +215,10 @@ test("el ejercicio 5 del taller IP queda integrado con lock y panel teorico con 
   assert.doesNotMatch(ip7Panel, /3\.000 dispositivos/);
 });
 
-test("el taller IP incluye un boton final para generar y subir un solo Word con ejercicios 1 a 5", () => {
-  HTML_FILES.forEach((fileName) => {
-    const html = fs.readFileSync(path.join(__dirname, "..", fileName), "utf8");
-    assert.match(html, /onclick="exportarWordTallerIP\(event\)"/);
-    assert.match(html, /Generar Word(?:\s|&nbsp;|&#160;|&mdash;|&#8212;|-)+Taller IP/);
-    assert.match(html, /Cuando hayas completado los 5 ejercicios, genera tu entrega en Word y s(?:u|ú|&uacute;)bela al Drive/i);
-  });
+test("el taller IP incluye un boton final para generar y subir un solo Word con ejercicios 1 a 5 en la guia compartida", () => {
+  assert.match(SHARED_HTML, /onclick="exportarWordTallerIP\(event\)"/);
+  assert.match(SHARED_HTML, /Generar Word(?:\s|&nbsp;|&#160;|&mdash;|&#8212;|-)+Taller IP/);
+  assert.match(SHARED_HTML, /Cuando hayas completado los 5 ejercicios, genera tu entrega en Word y s(?:u|Ãº|&uacute;)bela al Drive/i);
 });
 
 test("el taller IP genera un solo Word con ejercicios 1 a 5 y prepara la subida al Drive", () => {

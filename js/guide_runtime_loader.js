@@ -60,6 +60,10 @@
       throw new Error("No existe el contexto " + runtimeRequest.key + ".");
     }
 
+    if (context.template !== runtimeRequest.template) {
+      throw new Error("El template solicitado no coincide con el contexto publico.");
+    }
+
     if (context.pageFile !== currentPageFile()) {
       throw new Error("El wrapper no coincide con el contexto solicitado.");
     }
