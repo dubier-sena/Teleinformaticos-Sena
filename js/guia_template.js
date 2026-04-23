@@ -1437,9 +1437,7 @@
       updateActivityNavDone();
       notifyGuideProgressChanged();
       applyResponsiveSidebarState();
-      if (guideTemplateBooted) {
-        return;
-      }
+      return;
     }
 
     guideTemplateBooted = true;
