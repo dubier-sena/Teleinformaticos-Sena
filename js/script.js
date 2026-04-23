@@ -392,8 +392,14 @@ let state = loadState();
 let cloudStateSyncTimer = null;
 let cloudStateRetryTimer = null;
 let pendingCloudStateSnapshot = null;
+let guia5Booted = false;
 
-document.addEventListener("DOMContentLoaded", () => {
+function initGuia5() {
+  if (guia5Booted) {
+    return;
+  }
+
+  guia5Booted = true;
   renderStatefulSections();
   renderConceptLegend();
   renderEvidenceTable();
@@ -405,7 +411,13 @@ document.addEventListener("DOMContentLoaded", () => {
   updateProgress();
   setupScrollSpy();
   initializeCloudStateSync();
-});
+}
+
+window.initGuia5 = initGuia5;
+
+if (!window.__PAGE_CONTEXT__) {
+  document.addEventListener("DOMContentLoaded", initGuia5);
+}
 
 document.addEventListener("guide-activity-check-change", () => {
   window.requestAnimationFrame(() => updateProgress());
