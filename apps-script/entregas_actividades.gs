@@ -57,19 +57,20 @@ function doPost(e) {
 
     const rootFolder = DriveApp.getFolderById(rootFolderId);
     const finalFileName = buildDeliveryFileName(fullName, ficha, activityLabel, fileName, payload);
+    const destination = resolveTargetFolder(rootFolder, ficha, payload);
 
     const blob = Utilities.newBlob(
       fileBytes,
       mimeType,
       finalFileName
     );
-    const uploaded = rootFolder.createFile(blob);
+    const uploaded = destination.folder.createFile(blob);
 
     return jsonResponse({
       ok: true,
-      message: "Entrega registrada correctamente en Drive.",
+      message: "Entrega registrada correctamente en Drive en la carpeta correspondiente.",
       driveUrl: uploaded.getUrl(),
-      folderPath: `Ficha ${ficha}`,
+      folderPath: destination.folderPath,
       savedFileName: finalFileName,
     });
   } catch (error) {
@@ -92,6 +93,61 @@ function sanitizeFileSegment(value, fallback) {
     .replace(/\s+/g, "_")
     .replace(/[^a-z0-9]+/gi, "_")
     .replace(/^_+|_+$/g, "") || fallback || "";
+}
+
+function ensureFolderByName(parentFolder, folderName) {
+  const cleanName = sanitizeLabel(folderName, "");
+  if (!cleanName) {
+    return parentFolder;
+  }
+
+  const folders = parentFolder.getFoldersByName(cleanName);
+  return folders.hasNext() ? folders.next() : parentFolder.createFolder(cleanName);
+}
+
+function buildGuideFolderName(payload) {
+  return sanitizeLabel(payload.guideLabel, "");
+}
+
+function buildActivityFolderName(payload) {
+  const activityNumber = sanitizeLabel(payload.activityNumber, "");
+  const titleSource = sanitizeLabel(
+    payload.activityTitle || payload.activityLabel,
+    "Actividad"
+  );
+
+  if (activityNumber && titleSource) {
+    const normalizedLabel = `Actividad ${activityNumber}`.toLowerCase();
+    const normalizedTitle = titleSource.toLowerCase();
+    if (normalizedTitle === normalizedLabel || normalizedTitle === activityNumber.toLowerCase()) {
+      return activityNumber;
+    }
+    return `${activityNumber} - ${titleSource}`;
+  }
+
+  return activityNumber || titleSource;
+}
+
+function resolveTargetFolder(rootFolder, ficha, payload) {
+  let currentFolder = rootFolder;
+  const pathSegments = [`Ficha ${sanitizeLabel(ficha, "SIN_FICHA")}`];
+
+  const guideFolderName = buildGuideFolderName(payload);
+  if (guideFolderName) {
+    currentFolder = ensureFolderByName(currentFolder, guideFolderName);
+    pathSegments.push(guideFolderName);
+  }
+
+  const activityFolderName = buildActivityFolderName(payload);
+  if (activityFolderName) {
+    currentFolder = ensureFolderByName(currentFolder, activityFolderName);
+    pathSegments.push(activityFolderName);
+  }
+
+  return {
+    folder: currentFolder,
+    folderPath: pathSegments.join(" / "),
+  };
 }
 
 function buildDeliveryFileName(fullName, ficha, activityLabel, originalFileName, payload) {

@@ -205,7 +205,7 @@
     }
 
     button?.setAttribute("disabled", "disabled");
-    setStatus(panel, "Subiendo archivo a la carpeta base de la ficha...", "loading");
+    setStatus(panel, "Subiendo archivo a la carpeta correspondiente de Drive...", "loading");
 
     try {
       const fileBase64 = await readFileAsBase64(file);
@@ -223,9 +223,17 @@
         submittedAt: new Date().toISOString(),
       });
 
+      const pathNode = panel.querySelector("[data-delivery-path]");
+      if (pathNode && response.folderPath) {
+        pathNode.textContent =
+          response.folderPath +
+          (response.savedFileName ? ` / ${response.savedFileName}` : "");
+      }
+
       setStatus(
         panel,
-        (response.message || "Entrega realizada en la carpeta de la ficha.") +
+        (response.message || "Entrega realizada en la carpeta correspondiente.") +
+          (response.folderPath ? ` Ruta: ${response.folderPath}.` : "") +
           (response.savedFileName ? ` Archivo guardado como: ${response.savedFileName}.` : ""),
         "success"
       );
