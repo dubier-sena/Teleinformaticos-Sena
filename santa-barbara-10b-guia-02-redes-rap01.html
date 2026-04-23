@@ -29,7 +29,7 @@
 <script defer src="data/calendario_2026_records.js?v=20260410_1"></script>
 <script defer src="data/calendario_2026_seed.js?v=20260410_1"></script>
 <script defer src="js/redes_lock_sync.js?v=20260422_2"></script>
-<script defer src="js/script_guia_redes.js?v=20260422_9"></script>
+<script defer src="js/script_guia_redes.js?v=20260423_1"></script>
 <script defer src="js/guia_template.js?v=20260411_1"></script>
 </head>
 <body
@@ -1926,6 +1926,216 @@
               <span class="activity-toggle">&#9662;</span>
             </div>
             <div class="activity-body">
+              <div style="padding:18px;border-radius:16px;background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #bfdbfe">
+                <p class="intro-text" style="text-align:justify;margin:0 0 10px">
+                  <strong>Escenario:</strong> La empresa &ldquo;Boyc&aacute;Tech S.A.S.&rdquo; tiene 3 departamentos distribuidos en 2 pisos.
+                  En el piso 1 est&aacute;n <strong>Administraci&oacute;n</strong> y <strong>Ventas</strong>; en el piso 2 est&aacute; <strong>Bodega</strong>.
+                  Cada departamento tiene su propio switch y todos deben conectarse a un <strong>switch central</strong>, formando una topolog&iacute;a &aacute;rbol.
+                </p>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:14px">
+                  <div style="background:#fff;border:1px solid #bfdbfe;border-radius:14px;padding:14px">
+                    <strong style="display:block;color:#1d4ed8;margin-bottom:6px">Objetivo del laboratorio</strong>
+                    <span style="color:#334155;font-size:.92rem">Construir una <strong>red en topolog&iacute;a &aacute;rbol</strong>, configurar el direccionamiento IP por departamentos y comprobar conectividad con <code>ping</code> y <code>tracert</code>.</span>
+                  </div>
+                  <div style="background:#fff;border:1px solid #bfdbfe;border-radius:14px;padding:14px">
+                    <strong style="display:block;color:#1d4ed8;margin-bottom:6px">Lo que vas a construir</strong>
+                    <span style="color:#334155;font-size:.92rem">1 switch central, 3 switches departamentales, 11 PCs y una red base <strong>192.168.1.0/24</strong> con gateway <strong>192.168.1.1</strong>.</span>
+                  </div>
+                  <div style="background:#fff;border:1px solid #bfdbfe;border-radius:14px;padding:14px">
+                    <strong style="display:block;color:#1d4ed8;margin-bottom:6px">Evidencia esperada</strong>
+                    <span style="color:#334155;font-size:.92rem">4 pantallazos obligatorios, an&aacute;lisis corto en la gu&iacute;a y archivo final <code>.pkt</code> del laboratorio.</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="checklist-card compact-card" style="margin-top:14px">
+                <h3>Equipos y recursos que debes agregar</h3>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+                  <div style="padding:12px;border-radius:12px;background:#f8fafc;border:1px solid #dbeafe">
+                    <strong style="display:block;color:#0f172a">1 Switch Central</strong>
+                    <span style="color:#475569;font-size:.9rem">Ub&iacute;calo como ra&iacute;z del &aacute;rbol para enlazar los tres departamentos.</span>
+                  </div>
+                  <div style="padding:12px;border-radius:12px;background:#f8fafc;border:1px solid #dbeafe">
+                    <strong style="display:block;color:#0f172a">3 Switches departamentales</strong>
+                    <span style="color:#475569;font-size:.9rem">Uno para Administraci&oacute;n, uno para Ventas y uno para Bodega.</span>
+                  </div>
+                  <div style="padding:12px;border-radius:12px;background:#f8fafc;border:1px solid #dbeafe">
+                    <strong style="display:block;color:#0f172a">11 PCs</strong>
+                    <span style="color:#475569;font-size:.9rem">4 en Administraci&oacute;n, 4 en Ventas y 3 en Bodega.</span>
+                  </div>
+                  <div style="padding:12px;border-radius:12px;background:#f8fafc;border:1px solid #dbeafe">
+                    <strong style="display:block;color:#0f172a">Cable Copper Straight-Through</strong>
+                    <span style="color:#475569;font-size:.9rem">Conecta cada PC a su switch de departamento y luego cada switch al central.</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="checklist-card compact-card" style="margin-top:12px">
+                <h3>Pasos guiados en Packet Tracer</h3>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
+                  <div style="padding:14px;border-radius:14px;background:#f4fbf6;border:1px solid #cce7d0">
+                    <strong style="display:block;color:#166534;margin-bottom:6px">1. Organiza los pisos y departamentos</strong>
+                    <span style="color:#374151;font-size:.9rem">Distribuye visualmente Administraci&oacute;n y Ventas en el piso 1, y Bodega en el piso 2 para que la topolog&iacute;a quede clara.</span>
+                  </div>
+                  <div style="padding:14px;border-radius:14px;background:#f4fbf6;border:1px solid #cce7d0">
+                    <strong style="display:block;color:#166534;margin-bottom:6px">2. Conecta la topolog&iacute;a &aacute;rbol</strong>
+                    <span style="color:#374151;font-size:.9rem">Cada switch departamental debe salir hacia el switch central. Esa relaci&oacute;n ra&iacute;z-rama es la clave del laboratorio.</span>
+                  </div>
+                  <div style="padding:14px;border-radius:14px;background:#f4fbf6;border:1px solid #cce7d0">
+                    <strong style="display:block;color:#166534;margin-bottom:6px">3. Configura las IPs por departamento</strong>
+                    <span style="color:#374151;font-size:.9rem">Asigna las direcciones de la tabla respetando rangos, m&aacute;scara <code>255.255.255.0</code> y gateway <code>192.168.1.1</code>.</span>
+                  </div>
+                  <div style="padding:14px;border-radius:14px;background:#f4fbf6;border:1px solid #cce7d0">
+                    <strong style="display:block;color:#166534;margin-bottom:6px">4. Ejecuta pruebas y analiza</strong>
+                    <span style="color:#374151;font-size:.9rem">Realiza <code>ping</code> y <code>tracert</code>, guarda los pantallazos y explica qu&eacute; ocurri&oacute; en cada caso.</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="checklist-card compact-card" style="margin-top:12px">
+                <h3>Tabla de direccionamiento sugerida</h3>
+                <p>Red base: <strong>192.168.1.0/24</strong> &nbsp;|&nbsp; Gateway: <strong>192.168.1.1</strong> &nbsp;|&nbsp; M&aacute;scara: <strong>255.255.255.0</strong></p>
+                <div class="table-scroll" style="margin-top:10px">
+                  <table class="data-table">
+                    <thead>
+                      <tr><th>Departamento</th><th>Equipo</th><th>Direcci&oacute;n IP</th><th>M&aacute;scara</th><th>Gateway</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr><td>Administraci&oacute;n</td><td>Admin_PC1</td><td>192.168.1.10</td><td>255.255.255.0</td><td>192.168.1.1</td></tr>
+                      <tr><td>Administraci&oacute;n</td><td>Admin_PC2</td><td>192.168.1.11</td><td>255.255.255.0</td><td>192.168.1.1</td></tr>
+                      <tr><td>Administraci&oacute;n</td><td>Admin_PC3</td><td>192.168.1.12</td><td>255.255.255.0</td><td>192.168.1.1</td></tr>
+                      <tr><td>Administraci&oacute;n</td><td>Admin_PC4</td><td>192.168.1.13</td><td>255.255.255.0</td><td>192.168.1.1</td></tr>
+                      <tr><td>Ventas</td><td>Ventas_PC1</td><td>192.168.1.20</td><td>255.255.255.0</td><td>192.168.1.1</td></tr>
+                      <tr><td>Ventas</td><td>Ventas_PC2</td><td>192.168.1.21</td><td>255.255.255.0</td><td>192.168.1.1</td></tr>
+                      <tr><td>Ventas</td><td>Ventas_PC3</td><td>192.168.1.22</td><td>255.255.255.0</td><td>192.168.1.1</td></tr>
+                      <tr><td>Ventas</td><td>Ventas_PC4</td><td>192.168.1.23</td><td>255.255.255.0</td><td>192.168.1.1</td></tr>
+                      <tr><td>Bodega</td><td>Bodega_PC1</td><td>192.168.1.30</td><td>255.255.255.0</td><td>192.168.1.1</td></tr>
+                      <tr><td>Bodega</td><td>Bodega_PC2</td><td>192.168.1.31</td><td>255.255.255.0</td><td>192.168.1.1</td></tr>
+                      <tr><td>Bodega</td><td>Bodega_PC3</td><td>192.168.1.32</td><td>255.255.255.0</td><td>192.168.1.1</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="info-box" style="margin-top:10px">
+                  <p><strong>Tip para el aprendiz:</strong> la topolog&iacute;a es &aacute;rbol en lo f&iacute;sico, pero todos los PCs siguen en la misma red <code>192.168.1.0/24</code>. Ten esto presente al interpretar <code>ping</code> y <code>tracert</code>.</p>
+                </div>
+              </div>
+
+              <div class="checklist-card compact-card" style="margin-top:12px">
+                <h3>Pruebas obligatorias</h3>
+                <ol class="note-list">
+                  <li>Desde <strong>Admin_PC1</strong> ejecuta <code>ping 192.168.1.11</code> para verificar conectividad dentro del mismo departamento.</li>
+                  <li>Desde <strong>Ventas_PC1</strong> ejecuta <code>ping 192.168.1.30</code> para probar conectividad hacia Bodega.</li>
+                  <li>Desde <strong>Admin_PC1</strong> ejecuta <code>tracert 192.168.1.30</code> y analiza cu&aacute;ntos saltos aparecen.</li>
+                  <li>Desde cualquier PC ejecuta <code>tracert 8.8.8.8</code> y explica qu&eacute; ocurre con una ruta externa.</li>
+                </ol>
+              </div>
+
+              <div class="info-box" style="margin-top:12px">
+                <div class="label">Modalidad</div>
+                <p>Este laboratorio es trabajo <strong>aut&oacute;nomo en casa</strong>. Debes dejar la topolog&iacute;a organizada, subir las evidencias obligatorias y entregar el archivo <code>.pkt</code> cuando termines.</p>
+              </div>
+
+              <div style="margin-top:14px;padding:16px;border:1px dashed #93c5fd;border-radius:16px;background:#f8fbff">
+                <h3 style="margin:0 0 8px;color:#1d4ed8">Evidencias visuales obligatorias</h3>
+                <p style="margin:0 0 14px;color:#475569;font-size:.92rem">Sube aqu&iacute; los 4 pantallazos del laboratorio. Debe verse el comando ejecutado y el resultado en Packet Tracer.</p>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px">
+                  <div style="padding:14px;border-radius:14px;background:#fff;border:1px solid #dbeafe">
+                    <strong style="display:block;color:#0f172a;margin-bottom:6px">1. Ping del mismo departamento</strong>
+                    <span style="display:block;color:#64748b;font-size:.88rem;margin-bottom:10px">Comando sugerido: <code>ping 192.168.1.11</code></span>
+                    <input type="file" id="lab2PingMismoInput" accept="image/*" style="display:none" onchange="subirPantallazoLab2('mismo', this)">
+                    <button type="button" id="btnSubirLab2PingMismo" onclick="document.getElementById('lab2PingMismoInput').click()"
+                      style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                      &#128248; Subir pantallazo
+                    </button>
+                    <div id="lab2PingMismoPreview" style="display:none;margin-top:12px">
+                      <img id="lab2PingMismoImg" alt="Pantallazo ping mismo departamento" style="width:100%;border-radius:10px;border:1px solid #cbd5e1;display:block">
+                      <div id="lab2PingMismoNombre" style="margin-top:8px;color:#334155;font-size:.84rem"></div>
+                    </div>
+                  </div>
+                  <div style="padding:14px;border-radius:14px;background:#fff;border:1px solid #dbeafe">
+                    <strong style="display:block;color:#0f172a;margin-bottom:6px">2. Ping entre departamentos</strong>
+                    <span style="display:block;color:#64748b;font-size:.88rem;margin-bottom:10px">Comando sugerido: <code>ping 192.168.1.30</code></span>
+                    <input type="file" id="lab2PingDifInput" accept="image/*" style="display:none" onchange="subirPantallazoLab2('diferente', this)">
+                    <button type="button" id="btnSubirLab2PingDif" onclick="document.getElementById('lab2PingDifInput').click()"
+                      style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                      &#128248; Subir pantallazo
+                    </button>
+                    <div id="lab2PingDifPreview" style="display:none;margin-top:12px">
+                      <img id="lab2PingDifImg" alt="Pantallazo ping entre departamentos" style="width:100%;border-radius:10px;border:1px solid #cbd5e1;display:block">
+                      <div id="lab2PingDifNombre" style="margin-top:8px;color:#334155;font-size:.84rem"></div>
+                    </div>
+                  </div>
+                  <div style="padding:14px;border-radius:14px;background:#fff;border:1px solid #dbeafe">
+                    <strong style="display:block;color:#0f172a;margin-bottom:6px">3. Tracert interno</strong>
+                    <span style="display:block;color:#64748b;font-size:.88rem;margin-bottom:10px">Comando sugerido: <code>tracert 192.168.1.30</code></span>
+                    <input type="file" id="lab2TracertInternoInput" accept="image/*" style="display:none" onchange="subirPantallazoLab2('tracertInterno', this)">
+                    <button type="button" id="btnSubirLab2TracertInterno" onclick="document.getElementById('lab2TracertInternoInput').click()"
+                      style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                      &#128248; Subir pantallazo
+                    </button>
+                    <div id="lab2TracertInternoPreview" style="display:none;margin-top:12px">
+                      <img id="lab2TracertInternoImg" alt="Pantallazo tracert interno" style="width:100%;border-radius:10px;border:1px solid #cbd5e1;display:block">
+                      <div id="lab2TracertInternoNombre" style="margin-top:8px;color:#334155;font-size:.84rem"></div>
+                    </div>
+                  </div>
+                  <div style="padding:14px;border-radius:14px;background:#fff;border:1px solid #dbeafe">
+                    <strong style="display:block;color:#0f172a;margin-bottom:6px">4. Tracert externo</strong>
+                    <span style="display:block;color:#64748b;font-size:.88rem;margin-bottom:10px">Comando sugerido: <code>tracert 8.8.8.8</code></span>
+                    <input type="file" id="lab2TracertExternoInput" accept="image/*" style="display:none" onchange="subirPantallazoLab2('tracertExterno', this)">
+                    <button type="button" id="btnSubirLab2TracertExterno" onclick="document.getElementById('lab2TracertExternoInput').click()"
+                      style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                      &#128248; Subir pantallazo
+                    </button>
+                    <div id="lab2TracertExternoPreview" style="display:none;margin-top:12px">
+                      <img id="lab2TracertExternoImg" alt="Pantallazo tracert externo" style="width:100%;border-radius:10px;border:1px solid #cbd5e1;display:block">
+                      <div id="lab2TracertExternoNombre" style="margin-top:8px;color:#334155;font-size:.84rem"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div style="margin-top:16px;padding:18px;border-radius:16px;background:#fcfffb;border:1px solid #cce7d0">
+                <h3 style="margin:0 0 10px;color:#166534">An&aacute;lisis del laboratorio</h3>
+                <p style="margin:0 0 14px;color:#475569;font-size:.92rem">Responde con tus propias palabras. Explica qu&eacute; observaste y c&oacute;mo se relaciona con la topolog&iacute;a &aacute;rbol.</p>
+                <div style="display:flex;flex-direction:column;gap:12px">
+                  <label style="display:block">
+                    <span style="display:block;margin-bottom:6px;font-weight:600">Resultado del ping entre equipos del mismo departamento. &iquest;Funcion&oacute;? &iquest;Qu&eacute; demuestra?</span>
+                    <textarea rows="3" data-store="lab2-ping-mismo" data-track placeholder="Describe si el ping fue exitoso y qu&eacute; comprueba sobre la conectividad dentro del mismo switch departamental."></textarea>
+                  </label>
+                  <label style="display:block">
+                    <span style="display:block;margin-bottom:6px;font-weight:600">Resultado del ping entre departamentos distintos. &iquest;Funcion&oacute;? &iquest;Por qu&eacute;?</span>
+                    <textarea rows="3" data-store="lab2-ping-dif" data-track placeholder="Explica si hubo respuesta y qu&eacute; relaci&oacute;n tiene con que todos los equipos comparten la misma red 192.168.1.0/24."></textarea>
+                  </label>
+                  <label style="display:block">
+                    <span style="display:block;margin-bottom:6px;font-weight:600">An&aacute;lisis del <code>tracert</code> entre Administraci&oacute;n y Bodega. &iquest;Cu&aacute;ntos saltos viste y qu&eacute; interpretas?</span>
+                    <textarea rows="4" data-store="lab2-tracert-interno" data-track placeholder="Explica cu&aacute;ntos hops aparecieron, si hubo routers reales en el recorrido y por qu&eacute; sucede ese comportamiento en esta red."></textarea>
+                  </label>
+                  <label style="display:block">
+                    <span style="display:block;margin-bottom:6px;font-weight:600">An&aacute;lisis del <code>tracert</code> hacia 8.8.8.8. &iquest;Qu&eacute; ocurri&oacute; y qu&eacute; conclusi&oacute;n sacas?</span>
+                    <textarea rows="4" data-store="lab2-tracert-externo" data-track placeholder="Describe el resultado del intento hacia una IP externa y explica qu&eacute; le falta a esta topolog&iacute;a para salir a Internet."></textarea>
+                  </label>
+                </div>
+                <div style="margin-top:16px">
+                  <button id="btnGuardarLab2" type="button" onclick="guardarLab2Arbol()"
+                    style="background:#2e7d32;color:#fff;border:none;padding:12px 22px;border-radius:10px;font-weight:700;cursor:pointer">
+                    &#128190; Guardar respuestas del laboratorio
+                  </button>
+                </div>
+                <div id="lab2Status" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                  &#9989; Respuestas y evidencias guardadas. Ya no se pueden modificar.
+                </div>
+              </div>
+
+              <div style="margin-top:14px;padding:20px;background:linear-gradient(135deg,#eff6ff,#dbeafe);border-radius:14px;border:1px solid #bfdbfe;text-align:center">
+                <p style="font-size:0.95rem;font-weight:600;color:#1e3a8a;margin:0 0 12px">&#128193; Cuando termines el laboratorio, sube tu archivo final de Cisco Packet Tracer</p>
+                <button type="button" id="btnEntregaLab2Pkt" onclick="subirEntregaFinalLab2()"
+                  style="display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,#1e3a8a,#1d4ed8);color:#fff;border:none;border-radius:12px;padding:12px 28px;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 4px 14px rgba(29,78,216,0.35)">
+                  &#128193; Subir archivo .pkt al Drive
+                </button>
+                <p style="font-size:0.8rem;color:#3b82f6;margin:10px 0 0">Nombre sugerido: <code>Lab2_ArbolBoycaTech_NombreAprendiz_FICHA.pkt</code></p>
+              </div>
+
+              <div style="display:none" aria-hidden="true" data-ignore-progress="true">
               <p class="intro-text" style="text-align:justify">
                 <strong>Escenario:</strong> La empresa &ldquo;BoycáTech S.A.S.&rdquo; tiene 3 departamentos en 2 pisos:
                 Piso 1 &mdash; Administraci&oacute;n (4 PCs) y Ventas (4 PCs); Piso 2 &mdash; Bodega (3 PCs).
@@ -1981,11 +2191,259 @@
                 <strong>&#9888; Entregable Lab 2:</strong> Archivo <code>.pkt</code> + capturas de los 4 tipos de prueba + documento de an&aacute;lisis (m&iacute;nimo 1 p&aacute;gina explicando los resultados de tracert).<br>
                 Nombre: <code>Lab2_ArbolBoycaTech_NombreAprendiz_FICHA.pkt</code>
               </div>
+              </div>
+              </div>
             </div>
           </div>
 
         </div>
       </div>
+
+          <!-- LAB 3 -->
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.4.3</span>
+              <span class="activity-title">&#128187; Laboratorio 3 &mdash; Red h&iacute;brida estrella + &aacute;rbol con fibra &oacute;ptica, cableado y Wi-Fi</span>
+              <span class="mission-chip">Mision final</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <div style="padding:18px;border-radius:16px;background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #bfdbfe">
+                <p class="intro-text" style="text-align:justify;margin:0 0 10px">
+                  <strong>Escenario:</strong> Una instituci&oacute;n educativa tiene tres zonas: <strong>Bloque Acad&eacute;mico</strong>,
+                  <strong>Bloque Administrativo</strong> y <strong>Biblioteca</strong>. Dentro de cada zona los equipos se conectan
+                  en <strong>estrella</strong> a un switch local, y esos switches se enlazan a un <strong>switch central</strong>,
+                  formando la parte <strong>&aacute;rbol</strong> del dise&ntilde;o. Los enlaces entre bloques usan <strong>fibra &oacute;ptica</strong>,
+                  las conexiones internas usan <strong>UTP</strong> y los dispositivos m&oacute;viles se conectan por <strong>Wi-Fi</strong>.
+                </p>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:14px">
+                  <div style="background:#fff;border:1px solid #bfdbfe;border-radius:14px;padding:14px">
+                    <strong style="display:block;color:#1d4ed8;margin-bottom:6px">Objetivo del laboratorio</strong>
+                    <span style="color:#334155;font-size:.92rem">Construir una red h&iacute;brida <strong>estrella + &aacute;rbol</strong>, identificar d&oacute;nde se usa <strong>fibra &oacute;ptica</strong>, <strong>UTP</strong> y <strong>Wi-Fi</strong>, y verificar conectividad entre zonas cableadas e inal&aacute;mbricas.</span>
+                  </div>
+                  <div style="background:#fff;border:1px solid #bfdbfe;border-radius:14px;padding:14px">
+                    <strong style="display:block;color:#1d4ed8;margin-bottom:6px">Lo que vas a construir</strong>
+                    <span style="color:#334155;font-size:.92rem">1 router, 1 switch central, 3 switches de bloque, 10 PCs, 1 impresora, 2 access point y 2 clientes Wi-Fi sobre la red <strong>192.168.20.0/24</strong>.</span>
+                  </div>
+                  <div style="background:#fff;border:1px solid #bfdbfe;border-radius:14px;padding:14px">
+                    <strong style="display:block;color:#1d4ed8;margin-bottom:6px">Evidencia esperada</strong>
+                    <span style="color:#334155;font-size:.92rem">4 pantallazos obligatorios, an&aacute;lisis corto en la gu&iacute;a y archivo final <code>.pkt</code> del laboratorio.</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="checklist-card compact-card" style="margin-top:14px">
+                <h3>Equipos y recursos que debes agregar</h3>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+                  <div style="padding:12px;border-radius:12px;background:#f8fafc;border:1px solid #dbeafe">
+                    <strong style="display:block;color:#0f172a">1 Router/Gateway</strong>
+                    <span style="color:#475569;font-size:.9rem">Define el gateway com&uacute;n de la red y sirve como punto de salida del dise&ntilde;o.</span>
+                  </div>
+                  <div style="padding:12px;border-radius:12px;background:#f8fafc;border:1px solid #dbeafe">
+                    <strong style="display:block;color:#0f172a">1 Switch central</strong>
+                    <span style="color:#475569;font-size:.9rem">Act&uacute;a como n&uacute;cleo del &aacute;rbol y conecta los tres bloques.</span>
+                  </div>
+                  <div style="padding:12px;border-radius:12px;background:#f8fafc;border:1px solid #dbeafe">
+                    <strong style="display:block;color:#0f172a">3 Switches de bloque</strong>
+                    <span style="color:#475569;font-size:.9rem">Uno para el Bloque Acad&eacute;mico, uno para el Administrativo y uno para Biblioteca.</span>
+                  </div>
+                  <div style="padding:12px;border-radius:12px;background:#f8fafc;border:1px solid #dbeafe">
+                    <strong style="display:block;color:#0f172a">10 PCs + 1 impresora</strong>
+                    <span style="color:#475569;font-size:.9rem">Representan equipos cableados en las tres zonas de la sede educativa.</span>
+                  </div>
+                  <div style="padding:12px;border-radius:12px;background:#f8fafc;border:1px solid #dbeafe">
+                    <strong style="display:block;color:#0f172a">2 Access Point</strong>
+                    <span style="color:#475569;font-size:.9rem">Permiten el acceso Wi-Fi en el Bloque Acad&eacute;mico y la Biblioteca.</span>
+                  </div>
+                  <div style="padding:12px;border-radius:12px;background:#f8fafc;border:1px solid #dbeafe">
+                    <strong style="display:block;color:#0f172a">2 clientes Wi-Fi</strong>
+                    <span style="color:#475569;font-size:.9rem">Usa laptops o dispositivos m&oacute;viles para probar la conectividad inal&aacute;mbrica.</span>
+                  </div>
+                  <div style="padding:12px;border-radius:12px;background:#f8fafc;border:1px solid #dbeafe">
+                    <strong style="display:block;color:#0f172a">Fibra &oacute;ptica</strong>
+                    <span style="color:#475569;font-size:.9rem">&Uacute;sala en los enlaces troncales entre el switch central y los switches de bloque.</span>
+                  </div>
+                  <div style="padding:12px;border-radius:12px;background:#f8fafc;border:1px solid #dbeafe">
+                    <strong style="display:block;color:#0f172a">Cable Copper Straight-Through</strong>
+                    <span style="color:#475569;font-size:.9rem">&Uacute;salo para las conexiones internas entre switches, PCs, impresora y access point.</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="checklist-card compact-card" style="margin-top:12px">
+                <h3>Pasos guiados en Packet Tracer</h3>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
+                  <div style="padding:14px;border-radius:14px;background:#f4fbf6;border:1px solid #cce7d0">
+                    <strong style="display:block;color:#166534;margin-bottom:6px">1. Organiza la sede educativa</strong>
+                    <span style="color:#374151;font-size:.9rem">Ubica visualmente el Bloque Acad&eacute;mico, el Administrativo y la Biblioteca para que se entienda la red por zonas.</span>
+                  </div>
+                  <div style="padding:14px;border-radius:14px;background:#f4fbf6;border:1px solid #cce7d0">
+                    <strong style="display:block;color:#166534;margin-bottom:6px">2. Construye la parte &aacute;rbol</strong>
+                    <span style="color:#374151;font-size:.9rem">Conecta cada switch de bloque al switch central con fibra &oacute;ptica para representar la troncal de la sede.</span>
+                  </div>
+                  <div style="padding:14px;border-radius:14px;background:#f4fbf6;border:1px solid #cce7d0">
+                    <strong style="display:block;color:#166534;margin-bottom:6px">3. Construye la parte estrella</strong>
+                    <span style="color:#374151;font-size:.9rem">Conecta los equipos de cada zona a su switch local con cable UTP y vincula los access point correspondientes.</span>
+                  </div>
+                  <div style="padding:14px;border-radius:14px;background:#f4fbf6;border:1px solid #cce7d0">
+                    <strong style="display:block;color:#166534;margin-bottom:6px">4. Configura IPs y Wi-Fi</strong>
+                    <span style="color:#374151;font-size:.9rem">Asigna direcciones seg&uacute;n la tabla, configura el gateway y conecta los clientes inal&aacute;mbricos al AP correcto.</span>
+                  </div>
+                  <div style="padding:14px;border-radius:14px;background:#f4fbf6;border:1px solid #cce7d0">
+                    <strong style="display:block;color:#166534;margin-bottom:6px">5. Ejecuta pruebas y analiza</strong>
+                    <span style="color:#374151;font-size:.9rem">Guarda pantallazos de la topolog&iacute;a, pruebas de ping e informaci&oacute;n IP, y explica c&oacute;mo conviven las dos topolog&iacute;as.</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="checklist-card compact-card" style="margin-top:12px">
+                <h3>Tabla de direccionamiento sugerida</h3>
+                <p>Red base: <strong>192.168.20.0/24</strong> &nbsp;|&nbsp; Gateway: <strong>192.168.20.1</strong> &nbsp;|&nbsp; M&aacute;scara: <strong>255.255.255.0</strong></p>
+                <div class="table-scroll" style="margin-top:10px">
+                  <table class="data-table">
+                    <thead>
+                      <tr><th>Zona</th><th>Equipo</th><th>Direcci&oacute;n IP</th><th>M&aacute;scara</th><th>Gateway</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr><td>Bloque Acad&eacute;mico</td><td>Academico_PC1</td><td>192.168.20.10</td><td>255.255.255.0</td><td>192.168.20.1</td></tr>
+                      <tr><td>Bloque Acad&eacute;mico</td><td>Academico_PC2</td><td>192.168.20.11</td><td>255.255.255.0</td><td>192.168.20.1</td></tr>
+                      <tr><td>Bloque Acad&eacute;mico</td><td>Academico_PC3</td><td>192.168.20.12</td><td>255.255.255.0</td><td>192.168.20.1</td></tr>
+                      <tr><td>Bloque Acad&eacute;mico</td><td>Academico_PC4</td><td>192.168.20.13</td><td>255.255.255.0</td><td>192.168.20.1</td></tr>
+                      <tr><td>Bloque Administrativo</td><td>Admin_PC1</td><td>192.168.20.20</td><td>255.255.255.0</td><td>192.168.20.1</td></tr>
+                      <tr><td>Bloque Administrativo</td><td>Admin_PC2</td><td>192.168.20.21</td><td>255.255.255.0</td><td>192.168.20.1</td></tr>
+                      <tr><td>Bloque Administrativo</td><td>Admin_PC3</td><td>192.168.20.22</td><td>255.255.255.0</td><td>192.168.20.1</td></tr>
+                      <tr><td>Biblioteca</td><td>Biblioteca_PC1</td><td>192.168.20.30</td><td>255.255.255.0</td><td>192.168.20.1</td></tr>
+                      <tr><td>Biblioteca</td><td>Biblioteca_PC2</td><td>192.168.20.31</td><td>255.255.255.0</td><td>192.168.20.1</td></tr>
+                      <tr><td>Biblioteca</td><td>Biblioteca_PC3</td><td>192.168.20.32</td><td>255.255.255.0</td><td>192.168.20.1</td></tr>
+                      <tr><td>Biblioteca</td><td>Impresora</td><td>192.168.20.29</td><td>255.255.255.0</td><td>192.168.20.1</td></tr>
+                      <tr><td>Wi-Fi</td><td>AP_Academico</td><td>192.168.20.40</td><td>255.255.255.0</td><td>192.168.20.1</td></tr>
+                      <tr><td>Wi-Fi</td><td>AP_Biblioteca</td><td>192.168.20.41</td><td>255.255.255.0</td><td>192.168.20.1</td></tr>
+                      <tr><td>Wi-Fi</td><td>Cliente_WiFi_1</td><td>192.168.20.50</td><td>255.255.255.0</td><td>192.168.20.1</td></tr>
+                      <tr><td>Wi-Fi</td><td>Cliente_WiFi_2</td><td>192.168.20.51</td><td>255.255.255.0</td><td>192.168.20.1</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="info-box" style="margin-top:10px">
+                  <p><strong>Tip para el aprendiz:</strong> dentro de cada bloque la forma de conexi&oacute;n es <code>estrella</code>, pero los switches de bloque se unen al switch central formando la parte <code>&aacute;rbol</code>. Los enlaces entre bloques usan <code>fibra &oacute;ptica</code> y las conexiones internas usan <code>UTP</code>.</p>
+                </div>
+              </div>
+
+              <div class="checklist-card compact-card" style="margin-top:12px">
+                <h3>Pruebas obligatorias</h3>
+                <ol class="note-list">
+                  <li>Desde <strong>Academico_PC1</strong> ejecuta <code>ping 192.168.20.20</code> para verificar conectividad entre bloques.</li>
+                  <li>Desde <strong>Cliente_WiFi_1</strong> ejecuta <code>ping 192.168.20.30</code> para probar conectividad desde Wi-Fi hacia un equipo cableado.</li>
+                  <li>Ejecuta <code>ipconfig</code> en un equipo cableado y verifica IP, m&aacute;scara y gateway.</li>
+                  <li>Comprueba los par&aacute;metros del cliente inal&aacute;mbrico o su conectividad una vez asociado al access point.</li>
+                </ol>
+              </div>
+
+              <div class="info-box" style="margin-top:12px">
+                <div class="label">Modalidad</div>
+                <p>Este laboratorio es trabajo <strong>aut&oacute;nomo</strong>. Debes dejar clara la combinaci&oacute;n de topolog&iacute;as, evidenciar el uso de fibra, cableado y Wi-Fi, y entregar el archivo <code>.pkt</code> al finalizar.</p>
+              </div>
+
+              <div style="margin-top:14px;padding:16px;border:1px dashed #93c5fd;border-radius:16px;background:#f8fbff">
+                <h3 style="margin:0 0 8px;color:#1d4ed8">Evidencias visuales obligatorias</h3>
+                <p style="margin:0 0 14px;color:#475569;font-size:.92rem">Sube aqu&iacute; los 4 pantallazos del laboratorio. Debe verse la topolog&iacute;a o el comando ejecutado y su resultado.</p>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px">
+                  <div style="padding:14px;border-radius:14px;background:#fff;border:1px solid #dbeafe">
+                    <strong style="display:block;color:#0f172a;margin-bottom:6px">1. Topolog&iacute;a completa</strong>
+                    <span style="display:block;color:#64748b;font-size:.88rem;margin-bottom:10px">Debe verse la mezcla de estrella + &aacute;rbol y los medios utilizados.</span>
+                    <input type="file" id="lab3TopologiaInput" accept="image/*" style="display:none" onchange="subirPantallazoLab3('topologia', this)">
+                    <button type="button" id="btnSubirLab3Topologia" onclick="document.getElementById('lab3TopologiaInput').click()"
+                      style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                      &#128248; Subir pantallazo
+                    </button>
+                    <div id="lab3TopologiaPreview" style="display:none;margin-top:12px">
+                      <img id="lab3TopologiaImg" alt="Pantallazo topologia completa" style="width:100%;border-radius:10px;border:1px solid #cbd5e1;display:block">
+                      <div id="lab3TopologiaNombre" style="margin-top:8px;color:#334155;font-size:.84rem"></div>
+                    </div>
+                  </div>
+                  <div style="padding:14px;border-radius:14px;background:#fff;border:1px solid #dbeafe">
+                    <strong style="display:block;color:#0f172a;margin-bottom:6px">2. Ping entre bloques</strong>
+                    <span style="display:block;color:#64748b;font-size:.88rem;margin-bottom:10px">Comando sugerido: <code>ping 192.168.20.20</code></span>
+                    <input type="file" id="lab3PingBloquesInput" accept="image/*" style="display:none" onchange="subirPantallazoLab3('pingBloques', this)">
+                    <button type="button" id="btnSubirLab3PingBloques" onclick="document.getElementById('lab3PingBloquesInput').click()"
+                      style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                      &#128248; Subir pantallazo
+                    </button>
+                    <div id="lab3PingBloquesPreview" style="display:none;margin-top:12px">
+                      <img id="lab3PingBloquesImg" alt="Pantallazo ping entre bloques" style="width:100%;border-radius:10px;border:1px solid #cbd5e1;display:block">
+                      <div id="lab3PingBloquesNombre" style="margin-top:8px;color:#334155;font-size:.84rem"></div>
+                    </div>
+                  </div>
+                  <div style="padding:14px;border-radius:14px;background:#fff;border:1px solid #dbeafe">
+                    <strong style="display:block;color:#0f172a;margin-bottom:6px">3. Ping Wi-Fi a equipo cableado</strong>
+                    <span style="display:block;color:#64748b;font-size:.88rem;margin-bottom:10px">Comando sugerido: <code>ping 192.168.20.30</code></span>
+                    <input type="file" id="lab3PingWifiInput" accept="image/*" style="display:none" onchange="subirPantallazoLab3('pingWifi', this)">
+                    <button type="button" id="btnSubirLab3PingWifi" onclick="document.getElementById('lab3PingWifiInput').click()"
+                      style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                      &#128248; Subir pantallazo
+                    </button>
+                    <div id="lab3PingWifiPreview" style="display:none;margin-top:12px">
+                      <img id="lab3PingWifiImg" alt="Pantallazo ping desde Wi-Fi" style="width:100%;border-radius:10px;border:1px solid #cbd5e1;display:block">
+                      <div id="lab3PingWifiNombre" style="margin-top:8px;color:#334155;font-size:.84rem"></div>
+                    </div>
+                  </div>
+                  <div style="padding:14px;border-radius:14px;background:#fff;border:1px solid #dbeafe">
+                    <strong style="display:block;color:#0f172a;margin-bottom:6px">4. Par&aacute;metros IP del cliente inal&aacute;mbrico</strong>
+                    <span style="display:block;color:#64748b;font-size:.88rem;margin-bottom:10px">Debe verse IP, m&aacute;scara, gateway o la asociaci&oacute;n al AP.</span>
+                    <input type="file" id="lab3IpconfigWifiInput" accept="image/*" style="display:none" onchange="subirPantallazoLab3('ipconfigWifi', this)">
+                    <button type="button" id="btnSubirLab3IpconfigWifi" onclick="document.getElementById('lab3IpconfigWifiInput').click()"
+                      style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                      &#128248; Subir pantallazo
+                    </button>
+                    <div id="lab3IpconfigWifiPreview" style="display:none;margin-top:12px">
+                      <img id="lab3IpconfigWifiImg" alt="Pantallazo parametros del cliente inalambrico" style="width:100%;border-radius:10px;border:1px solid #cbd5e1;display:block">
+                      <div id="lab3IpconfigWifiNombre" style="margin-top:8px;color:#334155;font-size:.84rem"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div style="margin-top:16px;padding:18px;border-radius:16px;background:#fcfffb;border:1px solid #cce7d0">
+                <h3 style="margin:0 0 10px;color:#166534">An&aacute;lisis del laboratorio</h3>
+                <p style="margin:0 0 14px;color:#475569;font-size:.92rem">Responde con tus propias palabras. Explica d&oacute;nde aparece cada topolog&iacute;a y por qu&eacute; se usa cada medio de transmisi&oacute;n.</p>
+                <div style="display:flex;flex-direction:column;gap:12px">
+                  <label style="display:block">
+                    <span style="display:block;margin-bottom:6px;font-weight:600">&iquest;D&oacute;nde aparece la topolog&iacute;a estrella y qu&eacute; elementos la evidencian?</span>
+                    <textarea rows="3" data-store="lab3-topologia" data-track placeholder="Describe en qu&eacute; zonas observaste la conexi&oacute;n en estrella y qu&eacute; papel cumple el switch local."></textarea>
+                  </label>
+                  <label style="display:block">
+                    <span style="display:block;margin-bottom:6px;font-weight:600">Resultado del ping entre bloques. &iquest;Funcion&oacute; y qu&eacute; demuestra sobre la conectividad de la sede?</span>
+                    <textarea rows="3" data-store="lab3-ping-bloques" data-track placeholder="Explica si hubo respuesta y c&oacute;mo la parte &aacute;rbol de la red permite comunicar los bloques."></textarea>
+                  </label>
+                  <label style="display:block">
+                    <span style="display:block;margin-bottom:6px;font-weight:600">Resultado del ping desde Wi-Fi hacia un equipo cableado. &iquest;Qu&eacute; observaste?</span>
+                    <textarea rows="3" data-store="lab3-ping-wifi" data-track placeholder="Explica si el cliente inal&aacute;mbrico logr&oacute; comunicarse con un equipo cableado y qu&eacute; papel cumple el access point."></textarea>
+                  </label>
+                  <label style="display:block">
+                    <span style="display:block;margin-bottom:6px;font-weight:600">&iquest;Por qu&eacute; se usa fibra &oacute;ptica entre bloques y UTP/Wi-Fi dentro de la sede?</span>
+                    <textarea rows="4" data-store="lab3-ipconfig-wifi" data-track placeholder="Relaciona cada medio con su funci&oacute;n: troncal de bloques, conexi&oacute;n interna y movilidad."></textarea>
+                  </label>
+                </div>
+                <div style="margin-top:16px">
+                  <button id="btnGuardarLab3" type="button" onclick="guardarLab3Hibrida()"
+                    style="background:#2e7d32;color:#fff;border:none;padding:12px 22px;border-radius:10px;font-weight:700;cursor:pointer">
+                    &#128190; Guardar respuestas del laboratorio
+                  </button>
+                </div>
+                <div id="lab3Status" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                  &#9989; Respuestas y evidencias guardadas. Ya no se pueden modificar.
+                </div>
+              </div>
+
+              <div style="margin-top:14px;padding:20px;background:linear-gradient(135deg,#eff6ff,#dbeafe);border-radius:14px;border:1px solid #bfdbfe;text-align:center">
+                <p style="font-size:0.95rem;font-weight:600;color:#1e3a8a;margin:0 0 12px">&#128193; Cuando termines el laboratorio, sube tu archivo final de Cisco Packet Tracer</p>
+                <button type="button" id="btnEntregaLab3Pkt" onclick="subirEntregaFinalLab3()"
+                  style="display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,#1e3a8a,#1d4ed8);color:#fff;border:none;border-radius:12px;padding:12px 28px;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 4px 14px rgba(29,78,216,0.35)">
+                  &#128193; Subir archivo .pkt al Drive
+                </button>
+                <p style="font-size:0.8rem;color:#3b82f6;margin:10px 0 0">Nombre sugerido: <code>Lab3_HibridaColegio_NombreAprendiz_FICHA.pkt</code></p>
+              </div>
+            </div>
+          </div>
 
       <!-- EVIDENCIAS -->
       <div id="evidencias" class="section-title">Planteamiento de Evidencias de Aprendizaje</div>
