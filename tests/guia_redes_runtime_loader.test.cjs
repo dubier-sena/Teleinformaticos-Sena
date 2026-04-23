@@ -8,23 +8,45 @@ const REPO_ROOT = path.join(__dirname, "..");
 const CONTEXT_FILE = path.join(REPO_ROOT, "data", "guide_contexts.json");
 const LOADER_FILE = path.join(REPO_ROOT, "js", "guide_runtime_loader.js");
 
-test("guide contexts expose the two Santa Barbara runtime entries", () => {
-  const contexts = JSON.parse(fs.readFileSync(CONTEXT_FILE, "utf8"));
+const SHARED_HTML =
+  '<div class="guide-shell-fragment"><a id="quizRedesActionLink"></a><a id="quizIPActionLink"></a></div>';
 
-  assert.deepEqual(Object.keys(contexts).sort(), ["sb-redes-10a", "sb-redes-10b"]);
-  assert.equal(contexts["sb-redes-10a"].pageFile, "santa-barbara-10a-guia-02-redes-rap01.html");
-  assert.equal(contexts["sb-redes-10a"].partialPath, "partials/guia-redes-rap01-content.html");
-  assert.equal(contexts["sb-redes-10a"].quizRedesUrl, "santa-barbara-10a-guia-02-redes-rap01-quiz.html");
-  assert.equal(contexts["sb-redes-10a"].quizIpUrl, "santa-barbara-10a-guia-02-redes-ip-quiz.html");
-  assert.equal(contexts["sb-redes-10b"].pageFile, "santa-barbara-10b-guia-02-redes-rap01.html");
-  assert.equal(contexts["sb-redes-10b"].partialPath, "partials/guia-redes-rap01-content.html");
-  assert.equal(contexts["sb-redes-10b"].quizRedesUrl, "santa-barbara-10b-guia-02-redes-rap01-quiz.html");
-  assert.equal(contexts["sb-redes-10b"].quizIpUrl, "santa-barbara-10b-guia-02-redes-ip-quiz.html");
-});
+const EXPECTED_CONTEXTS = {
+  "sb-redes-10a": {
+    template: "guia-redes-rap01",
+    partialPath: "partials/guia-redes-rap01-content.html",
+    pageFile: "santa-barbara-10a-guia-02-redes-rap01.html",
+    inst: "Institucion Educativa Santa Barbara",
+    grupo: "10A",
+    ficha: "3441944",
+    cloudFileName: "sb_10a_redes.html",
+    quizRedesUrl: "santa-barbara-10a-guia-02-redes-rap01-quiz.html",
+    quizIpUrl: "santa-barbara-10a-guia-02-redes-ip-quiz.html",
+  },
+  "sb-redes-10b": {
+    template: "guia-redes-rap01",
+    partialPath: "partials/guia-redes-rap01-content.html",
+    pageFile: "santa-barbara-10b-guia-02-redes-rap01.html",
+    inst: "Institucion Educativa Santa Barbara",
+    grupo: "10B",
+    ficha: "3441950",
+    cloudFileName: "sb_10b_redes.html",
+    quizRedesUrl: "santa-barbara-10b-guia-02-redes-rap01-quiz.html",
+    quizIpUrl: "santa-barbara-10b-guia-02-redes-ip-quiz.html",
+  },
+};
 
-test("runtime loader injects the shared guide and boots both init hooks", async () => {
+function createHarness({
+  contextKey = "sb-redes-10a",
+  pathname = "/santa-barbara-10a-guia-02-redes-rap01.html",
+  registryOk = true,
+  partialOk = true,
+  registryPayload = EXPECTED_CONTEXTS,
+  partialHtml = SHARED_HTML,
+} = {}) {
   const loaderSource = fs.readFileSync(LOADER_FILE, "utf8");
-  const root = { innerHTML: "" };
+  const rootState = { ready: false, html: "" };
+  const linkLookups = [];
   const quizRedesLink = {
     href: "",
     setAttribute(name, value) {
@@ -40,57 +62,72 @@ test("runtime loader injects the shared guide and boots both init hooks", async 
   const body = { dataset: {} };
   let templateInitCalls = 0;
   let guideInitCalls = 0;
+  const testConsole = {
+    error() {},
+    info() {},
+    log() {},
+    warn() {},
+  };
+
+  const root = {};
+  Object.defineProperty(root, "innerHTML", {
+    get() {
+      return rootState.html;
+    },
+    set(value) {
+      rootState.html = String(value);
+      rootState.ready = true;
+    },
+    enumerable: true,
+    configurable: true,
+  });
 
   const document = {
     body,
     getElementById(id) {
-      if (id === "guide-root") return root;
-      if (id === "quizRedesActionLink") return quizRedesLink;
-      if (id === "quizIPActionLink") return quizIpLink;
+      if (id === "guide-root") {
+        return root;
+      }
+      if (id === "quizRedesActionLink") {
+        linkLookups.push({ id, ready: rootState.ready });
+        return rootState.ready ? quizRedesLink : null;
+      }
+      if (id === "quizIPActionLink") {
+        linkLookups.push({ id, ready: rootState.ready });
+        return rootState.ready ? quizIpLink : null;
+      }
       return null;
     },
   };
 
-  const contextPayload = {
-    "sb-redes-10a": {
-      template: "guia-redes-rap01",
-      partialPath: "partials/guia-redes-rap01-content.html",
-      pageFile: "santa-barbara-10a-guia-02-redes-rap01.html",
-      inst: "Institucion Educativa Santa Barbara",
-      grupo: "10A",
-      ficha: "3441944",
-      cloudFileName: "sb_10a_redes.html",
-      quizRedesUrl: "santa-barbara-10a-guia-02-redes-rap01-quiz.html",
-      quizIpUrl: "santa-barbara-10a-guia-02-redes-ip-quiz.html",
-    },
-  };
-
   const runtimeWindow = {
-    __GUIDE_CONTEXT__: { key: "sb-redes-10a", template: "guia-redes-rap01" },
-    location: { pathname: "/santa-barbara-10a-guia-02-redes-rap01.html" },
+    __GUIDE_CONTEXT__: { key: contextKey, template: "guia-redes-rap01" },
+    location: { pathname },
     initGuiaTemplateShell() {
       templateInitCalls += 1;
+      assert.match(root.innerHTML, /guide-shell-fragment/);
     },
     initGuiaRedes() {
       guideInitCalls += 1;
+      assert.match(root.innerHTML, /guide-shell-fragment/);
     },
-    console,
+    console: testConsole,
   };
 
   async function fetchStub(url) {
     if (url === "data/guide_contexts.json") {
       return {
-        ok: true,
+        ok: registryOk,
         async json() {
-          return contextPayload;
+          return registryPayload;
         },
       };
     }
     if (url === "partials/guia-redes-rap01-content.html") {
       return {
-        ok: true,
+        ok: partialOk,
         async text() {
-          return '<div class="guide-shell-fragment"><a id="quizRedesActionLink"></a><a id="quizIPActionLink"></a></div>';
+          return partialHtml;
         },
       };
     }
@@ -101,21 +138,94 @@ test("runtime loader injects the shared guide and boots both init hooks", async 
     window: runtimeWindow,
     document,
     fetch: fetchStub,
-    console,
+    console: testConsole,
     Promise,
     setTimeout,
     clearTimeout,
   };
 
-  vm.runInNewContext(loaderSource, sandbox, { filename: "guide_runtime_loader.js" });
-  await runtimeWindow.__guideRuntimePromise;
+  return {
+    body,
+    document,
+    linkLookups,
+    loaderSource,
+    quizIpLink,
+    quizRedesLink,
+    root,
+    rootState,
+    runtimeWindow,
+    sandbox,
+    getCounts() {
+      return { templateInitCalls, guideInitCalls };
+    },
+  };
+}
 
-  assert.match(root.innerHTML, /guide-shell-fragment/);
-  assert.equal(body.dataset.defaultInst, "Institucion Educativa Santa Barbara");
-  assert.equal(body.dataset.defaultGrupo, "10A");
-  assert.equal(body.dataset.defaultFicha, "3441944");
-  assert.equal(quizRedesLink.href, "santa-barbara-10a-guia-02-redes-rap01-quiz.html");
-  assert.equal(quizIpLink.href, "santa-barbara-10a-guia-02-redes-ip-quiz.html");
-  assert.equal(templateInitCalls, 1);
-  assert.equal(guideInitCalls, 1);
+async function runLoader(options) {
+  const harness = createHarness(options);
+  vm.runInNewContext(harness.loaderSource, harness.sandbox, {
+    filename: "guide_runtime_loader.js",
+  });
+  await harness.runtimeWindow.__guideRuntimePromise;
+  return harness;
+}
+
+test("guide contexts expose the two Santa Barbara runtime entries", () => {
+  const contexts = JSON.parse(fs.readFileSync(CONTEXT_FILE, "utf8"));
+
+  assert.deepEqual(Object.keys(contexts).sort(), ["sb-redes-10a", "sb-redes-10b"]);
+  assert.deepEqual(contexts["sb-redes-10a"], EXPECTED_CONTEXTS["sb-redes-10a"]);
+  assert.deepEqual(contexts["sb-redes-10b"], EXPECTED_CONTEXTS["sb-redes-10b"]);
 });
+
+test("runtime loader injects the shared guide and boots both init hooks", async () => {
+  const harness = await runLoader();
+  const counts = harness.getCounts();
+
+  assert.match(harness.root.innerHTML, /guide-shell-fragment/);
+  assert.deepEqual(harness.runtimeWindow.__GUIDE_RUNTIME_CONTEXT__, EXPECTED_CONTEXTS["sb-redes-10a"]);
+  assert.equal(harness.body.dataset.defaultInst, "Institucion Educativa Santa Barbara");
+  assert.equal(harness.body.dataset.defaultGrupo, "10A");
+  assert.equal(harness.body.dataset.defaultFicha, "3441944");
+  assert.equal(harness.quizRedesLink.href, "santa-barbara-10a-guia-02-redes-rap01-quiz.html");
+  assert.equal(harness.quizIpLink.href, "santa-barbara-10a-guia-02-redes-ip-quiz.html");
+  assert.equal(counts.templateInitCalls, 1);
+  assert.equal(counts.guideInitCalls, 1);
+  assert.deepEqual(harness.linkLookups, [
+    { id: "quizRedesActionLink", ready: true },
+    { id: "quizIPActionLink", ready: true },
+  ]);
+});
+
+for (const scenario of [
+  {
+    name: "unknown context key",
+    options: { contextKey: "missing-context" },
+  },
+  {
+    name: "pageFile mismatch",
+    options: {
+      pathname: "/santa-barbara-10a-guia-02-redes-ip-quiz.html",
+    },
+  },
+  {
+    name: "registry fetch failure",
+    options: { registryOk: false },
+  },
+  {
+    name: "partial fetch failure",
+    options: { partialOk: false },
+  },
+]) {
+  test(`runtime loader renders an error card for ${scenario.name}`, async () => {
+    const harness = await runLoader(scenario.options);
+    const counts = harness.getCounts();
+
+    assert.match(harness.root.innerHTML, /info-box red/);
+    assert.doesNotMatch(harness.root.innerHTML, /guide-shell-fragment/);
+    assert.equal(harness.runtimeWindow.__GUIDE_RUNTIME_CONTEXT__, undefined);
+    assert.equal(counts.templateInitCalls, 0);
+    assert.equal(counts.guideInitCalls, 0);
+    assert.deepEqual(harness.linkLookups, []);
+  });
+}
