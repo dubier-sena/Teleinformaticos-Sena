@@ -43,25 +43,12 @@ function createHarness({
   partialOk = true,
   registryPayload = EXPECTED_CONTEXTS,
   partialHtml = SHARED_HTML,
+  guideRootPresent = true,
 } = {}) {
   const loaderSource = fs.readFileSync(LOADER_FILE, "utf8");
-  const rootState = { ready: false, html: "" };
-  const linkLookups = [];
-  const quizRedesLink = {
-    href: "",
-    setAttribute(name, value) {
-      this[name] = value;
-    },
-  };
-  const quizIpLink = {
-    href: "",
-    setAttribute(name, value) {
-      this[name] = value;
-    },
-  };
-  const body = { dataset: {} };
-  let templateInitCalls = 0;
-  let guideInitCalls = 0;
+  const eventLog = [];
+  const lookupLog = [];
+  const fetchLog = [];
   const testConsole = {
     error() {},
     info() {},
@@ -69,6 +56,12 @@ function createHarness({
     warn() {},
   };
 
+  let datasetsHydrated = false;
+  let linksHydrated = false;
+  let templateInitCalls = 0;
+  let guideInitCalls = 0;
+
+  const rootState = { html: "" };
   const root = {};
   Object.defineProperty(root, "innerHTML", {
     get() {
@@ -76,25 +69,70 @@ function createHarness({
     },
     set(value) {
       rootState.html = String(value);
-      rootState.ready = true;
+      eventLog.push("root.innerHTML injected");
     },
     enumerable: true,
     configurable: true,
   });
 
+  const datasetBacking = {};
+  const body = {};
+  Object.defineProperty(body, "dataset", {
+    value: new Proxy(datasetBacking, {
+      set(target, prop, value) {
+        target[prop] = value;
+        if (
+          !datasetsHydrated &&
+          target.defaultInst !== undefined &&
+          target.defaultGrupo !== undefined &&
+          target.defaultFicha !== undefined
+        ) {
+          datasetsHydrated = true;
+          eventLog.push("datasets hydrated");
+        }
+        return true;
+      },
+    }),
+    enumerable: true,
+    configurable: true,
+  });
+
+  const quizRedesLink = {
+    href: "",
+    setAttribute(name, value) {
+      this[name] = value;
+      if (!linksHydrated && this.href && quizIpLink.href) {
+        linksHydrated = true;
+        eventLog.push("links hydrated");
+      }
+    },
+  };
+  const quizIpLink = {
+    href: "",
+    setAttribute(name, value) {
+      this[name] = value;
+      if (!linksHydrated && quizRedesLink.href && this.href) {
+        linksHydrated = true;
+        eventLog.push("links hydrated");
+      }
+    },
+  };
+
   const document = {
     body,
     getElementById(id) {
       if (id === "guide-root") {
-        return root;
+        return guideRootPresent ? root : null;
       }
       if (id === "quizRedesActionLink") {
-        linkLookups.push({ id, ready: rootState.ready });
-        return rootState.ready ? quizRedesLink : null;
+        lookupLog.push({ id, rootReady: rootState.html.length > 0 });
+        assert.ok(rootState.html.length > 0, "quizRedesActionLink should only be queried after root markup is injected");
+        return quizRedesLink;
       }
       if (id === "quizIPActionLink") {
-        linkLookups.push({ id, ready: rootState.ready });
-        return rootState.ready ? quizIpLink : null;
+        lookupLog.push({ id, rootReady: rootState.html.length > 0 });
+        assert.ok(rootState.html.length > 0, "quizIPActionLink should only be queried after root markup is injected");
+        return quizIpLink;
       }
       return null;
     },
@@ -105,16 +143,25 @@ function createHarness({
     location: { pathname },
     initGuiaTemplateShell() {
       templateInitCalls += 1;
-      assert.match(root.innerHTML, /guide-shell-fragment/);
+      eventLog.push("initGuiaTemplateShell");
+      assert.ok(datasetsHydrated, "template init should run after datasets are hydrated");
+      assert.ok(linksHydrated, "template init should run after links are hydrated");
     },
     initGuiaRedes() {
       guideInitCalls += 1;
-      assert.match(root.innerHTML, /guide-shell-fragment/);
+      eventLog.push("initGuiaRedes");
+      assert.ok(
+        eventLog.includes("initGuiaTemplateShell"),
+        "guide init should run after template init"
+      );
+      assert.ok(datasetsHydrated, "guide init should run after datasets are hydrated");
+      assert.ok(linksHydrated, "guide init should run after links are hydrated");
     },
     console: testConsole,
   };
 
   async function fetchStub(url) {
+    fetchLog.push(url);
     if (url === "data/guide_contexts.json") {
       return {
         ok: registryOk,
@@ -147,12 +194,16 @@ function createHarness({
   return {
     body,
     document,
-    linkLookups,
+    eventLog,
+    fetchLog,
+    guideIpLink: quizIpLink,
+    guideRootPresent,
+    guideRootState: rootState,
+    lookupLog,
     loaderSource,
     quizIpLink,
     quizRedesLink,
     root,
-    rootState,
     runtimeWindow,
     sandbox,
     getCounts() {
@@ -178,10 +229,17 @@ test("guide contexts expose the two Santa Barbara runtime entries", () => {
   assert.deepEqual(contexts["sb-redes-10b"], EXPECTED_CONTEXTS["sb-redes-10b"]);
 });
 
-test("runtime loader injects the shared guide and boots both init hooks", async () => {
+test("runtime loader injects the shared guide and boots both init hooks in order", async () => {
   const harness = await runLoader();
   const counts = harness.getCounts();
 
+  assert.deepEqual(harness.eventLog, [
+    "root.innerHTML injected",
+    "datasets hydrated",
+    "links hydrated",
+    "initGuiaTemplateShell",
+    "initGuiaRedes",
+  ]);
   assert.match(harness.root.innerHTML, /guide-shell-fragment/);
   assert.deepEqual(harness.runtimeWindow.__GUIDE_RUNTIME_CONTEXT__, EXPECTED_CONTEXTS["sb-redes-10a"]);
   assert.equal(harness.body.dataset.defaultInst, "Institucion Educativa Santa Barbara");
@@ -191,10 +249,23 @@ test("runtime loader injects the shared guide and boots both init hooks", async 
   assert.equal(harness.quizIpLink.href, "santa-barbara-10a-guia-02-redes-ip-quiz.html");
   assert.equal(counts.templateInitCalls, 1);
   assert.equal(counts.guideInitCalls, 1);
-  assert.deepEqual(harness.linkLookups, [
-    { id: "quizRedesActionLink", ready: true },
-    { id: "quizIPActionLink", ready: true },
+  assert.deepEqual(harness.lookupLog, [
+    { id: "quizRedesActionLink", rootReady: true },
+    { id: "quizIPActionLink", rootReady: true },
   ]);
+  assert.equal(harness.fetchLog[0], "data/guide_contexts.json");
+  assert.equal(harness.fetchLog[1], "partials/guia-redes-rap01-content.html");
+});
+
+test("runtime loader handles a missing guide root guard cleanly", async () => {
+  const harness = await runLoader({ guideRootPresent: false });
+  const counts = harness.getCounts();
+
+  assert.deepEqual(harness.eventLog, []);
+  assert.equal(harness.runtimeWindow.__GUIDE_RUNTIME_CONTEXT__, undefined);
+  assert.equal(counts.templateInitCalls, 0);
+  assert.equal(counts.guideInitCalls, 0);
+  assert.deepEqual(harness.fetchLog, []);
 });
 
 for (const scenario of [
@@ -226,6 +297,5 @@ for (const scenario of [
     assert.equal(harness.runtimeWindow.__GUIDE_RUNTIME_CONTEXT__, undefined);
     assert.equal(counts.templateInitCalls, 0);
     assert.equal(counts.guideInitCalls, 0);
-    assert.deepEqual(harness.linkLookups, []);
   });
 }
