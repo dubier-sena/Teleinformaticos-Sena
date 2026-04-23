@@ -4,14 +4,15 @@ const path = require("path");
 const projectRoot = process.cwd();
 const adminHtmlPath = path.join(projectRoot, "panel-administrativo-usuarios.html");
 const adminJsPath = path.join(projectRoot, "js", "admin_usuarios.js");
+const sharedGuidePartialPath = path.join(projectRoot, "partials", "guia-02-herramientas-content.html");
 const guidePages = [
   {
-    guidePath: path.join(projectRoot, "grupo-10a-guia-02-herramientas-informaticas-digitales.html"),
-    formPath: path.join(projectRoot, "grupo-10a-guia-02-actividad-4-formulario.html"),
+    formPath: path.join(projectRoot, "pages", "auxiliares", "grupo-10a-guia-02-actividad-4-formulario.html"),
+    expectedGuideLink: "pages/auxiliares/grupo-10a-guia-02-actividad-4-formulario.html",
   },
   {
-    guidePath: path.join(projectRoot, "grupo-10b-guia-02-herramientas-informaticas-digitales.html"),
-    formPath: path.join(projectRoot, "grupo-10b-guia-02-actividad-4-formulario.html"),
+    formPath: path.join(projectRoot, "pages", "auxiliares", "grupo-10b-guia-02-actividad-4-formulario.html"),
+    expectedGuideLink: "pages/auxiliares/grupo-10b-guia-02-actividad-4-formulario.html",
   },
 ];
 
@@ -27,6 +28,7 @@ function assertIncludes(content, expected, label) {
 
 const adminHtml = read(adminHtmlPath);
 const adminJs = read(adminJsPath);
+const sharedGuidePartial = read(sharedGuidePartialPath);
 const questionnaireFields = [
   'data-store="contexto-q1"',
   'data-store="contexto-rel-drive"',
@@ -40,13 +42,12 @@ const questionnaireFields = [
   'data-store="contexto-otanche"',
 ];
 
-guidePages.forEach(({ guidePath, formPath }) => {
-  const guideHtml = read(guidePath);
+guidePages.forEach(({ formPath, expectedGuideLink }) => {
   const formHtml = read(formPath);
   assertIncludes(
-    guideHtml,
-    path.basename(formPath),
-    `enlace al formulario independiente en ${path.basename(guidePath)}`
+    sharedGuidePartial,
+    expectedGuideLink,
+    `enlace al formulario independiente en el parcial compartido de Guia 2`
   );
 
   questionnaireFields.forEach((key) => {

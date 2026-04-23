@@ -11,7 +11,7 @@ const BUILD_SCRIPT = path.join(REPO_ROOT, "tools", "build-generated-pages.ps1");
 const EXPECTED_VARIANTS = {
   "redes-rap01-quiz-10a": {
     template: "redes-rap01-quiz.template.html",
-    outputFile: "pages/aux/santa-barbara-10a-guia-02-redes-rap01-quiz.html",
+    outputFile: "pages/auxiliares/santa-barbara-10a-guia-02-redes-rap01-quiz.html",
     grupo: "10A",
     ficha: "3441944",
     inst: "Institucion Educativa Santa Barbara",
@@ -21,7 +21,7 @@ const EXPECTED_VARIANTS = {
   },
   "redes-rap01-quiz-10b": {
     template: "redes-rap01-quiz.template.html",
-    outputFile: "pages/aux/santa-barbara-10b-guia-02-redes-rap01-quiz.html",
+    outputFile: "pages/auxiliares/santa-barbara-10b-guia-02-redes-rap01-quiz.html",
     grupo: "10B",
     ficha: "3441950",
     inst: "Institucion Educativa Santa Barbara",
@@ -31,7 +31,7 @@ const EXPECTED_VARIANTS = {
   },
   "redes-ip-quiz-10a": {
     template: "redes-ip-quiz.template.html",
-    outputFile: "pages/aux/santa-barbara-10a-guia-02-redes-ip-quiz.html",
+    outputFile: "pages/auxiliares/santa-barbara-10a-guia-02-redes-ip-quiz.html",
     grupo: "10A",
     ficha: "3441944",
     inst: "Institucion Educativa Santa Barbara",
@@ -41,7 +41,7 @@ const EXPECTED_VARIANTS = {
   },
   "redes-ip-quiz-10b": {
     template: "redes-ip-quiz.template.html",
-    outputFile: "pages/aux/santa-barbara-10b-guia-02-redes-ip-quiz.html",
+    outputFile: "pages/auxiliares/santa-barbara-10b-guia-02-redes-ip-quiz.html",
     grupo: "10B",
     ficha: "3441950",
     inst: "Institucion Educativa Santa Barbara",
@@ -51,7 +51,7 @@ const EXPECTED_VARIANTS = {
   },
   "guia2-matriz-322-10a": {
     template: "guia-02-matriz-322.template.html",
-    outputFile: "pages/aux/grupo-10a-guia-02-actividad-322-matriz.html",
+    outputFile: "pages/auxiliares/grupo-10a-guia-02-actividad-322-matriz.html",
     grupo: "10A",
     ficha: "3441939",
     inst: "Institucion Educativa Jhon F. Kennedy",
@@ -60,7 +60,7 @@ const EXPECTED_VARIANTS = {
   },
   "guia2-matriz-322-10b": {
     template: "guia-02-matriz-322.template.html",
-    outputFile: "pages/aux/grupo-10b-guia-02-actividad-322-matriz.html",
+    outputFile: "pages/auxiliares/grupo-10b-guia-02-actividad-322-matriz.html",
     grupo: "10B",
     ficha: "3441942",
     inst: "Institucion Educativa Jhon F. Kennedy",

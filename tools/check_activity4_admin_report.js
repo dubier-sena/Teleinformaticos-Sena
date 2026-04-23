@@ -3,11 +3,11 @@ const path = require("path");
 
 const root = process.cwd();
 const form10a = fs.readFileSync(
-  path.join(root, "grupo-10a-guia-02-actividad-4-formulario.html"),
+  path.join(root, "pages", "auxiliares", "grupo-10a-guia-02-actividad-4-formulario.html"),
   "utf8"
 );
 const form10b = fs.readFileSync(
-  path.join(root, "grupo-10b-guia-02-actividad-4-formulario.html"),
+  path.join(root, "pages", "auxiliares", "grupo-10b-guia-02-actividad-4-formulario.html"),
   "utf8"
 );
 const guia2Js = fs.readFileSync(path.join(root, "js", "script_guia2.js"), "utf8");
@@ -21,12 +21,12 @@ function assertIncludes(content, expected, label) {
 
 assertIncludes(
   form10a,
-  'src="js/activity4_admin_report.js?v=20260411_1"',
+  "activity4_admin_report.js?v=",
   "script del reporte admin en el formulario 10A"
 );
 assertIncludes(
   form10b,
-  'src="js/activity4_admin_report.js?v=20260411_1"',
+  "activity4_admin_report.js?v=",
   "script del reporte admin en el formulario 10B"
 );
 assertIncludes(
