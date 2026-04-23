@@ -1,4 +1,3 @@
-﻿<!-- GENERATED FILE: edit sources/generated and data/generated_page_variants.json -->
 <!doctype html>
 <html lang="es">
 <head>
@@ -9,7 +8,7 @@
   content="default-src 'self' blob: data:; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https:; media-src 'self' blob: data: https:; frame-src 'self' https://player.vimeo.com https://www.youtube.com;"
 >
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<title>Quiz 3.2.1.H | Redes Santa Barbara 10B</title>
+<title>{{PAGE_TITLE}}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -20,24 +19,26 @@
 <script src="js/firebase-config.js?v=20260414_1"></script>
 <script src="js/firebase_db.js?v=20260422_2"></script>
 <script defer src="js/redes_quiz_bank.js?v=20260421_1"></script>
-<script defer src="js/script_redes_quiz.js?v=20260422_3"></script>
+<script defer src="js/script_redes_quiz.js?v=20260422_2"></script>
 </head>
 <body
   class="app-shell redes-quiz-page"
-  data-quiz-group="10B"
-  data-quiz-ficha="3441950"
-  data-quiz-cloud-file="sb_10b_redes.html"
-  data-quiz-page-file="santa-barbara-10b-guia-02-redes-rap01.html"
-  data-quiz-back-link="santa-barbara-10b-guia-02-redes-rap01.html#contexto"
+  data-quiz-group="{{QUIZ_GROUP}}"
+  data-quiz-ficha="{{QUIZ_FICHA}}"
+  data-quiz-cloud-file="{{QUIZ_CLOUD_FILE}}"
+  data-quiz-page-file="{{QUIZ_PAGE_FILE}}"
+  data-quiz-back-link="{{QUIZ_BACK_LINK}}"
+  data-quiz-storage-key="{{QUIZ_STORAGE_KEY}}"
+  data-quiz-bank-var="{{QUIZ_BANK_VAR}}"
 >
   <main class="redes-quiz-shell">
     <section class="redes-quiz-hero">
-      <div class="redes-quiz-kicker">Guia 2 &middot; Actividad 3.2.1.H</div>
-      <h1>Quiz individual de fundamentos de redes</h1>
-      <p><strong>Grupo 10B</strong></p>
+      <div class="redes-quiz-kicker">Guia 2 &middot; Actividad 3.3.H</div>
+      <h1>Quiz individual de parametros de red</h1>
+      <p><strong>Grupo {{GROUP_LABEL}}</strong></p>
       <p>
-        Presenta un quiz aleatorio de 10 preguntas sobre tipos de redes, topologias, medios de transmision,
-        dispositivos de interconexion y modelo OSI / TCP/IP. El intento usa Page Visibility API y se
+        Presenta un quiz aleatorio de 10 preguntas sobre estructura de IPv4, clases de IP, direcciones
+        privadas, mascara de subred, gateway y DNS. El intento usa Page Visibility API y se
         finaliza automaticamente en la segunda salida de pestana.
       </p>
     </section>
@@ -53,7 +54,7 @@
         </ul>
         <div class="redes-quiz-actions">
           <button type="button" class="redes-quiz-button" id="quizStartBtn">Iniciar quiz</button>
-          <a class="redes-quiz-link" id="quizBackLink" href="santa-barbara-10b-guia-02-redes-rap01.html#contexto">Volver a la guia</a>
+          <a class="redes-quiz-link" id="quizBackLink" href="{{QUIZ_BACK_LINK}}">Volver a la guia</a>
         </div>
         <div class="redes-quiz-status" id="quizStatus">Listo para iniciar. La variante se asignara al azar cuando pulses "Iniciar quiz".</div>
         <div class="redes-quiz-alert" id="quizAlertPanel"></div>
@@ -97,4 +98,3 @@
   </main>
 </body>
 </html>
-
