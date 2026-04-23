@@ -39,3 +39,19 @@ test("el ejercicio 4 limpia la copia local cuando Drive confirma el pantallazo",
   assert.match(guideScript, /delete state\["ej4-captura"\]/);
   assert.match(guideScript, /state\["ej4-captura-url"\]\s*=\s*response\.driveUrl/);
 });
+
+test("los laboratorios de redes pueden entregar archivos .pkt en la integracion segura", () => {
+  const integrationsScript = fs.readFileSync(
+    path.join(__dirname, "..", "js", "project_integrations.js"),
+    "utf8"
+  );
+  const guideScript = fs.readFileSync(
+    path.join(__dirname, "..", "js", "script_guia_redes.js"),
+    "utf8"
+  );
+
+  assert.match(integrationsScript, /allowedUploadExtensions:\s*\[[\s\S]*"\.pkt"/);
+  assert.match(guideScript, /subirEntregaFinalLab1[\s\S]*allowedExtensions:\s*\["\.pkt"\]/);
+  assert.match(guideScript, /subirEntregaFinalLab2[\s\S]*allowedExtensions:\s*\["\.pkt"\]/);
+  assert.match(guideScript, /subirEntregaFinalLab3[\s\S]*allowedExtensions:\s*\["\.pkt"\]/);
+});
