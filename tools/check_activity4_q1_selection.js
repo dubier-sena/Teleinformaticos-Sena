@@ -3,8 +3,8 @@ const path = require("path");
 
 const root = process.cwd();
 const files = [
-  "grupo-10a-guia-02-actividad-4-formulario.html",
-  "grupo-10b-guia-02-actividad-4-formulario.html",
+  path.join("pages", "auxiliares", "grupo-10a-guia-02-actividad-4-formulario.html"),
+  path.join("pages", "auxiliares", "grupo-10b-guia-02-actividad-4-formulario.html"),
 ];
 
 let failed = false;
