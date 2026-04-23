@@ -2135,68 +2135,8 @@
                 <p style="font-size:0.8rem;color:#3b82f6;margin:10px 0 0">Nombre sugerido: <code>Lab2_ArbolBoycaTech_NombreAprendiz_FICHA.pkt</code></p>
               </div>
 
-              <div style="display:none" aria-hidden="true" data-ignore-progress="true">
-              <p class="intro-text" style="text-align:justify">
-                <strong>Escenario:</strong> La empresa &ldquo;BoycáTech S.A.S.&rdquo; tiene 3 departamentos en 2 pisos:
-                Piso 1 &mdash; Administraci&oacute;n (4 PCs) y Ventas (4 PCs); Piso 2 &mdash; Bodega (3 PCs).
-                Cada departamento tiene su propio switch. Un switch central conecta los 3 departamentos.
-              </p>
-
-              <div class="checklist-card compact-card">
-                <h3>Dise&ntilde;o requerido</h3>
-                <ul class="note-list">
-                  <li><strong>1 Switch Central</strong> (nivel 0 &mdash; ra&iacute;z del &aacute;rbol) + <strong>3 Switches departamentales</strong> (nivel 1).</li>
-                  <li>Administraci&oacute;n: 4 PCs con IPs 192.168.1.10 a 192.168.1.13 &mdash; M&aacute;scara /24</li>
-                  <li>Ventas: 4 PCs con IPs 192.168.1.20 a 192.168.1.23 &mdash; M&aacute;scara /24</li>
-                  <li>Bodega: 3 PCs con IPs 192.168.1.30 a 192.168.1.32 &mdash; M&aacute;scara /24</li>
-                  <li>Gateway para toda la red: 192.168.1.1</li>
-                </ul>
-              </div>
-
-              <div class="checklist-card compact-card" style="margin-top:12px">
-                <h3>Pruebas requeridas</h3>
-                <ol class="note-list">
-                  <li>Ping entre PCs del mismo departamento (debe funcionar).</li>
-                  <li>Ping entre PCs de departamentos diferentes (debe funcionar &mdash; misma red).</li>
-                  <li>Comando <code>tracert</code> entre un PC de Administraci&oacute;n y uno de Bodega. Analiza: &iquest;cu&aacute;ntos saltos hay? &iquest;por qu&eacute;?</li>
-                  <li>Comando <code>tracert</code> desde un PC hacia 8.8.8.8 (DNS de Google). Analiza el resultado.</li>
-                </ol>
-              </div>
-
-              <div class="info-box" style="margin-top:12px">
-                <div class="label">Modalidad</div>
-                <p>Este laboratorio es trabajo <strong>aut&oacute;nomo en casa</strong>. El instructor hace seguimiento por correo o plataforma LMS. Entrega los resultados en la siguiente sesi&oacute;n presencial.</p>
-              </div>
-
-              <div class="form-grid" style="margin-top:16px">
-                <label>
-                  <span>Resultado de ping entre PCs del mismo departamento</span>
-                  <textarea rows="3" data-store="lab2-ping-mismo" data-track placeholder="Ejemplo: PC Administ. 1 pinga PC Administ. 2 correctamente. RTT..."></textarea>
-                </label>
-                <label>
-                  <span>Resultado de ping entre PCs de departamentos distintos</span>
-                  <textarea rows="3" data-store="lab2-ping-dif" data-track placeholder="Ejemplo: PC Ventas pinga PC Bodega. &iquest;Funcion&oacute;? &iquest;Por qu&eacute;?"></textarea>
-                </label>
-                <label style="grid-column:1 / -1">
-                  <span>An&aacute;lisis del tracert entre Administraci&oacute;n y Bodega: &iquest;cu&aacute;ntos saltos? &iquest;por qu&eacute;?</span>
-                  <textarea rows="5" data-store="lab2-tracert-interno" data-track placeholder="Describe cada salto (hop) que apareci&oacute; en el tracert y explica a qu&eacute; dispositivo corresponde."></textarea>
-                </label>
-                <label style="grid-column:1 / -1">
-                  <span>An&aacute;lisis del tracert hacia 8.8.8.8 &mdash; &iquest;qu&eacute; ocurri&oacute;?</span>
-                  <textarea rows="5" data-store="lab2-tracert-externo" data-track placeholder="Explica por qu&eacute; el tracert hacia 8.8.8.8 muestra diferente comportamiento que el tracert interno."></textarea>
-                </label>
-              </div>
-
-              <div class="warning-box" style="margin-top:12px">
-                <strong>&#9888; Entregable Lab 2:</strong> Archivo <code>.pkt</code> + capturas de los 4 tipos de prueba + documento de an&aacute;lisis (m&iacute;nimo 1 p&aacute;gina explicando los resultados de tracert).<br>
-                Nombre: <code>Lab2_ArbolBoycaTech_NombreAprendiz_FICHA.pkt</code>
-              </div>
-              </div>
             </div>
           </div>
-
-        </div>
-      </div>
 
           <!-- LAB 3 -->
           <div class="activity open mission-card">
