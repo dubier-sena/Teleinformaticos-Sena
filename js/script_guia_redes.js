@@ -401,6 +401,7 @@ function hydrateFieldsRedes() {
   restoreImagenSocial();
   restoreImagenBloqueIP1();
   restoreImagenBloqueIP3();
+  restorePantallazoTallerIPEj4();
   applyReflexionLock();
   applyReflexionSocializacionLock();
   applyBloqueALock();
@@ -412,6 +413,11 @@ function hydrateFieldsRedes() {
   applyBloqueIP1Lock();
   applyBloqueIP2Lock();
   applyBloqueIP3Lock();
+  applyTallerIPEj1Lock();
+  applyTallerIPEj2Lock();
+  applyTallerIPEj3Lock();
+  applyTallerIPEj4Lock();
+  applyTallerIPEj5Lock();
 }
 
 function applyReflexionSocializacionLock() {
@@ -1226,7 +1232,12 @@ const LOCK_KEYS_REDES = [
   "ip2-locked",
   "ip3-locked",
   "taller-ip-ej1-locked",
+  "taller-ip-ej2-locked",
+  "taller-ip-ej3-locked",
 ];
+
+LOCK_KEYS_REDES.push("taller-ip-ej4-locked");
+LOCK_KEYS_REDES.push("taller-ip-ej5-locked");
 
 function getCloudScopeKeyRedes() {
   const session = _portalAuth?.getCurrentSession?.();
@@ -1237,6 +1248,8 @@ function getCloudScopeKeyRedes() {
 }
 
 const IMAGE_KEYS_REDES = ["bloqueA-imagen", "bloqueB-imagen", "social-mapa", "ip1-imagen", "ip3-imagen"]; // Excluir base64 local del sync a Firebase; las URLs de Drive sí se guardan
+
+IMAGE_KEYS_REDES.push("ej4-captura");
 
 function buildCloudSnapshotRedes() {
   const data = { ...state };
@@ -1280,6 +1293,10 @@ function applyAllLocksRedes() {
   applyBloqueIP2Lock();
   applyBloqueIP3Lock();
   applyTallerIPEj1Lock();
+  applyTallerIPEj2Lock();
+  applyTallerIPEj3Lock();
+  applyTallerIPEj4Lock();
+  applyTallerIPEj5Lock();
 }
 
 function syncAuthoritativeLockFlagsFromRemoteRedes(remoteData) {
@@ -1596,6 +1613,181 @@ ${b3Rows}${b3Img}
 // ---------------------------------------------------------------------------
 // Bloque IP2 — Clases de IP y direcciones privadas (3.3.2)
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Generar Word final - Taller IP completo (Ejercicios 1-5)
+// ---------------------------------------------------------------------------
+window.exportarWordTallerIP = function (evt) {
+  const btn = evt && evt.currentTarget ? evt.currentTarget
+    : document.querySelector('[onclick*="exportarWordTallerIP"]');
+  const origHTML = btn ? btn.innerHTML : "";
+  if (btn) { btn.disabled = true; btn.innerHTML = "&#9203; Generando Word\u2026"; }
+
+  try {
+    const identity = getDeliveryIdentityRedes();
+    const fullName = identity.fullName || identity.usernameKey || "Aprendiz";
+    const ficha = identity.ficha || "0000";
+    const grupo = identity.grupo || document.body.dataset.defaultGrupo || "";
+    const institucion = identity.institucion || document.body.dataset.defaultInst || "";
+    const fecha = new Date().toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric" });
+    const allExerciseKeys = [
+      ...TALLER_IP_EJ1_KEYS,
+      ...TALLER_IP_EJ2_KEYS,
+      ...TALLER_IP_EJ3_KEYS,
+      ...TALLER_IP_EJ4_KEYS,
+      ...TALLER_IP_EJ5_KEYS,
+    ];
+    const missingKeys = allExerciseKeys.filter((key) => !String(state[key] || "").trim());
+
+    if (missingKeys.length > 0) {
+      throw new Error("Completa todos los ejercicios del 1 al 5 antes de generar la entrega final.");
+    }
+    if (!state["ej4-captura-url"] && !state["ej4-captura"]) {
+      throw new Error("Primero sube el pantallazo de ipconfig /all del Ejercicio 4.");
+    }
+
+    function val(key) {
+      return escapeHtml(String(state[key] || "(sin respuesta)"));
+    }
+
+    const learnerFileLabel = String(fullName || "Aprendiz")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "") || "Aprendiz";
+
+    const ej1Rows = [
+      ["10.5.20.1", "ej1-a-clase", "ej1-a-mask"],
+      ["172.20.0.1", "ej1-b-clase", "ej1-b-mask"],
+      ["192.168.1.50", "ej1-c-clase", "ej1-c-mask"],
+      ["200.14.5.3", "ej1-d-clase", "ej1-d-mask"],
+    ].map(([ip, claseKey, maskKey]) =>
+      `<tr><td>${ip}</td><td>${val(claseKey)}</td><td>${val(maskKey)}</td></tr>`
+    ).join("");
+
+    const ej3Rows = [
+      ["Computador 1 - Caja", "ej3-pc1"],
+      ["Computador 2 - Administracion", "ej3-pc2"],
+      ["Computador 3 - Bodega", "ej3-pc3"],
+      ["Computador 4 - Punto de Venta", "ej3-pc4"],
+      ["Computador 5 - Gerencia", "ej3-pc5"],
+      ["Computador 6 - Ventas", "ej3-pc6"],
+      ["Impresora de red", "ej3-print"],
+      ["Camara IP", "ej3-cam"],
+    ].map(([device, key]) =>
+      `<tr><td>${device}</td><td>${val(key)}</td><td>255.255.255.0</td></tr>`
+    ).join("");
+
+    const ej5Rows = [
+      ["Miscelanea Lucia - Tunja", "50 dispositivos", "ej5-lucia-clase", "ej5-lucia-just"],
+      ["Empresa de transporte regional", "500 dispositivos", "ej5-trans-clase", "ej5-trans-just"],
+      ["Corporacion con sedes en todo el pais", "3.000 dispositivos", "ej5-corp-clase", "ej5-corp-just"],
+    ].map(([company, devices, classKey, justKey]) =>
+      `<tr><td>${company}</td><td>${devices}</td><td>${val(classKey)}</td><td>${val(justKey)}</td></tr>`
+    ).join("");
+
+    const screenshotBlock = state["ej4-captura"]
+      ? `<p><b>Pantallazo ipconfig /all:</b></p><p><img src="${state["ej4-captura"]}" alt="Pantallazo ipconfig" style="max-width:580px;border:1px solid #c8e6c9;border-radius:8px"></p>`
+      : `<p><b>Pantallazo ipconfig /all:</b> <a href="${escapeHtml(state["ej4-captura-url"] || "")}">Ver pantallazo en Drive</a></p>`;
+
+    const html = `<html xmlns:o='urn:schemas-microsoft-com:office:office'
+      xmlns:w='urn:schemas-microsoft-com:office:word'
+      xmlns='http://www.w3.org/TR/REC-html40'>
+<head><meta charset='utf-8'><title>Taller IP</title>
+<style>
+body{font-family:Calibri,Arial;font-size:12pt;margin:2cm;color:#263238}
+h1{font-size:16pt;color:#1b5e20}h2{font-size:13pt;color:#1b5e20;border-bottom:1px solid #c8e6c9;padding-bottom:4pt}
+h3{font-size:11pt;color:#1e40af}p{margin:6pt 0;line-height:1.5}
+table{border-collapse:collapse;width:100%;margin-top:8pt}th,td{border:1px solid #ccc;padding:6pt;font-size:11pt;vertical-align:top}
+th{background:#c8e6c9}
+</style>
+</head><body>
+<h1>Actividad 3.3.4 - Taller IP (Ejercicios 1-5)</h1>
+<p>Aprendiz: <b>${escapeHtml(fullName)}</b> &nbsp;|&nbsp; Ficha: ${escapeHtml(ficha)} &nbsp;|&nbsp; Grupo: ${escapeHtml(grupo)} &nbsp;|&nbsp; ${fecha}</p>
+<p>Institucion: ${escapeHtml(institucion)}</p>
+<hr>
+
+<h2>Ejercicio 1 — Identificar clases de direcciones IP</h2>
+<table>
+  <tr><th>Direccion IP</th><th>Clase</th><th>Mascara por defecto</th></tr>
+  ${ej1Rows}
+</table>
+
+<h2>Ejercicio 2 — Analizar una direccion IP</h2>
+<p><b>Caso base:</b> IP 192.168.10.45 &nbsp;|&nbsp; Mascara 255.255.255.0</p>
+<p><b>¿A que clase pertenece?</b></p>
+<p style="margin-left:20px;white-space:pre-wrap">${val("ej2-clase")}</p>
+<p><b>¿Cual es la parte de red y cual es la parte del host?</b></p>
+<p style="margin-left:20px;white-space:pre-wrap">${val("ej2-red-host")}</p>
+<p><b>¿Cuantos hosts puede tener esta red?</b></p>
+<p style="margin-left:20px;white-space:pre-wrap">${val("ej2-hosts")}</p>
+<p><b>¿Es una IP privada o publica? ¿Como lo sabe?</b></p>
+<p style="margin-left:20px;white-space:pre-wrap">${val("ej2-privada")}</p>
+
+<h2>Ejercicio 3 — Asignacion de IP a la Ferretera El Tornillo</h2>
+<p><b>Red:</b> 192.168.1.0 &nbsp;|&nbsp; <b>Mascara:</b> 255.255.255.0 &nbsp;|&nbsp; <b>Gateway:</b> 192.168.1.1</p>
+<table>
+  <tr><th>Dispositivo</th><th>IP asignada</th><th>Mascara</th></tr>
+  ${ej3Rows}
+</table>
+<p><b>Justificacion:</b></p>
+<p style="margin-left:20px;white-space:pre-wrap">${val("ej3-justifica")}</p>
+
+<h2>Ejercicio 4 — Verificar parametros de red en tu computador</h2>
+${screenshotBlock}
+<p><b>Direccion IPv4 que aparece - ¿para que sirve?</b></p>
+<p style="margin-left:20px;white-space:pre-wrap">${val("ej4-ipv4")}</p>
+<p><b>Mascara de subred - ¿para que sirve?</b></p>
+<p style="margin-left:20px;white-space:pre-wrap">${val("ej4-mask")}</p>
+<p><b>Puerta de enlace predeterminada - ¿para que sirve?</b></p>
+<p style="margin-left:20px;white-space:pre-wrap">${val("ej4-gw")}</p>
+<p><b>Servidores DNS - ¿para que sirven?</b></p>
+<p style="margin-left:20px;white-space:pre-wrap">${val("ej4-dns")}</p>
+
+<h2>Ejercicio 5 — Elegir la clase de IP correcta para cada caso</h2>
+<table>
+  <tr><th>Empresa</th><th>N. de dispositivos</th><th>Clase elegida</th><th>Justificacion</th></tr>
+  ${ej5Rows}
+</table>
+</body></html>`;
+
+    const fileName = `Taller_IP_${learnerFileLabel}_${ficha}.doc`;
+    const blob = new Blob(["\ufeff", html], { type: "application/msword" });
+    const file = new File([blob], fileName, { type: "application/msword" });
+
+    if (
+      !window.sharedAppsScriptDelivery ||
+      typeof window.sharedAppsScriptDelivery.openDeliveryModal !== "function"
+    ) {
+      throw new Error("El sistema de entrega no está disponible.");
+    }
+
+    window.sharedAppsScriptDelivery.openDeliveryModal({
+      guideLabel: "Guia 2",
+      activityNumber: "3.3.4",
+      activityTitle: "Actividad 3.3.4 — Taller IP (Ejercicios 1–5)",
+      activityLabel: "Actividad 3.3.4",
+      allowedExtensions: [".doc", ".docx"],
+      fileNamePrefix: "Taller_IP",
+      learnerNameMode: "full",
+    });
+    setTimeout(() => {
+      const fileInput = document.querySelector("[data-shared-apps-file]");
+      if (!fileInput) return;
+      try {
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        fileInput.files = dt.files;
+        fileInput.dispatchEvent(new Event("change", { bubbles: true }));
+      } catch (_) {}
+    }, 80);
+
+    if (btn) { btn.disabled = false; btn.innerHTML = origHTML; }
+  } catch (err) {
+    alert("Error al generar el Word: " + ((err && err.message) || "Intenta de nuevo."));
+    if (btn) { btn.disabled = false; btn.innerHTML = origHTML; }
+  }
+};
+
 const BLOQUE_IP2_KEYS = [
   "ip2-1", "ip2-2", "ip2-3",
   "ip2-claseA-mask", "ip2-claseA-hosts", "ip2-claseA-uso",
@@ -1673,6 +1865,258 @@ window.guardarTallerIPEj1 = async function () {
   saveStateRedes();
   await saveToCloudRedes();
   applyTallerIPEj1Lock();
+};
+
+const TALLER_IP_EJ2_KEYS = [
+  "ej2-clase",
+  "ej2-red-host",
+  "ej2-hosts",
+  "ej2-privada",
+];
+
+function applyTallerIPEj2Lock() {
+  const locked = Boolean(state["taller-ip-ej2-locked"]);
+  document.querySelectorAll("[data-store^='ej2-']").forEach((el) => {
+    el.disabled = locked;
+    el.style.opacity = locked ? "0.75" : "";
+  });
+  const btn = document.getElementById("btnGuardarTallerIPEj2");
+  if (btn) {
+    btn.disabled = locked;
+    btn.textContent = locked ? "\u2705 Respuestas guardadas" : "\uD83D\uDCBE Guardar respuestas";
+  }
+  const status = document.getElementById("tallerIPEj2Status");
+  if (status) status.style.display = locked ? "block" : "none";
+}
+
+window.guardarTallerIPEj2 = async function () {
+  const empty = TALLER_IP_EJ2_KEYS.filter((k) => !String(state[k] || "").trim());
+  if (empty.length > 0) {
+    alert("Completa todas las respuestas del Ejercicio 2 antes de guardar.");
+    return;
+  }
+  const btn = document.getElementById("btnGuardarTallerIPEj2");
+  if (btn) { btn.disabled = true; btn.textContent = "Guardando\u2026"; }
+  state["taller-ip-ej2-locked"] = true;
+  saveStateRedes();
+  await saveToCloudRedes();
+  applyTallerIPEj2Lock();
+};
+
+const TALLER_IP_EJ3_KEYS = [
+  "ej3-pc1",
+  "ej3-pc2",
+  "ej3-pc3",
+  "ej3-pc4",
+  "ej3-pc5",
+  "ej3-pc6",
+  "ej3-print",
+  "ej3-cam",
+  "ej3-justifica",
+];
+
+function applyTallerIPEj3Lock() {
+  const locked = Boolean(state["taller-ip-ej3-locked"]);
+  document.querySelectorAll("[data-store^='ej3-']").forEach((el) => {
+    el.disabled = locked;
+    el.style.opacity = locked ? "0.75" : "";
+  });
+  const btn = document.getElementById("btnGuardarTallerIPEj3");
+  if (btn) {
+    btn.disabled = locked;
+    btn.textContent = locked ? "\u2705 Respuestas guardadas" : "\uD83D\uDCBE Guardar respuestas";
+  }
+  const status = document.getElementById("tallerIPEj3Status");
+  if (status) status.style.display = locked ? "block" : "none";
+}
+
+window.guardarTallerIPEj3 = async function () {
+  const empty = TALLER_IP_EJ3_KEYS.filter((k) => !String(state[k] || "").trim());
+  if (empty.length > 0) {
+    alert("Completa todas las respuestas del Ejercicio 3 antes de guardar.");
+    return;
+  }
+  const btn = document.getElementById("btnGuardarTallerIPEj3");
+  if (btn) { btn.disabled = true; btn.textContent = "Guardando\u2026"; }
+  state["taller-ip-ej3-locked"] = true;
+  saveStateRedes();
+  await saveToCloudRedes();
+  applyTallerIPEj3Lock();
+};
+
+const TALLER_IP_EJ4_KEYS = ["ej4-ipv4", "ej4-mask", "ej4-gw", "ej4-dns"];
+
+function applyTallerIPEj4Lock() {
+  const locked = Boolean(state["taller-ip-ej4-locked"]);
+  document.querySelectorAll("[data-store^='ej4-']").forEach((el) => {
+    el.disabled = locked;
+    el.style.opacity = locked ? "0.75" : "";
+  });
+  const input = document.getElementById("ej4CapturaInput");
+  if (input) input.disabled = locked;
+  const uploadBtn = document.getElementById("btnSubirTallerIPEj4");
+  if (uploadBtn) {
+    uploadBtn.disabled = locked;
+    uploadBtn.textContent = locked ? "\u2705 Pantallazo cargado" : "\uD83D\uDCF8 Subir pantallazo de ipconfig /all";
+    uploadBtn.style.opacity = locked ? "0.7" : "";
+    uploadBtn.style.pointerEvents = locked ? "none" : "";
+  }
+  const btn = document.getElementById("btnGuardarTallerIPEj4");
+  if (btn) {
+    btn.disabled = locked;
+    btn.textContent = locked ? "\u2705 Respuestas guardadas" : "\uD83D\uDCBE Guardar respuestas";
+  }
+  const status = document.getElementById("tallerIPEj4Status");
+  if (status) status.style.display = locked ? "block" : "none";
+}
+
+function restorePantallazoTallerIPEj4() {
+  const driveUrl = state["ej4-captura-url"];
+  const localBase64 = state["ej4-captura"];
+  const img = document.getElementById("tallerIPEj4Img");
+  const preview = document.getElementById("tallerIPEj4Preview");
+  const nombre = document.getElementById("tallerIPEj4Nombre");
+  const uploadBtn = document.getElementById("btnSubirTallerIPEj4");
+  if (driveUrl) {
+    const thumb = _getDriveThumbnailUrl(driveUrl);
+    if (img) img.src = thumb || driveUrl;
+    if (preview) preview.style.display = "block";
+    if (nombre) {
+      nombre.innerHTML = `<a href="${driveUrl}" target="_blank" rel="noopener">Ver pantallazo en Drive</a> \u2014 ${state["ej4-captura-nombre"] || "pantallazo adjunto"}`;
+    }
+    if (uploadBtn && !state["taller-ip-ej4-locked"]) uploadBtn.innerHTML = "&#128247; Cambiar pantallazo";
+    return;
+  }
+  if (localBase64) {
+    if (img) img.src = localBase64;
+    if (preview) preview.style.display = "block";
+    if (nombre) nombre.textContent = state["ej4-captura-nombre"] || "pantallazo adjunto";
+    if (uploadBtn && !state["taller-ip-ej4-locked"]) uploadBtn.innerHTML = "&#128247; Cambiar pantallazo";
+  }
+}
+
+window.subirPantallazoTallerIPEj4 = async function (input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) {
+    alert("La imagen es demasiado grande (m\u00e1x. 5 MB). Usa un pantallazo m\u00e1s liviano.");
+    input.value = "";
+    return;
+  }
+  const uploadBtn = document.getElementById("btnSubirTallerIPEj4");
+  const originalLabel = uploadBtn ? uploadBtn.innerHTML : "";
+  if (uploadBtn) {
+    uploadBtn.innerHTML = "&#9203; Subiendo pantallazo...";
+    uploadBtn.style.pointerEvents = "none";
+  }
+  try {
+    const delivery = window.sharedAppsScriptDelivery;
+    if (!delivery || typeof delivery.uploadToAppsScript !== "function") {
+      throw new Error("El sistema de entrega no est\u00e1 disponible.");
+    }
+    const identity = getDeliveryIdentityRedes();
+    const usernameKey = identity.usernameKey;
+    const ficha = identity.ficha || "0000";
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+    const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+    const fileName = `ej4_ipconfig_${ficha}_${usernameKey}_${dateStr}.${ext}`;
+
+    const reader = new FileReader();
+    const localBase64 = await new Promise((res) => { reader.onload = (e) => res(e.target.result); reader.readAsDataURL(file); });
+    state["ej4-captura"] = localBase64;
+    state["ej4-captura-nombre"] = fileName;
+    saveStateRedes();
+    restorePantallazoTallerIPEj4();
+
+    const fileBase64 = localBase64.split(",").pop();
+    const response = await delivery.uploadToAppsScript({
+      guideLabel: "Guia 2",
+      activityLabel: "Ejercicio 4 \u2014 Pantallazo ipconfig /all",
+      activityNumber: "3.3.4",
+      activityTitle: "Taller IP \u2014 Verificar parametros de red",
+      fileName,
+      mimeType: file.type || "image/jpeg",
+      fileBase64,
+      fullName: identity.fullName || identity.usernameKey || "Aprendiz",
+      ficha,
+    });
+
+    if (response && response.driveUrl) {
+      delete state["ej4-captura"];
+      state["ej4-captura-url"] = response.driveUrl;
+      state["ej4-captura-folder-path"] = response.folderPath || "";
+      saveStateRedes();
+      await saveToCloudRedes();
+      restorePantallazoTallerIPEj4();
+    }
+    if (uploadBtn) {
+      uploadBtn.innerHTML = "&#128247; Cambiar pantallazo";
+      uploadBtn.style.pointerEvents = "";
+    }
+  } catch (err) {
+    alert("Error al subir el pantallazo: " + ((err && err.message) || "Intenta de nuevo."));
+    if (uploadBtn) {
+      uploadBtn.innerHTML = originalLabel;
+      uploadBtn.style.pointerEvents = "";
+    }
+  }
+};
+
+window.guardarTallerIPEj4 = async function () {
+  const empty = TALLER_IP_EJ4_KEYS.filter((k) => !String(state[k] || "").trim());
+  if (empty.length > 0) {
+    alert("Responde las 4 preguntas del Ejercicio 4 antes de guardar.");
+    return;
+  }
+  if (!state["ej4-captura"] && !state["ej4-captura-url"]) {
+    alert("Primero sube el pantallazo de ipconfig /all.");
+    return;
+  }
+  const btn = document.getElementById("btnGuardarTallerIPEj4");
+  if (btn) { btn.disabled = true; btn.textContent = "Guardando\u2026"; }
+  state["taller-ip-ej4-locked"] = true;
+  saveStateRedes();
+  await saveToCloudRedes();
+  applyTallerIPEj4Lock();
+};
+
+const TALLER_IP_EJ5_KEYS = [
+  "ej5-lucia-clase",
+  "ej5-lucia-just",
+  "ej5-trans-clase",
+  "ej5-trans-just",
+  "ej5-corp-clase",
+  "ej5-corp-just",
+];
+
+function applyTallerIPEj5Lock() {
+  const locked = Boolean(state["taller-ip-ej5-locked"]);
+  document.querySelectorAll("[data-store^='ej5-']").forEach((el) => {
+    el.disabled = locked;
+    el.style.opacity = locked ? "0.75" : "";
+  });
+  const btn = document.getElementById("btnGuardarTallerIPEj5");
+  if (btn) {
+    btn.disabled = locked;
+    btn.textContent = locked ? "\u2705 Respuestas guardadas" : "\uD83D\uDCBE Guardar respuestas";
+  }
+  const status = document.getElementById("tallerIPEj5Status");
+  if (status) status.style.display = locked ? "block" : "none";
+}
+
+window.guardarTallerIPEj5 = async function () {
+  const empty = TALLER_IP_EJ5_KEYS.filter((k) => !String(state[k] || "").trim());
+  if (empty.length > 0) {
+    alert("Completa todas las respuestas del Ejercicio 5 antes de guardar.");
+    return;
+  }
+  const btn = document.getElementById("btnGuardarTallerIPEj5");
+  if (btn) { btn.disabled = true; btn.textContent = "Guardando\u2026"; }
+  state["taller-ip-ej5-locked"] = true;
+  saveStateRedes();
+  await saveToCloudRedes();
+  applyTallerIPEj5Lock();
 };
 
 window.showVideoBloqueIP3 = function (n) {
@@ -2381,6 +2825,396 @@ const TEORIA_PANEL_CONTENTS = {
           <p style="color:#546e7a;font-size:.78rem;margin:8px 0 0">
             💡 El gateway y el DNS suelen ser la misma IP del router en redes domésticas y de pequeñas empresas.
           </p>
+        </div>
+      </div>
+    `
+  },
+  ip4: {
+    title: "Analizar una direccion IP paso a paso",
+    html: `
+      <div class="tp-sec">
+        <p class="tp-h">Ejemplo guiado distinto al taller</p>
+        <div class="tp-card">
+          <p style="color:#37474f;font-size:.9rem;line-height:1.65;margin:0 0 10px">
+            Este <strong>ejemplo guiado</strong> usa una direccion diferente para que practiques
+            el procedimiento sin ver resuelto el mismo ejercicio del taller.
+            Vamos a analizar <strong>150.20.8.12</strong> con mascara <strong>255.255.0.0</strong>.
+          </p>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">
+            <div style="background:#fff;padding:10px 12px;border-radius:8px;border-left:4px solid #2e7d32">
+              <div style="font-size:.76rem;color:#78909c;text-transform:uppercase;letter-spacing:.04em">IP</div>
+              <div style="font-weight:800;color:#1b5e20">150.20.8.12</div>
+            </div>
+            <div style="background:#fff;padding:10px 12px;border-radius:8px;border-left:4px solid #1565c0">
+              <div style="font-size:.76rem;color:#78909c;text-transform:uppercase;letter-spacing:.04em">Mascara</div>
+              <div style="font-weight:800;color:#1565c0">255.255.0.0 /16</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tp-sec">
+        <p class="tp-h">1. Identifica la clase</p>
+        <div class="tp-card">
+          <p style="color:#37474f;font-size:.86rem;line-height:1.6;margin:0 0 10px">
+            El primer octeto es <strong>150</strong>. Las direcciones que empiezan entre
+            <strong>128 y 191</strong> pertenecen a <strong>Clase B</strong>.
+          </p>
+          <div style="background:#fff;padding:10px 12px;border-radius:8px;border-left:4px solid #6a1b9a;color:#4a148c;font-weight:700">
+            Resultado del ejemplo: Clase B
+          </div>
+        </div>
+      </div>
+      <div class="tp-sec">
+        <p class="tp-h">2. Separa red y host</p>
+        <div class="tp-card">
+          <p style="color:#37474f;font-size:.86rem;line-height:1.6;margin:0 0 10px">
+            Con <strong>255.255.0.0</strong> la red usa los primeros <strong>2 octetos</strong>
+            y el host usa los <strong>2 ultimos</strong>.
+          </p>
+          <div style="display:flex;border-radius:8px;overflow:hidden;margin-bottom:10px">
+            <div style="flex:2;background:#1b5e20;color:#fff;padding:10px 8px;text-align:center;font-size:.85rem">
+              <div style="font-weight:700">150.20</div>
+              <div style="font-size:.74rem;opacity:.88">Parte de RED</div>
+            </div>
+            <div style="flex:2;background:#f57c00;color:#fff;padding:10px 8px;text-align:center;font-size:.85rem">
+              <div style="font-weight:700">8.12</div>
+              <div style="font-size:.74rem;opacity:.88">HOST</div>
+            </div>
+          </div>
+          <p style="color:#546e7a;font-size:.8rem;margin:0">
+            Puedes escribirlo como: <strong>Red = 150.20</strong> y <strong>Host = 8.12</strong>.
+            La direccion de red completa es <strong>150.20.0.0</strong>.
+          </p>
+        </div>
+      </div>
+      <div class="tp-sec">
+        <p class="tp-h">3. Calcula cuantos hosts utiles tiene</p>
+        <div class="tp-card">
+          <p style="color:#37474f;font-size:.86rem;line-height:1.6;margin:0 0 10px">
+            Una mascara <strong>/16</strong> deja <strong>16 bits</strong> para hosts.
+          </p>
+          <div style="background:#fff;padding:12px;border-radius:8px;border-left:4px solid #1565c0">
+            <div style="font-weight:800;color:#1565c0;margin-bottom:6px">Calculo</div>
+            <div style="font-size:.9rem;color:#37474f"><strong>2^16 - 2 = 65534 hosts</strong></div>
+            <div style="font-size:.78rem;color:#546e7a;margin-top:6px">
+              Se restan 2 porque una direccion es la red (<strong>150.20.0.0</strong>)
+              y otra es el broadcast (<strong>150.20.255.255</strong>).
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tp-sec">
+        <p class="tp-h">4. Define si es privada o publica</p>
+        <div class="tp-card">
+          <p style="color:#37474f;font-size:.86rem;line-height:1.6;margin:0 0 10px">
+            En Clase B, el rango privado es <strong>172.16.0.0 - 172.31.255.255</strong>.
+            Como <strong>150.20.8.12</strong> no cae en ese rango, se considera una IP
+            <strong>publica</strong>.
+          </p>
+          <div style="background:#fff;padding:10px 12px;border-radius:8px;border-left:4px solid #2e7d32;color:#1b5e20;font-weight:700">
+            Resultado del ejemplo: IP publica
+          </div>
+        </div>
+      </div>
+      <div class="tp-sec">
+        <p class="tp-h">Resumen rapido para contestar</p>
+        <div class="tp-card">
+          <table style="width:100%;border-collapse:collapse;font-size:.82rem">
+            <thead><tr style="background:#1b5e20;color:#fff">
+              <th style="padding:7px 10px;text-align:left">Pregunta</th>
+              <th style="padding:7px 10px;text-align:left">Pista</th>
+            </tr></thead>
+            <tbody>
+              <tr style="background:#f1f8e9"><td style="padding:6px 10px">Clase</td><td style="padding:6px 10px">Primer octeto 150 = Clase B</td></tr>
+              <tr><td style="padding:6px 10px">Red y host</td><td style="padding:6px 10px">Red 150.20 - Host 8.12</td></tr>
+              <tr style="background:#f1f8e9"><td style="padding:6px 10px">Hosts utiles</td><td style="padding:6px 10px">2^16 - 2 = 65534 hosts</td></tr>
+              <tr><td style="padding:6px 10px">Privada o publica</td><td style="padding:6px 10px">Solo 172.16 a 172.31 es privada en Clase B</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `
+  },
+  ip5: {
+    title: "Asignar IPs en una red local paso a paso",
+    html: `
+      <div class="tp-sec">
+        <p class="tp-h">Ejemplo guiado distinto al taller</p>
+        <div class="tp-card">
+          <p style="color:#37474f;font-size:.9rem;line-height:1.65;margin:0 0 10px">
+            Este material usa una red diferente para mostrar el procedimiento sin resolver
+            el caso de la Ferretera. Ejemplo: <strong>192.168.50.0/24</strong> con
+            <strong>gateway 192.168.50.1</strong>.
+          </p>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">
+            <div style="background:#fff;padding:10px 12px;border-radius:8px;border-left:4px solid #2e7d32">
+              <div style="font-size:.76rem;color:#78909c;text-transform:uppercase;letter-spacing:.04em">Red</div>
+              <div style="font-weight:800;color:#1b5e20">192.168.50.0</div>
+            </div>
+            <div style="background:#fff;padding:10px 12px;border-radius:8px;border-left:4px solid #1565c0">
+              <div style="font-size:.76rem;color:#78909c;text-transform:uppercase;letter-spacing:.04em">Mascara</div>
+              <div style="font-weight:800;color:#1565c0">255.255.255.0 /24</div>
+            </div>
+            <div style="background:#fff;padding:10px 12px;border-radius:8px;border-left:4px solid #f57c00">
+              <div style="font-size:.76rem;color:#78909c;text-transform:uppercase;letter-spacing:.04em">Gateway</div>
+              <div style="font-weight:800;color:#e65100">192.168.50.1</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tp-sec">
+        <p class="tp-h">1. Identifica las direcciones reservadas</p>
+        <div class="tp-card">
+          <table style="width:100%;border-collapse:collapse;font-size:.82rem">
+            <thead><tr style="background:#1b5e20;color:#fff">
+              <th style="padding:7px 10px;text-align:left">Direccion</th>
+              <th style="padding:7px 10px;text-align:left">Uso</th>
+            </tr></thead>
+            <tbody>
+              <tr style="background:#f1f8e9"><td style="padding:6px 10px">192.168.50.0</td><td style="padding:6px 10px">Direccion de red</td></tr>
+              <tr><td style="padding:6px 10px">192.168.50.1</td><td style="padding:6px 10px">Gateway / router</td></tr>
+              <tr style="background:#f1f8e9"><td style="padding:6px 10px">192.168.50.255</td><td style="padding:6px 10px">Broadcast</td></tr>
+            </tbody>
+          </table>
+          <p style="color:#546e7a;font-size:.8rem;margin:10px 0 0;line-height:1.55">
+            Nunca asignes la <strong>.0</strong> ni la <strong>.255</strong> a equipos finales.
+            La <strong>.1</strong> ya quedó reservada para el gateway.
+          </p>
+        </div>
+      </div>
+      <div class="tp-sec">
+        <p class="tp-h">2. Organiza un rango limpio para los equipos</p>
+        <div class="tp-card">
+          <p style="color:#37474f;font-size:.86rem;line-height:1.6;margin:0 0 10px">
+            Una buena practica es <strong>empezar en .10</strong> para dejar libres las direcciones
+            bajas por si luego necesitas switches gestionables, access points, DVR, otra impresora
+            o mas infraestructura.
+          </p>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px">
+            <div style="background:#fff;padding:10px 12px;border-radius:8px;border-left:4px solid #1565c0">
+              <div style="font-weight:700;color:#1565c0">Infraestructura reservada</div>
+              <div style="color:#546e7a;font-size:.82rem">192.168.50.2 - 192.168.50.9</div>
+            </div>
+            <div style="background:#fff;padding:10px 12px;border-radius:8px;border-left:4px solid #2e7d32">
+              <div style="font-weight:700;color:#1b5e20">Equipos de usuario</div>
+              <div style="color:#546e7a;font-size:.82rem">192.168.50.10 en adelante</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tp-sec">
+        <p class="tp-h">3. Ejemplo de asignacion</p>
+        <div class="tp-card">
+          <table style="width:100%;border-collapse:collapse;font-size:.82rem">
+            <thead><tr style="background:#1b5e20;color:#fff">
+              <th style="padding:7px 10px;text-align:left">Dispositivo</th>
+              <th style="padding:7px 10px;text-align:left">IP sugerida</th>
+              <th style="padding:7px 10px;text-align:left">Motivo</th>
+            </tr></thead>
+            <tbody>
+              <tr style="background:#f1f8e9"><td style="padding:6px 10px">PC Caja</td><td style="padding:6px 10px">192.168.50.10</td><td style="padding:6px 10px">Inicio ordenado del rango de usuarios</td></tr>
+              <tr><td style="padding:6px 10px">PC Administracion</td><td style="padding:6px 10px">192.168.50.11</td><td style="padding:6px 10px">Secuencia continua</td></tr>
+              <tr style="background:#f1f8e9"><td style="padding:6px 10px">PC Bodega</td><td style="padding:6px 10px">192.168.50.12</td><td style="padding:6px 10px">Facilita inventario</td></tr>
+              <tr><td style="padding:6px 10px">PC Ventas</td><td style="padding:6px 10px">192.168.50.13</td><td style="padding:6px 10px">Mantiene orden consecutivo</td></tr>
+              <tr style="background:#f1f8e9"><td style="padding:6px 10px">Impresora</td><td style="padding:6px 10px">192.168.50.20</td><td style="padding:6px 10px">Conviene separar perifericos</td></tr>
+              <tr><td style="padding:6px 10px">Camara IP</td><td style="padding:6px 10px">192.168.50.30</td><td style="padding:6px 10px">Otro bloque para vigilancia</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="tp-sec">
+        <p class="tp-h">4. Como justificar tu respuesta</p>
+        <div class="tp-card">
+          <p style="color:#37474f;font-size:.86rem;line-height:1.65;margin:0 0 10px">
+            Una justificacion valida puede decir:
+          </p>
+          <div style="background:#fff;padding:12px;border-radius:8px;border-left:4px solid #6a1b9a;color:#4a148c;font-size:.84rem;line-height:1.6">
+            "Empece en .10 porque .0 es la red, .255 es broadcast y .1 se usa como gateway.
+            Ademas deje libres las direcciones bajas para equipos de infraestructura y mantuve
+            un orden consecutivo para administrar mejor la red."
+          </div>
+        </div>
+      </div>
+    `
+  },
+  ip6: {
+    title: "Interpretar IPv4, mascara, gateway y DNS",
+    html: `
+      <div class="tp-sec">
+        <p class="tp-h">Ejemplo guiado distinto al equipo del aprendiz</p>
+        <div class="tp-card">
+          <p style="color:#37474f;font-size:.9rem;line-height:1.65;margin:0 0 10px">
+            Usa este <strong>ejemplo guiado</strong> para aprender a leer un pantallazo de
+            <code style="background:#c8e6c9;padding:2px 5px;border-radius:4px">ipconfig /all</code>
+            sin responder con los datos reales de tu computador.
+          </p>
+          <table style="width:100%;border-collapse:collapse;font-size:.82rem">
+            <thead><tr style="background:#1b5e20;color:#fff">
+              <th style="padding:7px 10px;text-align:left">Parametro</th>
+              <th style="padding:7px 10px;text-align:left">Valor ejemplo</th>
+            </tr></thead>
+            <tbody>
+              <tr style="background:#f1f8e9"><td style="padding:6px 10px">IPv4</td><td style="padding:6px 10px">10.0.5.23</td></tr>
+              <tr><td style="padding:6px 10px">Mascara</td><td style="padding:6px 10px">255.255.255.0</td></tr>
+              <tr style="background:#f1f8e9"><td style="padding:6px 10px">Gateway</td><td style="padding:6px 10px">10.0.5.1</td></tr>
+              <tr><td style="padding:6px 10px">DNS</td><td style="padding:6px 10px">8.8.8.8 y 1.1.1.1</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="tp-sec">
+        <p class="tp-h">1. Direccion IPv4</p>
+        <div class="tp-card">
+          <p style="color:#37474f;font-size:.86rem;line-height:1.6;margin:0 0 10px">
+            La <strong>IPv4</strong> identifica al equipo dentro de la red. En el ejemplo,
+            <strong>10.0.5.23</strong> es la direccion del computador.
+          </p>
+          <div style="background:#fff;padding:10px 12px;border-radius:8px;border-left:4px solid #2e7d32;color:#1b5e20">
+            Puedes responder: "Sirve para identificar mi computador dentro de la red local."
+          </div>
+        </div>
+      </div>
+      <div class="tp-sec">
+        <p class="tp-h">2. Mascara de subred</p>
+        <div class="tp-card">
+          <p style="color:#37474f;font-size:.86rem;line-height:1.6;margin:0 0 10px">
+            La <strong>mascara</strong> indica qu\u00e9 parte de la IP corresponde a la red y qu\u00e9
+            parte al host. En <strong>255.255.255.0</strong>, los tres primeros octetos son red.
+          </p>
+          <div style="display:flex;border-radius:8px;overflow:hidden;margin-bottom:10px">
+            <div style="flex:3;background:#1565c0;color:#fff;padding:10px 8px;text-align:center;font-size:.85rem">
+              <div style="font-weight:700">10.0.5</div>
+              <div style="font-size:.74rem;opacity:.88">RED</div>
+            </div>
+            <div style="flex:1;background:#f57c00;color:#fff;padding:10px 8px;text-align:center;font-size:.85rem">
+              <div style="font-weight:700">23</div>
+              <div style="font-size:.74rem;opacity:.88">HOST</div>
+            </div>
+          </div>
+          <div style="background:#fff;padding:10px 12px;border-radius:8px;border-left:4px solid #1565c0;color:#0d47a1">
+            Puedes responder: "Sirve para separar la parte de red y la parte del equipo."
+          </div>
+        </div>
+      </div>
+      <div class="tp-sec">
+        <p class="tp-h">3. Puerta de enlace predeterminada</p>
+        <div class="tp-card">
+          <p style="color:#37474f;font-size:.86rem;line-height:1.6;margin:0 0 10px">
+            El <strong>gateway</strong> es la salida de la red local hacia otras redes o Internet.
+            En el ejemplo es <strong>10.0.5.1</strong>, normalmente el router.
+          </p>
+          <div style="background:#fff;padding:10px 12px;border-radius:8px;border-left:4px solid #f57c00;color:#e65100">
+            Puedes responder: "Sirve para que mi computador salga a Internet o a otras redes."
+          </div>
+        </div>
+      </div>
+      <div class="tp-sec">
+        <p class="tp-h">4. Servidores DNS</p>
+        <div class="tp-card">
+          <p style="color:#37474f;font-size:.86rem;line-height:1.6;margin:0 0 10px">
+            Los <strong>DNS</strong> traducen nombres de paginas a direcciones IP. En el ejemplo
+            aparecen <strong>8.8.8.8</strong> y <strong>1.1.1.1</strong>.
+          </p>
+          <div style="background:#fff;padding:10px 12px;border-radius:8px;border-left:4px solid #6a1b9a;color:#4a148c">
+            Puedes responder: "Sirven para traducir nombres como google.com a una IP real."
+          </div>
+        </div>
+      </div>
+      <div class="tp-sec">
+        <p class="tp-h">Como leer tu pantallazo</p>
+        <div class="tp-card">
+          <ol style="margin:0;padding-left:18px;color:#37474f;font-size:.84rem;line-height:1.65">
+            <li>Busca la linea que diga <strong>Direccion IPv4</strong>.</li>
+            <li>Ubica la <strong>Mascara de subred</strong>.</li>
+            <li>Identifica la <strong>Puerta de enlace predeterminada</strong>.</li>
+            <li>Revisa uno o dos valores en <strong>Servidores DNS</strong>.</li>
+          </ol>
+        </div>
+      </div>
+    `
+  },
+  ip7: {
+    title: "Elegir la clase IP segun cantidad de dispositivos",
+    html: `
+      <div class="tp-sec">
+        <p class="tp-h">Regla principal</p>
+        <div class="tp-card">
+          <p style="color:#37474f;font-size:.9rem;line-height:1.65;margin:0 0 10px">
+            Para este tipo de ejercicio, <strong>elige la clase mas pequena</strong> que
+            soporte la cantidad de equipos que necesita la empresa. No se trata de escoger
+            la clase mas grande, sino la que sea suficiente para ese caso.
+          </p>
+          <table style="width:100%;border-collapse:collapse;font-size:.82rem">
+            <thead><tr style="background:#1b5e20;color:#fff">
+              <th style="padding:7px 10px;text-align:left">Clase</th>
+              <th style="padding:7px 10px;text-align:left">Capacidad util</th>
+              <th style="padding:7px 10px;text-align:left">Cuando conviene</th>
+            </tr></thead>
+            <tbody>
+              <tr style="background:#f1f8e9"><td style="padding:6px 10px">Clase C</td><td style="padding:6px 10px">Hasta 254 hosts</td><td style="padding:6px 10px">Negocios pequenos</td></tr>
+              <tr><td style="padding:6px 10px">Clase B</td><td style="padding:6px 10px">Hasta 65534 hosts</td><td style="padding:6px 10px">Empresas medianas o con varias areas</td></tr>
+              <tr style="background:#f1f8e9"><td style="padding:6px 10px">Clase A</td><td style="padding:6px 10px">Hasta 16777214 hosts</td><td style="padding:6px 10px">Organizaciones muy grandes</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="tp-sec">
+        <p class="tp-h">Ejemplo guiado distinto al taller</p>
+        <div class="tp-card">
+          <p style="color:#37474f;font-size:.86rem;line-height:1.6;margin:0 0 10px">
+            Estos ejemplos son diferentes a los del ejercicio para que practiques el criterio
+            sin ver respondidos los casos reales.
+          </p>
+          <table style="width:100%;border-collapse:collapse;font-size:.82rem">
+            <thead><tr style="background:#1565c0;color:#fff">
+              <th style="padding:7px 10px;text-align:left">Caso</th>
+              <th style="padding:7px 10px;text-align:left">Cantidad</th>
+              <th style="padding:7px 10px;text-align:left">Clase sugerida</th>
+            </tr></thead>
+            <tbody>
+              <tr style="background:#eef7ff"><td style="padding:6px 10px">Papeleria escolar</td><td style="padding:6px 10px">120 dispositivos</td><td style="padding:6px 10px"><strong>Clase C</strong></td></tr>
+              <tr><td style="padding:6px 10px">Clinica municipal</td><td style="padding:6px 10px">900 dispositivos</td><td style="padding:6px 10px"><strong>Clase B</strong></td></tr>
+              <tr style="background:#eef7ff"><td style="padding:6px 10px">Operador logistico nacional</td><td style="padding:6px 10px">120000 dispositivos</td><td style="padding:6px 10px"><strong>Clase A</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="tp-sec">
+        <p class="tp-h">Como razonar cada caso</p>
+        <div class="tp-card">
+          <div style="display:grid;gap:10px">
+            <div style="background:#fff;padding:12px;border-radius:10px;border-left:4px solid #2e7d32">
+              <div style="font-weight:800;color:#1b5e20;margin-bottom:4px">120 dispositivos</div>
+              <div style="color:#455a64;font-size:.84rem;line-height:1.55">
+                Como 120 es menor que 254, una <strong>Clase C</strong> es suficiente.
+                No hace falta subir a Clase B.
+              </div>
+            </div>
+            <div style="background:#fff;padding:12px;border-radius:10px;border-left:4px solid #1565c0">
+              <div style="font-weight:800;color:#1565c0;margin-bottom:4px">900 dispositivos</div>
+              <div style="color:#455a64;font-size:.84rem;line-height:1.55">
+                900 ya supera 254, asi que <strong>Clase C no alcanza</strong>.
+                La siguiente opcion valida es <strong>Clase B</strong>.
+              </div>
+            </div>
+            <div style="background:#fff;padding:12px;border-radius:10px;border-left:4px solid #6a1b9a">
+              <div style="font-weight:800;color:#6a1b9a;margin-bottom:4px">120000 dispositivos</div>
+              <div style="color:#455a64;font-size:.84rem;line-height:1.55">
+                120000 supera la capacidad de Clase B, por eso aqui ya se requiere
+                <strong>Clase A</strong>.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tp-sec">
+        <p class="tp-h">Frase modelo para justificar</p>
+        <div class="tp-card">
+          <div style="background:#fff;padding:12px;border-radius:8px;border-left:4px solid #f57c00;color:#5d4037;font-size:.84rem;line-height:1.65">
+            "Elegi esa clase porque es la menor que soporta la cantidad de dispositivos
+            del caso. Compare el numero de equipos con la capacidad maxima de las clases C,
+            B y A, y descarte las que no alcanzaban."
+          </div>
         </div>
       </div>
     `

@@ -19,6 +19,10 @@ const LOCK_KEYS = [
   "ip2-locked",
   "ip3-locked",
   "taller-ip-ej1-locked",
+  "taller-ip-ej2-locked",
+  "taller-ip-ej3-locked",
+  "taller-ip-ej4-locked",
+  "taller-ip-ej5-locked",
   "social-locked",
 ];
 
