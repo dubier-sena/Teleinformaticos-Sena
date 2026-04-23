@@ -131,6 +131,7 @@ const supportTools = [
 // State management
 // ---------------------------------------------------------------------------
 let state = {};
+let redesBooted = false;
 
 function loadStateRedes() {
   try {
@@ -4006,7 +4007,13 @@ window.cerrarTeoriaPanel = function () {
 // ---------------------------------------------------------------------------
 // Init
 // ---------------------------------------------------------------------------
-document.addEventListener("DOMContentLoaded", () => {
+function initGuiaRedes() {
+  if (redesBooted) {
+    updateProgressRedes();
+    return;
+  }
+
+  redesBooted = true;
   state = loadStateRedes();
   renderEvidenceTable();
   renderQuizRedesStatus();
@@ -4017,7 +4024,13 @@ document.addEventListener("DOMContentLoaded", () => {
   bindEventsRedes();
   updateProgressRedes();
   initCloudSyncRedes();
-});
+}
+
+window.initGuiaRedes = initGuiaRedes;
+
+if (!window.__GUIDE_CONTEXT__) {
+  document.addEventListener("DOMContentLoaded", initGuiaRedes);
+}
 
 document.addEventListener("guide-activity-check-change", () => {
   window.requestAnimationFrame(updateProgressRedes);

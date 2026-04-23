@@ -3,32 +3,29 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 
-const HTML_FILES = [
-  "santa-barbara-10a-guia-02-redes-rap01.html",
-  "santa-barbara-10b-guia-02-redes-rap01.html",
-];
+const SHARED_HTML = fs.readFileSync(
+  path.join(__dirname, "..", "partials", "guia-redes-rap01-content.html"),
+  "utf8"
+);
 
 test("el laboratorio 2 de arbol presenta una estructura guiada y espacios para evidencias", () => {
-  HTML_FILES.forEach((fileName) => {
-    const html = fs.readFileSync(path.join(__dirname, "..", fileName), "utf8");
-    const lab2ToLab3 = html.match(/<!-- LAB 2 -->([\s\S]*?)<!-- LAB 3 -->/);
+  const lab2ToLab3 = SHARED_HTML.match(/<!-- LAB 2 -->([\s\S]*?)<!-- LAB 3 -->/);
 
-    assert.match(html, /Objetivo del laboratorio/);
-    assert.match(html, /Lo que vas a construir/);
-    assert.match(html, /Equipos y recursos que debes agregar/);
-    assert.match(html, /Tabla de direccionamiento sugerida/);
-    assert.match(html, /Evidencias visuales obligatorias/);
-    assert.match(html, /An(?:a|Ã¡|&aacute;)lisis del laboratorio/);
-    assert.match(html, /btnSubirLab2PingMismo/);
-    assert.match(html, /btnSubirLab2PingDif/);
-    assert.match(html, /btnSubirLab2TracertInterno/);
-    assert.match(html, /btnSubirLab2TracertExterno/);
-    assert.match(html, /btnGuardarLab2/);
-    assert.match(html, /btnEntregaLab2Pkt/);
-    assert.match(html, /lab2Status/);
-    assert.ok(lab2ToLab3, "debe existir el bloque entre LAB 2 y LAB 3");
-    assert.doesNotMatch(lab2ToLab3[1], /data-ignore-progress/);
-  });
+  assert.match(SHARED_HTML, /Objetivo del laboratorio/);
+  assert.match(SHARED_HTML, /Lo que vas a construir/);
+  assert.match(SHARED_HTML, /Equipos y recursos que debes agregar/);
+  assert.match(SHARED_HTML, /Tabla de direccionamiento sugerida/);
+  assert.match(SHARED_HTML, /Evidencias visuales obligatorias/);
+  assert.match(SHARED_HTML, /An(?:a|ÃƒÂ¡|&aacute;)lisis del laboratorio/);
+  assert.match(SHARED_HTML, /btnSubirLab2PingMismo/);
+  assert.match(SHARED_HTML, /btnSubirLab2PingDif/);
+  assert.match(SHARED_HTML, /btnSubirLab2TracertInterno/);
+  assert.match(SHARED_HTML, /btnSubirLab2TracertExterno/);
+  assert.match(SHARED_HTML, /btnGuardarLab2/);
+  assert.match(SHARED_HTML, /btnEntregaLab2Pkt/);
+  assert.match(SHARED_HTML, /lab2Status/);
+  assert.ok(lab2ToLab3, "debe existir el bloque entre LAB 2 y LAB 3");
+  assert.doesNotMatch(lab2ToLab3[1], /data-ignore-progress/);
 });
 
 test("el laboratorio 2 integra carga de pantallazos, guardado y desbloqueo admin", () => {
