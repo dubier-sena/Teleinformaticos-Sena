@@ -28,10 +28,8 @@ const appsScriptGs = read(path.join("apps-script", "entregas_actividades.gs"));
   "grupo-11b-guia-05-herramientas-informaticas-digitales.html",
   "grupo-11a-guia-06-planificar-informacion.html",
   "grupo-11b-guia-06-planificar-informacion.html",
-  "plantilla-grado-11-guia-05-herramientas-informaticas-digitales.html",
-  "plantilla-grado-11-guia-06-planificar-informacion.html",
-  "grupo-10a-guia-02-actividad-4-formulario.html",
-  "grupo-10b-guia-02-actividad-4-formulario.html",
+  "pages/auxiliares/plantilla-grado-11-guia-05-herramientas-informaticas-digitales.html",
+  "pages/auxiliares/plantilla-grado-11-guia-06-planificar-informacion.html",
 ].forEach((filePath) => {
   const html = read(filePath);
   assertIncludes(

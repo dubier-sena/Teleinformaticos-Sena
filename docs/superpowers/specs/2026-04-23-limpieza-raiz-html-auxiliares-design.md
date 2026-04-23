@@ -85,7 +85,7 @@ Desventajas:
 
 Se aprueba la **Opcion 2**:
 
-**Mover a `pages/aux/` las paginas auxiliares y dejar en la raiz solo las paginas principales.**
+**Mover a `pages/auxiliares/` las paginas auxiliares y dejar en la raiz solo las paginas principales.**
 
 La compatibilidad que se preserva es:
 
@@ -121,7 +121,7 @@ No se dejaran copias espejo en la raiz, porque eso volveria a ensuciar el arbol 
 - `santa-barbara-10a-guia-02-redes-rap01.html`
 - `santa-barbara-10b-guia-02-redes-rap01.html`
 
-### Paginas que deben moverse a `pages/aux/`
+### Paginas que deben moverse a `pages/auxiliares/`
 
 - `grupo-10a-guia-02-actividad-4-formulario.html`
 - `grupo-10b-guia-02-actividad-4-formulario.html`
@@ -161,7 +161,7 @@ No forman parte de esta fase:
 
 Se crea la carpeta:
 
-- `pages/aux/`
+- `pages/auxiliares/`
 
 La raiz queda reservada para las paginas principales del flujo.
 
@@ -173,7 +173,7 @@ Las paginas auxiliares deben quedar agrupadas por funcion, aunque no necesariame
 
 ### 1. Rutas relativas
 
-Toda pagina movida a `pages/aux/` debe corregir sus referencias relativas para que siga cargando correctamente en apertura local.
+Toda pagina movida a `pages/auxiliares/` debe corregir sus referencias relativas para que siga cargando correctamente en apertura local.
 
 Esto incluye, segun corresponda:
 
@@ -188,7 +188,7 @@ No se deben introducir rutas absolutas tipo `/css/...`, porque el proyecto se us
 
 ### 2. Enlaces desde paginas principales
 
-Las paginas principales que hoy apuntan a auxiliares en la raiz deben actualizar sus `href` para usar `pages/aux/...`.
+Las paginas principales que hoy apuntan a auxiliares en la raiz deben actualizar sus `href` para usar `pages/auxiliares/...`.
 
 Esto incluye:
 
@@ -199,7 +199,7 @@ Esto incluye:
 
 ### 3. Paginas generadas
 
-Las paginas auxiliares que ya dependen de `tools/build-generated-pages.ps1` deben pasar a generarse dentro de `pages/aux/`.
+Las paginas auxiliares que ya dependen de `tools/build-generated-pages.ps1` deben pasar a generarse dentro de `pages/auxiliares/`.
 
 La fuente real sigue siendo:
 
@@ -216,7 +216,7 @@ Sus contextos y parciales deben seguir funcionando sin cambiar su papel arquitec
 
 ### 5. Contenido teorico de redes
 
-`santa-barbara-guia-02-contenido-teorico-redes.html` se considera auxiliar compartida y debe moverse tambien a `pages/aux/`, ajustando cualquier referencia entrante desde las guias o quizzes relacionados.
+`santa-barbara-guia-02-contenido-teorico-redes.html` se considera auxiliar compartida y debe moverse tambien a `pages/auxiliares/`, ajustando cualquier referencia entrante desde las guias o quizzes relacionados.
 
 ---
 
@@ -258,7 +258,7 @@ Mitigacion:
 
 Mitigacion:
 
-- mover la salida esperada del generador a `pages/aux/`;
+- mover la salida esperada del generador a `pages/auxiliares/`;
 - ajustar pruebas de build para reflejar la nueva ubicacion;
 - verificar que una segunda regeneracion no deje drift inesperado.
 
@@ -277,9 +277,9 @@ Mitigacion:
 
 Se deben agregar o actualizar pruebas para verificar:
 
-- que las paginas principales apunten a `pages/aux/...` cuando corresponda;
+- que las paginas principales apunten a `pages/auxiliares/...` cuando corresponda;
 - que el generador emita los archivos auxiliares en su nueva ubicacion;
-- que las rutas auxiliares esperadas existan en `pages/aux/`;
+- que las rutas auxiliares esperadas existan en `pages/auxiliares/`;
 - que la raiz ya no contenga las paginas auxiliares migradas.
 
 ### Verificacion manual
@@ -299,7 +299,7 @@ Se debe comprobar manualmente:
 La fase se considera exitosa si:
 
 - la raiz queda reducida al conjunto principal de paginas;
-- `pages/aux/` concentra las pantallas auxiliares aprobadas;
+- `pages/auxiliares/` concentra las pantallas auxiliares aprobadas;
 - la navegacion principal del proyecto sigue funcionando;
 - el generador y las pruebas quedan alineados con la nueva estructura;
 - no quedan duplicados legacy en la raiz para las auxiliares migradas.
@@ -308,7 +308,7 @@ La fase se considera exitosa si:
 
 ## Entregables esperados
 
-- nueva carpeta `pages/aux/`
+- nueva carpeta `pages/auxiliares/`
 - paginas auxiliares reubicadas
 - enlaces internos actualizados
 - generador actualizado

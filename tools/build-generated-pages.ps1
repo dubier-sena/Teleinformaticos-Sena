@@ -148,10 +148,15 @@ foreach ($variantEntry in $variants.GetEnumerator()) {
   $variant = $variantEntry.Value
   $templatePath = Join-Path $templatesRoot ([string]$variant.template)
   $outputPath = Join-Path $repoRoot ([string]$variant.outputFile)
+  $outputDir = Split-Path -Parent $outputPath
   $templateText = Get-Content -LiteralPath $templatePath -Raw
   $tokens = Get-VariantTokens -Variant $variant
   $rendered = Render-Template -TemplateText $templateText -Tokens $tokens
   $generated = "<!-- GENERATED FILE: edit sources/generated and data/generated_page_variants.json -->`r`n" + $rendered
+
+  if ($outputDir -and -not (Test-Path -LiteralPath $outputDir)) {
+    New-Item -ItemType Directory -Force -Path $outputDir | Out-Null
+  }
 
   Set-Content -LiteralPath $outputPath -Value $generated -Encoding UTF8
 }

@@ -72,10 +72,10 @@ assertNotIncludes(
   "grupo-10b-guia-02-herramientas-informaticas-digitales.html",
   "grupo-11a-guia-05-herramientas-informaticas-digitales.html",
   "grupo-11b-guia-05-herramientas-informaticas-digitales.html",
-  "plantilla-grado-11-guia-05-herramientas-informaticas-digitales.html",
+  "pages/auxiliares/plantilla-grado-11-guia-05-herramientas-informaticas-digitales.html",
   "grupo-11a-guia-06-planificar-informacion.html",
   "grupo-11b-guia-06-planificar-informacion.html",
-  "plantilla-grado-11-guia-06-planificar-informacion.html",
+  "pages/auxiliares/plantilla-grado-11-guia-06-planificar-informacion.html",
 ].forEach((filePath) => {
   const html = read(filePath);
   assertIncludes(

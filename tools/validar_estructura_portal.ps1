@@ -6,23 +6,40 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $rootPath = (Resolve-Path -LiteralPath $Root).Path
+$pagesRootPath = Join-Path $rootPath "pages"
 
 $expectedRootHtml = @(
   "index.html",
   "panel-administrativo-usuarios.html",
   "calendario-academico-2026.html",
+  "etapa-productiva-admin.html",
+  "etapa-productiva-estudiante.html",
   "grupo-10a-guia-01-induccion.html",
   "grupo-10a-guia-02-herramientas-informaticas-digitales.html",
-  "grupo-10a-guia-02-actividad-4-formulario.html",
   "grupo-10b-guia-01-induccion.html",
   "grupo-10b-guia-02-herramientas-informaticas-digitales.html",
-  "grupo-10b-guia-02-actividad-4-formulario.html",
   "grupo-11a-guia-05-herramientas-informaticas-digitales.html",
   "grupo-11a-guia-06-planificar-informacion.html",
   "grupo-11b-guia-05-herramientas-informaticas-digitales.html",
   "grupo-11b-guia-06-planificar-informacion.html",
+  "santa-barbara-10a-guia-02-redes-rap01.html",
+  "santa-barbara-10b-guia-02-redes-rap01.html"
+)
+
+$expectedAuxHtml = @(
+  "grupo-10a-guia-02-actividad-322-matriz.html",
+  "grupo-10a-guia-02-actividad-4-formulario.html",
+  "grupo-10a-guia-02-ficha-caso.html",
+  "grupo-10b-guia-02-actividad-322-matriz.html",
+  "grupo-10b-guia-02-actividad-4-formulario.html",
+  "grupo-10b-guia-02-ficha-caso.html",
   "plantilla-grado-11-guia-05-herramientas-informaticas-digitales.html",
-  "plantilla-grado-11-guia-06-planificar-informacion.html"
+  "plantilla-grado-11-guia-06-planificar-informacion.html",
+  "santa-barbara-10a-guia-02-redes-ip-quiz.html",
+  "santa-barbara-10a-guia-02-redes-rap01-quiz.html",
+  "santa-barbara-10b-guia-02-redes-ip-quiz.html",
+  "santa-barbara-10b-guia-02-redes-rap01-quiz.html",
+  "santa-barbara-guia-02-contenido-teorico-redes.html"
 )
 
 $legacyNames = @(
@@ -56,6 +73,7 @@ $unexpectedRootFiles = @(
 
 $allowedAliasFiles = @(
   "js/admin_usuarios.js",
+  "js/firebase_db.js",
   "js/script.js",
   "js/script_guia2.js",
   "js/script_guia6.js",
@@ -96,6 +114,13 @@ foreach ($file in $expectedRootHtml + $requiredFiles) {
   }
 }
 
+foreach ($file in $expectedAuxHtml) {
+  $path = Join-Path $pagesRootPath ("auxiliares\" + $file)
+  if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+    Add-Issue "Falta el HTML auxiliar requerido: pages/auxiliares/$file"
+  }
+}
+
 foreach ($file in $legacyNames + $unexpectedRootFiles) {
   $path = Join-Path $rootPath $file
   if (Test-Path -LiteralPath $path) {
@@ -113,6 +138,22 @@ if ($extraHtml.Count -gt 0) {
   Add-Issue ("Hay HTML inesperados en la raiz: " + ($extraHtml -join ", "))
 }
 
+if (-not (Test-Path -LiteralPath $pagesRootPath -PathType Container)) {
+  Add-Issue "Falta la carpeta pages/auxiliares"
+} else {
+  $auxHtml = Get-ChildItem -LiteralPath $pagesRootPath -Recurse -File |
+    Where-Object { $_.DirectoryName -eq (Join-Path $pagesRootPath "auxiliares") -and $_.Extension -eq ".html" } |
+    Select-Object -ExpandProperty Name
+  $missingAuxHtml = @($expectedAuxHtml | Where-Object { $_ -notin $auxHtml })
+  $extraAuxHtml = @($auxHtml | Where-Object { $_ -notin $expectedAuxHtml })
+  if ($missingAuxHtml.Count -gt 0) {
+    Add-Issue ("Faltan HTML esperados en pages/auxiliares: " + ($missingAuxHtml -join ", "))
+  }
+  if ($extraAuxHtml.Count -gt 0) {
+    Add-Issue ("Hay HTML inesperados en pages/auxiliares: " + ($extraAuxHtml -join ", "))
+  }
+}
+
 $tmpPath = Join-Path $rootPath "tmp"
 if (Test-Path -LiteralPath $tmpPath) {
   $tmpHtml = Get-ChildItem -LiteralPath $tmpPath -Recurse -File -ErrorAction SilentlyContinue |
@@ -124,10 +165,17 @@ if (Test-Path -LiteralPath $tmpPath) {
 
 $scanFiles = @()
 $scanFiles += Get-ChildItem -LiteralPath $rootPath -Filter *.html -File
+if (Test-Path -LiteralPath $pagesRootPath -PathType Container) {
+  $scanFiles += Get-ChildItem -LiteralPath $pagesRootPath -Recurse -File |
+    Where-Object { $_.DirectoryName -eq (Join-Path $pagesRootPath "auxiliares") -and $_.Extension -eq ".html" }
+}
 $scanFiles += Get-ChildItem -LiteralPath (Join-Path $rootPath "js") -Recurse -Include *.js -File
 $scanFiles += Get-ChildItem -LiteralPath (Join-Path $rootPath "css") -Recurse -Include *.css -File
 $scanFiles += Get-ChildItem -LiteralPath (Join-Path $rootPath "tools") -Recurse -Include *.ps1,*.cmd -File
-$scanFiles = $scanFiles | Where-Object { $_.Name -ne "validar_estructura_portal.ps1" }
+$scanFiles = $scanFiles | Where-Object {
+  $_.Name -ne "validar_estructura_portal.ps1" -and
+  -not $_.FullName.Replace("\", "/").Contains("/js/vendor/")
+}
 
 foreach ($file in $scanFiles) {
   $content = Get-Content -LiteralPath $file.FullName -Raw
@@ -161,5 +209,6 @@ if ($issues.Count -gt 0) {
 Write-Host ""
 Write-Host "Validacion correcta" -ForegroundColor Green
 Write-Host "- Estructura HTML consistente en raiz"
+Write-Host "- Estructura HTML auxiliar consistente en pages/auxiliares"
 Write-Host "- Sin nombres legados detectados fuera de alias de compatibilidad"
 Write-Host "- Sin marcadores obvios de mojibake en archivos revisados"

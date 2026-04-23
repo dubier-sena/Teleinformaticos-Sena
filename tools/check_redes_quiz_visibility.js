@@ -3,6 +3,7 @@ const path = require("path");
 const assert = require("assert");
 
 const root = path.resolve(__dirname, "..");
+const guideContexts = JSON.parse(read(path.join("data", "guide_contexts.json")));
 
 function read(relativePath) {
   return fs.readFileSync(path.join(root, relativePath), "utf8");
@@ -12,42 +13,41 @@ function expectIncludes(source, snippet, message) {
   assert(source.includes(snippet), `${message}\nEsperado: ${snippet}`);
 }
 
-const guide10A = read("santa-barbara-10a-guia-02-redes-rap01.html");
-const guide10B = read("santa-barbara-10b-guia-02-redes-rap01.html");
-const quiz10A = read("santa-barbara-10a-guia-02-redes-rap01-quiz.html");
-const quiz10B = read("santa-barbara-10b-guia-02-redes-rap01-quiz.html");
+const sharedGuide = read(path.join("partials", "guia-redes-rap01-content.html"));
+const quiz10A = read(path.join("pages", "auxiliares", "santa-barbara-10a-guia-02-redes-rap01-quiz.html"));
+const quiz10B = read(path.join("pages", "auxiliares", "santa-barbara-10b-guia-02-redes-rap01-quiz.html"));
 const quizJs = read(path.join("js", "script_redes_quiz.js"));
 const bankJs = read(path.join("js", "redes_quiz_bank.js"));
 const guideScript = read(path.join("js", "script_guia_redes.js"));
 
-for (const [label, guide, href] of [
-  ["10A", guide10A, 'href="santa-barbara-10a-guia-02-redes-rap01-quiz.html"'],
-  ["10B", guide10B, 'href="santa-barbara-10b-guia-02-redes-rap01-quiz.html"'],
+for (const [label, href] of [
+  ["10A", "pages/auxiliares/santa-barbara-10a-guia-02-redes-rap01-quiz.html"],
+  ["10B", "pages/auxiliares/santa-barbara-10b-guia-02-redes-rap01-quiz.html"],
 ]) {
   expectIncludes(
-    guide,
+    sharedGuide,
     '<span class="activity-num">3.2.1.H</span>',
-    `La guia ${label} debe agregar la actividad 3.2.1.H para el quiz de redes.`
+    `La guia compartida ${label} debe agregar la actividad 3.2.1.H para el quiz de redes.`
   );
   expectIncludes(
-    guide,
+    sharedGuide,
     "Quiz individual de fundamentos de redes",
-    `La guia ${label} debe mostrar el titulo del quiz individual de redes.`
+    `La guia compartida ${label} debe mostrar el titulo del quiz individual de redes.`
   );
   expectIncludes(
-    guide,
+    sharedGuide,
     'id="quizRedesStatus"',
-    `La guia ${label} debe mostrar un resumen del estado del quiz en la misma actividad.`
+    `La guia compartida ${label} debe mostrar un resumen del estado del quiz en la misma actividad.`
   );
   expectIncludes(
-    guide,
+    sharedGuide,
     'id="quizRedesActionLink"',
-    `La guia ${label} debe exponer el enlace de accion del quiz para actualizar su etiqueta segun el estado.`
+    `La guia compartida ${label} debe exponer el enlace de accion del quiz para actualizar su etiqueta segun el estado.`
   );
   expectIncludes(
-    guide,
+    JSON.stringify(guideContexts),
     href,
-    `La guia ${label} debe enlazar a la pagina independiente del quiz.`
+    `El contexto runtime ${label} debe enlazar a la pagina independiente del quiz.`
   );
 }
 
@@ -108,7 +108,7 @@ expectIncludes(
 
 expectIncludes(
   quizJs,
-  'const QUIZ_STORAGE_KEY = "quiz-redes-321h";',
+  'const QUIZ_STORAGE_KEY = String(body.dataset.quizStorageKey || "quiz-redes-321h").trim();',
   "El controlador del quiz debe usar una clave estable para el intento."
 );
 expectIncludes(
@@ -118,7 +118,7 @@ expectIncludes(
 );
 expectIncludes(
   quizJs,
-  "warningCount >= 2",
+  "attempt.warningCount >= 2",
   "El controlador del quiz debe terminar el intento en la segunda advertencia."
 );
 expectIncludes(

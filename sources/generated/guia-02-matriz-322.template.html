@@ -13,15 +13,15 @@
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>{{PAGE_TITLE}}</title>
 <meta name="description" content="{{PAGE_DESCRIPTION}}">
-<script defer src="js/portal_auth.js?v=20260422_2"></script>
-<script src="js/firebase-config.js?v=20260414_1"></script>
-<script defer src="js/firebase_db.js?v=20260422_2"></script>
+<script defer src="../js/portal_auth.js?v=20260422_2"></script>
+<script src="../js/firebase-config.js?v=20260414_1"></script>
+<script defer src="../js/firebase_db.js?v=20260422_2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/site_tokens.css?v=20260412_2">
-<link rel="stylesheet" href="css/shared_shell.css?v=20260412_2">
-<link rel="stylesheet" href="css/guia_template.css?v=20260413_1">
+<link rel="stylesheet" href="../css/site_tokens.css?v=20260412_2">
+<link rel="stylesheet" href="../css/shared_shell.css?v=20260412_2">
+<link rel="stylesheet" href="../css/guia_template.css?v=20260413_1">
 <style>
   .matriz-page .app-main { padding: 24px 0 64px; }
   .matriz-page .content {
@@ -209,8 +209,8 @@
   .btn-export:hover { background: #15803d; transform: translateY(-1px); }
   .drive-link-panel { display: none; margin-top: 14px; }
 </style>
-<script defer src="js/shared_shell.js?v=20260412_2"></script>
-<script defer src="js/script_guia2.js?v=20260416_2"></script>
+<script defer src="../js/shared_shell.js?v=20260412_2"></script>
+<script defer src="../js/script_guia2.js?v=20260416_2"></script>
 </head>
 <body
   class="app-shell app-shell--guide matriz-page"
@@ -230,7 +230,7 @@
     </div>
 
     <div class="content">
-      <a href="{{BACK_LINK}}" class="back-btn">
+      <a href="../{{BACK_LINK}}" class="back-btn">
         &#8592; Volver a la Guía 2
       </a>
 
@@ -419,7 +419,7 @@
 /* ── Descarga plantilla Word vacía ─────────────────────────────────────── */
 function descargarMatrizWord() {
   var a = document.createElement("a");
-  a.href = "assets/materiales/guia2/MatrizDiagnosticoDigital.docx";
+  a.href = "../assets/materiales/guia2/MatrizDiagnosticoDigital.docx";
   a.download = "MatrizDiagnosticoDigital.docx";
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
 }

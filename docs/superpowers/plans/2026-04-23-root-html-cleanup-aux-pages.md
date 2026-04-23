@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Reduce the root folder to the approved set of 15 main HTML pages by moving approved auxiliary HTML pages into `pages/aux/`, updating all internal references, and keeping local navigation and automated verification working.
+**Goal:** Reduce the root folder to the approved set of 15 main HTML pages by moving approved auxiliary HTML pages into `pages/auxiliares/`, updating all internal references, and keeping local navigation and automated verification working.
 
-**Architecture:** Keep all main entry pages in the repo root, move auxiliary pages into a single `pages/aux/` folder, and make the existing runtime/generation layer point to those new paths. Generated auxiliary pages will still be rendered from templates, but their outputs will be written to `pages/aux/` instead of the root.
+**Architecture:** Keep all main entry pages in the repo root, move auxiliary pages into a single `pages/auxiliares/` folder, and make the existing runtime/generation layer point to those new paths. Generated auxiliary pages will still be rendered from templates, but their outputs will be written to `pages/auxiliares/` instead of the root.
 
 **Tech Stack:** Static HTML, vanilla JavaScript, Node `node:test`, PowerShell, existing runtime wrappers and generator scripts.
 
@@ -12,7 +12,7 @@
 
 ## File Map
 
-- `pages/aux/`
+- `pages/auxiliares/`
   New container for auxiliary HTML pages that should no longer live in the root.
 
 - `grupo-10a-guia-02-actividad-4-formulario.html`
@@ -22,27 +22,27 @@
 - `plantilla-grado-11-guia-05-herramientas-informaticas-digitales.html`
 - `plantilla-grado-11-guia-06-planificar-informacion.html`
 - `santa-barbara-guia-02-contenido-teorico-redes.html`
-  Auxiliary source pages that will be moved physically into `pages/aux/` and must have all relative paths corrected.
+  Auxiliary source pages that will be moved physically into `pages/auxiliares/` and must have all relative paths corrected.
 
 - `partials/guia-02-herramientas-content.html`
-  Shared Guide 2 partial that currently points to auxiliary pages in the root and must be updated to `pages/aux/...`.
+  Shared Guide 2 partial that currently points to auxiliary pages in the root and must be updated to `pages/auxiliares/...`.
 
 - `partials/guia-redes-rap01-content.html`
-  Shared Guide Redes partial that links to the shared theoretical content page and must point to `pages/aux/...`.
+  Shared Guide Redes partial that links to the shared theoretical content page and must point to `pages/auxiliares/...`.
 
 - `data/guide_contexts.json`
-  Runtime registry for the Redes guide wrappers. It currently publishes quiz URLs in the root and must be updated to `pages/aux/...`.
+  Runtime registry for the Redes guide wrappers. It currently publishes quiz URLs in the root and must be updated to `pages/auxiliares/...`.
 
 - `data/generated_page_variants.json`
-  Variant registry for generated auxiliary pages. The `outputFile` values must move from root HTML file names to `pages/aux/...`.
+  Variant registry for generated auxiliary pages. The `outputFile` values must move from root HTML file names to `pages/auxiliares/...`.
 
 - `tools/build-generated-pages.ps1`
-  Generator that must continue writing deterministic outputs, now into `pages/aux/`.
+  Generator that must continue writing deterministic outputs, now into `pages/auxiliares/`.
 
 - `sources/generated/redes-rap01-quiz.template.html`
 - `sources/generated/redes-ip-quiz.template.html`
 - `sources/generated/guia-02-matriz-322.template.html`
-  Templates for generated auxiliary pages. Their relative asset and back-link paths must be updated for `pages/aux/`.
+  Templates for generated auxiliary pages. Their relative asset and back-link paths must be updated for `pages/auxiliares/`.
 
 - `js/admin_usuarios.js`
 - `js/firebase_db.js`
@@ -64,13 +64,13 @@
 - `tools/check_shared_apps_script_button.js`
 - `tools/check_shared_drive_delivery.js`
 - `tools/validar_estructura_portal.ps1`
-  Local verification scripts that read moved files by path and must follow the new `pages/aux/` structure.
+  Local verification scripts that read moved files by path and must follow the new `pages/auxiliares/` structure.
 
 - `tests/generated_pages_build.test.cjs`
-  Must assert generated outputs now exist under `pages/aux/`.
+  Must assert generated outputs now exist under `pages/auxiliares/`.
 
 - `tests/guia_redes_runtime_loader.test.cjs`
-  Must assert quiz links now point into `pages/aux/`.
+  Must assert quiz links now point into `pages/auxiliares/`.
 
 - `tests/root_html_cleanup_structure.test.cjs`
   New regression test for root-vs-aux placement and key link rewrites.
@@ -160,33 +160,33 @@ const EXPECTED_AUX_HTML = [
 Also assert:
 
 - every root page still exists in the repo root;
-- every aux page exists under `pages/aux/`;
+- every aux page exists under `pages/auxiliares/`;
 - none of the aux pages still exists in the repo root;
-- the Guide 2 shared partial contains `pages/aux/`;
-- the Redes shared partial points to `pages/aux/santa-barbara-guia-02-contenido-teorico-redes.html`.
+- the Guide 2 shared partial contains `pages/auxiliares/`;
+- the Redes shared partial points to `pages/auxiliares/santa-barbara-guia-02-contenido-teorico-redes.html`.
 
-- [ ] **Step 2: Update the generated-pages test to expect `pages/aux/` outputs**
+- [ ] **Step 2: Update the generated-pages test to expect `pages/auxiliares/` outputs**
 
 In `tests/generated_pages_build.test.cjs`, change the expected `outputFile` values to:
 
 ```js
-"pages/aux/santa-barbara-10a-guia-02-redes-rap01-quiz.html"
-"pages/aux/santa-barbara-10b-guia-02-redes-rap01-quiz.html"
-"pages/aux/santa-barbara-10a-guia-02-redes-ip-quiz.html"
-"pages/aux/santa-barbara-10b-guia-02-redes-ip-quiz.html"
-"pages/aux/grupo-10a-guia-02-actividad-322-matriz.html"
-"pages/aux/grupo-10b-guia-02-actividad-322-matriz.html"
+"pages/auxiliares/santa-barbara-10a-guia-02-redes-rap01-quiz.html"
+"pages/auxiliares/santa-barbara-10b-guia-02-redes-rap01-quiz.html"
+"pages/auxiliares/santa-barbara-10a-guia-02-redes-ip-quiz.html"
+"pages/auxiliares/santa-barbara-10b-guia-02-redes-ip-quiz.html"
+"pages/auxiliares/grupo-10a-guia-02-actividad-322-matriz.html"
+"pages/auxiliares/grupo-10b-guia-02-actividad-322-matriz.html"
 ```
 
-- [ ] **Step 3: Update the Redes runtime-loader test to expect `pages/aux/` quiz links**
+- [ ] **Step 3: Update the Redes runtime-loader test to expect `pages/auxiliares/` quiz links**
 
 In `tests/guia_redes_runtime_loader.test.cjs`, change both the fixture context and the final `assert.equal(...)` expectations to the new auxiliary quiz URLs:
 
 ```js
-"pages/aux/santa-barbara-10a-guia-02-redes-rap01-quiz.html"
-"pages/aux/santa-barbara-10a-guia-02-redes-ip-quiz.html"
-"pages/aux/santa-barbara-10b-guia-02-redes-rap01-quiz.html"
-"pages/aux/santa-barbara-10b-guia-02-redes-ip-quiz.html"
+"pages/auxiliares/santa-barbara-10a-guia-02-redes-rap01-quiz.html"
+"pages/auxiliares/santa-barbara-10a-guia-02-redes-ip-quiz.html"
+"pages/auxiliares/santa-barbara-10b-guia-02-redes-rap01-quiz.html"
+"pages/auxiliares/santa-barbara-10b-guia-02-redes-ip-quiz.html"
 ```
 
 - [ ] **Step 4: Run the focused tests and verify they fail**
@@ -212,17 +212,17 @@ Expected: one commit with failing tests only.
 
 ---
 
-## Task 2: Move The Static Auxiliary Pages Into `pages/aux/`
+## Task 2: Move The Static Auxiliary Pages Into `pages/auxiliares/`
 
 **Files:**
-- Create: `pages/aux/`
-- Modify: `pages/aux/grupo-10a-guia-02-actividad-4-formulario.html`
-- Modify: `pages/aux/grupo-10b-guia-02-actividad-4-formulario.html`
-- Modify: `pages/aux/grupo-10a-guia-02-ficha-caso.html`
-- Modify: `pages/aux/grupo-10b-guia-02-ficha-caso.html`
-- Modify: `pages/aux/plantilla-grado-11-guia-05-herramientas-informaticas-digitales.html`
-- Modify: `pages/aux/plantilla-grado-11-guia-06-planificar-informacion.html`
-- Modify: `pages/aux/santa-barbara-guia-02-contenido-teorico-redes.html`
+- Create: `pages/auxiliares/`
+- Modify: `pages/auxiliares/grupo-10a-guia-02-actividad-4-formulario.html`
+- Modify: `pages/auxiliares/grupo-10b-guia-02-actividad-4-formulario.html`
+- Modify: `pages/auxiliares/grupo-10a-guia-02-ficha-caso.html`
+- Modify: `pages/auxiliares/grupo-10b-guia-02-ficha-caso.html`
+- Modify: `pages/auxiliares/plantilla-grado-11-guia-05-herramientas-informaticas-digitales.html`
+- Modify: `pages/auxiliares/plantilla-grado-11-guia-06-planificar-informacion.html`
+- Modify: `pages/auxiliares/santa-barbara-guia-02-contenido-teorico-redes.html`
 - Test: `tests/root_html_cleanup_structure.test.cjs`
 
 - [ ] **Step 1: Move the approved static auxiliary files**
@@ -240,7 +240,7 @@ Move-Item -LiteralPath plantilla-grado-11-guia-06-planificar-informacion.html -D
 Move-Item -LiteralPath santa-barbara-guia-02-contenido-teorico-redes.html -Destination pages\aux\
 ```
 
-Expected: the seven static auxiliary pages disappear from the repo root and now exist under `pages/aux/`.
+Expected: the seven static auxiliary pages disappear from the repo root and now exist under `pages/auxiliares/`.
 
 - [ ] **Step 2: Rewrite relative asset paths in every moved file**
 
@@ -264,7 +264,7 @@ src="../assets/img/..."
 
 - [ ] **Step 3: Rewrite local navigation links inside the moved files**
 
-Where a moved page links back to root pages or `index.html`, keep those targets reachable from `pages/aux/`:
+Where a moved page links back to root pages or `index.html`, keep those targets reachable from `pages/auxiliares/`:
 
 ```html
 href="../index.html"
@@ -272,7 +272,7 @@ href="../grupo-10a-guia-02-herramientas-informaticas-digitales.html"
 href="../grupo-11a-guia-05-herramientas-informaticas-digitales.html"
 ```
 
-Keep any same-folder links between auxiliary pages as plain file names if both pages now live under `pages/aux/`.
+Keep any same-folder links between auxiliary pages as plain file names if both pages now live under `pages/auxiliares/`.
 
 - [ ] **Step 4: Update cloud-file constants only when they encode a file path**
 
@@ -285,7 +285,7 @@ var CLOUD_FILE = "grupo-10a-guia-02-ficha-caso.html";
 preserve it **only if** the app treats it as a logical key. If any usage requires a path lookup, change it to:
 
 ```js
-var CLOUD_FILE = "pages/aux/grupo-10a-guia-02-ficha-caso.html";
+var CLOUD_FILE = "pages/auxiliares/grupo-10a-guia-02-ficha-caso.html";
 ```
 
 Use the existing call sites in `js/firebase_db.js` and related tools to decide consistently.
@@ -302,7 +302,7 @@ Expected: still FAIL, but now only for generated auxiliary pages or not-yet-rewr
 
 ---
 
-## Task 3: Update Runtime Pages, Registries, And Local Tools To Use `pages/aux/`
+## Task 3: Update Runtime Pages, Registries, And Local Tools To Use `pages/auxiliares/`
 
 **Files:**
 - Modify: `partials/guia-02-herramientas-content.html`
@@ -329,19 +329,19 @@ Expected: still FAIL, but now only for generated auxiliary pages or not-yet-rewr
 - Test: `tests/root_html_cleanup_structure.test.cjs`
 - Test: `tests/guia_redes_runtime_loader.test.cjs`
 
-- [ ] **Step 1: Point Guide 2 links to `pages/aux/`**
+- [ ] **Step 1: Point Guide 2 links to `pages/auxiliares/`**
 
 In `partials/guia-02-herramientas-content.html`, update the config block so the auxiliary URLs become:
 
 ```js
-activity4Url: "pages/aux/grupo-10a-guia-02-actividad-4-formulario.html?v=20260409_6"
-fichaCasoUrl: "pages/aux/grupo-10a-guia-02-ficha-caso.html"
-matrizUrl: "pages/aux/grupo-10a-guia-02-actividad-322-matriz.html"
+activity4Url: "pages/auxiliares/grupo-10a-guia-02-actividad-4-formulario.html?v=20260409_6"
+fichaCasoUrl: "pages/auxiliares/grupo-10a-guia-02-ficha-caso.html"
+matrizUrl: "pages/auxiliares/grupo-10a-guia-02-actividad-322-matriz.html"
 ```
 
 and the matching 10B equivalents.
 
-- [ ] **Step 2: Point the Redes theoretical-content link to `pages/aux/`**
+- [ ] **Step 2: Point the Redes theoretical-content link to `pages/auxiliares/`**
 
 In `partials/guia-redes-rap01-content.html`, change:
 
@@ -352,12 +352,12 @@ href="santa-barbara-guia-02-contenido-teorico-redes.html"
 to:
 
 ```html
-href="pages/aux/santa-barbara-guia-02-contenido-teorico-redes.html"
+href="pages/auxiliares/santa-barbara-guia-02-contenido-teorico-redes.html"
 ```
 
-- [ ] **Step 3: Point Redes runtime context URLs to `pages/aux/`**
+- [ ] **Step 3: Point Redes runtime context URLs to `pages/auxiliares/`**
 
-In `data/guide_contexts.json`, update `quizRedesUrl` and `quizIpUrl` for both Santa Barbara groups to the new `pages/aux/...` locations.
+In `data/guide_contexts.json`, update `quizRedesUrl` and `quizIpUrl` for both Santa Barbara groups to the new `pages/auxiliares/...` locations.
 
 - [ ] **Step 4: Update JS file-name maps for moved pages**
 
@@ -373,20 +373,20 @@ js/guia_template.js
 so any moved pages are represented by their new relative path strings, for example:
 
 ```js
-"pages/aux/grupo-10a-guia-02-actividad-4-formulario.html": "10a_guia2.html"
-"pages/aux/plantilla-grado-11-guia-05-herramientas-informaticas-digitales.html": "grado_guia.html"
+"pages/auxiliares/grupo-10a-guia-02-actividad-4-formulario.html": "10a_guia2.html"
+"pages/auxiliares/plantilla-grado-11-guia-05-herramientas-informaticas-digitales.html": "grado_guia.html"
 ```
 
 - [ ] **Step 5: Update allowlists and helper lookups**
 
-In `js/admin_usuarios.js` and `js/firebase_db.js`, update every moved-page reference to use `pages/aux/...` so admin tools, unlock logic, and scoped-storage handling still recognize the correct files.
+In `js/admin_usuarios.js` and `js/firebase_db.js`, update every moved-page reference to use `pages/auxiliares/...` so admin tools, unlock logic, and scoped-storage handling still recognize the correct files.
 
 - [ ] **Step 6: Update local verification scripts**
 
 In every listed `tools/check_*.js` and `tools/validar_estructura_portal.ps1`, rewrite hardcoded root file paths to:
 
 ```js
-path.join(root, "pages", "aux", "grupo-10a-guia-02-actividad-4-formulario.html")
+path.join(root, "pages", "auxiliares", "grupo-10a-guia-02-actividad-4-formulario.html")
 ```
 
 or the PowerShell equivalent.
@@ -403,7 +403,7 @@ Expected: PASS for structure and quiz-link expectations, with generated-file fai
 
 ---
 
-## Task 4: Move Generated Auxiliary Outputs Into `pages/aux/`
+## Task 4: Move Generated Auxiliary Outputs Into `pages/auxiliares/`
 
 **Files:**
 - Modify: `data/generated_page_variants.json`
@@ -420,7 +420,7 @@ Expected: PASS for structure and quiz-link expectations, with generated-file fai
 In `data/generated_page_variants.json`, change each `outputFile` to the new location, for example:
 
 ```json
-"outputFile": "pages/aux/santa-barbara-10a-guia-02-redes-rap01-quiz.html"
+"outputFile": "pages/auxiliares/santa-barbara-10a-guia-02-redes-rap01-quiz.html"
 ```
 
 Apply the same pattern to both quiz families and both matrix outputs.
@@ -438,7 +438,7 @@ if ($outputDir -and -not (Test-Path -LiteralPath $outputDir)) {
 
 - [ ] **Step 3: Fix relative assets and backlinks in generated templates**
 
-Because the generated files now live under `pages/aux/`, update each template so local references use `../` prefixes, for example:
+Because the generated files now live under `pages/auxiliares/`, update each template so local references use `../` prefixes, for example:
 
 ```html
 <link rel="stylesheet" href="../css/site_tokens.css?v=20260412_2">
@@ -456,7 +456,7 @@ Run:
 powershell -NoProfile -ExecutionPolicy Bypass -File tools\build-generated-pages.ps1
 ```
 
-Expected: six generated HTML files are written under `pages/aux/` and none are regenerated in the repo root.
+Expected: six generated HTML files are written under `pages/auxiliares/` and none are regenerated in the repo root.
 
 - [ ] **Step 5: Run the generator and structure tests**
 
@@ -516,8 +516,8 @@ Expected: PASS for the full suite.
 Verify manually:
 
 ```text
-1. Open both Guide 2 main pages and follow links to formulario, ficha de caso, and matriz under pages/aux/.
-2. Open both Redes main pages and follow links to quiz pages and theoretical content under pages/aux/.
+1. Open both Guide 2 main pages and follow links to formulario, ficha de caso, and matriz under pages/auxiliares/.
+2. Open both Redes main pages and follow links to quiz pages and theoretical content under pages/auxiliares/.
 3. Open one moved plantilla page and confirm CSS, JS, and local assets still load.
 4. Confirm the repo root only contains the approved 15 HTML files.
 ```
