@@ -403,6 +403,8 @@ function hydrateFieldsRedes() {
   restoreImagenBloqueIP3();
   restorePantallazoTallerIPEj4();
   restoreLab1EvidenceUploads();
+  restoreLab2EvidenceUploads();
+  restoreLab3EvidenceUploads();
   applyReflexionLock();
   applyReflexionSocializacionLock();
   applyBloqueALock();
@@ -420,6 +422,8 @@ function hydrateFieldsRedes() {
   applyTallerIPEj4Lock();
   applyTallerIPEj5Lock();
   applyLab1Lock();
+  applyLab2Lock();
+  applyLab3Lock();
 }
 
 function applyReflexionSocializacionLock() {
@@ -1239,6 +1243,8 @@ const LOCK_KEYS_REDES = [
   "taller-ip-ej2-locked",
   "taller-ip-ej3-locked",
   "lab1-locked",
+  "lab2-locked",
+  "lab3-locked",
 ];
 
 LOCK_KEYS_REDES.push("taller-ip-ej4-locked");
@@ -1260,6 +1266,14 @@ const IMAGE_KEYS_REDES = ["bloqueA-imagen", "bloqueB-imagen", "social-mapa", "ip
   "lab1-ping2-image",
   "lab1-broadcast-image",
   "lab1-ipconfig-image",
+  "lab2-ping-mismo-image",
+  "lab2-ping-dif-image",
+  "lab2-tracert-interno-image",
+  "lab2-tracert-externo-image",
+  "lab3-topologia-image",
+  "lab3-ping-bloques-image",
+  "lab3-ping-wifi-image",
+  "lab3-ipconfig-wifi-image",
 ].forEach((key) => IMAGE_KEYS_REDES.push(key));
 
 function buildCloudSnapshotRedes() {
@@ -1309,6 +1323,8 @@ function applyAllLocksRedes() {
   applyTallerIPEj4Lock();
   applyTallerIPEj5Lock();
   applyLab1Lock();
+  applyLab2Lock();
+  applyLab3Lock();
 }
 
 function syncAuthoritativeLockFlagsFromRemoteRedes(remoteData) {
@@ -2366,6 +2382,496 @@ window.subirEntregaFinalLab1 = function () {
     activityLabel: "Actividad 3.4.1",
     allowedExtensions: [".pkt"],
     fileNamePrefix: "Lab1_EstrellaCarmen",
+    learnerNameMode: "full",
+  });
+};
+
+const LAB2_ANALYSIS_KEYS = [
+  "lab2-ping-mismo",
+  "lab2-ping-dif",
+  "lab2-tracert-interno",
+  "lab2-tracert-externo",
+];
+
+const LAB2_EVIDENCE_SLOTS = {
+  mismo: {
+    title: "Ping mismo departamento",
+    fileToken: "ping_mismo_departamento",
+    baseKey: "lab2-ping-mismo",
+    inputId: "lab2PingMismoInput",
+    buttonId: "btnSubirLab2PingMismo",
+    previewId: "lab2PingMismoPreview",
+    imageId: "lab2PingMismoImg",
+    nameId: "lab2PingMismoNombre",
+  },
+  diferente: {
+    title: "Ping entre departamentos",
+    fileToken: "ping_entre_departamentos",
+    baseKey: "lab2-ping-dif",
+    inputId: "lab2PingDifInput",
+    buttonId: "btnSubirLab2PingDif",
+    previewId: "lab2PingDifPreview",
+    imageId: "lab2PingDifImg",
+    nameId: "lab2PingDifNombre",
+  },
+  tracertInterno: {
+    title: "Tracert interno",
+    fileToken: "tracert_interno",
+    baseKey: "lab2-tracert-interno",
+    inputId: "lab2TracertInternoInput",
+    buttonId: "btnSubirLab2TracertInterno",
+    previewId: "lab2TracertInternoPreview",
+    imageId: "lab2TracertInternoImg",
+    nameId: "lab2TracertInternoNombre",
+  },
+  tracertExterno: {
+    title: "Tracert externo",
+    fileToken: "tracert_externo",
+    baseKey: "lab2-tracert-externo",
+    inputId: "lab2TracertExternoInput",
+    buttonId: "btnSubirLab2TracertExterno",
+    previewId: "lab2TracertExternoPreview",
+    imageId: "lab2TracertExternoImg",
+    nameId: "lab2TracertExternoNombre",
+  },
+};
+
+function getLab2EvidenceStateKey(slotKey, suffix) {
+  const slot = LAB2_EVIDENCE_SLOTS[slotKey];
+  return slot ? `${slot.baseKey}-${suffix}` : "";
+}
+
+function refreshLab2EvidenceSlot(slotKey) {
+  const slot = LAB2_EVIDENCE_SLOTS[slotKey];
+  if (!slot) return;
+
+  const driveUrl = state[getLab2EvidenceStateKey(slotKey, "url")];
+  const localBase64 = state[getLab2EvidenceStateKey(slotKey, "image")];
+  const fileName = state[getLab2EvidenceStateKey(slotKey, "name")] || `${slot.title}.png`;
+  const locked = Boolean(state["lab2-locked"]);
+  const preview = document.getElementById(slot.previewId);
+  const img = document.getElementById(slot.imageId);
+  const name = document.getElementById(slot.nameId);
+  const input = document.getElementById(slot.inputId);
+  const btn = document.getElementById(slot.buttonId);
+
+  if (input) input.disabled = locked;
+  if (btn) {
+    btn.disabled = locked;
+    btn.style.opacity = locked ? "0.7" : "";
+    btn.style.pointerEvents = locked ? "none" : "";
+  }
+
+  if (driveUrl) {
+    const thumb = _getDriveThumbnailUrl(driveUrl);
+    if (img) img.src = thumb || driveUrl;
+    if (preview) preview.style.display = "block";
+    if (name) {
+      name.innerHTML = `<a href="${driveUrl}" target="_blank" rel="noopener">Ver pantallazo en Drive</a> — ${escapeHtml(fileName)}`;
+    }
+    if (btn) btn.innerHTML = locked ? "&#9989; Evidencia cargada" : "&#128247; Cambiar pantallazo";
+    return;
+  }
+
+  if (localBase64) {
+    if (img) img.src = localBase64;
+    if (preview) preview.style.display = "block";
+    if (name) name.textContent = fileName;
+    if (btn) btn.innerHTML = locked ? "&#9989; Evidencia cargada" : "&#128247; Cambiar pantallazo";
+    return;
+  }
+
+  if (img) img.removeAttribute("src");
+  if (preview) preview.style.display = "none";
+  if (name) name.textContent = "";
+  if (btn) btn.innerHTML = locked ? "&#9989; Evidencia cargada" : "&#128248; Subir pantallazo";
+}
+
+function restoreLab2EvidenceUploads() {
+  Object.keys(LAB2_EVIDENCE_SLOTS).forEach(refreshLab2EvidenceSlot);
+}
+
+function applyLab2Lock() {
+  const locked = Boolean(state["lab2-locked"]);
+  document.querySelectorAll("[data-store^='lab2-']").forEach((el) => {
+    el.disabled = locked;
+    el.style.opacity = locked ? "0.75" : "";
+  });
+  Object.keys(LAB2_EVIDENCE_SLOTS).forEach(refreshLab2EvidenceSlot);
+  const btn = document.getElementById("btnGuardarLab2");
+  if (btn) {
+    btn.disabled = locked;
+    btn.textContent = locked ? "✅ Respuestas guardadas" : "💾 Guardar respuestas del laboratorio";
+  }
+  const status = document.getElementById("lab2Status");
+  if (status) status.style.display = locked ? "block" : "none";
+}
+
+window.subirPantallazoLab2 = async function (slotKey, input) {
+  const slot = LAB2_EVIDENCE_SLOTS[slotKey];
+  const file = input && input.files && input.files[0];
+  if (!slot || !file) return;
+
+  if (file.size > 5 * 1024 * 1024) {
+    alert("La imagen es demasiado grande (max. 5 MB). Usa un pantallazo mas liviano.");
+    input.value = "";
+    return;
+  }
+
+  const uploadBtn = document.getElementById(slot.buttonId);
+  const originalLabel = uploadBtn ? uploadBtn.innerHTML : "";
+  if (uploadBtn) {
+    uploadBtn.innerHTML = "&#9203; Subiendo pantallazo...";
+    uploadBtn.style.pointerEvents = "none";
+  }
+
+  try {
+    const delivery = window.sharedAppsScriptDelivery;
+    if (!delivery || typeof delivery.uploadToAppsScript !== "function") {
+      throw new Error("El sistema de entrega no esta disponible.");
+    }
+
+    const identity = getDeliveryIdentityRedes();
+    const usernameKey = identity.usernameKey;
+    const ficha = identity.ficha || "0000";
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+    const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+    const fileName = `lab2_${slot.fileToken}_${ficha}_${usernameKey}_${dateStr}.${ext}`;
+
+    const reader = new FileReader();
+    const localBase64 = await new Promise((resolve) => {
+      reader.onload = (event) => resolve(event.target.result);
+      reader.readAsDataURL(file);
+    });
+
+    state[getLab2EvidenceStateKey(slotKey, "image")] = localBase64;
+    state[getLab2EvidenceStateKey(slotKey, "name")] = fileName;
+    saveStateRedes();
+    refreshLab2EvidenceSlot(slotKey);
+
+    const response = await delivery.uploadToAppsScript({
+      guideLabel: "Guia 2",
+      activityLabel: `Laboratorio 2 — ${slot.title}`,
+      activityNumber: "3.4.2",
+      activityTitle: "Laboratorio 2 — Red topologia arbol con multiples segmentos (Autonomo)",
+      fileName,
+      mimeType: file.type || "image/jpeg",
+      fileBase64: String(localBase64).split(",").pop(),
+      fullName: identity.fullName || identity.usernameKey || "Aprendiz",
+      ficha,
+    });
+
+    if (response && response.driveUrl) {
+      delete state[getLab2EvidenceStateKey(slotKey, "image")];
+      state[getLab2EvidenceStateKey(slotKey, "url")] = response.driveUrl;
+      state[getLab2EvidenceStateKey(slotKey, "folder-path")] = response.folderPath || "";
+      saveStateRedes();
+      await saveToCloudRedes();
+      refreshLab2EvidenceSlot(slotKey);
+    }
+
+    if (uploadBtn) {
+      uploadBtn.innerHTML = "&#128247; Cambiar pantallazo";
+      uploadBtn.style.pointerEvents = "";
+    }
+    if (input) input.value = "";
+  } catch (err) {
+    alert("Error al subir el pantallazo: " + ((err && err.message) || "Intenta de nuevo."));
+    if (uploadBtn) {
+      uploadBtn.innerHTML = originalLabel;
+      uploadBtn.style.pointerEvents = "";
+    }
+  }
+};
+
+window.guardarLab2Arbol = async function () {
+  const emptyAnalysis = LAB2_ANALYSIS_KEYS.filter((key) => !String(state[key] || "").trim());
+  if (emptyAnalysis.length > 0) {
+    alert("Responde las 4 preguntas del analisis antes de guardar.");
+    return;
+  }
+
+  const pendingEvidence = Object.keys(LAB2_EVIDENCE_SLOTS).filter((slotKey) => !state[getLab2EvidenceStateKey(slotKey, "url")]);
+  if (pendingEvidence.length > 0) {
+    alert("Debes subir los 4 pantallazos del laboratorio antes de guardar.");
+    return;
+  }
+
+  const btn = document.getElementById("btnGuardarLab2");
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "Guardando…";
+  }
+
+  state["lab2-locked"] = true;
+  saveStateRedes();
+  await saveToCloudRedes();
+  applyLab2Lock();
+};
+
+window.subirEntregaFinalLab2 = function () {
+  if (
+    !window.sharedAppsScriptDelivery ||
+    typeof window.sharedAppsScriptDelivery.openDeliveryModal !== "function"
+  ) {
+    alert("El sistema de entrega no esta disponible en este momento.");
+    return;
+  }
+
+  window.sharedAppsScriptDelivery.openDeliveryModal({
+    guideLabel: "Guia 2",
+    activityNumber: "3.4.2",
+    activityTitle: "Laboratorio 2 — Red topologia arbol con multiples segmentos (Autonomo)",
+    activityLabel: "Actividad 3.4.2",
+    allowedExtensions: [".pkt"],
+    fileNamePrefix: "Lab2_ArbolBoycaTech",
+    learnerNameMode: "full",
+  });
+};
+
+const LAB3_ANALYSIS_KEYS = [
+  "lab3-topologia",
+  "lab3-ping-bloques",
+  "lab3-ping-wifi",
+  "lab3-ipconfig-wifi",
+];
+
+const LAB3_EVIDENCE_SLOTS = {
+  topologia: {
+    title: "Topologia completa",
+    fileToken: "topologia_completa",
+    baseKey: "lab3-topologia",
+    inputId: "lab3TopologiaInput",
+    buttonId: "btnSubirLab3Topologia",
+    previewId: "lab3TopologiaPreview",
+    imageId: "lab3TopologiaImg",
+    nameId: "lab3TopologiaNombre",
+  },
+  pingBloques: {
+    title: "Ping entre bloques",
+    fileToken: "ping_entre_bloques",
+    baseKey: "lab3-ping-bloques",
+    inputId: "lab3PingBloquesInput",
+    buttonId: "btnSubirLab3PingBloques",
+    previewId: "lab3PingBloquesPreview",
+    imageId: "lab3PingBloquesImg",
+    nameId: "lab3PingBloquesNombre",
+  },
+  pingWifi: {
+    title: "Ping Wi-Fi a equipo cableado",
+    fileToken: "ping_wifi_a_cableado",
+    baseKey: "lab3-ping-wifi",
+    inputId: "lab3PingWifiInput",
+    buttonId: "btnSubirLab3PingWifi",
+    previewId: "lab3PingWifiPreview",
+    imageId: "lab3PingWifiImg",
+    nameId: "lab3PingWifiNombre",
+  },
+  ipconfigWifi: {
+    title: "Parametros del cliente inalambrico",
+    fileToken: "parametros_cliente_inalambrico",
+    baseKey: "lab3-ipconfig-wifi",
+    inputId: "lab3IpconfigWifiInput",
+    buttonId: "btnSubirLab3IpconfigWifi",
+    previewId: "lab3IpconfigWifiPreview",
+    imageId: "lab3IpconfigWifiImg",
+    nameId: "lab3IpconfigWifiNombre",
+  },
+};
+
+function getLab3EvidenceStateKey(slotKey, suffix) {
+  const slot = LAB3_EVIDENCE_SLOTS[slotKey];
+  return slot ? `${slot.baseKey}-${suffix}` : "";
+}
+
+function refreshLab3EvidenceSlot(slotKey) {
+  const slot = LAB3_EVIDENCE_SLOTS[slotKey];
+  if (!slot) return;
+
+  const driveUrl = state[getLab3EvidenceStateKey(slotKey, "url")];
+  const localBase64 = state[getLab3EvidenceStateKey(slotKey, "image")];
+  const fileName = state[getLab3EvidenceStateKey(slotKey, "name")] || `${slot.title}.png`;
+  const locked = Boolean(state["lab3-locked"]);
+  const preview = document.getElementById(slot.previewId);
+  const img = document.getElementById(slot.imageId);
+  const name = document.getElementById(slot.nameId);
+  const input = document.getElementById(slot.inputId);
+  const btn = document.getElementById(slot.buttonId);
+
+  if (input) input.disabled = locked;
+  if (btn) {
+    btn.disabled = locked;
+    btn.style.opacity = locked ? "0.7" : "";
+    btn.style.pointerEvents = locked ? "none" : "";
+  }
+
+  if (driveUrl) {
+    const thumb = _getDriveThumbnailUrl(driveUrl);
+    if (img) img.src = thumb || driveUrl;
+    if (preview) preview.style.display = "block";
+    if (name) {
+      name.innerHTML = `<a href="${driveUrl}" target="_blank" rel="noopener">Ver pantallazo en Drive</a> &mdash; ${escapeHtml(fileName)}`;
+    }
+    if (btn) btn.innerHTML = locked ? "&#9989; Evidencia cargada" : "&#128247; Cambiar pantallazo";
+    return;
+  }
+
+  if (localBase64) {
+    if (img) img.src = localBase64;
+    if (preview) preview.style.display = "block";
+    if (name) name.textContent = fileName;
+    if (btn) btn.innerHTML = locked ? "&#9989; Evidencia cargada" : "&#128247; Cambiar pantallazo";
+    return;
+  }
+
+  if (img) img.removeAttribute("src");
+  if (preview) preview.style.display = "none";
+  if (name) name.textContent = "";
+  if (btn) btn.innerHTML = locked ? "&#9989; Evidencia cargada" : "&#128248; Subir pantallazo";
+}
+
+function restoreLab3EvidenceUploads() {
+  Object.keys(LAB3_EVIDENCE_SLOTS).forEach(refreshLab3EvidenceSlot);
+}
+
+function applyLab3Lock() {
+  const locked = Boolean(state["lab3-locked"]);
+  document.querySelectorAll("[data-store^='lab3-']").forEach((el) => {
+    el.disabled = locked;
+    el.style.opacity = locked ? "0.75" : "";
+  });
+  Object.keys(LAB3_EVIDENCE_SLOTS).forEach(refreshLab3EvidenceSlot);
+  const btn = document.getElementById("btnGuardarLab3");
+  if (btn) {
+    btn.disabled = locked;
+    btn.innerHTML = locked ? "&#9989; Respuestas guardadas" : "&#128190; Guardar respuestas del laboratorio";
+  }
+  const status = document.getElementById("lab3Status");
+  if (status) status.style.display = locked ? "block" : "none";
+}
+
+window.subirPantallazoLab3 = async function (slotKey, input) {
+  const slot = LAB3_EVIDENCE_SLOTS[slotKey];
+  const file = input && input.files && input.files[0];
+  if (!slot || !file) return;
+
+  if (file.size > 5 * 1024 * 1024) {
+    alert("La imagen es demasiado grande (max. 5 MB). Usa un pantallazo mas liviano.");
+    input.value = "";
+    return;
+  }
+
+  const uploadBtn = document.getElementById(slot.buttonId);
+  const originalLabel = uploadBtn ? uploadBtn.innerHTML : "";
+  if (uploadBtn) {
+    uploadBtn.innerHTML = "&#9203; Subiendo pantallazo...";
+    uploadBtn.style.pointerEvents = "none";
+  }
+
+  try {
+    const delivery = window.sharedAppsScriptDelivery;
+    if (!delivery || typeof delivery.uploadToAppsScript !== "function") {
+      throw new Error("El sistema de entrega no esta disponible.");
+    }
+
+    const identity = getDeliveryIdentityRedes();
+    const usernameKey = identity.usernameKey;
+    const ficha = identity.ficha || "0000";
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+    const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+    const fileName = `lab3_${slot.fileToken}_${ficha}_${usernameKey}_${dateStr}.${ext}`;
+
+    const reader = new FileReader();
+    const localBase64 = await new Promise((resolve) => {
+      reader.onload = (event) => resolve(event.target.result);
+      reader.readAsDataURL(file);
+    });
+
+    state[getLab3EvidenceStateKey(slotKey, "image")] = localBase64;
+    state[getLab3EvidenceStateKey(slotKey, "name")] = fileName;
+    saveStateRedes();
+    refreshLab3EvidenceSlot(slotKey);
+
+    const response = await delivery.uploadToAppsScript({
+      guideLabel: "Guia 2",
+      activityLabel: `Laboratorio 3 - ${slot.title}`,
+      activityNumber: "3.4.3",
+      activityTitle: "Laboratorio 3 - Red hibrida estrella y arbol con fibra optica, cableado y Wi-Fi",
+      fileName,
+      mimeType: file.type || "image/jpeg",
+      fileBase64: String(localBase64).split(",").pop(),
+      fullName: identity.fullName || identity.usernameKey || "Aprendiz",
+      ficha,
+    });
+
+    if (response && response.driveUrl) {
+      delete state[getLab3EvidenceStateKey(slotKey, "image")];
+      state[getLab3EvidenceStateKey(slotKey, "url")] = response.driveUrl;
+      state[getLab3EvidenceStateKey(slotKey, "folder-path")] = response.folderPath || "";
+      saveStateRedes();
+      await saveToCloudRedes();
+      refreshLab3EvidenceSlot(slotKey);
+    }
+
+    if (uploadBtn) {
+      uploadBtn.innerHTML = "&#128247; Cambiar pantallazo";
+      uploadBtn.style.pointerEvents = "";
+    }
+    if (input) input.value = "";
+  } catch (err) {
+    alert("Error al subir el pantallazo: " + ((err && err.message) || "Intenta de nuevo."));
+    if (uploadBtn) {
+      uploadBtn.innerHTML = originalLabel;
+      uploadBtn.style.pointerEvents = "";
+    }
+  }
+};
+
+window.guardarLab3Hibrida = async function () {
+  const emptyAnalysis = LAB3_ANALYSIS_KEYS.filter((key) => !String(state[key] || "").trim());
+  if (emptyAnalysis.length > 0) {
+    alert("Responde las 4 preguntas del analisis antes de guardar.");
+    return;
+  }
+
+  const pendingEvidence = Object.keys(LAB3_EVIDENCE_SLOTS).filter(
+    (slotKey) => !state[getLab3EvidenceStateKey(slotKey, "url")]
+  );
+  if (pendingEvidence.length > 0) {
+    alert("Debes subir los 4 pantallazos del laboratorio antes de guardar.");
+    return;
+  }
+
+  const btn = document.getElementById("btnGuardarLab3");
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "Guardando...";
+  }
+
+  state["lab3-locked"] = true;
+  saveStateRedes();
+  await saveToCloudRedes();
+  applyLab3Lock();
+};
+
+window.subirEntregaFinalLab3 = function () {
+  if (
+    !window.sharedAppsScriptDelivery ||
+    typeof window.sharedAppsScriptDelivery.openDeliveryModal !== "function"
+  ) {
+    alert("El sistema de entrega no esta disponible en este momento.");
+    return;
+  }
+
+  window.sharedAppsScriptDelivery.openDeliveryModal({
+    guideLabel: "Guia 2",
+    activityNumber: "3.4.3",
+    activityTitle: "Laboratorio 3 - Red hibrida estrella y arbol con fibra optica, cableado y Wi-Fi",
+    activityLabel: "Actividad 3.4.3",
+    allowedExtensions: [".pkt"],
+    fileNamePrefix: "Lab3_HibridaColegio",
     learnerNameMode: "full",
   });
 };
