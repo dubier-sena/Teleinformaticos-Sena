@@ -84,6 +84,9 @@ const EXPECTED_CONTEXTS = {
 };
 
 const SHARED_HTML = '<section class="runtime-fragment"><button id="runtimeButton"></button></section>';
+const SHARED_HTML_WITH_INLINE_SCRIPT =
+  SHARED_HTML +
+  '<script>window.recordPartialScript(document.body.dataset.defaultGrupo);</script>';
 
 function createHarness({
   contextKey = "jfk-induccion-10a",
@@ -155,6 +158,10 @@ function createHarness({
   const runtimeWindow = {
     __PAGE_CONTEXT__: { key: contextKey, family: registryPayload[contextKey]?.family || "unknown" },
     location: { pathname },
+    recordPartialScript(grupo) {
+      eventLog.push("partial script executed");
+      assert.equal(body.dataset.defaultGrupo, grupo);
+    },
     initGuiaTemplateShell() {
       templateInitCalls += 1;
       eventLog.push("initGuiaTemplateShell");
@@ -217,6 +224,14 @@ function createHarness({
     clearTimeout,
   };
 
+  const evalStub = function (code) {
+    return vm.runInNewContext(String(code), sandbox, {
+      filename: "page_runtime_loader.inline.js",
+    });
+  };
+  sandbox.eval = evalStub;
+  runtimeWindow.eval = evalStub;
+
   return {
     body,
     eventLog,
@@ -270,6 +285,22 @@ test("generic runtime loader injects the partial and boots the configured page h
   assert.equal(counts.pageBootCalls, 1);
   assert.equal(harness.fetchLog[0], "data/page_runtime_contexts.json");
   assert.equal(harness.fetchLog[1], "partials/guia-02-herramientas-content.html");
+});
+
+test("generic runtime loader executes inline scripts from the injected partial before booting", async () => {
+  const harness = await runLoader({
+    contextKey: "jfk-guia2-10a",
+    pathname: "/grupo-10a-guia-02-herramientas-informaticas-digitales.html",
+    partialHtml: SHARED_HTML_WITH_INLINE_SCRIPT,
+  });
+
+  assert.deepEqual(harness.eventLog, [
+    "root injected",
+    "datasets hydrated",
+    "partial script executed",
+    "initGuiaTemplateShell",
+    "initGuia2",
+  ]);
 });
 
 test("generic runtime loader renders an error card for page mismatches", async () => {
