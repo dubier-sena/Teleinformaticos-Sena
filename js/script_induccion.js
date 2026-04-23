@@ -97,8 +97,14 @@ let state = loadState();
 let cloudStateSyncTimer = null;
 let cloudStateRetryTimer = null;
 let pendingCloudStateSnapshot = null;
+let induccionBooted = false;
 
-document.addEventListener("DOMContentLoaded", () => {
+function initInduccion() {
+  if (induccionBooted) {
+    return;
+  }
+
+  induccionBooted = true;
   renderStatefulSections();
   renderVideoGrid();
   renderEvidenceTable();
@@ -108,7 +114,13 @@ document.addEventListener("DOMContentLoaded", () => {
   updateProgress();
   setupScrollSpy();
   initializeCloudStateSync();
-});
+}
+
+window.initInduccion = initInduccion;
+
+if (!window.__PAGE_CONTEXT__) {
+  document.addEventListener("DOMContentLoaded", initInduccion);
+}
 function loadState() {
   try {
     const saved = localStorage.getItem(ACTIVE_STORAGE_KEY);
