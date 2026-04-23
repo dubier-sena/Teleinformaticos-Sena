@@ -27,6 +27,26 @@
     document.body.dataset.defaultFicha = context.ficha || "";
   }
 
+  function executeInlinePartialScripts(html) {
+    const scriptPattern = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi;
+    let match = scriptPattern.exec(html);
+
+    while (match) {
+      const attributes = String(match[1] || "");
+      const sourceCode = String(match[2] || "").trim();
+
+      if (!/\bsrc\s*=/.test(attributes) && sourceCode) {
+        if (typeof window.eval === "function") {
+          window.eval(sourceCode);
+        } else {
+          Function(sourceCode)();
+        }
+      }
+
+      match = scriptPattern.exec(html);
+    }
+  }
+
   function showRuntimeError(message) {
     const root = document.getElementById("page-root");
     if (!root) {
@@ -81,6 +101,7 @@
     root.innerHTML = html;
     window.__PAGE_RUNTIME_CONTEXT__ = context;
     setContextDatasets(context);
+    executeInlinePartialScripts(html);
 
     if (typeof window.initGuiaTemplateShell === "function") {
       window.initGuiaTemplateShell();
