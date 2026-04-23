@@ -20,6 +20,7 @@
         ".jpeg",
         ".png",
         ".zip",
+        ".pkt",
       ],
     },
     window.PROJECT_INTEGRATIONS || {}
