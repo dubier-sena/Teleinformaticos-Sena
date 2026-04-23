@@ -15,7 +15,10 @@ test("guide contexts expose the two Santa Barbara runtime entries", () => {
   assert.equal(contexts["sb-redes-10a"].pageFile, "santa-barbara-10a-guia-02-redes-rap01.html");
   assert.equal(contexts["sb-redes-10a"].partialPath, "partials/guia-redes-rap01-content.html");
   assert.equal(contexts["sb-redes-10a"].quizRedesUrl, "santa-barbara-10a-guia-02-redes-rap01-quiz.html");
+  assert.equal(contexts["sb-redes-10a"].quizIpUrl, "santa-barbara-10a-guia-02-redes-ip-quiz.html");
   assert.equal(contexts["sb-redes-10b"].pageFile, "santa-barbara-10b-guia-02-redes-rap01.html");
+  assert.equal(contexts["sb-redes-10b"].partialPath, "partials/guia-redes-rap01-content.html");
+  assert.equal(contexts["sb-redes-10b"].quizRedesUrl, "santa-barbara-10b-guia-02-redes-rap01-quiz.html");
   assert.equal(contexts["sb-redes-10b"].quizIpUrl, "santa-barbara-10b-guia-02-redes-ip-quiz.html");
 });
 
