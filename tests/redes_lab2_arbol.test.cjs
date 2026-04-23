@@ -11,6 +11,7 @@ const HTML_FILES = [
 test("el laboratorio 2 de arbol presenta una estructura guiada y espacios para evidencias", () => {
   HTML_FILES.forEach((fileName) => {
     const html = fs.readFileSync(path.join(__dirname, "..", fileName), "utf8");
+    const lab2ToLab3 = html.match(/<!-- LAB 2 -->([\s\S]*?)<!-- LAB 3 -->/);
 
     assert.match(html, /Objetivo del laboratorio/);
     assert.match(html, /Lo que vas a construir/);
@@ -25,6 +26,8 @@ test("el laboratorio 2 de arbol presenta una estructura guiada y espacios para e
     assert.match(html, /btnGuardarLab2/);
     assert.match(html, /btnEntregaLab2Pkt/);
     assert.match(html, /lab2Status/);
+    assert.ok(lab2ToLab3, "debe existir el bloque entre LAB 2 y LAB 3");
+    assert.doesNotMatch(lab2ToLab3[1], /data-ignore-progress/);
   });
 });
 
