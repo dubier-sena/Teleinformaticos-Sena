@@ -29,7 +29,7 @@
 <script defer src="data/calendario_2026_records.js?v=20260410_1"></script>
 <script defer src="data/calendario_2026_seed.js?v=20260410_1"></script>
 <script defer src="js/redes_lock_sync.js?v=20260422_2"></script>
-<script defer src="js/script_guia_redes.js?v=20260422_8"></script>
+<script defer src="js/script_guia_redes.js?v=20260422_9"></script>
 <script defer src="js/guia_template.js?v=20260411_1"></script>
 </head>
 <body
@@ -1645,6 +1645,7 @@
               <span class="activity-toggle">&#9662;</span>
             </div>
             <div class="activity-body">
+              <div style="display:none" aria-hidden="true" data-ignore-progress="true">
               <p class="intro-text" style="text-align:justify">
                 <strong>Escenario:</strong> La papeler&iacute;a de la se&ntilde;ora Carmen ha decidido instalar una red. Tiene 6 computadores,
                 1 impresora de red y 1 punto de acceso Wi-Fi. T&uacute; eres el t&eacute;cnico contratado para dise&ntilde;ar y simular la red.
@@ -1713,6 +1714,205 @@
               <div class="warning-box" style="margin-top:12px">
                 <strong>&#9888; Entregable Lab 1:</strong> Archivo <code>.pkt</code> de Packet Tracer + capturas de pantalla de los 4 pings/verificaciones + an&aacute;lisis breve.<br>
                 Nombre: <code>Lab1_EstrellaCarmen_NombreAprendiz_FICHA.pkt</code>
+              </div>
+              </div>
+
+              <div style="padding:18px;border-radius:16px;background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #bfdbfe">
+                <p class="intro-text" style="text-align:justify;margin:0 0 10px">
+                  <strong>Escenario:</strong> La papeler&iacute;a de la se&ntilde;ora Carmen necesita una red local para conectar sus equipos de trabajo.
+                  Tu misi&oacute;n es dise&ntilde;ar la topolog&iacute;a, configurar las IPs y comprobar que la red funcione correctamente en Cisco Packet Tracer.
+                </p>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:14px">
+                  <div style="background:#fff;border:1px solid #bfdbfe;border-radius:14px;padding:14px">
+                    <strong style="display:block;color:#1d4ed8;margin-bottom:6px">Objetivo del laboratorio</strong>
+                    <span style="color:#334155;font-size:.92rem">Construir una <strong>red en topolog&iacute;a estrella</strong>, asignar direcciones IP correctas y verificar conectividad con <code>ping</code> e <code>ipconfig</code>.</span>
+                  </div>
+                  <div style="background:#fff;border:1px solid #bfdbfe;border-radius:14px;padding:14px">
+                    <strong style="display:block;color:#1d4ed8;margin-bottom:6px">Lo que vas a construir</strong>
+                    <span style="color:#334155;font-size:.92rem">1 switch central, 6 PCs cableados, 1 access point y una red <strong>192.168.10.0/24</strong> con salida por <strong>192.168.10.1</strong>.</span>
+                  </div>
+                  <div style="background:#fff;border:1px solid #bfdbfe;border-radius:14px;padding:14px">
+                    <strong style="display:block;color:#1d4ed8;margin-bottom:6px">Evidencia esperada</strong>
+                    <span style="color:#334155;font-size:.92rem">4 pantallazos obligatorios + an&aacute;lisis corto + archivo final <code>.pkt</code> del laboratorio.</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="checklist-card compact-card" style="margin-top:14px">
+                <h3>Equipos y recursos que debes agregar</h3>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+                  <div style="padding:12px;border-radius:12px;background:#f8fafc;border:1px solid #dbeafe">
+                    <strong style="display:block;color:#0f172a">6 PCs</strong>
+                    <span style="color:#475569;font-size:.9rem">PC1_Caja, PC2_Admin, PC3_Bodega, PC4_Punto1, PC5_Punto2 y PC6_Gerencia.</span>
+                  </div>
+                  <div style="padding:12px;border-radius:12px;background:#f8fafc;border:1px solid #dbeafe">
+                    <strong style="display:block;color:#0f172a">1 Switch 2960</strong>
+                    <span style="color:#475569;font-size:.9rem">Ser&aacute; el dispositivo central de la topolog&iacute;a estrella.</span>
+                  </div>
+                  <div style="padding:12px;border-radius:12px;background:#f8fafc;border:1px solid #dbeafe">
+                    <strong style="display:block;color:#0f172a">1 Access Point</strong>
+                    <span style="color:#475569;font-size:.9rem">Agr&eacute;galo como parte del dise&ntilde;o para la conectividad Wi-Fi de la papeler&iacute;a.</span>
+                  </div>
+                  <div style="padding:12px;border-radius:12px;background:#f8fafc;border:1px solid #dbeafe">
+                    <strong style="display:block;color:#0f172a">Cable Copper Straight-Through</strong>
+                    <span style="color:#475569;font-size:.9rem">Conecta cada PC al switch por FastEthernet 0/1 a 0/6.</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="checklist-card compact-card" style="margin-top:12px">
+                <h3>Pasos guiados en Packet Tracer</h3>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
+                  <div style="padding:14px;border-radius:14px;background:#f4fbf6;border:1px solid #cce7d0">
+                    <strong style="display:block;color:#166534;margin-bottom:6px">1. Crea el escenario</strong>
+                    <span style="color:#374151;font-size:.9rem">Abre un proyecto nuevo y organiza visualmente el switch en el centro y los 6 PCs alrededor.</span>
+                  </div>
+                  <div style="padding:14px;border-radius:14px;background:#f4fbf6;border:1px solid #cce7d0">
+                    <strong style="display:block;color:#166534;margin-bottom:6px">2. Agrega y nombra los equipos</strong>
+                    <span style="color:#374151;font-size:.9rem">Usa exactamente los nombres solicitados para que luego sea m&aacute;s f&aacute;cil identificar cada prueba.</span>
+                  </div>
+                  <div style="padding:14px;border-radius:14px;background:#f4fbf6;border:1px solid #cce7d0">
+                    <strong style="display:block;color:#166534;margin-bottom:6px">3. Conecta la topolog&iacute;a estrella</strong>
+                    <span style="color:#374151;font-size:.9rem">Todos los PCs deben salir desde el switch central; esa es la caracter&iacute;stica principal de esta topolog&iacute;a.</span>
+                  </div>
+                  <div style="padding:14px;border-radius:14px;background:#f4fbf6;border:1px solid #cce7d0">
+                    <strong style="display:block;color:#166534;margin-bottom:6px">4. Configura las IPs y prueba</strong>
+                    <span style="color:#374151;font-size:.9rem">Asigna IP, m&aacute;scara, gateway y DNS seg&uacute;n la tabla y luego ejecuta los pings y <code>ipconfig</code>.</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="checklist-card compact-card" style="margin-top:12px">
+                <h3>Tabla de direccionamiento sugerida</h3>
+                <p>Red base: <strong>192.168.10.0/24</strong> &nbsp;|&nbsp; Gateway: <strong>192.168.10.1</strong> &nbsp;|&nbsp; DNS: <strong>8.8.8.8</strong></p>
+                <div class="table-scroll" style="margin-top:10px">
+                  <table class="data-table">
+                    <thead>
+                      <tr><th>Dispositivo</th><th>Direcci&oacute;n IP</th><th>M&aacute;scara</th><th>Gateway</th><th>DNS</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr><td>PC1_Caja</td><td>192.168.10.10</td><td>255.255.255.0</td><td>192.168.10.1</td><td>8.8.8.8</td></tr>
+                      <tr><td>PC2_Admin</td><td>192.168.10.11</td><td>255.255.255.0</td><td>192.168.10.1</td><td>8.8.8.8</td></tr>
+                      <tr><td>PC3_Bodega</td><td>192.168.10.12</td><td>255.255.255.0</td><td>192.168.10.1</td><td>8.8.8.8</td></tr>
+                      <tr><td>PC4_Punto1</td><td>192.168.10.13</td><td>255.255.255.0</td><td>192.168.10.1</td><td>8.8.8.8</td></tr>
+                      <tr><td>PC5_Punto2</td><td>192.168.10.14</td><td>255.255.255.0</td><td>192.168.10.1</td><td>8.8.8.8</td></tr>
+                      <tr><td>PC6_Gerencia</td><td>192.168.10.15</td><td>255.255.255.0</td><td>192.168.10.1</td><td>8.8.8.8</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="info-box" style="margin-top:10px">
+                  <p><strong>Tip para el aprendiz:</strong> el access point y la impresora pueden hacer parte visual del dise&ntilde;o, pero en este laboratorio la verificaci&oacute;n obligatoria se centra en las 6 PCs de la tabla.</p>
+                </div>
+              </div>
+
+              <div class="checklist-card compact-card" style="margin-top:12px">
+                <h3>Pruebas obligatorias</h3>
+                <ol class="note-list">
+                  <li>Desde <strong>PC1_Caja</strong> ejecuta <code>ping 192.168.10.15</code> y verifica si responde <strong>PC6_Gerencia</strong>.</li>
+                  <li>Desde <strong>PC3_Bodega</strong> ejecuta <code>ping 192.168.10.13</code> para probar conectividad hacia <strong>PC4_Punto1</strong>.</li>
+                  <li>Desde <strong>PC2_Admin</strong> ejecuta <code>ping 192.168.10.255</code> y analiza qu&eacute; ocurre con el broadcast.</li>
+                  <li>Desde cualquier equipo ejecuta <code>ipconfig</code> y comprueba IP, m&aacute;scara, gateway y DNS.</li>
+                </ol>
+              </div>
+
+              <div style="margin-top:14px;padding:16px;border:1px dashed #93c5fd;border-radius:16px;background:#f8fbff">
+                <h3 style="margin:0 0 8px;color:#1d4ed8">Evidencias visuales obligatorias</h3>
+                <p style="margin:0 0 14px;color:#475569;font-size:.92rem">Sube aqu&iacute; los 4 pantallazos obligatorios. Debe verse el comando ejecutado y el resultado en Packet Tracer.</p>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px">
+                  <div style="padding:14px;border-radius:14px;background:#fff;border:1px solid #dbeafe">
+                    <strong style="display:block;color:#0f172a;margin-bottom:6px">1. Ping PC1_Caja &rarr; PC6_Gerencia</strong>
+                    <span style="display:block;color:#64748b;font-size:.88rem;margin-bottom:10px">Comando esperado: <code>ping 192.168.10.15</code></span>
+                    <input type="file" id="lab1Ping1Input" accept="image/*" style="display:none" onchange="subirPantallazoLab1('ping1', this)">
+                    <button type="button" id="btnSubirLab1Ping1" onclick="document.getElementById('lab1Ping1Input').click()"
+                      style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                      &#128248; Subir pantallazo
+                    </button>
+                    <div id="lab1Ping1Preview" style="display:none;margin-top:12px">
+                      <img id="lab1Ping1Img" alt="Pantallazo ping PC1 a PC6" style="width:100%;border-radius:10px;border:1px solid #cbd5e1;display:block">
+                      <div id="lab1Ping1Nombre" style="margin-top:8px;color:#334155;font-size:.84rem"></div>
+                    </div>
+                  </div>
+                  <div style="padding:14px;border-radius:14px;background:#fff;border:1px solid #dbeafe">
+                    <strong style="display:block;color:#0f172a;margin-bottom:6px">2. Ping PC3_Bodega &rarr; PC4_Punto1</strong>
+                    <span style="display:block;color:#64748b;font-size:.88rem;margin-bottom:10px">Comando esperado: <code>ping 192.168.10.13</code></span>
+                    <input type="file" id="lab1Ping2Input" accept="image/*" style="display:none" onchange="subirPantallazoLab1('ping2', this)">
+                    <button type="button" id="btnSubirLab1Ping2" onclick="document.getElementById('lab1Ping2Input').click()"
+                      style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                      &#128248; Subir pantallazo
+                    </button>
+                    <div id="lab1Ping2Preview" style="display:none;margin-top:12px">
+                      <img id="lab1Ping2Img" alt="Pantallazo ping PC3 a PC4" style="width:100%;border-radius:10px;border:1px solid #cbd5e1;display:block">
+                      <div id="lab1Ping2Nombre" style="margin-top:8px;color:#334155;font-size:.84rem"></div>
+                    </div>
+                  </div>
+                  <div style="padding:14px;border-radius:14px;background:#fff;border:1px solid #dbeafe">
+                    <strong style="display:block;color:#0f172a;margin-bottom:6px">3. Ping broadcast</strong>
+                    <span style="display:block;color:#64748b;font-size:.88rem;margin-bottom:10px">Comando esperado: <code>ping 192.168.10.255</code></span>
+                    <input type="file" id="lab1BroadcastInput" accept="image/*" style="display:none" onchange="subirPantallazoLab1('broadcast', this)">
+                    <button type="button" id="btnSubirLab1Broadcast" onclick="document.getElementById('lab1BroadcastInput').click()"
+                      style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                      &#128248; Subir pantallazo
+                    </button>
+                    <div id="lab1BroadcastPreview" style="display:none;margin-top:12px">
+                      <img id="lab1BroadcastImg" alt="Pantallazo ping broadcast" style="width:100%;border-radius:10px;border:1px solid #cbd5e1;display:block">
+                      <div id="lab1BroadcastNombre" style="margin-top:8px;color:#334155;font-size:.84rem"></div>
+                    </div>
+                  </div>
+                  <div style="padding:14px;border-radius:14px;background:#fff;border:1px solid #dbeafe">
+                    <strong style="display:block;color:#0f172a;margin-bottom:6px">4. Verificaci&oacute;n con ipconfig</strong>
+                    <span style="display:block;color:#64748b;font-size:.88rem;margin-bottom:10px">Debe verse IP, m&aacute;scara, gateway y DNS del equipo.</span>
+                    <input type="file" id="lab1IpconfigInput" accept="image/*" style="display:none" onchange="subirPantallazoLab1('ipconfig', this)">
+                    <button type="button" id="btnSubirLab1Ipconfig" onclick="document.getElementById('lab1IpconfigInput').click()"
+                      style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                      &#128248; Subir pantallazo
+                    </button>
+                    <div id="lab1IpconfigPreview" style="display:none;margin-top:12px">
+                      <img id="lab1IpconfigImg" alt="Pantallazo ipconfig" style="width:100%;border-radius:10px;border:1px solid #cbd5e1;display:block">
+                      <div id="lab1IpconfigNombre" style="margin-top:8px;color:#334155;font-size:.84rem"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div style="margin-top:16px;padding:18px;border-radius:16px;background:#fcfffb;border:1px solid #cce7d0">
+                <h3 style="margin:0 0 10px;color:#166534">An&aacute;lisis del laboratorio</h3>
+                <p style="margin:0 0 14px;color:#475569;font-size:.92rem">Responde con tus propias palabras. Explica qu&eacute; observaste y por qu&eacute; ocurri&oacute;.</p>
+                <div style="display:flex;flex-direction:column;gap:12px">
+                  <label style="display:block">
+                    <span style="display:block;margin-bottom:6px;font-weight:600">Resultado del ping PC1_Caja &rarr; PC6_Gerencia. &iquest;Funcion&oacute;? &iquest;Por qu&eacute;?</span>
+                    <textarea rows="3" data-store="lab1-ping1" data-track placeholder="Describe si el ping fue exitoso, qu&eacute; respuesta obtuviste y qu&eacute; demuestra sobre la conectividad."></textarea>
+                  </label>
+                  <label style="display:block">
+                    <span style="display:block;margin-bottom:6px;font-weight:600">Resultado del ping PC3_Bodega &rarr; PC4_Punto1. &iquest;Funcion&oacute;?</span>
+                    <textarea rows="3" data-store="lab1-ping2" data-track placeholder="Explica el resultado y menciona si el tiempo de respuesta fue adecuado."></textarea>
+                  </label>
+                  <label style="display:block">
+                    <span style="display:block;margin-bottom:6px;font-weight:600">Resultado del ping broadcast (192.168.10.255). &iquest;Qu&eacute; ocurri&oacute;?</span>
+                    <textarea rows="3" data-store="lab1-broadcast" data-track placeholder="Analiza por qu&eacute; el comportamiento del broadcast es diferente al de un ping directo entre dos equipos."></textarea>
+                  </label>
+                  <label style="display:block">
+                    <span style="display:block;margin-bottom:6px;font-weight:600">Verificaci&oacute;n con ipconfig. &iquest;Coinciden los par&aacute;metros con la tabla? &iquest;Qu&eacute; revisaste?</span>
+                    <textarea rows="3" data-store="lab1-ipconfig" data-track placeholder="Confirma IP, m&aacute;scara, gateway y DNS del equipo que verificaste."></textarea>
+                  </label>
+                </div>
+                <div style="margin-top:16px">
+                  <button id="btnGuardarLab1" type="button" onclick="guardarLab1Transferencia()"
+                    style="background:#2e7d32;color:#fff;border:none;padding:12px 22px;border-radius:10px;font-weight:700;cursor:pointer">
+                    &#128190; Guardar respuestas del laboratorio
+                  </button>
+                </div>
+                <div id="lab1Status" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                  &#9989; Respuestas y evidencias guardadas. Ya no se pueden modificar.
+                </div>
+              </div>
+
+              <div style="margin-top:14px;padding:20px;background:linear-gradient(135deg,#eff6ff,#dbeafe);border-radius:14px;border:1px solid #bfdbfe;text-align:center">
+                <p style="font-size:0.95rem;font-weight:600;color:#1e3a8a;margin:0 0 12px">&#128193; Cuando termines el laboratorio, sube tu archivo final de Cisco Packet Tracer</p>
+                <button type="button" id="btnEntregaLab1Pkt" onclick="subirEntregaFinalLab1()"
+                  style="display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,#1e3a8a,#1d4ed8);color:#fff;border:none;border-radius:12px;padding:12px 28px;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 4px 14px rgba(29,78,216,0.35)">
+                  &#128193; Subir archivo .pkt al Drive
+                </button>
+                <p style="font-size:0.8rem;color:#3b82f6;margin:10px 0 0">Nombre sugerido: <code>Lab1_EstrellaCarmen_NombreAprendiz_FICHA.pkt</code></p>
               </div>
             </div>
           </div>
