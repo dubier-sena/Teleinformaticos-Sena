@@ -26,6 +26,7 @@
   let guideCalendarState = null;
   let guideCalendarRemotePromise = null;
   let guideCalendarRemoteLoaded = false;
+  let guideTemplateBooted = false;
 
   if (portalAuth && !portalAuth.requireFileAccess(pageFile, { redirectUrl: "index.html" })) {
     return;
@@ -1430,10 +1431,29 @@
     queueGuideUiCloudSync();
   };
 
-  ensureGuideRevealShell();
-  initCollapsibleState();
-  initActivityChecks();
-  initializeGuideUiCloudSync();
+  function initGuiaTemplateShell() {
+    if (guideTemplateBooted) {
+      applySelection(currentSelection());
+      updateActivityNavDone();
+      notifyGuideProgressChanged();
+      applyResponsiveSidebarState();
+      return;
+    }
+
+    guideTemplateBooted = true;
+    ensureGuideRevealShell();
+    initCollapsibleState();
+    initActivityChecks();
+    initializeGuideUiCloudSync();
+    applySelection(currentSelection());
+    bindSidebarLinks();
+    updateActivityNavDone();
+    notifyGuideProgressChanged();
+    applyResponsiveSidebarState();
+  }
+
+  window.initGuiaTemplateShell = initGuiaTemplateShell;
+
   window.addEventListener("pagehide", function () {
     window.flushGuideUiStateSync();
   });
@@ -1446,14 +1466,9 @@
     }
   });
 
-  document.addEventListener("DOMContentLoaded", function () {
-    ensureGuideRevealShell();
-    applySelection(currentSelection());
-    bindSidebarLinks();
-    updateActivityNavDone();
-    notifyGuideProgressChanged();
-    applyResponsiveSidebarState();
-  });
+  if (!window.__GUIDE_CONTEXT__) {
+    document.addEventListener("DOMContentLoaded", initGuiaTemplateShell);
+  }
 
   window.addEventListener("resize", applyResponsiveSidebarState);
 })();

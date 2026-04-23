@@ -1,0 +1,24 @@
+{
+  "sb-redes-10a": {
+    "template": "guia-redes-rap01",
+    "partialPath": "partials/guia-redes-rap01-content.html",
+    "pageFile": "santa-barbara-10a-guia-02-redes-rap01.html",
+    "inst": "Institucion Educativa Santa Barbara",
+    "grupo": "10A",
+    "ficha": "3441944",
+    "cloudFileName": "sb_10a_redes.html",
+    "quizRedesUrl": "santa-barbara-10a-guia-02-redes-rap01-quiz.html",
+    "quizIpUrl": "santa-barbara-10a-guia-02-redes-ip-quiz.html"
+  },
+  "sb-redes-10b": {
+    "template": "guia-redes-rap01",
+    "partialPath": "partials/guia-redes-rap01-content.html",
+    "pageFile": "santa-barbara-10b-guia-02-redes-rap01.html",
+    "inst": "Institucion Educativa Santa Barbara",
+    "grupo": "10B",
+    "ficha": "3441950",
+    "cloudFileName": "sb_10b_redes.html",
+    "quizRedesUrl": "santa-barbara-10b-guia-02-redes-rap01-quiz.html",
+    "quizIpUrl": "santa-barbara-10b-guia-02-redes-ip-quiz.html"
+  }
+}
