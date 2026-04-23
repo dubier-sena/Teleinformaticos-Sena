@@ -20,8 +20,8 @@ const EXPECTED_CONTEXTS = {
     grupo: "10A",
     ficha: "3441944",
     cloudFileName: "sb_10a_redes.html",
-    quizRedesUrl: "santa-barbara-10a-guia-02-redes-rap01-quiz.html",
-    quizIpUrl: "santa-barbara-10a-guia-02-redes-ip-quiz.html",
+    quizRedesUrl: "pages/aux/santa-barbara-10a-guia-02-redes-rap01-quiz.html",
+    quizIpUrl: "pages/aux/santa-barbara-10a-guia-02-redes-ip-quiz.html",
   },
   "sb-redes-10b": {
     template: "guia-redes-rap01",
@@ -31,8 +31,8 @@ const EXPECTED_CONTEXTS = {
     grupo: "10B",
     ficha: "3441950",
     cloudFileName: "sb_10b_redes.html",
-    quizRedesUrl: "santa-barbara-10b-guia-02-redes-rap01-quiz.html",
-    quizIpUrl: "santa-barbara-10b-guia-02-redes-ip-quiz.html",
+    quizRedesUrl: "pages/aux/santa-barbara-10b-guia-02-redes-rap01-quiz.html",
+    quizIpUrl: "pages/aux/santa-barbara-10b-guia-02-redes-ip-quiz.html",
   },
 };
 
@@ -246,8 +246,8 @@ test("runtime loader injects the shared guide and boots both init hooks in order
   assert.equal(harness.body.dataset.defaultInst, "Institucion Educativa Santa Barbara");
   assert.equal(harness.body.dataset.defaultGrupo, "10A");
   assert.equal(harness.body.dataset.defaultFicha, "3441944");
-  assert.equal(harness.quizRedesLink.href, "santa-barbara-10a-guia-02-redes-rap01-quiz.html");
-  assert.equal(harness.quizIpLink.href, "santa-barbara-10a-guia-02-redes-ip-quiz.html");
+  assert.equal(harness.quizRedesLink.href, "pages/aux/santa-barbara-10a-guia-02-redes-rap01-quiz.html");
+  assert.equal(harness.quizIpLink.href, "pages/aux/santa-barbara-10a-guia-02-redes-ip-quiz.html");
   assert.equal(counts.templateInitCalls, 1);
   assert.equal(counts.guideInitCalls, 1);
   assert.deepEqual(harness.lookupLog, [
