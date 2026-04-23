@@ -536,8 +536,14 @@ let matchingGameCountdownVariant = 0;
 let matchingGameCountdownPhase = "idle";
 const ACTIVITY4_IDENTITY_NAME_KEY = "actividad4:nombre_completo";
 const ACTIVITY4_IDENTITY_FICHA_KEY = "actividad4:ficha";
+let guia2Booted = false;
 
-document.addEventListener("DOMContentLoaded", () => {
+function initGuia2() {
+  if (guia2Booted) {
+    return;
+  }
+
+  guia2Booted = true;
   renderStatefulSections();
   renderConceptLegend();
   renderEvidenceTable();
@@ -553,7 +559,13 @@ document.addEventListener("DOMContentLoaded", () => {
   updateProgress();
   setupScrollSpy();
   initializeCloudStateSync();
-});
+}
+
+window.initGuia2 = initGuia2;
+
+if (!window.__PAGE_CONTEXT__) {
+  document.addEventListener("DOMContentLoaded", initGuia2);
+}
 
 document.addEventListener("guide-activity-check-change", () => {
   window.requestAnimationFrame(() => updateProgress());
