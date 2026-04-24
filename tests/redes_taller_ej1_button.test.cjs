@@ -218,7 +218,7 @@ test("el ejercicio 5 del taller IP queda integrado con lock y panel teorico con 
 test("el taller IP incluye un boton final para generar y subir un solo Word con ejercicios 1 a 5 en la guia compartida", () => {
   assert.match(SHARED_HTML, /onclick="exportarWordTallerIP\(event\)"/);
   assert.match(SHARED_HTML, /Generar Word(?:\s|&nbsp;|&#160;|&mdash;|&#8212;|-)+Taller IP/);
-  assert.match(SHARED_HTML, /Cuando hayas completado los 5 ejercicios, genera tu entrega en Word y s(?:u|Ãº|&uacute;)bela al Drive/i);
+  assert.match(SHARED_HTML, /Cuando hayas completado los 5 ejercicios, genera tu entrega en Word y s(?:u|ú|Ãº|&uacute;)bela al Drive/i);
 });
 
 test("el taller IP genera un solo Word con ejercicios 1 a 5 y prepara la subida al Drive", () => {
