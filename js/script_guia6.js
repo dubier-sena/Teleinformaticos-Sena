@@ -340,6 +340,11 @@ const GUIDE6_DRIVE_ACTIVITY_TARGETS = [
     description:
       "Cuando termines la bitacora individual de analisis, subela a la carpeta de Drive correspondiente a tu ficha.",
     note: "Entrega sugerida: bitacora individual exportada a Word o version final del analisis.",
+    activityContext: {
+      activityTitle: "Estudio de caso - Bitacora individual de analisis",
+      fileNamePrefix: "Bitacora_Guia6_EstudioCaso",
+      learnerNameMode: "full",
+    },
   },
   {
     activityNumber: "3.2.1",
@@ -347,6 +352,11 @@ const GUIDE6_DRIVE_ACTIVITY_TARGETS = [
     description:
       "Sube a Drive la tabla resumen, el PDF o la evidencia final construida por el equipo para esta actividad.",
     note: "Entrega sugerida: tabla resumen del bloque tematico en PDF o archivo editable.",
+    activityContext: {
+      activityTitle: "Tabla resumen del bloque tematico",
+      fileNamePrefix: "TablaResumen_Guia6_Bloque",
+      learnerNameMode: "full",
+    },
   },
   {
     activityNumber: "3.2.2",
@@ -354,6 +364,11 @@ const GUIDE6_DRIVE_ACTIVITY_TARGETS = [
     description:
       "Sube a Drive el mapa conceptual exportado a PDF y la evidencia que sustenta la socializacion del equipo.",
     note: "Entrega sugerida: mapa conceptual en PDF y soporte del producto presentado.",
+    activityContext: {
+      activityTitle: "Mapa conceptual de herramientas tecnologicas",
+      fileNamePrefix: "MapaConceptual_Guia6",
+      learnerNameMode: "full",
+    },
   },
   {
     activityNumber: "3.3.1",
@@ -361,6 +376,11 @@ const GUIDE6_DRIVE_ACTIVITY_TARGETS = [
     description:
       "Sube a Drive el checklist de instalacion, capturas y evidencias tecnicas de la configuracion realizada.",
     note: "Entrega sugerida: checklist diligenciado, capturas y registro de instalacion.",
+    activityContext: {
+      activityTitle: "Checklist de instalacion y configuracion de herramientas",
+      fileNamePrefix: "Checklist_Guia6_Instalacion",
+      learnerNameMode: "full",
+    },
   },
   {
     activityNumber: "3.3.2",
@@ -368,6 +388,11 @@ const GUIDE6_DRIVE_ACTIVITY_TARGETS = [
     description:
       "Sube a Drive el diagnostico tecnico con hallazgos, recomendaciones y soporte de las herramientas usadas.",
     note: "Entrega sugerida: diagnostico final del equipo y carpeta de evidencias.",
+    activityContext: {
+      activityTitle: "Diagnostico tecnico del equipo",
+      fileNamePrefix: "Diagnostico_Guia6",
+      learnerNameMode: "full",
+    },
   },
   {
     activityNumber: "3.4.1",
@@ -375,6 +400,11 @@ const GUIDE6_DRIVE_ACTIVITY_TARGETS = [
     description:
       "Sube a Drive el presupuesto en PDF junto con el archivo editable y la justificacion tecnica final.",
     note: "Entrega sugerida: presupuesto PDF, archivo fuente y conclusion tecnica.",
+    activityContext: {
+      activityTitle: "Presupuesto de implementacion tecnologica",
+      fileNamePrefix: "Presupuesto_Guia6",
+      learnerNameMode: "full",
+    },
   },
 ];
 
