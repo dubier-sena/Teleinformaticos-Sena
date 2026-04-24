@@ -1102,7 +1102,6 @@ window.exportarWordContextualizacion = async function (evt) {
       activityLabel: "Actividad 3.2.1",
       activityNumber: "3.2.1",
       activityTitle: "Exploracion Visual por Bloques Tematicos",
-      allowedExtensions: [".docx"],
       fileNamePrefix: "Exploracion_Contextual",
       learnerNameMode: "full",
     });
@@ -1795,7 +1794,6 @@ ${screenshotBlock}
       activityNumber: "3.3.4",
       activityTitle: "Actividad 3.3.4 — Taller IP (Ejercicios 1–5)",
       activityLabel: "Actividad 3.3.4",
-      allowedExtensions: [".doc", ".docx"],
       fileNamePrefix: "Taller_IP",
       learnerNameMode: "full",
     });
@@ -2381,7 +2379,6 @@ window.subirEntregaFinalLab1 = function () {
     activityNumber: "3.4.1",
     activityTitle: "Laboratorio 1 \u2014 Red topologia estrella con direccionamiento IP",
     activityLabel: "Actividad 3.4.1",
-    allowedExtensions: [".pkt"],
     fileNamePrefix: "Lab1_EstrellaCarmen",
     learnerNameMode: "full",
   });
@@ -2625,7 +2622,6 @@ window.subirEntregaFinalLab2 = function () {
     activityNumber: "3.4.2",
     activityTitle: "Laboratorio 2 — Red topologia arbol con multiples segmentos (Autonomo)",
     activityLabel: "Actividad 3.4.2",
-    allowedExtensions: [".pkt"],
     fileNamePrefix: "Lab2_ArbolBoycaTech",
     learnerNameMode: "full",
   });
@@ -2871,7 +2867,6 @@ window.subirEntregaFinalLab3 = function () {
     activityNumber: "3.4.3",
     activityTitle: "Laboratorio 3 - Red hibrida estrella y arbol con fibra optica, cableado y Wi-Fi",
     activityLabel: "Actividad 3.4.3",
-    allowedExtensions: [".pkt"],
     fileNamePrefix: "Lab3_HibridaColegio",
     learnerNameMode: "full",
   });
