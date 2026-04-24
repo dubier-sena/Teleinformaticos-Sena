@@ -19,6 +19,7 @@ const ALLOWED_EXTENSIONS = [
   ".jpeg",
   ".png",
   ".zip",
+  ".pkt",
 ];
 
 function doPost(e) {
