@@ -27,24 +27,13 @@
     document.body.dataset.defaultFicha = context.ficha || "";
   }
 
-  function executeInlinePartialScripts(html) {
-    const scriptPattern = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi;
-    let match = scriptPattern.exec(html);
-
-    while (match) {
-      const attributes = String(match[1] || "");
-      const sourceCode = String(match[2] || "").trim();
-
-      if (!/\bsrc\s*=/.test(attributes) && sourceCode) {
-        if (typeof window.eval === "function") {
-          window.eval(sourceCode);
-        } else {
-          Function(sourceCode)();
-        }
-      }
-
-      match = scriptPattern.exec(html);
-    }
+  function executeInlinePartialScripts(container) {
+    var scripts = Array.from(container.querySelectorAll("script:not([src])"));
+    scripts.forEach(function (oldScript) {
+      var newScript = document.createElement("script");
+      newScript.textContent = oldScript.textContent;
+      document.head.appendChild(newScript);
+    });
   }
 
   function showRuntimeError(message) {
@@ -101,7 +90,7 @@
     root.innerHTML = html;
     window.__PAGE_RUNTIME_CONTEXT__ = context;
     setContextDatasets(context);
-    executeInlinePartialScripts(html);
+    executeInlinePartialScripts(root);
 
     if (typeof window.initGuiaTemplateShell === "function") {
       window.initGuiaTemplateShell();
