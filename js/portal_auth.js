@@ -2725,9 +2725,9 @@ window.portalAuth = {
     });
 
     if (!result.ok || !Array.isArray(result.users)) {
-      if (result.status === 401) {
+      if (result.status === 401 && !shouldBypassAccessGuardsForLocalPreview()) {
         persistSessionRecord(null);
-      auth.setFlashMessage("La sesi\u00f3n administrativa ha expirado. Inicia sesi\u00f3n de nuevo.", "warn");
+        auth.setFlashMessage("La sesi\u00f3n administrativa ha expirado. Inicia sesi\u00f3n de nuevo.", "warn");
         window.location.replace("index.html");
         return [];
       }
