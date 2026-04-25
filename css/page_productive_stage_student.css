@@ -495,6 +495,108 @@
   border-color: #dfe6e2;
 }
 
+/* ── Fechas de tutoria ─────────────────────────────────── */
+.tutoring-dates-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.tutoring-date {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 72px;
+  padding: 12px 10px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #dcefe3;
+  background: #f5faf7;
+  text-align: center;
+  transition: box-shadow 0.15s;
+}
+
+.tutoring-date__num {
+  font-family: var(--font-display);
+  font-size: 1.65rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: var(--text-strong);
+}
+
+.tutoring-date__month {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: capitalize;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.tutoring-date__badge {
+  margin-top: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Estados */
+.tutoring-date--past {
+  border-color: #e5e8e6;
+  background: #f8faf9;
+}
+.tutoring-date--past .tutoring-date__num,
+.tutoring-date--past .tutoring-date__month {
+  color: #aab8b2;
+}
+.tutoring-date--past .tutoring-date__badge {
+  background: #eef0ef;
+  color: #8fa49b;
+}
+
+.tutoring-date--upcoming {
+  border-color: #c6e4d2;
+  background: #f0f9f4;
+}
+.tutoring-date--upcoming .tutoring-date__num {
+  color: var(--brand-700);
+}
+.tutoring-date--upcoming .tutoring-date__badge {
+  background: #d6f0e2;
+  color: var(--brand-700);
+}
+
+.tutoring-date--today {
+  border-color: #f5b700;
+  background: #fffceb;
+  box-shadow: 0 0 0 2px rgba(245, 183, 0, 0.2);
+}
+.tutoring-date--today .tutoring-date__num {
+  color: #7a4f00;
+}
+.tutoring-date--today .tutoring-date__badge {
+  background: #fde68a;
+  color: #7a4f00;
+}
+
+.tutoring-date--cancelled {
+  border-color: #fecdd3;
+  background: #fff5f5;
+}
+.tutoring-date--cancelled .tutoring-date__num,
+.tutoring-date--cancelled .tutoring-date__month {
+  color: #c2929a;
+  text-decoration: line-through;
+}
+.tutoring-date--cancelled .tutoring-date__badge {
+  background: #ffe4e8;
+  color: #b42318;
+}
+
 @media (max-width: 900px) {
   .student-project-grid {
     grid-template-columns: 1fr;
