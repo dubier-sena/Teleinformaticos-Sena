@@ -43,19 +43,21 @@
       '          Guías <span class="app-navbar__caret" aria-hidden="true">▾</span>',
       '        </button>',
       '        <div class="app-navbar__drop-panel" role="menu">',
-      '          <div class="app-navbar__drop-group">',
+      '          <div class="app-navbar__drop-group" data-guide-group>',
       '            <span class="app-navbar__drop-heading">Grado 10</span>',
-      '            <a class="app-navbar__drop-link" href="grupo-10a-guia-01-induccion.html" role="menuitem">10A · Guía 1 — Inducción</a>',
-      '            <a class="app-navbar__drop-link" href="grupo-10a-guia-02-herramientas-informaticas-digitales.html" role="menuitem">10A · Guía 2 — Herramientas</a>',
-      '            <a class="app-navbar__drop-link" href="grupo-10b-guia-01-induccion.html" role="menuitem">10B · Guía 1 — Inducción</a>',
-      '            <a class="app-navbar__drop-link" href="grupo-10b-guia-02-herramientas-informaticas-digitales.html" role="menuitem">10B · Guía 2 — Herramientas</a>',
+      '            <a class="app-navbar__drop-link" href="grupo-10a-guia-01-induccion.html" role="menuitem" data-guide-file="grupo-10a-guia-01-induccion.html">10A · Guía 1 — Inducción</a>',
+      '            <a class="app-navbar__drop-link" href="grupo-10a-guia-02-herramientas-informaticas-digitales.html" role="menuitem" data-guide-file="grupo-10a-guia-02-herramientas-informaticas-digitales.html">10A · Guía 2 — Herramientas</a>',
+      '            <a class="app-navbar__drop-link" href="santa-barbara-10a-guia-02-redes-rap01.html" role="menuitem" data-guide-file="santa-barbara-10a-guia-02-redes-rap01.html">10A · Guía 2 — Redes</a>',
+      '            <a class="app-navbar__drop-link" href="grupo-10b-guia-01-induccion.html" role="menuitem" data-guide-file="grupo-10b-guia-01-induccion.html">10B · Guía 1 — Inducción</a>',
+      '            <a class="app-navbar__drop-link" href="grupo-10b-guia-02-herramientas-informaticas-digitales.html" role="menuitem" data-guide-file="grupo-10b-guia-02-herramientas-informaticas-digitales.html">10B · Guía 2 — Herramientas</a>',
+      '            <a class="app-navbar__drop-link" href="santa-barbara-10b-guia-02-redes-rap01.html" role="menuitem" data-guide-file="santa-barbara-10b-guia-02-redes-rap01.html">10B · Guía 2 — Redes</a>',
       '          </div>',
-      '          <div class="app-navbar__drop-group">',
+      '          <div class="app-navbar__drop-group" data-guide-group>',
       '            <span class="app-navbar__drop-heading">Grado 11</span>',
-      '            <a class="app-navbar__drop-link" href="grupo-11a-guia-05-herramientas-informaticas-digitales.html" role="menuitem">11A · Guía 5 — Herramientas</a>',
-      '            <a class="app-navbar__drop-link" href="grupo-11a-guia-06-planificar-informacion.html" role="menuitem">11A · Guía 6 — Planificar</a>',
-      '            <a class="app-navbar__drop-link" href="grupo-11b-guia-05-herramientas-informaticas-digitales.html" role="menuitem">11B · Guía 5 — Herramientas</a>',
-      '            <a class="app-navbar__drop-link" href="grupo-11b-guia-06-planificar-informacion.html" role="menuitem">11B · Guía 6 — Planificar</a>',
+      '            <a class="app-navbar__drop-link" href="grupo-11a-guia-05-herramientas-informaticas-digitales.html" role="menuitem" data-guide-file="grupo-11a-guia-05-herramientas-informaticas-digitales.html">11A · Guía 5 — Herramientas</a>',
+      '            <a class="app-navbar__drop-link" href="grupo-11a-guia-06-planificar-informacion.html" role="menuitem" data-guide-file="grupo-11a-guia-06-planificar-informacion.html">11A · Guía 6 — Planificar</a>',
+      '            <a class="app-navbar__drop-link" href="grupo-11b-guia-05-herramientas-informaticas-digitales.html" role="menuitem" data-guide-file="grupo-11b-guia-05-herramientas-informaticas-digitales.html">11B · Guía 5 — Herramientas</a>',
+      '            <a class="app-navbar__drop-link" href="grupo-11b-guia-06-planificar-informacion.html" role="menuitem" data-guide-file="grupo-11b-guia-06-planificar-informacion.html">11B · Guía 6 — Planificar</a>',
       '          </div>',
       '        </div>',
       '      </div>',
@@ -163,6 +165,26 @@
     if (isAdmin) {
       document.querySelectorAll(".app-navbar__admin-only").forEach(function (el) {
         el.style.display = "";
+      });
+    } else {
+      // Estudiante: mostrar solo las guías de su ficha
+      var studentGuides = [];
+      try {
+        studentGuides = auth.getGuidesForFicha(session.user && session.user.ficha) || [];
+      } catch (e) {}
+
+      document.querySelectorAll(".app-navbar__drop-link[data-guide-file]").forEach(function (link) {
+        var file = link.getAttribute("data-guide-file");
+        link.style.display = studentGuides.includes(file) ? "" : "none";
+      });
+
+      // Ocultar el encabezado del grupo si no tiene guías visibles
+      document.querySelectorAll("[data-guide-group]").forEach(function (group) {
+        var visibleLinks = Array.from(
+          group.querySelectorAll(".app-navbar__drop-link[data-guide-file]")
+        ).filter(function (l) { return l.style.display !== "none"; });
+        var heading = group.querySelector(".app-navbar__drop-heading");
+        if (heading) heading.style.display = visibleLinks.length ? "" : "none";
       });
     }
   }
