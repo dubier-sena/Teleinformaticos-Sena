@@ -240,6 +240,84 @@
     }
   }
 
+  function getTutoringDates() {
+    const records = window.CALENDAR_2026_RECORDS;
+    if (!Array.isArray(records)) {
+      return [];
+    }
+
+    return records
+      .filter(function (r) {
+        return r.tipo === "SENA";
+      })
+      .sort(function (a, b) {
+        return a.fecha.localeCompare(b.fecha);
+      });
+  }
+
+  function renderTutoringDates() {
+    const container = getById("student-tutoring-dates-body");
+    if (!container) {
+      return;
+    }
+
+    const dates = getTutoringDates();
+    if (!dates.length) {
+      container.innerHTML = '<p class="student-project-placeholder">No hay fechas de tutoria registradas.</p>';
+      return;
+    }
+
+    const todayStr = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD local
+
+    const items = dates
+      .map(function (record) {
+        const isPast = record.fecha < todayStr;
+        const isToday = record.fecha === todayStr;
+        const isCancelled = String(record.defE || "").toLowerCase() === "cancelada";
+
+        const parts = record.fecha.split("-");
+        const dateObj = new Date(
+          parseInt(parts[0], 10),
+          parseInt(parts[1], 10) - 1,
+          parseInt(parts[2], 10)
+        );
+        const dayNum = dateObj.getDate();
+        const monthName = dateObj.toLocaleString("es-CO", { month: "long" });
+
+        let stateClass = "tutoring-date--upcoming";
+        let stateLabel = "Proxima";
+        if (isCancelled) {
+          stateClass = "tutoring-date--cancelled";
+          stateLabel = "Cancelada";
+        } else if (isToday) {
+          stateClass = "tutoring-date--today";
+          stateLabel = "Hoy";
+        } else if (isPast) {
+          stateClass = "tutoring-date--past";
+          stateLabel = "Realizada";
+        }
+
+        return (
+          '<div class="tutoring-date ' +
+          stateClass +
+          '">' +
+          '<div class="tutoring-date__num">' +
+          dayNum +
+          "</div>" +
+          '<div class="tutoring-date__month">' +
+          escapeHtml(monthName) +
+          "</div>" +
+          '<div class="tutoring-date__badge">' +
+          stateLabel +
+          "</div>" +
+          "</div>"
+        );
+      })
+      .join("");
+
+    container.innerHTML = '<div class="tutoring-dates-grid">' + items + "</div>";
+  }
+
   function renderSupportModules(snapshot, viewModel, session) {
     if (!projectDelivery || typeof projectDelivery.render !== "function") {
       return;
@@ -320,6 +398,10 @@
     }
   }
 
+  function isLocalFilePreview() {
+    return /^file:$/i.test(String(window.location.protocol || ""));
+  }
+
   async function initializeStudentProductiveStagePage() {
     if (!auth || !store) {
       renderEmptyState(
@@ -331,7 +413,17 @@
     }
 
     const session = auth.getCurrentSession();
+
     if (!isAllowedStudentSession(session)) {
+      if (isLocalFilePreview()) {
+        renderTutoringDates();
+        renderEmptyState(
+          "Vista local — Sin sesion activa",
+          "Para ver tu proyecto inicia sesion desde el portal. Esta seccion solo esta disponible para aprendices de 11A y 11B.",
+          "Sin sesion"
+        );
+        return;
+      }
       auth.setFlashMessage(
         "Esta vista privada de etapa productiva solo esta disponible para los aprendices autorizados de 11A y 11B.",
         "warn"
@@ -342,6 +434,8 @@
 
     const usernameKey = resolveStudentUsernameKey(session);
     const snapshot = await store.loadSnapshot();
+
+    renderTutoringDates();
 
     if (session.role === "admin" && !usernameKey) {
       renderAdminOverview(snapshot);
