@@ -261,13 +261,14 @@
       return;
     }
 
-    const dates = getTutoringDates();
+    const todayStr = new Date().toLocaleDateString("en-CA");
+    const dates = getTutoringDates().filter(function (r) {
+      return r.fecha >= todayStr;
+    });
     if (!dates.length) {
       container.innerHTML = '<p class="student-project-placeholder">No hay fechas de tutoria registradas.</p>';
       return;
     }
-
-    const todayStr = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD local
 
     const items = dates
       .map(function (record) {

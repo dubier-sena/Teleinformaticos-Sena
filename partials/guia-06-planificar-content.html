@@ -517,87 +517,81 @@
               <span class="activity-toggle">&#9662;</span>
             </div>
             <div class="activity-body">
-              <article class="support-card">
-                <h3>El diagnostico debe incluir</h3>
-                <ul class="note-list">
-                  <li>Hardware con CPU-Z: procesador, RAM, placa base y tarjeta de red.</li>
-                  <li>Sistema operativo: version exacta, licenciamiento y actualizaciones pendientes.</li>
-                  <li>Estado del disco con CrystalDiskInfo: salud, temperatura y alertas.</li>
-                  <li>Inventario de software instalado en Calc o Google Sheets.</li>
-                  <li>Conectividad de red con <code>ipconfig /all</code> y <code>ping 8.8.8.8</code>.</li>
-                  <li>Belarc Advisor como evidencia adicional si el instructor lo autoriza.</li>
-                </ul>
-              </article>
 
-              <article class="notes-card" style="margin-top:16px;">
-                <h3>Registro final del diagnostico</h3>
-                <label>
-                  <span>Conclusion tecnica del equipo</span>
-                  <textarea rows="5" data-store="diag_conclusion" data-track placeholder="Indica si el equipo esta listo para uso empresarial y que recomendarias mejorar."></textarea>
-                </label>
-                <label>
-                  <span>Nombre de la carpeta de entrega</span>
-                  <textarea rows="3" data-store="diag_folder" data-track placeholder="Ejemplo: Diagnostico_TuNombre_2026-03-23"></textarea>
-                </label>
-                <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
-                  <button type="button" id="btnGuardarDiagnostico"
-                    onclick="guardarDiagnostico331()"
-                    style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
-                    &#128190; Guardar respuestas
-                  </button>
-                </div>
-                <div id="diagnosticoStatus331" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
-                  &#9989; Respuestas guardadas correctamente.
-                </div>
-              </article>
-
-              <div class="table-scroll">
-                <table class="data-table">
+              <div style="background:#1b5e20;color:#fff;border-radius:8px 8px 0 0;padding:10px 16px;font-size:0.82rem;font-weight:700;letter-spacing:0.04em;display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:0">
+                <span>&#128203; EVIDENCIA &mdash; Tipo: Evidencia de Desempe&ntilde;o</span>
+                <span style="opacity:0.5">|</span>
+                <span>Instrumento: Lista de Chequeo IE-02</span>
+              </div>
+              <div class="table-scroll" style="margin-top:0;border-radius:0 0 8px 8px;overflow:hidden;border:1px solid #c8e6c9;border-top:none">
+                <table class="data-table" style="margin:0">
                   <thead>
                     <tr>
+                      <th style="width:2rem;text-align:center">#</th>
                       <th>Herramienta</th>
-                      <th>Fuente oficial o manual</th>
-                      <th>Version</th>
-                      <th>Criterio de verificacion</th>
-                      <th>Instalada</th>
-                      <th>Configuracion / evidencia</th>
+                      <th>Criterio de verificaci&oacute;n</th>
+                      <th>Fuente oficial</th>
                     </tr>
                   </thead>
-                  <tbody id="installationTable"></tbody>
+                  <tbody>
+                    <tr>
+                      <td style="text-align:center;font-weight:700">1</td>
+                      <td>Suite ofim&aacute;tica (LibreOffice o Microsoft 365 seg&uacute;n disponibilidad)</td>
+                      <td>Procesador de texto, hoja de c&aacute;lculo y presentaciones abriendo correctamente. Captura de cada m&oacute;dulo.</td>
+                      <td><a href="https://www.libreoffice.org" target="_blank" rel="noopener">libreoffice.org</a> o <a href="https://www.microsoft.com/es-co/microsoft-365" target="_blank" rel="noopener">microsoft.com</a></td>
+                    </tr>
+                    <tr>
+                      <td style="text-align:center;font-weight:700">2</td>
+                      <td>Navegador web actualizado con extensiones b&aacute;sicas de seguridad</td>
+                      <td>Extensi&oacute;n de seguridad instalada (bloqueador de anuncios, HTTPS). Captura de la configuraci&oacute;n.</td>
+                      <td><a href="https://www.mozilla.org/es-ES/firefox/" target="_blank" rel="noopener">mozilla.org</a> o <a href="https://www.google.com/intl/es/chrome/" target="_blank" rel="noopener">google.com/chrome</a></td>
+                    </tr>
+                    <tr>
+                      <td style="text-align:center;font-weight:700">3</td>
+                      <td>Cliente de correo electr&oacute;nico configurado</td>
+                      <td>Cuenta de prueba configurada. Env&iacute;o y recepci&oacute;n de correo de prueba exitoso. Captura de la bandeja.</td>
+                      <td><a href="https://www.thunderbird.net/es-ES/" target="_blank" rel="noopener">thunderbird.net</a> o <a href="https://mail.google.com" target="_blank" rel="noopener">gmail.com</a></td>
+                    </tr>
+                    <tr>
+                      <td style="text-align:center;font-weight:700">4</td>
+                      <td>Herramienta de compresi&oacute;n y descompresi&oacute;n (7-Zip)</td>
+                      <td>Comprimir y descomprimir un archivo de prueba. Captura del proceso completo.</td>
+                      <td><a href="https://www.7-zip.org" target="_blank" rel="noopener">7-zip.org</a></td>
+                    </tr>
+                    <tr>
+                      <td style="text-align:center;font-weight:700">5</td>
+                      <td>Software antivirus / protecci&oacute;n integrada (Windows Defender)</td>
+                      <td>Estado &ldquo;Protegido&rdquo;, definiciones actualizadas, an&aacute;lisis r&aacute;pido ejecutado. Captura del reporte.</td>
+                      <td>Integrado en Windows</td>
+                    </tr>
+                    <tr>
+                      <td style="text-align:center;font-weight:700">6</td>
+                      <td>Al menos una herramienta de diagn&oacute;stico (CPU-Z, CrystalDiskInfo)</td>
+                      <td>Instalada y mostrando reporte del hardware del equipo. Captura del reporte generado.</td>
+                      <td><a href="https://www.cpuid.com/softwares/cpu-z.html" target="_blank" rel="noopener">cpuid.com</a> o <a href="https://crystalmark.info/en/software/crystaldiskinfo/" target="_blank" rel="noopener">crystalmark.info</a></td>
+                    </tr>
+                  </tbody>
                 </table>
               </div>
 
-              <div class="info-box green" style="margin-top:16px">
-                <div class="label">Importante</div>
-                <p>Descarga cada instalador unicamente desde el sitio oficial del fabricante o desde la ruta validada por el instructor. Nunca uses fuentes no oficiales.</p>
+              <div class="info-box green" style="margin-top:14px">
+                <div class="label">&#128274; Importante</div>
+                <p>Descarga el instalador &Uacute;NICAMENTE del sitio oficial del fabricante (columna &ldquo;Fuente oficial&rdquo;). Nunca uses fuentes no oficiales. Ante cualquier duda, consulta al instructor antes de descargar.</p>
               </div>
 
-              <article class="checklist-card" style="margin-top:16px;">
-                <h3>Pasos obligatorios</h3>
-                <label class="check-item"><input type="checkbox" data-store="inst_step_1" data-track><span>Consultar el manual tecnico o guia oficial de instalacion.</span></label>
-                <label class="check-item"><input type="checkbox" data-store="inst_step_2" data-track><span>Verificar compatibilidad con Windows y arquitectura de 32 o 64 bits.</span></label>
-                <label class="check-item"><input type="checkbox" data-store="inst_step_3" data-track><span>Ejecutar la instalacion paso a paso siguiendo el asistente.</span></label>
-                <label class="check-item"><input type="checkbox" data-store="inst_step_4" data-track><span>Configurar parametros basicos y tomar capturas de evidencia.</span></label>
-                <label class="check-item"><input type="checkbox" data-store="inst_step_5" data-track><span>Registrar resultado, error exacto y solucion aplicada si hubo fallas.</span></label>
+              <article class="support-card" style="margin-top:14px">
+                <h3>Para cada herramienta instalada debes:</h3>
+                <ol style="padding-left:1.4rem;margin:0;line-height:1.75">
+                  <li>Consultar el manual t&eacute;cnico o gu&iacute;a de instalaci&oacute;n oficial (sitio del fabricante).</li>
+                  <li>Verificar compatibilidad con el sistema operativo del equipo (32 o 64 bits &mdash; revisa en <code>msinfo32</code> con <kbd>Windows + R</kbd>).</li>
+                  <li>Ejecutar el proceso de instalaci&oacute;n paso a paso siguiendo el asistente.</li>
+                  <li>Configurar los par&aacute;metros b&aacute;sicos seg&uacute;n el manual t&eacute;cnico del instructor.</li>
+                  <li>Verificar que la herramienta funcione correctamente ejecutando una tarea b&aacute;sica y tomando captura con Recortes de Windows (<kbd>Win + May&uacute;s + S</kbd>) o Greenshot (getgreenshot.org).</li>
+                  <li>Registrar cada instalaci&oacute;n en el checklist: nombre, versi&oacute;n (Ayuda &gt; Acerca de), fecha, configuraci&oacute;n aplicada, resultado y observaciones. Si falla, anotar el mensaje de error exacto y la soluci&oacute;n aplicada.</li>
+                  <li>Organizar todas las capturas en una carpeta llamada <strong>Evidencias_Act331_[TuNombre]</strong>, numeradas: <code>01_LibreOffice.png</code>, <code>02_Navegador.png</code>, etc. Entregar checklist y carpeta al instructor.</li>
+                </ol>
               </article>
 
-              <article class="notes-card" style="margin-top:16px;">
-                <h3>Observaciones de instalacion</h3>
-                <label>
-                  <span>Problemas encontrados y solucion aplicada</span>
-                  <textarea rows="6" data-store="inst_observaciones" data-track placeholder="Registra incompatibilidades, reinicios, permisos, capturas y carpeta de evidencias creada."></textarea>
-                </label>
-                <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
-                  <button type="button" id="btnGuardarObservaciones"
-                    onclick="guardarObservaciones331()"
-                    style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
-                    &#128190; Guardar respuestas
-                  </button>
-                </div>
-                <div id="observacionesStatus331" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
-                  &#9989; Respuestas guardadas correctamente.
-                </div>
-              </article>
             </div>
           </div>
 
@@ -609,23 +603,165 @@
               <span class="activity-toggle">&#9662;</span>
             </div>
             <div class="activity-body">
-              <div class="table-scroll">
-                <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th>Categoria</th>
-                      <th>Hallazgos tecnicos</th>
-                      <th>Acciones o recomendaciones</th>
-                    </tr>
-                  </thead>
-                  <tbody id="diagnosticTable"></tbody>
-                </table>
+
+              <div style="border:1px solid #c8e6c9;border-radius:10px;overflow:hidden;margin-bottom:16px">
+                <div style="background:#e8f5e9;padding:10px 16px;font-weight:700;color:#1b5e20;font-size:0.9rem">
+                  &#128187; Herramientas TIC que vas a usar
+                </div>
+                <div style="padding:12px 16px;display:flex;flex-wrap:wrap;gap:8px">
+                  <a href="https://www.cpuid.com/softwares/cpu-z.html" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;background:#f0f9f4;border:1px solid #c8e6c9;border-radius:6px;padding:5px 11px;font-size:0.83rem;font-weight:600;color:#1b5e20;text-decoration:none">&#128190; CPU-Z <span style="font-weight:400;color:#666;font-size:0.78rem">— hardware detallado</span></a>
+                  <a href="https://crystalmark.info/en/software/crystaldiskinfo/" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;background:#f0f9f4;border:1px solid #c8e6c9;border-radius:6px;padding:5px 11px;font-size:0.83rem;font-weight:600;color:#1b5e20;text-decoration:none">&#128190; CrystalDiskInfo <span style="font-weight:400;color:#666;font-size:0.78rem">— salud del disco</span></a>
+                  <a href="https://www.belarc.com/products/belarc-advisor" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;background:#f0f9f4;border:1px solid #c8e6c9;border-radius:6px;padding:5px 11px;font-size:0.83rem;font-weight:600;color:#1b5e20;text-decoration:none">&#128190; Belarc Advisor <span style="font-weight:400;color:#666;font-size:0.78rem">— inventario HTML</span></a>
+                  <span style="display:inline-flex;align-items:center;gap:5px;background:#f0f9f4;border:1px solid #c8e6c9;border-radius:6px;padding:5px 11px;font-size:0.83rem;font-weight:600;color:#1b5e20"><code style="background:none;padding:0">msinfo32</code> <span style="font-weight:400;color:#666;font-size:0.78rem">— resumen del sistema</span></span>
+                  <span style="display:inline-flex;align-items:center;gap:5px;background:#f0f9f4;border:1px solid #c8e6c9;border-radius:6px;padding:5px 11px;font-size:0.83rem;font-weight:600;color:#1b5e20">Administrador de tareas <span style="font-weight:400;color:#666;font-size:0.78rem">— rendimiento en vivo</span></span>
+                  <span style="display:inline-flex;align-items:center;gap:5px;background:#f0f9f4;border:1px solid #c8e6c9;border-radius:6px;padding:5px 11px;font-size:0.83rem;font-weight:600;color:#1b5e20">CMD: <code style="background:none;padding:0">ipconfig /all</code>, <code style="background:none;padding:0">ping 8.8.8.8</code></span>
+                  <span style="display:inline-flex;align-items:center;gap:5px;background:#f0f9f4;border:1px solid #c8e6c9;border-radius:6px;padding:5px 11px;font-size:0.83rem;font-weight:600;color:#1b5e20">LibreOffice Calc / Google Sheets <span style="font-weight:400;color:#666;font-size:0.78rem">— inventario</span></span>
+                  <a href="https://getgreenshot.org" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;background:#f0f9f4;border:1px solid #c8e6c9;border-radius:6px;padding:5px 11px;font-size:0.83rem;font-weight:600;color:#1b5e20;text-decoration:none">Recortes de Windows / Greenshot <span style="font-weight:400;color:#666;font-size:0.78rem">— capturas</span></a>
+                </div>
               </div>
 
-              <div class="info-box" style="margin-top:16px">
-                <div class="label">Herramientas recomendadas</div>
-                <p>CPU-Z para hardware, CrystalDiskInfo para el disco, Belarc Advisor como opcional de inventario, <code>msinfo32</code> para resumen del sistema y <code>ipconfig</code> / <code>ping</code> para conectividad.</p>
+              <p style="margin:0 0 16px;color:var(--text-muted);line-height:1.7">Vas a hacer un diagn&oacute;stico completo de un equipo del laboratorio. Sigue cada paso, toma la captura indicada y organiza todo en tu carpeta de evidencias.</p>
+
+              <!-- Paso 1 -->
+              <div style="border:1px solid #c8e6c9;border-radius:10px;overflow:hidden;margin-bottom:12px">
+                <div style="background:#e8f5e9;padding:10px 16px;display:flex;align-items:center;gap:10px">
+                  <span style="background:#2e7d32;color:#fff;border-radius:50%;width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:800;flex-shrink:0">1</span>
+                  <strong style="color:#1b5e20">Hardware &mdash; CPU-Z</strong>
+                  <a href="https://www.cpuid.com/softwares/cpu-z.html" target="_blank" rel="noopener" style="margin-left:auto;font-size:12px;color:#2e7d32;font-weight:700">&#8599; cpuid.com</a>
+                </div>
+                <div style="padding:12px 16px;font-size:0.92rem;line-height:1.7">
+                  <p style="margin:0 0 8px">Abre CPU-Z y revisa las siguientes pesta&ntilde;as:</p>
+                  <ul style="margin:0;padding-left:1.2rem">
+                    <li><strong>CPU:</strong> nombre del procesador, velocidad y n&uacute;cleos.</li>
+                    <li><strong>Memory:</strong> capacidad y tipo de RAM.</li>
+                    <li><strong>Mainboard:</strong> fabricante y modelo de la placa base.</li>
+                  </ul>
+                  <div style="margin-top:10px;background:#f0f9f4;border-left:3px solid #2e7d32;padding:8px 12px;border-radius:0 6px 6px 0;font-size:0.85rem">
+                    &#128247; <strong>Captura:</strong> una imagen por cada pesta&ntilde;a &rarr; <code>01_Hardware_CPU-Z.png</code>
+                  </div>
+                </div>
               </div>
+
+              <!-- Paso 2 -->
+              <div style="border:1px solid #c8e6c9;border-radius:10px;overflow:hidden;margin-bottom:12px">
+                <div style="background:#e8f5e9;padding:10px 16px;display:flex;align-items:center;gap:10px">
+                  <span style="background:#2e7d32;color:#fff;border-radius:50%;width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:800;flex-shrink:0">2</span>
+                  <strong style="color:#1b5e20">Sistema Operativo</strong>
+                </div>
+                <div style="padding:12px 16px;font-size:0.92rem;line-height:1.7">
+                  <p style="margin:0 0 8px">Ve a <strong>Configuraci&oacute;n &rarr; Sistema &rarr; Acerca de</strong> y anota:</p>
+                  <ul style="margin:0;padding-left:1.2rem">
+                    <li>Versi&oacute;n exacta de Windows.</li>
+                    <li>Estado del licenciamiento.</li>
+                    <li>Actualizaciones pendientes.</li>
+                  </ul>
+                  <div style="margin-top:10px;background:#f0f9f4;border-left:3px solid #2e7d32;padding:8px 12px;border-radius:0 6px 6px 0;font-size:0.85rem">
+                    &#128247; <strong>Captura:</strong> pantalla de &ldquo;Acerca de&rdquo; &rarr; <code>02_SO_version.png</code>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Paso 3 -->
+              <div style="border:1px solid #c8e6c9;border-radius:10px;overflow:hidden;margin-bottom:12px">
+                <div style="background:#e8f5e9;padding:10px 16px;display:flex;align-items:center;gap:10px">
+                  <span style="background:#2e7d32;color:#fff;border-radius:50%;width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:800;flex-shrink:0">3</span>
+                  <strong style="color:#1b5e20">Estado del disco &mdash; CrystalDiskInfo</strong>
+                  <a href="https://crystalmark.info/en/software/crystaldiskinfo/" target="_blank" rel="noopener" style="margin-left:auto;font-size:12px;color:#2e7d32;font-weight:700">&#8599; crystalmark.info</a>
+                </div>
+                <div style="padding:12px 16px;font-size:0.92rem;line-height:1.7">
+                  <p style="margin:0 0 8px">Abre CrystalDiskInfo y verifica:</p>
+                  <ul style="margin:0;padding-left:1.2rem">
+                    <li><strong>Salud general:</strong> debe decir Bueno (azul). Si dice Precauci&oacute;n o Malo, inf&oacute;rmalo al instructor.</li>
+                    <li><strong>Temperatura</strong> del disco.</li>
+                    <li><strong>Espacio disponible</strong>.</li>
+                  </ul>
+                  <div style="margin-top:10px;background:#f0f9f4;border-left:3px solid #2e7d32;padding:8px 12px;border-radius:0 6px 6px 0;font-size:0.85rem">
+                    &#128247; <strong>Captura:</strong> ventana principal de CrystalDiskInfo &rarr; <code>03_Disco_CrystalDisk.png</code>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Paso 4 -->
+              <div style="border:1px solid #c8e6c9;border-radius:10px;overflow:hidden;margin-bottom:12px">
+                <div style="background:#e8f5e9;padding:10px 16px;display:flex;align-items:center;gap:10px">
+                  <span style="background:#2e7d32;color:#fff;border-radius:50%;width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:800;flex-shrink:0">4</span>
+                  <strong style="color:#1b5e20">Inventario de software</strong>
+                </div>
+                <div style="padding:12px 16px;font-size:0.92rem;line-height:1.7">
+                  <p style="margin:0 0 8px">Ve a <strong>Panel de Control &rarr; Programas &rarr; Programas y caracter&iacute;sticas</strong>.</p>
+                  <p style="margin:0 0 8px">Elabora una tabla en LibreOffice Calc o Google Sheets con estas columnas:</p>
+                  <div style="overflow-x:auto">
+                    <table style="width:100%;border-collapse:collapse;font-size:0.85rem;min-width:360px">
+                      <thead>
+                        <tr style="background:#e8f5e9">
+                          <th style="border:1px solid #c8e6c9;padding:6px 10px;text-align:left">Nombre</th>
+                          <th style="border:1px solid #c8e6c9;padding:6px 10px;text-align:left">Versi&oacute;n</th>
+                          <th style="border:1px solid #c8e6c9;padding:6px 10px;text-align:left">Fecha instalaci&oacute;n</th>
+                          <th style="border:1px solid #c8e6c9;padding:6px 10px;text-align:left">Tipo de licencia</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td style="border:1px solid #c8e6c9;padding:6px 10px;color:#999;font-style:italic" colspan="4">Completa con los programas del equipo del laboratorio&hellip;</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Paso 5 -->
+              <div style="border:1px solid #c8e6c9;border-radius:10px;overflow:hidden;margin-bottom:12px">
+                <div style="background:#e8f5e9;padding:10px 16px;display:flex;align-items:center;gap:10px">
+                  <span style="background:#2e7d32;color:#fff;border-radius:50%;width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:800;flex-shrink:0">5</span>
+                  <strong style="color:#1b5e20">Conectividad de red &mdash; CMD</strong>
+                </div>
+                <div style="padding:12px 16px;font-size:0.92rem;line-height:1.7">
+                  <p style="margin:0 0 8px">Abre el s&iacute;mbolo del sistema: <kbd>Windows + R</kbd> &rarr; escribe <code>cmd</code> &rarr; Enter.</p>
+                  <p style="margin:0 4px"><strong>a)</strong> Ejecuta <code>ipconfig /all</code> y anota: IP, m&aacute;scara de subred, puerta de enlace y DNS.</p>
+                  <p style="margin:0 4px"><strong>b)</strong> Ejecuta <code>ping 8.8.8.8</code> y verifica que haya respuesta (conectividad activa).</p>
+                  <div style="margin-top:10px;background:#f0f9f4;border-left:3px solid #2e7d32;padding:8px 12px;border-radius:0 6px 6px 0;font-size:0.85rem">
+                    &#128247; <strong>Captura:</strong> resultado de cada comando &rarr; <code>04_ipconfig.png</code> y <code>05_ping.png</code>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Paso 6 -->
+              <div style="border:1px solid #c8e6c9;border-radius:10px;overflow:hidden;margin-bottom:12px">
+                <div style="background:#e8f5e9;padding:10px 16px;display:flex;align-items:center;gap:10px">
+                  <span style="background:#2e7d32;color:#fff;border-radius:50%;width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:800;flex-shrink:0">6</span>
+                  <strong style="color:#1b5e20">Reporte completo (opcional) &mdash; Belarc Advisor</strong>
+                  <a href="https://www.belarc.com/products/belarc-advisor" target="_blank" rel="noopener" style="margin-left:auto;font-size:12px;color:#2e7d32;font-weight:700">&#8599; belarc.com</a>
+                </div>
+                <div style="padding:12px 16px;font-size:0.92rem;line-height:1.7">
+                  <p style="margin:0">Si el instructor lo autoriza, ejecuta Belarc Advisor. Genera autom&aacute;ticamente un reporte HTML completo del equipo (hardware, software y licencias). Gu&aacute;rdalo como evidencia adicional con el nombre <code>06_Belarc_Reporte.html</code>.</p>
+                </div>
+              </div>
+
+              <!-- Paso 7 – Entrega -->
+              <div style="border:2px solid #1b5e20;border-radius:10px;overflow:hidden;margin-bottom:4px">
+                <div style="background:#1b5e20;padding:10px 16px;display:flex;align-items:center;gap:10px">
+                  <span style="background:#fff;color:#1b5e20;border-radius:50%;width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:800;flex-shrink:0">7</span>
+                  <strong style="color:#fff">Organiza y entrega</strong>
+                </div>
+                <div style="padding:12px 16px;font-size:0.92rem;line-height:1.7">
+                  <p style="margin:0 0 8px">Crea una carpeta con el nombre: <strong>Diagnostico_[TuNombre]_[Fecha]</strong></p>
+                  <p style="margin:0 0 8px">Dentro coloca todas las capturas numeradas:</p>
+                  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
+                    <code style="background:#e8f5e9;padding:3px 8px;border-radius:4px;font-size:0.82rem">01_Hardware_CPU-Z.png</code>
+                    <code style="background:#e8f5e9;padding:3px 8px;border-radius:4px;font-size:0.82rem">02_SO_version.png</code>
+                    <code style="background:#e8f5e9;padding:3px 8px;border-radius:4px;font-size:0.82rem">03_Disco_CrystalDisk.png</code>
+                    <code style="background:#e8f5e9;padding:3px 8px;border-radius:4px;font-size:0.82rem">04_ipconfig.png</code>
+                    <code style="background:#e8f5e9;padding:3px 8px;border-radius:4px;font-size:0.82rem">05_ping.png</code>
+                  </div>
+                  <p style="margin:0 0 4px">En tu bit&aacute;cora escribe un p&aacute;rrafo de conclusi&oacute;n respondiendo:</p>
+                  <ul style="margin:0;padding-left:1.2rem">
+                    <li>&iquest;El equipo est&aacute; en buen estado para usarse en una empresa?</li>
+                    <li>&iquest;Qu&eacute; recomendar&iacute;as mejorar?</li>
+                  </ul>
+                </div>
+              </div>
+
             </div>
           </div>
 
