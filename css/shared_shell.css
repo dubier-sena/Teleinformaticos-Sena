@@ -98,6 +98,21 @@ body.app-shell {
   color: #fff;
 }
 
+.app-btn--outline {
+  background: transparent;
+  border-color: var(--brand-600, #2e7d32);
+  color: var(--brand-700, #1b5e20);
+}
+.app-btn--outline:hover {
+  background: var(--brand-50, #e8f5e9);
+}
+.app-btn--outline:disabled {
+  border-color: var(--border, #ddd);
+  color: var(--text-muted, #888);
+  cursor: not-allowed;
+  transform: none;
+}
+
 /* ══════════════════════════════════════════════════════
    APP NAVBAR — Design A (SENA Academy · Top Bar)
 ══════════════════════════════════════════════════════ */
