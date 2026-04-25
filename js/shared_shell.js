@@ -18,16 +18,37 @@
   }
 
   // ─────────────────────────────────────────────
+  //  Root prefix (handles pages in subdirectories)
+  // ─────────────────────────────────────────────
+  function getNavRootPrefix() {
+    var path = window.location.pathname;
+    if (path.indexOf("/pages/auxiliares/") !== -1) return "../../";
+    if (path.indexOf("/pages/") !== -1) return "../";
+    // file:// protocol: count depth from HTML root folder
+    if (window.location.protocol === "file:") {
+      var parts = path.replace(/\\/g, "/").split("/");
+      // Remove filename
+      parts.pop();
+      // Count how many folders deep we are after the root HTML folder
+      // by checking for known subfolder names
+      if (parts.indexOf("auxiliares") !== -1) return "../../";
+      if (parts.indexOf("pages") !== -1) return "../";
+    }
+    return "";
+  }
+
+  // ─────────────────────────────────────────────
   //  Build navbar HTML
   // ─────────────────────────────────────────────
   function buildNavbarHtml() {
+    var p = getNavRootPrefix();
     return [
       '<nav class="app-navbar" id="app-navbar" aria-label="Navegación principal">',
       '  <div class="app-navbar__inner">',
 
       // Logo
-      '    <a class="app-navbar__logo" href="index.html">',
-      '      <img class="app-navbar__logo-img" src="assets/img/sena-logo.png" alt="SENA" aria-hidden="true">',
+      '    <a class="app-navbar__logo" href="' + p + 'index.html">',
+      '      <img class="app-navbar__logo-img" src="' + p + 'assets/img/sena-logo.png" alt="SENA" aria-hidden="true">',
       '      <span>SENA <strong>Teleinformáticos</strong></span>',
       '    </a>',
 
@@ -35,7 +56,7 @@
       '    <div class="app-navbar__links" id="app-navbar-links">',
 
       // Portal
-      '      <a class="app-navbar__link" href="index.html" data-nav-key="portal">Portal</a>',
+      '      <a class="app-navbar__link" href="' + p + 'index.html" data-nav-key="portal">Portal</a>',
 
       // Guías dropdown
       '      <div class="app-navbar__drop" data-nav-key="guias">',
@@ -45,25 +66,25 @@
       '        <div class="app-navbar__drop-panel" role="menu">',
       '          <div class="app-navbar__drop-group" data-guide-group>',
       '            <span class="app-navbar__drop-heading">Grado 10</span>',
-      '            <a class="app-navbar__drop-link" href="grupo-10a-guia-01-induccion.html" role="menuitem" data-guide-file="grupo-10a-guia-01-induccion.html">10A · Guía 1 — Inducción</a>',
-      '            <a class="app-navbar__drop-link" href="grupo-10a-guia-02-herramientas-informaticas-digitales.html" role="menuitem" data-guide-file="grupo-10a-guia-02-herramientas-informaticas-digitales.html">10A · Guía 2 — Herramientas</a>',
-      '            <a class="app-navbar__drop-link" href="santa-barbara-10a-guia-02-redes-rap01.html" role="menuitem" data-guide-file="santa-barbara-10a-guia-02-redes-rap01.html">10A · Guía 2 — Redes</a>',
-      '            <a class="app-navbar__drop-link" href="grupo-10b-guia-01-induccion.html" role="menuitem" data-guide-file="grupo-10b-guia-01-induccion.html">10B · Guía 1 — Inducción</a>',
-      '            <a class="app-navbar__drop-link" href="grupo-10b-guia-02-herramientas-informaticas-digitales.html" role="menuitem" data-guide-file="grupo-10b-guia-02-herramientas-informaticas-digitales.html">10B · Guía 2 — Herramientas</a>',
-      '            <a class="app-navbar__drop-link" href="santa-barbara-10b-guia-02-redes-rap01.html" role="menuitem" data-guide-file="santa-barbara-10b-guia-02-redes-rap01.html">10B · Guía 2 — Redes</a>',
+      '            <a class="app-navbar__drop-link" href="' + p + 'grupo-10a-guia-01-induccion.html" role="menuitem" data-guide-file="grupo-10a-guia-01-induccion.html">10A · Guía 1 — Inducción</a>',
+      '            <a class="app-navbar__drop-link" href="' + p + 'grupo-10a-guia-02-herramientas-informaticas-digitales.html" role="menuitem" data-guide-file="grupo-10a-guia-02-herramientas-informaticas-digitales.html">10A · Guía 2 — Herramientas</a>',
+      '            <a class="app-navbar__drop-link" href="' + p + 'santa-barbara-10a-guia-02-redes-rap01.html" role="menuitem" data-guide-file="santa-barbara-10a-guia-02-redes-rap01.html">10A · Guía 2 — Redes</a>',
+      '            <a class="app-navbar__drop-link" href="' + p + 'grupo-10b-guia-01-induccion.html" role="menuitem" data-guide-file="grupo-10b-guia-01-induccion.html">10B · Guía 1 — Inducción</a>',
+      '            <a class="app-navbar__drop-link" href="' + p + 'grupo-10b-guia-02-herramientas-informaticas-digitales.html" role="menuitem" data-guide-file="grupo-10b-guia-02-herramientas-informaticas-digitales.html">10B · Guía 2 — Herramientas</a>',
+      '            <a class="app-navbar__drop-link" href="' + p + 'santa-barbara-10b-guia-02-redes-rap01.html" role="menuitem" data-guide-file="santa-barbara-10b-guia-02-redes-rap01.html">10B · Guía 2 — Redes</a>',
       '          </div>',
       '          <div class="app-navbar__drop-group" data-guide-group>',
       '            <span class="app-navbar__drop-heading">Grado 11</span>',
-      '            <a class="app-navbar__drop-link" href="grupo-11a-guia-05-herramientas-informaticas-digitales.html" role="menuitem" data-guide-file="grupo-11a-guia-05-herramientas-informaticas-digitales.html">11A · Guía 5 — Herramientas</a>',
-      '            <a class="app-navbar__drop-link" href="grupo-11a-guia-06-planificar-informacion.html" role="menuitem" data-guide-file="grupo-11a-guia-06-planificar-informacion.html">11A · Guía 6 — Planificar</a>',
-      '            <a class="app-navbar__drop-link" href="grupo-11b-guia-05-herramientas-informaticas-digitales.html" role="menuitem" data-guide-file="grupo-11b-guia-05-herramientas-informaticas-digitales.html">11B · Guía 5 — Herramientas</a>',
-      '            <a class="app-navbar__drop-link" href="grupo-11b-guia-06-planificar-informacion.html" role="menuitem" data-guide-file="grupo-11b-guia-06-planificar-informacion.html">11B · Guía 6 — Planificar</a>',
+      '            <a class="app-navbar__drop-link" href="' + p + 'grupo-11a-guia-05-herramientas-informaticas-digitales.html" role="menuitem" data-guide-file="grupo-11a-guia-05-herramientas-informaticas-digitales.html">11A · Guía 5 — Herramientas</a>',
+      '            <a class="app-navbar__drop-link" href="' + p + 'grupo-11a-guia-06-planificar-informacion.html" role="menuitem" data-guide-file="grupo-11a-guia-06-planificar-informacion.html">11A · Guía 6 — Planificar</a>',
+      '            <a class="app-navbar__drop-link" href="' + p + 'grupo-11b-guia-05-herramientas-informaticas-digitales.html" role="menuitem" data-guide-file="grupo-11b-guia-05-herramientas-informaticas-digitales.html">11B · Guía 5 — Herramientas</a>',
+      '            <a class="app-navbar__drop-link" href="' + p + 'grupo-11b-guia-06-planificar-informacion.html" role="menuitem" data-guide-file="grupo-11b-guia-06-planificar-informacion.html">11B · Guía 6 — Planificar</a>',
       '          </div>',
       '        </div>',
       '      </div>',
 
       // Calendario (admin only — shown by updateNavbarSession)
-      '      <a class="app-navbar__link app-navbar__admin-only" href="calendario-academico-2026.html" data-nav-key="calendario" style="display:none">Calendario</a>',
+      '      <a class="app-navbar__link app-navbar__admin-only" href="' + p + 'calendario-academico-2026.html" data-nav-key="calendario" style="display:none">Calendario</a>',
 
       // Etapa Productiva dropdown
       '      <div class="app-navbar__drop" data-nav-key="etapa">',
@@ -71,13 +92,13 @@
       '          Etapa Productiva <span class="app-navbar__caret" aria-hidden="true">▾</span>',
       '        </button>',
       '        <div class="app-navbar__drop-panel" role="menu">',
-      '          <a class="app-navbar__drop-link app-navbar__admin-only" href="etapa-productiva-admin.html" role="menuitem" style="display:none">Panel del instructor</a>',
-      '          <a class="app-navbar__drop-link" href="etapa-productiva-estudiante.html" role="menuitem">Mi proyecto</a>',
+      '          <a class="app-navbar__drop-link app-navbar__admin-only" href="' + p + 'etapa-productiva-admin.html" role="menuitem" style="display:none">Panel del instructor</a>',
+      '          <a class="app-navbar__drop-link" href="' + p + 'etapa-productiva-estudiante.html" role="menuitem">Mi proyecto</a>',
       '        </div>',
       '      </div>',
 
       // Panel Admin (admin only)
-      '      <a class="app-navbar__link app-navbar__admin-only" href="panel-administrativo-usuarios.html" data-nav-key="panel" style="display:none">Panel Admin</a>',
+      '      <a class="app-navbar__link app-navbar__admin-only" href="' + p + 'panel-administrativo-usuarios.html" data-nav-key="panel" style="display:none">Panel Admin</a>',
 
       '    </div>',
 
