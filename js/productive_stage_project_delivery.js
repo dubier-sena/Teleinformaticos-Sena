@@ -12,6 +12,7 @@
         "Formato inicial para registrar el proyecto y consolidar los datos principales del grupo.",
       href: "assets/materiales/etapa-productiva/1.%20Ficha%20de%20inscripcion.docx",
       fileName: "1. Ficha de inscripcion.docx",
+      deliveryLabel: "Ficha de Inscripcion",
     },
     {
       id: "formato-proyecto",
@@ -84,9 +85,23 @@
   }
 
   function buildResourcesMarkup() {
+    const project = getMainProject(currentState.viewModel);
+    const session = currentState.session;
+    const canUpload = isStudentUploader(session) && !!project;
+
     return `
       <div class="student-project-downloads">
         ${PROJECT_DOCUMENTS.map(function (documentItem) {
+          const hasDelivery = !!documentItem.deliveryLabel;
+          const deliveryBtn = hasDelivery
+            ? `<button
+                 class="app-btn app-btn--outline"
+                 type="button"
+                 data-delivery-doc="${escapeHtml(documentItem.id)}"
+                 ${canUpload ? "" : "disabled"}
+               >Entregar</button>`
+            : "";
+
           return `
             <article class="student-project-download-card">
               <span class="student-project-download-card__type">${escapeHtml(documentItem.type)}</span>
@@ -96,6 +111,7 @@
                 <a class="app-btn app-btn--primary" href="${escapeHtml(documentItem.href)}" download="${escapeHtml(documentItem.fileName)}">
                   Descargar
                 </a>
+                ${deliveryBtn}
               </div>
             </article>
           `;
@@ -140,6 +156,34 @@
     }
 
     body.innerHTML = buildResourcesMarkup();
+
+    // Wire up delivery buttons
+    body.querySelectorAll("[data-delivery-doc]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        const docId = btn.getAttribute("data-delivery-doc");
+        const doc = PROJECT_DOCUMENTS.find(function (d) { return d.id === docId; });
+        if (!doc) return;
+        const project = getMainProject(currentState.viewModel);
+        const session = currentState.session;
+        if (!project || !session) return;
+        openDocumentDeliveryModal(doc, project, session);
+      });
+    });
+  }
+
+  function openDocumentDeliveryModal(doc, project, session) {
+    if (!sharedDelivery || typeof sharedDelivery.openDeliveryModal !== "function") {
+      return;
+    }
+    sharedDelivery.openDeliveryModal({
+      guideLabel: "Etapa Productiva",
+      activityLabel: doc.deliveryLabel,
+      activityTitle: project.projectTitle || "Proyecto",
+      activityNumber: "",
+      projectId: project.id,
+      ficha: project.ficha || session?.user?.ficha || "",
+      grupo: project.grupo || session?.user?.grupo || "",
+    });
   }
 
   function renderProjectDelivery() {
