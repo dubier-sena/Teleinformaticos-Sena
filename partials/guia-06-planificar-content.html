@@ -252,42 +252,49 @@
                 <p>Al revisar, el tecnico descubre que los equipos no tienen suite ofimatica instalada, que el antivirus esta desactualizado y que no existe ningun registro del trabajo tecnico anterior.</p>
               </article>
 
-              <div class="panel-grid" style="margin-top:16px;">
-                <article class="support-card">
-                  <h3>Datos de la actividad</h3>
-                  <ul class="note-list">
-                    <li>Duracion: 30 minutos.</li>
-                    <li>Ambiente: laboratorio de informatica o aula con videobeam.</li>
-                    <li>Estrategia: aprendizaje basado en problemas mediante estudio de caso.</li>
-                    <li>Materiales: escenario proyectado o impreso y bitacora de aprendizaje.</li>
-                    <li>Herramientas TIC sugeridas: Mentimeter, LibreOffice Writer o Bloc de notas.</li>
-                  </ul>
-                </article>
-                <article class="notes-card">
-                  <h3>Bitacora individual de analisis</h3>
-                  <div style="margin: 12px 0 16px;">
-                    <button class="btn-export-word" type="button" onclick="openBitacoraExportModal()">
-                      &#128196; Exportar bitacora a Word
-                    </button>
-                  </div>
-                  <label>
-                    <span>1. Que herramientas informaticas deberia instalar el tecnico y por que</span>
-                    <textarea rows="5" data-store="reflexion_herramientas" data-track placeholder="Justifica herramientas ofimaticas, seguridad, diagnostico, correo o colaboracion."></textarea>
-                  </label>
-                  <label>
-                    <span>2. Que informacion deberia registrar el tecnico en una ficha tecnica o formato de inventario</span>
-                    <textarea rows="5" data-store="reflexion_registro" data-track placeholder="Describe datos como software, version, licencia, responsable, fecha y observaciones."></textarea>
-                  </label>
-                  <label>
-                    <span>3. Que consecuencias tiene para una empresa no tener documentados sus procesos tecnologicos</span>
-                    <textarea rows="4" data-store="reflexion_consecuencias" data-track placeholder="Relaciona riesgos, tiempos, errores, soporte y control del servicio."></textarea>
-                  </label>
-                  <label>
-                    <span>4. Has vivido una situacion parecida en casa, el colegio o una empresa</span>
-                    <textarea rows="4" data-store="reflexion_experiencia" data-track placeholder="Describe brevemente una experiencia propia o cercana."></textarea>
-                  </label>
-                </article>
-              </div>
+              <article class="support-card" style="margin-top:16px;">
+                <h3>Datos de la actividad</h3>
+                <ul class="note-list">
+                  <li>Duracion: 30 minutos.</li>
+                  <li>Ambiente: laboratorio de informatica o aula con videobeam.</li>
+                  <li>Estrategia: aprendizaje basado en problemas mediante estudio de caso.</li>
+                  <li>Materiales: escenario proyectado o impreso y bitacora de aprendizaje.</li>
+                  <li>Herramientas TIC sugeridas: Mentimeter, LibreOffice Writer o Bloc de notas.</li>
+                </ul>
+              </article>
+
+              <article class="notes-card" style="margin-top:16px;">
+                <h3>Bitacora individual de analisis</h3>
+                <label>
+                  <span>1. Que herramientas informaticas deberia instalar el tecnico y por que</span>
+                  <textarea rows="5" data-store="reflexion_herramientas" data-track placeholder="Justifica herramientas ofimaticas, seguridad, diagnostico, correo o colaboracion."></textarea>
+                </label>
+                <label>
+                  <span>2. Que informacion deberia registrar el tecnico en una ficha tecnica o formato de inventario</span>
+                  <textarea rows="5" data-store="reflexion_registro" data-track placeholder="Describe datos como software, version, licencia, responsable, fecha y observaciones."></textarea>
+                </label>
+                <label>
+                  <span>3. Que consecuencias tiene para una empresa no tener documentados sus procesos tecnologicos</span>
+                  <textarea rows="4" data-store="reflexion_consecuencias" data-track placeholder="Relaciona riesgos, tiempos, errores, soporte y control del servicio."></textarea>
+                </label>
+                <label>
+                  <span>4. Has vivido una situacion parecida en casa, el colegio o una empresa</span>
+                  <textarea rows="4" data-store="reflexion_experiencia" data-track placeholder="Describe brevemente una experiencia propia o cercana."></textarea>
+                </label>
+                <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+                  <button type="button" id="btnGuardarBitacora"
+                    onclick="guardarBitacora311()"
+                    style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button class="btn-export-word" type="button" onclick="openBitacoraExportModal()">
+                    &#128196; Exportar bitacora a Word
+                  </button>
+                </div>
+                <div id="bitacoraStatus311" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
             </div>
           </div>
 
@@ -299,30 +306,59 @@
               <span class="activity-toggle">&#9662;</span>
             </div>
             <div class="activity-body">
-              <div class="panel-grid">
-                <article class="checklist-card">
-                  <h3>Preparacion del equipo</h3>
-                  <label class="check-item"><input type="checkbox" data-store="socializacion_equipo" data-track><span>Conformamos el grupo de tres aprendices.</span></label>
-                  <label class="check-item"><input type="checkbox" data-store="socializacion_roles" data-track><span>Asignamos roles para moderar, argumentar y concluir.</span></label>
-                  <label class="check-item"><input type="checkbox" data-store="socializacion_pregunta" data-track><span>Enfocamos la discusion en por que es clave instalar las herramientas correctas antes de entregar un equipo.</span></label>
-                  <label class="check-item"><input type="checkbox" data-store="socializacion_tiempo" data-track><span>Preparamos una conclusion grupal para presentar en maximo 5 minutos.</span></label>
-                </article>
+              <article class="support-card">
+                <h3>Preparacion del equipo</h3>
+                <ul class="note-list">
+                  <li>Conformar el grupo de tres aprendices.</li>
+                  <li>Asignar roles: moderador, argumentador y quien concluye.</li>
+                  <li>Enfocar la discusion en por que es clave instalar las herramientas correctas antes de entregar un equipo.</li>
+                  <li>Preparar una conclusion grupal para presentar en maximo 5 minutos.</li>
+                </ul>
+              </article>
 
-                <article class="notes-card">
-                  <h3>Conclusion grupal</h3>
-                  <label>
-                    <span>Resumen de la socializacion</span>
-                    <textarea rows="6" data-store="socializacion_conclusion" data-track placeholder="Escribe la conclusion del equipo sobre por que un tecnico debe instalar y verificar correctamente las herramientas."></textarea>
-                  </label>
-                  <label>
-                    <span>Pregunta orientadora que responderan al grupo</span>
-                    <textarea rows="3" data-store="socializacion_pregunta_central" data-track placeholder="Formula la idea central que sustentaran en la plenaria."></textarea>
-                  </label>
-                </article>
+              <article class="notes-card" style="margin-top:16px;">
+                <h3>Conclusion grupal</h3>
+                <label>
+                  <span>Resumen de la socializacion</span>
+                  <textarea rows="6" data-store="socializacion_conclusion" data-track placeholder="Escribe la conclusion del equipo sobre por que un tecnico debe instalar y verificar correctamente las herramientas."></textarea>
+                </label>
+                <label>
+                  <span>Pregunta orientadora que responderan al grupo</span>
+                  <textarea rows="3" data-store="socializacion_pregunta_central" data-track placeholder="Formula la idea central que sustentaran en la plenaria."></textarea>
+                </label>
+                <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+                  <button type="button" id="btnGuardarSocializacion"
+                    onclick="guardarSocializacion312()"
+                    style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                    &#128190; Guardar respuestas
+                  </button>
+                </div>
+                <div id="socializacionStatus312" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+
+              <div class="info-box" style="margin-top:16px">
+                <div class="label">&#129504; Quiz individual de herramientas tecnologicas</div>
+                <p>Al cerrar la actividad, presenta el quiz individual de 10 preguntas sobre herramientas ofimaticas, seguridad, diagnostico y buenas practicas de instalacion.</p>
+                <ul style="margin-top:8px">
+                  <li>La variante se asigna al azar entre <strong>A</strong>, <strong>B</strong> y <strong>C</strong> al iniciar.</li>
+                  <li>Puntaje maximo: <strong>100</strong>. Hay 2 advertencias por cambio de pestana.</li>
+                  <li>En la segunda advertencia el sistema envia lo contestado autom&aacute;ticamente.</li>
+                </ul>
               </div>
+              <div id="quizHerramientasStatus" class="info-box blue" style="margin-top:12px;display:none"></div>
+              <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+                <a id="quizHerramientasActionLink" class="btn-drive"
+                  href="#"
+                  style="min-height:unset;border-radius:10px;padding:10px 20px;font-size:0.95rem;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none">
+                  &#128218; Presentar quiz aleatorio
+                </a>
+              </div>
+
               <div class="info-box" style="margin-top:16px">
                 <div class="label">Cierre sugerido</div>
-                <p>Cuando el instructor abra la plenaria, participa en Mentimeter con la herramienta que instalarias primero y prepárate para un quiz rapido de cierre en Kahoot.</p>
+                <p>Cuando el instructor abra la plenaria, participa en <strong>Mentimeter</strong> con la herramienta que instalarias primero y prep&aacute;rate para el quiz de cierre.</p>
               </div>
             </div>
           </div>
@@ -378,27 +414,18 @@
                 </table>
               </div>
 
-              <div class="panel-grid" style="margin-top:16px;">
-                <article class="checklist-card">
-                  <h3>Checklist de avance</h3>
-                  <label class="check-item"><input type="checkbox" data-store="ctx_nota_1" data-track><span>Distribuimos los siete temas del bloque entre los integrantes.</span></label>
-                  <label class="check-item"><input type="checkbox" data-store="ctx_nota_2" data-track><span>Consultamos fuentes oficiales o institucionales.</span></label>
-                  <label class="check-item"><input type="checkbox" data-store="ctx_nota_3" data-track><span>Construimos la tabla resumen en Sheets o Calc y la exportamos a PDF.</span></label>
-                  <label class="check-item"><input type="checkbox" data-store="ctx_nota_4" data-track><span>Registramos dudas y hallazgos clave para el mapa conceptual.</span></label>
-                </article>
+              <article class="support-card" style="margin-top:16px;">
+                <h3>Instrucciones</h3>
+                <ol class="note-list" style="padding-left:1.2em">
+                  <li>Forma un equipo de 3 personas. Distribuyan los 7 temas del Bloque A entre los integrantes (2 o 3 temas por persona).</li>
+                  <li>Estudia los temas que te corresponden usando los recursos indicados. Toma apuntes organizados en LibreOffice Writer o en tu bit&aacute;cora. Tiempo de estudio aut&oacute;nomo: 2 horas.</li>
+                  <li>En la sesi&oacute;n presencial, cada integrante explica sus temas al equipo (5 minutos por tema). Mientras escuchas, completa los apuntes de los temas que no estudiaste.</li>
+                  <li>Como equipo, elaboren una tabla resumen en Google Sheets (sheets.google.com) o LibreOffice Calc con 3 columnas: &ldquo;Herramienta o proceso&rdquo;, &ldquo;Para qu&eacute; sirve&rdquo;, &ldquo;Aplicaci&oacute;n en una MiPyme de Boyac&aacute;&rdquo;.</li>
+                  <li>Exporta la tabla a PDF (Archivo &gt; Exportar como PDF en LibreOffice Calc, o Archivo &gt; Descargar &gt; PDF en Google Sheets). Nombre: <strong>BloqueA_Resumen_[TuNombre]_v1.0.pdf</strong>. Comp&aacute;rtela con el instructor.</li>
+                  <li>Anota en tu bit&aacute;cora las dudas que te quedaron para resolverlas antes del mapa conceptual.</li>
+                </ol>
+              </article>
 
-                <article class="notes-card">
-                  <h3>Apuntes personales</h3>
-                  <label>
-                    <span>Conceptos clave estudiados</span>
-                    <textarea rows="5" data-store="ctx_apuntes" data-track placeholder="Resume los temas mas importantes y las conexiones entre herramientas, procesos y uso empresarial."></textarea>
-                  </label>
-                  <label>
-                    <span>Nombre del PDF o archivo entregado</span>
-                    <textarea rows="3" data-store="ctx_recurso" data-track placeholder="Ejemplo: BloqueA_Resumen_TuNombre_v1.0.pdf"></textarea>
-                  </label>
-                </article>
-              </div>
 
               <div class="info-box green">
                 <div class="label">Recurso recomendado</div>
@@ -415,36 +442,47 @@
               <span class="activity-toggle">&#9662;</span>
             </div>
             <div class="activity-body">
-              <div class="panel-grid">
-                <article class="checklist-card">
-                  <h3>Requisitos minimos del mapa</h3>
-                  <label class="check-item"><input type="checkbox" data-store="map_req_1" data-track><span>Incluye categorias de herramientas tecnologicas para soporte tecnico.</span></label>
-                  <label class="check-item"><input type="checkbox" data-store="map_req_2" data-track><span>Representa el proceso descarga, verificacion de compatibilidad, instalacion, configuracion y validacion.</span></label>
-                  <label class="check-item"><input type="checkbox" data-store="map_req_3" data-track><span>Incluye tipos de licencia con al menos un ejemplo real de cada uno.</span></label>
-                  <label class="check-item"><input type="checkbox" data-store="map_req_4" data-track><span>Relaciona herramienta, manual tecnico, instalacion, verificacion y servicio al cliente.</span></label>
-                  <label class="check-item"><input type="checkbox" data-store="map_req_5" data-track><span>Incluye al menos dos herramientas reales aplicables a una MiPyme de Boyaca.</span></label>
-                </article>
+              <article class="support-card">
+                <h3>Requisitos m&iacute;nimos del mapa</h3>
+                <p style="margin-bottom:12px">El mapa conceptual debe integrar y demostrar la comprensi&oacute;n de las herramientas tecnol&oacute;gicas para soporte t&eacute;cnico. Debe incluir m&iacute;nimo:</p>
+                <table style="width:100%;border-collapse:collapse;font-size:0.9rem">
+                  <tbody>
+                    <tr style="border:1px solid #c8e6c9">
+                      <td style="border:1px solid #c8e6c9;padding:10px 12px;font-weight:700;background:#e8f5e9;width:2.5rem;text-align:center;vertical-align:top">A</td>
+                      <td style="border:1px solid #c8e6c9;padding:10px 12px;vertical-align:top">Las categor&iacute;as de herramientas tecnol&oacute;gicas para soporte t&eacute;cnico (ofim&aacute;tica, diagn&oacute;stico, seguridad, colaboraci&oacute;n).</td>
+                    </tr>
+                    <tr style="border:1px solid #c8e6c9">
+                      <td style="border:1px solid #c8e6c9;padding:10px 12px;font-weight:700;background:#e8f5e9;width:2.5rem;text-align:center;vertical-align:top">B</td>
+                      <td style="border:1px solid #c8e6c9;padding:10px 12px;vertical-align:top">Los pasos del proceso de instalaci&oacute;n y configuraci&oacute;n: descarga &rarr; verificaci&oacute;n de compatibilidad &rarr; instalaci&oacute;n &rarr; configuraci&oacute;n &rarr; verificaci&oacute;n de funcionamiento.</td>
+                    </tr>
+                    <tr style="border:1px solid #c8e6c9">
+                      <td style="border:1px solid #c8e6c9;padding:10px 12px;font-weight:700;background:#e8f5e9;width:2.5rem;text-align:center;vertical-align:top">C</td>
+                      <td style="border:1px solid #c8e6c9;padding:10px 12px;vertical-align:top">Los tipos de licencia de software (libre, propietario, suscripci&oacute;n) con al menos un ejemplo real de cada uno.</td>
+                    </tr>
+                    <tr style="border:1px solid #c8e6c9">
+                      <td style="border:1px solid #c8e6c9;padding:10px 12px;font-weight:700;background:#e8f5e9;width:2.5rem;text-align:center;vertical-align:top">D</td>
+                      <td style="border:1px solid #c8e6c9;padding:10px 12px;vertical-align:top">La relaci&oacute;n entre: herramienta &rarr; manual t&eacute;cnico &rarr; instalaci&oacute;n &rarr; verificaci&oacute;n &rarr; servicio al cliente.</td>
+                    </tr>
+                    <tr style="border:1px solid #c8e6c9">
+                      <td style="border:1px solid #c8e6c9;padding:10px 12px;font-weight:700;background:#e8f5e9;width:2.5rem;text-align:center;vertical-align:top">E</td>
+                      <td style="border:1px solid #c8e6c9;padding:10px 12px;vertical-align:top">Al menos 2 herramientas con nombre real que usar&iacute;a un t&eacute;cnico en una MiPyme del Magdalena Medio u Occidente de Boyac&aacute;.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </article>
 
-                <article class="notes-card">
-                  <h3>Planeacion del mapa conceptual</h3>
-                  <label>
-                    <span>Concepto central del mapa</span>
-                    <textarea rows="3" data-store="map_central" data-track placeholder="Escribe el concepto principal que articulara el mapa."></textarea>
-                  </label>
-                  <label>
-                    <span>Categorias o ramas principales</span>
-                    <textarea rows="5" data-store="map_ramas" data-track placeholder="Define ramas, subtemas y relaciones clave."></textarea>
-                  </label>
-                  <label>
-                    <span>Herramienta digital elegida</span>
-                    <textarea rows="3" data-store="map_herramienta" data-track placeholder="Ejemplo: Canva, MindMeister, CmapTools o Miro."></textarea>
-                  </label>
-                  <label>
-                    <span>Enlace, archivo o evidencia del producto</span>
-                    <textarea rows="3" data-store="map_evidencia" data-track placeholder="Registra el nombre del PDF, enlace compartido o carpeta de entrega."></textarea>
-                  </label>
-                </article>
-              </div>
+              <article class="support-card" style="margin-top:16px;">
+                <h3>Instrucciones</h3>
+                <ol style="padding-left:1.4rem;margin:0;line-height:1.7">
+                  <li>Con tu equipo de la actividad 3.2.1, elijan la herramienta digital: Canva (canva.com), MindMeister (mindmeister.com) o CmapTools (cmap.ihmc.us &mdash; descarga gratuita). Sin internet, usen papel y marcadores.</li>
+                  <li>Definan juntos la estructura del mapa: &iquest;cu&aacute;l ser&aacute; el concepto central? &iquest;cu&aacute;les las ramas principales? Antes de dise&ntilde;ar en digital, hagan un borrador a mano en 10 minutos.</li>
+                  <li>Construyan el mapa asegurando que incluya todos los elementos A hasta E. Usen conectores con palabras enlace claras: &ldquo;se instala con&rdquo;, &ldquo;requiere leer&rdquo;, &ldquo;produce&rdquo;, &ldquo;se verifica con&rdquo;.</li>
+                  <li>Revisen que el mapa sea visualmente claro (colores por categor&iacute;a, texto m&iacute;nimo 12pt, jerarqu&iacute;a visible). Debe entenderse sin haber estudiado los temas.</li>
+                  <li>Exporten el mapa a PDF: Canva &gt; Descargar &gt; PDF est&aacute;ndar | MindMeister &gt; Exportar &gt; PDF | CmapTools &gt; Archivo &gt; Exportar &gt; Como imagen. Nombre: <strong>MapaConceptual_RAP02_[NombreEquipo]_v1.0.pdf</strong>.</li>
+                  <li>Preparen una presentaci&oacute;n oral de m&aacute;ximo 10 minutos para explicar el mapa al grupo. Cada integrante habla al menos 3 minutos. Practiquen en voz alta antes de presentar.</li>
+                  <li>Presenten en la fecha que indique el instructor. Recibir&aacute;n retroalimentaci&oacute;n usando la Lista de Chequeo IE-01.</li>
+                </ol>
+              </article>
 
               <div class="info-box green">
                 <div class="label">Evidencia e instrumento</div>
@@ -479,31 +517,39 @@
               <span class="activity-toggle">&#9662;</span>
             </div>
             <div class="activity-body">
-              <div class="panel-grid">
-                <article class="support-card">
-                  <h3>El diagnostico debe incluir</h3>
-                  <ul class="note-list">
-                    <li>Hardware con CPU-Z: procesador, RAM, placa base y tarjeta de red.</li>
-                    <li>Sistema operativo: version exacta, licenciamiento y actualizaciones pendientes.</li>
-                    <li>Estado del disco con CrystalDiskInfo: salud, temperatura y alertas.</li>
-                    <li>Inventario de software instalado en Calc o Google Sheets.</li>
-                    <li>Conectividad de red con <code>ipconfig /all</code> y <code>ping 8.8.8.8</code>.</li>
-                    <li>Belarc Advisor como evidencia adicional si el instructor lo autoriza.</li>
-                  </ul>
-                </article>
+              <article class="support-card">
+                <h3>El diagnostico debe incluir</h3>
+                <ul class="note-list">
+                  <li>Hardware con CPU-Z: procesador, RAM, placa base y tarjeta de red.</li>
+                  <li>Sistema operativo: version exacta, licenciamiento y actualizaciones pendientes.</li>
+                  <li>Estado del disco con CrystalDiskInfo: salud, temperatura y alertas.</li>
+                  <li>Inventario de software instalado en Calc o Google Sheets.</li>
+                  <li>Conectividad de red con <code>ipconfig /all</code> y <code>ping 8.8.8.8</code>.</li>
+                  <li>Belarc Advisor como evidencia adicional si el instructor lo autoriza.</li>
+                </ul>
+              </article>
 
-                <article class="notes-card">
-                  <h3>Registro final del diagnostico</h3>
-                  <label>
-                    <span>Conclusion tecnica del equipo</span>
-                    <textarea rows="5" data-store="diag_conclusion" data-track placeholder="Indica si el equipo esta listo para uso empresarial y que recomendarias mejorar."></textarea>
-                  </label>
-                  <label>
-                    <span>Nombre de la carpeta de entrega</span>
-                    <textarea rows="3" data-store="diag_folder" data-track placeholder="Ejemplo: Diagnostico_TuNombre_2026-03-23"></textarea>
-                  </label>
-                </article>
-              </div>
+              <article class="notes-card" style="margin-top:16px;">
+                <h3>Registro final del diagnostico</h3>
+                <label>
+                  <span>Conclusion tecnica del equipo</span>
+                  <textarea rows="5" data-store="diag_conclusion" data-track placeholder="Indica si el equipo esta listo para uso empresarial y que recomendarias mejorar."></textarea>
+                </label>
+                <label>
+                  <span>Nombre de la carpeta de entrega</span>
+                  <textarea rows="3" data-store="diag_folder" data-track placeholder="Ejemplo: Diagnostico_TuNombre_2026-03-23"></textarea>
+                </label>
+                <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+                  <button type="button" id="btnGuardarDiagnostico"
+                    onclick="guardarDiagnostico331()"
+                    style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                    &#128190; Guardar respuestas
+                  </button>
+                </div>
+                <div id="diagnosticoStatus331" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
 
               <div class="table-scroll">
                 <table class="data-table">
@@ -526,24 +572,32 @@
                 <p>Descarga cada instalador unicamente desde el sitio oficial del fabricante o desde la ruta validada por el instructor. Nunca uses fuentes no oficiales.</p>
               </div>
 
-              <div class="panel-grid" style="margin-top:16px;">
-                <article class="checklist-card">
-                  <h3>Pasos obligatorios</h3>
-                  <label class="check-item"><input type="checkbox" data-store="inst_step_1" data-track><span>Consultar el manual tecnico o guia oficial de instalacion.</span></label>
-                  <label class="check-item"><input type="checkbox" data-store="inst_step_2" data-track><span>Verificar compatibilidad con Windows y arquitectura de 32 o 64 bits.</span></label>
-                  <label class="check-item"><input type="checkbox" data-store="inst_step_3" data-track><span>Ejecutar la instalacion paso a paso siguiendo el asistente.</span></label>
-                  <label class="check-item"><input type="checkbox" data-store="inst_step_4" data-track><span>Configurar parametros basicos y tomar capturas de evidencia.</span></label>
-                  <label class="check-item"><input type="checkbox" data-store="inst_step_5" data-track><span>Registrar resultado, error exacto y solucion aplicada si hubo fallas.</span></label>
-                </article>
+              <article class="checklist-card" style="margin-top:16px;">
+                <h3>Pasos obligatorios</h3>
+                <label class="check-item"><input type="checkbox" data-store="inst_step_1" data-track><span>Consultar el manual tecnico o guia oficial de instalacion.</span></label>
+                <label class="check-item"><input type="checkbox" data-store="inst_step_2" data-track><span>Verificar compatibilidad con Windows y arquitectura de 32 o 64 bits.</span></label>
+                <label class="check-item"><input type="checkbox" data-store="inst_step_3" data-track><span>Ejecutar la instalacion paso a paso siguiendo el asistente.</span></label>
+                <label class="check-item"><input type="checkbox" data-store="inst_step_4" data-track><span>Configurar parametros basicos y tomar capturas de evidencia.</span></label>
+                <label class="check-item"><input type="checkbox" data-store="inst_step_5" data-track><span>Registrar resultado, error exacto y solucion aplicada si hubo fallas.</span></label>
+              </article>
 
-                <article class="notes-card">
-                  <h3>Observaciones de instalacion</h3>
-                  <label>
-                    <span>Problemas encontrados y solucion aplicada</span>
-                    <textarea rows="6" data-store="inst_observaciones" data-track placeholder="Registra incompatibilidades, reinicios, permisos, capturas y carpeta de evidencias creada."></textarea>
-                  </label>
-                </article>
-              </div>
+              <article class="notes-card" style="margin-top:16px;">
+                <h3>Observaciones de instalacion</h3>
+                <label>
+                  <span>Problemas encontrados y solucion aplicada</span>
+                  <textarea rows="6" data-store="inst_observaciones" data-track placeholder="Registra incompatibilidades, reinicios, permisos, capturas y carpeta de evidencias creada."></textarea>
+                </label>
+                <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+                  <button type="button" id="btnGuardarObservaciones"
+                    onclick="guardarObservaciones331()"
+                    style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                    &#128190; Guardar respuestas
+                  </button>
+                </div>
+                <div id="observacionesStatus331" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
             </div>
           </div>
 
@@ -623,26 +677,34 @@
                 <strong id="budgetGrandTotal">$0</strong>
               </div>
 
-              <div class="panel-grid" style="margin-top:16px;">
-                <article class="notes-card">
-                  <h3>Analisis del presupuesto</h3>
-                  <label>
-                    <span>Conclusion tecnica del presupuesto</span>
-                    <textarea rows="5" data-store="budget_conclusion" data-track placeholder="Explica por que seleccionaste esas herramientas para esa MiPyme y que ganaria la empresa con la implementacion."></textarea>
-                  </label>
-                  <label>
-                    <span>Fuentes de consulta de precios</span>
-                    <textarea rows="3" data-store="budget_fuentes" data-track placeholder="Anota las URL oficiales o los fabricantes consultados para cotizar."></textarea>
-                  </label>
-                </article>
+              <article class="notes-card" style="margin-top:16px;">
+                <h3>Analisis del presupuesto</h3>
+                <label>
+                  <span>Conclusion tecnica del presupuesto</span>
+                  <textarea rows="5" data-store="budget_conclusion" data-track placeholder="Explica por que seleccionaste esas herramientas para esa MiPyme y que ganaria la empresa con la implementacion."></textarea>
+                </label>
+                <label>
+                  <span>Fuentes de consulta de precios</span>
+                  <textarea rows="3" data-store="budget_fuentes" data-track placeholder="Anota las URL oficiales o los fabricantes consultados para cotizar."></textarea>
+                </label>
+                <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+                  <button type="button" id="btnGuardarPresupuesto"
+                    onclick="guardarPresupuesto341()"
+                    style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                    &#128190; Guardar respuestas
+                  </button>
+                </div>
+                <div id="presupuestoStatus341" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
 
-                <article class="checklist-card">
-                  <h3>Requisitos del producto</h3>
-                  <label class="check-item"><input type="checkbox" data-store="budget_pdf" data-track><span>Se elabora en hoja de calculo y luego se exporta a PDF.</span></label>
-                  <label class="check-item"><input type="checkbox" data-store="budget_items" data-track><span>Compara al menos una opcion de software libre y una de software propietario.</span></label>
-                  <label class="check-item"><input type="checkbox" data-store="budget_tabla" data-track><span>Usa formulas para calcular totales y entrega PDF mas archivo fuente.</span></label>
-                </article>
-              </div>
+              <article class="checklist-card" style="margin-top:16px;">
+                <h3>Requisitos del producto</h3>
+                <label class="check-item"><input type="checkbox" data-store="budget_pdf" data-track><span>Se elabora en hoja de calculo y luego se exporta a PDF.</span></label>
+                <label class="check-item"><input type="checkbox" data-store="budget_items" data-track><span>Compara al menos una opcion de software libre y una de software propietario.</span></label>
+                <label class="check-item"><input type="checkbox" data-store="budget_tabla" data-track><span>Usa formulas para calcular totales y entrega PDF mas archivo fuente.</span></label>
+              </article>
               <div class="info-box green" style="margin-top:16px">
                 <div class="label">Producto esperado</div>
                 <p>Entrega un PDF con presupuesto detallado, justificacion tecnica y conclusion breve, junto con el archivo fuente en formato editable (.ods o equivalente).</p>
@@ -746,12 +808,14 @@
           <span class="card-toggle">&#9662;</span>
         </div>
         <div class="card-body">
-          <div class="info-box">
-            <div class="label">Carpeta local del curso</div>
-            <p>
-              Este material se abre desde la ruta
-              <code class="support-path">assets/materiales/guia6</code>.
-            </p>
+          <div class="info-box drive-submit-box">
+            <div class="label">Portafolio de evidencias &mdash; Carpeta de Drive</div>
+            <p>Accede a la carpeta de Drive de tu grupo para subir tus evidencias y entregas de la Gu&iacute;a 6. La carpeta se determina autom&aacute;ticamente seg&uacute;n tu ficha activa.</p>
+            <div class="drive-action-group">
+              <button type="button" class="btn-drive" onclick="openDriveFolder()">&#128193; Abrir carpeta de Drive</button>
+              <button type="button" class="btn-qr" onclick="showDriveFolderQR()">&#128241; Ver QR para m&oacute;vil</button>
+            </div>
+            <div class="drive-helper-note">La carpeta se define autom&aacute;ticamente seg&uacute;n la ficha activa. Si no tienes sesi&oacute;n iniciada, regresa al portal y selecciona tu grupo.</div>
           </div>
 
           <div class="material-heading">Paquete general</div>
