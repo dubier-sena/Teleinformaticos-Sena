@@ -11,6 +11,7 @@
   let matriz322Summaries = {};
   let redesSocializacionSummaries = {};
   let redesQuizSummaries = {};
+  let activeActivitiesSubtab = null;
 
   const REDES_SB_CLOUD_FILES = {
     "3441944": "sb_10a_redes.html",
@@ -103,6 +104,44 @@
     "contexto-uso-meet-si",
     "contexto-uso-meet-porque",
     "contexto-otanche",
+  ];
+
+  const GUIDE6_FILES = {
+    "grupo-11a-guia-06-planificar-informacion.html": { stateKey: "guia_interactiva_11a_guia6_html" },
+    "grupo-11b-guia-06-planificar-informacion.html": { stateKey: "guia_interactiva_11b_guia6_html" },
+  };
+
+  const GUIDE6_INSTALL_IDS = ["suite", "browser", "email", "zip", "antivirus", "diagnostic"];
+  const GUIDE6_DIAG_IDS = ["hardware", "so", "disk", "software", "network"];
+  const GUIDE6_BUDGET_IDS = ["suite", "diagnostic", "security", "cloud", "backup"];
+
+  const GUIDE6_ACTIVITIES = [
+    { id: "bitacora311", label: "Bitácora 3.1.1", keys: ["reflexion_herramientas", "reflexion_registro", "reflexion_consecuencias", "reflexion_experiencia"] },
+    { id: "socializacion312", label: "Socialización 3.1.2", keys: ["socializacion_conclusion", "socializacion_pregunta_central"] },
+    { id: "quiz312", label: "Quiz herramientas 3.1.2", keys: ["quiz-guia6-312"] },
+    { id: "contexto321", label: "Apuntes 3.2.1", keys: ["ctx_apuntes"] },
+    { id: "mapa322", label: "Mapa conceptual 3.2.2", keys: ["map_central", "map_ramas"] },
+    {
+      id: "instalacion331", label: "Checklist instalación 3.3.1",
+      keys: GUIDE6_INSTALL_IDS.flatMap((id) => [`inst_source_${id}`, `inst_version_${id}`, `inst_verify_${id}`, `inst_done_${id}`, `inst_notes_${id}`]),
+    },
+    {
+      id: "diagnostico331", label: "Diagnóstico 3.3.1",
+      keys: [...GUIDE6_DIAG_IDS.flatMap((id) => [`diag_result_${id}`, `diag_action_${id}`]), "diag_conclusion"],
+    },
+    {
+      id: "presupuesto341", label: "Presupuesto 3.4.1",
+      keys: [...GUIDE6_BUDGET_IDS.flatMap((id) => [`budget_license_${id}`, `budget_price_${id}`, `budget_qty_${id}`, `budget_why_${id}`]), "budget_conclusion"],
+    },
+  ];
+
+  const GUIDE2_ACTIVITIES = [
+    { id: "wordsearch", label: "Sopa de letras", keys: ["wordSearch:guia2-sopa"] },
+    { id: "matching", label: "Relaciona herramientas", keys: ["matchingGame:guia2-relaciona"] },
+    {
+      id: "cuestionario", label: "Cuestionario 3.2.1",
+      keys: GUIDE2_RESPONSE_KEYS.filter((k) => !k.startsWith("wordSearch:") && !k.startsWith("matchingGame:")),
+    },
   ];
 
   function getById(id) {
@@ -282,6 +321,39 @@
 
   function getGuide2SummaryKey(usernameKey, fileName) {
     return `${String(usernameKey || "").trim().toLowerCase()}::${fileName}`;
+  }
+
+  function getGuide6Config(fileName) {
+    const config = GUIDE6_FILES[fileName];
+    if (!config) return null;
+    return { ...config, title: auth.getGuideTitle(fileName) };
+  }
+
+  function isGuide6File(fileName) {
+    return Boolean(GUIDE6_FILES[fileName]);
+  }
+
+  function readGuide6LocalSnapshot(usernameKey, config) {
+    if (!config?.stateKey) return null;
+    const storageKey = auth.getStudentStorageKey(usernameKey, config.stateKey, { area: "guide-data" });
+    const state = readJson(localStorage.getItem(storageKey), null);
+    if (!state || typeof state !== "object") return null;
+    const meta = readJson(localStorage.getItem(`${storageKey}__meta`), null);
+    return { state, updatedAt: meta?.updatedAt || "", sourceLabel: "Copia local" };
+  }
+
+  function getGuideActivityStateKey(fileName) {
+    const g6 = GUIDE6_FILES[fileName];
+    if (g6) return g6.stateKey;
+    return auth.GUIDE_PROGRESS_CONFIG?.[fileName]?.stateKey || "";
+  }
+
+  function patchGuideState(usernameKey, stateKey, keysToDelete) {
+    if (!stateKey || typeof auth.getStudentStorageKey !== "function") return;
+    const storageKey = auth.getStudentStorageKey(usernameKey, stateKey, { area: "guide-data" });
+    const current = readJson(localStorage.getItem(storageKey), {});
+    keysToDelete.forEach((k) => delete current[k]);
+    localStorage.setItem(storageKey, JSON.stringify(current));
   }
 
   function isRedesSbGuideFile(fileName) {
@@ -1440,9 +1512,147 @@
     container.innerHTML = `<div class="empty-state">${escapeHtml(message)}</div>`;
   }
 
+  function renderGuide6ResponsesBody(state) {
+    const toolNames = { suite: "Suite ofimática", browser: "Navegador web", email: "Cliente de correo", zip: "Compresión", antivirus: "Antivirus", diagnostic: "Herramienta diagnóstico" };
+    const diagNames = { hardware: "Hardware", so: "Sistema operativo", disk: "Estado del disco", software: "Inventario software", network: "Conectividad de red" };
+    const budgetNames = { suite: "Suite ofimática", diagnostic: "Diagnóstico", security: "Antivirus / seguridad", cloud: "Servicios en la nube", backup: "Respaldo" };
+    const val = (key) => String(state[key] ?? "").trim() || "Sin respuesta";
+    const chk = (key) => state[key] ? "Sí ✓" : "No";
+    const quiz = state["quiz-guia6-312"];
+    const quizHtml = quiz && typeof quiz === "object"
+      ? renderAnswerTable(["Campo", "Valor"], [
+          ["Estado", quiz.status || "Sin registro"],
+          ["Variante", quiz.variant != null ? String(quiz.variant) : "Sin registro"],
+          ["Puntaje", quiz.score != null ? `${quiz.score} / 100` : "Sin registro"],
+          ["Enviado por cambio de pestaña", quiz.terminatedByVisibility ? "Sí" : "No"],
+          ["Fecha envío", quiz.submittedAt ? formatDate(quiz.submittedAt) : "Sin registro"],
+        ])
+      : '<div class="answer-value empty">Sin intento registrado.</div>';
+    return `
+      <div class="answers-grid">
+        <article class="answer-card">
+          <h3>Bitácora 3.1.1</h3>
+          ${renderAnswerTable(["Pregunta", "Respuesta"], [
+            ["¿Qué herramientas usa?", val("reflexion_herramientas")],
+            ["¿Cómo registra su trabajo?", val("reflexion_registro")],
+            ["¿Qué consecuencias tiene?", val("reflexion_consecuencias")],
+            ["¿Qué experiencia tiene?", val("reflexion_experiencia")],
+          ])}
+        </article>
+        <article class="answer-card">
+          <h3>Socialización 3.1.2</h3>
+          ${renderAnswerTable(["Campo", "Respuesta"], [
+            ["Conclusión", val("socializacion_conclusion")],
+            ["Pregunta central", val("socializacion_pregunta_central")],
+          ])}
+        </article>
+        <article class="answer-card">
+          <h3>Quiz herramientas 3.1.2</h3>
+          ${quizHtml}
+        </article>
+        <article class="answer-card">
+          <h3>Apuntes contexto 3.2.1</h3>
+          <div class="answer-value">${escapeHtml(val("ctx_apuntes"))}</div>
+        </article>
+        <article class="answer-card">
+          <h3>Mapa conceptual 3.2.2</h3>
+          ${renderAnswerTable(["Campo", "Respuesta"], [
+            ["Tema central", val("map_central")],
+            ["Ramas principales", val("map_ramas")],
+          ])}
+        </article>
+        <article class="answer-card" style="grid-column:1/-1">
+          <h3>Checklist instalación 3.3.1</h3>
+          ${renderAnswerTable(
+            ["Herramienta", "Fuente consultada", "Versión", "Criterio verificación", "Hecho", "Notas / evidencia"],
+            GUIDE6_INSTALL_IDS.map((id) => [toolNames[id] || id, val(`inst_source_${id}`), val(`inst_version_${id}`), val(`inst_verify_${id}`), chk(`inst_done_${id}`), val(`inst_notes_${id}`)])
+          )}
+        </article>
+        <article class="answer-card" style="grid-column:1/-1">
+          <h3>Diagnóstico 3.3.1</h3>
+          ${renderAnswerTable(
+            ["Sección", "Hallazgos y datos técnicos", "Recomendaciones / acciones"],
+            GUIDE6_DIAG_IDS.map((id) => [diagNames[id] || id, val(`diag_result_${id}`), val(`diag_action_${id}`)])
+          )}
+          <div style="margin-top:12px">
+            <strong style="font-size:.82rem;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted)">Conclusión</strong>
+            <div class="answer-value" style="margin-top:6px">${escapeHtml(val("diag_conclusion"))}</div>
+          </div>
+        </article>
+        <article class="answer-card" style="grid-column:1/-1">
+          <h3>Presupuesto 3.4.1</h3>
+          ${renderAnswerTable(
+            ["Elemento", "Licencia", "Precio unit.", "Cant.", "Justificación técnica"],
+            GUIDE6_BUDGET_IDS.map((id) => [budgetNames[id] || id, val(`budget_license_${id}`), val(`budget_price_${id}`), val(`budget_qty_${id}`), val(`budget_why_${id}`)])
+          )}
+          <div style="margin-top:12px">
+            <strong style="font-size:.82rem;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted)">Conclusión</strong>
+            <div class="answer-value" style="margin-top:6px">${escapeHtml(val("budget_conclusion"))}</div>
+          </div>
+        </article>
+      </div>
+    `;
+  }
+
+  async function handleViewGuide6Responses(button) {
+    const usernameKey = button.getAttribute("data-user") || "";
+    const fileName = button.getAttribute("data-view-guide6") || "";
+    const user = allUsers.find((u) => u.usernameKey === usernameKey);
+    if (!user || !fileName) return;
+    const config = getGuide6Config(fileName);
+    if (!config) return;
+    openGuide2ResponsesModal({
+      title: "Respuestas — Guía 6",
+      subtitle: `${user.fullName} | ${config.title}`,
+      meta: "Leyendo respuestas del aprendiz…",
+      bodyHtml: '<div class="response-status">Consultando…</div>',
+    });
+    const snapshot = readGuide6LocalSnapshot(usernameKey, config);
+    if (!snapshot?.state) {
+      openGuide2ResponsesModal({
+        title: "Respuestas — Guía 6",
+        subtitle: `${user.fullName} | ${config.title}`,
+        meta: `Aprendiz: ${user.fullName} | Grupo: ${user.grupo}`,
+        bodyHtml: '<div class="response-status">Este aprendiz aún no tiene respuestas guardadas en la Guía 6 en este navegador.</div>',
+      });
+      return;
+    }
+    openGuide2ResponsesModal({
+      title: "Respuestas — Guía 6",
+      subtitle: `${user.fullName} | ${config.title}`,
+      meta: `Aprendiz: ${user.fullName} | Grupo: ${user.grupo} | Actualizado: ${formatDate(snapshot.updatedAt)}`,
+      bodyHtml: renderGuide6ResponsesBody(snapshot.state),
+    });
+  }
+
+  async function handleUnlockActivity(button) {
+    const usernameKey = button.getAttribute("data-user") || "";
+    const activityId = button.getAttribute("data-unlock-activity") || "";
+    const stateKey = button.getAttribute("data-state-key") || "";
+    const label = button.getAttribute("data-activity-label") || activityId;
+    const user = allUsers.find((u) => u.usernameKey === usernameKey);
+    if (!user || !stateKey || !activityId) {
+      setFeedback("No fue posible identificar la actividad.", "error");
+      return;
+    }
+    const activity = [...GUIDE6_ACTIVITIES, ...GUIDE2_ACTIVITIES].find((a) => a.id === activityId);
+    if (!activity) {
+      setFeedback("No se encontró la configuración de la actividad.", "error");
+      return;
+    }
+    const confirmed = window.confirm(
+      `¿Habilitar de nuevo "${label}" para ${user.fullName}?\n\nEsto borrará las respuestas guardadas en esa actividad.`
+    );
+    if (!confirmed) return;
+    patchGuideState(usernameKey, stateKey, activity.keys);
+    setFeedback(`Actividad "${label}" habilitada de nuevo para ${user.fullName}.`, "success");
+    await refreshUsers();
+  }
+
   function buildProgressCard(user, guide) {
     const fillWidth = Math.max(0, Math.min(100, Number(guide.percent) || 0));
     const guide2Config = getGuide2ResponseConfig(guide.fileName);
+    const guide6Config = getGuide6Config(guide.fileName);
     const isRedesGuide = isRedesSbGuideFile(guide.fileName);
     const redesQuizButtons = isRedesGuide
       ? REDES_ADMIN_QUIZ_CONFIGS.map(
@@ -1460,6 +1670,32 @@
         ? `\u00daltima actualizaci\u00f3n: ${formatDate(guide.updatedAt)}`
         : "Resumen reconstruido desde el almacenamiento local.";
 
+    const activityStateKey = escapeHtml(getGuideActivityStateKey(guide.fileName));
+    const activityUnlockButtons = (activities) =>
+      activities
+        .map(
+          (act) =>
+            `<button class="btn ghost unlock-activity-btn" type="button"
+              data-unlock-activity="${escapeHtml(act.id)}"
+              data-activity-label="${escapeHtml(act.label)}"
+              data-state-key="${activityStateKey}"
+              data-user="${escapeHtml(user.usernameKey)}"
+            >${escapeHtml(act.label)}</button>`
+        )
+        .join("");
+
+    const unlockSection = guide2Config
+      ? `<div class="activity-unlock-panel">
+           <div class="activity-unlock-title">Habilitar actividad</div>
+           <div class="activity-unlock-buttons">${activityUnlockButtons(GUIDE2_ACTIVITIES)}</div>
+         </div>`
+      : guide6Config
+      ? `<div class="activity-unlock-panel">
+           <div class="activity-unlock-title">Habilitar actividad</div>
+           <div class="activity-unlock-buttons">${activityUnlockButtons(GUIDE6_ACTIVITIES)}</div>
+         </div>`
+      : "";
+
     return `
       <article class="progress-card">
         <h4>${escapeHtml(guide.title)}</h4>
@@ -1476,7 +1712,14 @@
             guide2Config
               ? `<button class="btn secondary" type="button" data-view-guide2="${escapeHtml(
                   guide.fileName
-                )}" data-user="${escapeHtml(user.usernameKey)}">Ver resultados Guia 2</button>`
+                )}" data-user="${escapeHtml(user.usernameKey)}">Ver respuestas Guia 2</button>`
+              : ""
+          }
+          ${
+            guide6Config
+              ? `<button class="btn secondary" type="button" data-view-guide6="${escapeHtml(
+                  guide.fileName
+                )}" data-user="${escapeHtml(user.usernameKey)}">Ver respuestas Guia 6</button>`
               : ""
           }
           ${
@@ -1494,6 +1737,7 @@
         <div class="progress-source">${escapeHtml(sourceText)}</div>
         ${guide2Config ? renderWordSearchAdminSummary(user, guide.fileName) : ""}
         ${guide2Config ? renderMatchingGameAdminSummary(user, guide.fileName) : ""}
+        ${unlockSection}
       </article>
     `;
   }
@@ -1509,19 +1753,14 @@
           <div>
             <h3>${escapeHtml(user.fullName)}</h3>
             <div class="user-meta">
-              <div>Usuario: <strong>${escapeHtml(user.username)}</strong></div>
-              <div>Ficha ${escapeHtml(user.ficha)} | ${escapeHtml(user.grupo)} | ${escapeHtml(
-      user.inst
-    )}</div>
-              <div>Creado: ${escapeHtml(createdText)} | \u00daltima edici\u00f3n de cuenta: ${escapeHtml(
-      updatedText
-    )}</div>
+              <div>Usuario: <strong>${escapeHtml(user.username)}</strong> &nbsp;&middot;&nbsp; Ficha ${escapeHtml(user.ficha)} | ${escapeHtml(user.grupo)} | ${escapeHtml(user.inst)}</div>
+              <div class="user-dates">Creado: ${escapeHtml(createdText)} &nbsp;&middot;&nbsp; Editado: ${escapeHtml(updatedText)}</div>
             </div>
           </div>
           <div class="user-badge">${overall}%</div>
         </div>
 
-        <div class="user-section-title">Editar usuario</div>
+        <div class="user-section-title">Editar datos</div>
         <form class="account-form" data-account-form="${escapeHtml(user.usernameKey)}">
           <div class="account-grid">
             <label class="account-field">
@@ -1553,37 +1792,29 @@
               </select>
             </label>
           </div>
-          <div class="user-actions">
+          <div class="user-actions-row">
             <button class="btn secondary" type="submit">Guardar datos</button>
+            <span class="user-hint">Al cambiar guia o grupo se actualizan la ficha e institucion.</span>
           </div>
         </form>
-        <div class="user-note">
-          Al cambiar la guia o el grupo se actualizan automaticamente la ficha, la institucion y las guias visibles.
+
+        <div class="user-password-section">
+          <div class="user-section-title">Contrase\u00f1a</div>
+          <form class="password-row" data-password-form="${escapeHtml(user.usernameKey)}">
+            <input
+              type="password"
+              name="password"
+              minlength="4"
+              maxlength="60"
+              placeholder="Nueva contrase\u00f1a para ${escapeHtml(user.username)}"
+            >
+            <button class="btn primary" type="submit">Actualizar</button>
+          </form>
         </div>
 
-        <div class="user-section-title" style="margin-top:16px">Cambiar contrase\u00f1a</div>
-        <form class="password-row" data-password-form="${escapeHtml(user.usernameKey)}">
-          <input
-            type="password"
-            name="password"
-            minlength="4"
-            maxlength="60"
-            placeholder="Nueva contrase\u00f1a para ${escapeHtml(user.username)}"
-          >
-          <button class="btn primary" type="submit">Actualizar</button>
-        </form>
-        <div class="user-note">
-          La contrase\u00f1a se cambia por separado para evitar errores al actualizar otros datos.
-        </div>
-
-        <div class="user-note">
-          Para ver el avance por gu\u00eda o reiniciar actividades espec\u00edficas, usa la pesta\u00f1a "Avance de guias".
-        </div>
-
-        <div class="user-actions" style="margin-top:12px">
-          <button class="btn warn" type="button" data-reset-all="${escapeHtml(
-            user.usernameKey
-          )}">Reiniciar todo el avance</button>
+        <div class="user-danger-zone">
+          <button class="btn warn" type="button" data-reset-all="${escapeHtml(user.usernameKey)}">Reiniciar todo el avance</button>
+          <span class="user-hint">Para reiniciar actividades espec\u00edficas usa la pesta\u00f1a "Avance de gu\u00edas".</span>
         </div>
       </article>
     `;
@@ -2098,105 +2329,147 @@
       </div>`;
   }
 
-  function renderActivitiesTab(users) {
-    const container = getById("activities-container");
-    if (!container) {
-      return;
-    }
+  function getActivitiesGroups(users) {
+    const seen = new Set();
+    const groups = [];
+    users.forEach((u) => {
+      const key = `${u.grupo}::${u.ficha}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        const instShort = String(u.inst || "").toLowerCase().includes("santa") ? "Santa B\u00e1rbara" : "Kennedy";
+        groups.push({ key, grupo: u.grupo, inst: u.inst, ficha: u.ficha, label: `${u.grupo} \u2014 ${instShort}` });
+      }
+    });
+    return groups.sort((a, b) => a.label.localeCompare(b.label, "es"));
+  }
 
+  function buildActivitiesPanels(groupUsers) {
     const wordSearchRows = [];
     const matchingRows = [];
 
-    users.forEach((user) => {
+    groupUsers.forEach((user) => {
       (user.progress?.guides || []).forEach((guide) => {
-        if (!getGuide2ResponseConfig(guide.fileName)) {
-          return;
-        }
+        if (!getGuide2ResponseConfig(guide.fileName)) return;
         const key = getGuide2SummaryKey(user.usernameKey, guide.fileName);
         const ws = guide2WordSearchSummaries[key];
         const mg = guide2MatchingGameSummaries[key];
-        if (ws) {
-          wordSearchRows.push({ summary: ws, user, guide });
-        }
-        if (mg) {
-          matchingRows.push({ summary: mg, user, guide });
-        }
+        if (ws) wordSearchRows.push({ summary: ws, user, guide });
+        if (mg) matchingRows.push({ summary: mg, user, guide });
       });
     });
 
-    const stillLoading =
-      users.some((user) =>
-        (user.progress?.guides || []).some((guide) => {
-          if (!getGuide2ResponseConfig(guide.fileName)) {
-            return false;
-          }
-          const key = getGuide2SummaryKey(user.usernameKey, guide.fileName);
-          return !(key in guide2WordSearchSummaries);
-        })
-      );
+    const stillLoading = groupUsers.some((user) =>
+      (user.progress?.guides || []).some((guide) => {
+        if (!getGuide2ResponseConfig(guide.fileName)) return false;
+        const key = getGuide2SummaryKey(user.usernameKey, guide.fileName);
+        return !(key in guide2WordSearchSummaries);
+      })
+    );
 
-    // Ficha de caso rows
     const fichaCasoRows = [];
-    const fichaCasoLoading = users
-      .filter((user) => getFichaCasoFileName(user))
-      .some((user) => !(user.usernameKey in fichaCasoSummaries));
-
-    users.forEach((user) => {
+    const fichaCasoLoading = groupUsers
+      .filter((u) => getFichaCasoFileName(u))
+      .some((u) => !(u.usernameKey in fichaCasoSummaries));
+    groupUsers.forEach((user) => {
       if (!getFichaCasoFileName(user)) return;
       const snapshot = fichaCasoSummaries[user.usernameKey];
-      if (snapshot && snapshot.state) {
-        fichaCasoRows.push({ user, snapshot });
-      }
+      if (snapshot?.state) fichaCasoRows.push({ user, snapshot });
     });
+
+    const matriz322Rows = [];
+    groupUsers.forEach((user) => {
+      const summary = matriz322Summaries[user.usernameKey];
+      if (summary) matriz322Rows.push({ summary });
+    });
+
+    const redesSbUsers = groupUsers.filter((u) => REDES_SB_CLOUD_FILES[u.ficha]);
+    const hasRedes = redesSbUsers.length > 0;
+    const redesLoading = redesSbUsers.some((u) => !(u.usernameKey in redesSocializacionSummaries));
+    const redesRows = redesSbUsers.map((u) => redesSocializacionSummaries[u.usernameKey]).filter(Boolean).map((s) => ({ summary: s }));
+    const redesQuizLoading = redesSbUsers.some((u) => !(u.usernameKey in redesQuizSummaries));
+    const redesQuizRows = redesSbUsers.map((u) => redesQuizSummaries[u.usernameKey]).filter(Boolean).map((s) => ({ summary: s }));
 
     const loadingHtml = '<p class="activities-loading">Cargando resultados\u2026</p>';
 
-    const matriz322Rows = [];
-    users.forEach((user) => {
-      const summary = matriz322Summaries[user.usernameKey];
-      if (summary) {
-        matriz322Rows.push({ summary });
-      }
-    });
+    const hasGuia2Activities = groupUsers.some((u) =>
+      (u.progress?.guides || []).some((g) => getGuide2ResponseConfig(g.fileName))
+    );
+    const hasFichaCaso = groupUsers.some((u) => getFichaCasoFileName(u));
 
-    const redesSbUsers = users.filter((u) => REDES_SB_CLOUD_FILES[u.ficha]);
-    const redesLoading = redesSbUsers.some((u) => !(u.usernameKey in redesSocializacionSummaries));
-    const redesRows = redesSbUsers
-      .map((u) => redesSocializacionSummaries[u.usernameKey])
-      .filter(Boolean)
-      .map((summary) => ({ summary }));
-    const redesQuizLoading = redesSbUsers.some((u) => !(u.usernameKey in redesQuizSummaries));
-    const redesQuizRows = redesSbUsers
-      .map((u) => redesQuizSummaries[u.usernameKey])
-      .filter(Boolean)
-      .map((summary) => ({ summary }));
+    let html = "";
 
-    container.innerHTML = `
-      <section class="panel">
-        <h2>Actividad 1 \u2014 Sopa de letras</h2>
-        ${stillLoading ? loadingHtml : buildActivitiesTable(wordSearchRows, "wordsearch")}
-      </section>
-      <section class="panel">
-        <h2>Actividad 2 \u2014 Relacionar funciones</h2>
-        ${stillLoading ? loadingHtml : buildActivitiesTable(matchingRows, "matching")}
-      </section>
-      <section class="panel">
-        <h2>Actividad 4 \u2014 Ficha de caso (respuestas guardadas)</h2>
-        ${fichaCasoLoading ? loadingHtml : buildFichaCasoTable(fichaCasoRows)}
-      </section>
-      <section class="panel">
-        <h2>Actividad 3.2.2 \u2014 Matriz de Diagn\u00f3stico Digital (finalizadas)</h2>
-        ${stillLoading ? loadingHtml : buildMatriz322Table(matriz322Rows)}
-      </section>
-      <section class="panel">
-        <h2>Quiz 3.2.1.H - Redes Santa Barbara</h2>
-        ${redesQuizLoading ? loadingHtml : buildRedesQuizTable(redesQuizRows)}
-      </section>
-      <section class="panel">
-        <h2>Socializaci\u00f3n 3.1.1 \u2014 Santa B\u00e1rbara (notas enviadas)</h2>
-        ${redesLoading ? loadingHtml : buildRedesSocializacionTable(redesRows)}
-      </section>
-    `;
+    if (hasGuia2Activities) {
+      html += `
+        <section class="panel">
+          <h2>Actividad 1 \u2014 Sopa de letras</h2>
+          ${stillLoading ? loadingHtml : buildActivitiesTable(wordSearchRows, "wordsearch")}
+        </section>
+        <section class="panel">
+          <h2>Actividad 2 \u2014 Relacionar funciones</h2>
+          ${stillLoading ? loadingHtml : buildActivitiesTable(matchingRows, "matching")}
+        </section>
+        <section class="panel">
+          <h2>Actividad 3.2.2 \u2014 Matriz de Diagn\u00f3stico Digital</h2>
+          ${stillLoading ? loadingHtml : buildMatriz322Table(matriz322Rows)}
+        </section>
+      `;
+    }
+    if (hasFichaCaso) {
+      html += `
+        <section class="panel">
+          <h2>Actividad 4 \u2014 Ficha de caso</h2>
+          ${fichaCasoLoading ? loadingHtml : buildFichaCasoTable(fichaCasoRows)}
+        </section>
+      `;
+    }
+    if (hasRedes) {
+      html += `
+        <section class="panel">
+          <h2>Quiz 3.2.1.H \u2014 Redes Santa B\u00e1rbara</h2>
+          ${redesQuizLoading ? loadingHtml : buildRedesQuizTable(redesQuizRows)}
+        </section>
+        <section class="panel">
+          <h2>Socializaci\u00f3n 3.1.1 \u2014 Santa B\u00e1rbara</h2>
+          ${redesLoading ? loadingHtml : buildRedesSocializacionTable(redesRows)}
+        </section>
+      `;
+    }
+    if (!html) {
+      html = '<div class="empty-state">No hay actividades registradas para este grupo.</div>';
+    }
+    return html;
+  }
+
+  function renderActivitiesTab(users) {
+    const container = getById("activities-container");
+    if (!container) return;
+
+    if (!users.length) {
+      container.innerHTML = '<div class="empty-state">No hay usuarios que coincidan con la b\u00fasqueda actual.</div>';
+      return;
+    }
+
+    const groups = getActivitiesGroups(users);
+
+    if (!activeActivitiesSubtab || !groups.find((g) => g.key === activeActivitiesSubtab)) {
+      activeActivitiesSubtab = groups[0]?.key || null;
+    }
+
+    const subTabsHtml = groups.length > 1
+      ? `<nav class="activities-subtabs">
+          ${groups.map((g) => `
+            <button class="activities-subtab${g.key === activeActivitiesSubtab ? " is-active" : ""}"
+              type="button" data-activities-subtab="${escapeHtml(g.key)}">
+              ${escapeHtml(g.label)}
+            </button>`).join("")}
+         </nav>`
+      : "";
+
+    const groupUsers = activeActivitiesSubtab
+      ? users.filter((u) => `${u.grupo}::${u.ficha}` === activeActivitiesSubtab)
+      : users;
+
+    container.innerHTML = subTabsHtml + buildActivitiesPanels(groupUsers);
   }
 
   function renderUsers() {
@@ -2470,6 +2743,25 @@
           return;
         }
         await unlockRedesQuizProgress(usernameKey, fileName, quizKey, user.fullName || user.usernameKey);
+        return;
+      }
+
+      const subtabButton = event.target.closest("[data-activities-subtab]");
+      if (subtabButton) {
+        activeActivitiesSubtab = subtabButton.getAttribute("data-activities-subtab") || null;
+        renderUsers();
+        return;
+      }
+
+      const viewGuide6Button = event.target.closest("[data-view-guide6]");
+      if (viewGuide6Button) {
+        await handleViewGuide6Responses(viewGuide6Button);
+        return;
+      }
+
+      const unlockActivityButton = event.target.closest("[data-unlock-activity]");
+      if (unlockActivityButton) {
+        await handleUnlockActivity(unlockActivityButton);
         return;
       }
 
