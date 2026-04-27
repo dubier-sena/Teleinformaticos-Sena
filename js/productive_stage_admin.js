@@ -310,8 +310,8 @@
 
   function buildProductiveStageDeliveryHistoryMarkup(projectId) {
     const deliveries =
-      store && typeof store.getProjectDeliveries === "function"
-        ? store.getProjectDeliveries(productiveStageSnapshot, projectId)
+      window.productiveStageStore && typeof window.productiveStageStore.getProjectDeliveries === "function"
+        ? window.productiveStageStore.getProjectDeliveries(productiveStageSnapshot, projectId)
         : [];
 
     if (!deliveries.length) {
@@ -340,6 +340,105 @@
         .join("") +
       "</div>"
     );
+  }
+
+  function buildStudentLinkMarkup(project) {
+    const linkedKeys = Array.isArray(project.studentUsernameKeys) ? project.studentUsernameKeys.slice() : [];
+
+    const chipsHtml = linkedKeys.length
+      ? linkedKeys.map(function (key) {
+          const user = allUsers.find(function (u) {
+            return String(u.usernameKey || "").trim().toLowerCase() === key;
+          });
+          const label = user ? escapeHtml(user.fullName || key) : escapeHtml(key);
+          const fichaLabel = user && user.ficha ? " · Ficha " + escapeHtml(String(user.ficha)) : "";
+          return (
+            '<span class="productive-stage-link-chip">' +
+            label + fichaLabel +
+            ' <button type="button" class="productive-stage-link-chip__remove" data-unlink-key="' +
+            escapeHtml(key) +
+            '" aria-label="Desvincular">×</button>' +
+            "</span>"
+          );
+        }).join("")
+      : '<span class="productive-stage-placeholder" style="font-size:13px">Sin aprendices vinculados. Usa el selector para vincular manualmente.</span>';
+
+    const projectFicha = String(project.ficha || "");
+    const availableUsers = allUsers.filter(function (u) {
+      const uKey = String(u.usernameKey || "").trim().toLowerCase();
+      return uKey && !linkedKeys.includes(uKey);
+    });
+    const sameFicha = availableUsers.filter(function (u) { return String(u.ficha || "") === projectFicha; });
+    const otherFicha = availableUsers.filter(function (u) { return String(u.ficha || "") !== projectFicha; });
+
+    let optionsHtml = '<option value="">Selecciona un aprendiz...</option>';
+    if (sameFicha.length) {
+      optionsHtml += '<optgroup label="Ficha ' + escapeHtml(projectFicha) + '">';
+      optionsHtml += sameFicha.map(function (u) {
+        const key = String(u.usernameKey || "").trim().toLowerCase();
+        return '<option value="' + escapeHtml(key) + '">' + escapeHtml(u.fullName || key) + "</option>";
+      }).join("");
+      optionsHtml += "</optgroup>";
+    }
+    if (otherFicha.length) {
+      optionsHtml += '<optgroup label="Otras fichas">';
+      optionsHtml += otherFicha.map(function (u) {
+        const key = String(u.usernameKey || "").trim().toLowerCase();
+        return (
+          '<option value="' + escapeHtml(key) + '">' +
+          escapeHtml(u.fullName || key) + " · Ficha " + escapeHtml(String(u.ficha || "")) +
+          "</option>"
+        );
+      }).join("");
+      optionsHtml += "</optgroup>";
+    }
+    if (!availableUsers.length) {
+      optionsHtml = '<option value="">Todos los aprendices ya estan vinculados</option>';
+    }
+
+    return (
+      '<article class="answer-card productive-stage-link-card">' +
+        "<h3>Aprendices vinculados</h3>" +
+        '<p style="font-size:13px;color:var(--text-muted);margin:0 0 12px">Vincula los aprendices a este proyecto. Solo ellos veran el Resumen del proyecto y podran entregar la Ficha de Inscripcion.</p>' +
+        '<div class="productive-stage-link-chips" id="productive-stage-link-chips">' + chipsHtml + "</div>" +
+        '<div class="productive-stage-link-row">' +
+          '<select id="productive-stage-link-select">' + optionsHtml + "</select>" +
+          '<button class="btn primary" type="button" id="productive-stage-link-btn">Vincular</button>' +
+        "</div>" +
+        '<div class="productive-stage-delivery-status" id="productive-stage-link-status" style="display:none"></div>' +
+      "</article>"
+    );
+  }
+
+  async function updateProjectStudentKeys(projectId, newKeys) {
+    if (!window.productiveStageStore) {
+      return { ok: false };
+    }
+
+    const projects = getProductiveStageProjects();
+    const projectIndex = projects.findIndex(function (p) { return p.id === projectId; });
+    if (projectIndex < 0) {
+      return { ok: false };
+    }
+
+    const updatedProject = Object.assign({}, projects[projectIndex], {
+      studentUsernameKeys: newKeys.filter(Boolean).slice(),
+      updatedAt: new Date().toISOString(),
+    });
+
+    const nextProjects = projects.slice();
+    nextProjects[projectIndex] = updatedProject;
+
+    const nextSnapshot = Object.assign({}, productiveStageSnapshot, {
+      projects: nextProjects,
+      studentIndex: window.productiveStageStore.buildStudentIndex(nextProjects),
+      updatedAt: new Date().toISOString(),
+    });
+
+    const saveResult = await window.productiveStageStore.saveSnapshot(nextSnapshot);
+    productiveStageSnapshot = nextSnapshot;
+    renderProductiveStageSection();
+    return saveResult;
   }
 
   function updateProductiveStageDeliverySummary(project) {
@@ -436,6 +535,7 @@
 
     getById("productive-stage-detail-body").innerHTML =
       '<div class="productive-stage-detail-grid">' +
+        buildStudentLinkMarkup(project) +
         '<article class="answer-card">' +
           "<h3>Resumen del proyecto</h3>" +
           "<p>" + escapeHtml(project.summary || "Sin resumen importado.") + "</p>" +
@@ -552,6 +652,65 @@
         "warning"
       );
     }
+
+    // Wire student link events
+    const linkBtn = getById("productive-stage-link-btn");
+    const linkSelect = getById("productive-stage-link-select");
+    const linkStatus = getById("productive-stage-link-status");
+
+    function setLinkStatus(message, type) {
+      if (!linkStatus) return;
+      linkStatus.style.display = message ? "" : "none";
+      linkStatus.className = "productive-stage-delivery-status" + (type ? " is-" + type : "");
+      linkStatus.textContent = message;
+    }
+
+    if (linkBtn) {
+      linkBtn.addEventListener("click", async function () {
+        const key = String(linkSelect && linkSelect.value || "").trim();
+        if (!key) {
+          setLinkStatus("Selecciona un aprendiz de la lista.", "error");
+          return;
+        }
+
+        const currentProject = getProductiveStageProjects().find(function (p) { return p.id === projectId; });
+        if (!currentProject) return;
+
+        const currentKeys = Array.isArray(currentProject.studentUsernameKeys) ? currentProject.studentUsernameKeys.slice() : [];
+        if (!currentKeys.includes(key)) {
+          currentKeys.push(key);
+        }
+
+        setLinkStatus("Guardando...", "loading");
+        linkBtn.disabled = true;
+        try {
+          const result = await updateProjectStudentKeys(projectId, currentKeys);
+          if (result && result.ok !== false) {
+            openProductiveStageDetailModal(projectId);
+          } else {
+            setLinkStatus("No se pudo guardar. Intenta de nuevo.", "error");
+            linkBtn.disabled = false;
+          }
+        } catch (e) {
+          setLinkStatus("Error al guardar.", "error");
+          linkBtn.disabled = false;
+        }
+      });
+    }
+
+    getById("productive-stage-detail-body").querySelectorAll("[data-unlink-key]").forEach(function (btn) {
+      btn.addEventListener("click", async function () {
+        const keyToRemove = btn.getAttribute("data-unlink-key");
+        const currentProject = getProductiveStageProjects().find(function (p) { return p.id === projectId; });
+        if (!currentProject) return;
+
+        const newKeys = (Array.isArray(currentProject.studentUsernameKeys) ? currentProject.studentUsernameKeys : [])
+          .filter(function (k) { return k !== keyToRemove; });
+
+        await updateProjectStudentKeys(projectId, newKeys);
+        openProductiveStageDetailModal(projectId);
+      });
+    });
   }
 
   async function handleProductiveStageDeliverySubmit() {

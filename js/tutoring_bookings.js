@@ -183,6 +183,25 @@
       ".tutoring-admin-toolbar label { display: flex; flex-direction: column; gap: 4px; font-weight: 600; color: #334155; font-size: 0.85rem; }",
       ".tutoring-admin-toolbar select, .tutoring-admin-toolbar input { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; min-width: 180px; }",
       ".tutoring-admin-empty { padding: 24px; text-align: center; color: #64748b; }",
+      // Grilla visual de slots
+      ".tutoring-slots-label { font-weight: 600; color: #334155; margin: 0 0 8px; display: block; }",
+      ".tutoring-slots-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }",
+      "@media (max-width: 460px) { .tutoring-slots-grid { grid-template-columns: repeat(2, 1fr); } }",
+      ".tutoring-slot { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 9px 5px; border-radius: 10px; font-family: inherit; font-size: 0.78rem; text-align: center; border: 2px solid transparent; box-sizing: border-box; transition: transform 0.12s, border-color 0.12s; }",
+      ".tutoring-slot__time { font-weight: 700; white-space: nowrap; }",
+      ".tutoring-slot__badge { font-size: 0.7rem; font-weight: 700; padding: 2px 7px; border-radius: 999px; }",
+      ".tutoring-slot--free { background: #f0fdf4; border-color: #86efac; color: #15803d; cursor: pointer; }",
+      ".tutoring-slot--free:hover { background: #dcfce7; border-color: #4ade80; transform: translateY(-1px); }",
+      ".tutoring-slot--free .tutoring-slot__badge { background: #dcfce7; color: #166534; }",
+      ".tutoring-slot--occupied { background: #fef2f2; border-color: #fecaca; color: #991b1b; }",
+      ".tutoring-slot--occupied .tutoring-slot__badge { background: #fee2e2; color: #b91c1c; }",
+      ".tutoring-slot--selected { background: #15803d; border-color: #166534; color: #fff; cursor: pointer; }",
+      ".tutoring-slot--selected:hover { background: #166534; }",
+      ".tutoring-slot--selected .tutoring-slot__badge { background: rgba(255,255,255,0.2); color: #fff; }",
+      ".tutoring-slot--selected-cont { background: #166534; border-color: #14532d; color: #bbf7d0; }",
+      ".tutoring-slot--selected-cont .tutoring-slot__badge { background: rgba(255,255,255,0.12); color: #bbf7d0; }",
+      ".tutoring-slot--unavailable { background: #f8fafc; border-color: #e2e8f0; color: #94a3b8; }",
+      ".tutoring-slot--unavailable .tutoring-slot__badge { background: #f1f5f9; color: #94a3b8; }",
     ].join("\n");
     document.head.appendChild(style);
   }
@@ -211,10 +230,11 @@
       '      <label><input type="radio" name="duration" value="30" checked> 30 minutos</label>',
       '      <label><input type="radio" name="duration" value="60"> 1 hora</label>',
       '    </fieldset>',
-      '    <label>',
-      '      Hora de inicio',
-      '      <select id="tutoring-modal-start-time" required></select>',
-      '    </label>',
+      '    <div>',
+      '      <p class="tutoring-slots-label">Hora de inicio</p>',
+      '      <div id="tutoring-slots-grid" class="tutoring-slots-grid"></div>',
+      '      <input type="hidden" id="tutoring-modal-start-time">',
+      '    </div>',
       '    <label>',
       '      Tema (opcional)',
       '      <input type="text" id="tutoring-modal-topic" maxlength="120" placeholder="Ej: revisar avance del proyecto">',
@@ -237,7 +257,10 @@
     });
     modal.querySelector("#tutoring-modal-form").addEventListener("submit", handleSubmit);
     modal.querySelectorAll('input[name="duration"]').forEach(function (radio) {
-      radio.addEventListener("change", refreshAvailableStartTimes);
+      radio.addEventListener("change", function () {
+        selectedStartTime = "";
+        renderSlotGrid();
+      });
     });
     document.getElementById("tutoring-modal-cancel-btn").addEventListener("click", handleCancelExisting);
   }
@@ -249,6 +272,8 @@
     bookings: [],
     existingBooking: null,
   };
+
+  var selectedStartTime = "";
 
   function openModal(date) {
     var user = getStudentUser();
@@ -283,6 +308,7 @@
     modal.hidden = true;
     document.body.style.overflow = "";
     modalState = { date: "", record: null, user: null, bookings: [], existingBooking: null };
+    selectedStartTime = "";
     setStatus("", "");
   }
 
@@ -336,6 +362,7 @@
       // Pre-rellenar el form con la reserva existente
       var radio = document.querySelector('#tutoring-modal-form input[name="duration"][value="' + b.durationMinutes + '"]');
       if (radio) radio.checked = true;
+      selectedStartTime = b.startTime || "";
       var topicEl = document.getElementById("tutoring-modal-topic");
       if (topicEl) topicEl.value = b.topic || "";
     } else {
@@ -344,34 +371,94 @@
       submitBtn.textContent = "Confirmar reserva";
     }
 
-    refreshAvailableStartTimes();
+    renderSlotGrid();
   }
 
-  function refreshAvailableStartTimes() {
+  function renderSlotGrid() {
     var radio = document.querySelector('#tutoring-modal-form input[name="duration"]:checked');
     var duration = radio ? Number(radio.value) || 30 : 30;
-    var available = getAvailableStartTimes(
+    var slotCount = duration === 60 ? 2 : 1;
+
+    var occupied = getOccupiedSlots(
       modalState.bookings,
-      duration,
       modalState.user ? modalState.user.usernameKey : ""
     );
-    var select = document.getElementById("tutoring-modal-start-time");
-    if (!select) return;
-    var preferredStart = modalState.existingBooking ? modalState.existingBooking.startTime : "";
 
-    if (!available.length) {
-      select.innerHTML = '<option value="">No hay horarios libres para esta duracion</option>';
-      select.disabled = true;
-      return;
+    // Slots válidos como hora de inicio para la duración elegida
+    var validStarts = SLOT_TIMES.filter(function (t, idx) {
+      if (idx + slotCount > SLOT_COUNT) return false;
+      for (var i = 0; i < slotCount; i++) {
+        if (occupied[SLOT_TIMES[idx + i]]) return false;
+      }
+      return true;
+    });
+
+    // Si la selección actual ya no es válida, limpiarla
+    if (selectedStartTime && validStarts.indexOf(selectedStartTime) < 0) {
+      selectedStartTime = "";
     }
-    select.disabled = false;
-    select.innerHTML = available.map(function (start) {
-      var end = computeEndTime(start, duration);
-      var selected = start === preferredStart ? " selected" : "";
-      return '<option value="' + start + '"' + selected + '>' +
-        start + " - " + end + " (" + duration + " min)" +
-        '</option>';
+
+    var grid = document.getElementById("tutoring-slots-grid");
+    var hiddenInput = document.getElementById("tutoring-modal-start-time");
+    if (!grid) return;
+
+    var html = SLOT_TIMES.map(function (slotTime, idx) {
+      var end30 = idx + 1 < SLOT_COUNT ? SLOT_TIMES[idx + 1] : END_TIME;
+      var isOccupied = !!occupied[slotTime];
+      var isValidStart = validStarts.indexOf(slotTime) >= 0;
+
+      var selIdx = selectedStartTime ? SLOT_TIMES.indexOf(selectedStartTime) : -1;
+      var isSelectedStart = selIdx >= 0 && idx === selIdx;
+      var isSelectedCont  = selIdx >= 0 && duration === 60 && idx === selIdx + 1;
+
+      if (isOccupied) {
+        return '<div class="tutoring-slot tutoring-slot--occupied">' +
+          '<span class="tutoring-slot__time">' + escapeHtml(slotTime + " – " + end30) + '</span>' +
+          '<span class="tutoring-slot__badge">Ocupado</span>' +
+          '</div>';
+      }
+
+      if (isSelectedStart) {
+        var selEnd = computeEndTime(selectedStartTime, duration);
+        return '<button type="button" class="tutoring-slot tutoring-slot--selected" data-slot-start="' + escapeHtml(slotTime) + '">' +
+          '<span class="tutoring-slot__time">' + escapeHtml(slotTime + " – " + selEnd) + '</span>' +
+          '<span class="tutoring-slot__badge">✓ Seleccionada</span>' +
+          '</button>';
+      }
+
+      if (isSelectedCont) {
+        return '<div class="tutoring-slot tutoring-slot--selected-cont">' +
+          '<span class="tutoring-slot__time">' + escapeHtml(slotTime + " – " + end30) + '</span>' +
+          '<span class="tutoring-slot__badge">+ incluida</span>' +
+          '</div>';
+      }
+
+      if (isValidStart) {
+        var freeEnd = computeEndTime(slotTime, duration);
+        return '<button type="button" class="tutoring-slot tutoring-slot--free" data-slot-start="' + escapeHtml(slotTime) + '">' +
+          '<span class="tutoring-slot__time">' + escapeHtml(slotTime + " – " + freeEnd) + '</span>' +
+          '<span class="tutoring-slot__badge">Libre</span>' +
+          '</button>';
+      }
+
+      // Franja libre pero no usable como inicio (p. ej. último slot en modo 1h,
+      // o el slot siguiente está ocupado y bloquea la 2ª mitad de 1h)
+      return '<div class="tutoring-slot tutoring-slot--unavailable">' +
+        '<span class="tutoring-slot__time">' + escapeHtml(slotTime + " – " + end30) + '</span>' +
+        '<span class="tutoring-slot__badge">No disponible</span>' +
+        '</div>';
     }).join("");
+
+    grid.innerHTML = html;
+
+    if (hiddenInput) hiddenInput.value = selectedStartTime;
+
+    grid.querySelectorAll(".tutoring-slot--free, .tutoring-slot--selected").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        selectedStartTime = btn.getAttribute("data-slot-start") || "";
+        renderSlotGrid();
+      });
+    });
   }
 
   async function handleSubmit(event) {
