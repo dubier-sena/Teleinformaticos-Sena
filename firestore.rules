@@ -21,6 +21,10 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    match /sena_portal_tutoring_bookings/{bookingId} {
+      allow read, write: if true;
+    }
+
     // Bloquear cualquier otra coleccion no prevista
     match /{document=**} {
       allow read, write: if false;

@@ -66,6 +66,7 @@
   var COL_PROGRESS = "sena_portal_progress";
   var COL_CALENDAR = "sena_portal_calendar";
   var COL_GUIDE_STATE = "sena_portal_guide_state";
+  var COL_TUTORING = "sena_portal_tutoring_bookings";
   var CALENDAR_FALLBACK_PREFIX = "__calendar__:";
   var AVAILABILITY_DOC_ID = CALENDAR_FALLBACK_PREFIX + "calendario_2026_admin";
   var GUIDE_DATA_FALLBACK_PREFIX = "__guide_data__:";
@@ -785,6 +786,56 @@
   }
 
   // ════════════════════════════════════════════════════════════════════════════
+  //  RESERVAS DE TUTORIA VIRTUAL
+  //  Cada documento es una reserva de un aprendiz para una fecha SENA, con
+  //  hora de inicio y duracion (30 o 60 min). El doc id es deterministico
+  //  ({date}__{ficha}__{usernameKey}) para que el mismo aprendiz solo tenga
+  //  una reserva por fecha (re-guardar = sobreescribir).
+  // ════════════════════════════════════════════════════════════════════════════
+  function tutoringDocId(date, ficha, usernameKey) {
+    var d = String(date || "").trim();
+    var f = String(ficha || "").trim();
+    var u = String(usernameKey || "").trim().toLowerCase();
+    if (!d || !f || !u) return "";
+    return d + "__" + f + "__" + u;
+  }
+
+  async function cloudListTutoringBookings() {
+    var list = await fsList(COL_TUTORING);
+    return Array.isArray(list) ? list : [];
+  }
+
+  async function cloudListTutoringBookingsForDate(date, ficha) {
+    // No filtramos en Firestore (la API REST sin SDK no soporta queries
+    // estructuradas trivialmente); filtramos en cliente sobre la lista.
+    var all = await cloudListTutoringBookings();
+    return all.filter(function (b) {
+      if (date && b.date !== date) return false;
+      if (ficha && String(b.ficha || "") !== String(ficha)) return false;
+      return true;
+    });
+  }
+
+  async function cloudGetTutoringBooking(date, ficha, usernameKey) {
+    var id = tutoringDocId(date, ficha, usernameKey);
+    if (!id) return null;
+    return fsGet(COL_TUTORING, id);
+  }
+
+  async function cloudSaveTutoringBooking(booking) {
+    if (!booking) return false;
+    var id = tutoringDocId(booking.date, booking.ficha, booking.usernameKey);
+    if (!id) return false;
+    return fsPatch(COL_TUTORING, id, booking);
+  }
+
+  async function cloudDeleteTutoringBooking(date, ficha, usernameKey) {
+    var id = tutoringDocId(date, ficha, usernameKey);
+    if (!id) return false;
+    return fsDelete(COL_TUTORING, id);
+  }
+
+  // ════════════════════════════════════════════════════════════════════════════
   //  RESTAURAR DATOS EN LOCALSTORAGE DESDE FIREBASE
   //  Necesario cuando el estudiante entra desde un equipo nuevo.
   // ════════════════════════════════════════════════════════════════════════════
@@ -1212,6 +1263,11 @@
     cloudSaveGuideData: cloudSaveGuideData,
     cloudGetGuideUiState: cloudGetGuideUiState,
     cloudSaveGuideUiState: cloudSaveGuideUiState,
+    cloudListTutoringBookings:        cloudListTutoringBookings,
+    cloudListTutoringBookingsForDate: cloudListTutoringBookingsForDate,
+    cloudGetTutoringBooking:          cloudGetTutoringBooking,
+    cloudSaveTutoringBooking:         cloudSaveTutoringBooking,
+    cloudDeleteTutoringBooking:       cloudDeleteTutoringBooking,
     shouldDeferCloudReads: shouldDeferCloudReads,
     shouldSkipGuideUiCloudSave: shouldSkipGuideUiCloudSave,
     getBudgetStatus:    getFirestoreBudgetStatus,
