@@ -116,8 +116,8 @@
   const GUIDE6_BUDGET_IDS = ["suite", "diagnostic", "security", "cloud", "backup"];
 
   const GUIDE6_ACTIVITIES = [
-    { id: "bitacora311", label: "Bitácora 3.1.1", keys: ["reflexion_herramientas", "reflexion_registro", "reflexion_consecuencias", "reflexion_experiencia"] },
-    { id: "socializacion312", label: "Socialización 3.1.2", keys: ["socializacion_conclusion", "socializacion_pregunta_central"] },
+    { id: "bitacora311", label: "Bitácora 3.1.1", keys: ["reflexion_herramientas", "reflexion_registro", "reflexion_consecuencias", "reflexion_experiencia", "bitacora311-locked"] },
+    { id: "socializacion312", label: "Socialización 3.1.2", keys: ["socializacion_conclusion", "socializacion_pregunta_central", "socializacion312-locked"] },
     { id: "quiz312", label: "Quiz herramientas 3.1.2", keys: ["quiz-guia6-312"] },
     { id: "contexto321", label: "Apuntes 3.2.1", keys: ["ctx_apuntes"] },
     { id: "mapa322", label: "Mapa conceptual 3.2.2", keys: ["map_central", "map_ramas"] },
