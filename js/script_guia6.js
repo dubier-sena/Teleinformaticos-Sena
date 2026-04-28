@@ -1338,4 +1338,25 @@ function escapeHtml(value) {
     .replace(/'/g, "&#39;");
 }
 
+function guardarBitacora311() {
+  saveState();
+  const status = document.getElementById("bitacoraStatus311");
+  if (!status) return;
+  status.style.display = "block";
+  clearTimeout(guardarBitacora311._timer);
+  guardarBitacora311._timer = setTimeout(() => { status.style.display = "none"; }, 3000);
+}
+
+function guardarSocializacion312() {
+  saveState();
+  const status = document.getElementById("socializacionStatus312");
+  if (!status) return;
+  status.style.display = "block";
+  clearTimeout(guardarSocializacion312._timer);
+  guardarSocializacion312._timer = setTimeout(() => { status.style.display = "none"; }, 3000);
+}
+
+window.guardarBitacora311 = guardarBitacora311;
+window.guardarSocializacion312 = guardarSocializacion312;
+
 
