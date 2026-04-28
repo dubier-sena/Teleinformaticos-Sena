@@ -428,6 +428,7 @@ function initGuia6() {
   hydrateFields();
   applyBitacoraLock();
   applyBitacoraSocializacionLock();
+  renderQuizHerramientasStatus();
   updateBudgetSummary();
   bindEvents();
   updateProgress();
@@ -1338,6 +1339,56 @@ function escapeHtml(value) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
+}
+
+const QUIZ_PAGE_URLS = {
+  "grupo-11a-guia-06-planificar-informacion.html": "pages/auxiliares/grupo-11a-guia-06-herramientas-quiz.html",
+  "grupo-11b-guia-06-planificar-informacion.html": "pages/auxiliares/grupo-11b-guia-06-herramientas-quiz.html",
+};
+
+function renderQuizHerramientasStatus() {
+  const panel = document.getElementById("quizHerramientasStatus");
+  const actionLink = document.getElementById("quizHerramientasActionLink");
+  if (!actionLink) return;
+
+  const quizUrl = QUIZ_PAGE_URLS[PAGE_FILE] || "";
+  if (quizUrl) actionLink.setAttribute("href", quizUrl);
+
+  const attempt = state?.["quiz-guia6-312"];
+  if (!panel) return;
+
+  if (!attempt || typeof attempt !== "object") {
+    panel.style.display = "none";
+    actionLink.innerHTML = "&#128218; Presentar quiz aleatorio";
+    return;
+  }
+
+  const statusLabel = attempt.locked || attempt.status === "completed"
+    ? "Completado"
+    : attempt.status === "terminated_visibility"
+    ? "Finalizado por visibilidad"
+    : attempt.startedAt ? "En progreso" : "Pendiente";
+
+  const variant = String(attempt.variant || "Sin asignar");
+  const warnings = Number(attempt.warningCount) || 0;
+  const score = Number(attempt.score) || 0;
+  const maxScore = Number(attempt.maxScore) || 100;
+
+  panel.style.display = "block";
+  panel.innerHTML =
+    `<div class="label">&#128221; Estado del quiz 3.1.2</div>` +
+    `<p style="margin:8px 0 0"><strong>Estado:</strong> ${statusLabel} | ` +
+    `<strong>Variante:</strong> ${variant} | ` +
+    `<strong>Advertencias:</strong> ${warnings} / 2</p>` +
+    (attempt.locked
+      ? `<p style="margin:8px 0 0"><strong>Puntaje:</strong> ${score} / ${maxScore}</p>`
+      : `<p style="margin:8px 0 0">Tienes un intento iniciado. Al volver continuaras con la misma variante.</p>`);
+
+  if (attempt.locked) {
+    actionLink.innerHTML = "&#128065; Ver quiz presentado";
+  } else {
+    actionLink.innerHTML = "&#9205; Continuar quiz";
+  }
 }
 
 const BITACORA_311_STORES = ["reflexion_herramientas", "reflexion_registro", "reflexion_consecuencias", "reflexion_experiencia"];
