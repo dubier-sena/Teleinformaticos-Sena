@@ -2380,6 +2380,7 @@ window.subirEntregaFinalLab1 = function () {
     activityTitle: "Laboratorio 1 \u2014 Red topologia estrella con direccionamiento IP",
     activityLabel: "Actividad 3.4.1",
     fileNamePrefix: "Lab1_EstrellaCarmen",
+    allowedExtensions: [".pkt"],
     learnerNameMode: "full",
   });
 };
@@ -2623,6 +2624,7 @@ window.subirEntregaFinalLab2 = function () {
     activityTitle: "Laboratorio 2 — Red topologia arbol con multiples segmentos (Autonomo)",
     activityLabel: "Actividad 3.4.2",
     fileNamePrefix: "Lab2_ArbolBoycaTech",
+    allowedExtensions: [".pkt"],
     learnerNameMode: "full",
   });
 };
@@ -2868,6 +2870,7 @@ window.subirEntregaFinalLab3 = function () {
     activityTitle: "Laboratorio 3 - Red hibrida estrella y arbol con fibra optica, cableado y Wi-Fi",
     activityLabel: "Actividad 3.4.3",
     fileNamePrefix: "Lab3_HibridaColegio",
+    allowedExtensions: [".pkt"],
     learnerNameMode: "full",
   });
 };

@@ -55,6 +55,11 @@
         { key: "quiz-redes-321h", label: "Quiz 3.2.1.H" },
         { key: "quiz-redes-33h", label: "Quiz IP" },
       ];
+  const REDES_LAB_ACTIVITIES = [
+    { id: "lab1", label: "Laboratorio 1 - Topologia estrella", keys: ["lab1-locked"] },
+    { id: "lab2", label: "Laboratorio 2 - Topologia arbol", keys: ["lab2-locked"] },
+    { id: "lab3", label: "Laboratorio 3 - Red hibrida", keys: ["lab3-locked"] },
+  ];
 
   const FICHA_CASO_FILES = {
     "10A": "grupo-10a-guia-02-ficha-caso.html",
@@ -490,6 +495,23 @@
       snapshotState && typeof snapshotState === "object" ? { ...snapshotState } : {};
     let changed = false;
     REDES_SB_LOCK_KEYS.forEach((key) => {
+      if (Object.prototype.hasOwnProperty.call(nextState, key)) {
+        changed = true;
+        delete nextState[key];
+      }
+    });
+    return { state: nextState, changed };
+  }
+
+  function clearSelectedRedesGuideLocks(snapshotState, lockKeys) {
+    if (typeof window.redesLockSync?.clearSelectedRedesGuideLocks === "function") {
+      return window.redesLockSync.clearSelectedRedesGuideLocks(snapshotState, lockKeys);
+    }
+
+    const nextState =
+      snapshotState && typeof snapshotState === "object" ? { ...snapshotState } : {};
+    let changed = false;
+    (Array.isArray(lockKeys) ? lockKeys : []).forEach((key) => {
       if (Object.prototype.hasOwnProperty.call(nextState, key)) {
         changed = true;
         delete nextState[key];
@@ -1665,6 +1687,16 @@
               >${escapeHtml(`Reabrir ${config.label}`)}</button>`
         ).join("")
       : "";
+    const redesLabUnlockButtons = isRedesGuide
+      ? REDES_LAB_ACTIVITIES.map(
+          (activity) =>
+            `<button class="btn ghost" type="button"
+              data-unlock-redes-activity="${escapeHtml(activity.id)}"
+              data-guide-file="${escapeHtml(guide.fileName)}"
+              data-user="${escapeHtml(user.usernameKey)}"
+            >${escapeHtml(activity.label)}</button>`
+        ).join("")
+      : "";
     const sourceText =
       guide.source === "meta" || guide.source === "network"
         ? `\u00daltima actualizaci\u00f3n: ${formatDate(guide.updatedAt)}`
@@ -1684,7 +1716,12 @@
         )
         .join("");
 
-    const unlockSection = guide2Config
+    const unlockSection = isRedesGuide
+      ? `<div class="activity-unlock-panel">
+           <div class="activity-unlock-title">Habilitar actividad</div>
+           <div class="activity-unlock-buttons">${redesLabUnlockButtons}</div>
+         </div>`
+      : guide2Config
       ? `<div class="activity-unlock-panel">
            <div class="activity-unlock-title">Habilitar actividad</div>
            <div class="activity-unlock-buttons">${activityUnlockButtons(GUIDE2_ACTIVITIES)}</div>
@@ -1720,13 +1757,6 @@
               ? `<button class="btn secondary" type="button" data-view-guide6="${escapeHtml(
                   guide.fileName
                 )}" data-user="${escapeHtml(user.usernameKey)}">Ver respuestas Guia 6</button>`
-              : ""
-          }
-          ${
-            isRedesGuide
-              ? `<button class="btn secondary" type="button" data-unlock-redes-guide="${escapeHtml(
-                  guide.fileName
-                )}" data-user="${escapeHtml(user.usernameKey)}">Habilitar edicion</button>`
               : ""
           }
           ${redesQuizButtons}
@@ -2020,6 +2050,72 @@
       );
     } catch (err) {
       setFeedback(`No fue posible habilitar la edicion: ${err?.message || "intenta de nuevo."}`, "error");
+    }
+  }
+
+  async function unlockRedesActivityProgress(usernameKey, fileName, activityId, displayName) {
+    const user = allUsers.find((item) => item.usernameKey === usernameKey) || null;
+    const activity = REDES_LAB_ACTIVITIES.find((item) => item.id === activityId);
+    const cloudFileName = getRedesGuideCloudFileName(fileName, user?.ficha);
+    if (!activity || !cloudFileName) {
+      setFeedback("No fue posible identificar la actividad de redes a habilitar.", "error");
+      return;
+    }
+
+    if (!confirm(`¿Habilitar nuevamente la edicion de "${activity.label}" para "${displayName}"?`)) {
+      return;
+    }
+
+    const updatedAt = new Date().toISOString();
+    const updatedBy = `admin-redes-activity-unlock:${activity.id}`;
+    let changed = false;
+
+    try {
+      const localStorageKey = getRedesGuideLocalStorageKey(usernameKey, fileName);
+      const localState = localStorageKey
+        ? readJson(localStorage.getItem(localStorageKey), null)
+        : null;
+
+      if (localStorageKey && localState && typeof localState === "object") {
+        const localUnlock = clearSelectedRedesGuideLocks(localState, activity.keys);
+        if (localUnlock.changed) {
+          changed = true;
+          localStorage.setItem(localStorageKey, JSON.stringify(localUnlock.state));
+          localStorage.setItem(
+            `${localStorageKey}__meta`,
+            JSON.stringify({ updatedAt, updatedBy })
+          );
+        }
+      }
+
+      if (window._firebaseDb?.cloudGetGuideData && window._firebaseDb?.cloudSaveGuideData) {
+        const scopeKey = getGuide2ScopeKey(usernameKey);
+        const snapshot = await window._firebaseDb.cloudGetGuideData(scopeKey, cloudFileName);
+        const cloudUnlock = clearSelectedRedesGuideLocks(snapshot?.state || snapshot?.data || {}, activity.keys);
+        if (cloudUnlock.changed) {
+          changed = true;
+          await window._firebaseDb.cloudSaveGuideData(
+            scopeKey,
+            cloudFileName,
+            buildRedesGuideSnapshotPayload(
+              snapshot,
+              cloudUnlock.state,
+              updatedAt,
+              updatedBy
+            )
+          );
+        }
+      }
+
+      renderUsers();
+      setFeedback(
+        changed
+          ? `Edicion habilitada para ${displayName} en ${activity.label}.`
+          : `No se encontro bloqueo activo para ${displayName} en ${activity.label}.`,
+        "success"
+      );
+    } catch (err) {
+      setFeedback(`No fue posible habilitar la actividad: ${err?.message || "intenta de nuevo."}`, "error");
     }
   }
 
@@ -2729,6 +2825,20 @@
           return;
         }
         await unlockRedesGuideProgress(usernameKey, fileName, user.fullName || user.usernameKey);
+        return;
+      }
+
+      const unlockRedesActivityButton = event.target.closest("[data-unlock-redes-activity]");
+      if (unlockRedesActivityButton) {
+        const usernameKey = unlockRedesActivityButton.getAttribute("data-user") || "";
+        const fileName = unlockRedesActivityButton.getAttribute("data-guide-file") || "";
+        const activityId = unlockRedesActivityButton.getAttribute("data-unlock-redes-activity") || "";
+        const user = allUsers.find((item) => item.usernameKey === usernameKey);
+        if (!user || !fileName || !activityId) {
+          setFeedback("No fue posible identificar la actividad de redes a habilitar.", "error");
+          return;
+        }
+        await unlockRedesActivityProgress(usernameKey, fileName, activityId, user.fullName || user.usernameKey);
         return;
       }
 
