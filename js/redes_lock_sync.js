@@ -79,8 +79,28 @@
     };
   }
 
+  function clearSelectedRedesGuideLocks(snapshotState, lockKeys) {
+    const nextState =
+      snapshotState && typeof snapshotState === "object" ? { ...snapshotState } : {};
+    const safeLockKeys = Array.isArray(lockKeys) ? lockKeys : [];
+    let changed = false;
+
+    safeLockKeys.forEach((key) => {
+      if (Object.prototype.hasOwnProperty.call(nextState, key)) {
+        changed = true;
+        delete nextState[key];
+      }
+    });
+
+    return {
+      state: nextState,
+      changed,
+    };
+  }
+
   return {
     buildRedesGuideSnapshot,
+    clearSelectedRedesGuideLocks,
     syncAuthoritativeLockFlagsOnlyRedes,
     syncRemoteLockFlagsRedes,
   };

@@ -2,6 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 
 const {
+  clearSelectedRedesGuideLocks,
   syncRemoteLockFlagsRedes,
   syncAuthoritativeLockFlagsOnlyRedes,
   buildRedesGuideSnapshot,
@@ -117,4 +118,22 @@ test("actualiza data y state al construir el snapshot desbloqueado de redes", ()
   });
   assert.equal(nextSnapshot.updatedAt, updatedAt);
   assert.equal(nextSnapshot.updatedBy, "admin-redes-unlock");
+});
+
+test("habilita de nuevo solo la actividad de redes seleccionada", () => {
+  const unlockResult = clearSelectedRedesGuideLocks(
+    {
+      "lab1-locked": true,
+      "lab2-locked": true,
+      "lab3-locked": true,
+      "lab1-ping1": "Analisis previo",
+    },
+    ["lab1-locked"]
+  );
+
+  assert.equal(unlockResult.changed, true);
+  assert.equal("lab1-locked" in unlockResult.state, false);
+  assert.equal(unlockResult.state["lab2-locked"], true);
+  assert.equal(unlockResult.state["lab3-locked"], true);
+  assert.equal(unlockResult.state["lab1-ping1"], "Analisis previo");
 });
