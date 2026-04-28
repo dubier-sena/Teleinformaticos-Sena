@@ -112,8 +112,14 @@
   ];
 
   const GUIDE6_FILES = {
-    "grupo-11a-guia-06-planificar-informacion.html": { stateKey: "guia_interactiva_11a_guia6_html" },
-    "grupo-11b-guia-06-planificar-informacion.html": { stateKey: "guia_interactiva_11b_guia6_html" },
+    "grupo-11a-guia-06-planificar-informacion.html": {
+      stateKey: "guia_interactiva_11a_guia6_html",
+      cloudFileName: "11a_guia6.html",
+    },
+    "grupo-11b-guia-06-planificar-informacion.html": {
+      stateKey: "guia_interactiva_11b_guia6_html",
+      cloudFileName: "11b_guia6.html",
+    },
   };
 
   const GUIDE6_INSTALL_IDS = ["suite", "browser", "email", "zip", "antivirus", "diagnostic"];
@@ -347,18 +353,126 @@
     return { state, updatedAt: meta?.updatedAt || "", sourceLabel: "Copia local" };
   }
 
+  async function readGuide6CloudSnapshot(usernameKey, config) {
+    if (
+      !config?.cloudFileName ||
+      !window._firebaseDb ||
+      typeof window._firebaseDb.cloudGetGuideData !== "function"
+    ) {
+      return null;
+    }
+
+    try {
+      const snapshot = await window._firebaseDb.cloudGetGuideData(
+        getGuide2ScopeKey(usernameKey),
+        config.cloudFileName
+      );
+      const state =
+        snapshot?.state && typeof snapshot.state === "object"
+          ? snapshot.state
+          : snapshot?.data && typeof snapshot.data === "object"
+            ? snapshot.data
+            : null;
+      if (!state) return null;
+      return {
+        state,
+        updatedAt: snapshot.updatedAt || snapshot.importedAt || "",
+        updatedBy: snapshot.updatedBy || "",
+        sourceLabel: "Sincronizacion compartida",
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  async function loadGuide6Responses(usernameKey, config) {
+    const [cloudSnapshot, localSnapshot] = await Promise.all([
+      readGuide6CloudSnapshot(usernameKey, config),
+      Promise.resolve(readGuide6LocalSnapshot(usernameKey, config)),
+    ]);
+    return pickLatestSnapshot(cloudSnapshot, localSnapshot);
+  }
+
   function getGuideActivityStateKey(fileName) {
     const g6 = GUIDE6_FILES[fileName];
     if (g6) return g6.stateKey;
     return auth.GUIDE_PROGRESS_CONFIG?.[fileName]?.stateKey || "";
   }
 
-  function patchGuideState(usernameKey, stateKey, keysToDelete) {
-    if (!stateKey || typeof auth.getStudentStorageKey !== "function") return;
+  function patchGuideState(usernameKey, stateKey, keysToDelete, options = {}) {
+    if (!stateKey || typeof auth.getStudentStorageKey !== "function") return false;
     const storageKey = auth.getStudentStorageKey(usernameKey, stateKey, { area: "guide-data" });
     const current = readJson(localStorage.getItem(storageKey), {});
-    keysToDelete.forEach((k) => delete current[k]);
+    let changed = false;
+    keysToDelete.forEach((k) => {
+      if (Object.prototype.hasOwnProperty.call(current, k)) {
+        changed = true;
+        delete current[k];
+      }
+    });
     localStorage.setItem(storageKey, JSON.stringify(current));
+    localStorage.setItem(
+      `${storageKey}__meta`,
+      JSON.stringify({
+        updatedAt: options.updatedAt || new Date().toISOString(),
+        updatedBy: options.updatedBy || "admin-activity-unlock",
+      })
+    );
+    return changed;
+  }
+
+  function buildGuideSnapshotPayload(snapshot, nextState, updatedAt, updatedBy) {
+    const safeSnapshot =
+      snapshot && typeof snapshot === "object" ? { ...snapshot } : {};
+    const safeState =
+      nextState && typeof nextState === "object" ? { ...nextState } : {};
+
+    return {
+      ...safeSnapshot,
+      data: safeState,
+      state: safeState,
+      updatedAt,
+      updatedBy,
+    };
+  }
+
+  async function patchGuideCloudState(usernameKey, cloudFileName, keysToDelete, options = {}) {
+    if (
+      !cloudFileName ||
+      !window._firebaseDb?.cloudGetGuideData ||
+      !window._firebaseDb?.cloudSaveGuideData
+    ) {
+      return false;
+    }
+
+    const scopeKey = getGuide2ScopeKey(usernameKey);
+    const snapshot = await window._firebaseDb.cloudGetGuideData(scopeKey, cloudFileName);
+    const current =
+      snapshot?.state && typeof snapshot.state === "object"
+        ? { ...snapshot.state }
+        : snapshot?.data && typeof snapshot.data === "object"
+          ? { ...snapshot.data }
+          : {};
+    let changed = false;
+    keysToDelete.forEach((key) => {
+      if (Object.prototype.hasOwnProperty.call(current, key)) {
+        changed = true;
+        delete current[key];
+      }
+    });
+    if (!changed) return false;
+
+    await window._firebaseDb.cloudSaveGuideData(
+      scopeKey,
+      cloudFileName,
+      buildGuideSnapshotPayload(
+        snapshot,
+        current,
+        options.updatedAt || new Date().toISOString(),
+        options.updatedBy || "admin-activity-unlock"
+      )
+    );
+    return true;
   }
 
   function isRedesSbGuideFile(fileName) {
@@ -1629,20 +1743,20 @@
       meta: "Leyendo respuestas del aprendiz…",
       bodyHtml: '<div class="response-status">Consultando…</div>',
     });
-    const snapshot = readGuide6LocalSnapshot(usernameKey, config);
+    const snapshot = await loadGuide6Responses(usernameKey, config);
     if (!snapshot?.state) {
       openGuide2ResponsesModal({
         title: "Respuestas — Guía 6",
         subtitle: `${user.fullName} | ${config.title}`,
         meta: `Aprendiz: ${user.fullName} | Grupo: ${user.grupo}`,
-        bodyHtml: '<div class="response-status">Este aprendiz aún no tiene respuestas guardadas en la Guía 6 en este navegador.</div>',
+        bodyHtml: '<div class="response-status">Este aprendiz aun no tiene respuestas guardadas en la Guia 6 sincronizadas.</div>',
       });
       return;
     }
     openGuide2ResponsesModal({
       title: "Respuestas — Guía 6",
       subtitle: `${user.fullName} | ${config.title}`,
-      meta: `Aprendiz: ${user.fullName} | Grupo: ${user.grupo} | Actualizado: ${formatDate(snapshot.updatedAt)}`,
+      meta: `Aprendiz: ${user.fullName} | Grupo: ${user.grupo} | Fuente: ${snapshot.sourceLabel || "Sin registro"} | Actualizado: ${formatDate(snapshot.updatedAt)}`,
       bodyHtml: renderGuide6ResponsesBody(snapshot.state),
     });
   }
@@ -1651,6 +1765,7 @@
     const usernameKey = button.getAttribute("data-user") || "";
     const activityId = button.getAttribute("data-unlock-activity") || "";
     const stateKey = button.getAttribute("data-state-key") || "";
+    const fileName = button.getAttribute("data-guide-file") || "";
     const label = button.getAttribute("data-activity-label") || activityId;
     const user = allUsers.find((u) => u.usernameKey === usernameKey);
     if (!user || !stateKey || !activityId) {
@@ -1666,7 +1781,14 @@
       `¿Habilitar de nuevo "${label}" para ${user.fullName}?\n\nEsto borrará las respuestas guardadas en esa actividad.`
     );
     if (!confirmed) return;
-    patchGuideState(usernameKey, stateKey, activity.keys);
+    const updatedAt = new Date().toISOString();
+    const updatedBy = `admin-activity-unlock:${activity.id}`;
+    const guideConfig = getGuide6Config(fileName) || getGuide2ResponseConfig(fileName);
+    patchGuideState(usernameKey, stateKey, activity.keys, { updatedAt, updatedBy });
+    await patchGuideCloudState(usernameKey, guideConfig?.cloudFileName || "", activity.keys, {
+      updatedAt,
+      updatedBy,
+    });
     setFeedback(`Actividad "${label}" habilitada de nuevo para ${user.fullName}.`, "success");
     await refreshUsers();
   }
@@ -1711,6 +1833,7 @@
               data-unlock-activity="${escapeHtml(act.id)}"
               data-activity-label="${escapeHtml(act.label)}"
               data-state-key="${activityStateKey}"
+              data-guide-file="${escapeHtml(guide.fileName)}"
               data-user="${escapeHtml(user.usernameKey)}"
             >${escapeHtml(act.label)}</button>`
         )
