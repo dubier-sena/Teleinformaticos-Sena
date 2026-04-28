@@ -426,6 +426,8 @@ function initGuia6() {
   renderSupportMaterials();
   renderDriveDeliveryPanel();
   hydrateFields();
+  applyBitacoraLock();
+  applyBitacoraSocializacionLock();
   updateBudgetSummary();
   bindEvents();
   updateProgress();
@@ -1338,22 +1340,63 @@ function escapeHtml(value) {
     .replace(/'/g, "&#39;");
 }
 
-function guardarBitacora311() {
-  saveState();
+const BITACORA_311_STORES = ["reflexion_herramientas", "reflexion_registro", "reflexion_consecuencias", "reflexion_experiencia"];
+const SOCIALIZACION_312_STORES = ["socializacion_conclusion", "socializacion_pregunta_central"];
+
+function applyBitacoraLock() {
+  const locked = Boolean(state["bitacora311-locked"]);
+  BITACORA_311_STORES.forEach((key) => {
+    const el = document.querySelector(`[data-store="${key}"]`);
+    if (!el) return;
+    el.disabled = locked;
+    el.style.opacity = locked ? "0.75" : "";
+  });
+  const btn = document.getElementById("btnGuardarBitacora");
+  if (btn) {
+    btn.disabled = locked;
+    btn.textContent = locked ? "✅ Respuestas enviadas" : "💾 Guardar respuestas";
+  }
   const status = document.getElementById("bitacoraStatus311");
-  if (!status) return;
-  status.style.display = "block";
-  clearTimeout(guardarBitacora311._timer);
-  guardarBitacora311._timer = setTimeout(() => { status.style.display = "none"; }, 3000);
+  if (status) status.style.display = locked ? "block" : "none";
+}
+
+function applyBitacoraSocializacionLock() {
+  const locked = Boolean(state["socializacion312-locked"]);
+  SOCIALIZACION_312_STORES.forEach((key) => {
+    const el = document.querySelector(`[data-store="${key}"]`);
+    if (!el) return;
+    el.disabled = locked;
+    el.style.opacity = locked ? "0.75" : "";
+  });
+  const btn = document.getElementById("btnGuardarSocializacion");
+  if (btn) {
+    btn.disabled = locked;
+    btn.textContent = locked ? "✅ Respuestas enviadas" : "💾 Guardar respuestas";
+  }
+  const status = document.getElementById("socializacionStatus312");
+  if (status) status.style.display = locked ? "block" : "none";
+}
+
+function guardarBitacora311() {
+  const empty = BITACORA_311_STORES.filter((k) => !String(state[k] || "").trim());
+  if (empty.length > 0) {
+    alert("Por favor responde todas las preguntas antes de guardar.");
+    return;
+  }
+  state["bitacora311-locked"] = true;
+  saveState();
+  applyBitacoraLock();
 }
 
 function guardarSocializacion312() {
+  const empty = SOCIALIZACION_312_STORES.filter((k) => !String(state[k] || "").trim());
+  if (empty.length > 0) {
+    alert("Por favor completa los campos antes de guardar.");
+    return;
+  }
+  state["socializacion312-locked"] = true;
   saveState();
-  const status = document.getElementById("socializacionStatus312");
-  if (!status) return;
-  status.style.display = "block";
-  clearTimeout(guardarSocializacion312._timer);
-  guardarSocializacion312._timer = setTimeout(() => { status.style.display = "none"; }, 3000);
+  applyBitacoraSocializacionLock();
 }
 
 window.guardarBitacora311 = guardarBitacora311;
