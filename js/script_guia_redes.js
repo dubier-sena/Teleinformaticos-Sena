@@ -206,22 +206,45 @@ function escapeHtml(str) {
 }
 
 function getGuideSelectionRedes() {
+  const bodyEl = document.body || {};
+  const defaults = {
+    ficha: bodyEl.dataset?.defaultFicha || "",
+    inst: bodyEl.dataset?.defaultInst || "",
+    grupo: bodyEl.dataset?.defaultGrupo || "",
+  };
+  const auth = _portalAuth || window.portalAuth || null;
+  const session = auth?.getCurrentSession?.() || null;
+  const user = session && session.user ? session.user : null;
+  const selection = auth?.getCurrentSelection?.(defaults) || defaults;
+
+  if (user) {
+    return {
+      ficha: String(user.ficha || selection.ficha || defaults.ficha || "").trim(),
+      inst: String(user.inst || selection.inst || defaults.inst || "").trim(),
+      grupo: String(user.grupo || selection.grupo || defaults.grupo || "").trim(),
+      fullName: String(user.fullName || user.username || "").trim() || "Aprendiz",
+      usernameKey: String(user.usernameKey || session.usernameKey || user.username || "").trim(),
+    };
+  }
+
   try {
     const raw = localStorage.getItem("sena_portal_session") || localStorage.getItem("portal_session") || "";
     const session = raw ? JSON.parse(raw) : null;
     if (session) {
+      const user = session.user || {};
       return {
-        ficha: session.ficha || session.fichaId || "",
-        inst: session.inst || session.institucion || "",
-        grupo: session.grupo || "",
+        ficha: user.ficha || session.ficha || session.fichaId || selection.ficha || defaults.ficha || "",
+        inst: user.inst || session.inst || session.institucion || selection.inst || defaults.inst || "",
+        grupo: user.grupo || session.grupo || selection.grupo || defaults.grupo || "",
+        fullName: user.fullName || user.username || session.fullName || "Aprendiz",
+        usernameKey: user.usernameKey || session.usernameKey || user.username || "",
       };
     }
   } catch {}
-  const bodyEl = document.body;
   return {
-    ficha: bodyEl.dataset.defaultFicha || "",
-    inst: bodyEl.dataset.defaultInst || "",
-    grupo: bodyEl.dataset.defaultGrupo || "",
+    ...defaults,
+    fullName: "Aprendiz",
+    usernameKey: "",
   };
 }
 
@@ -1484,7 +1507,7 @@ h1{font-size:16pt;color:#1b5e20}h2{font-size:13pt}p{margin:6pt 0;line-height:1.5
 </head><body>
 <h1>Actividad 3.1.1 – Reflexión Individual Escrita</h1>
 <h2>Caso: La papelería de la señora Carmen</h2>
-<p>Institución: ${escapeHtml(sel.inst || "")} &nbsp;|&nbsp; Grupo: ${escapeHtml(sel.grupo || "")} &nbsp;|&nbsp; Ficha: ${escapeHtml(sel.ficha || "")}</p>
+<p>Aprendiz: ${escapeHtml(sel.fullName || "Aprendiz")} &nbsp;|&nbsp; Institución: ${escapeHtml(sel.inst || "")} &nbsp;|&nbsp; Grupo: ${escapeHtml(sel.grupo || "")} &nbsp;|&nbsp; Ficha: ${escapeHtml(sel.ficha || "")}</p>
 <hr>${rows}</body></html>`;
 
   const fileName = `Reflexion_311_Carmen_${sel.ficha || "sin_ficha"}.doc`;
