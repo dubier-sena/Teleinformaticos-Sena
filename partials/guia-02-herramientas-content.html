@@ -548,7 +548,7 @@
                 <h3>Descripci&oacute;n paso a paso</h3>
               </div>
               <div class="table-scroll">
-                <table class="data-table">
+                <table class="data-table extension-activity-table">
                   <thead>
                     <tr>
                       <th>Extension</th>
@@ -559,10 +559,6 @@
                   <tbody id="extensionTable"></tbody>
                 </table>
               </div>
-              <button class="btn-export-word" type="button" onclick="openGuide5ExportModal('extensions')">
-                &#128196; Exportar actividad a Word
-              </button>
-
               <datalist id="programSuggestions">
                 <option value="Microsoft Word"></option>
                 <option value="Microsoft Excel"></option>
@@ -589,7 +585,7 @@
                 </ul>
               </div>
 
-              <div class="form-grid" style="margin-top:16px;">
+              <div class="form-grid extension-analysis-grid" style="margin-top:16px;">
                 <label>
                   <span>&iquest;Cu&aacute;l categor&iacute;a tuvo m&aacute;s extensiones?</span>
                   <textarea rows="3" data-store="extensions-category-summary" data-track placeholder="Escribe la categor&iacute;a y la cantidad de extensiones identificadas."></textarea>
@@ -606,6 +602,23 @@
                   <span>Explorador de archivos: hallazgos reales</span>
                   <textarea rows="4" data-store="extensions-real-files" data-track placeholder="Resume los 10 archivos observados, sus extensiones y si encontraste alguna extensi&oacute;n nueva."></textarea>
                 </label>
+              </div>
+
+              <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+                <button type="button" id="btnGuardarExtensiones"
+                  onclick="guardarExtensiones331()"
+                  style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                  &#128190; Guardar respuestas
+                </button>
+                <button class="btn-export-word" type="button" onclick="openGuide5ExportModal('extensions')" style="margin-top:0">
+                  &#128196; Exportar actividad a Word
+                </button>
+                <button type="button" class="btn-drive" onclick="openDriveFolder()" style="min-height:unset;border-radius:10px;padding:10px 20px;font-size:0.95rem;font-weight:700;display:inline-flex;align-items:center;gap:8px">
+                  &#128228; Subir Word a Drive
+                </button>
+              </div>
+              <div id="extensionesStatus331" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                &#9989; Respuestas guardadas correctamente.
               </div>
 
               <div class="warning-box" style="margin-top:16px;">

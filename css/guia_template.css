@@ -2893,6 +2893,53 @@ body.word-search-fullscreen-lock {
   color: #b33b2e;
 }
 
+.extension-activity-table {
+  table-layout: fixed;
+  min-width: 720px;
+}
+
+.extension-activity-table th:first-child,
+.extension-activity-table td:first-child {
+  width: 120px;
+}
+
+.extension-activity-table th:nth-child(2),
+.extension-activity-table td:nth-child(2) {
+  width: 30%;
+}
+
+.extension-activity-table th:nth-child(3),
+.extension-activity-table td:nth-child(3) {
+  width: auto;
+}
+
+.extension-activity-table td {
+  padding: 8px 10px;
+}
+
+.extension-activity-table input,
+.extension-activity-table textarea {
+  width: 100%;
+  min-height: 42px;
+  box-sizing: border-box;
+}
+
+.extension-activity-table textarea {
+  min-height: 64px;
+}
+
+.extension-analysis-grid {
+  grid-template-columns: 1fr;
+}
+
+.extension-analysis-grid label {
+  width: 100%;
+}
+
+.extension-analysis-grid textarea {
+  min-height: 96px;
+}
+
 .feedback-text {
   font-size: 13px;
   color: var(--text-muted);
