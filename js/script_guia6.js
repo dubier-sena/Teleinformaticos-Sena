@@ -1016,6 +1016,11 @@ function getGuideSelection() {
   return portalAuth ? portalAuth.getCurrentSelection(defaults) : defaults;
 }
 
+function getCurrentLearnerName() {
+  const session = portalAuth?.getCurrentSession?.();
+  return String(session?.user?.fullName || session?.user?.username || "").trim();
+}
+
 function sanitizeFileName(value) {
   return String(value || "")
     .replace(/[^a-zA-Z0-9\u00C0-\u024F\s_-]/g, "")
@@ -1072,7 +1077,7 @@ function openBitacoraExportModal() {
   }
 
   modal.classList.add("open");
-  input.value = "";
+  input.value = getCurrentLearnerName();
   input.classList.remove("error");
   error.classList.remove("visible");
   setBitacoraModalState();
@@ -1094,7 +1099,7 @@ function doExportBitacoraWord() {
     return;
   }
 
-  const nombre = input.value.trim();
+  const nombre = input.value.trim() || getCurrentLearnerName();
   if (!nombre) {
     input.classList.add("error");
     error.classList.add("visible");
