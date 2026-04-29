@@ -3015,6 +3015,26 @@ function openDriveFolder() {
   window.open(url, "_blank", "noopener,noreferrer");
 }
 
+function openExtensionesWordDelivery() {
+  const delivery = window.sharedAppsScriptDelivery;
+  if (!delivery || typeof delivery.openDeliveryModal !== "function") {
+    alert("No se encontro disponible el formulario seguro de entrega. Recarga la pagina e intenta de nuevo.");
+    return;
+  }
+
+  delivery.openDeliveryModal({
+    guideLabel: "Guia 2",
+    activityNumber: "3.3.1",
+    activityTitle: "Actividad 5: Extensiones de archivo - Que hay detras del punto",
+    activityLabel: "Actividad 5 - Extensiones de archivo",
+    allowedExtensions: [".doc", ".docx"],
+    fileNamePrefix: "Actividad_5_Extensiones",
+    learnerNameMode: "full",
+  });
+}
+
+window.openExtensionesWordDelivery = openExtensionesWordDelivery;
+
 function showDriveFolderQR() {
   const url = getDriveFolderUrl();
   if (!url) {

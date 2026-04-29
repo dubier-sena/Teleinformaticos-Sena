@@ -11,7 +11,7 @@ test("guia 2 activity 5 exposes save, export, and upload actions", () => {
   assert.match(partial, /id="btnGuardarExtensiones"/);
   assert.match(partial, /onclick="guardarExtensiones331\(\)"/);
   assert.match(partial, /openGuide5ExportModal\('extensions'\)/);
-  assert.match(partial, /onclick="openDriveFolder\(\)"/);
+  assert.match(partial, /onclick="openExtensionesWordDelivery\(\)"/);
   assert.match(partial, /id="extensionesStatus331"/);
 });
 
@@ -24,6 +24,17 @@ test("guia 2 activity 5 locks extension answers after saving", () => {
   assert.match(script, /function guardarExtensiones331\(\)/);
   assert.match(script, /window\.guardarExtensiones331 = guardarExtensiones331/);
   assert.match(script, /applyExtensionesLock\(\);/);
+});
+
+test("guia 2 activity 5 upload action opens the secure Drive file selector", () => {
+  const script = read("js/script_guia2.js");
+
+  assert.match(script, /function openExtensionesWordDelivery\(\)/);
+  assert.match(script, /sharedAppsScriptDelivery/);
+  assert.match(script, /openDeliveryModal/);
+  assert.match(script, /activityNumber:\s*"3\.3\.1"/);
+  assert.match(script, /allowedExtensions:\s*\["\.doc", "\.docx"\]/);
+  assert.match(script, /window\.openExtensionesWordDelivery = openExtensionesWordDelivery/);
 });
 
 test("guia 2 activity 5 table is compact and does not show red risk labels", () => {
