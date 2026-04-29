@@ -102,10 +102,44 @@
     "extensions-real-files",
     "extensiones331-locked",
   ];
+  const GUIDE2_SYSTEM_IDS = [
+    "linux-lite",
+    "arcaos",
+    "windows-10",
+    "ubuntu",
+    "macos-mojave",
+    "windows-11",
+    "chromium-os",
+    "mac-os-x-leopard",
+  ];
+  const GUIDE2_SYSTEM_NAMES = {
+    "linux-lite": "Linux Lite",
+    arcaos: "ArcaOS",
+    "windows-10": "Windows 10",
+    ubuntu: "Ubuntu",
+    "macos-mojave": "macOS Mojave",
+    "windows-11": "Windows 11",
+    "chromium-os": "Chromium OS",
+    "mac-os-x-leopard": "Mac OS X Leopard",
+  };
+  const GUIDE2_SYSTEM_ACTIVITY_KEYS = [
+    ...GUIDE2_SYSTEM_IDS.flatMap((id) => [
+      `system:${id}:processor`,
+      `system:${id}:ram`,
+      `system:${id}:disk`,
+      `system:${id}:source`,
+    ]),
+    "systems-lowest",
+    "systems-highest",
+    "systems-recommendation",
+    "systems-peer-feedback",
+    "sistemas332-locked",
+  ];
   const GUIDE2_RESPONSE_KEYS = [
     "wordSearch:guia2-sopa",
     "matchingGame:guia2-relaciona",
     ...GUIDE2_EXTENSION_ACTIVITY_KEYS,
+    ...GUIDE2_SYSTEM_ACTIVITY_KEYS,
     "contexto-q1",
     "contexto-rel-drive",
     "contexto-rel-excel",
@@ -179,13 +213,15 @@
     { id: "wordsearch", label: "Sopa de letras", keys: ["wordSearch:guia2-sopa"] },
     { id: "matching", label: "Relaciona herramientas", keys: ["matchingGame:guia2-relaciona"] },
     { id: "extensiones331", label: "Actividad 5 - Extensiones de archivo", keys: GUIDE2_EXTENSION_ACTIVITY_KEYS },
+    { id: "sistemas332", label: "Actividad 6 - Requerimientos minimos", keys: GUIDE2_SYSTEM_ACTIVITY_KEYS },
     {
       id: "cuestionario", label: "Cuestionario 3.2.1",
       keys: GUIDE2_RESPONSE_KEYS.filter(
         (k) =>
           !k.startsWith("wordSearch:") &&
           !k.startsWith("matchingGame:") &&
-          !GUIDE2_EXTENSION_ACTIVITY_KEYS.includes(k)
+          !GUIDE2_EXTENSION_ACTIVITY_KEYS.includes(k) &&
+          !GUIDE2_SYSTEM_ACTIVITY_KEYS.includes(k)
       ),
     },
   ];
@@ -1286,6 +1322,30 @@
               ["Extensiones de riesgo identificadas", state["extensions-risk-list"]],
               ["Hallazgos reales en el explorador", state["extensions-real-files"]],
               ["Estado de guardado", state["extensiones331-locked"] ? "Respuestas enviadas" : "Sin bloquear"],
+            ]
+          )}
+        </article>
+
+        <article class="answer-card">
+          <h3>Actividad 6. Requerimientos minimos de sistemas operativos.</h3>
+          ${renderAnswerTable(
+            ["Sistema operativo", "Procesador", "RAM", "Disco", "Fuente"],
+            GUIDE2_SYSTEM_IDS.map((id) => [
+              GUIDE2_SYSTEM_NAMES[id] || id,
+              state[`system:${id}:processor`],
+              state[`system:${id}:ram`],
+              state[`system:${id}:disk`],
+              state[`system:${id}:source`],
+            ])
+          )}
+          ${renderAnswerTable(
+            ["Pregunta", "Respuesta del aprendiz"],
+            [
+              ["Sistema con requerimientos mas bajos", state["systems-lowest"]],
+              ["Sistema con requerimientos mas altos", state["systems-highest"]],
+              ["Recomendacion tecnica", state["systems-recommendation"]],
+              ["Retroalimentacion de companeros", state["systems-peer-feedback"]],
+              ["Estado de guardado", state["sistemas332-locked"] ? "Respuestas enviadas" : "Sin bloquear"],
             ]
           )}
         </article>

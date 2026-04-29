@@ -176,6 +176,18 @@ const systems = [
   { id: "mac-os-x-leopard", name: "Mac OS X Leopard", processor: "", ram: "", disk: "", source: "" },
 ];
 
+const SYSTEM_ACTIVITY_STORES = systems.flatMap((row) => [
+  `system:${row.id}:processor`,
+  `system:${row.id}:ram`,
+  `system:${row.id}:disk`,
+  `system:${row.id}:source`,
+]).concat([
+  "systems-lowest",
+  "systems-highest",
+  "systems-recommendation",
+  "systems-peer-feedback",
+]);
+
 const evidenceRows = [
   {
     phase: "An?lisis",
@@ -563,6 +575,7 @@ function initGuia2() {
   prefillActivity4Identity();
   hydrateFields();
   applyExtensionesLock();
+  applySistemasLock();
   initializeWordSearchGame();
   initializeMatchingGame();
   bindEvents();
@@ -721,6 +734,7 @@ function applyCloudStateSnapshot(snapshot) {
   renderStatefulSections();
   hydrateFields();
   applyExtensionesLock();
+  applySistemasLock();
   updateProgress();
 }
 
@@ -3035,6 +3049,26 @@ function openExtensionesWordDelivery() {
 
 window.openExtensionesWordDelivery = openExtensionesWordDelivery;
 
+function openSistemasWordDelivery() {
+  const delivery = window.sharedAppsScriptDelivery;
+  if (!delivery || typeof delivery.openDeliveryModal !== "function") {
+    alert("No se encontro disponible el formulario seguro de entrega. Recarga la pagina e intenta de nuevo.");
+    return;
+  }
+
+  delivery.openDeliveryModal({
+    guideLabel: "Guia 2",
+    activityNumber: "3.3.2",
+    activityTitle: "Actividad 6: Requerimientos minimos de sistemas operativos",
+    activityLabel: "Actividad 6 - Requerimientos minimos de sistemas operativos",
+    allowedExtensions: [".doc", ".docx"],
+    fileNamePrefix: "Actividad_6_Requerimientos_SO",
+    learnerNameMode: "full",
+  });
+}
+
+window.openSistemasWordDelivery = openSistemasWordDelivery;
+
 function showDriveFolderQR() {
   const url = getDriveFolderUrl();
   if (!url) {
@@ -3620,6 +3654,42 @@ function guardarExtensiones331() {
 }
 
 window.guardarExtensiones331 = guardarExtensiones331;
+
+function applySistemasLock() {
+  const locked = Boolean(state["sistemas332-locked"]);
+  SYSTEM_ACTIVITY_STORES.forEach((key) => {
+    const el = document.querySelector(`[data-store="${key}"]`);
+    if (!el) return;
+    el.disabled = locked;
+    el.style.opacity = locked ? "0.75" : "";
+  });
+  const btn = document.getElementById("btnGuardarSistemas");
+  if (btn) {
+    btn.disabled = locked;
+    btn.textContent = locked ? "Respuestas enviadas" : "Guardar respuestas";
+  }
+  const status = document.getElementById("sistemasStatus332");
+  if (status) {
+    status.style.display = locked ? "block" : "none";
+  }
+}
+
+function guardarSistemas332() {
+  const empty = SYSTEM_ACTIVITY_STORES.filter((key) => !readStoreValue(key));
+  if (empty.length > 0) {
+    alert("Por favor completa la tabla y los campos de analisis antes de guardar.");
+    return;
+  }
+
+  SYSTEM_ACTIVITY_STORES.forEach((key) => {
+    state[key] = readStoreValue(key);
+  });
+  state["sistemas332-locked"] = true;
+  saveState();
+  applySistemasLock();
+}
+
+window.guardarSistemas332 = guardarSistemas332;
 
 function bindEvents() {
   document.addEventListener("input", (event) => {

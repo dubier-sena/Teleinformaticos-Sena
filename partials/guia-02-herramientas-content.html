@@ -645,7 +645,7 @@
                 <p>Windows 11 requiere procesador de 64 bits con 2 n&uacute;cleos a 1 GHz, 4 GB de RAM y 64 GB de almacenamiento. En contraste, Linux Lite funciona con 1 GB de RAM y 100 GB de disco. Para comunidades con recursos limitados, la elecci&oacute;n del sistema operativo es una decisi&oacute;n t&eacute;cnica y social al mismo tiempo.</p>
               </div>
               <div class="table-scroll">
-                <table class="data-table">
+                <table class="data-table system-activity-table">
                   <thead>
                     <tr>
                       <th>Sistema operativo</th>
@@ -658,10 +658,6 @@
                   <tbody id="systemTable"></tbody>
                 </table>
               </div>
-              <button class="btn-export-word" type="button" onclick="openGuide5ExportModal('systems')">
-                &#128196; Exportar actividad a Word
-              </button>
-
               <div class="checklist-card compact-card" style="margin-top:16px;">
                 <h3>Investiga, compara y recomienda</h3>
                 <ul class="note-list">
@@ -673,7 +669,7 @@
                 </ul>
               </div>
 
-              <div class="form-grid" style="margin-top:16px;">
+              <div class="form-grid system-analysis-grid" style="margin-top:16px;">
                 <label>
                   <span>&iquest;Qu&eacute; sistema tiene los requerimientos m&aacute;s bajos?</span>
                   <textarea rows="3" data-store="systems-lowest" data-track placeholder="Escribe el sistema y justifica tu respuesta con datos."></textarea>
@@ -690,6 +686,22 @@
                   <span>Retroalimentaci&oacute;n de tus compa&ntilde;eros</span>
                   <textarea rows="4" data-store="systems-peer-feedback" data-track placeholder="Registra si coincidieron contigo y qu&eacute; factor fue decisivo en la elecci&oacute;n."></textarea>
                 </label>
+              </div>
+              <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+                <button type="button" id="btnGuardarSistemas"
+                  onclick="guardarSistemas332()"
+                  style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                  &#128190; Guardar respuestas
+                </button>
+                <button class="btn-export-word" type="button" onclick="openGuide5ExportModal('systems')" style="margin-top:0">
+                  &#128196; Exportar actividad a Word
+                </button>
+                <button type="button" class="btn-drive" onclick="openSistemasWordDelivery()" style="min-height:unset;border-radius:10px;padding:10px 20px;font-size:0.95rem;font-weight:700;display:inline-flex;align-items:center;gap:8px">
+                  &#128228; Subir Word a Drive
+                </button>
+              </div>
+              <div id="sistemasStatus332" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                &#9989; Respuestas guardadas correctamente.
               </div>
             </div>
           </div>
