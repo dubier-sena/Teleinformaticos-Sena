@@ -188,6 +188,21 @@ const SYSTEM_ACTIVITY_STORES = systems.flatMap((row) => [
   "systems-peer-feedback",
 ]);
 
+const collaborativeTools = [
+  { id: "microsoft-365", name: "Microsoft 365", detail: "Teams, SharePoint, OneDrive" },
+  { id: "google-workspace", name: "Google Workspace", detail: "Meet, Drive, Docs" },
+  { id: "zoom", name: "Zoom", detail: "" },
+  { id: "wetransfer", name: "WeTransfer", detail: "" },
+  { id: "canva", name: "Canva", detail: "" },
+];
+
+const COLLABORATIVE_TOOLS_ACTIVITY_STORES = collaborativeTools.flatMap((row) => [
+  `collab:${row.id}:function`,
+  `collab:${row.id}:advantage`,
+  `collab:${row.id}:limit`,
+  `collab:${row.id}:license`,
+]);
+
 const evidenceRows = [
   {
     phase: "An?lisis",
@@ -405,6 +420,14 @@ const GUIDE2_DRIVE_ACTIVITY_TARGETS = [
       "Entrega sugerida: documento .docx, archivo .xlsx, enlace de Drive y correo formal de entrega.",
   },
   {
+    activityNumber: "3.3.4",
+    panelKey: "guide2-3-3-4",
+    description:
+      "Sube a Drive la tabla comparativa, la evidencia de Meet o Teams, la presentacion en PDF, la captura de WeTransfer y la lista de verificacion.",
+    note:
+      "Entrega sugerida: tabla comparativa, PDF de presentacion, captura de confirmacion y bitacora de competencias digitales.",
+  },
+  {
     activityNumber: "3.4.1",
     panelKey: "guide2-3-4-1",
     description:
@@ -576,6 +599,7 @@ function initGuia2() {
   hydrateFields();
   applyExtensionesLock();
   applySistemasLock();
+  applyColaborativasLock();
   initializeWordSearchGame();
   initializeMatchingGame();
   bindEvents();
@@ -3069,6 +3093,103 @@ function openSistemasWordDelivery() {
 
 window.openSistemasWordDelivery = openSistemasWordDelivery;
 
+const GUIA2_SUPPORT_PANEL_CONTENTS = {
+  "collab-tools": {
+    title: "Cuadro comparativo - herramientas colaborativas",
+    html: `
+      <div class="tp-sec">
+        <p class="tp-h">Tabla base para completar en el cuaderno</p>
+        <div class="tp-card">
+          <p style="margin:0 0 12px;color:#455a64;line-height:1.6">
+            Usa esta comparacion como material de apoyo. El instructor puede pedirte
+            ampliar o ajustar la informacion segun el negocio o caso trabajado.
+          </p>
+          <div style="overflow-x:auto">
+            <table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #cfe3d4;font-size:.86rem">
+              <thead>
+                <tr style="background:#0b6b35;color:#fff">
+                  <th style="padding:10px;text-align:left;border:1px solid #0b6b35">Herramienta</th>
+                  <th style="padding:10px;text-align:left;border:1px solid #0b6b35">Funcion principal</th>
+                  <th style="padding:10px;text-align:left;border:1px solid #0b6b35">Ventaja clave</th>
+                  <th style="padding:10px;text-align:left;border:1px solid #0b6b35">Limitacion o cuidado</th>
+                  <th style="padding:10px;text-align:left;border:1px solid #0b6b35">Precio / licencia</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th style="padding:10px;border:1px solid #d8e6dc;text-align:left">Microsoft 365<br><small>Teams, SharePoint, OneDrive</small></th>
+                  <td style="padding:10px;border:1px solid #d8e6dc">Comunicacion, reuniones, almacenamiento, documentos compartidos y gestion de archivos institucionales.</td>
+                  <td style="padding:10px;border:1px solid #d8e6dc">Integra correo, videollamadas, archivos y permisos en un ecosistema empresarial.</td>
+                  <td style="padding:10px;border:1px solid #d8e6dc">Requiere cuenta, conexion estable y buena configuracion de permisos para evitar fugas de informacion.</td>
+                  <td style="padding:10px;border:1px solid #d8e6dc">Suscripcion institucional o empresarial; algunas instituciones educativas tienen licencias academicas.</td>
+                </tr>
+                <tr style="background:#f7fbf8">
+                  <th style="padding:10px;border:1px solid #d8e6dc;text-align:left">Google Workspace<br><small>Meet, Drive, Docs</small></th>
+                  <td style="padding:10px;border:1px solid #d8e6dc">Trabajo colaborativo en documentos, almacenamiento en nube, videollamadas y formularios.</td>
+                  <td style="padding:10px;border:1px solid #d8e6dc">Permite editar en tiempo real desde varios dispositivos y compartir enlaces rapidamente.</td>
+                  <td style="padding:10px;border:1px solid #d8e6dc">Se debe controlar quien puede ver, editar o descargar los archivos compartidos.</td>
+                  <td style="padding:10px;border:1px solid #d8e6dc">Cuenta gratuita con limites; planes pagos para organizaciones y educacion.</td>
+                </tr>
+                <tr>
+                  <th style="padding:10px;border:1px solid #d8e6dc;text-align:left">Herramientas independientes<br><small>Zoom, WeTransfer, Canva</small></th>
+                  <td style="padding:10px;border:1px solid #d8e6dc">Soluciones puntuales para reuniones, envio de archivos pesados y diseno de piezas visuales.</td>
+                  <td style="padding:10px;border:1px solid #d8e6dc">Son faciles de usar y resuelven tareas concretas sin configurar todo un ecosistema.</td>
+                  <td style="padding:10px;border:1px solid #d8e6dc">Cada herramienta maneja cuentas, permisos y vencimientos distintos; hay que revisar privacidad y enlaces.</td>
+                  <td style="padding:10px;border:1px solid #d8e6dc">Versiones gratuitas con limites; planes pagos segun capacidad, tiempo o funciones avanzadas.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="tp-sec">
+        <p class="tp-h">Como elegir para un negocio local</p>
+        <div class="tp-card">
+          <ul style="margin:0;padding-left:18px;line-height:1.7;color:#37474f">
+            <li>Si el negocio ya usa correo institucional de Microsoft, Microsoft 365 puede ser mas ordenado.</li>
+            <li>Si el equipo necesita editar documentos al mismo tiempo y compartir enlaces, Google Workspace es muy practico.</li>
+            <li>Si solo se necesita una tarea puntual, como enviar un archivo pesado o disenar una pieza, una herramienta independiente puede ser suficiente.</li>
+          </ul>
+        </div>
+      </div>
+    `,
+  },
+};
+
+function openGuia2SupportPanel(key) {
+  const panel = document.getElementById("guia2-support-panel");
+  const backdrop = document.getElementById("guia2-support-backdrop");
+  const title = document.getElementById("guia2-support-panel-title");
+  const body = document.getElementById("guia2-support-panel-body");
+  const content = GUIA2_SUPPORT_PANEL_CONTENTS[key];
+  if (!panel || !backdrop || !title || !body || !content) {
+    return;
+  }
+
+  title.textContent = content.title;
+  body.innerHTML = content.html;
+  panel.style.transform = "translateX(0)";
+  backdrop.style.opacity = "1";
+  backdrop.style.pointerEvents = "auto";
+  document.body.style.overflow = "hidden";
+}
+
+function closeGuia2SupportPanel() {
+  const panel = document.getElementById("guia2-support-panel");
+  const backdrop = document.getElementById("guia2-support-backdrop");
+  if (!panel || !backdrop) {
+    return;
+  }
+
+  panel.style.transform = "translateX(110%)";
+  backdrop.style.opacity = "0";
+  backdrop.style.pointerEvents = "none";
+  document.body.style.overflow = "";
+}
+
+window.openGuia2SupportPanel = openGuia2SupportPanel;
+window.closeGuia2SupportPanel = closeGuia2SupportPanel;
+
 function showDriveFolderQR() {
   const url = getDriveFolderUrl();
   if (!url) {
@@ -3167,8 +3288,8 @@ function renderDriveDeliveryPanel() {
   window.sharedDriveDelivery?.appendDriveDeliveryPanels({
     targets: GUIDE2_DRIVE_ACTIVITY_TARGETS,
     helperSuffix: "La carpeta se define automaticamente segun la ficha activa.",
+    hideQr: true,
     onDriveClick: openDriveFolder,
-    onQrClick: showDriveFolderQR,
   });
 }
 
@@ -3214,6 +3335,12 @@ const guide5ExportConfig = {
     filePrefix: "Guia2_Actividad6_Requerimientos_Minimos",
     description:
       "Exporta la matriz diligenciada de requerimientos m?nimos de sistemas operativos a un documento Word.",
+  },
+  collaborative: {
+    title: "Actividad 8: Herramientas colaborativas y comunicacion digital",
+    filePrefix: "Guia2_Actividad8_Herramientas_Colaborativas",
+    description:
+      "Exporta la tabla comparativa diligenciada de herramientas colaborativas a un documento Word.",
   },
 };
 
@@ -3407,12 +3534,48 @@ function buildGuide5SystemsRows() {
     .join("");
 }
 
+function buildGuide5CollaborativeRows() {
+  return collaborativeTools
+    .map((row) => {
+      const label = row.detail ? `${row.name} (${row.detail})` : row.name;
+      const mainFunction =
+        document.querySelector(`[data-store="collab:${row.id}:function"]`)?.value ?? "";
+      const advantage =
+        document.querySelector(`[data-store="collab:${row.id}:advantage"]`)?.value ?? "";
+      const limit =
+        document.querySelector(`[data-store="collab:${row.id}:limit"]`)?.value ?? "";
+      const license =
+        document.querySelector(`[data-store="collab:${row.id}:license"]`)?.value ?? "";
+
+      return `
+        <tr>
+          <td>${escapeWordValue(label)}</td>
+          <td>${escapeWordValue(mainFunction)}</td>
+          <td>${escapeWordValue(advantage)}</td>
+          <td>${escapeWordValue(limit)}</td>
+          <td>${escapeWordValue(license)}</td>
+        </tr>
+      `;
+    })
+    .join("");
+}
+
 function buildGuide5ExportDocument(mode, learnerName) {
   const config = getGuide5ExportConfig(mode);
   const selection = getGuideSelection();
   const today = new Date().toLocaleDateString("es-CO");
   const tableHead =
-    mode === "systems"
+    mode === "collaborative"
+      ? `
+        <tr>
+          <th>Nombre</th>
+          <th>Funcion principal</th>
+          <th>Ventaja clave</th>
+          <th>Limitacion</th>
+          <th>Precio / licencia</th>
+        </tr>
+      `
+      : mode === "systems"
       ? `
         <tr>
           <th>Sistema operativo</th>
@@ -3430,7 +3593,11 @@ function buildGuide5ExportDocument(mode, learnerName) {
         </tr>
       `;
   const tableRows =
-    mode === "systems" ? buildGuide5SystemsRows() : buildGuide5ExtensionsRows();
+    mode === "collaborative"
+      ? buildGuide5CollaborativeRows()
+      : mode === "systems"
+      ? buildGuide5SystemsRows()
+      : buildGuide5ExtensionsRows();
 
   return `<!DOCTYPE html>
 <html xmlns:o="urn:schemas-microsoft-com:office:office"
@@ -3690,6 +3857,42 @@ function guardarSistemas332() {
 }
 
 window.guardarSistemas332 = guardarSistemas332;
+
+function applyColaborativasLock() {
+  const locked = Boolean(state["colaborativas334-locked"]);
+  COLLABORATIVE_TOOLS_ACTIVITY_STORES.forEach((key) => {
+    const el = document.querySelector(`[data-store="${key}"]`);
+    if (!el) return;
+    el.disabled = locked;
+    el.style.opacity = locked ? "0.75" : "";
+  });
+  const btn = document.getElementById("btnGuardarColaborativas");
+  if (btn) {
+    btn.disabled = locked;
+    btn.textContent = locked ? "Respuestas enviadas" : "Guardar respuestas";
+  }
+  const status = document.getElementById("colaborativasStatus334");
+  if (status) {
+    status.style.display = locked ? "" : "none";
+  }
+}
+
+function guardarColaborativas334() {
+  const empty = COLLABORATIVE_TOOLS_ACTIVITY_STORES.filter((key) => !readStoreValue(key));
+  if (empty.length > 0) {
+    alert("Por favor completa la tabla comparativa antes de guardar.");
+    return;
+  }
+
+  COLLABORATIVE_TOOLS_ACTIVITY_STORES.forEach((key) => {
+    state[key] = readStoreValue(key);
+  });
+  state["colaborativas334-locked"] = true;
+  saveState();
+  applyColaborativasLock();
+}
+
+window.guardarColaborativas334 = guardarColaborativas334;
 
 function bindEvents() {
   document.addEventListener("input", (event) => {
