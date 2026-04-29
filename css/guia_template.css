@@ -2974,6 +2974,134 @@ body.word-search-fullscreen-lock {
   min-height: 96px;
 }
 
+.collaborative-tools-table {
+  table-layout: fixed;
+  min-width: 980px;
+}
+
+.collaborative-tools-table th:first-child,
+.collaborative-tools-table td:first-child {
+  width: 190px;
+}
+
+.collaborative-tools-table th,
+.collaborative-tools-table td {
+  padding: 8px 10px;
+  vertical-align: top;
+}
+
+.collaborative-tools-table td:first-child span {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.collaborative-tools-table textarea {
+  width: 100%;
+  min-height: 72px;
+  box-sizing: border-box;
+  resize: vertical;
+}
+
+.guide-source-steps {
+  margin-top: 14px;
+}
+
+.guide-source-steps ol {
+  margin: 0;
+  padding-left: 28px;
+}
+
+.guide-source-steps li {
+  margin-bottom: 12px;
+  padding-left: 6px;
+  line-height: 1.7;
+}
+
+.guide-source-steps li::marker {
+  font-weight: 700;
+}
+
+.guide-source-achievement {
+  margin-top: 22px;
+  padding: 16px 22px;
+  border: 2px solid #2f8f2f;
+  background: #dff5df;
+  color: #0d5f1e;
+}
+
+.guide-source-achievement strong {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 1.05rem;
+}
+
+.guide-source-achievement p {
+  margin: 6px 0 0;
+  color: #101820;
+}
+
+.guide-source-warning {
+  margin-top: 22px;
+  padding: 14px 18px;
+  border: 2px solid #d82121;
+  background: #ffd2d2;
+  color: #111;
+}
+
+.guide-source-warning strong {
+  display: block;
+  margin-bottom: 10px;
+  color: #c40000;
+  font-size: 1rem;
+}
+
+.guide-source-warning p {
+  margin: 10px 0 0;
+  line-height: 1.55;
+}
+
+.guide-source-info-blue {
+  margin-top: 22px;
+  padding: 14px 18px;
+  border: 2px solid #1976f3;
+  background: #b9d8fb;
+  color: #111827;
+}
+
+.guide-source-info-blue strong {
+  display: block;
+  margin-bottom: 10px;
+  color: #075da8;
+  font-size: 1rem;
+}
+
+.guide-source-info-blue p {
+  margin: 10px 0 0;
+  line-height: 1.55;
+}
+
+.tp-h {
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: #2e7d32;
+  margin: 0 0 8px;
+}
+
+.tp-card {
+  background: #f1f8e9;
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.tp-sec {
+  margin-bottom: 20px;
+}
+
 .feedback-text {
   font-size: 13px;
   color: var(--text-muted);

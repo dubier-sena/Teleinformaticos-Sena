@@ -86,23 +86,25 @@
         panelHandlers.onDriveClick
       )
     );
-    actionGroup.appendChild(
-      createActionButton(
-        "btn-qr",
-        panelConfig.qrLabel || "Abrir en movil - Ver QR",
-        panelHandlers.onQrClick
-      )
-    );
-    if (typeof panelHandlers.onSecureUploadClick === "function") {
+    if (!panelConfig.hideQr && typeof panelHandlers.onQrClick === "function") {
       actionGroup.appendChild(
         createActionButton(
-          "btn-drive btn-apps-script",
-          panelConfig.secureLabel || "Entregar por formulario seguro",
-          function () {
-            panelHandlers.onSecureUploadClick(panelConfig.activityContext || {});
-          }
+          "btn-qr",
+          panelConfig.qrLabel || "Abrir en movil - Ver QR",
+          panelHandlers.onQrClick
         )
       );
+    }
+    if (typeof panelHandlers.onSecureUploadClick === "function") {
+      var secureButton = createActionButton(
+        "btn-drive btn-apps-script",
+        panelConfig.secureLabel || "Entregar por formulario seguro",
+        function () {
+          panelHandlers.onSecureUploadClick(panelConfig.activityContext || {});
+        }
+      );
+      secureButton.setAttribute("data-apps-script-trigger", "true");
+      actionGroup.appendChild(secureButton);
     }
     wrapper.appendChild(actionGroup);
 
@@ -161,6 +163,7 @@
             driveLabel: settings.driveLabel,
             qrLabel: settings.qrLabel,
             secureLabel: settings.secureLabel,
+            hideQr: config.hideQr || settings.hideQr,
             activityContext: activityContext,
           },
           {

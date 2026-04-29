@@ -45,6 +45,8 @@ function createHarness({
   registryPayload = EXPECTED_CONTEXTS,
   partialHtml = SHARED_HTML,
   guideRootPresent = true,
+  bundledContexts = null,
+  bundledPartials = null,
 } = {}) {
   const loaderSource = fs.readFileSync(LOADER_FILE, "utf8");
   const eventLog = [];
@@ -160,6 +162,12 @@ function createHarness({
     },
     console: testConsole,
   };
+  if (bundledContexts) {
+    runtimeWindow.__GUIDE_RUNTIME_CONTEXTS__ = bundledContexts;
+  }
+  if (bundledPartials) {
+    runtimeWindow.__GUIDE_RUNTIME_PARTIALS__ = bundledPartials;
+  }
 
   async function fetchStub(url) {
     fetchLog.push(url);
@@ -256,6 +264,20 @@ test("runtime loader injects the shared guide and boots both init hooks in order
   ]);
   assert.equal(harness.fetchLog[0], "data/guide_contexts.json");
   assert.equal(harness.fetchLog[1], "partials/guia-redes-rap01-content.html");
+});
+
+test("runtime loader can boot from bundled data for local file navigation", async () => {
+  const harness = await runLoader({
+    bundledContexts: EXPECTED_CONTEXTS,
+    bundledPartials: {
+      "partials/guia-redes-rap01-content.html": SHARED_HTML,
+    },
+  });
+
+  assert.match(harness.root.innerHTML, /guide-shell-fragment/);
+  assert.deepEqual(harness.fetchLog, []);
+  assert.equal(harness.getCounts().templateInitCalls, 1);
+  assert.equal(harness.getCounts().guideInitCalls, 1);
 });
 
 test("runtime loader handles a missing guide root guard cleanly", async () => {

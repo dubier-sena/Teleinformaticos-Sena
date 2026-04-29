@@ -96,6 +96,8 @@ function createHarness({
   registryPayload = EXPECTED_CONTEXTS,
   partialHtml = SHARED_HTML,
   pageRootPresent = true,
+  bundledContexts = null,
+  bundledPartials = null,
 } = {}) {
   const loaderSource = fs.readFileSync(LOADER_FILE, "utf8");
   const eventLog = [];
@@ -189,6 +191,12 @@ function createHarness({
     },
     console: consoleStub,
   };
+  if (bundledContexts) {
+    runtimeWindow.__PAGE_RUNTIME_CONTEXTS__ = bundledContexts;
+  }
+  if (bundledPartials) {
+    runtimeWindow.__PAGE_RUNTIME_PARTIALS__ = bundledPartials;
+  }
 
   async function fetchStub(url) {
     fetchLog.push(url);
@@ -285,6 +293,22 @@ test("generic runtime loader injects the partial and boots the configured page h
   assert.equal(counts.pageBootCalls, 1);
   assert.equal(harness.fetchLog[0], "data/page_runtime_contexts.json");
   assert.equal(harness.fetchLog[1], "partials/guia-02-herramientas-content.html");
+});
+
+test("generic runtime loader can boot from bundled data for local file navigation", async () => {
+  const harness = await runLoader({
+    contextKey: "jfk-guia2-10a",
+    pathname: "/grupo-10a-guia-02-herramientas-informaticas-digitales.html",
+    bundledContexts: EXPECTED_CONTEXTS,
+    bundledPartials: {
+      "partials/guia-02-herramientas-content.html": SHARED_HTML,
+    },
+  });
+
+  assert.match(harness.root.innerHTML, /runtime-fragment/);
+  assert.deepEqual(harness.fetchLog, []);
+  assert.equal(harness.getCounts().templateInitCalls, 1);
+  assert.equal(harness.getCounts().pageBootCalls, 1);
 });
 
 test("generic runtime loader executes inline scripts from the injected partial before booting", async () => {

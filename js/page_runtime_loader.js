@@ -6,6 +6,13 @@
   }
 
   async function fetchJson(url) {
+    if (
+      window.__PAGE_RUNTIME_CONTEXTS__ &&
+      url === "data/page_runtime_contexts.json"
+    ) {
+      return window.__PAGE_RUNTIME_CONTEXTS__;
+    }
+
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error("No se pudo cargar " + url);
@@ -14,6 +21,11 @@
   }
 
   async function fetchText(url) {
+    const bundledPartials = window.__PAGE_RUNTIME_PARTIALS__ || {};
+    if (Object.prototype.hasOwnProperty.call(bundledPartials, url)) {
+      return bundledPartials[url];
+    }
+
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error("No se pudo cargar " + url);
@@ -28,12 +40,36 @@
   }
 
   function executeInlinePartialScripts(container) {
-    var scripts = Array.from(container.querySelectorAll("script:not([src])"));
-    scripts.forEach(function (oldScript) {
-      var newScript = document.createElement("script");
-      newScript.textContent = oldScript.textContent;
-      document.head.appendChild(newScript);
-    });
+    function runInlineScript(code) {
+      if (!code) {
+        return;
+      }
+      if (document.head && typeof document.createElement === "function") {
+        var newScript = document.createElement("script");
+        newScript.textContent = code;
+        document.head.appendChild(newScript);
+        return;
+      }
+      if (typeof window.eval === "function") {
+        window.eval(code);
+      }
+    }
+
+    if (container && typeof container.querySelectorAll === "function") {
+      var scripts = Array.from(container.querySelectorAll("script:not([src])"));
+      scripts.forEach(function (oldScript) {
+        runInlineScript(oldScript.textContent);
+      });
+      return;
+    }
+
+    String(container && container.innerHTML ? container.innerHTML : "").replace(
+      /<script\b(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi,
+      function (_match, code) {
+        runInlineScript(code);
+        return "";
+      }
+    );
   }
 
   function showRuntimeError(message) {

@@ -6,6 +6,10 @@
   }
 
   async function fetchJson(url) {
+    if (window.__GUIDE_RUNTIME_CONTEXTS__ && url === "data/guide_contexts.json") {
+      return window.__GUIDE_RUNTIME_CONTEXTS__;
+    }
+
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error("No se pudo cargar " + url);
@@ -14,6 +18,11 @@
   }
 
   async function fetchText(url) {
+    const bundledPartials = window.__GUIDE_RUNTIME_PARTIALS__ || {};
+    if (Object.prototype.hasOwnProperty.call(bundledPartials, url)) {
+      return bundledPartials[url];
+    }
+
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error("No se pudo cargar " + url);
