@@ -74,9 +74,38 @@
       cloudFileName: "10b_guia2.html",
     },
   };
+  const GUIDE2_EXTENSION_IDS = [
+    "doc",
+    "xlsx",
+    "accdb",
+    "mpp",
+    "ppt",
+    "pub",
+    "cda",
+    "ogv",
+    "tar",
+    "exe",
+    "pdf",
+    "rar",
+    "wma",
+    "vssm",
+    "txt",
+    "sys",
+    "png",
+    "html",
+  ];
+  const GUIDE2_EXTENSION_ACTIVITY_KEYS = [
+    ...GUIDE2_EXTENSION_IDS.flatMap((id) => [`extension:${id}:program`, `extension:${id}:description`]),
+    "extensions-category-summary",
+    "extensions-category-why",
+    "extensions-risk-list",
+    "extensions-real-files",
+    "extensiones331-locked",
+  ];
   const GUIDE2_RESPONSE_KEYS = [
     "wordSearch:guia2-sopa",
     "matchingGame:guia2-relaciona",
+    ...GUIDE2_EXTENSION_ACTIVITY_KEYS,
     "contexto-q1",
     "contexto-rel-drive",
     "contexto-rel-excel",
@@ -149,9 +178,15 @@
   const GUIDE2_ACTIVITIES = [
     { id: "wordsearch", label: "Sopa de letras", keys: ["wordSearch:guia2-sopa"] },
     { id: "matching", label: "Relaciona herramientas", keys: ["matchingGame:guia2-relaciona"] },
+    { id: "extensiones331", label: "Actividad 5 - Extensiones de archivo", keys: GUIDE2_EXTENSION_ACTIVITY_KEYS },
     {
       id: "cuestionario", label: "Cuestionario 3.2.1",
-      keys: GUIDE2_RESPONSE_KEYS.filter((k) => !k.startsWith("wordSearch:") && !k.startsWith("matchingGame:")),
+      keys: GUIDE2_RESPONSE_KEYS.filter(
+        (k) =>
+          !k.startsWith("wordSearch:") &&
+          !k.startsWith("matchingGame:") &&
+          !GUIDE2_EXTENSION_ACTIVITY_KEYS.includes(k)
+      ),
     },
   ];
 
@@ -1229,6 +1264,28 @@
             [
               ["Nombre completo", state["actividad4:nombre_completo"]],
               ["Numero de ficha", state["actividad4:ficha"]],
+            ]
+          )}
+        </article>
+
+        <article class="answer-card">
+          <h3>Actividad 5. Extensiones de archivo.</h3>
+          ${renderAnswerTable(
+            ["Extension", "Programa asociado", "Descripcion"],
+            GUIDE2_EXTENSION_IDS.map((id) => [
+              `.${id}`,
+              state[`extension:${id}:program`],
+              state[`extension:${id}:description`],
+            ])
+          )}
+          ${renderAnswerTable(
+            ["Pregunta", "Respuesta del aprendiz"],
+            [
+              ["Categoria con mas extensiones", state["extensions-category-summary"]],
+              ["Explicacion de la categoria", state["extensions-category-why"]],
+              ["Extensiones de riesgo identificadas", state["extensions-risk-list"]],
+              ["Hallazgos reales en el explorador", state["extensions-real-files"]],
+              ["Estado de guardado", state["extensiones331-locked"] ? "Respuestas enviadas" : "Sin bloquear"],
             ]
           )}
         </article>

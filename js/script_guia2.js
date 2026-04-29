@@ -148,6 +148,16 @@ const extensions = [
   { id: "html", ext: ".html", program: "", description: "" },
 ];
 
+const EXTENSION_ACTIVITY_STORES = extensions.flatMap((row) => [
+  `extension:${row.id}:program`,
+  `extension:${row.id}:description`,
+]).concat([
+  "extensions-category-summary",
+  "extensions-category-why",
+  "extensions-risk-list",
+  "extensions-real-files",
+]);
+
 const systems = [
   {
     id: "linux-lite",
@@ -552,6 +562,7 @@ function initGuia2() {
   renderDriveDeliveryPanel();
   prefillActivity4Identity();
   hydrateFields();
+  applyExtensionesLock();
   initializeWordSearchGame();
   initializeMatchingGame();
   bindEvents();
@@ -709,6 +720,7 @@ function applyCloudStateSnapshot(snapshot) {
   });
   renderStatefulSections();
   hydrateFields();
+  applyExtensionesLock();
   updateProgress();
 }
 
@@ -2842,7 +2854,6 @@ function renderExtensionTable() {
         <tr>
           <th scope="row">
             <span class="extension-tag">${escapeHtml(row.ext)}</span>
-            ${row.risk ? `<span class="risk-tag">${escapeHtml(row.risk)}</span>` : ""}
           </th>
           <td>
             <input
@@ -3542,6 +3553,53 @@ function hydrateFields() {
     field.value = state[key];
   });
 }
+
+function readStoreValue(key) {
+  const field = document.querySelector(`[data-store="${key}"]`);
+  if (!field) {
+    return String(state[key] || "").trim();
+  }
+  if (field.type === "checkbox") {
+    return field.checked ? "true" : "";
+  }
+  return String(field.value || "").trim();
+}
+
+function applyExtensionesLock() {
+  const locked = Boolean(state["extensiones331-locked"]);
+  EXTENSION_ACTIVITY_STORES.forEach((key) => {
+    const el = document.querySelector(`[data-store="${key}"]`);
+    if (!el) return;
+    el.disabled = locked;
+    el.style.opacity = locked ? "0.75" : "";
+  });
+  const btn = document.getElementById("btnGuardarExtensiones");
+  if (btn) {
+    btn.disabled = locked;
+    btn.textContent = locked ? "Respuestas enviadas" : "Guardar respuestas";
+  }
+  const status = document.getElementById("extensionesStatus331");
+  if (status) {
+    status.style.display = locked ? "block" : "none";
+  }
+}
+
+function guardarExtensiones331() {
+  const empty = EXTENSION_ACTIVITY_STORES.filter((key) => !readStoreValue(key));
+  if (empty.length > 0) {
+    alert("Por favor completa la tabla y los campos de analisis antes de guardar.");
+    return;
+  }
+
+  EXTENSION_ACTIVITY_STORES.forEach((key) => {
+    state[key] = readStoreValue(key);
+  });
+  state["extensiones331-locked"] = true;
+  saveState();
+  applyExtensionesLock();
+}
+
+window.guardarExtensiones331 = guardarExtensiones331;
 
 function bindEvents() {
   document.addEventListener("input", (event) => {
