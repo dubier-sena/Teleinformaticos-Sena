@@ -1042,6 +1042,11 @@ function getGuideSelection() {
   return portalAuth ? portalAuth.getCurrentSelection(defaults) : defaults;
 }
 
+function getCurrentLearnerName() {
+  const session = portalAuth?.getCurrentSession?.();
+  return String(session?.user?.fullName || session?.user?.username || "").trim();
+}
+
 function sanitizeFileName(value) {
   return String(value || "")
     .replace(/[^a-zA-Z0-9\u00C0-\u024F\s_-]/g, "")
@@ -1258,7 +1263,7 @@ function openGuide5ExportModal(mode) {
   guide5ExportMode = mode;
   title.textContent = `📄 Exportar ${config.title}`;
   description.textContent = config.description;
-  input.value = "";
+  input.value = getCurrentLearnerName();
   input.classList.remove("error");
   error.classList.remove("visible");
   modal.classList.add("open");
@@ -1281,7 +1286,7 @@ function doGuide5ExportWord() {
     return;
   }
 
-  const learnerName = input.value.trim();
+  const learnerName = input.value.trim() || getCurrentLearnerName();
   if (!learnerName) {
     input.classList.add("error");
     error.classList.add("visible");
