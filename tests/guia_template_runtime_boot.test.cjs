@@ -245,3 +245,20 @@ test("guia_template keeps runtime page context ahead of stale admin selection", 
     /function currentSelection\(\) \{[\s\S]*const runtimeContext = window\.__PAGE_RUNTIME_CONTEXT__ \|\| null;[\s\S]*if \(runtimeContext\) \{\s*return defaults;\s*\}/
   );
 });
+
+test("guia_template adds a five-class hover list to the next class chip", () => {
+  const css = fs.readFileSync(path.join(__dirname, "..", "css", "guia_template.css"), "utf8");
+
+  assert.match(source, /function findNextGuideClasses\(selection, limit\)/);
+  assert.match(source, /slice\(0, Math\.max\(1, limit \|\| 5\)\)/);
+  assert.match(source, /function formatGuideClassListDate\(isoDate\)/);
+  assert.match(source, /function formatGuideClassListTime\(horario\)/);
+  assert.match(source, /function buildGuideNextClassesPanel\(classes\)/);
+  assert.match(source, /Proximas clases/);
+  assert.match(source, /guide-schedule-popover/);
+  assert.match(source, /formatGuideClassListDate\(record\.fecha\)[\s\S]*" · "[\s\S]*formatGuideClassListTime\(record\.horario\)/);
+
+  assert.match(css, /\.guide-schedule-popover/);
+  assert.match(css, /\.guide-schedule-item:hover \.guide-schedule-popover/);
+  assert.match(css, /\.guide-schedule-popover__item/);
+});

@@ -2927,9 +2927,13 @@ function _isAfterNow(r) { const t=_todayKey(),d=String(r.fecha||''); if(d>t) ret
 function _fmtDate(iso) { const p=String(iso||'').split('-'); if(p.length!==3) return 'Fecha pendiente'; const l=p[2]+'/'+p[1]+'/'+p[0]; return iso===_todayKey()?'Hoy '+l:l; }
 function _findCurrent(sel) { const t=_todayKey(),n=_nowMin(); return _calRecords().filter(r=>{ if(r.tipo!=='CLASE'||String(r.fecha||'')!==t||!_matchSel(r,sel)||!_isAvail(r)) return false; const rng=_parseRange(r); return rng?n>=rng.start&&n<=rng.end:false; }).sort(_cmpRec)[0]||null; }
 function _findNext(sel) { return _calRecords().filter(r=>r.tipo==='CLASE'&&_isAfterNow(r)&&_matchSel(r,sel)&&_isAvail(r)).sort(_cmpRec)[0]||null; }
+function _findNextList(sel,limit) { return _calRecords().filter(r=>r.tipo==='CLASE'&&_isAfterNow(r)&&_matchSel(r,sel)&&_isAvail(r)).sort(_cmpRec).slice(0,Math.max(1,limit||5)); }
 function _findDelivery(sel) { const t=_todayKey(),f=[]; _calRecords().forEach(r=>{ if(r.tipo!=='CLASE'||!_matchSel(r,sel)||!_isAvail(r)) return; const act=_calEntry(r).act; if(!act||(!act.nombre&&!act.fecha)) return; const due=String(act.fecha||r.fecha||''); if(due&&due<t) return; f.push({r,act,due}); }); return f.sort((a,b)=>String(a.due||'').localeCompare(String(b.due||''))||_cmpRec(a.r,b.r))[0]||null; }
+function _fmtListDate(iso) { const p=String(iso||'').split('-'); if(p.length!==3) return 'Fecha pendiente'; const d=new Date(Number(p[0]),Number(p[1])-1,Number(p[2])); return ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'][d.getDay()]+' '+p[2]+'/'+p[1]+'/'+p[0]; }
+function _fmtListTime(h) { return String(h||'Sin horario').replace(/\s*[–—-]\s*/g,'-').trim(); }
+function _buildNextPanel(list) { if(!list||!list.length) return ''; return '<span class="guide-schedule-popover" role="tooltip"><span class="guide-schedule-popover__title">Proximas clases</span>'+list.map((r,i)=>'<div class="guide-schedule-popover__item">'+_escHtml((i+1)+'. '+_fmtListDate(r.fecha)+' · '+_fmtListTime(r.horario))+'</div>').join('')+'</span>'; }
 function _ensureChips() { const meta=document.querySelector('.topbar-meta'); if(!meta) return null; let cls=document.getElementById('guideScheduleNextClass'),dlv=document.getElementById('guideScheduleNextDelivery'); if(!cls){cls=document.createElement('span');cls.id='guideScheduleNextClass';meta.appendChild(cls);} if(!dlv){dlv=document.createElement('span');dlv.id='guideScheduleNextDelivery';meta.appendChild(dlv);} return {cls,dlv}; }
-function _renderChip(el,type,title,body,empty) { el.className='meta-item guide-schedule-item guide-schedule-item--'+type+(empty?' is-empty':''); el.title=title+': '+body; el.innerHTML='<span class="guide-schedule-dot" aria-hidden="true"></span><span class="guide-schedule-copy"><strong>'+_escHtml(title)+'</strong><span>'+_escHtml(body)+'</span></span>'; }
+function _renderChip(el,type,title,body,empty,panel) { el.className='meta-item guide-schedule-item guide-schedule-item--'+type+(empty?' is-empty':''); el.tabIndex=0; el.title=title+': '+body; el.innerHTML='<span class="guide-schedule-dot" aria-hidden="true"></span><span class="guide-schedule-copy"><strong>'+_escHtml(title)+'</strong><span>'+_escHtml(body)+'</span></span>'+(panel||''); }
 function initTopbarSchedule() {
   const sel = (portalAuth&&portalAuth.getCurrentSelection)?portalAuth.getCurrentSelection({ficha:'',inst:'',grupo:''}):{ inst:localStorage.getItem('sena_inst')||'', grupo:localStorage.getItem('sena_grupo')||'', ficha:localStorage.getItem('sena_ficha')||'' };
   const campusEl=document.getElementById('topbarCampus');
@@ -2937,8 +2941,9 @@ function initTopbarSchedule() {
   if(!_calRecords().length) return;
   const chips=_ensureChips(); if(!chips) return;
   const cur=_findCurrent(sel),nxt=_findNext(sel);
-  if(cur) _renderChip(chips.cls,'class','Estoy en clase',[_fmtDate(cur.fecha),cur.horario].filter(Boolean).join(' - '),false);
-  else if(nxt) _renderChip(chips.cls,'class','Proxima clase',[_fmtDate(nxt.fecha),nxt.horario].filter(Boolean).join(' - '),false);
+  const nextPanel=_buildNextPanel(_findNextList(sel,5));
+  if(cur) _renderChip(chips.cls,'class','Estoy en clase',[_fmtDate(cur.fecha),cur.horario].filter(Boolean).join(' - '),false,nextPanel);
+  else if(nxt) _renderChip(chips.cls,'class','Proxima clase',[_fmtDate(nxt.fecha),nxt.horario].filter(Boolean).join(' - '),false,nextPanel);
   else _renderChip(chips.cls,'class','Proxima clase','Sin fecha programada',true);
   if(cur&&nxt) _renderChip(chips.dlv,'class','Proxima clase',[_fmtDate(nxt.fecha),nxt.horario].filter(Boolean).join(' - '),false);
   else { const dlv=_findDelivery(sel); if(dlv) _renderChip(chips.dlv,'delivery','Entrega pendiente',[dlv.act?.nombre||'Actividad sin nombre',dlv.due?_fmtDate(dlv.due):'Sin fecha'].filter(Boolean).join(' - '),false); else _renderChip(chips.dlv,'delivery','Sin entrega proxima','No hay actividad pendiente',true); }
