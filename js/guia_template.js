@@ -969,6 +969,11 @@
       grupo: body.dataset.defaultGrupo || "",
     };
 
+    const runtimeContext = window.__PAGE_RUNTIME_CONTEXT__ || null;
+    if (runtimeContext) {
+      return defaults;
+    }
+
     if (portalAuth?.isStudentSession()) {
       const selection = portalAuth.getCurrentSelection(defaults);
       portalAuth.applySelection(selection);

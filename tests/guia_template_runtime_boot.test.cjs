@@ -238,3 +238,10 @@ test("guia_template returns directly from the already-booted branch", () => {
     /if \(guideTemplateBooted\) \{\s*applySelection\(currentSelection\(\)\);\s*updateActivityNavDone\(\);\s*notifyGuideProgressChanged\(\);\s*applyResponsiveSidebarState\(\);\s*if \(guideTemplateBooted\) \{\s*return;\s*\}\s*\}/s
   );
 });
+
+test("guia_template keeps runtime page context ahead of stale admin selection", () => {
+  assert.match(
+    source,
+    /function currentSelection\(\) \{[\s\S]*const runtimeContext = window\.__PAGE_RUNTIME_CONTEXT__ \|\| null;[\s\S]*if \(runtimeContext\) \{\s*return defaults;\s*\}/
+  );
+});
