@@ -18,7 +18,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="css/site_tokens.css?v=20260412_2"/>
 <link rel="stylesheet" href="css/shared_shell.css?v=20260425_1"/>
-<link rel="stylesheet" href="css/page_calendar.css?v=20260412_2"/>
+<link rel="stylesheet" href="css/page_calendar.css?v=20260429_1"/>
 <script src="js/portal_auth.js?v=20260422_2"></script>
   <script src="js/firebase-config.js?v=20260414_1"></script>
   <script src="js/firebase_db.js?v=20260427_1" defer></script>
@@ -36,17 +36,13 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
     <div class="calendar-hero__panel">
       <div id="header-top">
         <div class="calendar-hero__copy">
-          <div id="title">Calendario Pro 2026</div>
-          <div id="subtitle">Sistemas Teleinformaticos · I.E. Jhon F. Kennedy · I.E. Santa Barbara · 23 Feb - 27 Nov</div>
-          <div class="calendar-hero__range">23 Feb - 27 Nov</div>
+          <div id="title">Calendario</div>
         </div>
-        <div class="calendar-hero__actions">
+        <div class="calendar-hero__actions calendar-hero__actions--inline">
           <div class="calendar-hero__actions-row">
             <button type="button" class="hbtn" id="firebase-sync-button" onclick="syncFirebaseState(true)">Guardar</button>
             <button type="button" class="hbtn" id="firebase-load-button" onclick="loadLatestFromFirebase()">Cargar</button>
             <button type="button" class="hbtn" id="calendar-reset-button" onclick="resetCalendar()">Restaurar</button>
-          </div>
-          <div class="calendar-hero__status-row">
             <div id="save-chip">Guardado local</div>
             <div id="sync-chip" class="sync-chip offline">Firebase verificando</div>
           </div>

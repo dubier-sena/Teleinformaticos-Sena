@@ -184,3 +184,46 @@ test("guia 2 activity 9 matches the source guide cybersecurity layout", () => {
   assert.doesNotMatch(partial, /data-store="cyber-checklist"/);
   assert.match(css, /\.guide-source-info-blue/);
 });
+
+test("guia 2 activity 10 matches the source transfer mission layout", () => {
+  const partial = read("partials/guia-02-herramientas-content.html");
+  const css = read("css/guia_template.css");
+  const script = read("js/script_guia2.js");
+  const admin = read("js/admin_usuarios.js");
+
+  assert.match(partial, /ACTIVIDAD 10: &#128187; Dise&ntilde;o y construcci&oacute;n de soluci&oacute;n digital para actor productivo local/);
+  assert.match(partial, /El instructor asigna a tu equipo \(3-4 personas\) un actor productivo/);
+  assert.match(partial, /class="guide-source-step-action"/);
+  assert.match(partial, /Descubre tu caso de la Actividad 10/);
+  assert.match(partial, /class="btn-ficha-caso activity10CaseButton"/);
+  assert.match(partial, /openGuia2SupportPanel\('activity10-cases'\)/);
+  assert.match(partial, /Registra todo en el Formato de Perfil Digital/);
+  assert.match(partial, /Prueba de calidad: si un tendero de 50 a&ntilde;os que nunca us&oacute; Excel/);
+  assert.match(partial, /01_Perfil_Digital,\s*02_Herramienta,\s*03_Guia_Uso_Rapido,\s*04_Presentacion/);
+  assert.match(partial, /class="guide-source-achievement"/);
+  assert.match(partial, /Construiste una soluci&oacute;n digital real para un actor productivo/);
+  assert.match(partial, /class="guide-source-challenge"/);
+  assert.match(partial, /&iexcl;RETO! Demuestra lo que sabes/);
+  assert.match(partial, /Estas dos preguntas son el verdadero est&aacute;ndar de calidad de esta misi&oacute;n/);
+  assert.doesNotMatch(partial, /data-store="transfer-actor"/);
+  assert.match(partial, /data-store="transfer-reto-uso"/);
+  assert.match(partial, /data-store="transfer-reto-guia"/);
+  assert.match(partial, /id="btnGuardarTransferReto"/);
+  assert.match(partial, /onclick="guardarTransferReto341\(\)"/);
+  assert.match(partial, /id="transferRetoStatus"/);
+  assert.match(css, /\.guide-source-challenge/);
+  assert.match(css, /\.guide-source-challenge-form/);
+  assert.match(script, /"activity10-cases":/);
+  assert.match(script, /Papeleria La Esperanza - Puerto Boyaca/);
+  assert.match(script, /Asociacion Semillas del Campo - Otanche/);
+  assert.match(script, /Taller Creativo Manos de Pauna - Pauna/);
+  assert.match(script, /const TRANSFER_RETO_ACTIVITY_STORES =/);
+  assert.match(script, /function applyTransferRetoLock\(\)/);
+  assert.match(script, /function guardarTransferReto341\(\)/);
+  assert.match(script, /state\["transfer-reto-locked"\]/);
+  assert.match(script, /window\.guardarTransferReto341 = guardarTransferReto341/);
+  assert.match(admin, /GUIDE2_TRANSFER_RETO_KEYS/);
+  assert.match(admin, /Actividad 10 - Reto final/);
+  assert.match(admin, /Actividad 10\. Reto final de solucion digital/);
+  assert.match(admin, /transfer-reto-locked/);
+});

@@ -641,6 +641,20 @@
       .sort(compareGuideScheduleRecords)[0] || null;
   }
 
+  function findNextGuideClasses(selection, limit) {
+    return getGuideCalendarRecords()
+      .filter(function (record) {
+        return (
+          record.tipo === "CLASE" &&
+          isGuideClassAfterNow(record) &&
+          matchesGuideScheduleSelection(record, selection) &&
+          isGuideClassAvailable(record)
+        );
+      })
+      .sort(compareGuideScheduleRecords)
+      .slice(0, Math.max(1, limit || 5));
+  }
+
   function findNextGuideDelivery(selection) {
     const today = getGuideTodayKey();
     const deliveries = [];
@@ -692,6 +706,49 @@
     return isoDate === getGuideTodayKey() ? "Hoy " + label : label;
   }
 
+  function formatGuideClassListDate(isoDate) {
+    const parts = String(isoDate || "").split("-");
+    if (parts.length !== 3) {
+      return "Fecha pendiente";
+    }
+
+    const date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+    return dayNames[date.getDay()] + " " + parts[2] + "/" + parts[1] + "/" + parts[0];
+  }
+
+  function formatGuideClassListTime(horario) {
+    return String(horario || "Sin horario")
+      .replace(/\s*[–—-]\s*/g, "-")
+      .trim();
+  }
+
+  function buildGuideNextClassesPanel(classes) {
+    if (!classes || !classes.length) {
+      return "";
+    }
+
+    const items = classes
+      .map(function (record, index) {
+        const text =
+          index +
+          1 +
+          ". " +
+          formatGuideClassListDate(record.fecha) +
+          " · " +
+          formatGuideClassListTime(record.horario);
+        return '<div class="guide-schedule-popover__item">' + escapeHtml(text) + "</div>";
+      })
+      .join("");
+
+    return (
+      '<span class="guide-schedule-popover" role="tooltip">' +
+      '<span class="guide-schedule-popover__title">Proximas clases</span>' +
+      items +
+      "</span>"
+    );
+  }
+
   function ensureGuideScheduleMeta() {
     const meta = document.querySelector(".topbar-meta");
     if (!meta) {
@@ -716,11 +773,12 @@
     return { classItem, deliveryItem };
   }
 
-  function renderGuideScheduleItem(element, type, title, body, isEmpty) {
+  function renderGuideScheduleItem(element, type, title, body, isEmpty, popoverHtml) {
     element.className =
       "meta-item guide-schedule-item guide-schedule-item--" +
       type +
       (isEmpty ? " is-empty" : "");
+    element.tabIndex = 0;
     element.title = title + ": " + body;
     element.innerHTML =
       '<span class="guide-schedule-dot" aria-hidden="true"></span>' +
@@ -728,7 +786,8 @@
       escapeHtml(title) +
       '</strong><span>' +
       escapeHtml(body) +
-      "</span></span>";
+      "</span></span>" +
+      (popoverHtml || "");
   }
 
   function renderGuideScheduleSummary(selection, options) {
@@ -743,6 +802,8 @@
 
     const currentClass = findCurrentGuideClass(selection);
     const nextClass = findNextGuideClass(selection);
+    const nextClasses = findNextGuideClasses(selection, 5);
+    const nextClassesPanel = buildGuideNextClassesPanel(nextClasses);
 
     if (currentClass) {
       const currentBody = [formatGuideDate(currentClass.fecha), currentClass.horario]
@@ -753,13 +814,14 @@
         "class",
         "Estoy dentro de la hora de clase",
         currentBody,
-        false
+        false,
+        nextClassesPanel
       );
     } else if (nextClass) {
       const classBody = [formatGuideDate(nextClass.fecha), nextClass.horario]
         .filter(Boolean)
         .join(" - ");
-      renderGuideScheduleItem(nodes.classItem, "class", "Proxima clase", classBody, false);
+      renderGuideScheduleItem(nodes.classItem, "class", "Proxima clase", classBody, false, nextClassesPanel);
     } else {
       renderGuideScheduleItem(
         nodes.classItem,
