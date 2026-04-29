@@ -59,3 +59,34 @@ test("guia 2 activity 5 analysis questions render vertically and admin can show 
   assert.match(admin, /Actividad 5\. Extensiones de archivo/);
   assert.match(admin, /extensiones331-locked/);
 });
+
+test("guia 2 activity 6 mirrors save, export, upload, lock, and admin visibility", () => {
+  const partial = read("partials/guia-02-herramientas-content.html");
+  const script = read("js/script_guia2.js");
+  const css = read("css/guia_template.css");
+  const admin = read("js/admin_usuarios.js");
+
+  assert.match(partial, /class="data-table system-activity-table"/);
+  assert.match(partial, /class="form-grid system-analysis-grid"/);
+  assert.match(partial, /id="btnGuardarSistemas"/);
+  assert.match(partial, /onclick="guardarSistemas332\(\)"/);
+  assert.match(partial, /openGuide5ExportModal\('systems'\)/);
+  assert.match(partial, /onclick="openSistemasWordDelivery\(\)"/);
+  assert.match(partial, /id="sistemasStatus332"/);
+
+  assert.match(script, /const SYSTEM_ACTIVITY_STORES =/);
+  assert.match(script, /function applySistemasLock\(\)/);
+  assert.match(script, /function guardarSistemas332\(\)/);
+  assert.match(script, /state\["sistemas332-locked"\]/);
+  assert.match(script, /function openSistemasWordDelivery\(\)/);
+  assert.match(script, /activityNumber:\s*"3\.3\.2"/);
+  assert.match(script, /allowedExtensions:\s*\["\.doc", "\.docx"\]/);
+  assert.match(script, /window\.guardarSistemas332 = guardarSistemas332/);
+  assert.match(script, /window\.openSistemasWordDelivery = openSistemasWordDelivery/);
+
+  assert.match(css, /\.system-activity-table/);
+  assert.match(css, /\.system-analysis-grid\s*\{/);
+  assert.match(admin, /GUIDE2_SYSTEM_ACTIVITY_KEYS/);
+  assert.match(admin, /Actividad 6\. Requerimientos minimos de sistemas operativos/);
+  assert.match(admin, /sistemas332-locked/);
+});

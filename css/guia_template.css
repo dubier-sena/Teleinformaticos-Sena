@@ -2940,6 +2940,40 @@ body.word-search-fullscreen-lock {
   min-height: 96px;
 }
 
+.system-activity-table {
+  table-layout: fixed;
+  min-width: 900px;
+}
+
+.system-activity-table th:first-child,
+.system-activity-table td:first-child {
+  width: 190px;
+}
+
+.system-activity-table th,
+.system-activity-table td {
+  padding: 8px 10px;
+  vertical-align: top;
+}
+
+.system-activity-table input {
+  width: 100%;
+  min-height: 42px;
+  box-sizing: border-box;
+}
+
+.system-analysis-grid {
+  grid-template-columns: 1fr;
+}
+
+.system-analysis-grid label {
+  width: 100%;
+}
+
+.system-analysis-grid textarea {
+  min-height: 96px;
+}
+
 .feedback-text {
   font-size: 13px;
   color: var(--text-muted);
