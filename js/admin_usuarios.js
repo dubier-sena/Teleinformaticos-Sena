@@ -135,11 +135,17 @@
     "systems-peer-feedback",
     "sistemas332-locked",
   ];
+  const GUIDE2_TRANSFER_RETO_KEYS = [
+    "transfer-reto-uso",
+    "transfer-reto-guia",
+    "transfer-reto-locked",
+  ];
   const GUIDE2_RESPONSE_KEYS = [
     "wordSearch:guia2-sopa",
     "matchingGame:guia2-relaciona",
     ...GUIDE2_EXTENSION_ACTIVITY_KEYS,
     ...GUIDE2_SYSTEM_ACTIVITY_KEYS,
+    ...GUIDE2_TRANSFER_RETO_KEYS,
     "contexto-q1",
     "contexto-rel-drive",
     "contexto-rel-excel",
@@ -214,6 +220,7 @@
     { id: "matching", label: "Relaciona herramientas", keys: ["matchingGame:guia2-relaciona"] },
     { id: "extensiones331", label: "Actividad 5 - Extensiones de archivo", keys: GUIDE2_EXTENSION_ACTIVITY_KEYS },
     { id: "sistemas332", label: "Actividad 6 - Requerimientos minimos", keys: GUIDE2_SYSTEM_ACTIVITY_KEYS },
+    { id: "transferReto341", label: "Actividad 10 - Reto final", keys: GUIDE2_TRANSFER_RETO_KEYS },
     {
       id: "cuestionario", label: "Cuestionario 3.2.1",
       keys: GUIDE2_RESPONSE_KEYS.filter(
@@ -221,7 +228,8 @@
           !k.startsWith("wordSearch:") &&
           !k.startsWith("matchingGame:") &&
           !GUIDE2_EXTENSION_ACTIVITY_KEYS.includes(k) &&
-          !GUIDE2_SYSTEM_ACTIVITY_KEYS.includes(k)
+          !GUIDE2_SYSTEM_ACTIVITY_KEYS.includes(k) &&
+          !GUIDE2_TRANSFER_RETO_KEYS.includes(k)
       ),
     },
   ];
@@ -1346,6 +1354,24 @@
               ["Recomendacion tecnica", state["systems-recommendation"]],
               ["Retroalimentacion de companeros", state["systems-peer-feedback"]],
               ["Estado de guardado", state["sistemas332-locked"] ? "Respuestas enviadas" : "Sin bloquear"],
+            ]
+          )}
+        </article>
+
+        <article class="answer-card">
+          <h3>Actividad 10. Reto final de solucion digital.</h3>
+          ${renderAnswerTable(
+            ["Pregunta", "Respuesta del aprendiz"],
+            [
+              [
+                "El actor productivo podria usar la herramienta sin acompanamiento",
+                state["transfer-reto-uso"],
+              ],
+              [
+                "La guia de uso rapido responde las preguntas del actor productivo",
+                state["transfer-reto-guia"],
+              ],
+              ["Estado de guardado", state["transfer-reto-locked"] ? "Respuestas enviadas" : "Sin bloquear"],
             ]
           )}
         </article>

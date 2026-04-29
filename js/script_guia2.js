@@ -203,6 +203,11 @@ const COLLABORATIVE_TOOLS_ACTIVITY_STORES = collaborativeTools.flatMap((row) => 
   `collab:${row.id}:license`,
 ]);
 
+const TRANSFER_RETO_ACTIVITY_STORES = [
+  "transfer-reto-uso",
+  "transfer-reto-guia",
+];
+
 const evidenceRows = [
   {
     phase: "An?lisis",
@@ -600,6 +605,7 @@ function initGuia2() {
   applyExtensionesLock();
   applySistemasLock();
   applyColaborativasLock();
+  applyTransferRetoLock();
   initializeWordSearchGame();
   initializeMatchingGame();
   bindEvents();
@@ -3154,6 +3160,56 @@ const GUIA2_SUPPORT_PANEL_CONTENTS = {
       </div>
     `,
   },
+  "activity10-cases": {
+    title: "Casos para la Actividad 10",
+    html: `
+      <div class="tp-sec">
+        <p class="tp-h">Escoge un caso para desarrollar la solucion digital</p>
+        <div class="tp-card">
+          <p style="margin:0;color:#455a64;line-height:1.6">
+            Estos casos son exclusivos de la Actividad 10. Selecciona uno y usalo para construir el perfil digital,
+            definir el problema, disenar la herramienta, preparar la guia de uso rapido y organizar la entrega final.
+          </p>
+        </div>
+      </div>
+
+      <div class="tp-sec">
+        <p class="tp-h">Caso 1</p>
+        <div class="tp-card">
+          <h3 style="margin:0 0 8px;color:#0b6b35">Papeleria La Esperanza - Puerto Boyaca</h3>
+          <p><strong>Actor productivo:</strong> negocio familiar que vende utiles escolares, impresiones, fotocopias y recargas.</p>
+          <p><strong>Situacion actual:</strong> registra ventas en una libreta, no separa productos por categoria y pierde tiempo buscando precios. Usa WhatsApp para pedidos, pero no conserva un historial ordenado.</p>
+          <p><strong>Problema principal:</strong> no tiene control claro de ventas, inventario ni productos mas vendidos.</p>
+          <p><strong>Solucion sugerida:</strong> plantilla en Excel o Calc con registro de ventas, inventario basico, resumen mensual y alertas de productos por reponer.</p>
+          <p><strong>Producto final esperado:</strong> archivo funcional, guia rapida para registrar ventas y una presentacion breve mostrando como se usa.</p>
+        </div>
+      </div>
+
+      <div class="tp-sec">
+        <p class="tp-h">Caso 2</p>
+        <div class="tp-card">
+          <h3 style="margin:0 0 8px;color:#0b6b35">Asociacion Semillas del Campo - Otanche</h3>
+          <p><strong>Actor productivo:</strong> grupo comunitario que comercializa productos agricolas locales por encargos.</p>
+          <p><strong>Situacion actual:</strong> los pedidos llegan por llamadas y mensajes. Cada integrante guarda informacion en su celular y a veces se duplican pedidos o se olvidan entregas.</p>
+          <p><strong>Problema principal:</strong> falta una estructura compartida para registrar pedidos, clientes, fechas de entrega y responsables.</p>
+          <p><strong>Solucion sugerida:</strong> carpeta organizada en Google Drive con hoja de pedidos, formato de clientes, control de entregas y documento de instrucciones para el equipo.</p>
+          <p><strong>Producto final esperado:</strong> estructura de carpetas, hoja de seguimiento colaborativa, guia rapida y presentacion del flujo de trabajo.</p>
+        </div>
+      </div>
+
+      <div class="tp-sec">
+        <p class="tp-h">Caso 3</p>
+        <div class="tp-card">
+          <h3 style="margin:0 0 8px;color:#0b6b35">Taller Creativo Manos de Pauna - Pauna</h3>
+          <p><strong>Actor productivo:</strong> emprendimiento que elabora arreglos, decoraciones y detalles personalizados para fechas especiales.</p>
+          <p><strong>Situacion actual:</strong> publica productos en redes sociales, pero no tiene catalogo organizado ni formato para cotizaciones. Responde precios de memoria y eso causa errores.</p>
+          <p><strong>Problema principal:</strong> necesita presentar productos y cotizaciones de forma clara, rapida y profesional.</p>
+          <p><strong>Solucion sugerida:</strong> catalogo sencillo en presentacion o documento, plantilla de cotizacion en Word y carpeta de evidencias con fotos clasificadas.</p>
+          <p><strong>Producto final esperado:</strong> catalogo editable, formato de cotizacion, guia de uso rapido y presentacion final del sistema creado.</p>
+        </div>
+      </div>
+    `,
+  },
 };
 
 function openGuia2SupportPanel(key) {
@@ -3893,6 +3949,42 @@ function guardarColaborativas334() {
 }
 
 window.guardarColaborativas334 = guardarColaborativas334;
+
+function applyTransferRetoLock() {
+  const locked = Boolean(state["transfer-reto-locked"]);
+  TRANSFER_RETO_ACTIVITY_STORES.forEach((key) => {
+    const el = document.querySelector(`[data-store="${key}"]`);
+    if (!el) return;
+    el.disabled = locked;
+    el.style.opacity = locked ? "0.75" : "";
+  });
+  const btn = document.getElementById("btnGuardarTransferReto");
+  if (btn) {
+    btn.disabled = locked;
+    btn.textContent = locked ? "Respuestas enviadas" : "💾 Guardar respuestas";
+  }
+  const status = document.getElementById("transferRetoStatus");
+  if (status) {
+    status.style.display = locked ? "" : "none";
+  }
+}
+
+function guardarTransferReto341() {
+  const empty = TRANSFER_RETO_ACTIVITY_STORES.filter((key) => !readStoreValue(key));
+  if (empty.length > 0) {
+    alert("Por favor responde las dos preguntas del reto antes de guardar.");
+    return;
+  }
+
+  TRANSFER_RETO_ACTIVITY_STORES.forEach((key) => {
+    state[key] = readStoreValue(key);
+  });
+  state["transfer-reto-locked"] = true;
+  saveState();
+  applyTransferRetoLock();
+}
+
+window.guardarTransferReto341 = guardarTransferReto341;
 
 function bindEvents() {
   document.addEventListener("input", (event) => {
