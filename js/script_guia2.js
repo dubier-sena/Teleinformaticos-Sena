@@ -3160,6 +3160,59 @@ const GUIA2_SUPPORT_PANEL_CONTENTS = {
       </div>
     `,
   },
+  "activity7-cases": {
+    title: "Casos para la Actividad 7",
+    html: `
+      <div class="tp-sec">
+        <p class="tp-h">Casos para trabajar Word, Excel y Drive</p>
+        <div class="tp-card">
+          <p style="margin:0;color:#455a64;line-height:1.6">
+            Selecciona uno de estos casos y usalo durante toda la Actividad 7: diagnostico en Word,
+            control de ventas en Excel, carpeta colaborativa en Drive, correo de entrega y respaldo final.
+          </p>
+        </div>
+      </div>
+
+      <div class="tp-sec">
+        <p class="tp-h">Caso 1</p>
+        <div class="tp-card">
+          <h3 style="margin:0 0 8px;color:#0b6b35">Cafeteria El Descanso - Puerto Boyaca</h3>
+          <p><strong>Actividad del negocio:</strong> vende desayunos, almuerzos sencillos, bebidas frias y productos de panaderia cerca de una institucion educativa.</p>
+          <p><strong>Herramientas actuales:</strong> libreta de ventas, calculadora, WhatsApp para pedidos y fotos sueltas de productos en el celular.</p>
+          <p><strong>Dificultades:</strong> no conoce con claridad cuanto vende por producto, que dias tiene mas movimiento ni que compras debe priorizar.</p>
+          <p><strong>Para Word:</strong> describe el negocio, sus necesidades digitales y propone herramientas actuales vs. recomendadas.</p>
+          <p><strong>Para Excel:</strong> registra 15 ventas ficticias de desayunos, bebidas y panaderia; calcula total, resumen y grafico.</p>
+          <p><strong>Para Drive:</strong> crea la carpeta Proyecto_Digital_Cafeteria_El_Descanso con diagnostico, control de ventas y plan de accion.</p>
+        </div>
+      </div>
+
+      <div class="tp-sec">
+        <p class="tp-h">Caso 2</p>
+        <div class="tp-card">
+          <h3 style="margin:0 0 8px;color:#0b6b35">Miscelanea San Miguel - Otanche</h3>
+          <p><strong>Actividad del negocio:</strong> vende productos de aseo, papeleria, accesorios basicos para celular y recargas.</p>
+          <p><strong>Herramientas actuales:</strong> cuaderno de fiados, mensajes de WhatsApp, recibos impresos y lista de precios pegada en el mostrador.</p>
+          <p><strong>Dificultades:</strong> mezcla ventas de contado con fiados, no identifica productos de baja rotacion y a veces pierde datos de clientes.</p>
+          <p><strong>Para Word:</strong> redacta el diagnostico digital y concluye dos acciones urgentes para ordenar ventas y clientes.</p>
+          <p><strong>Para Excel:</strong> crea 15 ventas ficticias con productos variados, precios unitarios, cantidades y total por venta.</p>
+          <p><strong>Para Drive:</strong> organiza Proyecto_Digital_Miscelanea_San_Miguel y comparte evidencias con tu equipo.</p>
+        </div>
+      </div>
+
+      <div class="tp-sec">
+        <p class="tp-h">Caso 3</p>
+        <div class="tp-card">
+          <h3 style="margin:0 0 8px;color:#0b6b35">Confecciones Luz Marina - Pauna</h3>
+          <p><strong>Actividad del negocio:</strong> realiza arreglos de ropa, uniformes escolares, cortinas y pedidos pequenos por encargo.</p>
+          <p><strong>Herramientas actuales:</strong> toma medidas en hojas sueltas, guarda fotos en el celular y acuerda entregas por llamadas.</p>
+          <p><strong>Dificultades:</strong> no tiene control de pedidos, fechas de entrega, abonos ni materiales pendientes por comprar.</p>
+          <p><strong>Para Word:</strong> elabora el diagnostico digital con descripcion del servicio y tabla de herramientas recomendadas.</p>
+          <p><strong>Para Excel:</strong> registra 15 ventas o pedidos ficticios con producto, cantidad, precio unitario y total.</p>
+          <p><strong>Para Drive:</strong> crea Proyecto_Digital_Confecciones_Luz_Marina con archivos, plan de accion y respaldo final.</p>
+        </div>
+      </div>
+    `,
+  },
   "activity10-cases": {
     title: "Casos para la Actividad 10",
     html: `
@@ -3210,7 +3263,201 @@ const GUIA2_SUPPORT_PANEL_CONTENTS = {
       </div>
     `,
   },
+  "activity9-cases": {
+    title: "Casos para la Actividad 9",
+    html: "",
+  },
 };
+
+const ACTIVITY_CASE_ASSIGNMENTS = {
+  "activity7-cases": {
+    storageKey: "guia2_activity7_case_idx",
+    intro:
+      "Este es tu caso asignado para trabajar toda la Actividad 7: diagnostico en Word, control de ventas en Excel, carpeta colaborativa en Drive, correo de entrega y respaldo final.",
+    cases: [
+      {
+        number: 1,
+        title: "Cafeteria El Descanso - Puerto Boyaca",
+        lines: [
+          ["Actividad del negocio", "Vende desayunos, almuerzos sencillos, bebidas frias y productos de panaderia cerca de una institucion educativa."],
+          ["Herramientas actuales", "Libreta de ventas, calculadora, WhatsApp para pedidos y fotos sueltas de productos en el celular."],
+          ["Dificultades", "No conoce con claridad cuanto vende por producto, que dias tiene mas movimiento ni que compras debe priorizar."],
+          ["Para Word", "Describe el negocio, sus necesidades digitales y propone herramientas actuales vs. recomendadas."],
+          ["Para Excel", "Registra 15 ventas ficticias de desayunos, bebidas y panaderia; calcula total, resumen y grafico."],
+          ["Para Drive", "Crea la carpeta Proyecto_Digital_Cafeteria_El_Descanso con diagnostico, control de ventas y plan de accion."],
+        ],
+      },
+      {
+        number: 2,
+        title: "Miscelanea San Miguel - Otanche",
+        lines: [
+          ["Actividad del negocio", "Vende productos de aseo, papeleria, accesorios basicos para celular y recargas."],
+          ["Herramientas actuales", "Cuaderno de fiados, mensajes de WhatsApp, recibos impresos y lista de precios pegada en el mostrador."],
+          ["Dificultades", "Mezcla ventas de contado con fiados, no identifica productos de baja rotacion y a veces pierde datos de clientes."],
+          ["Para Word", "Redacta el diagnostico digital y concluye dos acciones urgentes para ordenar ventas y clientes."],
+          ["Para Excel", "Crea 15 ventas ficticias con productos variados, precios unitarios, cantidades y total por venta."],
+          ["Para Drive", "Organiza Proyecto_Digital_Miscelanea_San_Miguel y comparte evidencias con tu equipo."],
+        ],
+      },
+      {
+        number: 3,
+        title: "Confecciones Luz Marina - Pauna",
+        lines: [
+          ["Actividad del negocio", "Realiza arreglos de ropa, uniformes escolares, cortinas y pedidos pequenos por encargo."],
+          ["Herramientas actuales", "Toma medidas en hojas sueltas, guarda fotos en el celular y acuerda entregas por llamadas."],
+          ["Dificultades", "No tiene control de pedidos, fechas de entrega, abonos ni materiales pendientes por comprar."],
+          ["Para Word", "Elabora el diagnostico digital con descripcion del servicio y tabla de herramientas recomendadas."],
+          ["Para Excel", "Registra 15 ventas o pedidos ficticios con producto, cantidad, precio unitario y total."],
+          ["Para Drive", "Crea Proyecto_Digital_Confecciones_Luz_Marina con archivos, plan de accion y respaldo final."],
+        ],
+      },
+    ],
+  },
+  "activity9-cases": {
+    storageKey: "guia2_activity9_case_idx",
+    intro:
+      "Este es tu caso asignado para analizar amenazas, crear una guia de ciberseguridad, revisar un mensaje de phishing y preparar una lista de verificacion de 10 items.",
+    cases: [
+      {
+        number: 1,
+        title: "Minimercado Los Pinos - Puerto Boyaca",
+        lines: [
+          ["Actor productivo", "Negocio de barrio que recibe pedidos por WhatsApp, maneja pagos por Nequi y guarda cuentas en un computador compartido."],
+          ["Riesgos principales", "Phishing por mensajes de supuestos bancos, contrasenas debiles, computador sin antivirus actualizado y ausencia de copia de seguridad."],
+          ["Situacion critica", "El propietario suele abrir enlaces que llegan por WhatsApp para revisar pagos y promociones de proveedores."],
+          ["Para la guia", "Incluye recomendaciones sobre verificacion de enlaces, contrasenas seguras, respaldo semanal y bloqueo de pantalla."],
+          ["Lista de verificacion", "Revisa antivirus, contrasenas distintas, copia de seguridad, permisos del computador y confirmacion de pagos por canales oficiales."],
+        ],
+      },
+      {
+        number: 2,
+        title: "Agroinsumos La Cosecha - Otanche",
+        lines: [
+          ["Actor productivo", "Local que vende semillas, fertilizantes y herramientas pequenas a productores rurales."],
+          ["Riesgos principales", "Archivos de proveedores descargados sin revisar, memorias USB de clientes, equipos compartidos y redes Wi-Fi publicas sin proteccion."],
+          ["Situacion critica", "Un proveedor envia listas de precios en archivos comprimidos y el negocio los descarga en el computador de caja."],
+          ["Para la guia", "Explica como revisar archivos antes de abrirlos, evitar extensiones peligrosas y separar equipo personal del equipo del negocio."],
+          ["Lista de verificacion", "Incluye revision de extensiones, antivirus activo, copias en Drive, permisos de usuarios y cuidado con USB desconocidas."],
+        ],
+      },
+      {
+        number: 3,
+        title: "Estudio Creativo Brillo Digital - Pauna",
+        lines: [
+          ["Actor productivo", "Emprendimiento que diseña piezas para redes sociales, maneja fotos de clientes y comparte archivos por enlaces."],
+          ["Riesgos principales", "Enlaces publicos sin control, uso de cuentas personales para trabajo, contrasenas repetidas y perdida de archivos de clientes."],
+          ["Situacion critica", "La emprendedora comparte carpetas completas con clientes y deja enlaces abiertos sin fecha de cierre."],
+          ["Para la guia", "Incluye recomendaciones sobre permisos de Drive, privacidad de datos, contrasenas distintas y separacion entre cuentas personales y laborales."],
+          ["Lista de verificacion", "Evalua permisos de enlaces, respaldo de proyectos, autenticacion en dos pasos, orden de carpetas y eliminacion de accesos antiguos."],
+        ],
+      },
+    ],
+  },
+  "activity10-cases": {
+    storageKey: "guia2_activity10_case_idx",
+    intro:
+      "Este es tu caso asignado para construir el perfil digital, definir el problema, disenar la herramienta, preparar la guia de uso rapido y organizar la entrega final.",
+    cases: [
+      {
+        number: 1,
+        title: "Papeleria La Esperanza - Puerto Boyaca",
+        lines: [
+          ["Actor productivo", "Negocio familiar que vende utiles escolares, impresiones, fotocopias y recargas."],
+          ["Situacion actual", "Registra ventas en una libreta, no separa productos por categoria y pierde tiempo buscando precios. Usa WhatsApp para pedidos, pero no conserva un historial ordenado."],
+          ["Problema principal", "No tiene control claro de ventas, inventario ni productos mas vendidos."],
+          ["Solucion sugerida", "Plantilla en Excel o Calc con registro de ventas, inventario basico, resumen mensual y alertas de productos por reponer."],
+          ["Producto final esperado", "Archivo funcional, guia rapida para registrar ventas y una presentacion breve mostrando como se usa."],
+        ],
+      },
+      {
+        number: 2,
+        title: "Asociacion Semillas del Campo - Otanche",
+        lines: [
+          ["Actor productivo", "Grupo comunitario que comercializa productos agricolas locales por encargos."],
+          ["Situacion actual", "Los pedidos llegan por llamadas y mensajes. Cada integrante guarda informacion en su celular y a veces se duplican pedidos o se olvidan entregas."],
+          ["Problema principal", "Falta una estructura compartida para registrar pedidos, clientes, fechas de entrega y responsables."],
+          ["Solucion sugerida", "Carpeta organizada en Google Drive con hoja de pedidos, formato de clientes, control de entregas y documento de instrucciones para el equipo."],
+          ["Producto final esperado", "Estructura de carpetas, hoja de seguimiento colaborativa, guia rapida y presentacion del flujo de trabajo."],
+        ],
+      },
+      {
+        number: 3,
+        title: "Taller Creativo Manos de Pauna - Pauna",
+        lines: [
+          ["Actor productivo", "Emprendimiento que elabora arreglos, decoraciones y detalles personalizados para fechas especiales."],
+          ["Situacion actual", "Publica productos en redes sociales, pero no tiene catalogo organizado ni formato para cotizaciones. Responde precios de memoria y eso causa errores."],
+          ["Problema principal", "Necesita presentar productos y cotizaciones de forma clara, rapida y profesional."],
+          ["Solucion sugerida", "Catalogo sencillo en presentacion o documento, plantilla de cotizacion en Word y carpeta de evidencias con fotos clasificadas."],
+          ["Producto final esperado", "Catalogo editable, formato de cotizacion, guia de uso rapido y presentacion final del sistema creado."],
+        ],
+      },
+    ],
+  },
+};
+
+function getActivityCaseSeed(key) {
+  const session = window.portalAuth?.getCurrentSession?.();
+  const selection = getGuideSelection();
+  return [
+    key,
+    session?.user?.usernameKey || session?.user?.username || session?.usernameKey || "",
+    selection.grupo || "",
+    selection.ficha || "",
+  ].join("|");
+}
+
+function getAssignedActivityCase(key) {
+  const config = ACTIVITY_CASE_ASSIGNMENTS[key];
+  if (!config) {
+    return null;
+  }
+
+  const saved = localStorage.getItem(config.storageKey);
+  if (saved !== null) {
+    const idx = parseInt(saved, 10);
+    if (idx >= 0 && idx < config.cases.length) {
+      return config.cases[idx];
+    }
+  }
+
+  const seed = getActivityCaseSeed(key);
+  const idx = seed.trim()
+    ? hashString(seed) % config.cases.length
+    : Math.floor(Math.random() * config.cases.length);
+  localStorage.setItem(config.storageKey, String(idx));
+  return config.cases[idx];
+}
+
+function buildAssignedActivityCaseHtml(key) {
+  const config = ACTIVITY_CASE_ASSIGNMENTS[key];
+  const selectedCase = getAssignedActivityCase(key);
+  if (!config || !selectedCase) {
+    return "";
+  }
+
+  const lines = selectedCase.lines
+    .map(
+      ([label, value]) => `
+        <p><strong>${escapeHtml(label)}:</strong> ${escapeHtml(value)}</p>`
+    )
+    .join("");
+
+  return `
+    <div class="tp-sec">
+      <p class="tp-h">Caso asignado al aprendiz</p>
+      <div class="tp-card">
+        <p style="margin:0;color:#455a64;line-height:1.6">${escapeHtml(config.intro)}</p>
+      </div>
+    </div>
+    <div class="tp-sec">
+      <p class="tp-h">Caso ${selectedCase.number}</p>
+      <div class="tp-card">
+        <h3 style="margin:0 0 8px;color:#0b6b35">${escapeHtml(selectedCase.title)}</h3>
+        ${lines}
+      </div>
+    </div>
+  `;
+}
 
 function openGuia2SupportPanel(key) {
   const panel = document.getElementById("guia2-support-panel");
@@ -3223,7 +3470,9 @@ function openGuia2SupportPanel(key) {
   }
 
   title.textContent = content.title;
-  body.innerHTML = content.html;
+  body.innerHTML = ACTIVITY_CASE_ASSIGNMENTS[key]
+    ? buildAssignedActivityCaseHtml(key)
+    : content.html;
   panel.style.transform = "translateX(0)";
   backdrop.style.opacity = "1";
   backdrop.style.pointerEvents = "auto";
