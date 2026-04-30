@@ -218,6 +218,81 @@
     };
   }
 
+  function getDeliveryStorageKey(context) {
+    var identity = getCurrentIdentity();
+    var pageFile =
+      (context && context.pageFile) ||
+      window.__RUNTIME_PAGE_FILE__ ||
+      identity.pageFile ||
+      "guia.html";
+    var activitySegment = sanitizeFileSegment(
+      (context && (context.panelKey || context.activityNumber || context.activityLabel)) || "actividad",
+      "actividad"
+    );
+    var storageBase = pageFile.replace(/\.html$/i, "") + ":delivery:" + activitySegment;
+    var auth = getPortalAuth();
+
+    return auth && typeof auth.getScopedStorageKey === "function"
+      ? auth.getScopedStorageKey(storageBase, { area: "guide-data" })
+      : storageBase;
+  }
+
+  function loadDeliveryRecord(context) {
+    try {
+      var raw = window.localStorage.getItem(getDeliveryStorageKey(context));
+      return raw ? JSON.parse(raw) : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function saveDeliveryRecord(context, record) {
+    try {
+      window.localStorage.setItem(
+        getDeliveryStorageKey(context),
+        JSON.stringify(record || {})
+      );
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function notifyDeliveryRegistered(record) {
+    try {
+      document.dispatchEvent(
+        new CustomEvent("guide-delivery-registered", {
+          detail: record || {},
+        })
+      );
+    } catch (error) {
+    }
+  }
+
+  function markGuideActivitySeenForRecord(record) {
+    if (!record || typeof window.setGuideActivitySeen !== "function") {
+      return;
+    }
+
+    var activity = Array.from(document.querySelectorAll(".activity")).find(function (node) {
+      var number = normalizeText(
+        node.querySelector(".activity-num") && node.querySelector(".activity-num").textContent
+      );
+      var title = normalizeText(
+        node.querySelector(".activity-title") && node.querySelector(".activity-title").textContent
+      );
+      return (
+        (record.activityNumber && number === normalizeText(record.activityNumber)) ||
+        (record.activityTitle && title === normalizeText(record.activityTitle)) ||
+        (record.activityLabel && title === normalizeText(record.activityLabel))
+      );
+    });
+
+    if (activity) {
+      window.setGuideActivitySeen(activity, true);
+    }
+  }
+
   function getGuideLabelFromDocument() {
     var heading = document.querySelector(".sidebar-logo h2");
     var titleSource = normalizeText(
@@ -815,6 +890,27 @@
         nodes.resultLink.href = response.driveUrl;
         nodes.resultLink.hidden = false;
       }
+
+      var record = {
+        guideLabel: currentContext.guideLabel,
+        activityNumber: currentContext.activityNumber || "",
+        activityTitle: currentContext.activityTitle || "",
+        activityLabel: currentContext.activityLabel || "Actividad",
+        panelKey: currentContext.panelKey || "",
+        pageFile: identity.pageFile,
+        fullName: fullName,
+        ficha: ficha,
+        grupo: identity.grupo,
+        institucion: identity.institucion,
+        submittedAt: payload.submittedAt,
+        folderPath: response.folderPath || "",
+        savedFileName: response.savedFileName || file.name || "",
+        driveUrl: response.driveUrl || "",
+        status: "delivered",
+      };
+      saveDeliveryRecord(currentContext, record);
+      markGuideActivitySeenForRecord(record);
+      notifyDeliveryRegistered(record);
     } catch (error) {
       setStatus(
         nodes.status,
@@ -865,8 +961,11 @@
     getActivityContextFromNode: getActivityContextFromNode,
     injectButtonsIntoExistingGroups: injectButtonsIntoExistingGroups,
     isValidAppsScriptUrl: isValidAppsScriptUrl,
+    loadDeliveryRecord: loadDeliveryRecord,
+    notifyDeliveryRegistered: notifyDeliveryRegistered,
     openDeliveryModal: openDeliveryModal,
     readFileAsBase64: readFileAsBase64,
+    saveDeliveryRecord: saveDeliveryRecord,
     uploadToAppsScript: uploadToAppsScript,
     validateFile: validateFile,
   };
