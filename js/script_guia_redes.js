@@ -231,10 +231,10 @@ function getWordIdentityValueRedes(identity, key) {
 function buildInstitutionalWordStylesRedes() {
   return `
 table{max-width:100%;table-layout:fixed;overflow-wrap:break-word;word-break:break-word}
-.institutional-header{width:100%;border-collapse:collapse;margin:0 0 12pt}
+.institutional-header{width:100%;max-width:100%;table-layout:fixed;border-collapse:collapse;margin:0 0 12pt}
 .institutional-header td{border:1px solid #b7c9bc;padding:7pt;vertical-align:middle;font-size:10pt;line-height:1.35}
-.institutional-header .logo-cell{width:80pt;text-align:center;background:#f7fbf8}
-.institutional-header img{width:62pt;height:auto}
+.institutional-header .logo-cell{width:74pt;text-align:center;background:#f7fbf8}
+.institutional-header img{width:64pt;max-width:64pt;height:auto}
 .institutional-header .label,.meta .label{font-weight:700;background:#f3f4f6;color:#1b5e20}
 .meta{width:100%;border-collapse:collapse;margin:0 0 16pt}
 .meta td{border:1px solid #d1d5db;padding:8pt;vertical-align:top;font-size:10.5pt;line-height:1.35}`;
@@ -244,7 +244,7 @@ function buildInstitutionalWordHeaderRedes(title, fullName, identity, fecha) {
   return `
 <table class="institutional-header">
   <tr>
-    <td class="logo-cell" rowspan="4"><img src="${escapeHtml(getSenaLogoUrlRedes())}" alt="Logo SENA"></td>
+    <td class="logo-cell" rowspan="4" width="74" style="width:74pt;"><img src="${escapeHtml(getSenaLogoUrlRedes())}" alt="Logo SENA" width="64" style="width:64pt;height:auto;"></td>
     <td class="label">Programa</td>
     <td>${escapeHtml(REDES_WORD_METADATA.program)}</td>
     <td class="label">Fecha de elaboracion</td>
