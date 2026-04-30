@@ -67,8 +67,10 @@ test("Word exports use APA page basics and keep tables inside margins", () => {
     assert.match(script, /table-layout:\s*fixed/);
     assert.match(script, /max-width:\s*100%/);
     assert.match(script, /word-break:\s*break-word/);
-    assert.match(script, /width="42"/);
-    assert.match(script, /width:\s*42pt/);
+    assert.match(script, /width="36"/);
+    assert.match(script, /width:\s*36pt/);
+    assert.doesNotMatch(script, /class="logo-cell"/);
+    assert.doesNotMatch(script, /rowspan=/);
   }
 
   const redesScript = read("js/script_guia_redes.js");

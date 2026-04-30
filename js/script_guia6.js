@@ -1056,35 +1056,20 @@ function getSenaLogoUrl() {
 
 function buildInstitutionalWordHeader(title, learnerName, selection, fecha) {
   return `
+  <div class="word-logo-line">
+    <img src="${escapeWordText(getSenaLogoUrl())}" alt="Logo SENA" width="36" height="36" style="width:36pt;height:36pt;" />
+    <strong>Servicio Nacional de Aprendizaje - SENA</strong>
+  </div>
   <table class="institutional-header" width="100%" align="left" style="width:100%;margin-left:0;margin-right:0;">
-    <tr>
-      <td class="logo-cell" width="52" style="width:52pt;">
-        <img src="${escapeWordText(getSenaLogoUrl())}" alt="Logo SENA" width="42" height="42" style="width:42pt;height:42pt;" />
-      </td>
-      <td colspan="3"><strong>Servicio Nacional de Aprendizaje - SENA</strong><br>${escapeWordValue(GUIDE6_WORD_METADATA.program)}</td>
-    </tr>
-    <tr><td class="label">Guia / actividad</td><td colspan="3">${escapeWordValue(`${GUIDE6_WORD_METADATA.guideName} - ${title}`)}</td></tr>
-    <tr><td class="label">Competencia</td><td colspan="3">${escapeWordValue(GUIDE6_WORD_METADATA.competencia)}</td></tr>
-    <tr><td class="label">Resultado de Aprendizaje</td><td colspan="3">${escapeWordValue(GUIDE6_WORD_METADATA.resultado)}</td></tr>
-  </table>
-
-  <table class="meta" width="100%" align="left" style="width:100%;margin-left:0;margin-right:0;">
-    <tr>
-      <td class="label">Nombre completo del aprendiz</td>
-      <td>${escapeWordValue(learnerName)}</td>
-      <td class="label">Fecha de elaboracion</td>
-      <td>${escapeWordValue(fecha)}</td>
-    </tr>
-    <tr>
-      <td class="label">Numero de ficha</td>
-      <td>${escapeWordValue(selection.ficha)}</td>
-      <td class="label">Grado</td>
-      <td>${escapeWordValue(selection.grupo)}</td>
-    </tr>
-    <tr>
-      <td class="label">Institucion</td>
-      <td colspan="3">${escapeWordValue(selection.inst)}</td>
-    </tr>
+    <tr><td class="label">Programa</td><td>${escapeWordValue(GUIDE6_WORD_METADATA.program)}</td></tr>
+    <tr><td class="label">Fecha de elaboracion</td><td>${escapeWordValue(fecha)}</td></tr>
+    <tr><td class="label">Guia / actividad</td><td>${escapeWordValue(`${GUIDE6_WORD_METADATA.guideName} - ${title}`)}</td></tr>
+    <tr><td class="label">Competencia</td><td>${escapeWordValue(GUIDE6_WORD_METADATA.competencia)}</td></tr>
+    <tr><td class="label">Resultado de Aprendizaje</td><td>${escapeWordValue(GUIDE6_WORD_METADATA.resultado)}</td></tr>
+    <tr><td class="label">Nombre completo del aprendiz</td><td>${escapeWordValue(learnerName)}</td></tr>
+    <tr><td class="label">Numero de ficha</td><td>${escapeWordValue(selection.ficha)}</td></tr>
+    <tr><td class="label">Grado</td><td>${escapeWordValue(selection.grupo)}</td></tr>
+    <tr><td class="label">Institucion</td><td>${escapeWordValue(selection.inst)}</td></tr>
   </table>`;
 }
 
@@ -1226,10 +1211,11 @@ function doExportBitacoraWord() {
   .header { text-align: center; border-bottom: 2px solid #007934; padding-bottom: 8pt; margin-bottom: 14pt; }
   .header p { margin: 2pt 0; }
   table { max-width: 100%; table-layout: fixed; overflow-wrap: break-word; word-break: break-word; }
+  .word-logo-line { text-align: left; margin: 0 0 8pt; font-size: 10pt; line-height: 1.2; color: #1b5e20; }
+  .word-logo-line img { width: 36pt; height: 36pt; vertical-align: middle; margin-right: 8pt; }
   .institutional-header { width: 100%; max-width: 100%; table-layout: fixed; border-collapse: collapse; margin: 0 0 12pt; }
   .institutional-header td { border: 1px solid #b7c9bc; padding: 7pt; vertical-align: middle; font-size: 10pt; line-height: 1.35; }
-  .institutional-header .logo-cell { width: 52pt; text-align: center; background: #f7fbf8; }
-  .institutional-header img { width: 42pt; max-width: 42pt; height: 42pt; max-height: 42pt; }
+  .institutional-header .label { width: 30%; font-weight: 700; background: #f3f4f6; color: #1b5e20; }
   .meta { width: 100%; border-collapse: collapse; margin: 12pt 0 16pt; }
   .meta td { border: 1pt solid #cfd8dc; padding: 6pt 10pt; font-size: 10.5pt; line-height: 1.35; }
   .meta .label { width: 120pt; font-weight: bold; background: #f0faf4; color: #007934; }
