@@ -12,6 +12,7 @@
   let redesSocializacionSummaries = {};
   let redesQuizSummaries = {};
   let activeActivitiesSubtab = null;
+  let currentResponsesExport = null;
 
   const REDES_SB_CLOUD_FILES = {
     "3441944": "sb_10a_redes.html",
@@ -140,44 +141,29 @@
     "transfer-reto-guia",
     "transfer-reto-locked",
   ];
+  const GUIDE2_COLLABORATIVE_TOOLS = [
+    { id: "microsoft-365", label: "Microsoft 365 (Teams, SharePoint, OneDrive)" },
+    { id: "google-workspace", label: "Google Workspace (Meet, Drive, Docs)" },
+    { id: "zoom", label: "Zoom" },
+    { id: "wetransfer", label: "WeTransfer" },
+    { id: "canva", label: "Canva" },
+  ];
+  const GUIDE2_COLLABORATIVE_ACTIVITY_KEYS = [
+    ...GUIDE2_COLLABORATIVE_TOOLS.flatMap((tool) => [
+      `collab:${tool.id}:function`,
+      `collab:${tool.id}:advantage`,
+      `collab:${tool.id}:limit`,
+      `collab:${tool.id}:license`,
+    ]),
+    "colaborativas334-locked",
+  ];
   const GUIDE2_RESPONSE_KEYS = [
     "wordSearch:guia2-sopa",
     "matchingGame:guia2-relaciona",
     ...GUIDE2_EXTENSION_ACTIVITY_KEYS,
     ...GUIDE2_SYSTEM_ACTIVITY_KEYS,
+    ...GUIDE2_COLLABORATIVE_ACTIVITY_KEYS,
     ...GUIDE2_TRANSFER_RETO_KEYS,
-    "contexto-q1",
-    "contexto-rel-drive",
-    "contexto-rel-excel",
-    "contexto-rel-canva",
-    "contexto-rel-whatsapp",
-    "contexto-tendero",
-    "contexto-q4",
-    "contexto-docente-correo-si",
-    "contexto-docente-correo-porque",
-    "contexto-docente-classroom-si",
-    "contexto-docente-classroom-porque",
-    "contexto-docente-whatsapp-si",
-    "contexto-docente-whatsapp-porque",
-    "contexto-docente-usb-si",
-    "contexto-docente-usb-porque",
-    "contexto-nube",
-    "contexto-backup-verificar",
-    "contexto-backup-seleccionar",
-    "contexto-backup-copiar",
-    "contexto-backup-confirmar",
-    "contexto-info-problem",
-    "contexto-uso-word-si",
-    "contexto-uso-word-porque",
-    "contexto-uso-excel-si",
-    "contexto-uso-excel-porque",
-    "contexto-uso-drive-si",
-    "contexto-uso-drive-porque",
-    "contexto-uso-correo-si",
-    "contexto-uso-correo-porque",
-    "contexto-uso-meet-si",
-    "contexto-uso-meet-porque",
-    "contexto-otanche",
   ];
 
   const GUIDE6_FILES = {
@@ -220,18 +206,8 @@
     { id: "matching", label: "Relaciona herramientas", keys: ["matchingGame:guia2-relaciona"] },
     { id: "extensiones331", label: "Actividad 5 - Extensiones de archivo", keys: GUIDE2_EXTENSION_ACTIVITY_KEYS },
     { id: "sistemas332", label: "Actividad 6 - Requerimientos minimos", keys: GUIDE2_SYSTEM_ACTIVITY_KEYS },
+    { id: "colaborativas334", label: "Actividad 8 - Herramientas colaborativas", keys: GUIDE2_COLLABORATIVE_ACTIVITY_KEYS },
     { id: "transferReto341", label: "Actividad 10 - Reto final", keys: GUIDE2_TRANSFER_RETO_KEYS },
-    {
-      id: "cuestionario", label: "Cuestionario 3.2.1",
-      keys: GUIDE2_RESPONSE_KEYS.filter(
-        (k) =>
-          !k.startsWith("wordSearch:") &&
-          !k.startsWith("matchingGame:") &&
-          !GUIDE2_EXTENSION_ACTIVITY_KEYS.includes(k) &&
-          !GUIDE2_SYSTEM_ACTIVITY_KEYS.includes(k) &&
-          !GUIDE2_TRANSFER_RETO_KEYS.includes(k)
-      ),
-    },
   ];
 
   function getById(id) {
@@ -249,6 +225,157 @@
       };
       return map[char];
     });
+  }
+
+  function escapeWordText(value) {
+    return escapeHtml(value);
+  }
+
+  function sanitizeFileName(value) {
+    return String(value || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9_-]+/g, "_")
+      .replace(/^_+|_+$/g, "")
+      .slice(0, 90);
+  }
+
+  function getSenaLogoUrl() {
+    try {
+      return new URL("assets/img/sena-logo.png", window.location.href).href;
+    } catch {
+      return "assets/img/sena-logo.png";
+    }
+  }
+
+  const ADMIN_WORD_METADATA = {
+    default: {
+      guideName: "Consulta administrativa de respuestas",
+      program: "Sistemas Teleinformaticos",
+      competencia:
+        "220501121 - Operar herramientas informaticas y digitales de acuerdo con protocolos y manuales tecnicos.",
+      resultado: "Evidencia administrativa de respuestas registradas por el aprendiz.",
+    },
+    guia2: {
+      guideName: "Guia 2 - Operar Herramientas Informaticas y Digitales",
+      program: "Sistemas Teleinformaticos",
+      competencia:
+        "220501121 - Operar herramientas informaticas y digitales de acuerdo con protocolos y manuales tecnicos.",
+      resultado: "RAP 01 - Caracterizar herramientas informaticas segun el contexto tecnologico de la organizacion.",
+    },
+    guia6: {
+      guideName: "Guia 6 - Planificar la informacion",
+      program: "Sistemas Teleinformaticos",
+      competencia:
+        "220501121 - Operar herramientas informaticas y digitales de acuerdo con protocolos y manuales tecnicos.",
+      resultado: "RAP 02 - Implementar componentes de las herramientas tecnologicas segun procedimientos de la organizacion.",
+    },
+    redes: {
+      guideName: "Guia 2 - Redes RAP01",
+      program: "Sistemas Teleinformaticos",
+      competencia:
+        "280102129 - Evaluar red de acuerdo con procedimientos de telecomunicaciones y normativa tecnica.",
+      resultado: "RAP 01 - Definir los parametros y recursos de la red de acuerdo con normativa de telecomunicaciones.",
+    },
+  };
+
+  function getAdminWordMetadata(title, subtitle) {
+    const source = `${title || ""} ${subtitle || ""}`.toLowerCase();
+    if (source.includes("redes") || source.includes("santa barbara")) return ADMIN_WORD_METADATA.redes;
+    if (source.includes("guia 6") || source.includes("guía 6")) return ADMIN_WORD_METADATA.guia6;
+    if (source.includes("guia 2") || source.includes("guía 2") || source.includes("ficha de caso") || source.includes("matriz 3.2.2")) {
+      return ADMIN_WORD_METADATA.guia2;
+    }
+    return ADMIN_WORD_METADATA.default;
+  }
+
+  function readMetaField(meta, label) {
+    const escapedLabel = String(label || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const match = String(meta || "").match(new RegExp(`${escapedLabel}:\\s*([^|]+)`, "i"));
+    return match ? match[1].trim() : "";
+  }
+
+  function buildAdminResponsesWordStyles() {
+    return `
+      @page { size: 8.5in 11in; margin: 2.54cm; }
+      body { font-family: "Times New Roman", serif; font-size: 12pt; line-height: 2; color: #111827; }
+      .word-logo-line { display: flex; align-items: center; gap: 8pt; margin: 0 0 8pt; color: #0b6b2b; font-weight: bold; }
+      .institutional-header, .answer-card table { width: 100%; border-collapse: collapse; table-layout: fixed; margin: 0 0 14pt; }
+      .institutional-header td, .answer-card th, .answer-card td { border: 1px solid #b7c7bc; padding: 6pt; vertical-align: top; word-wrap: break-word; overflow-wrap: break-word; }
+      .institutional-header .label, .answer-card th { background: #f1f5f9; color: #0b5d28; font-weight: bold; }
+      h1 { font-size: 16pt; color: #14532d; margin: 18pt 0 8pt; line-height: 1.35; }
+      h2 { font-size: 14pt; color: #14532d; margin: 16pt 0 8pt; line-height: 1.35; }
+      h3 { font-size: 12pt; color: #111827; margin: 12pt 0 6pt; line-height: 1.35; }
+      .answer-card { page-break-inside: avoid; margin: 0 0 14pt; }
+      .response-status { border: 1px solid #d1d5db; padding: 10pt; border-radius: 4pt; }
+      p { margin: 0 0 10pt; }
+      small { color: #4b5563; }
+    `;
+  }
+
+  function buildAdminResponsesWordDocument(exportData) {
+    const title = exportData?.title || "Respuestas del aprendiz";
+    const subtitle = exportData?.subtitle || "";
+    const meta = exportData?.meta || "";
+    const bodyHtml = exportData?.bodyHtml || "";
+    const metadata = getAdminWordMetadata(title, subtitle);
+    const today = new Date().toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric" });
+    const learnerName =
+      readMetaField(meta, "Aprendiz") ||
+      String(subtitle).split("|")[0]?.trim() ||
+      "Aprendiz";
+    const ficha = readMetaField(meta, "Ficha");
+    const grupo = readMetaField(meta, "Grupo");
+    const institucion = readMetaField(meta, "Institucion") || readMetaField(meta, "Institución");
+
+    return `<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>${escapeWordText(title)}</title>
+  <style>${buildAdminResponsesWordStyles()}</style>
+</head>
+<body>
+  <div class="word-logo-line">
+    <img src="${escapeWordText(getSenaLogoUrl())}" alt="Logo SENA" width="36" height="36" style="width:36pt;height:36pt;">
+    <strong>Servicio Nacional de Aprendizaje - SENA</strong>
+  </div>
+  <table class="institutional-header" width="100%" align="left" style="width:100%;margin-left:0;margin-right:0;">
+    <tr><td class="label">Programa</td><td>${escapeWordText(metadata.program)}</td></tr>
+    <tr><td class="label">Fecha de elaboracion</td><td>${escapeWordText(today)}</td></tr>
+    <tr><td class="label">Guia / actividad</td><td>${escapeWordText(`${metadata.guideName} - ${title}`)}</td></tr>
+    <tr><td class="label">Competencia</td><td>${escapeWordText(metadata.competencia)}</td></tr>
+    <tr><td class="label">Resultado de Aprendizaje</td><td>${escapeWordText(metadata.resultado)}</td></tr>
+    <tr><td class="label">Nombre completo del aprendiz</td><td>${escapeWordText(learnerName)}</td></tr>
+    <tr><td class="label">Numero de ficha</td><td>${escapeWordText(ficha)}</td></tr>
+    <tr><td class="label">Grado</td><td>${escapeWordText(grupo)}</td></tr>
+    <tr><td class="label">Institucion</td><td>${escapeWordText(institucion)}</td></tr>
+  </table>
+  <h1>${escapeWordText(title)}</h1>
+  <p><strong>${escapeWordText(subtitle)}</strong></p>
+  <p>${escapeWordText(meta)}</p>
+  ${bodyHtml}
+</body>
+</html>`;
+  }
+
+  function exportCurrentResponsesToWord() {
+    if (!currentResponsesExport?.bodyHtml) {
+      setFeedback("No hay respuestas visibles para exportar.", "error");
+      return;
+    }
+    const html = buildAdminResponsesWordDocument(currentResponsesExport);
+    const blob = new Blob(["\ufeff", html], { type: "application/msword" });
+    const url = URL.createObjectURL(blob);
+    const safeLearner = sanitizeFileName(readMetaField(currentResponsesExport.meta, "Aprendiz") || "Aprendiz");
+    const safeTitle = sanitizeFileName(currentResponsesExport.title || "Respuestas");
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${safeTitle}_${safeLearner}.doc`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
   function formatDate(value) {
@@ -316,6 +443,17 @@
       localStateKey: auth.GUIDE_PROGRESS_CONFIG?.[fileName]?.stateKey || "",
       title: auth.getGuideTitle(fileName),
     };
+  }
+
+  function getGuide2ActivitiesForFile(fileName) {
+    return getGuide2ResponseConfig(fileName) ? GUIDE2_ACTIVITIES : [];
+  }
+
+  function getUnlockActivitiesForGuide(fileName) {
+    const guide2Activities = getGuide2ActivitiesForFile(fileName);
+    if (guide2Activities.length) return guide2Activities;
+    if (getGuide6Config(fileName)) return GUIDE6_ACTIVITIES;
+    return [];
   }
 
   function getGuide2ScopeKey(usernameKey) {
@@ -1289,198 +1427,105 @@
   }
 
   function renderGuide2ResponsesBody(state, context) {
-    return `
-      <div class="answers-grid">
-        <article class="answer-card">
-          <h3>Actividad 1. Sopa de letras de conceptos basicos.</h3>
-          ${renderWordSearchResult(state, context)}
-        </article>
+    return `<div class="answers-grid">${GUIDE2_ACTIVITIES.map((activity) =>
+      renderGuide2ActivityResponsesBody(activity.id, state, context)
+    ).join("")}</div>`;
+  }
 
-        <article class="answer-card">
-          <h3>Actividad 2. Relaciona la herramienta con su funcion.</h3>
-          ${renderMatchingGameResult(state, context)}
-        </article>
-
-        <article class="answer-card">
-          <h3>Identificacion registrada en el formulario.</h3>
-          ${renderAnswerTable(
-            ["Campo", "Respuesta del aprendiz"],
-            [
-              ["Nombre completo", state["actividad4:nombre_completo"]],
-              ["Numero de ficha", state["actividad4:ficha"]],
-            ]
-          )}
-        </article>
-
-        <article class="answer-card">
-          <h3>Actividad 5. Extensiones de archivo.</h3>
-          ${renderAnswerTable(
-            ["Extension", "Programa asociado", "Descripcion"],
-            GUIDE2_EXTENSION_IDS.map((id) => [
-              `.${id}`,
-              state[`extension:${id}:program`],
-              state[`extension:${id}:description`],
-            ])
-          )}
-          ${renderAnswerTable(
-            ["Pregunta", "Respuesta del aprendiz"],
-            [
-              ["Categoria con mas extensiones", state["extensions-category-summary"]],
-              ["Explicacion de la categoria", state["extensions-category-why"]],
-              ["Extensiones de riesgo identificadas", state["extensions-risk-list"]],
-              ["Hallazgos reales en el explorador", state["extensions-real-files"]],
-              ["Estado de guardado", state["extensiones331-locked"] ? "Respuestas enviadas" : "Sin bloquear"],
-            ]
-          )}
-        </article>
-
-        <article class="answer-card">
-          <h3>Actividad 6. Requerimientos minimos de sistemas operativos.</h3>
-          ${renderAnswerTable(
-            ["Sistema operativo", "Procesador", "RAM", "Disco", "Fuente"],
-            GUIDE2_SYSTEM_IDS.map((id) => [
-              GUIDE2_SYSTEM_NAMES[id] || id,
-              state[`system:${id}:processor`],
-              state[`system:${id}:ram`],
-              state[`system:${id}:disk`],
-              state[`system:${id}:source`],
-            ])
-          )}
-          ${renderAnswerTable(
-            ["Pregunta", "Respuesta del aprendiz"],
-            [
-              ["Sistema con requerimientos mas bajos", state["systems-lowest"]],
-              ["Sistema con requerimientos mas altos", state["systems-highest"]],
-              ["Recomendacion tecnica", state["systems-recommendation"]],
-              ["Retroalimentacion de companeros", state["systems-peer-feedback"]],
-              ["Estado de guardado", state["sistemas332-locked"] ? "Respuestas enviadas" : "Sin bloquear"],
-            ]
-          )}
-        </article>
-
-        <article class="answer-card">
-          <h3>Actividad 10. Reto final de solucion digital.</h3>
-          ${renderAnswerTable(
-            ["Pregunta", "Respuesta del aprendiz"],
-            [
-              [
-                "El actor productivo podria usar la herramienta sin acompanamiento",
-                state["transfer-reto-uso"],
-              ],
-              [
-                "La guia de uso rapido responde las preguntas del actor productivo",
-                state["transfer-reto-guia"],
-              ],
-              ["Estado de guardado", state["transfer-reto-locked"] ? "Respuestas enviadas" : "Sin bloquear"],
-            ]
-          )}
-        </article>
-
-        <article class="answer-card">
-          <h3>1. \u00bfCu\u00e1l de las siguientes opciones describe mejor qu\u00e9 es una herramienta TIC?</h3>
-          ${renderAnswerValue(state["contexto-q1"])}
-        </article>
-
-        <article class="answer-card">
-          <h3>2. Relaciona cada herramienta con su funci\u00f3n principal.</h3>
-          ${renderAnswerTable(
-            ["Herramienta", "Respuesta del aprendiz"],
-            [
-              ["Google Drive", state["contexto-rel-drive"]],
-              ["Microsoft Excel", state["contexto-rel-excel"]],
-              ["Canva", state["contexto-rel-canva"]],
-              ["WhatsApp Business", state["contexto-rel-whatsapp"]],
-            ]
-          )}
-        </article>
-
-        <article class="answer-card">
-          <h3>3. Recomendaci\u00f3n para el tendero de Puerto Boyac\u00e1.</h3>
-          ${renderAnswerValue(state["contexto-tendero"])}
-        </article>
-
-        <article class="answer-card">
-          <h3>4. Acci\u00f3n que NO corresponde a un procesador de texto.</h3>
-          ${renderAnswerValue(state["contexto-q4"])}
-        </article>
-
-        <article class="answer-card">
-          <h3>5. Herramientas para enviar el mismo mensaje a 30 estudiantes.</h3>
-          ${renderAnswerTable(
-            ["Herramienta", "\u00bfLa usar\u00eda?", "\u00bfPor qu\u00e9 la usar\u00eda?"],
-            [
-              [
-                "Correo electr\u00f3nico (Gmail, Outlook)",
-                state["contexto-docente-correo-si"],
-                state["contexto-docente-correo-porque"],
-              ],
-              [
-                "Google Classroom o plataforma educativa",
-                state["contexto-docente-classroom-si"],
-                state["contexto-docente-classroom-porque"],
-              ],
-              [
-                "WhatsApp con lista de difusi\u00f3n",
-                state["contexto-docente-whatsapp-si"],
-                state["contexto-docente-whatsapp-porque"],
-              ],
-              ["USB copiado uno por uno", state["contexto-docente-usb-si"], state["contexto-docente-usb-porque"]],
-            ]
-          )}
-        </article>
-
-        <article class="answer-card">
-          <h3>6. \u00bfQu\u00e9 significa guardar en la nube?</h3>
-          ${renderAnswerValue(state["contexto-nube"])}
-        </article>
-
-        <article class="answer-card">
-          <h3>7. Orden propuesto para crear una copia de seguridad.</h3>
-          ${renderAnswerTable(
-            ["Paso", "Orden escrito"],
-            [
-              [
-                "Verificar que el archivo se abrio correctamente en la ubicacion de respaldo",
-                state["contexto-backup-verificar"],
-              ],
-              ["Seleccionar el archivo que deseas respaldar", state["contexto-backup-seleccionar"]],
-              [
-                "Copiar o subir el archivo a una memoria USB o servicio en la nube",
-                state["contexto-backup-copiar"],
-              ],
-              [
-                "Confirmar que el archivo original sigue disponible en su ubicacion original",
-                state["contexto-backup-confirmar"],
-              ],
-            ]
-          )}
-        </article>
-
-        <article class="answer-card">
-          <h3>8. Situaci\u00f3n que representa un problema de gesti\u00f3n de la informaci\u00f3n.</h3>
-          ${renderAnswerValue(state["contexto-info-problem"])}
-        </article>
-
-        <article class="answer-card">
-          <h3>9. Herramientas digitales que ya ha usado el aprendiz.</h3>
-          ${renderAnswerTable(
-            ["Herramienta", "\u00bfLa ha usado?", "\u00bfPara qu\u00e9 la us\u00f3?"],
-            [
-              ["Microsoft Word o Writer", state["contexto-uso-word-si"], state["contexto-uso-word-porque"]],
-              ["Microsoft Excel o Calc", state["contexto-uso-excel-si"], state["contexto-uso-excel-porque"]],
-              ["Google Drive", state["contexto-uso-drive-si"], state["contexto-uso-drive-porque"]],
-              ["Correo electronico", state["contexto-uso-correo-si"], state["contexto-uso-correo-porque"]],
-              ["Zoom o Google Meet", state["contexto-uso-meet-si"], state["contexto-uso-meet-porque"]],
-            ]
-          )}
-        </article>
-
-        <article class="answer-card">
-          <h3>10. Recomendaciones para organizar la informaci\u00f3n del emprendedor de Otanche.</h3>
-          ${renderAnswerValue(state["contexto-otanche"])}
-        </article>
-      </div>
-    `;
+  function renderGuide2ActivityResponsesBody(activityId, state, context) {
+    if (activityId === "wordsearch") {
+      return `<article class="answer-card">
+        <h3>Actividad 1. Sopa de letras de conceptos basicos.</h3>
+        ${renderWordSearchResult(state, context)}
+      </article>`;
+    }
+    if (activityId === "matching") {
+      return `<article class="answer-card">
+        <h3>Actividad 2. Relaciona la herramienta con su funcion.</h3>
+        ${renderMatchingGameResult(state, context)}
+      </article>`;
+    }
+    if (activityId === "extensiones331") {
+      return `<article class="answer-card">
+        <h3>Actividad 5. Extensiones de archivo.</h3>
+        ${renderAnswerTable(
+          ["Extension", "Programa asociado", "Descripcion"],
+          GUIDE2_EXTENSION_IDS.map((id) => [
+            `.${id}`,
+            state[`extension:${id}:program`],
+            state[`extension:${id}:description`],
+          ])
+        )}
+        ${renderAnswerTable(
+          ["Pregunta", "Respuesta del aprendiz"],
+          [
+            ["Categoria con mas extensiones", state["extensions-category-summary"]],
+            ["Explicacion de la categoria", state["extensions-category-why"]],
+            ["Extensiones de riesgo identificadas", state["extensions-risk-list"]],
+            ["Hallazgos reales en el explorador", state["extensions-real-files"]],
+            ["Estado de guardado", state["extensiones331-locked"] ? "Respuestas enviadas" : "Sin bloquear"],
+          ]
+        )}
+      </article>`;
+    }
+    if (activityId === "sistemas332") {
+      return `<article class="answer-card">
+        <h3>Actividad 6. Requerimientos minimos de sistemas operativos.</h3>
+        ${renderAnswerTable(
+          ["Sistema operativo", "Procesador", "RAM", "Disco", "Fuente"],
+          GUIDE2_SYSTEM_IDS.map((id) => [
+            GUIDE2_SYSTEM_NAMES[id] || id,
+            state[`system:${id}:processor`],
+            state[`system:${id}:ram`],
+            state[`system:${id}:disk`],
+            state[`system:${id}:source`],
+          ])
+        )}
+        ${renderAnswerTable(
+          ["Pregunta", "Respuesta del aprendiz"],
+          [
+            ["Sistema con requerimientos mas bajos", state["systems-lowest"]],
+            ["Sistema con requerimientos mas altos", state["systems-highest"]],
+            ["Recomendacion tecnica", state["systems-recommendation"]],
+            ["Retroalimentacion de companeros", state["systems-peer-feedback"]],
+            ["Estado de guardado", state["sistemas332-locked"] ? "Respuestas enviadas" : "Sin bloquear"],
+          ]
+        )}
+      </article>`;
+    }
+    if (activityId === "colaborativas334") {
+      return `<article class="answer-card">
+        <h3>Actividad 8. Herramientas colaborativas y comunicacion digital profesional.</h3>
+        ${renderAnswerTable(
+          ["Herramienta", "Funcion principal", "Ventaja clave", "Limitacion", "Precio/licencia"],
+          GUIDE2_COLLABORATIVE_TOOLS.map((tool) => [
+            tool.label,
+            state[`collab:${tool.id}:function`],
+            state[`collab:${tool.id}:advantage`],
+            state[`collab:${tool.id}:limit`],
+            state[`collab:${tool.id}:license`],
+          ])
+        )}
+        ${renderAnswerTable(
+          ["Campo", "Estado"],
+          [["Estado de guardado", state["colaborativas334-locked"] ? "Respuestas enviadas" : "Sin bloquear"]]
+        )}
+      </article>`;
+    }
+    if (activityId === "transferReto341") {
+      return `<article class="answer-card">
+        <h3>Actividad 10. Reto final de solucion digital.</h3>
+        ${renderAnswerTable(
+          ["Pregunta", "Respuesta del aprendiz"],
+          [
+            ["El actor productivo podria usar la herramienta sin acompanamiento", state["transfer-reto-uso"]],
+            ["La guia de uso rapido responde las preguntas del actor productivo", state["transfer-reto-guia"]],
+            ["Estado de guardado", state["transfer-reto-locked"] ? "Respuestas enviadas" : "Sin bloquear"],
+          ]
+        )}
+      </article>`;
+    }
+    return '<article class="answer-card"><div class="response-status">Actividad sin vista configurada.</div></article>';
   }
 
   function openGuide2ResponsesModal(options) {
@@ -1493,14 +1538,32 @@
     const subtitle = getById("guide2-responses-subtitle");
     const meta = getById("guide2-responses-meta");
     const body = getById("guide2-responses-body");
+    const exportButton = getById("guide2-responses-export");
     if (!title || !subtitle || !meta || !body) {
       return;
     }
 
-    title.textContent = options.title || "Resultados de la Guia 2";
-    subtitle.textContent = options.subtitle || "Consulta administrativa de la Guia 2.";
-    meta.textContent = options.meta || "";
-    body.innerHTML = options.bodyHtml || '<div class="response-status">Sin contenido disponible.</div>';
+    const nextTitle = options.title || "Resultados de la Guia 2";
+    const nextSubtitle = options.subtitle || "Consulta administrativa de la Guia 2.";
+    const nextMeta = options.meta || "";
+    const nextBodyHtml = options.bodyHtml || '<div class="response-status">Sin contenido disponible.</div>';
+    const canExport = !/class=["'][^"']*response-status/i.test(nextBodyHtml);
+
+    title.textContent = nextTitle;
+    subtitle.textContent = nextSubtitle;
+    meta.textContent = nextMeta;
+    body.innerHTML = nextBodyHtml;
+    currentResponsesExport = canExport
+      ? {
+          title: nextTitle,
+          subtitle: nextSubtitle,
+          meta: nextMeta,
+          bodyHtml: nextBodyHtml,
+        }
+      : null;
+    if (exportButton) {
+      exportButton.hidden = !canExport;
+    }
     modal.hidden = false;
     document.body.classList.add("modal-open");
   }
@@ -1512,6 +1575,7 @@
     }
 
     modal.hidden = true;
+    currentResponsesExport = null;
     document.body.classList.remove("modal-open");
   }
 
@@ -1565,6 +1629,67 @@
       subtitle: `${user.fullName} | ${guideConfig?.title || auth.getGuideTitle(fileName)}`,
       meta: metaParts.join(" | "),
       bodyHtml: renderGuide2ResponsesBody(snapshot.state || {}, { user, guide }),
+    });
+  }
+
+  async function handleViewGuideActivityResponses(button) {
+    const usernameKey = button.getAttribute("data-user") || "";
+    const fileName = button.getAttribute("data-guide-file") || "";
+    const activityId = button.getAttribute("data-view-guide-activity") || "";
+    const guideKind = button.getAttribute("data-guide-kind") || "";
+    const activityLabel = button.getAttribute("data-activity-label") || "Actividad";
+    const user = allUsers.find((item) => item.usernameKey === usernameKey);
+    const guide = user?.progress?.guides?.find((item) => item.fileName === fileName);
+    if (!user || !fileName || !activityId) {
+      setFeedback("No fue posible identificar la actividad seleccionada.", "error");
+      return;
+    }
+
+    openGuide2ResponsesModal({
+      title: activityLabel,
+      subtitle: `${user.fullName} | ${auth.getGuideTitle(fileName)}`,
+      meta: "Cargando respuestas guardadas...",
+      bodyHtml: '<div class="response-status">Consultando la copia sincronizada y el respaldo local del aprendiz.</div>',
+    });
+
+    if (guideKind === "guia6") {
+      const config = getGuide6Config(fileName);
+      const snapshot = config ? await loadGuide6Responses(usernameKey, config) : null;
+      const meta = [
+        `Aprendiz: ${user.fullName}`,
+        `Grupo: ${user.grupo}`,
+        `Ficha: ${user.ficha}`,
+        `Guia: ${guide?.title || config?.title || auth.getGuideTitle(fileName)}`,
+        `Fuente: ${snapshot?.sourceLabel || "Sin registro"}`,
+        `Actualizado: ${formatDate(snapshot?.updatedAt)}`,
+      ].join(" | ");
+      openGuide2ResponsesModal({
+        title: activityLabel,
+        subtitle: `${user.fullName} | ${config?.title || auth.getGuideTitle(fileName)}`,
+        meta,
+        bodyHtml: snapshot?.state
+          ? `<div class="answers-grid">${renderGuide6ActivityResponsesBody(activityId, snapshot.state)}</div>`
+          : '<div class="response-status">Este aprendiz aun no tiene respuestas guardadas para esta actividad.</div>',
+      });
+      return;
+    }
+
+    const { guideConfig, snapshot } = await loadGuide2Responses(usernameKey, fileName);
+    const meta = [
+      `Aprendiz: ${user.fullName}`,
+      `Grupo: ${user.grupo}`,
+      `Ficha: ${user.ficha}`,
+      `Guia: ${guide?.title || guideConfig?.title || auth.getGuideTitle(fileName)}`,
+      `Fuente: ${snapshot?.sourceLabel || "Sin registro"}`,
+      `Actualizado: ${formatDate(snapshot?.updatedAt)}`,
+    ].join(" | ");
+    openGuide2ResponsesModal({
+      title: activityLabel,
+      subtitle: `${user.fullName} | ${guideConfig?.title || auth.getGuideTitle(fileName)}`,
+      meta,
+      bodyHtml: snapshot?.state
+        ? `<div class="answers-grid">${renderGuide2ActivityResponsesBody(activityId, snapshot.state || {}, { user, guide })}</div>`
+        : '<div class="response-status">Este aprendiz aun no tiene respuestas guardadas para esta actividad.</div>',
     });
   }
 
@@ -1873,6 +1998,69 @@
     `;
   }
 
+  function renderGuide6ActivityResponsesBody(activityId, state) {
+    const toolNames = { suite: "Suite ofimatica", browser: "Navegador web", email: "Cliente de correo", zip: "Compresion", antivirus: "Antivirus", diagnostic: "Herramienta diagnostico" };
+    const diagNames = { hardware: "Hardware", so: "Sistema operativo", disk: "Estado del disco", software: "Inventario software", network: "Conectividad de red" };
+    const budgetNames = { suite: "Suite ofimatica", diagnostic: "Diagnostico", security: "Antivirus / seguridad", cloud: "Servicios en la nube", backup: "Respaldo" };
+    const val = (key) => String(state[key] ?? "").trim() || "Sin respuesta";
+    const chk = (key) => state[key] ? "Si" : "No";
+    if (activityId === "bitacora311") {
+      return `<article class="answer-card"><h3>Bitacora 3.1.1</h3>${renderAnswerTable(["Pregunta", "Respuesta"], [
+        ["Que herramientas usa", val("reflexion_herramientas")],
+        ["Como registra su trabajo", val("reflexion_registro")],
+        ["Que consecuencias tiene", val("reflexion_consecuencias")],
+        ["Que experiencia tiene", val("reflexion_experiencia")],
+      ])}</article>`;
+    }
+    if (activityId === "socializacion312") {
+      return `<article class="answer-card"><h3>Socializacion 3.1.2</h3>${renderAnswerTable(["Campo", "Respuesta"], [
+        ["Conclusion", val("socializacion_conclusion")],
+        ["Pregunta central", val("socializacion_pregunta_central")],
+      ])}</article>`;
+    }
+    if (activityId === "quiz312") {
+      const quiz = state["quiz-guia6-312"];
+      return `<article class="answer-card"><h3>Quiz herramientas 3.1.2</h3>${
+        quiz && typeof quiz === "object"
+          ? renderAnswerTable(["Campo", "Valor"], [
+              ["Estado", quiz.status || "Sin registro"],
+              ["Variante", quiz.variant != null ? String(quiz.variant) : "Sin registro"],
+              ["Puntaje", quiz.score != null ? `${quiz.score} / 100` : "Sin registro"],
+              ["Fecha envio", quiz.submittedAt ? formatDate(quiz.submittedAt) : "Sin registro"],
+            ])
+          : '<div class="answer-value empty">Sin intento registrado.</div>'
+      }</article>`;
+    }
+    if (activityId === "contexto321") {
+      return `<article class="answer-card"><h3>Apuntes contexto 3.2.1</h3><div class="answer-value">${escapeHtml(val("ctx_apuntes"))}</div></article>`;
+    }
+    if (activityId === "mapa322") {
+      return `<article class="answer-card"><h3>Mapa conceptual 3.2.2</h3>${renderAnswerTable(["Campo", "Respuesta"], [
+        ["Tema central", val("map_central")],
+        ["Ramas principales", val("map_ramas")],
+      ])}</article>`;
+    }
+    if (activityId === "instalacion331") {
+      return `<article class="answer-card"><h3>Checklist instalacion 3.3.1</h3>${renderAnswerTable(
+        ["Herramienta", "Fuente consultada", "Version", "Criterio verificacion", "Hecho", "Notas / evidencia"],
+        GUIDE6_INSTALL_IDS.map((id) => [toolNames[id] || id, val(`inst_source_${id}`), val(`inst_version_${id}`), val(`inst_verify_${id}`), chk(`inst_done_${id}`), val(`inst_notes_${id}`)])
+      )}</article>`;
+    }
+    if (activityId === "diagnostico331") {
+      return `<article class="answer-card"><h3>Diagnostico 3.3.1</h3>${renderAnswerTable(
+        ["Seccion", "Hallazgos y datos tecnicos", "Recomendaciones / acciones"],
+        GUIDE6_DIAG_IDS.map((id) => [diagNames[id] || id, val(`diag_result_${id}`), val(`diag_action_${id}`)])
+      )}<div class="answer-value">${escapeHtml(val("diag_conclusion"))}</div></article>`;
+    }
+    if (activityId === "presupuesto341") {
+      return `<article class="answer-card"><h3>Presupuesto 3.4.1</h3>${renderAnswerTable(
+        ["Elemento", "Licencia", "Precio unit.", "Cant.", "Justificacion tecnica"],
+        GUIDE6_BUDGET_IDS.map((id) => [budgetNames[id] || id, val(`budget_license_${id}`), val(`budget_price_${id}`), val(`budget_qty_${id}`), val(`budget_why_${id}`)])
+      )}<div class="answer-value">${escapeHtml(val("budget_conclusion"))}</div></article>`;
+    }
+    return '<article class="answer-card"><div class="response-status">Actividad sin vista configurada.</div></article>';
+  }
+
   async function handleViewGuide6Responses(button) {
     const usernameKey = button.getAttribute("data-user") || "";
     const fileName = button.getAttribute("data-view-guide6") || "";
@@ -1915,7 +2103,7 @@
       setFeedback("No fue posible identificar la actividad.", "error");
       return;
     }
-    const activity = [...GUIDE6_ACTIVITIES, ...GUIDE2_ACTIVITIES].find((a) => a.id === activityId);
+    const activity = getUnlockActivitiesForGuide(fileName).find((a) => a.id === activityId);
     if (!activity) {
       setFeedback("No se encontró la configuración de la actividad.", "error");
       return;
@@ -1940,6 +2128,7 @@
     const fillWidth = Math.max(0, Math.min(100, Number(guide.percent) || 0));
     const guide2Config = getGuide2ResponseConfig(guide.fileName);
     const guide6Config = getGuide6Config(guide.fileName);
+    const guide2Activities = getGuide2ActivitiesForFile(guide.fileName);
     const isRedesGuide = isRedesSbGuideFile(guide.fileName);
     const redesQuizButtons = isRedesGuide
       ? REDES_ADMIN_QUIZ_CONFIGS.map(
@@ -1966,6 +2155,13 @@
       guide.source === "meta" || guide.source === "network"
         ? `\u00daltima actualizaci\u00f3n: ${formatDate(guide.updatedAt)}`
         : "Resumen reconstruido desde el almacenamiento local.";
+    const unlockableCount = isRedesGuide
+      ? REDES_LAB_ACTIVITIES.length + REDES_ADMIN_QUIZ_CONFIGS.length
+      : guide2Config
+      ? guide2Activities.length
+      : guide6Config
+      ? GUIDE6_ACTIVITIES.length
+      : 0;
 
     const activityStateKey = escapeHtml(getGuideActivityStateKey(guide.fileName));
     const activityUnlockButtons = (activities) =>
@@ -1990,7 +2186,7 @@
       : guide2Config
       ? `<div class="activity-unlock-panel">
            <div class="activity-unlock-title">Habilitar actividad</div>
-           <div class="activity-unlock-buttons">${activityUnlockButtons(GUIDE2_ACTIVITIES)}</div>
+           <div class="activity-unlock-buttons">${activityUnlockButtons(guide2Activities)}</div>
          </div>`
       : guide6Config
       ? `<div class="activity-unlock-panel">
@@ -2001,38 +2197,37 @@
 
     return `
       <article class="progress-card">
-        <h4>${escapeHtml(guide.title)}</h4>
-        <div class="progress-meta">
-          <span>${guide.completed} / ${guide.total || 0}</span>
-          <strong>${fillWidth}%</strong>
+        <div class="progress-card__head">
+          <div>
+            <h4>${escapeHtml(guide.title)}</h4>
+            <div class="progress-source">${escapeHtml(sourceText)}</div>
+          </div>
+          <strong class="progress-card__percent">${fillWidth}%</strong>
+        </div>
+        <div class="progress-card__summary">
+          <div>
+            <span>Progreso</span>
+            <strong>${guide.completed} / ${guide.total || 0}</strong>
+          </div>
+          <div>
+            <span>Estado</span>
+            <strong>${fillWidth >= 100 ? "Completada" : fillWidth > 0 ? "En desarrollo" : "Sin iniciar"}</strong>
+          </div>
+          <div>
+            <span>Actividades habilitables</span>
+            <strong>${unlockableCount}</strong>
+          </div>
         </div>
         <div class="progress-bar">
           <div class="progress-fill" style="width:${fillWidth}%"></div>
         </div>
-        <div class="progress-actions">
+        <div class="progress-card__actions progress-actions">
           <a class="btn ghost" href="${escapeHtml(buildGuideUrl(user, guide.fileName))}">Abrir gu\u00eda</a>
-          ${
-            guide2Config
-              ? `<button class="btn secondary" type="button" data-view-guide2="${escapeHtml(
-                  guide.fileName
-                )}" data-user="${escapeHtml(user.usernameKey)}">Ver respuestas Guia 2</button>`
-              : ""
-          }
-          ${
-            guide6Config
-              ? `<button class="btn secondary" type="button" data-view-guide6="${escapeHtml(
-                  guide.fileName
-                )}" data-user="${escapeHtml(user.usernameKey)}">Ver respuestas Guia 6</button>`
-              : ""
-          }
           ${redesQuizButtons}
           <button class="btn warn" type="button" data-reset-guide="${escapeHtml(
             guide.fileName
           )}" data-user="${escapeHtml(user.usernameKey)}">Reiniciar gu\u00eda</button>
         </div>
-        <div class="progress-source">${escapeHtml(sourceText)}</div>
-        ${guide2Config ? renderWordSearchAdminSummary(user, guide.fileName) : ""}
-        ${guide2Config ? renderMatchingGameAdminSummary(user, guide.fileName) : ""}
         ${unlockSection}
       </article>
     `;
@@ -2248,6 +2443,40 @@
           <tbody>${buildActivitiesTableRows(rows, type)}</tbody>
         </table>
       </div>`;
+  }
+
+  function buildAvailableGuideActivityCards(groupUsers) {
+    const cards = [];
+    groupUsers.forEach((user) => {
+      (user.progress?.guides || []).forEach((guide) => {
+        const guide2Config = getGuide2ResponseConfig(guide.fileName);
+        const guide6Config = getGuide6Config(guide.fileName);
+        const activities = guide2Config ? GUIDE2_ACTIVITIES : guide6Config ? GUIDE6_ACTIVITIES : [];
+        const guideKind = guide2Config ? "guia2" : guide6Config ? "guia6" : "";
+        activities.forEach((activity) => {
+          cards.push(`
+            <article class="activity-response-card">
+              <div>
+                <span class="activity-response-card__eyebrow">${escapeHtml(user.grupo)} | Ficha ${escapeHtml(user.ficha)}</span>
+                <h3>${escapeHtml(activity.label)}</h3>
+                <p>${escapeHtml(user.fullName)}<br>${escapeHtml(guide.title || auth.getGuideTitle(guide.fileName))}</p>
+              </div>
+              <button class="btn secondary" type="button"
+                data-view-guide-activity="${escapeHtml(activity.id)}"
+                data-guide-kind="${escapeHtml(guideKind)}"
+                data-guide-file="${escapeHtml(guide.fileName)}"
+                data-activity-label="${escapeHtml(activity.label)}"
+                data-user="${escapeHtml(user.usernameKey)}">Ver respuestas</button>
+            </article>
+          `);
+        });
+      });
+    });
+
+    if (!cards.length) {
+      return '<p class="activities-empty">No hay actividades de guias interactivas disponibles para este grupo.</p>';
+    }
+    return `<div class="activity-response-grid">${cards.join("")}</div>`;
   }
 
   async function unlockRedesGuideProgress(usernameKey, fileName, displayName) {
@@ -2760,6 +2989,14 @@
 
     let html = "";
 
+    html += `
+      <section class="panel">
+        <h2>Respuestas por actividad individual</h2>
+        <p class="activities-section-copy">Selecciona una actividad para ver solo sus respuestas y exportarlas como soporte en Word.</p>
+        ${buildAvailableGuideActivityCards(groupUsers)}
+      </section>
+    `;
+
     if (hasGuia2Activities) {
       html += `
         <section class="panel">
@@ -3053,6 +3290,18 @@
       const viewGuide2Button = event.target.closest("[data-view-guide2]");
       if (viewGuide2Button) {
         await handleViewGuide2Responses(viewGuide2Button);
+        return;
+      }
+
+      const viewGuideActivityButton = event.target.closest("[data-view-guide-activity]");
+      if (viewGuideActivityButton) {
+        await handleViewGuideActivityResponses(viewGuideActivityButton);
+        return;
+      }
+
+      const exportResponsesButton = event.target.closest("[data-export-responses-word]");
+      if (exportResponsesButton) {
+        exportCurrentResponsesToWord();
         return;
       }
 
