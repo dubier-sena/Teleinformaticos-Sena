@@ -93,9 +93,13 @@ test("guia 2 activity 6 mirrors save, export, upload, lock, and admin visibility
 
 test("guia 2 activity 7 matches the source guide layout and copy", () => {
   const partial = read("partials/guia-02-herramientas-content.html");
+  const script = read("js/script_guia2.js");
 
   assert.match(partial, /ACTIVIDAD 7: &#128187; Suite ofim&aacute;tica en acci&oacute;n: herramientas para el negocio real/);
   assert.match(partial, /Diagn&oacute;stico digital &ndash; \[Nombre del negocio de tu caso\]/);
+  assert.match(partial, /Descubre tu caso de la Actividad 7/);
+  assert.match(partial, /class="btn-ficha-caso activity7CaseButton"/);
+  assert.match(partial, /openGuia2SupportPanel\('activity7-cases'\)/);
   assert.match(partial, /Control_Ventas_\[Negocio\]\.xlsx/);
   assert.match(partial, /C2 \* D2/);
   assert.match(partial, /SUMA\(\), PROMEDIO\(\) y MAX\(\)/);
@@ -105,6 +109,14 @@ test("guia 2 activity 7 matches the source guide layout and copy", () => {
   assert.match(partial, /class="guide-source-achievement"/);
   assert.doesNotMatch(partial, /data-store="suite-negocio"/);
   assert.doesNotMatch(partial, /Organiza la evidencia del caso/);
+  assert.match(script, /"activity7-cases":/);
+  assert.match(script, /guia2_activity7_case_idx/);
+  assert.match(script, /function getAssignedActivityCase\(key\)/);
+  assert.match(script, /function buildAssignedActivityCaseHtml\(key\)/);
+  assert.match(script, /buildAssignedActivityCaseHtml\(key\)/);
+  assert.match(script, /Cafeteria El Descanso - Puerto Boyaca/);
+  assert.match(script, /Miscelanea San Miguel - Otanche/);
+  assert.match(script, /Confecciones Luz Marina - Pauna/);
 });
 
 test("guia 2 activity 8 matches the source guide layout and warning", () => {
@@ -171,18 +183,27 @@ test("guia 2 drive delivery panels show only portfolio and secure delivery butto
 test("guia 2 activity 9 matches the source guide cybersecurity layout", () => {
   const partial = read("partials/guia-02-herramientas-content.html");
   const css = read("css/guia_template.css");
+  const script = read("js/script_guia2.js");
 
   assert.match(partial, /ACTIVIDAD 9: &#128187; Ciberseguridad b&aacute;sica: proteger la informaci&oacute;n del actor productivo/);
   assert.match(partial, /class="guide-source-info-blue"/);
   assert.match(partial, /El 59 % de las empresas colombianas ha sufrido alg&uacute;n incidente de ciberseguridad/);
   assert.match(partial, /malos h&aacute;bitos digitales/);
   assert.match(partial, /phishing por correo o WhatsApp/);
+  assert.match(partial, /Descubre tu caso de la Actividad 9/);
+  assert.match(partial, /class="btn-ficha-caso activity9CaseButton"/);
+  assert.match(partial, /openGuia2SupportPanel\('activity9-cases'\)/);
   assert.match(partial, /Gu&iacute;a de ciberseguridad para \[Nombre del actor productivo\]/);
   assert.match(partial, /m&iacute;nimo 8 recomendaciones concretas/);
   assert.match(partial, /lista de verificaci&oacute;n de ciberseguridad de 10 &iacute;tems/);
   assert.doesNotMatch(partial, /data-store="cyber-threats"/);
   assert.doesNotMatch(partial, /data-store="cyber-checklist"/);
   assert.match(css, /\.guide-source-info-blue/);
+  assert.match(script, /"activity9-cases":/);
+  assert.match(script, /guia2_activity9_case_idx/);
+  assert.match(script, /Minimercado Los Pinos - Puerto Boyaca/);
+  assert.match(script, /Agroinsumos La Cosecha - Otanche/);
+  assert.match(script, /Estudio Creativo Brillo Digital - Pauna/);
 });
 
 test("guia 2 activity 10 matches the source transfer mission layout", () => {
@@ -214,6 +235,7 @@ test("guia 2 activity 10 matches the source transfer mission layout", () => {
   assert.match(css, /\.guide-source-challenge/);
   assert.match(css, /\.guide-source-challenge-form/);
   assert.match(script, /"activity10-cases":/);
+  assert.match(script, /guia2_activity10_case_idx/);
   assert.match(script, /Papeleria La Esperanza - Puerto Boyaca/);
   assert.match(script, /Asociacion Semillas del Campo - Otanche/);
   assert.match(script, /Taller Creativo Manos de Pauna - Pauna/);
