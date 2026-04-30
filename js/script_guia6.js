@@ -1058,8 +1058,8 @@ function buildInstitutionalWordHeader(title, learnerName, selection, fecha) {
   return `
   <table class="institutional-header">
     <tr>
-      <td class="logo-cell" rowspan="4">
-        <img src="${escapeWordText(getSenaLogoUrl())}" alt="Logo SENA" />
+      <td class="logo-cell" rowspan="4" width="74" style="width:74pt;">
+        <img src="${escapeWordText(getSenaLogoUrl())}" alt="Logo SENA" width="64" style="width:64pt;height:auto;" />
       </td>
       <td class="label">Programa</td>
       <td>${escapeWordValue(GUIDE6_WORD_METADATA.program)}</td>
@@ -1234,10 +1234,10 @@ function doExportBitacoraWord() {
   .header { text-align: center; border-bottom: 2px solid #007934; padding-bottom: 8pt; margin-bottom: 14pt; }
   .header p { margin: 2pt 0; }
   table { max-width: 100%; table-layout: fixed; overflow-wrap: break-word; word-break: break-word; }
-  .institutional-header { width: 100%; border-collapse: collapse; margin: 0 0 12pt; }
+  .institutional-header { width: 100%; max-width: 100%; table-layout: fixed; border-collapse: collapse; margin: 0 0 12pt; }
   .institutional-header td { border: 1px solid #b7c9bc; padding: 7pt; vertical-align: middle; font-size: 10pt; line-height: 1.35; }
-  .institutional-header .logo-cell { width: 80pt; text-align: center; background: #f7fbf8; }
-  .institutional-header img { width: 62pt; height: auto; }
+  .institutional-header .logo-cell { width: 74pt; text-align: center; background: #f7fbf8; }
+  .institutional-header img { width: 64pt; max-width: 64pt; height: auto; }
   .meta { width: 100%; border-collapse: collapse; margin: 12pt 0 16pt; }
   .meta td { border: 1pt solid #cfd8dc; padding: 6pt 10pt; font-size: 10.5pt; line-height: 1.35; }
   .meta .label { width: 120pt; font-weight: bold; background: #f0faf4; color: #007934; }
