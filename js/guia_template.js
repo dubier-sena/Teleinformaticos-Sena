@@ -1501,9 +1501,36 @@
     queueGuideUiCloudSync();
   };
 
+  window.setGuideActivitySeen = function (activity, seen) {
+    if (!activity) {
+      return false;
+    }
+
+    const allActivities = Array.from(document.querySelectorAll(".activity"));
+    const index = Math.max(0, allActivities.indexOf(activity));
+    const activityKey =
+      activity.dataset.activityKey || activityKeyFromElement(activity, index);
+    activity.dataset.activityKey = activityKey;
+
+    const button = activity.querySelector(".activity-check");
+    if (!button) {
+      return false;
+    }
+
+    localStorage.setItem(activityStorageKey(activityKey), seen ? "1" : "0");
+    setActivityCheckState(button, Boolean(seen));
+    updateActivityNavDone();
+    notifyGuideProgressChanged();
+    queueGuideUiCloudSync();
+    return true;
+  };
+
   function initGuiaTemplateShell() {
     if (guideTemplateBooted) {
       applySelection(currentSelection());
+      if (window.sharedDriveDelivery && typeof window.sharedDriveDelivery.syncExistingDeliveryPanels === "function") {
+        window.sharedDriveDelivery.syncExistingDeliveryPanels(document);
+      }
       updateActivityNavDone();
       notifyGuideProgressChanged();
       applyResponsiveSidebarState();
@@ -1514,6 +1541,9 @@
     ensureGuideRevealShell();
     initCollapsibleState();
     initActivityChecks();
+    if (window.sharedDriveDelivery && typeof window.sharedDriveDelivery.syncExistingDeliveryPanels === "function") {
+      window.sharedDriveDelivery.syncExistingDeliveryPanels(document);
+    }
     initializeGuideUiCloudSync();
     applySelection(currentSelection());
     bindSidebarLinks();
