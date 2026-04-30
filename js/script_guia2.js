@@ -405,7 +405,7 @@ const supportTools = [
     type: "Drive",
     description:
       "Instalador del hipervisor usado para practicar virtualizacion e instalaciones controladas.",
-    cta: "Abrir en Drive â†—",
+    cta: "Abrir en Drive ↗",
   },
 ];
 
@@ -414,8 +414,8 @@ const GUIDE2_DRIVE_ACTIVITY_TARGETS = [
     activityNumber: "3.1.3",
     panelKey: "guide2-3-1-3",
     description:
-      "Cuando termines la bit?cora o el documento final de an?lisis, s?belo a la carpeta de Drive correspondiente a tu ficha.",
-    note: "Entrega sugerida: bit?cora individual o informe final de an?lisis del caso.",
+      "Cuando termines la bitácora o el documento final de análisis, súbelo a la carpeta de Drive correspondiente a tu ficha.",
+    note: "Entrega sugerida: bitácora individual o informe final de análisis del caso.",
   },
   {
     activityNumber: "3.3.3",
@@ -2005,8 +2005,8 @@ function initializeWordSearchGame() {
   document.getElementById("wordSearchReset")?.addEventListener("click", resetWordSearchGame);
   document.getElementById("wordSearchFullscreen")?.addEventListener("click", toggleWordSearchFullscreen);
 
-  // En mÃ³vil (<600 px) activar pantalla completa automÃ¡ticamente para que
-  // las celdas sean mÃ¡s grandes y la selecciÃ³n tÃ¡ctil sea precisa.
+  // En móvil (<600 px) activar pantalla completa automáticamente para que
+  // las celdas sean más grandes y la selección táctil sea precisa.
   if (window.innerWidth < 600 && !wordSearchFullscreenActive) {
     window.setTimeout(() => setWordSearchFullscreen(true), 300);
   }
@@ -3345,7 +3345,7 @@ const ACTIVITY_CASE_ASSIGNMENTS = {
         number: 3,
         title: "Estudio Creativo Brillo Digital - Pauna",
         lines: [
-          ["Actor productivo", "Emprendimiento que diseÃ±a piezas para redes sociales, maneja fotos de clientes y comparte archivos por enlaces."],
+          ["Actor productivo", "Emprendimiento que diseña piezas para redes sociales, maneja fotos de clientes y comparte archivos por enlaces."],
           ["Riesgos principales", "Enlaces publicos sin control, uso de cuentas personales para trabajo, contrasenas repetidas y perdida de archivos de clientes."],
           ["Situacion critica", "La emprendedora comparte carpetas completas con clientes y deja enlaces abiertos sin fecha de cierre."],
           ["Para la guia", "Incluye recomendaciones sobre permisos de Drive, privacidad de datos, contrasenas distintas y separacion entre cuentas personales y laborales."],
@@ -4010,7 +4010,7 @@ function openGuide5ExportModal(mode) {
 
   const config = getGuide5ExportConfig(mode);
   guide5ExportMode = mode;
-  title.textContent = `ðŸ“„ Exportar ${config.title}`;
+  title.textContent = `📄 Exportar ${config.title}`;
   description.textContent = config.description;
   input.value = getCurrentLearnerName();
   input.classList.remove("error");
@@ -4577,7 +4577,7 @@ window.guia2WordSearch = {
   getFoundColorClass: getWordSearchFoundColorClass,
 };
 
-// Expone una funciÃ³n para forzar sincronizaciÃ³n inmediata con Firestore
+// Expone una función para forzar sincronización inmediata con Firestore
 // (usada por guardarFormulario() al finalizar la Actividad 4)
 window.guia2SyncNow = () => syncCloudState(true);
 
