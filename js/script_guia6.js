@@ -1032,6 +1032,70 @@ function escapeWordText(value) {
   return escapeHtml(value).replace(/\n/g, "<br>");
 }
 
+function escapeWordValue(value) {
+  const text = String(value || "").trim();
+  return escapeWordText(text || "(Sin respuesta)");
+}
+
+const GUIDE6_WORD_METADATA = {
+  guideName: "Guia 6 - Planificar la informacion",
+  program: "Sistemas Teleinformaticos",
+  competencia:
+    "220501121 - Operar herramientas informaticas y digitales de acuerdo con protocolos y manuales tecnicos.",
+  resultado:
+    "RAP 02 - Implementar componentes de las herramientas tecnologicas segun procedimientos de la organizacion.",
+};
+
+function getSenaLogoUrl() {
+  try {
+    return new URL("assets/img/sena-logo.png", window.location.href).href;
+  } catch (_) {
+    return "assets/img/sena-logo.png";
+  }
+}
+
+function buildInstitutionalWordHeader(title, learnerName, selection, fecha) {
+  return `
+  <table class="institutional-header">
+    <tr>
+      <td class="logo-cell" rowspan="4">
+        <img src="${escapeWordText(getSenaLogoUrl())}" alt="Logo SENA" />
+      </td>
+      <td class="label">Programa</td>
+      <td>${escapeWordValue(GUIDE6_WORD_METADATA.program)}</td>
+      <td class="label">Fecha de elaboracion</td>
+      <td>${escapeWordValue(fecha)}</td>
+    </tr>
+    <tr>
+      <td class="label">Guia / actividad</td>
+      <td colspan="3">${escapeWordValue(`${GUIDE6_WORD_METADATA.guideName} - ${title}`)}</td>
+    </tr>
+    <tr>
+      <td class="label">Competencia</td>
+      <td colspan="3">${escapeWordValue(GUIDE6_WORD_METADATA.competencia)}</td>
+    </tr>
+    <tr>
+      <td class="label">Resultado de Aprendizaje</td>
+      <td colspan="3">${escapeWordValue(GUIDE6_WORD_METADATA.resultado)}</td>
+    </tr>
+  </table>
+
+  <table class="meta">
+    <tr>
+      <td class="label">Nombre completo del aprendiz</td>
+      <td>${escapeWordValue(learnerName)}</td>
+      <td class="label">Numero de ficha</td>
+      <td>${escapeWordValue(selection.ficha)}</td>
+    </tr>
+    <tr>
+      <td class="label">Grado</td>
+      <td>${escapeWordValue(selection.grupo)}</td>
+      <td class="label">Institucion</td>
+      <td>${escapeWordValue(selection.inst)}</td>
+    </tr>
+  </table>`;
+}
+
 function buildBitacoraFileName(nombre, ficha) {
   const safeName = sanitizeFileName(nombre) || "Nombre";
   const safeFicha = sanitizeFileName(ficha) || "SinFicha";
@@ -1165,12 +1229,17 @@ function doExportBitacoraWord() {
 </w:WordDocument>
 </xml><![endif]-->
 <style>
-  @page { margin: 2.5cm; }
-  body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; color: #1a1a1a; }
+  @page { margin: 2.54cm; }
+  body { font-family: "Times New Roman", Times, serif; font-size: 12pt; line-height: 2; color: #1a1a1a; }
   .header { text-align: center; border-bottom: 2px solid #007934; padding-bottom: 8pt; margin-bottom: 14pt; }
   .header p { margin: 2pt 0; }
+  table { max-width: 100%; table-layout: fixed; overflow-wrap: break-word; word-break: break-word; }
+  .institutional-header { width: 100%; border-collapse: collapse; margin: 0 0 12pt; }
+  .institutional-header td { border: 1px solid #b7c9bc; padding: 7pt; vertical-align: middle; font-size: 10pt; line-height: 1.35; }
+  .institutional-header .logo-cell { width: 80pt; text-align: center; background: #f7fbf8; }
+  .institutional-header img { width: 62pt; height: auto; }
   .meta { width: 100%; border-collapse: collapse; margin: 12pt 0 16pt; }
-  .meta td { border: 1pt solid #cfd8dc; padding: 6pt 10pt; }
+  .meta td { border: 1pt solid #cfd8dc; padding: 6pt 10pt; font-size: 10.5pt; line-height: 1.35; }
   .meta .label { width: 120pt; font-weight: bold; background: #f0faf4; color: #007934; }
   h1 { text-align: center; color: #007934; font-size: 18pt; margin: 12pt 0 6pt; }
   .lead { font-size: 10pt; color: #4b5563; line-height: 1.6; margin-bottom: 10pt; }
@@ -1183,8 +1252,8 @@ function doExportBitacoraWord() {
 <body>
   <div class="header">
     <p><strong>SERVICIO NACIONAL DE APRENDIZAJE - SENA</strong></p>
-    <p>Tecnico en Sistemas Teleinformaticos - Codigo 233108 V1</p>
-    <p>Guia 6 - Planificar la informacion</p>
+    <p>${escapeWordValue(GUIDE6_WORD_METADATA.program)}</p>
+    <p>${escapeWordValue(GUIDE6_WORD_METADATA.guideName)}</p>
   </div>
 
   <h1>Bitacora individual de analisis</h1>
@@ -1193,14 +1262,7 @@ function doExportBitacoraWord() {
     el analisis del caso empresarial y las respuestas del aprendiz.
   </p>
 
-  <table class="meta">
-    <tr><td class="label">Aprendiz</td><td>${escapeWordText(nombre)}</td></tr>
-    <tr><td class="label">Institucion</td><td>${escapeWordText(selection.inst || "Sin institucion")}</td></tr>
-    <tr><td class="label">Grupo</td><td>${escapeWordText(selection.grupo || "Sin grupo")}</td></tr>
-    <tr><td class="label">Ficha</td><td>${escapeWordText(selection.ficha)}</td></tr>
-    <tr><td class="label">Fecha</td><td>${escapeWordText(fecha)}</td></tr>
-    <tr><td class="label">Instructor</td><td>Dubier Orlando Millan Barbosa</td></tr>
-  </table>
+  ${buildInstitutionalWordHeader("Actividad 3.1.1 - Bitacora individual de analisis", nombre, selection, fecha)}
 
   <div class="case-box">
     <strong>Escenario de trabajo:</strong><br>

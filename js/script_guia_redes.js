@@ -205,6 +205,71 @@ function escapeHtml(str) {
     .replace(/'/g, "&#39;");
 }
 
+const REDES_WORD_METADATA = {
+  guideName: "Guia 2 - Redes RAP01",
+  program: "Sistemas Teleinformaticos",
+  competencia:
+    "280102129 - Evaluar red de acuerdo con procedimientos de telecomunicaciones y normativa tecnica.",
+  resultado:
+    "RAP 01 - Definir los parametros y recursos de la red de acuerdo con normativa de telecomunicaciones.",
+};
+
+function getSenaLogoUrlRedes() {
+  try {
+    return new URL("assets/img/sena-logo.png", window.location.href).href;
+  } catch (_) {
+    return "assets/img/sena-logo.png";
+  }
+}
+
+function getWordIdentityValueRedes(identity, key) {
+  if (!identity) return "";
+  if (key === "inst") return identity.inst || identity.institucion || "";
+  return identity[key] || "";
+}
+
+function buildInstitutionalWordStylesRedes() {
+  return `
+table{max-width:100%;table-layout:fixed;overflow-wrap:break-word;word-break:break-word}
+.institutional-header{width:100%;border-collapse:collapse;margin:0 0 12pt}
+.institutional-header td{border:1px solid #b7c9bc;padding:7pt;vertical-align:middle;font-size:10pt;line-height:1.35}
+.institutional-header .logo-cell{width:80pt;text-align:center;background:#f7fbf8}
+.institutional-header img{width:62pt;height:auto}
+.institutional-header .label,.meta .label{font-weight:700;background:#f3f4f6;color:#1b5e20}
+.meta{width:100%;border-collapse:collapse;margin:0 0 16pt}
+.meta td{border:1px solid #d1d5db;padding:8pt;vertical-align:top;font-size:10.5pt;line-height:1.35}`;
+}
+
+function buildInstitutionalWordHeaderRedes(title, fullName, identity, fecha) {
+  return `
+<table class="institutional-header">
+  <tr>
+    <td class="logo-cell" rowspan="4"><img src="${escapeHtml(getSenaLogoUrlRedes())}" alt="Logo SENA"></td>
+    <td class="label">Programa</td>
+    <td>${escapeHtml(REDES_WORD_METADATA.program)}</td>
+    <td class="label">Fecha de elaboracion</td>
+    <td>${escapeHtml(fecha)}</td>
+  </tr>
+  <tr><td class="label">Guia / actividad</td><td colspan="3">${escapeHtml(`${REDES_WORD_METADATA.guideName} - ${title}`)}</td></tr>
+  <tr><td class="label">Competencia</td><td colspan="3">${escapeHtml(REDES_WORD_METADATA.competencia)}</td></tr>
+  <tr><td class="label">Resultado de Aprendizaje</td><td colspan="3">${escapeHtml(REDES_WORD_METADATA.resultado)}</td></tr>
+</table>
+<table class="meta">
+  <tr>
+    <td class="label">Nombre completo del aprendiz</td>
+    <td>${escapeHtml(fullName || "Aprendiz")}</td>
+    <td class="label">Numero de ficha</td>
+    <td>${escapeHtml(getWordIdentityValueRedes(identity, "ficha") || "0000")}</td>
+  </tr>
+  <tr>
+    <td class="label">Grado</td>
+    <td>${escapeHtml(getWordIdentityValueRedes(identity, "grupo"))}</td>
+    <td class="label">Institucion</td>
+    <td>${escapeHtml(getWordIdentityValueRedes(identity, "inst"))}</td>
+  </tr>
+</table>`;
+}
+
 function getGuideSelectionRedes() {
   const bodyEl = document.body || {};
   const defaults = {
@@ -950,6 +1015,7 @@ window.exportarWordContextualizacion = async function (evt) {
     const fullName = identity.fullName || identity.usernameKey || "Aprendiz";
     const ficha    = identity.ficha || "0000";
     const grupo    = identity.grupo || document.body.dataset.defaultGrupo || "";
+    const institucion = identity.inst || document.body.dataset.defaultInst || "";
     const fecha    = new Date().toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric" });
     const fileName = `Exploracion_Contextual_${fullName.replace(/\s+/g, "_")}_${ficha}.docx`;
 
@@ -959,7 +1025,7 @@ window.exportarWordContextualizacion = async function (evt) {
 
     function makeBlockTitle(num, title) {
       return new Paragraph({
-        children: [new TextRun({ text: `${num} \u2014 ${title}`, bold: true, size: 24, color: "1B5E20" })],
+        children: [new TextRun({ text: `${num} \u2014 ${title}`, bold: true, size: 24, font: "Times New Roman", color: "1B5E20" })],
         spacing: { before: 320, after: 120 },
       });
     }
@@ -967,11 +1033,11 @@ window.exportarWordContextualizacion = async function (evt) {
     function makeQuestion(q, key) {
       return [
         new Paragraph({
-          children: [new TextRun({ text: q, bold: true, size: 19, color: "475569" })],
+          children: [new TextRun({ text: q, bold: true, size: 24, font: "Times New Roman", color: "475569" })],
           spacing: { before: 120, after: 60 },
         }),
         new Paragraph({
-          children: [new TextRun({ text: val(key), size: 20 })],
+          children: [new TextRun({ text: val(key), size: 24, font: "Times New Roman" })],
           indent: { left: 300 },
           spacing: { after: 140 },
         }),
@@ -980,7 +1046,7 @@ window.exportarWordContextualizacion = async function (evt) {
 
     function makeProductLabel(label) {
       return new Paragraph({
-        children: [new TextRun({ text: `Producto \u2014 ${label}`, bold: true, size: 20, color: "1E40AF" })],
+        children: [new TextRun({ text: `Producto \u2014 ${label}`, bold: true, size: 24, font: "Times New Roman", color: "1E40AF" })],
         spacing: { before: 200, after: 80 },
       });
     }
@@ -989,7 +1055,7 @@ window.exportarWordContextualizacion = async function (evt) {
       const b64Full = state[b64Key];
       if (!b64Full) {
         return new Paragraph({
-          children: [new TextRun({ text: "(Sin imagen adjunta)", italics: true, size: 19, color: "94A3B8" })],
+          children: [new TextRun({ text: "(Sin imagen adjunta)", italics: true, size: 24, font: "Times New Roman", color: "94A3B8" })],
           spacing: { after: 160 },
         });
       }
@@ -1004,7 +1070,7 @@ window.exportarWordContextualizacion = async function (evt) {
         });
       } catch (_) {
         return new Paragraph({
-          children: [new TextRun({ text: "(Imagen no disponible)", italics: true, size: 19, color: "94A3B8" })],
+          children: [new TextRun({ text: "(Imagen no disponible)", italics: true, size: 24, font: "Times New Roman", color: "94A3B8" })],
           spacing: { after: 160 },
         });
       }
@@ -1017,36 +1083,74 @@ window.exportarWordContextualizacion = async function (evt) {
           new TableRow({
             tableHeader: true,
             children: head.map(h => new TableCell({
-              children: [new Paragraph({ children: [new TextRun({ text: h, bold: true, size: 18 })] })],
+              children: [new Paragraph({ children: [new TextRun({ text: h, bold: true, size: 20, font: "Times New Roman" })] })],
             })),
           }),
           ...rows.map(row => new TableRow({
             children: row.map(cell => new TableCell({
-              children: [new Paragraph({ children: [new TextRun({ text: cell, size: 18 })] })],
+              children: [new Paragraph({ children: [new TextRun({ text: cell, size: 20, font: "Times New Roman" })] })],
             })),
           })),
         ],
       });
     }
 
+    async function makeSenaLogoParagraph() {
+      try {
+        const response = await fetch(getSenaLogoUrlRedes(), { cache: "force-cache" });
+        if (!response.ok) throw new Error("No logo");
+        const data = new Uint8Array(await response.arrayBuffer());
+        return new Paragraph({
+          children: [new ImageRun({ data, transformation: { width: 72, height: 72 } })],
+          spacing: { after: 100 },
+        });
+      } catch (_) {
+        return new Paragraph({
+          children: [new TextRun({ text: "SENA", bold: true, size: 24, font: "Times New Roman", color: "1B5E20" })],
+          spacing: { after: 100 },
+        });
+      }
+    }
+
+    function makeInstitutionalDocxRows() {
+      return [
+        ["Programa", REDES_WORD_METADATA.program, "Fecha de elaboracion", fecha],
+        ["Guia / actividad", `${REDES_WORD_METADATA.guideName} - Actividad 3.2.1`, "Numero de ficha", ficha],
+        ["Competencia", REDES_WORD_METADATA.competencia, "Grado", grupo],
+        ["Resultado de Aprendizaje", REDES_WORD_METADATA.resultado, "Institucion", institucion],
+        ["Nombre completo del aprendiz", fullName, "", ""],
+      ].map((row) => new TableRow({
+        children: row.map((cell, index) => new TableCell({
+          children: [new Paragraph({
+            children: [new TextRun({ text: cell, bold: index % 2 === 0 && cell !== "", size: 20, font: "Times New Roman" })],
+          })],
+        })),
+      }));
+    }
+
     const imgA = await makeImageParagraph("bloqueA-imagen");
     const imgB = await makeImageParagraph("bloqueB-imagen");
     const imgE = await makeImageParagraph("bloqueE-imagen");
+    const senaLogoParagraph = await makeSenaLogoParagraph();
 
     const doc = new Document({
       sections: [{
         children: [
-          // Encabezado
-          new Paragraph({
-            children: [new TextRun({ text: "Exploracion Visual por Bloques Tematicos", bold: true, size: 32, color: "1B5E20" })],
-            spacing: { after: 80 },
+          senaLogoParagraph,
+          new Table({
+            width: { size: 100, type: WidthType.PERCENTAGE },
+            rows: makeInstitutionalDocxRows(),
           }),
           new Paragraph({
-            children: [new TextRun({ text: `Guia 2 \u2014 Redes RAP01  |  Actividad 3.2.1`, size: 19, color: "475569" })],
+            children: [new TextRun({ text: "Exploracion Visual por Bloques Tematicos", bold: true, size: 28, font: "Times New Roman", color: "1B5E20" })],
+            spacing: { before: 240, after: 80 },
+          }),
+          new Paragraph({
+            children: [new TextRun({ text: `Guia 2 \u2014 Redes RAP01  |  Actividad 3.2.1`, size: 24, font: "Times New Roman", color: "475569" })],
             spacing: { after: 60 },
           }),
           new Paragraph({
-            children: [new TextRun({ text: `${fullName}   |   Ficha: ${ficha}   |   Grupo: ${grupo}   |   ${fecha}`, size: 19, color: "64748B" })],
+            children: [new TextRun({ text: `${fullName}   |   Ficha: ${ficha}   |   Grupo: ${grupo}   |   ${fecha}`, size: 24, font: "Times New Roman", color: "64748B" })],
             spacing: { after: 240 },
           }),
 
@@ -1502,9 +1606,11 @@ function buildReflexion311WordFile() {
     xmlns:w='urn:schemas-microsoft-com:office:word'
     xmlns='http://www.w3.org/TR/REC-html40'>
 <head><meta charset='utf-8'><title>Reflexión 3.1.1</title>
-<style>body{font-family:Calibri,Arial;font-size:12pt;margin:2cm}
-h1{font-size:16pt;color:#1b5e20}h2{font-size:13pt}p{margin:6pt 0;line-height:1.5}</style>
+<style>body{font-family:"Times New Roman",Times,serif;font-size:12pt;line-height:2;margin:2.54cm}
+h1{font-size:16pt;color:#1b5e20}h2{font-size:13pt}p{margin:6pt 0;line-height:1.5}
+${buildInstitutionalWordStylesRedes()}</style>
 </head><body>
+${buildInstitutionalWordHeaderRedes("Actividad 3.1.1 - Reflexion Individual Escrita", sel.fullName || "Aprendiz", sel, new Date().toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric" }))}
 <h1>Actividad 3.1.1 – Reflexión Individual Escrita</h1>
 <h2>Caso: La papelería de la señora Carmen</h2>
 <p>Aprendiz: ${escapeHtml(sel.fullName || "Aprendiz")} &nbsp;|&nbsp; Institución: ${escapeHtml(sel.inst || "")} &nbsp;|&nbsp; Grupo: ${escapeHtml(sel.grupo || "")} &nbsp;|&nbsp; Ficha: ${escapeHtml(sel.ficha || "")}</p>
@@ -1616,12 +1722,14 @@ window.exportarWordBloques123IP = function (evt) {
       xmlns:w='urn:schemas-microsoft-com:office:word'
       xmlns='http://www.w3.org/TR/REC-html40'>
 <head><meta charset='utf-8'><title>Bloques IP 1-3</title>
-<style>body{font-family:Calibri,Arial;font-size:12pt;margin:2cm}
+<style>body{font-family:"Times New Roman",Times,serif;font-size:12pt;line-height:2;margin:2.54cm}
 h1{font-size:16pt;color:#1b5e20}h2{font-size:13pt;color:#1b5e20;border-bottom:1px solid #c8e6c9;padding-bottom:4pt}
 h3{font-size:11pt;color:#1e40af}p{margin:6pt 0;line-height:1.5}
-table{border-collapse:collapse;width:100%}th,td{border:1px solid #ccc;padding:5pt;font-size:11pt}
-th{background:#c8e6c9}</style>
+table{border-collapse:collapse;width:100%;max-width:100%;table-layout:fixed;overflow-wrap:break-word;word-break:break-word}th,td{border:1px solid #ccc;padding:5pt;font-size:10pt;line-height:1.35}
+th{background:#c8e6c9}
+${buildInstitutionalWordStylesRedes()}</style>
 </head><body>
+${buildInstitutionalWordHeaderRedes("Actividad 3.3 - Direccionamiento IP (Bloques 1-3)", fullName, sel, fecha)}
 <h1>Actividad 3.3 \u2013 Direccionamiento IP (Bloques 1\u20133)</h1>
 <p>Aprendiz: <b>${escapeHtml(fullName)}</b> &nbsp;|&nbsp; Ficha: ${escapeHtml(ficha)} &nbsp;|&nbsp; Grupo: ${escapeHtml(sel.grupo || "")} &nbsp;|&nbsp; ${fecha}</p>
 <hr>
@@ -1745,13 +1853,15 @@ window.exportarWordTallerIP = function (evt) {
       xmlns='http://www.w3.org/TR/REC-html40'>
 <head><meta charset='utf-8'><title>Taller IP</title>
 <style>
-body{font-family:Calibri,Arial;font-size:12pt;margin:2cm;color:#263238}
+body{font-family:"Times New Roman",Times,serif;font-size:12pt;line-height:2;margin:2.54cm;color:#263238}
 h1{font-size:16pt;color:#1b5e20}h2{font-size:13pt;color:#1b5e20;border-bottom:1px solid #c8e6c9;padding-bottom:4pt}
 h3{font-size:11pt;color:#1e40af}p{margin:6pt 0;line-height:1.5}
-table{border-collapse:collapse;width:100%;margin-top:8pt}th,td{border:1px solid #ccc;padding:6pt;font-size:11pt;vertical-align:top}
+table{border-collapse:collapse;width:100%;max-width:100%;table-layout:fixed;overflow-wrap:break-word;word-break:break-word;margin-top:8pt}th,td{border:1px solid #ccc;padding:6pt;font-size:10pt;line-height:1.35;vertical-align:top}
 th{background:#c8e6c9}
+${buildInstitutionalWordStylesRedes()}
 </style>
 </head><body>
+${buildInstitutionalWordHeaderRedes("Actividad 3.3.4 - Taller IP (Ejercicios 1-5)", fullName, identity, fecha)}
 <h1>Actividad 3.3.4 - Taller IP (Ejercicios 1-5)</h1>
 <p>Aprendiz: <b>${escapeHtml(fullName)}</b> &nbsp;|&nbsp; Ficha: ${escapeHtml(ficha)} &nbsp;|&nbsp; Grupo: ${escapeHtml(grupo)} &nbsp;|&nbsp; ${fecha}</p>
 <p>Institucion: ${escapeHtml(institucion)}</p>
