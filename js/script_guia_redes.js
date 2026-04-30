@@ -233,8 +233,8 @@ function buildInstitutionalWordStylesRedes() {
 table{max-width:100%;table-layout:fixed;overflow-wrap:break-word;word-break:break-word}
 .institutional-header{width:100%;max-width:100%;table-layout:fixed;border-collapse:collapse;margin:0 0 12pt}
 .institutional-header td{border:1px solid #b7c9bc;padding:7pt;vertical-align:middle;font-size:10pt;line-height:1.35}
-.institutional-header .logo-cell{width:74pt;text-align:center;background:#f7fbf8}
-.institutional-header img{width:64pt;max-width:64pt;height:auto}
+.institutional-header .logo-cell{width:52pt;text-align:center;background:#f7fbf8}
+.institutional-header img{width:42pt;max-width:42pt;height:42pt;max-height:42pt}
 .institutional-header .label,.meta .label{font-weight:700;background:#f3f4f6;color:#1b5e20}
 .meta{width:100%;border-collapse:collapse;margin:0 0 16pt}
 .meta td{border:1px solid #d1d5db;padding:8pt;vertical-align:top;font-size:10.5pt;line-height:1.35}`;
@@ -242,30 +242,31 @@ table{max-width:100%;table-layout:fixed;overflow-wrap:break-word;word-break:brea
 
 function buildInstitutionalWordHeaderRedes(title, fullName, identity, fecha) {
   return `
-<table class="institutional-header">
+<table class="institutional-header" width="100%" align="left" style="width:100%;margin-left:0;margin-right:0;">
   <tr>
-    <td class="logo-cell" rowspan="4" width="74" style="width:74pt;"><img src="${escapeHtml(getSenaLogoUrlRedes())}" alt="Logo SENA" width="64" style="width:64pt;height:auto;"></td>
-    <td class="label">Programa</td>
-    <td>${escapeHtml(REDES_WORD_METADATA.program)}</td>
-    <td class="label">Fecha de elaboracion</td>
-    <td>${escapeHtml(fecha)}</td>
+    <td class="logo-cell" width="52" style="width:52pt;"><img src="${escapeHtml(getSenaLogoUrlRedes())}" alt="Logo SENA" width="42" height="42" style="width:42pt;height:42pt;"></td>
+    <td colspan="3"><strong>Servicio Nacional de Aprendizaje - SENA</strong><br>${escapeHtml(REDES_WORD_METADATA.program)}</td>
   </tr>
   <tr><td class="label">Guia / actividad</td><td colspan="3">${escapeHtml(`${REDES_WORD_METADATA.guideName} - ${title}`)}</td></tr>
   <tr><td class="label">Competencia</td><td colspan="3">${escapeHtml(REDES_WORD_METADATA.competencia)}</td></tr>
   <tr><td class="label">Resultado de Aprendizaje</td><td colspan="3">${escapeHtml(REDES_WORD_METADATA.resultado)}</td></tr>
 </table>
-<table class="meta">
+<table class="meta" width="100%" align="left" style="width:100%;margin-left:0;margin-right:0;">
   <tr>
     <td class="label">Nombre completo del aprendiz</td>
     <td>${escapeHtml(fullName || "Aprendiz")}</td>
-    <td class="label">Numero de ficha</td>
-    <td>${escapeHtml(getWordIdentityValueRedes(identity, "ficha") || "0000")}</td>
+    <td class="label">Fecha de elaboracion</td>
+    <td>${escapeHtml(fecha)}</td>
   </tr>
   <tr>
+    <td class="label">Numero de ficha</td>
+    <td>${escapeHtml(getWordIdentityValueRedes(identity, "ficha") || "0000")}</td>
     <td class="label">Grado</td>
     <td>${escapeHtml(getWordIdentityValueRedes(identity, "grupo"))}</td>
+  </tr>
+  <tr>
     <td class="label">Institucion</td>
-    <td>${escapeHtml(getWordIdentityValueRedes(identity, "inst"))}</td>
+    <td colspan="3">${escapeHtml(getWordIdentityValueRedes(identity, "inst"))}</td>
   </tr>
 </table>`;
 }
@@ -1606,7 +1607,7 @@ function buildReflexion311WordFile() {
     xmlns:w='urn:schemas-microsoft-com:office:word'
     xmlns='http://www.w3.org/TR/REC-html40'>
 <head><meta charset='utf-8'><title>Reflexión 3.1.1</title>
-<style>body{font-family:"Times New Roman",Times,serif;font-size:12pt;line-height:2;margin:2.54cm}
+<style>@page{margin:2.54cm}body{font-family:"Times New Roman",Times,serif;font-size:12pt;line-height:2;margin:0}
 h1{font-size:16pt;color:#1b5e20}h2{font-size:13pt}p{margin:6pt 0;line-height:1.5}
 ${buildInstitutionalWordStylesRedes()}</style>
 </head><body>
@@ -1722,7 +1723,7 @@ window.exportarWordBloques123IP = function (evt) {
       xmlns:w='urn:schemas-microsoft-com:office:word'
       xmlns='http://www.w3.org/TR/REC-html40'>
 <head><meta charset='utf-8'><title>Bloques IP 1-3</title>
-<style>body{font-family:"Times New Roman",Times,serif;font-size:12pt;line-height:2;margin:2.54cm}
+<style>@page{margin:2.54cm}body{font-family:"Times New Roman",Times,serif;font-size:12pt;line-height:2;margin:0}
 h1{font-size:16pt;color:#1b5e20}h2{font-size:13pt;color:#1b5e20;border-bottom:1px solid #c8e6c9;padding-bottom:4pt}
 h3{font-size:11pt;color:#1e40af}p{margin:6pt 0;line-height:1.5}
 table{border-collapse:collapse;width:100%;max-width:100%;table-layout:fixed;overflow-wrap:break-word;word-break:break-word}th,td{border:1px solid #ccc;padding:5pt;font-size:10pt;line-height:1.35}
@@ -1853,7 +1854,8 @@ window.exportarWordTallerIP = function (evt) {
       xmlns='http://www.w3.org/TR/REC-html40'>
 <head><meta charset='utf-8'><title>Taller IP</title>
 <style>
-body{font-family:"Times New Roman",Times,serif;font-size:12pt;line-height:2;margin:2.54cm;color:#263238}
+@page{margin:2.54cm}
+body{font-family:"Times New Roman",Times,serif;font-size:12pt;line-height:2;margin:0;color:#263238}
 h1{font-size:16pt;color:#1b5e20}h2{font-size:13pt;color:#1b5e20;border-bottom:1px solid #c8e6c9;padding-bottom:4pt}
 h3{font-size:11pt;color:#1e40af}p{margin:6pt 0;line-height:1.5}
 table{border-collapse:collapse;width:100%;max-width:100%;table-layout:fixed;overflow-wrap:break-word;word-break:break-word;margin-top:8pt}th,td{border:1px solid #ccc;padding:6pt;font-size:10pt;line-height:1.35;vertical-align:top}
