@@ -3813,42 +3813,34 @@ function getSenaLogoUrl() {
 
 function buildInstitutionalWordHeader(title, learnerName, selection, today) {
   return `
-  <table class="institutional-header">
+  <table class="institutional-header" width="100%" align="left" style="width:100%;margin-left:0;margin-right:0;">
     <tr>
-      <td class="logo-cell" rowspan="4" width="74" style="width:74pt;">
-        <img src="${escapeHtml(getSenaLogoUrl())}" alt="Logo SENA" width="64" style="width:64pt;height:auto;" />
+      <td class="logo-cell" width="52" style="width:52pt;">
+        <img src="${escapeHtml(getSenaLogoUrl())}" alt="Logo SENA" width="42" height="42" style="width:42pt;height:42pt;" />
       </td>
-      <td class="label">Programa</td>
-      <td>${escapeWordValue(GUIDE2_WORD_METADATA.program)}</td>
+      <td colspan="3"><strong>Servicio Nacional de Aprendizaje - SENA</strong><br>${escapeWordValue(GUIDE2_WORD_METADATA.program)}</td>
+    </tr>
+    <tr><td class="label">Guia / actividad</td><td colspan="3">${escapeWordValue(`${GUIDE2_WORD_METADATA.guideName} - ${title}`)}</td></tr>
+    <tr><td class="label">Competencia</td><td colspan="3">${escapeWordValue(GUIDE2_WORD_METADATA.competencia)}</td></tr>
+    <tr><td class="label">Resultado de Aprendizaje</td><td colspan="3">${escapeWordValue(GUIDE2_WORD_METADATA.resultado)}</td></tr>
+  </table>
+
+  <table class="meta" width="100%" align="left" style="width:100%;margin-left:0;margin-right:0;">
+    <tr>
+      <td class="label">Nombre completo del aprendiz</td>
+      <td>${escapeWordValue(learnerName)}</td>
       <td class="label">Fecha de elaboracion</td>
       <td>${escapeWordValue(today)}</td>
     </tr>
     <tr>
-      <td class="label">Guia / actividad</td>
-      <td colspan="3">${escapeWordValue(`${GUIDE2_WORD_METADATA.guideName} - ${title}`)}</td>
-    </tr>
-    <tr>
-      <td class="label">Competencia</td>
-      <td colspan="3">${escapeWordValue(GUIDE2_WORD_METADATA.competencia)}</td>
-    </tr>
-    <tr>
-      <td class="label">Resultado de Aprendizaje</td>
-      <td colspan="3">${escapeWordValue(GUIDE2_WORD_METADATA.resultado)}</td>
-    </tr>
-  </table>
-
-  <table class="meta">
-    <tr>
-      <td class="label">Nombre completo del aprendiz</td>
-      <td>${escapeWordValue(learnerName)}</td>
       <td class="label">Numero de ficha</td>
       <td>${escapeWordValue(selection.ficha)}</td>
-    </tr>
-    <tr>
       <td class="label">Grado</td>
       <td>${escapeWordValue(selection.grupo)}</td>
+    </tr>
+    <tr>
       <td class="label">Institucion</td>
-      <td>${escapeWordValue(selection.inst)}</td>
+      <td colspan="3">${escapeWordValue(selection.inst)}</td>
     </tr>
   </table>`;
 }
@@ -3986,8 +3978,8 @@ function buildGuide5ExportDocument(mode, learnerName) {
   table { max-width: 100%; table-layout: fixed; overflow-wrap: break-word; word-break: break-word; }
   .institutional-header { width: 100%; max-width: 100%; table-layout: fixed; border-collapse: collapse; margin: 0 0 12pt; }
   .institutional-header td { border: 1px solid #b7c9bc; padding: 7pt; vertical-align: middle; font-size: 10pt; line-height: 1.35; }
-  .institutional-header .logo-cell { width: 74pt; text-align: center; background: #f7fbf8; }
-  .institutional-header img { width: 64pt; max-width: 64pt; height: auto; }
+  .institutional-header .logo-cell { width: 52pt; text-align: center; background: #f7fbf8; }
+  .institutional-header img { width: 42pt; max-width: 42pt; height: 42pt; max-height: 42pt; }
   .meta { width: 100%; border-collapse: collapse; margin: 0 0 16pt; }
   .meta td { border: 1px solid #d1d5db; padding: 8pt; vertical-align: top; font-size: 10.5pt; line-height: 1.35; }
   .meta .label { font-weight: 700; background: #f3f4f6; width: 28%; }
