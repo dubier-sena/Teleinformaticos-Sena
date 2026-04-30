@@ -1,4 +1,5 @@
-const PAGE_FILE = window.location.pathname.split("/").pop().toLowerCase() || "guia.html";
+const PAGE_FILE =
+  (window.__RUNTIME_PAGE_FILE__ || window.location.pathname.split("/").pop() || "guia.html").toLowerCase();
 const STORAGE_FILE_ALIASES = {
   "grupo-10a-guia-02-herramientas-informaticas-digitales.html": "10a_guia2.html",
   "grupo-10b-guia-02-herramientas-informaticas-digitales.html": "10b_guia2.html",

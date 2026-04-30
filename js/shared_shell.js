@@ -37,6 +37,10 @@
     return "";
   }
 
+  function guideHref(p, fileName) {
+    return p + "guia.html?g=" + encodeURIComponent(fileName);
+  }
+
   // ─────────────────────────────────────────────
   //  Build navbar HTML
   // ─────────────────────────────────────────────
@@ -66,19 +70,19 @@
       '        <div class="app-navbar__drop-panel" role="menu">',
       '          <div class="app-navbar__drop-group" data-guide-group>',
       '            <span class="app-navbar__drop-heading">Grado 10</span>',
-      '            <a class="app-navbar__drop-link" href="' + p + 'grupo-10a-guia-01-induccion.html" role="menuitem" data-guide-file="grupo-10a-guia-01-induccion.html">10A · Guía 1 — Inducción</a>',
-      '            <a class="app-navbar__drop-link" href="' + p + 'grupo-10a-guia-02-herramientas-informaticas-digitales.html" role="menuitem" data-guide-file="grupo-10a-guia-02-herramientas-informaticas-digitales.html">10A · Guía 2 — Herramientas</a>',
-      '            <a class="app-navbar__drop-link" href="' + p + 'santa-barbara-10a-guia-02-redes-rap01.html" role="menuitem" data-guide-file="santa-barbara-10a-guia-02-redes-rap01.html">10A · Guía 2 — Redes</a>',
-      '            <a class="app-navbar__drop-link" href="' + p + 'grupo-10b-guia-01-induccion.html" role="menuitem" data-guide-file="grupo-10b-guia-01-induccion.html">10B · Guía 1 — Inducción</a>',
-      '            <a class="app-navbar__drop-link" href="' + p + 'grupo-10b-guia-02-herramientas-informaticas-digitales.html" role="menuitem" data-guide-file="grupo-10b-guia-02-herramientas-informaticas-digitales.html">10B · Guía 2 — Herramientas</a>',
-      '            <a class="app-navbar__drop-link" href="' + p + 'santa-barbara-10b-guia-02-redes-rap01.html" role="menuitem" data-guide-file="santa-barbara-10b-guia-02-redes-rap01.html">10B · Guía 2 — Redes</a>',
+      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-10a-guia-01-induccion.html") + '" role="menuitem" data-guide-file="grupo-10a-guia-01-induccion.html">10A · Guía 1 — Inducción</a>',
+      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-10a-guia-02-herramientas-informaticas-digitales.html") + '" role="menuitem" data-guide-file="grupo-10a-guia-02-herramientas-informaticas-digitales.html">10A · Guía 2 — Herramientas</a>',
+      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "santa-barbara-10a-guia-02-redes-rap01.html") + '" role="menuitem" data-guide-file="santa-barbara-10a-guia-02-redes-rap01.html">10A · Guía 2 — Redes</a>',
+      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-10b-guia-01-induccion.html") + '" role="menuitem" data-guide-file="grupo-10b-guia-01-induccion.html">10B · Guía 1 — Inducción</a>',
+      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-10b-guia-02-herramientas-informaticas-digitales.html") + '" role="menuitem" data-guide-file="grupo-10b-guia-02-herramientas-informaticas-digitales.html">10B · Guía 2 — Herramientas</a>',
+      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "santa-barbara-10b-guia-02-redes-rap01.html") + '" role="menuitem" data-guide-file="santa-barbara-10b-guia-02-redes-rap01.html">10B · Guía 2 — Redes</a>',
       '          </div>',
       '          <div class="app-navbar__drop-group" data-guide-group>',
       '            <span class="app-navbar__drop-heading">Grado 11</span>',
-      '            <a class="app-navbar__drop-link" href="' + p + 'grupo-11a-guia-05-herramientas-informaticas-digitales.html" role="menuitem" data-guide-file="grupo-11a-guia-05-herramientas-informaticas-digitales.html">11A · Guía 5 — Herramientas</a>',
-      '            <a class="app-navbar__drop-link" href="' + p + 'grupo-11a-guia-06-planificar-informacion.html" role="menuitem" data-guide-file="grupo-11a-guia-06-planificar-informacion.html">11A · Guía 6 — Planificar</a>',
-      '            <a class="app-navbar__drop-link" href="' + p + 'grupo-11b-guia-05-herramientas-informaticas-digitales.html" role="menuitem" data-guide-file="grupo-11b-guia-05-herramientas-informaticas-digitales.html">11B · Guía 5 — Herramientas</a>',
-      '            <a class="app-navbar__drop-link" href="' + p + 'grupo-11b-guia-06-planificar-informacion.html" role="menuitem" data-guide-file="grupo-11b-guia-06-planificar-informacion.html">11B · Guía 6 — Planificar</a>',
+      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-11a-guia-05-herramientas-informaticas-digitales.html") + '" role="menuitem" data-guide-file="grupo-11a-guia-05-herramientas-informaticas-digitales.html">11A · Guía 5 — Herramientas</a>',
+      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-11a-guia-06-planificar-informacion.html") + '" role="menuitem" data-guide-file="grupo-11a-guia-06-planificar-informacion.html">11A · Guía 6 — Planificar</a>',
+      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-11b-guia-05-herramientas-informaticas-digitales.html") + '" role="menuitem" data-guide-file="grupo-11b-guia-05-herramientas-informaticas-digitales.html">11B · Guía 5 — Herramientas</a>',
+      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-11b-guia-06-planificar-informacion.html") + '" role="menuitem" data-guide-file="grupo-11b-guia-06-planificar-informacion.html">11B · Guía 6 — Planificar</a>',
       '          </div>',
       '        </div>',
       '      </div>',
@@ -299,14 +303,26 @@
     });
   }
 
-  // ─────────────────────────────────────────────
-  //  Init
-  // ─────────────────────────────────────────────
-  document.addEventListener("DOMContentLoaded", function () {
+  var sharedShellBooted = false;
+
+  function initSharedShell() {
+    if (sharedShellBooted) return;
+    sharedShellBooted = true;
     injectNavbar();
     markShellReady();
     attachRevealMotion();
     updateNavbarSession();
     attachNavbarInteractions();
-  });
+  }
+
+  // ─────────────────────────────────────────────
+  //  Init
+  // ─────────────────────────────────────────────
+  window.initSharedShell = initSharedShell;
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initSharedShell);
+  } else {
+    initSharedShell();
+  }
 })();

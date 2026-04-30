@@ -10,6 +10,12 @@ const EXPECTED_ROOT_HTML = [
   "calendario-academico-2026.html",
   "etapa-productiva-admin.html",
   "etapa-productiva-estudiante.html",
+  "guia.html",
+  "index.html",
+  "panel-administrativo-usuarios.html",
+];
+
+const EXPECTED_GUIDE_WRAPPERS = [
   "grupo-10a-guia-01-induccion.html",
   "grupo-10a-guia-02-herramientas-informaticas-digitales.html",
   "grupo-10b-guia-01-induccion.html",
@@ -18,8 +24,6 @@ const EXPECTED_ROOT_HTML = [
   "grupo-11a-guia-06-planificar-informacion.html",
   "grupo-11b-guia-05-herramientas-informaticas-digitales.html",
   "grupo-11b-guia-06-planificar-informacion.html",
-  "index.html",
-  "panel-administrativo-usuarios.html",
   "santa-barbara-10a-guia-02-redes-rap01.html",
   "santa-barbara-10b-guia-02-redes-rap01.html",
 ];
@@ -60,6 +64,18 @@ test("approved auxiliary html pages live under pages/auxiliares and not in the r
     const rootPath = path.join(REPO_ROOT, fileName);
 
     assert.equal(fs.existsSync(auxPath), true, `${fileName} should exist under pages/auxiliares`);
+    assert.equal(fs.existsSync(rootPath), false, `${fileName} should no longer exist in the root`);
+  }
+});
+
+test("legacy guide wrappers now live under pages/guias and not in the root", () => {
+  const guideRoot = path.join(REPO_ROOT, "pages", "guias");
+
+  for (const fileName of EXPECTED_GUIDE_WRAPPERS) {
+    const guidePath = path.join(guideRoot, fileName);
+    const rootPath = path.join(REPO_ROOT, fileName);
+
+    assert.equal(fs.existsSync(guidePath), true, `${fileName} should exist under pages/guias`);
     assert.equal(fs.existsSync(rootPath), false, `${fileName} should no longer exist in the root`);
   }
 });
