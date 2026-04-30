@@ -147,6 +147,7 @@ test("guia 2 activity 8 includes a fillable comparison table with save and Word 
   const partial = read("partials/guia-02-herramientas-content.html");
   const script = read("js/script_guia2.js");
   const css = read("css/guia_template.css");
+  const admin = read("js/admin_usuarios.js");
 
   assert.match(partial, /class="data-table collaborative-tools-table"/);
   assert.match(partial, /data-store="collab:microsoft-365:function"/);
@@ -166,6 +167,13 @@ test("guia 2 activity 8 includes a fillable comparison table with save and Word 
   assert.match(script, /mode === "collaborative"/);
   assert.match(script, /window\.guardarColaborativas334 = guardarColaborativas334/);
   assert.match(css, /\.collaborative-tools-table/);
+  assert.match(admin, /GUIDE2_COLLABORATIVE_ACTIVITY_KEYS/);
+  assert.match(admin, /Actividad 8 - Herramientas colaborativas/);
+  assert.match(admin, /Actividad 8\. Herramientas colaborativas y comunicacion digital profesional/);
+  assert.match(admin, /colaborativas334-locked/);
+  assert.doesNotMatch(admin, /Cuestionario 3\.2\.1/);
+  assert.match(admin, /function getUnlockActivitiesForGuide\(fileName\)/);
+  assert.match(admin, /getUnlockActivitiesForGuide\(fileName\)\.find/);
 });
 
 test("guia 2 drive delivery panels show only portfolio and secure delivery buttons for activities 7 and 8", () => {
