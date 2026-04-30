@@ -3794,6 +3794,65 @@ function escapeWordValue(value) {
   return escapeHtml(text || "(Sin respuesta)");
 }
 
+const GUIDE2_WORD_METADATA = {
+  guideName: "Guia 2 - Operar Herramientas Informaticas y Digitales",
+  program: "Sistemas Teleinformaticos",
+  competencia:
+    "220501121 - Operar herramientas informaticas y digitales de acuerdo con protocolos y manuales tecnicos.",
+  resultado:
+    "RAP 01 - Caracterizar herramientas informaticas segun el contexto tecnologico de la organizacion.",
+};
+
+function getSenaLogoUrl() {
+  try {
+    return new URL("assets/img/sena-logo.png", window.location.href).href;
+  } catch (_) {
+    return "assets/img/sena-logo.png";
+  }
+}
+
+function buildInstitutionalWordHeader(title, learnerName, selection, today) {
+  return `
+  <table class="institutional-header">
+    <tr>
+      <td class="logo-cell" rowspan="4">
+        <img src="${escapeHtml(getSenaLogoUrl())}" alt="Logo SENA" />
+      </td>
+      <td class="label">Programa</td>
+      <td>${escapeWordValue(GUIDE2_WORD_METADATA.program)}</td>
+      <td class="label">Fecha de elaboracion</td>
+      <td>${escapeWordValue(today)}</td>
+    </tr>
+    <tr>
+      <td class="label">Guia / actividad</td>
+      <td colspan="3">${escapeWordValue(`${GUIDE2_WORD_METADATA.guideName} - ${title}`)}</td>
+    </tr>
+    <tr>
+      <td class="label">Competencia</td>
+      <td colspan="3">${escapeWordValue(GUIDE2_WORD_METADATA.competencia)}</td>
+    </tr>
+    <tr>
+      <td class="label">Resultado de Aprendizaje</td>
+      <td colspan="3">${escapeWordValue(GUIDE2_WORD_METADATA.resultado)}</td>
+    </tr>
+  </table>
+
+  <table class="meta">
+    <tr>
+      <td class="label">Nombre completo del aprendiz</td>
+      <td>${escapeWordValue(learnerName)}</td>
+      <td class="label">Numero de ficha</td>
+      <td>${escapeWordValue(selection.ficha)}</td>
+    </tr>
+    <tr>
+      <td class="label">Grado</td>
+      <td>${escapeWordValue(selection.grupo)}</td>
+      <td class="label">Institucion</td>
+      <td>${escapeWordValue(selection.inst)}</td>
+    </tr>
+  </table>`;
+}
+
 function buildGuide5ExtensionsRows() {
   return extensions
     .map((row) => {
@@ -3919,16 +3978,21 @@ function buildGuide5ExportDocument(mode, learnerName) {
 </w:WordDocument>
 </xml><![endif]-->
 <style>
-  @page { margin: 2.5cm; }
-  body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; color: #1a1a1a; }
+  @page { margin: 2.54cm; }
+  body { font-family: "Times New Roman", Times, serif; font-size: 12pt; line-height: 2; color: #1a1a1a; }
   .header { text-align: center; border-bottom: 2px solid #007934; padding-bottom: 8pt; margin-bottom: 14pt; }
   .header h1 { margin: 0 0 4pt; font-size: 18pt; color: #007934; }
   .header p { margin: 2pt 0; }
+  table { max-width: 100%; table-layout: fixed; overflow-wrap: break-word; word-break: break-word; }
+  .institutional-header { width: 100%; border-collapse: collapse; margin: 0 0 12pt; }
+  .institutional-header td { border: 1px solid #b7c9bc; padding: 7pt; vertical-align: middle; font-size: 10pt; line-height: 1.35; }
+  .institutional-header .logo-cell { width: 80pt; text-align: center; background: #f7fbf8; }
+  .institutional-header img { width: 62pt; height: auto; }
   .meta { width: 100%; border-collapse: collapse; margin: 0 0 16pt; }
-  .meta td { border: 1px solid #d1d5db; padding: 8pt; vertical-align: top; }
+  .meta td { border: 1px solid #d1d5db; padding: 8pt; vertical-align: top; font-size: 10.5pt; line-height: 1.35; }
   .meta .label { font-weight: 700; background: #f3f4f6; width: 28%; }
   .data { width: 100%; border-collapse: collapse; }
-  .data th, .data td { border: 1px solid #9ca3af; padding: 7pt; vertical-align: top; }
+  .data th, .data td { border: 1px solid #9ca3af; padding: 6pt; vertical-align: top; font-size: 10pt; line-height: 1.35; }
   .data th { background: #e8f5e9; text-align: left; }
   .note { margin-top: 12pt; font-size: 10pt; color: #4b5563; }
 </style>
@@ -3936,32 +4000,10 @@ function buildGuide5ExportDocument(mode, learnerName) {
 <body>
   <div class="header">
     <h1>${escapeHtml(config.title)}</h1>
-    <p>Guia 2 - Operar Herramientas Informaticas y Digitales</p>
-    <p>Sistemas Teleinformaticos</p>
+    <p>${escapeWordValue(GUIDE2_WORD_METADATA.guideName)}</p>
   </div>
 
-  <table class="meta">
-    <tr>
-      <td class="label">Aprendiz</td>
-      <td>${escapeWordValue(learnerName)}</td>
-    </tr>
-    <tr>
-      <td class="label">Institucion</td>
-      <td>${escapeWordValue(selection.inst)}</td>
-    </tr>
-    <tr>
-      <td class="label">Grupo</td>
-      <td>${escapeWordValue(selection.grupo)}</td>
-    </tr>
-    <tr>
-      <td class="label">Ficha</td>
-      <td>${escapeWordValue(selection.ficha)}</td>
-    </tr>
-    <tr>
-      <td class="label">Fecha de exportacion</td>
-      <td>${escapeWordValue(today)}</td>
-    </tr>
-  </table>
+  ${buildInstitutionalWordHeader(config.title, learnerName, selection, today)}
 
   <table class="data">
     <thead>

@@ -30,3 +30,45 @@ test("guide 5 and guide 6 Word exports prefill the learner name from the session
   assert.match(guide2Script, /input\.value = getCurrentLearnerName\(\)/);
   assert.match(guide6Script, /input\.value = getCurrentLearnerName\(\)/);
 });
+
+test("Word exports include the institutional SENA header fields", () => {
+  const scripts = [
+    read("js/script.js"),
+    read("js/script_guia2.js"),
+    read("js/script_guia6.js"),
+    read("js/script_guia_redes.js"),
+  ];
+
+  for (const script of scripts) {
+    assert.match(script, /sena-logo\.png/);
+    assert.match(script, /Sistemas Teleinformaticos/);
+    assert.match(script, /Competencia/);
+    assert.match(script, /Resultado de Aprendizaje/);
+    assert.match(script, /Nombre completo del aprendiz/);
+    assert.match(script, /Fecha de elaboracion/);
+    assert.match(script, /Numero de ficha/);
+    assert.match(script, /Grado/);
+    assert.match(script, /Institucion/);
+  }
+});
+
+test("Word exports use APA page basics and keep tables inside margins", () => {
+  const htmlExportScripts = [
+    read("js/script.js"),
+    read("js/script_guia2.js"),
+    read("js/script_guia6.js"),
+    read("js/script_guia_redes.js"),
+  ];
+
+  for (const script of htmlExportScripts) {
+    assert.match(script, /margin:\s*2\.54cm/);
+    assert.match(script, /Times New Roman/);
+    assert.match(script, /font-size:\s*12pt/);
+    assert.match(script, /table-layout:\s*fixed/);
+    assert.match(script, /max-width:\s*100%/);
+    assert.match(script, /word-break:\s*break-word/);
+  }
+
+  const redesScript = read("js/script_guia_redes.js");
+  assert.match(redesScript, /font:\s*"Times New Roman"/);
+});
