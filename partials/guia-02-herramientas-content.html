@@ -1149,6 +1149,10 @@
 <div id="guia2-support-backdrop" onclick="closeGuia2SupportPanel()" style="position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9998;opacity:0;pointer-events:none;transition:opacity .35s"></div>
 
 <script>
+function buildGuideRouteHref(fileName) {
+  return "guia.html?g=" + encodeURIComponent(fileName);
+}
+
 function descargarMatrizWord() {
   var a = document.createElement("a");
   a.href = "assets/materiales/guia2/MatrizDiagnosticoDigital.docx";
@@ -1197,14 +1201,14 @@ function descargarMatrizWord() {
   var matrizDiagnosticoLink = document.getElementById("matrizDiagnosticoLink");
 
   if (currentGuideNavLink) {
-    currentGuideNavLink.href = config.currentFile;
+    currentGuideNavLink.href = buildGuideRouteHref(config.currentFile);
     currentGuideNavLink.dataset.currentFile = config.currentFile;
   }
   if (currentGuideNavLabel) {
     currentGuideNavLabel.textContent = config.currentLabel;
   }
   if (previousGuideNavLink) {
-    previousGuideNavLink.href = config.previousFile;
+    previousGuideNavLink.href = buildGuideRouteHref(config.previousFile);
     previousGuideNavLink.dataset.currentFile = config.previousFile;
   }
   if (previousGuideNavLabel) {

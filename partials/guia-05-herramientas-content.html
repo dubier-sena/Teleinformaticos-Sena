@@ -878,6 +878,10 @@
 
 <script>
 (function () {
+  function buildGuideRouteHref(fileName) {
+    return "guia.html?g=" + encodeURIComponent(fileName);
+  }
+
   var grupo = String((document.body && document.body.dataset && document.body.dataset.defaultGrupo) || "11A").toUpperCase();
   var config = {
     "11A": {
@@ -901,7 +905,7 @@
   var topbarCampus = document.getElementById("topbarCampus");
 
   if (currentGuideNavLink) {
-    currentGuideNavLink.href = config.currentFile;
+    currentGuideNavLink.href = buildGuideRouteHref(config.currentFile);
     currentGuideNavLink.dataset.currentFile = config.currentFile;
   }
   if (currentGuideNavLabel) {

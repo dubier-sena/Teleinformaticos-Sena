@@ -38,7 +38,10 @@ test("el ejercicio 1 del taller IP incluye un boton de apoyo interactivo para cl
 
 test("los wrappers de Guia 2 Redes siguen siendo shells validos", () => {
   WRAPPER_FILES.forEach((fileName) => {
-    const html = fs.readFileSync(path.join(__dirname, "..", fileName), "utf8");
+    const html = fs.readFileSync(
+      path.join(__dirname, "..", "pages", "guias", fileName),
+      "utf8"
+    );
     assert.match(html, /window\.__GUIDE_CONTEXT__/);
     assert.match(html, /id="guide-root"/);
     assert.match(html, /guide_runtime_loader\.js/);
