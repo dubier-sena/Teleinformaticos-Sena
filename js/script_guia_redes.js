@@ -1,5 +1,6 @@
 /* script_guia_redes.js — Guia 2 Redes RAP01 | Santa Barbara 10A/10B */
-const PAGE_FILE_REDES = window.location.pathname.split("/").pop().toLowerCase() || "guia.html";
+const PAGE_FILE_REDES =
+  (window.__RUNTIME_PAGE_FILE__ || window.location.pathname.split("/").pop() || "guia.html").toLowerCase();
 const STORAGE_FILE_ALIASES_REDES = {
   "santa-barbara-10a-guia-02-redes-rap01.html": "sb_10a_redes.html",
   "santa-barbara-10b-guia-02-redes-rap01.html": "sb_10b_redes.html",
@@ -3367,6 +3368,98 @@ window.guardarSocializacion = async function () {
 // ---------------------------------------------------------------------------
 window.getGuideState = () => state;
 window.saveGuideState = saveStateRedes;
+
+function applyRedesOptionalDeadlineGate(activityId, options) {
+  if (!window.activityDeadlineManager?.applyAvailability) {
+    return { blocked: false, state: "none", hasDeadline: false };
+  }
+  return window.activityDeadlineManager.applyAvailability({
+    pageFile: GUIDE_DATA_FILE_REDES,
+    activityId,
+    ...options,
+  });
+}
+
+function canSubmitRedesActivity(activityId) {
+  return !window.activityDeadlineManager?.canSubmit ||
+    window.activityDeadlineManager.canSubmit({
+      pageFile: GUIDE_DATA_FILE_REDES,
+      activityId,
+    });
+}
+
+(function installRedesDeadlineWrappers() {
+  const uiConfigs = {
+    ip1: { lockKey: "ip1-locked", fieldSelector: "[data-store^='ip1-']", extraDisableSelector: "#ip1ImagenLabel", extraDisableIds: ["ip1ImagenInput"], buttonId: "btnGuardarIP1", statusId: "ip1Status", activeButtonText: "Guardar respuestas", lockedButtonText: "Respuestas guardadas", closedButtonText: "Entrega cerrada" },
+    ip3: { lockKey: "ip3-locked", fieldSelector: "[data-store^='ip3-']", extraDisableSelector: "#ip3ImagenLabel", extraDisableIds: ["ip3ImagenInput"], buttonId: "btnGuardarIP3", statusId: "ip3Status", activeButtonText: "Guardar respuestas", lockedButtonText: "Respuestas guardadas", closedButtonText: "Entrega cerrada" },
+    "taller-ip-ej1": { lockKey: "taller-ip-ej1-locked", fieldSelector: "[data-store^='ej1-']", buttonId: "btnGuardarTallerIPEj1", statusId: "tallerIPEj1Status", activeButtonText: "Guardar respuestas", lockedButtonText: "Respuestas guardadas", closedButtonText: "Entrega cerrada" },
+    "taller-ip-ej2": { lockKey: "taller-ip-ej2-locked", fieldSelector: "[data-store^='ej2-']", buttonId: "btnGuardarTallerIPEj2", statusId: "tallerIPEj2Status", activeButtonText: "Guardar respuestas", lockedButtonText: "Respuestas guardadas", closedButtonText: "Entrega cerrada" },
+    "taller-ip-ej3": { lockKey: "taller-ip-ej3-locked", fieldSelector: "[data-store^='ej3-']", buttonId: "btnGuardarTallerIPEj3", statusId: "tallerIPEj3Status", activeButtonText: "Guardar respuestas", lockedButtonText: "Respuestas guardadas", closedButtonText: "Entrega cerrada" },
+    "taller-ip-ej4": { lockKey: "taller-ip-ej4-locked", fieldSelector: "[data-store^='ej4-']", extraDisableIds: ["ej4CapturaInput", "btnSubirTallerIPEj4"], buttonId: "btnGuardarTallerIPEj4", statusId: "tallerIPEj4Status", activeButtonText: "Guardar respuestas", lockedButtonText: "Respuestas guardadas", closedButtonText: "Entrega cerrada" },
+    "taller-ip-ej5": { lockKey: "taller-ip-ej5-locked", fieldSelector: "[data-store^='ej5-']", buttonId: "btnGuardarTallerIPEj5", statusId: "tallerIPEj5Status", activeButtonText: "Guardar respuestas", lockedButtonText: "Respuestas guardadas", closedButtonText: "Entrega cerrada" },
+    lab1: { lockKey: "lab1-locked", fieldSelector: "[data-store^='lab1-']", extraDisableIds: ["lab1Ping1Input", "lab1Ping2Input", "lab1BroadcastInput", "lab1IpconfigInput", "btnSubirLab1Ping1", "btnSubirLab1Ping2", "btnSubirLab1Broadcast", "btnSubirLab1Ipconfig"], buttonId: "btnGuardarLab1", statusId: "lab1Status", activeButtonText: "Guardar respuestas del laboratorio", lockedButtonText: "Respuestas guardadas", closedButtonText: "Entrega cerrada" },
+    lab2: { lockKey: "lab2-locked", fieldSelector: "[data-store^='lab2-']", extraDisableIds: ["lab2PingMismoInput", "lab2PingDifInput", "lab2TracertInternoInput", "lab2TracertExternoInput", "btnSubirLab2PingMismo", "btnSubirLab2PingDif", "btnSubirLab2TracertInterno", "btnSubirLab2TracertExterno"], buttonId: "btnGuardarLab2", statusId: "lab2Status", activeButtonText: "Guardar respuestas del laboratorio", lockedButtonText: "Respuestas guardadas", closedButtonText: "Entrega cerrada" },
+    lab3: { lockKey: "lab3-locked", fieldSelector: "[data-store^='lab3-']", extraDisableIds: ["lab3TopologiaInput", "lab3PingBloquesInput", "lab3PingWifiInput", "lab3IpconfigWifiInput", "btnSubirLab3Topologia", "btnSubirLab3PingBloques", "btnSubirLab3PingWifi", "btnSubirLab3IpconfigWifi"], buttonId: "btnGuardarLab3", statusId: "lab3Status", activeButtonText: "Guardar respuestas del laboratorio", lockedButtonText: "Respuestas guardadas", closedButtonText: "Entrega cerrada" },
+    social: { lockKey: "social-locked", fieldSelector: "[data-store^='social-']", extraDisableSelector: "#socialImagenLabel", extraDisableIds: ["socialImagenInput"], buttonId: "btnGuardarSocial", statusId: "socialStatus", activeButtonText: "Guardar respuestas", lockedButtonText: "Respuestas guardadas", closedButtonText: "Entrega cerrada" },
+  };
+
+  function wrapApply(fnName, activityId) {
+    const original = window[fnName];
+    if (typeof original !== "function") return;
+    window[fnName] = function () {
+      original.apply(this, arguments);
+      const config = uiConfigs[activityId];
+      if (!config) return;
+      applyRedesOptionalDeadlineGate(activityId, { ...config, isLocked: Boolean(state[config.lockKey]) });
+    };
+  }
+
+  function wrapAction(fnName, activityId) {
+    const original = window[fnName];
+    if (typeof original !== "function") return;
+    window[fnName] = async function () {
+      if (!canSubmitRedesActivity(activityId)) return;
+      return await original.apply(this, arguments);
+    };
+  }
+
+  wrapApply("applyBloqueIP1Lock", "ip1");
+  wrapApply("applyBloqueIP3Lock", "ip3");
+  wrapApply("applyTallerIPEj1Lock", "taller-ip-ej1");
+  wrapApply("applyTallerIPEj2Lock", "taller-ip-ej2");
+  wrapApply("applyTallerIPEj3Lock", "taller-ip-ej3");
+  wrapApply("applyTallerIPEj4Lock", "taller-ip-ej4");
+  wrapApply("applyTallerIPEj5Lock", "taller-ip-ej5");
+  wrapApply("applyLab1Lock", "lab1");
+  wrapApply("applyLab2Lock", "lab2");
+  wrapApply("applyLab3Lock", "lab3");
+  wrapApply("applySocialLock", "social");
+
+  wrapAction("guardarBloqueIP1", "ip1");
+  wrapAction("subirImagenBloqueIP1", "ip1");
+  wrapAction("guardarBloqueIP3", "ip3");
+  wrapAction("subirImagenBloqueIP3", "ip3");
+  wrapAction("guardarTallerIPEj1", "taller-ip-ej1");
+  wrapAction("guardarTallerIPEj2", "taller-ip-ej2");
+  wrapAction("guardarTallerIPEj3", "taller-ip-ej3");
+  wrapAction("guardarTallerIPEj4", "taller-ip-ej4");
+  wrapAction("subirPantallazoTallerIPEj4", "taller-ip-ej4");
+  wrapAction("guardarTallerIPEj5", "taller-ip-ej5");
+  wrapAction("guardarLab1Transferencia", "lab1");
+  wrapAction("subirPantallazoLab1", "lab1");
+  wrapAction("guardarLab2Arbol", "lab2");
+  wrapAction("subirPantallazoLab2", "lab2");
+  wrapAction("guardarLab3Hibrida", "lab3");
+  wrapAction("subirPantallazoLab3", "lab3");
+  wrapAction("guardarSocializacion", "social");
+  wrapAction("subirImagenSocial", "social");
+
+  window.addEventListener("activity-deadlines-updated", function () {
+    if (typeof applyAllLocksRedes === "function") {
+      applyAllLocksRedes();
+    }
+  });
+})();
 
 // ---------------------------------------------------------------------------
 // Floating Theory Panel — Blocks 3.3.1 / 3.3.2 / 3.3.3

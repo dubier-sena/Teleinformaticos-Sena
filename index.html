@@ -668,8 +668,8 @@
   function setGuideEntry(inst, grupo, ficha, guia) {
     document.getElementById("si-guia").textContent = getGuideTitle(guia);
 
-    const params      = new URLSearchParams({ ficha, inst, grupo });
-    const target      = guia + "?" + params.toString();
+    const params      = new URLSearchParams({ g: guia, ficha, inst, grupo });
+    const target      = "guia.html?" + params.toString();
     const enterButton = document.getElementById("btn-enter");
     const session     = getPortalAuth()?.getCurrentSession?.() || null;
 
@@ -725,4 +725,3 @@
 
 </body>
 </html>
-

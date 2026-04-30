@@ -1,4 +1,5 @@
-const PAGE_FILE = window.location.pathname.split("/").pop().toLowerCase() || "guia6.html";
+const PAGE_FILE =
+  (window.__RUNTIME_PAGE_FILE__ || window.location.pathname.split("/").pop() || "guia6.html").toLowerCase();
 const STORAGE_FILE_ALIASES = {
   "grupo-11a-guia-06-planificar-informacion.html": "11a_guia6.html",
   "grupo-11b-guia-06-planificar-informacion.html": "11b_guia6.html",
@@ -1439,6 +1440,17 @@ function renderQuizHerramientasStatus() {
 const BITACORA_311_STORES = ["reflexion_herramientas", "reflexion_registro", "reflexion_consecuencias", "reflexion_experiencia"];
 const SOCIALIZACION_312_STORES = ["socializacion_conclusion", "socializacion_pregunta_central"];
 
+function applyOptionalDeadlineGate(activityId, options) {
+  if (!window.activityDeadlineManager?.applyAvailability) {
+    return { blocked: false, state: "none", hasDeadline: false };
+  }
+  return window.activityDeadlineManager.applyAvailability({
+    pageFile: GUIDE_DATA_FILE,
+    activityId,
+    ...options,
+  });
+}
+
 function applyBitacoraLock() {
   const locked = Boolean(state["bitacora311-locked"]);
   BITACORA_311_STORES.forEach((key) => {
@@ -1498,4 +1510,56 @@ function guardarSocializacion312() {
 window.guardarBitacora311 = guardarBitacora311;
 window.guardarSocializacion312 = guardarSocializacion312;
 
+(function installGuide6DeadlineWrappers() {
+  const originalApplyBitacoraLock = applyBitacoraLock;
+  applyBitacoraLock = function () {
+    originalApplyBitacoraLock.apply(this, arguments);
+    applyOptionalDeadlineGate("bitacora311", {
+      isLocked: Boolean(state["bitacora311-locked"]),
+      fieldSelector: BITACORA_311_STORES.map((key) => `[data-store="${key}"]`).join(","),
+      buttonId: "btnGuardarBitacora",
+      statusId: "bitacoraStatus311",
+      activeButtonText: "Guardar respuestas",
+      lockedButtonText: "Respuestas enviadas",
+      closedButtonText: "Entrega cerrada",
+    });
+  };
 
+  const originalApplySocializacionLock = applyBitacoraSocializacionLock;
+  applyBitacoraSocializacionLock = function () {
+    originalApplySocializacionLock.apply(this, arguments);
+    applyOptionalDeadlineGate("socializacion312", {
+      isLocked: Boolean(state["socializacion312-locked"]),
+      fieldSelector: SOCIALIZACION_312_STORES.map((key) => `[data-store="${key}"]`).join(","),
+      buttonId: "btnGuardarSocializacion",
+      statusId: "socializacionStatus312",
+      activeButtonText: "Guardar respuestas",
+      lockedButtonText: "Respuestas enviadas",
+      closedButtonText: "Entrega cerrada",
+    });
+  };
+
+  const originalGuardarBitacora311 = guardarBitacora311;
+  guardarBitacora311 = function () {
+    if (!window.activityDeadlineManager?.canSubmit({ pageFile: GUIDE_DATA_FILE, activityId: "bitacora311" })) {
+      return;
+    }
+    return originalGuardarBitacora311.apply(this, arguments);
+  };
+
+  const originalGuardarSocializacion312 = guardarSocializacion312;
+  guardarSocializacion312 = function () {
+    if (!window.activityDeadlineManager?.canSubmit({ pageFile: GUIDE_DATA_FILE, activityId: "socializacion312" })) {
+      return;
+    }
+    return originalGuardarSocializacion312.apply(this, arguments);
+  };
+
+  window.guardarBitacora311 = guardarBitacora311;
+  window.guardarSocializacion312 = guardarSocializacion312;
+})();
+
+window.addEventListener("activity-deadlines-updated", () => {
+  applyBitacoraLock();
+  applyBitacoraSocializacionLock();
+});

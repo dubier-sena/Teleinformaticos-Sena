@@ -1,6 +1,9 @@
 (function () {
   const portalAuth = window.portalAuth || null;
-  const pageFile = window.location.pathname.split("/").pop() || "guia.html";
+  const pageFile =
+    window.__RUNTIME_PAGE_FILE__ ||
+    window.location.pathname.split("/").pop() ||
+    "guia.html";
   const storageFileAliases = {
     "grupo-10a-guia-02-herramientas-informaticas-digitales.html": "10a_guia2.html",
     "grupo-10b-guia-02-herramientas-informaticas-digitales.html": "10b_guia2.html",

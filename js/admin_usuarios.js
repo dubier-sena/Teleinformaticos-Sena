@@ -1,5 +1,6 @@
 (function () {
   const auth = window.portalAuth;
+  const deadlineManager = window.activityDeadlineManager || null;
   if (!auth) {
     return;
   }
@@ -614,6 +615,88 @@
     const g6 = GUIDE6_FILES[fileName];
     if (g6) return g6.stateKey;
     return auth.GUIDE_PROGRESS_CONFIG?.[fileName]?.stateKey || "";
+  }
+
+  function getDeadlineConfigGuides(users) {
+    const ficha = String(users?.[0]?.ficha || "").trim();
+    if (!ficha || typeof auth.getGuidesForFicha !== "function" || !deadlineManager) {
+      return [];
+    }
+    return auth
+      .getGuidesForFicha(ficha)
+      .filter((fileName) => deadlineManager.getActivitiesForGuide(fileName).length);
+  }
+
+  function buildDeadlineConfigPanel(users) {
+    if (!deadlineManager || !users.length) {
+      return "";
+    }
+    const guideFiles = getDeadlineConfigGuides(users);
+    if (!guideFiles.length) {
+      return "";
+    }
+
+    const guideBlocks = guideFiles
+      .map((fileName) => {
+        const activities = deadlineManager.getActivitiesForGuide(fileName);
+        if (!activities.length) {
+          return "";
+        }
+        const rows = activities
+          .map((activity) => {
+            const policy = deadlineManager.getPolicy(fileName, activity.id);
+            const dueAt = String(policy?.dueAt || "").trim();
+            const updatedText = dueAt
+              ? `Fecha activa: ${escapeHtml(deadlineManager.formatDueAt(dueAt))}`
+              : "Sin fecha de entrega configurada";
+            return `
+              <div class="activity-deadline-row">
+                <div class="activity-deadline-label">
+                  <strong>${escapeHtml(activity.label)}</strong>
+                  <span>${updatedText}</span>
+                </div>
+                <input
+                  class="activity-deadline-input"
+                  type="datetime-local"
+                  value="${escapeHtml(dueAt)}"
+                  data-deadline-input="${escapeHtml(fileName)}::${escapeHtml(activity.id)}"
+                >
+                <button class="btn secondary" type="button"
+                  data-save-activity-deadline="${escapeHtml(fileName)}"
+                  data-activity-id="${escapeHtml(activity.id)}"
+                  data-activity-label="${escapeHtml(activity.label)}">
+                  Guardar fecha
+                </button>
+                <button class="btn ghost" type="button"
+                  data-clear-activity-deadline="${escapeHtml(fileName)}"
+                  data-activity-id="${escapeHtml(activity.id)}"
+                  data-activity-label="${escapeHtml(activity.label)}">
+                  Quitar fecha
+                </button>
+              </div>
+            `;
+          })
+          .join("");
+
+        return `
+          <article class="activity-deadline-guide">
+            <h3>${escapeHtml(auth.getGuideTitle(fileName))}</h3>
+            <p>Si no defines fecha, esta guia sigue funcionando como ahora. Solo se cierra la actividad cuando guardes una fecha aqui.</p>
+            <div class="activity-deadline-grid">${rows}</div>
+          </article>
+        `;
+      })
+      .join("");
+
+    return `
+      <section class="panel">
+        <h2>Fechas opcionales de entrega</h2>
+        <p class="activities-section-copy">
+          Esta configuracion es opcional. Solo afecta las actividades donde asignes una fecha de cierre.
+        </p>
+        <div class="activity-deadline-admin">${guideBlocks}</div>
+      </section>
+    `;
   }
 
   function patchGuideState(usernameKey, stateKey, keysToDelete, options = {}) {
@@ -3068,7 +3151,7 @@
       ? users.filter((u) => `${u.grupo}::${u.ficha}` === activeActivitiesSubtab)
       : users;
 
-    container.innerHTML = subTabsHtml + buildActivitiesPanels(groupUsers);
+    container.innerHTML = subTabsHtml + buildDeadlineConfigPanel(groupUsers) + buildActivitiesPanels(groupUsers);
   }
 
   function renderUsers() {
@@ -3107,12 +3190,60 @@
     redesSocializacionSummaries = {};
     redesQuizSummaries = {};
     renderUsers();
+    if (deadlineManager?.refreshPolicies) {
+      await deadlineManager.refreshPolicies(true);
+    }
     await Promise.all([
       hydrateGuide2WordSearchSummaries(allUsers),
       hydrateFichaCasoSummaries(allUsers),
       hydrateRedesSocializacionSummaries(allUsers),
       hydrateRedesQuizSummaries(allUsers),
     ]);
+    renderUsers();
+  }
+
+  async function handleSaveActivityDeadline(button) {
+    if (!deadlineManager) {
+      setFeedback("La configuracion de fechas no esta disponible.", "error");
+      return;
+    }
+    const fileName = button.getAttribute("data-save-activity-deadline") || "";
+    const activityId = button.getAttribute("data-activity-id") || "";
+    const activityLabel = button.getAttribute("data-activity-label") || activityId;
+    const input = Array.from(document.querySelectorAll("[data-deadline-input]")).find(
+      (element) => element.getAttribute("data-deadline-input") === `${fileName}::${activityId}`
+    );
+    const dueAt = String(input?.value || "").trim();
+    if (!dueAt) {
+      setFeedback(`Indica la fecha de cierre para "${activityLabel}".`, "error");
+      return;
+    }
+    const session = auth.getCurrentSession?.();
+    await deadlineManager.savePolicy(
+      fileName,
+      activityId,
+      dueAt,
+      session?.user?.usernameKey || session?.usernameKey || "admin"
+    );
+    setFeedback(`Fecha de entrega guardada para "${activityLabel}".`, "success");
+    renderUsers();
+  }
+
+  async function handleClearActivityDeadline(button) {
+    if (!deadlineManager) {
+      setFeedback("La configuracion de fechas no esta disponible.", "error");
+      return;
+    }
+    const fileName = button.getAttribute("data-clear-activity-deadline") || "";
+    const activityId = button.getAttribute("data-activity-id") || "";
+    const activityLabel = button.getAttribute("data-activity-label") || activityId;
+    const session = auth.getCurrentSession?.();
+    await deadlineManager.clearPolicy(
+      fileName,
+      activityId,
+      session?.user?.usernameKey || session?.usernameKey || "admin"
+    );
+    setFeedback(`Fecha de entrega eliminada para "${activityLabel}".`, "success");
     renderUsers();
   }
 
@@ -3387,6 +3518,18 @@
       const unlockActivityButton = event.target.closest("[data-unlock-activity]");
       if (unlockActivityButton) {
         await handleUnlockActivity(unlockActivityButton);
+        return;
+      }
+
+      const saveDeadlineButton = event.target.closest("[data-save-activity-deadline]");
+      if (saveDeadlineButton) {
+        await handleSaveActivityDeadline(saveDeadlineButton);
+        return;
+      }
+
+      const clearDeadlineButton = event.target.closest("[data-clear-activity-deadline]");
+      if (clearDeadlineButton) {
+        await handleClearActivityDeadline(clearDeadlineButton);
         return;
       }
 

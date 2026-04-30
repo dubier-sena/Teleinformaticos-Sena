@@ -17,7 +17,7 @@ const EXPECTED_VARIANTS = {
     inst: "Institucion Educativa Santa Barbara",
     title: "Quiz 3.2.1.H | Redes Santa Barbara 10A",
     cloudFileName: "sb_10a_redes.html",
-    backLink: "santa-barbara-10a-guia-02-redes-rap01.html#contexto",
+    backLink: "guia.html?g=santa-barbara-10a-guia-02-redes-rap01.html#contexto",
   },
   "redes-rap01-quiz-10b": {
     template: "redes-rap01-quiz.template.html",
@@ -27,7 +27,7 @@ const EXPECTED_VARIANTS = {
     inst: "Institucion Educativa Santa Barbara",
     title: "Quiz 3.2.1.H | Redes Santa Barbara 10B",
     cloudFileName: "sb_10b_redes.html",
-    backLink: "santa-barbara-10b-guia-02-redes-rap01.html#contexto",
+    backLink: "guia.html?g=santa-barbara-10b-guia-02-redes-rap01.html#contexto",
   },
   "redes-ip-quiz-10a": {
     template: "redes-ip-quiz.template.html",
@@ -37,7 +37,7 @@ const EXPECTED_VARIANTS = {
     inst: "Institucion Educativa Santa Barbara",
     title: "Quiz 3.3.H | Parámetros de Red Santa Barbara 10A",
     cloudFileName: "sb_10a_redes.html",
-    backLink: "santa-barbara-10a-guia-02-redes-rap01.html#apropiacion",
+    backLink: "guia.html?g=santa-barbara-10a-guia-02-redes-rap01.html#apropiacion",
   },
   "redes-ip-quiz-10b": {
     template: "redes-ip-quiz.template.html",
@@ -47,7 +47,7 @@ const EXPECTED_VARIANTS = {
     inst: "Institucion Educativa Santa Barbara",
     title: "Quiz 3.3.H | Parámetros de Red Santa Barbara 10B",
     cloudFileName: "sb_10b_redes.html",
-    backLink: "santa-barbara-10b-guia-02-redes-rap01.html#apropiacion",
+    backLink: "guia.html?g=santa-barbara-10b-guia-02-redes-rap01.html#apropiacion",
   },
   "guia2-matriz-322-10a": {
     template: "guia-02-matriz-322.template.html",
@@ -56,7 +56,7 @@ const EXPECTED_VARIANTS = {
     ficha: "3441939",
     inst: "Institucion Educativa Jhon F. Kennedy",
     title: "Matriz de Diagnóstico Digital | Actividad 3.2.2 | Guía 2 | Grupo 10A",
-    backLink: "grupo-10a-guia-02-herramientas-informaticas-digitales.html#contextualizacion",
+    backLink: "guia.html?g=grupo-10a-guia-02-herramientas-informaticas-digitales.html#contextualizacion",
   },
   "guia2-matriz-322-10b": {
     template: "guia-02-matriz-322.template.html",
@@ -65,7 +65,7 @@ const EXPECTED_VARIANTS = {
     ficha: "3441942",
     inst: "Institucion Educativa Jhon F. Kennedy",
     title: "Matriz de Diagnóstico Digital | Actividad 3.2.2 | Guía 2 | Grupo 10B",
-    backLink: "grupo-10b-guia-02-herramientas-informaticas-digitales.html#contextualizacion",
+    backLink: "guia.html?g=grupo-10b-guia-02-herramientas-informaticas-digitales.html#contextualizacion",
   },
 };
 

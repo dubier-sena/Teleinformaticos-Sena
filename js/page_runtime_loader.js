@@ -5,6 +5,11 @@
     return window.location.pathname.split("/").pop() || "pagina.html";
   }
 
+  function routePageMatches(context) {
+    const current = currentPageFile();
+    return context.pageFile === current || runtimeRequest.routePageFile === current;
+  }
+
   async function fetchJson(url) {
     if (
       window.__PAGE_RUNTIME_CONTEXTS__ &&
@@ -118,7 +123,7 @@
       throw new Error("La familia solicitada no coincide con el contexto publico.");
     }
 
-    if (context.pageFile !== currentPageFile()) {
+    if (!routePageMatches(context)) {
       throw new Error("El wrapper no coincide con el contexto solicitado.");
     }
 

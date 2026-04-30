@@ -335,6 +335,14 @@
     return GUIDE_TITLES[fileName] || fileName;
   }
 
+  function getGuideHref(fileName) {
+    const cleanFile = normalizeText(fileName);
+    if (!cleanFile) {
+      return "#";
+    }
+    return "guia.html?g=" + encodeURIComponent(cleanFile);
+  }
+
   function getGuidesForFicha(ficha) {
     return (getFichaInfo(ficha)?.guias || []).slice();
   }
@@ -1566,6 +1574,7 @@ window.portalAuth = {
     getStudentGuideProgress,
     getStudentGuideSummaries,
     getGuideTitle,
+    getGuideHref,
     getGuidesForFicha,
     getSelectionForFicha,
     getFichaInfo,

@@ -3686,3 +3686,90 @@ body.sb-hidden .btn-sb-expand {
     box-shadow: none;
   }
 }
+
+.activity-deadline-note {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #cfe8d4;
+  background: #f4fbf6;
+  color: #1b5e20;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.activity-deadline-note.is-closed {
+  border-color: #fecaca;
+  background: #fff7f7;
+  color: #b91c1c;
+}
+
+.activity-deadline-admin-inline {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border: 1px dashed #b8e0c6;
+  border-radius: 12px;
+  background: #f8fbff;
+}
+
+.activity-deadline-admin-inline__head {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 0.8rem;
+  color: #486172;
+}
+
+.activity-deadline-admin-inline__head strong {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 54px;
+  min-height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: #eef8f2;
+  color: #1b5e20;
+  font-size: 0.74rem;
+}
+
+.activity-deadline-admin-inline__body {
+  display: grid;
+  grid-template-columns: minmax(0, 220px) auto auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.activity-deadline-admin-inline__input {
+  min-height: 40px;
+  border-radius: 10px;
+  border: 1px solid #d0dce7;
+  padding: 0 12px;
+  font: inherit;
+  width: 100%;
+}
+
+.activity-deadline-admin-inline__btn {
+  min-height: 40px;
+  border: none;
+  border-radius: 10px;
+  padding: 0 14px;
+  background: #0f766e;
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.activity-deadline-admin-inline__btn.ghost {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+@media (max-width: 768px) {
+  .activity-deadline-admin-inline__body {
+    grid-template-columns: 1fr;
+  }
+}

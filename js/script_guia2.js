@@ -1,4 +1,5 @@
-const PAGE_FILE = window.location.pathname.split("/").pop().toLowerCase() || "guia.html";
+﻿const PAGE_FILE =
+  (window.__RUNTIME_PAGE_FILE__ || window.location.pathname.split("/").pop() || "guia.html").toLowerCase();
 const STORAGE_FILE_ALIASES = {
   "grupo-10a-guia-02-herramientas-informaticas-digitales.html": "10a_guia2.html",
   "grupo-10a-guia-02-actividad-4-formulario.html": "10a_guia2.html",
@@ -404,7 +405,7 @@ const supportTools = [
     type: "Drive",
     description:
       "Instalador del hipervisor usado para practicar virtualizacion e instalaciones controladas.",
-    cta: "Abrir en Drive ↗",
+    cta: "Abrir en Drive â†—",
   },
 ];
 
@@ -2004,8 +2005,8 @@ function initializeWordSearchGame() {
   document.getElementById("wordSearchReset")?.addEventListener("click", resetWordSearchGame);
   document.getElementById("wordSearchFullscreen")?.addEventListener("click", toggleWordSearchFullscreen);
 
-  // En móvil (<600 px) activar pantalla completa automáticamente para que
-  // las celdas sean más grandes y la selección táctil sea precisa.
+  // En mÃ³vil (<600 px) activar pantalla completa automÃ¡ticamente para que
+  // las celdas sean mÃ¡s grandes y la selecciÃ³n tÃ¡ctil sea precisa.
   if (window.innerWidth < 600 && !wordSearchFullscreenActive) {
     window.setTimeout(() => setWordSearchFullscreen(true), 300);
   }
@@ -3344,7 +3345,7 @@ const ACTIVITY_CASE_ASSIGNMENTS = {
         number: 3,
         title: "Estudio Creativo Brillo Digital - Pauna",
         lines: [
-          ["Actor productivo", "Emprendimiento que diseña piezas para redes sociales, maneja fotos de clientes y comparte archivos por enlaces."],
+          ["Actor productivo", "Emprendimiento que diseÃ±a piezas para redes sociales, maneja fotos de clientes y comparte archivos por enlaces."],
           ["Riesgos principales", "Enlaces publicos sin control, uso de cuentas personales para trabajo, contrasenas repetidas y perdida de archivos de clientes."],
           ["Situacion critica", "La emprendedora comparte carpetas completas con clientes y deja enlaces abiertos sin fecha de cierre."],
           ["Para la guia", "Incluye recomendaciones sobre permisos de Drive, privacidad de datos, contrasenas distintas y separacion entre cuentas personales y laborales."],
@@ -4009,7 +4010,7 @@ function openGuide5ExportModal(mode) {
 
   const config = getGuide5ExportConfig(mode);
   guide5ExportMode = mode;
-  title.textContent = `📄 Exportar ${config.title}`;
+  title.textContent = `ðŸ“„ Exportar ${config.title}`;
   description.textContent = config.description;
   input.value = getCurrentLearnerName();
   input.classList.remove("error");
@@ -4111,19 +4112,28 @@ function readStoreValue(key) {
   return String(field.value || "").trim();
 }
 
+function applyOptionalDeadlineGate(activityId, options) {
+  if (!window.activityDeadlineManager?.applyAvailability) {
+    return { blocked: false, state: "none", hasDeadline: false };
+  }
+  return window.activityDeadlineManager.applyAvailability({
+    pageFile: GUIDE_DATA_FILE,
+    activityId,
+    ...options,
+  });
+}
+
 function applyExtensionesLock() {
   const locked = Boolean(state["extensiones331-locked"]);
-  EXTENSION_ACTIVITY_STORES.forEach((key) => {
-    const el = document.querySelector(`[data-store="${key}"]`);
-    if (!el) return;
-    el.disabled = locked;
-    el.style.opacity = locked ? "0.75" : "";
+  applyOptionalDeadlineGate("extensiones331", {
+    isLocked: locked,
+    fieldSelector: EXTENSION_ACTIVITY_STORES.map((key) => `[data-store="${key}"]`).join(","),
+    buttonId: "btnGuardarExtensiones",
+    statusId: "extensionesStatus331",
+    activeButtonText: "Guardar respuestas",
+    lockedButtonText: "Respuestas enviadas",
+    closedButtonText: "Entrega cerrada",
   });
-  const btn = document.getElementById("btnGuardarExtensiones");
-  if (btn) {
-    btn.disabled = locked;
-    btn.textContent = locked ? "Respuestas enviadas" : "Guardar respuestas";
-  }
   const status = document.getElementById("extensionesStatus331");
   if (status) {
     status.style.display = locked ? "block" : "none";
@@ -4131,6 +4141,9 @@ function applyExtensionesLock() {
 }
 
 function guardarExtensiones331() {
+  if (!window.activityDeadlineManager?.canSubmit({ pageFile: GUIDE_DATA_FILE, activityId: "extensiones331" })) {
+    return;
+  }
   const empty = EXTENSION_ACTIVITY_STORES.filter((key) => !readStoreValue(key));
   if (empty.length > 0) {
     alert("Por favor completa la tabla y los campos de analisis antes de guardar.");
@@ -4149,17 +4162,15 @@ window.guardarExtensiones331 = guardarExtensiones331;
 
 function applySistemasLock() {
   const locked = Boolean(state["sistemas332-locked"]);
-  SYSTEM_ACTIVITY_STORES.forEach((key) => {
-    const el = document.querySelector(`[data-store="${key}"]`);
-    if (!el) return;
-    el.disabled = locked;
-    el.style.opacity = locked ? "0.75" : "";
+  applyOptionalDeadlineGate("sistemas332", {
+    isLocked: locked,
+    fieldSelector: SYSTEM_ACTIVITY_STORES.map((key) => `[data-store="${key}"]`).join(","),
+    buttonId: "btnGuardarSistemas",
+    statusId: "sistemasStatus332",
+    activeButtonText: "Guardar respuestas",
+    lockedButtonText: "Respuestas enviadas",
+    closedButtonText: "Entrega cerrada",
   });
-  const btn = document.getElementById("btnGuardarSistemas");
-  if (btn) {
-    btn.disabled = locked;
-    btn.textContent = locked ? "Respuestas enviadas" : "Guardar respuestas";
-  }
   const status = document.getElementById("sistemasStatus332");
   if (status) {
     status.style.display = locked ? "block" : "none";
@@ -4167,6 +4178,9 @@ function applySistemasLock() {
 }
 
 function guardarSistemas332() {
+  if (!window.activityDeadlineManager?.canSubmit({ pageFile: GUIDE_DATA_FILE, activityId: "sistemas332" })) {
+    return;
+  }
   const empty = SYSTEM_ACTIVITY_STORES.filter((key) => !readStoreValue(key));
   if (empty.length > 0) {
     alert("Por favor completa la tabla y los campos de analisis antes de guardar.");
@@ -4185,17 +4199,15 @@ window.guardarSistemas332 = guardarSistemas332;
 
 function applyColaborativasLock() {
   const locked = Boolean(state["colaborativas334-locked"]);
-  COLLABORATIVE_TOOLS_ACTIVITY_STORES.forEach((key) => {
-    const el = document.querySelector(`[data-store="${key}"]`);
-    if (!el) return;
-    el.disabled = locked;
-    el.style.opacity = locked ? "0.75" : "";
+  applyOptionalDeadlineGate("colaborativas334", {
+    isLocked: locked,
+    fieldSelector: COLLABORATIVE_TOOLS_ACTIVITY_STORES.map((key) => `[data-store="${key}"]`).join(","),
+    buttonId: "btnGuardarColaborativas",
+    statusId: "colaborativasStatus334",
+    activeButtonText: "Guardar respuestas",
+    lockedButtonText: "Respuestas enviadas",
+    closedButtonText: "Entrega cerrada",
   });
-  const btn = document.getElementById("btnGuardarColaborativas");
-  if (btn) {
-    btn.disabled = locked;
-    btn.textContent = locked ? "Respuestas enviadas" : "Guardar respuestas";
-  }
   const status = document.getElementById("colaborativasStatus334");
   if (status) {
     status.style.display = locked ? "" : "none";
@@ -4203,6 +4215,9 @@ function applyColaborativasLock() {
 }
 
 function guardarColaborativas334() {
+  if (!window.activityDeadlineManager?.canSubmit({ pageFile: GUIDE_DATA_FILE, activityId: "colaborativas334" })) {
+    return;
+  }
   const empty = COLLABORATIVE_TOOLS_ACTIVITY_STORES.filter((key) => !readStoreValue(key));
   if (empty.length > 0) {
     alert("Por favor completa la tabla comparativa antes de guardar.");
@@ -4221,16 +4236,18 @@ window.guardarColaborativas334 = guardarColaborativas334;
 
 function applyTransferRetoLock() {
   const locked = Boolean(state["transfer-reto-locked"]);
-  TRANSFER_RETO_ACTIVITY_STORES.forEach((key) => {
-    const el = document.querySelector(`[data-store="${key}"]`);
-    if (!el) return;
-    el.disabled = locked;
-    el.style.opacity = locked ? "0.75" : "";
+  applyOptionalDeadlineGate("transferReto341", {
+    isLocked: locked,
+    fieldSelector: TRANSFER_RETO_ACTIVITY_STORES.map((key) => `[data-store="${key}"]`).join(","),
+    buttonId: "btnGuardarTransferReto",
+    statusId: "transferRetoStatus",
+    activeButtonText: "Guardar respuestas",
+    lockedButtonText: "Respuestas enviadas",
+    closedButtonText: "Entrega cerrada",
   });
   const btn = document.getElementById("btnGuardarTransferReto");
   if (btn) {
-    btn.disabled = locked;
-    btn.textContent = locked ? "Respuestas enviadas" : "💾 Guardar respuestas";
+    btn.textContent = locked ? "Respuestas enviadas" : btn.textContent;
   }
   const status = document.getElementById("transferRetoStatus");
   if (status) {
@@ -4239,6 +4256,9 @@ function applyTransferRetoLock() {
 }
 
 function guardarTransferReto341() {
+  if (!window.activityDeadlineManager?.canSubmit({ pageFile: GUIDE_DATA_FILE, activityId: "transferReto341" })) {
+    return;
+  }
   const empty = TRANSFER_RETO_ACTIVITY_STORES.filter((key) => !readStoreValue(key));
   if (empty.length > 0) {
     alert("Por favor responde las dos preguntas del reto antes de guardar.");
@@ -4254,6 +4274,13 @@ function guardarTransferReto341() {
 }
 
 window.guardarTransferReto341 = guardarTransferReto341;
+
+window.addEventListener("activity-deadlines-updated", () => {
+  applyExtensionesLock();
+  applySistemasLock();
+  applyColaborativasLock();
+  applyTransferRetoLock();
+});
 
 function bindEvents() {
   document.addEventListener("input", (event) => {
@@ -4550,8 +4577,9 @@ window.guia2WordSearch = {
   getFoundColorClass: getWordSearchFoundColorClass,
 };
 
-// Expone una función para forzar sincronización inmediata con Firestore
+// Expone una funciÃ³n para forzar sincronizaciÃ³n inmediata con Firestore
 // (usada por guardarFormulario() al finalizar la Actividad 4)
 window.guia2SyncNow = () => syncCloudState(true);
+
 
 

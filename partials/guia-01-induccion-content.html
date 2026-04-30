@@ -2139,8 +2139,8 @@
 
 <script>
 let induccionRuntimeBooted = false;
-let portalAuth = null;
-const currentGuideFile = (window.location.pathname.split('/').pop() || '').toLowerCase();
+let induccionPortalAuth = null;
+const currentGuideFile = (window.__RUNTIME_PAGE_FILE__ || window.location.pathname.split('/').pop() || '').toLowerCase();
 const GUIDE_STORAGE_CONFIG = {
   'grupo-10a-guia-01-induccion.html': { prefix: '10a_guia', legacy: 'grupo-10a-guia-01-induccion' },
   'grupo-10b-guia-01-induccion.html': { prefix: '10b_guia', legacy: 'grupo-10b-guia-01-induccion' },
@@ -2248,7 +2248,7 @@ const LEGACY_PAGE_STORAGE_PREFIX = currentStorageConfig.legacy;
 
 function pageStorageKey(key) {
   const storageKey = `${PAGE_STORAGE_PREFIX}:${key}`;
-  return portalAuth ? portalAuth.getScopedStorageKey(storageKey, { area: 'guide-data' }) : storageKey;
+  return induccionPortalAuth ? induccionPortalAuth.getScopedStorageKey(storageKey, { area: 'guide-data' }) : storageKey;
 }
 
 function clearPageStorage(key) {
@@ -2305,7 +2305,7 @@ function updateProgress() {
   const pct = Math.round((done / total) * 100);
   document.getElementById('progressBar').style.width = pct + '%';
   document.getElementById('progressValue').textContent = pct + '%';
-  portalAuth?.writeGuideProgress?.(currentGuideFile, { completed: done, total, percent: pct });
+  induccionPortalAuth?.writeGuideProgress?.(currentGuideFile, { completed: done, total, percent: pct });
 }
 
 function updateNavDone() {
@@ -2434,15 +2434,15 @@ document.addEventListener('input', () => {
 function initInduccion() {
   if (induccionRuntimeBooted) return;
   induccionRuntimeBooted = true;
-  portalAuth = window.portalAuth || null;
-  if (portalAuth && !portalAuth.requireFileAccess(currentGuideFile, { redirectUrl: 'index.html' })) {
+  induccionPortalAuth = window.portalAuth || null;
+  if (induccionPortalAuth && !induccionPortalAuth.requireFileAccess(currentGuideFile, { redirectUrl: 'index.html' })) {
     document.documentElement.innerHTML = '';
     throw new Error('Acceso no autorizado a la guia.');
   }
   // Leer parámetros de URL (cuando el aprendiz llega desde index.html)
   // Garantiza que la ficha funcione con file:// y con el servidor
-  if (portalAuth && portalAuth.isStudentSession()) {
-    portalAuth.applySelection(portalAuth.getCurrentSelection({ ficha: '', inst: '', grupo: '' }));
+  if (induccionPortalAuth && induccionPortalAuth.isStudentSession()) {
+    induccionPortalAuth.applySelection(induccionPortalAuth.getCurrentSelection({ ficha: '', inst: '', grupo: '' }));
   } else {
     try {
       const _up = new URLSearchParams(window.location.search);
@@ -2555,7 +2555,7 @@ function inferGuideGrade() {
   const grupo = normalizeGuideGroup(localStorage.getItem('sena_grupo'));
   if (/^(10|11)/.test(grupo)) return grupo.slice(0, 2);
 
-  const file = (window.location.pathname.split('/').pop() || '').toLowerCase();
+  const file = (window.__RUNTIME_PAGE_FILE__ || window.location.pathname.split('/').pop() || '').toLowerCase();
   const match = file.match(/^(10|11)/);
   return match ? match[1] : '';
 }
@@ -2564,7 +2564,7 @@ function syncGuideNavigation() {
   const inst = localStorage.getItem('sena_inst') || '';
   const ficha = localStorage.getItem('sena_ficha') || '';
   const currentGroup = normalizeGuideGroup(localStorage.getItem('sena_grupo'));
-  const currentFile = (window.location.pathname.split('/').pop() || '').toLowerCase();
+  const currentFile = (window.__RUNTIME_PAGE_FILE__ || window.location.pathname.split('/').pop() || '').toLowerCase();
 
   document.querySelectorAll('.nav-guide[data-file]').forEach((link) => {
     const file = (link.dataset.file || '').toLowerCase();
@@ -2586,12 +2586,14 @@ function syncGuideNavigation() {
     if (inst && routeConfig) {
       params.set('grupo', targetGroup);
       params.set('ficha', routeConfig.ficha);
-      link.href = `${routeConfig.file}?${params.toString()}`;
+      params.set('g', routeConfig.file);
+      link.href = `guia.html?${params.toString()}`;
     } else {
       if (targetGroup) params.set('grupo', targetGroup);
       else if (currentGroup) params.set('grupo', currentGroup);
       if (ficha) params.set('ficha', ficha);
-      link.href = params.toString() ? `${file}?${params.toString()}` : file;
+      params.set('g', file);
+      link.href = `guia.html?${params.toString()}`;
     }
 
     const isCurrent = file === currentFile;
@@ -2935,7 +2937,7 @@ function _buildNextPanel(list) { if(!list||!list.length) return ''; return '<spa
 function _ensureChips() { const meta=document.querySelector('.topbar-meta'); if(!meta) return null; let cls=document.getElementById('guideScheduleNextClass'),dlv=document.getElementById('guideScheduleNextDelivery'); if(!cls){cls=document.createElement('span');cls.id='guideScheduleNextClass';meta.appendChild(cls);} if(!dlv){dlv=document.createElement('span');dlv.id='guideScheduleNextDelivery';meta.appendChild(dlv);} return {cls,dlv}; }
 function _renderChip(el,type,title,body,empty,panel) { el.className='meta-item guide-schedule-item guide-schedule-item--'+type+(empty?' is-empty':''); el.tabIndex=0; el.title=title+': '+body; el.innerHTML='<span class="guide-schedule-dot" aria-hidden="true"></span><span class="guide-schedule-copy"><strong>'+_escHtml(title)+'</strong><span>'+_escHtml(body)+'</span></span>'+(panel||''); }
 function initTopbarSchedule() {
-  const sel = (portalAuth&&portalAuth.getCurrentSelection)?portalAuth.getCurrentSelection({ficha:'',inst:'',grupo:''}):{ inst:localStorage.getItem('sena_inst')||'', grupo:localStorage.getItem('sena_grupo')||'', ficha:localStorage.getItem('sena_ficha')||'' };
+  const sel = (induccionPortalAuth&&induccionPortalAuth.getCurrentSelection)?induccionPortalAuth.getCurrentSelection({ficha:'',inst:'',grupo:''}):{ inst:localStorage.getItem('sena_inst')||'', grupo:localStorage.getItem('sena_grupo')||'', ficha:localStorage.getItem('sena_ficha')||'' };
   const campusEl=document.getElementById('topbarCampus');
   if(campusEl){ const txt=[_shortInst(sel.inst),sel.grupo].filter(Boolean).join(' | '); if(txt) campusEl.textContent=txt; }
   if(!_calRecords().length) return;

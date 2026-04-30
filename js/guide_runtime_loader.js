@@ -5,6 +5,11 @@
     return window.location.pathname.split("/").pop() || "guia.html";
   }
 
+  function routePageMatches(context) {
+    const current = currentPageFile();
+    return context.pageFile === current || runtimeRequest.routePageFile === current;
+  }
+
   async function fetchJson(url) {
     if (window.__GUIDE_RUNTIME_CONTEXTS__ && url === "data/guide_contexts.json") {
       return window.__GUIDE_RUNTIME_CONTEXTS__;
@@ -73,7 +78,7 @@
       throw new Error("El template solicitado no coincide con el contexto publico.");
     }
 
-    if (context.pageFile !== currentPageFile()) {
+    if (!routePageMatches(context)) {
       throw new Error("El wrapper no coincide con el contexto solicitado.");
     }
 
