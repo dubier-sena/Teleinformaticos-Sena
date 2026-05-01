@@ -413,6 +413,7 @@ const GUIDE2_DRIVE_ACTIVITY_TARGETS = [
   {
     activityNumber: "3.1.3",
     panelKey: "guide2-3-1-3",
+    deadlineActivityId: "analisis313",
     description:
       "Cuando termines la bitácora o el documento final de análisis, súbelo a la carpeta de Drive correspondiente a tu ficha.",
     note: "Entrega sugerida: bitácora individual o informe final de análisis del caso.",
@@ -420,6 +421,7 @@ const GUIDE2_DRIVE_ACTIVITY_TARGETS = [
   {
     activityNumber: "3.3.3",
     panelKey: "guide2-3-3-3",
+    deadlineActivityId: "suite333",
     description:
       "Sube a Drive el diagn?stico digital del negocio, el archivo de Excel, la carpeta compartida y las evidencias colaborativas de la actividad ofim?tica.",
     note:
@@ -428,6 +430,7 @@ const GUIDE2_DRIVE_ACTIVITY_TARGETS = [
   {
     activityNumber: "3.3.4",
     panelKey: "guide2-3-3-4",
+    deadlineActivityId: "colaborativas334",
     description:
       "Sube a Drive la tabla comparativa, la evidencia de Meet o Teams, la presentacion en PDF, la captura de WeTransfer y la lista de verificacion.",
     note:
@@ -436,6 +439,7 @@ const GUIDE2_DRIVE_ACTIVITY_TARGETS = [
   {
     activityNumber: "3.4.1",
     panelKey: "guide2-3-4-1",
+    deadlineActivityId: "transferReto341",
     description:
       "Sube a Drive el perfil digital, la herramienta construida, la gu?a de uso r?pido y la presentaci?n final de la soluci?n digital.",
     note: "Entrega sugerida: portafolio final organizado en las carpetas 01 a 04 y compartido con el instructor.",

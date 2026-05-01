@@ -4,24 +4,38 @@
   const CLOUD_FILE_NAME = "__activity_deadlines_v1";
   const catalog = {
     "grupo-10a-guia-02-herramientas-informaticas-digitales.html": [
+      { id: "analisis313", label: "Actividad 3 - Bitacora de analisis" },
       { id: "extensiones331", label: "Actividad 5 - Extensiones de archivo" },
       { id: "sistemas332", label: "Actividad 6 - Requerimientos minimos" },
+      { id: "suite333", label: "Actividad 7 - Suite ofimatica en accion" },
       { id: "colaborativas334", label: "Actividad 8 - Herramientas colaborativas" },
       { id: "transferReto341", label: "Actividad 10 - Reto final" },
     ],
     "grupo-10b-guia-02-herramientas-informaticas-digitales.html": [
+      { id: "analisis313", label: "Actividad 3 - Bitacora de analisis" },
       { id: "extensiones331", label: "Actividad 5 - Extensiones de archivo" },
       { id: "sistemas332", label: "Actividad 6 - Requerimientos minimos" },
+      { id: "suite333", label: "Actividad 7 - Suite ofimatica en accion" },
       { id: "colaborativas334", label: "Actividad 8 - Herramientas colaborativas" },
       { id: "transferReto341", label: "Actividad 10 - Reto final" },
     ],
     "grupo-11a-guia-06-planificar-informacion.html": [
       { id: "bitacora311", label: "Bitacora 3.1.1" },
       { id: "socializacion312", label: "Socializacion 3.1.2" },
+      { id: "tabla321", label: "Actividad 3.2.1 - Tabla resumen" },
+      { id: "mapa322", label: "Actividad 3.2.2 - Mapa conceptual" },
+      { id: "checklist331", label: "Actividad 3.3.1 - Checklist de instalacion" },
+      { id: "diagnostico332", label: "Actividad 3.3.2 - Diagnostico tecnico" },
+      { id: "presupuesto341", label: "Actividad 3.4.1 - Presupuesto final" },
     ],
     "grupo-11b-guia-06-planificar-informacion.html": [
       { id: "bitacora311", label: "Bitacora 3.1.1" },
       { id: "socializacion312", label: "Socializacion 3.1.2" },
+      { id: "tabla321", label: "Actividad 3.2.1 - Tabla resumen" },
+      { id: "mapa322", label: "Actividad 3.2.2 - Mapa conceptual" },
+      { id: "checklist331", label: "Actividad 3.3.1 - Checklist de instalacion" },
+      { id: "diagnostico332", label: "Actividad 3.3.2 - Diagnostico tecnico" },
+      { id: "presupuesto341", label: "Actividad 3.4.1 - Presupuesto final" },
     ],
     "santa-barbara-10a-guia-02-redes-rap01.html": [
       { id: "ip1", label: "Bloque IP 1" },
@@ -260,8 +274,25 @@
     return match?.label || activityId;
   }
 
-  function ensureAdminControlShell(button, fileName, activityId) {
-    if (!button || !button.parentElement || !isAdminSession()) {
+  function getMountNode(config, fallbackNode) {
+    if (config?.mountElement && typeof config.mountElement.appendChild === "function") {
+      return config.mountElement;
+    }
+    if (config?.mountSelector) {
+      const selected = document.querySelector(config.mountSelector);
+      if (selected) {
+        return selected;
+      }
+    }
+    if (fallbackNode?.parentElement) {
+      return fallbackNode.parentElement;
+    }
+    return null;
+  }
+
+  function ensureAdminControlShell(config, fallbackButton, fileName, activityId) {
+    const mountNode = getMountNode(config?.adminMount || null, fallbackButton);
+    if (!mountNode || !isAdminSession()) {
       return null;
     }
     const controlId = `activity-deadline-admin-${fileName.replace(/[^a-z0-9]+/gi, "-")}-${activityId}`;
@@ -284,7 +315,7 @@
         <button type="button" class="activity-deadline-admin-inline__btn ghost" data-deadline-clear-inline>Quitar</button>
       </div>
     `;
-    button.parentElement.insertBefore(shell, button.parentElement.firstChild);
+    mountNode.insertBefore(shell, mountNode.firstChild);
 
     const input = shell.querySelector(".activity-deadline-admin-inline__input");
     const saveButton = shell.querySelector("[data-deadline-save-inline]");
@@ -298,7 +329,7 @@
       }
       const session = window.portalAuth?.getCurrentSession?.();
       await savePolicy(fileName, activityId, dueAt, session?.user?.usernameKey || session?.usernameKey || "admin");
-      applyAvailability({ pageFile: fileName, activityId });
+      applyAvailability({ ...(config || {}), pageFile: fileName, activityId });
     });
 
     clearButton?.addEventListener("click", async function () {
@@ -307,7 +338,7 @@
       if (input) {
         input.value = "";
       }
-      applyAvailability({ pageFile: fileName, activityId });
+      applyAvailability({ ...(config || {}), pageFile: fileName, activityId });
     });
 
     return shell;
@@ -339,8 +370,9 @@
     };
   }
 
-  function ensureNotice(button, activityId) {
-    if (!button || !button.parentElement) {
+  function ensureNotice(config, fallbackButton, activityId) {
+    const mountNode = getMountNode(config?.noticeMount || null, fallbackButton);
+    if (!mountNode) {
       return null;
     }
     const noticeId = `activity-deadline-note-${activityId}`;
@@ -349,9 +381,39 @@
       notice = document.createElement("div");
       notice.id = noticeId;
       notice.className = "activity-deadline-note";
-      button.parentElement.insertBefore(notice, button.parentElement.firstChild);
+      mountNode.insertBefore(notice, mountNode.firstChild);
     }
     return notice;
+  }
+
+  function setElementDisabledState(element, disabled) {
+    if (!element) {
+      return;
+    }
+    if ("disabled" in element) {
+      element.disabled = disabled;
+    }
+    element.setAttribute("aria-disabled", disabled ? "true" : "false");
+    element.style.opacity = disabled ? "0.75" : "";
+    element.style.pointerEvents = disabled ? "none" : "";
+    element.style.cursor = disabled ? "not-allowed" : "";
+    if (element.tagName === "LABEL") {
+      element.style.pointerEvents = disabled ? "none" : "";
+    }
+    if (element.tagName === "A") {
+      if (disabled) {
+        if (!element.dataset.deadlineHref) {
+          element.dataset.deadlineHref = element.getAttribute("href") || "";
+        }
+        element.removeAttribute("href");
+        element.setAttribute("tabindex", "-1");
+      } else {
+        if (element.dataset.deadlineHref) {
+          element.setAttribute("href", element.dataset.deadlineHref);
+        }
+        element.removeAttribute("tabindex");
+      }
+    }
   }
 
   function toggleDisabledBySelector(selector, disabled) {
@@ -359,11 +421,7 @@
       return;
     }
     document.querySelectorAll(selector).forEach((element) => {
-      element.disabled = disabled;
-      element.style.opacity = disabled ? "0.75" : "";
-      if (element.tagName === "LABEL") {
-        element.style.pointerEvents = disabled ? "none" : "";
-      }
+      setElementDisabledState(element, disabled);
     });
   }
 
@@ -373,9 +431,7 @@
       if (!element) {
         return;
       }
-      element.disabled = disabled;
-      element.style.opacity = disabled ? "0.75" : "";
-      element.style.pointerEvents = disabled ? "none" : "";
+      setElementDisabledState(element, disabled);
     });
   }
 
@@ -392,8 +448,8 @@
     const blocked = !isLocked && evaluation.state === "closed";
     const button = config?.buttonId ? document.getElementById(config.buttonId) : null;
     const status = config?.statusId ? document.getElementById(config.statusId) : null;
-    const notice = ensureNotice(button, activityId);
-    const adminShell = ensureAdminControlShell(button, pageFile, activityId);
+    const notice = ensureNotice(config, button, activityId);
+    const adminShell = ensureAdminControlShell(config, button, pageFile, activityId);
 
     toggleDisabledBySelector(config?.fieldSelector || "", isLocked || blocked);
     toggleDisabledBySelector(config?.extraDisableSelector || "", isLocked || blocked);
@@ -524,6 +580,7 @@
     canSubmit,
     savePolicy,
     clearPolicy,
+    setElementDisabledState,
     refreshPolicies: loadPolicies,
     ready,
     __test: {
