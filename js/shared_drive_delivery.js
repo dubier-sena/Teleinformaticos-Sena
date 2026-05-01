@@ -134,10 +134,75 @@
   function buildPanelActivityContext(panel) {
     return Object.assign({}, getActivityContextFromNode(panel), {
       panelKey: panel.getAttribute("data-drive-panel") || "",
+      deadlineActivityId: panel.getAttribute("data-deadline-activity") || "",
       pageFile:
         window.__RUNTIME_PAGE_FILE__ ||
         window.location.pathname.split("/").pop() ||
         "",
+    });
+  }
+
+  function ensureDeliveryDeadlineSlots(wrapper) {
+    var adminSlot = wrapper.querySelector(".delivery-deadline-admin-slot");
+    if (!adminSlot) {
+      adminSlot = document.createElement("div");
+      adminSlot.className = "delivery-deadline-admin-slot";
+      wrapper.appendChild(adminSlot);
+    }
+
+    var noteSlot = wrapper.querySelector(".delivery-deadline-note-slot");
+    if (!noteSlot) {
+      noteSlot = document.createElement("div");
+      noteSlot.className = "delivery-deadline-note-slot";
+      wrapper.appendChild(noteSlot);
+    }
+
+    return { adminSlot: adminSlot, noteSlot: noteSlot };
+  }
+
+  function buildDeliveryActionSelector(panel) {
+    var panelKey = panel && panel.getAttribute("data-drive-panel");
+    if (!panelKey) {
+      return "";
+    }
+    return (
+      "[data-drive-panel='" +
+      String(panelKey) +
+      "'] .drive-action-group .btn-drive, " +
+      "[data-drive-panel='" +
+      String(panelKey) +
+      "'] .drive-action-group .btn-qr, " +
+      "[data-drive-panel='" +
+      String(panelKey) +
+      "'] .drive-action-group [data-apps-script-trigger]"
+    );
+  }
+
+  function applyDeliveryDeadlineState(panel, activityContext) {
+    if (!panel || !window.activityDeadlineManager?.applyAvailability) {
+      return { blocked: false, hasDeadline: false, state: "none" };
+    }
+
+    var deadlineActivityId =
+      (activityContext && activityContext.deadlineActivityId) ||
+      panel.getAttribute("data-deadline-activity") ||
+      "";
+
+    if (!deadlineActivityId) {
+      return { blocked: false, hasDeadline: false, state: "none" };
+    }
+
+    var slots = ensureDeliveryDeadlineSlots(panel);
+    return window.activityDeadlineManager.applyAvailability({
+      pageFile:
+        (activityContext && activityContext.pageFile) ||
+        window.__RUNTIME_PAGE_FILE__ ||
+        window.location.pathname.split("/").pop() ||
+        "",
+      activityId: deadlineActivityId,
+      noticeMount: { mountElement: slots.noteSlot },
+      adminMount: { mountElement: slots.adminSlot },
+      extraDisableSelector: buildDeliveryActionSelector(panel),
     });
   }
 
@@ -150,6 +215,7 @@
 
     renderDeliveryStatus(panel, record);
     applyDeliveryCompletion(activityNode, Boolean(record && record.status === "delivered"));
+    applyDeliveryDeadlineState(panel, activityContext);
   }
 
   function createDriveDeliveryPanel(config, handlers) {
@@ -159,6 +225,9 @@
     var wrapper = document.createElement("div");
     wrapper.className = "info-box drive-submit-box";
     wrapper.setAttribute("data-drive-panel", panelConfig.panelKey || "");
+    if (panelConfig.deadlineActivityId) {
+      wrapper.setAttribute("data-deadline-activity", panelConfig.deadlineActivityId);
+    }
     wrapper.style.marginTop = "16px";
 
     wrapper.appendChild(
@@ -207,6 +276,9 @@
     wrapper.appendChild(
       createTextElement("div", "drive-helper-note", helperParts.join(" "))
     );
+    if (panelConfig.deadlineActivityId) {
+      ensureDeliveryDeadlineSlots(wrapper);
+    }
     renderDeliveryStatus(wrapper, null);
 
     return wrapper;
@@ -251,6 +323,7 @@
       var panel = createDriveDeliveryPanel(
         {
           panelKey: config.panelKey,
+          deadlineActivityId: config.deadlineActivityId || activityContext.deadlineActivityId || "",
           description: config.description,
           note: config.note,
           helperSuffix: settings.helperSuffix || "",
@@ -298,6 +371,10 @@
     });
   });
 
+  window.addEventListener("activity-deadlines-updated", function () {
+    syncExistingDeliveryPanels(document);
+  });
+
   function syncExistingDeliveryPanels(root) {
     var scope = root || document;
     scope.querySelectorAll("[data-drive-panel]").forEach(function (panel) {
@@ -310,6 +387,7 @@
   }
 
   window.sharedDriveDelivery = {
+    applyDeliveryDeadlineState: applyDeliveryDeadlineState,
     createDriveDeliveryPanel: createDriveDeliveryPanel,
     findActivityBodyByNumber: findActivityBodyByNumber,
     getActivityContextFromNode: getActivityContextFromNode,

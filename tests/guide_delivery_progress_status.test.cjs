@@ -14,6 +14,9 @@ test("las entregas compartidas muestran un estado visible en la actividad", () =
   assert.match(sharedDrive, /function renderDeliveryStatus/);
   assert.match(sharedDrive, /Entrega registrada/);
   assert.match(sharedDrive, /document\.addEventListener\("guide-delivery-registered"/);
+  assert.match(sharedDrive, /delivery-deadline-admin-slot/);
+  assert.match(sharedDrive, /delivery-deadline-note-slot/);
+  assert.match(sharedDrive, /applyDeliveryDeadlineState/);
 });
 
 test("la entrega segura notifica a la guia cuando el archivo queda registrado", () => {
