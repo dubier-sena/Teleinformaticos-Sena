@@ -338,6 +338,7 @@ const GUIDE6_DRIVE_ACTIVITY_TARGETS = [
   {
     activityNumber: "3.1.1",
     panelKey: "guide6-3-1-1",
+    deadlineActivityId: "bitacora311",
     description:
       "Cuando termines la bitacora individual de analisis, subela a la carpeta de Drive correspondiente a tu ficha.",
     note: "Entrega sugerida: bitacora individual exportada a Word o version final del analisis.",
@@ -350,6 +351,7 @@ const GUIDE6_DRIVE_ACTIVITY_TARGETS = [
   {
     activityNumber: "3.2.1",
     panelKey: "guide6-3-2-1",
+    deadlineActivityId: "tabla321",
     description:
       "Sube a Drive la tabla resumen, el PDF o la evidencia final construida por el equipo para esta actividad.",
     note: "Entrega sugerida: tabla resumen del bloque tematico en PDF o archivo editable.",
@@ -362,6 +364,7 @@ const GUIDE6_DRIVE_ACTIVITY_TARGETS = [
   {
     activityNumber: "3.2.2",
     panelKey: "guide6-3-2-2",
+    deadlineActivityId: "mapa322",
     description:
       "Sube a Drive el mapa conceptual exportado a PDF y la evidencia que sustenta la socializacion del equipo.",
     note: "Entrega sugerida: mapa conceptual en PDF y soporte del producto presentado.",
@@ -374,6 +377,7 @@ const GUIDE6_DRIVE_ACTIVITY_TARGETS = [
   {
     activityNumber: "3.3.1",
     panelKey: "guide6-3-3-1",
+    deadlineActivityId: "checklist331",
     description:
       "Sube a Drive el checklist de instalacion, capturas y evidencias tecnicas de la configuracion realizada.",
     note: "Entrega sugerida: checklist diligenciado, capturas y registro de instalacion.",
@@ -386,6 +390,7 @@ const GUIDE6_DRIVE_ACTIVITY_TARGETS = [
   {
     activityNumber: "3.3.2",
     panelKey: "guide6-3-3-2",
+    deadlineActivityId: "diagnostico332",
     description:
       "Sube a Drive el diagnostico tecnico con hallazgos, recomendaciones y soporte de las herramientas usadas.",
     note: "Entrega sugerida: diagnostico final del equipo y carpeta de evidencias.",
@@ -398,6 +403,7 @@ const GUIDE6_DRIVE_ACTIVITY_TARGETS = [
   {
     activityNumber: "3.4.1",
     panelKey: "guide6-3-4-1",
+    deadlineActivityId: "presupuesto341",
     description:
       "Sube a Drive el presupuesto en PDF junto con el archivo editable y la justificacion tecnica final.",
     note: "Entrega sugerida: presupuesto PDF, archivo fuente y conclusion tecnica.",

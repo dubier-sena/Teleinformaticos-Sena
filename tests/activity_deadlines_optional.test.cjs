@@ -64,7 +64,9 @@ test("deadline manager catalog covers the supported guide activities", () => {
   const redes = manager.getActivitiesForGuide("santa-barbara-10a-guia-02-redes-rap01.html");
 
   assert.ok(guide2.some((item) => item.id === "colaborativas334"));
+  assert.ok(guide2.some((item) => item.id === "suite333"));
   assert.ok(guide6.some((item) => item.id === "bitacora311"));
+  assert.ok(guide6.some((item) => item.id === "tabla321"));
   assert.ok(redes.some((item) => item.id === "lab1"));
 });
 
@@ -82,6 +84,7 @@ test("admin and guide scripts wire the optional deadline controls", () => {
   const guide6Script = fs.readFileSync(path.join(REPO_ROOT, "js", "script_guia6.js"), "utf8");
   const redesScript = fs.readFileSync(path.join(REPO_ROOT, "js", "script_guia_redes.js"), "utf8");
   const deadlineScript = fs.readFileSync(path.join(REPO_ROOT, "js", "activity_deadlines.js"), "utf8");
+  const sharedDrive = fs.readFileSync(path.join(REPO_ROOT, "js", "shared_drive_delivery.js"), "utf8");
 
   assert.match(adminScript, /Fechas opcionales de entrega/);
   assert.match(adminScript, /data-save-activity-deadline/);
@@ -90,4 +93,6 @@ test("admin and guide scripts wire the optional deadline controls", () => {
   assert.match(redesScript, /installRedesDeadlineWrappers/);
   assert.match(deadlineScript, /activity-deadline-admin-inline/);
   assert.match(deadlineScript, /Guardar fecha/);
+  assert.match(sharedDrive, /delivery-deadline-admin-slot/);
+  assert.match(sharedDrive, /deadlineActivityId/);
 });
