@@ -268,11 +268,18 @@
                 <button type="button" onclick="exportarReflexion311()" class="btn-export-word">
                   &#128196; Exportar a Word
                 </button>
-                <button type="button" class="btn-drive"
-                  style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit;min-height:unset;border-radius:10px"
-                  onclick="subirReflexion311AlDrive()">
-                  &#128193; Subir al Drive
-                </button>
+              </div>
+              <div id="reflexion311DeliveryControls" class="info-box drive-submit-box" style="margin-top:16px">
+                <div class="label">Entrega de esta actividad en Drive</div>
+                <p>Cuando termines la reflexi&oacute;n y el documento en Word, sube esta evidencia desde el bot&oacute;n de entrega.</p>
+                <div class="drive-action-group">
+                  <button type="button" id="btnSubirReflexion311" class="btn-drive"
+                    style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit;min-height:unset;border-radius:10px"
+                    onclick="subirReflexion311AlDrive()">
+                    &#128193; Subir al Drive
+                  </button>
+                </div>
+                <div class="drive-helper-note">Entrega sugerida: documento Word de la reflexi&oacute;n individual de la actividad 3.1.1.</div>
               </div>
               <div id="reflexionStatus311" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
                 &#9989; Respuestas guardadas en Firebase. Ya no se pueden modificar.
@@ -291,6 +298,7 @@
                     &#128228; Enviar
                   </button>
                 </div>
+                <div id="socializacion311DeadlineControls" style="margin-top:12px"></div>
                 <div id="socializacionStatus311" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
                   &#9989; Notas enviadas al instructor. Ya no se pueden modificar.
                 </div>

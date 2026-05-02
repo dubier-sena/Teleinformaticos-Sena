@@ -58,9 +58,24 @@
         { key: "quiz-redes-33h", label: "Quiz IP" },
       ];
   const REDES_LAB_ACTIVITIES = [
+    { id: "reflexion311", label: "Reflexion 3.1.1", keys: ["reflexion-311-locked"] },
+    { id: "socializacion311", label: "Socializacion 3.1.1", keys: ["reflexion-socializacion-locked"] },
+    { id: "bloqueA", label: "Bloque A - Tipos de redes", keys: ["bloqueA-locked"] },
+    { id: "bloqueB", label: "Bloque B - Topologias de red", keys: ["bloqueB-locked"] },
+    { id: "bloqueC", label: "Bloque C - Medios de transmision", keys: ["bloqueC-locked"] },
+    { id: "bloqueD", label: "Bloque D - Dispositivos de interconexion", keys: ["bloqueD-locked"] },
+    { id: "bloqueE", label: "Bloque E - Modelo OSI y TCP/IP", keys: ["bloqueE-locked"] },
+    { id: "ip1", label: "Bloque IP 1", keys: ["ip1-locked"] },
+    { id: "ip3", label: "Bloque IP 3", keys: ["ip3-locked"] },
+    { id: "taller-ip-ej1", label: "Taller IP - Ejercicio 1", keys: ["taller-ip-ej1-locked"] },
+    { id: "taller-ip-ej2", label: "Taller IP - Ejercicio 2", keys: ["taller-ip-ej2-locked"] },
+    { id: "taller-ip-ej3", label: "Taller IP - Ejercicio 3", keys: ["taller-ip-ej3-locked"] },
+    { id: "taller-ip-ej4", label: "Taller IP - Ejercicio 4", keys: ["taller-ip-ej4-locked"] },
+    { id: "taller-ip-ej5", label: "Taller IP - Ejercicio 5", keys: ["taller-ip-ej5-locked"] },
     { id: "lab1", label: "Laboratorio 1 - Topologia estrella", keys: ["lab1-locked"] },
     { id: "lab2", label: "Laboratorio 2 - Topologia arbol", keys: ["lab2-locked"] },
     { id: "lab3", label: "Laboratorio 3 - Red hibrida", keys: ["lab3-locked"] },
+    { id: "social", label: "Socializacion final", keys: ["social-locked"] },
   ];
 
   const FICHA_CASO_FILES = {

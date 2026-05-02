@@ -4137,6 +4137,8 @@ function applyExtensionesLock() {
     activeButtonText: "Guardar respuestas",
     lockedButtonText: "Respuestas enviadas",
     closedButtonText: "Entrega cerrada",
+    adminMount: { mountSelector: "#extensiones331DeadlineControls" },
+    noticeMount: { mountSelector: "#extensiones331DeadlineControls" },
   });
   const status = document.getElementById("extensionesStatus331");
   if (status) {
@@ -4174,6 +4176,8 @@ function applySistemasLock() {
     activeButtonText: "Guardar respuestas",
     lockedButtonText: "Respuestas enviadas",
     closedButtonText: "Entrega cerrada",
+    adminMount: { mountSelector: "#sistemas332DeadlineControls" },
+    noticeMount: { mountSelector: "#sistemas332DeadlineControls" },
   });
   const status = document.getElementById("sistemasStatus332");
   if (status) {
@@ -4211,6 +4215,8 @@ function applyColaborativasLock() {
     activeButtonText: "Guardar respuestas",
     lockedButtonText: "Respuestas enviadas",
     closedButtonText: "Entrega cerrada",
+    adminMount: { mountSelector: "#colaborativas334DeadlineControls" },
+    noticeMount: { mountSelector: "#colaborativas334DeadlineControls" },
   });
   const status = document.getElementById("colaborativasStatus334");
   if (status) {
@@ -4248,6 +4254,8 @@ function applyTransferRetoLock() {
     activeButtonText: "Guardar respuestas",
     lockedButtonText: "Respuestas enviadas",
     closedButtonText: "Entrega cerrada",
+    adminMount: { mountSelector: "#transferReto341DeadlineControls" },
+    noticeMount: { mountSelector: "#transferReto341DeadlineControls" },
   });
   const btn = document.getElementById("btnGuardarTransferReto");
   if (btn) {

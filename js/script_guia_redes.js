@@ -3390,6 +3390,29 @@ function canSubmitRedesActivity(activityId) {
 
 (function installRedesDeadlineWrappers() {
   const uiConfigs = {
+    reflexion311: {
+      lockKey: "reflexion-311-locked",
+      fieldSelector: "#reflexionForm311 [data-store]",
+      extraDisableIds: ["btnSubirReflexion311"],
+      buttonId: "btnGuardarReflexion",
+      statusId: "reflexionStatus311",
+      activeButtonText: "Guardar respuestas",
+      lockedButtonText: "Respuestas guardadas",
+      closedButtonText: "Entrega cerrada",
+      noticeMount: { mountSelector: "#reflexion311DeliveryControls" },
+      adminMount: { mountSelector: "#reflexion311DeliveryControls" },
+    },
+    socializacion311: {
+      lockKey: "reflexion-socializacion-locked",
+      fieldSelector: "#socializacionTextarea311",
+      buttonId: "btnEnviarSocializacion",
+      statusId: "socializacionStatus311",
+      activeButtonText: "Enviar",
+      lockedButtonText: "Enviado",
+      closedButtonText: "Entrega cerrada",
+      noticeMount: { mountSelector: "#socializacion311DeadlineControls" },
+      adminMount: { mountSelector: "#socializacion311DeadlineControls" },
+    },
     ip1: { lockKey: "ip1-locked", fieldSelector: "[data-store^='ip1-']", extraDisableSelector: "#ip1ImagenLabel", extraDisableIds: ["ip1ImagenInput"], buttonId: "btnGuardarIP1", statusId: "ip1Status", activeButtonText: "Guardar respuestas", lockedButtonText: "Respuestas guardadas", closedButtonText: "Entrega cerrada" },
     ip3: { lockKey: "ip3-locked", fieldSelector: "[data-store^='ip3-']", extraDisableSelector: "#ip3ImagenLabel", extraDisableIds: ["ip3ImagenInput"], buttonId: "btnGuardarIP3", statusId: "ip3Status", activeButtonText: "Guardar respuestas", lockedButtonText: "Respuestas guardadas", closedButtonText: "Entrega cerrada" },
     "taller-ip-ej1": { lockKey: "taller-ip-ej1-locked", fieldSelector: "[data-store^='ej1-']", buttonId: "btnGuardarTallerIPEj1", statusId: "tallerIPEj1Status", activeButtonText: "Guardar respuestas", lockedButtonText: "Respuestas guardadas", closedButtonText: "Entrega cerrada" },
@@ -3423,6 +3446,8 @@ function canSubmitRedesActivity(activityId) {
     };
   }
 
+  wrapApply("applyReflexionLock", "reflexion311");
+  wrapApply("applyReflexionSocializacionLock", "socializacion311");
   wrapApply("applyBloqueIP1Lock", "ip1");
   wrapApply("applyBloqueIP3Lock", "ip3");
   wrapApply("applyTallerIPEj1Lock", "taller-ip-ej1");
@@ -3435,6 +3460,9 @@ function canSubmitRedesActivity(activityId) {
   wrapApply("applyLab3Lock", "lab3");
   wrapApply("applySocialLock", "social");
 
+  wrapAction("guardarReflexion311", "reflexion311");
+  wrapAction("subirReflexion311AlDrive", "reflexion311");
+  wrapAction("enviarSocializacion311", "socializacion311");
   wrapAction("guardarBloqueIP1", "ip1");
   wrapAction("subirImagenBloqueIP1", "ip1");
   wrapAction("guardarBloqueIP3", "ip3");

@@ -112,6 +112,7 @@ function initInduccion() {
   renderGlossary();
   hydrateFields();
   bindEvents();
+  installInduccionDeadlineControls();
   updateProgress();
   setupScrollSpy();
   initializeCloudStateSync();
@@ -482,6 +483,32 @@ function bindEvents() {
     window.location.reload();
   });
 }
+
+function installInduccionDeadlineControls() {
+  if (!window.activityDeadlineManager?.applyAvailability) {
+    return;
+  }
+
+  const configs = [
+    { activityId: "arbol312", mountSelector: "#arbol312DeadlineControls" },
+    { activityId: "sena331", mountSelector: "#sena331DeadlineControls" },
+    { activityId: "programa332", mountSelector: "#programa332DeadlineControls" },
+    { activityId: "plataformas334", mountSelector: "#plataformas334DeadlineControls" },
+    { activityId: "portafolio342", mountSelector: "#portafolio342DeadlineControls" },
+  ];
+
+  configs.forEach((config) => {
+    window.activityDeadlineManager.applyAvailability({
+      pageFile: PAGE_FILE,
+      activityId: config.activityId,
+      noticeMount: { mountSelector: config.mountSelector },
+      adminMount: { mountSelector: config.mountSelector },
+      extraDisableSelector: `[data-induccion-delivery="${config.activityId}"] [data-induccion-delivery-action]`,
+    });
+  });
+}
+
+window.addEventListener("activity-deadlines-updated", installInduccionDeadlineControls);
 
 function updateProgress() {
   const tracked = Array.from(document.querySelectorAll("[data-track]"));
