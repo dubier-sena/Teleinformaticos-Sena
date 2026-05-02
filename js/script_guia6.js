@@ -1528,6 +1528,8 @@ window.guardarSocializacion312 = guardarSocializacion312;
       activeButtonText: "Guardar respuestas",
       lockedButtonText: "Respuestas enviadas",
       closedButtonText: "Entrega cerrada",
+      adminMount: { mountSelector: "#bitacora311DeadlineControls" },
+      noticeMount: { mountSelector: "#bitacora311DeadlineControls" },
     });
   };
 
@@ -1542,6 +1544,8 @@ window.guardarSocializacion312 = guardarSocializacion312;
       activeButtonText: "Guardar respuestas",
       lockedButtonText: "Respuestas enviadas",
       closedButtonText: "Entrega cerrada",
+      adminMount: { mountSelector: "#socializacion312DeadlineControls" },
+      noticeMount: { mountSelector: "#socializacion312DeadlineControls" },
     });
   };
 
