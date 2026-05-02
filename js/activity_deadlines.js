@@ -3,6 +3,20 @@
   const CLOUD_SCOPE_KEY = "admin:activity-deadlines";
   const CLOUD_FILE_NAME = "__activity_deadlines_v1";
   const catalog = {
+    "grupo-10a-guia-01-induccion.html": [
+      { id: "arbol312", label: "Actividad 3.1.2 - El Arbol de la Vida" },
+      { id: "sena331", label: "Actividad 3.3.1 - Analisis de simbolos SENA" },
+      { id: "programa332", label: "Actividad 3.3.2 - Cuestionario diseno curricular" },
+      { id: "plataformas334", label: "Actividad 3.3.4 - Taller plataformas tecnologicas" },
+      { id: "portafolio342", label: "Actividad 3.4.2 - Portafolio de evidencias" },
+    ],
+    "grupo-10b-guia-01-induccion.html": [
+      { id: "arbol312", label: "Actividad 3.1.2 - El Arbol de la Vida" },
+      { id: "sena331", label: "Actividad 3.3.1 - Analisis de simbolos SENA" },
+      { id: "programa332", label: "Actividad 3.3.2 - Cuestionario diseno curricular" },
+      { id: "plataformas334", label: "Actividad 3.3.4 - Taller plataformas tecnologicas" },
+      { id: "portafolio342", label: "Actividad 3.4.2 - Portafolio de evidencias" },
+    ],
     "grupo-10a-guia-02-herramientas-informaticas-digitales.html": [
       { id: "analisis313", label: "Actividad 3 - Bitacora de analisis" },
       { id: "extensiones331", label: "Actividad 5 - Extensiones de archivo" },
@@ -37,7 +51,19 @@
       { id: "diagnostico332", label: "Actividad 3.3.2 - Diagnostico tecnico" },
       { id: "presupuesto341", label: "Actividad 3.4.1 - Presupuesto final" },
     ],
+    "grupo-11a-guia-05-herramientas-informaticas-digitales.html": [
+      { id: "guia5-311", label: "Actividad 3.1.1 - Bitacora o analisis del caso" },
+      { id: "guia5-331", label: "Actividad 3.3.1 - Evidencias de herramientas" },
+      { id: "guia5-341", label: "Actividad 3.4.1 - Informe final integrador" },
+    ],
+    "grupo-11b-guia-05-herramientas-informaticas-digitales.html": [
+      { id: "guia5-311", label: "Actividad 3.1.1 - Bitacora o analisis del caso" },
+      { id: "guia5-331", label: "Actividad 3.3.1 - Evidencias de herramientas" },
+      { id: "guia5-341", label: "Actividad 3.4.1 - Informe final integrador" },
+    ],
     "santa-barbara-10a-guia-02-redes-rap01.html": [
+      { id: "reflexion311", label: "Actividad 3.1.1 - Reflexion individual" },
+      { id: "socializacion311", label: "Actividad 3.1.1 - Socializacion" },
       { id: "ip1", label: "Bloque IP 1" },
       { id: "ip3", label: "Bloque IP 3" },
       { id: "taller-ip-ej1", label: "Taller IP - Ejercicio 1" },
@@ -51,6 +77,8 @@
       { id: "social", label: "Socializacion 3.1.1" },
     ],
     "santa-barbara-10b-guia-02-redes-rap01.html": [
+      { id: "reflexion311", label: "Actividad 3.1.1 - Reflexion individual" },
+      { id: "socializacion311", label: "Actividad 3.1.1 - Socializacion" },
       { id: "ip1", label: "Bloque IP 1" },
       { id: "ip3", label: "Bloque IP 3" },
       { id: "taller-ip-ej1", label: "Taller IP - Ejercicio 1" },
@@ -67,6 +95,19 @@
 
   let cachedSnapshot = { policies: {}, updatedAt: "", updatedBy: "" };
   let loadingPromise = null;
+  let nowProvider = null;
+  const pageFileAliases = {
+    "10a_guia.html": "grupo-10a-guia-01-induccion.html",
+    "10b_guia.html": "grupo-10b-guia-01-induccion.html",
+    "10a_guia2.html": "grupo-10a-guia-02-herramientas-informaticas-digitales.html",
+    "10b_guia2.html": "grupo-10b-guia-02-herramientas-informaticas-digitales.html",
+    "11a_guia.html": "grupo-11a-guia-05-herramientas-informaticas-digitales.html",
+    "11b_guia.html": "grupo-11b-guia-05-herramientas-informaticas-digitales.html",
+    "11a_guia6.html": "grupo-11a-guia-06-planificar-informacion.html",
+    "11b_guia6.html": "grupo-11b-guia-06-planificar-informacion.html",
+    "sb_10a_redes.html": "santa-barbara-10a-guia-02-redes-rap01.html",
+    "sb_10b_redes.html": "santa-barbara-10b-guia-02-redes-rap01.html",
+  };
 
   function cloneSnapshot(snapshot) {
     const source = snapshot && typeof snapshot === "object" ? snapshot : {};
@@ -239,11 +280,17 @@
   }
 
   function getActivitiesForGuide(fileName) {
-    return Array.isArray(catalog[fileName]) ? catalog[fileName].map((item) => ({ ...item })) : [];
+    const resolvedFileName = resolvePageFile(fileName);
+    return Array.isArray(catalog[resolvedFileName]) ? catalog[resolvedFileName].map((item) => ({ ...item })) : [];
+  }
+
+  function resolvePageFile(fileName) {
+    const clean = String(fileName || "").trim();
+    return pageFileAliases[clean] || clean;
   }
 
   function getPolicy(fileName, activityId) {
-    return cachedSnapshot.policies?.[fileName]?.[activityId] || null;
+    return cachedSnapshot.policies?.[resolvePageFile(fileName)]?.[activityId] || null;
   }
 
   function formatDueAt(dueAt) {
@@ -262,11 +309,6 @@
       hour: "numeric",
       minute: "2-digit",
     });
-  }
-
-  function isAdminSession() {
-    const session = window.portalAuth?.getCurrentSession?.();
-    return session?.role === "admin";
   }
 
   function getActivityLabel(fileName, activityId) {
@@ -288,6 +330,11 @@
       return fallbackNode.parentElement;
     }
     return null;
+  }
+
+  function isAdminSession() {
+    const session = window.portalAuth?.getCurrentSession?.();
+    return session?.role === "admin";
   }
 
   function ensureAdminControlShell(config, fallbackButton, fileName, activityId) {
@@ -360,7 +407,7 @@
         dueAt: "",
       };
     }
-    const now = nowValue instanceof Date ? nowValue : new Date();
+    const now = nowValue instanceof Date ? nowValue : (typeof nowProvider === "function" ? nowProvider() : new Date());
     const dueDate = new Date(dueAt);
     return {
       hasDeadline: true,
@@ -436,7 +483,7 @@
   }
 
   function applyAvailability(config) {
-    const pageFile = String(config?.pageFile || "").trim();
+    const pageFile = resolvePageFile(config?.pageFile || "");
     const activityId = String(config?.activityId || "").trim();
     if (!pageFile || !activityId) {
       return { blocked: false, hasDeadline: false, state: "none" };
@@ -451,7 +498,7 @@
     const notice = ensureNotice(config, button, activityId);
     const adminShell = ensureAdminControlShell(config, button, pageFile, activityId);
 
-    toggleDisabledBySelector(config?.fieldSelector || "", isLocked || blocked);
+    toggleDisabledBySelector(config?.fieldSelector || "", isLocked);
     toggleDisabledBySelector(config?.extraDisableSelector || "", isLocked || blocked);
     toggleDisabledByIds(config?.extraDisableIds || [], isLocked || blocked);
 
@@ -508,7 +555,7 @@
   }
 
   function canSubmit(config) {
-    const pageFile = String(config?.pageFile || "").trim();
+    const pageFile = resolvePageFile(config?.pageFile || "");
     const activityId = String(config?.activityId || "").trim();
     if (!pageFile || !activityId) {
       return true;
@@ -587,9 +634,14 @@
       normalizeDueAt,
       normalizePolicies,
       cloneSnapshot,
+      resolvePageFile,
+      setNowProvider(provider) {
+        nowProvider = typeof provider === "function" ? provider : null;
+      },
     },
   };
 
   loadPolicies(false).catch(function () {
   });
 })();
+

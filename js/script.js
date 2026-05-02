@@ -369,6 +369,7 @@ const GUIDE5_DRIVE_ACTIVITY_TARGETS = [
   {
     activityNumber: "3.1.1",
     panelKey: "guide5-3-1-1",
+    deadlineActivityId: "guia5-311",
     description:
       "Cuando termines la bitacora o el documento final de analisis, subelo a la carpeta de Drive correspondiente a tu ficha.",
     note: "Entrega sugerida: bitacora individual o informe final de analisis del caso.",
@@ -376,6 +377,7 @@ const GUIDE5_DRIVE_ACTIVITY_TARGETS = [
   {
     activityNumber: "3.3.1",
     panelKey: "guide5-3-3-1",
+    deadlineActivityId: "guia5-331",
     description:
       "Sube a Drive los archivos exportados a Word o la version final consolidada de las actividades de extensiones y requerimientos minimos.",
     note: "Entrega sugerida: Actividad 1, Actividad 2 o un archivo consolidado de ambas evidencias.",
@@ -383,6 +385,7 @@ const GUIDE5_DRIVE_ACTIVITY_TARGETS = [
   {
     activityNumber: "3.4.1",
     panelKey: "guide5-3-4-1",
+    deadlineActivityId: "guia5-341",
     description:
       "Sube a Drive la guia de instalacion, las capturas y el informe tecnico final de esta actividad integradora.",
     note: "Entrega sugerida: guia de instalacion, evidencias tecnicas e informe en formato IEEE.",
