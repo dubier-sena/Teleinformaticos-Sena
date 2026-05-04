@@ -98,6 +98,9 @@ test("las guias activas conservan la edicion de fechas dentro de la guia para ad
   const sharedDrive = read("js/shared_drive_delivery.js");
   const redesScript = read("js/script_guia_redes.js");
 
+  const guia5Partial = read("partials/guia-05-herramientas-content.html");
+  const guia5Script = read("js/script_guia5.js");
+
   assert.match(deadlineScript, /activity-deadline-admin-inline/);
   assert.match(deadlineScript, /Guardar fecha/);
   assert.match(inductionPartial, /id="arbol312DeadlineControls"/);
@@ -106,6 +109,13 @@ test("las guias activas conservan la edicion de fechas dentro de la guia para ad
   assert.match(sharedDrive, /delivery-deadline-admin-slot/);
   assert.match(redesScript, /adminMount:\s*\{\s*mountSelector:\s*"#reflexion311DeliveryControls"/);
   assert.match(redesScript, /adminMount:\s*\{\s*mountSelector:\s*"#socializacion311DeadlineControls"/);
+  assert.match(guia5Partial, /id="guia5311DeadlineControls"/);
+  assert.match(guia5Partial, /id="guia5331DeadlineControls"/);
+  assert.match(guia5Partial, /id="guia5341DeadlineControls"/);
+  assert.match(guia5Script, /installGuia5DeadlineControls/);
+  assert.match(guia5Script, /guia5-311/);
+  assert.match(guia5Script, /guia5-331/);
+  assert.match(guia5Script, /guia5-341/);
 });
 
 test("la guia de induccion ya no muestra el boton visible de guardar progreso", () => {
