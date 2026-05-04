@@ -115,11 +115,13 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
       <button class="admin-tab is-active" data-tab="usuarios" type="button">Usuarios</button>
       <button class="admin-tab" data-tab="avances" type="button">Avance de guias</button>
       <button class="admin-tab" data-tab="actividades" type="button">Actividades</button>
+      <button class="admin-tab" data-tab="notas" type="button">Juicios de evaluación</button>
     </nav>
 
     <section class="users-grid" id="users-container" data-tab-panel="usuarios" data-reveal></section>
     <section class="users-grid" id="progress-container" data-tab-panel="avances" hidden></section>
     <section class="activities-panel" id="activities-container" data-tab-panel="actividades" hidden></section>
+    <section class="activities-panel" id="grades-container" data-tab-panel="notas" hidden></section>
   </main>
 
   <div class="modal-shell" id="guide2-responses-modal" hidden>
@@ -145,6 +147,7 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
   <script src="js/redes_quiz_bank.js?v=20260421_1"></script>
   <script src="js/redes_lock_sync.js?v=20260428_1"></script>
   <script src="js/redes_quiz_unlock.js?v=20260422_1"></script>
-<script src="js/admin_usuarios.js?v=20260504_1"></script>
+  <script src="js/xlsx.full.min.js"></script>
+<script src="js/admin_usuarios.js?v=20260504_2"></script>
 </body>
 </html>

@@ -13,6 +13,7 @@
   let redesSocializacionSummaries = {};
   let redesQuizSummaries = {};
   let activeActivitiesSubtab = null;
+  let activeGradesGroup = null;
   let currentResponsesExport = null;
 
   const REDES_SB_CLOUD_FILES = {
@@ -3280,7 +3281,340 @@
       ? users.filter((u) => `${u.grupo}::${u.ficha}` === activeActivitiesSubtab)
       : users;
 
-    container.innerHTML = subTabsHtml + buildDeadlineConfigPanel(groupUsers) + buildGradesPanel(groupUsers) + buildActivitiesPanels(groupUsers);
+    container.innerHTML = subTabsHtml + buildDeadlineConfigPanel(groupUsers) + buildActivitiesPanels(groupUsers);
+  }
+
+  // ── Pestaña Juicios de evaluación ───────────────────────────────────────────
+
+  // Evidence→activityId maps por tipo de ficha dentro de cada guía.
+  // Cuando se sube un Excel, el parser detecta a qué guía pertenece leyendo
+  // las descripciones de las evidencias (fila 13-20, columna 3).
+  const EXCEL_GUIDE_SIGNATURES = [
+    {
+      guideFamily: "guia-01-induccion",
+      keywords: ["árbol de la vida", "arbol de la vida", "logo-símbolos", "logo-simbolos", "diseño curricular", "reglamento del aprendiz"],
+      // evidenceMap: evidencia número (1-based) → activityId
+      // Se determina dinámicamente leyendo las descripciones del Excel.
+      // Mapeo por descripción normalizada:
+      descToActivity: {
+        "arbol":        "arbol312",
+        "árbol":        "arbol312",
+        "logo":         "sena331",
+        "simbolo":      "sena331",
+        "símbolo":      "sena331",
+        "cuestionario": "programa332",
+        "diseño curricular": "programa332",
+        "diseno curricular": "programa332",
+        "reglamento":   "reglamento333",
+        "plataforma":   "plataformas334",
+        "portafolio":   "portafolio342",
+      },
+    },
+    {
+      guideFamily: "guia-02-herramientas",
+      keywords: ["extensiones", "sistemas operativos", "colaborativas", "reto de transferencia"],
+      descToActivity: {
+        "extensi":      "extensiones331",
+        "sistema operativo": "sistemas332",
+        "colaborativ":  "colaborativas334",
+        "reto":         "transferReto341",
+        "transferencia":"transferReto341",
+      },
+    },
+    {
+      guideFamily: "guia-redes-rap01",
+      keywords: ["tipos de redes", "topologías", "medios de transmisión", "dispositivos", "modelo osi", "laboratorio"],
+      descToActivity: {
+        "reflexi":      "reflexion311",
+        "socializaci":  "socializacion311",
+        "tipos de red": "bloqueA",
+        "topolog":      "bloqueB",
+        "medios":       "bloqueC",
+        "dispositivo":  "bloqueD",
+        "osi":          "bloqueE",
+        "ip 1":         "ip1",
+        "ip 3":         "ip3",
+        "laboratorio 1":"lab1",
+        "laboratorio 2":"lab2",
+        "laboratorio 3":"lab3",
+        "social":       "social",
+      },
+    },
+    {
+      guideFamily: "guia-06-planificar",
+      keywords: ["bitácora", "bitacora", "tabla resumen", "mapa conceptual", "checklist", "diagnóstico", "presupuesto"],
+      descToActivity: {
+        "bitácora":     "bitacora311",
+        "bitacora":     "bitacora311",
+        "socializaci":  "socializacion312",
+        "tabla resumen":"tabla321",
+        "mapa":         "mapa322",
+        "checklist":    "checklist331",
+        "diagnósti":    "diagnostico332",
+        "diagnostico":  "diagnostico332",
+        "presupuesto":  "presupuesto341",
+      },
+    },
+    {
+      guideFamily: "guia-05-herramientas",
+      keywords: ["bitácora de análisis", "bitacora de analisis", "evidencias de herramientas", "informe final integrador"],
+      descToActivity: {
+        "bitácora":     "guia5-311",
+        "bitacora":     "guia5-311",
+        "evidencia":    "guia5-331",
+        "informe":      "guia5-341",
+      },
+    },
+  ];
+
+  function normalizeForMatch(str) {
+    return String(str || "").toLowerCase()
+      .normalize("NFD").replace(/[̀-ͯ]/g, "")
+      .replace(/\s+/g, " ").trim();
+  }
+
+  function detectGuideSignature(evidenceDescriptions) {
+    // evidenceDescriptions: array of strings from col 3, rows 13-20
+    const combined = evidenceDescriptions.map(normalizeForMatch).join(" ");
+    return EXCEL_GUIDE_SIGNATURES.find((sig) =>
+      sig.keywords.some((kw) => combined.includes(normalizeForMatch(kw)))
+    ) || null;
+  }
+
+  function mapDescToActivity(desc, descToActivity) {
+    const norm = normalizeForMatch(desc);
+    for (const [key, actId] of Object.entries(descToActivity)) {
+      if (norm.includes(normalizeForMatch(key))) return actId;
+    }
+    return null;
+  }
+
+  function parseGradesFromWorkbook(wb) {
+    const wsName = wb.SheetNames[0];
+    const ws = wb.Sheets[wsName];
+    const data = window.XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+
+    // Find header rows
+    // Row 12 (0-based: 11): RAP, EVIDENCIA, DESCRIPCION...
+    // Row 22 (0-based: 21): NOMBRE DEL APRENDIZ, FECHA DE ENTREGA REAL, JUICIO DE EVALUACION
+    // Row 23 (0-based: 22): evidence numbers 1-16, 1-16
+    // Row 24+ (0-based: 23+): student data
+
+    // Collect evidence descriptions from rows 13-20 (0-based 12-19), col 3 (index 2)
+    const evidenceDescriptions = [];
+    const evidenceActivityMap = {}; // col index (0-based) → activityId
+
+    for (let r = 12; r <= 19; r++) {
+      const row = data[r] || [];
+      const evNum = String(row[1] || "").trim();
+      const desc = String(row[2] || "").trim();
+      if (evNum && desc) evidenceDescriptions.push(desc);
+    }
+
+    const sig = detectGuideSignature(evidenceDescriptions);
+    if (!sig) return { error: "No se reconoció el tipo de guía en este archivo." };
+
+    // Build colIndex → activityId map
+    // Evidence 1-16 grade columns start at col 19 (0-based) for evidence 1..16 in the JUICIO block
+    // From the Excel: row 22 col 3 = "FECHA DE ENTREGA REAL", col 19 = "JUICIO DE EVALUACION"
+    // Row 23: col 3=1, col4=2, ..., col19=1(juicio), col20=2...
+    // So juicio col for evidence N (1-based) = 19 + (N - 1)  [0-based]
+
+    // First map evidence numbers to activities from descriptions
+    const evNumToActivity = {};
+    for (let r = 12; r <= 19; r++) {
+      const row = data[r] || [];
+      const evNum = parseInt(String(row[1] || "").trim(), 10);
+      const desc = String(row[2] || "").trim();
+      if (!isNaN(evNum) && desc) {
+        const actId = mapDescToActivity(desc, sig.descToActivity);
+        if (actId) evNumToActivity[evNum] = actId;
+      }
+    }
+    // Also check second set (cols 21-22 area for R2,R4 evidences 5-16)
+    for (let r = 12; r <= 19; r++) {
+      const row = data[r] || [];
+      // Second block starts at col 21 for evidence number, col 22 for description
+      const evNum2 = parseInt(String(row[21] || "").trim(), 10);
+      const desc2 = String(row[22] || "").trim();
+      if (!isNaN(evNum2) && desc2) {
+        const actId = mapDescToActivity(desc2, sig.descToActivity);
+        if (actId) evNumToActivity[evNum2] = actId;
+      }
+    }
+
+    // Student rows start at index 23 (row 24 in Excel 1-based)
+    const JUICIO_COL_OFFSET = 19; // col 19 (0-based) = evidence 1 juicio
+    const NAME_COL = 0;           // col 0 (0-based) = NOMBRE DEL APRENDIZ (full name)
+    const STOP_KEYWORDS = ["juicio de evaluaci", "causas de deserci", "instructor", "ana lucelia", "dora lilia", "gladys forero", "luz edilsa", "orfidio", "fanny quiros"];
+
+    const studentGrades = []; // [{ name, grades: { activityId: "A"|"D" } }]
+
+    for (let r = 23; r < data.length; r++) {
+      const row = data[r] || [];
+      const rawName = String(row[NAME_COL] || "").trim();
+      if (!rawName || rawName.length < 4) continue;
+      const normName = normalizeForMatch(rawName);
+      if (STOP_KEYWORDS.some((kw) => normName.startsWith(normalizeForMatch(kw)))) continue;
+
+      const grades = {};
+      for (const [evNumStr, actId] of Object.entries(evNumToActivity)) {
+        const evNum = parseInt(evNumStr, 10);
+        const colIdx = JUICIO_COL_OFFSET + (evNum - 1);
+        const val = String(row[colIdx] || "").trim().toUpperCase();
+        if (val === "A" || val === "D") grades[actId] = val;
+      }
+
+      studentGrades.push({ name: rawName, grades });
+    }
+
+    return { guideFamily: sig.guideFamily, students: studentGrades };
+  }
+
+  function applyParsedGrades(guideFamily, students, allUsers) {
+    const gradesManager = window.activityGradesManager;
+    if (!gradesManager) return { saved: 0, unmatched: [] };
+
+    let saved = 0;
+    const unmatched = [];
+
+    students.forEach(({ name, grades }) => {
+      if (!Object.keys(grades).length) return;
+      const normExcel = normalizeForMatch(name);
+      // Match by normalized fullName (exact or apellidos-first)
+      let user = allUsers.find((u) => normalizeForMatch(u.fullName) === normExcel);
+      if (!user) {
+        const parts = normExcel.split(" ");
+        const apellidos = parts.slice(0, 2).join(" ");
+        user = allUsers.find((u) => {
+          const n = normalizeForMatch(u.fullName);
+          return n === apellidos || n.startsWith(apellidos + " ") || n.includes(apellidos);
+        });
+      }
+      if (!user) {
+        unmatched.push(name);
+        return;
+      }
+      // Merge with existing grades (don't overwrite entries not present in this file)
+      const existing = gradesManager.getStudentGrades(user.usernameKey, guideFamily) || {};
+      const merged = Object.assign({}, existing, grades);
+      gradesManager.setStudentGrades(user.usernameKey, guideFamily, merged);
+      saved++;
+    });
+
+    return { saved, unmatched };
+  }
+
+  function renderGradesTab(users) {
+    const container = getById("grades-container");
+    if (!container) return;
+
+    // Group selector
+    const groups = [];
+    const seen = new Set();
+    users.forEach((u) => {
+      const key = `${u.grupo}::${u.ficha}`;
+      if (!seen.has(key)) { seen.add(key); groups.push({ key, label: `${u.grupo} — Ficha ${u.ficha}` }); }
+    });
+
+    if (!activeGradesGroup || !groups.find((g) => g.key === activeGradesGroup)) {
+      activeGradesGroup = groups[0]?.key || null;
+    }
+
+    const groupSelectOptions = groups.map((g) =>
+      `<option value="${escapeHtml(g.key)}"${activeGradesGroup === g.key ? " selected" : ""}>${escapeHtml(g.label)}</option>`
+    ).join("");
+
+    const groupSelector = groups.length > 1
+      ? `<div class="grades-group-selector">
+           <label for="grades-group-select"><strong>Grupo / Ficha:</strong></label>
+           <select id="grades-group-select" class="activity-deadline-input" style="max-width:320px">
+             ${groupSelectOptions}
+           </select>
+         </div>`
+      : "";
+
+    const groupUsers = activeGradesGroup
+      ? users.filter((u) => `${u.grupo}::${u.ficha}` === activeGradesGroup)
+      : users;
+
+    container.innerHTML = `
+      <section class="panel">
+        <h2>Juicios de evaluación</h2>
+        <p class="activities-section-copy">
+          Importa el archivo Excel <strong>Plan de Trabajo Concertado</strong> para cargar
+          las notas automáticamente. También puedes editar cada nota directamente en la tabla.
+          Los cambios quedan guardados de inmediato y el aprendiz los ve al abrir su guía.
+        </p>
+
+        ${groupSelector}
+
+        <div class="grades-import-box" style="margin:20px 0;padding:16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px">
+          <p style="font-weight:600;margin:0 0 10px">📂 Importar desde Excel</p>
+          <p style="font-size:13px;color:#475569;margin:0 0 12px">
+            Acepta el archivo <em>Plan de Trabajo Concertado</em> (.xlsx).
+            Las notas se asignan automáticamente según el nombre del aprendiz.
+          </p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <label class="btn secondary" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px">
+              📄 Seleccionar Excel
+              <input type="file" accept=".xlsx,.xls" id="grades-excel-input" style="display:none">
+            </label>
+            <span id="grades-import-status" style="font-size:13px;color:#64748b"></span>
+          </div>
+        </div>
+
+        <div id="grades-table-area">
+          ${buildGradesPanel(groupUsers)}
+        </div>
+      </section>`;
+
+    // Wire file input
+    const fileInput = container.querySelector("#grades-excel-input");
+    if (fileInput) {
+      fileInput.addEventListener("change", async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const status = container.querySelector("#grades-import-status");
+        if (status) status.textContent = "Leyendo archivo...";
+        try {
+          const result = await importGradesFromExcelFile(file, allUsers);
+          if (result.error) {
+            if (status) status.textContent = "❌ " + result.error;
+          } else {
+            const msg = `✅ ${result.saved} aprendices actualizados.` +
+              (result.unmatched.length ? ` Sin coincidencia: ${result.unmatched.join(", ")}.` : "");
+            if (status) status.textContent = msg;
+            // Re-render table
+            const tableArea = container.querySelector("#grades-table-area");
+            if (tableArea) tableArea.innerHTML = buildGradesPanel(groupUsers);
+          }
+        } catch (err) {
+          if (status) status.textContent = "❌ Error al procesar: " + err.message;
+        }
+        fileInput.value = "";
+      });
+    }
+  }
+
+  async function importGradesFromExcelFile(file, users) {
+    if (!window.XLSX) return { error: "Librería XLSX no disponible." };
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const wb = window.XLSX.read(data, { type: "array" });
+          const parsed = parseGradesFromWorkbook(wb);
+          if (parsed.error) { resolve(parsed); return; }
+          const result = applyParsedGrades(parsed.guideFamily, parsed.students, users);
+          resolve(result);
+        } catch (err) {
+          resolve({ error: err.message });
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    });
   }
 
   function renderUsers() {
@@ -3292,6 +3626,8 @@
       renderProgressTab(users);
     } else if (tab === "actividades") {
       renderActivitiesTab(users);
+    } else if (tab === "notas") {
+      renderGradesTab(users);
     } else {
       renderUsersTab(users);
     }
@@ -3528,6 +3864,12 @@
       const gradeSelect = event.target.closest(".grades-panel-select");
       if (gradeSelect) {
         handleGradeChange(gradeSelect);
+        return;
+      }
+
+      if (event.target.id === "grades-group-select") {
+        activeGradesGroup = event.target.value || null;
+        renderUsers();
         return;
       }
     });
