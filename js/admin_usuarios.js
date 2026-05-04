@@ -785,9 +785,10 @@
           </tr>`;
       }).join("");
 
+      const isFirst = relevantFamilies.indexOf(family) === 0;
       return `
-        <article class="activity-deadline-article">
-          <h3 class="activity-deadline-guide-label">${escapeHtml(familyConfig.label)}</h3>
+        <details class="grades-guide-accordion"${isFirst ? " open" : ""}>
+          <summary><h3>${escapeHtml(familyConfig.label)}</h3></summary>
           <div class="grades-panel-table-wrap">
             <table class="grades-panel-table">
               <thead>
@@ -799,10 +800,10 @@
               <tbody>${studentRows}</tbody>
             </table>
           </div>
-        </article>`;
+        </details>`;
     }).join("");
 
-    return `<div class="activity-deadline-admin" id="gradesPanelSection">${familyBlocks}</div>`;
+    return `<div id="gradesPanelSection">${familyBlocks}</div>`;
   }
 
   function handleGradeChange(select) {
