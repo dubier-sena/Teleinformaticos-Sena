@@ -1216,13 +1216,57 @@ body.modal-open {
 }
 
 /* ── Panel de juicios de evaluación ── */
+/* Acordeón por guía */
+.grades-guide-accordion {
+  border: 1px solid var(--border-soft, #e2e8f0);
+  border-radius: 10px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.grades-guide-accordion summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  cursor: pointer;
+  background: var(--surface-2, #f8fafc);
+  font-weight: 600;
+  font-size: 14px;
+  list-style: none;
+  user-select: none;
+}
+
+.grades-guide-accordion summary::-webkit-details-marker { display: none; }
+
+.grades-guide-accordion summary::after {
+  content: "▸";
+  font-size: 12px;
+  color: var(--text-muted, #64748b);
+  transition: transform 0.2s;
+}
+
+.grades-guide-accordion[open] summary::after {
+  transform: rotate(90deg);
+}
+
+.grades-guide-accordion summary h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
 .grades-panel-table-wrap {
   overflow-x: auto;
-  margin-top: 12px;
+  margin: 0;
+  /* Necesario para que position:sticky funcione en las celdas */
+  position: relative;
 }
 
 .grades-panel-table {
-  width: 100%;
+  /* max-content hace que la tabla desborde y active el scroll */
+  width: max-content;
+  min-width: 100%;
   border-collapse: collapse;
   font-size: 13px;
 }
@@ -1234,18 +1278,19 @@ body.modal-open {
   font-weight: 600;
   border: 1px solid var(--border-soft, #e2e8f0);
   white-space: nowrap;
-  max-width: 140px;
+  max-width: 130px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .grades-panel-th--name {
-  min-width: 180px;
-  max-width: 220px;
+  min-width: 190px;
+  max-width: 190px;
   position: sticky;
   left: 0;
+  z-index: 2;
   background: var(--surface-2, #f8fafc);
-  z-index: 1;
+  box-shadow: 2px 0 4px -2px rgba(0,0,0,0.08);
 }
 
 .grades-panel-td {
@@ -1261,9 +1306,11 @@ body.modal-open {
   font-weight: 500;
   position: sticky;
   left: 0;
+  z-index: 1;
   background: var(--surface-1, #fff);
-  min-width: 180px;
-  max-width: 220px;
+  min-width: 190px;
+  max-width: 190px;
+  box-shadow: 2px 0 4px -2px rgba(0,0,0,0.08);
 }
 
 .grades-panel-table tbody tr:nth-child(even) .grades-panel-name,
