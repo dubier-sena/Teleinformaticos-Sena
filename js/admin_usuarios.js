@@ -802,16 +802,7 @@
         </article>`;
     }).join("");
 
-    return `
-      <section class="panel" id="gradesPanelSection">
-        <h2>Juicios de evaluación</h2>
-        <p class="activities-section-copy">
-          Registra o actualiza el juicio de cada actividad. Los cambios se guardan
-          automáticamente al cambiar el valor y quedan visibles para el aprendiz
-          la próxima vez que abra su guía.
-        </p>
-        <div class="activity-deadline-admin">${familyBlocks}</div>
-      </section>`;
+    return `<div class="activity-deadline-admin" id="gradesPanelSection">${familyBlocks}</div>`;
   }
 
   function handleGradeChange(select) {
@@ -3563,6 +3554,8 @@
             <span id="grades-import-status" style="font-size:13px;color:#64748b"></span>
           </div>
         </div>
+
+        <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0 20px">
 
         <div id="grades-table-area">
           ${buildGradesPanel(groupUsers)}
