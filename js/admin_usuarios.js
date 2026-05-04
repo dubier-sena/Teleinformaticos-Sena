@@ -714,6 +714,120 @@
     `;
   }
 
+  // ── Panel de juicios de evaluación ──────────────────────────────────────────
+
+  function buildGradesPanel(groupUsers) {
+    const gradesManager = window.activityGradesManager;
+    if (!gradesManager || !groupUsers.length) return "";
+
+    const catalog = gradesManager.GRADE_CATALOG || {};
+    const guideFamilies = Object.keys(catalog);
+    if (!guideFamilies.length) return "";
+
+    // Only show guide families that are relevant to the users in this group.
+    // Heuristic: check if any user has a guide whose filename contains the family key fragment.
+    const familyFragments = {
+      "guia-01-induccion":   ["induccion"],
+      "guia-02-herramientas": ["guia-02", "herramientas-inf"],
+      "guia-redes-rap01":    ["redes-rap01"],
+      "guia-05-herramientas": ["guia-05"],
+      "guia-06-planificar":  ["guia-06", "planificar"],
+    };
+
+    const userGuideFiles = new Set();
+    groupUsers.forEach((u) => {
+      (u.progress?.guides || []).forEach((g) => userGuideFiles.add(g.fileName));
+      (auth.getFichaConfig?.(u.ficha)?.guias || []).forEach((f) => userGuideFiles.add(f));
+    });
+
+    const relevantFamilies = guideFamilies.filter((family) => {
+      const frags = familyFragments[family] || [family];
+      return frags.some((frag) => {
+        for (const file of userGuideFiles) {
+          if (file.includes(frag)) return true;
+        }
+        return false;
+      });
+    });
+
+    if (!relevantFamilies.length) return "";
+
+    const familyBlocks = relevantFamilies.map((family) => {
+      const familyConfig = catalog[family];
+      const activities = familyConfig.activities || [];
+      if (!activities.length) return "";
+
+      const actCols = activities.map((a) =>
+        `<th class="grades-panel-th" title="${escapeHtml(a.label)}">${escapeHtml(a.label)}</th>`
+      ).join("");
+
+      const studentRows = groupUsers.map((user) => {
+        const currentGrades = gradesManager.getStudentGrades(user.usernameKey, family) || {};
+        const gradeCells = activities.map((a) => {
+          const val = currentGrades[a.id] || "";
+          const sel =
+            `<select class="grades-panel-select"
+               data-grades-username="${escapeHtml(user.usernameKey)}"
+               data-grades-family="${escapeHtml(family)}"
+               data-grades-activity="${escapeHtml(a.id)}">
+               <option value="">—</option>
+               <option value="A"${val === "A" ? " selected" : ""}>✅ Aprobado</option>
+               <option value="D"${val === "D" ? " selected" : ""}>❌ No aprobado</option>
+             </select>`;
+          return `<td class="grades-panel-td">${sel}</td>`;
+        }).join("");
+
+        return `
+          <tr>
+            <td class="grades-panel-name">${escapeHtml(user.fullName)}</td>
+            ${gradeCells}
+          </tr>`;
+      }).join("");
+
+      return `
+        <article class="activity-deadline-article">
+          <h3 class="activity-deadline-guide-label">${escapeHtml(familyConfig.label)}</h3>
+          <div class="grades-panel-table-wrap">
+            <table class="grades-panel-table">
+              <thead>
+                <tr>
+                  <th class="grades-panel-th grades-panel-th--name">Aprendiz</th>
+                  ${actCols}
+                </tr>
+              </thead>
+              <tbody>${studentRows}</tbody>
+            </table>
+          </div>
+        </article>`;
+    }).join("");
+
+    return `
+      <section class="panel" id="gradesPanelSection">
+        <h2>Juicios de evaluación</h2>
+        <p class="activities-section-copy">
+          Registra o actualiza el juicio de cada actividad. Los cambios se guardan
+          automáticamente al cambiar el valor y quedan visibles para el aprendiz
+          la próxima vez que abra su guía.
+        </p>
+        <div class="activity-deadline-admin">${familyBlocks}</div>
+      </section>`;
+  }
+
+  function handleGradeChange(select) {
+    const gradesManager = window.activityGradesManager;
+    if (!gradesManager) return;
+    const usernameKey = select.dataset.gradesUsername;
+    const family = select.dataset.gradesFamily;
+    const activityId = select.dataset.gradesActivity;
+    const grade = select.value;
+    if (!usernameKey || !family || !activityId) return;
+    gradesManager.setStudentActivityGrade(usernameKey, family, activityId, grade);
+    // Visual feedback
+    select.style.transition = "background 0.3s";
+    select.style.background = grade === "A" ? "#dcfce7" : grade === "D" ? "#fee2e2" : "#f1f5f9";
+    setTimeout(() => { select.style.background = ""; }, 1200);
+  }
+
   function patchGuideState(usernameKey, stateKey, keysToDelete, options = {}) {
     if (!stateKey || typeof auth.getStudentStorageKey !== "function") return false;
     const storageKey = auth.getStudentStorageKey(usernameKey, stateKey, { area: "guide-data" });
@@ -3166,7 +3280,7 @@
       ? users.filter((u) => `${u.grupo}::${u.ficha}` === activeActivitiesSubtab)
       : users;
 
-    container.innerHTML = subTabsHtml + buildDeadlineConfigPanel(groupUsers) + buildActivitiesPanels(groupUsers);
+    container.innerHTML = subTabsHtml + buildDeadlineConfigPanel(groupUsers) + buildGradesPanel(groupUsers) + buildActivitiesPanels(groupUsers);
   }
 
   function renderUsers() {
@@ -3408,6 +3522,14 @@
 
     getById("ficha-filter")?.addEventListener("change", () => {
       renderUsers();
+    });
+
+    document.addEventListener("change", (event) => {
+      const gradeSelect = event.target.closest(".grades-panel-select");
+      if (gradeSelect) {
+        handleGradeChange(gradeSelect);
+        return;
+      }
     });
 
     document.addEventListener("submit", async (event) => {
