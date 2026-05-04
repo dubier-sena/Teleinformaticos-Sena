@@ -1214,3 +1214,72 @@ body.modal-open {
     font-size: 13px;
   }
 }
+
+/* ── Panel de juicios de evaluación ── */
+.grades-panel-table-wrap {
+  overflow-x: auto;
+  margin-top: 12px;
+}
+
+.grades-panel-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.grades-panel-th {
+  background: var(--surface-2, #f8fafc);
+  padding: 8px 10px;
+  text-align: left;
+  font-weight: 600;
+  border: 1px solid var(--border-soft, #e2e8f0);
+  white-space: nowrap;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.grades-panel-th--name {
+  min-width: 180px;
+  max-width: 220px;
+  position: sticky;
+  left: 0;
+  background: var(--surface-2, #f8fafc);
+  z-index: 1;
+}
+
+.grades-panel-td {
+  padding: 6px 8px;
+  border: 1px solid var(--border-soft, #e2e8f0);
+  text-align: center;
+}
+
+.grades-panel-name {
+  padding: 6px 10px;
+  border: 1px solid var(--border-soft, #e2e8f0);
+  font-size: 12px;
+  font-weight: 500;
+  position: sticky;
+  left: 0;
+  background: var(--surface-1, #fff);
+  min-width: 180px;
+  max-width: 220px;
+}
+
+.grades-panel-table tbody tr:nth-child(even) .grades-panel-name,
+.grades-panel-table tbody tr:nth-child(even) .grades-panel-td {
+  background: var(--surface-2, #f8fafc);
+}
+
+.grades-panel-select {
+  border: 1px solid var(--border-soft, #e2e8f0);
+  border-radius: 6px;
+  padding: 4px 6px;
+  font: inherit;
+  font-size: 12px;
+  background: var(--surface-1, #fff);
+  cursor: pointer;
+  width: 100%;
+  min-width: 110px;
+  transition: background 0.3s;
+}

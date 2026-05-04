@@ -3773,3 +3773,33 @@ body.sb-hidden .btn-sb-expand {
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Nota de evaluación (Plan de Trabajo Concertado) ── */
+.activity-grade-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 8px;
+  border: 1px solid transparent;
+}
+.activity-grade-badge--aprobado {
+  background: #dcfce7;
+  border-color: #86efac;
+  color: #166534;
+}
+.activity-grade-badge--desaprobado {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #991b1b;
+}
+.activity-grade-badge--sin-nota {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #64748b;
+}
+.grade-badge-icon { font-size: 15px; flex-shrink: 0; }
+.grade-badge-text strong { font-weight: 700; }

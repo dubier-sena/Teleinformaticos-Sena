@@ -112,6 +112,8 @@ function initInduccion() {
   renderGlossary();
   hydrateFields();
   bindEvents();
+  renderInduccionDriveDeliveryPanel();
+  renderInduccionGradeBadges();
   installInduccionDeadlineControls();
   updateProgress();
   setupScrollSpy();
@@ -484,6 +486,74 @@ function bindEvents() {
   });
 }
 
+const INDUCCION_DRIVE_ACTIVITY_TARGETS = [
+  {
+    activityNumber: "3.1.2",
+    panelKey: "induccion-3-1-2",
+    deadlineActivityId: "arbol312",
+    description:
+      "Cuando termines el Árbol de la Vida, súbelo a la carpeta de Drive correspondiente a tu ficha.",
+    note: "Entrega sugerida: imagen o PDF del árbol dibujado.",
+    activityContext: {
+      activityTitle: "Árbol de la Vida",
+      fileNamePrefix: "Induccion_ArbolVida",
+      learnerNameMode: "full",
+    },
+  },
+  {
+    activityNumber: "3.3.1",
+    panelKey: "induccion-3-3-1",
+    deadlineActivityId: "sena331",
+    description:
+      "Sube el análisis de logo-símbolos del SENA a tu portafolio de evidencias en Drive.",
+    note: "Nombre sugerido: INDUCCION_1_Conociendo_el_SENA_[TuNombre]",
+    activityContext: {
+      activityTitle: "Conociendo el SENA — Análisis de Símbolos",
+      fileNamePrefix: "Induccion_ConocimientoSENA",
+      learnerNameMode: "full",
+    },
+  },
+  {
+    activityNumber: "3.3.2",
+    panelKey: "induccion-3-3-2",
+    deadlineActivityId: "programa332",
+    description:
+      "Sube el cuestionario del diseño curricular a tu carpeta de portafolio en Drive.",
+    note: "Nombre sugerido: Cuestionario_Diseno_Curricular_[TuNombre]",
+    activityContext: {
+      activityTitle: "El Programa de Formación — Cuestionario Diseño Curricular",
+      fileNamePrefix: "Induccion_CuestionarioCurricular",
+      learnerNameMode: "full",
+    },
+  },
+  {
+    activityNumber: "3.3.4",
+    panelKey: "induccion-3-3-4",
+    deadlineActivityId: "plataformas334",
+    description:
+      "Sube el taller de uso de plataformas (respuestas y capturas de acceso) a tu portafolio en Drive.",
+    note: "Entrega sugerida: documento con respuestas y capturas de pantalla.",
+    activityContext: {
+      activityTitle: "Plataformas del SENA — Taller de Uso",
+      fileNamePrefix: "Induccion_TallerPlataformas",
+      learnerNameMode: "full",
+    },
+  },
+  {
+    activityNumber: "3.4.2",
+    panelKey: "induccion-3-4-2",
+    deadlineActivityId: "portafolio342",
+    description:
+      "Comparte el enlace de tu portafolio en Drive y súbelo a la carpeta de la ficha para validación.",
+    note: "Verifica que los permisos permitan al instructor visualizar y comentar el contenido.",
+    activityContext: {
+      activityTitle: "Construcción del Portafolio de Evidencias en Drive",
+      fileNamePrefix: "Induccion_EnlacePortafolio",
+      learnerNameMode: "full",
+    },
+  },
+];
+
 function installInduccionDeadlineControls() {
   if (!window.activityDeadlineManager?.applyAvailability) {
     return;
@@ -502,13 +572,39 @@ function installInduccionDeadlineControls() {
       pageFile: PAGE_FILE,
       activityId: config.activityId,
       noticeMount: { mountSelector: config.mountSelector },
-      adminMount: { mountSelector: config.mountSelector },
-      extraDisableSelector: `[data-induccion-delivery="${config.activityId}"] [data-induccion-delivery-action]`,
     });
   });
 }
 
+function renderInduccionDriveDeliveryPanel() {
+  window.sharedDriveDelivery?.appendDriveDeliveryPanels({
+    targets: INDUCCION_DRIVE_ACTIVITY_TARGETS,
+    helperSuffix: "La carpeta se define automáticamente según la ficha activa.",
+    onDriveClick: openDriveFolder,
+    onQrClick: showDriveFolderQR,
+  });
+}
+
 window.addEventListener("activity-deadlines-updated", installInduccionDeadlineControls);
+
+// ── Notas de evaluación ──────────────────────────────────────────────────────
+// Delegado a activity_grades.js (cargado antes que este script).
+// grades_induccion.js provee datos semilla de respaldo (window.__GRADES_INDUCCION__).
+
+const INDUCCION_GRADE_ACTIVITIES = [
+  { activityId: "arbol312",      mountSelector: "#arbol312DeadlineControls" },
+  { activityId: "sena331",       mountSelector: "#sena331DeadlineControls" },
+  { activityId: "programa332",   mountSelector: "#programa332DeadlineControls" },
+  { activityId: "reglamento333", mountSelector: "#reglamento333GradeMount" },
+];
+
+function renderInduccionGradeBadges() {
+  window.activityGradesManager?.renderGradeBadges({
+    guideFamily: "guia-01-induccion",
+    activities: INDUCCION_GRADE_ACTIVITIES,
+    seedData: window.__GRADES_INDUCCION__,
+  });
+}
 
 function updateProgress() {
   const tracked = Array.from(document.querySelectorAll("[data-track]"));
