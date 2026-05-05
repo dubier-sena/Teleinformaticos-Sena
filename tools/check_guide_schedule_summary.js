@@ -49,7 +49,11 @@ const templateJs = fs.readFileSync(path.join(root, "js", "guia_template.js"), "u
 const calendarHtml = fs.readFileSync(path.join(root, "calendario-academico-2026.html"), "utf8");
 [
   "calculateRecordHorario",
+  "const getC=r=>estados[r.id]?.colegio??r.colegio",
+  "Object.entries(GRADE_OPTIONS)",
+  "parseGradeSelection",
   "const getH=r=>estados[r.id]?.horario??r.horario",
+  "current.colegio=getC(record)",
   "current.horario=getH(record)",
   "horario-preview",
 ].forEach((marker) => assertIncludes(calendarHtml, marker, "edicion de grado y horario en calendario"));
@@ -115,6 +119,7 @@ function loadTemplateHooks(todayOverride, minutesOverride) {
     findCurrentGuideClass,
     findNextGuideClass,
     findNextGuideNotice,
+    matchesGuideScheduleSelection,
     getGuideRecordHorario,
     getGuideScheduleTimeValue,
     getGuideNowMinutes,
@@ -257,6 +262,47 @@ if (!changedRecord) {
   }
   if (changedScheduleHooks.__setGuideCalendarState && originalState) {
     changedScheduleHooks.__setGuideCalendarState(originalState);
+  }
+}
+
+const changedInstitutionHooks = loadTemplateHooks("2026-05-05", 6 * 60);
+const changedInstitutionRecord = calendarWindow.CALENDAR_2026_RECORDS.find(
+  (record) => record.fecha >= "2026-05-05" && record.colegio.includes("Santa") && record.grado === "10B"
+);
+if (!changedInstitutionRecord) {
+  console.error("[FAIL] No se encontro registro SB 10B para probar cambio de institucion.");
+  failed = true;
+} else {
+  const changedInstitutionState = {
+    [changedInstitutionRecord.id]: {
+      colegio: "I.E. Jhon F. Kennedy",
+      grado: "10B",
+      horario: "6:10am-10:10am",
+      estado: "Activa",
+      obs: "Cambio a JFK 10B",
+    },
+  };
+  const originalState = changedInstitutionHooks.__setGuideCalendarState
+    ? changedInstitutionHooks.__setGuideCalendarState(changedInstitutionState)
+    : null;
+  const changedMatchesJfk = changedInstitutionHooks.matchesGuideScheduleSelection(changedInstitutionRecord, {
+    inst: "I.E. Jhon F. Kennedy",
+    grupo: "10B",
+  });
+  const changedMatchesSb = changedInstitutionHooks.matchesGuideScheduleSelection(changedInstitutionRecord, {
+    inst: "I.E. Santa Barbara",
+    grupo: "10B",
+  });
+  if (!changedMatchesJfk) {
+    console.error("[FAIL] El aprendiz JFK 10B debe ver la clase cambiada desde Santa Barbara.");
+    failed = true;
+  }
+  if (changedMatchesSb) {
+    console.error("[FAIL] El aprendiz SB 10B no debe seguir viendo la clase movida a JFK.");
+    failed = true;
+  }
+  if (changedInstitutionHooks.__setGuideCalendarState && originalState) {
+    changedInstitutionHooks.__setGuideCalendarState(originalState);
   }
 }
 

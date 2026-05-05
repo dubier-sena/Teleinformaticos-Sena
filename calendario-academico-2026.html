@@ -295,34 +295,73 @@ let lastRemoteCalendarMessage='';
 const getE=r=>estados[r.id]?.estado??r.defE;
 const getO=r=>estados[r.id]?.obs??r.defO;
 const getAct=r=>estados[r.id]?.act||null; // {nombre, fecha}
+const getC=r=>estados[r.id]?.colegio??r.colegio;
 const getG=r=>estados[r.id]?.grado??r.grado;
 const getH=r=>estados[r.id]?.horario??r.horario;
 
-function calculateRecordHorario(record,grade){
+function institutionShortName(colegio){
+  return String(colegio||'').includes('Kennedy')?'JFK':
+    String(colegio||'').includes('Santa')?'SB':String(colegio||'');
+}
+
+function parseGradeSelection(value,record){
+  const raw=String(value||'');
+  const parts=raw.split('::');
+  if(parts.length>=2){
+    return {colegio:parts[0],grado:parts.slice(1).join('::')};
+  }
+  return {colegio:getC(record),grado:raw||getG(record)};
+}
+
+function formatGradeSelection(option){
+  return `${institutionShortName(option.colegio)} · ${option.grado}`;
+}
+
+function calculateRecordHorario(record,selection){
   if(record.tipo!=='CLASE')return record.horario||'';
-  const selectedGrade=grade||getG(record);
-  if(record.colegio===SB){
+  const selected=typeof selection==='object'&&selection?selection:parseGradeSelection(selection,record);
+  const selectedGrade=selected.grado||getG(record);
+  const selectedColegio=selected.colegio||getC(record);
+  if(selectedColegio===SB){
     const weekday=iwd(parseD(record.fecha));
     return SBH[selectedGrade]?.[weekday]||record.horario||'';
   }
-  if(record.colegio===JFK){
+  if(selectedColegio===JFK){
     return jhr(Number(String(record.fecha||'').slice(5,7))||0);
   }
   return record.horario||'';
 }
 
 function getGradeOptionsForRecord(record){
-  const baseOptions=GRADE_OPTIONS[record.colegio]||[];
-  return Array.from(new Set([...baseOptions,getG(record),record.grado].filter(grade=>grade&&grade!=='—')));
+  const seen=new Set();
+  const options=[];
+  Object.entries(GRADE_OPTIONS).forEach(([colegio,grades])=>{
+    grades.forEach(grado=>{
+      const key=`${colegio}::${grado}`;
+      if(!seen.has(key)){seen.add(key);options.push({colegio,grado,key});}
+    });
+  });
+  [{colegio:getC(record),grado:getG(record)},{colegio:record.colegio,grado:record.grado}].forEach(({colegio,grado})=>{
+    if(!colegio||!grado||grado==='—')return;
+    const key=`${colegio}::${grado}`;
+    if(!seen.has(key)){seen.add(key);options.push({colegio,grado,key});}
+  });
+  return options;
 }
 
-function applyGradeToRecord(record,grade){
+function applyGradeToRecord(record,selectionValue){
   const next={...(estados[record.id]||{})};
-  const nextHorario=calculateRecordHorario(record,grade);
-  if(!grade||grade===record.grado){
+  const selected=parseGradeSelection(selectionValue,record);
+  const nextHorario=calculateRecordHorario(record,selected);
+  if(!selected.colegio||selected.colegio===record.colegio){
+    delete next.colegio;
+  } else {
+    next.colegio=selected.colegio;
+  }
+  if(!selected.grado||selected.grado===record.grado){
     delete next.grado;
   } else {
-    next.grado=grade;
+    next.grado=selected.grado;
   }
   if(nextHorario&&nextHorario!==record.horario){
     next.horario=nextHorario;
@@ -355,6 +394,7 @@ function buildSyncStatePayload(){
     const current={...(estados[record.id]||{})};
     current.sourceRow=record.sourceRow;
     if(record.tipo==='CLASE'){
+      current.colegio=getC(record);
       current.grado=getG(record);
       current.horario=getH(record);
     }
@@ -868,7 +908,7 @@ function renderDash(){
   const gg=gg2.querySelector('#gg');
   [[JFK,'10A'],[JFK,'10B'],[SB,'10A'],[SB,'10B'],[SB,'11A'],[SB,'11B']].forEach(([col,g])=>{
     const k=col+'-'+g;
-    const recs=RECORDS.filter(r=>r.colegio===col&&getG(r)===g&&r.tipo==='CLASE');
+    const recs=RECORDS.filter(r=>getC(r)===col&&getG(r)===g&&r.tipo==='CLASE');
     const byE=e=>recs.filter(r=>getE(r)===e).length;
     const s={total:recs.length,imp:byE('Impartida'),act:byE('Activa'),ko:byE('Cancelada'),sp:byE('Sin programación'),rec:byE('Recuperada')};
     const gc=GC[k]||{dk:'#374151',lt:'#F3F4F6'};
@@ -957,7 +997,7 @@ function redrawRegTables(main,tipoSel,estSel,inp){
   const pass=r=>{
     if(tipo&&r.tipo!==tipo)return false;
     if(estado&&getE(r)!==estado)return false;
-    if(q&&!(r.colegio+' '+getG(r)+' '+r.fecha+' '+r.dia+' '+r.mes).toLowerCase().includes(q))return false;
+    if(q&&!(getC(r)+' '+getG(r)+' '+r.fecha+' '+r.dia+' '+r.mes).toLowerCase().includes(q))return false;
     return true;
   };
   const hab=RECORDS.filter(r=>!r.finde&&pass(r)).sort(compareRecordsBySchedule);
@@ -980,9 +1020,10 @@ function buildRegSection(main,label,recs,finde){
   recs.forEach((r,i)=>{
     const e=getE(r),o=getO(r),act=getAct(r),ss=SS[e]||SS['Activa'];
     const grade=getG(r);
-    const gc=GC[r.colegio+'-'+grade];
-    const shC=r.colegio.includes('Kennedy')?'JFK':r.colegio.includes('Santa')?'SB':r.colegio;
-    const instB=gc?`<span style="background:${gc.lt};color:${gc.dk};padding:2px 7px;border-radius:5px;font-weight:700;font-size:11px;">${shC}</span>`:`<span style="font-size:11px;color:#9ca3af">${r.colegio}</span>`;
+    const colegio=getC(r);
+    const gc=GC[colegio+'-'+grade];
+    const shC=institutionShortName(colegio);
+    const instB=gc?`<span style="background:${gc.lt};color:${gc.dk};padding:2px 7px;border-radius:5px;font-weight:700;font-size:11px;">${shC}</span>`:`<span style="font-size:11px;color:#9ca3af">${colegio}</span>`;
     const gradoB=gc?`<span style="background:${gc.dk};color:#fff;padding:2px 7px;border-radius:5px;font-weight:700;font-size:11px;">${grade}</span>`:'—';
     const eB=`<span class="sbadge" style="background:${ss.bg};color:${ss.tc};border-color:${ss.bc};${e==='Cancelada'?'text-decoration:line-through':''}">${ss.em} ${escapeHtml(e)}</span>`;
     const actB=act?.nombre?`<span style="font-size:11px;color:#065f46;font-weight:600">📋 ${escapeHtml(act.nombre)}</span>`:'';
@@ -1130,14 +1171,14 @@ function buildCalMonth(m){
         n.onclick=()=>openModal(clases[0]);
         cell.appendChild(n);
       } else {
-        const gc=GC[clases[0].colegio+'-'+getG(clases[0])];
+        const gc=GC[getC(clases[0])+'-'+getG(clases[0])];
         if(gc){bg=gc.lt;brd=gc.dk;brdW=2;}
         if(cs==='all-ko'){bg='#FEF2F2';brd='#ef4444';brdW=2;}
 
         clases.forEach(r=>{
-          const e=getE(r),grade=getG(r),gc2=GC[r.colegio+'-'+grade]||{dk:'#374151',lt:'#F3F4F6'};
+          const e=getE(r),grade=getG(r),colegio=getC(r),gc2=GC[colegio+'-'+grade]||{dk:'#374151',lt:'#F3F4F6'};
           const act=getAct(r);
-          const sh=r.colegio.includes('Kennedy')?'JFK':'SB';
+          const sh=institutionShortName(colegio);
           const isDesplazamiento=isDesplazamientoReason(r);
           // ── FIX: si solo ESTA clase es Sin programación → mostrar 🏢 en su píldora ──
           const emap={
@@ -1244,12 +1285,11 @@ function refreshModalBtns(opts){
 
 function openModal(r){
   modalRec=r;modalCurEstado=getE(r);
-  const o=getO(r),act=getAct(r)||{},grade=getG(r);
+  const o=getO(r),act=getAct(r)||{},grade=getG(r),colegio=getC(r);
   const isFinde=r.finde,isSENA=r.tipo==='SENA';
 
   document.getElementById('m-title').textContent=
-    r.colegio.includes('Kennedy')?`JFK · Grado ${grade}`:
-    r.colegio.includes('Santa')?`SB · Grado ${grade}`:r.colegio;
+    `${institutionShortName(colegio)} · Grado ${grade}`;
   document.getElementById('m-sub').textContent=
     `${r.fecha.split('-').reverse().join('/')} · ${r.dia} · ${r.mes}${r.slotCount>1?` · Clase ${r.slotIndex} de ${r.slotCount}`:''}`;
   const hrDiv=document.getElementById('m-hr');
@@ -1269,8 +1309,9 @@ function openModal(r){
   const gradeSel=document.getElementById('m-grado');
   if(r.tipo==='CLASE'){
     const gradeOptions=getGradeOptionsForRecord(r);
-    gradeSel.innerHTML=gradeOptions.map(option=>`<option value="${option}">${option}</option>`).join('');
-    gradeSel.value=gradeOptions.includes(grade)?grade:(gradeOptions[0]||grade);
+    const currentKey=`${colegio}::${grade}`;
+    gradeSel.innerHTML=gradeOptions.map(option=>`<option value="${option.key}">${formatGradeSelection(option)}</option>`).join('');
+    gradeSel.value=gradeOptions.some(option=>option.key===currentKey)?currentKey:(gradeOptions[0]?.key||currentKey);
     gradeSel.onchange=updateHorarioPreview;
     gradeSec.style.display='block';
     updateHorarioPreview();
@@ -1310,11 +1351,11 @@ document.getElementById('m-act-fecha').addEventListener('change',updateActPrevie
 
 function updateHorarioPreview(){
   if(!modalRec)return;
-  const grade=document.getElementById('m-grado').value||getG(modalRec);
-  const horario=calculateRecordHorario(modalRec,grade);
+  const selected=parseGradeSelection(document.getElementById('m-grado').value,modalRec);
+  const horario=calculateRecordHorario(modalRec,selected);
   const prev=document.getElementById('horario-preview');
   const hrDiv=document.getElementById('m-hr');
-  if(prev)prev.textContent=horario&&horario!=='—'?`Horario del grupo ${grade}: ${horario}`:'Sin horario programado para este grupo.';
+  if(prev)prev.textContent=horario&&horario!=='—'?`Horario de ${formatGradeSelection(selected)}: ${horario}`:'Sin horario programado para este grupo.';
   if(hrDiv){
     if(horario&&horario!=='—'){hrDiv.textContent='🕐 '+horario;hrDiv.style.display='inline-block';}
     else hrDiv.style.display='none';

@@ -490,6 +490,7 @@
       estado: entry.estado || record.defE || "",
       obs: entry.obs || record.defO || "",
       act: entry.act || null,
+      colegio: entry.colegio || record.colegio || "",
       grado: entry.grado || record.grado || "",
       horario: entry.horario || record.horario || "",
     };
@@ -593,7 +594,7 @@
     if (!selectedGroup || !recordGroup || selectedGroup !== recordGroup) {
       return false;
     }
-    return guideInstitutionKey(record.colegio) === guideInstitutionKey(selection?.inst);
+    return guideInstitutionKey(entry.colegio || record.colegio) === guideInstitutionKey(selection?.inst);
   }
 
   function isGuideClassAvailable(record) {
@@ -606,6 +607,8 @@
     const estado = normalizeGuideText(entry.estado);
     return (
       ["cancelada", "sin programacion", "recuperada"].includes(estado) ||
+      (entry.colegio && record.colegio && entry.colegio !== record.colegio) ||
+      (entry.grado && record.grado && entry.grado !== record.grado) ||
       (entry.horario && record.horario && entry.horario !== record.horario)
     );
   }
