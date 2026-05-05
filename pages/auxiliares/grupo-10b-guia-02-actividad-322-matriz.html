@@ -17,6 +17,7 @@
 <script defer src="../js/portal_auth.js?v=20260422_2"></script>
 <script src="../js/firebase-config.js?v=20260414_1"></script>
 <script defer src="../js/firebase_db.js?v=20260427_1"></script>
+<script defer src="../js/activity_deadlines.js?v=20260505_1"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
@@ -211,7 +212,7 @@
   .drive-link-panel { display: none; margin-top: 14px; }
 </style>
 <script defer src="../js/shared_shell.js?v=20260425_1"></script>
-<script defer src="../js/script_guia2.js?v=20260416_2"></script>
+<script defer src="../js/script_guia2.js?v=20260505_1"></script>
 </head>
 <body
   class="app-shell app-shell--guide matriz-page"
@@ -240,7 +241,7 @@
         <input type="hidden" id="field-322-finalizada" data-store="322-finalizada">
         <input type="hidden" id="field-322-finalizada-at" data-store="322-finalizada-at">
         <button type="button" class="btn-save" id="btn-guardar" onclick="finalizarMatriz()">
-          &#128274; Guardar y finalizar actividad
+          &#128190; Guardar respuestas
         </button>
         <span class="save-status" id="save-status"></span>
         <span class="save-hint">Las respuestas también se guardan automáticamente al escribir.</span>
@@ -436,12 +437,12 @@ function lockMatriz(finalizedAt) {
   var btn = document.getElementById("btn-guardar");
   if (btn) {
     btn.disabled = true;
-    btn.innerHTML = "\u2713 Actividad finalizada";
+    btn.innerHTML = "\u2713 Respuestas enviadas";
     btn.style.background = "#16a34a";
     btn.style.cursor = "default";
   }
   var savebar = document.querySelector(".save-bar");
-  if (savebar) {
+  if (savebar && !document.getElementById("matriz-lock-banner")) {
     var dateStr = "";
     if (finalizedAt) {
       try {
@@ -452,10 +453,33 @@ function lockMatriz(finalizedAt) {
       } catch(e) {}
     }
     var banner = document.createElement("div");
+    banner.id = "matriz-lock-banner";
     banner.style.cssText = "background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:13px 18px;margin-bottom:16px;font-size:.9rem;color:#15803d;font-weight:700;";
     banner.textContent = "\uD83D\uDD12 Actividad 3.2.2 finalizada" + dateStr + ". Tus respuestas han sido enviadas y no pueden modificarse.";
     savebar.parentNode.insertBefore(banner, savebar);
   }
+}
+
+var MATRIZ_ACTIVITY_ID = "matriz322";
+
+function applyMatrizDeadlineLock() {
+  var field = document.getElementById("field-322-finalizada");
+  var locked = !!(field && (field.value === "true" || field.value === "1"));
+  if (!window.activityDeadlineManager || typeof window.activityDeadlineManager.applyAvailability !== "function") {
+    return;
+  }
+  window.activityDeadlineManager.applyAvailability({
+    pageFile: "10b_guia2.html",
+    activityId: MATRIZ_ACTIVITY_ID,
+    isLocked: locked,
+    fieldSelector: "textarea[data-store]",
+    buttonId: "btn-guardar",
+    statusId: "save-status",
+    activeButtonText: "Guardar respuestas",
+    lockedButtonText: "Respuestas enviadas",
+    closedButtonText: "Entrega cerrada",
+    noticeMount: { mountSelector: ".save-bar" }
+  });
 }
 
 function checkLockState() {
@@ -464,10 +488,15 @@ function checkLockState() {
   if (field && (field.value === "true" || field.value === "1")) {
     lockMatriz(fieldAt ? fieldAt.value : "");
   }
+  applyMatrizDeadlineLock();
 }
 
 /* ── Finalizar actividad ───────────────────────────────────────────────── */
 async function finalizarMatriz() {
+  if (window.activityDeadlineManager && !window.activityDeadlineManager.canSubmit({ pageFile: "10b_guia2.html", activityId: MATRIZ_ACTIVITY_ID })) {
+    applyMatrizDeadlineLock();
+    return;
+  }
   if (!window.confirm("¿Finalizar la actividad 3.2.2?\n\nUna vez guardada, tus respuestas quedarán bloqueadas y no podrás modificarlas.")) {
     return;
   }
@@ -491,6 +520,7 @@ async function finalizarMatriz() {
     }
     if (status) { status.textContent = "\u2713 Guardado en Firestore"; status.className = "save-status ok"; }
     lockMatriz(now);
+    applyMatrizDeadlineLock();
   } catch(e) {
     if (fFin) { fFin.value = ""; fFin.dispatchEvent(new Event("input", { bubbles: true })); }
     if (fAt)  { fAt.value  = ""; fAt.dispatchEvent(new Event("input",  { bubbles: true })); }
@@ -501,8 +531,18 @@ async function finalizarMatriz() {
 }
 
 document.addEventListener("DOMContentLoaded", function() {
+  if (window.activityDeadlineManager && typeof window.activityDeadlineManager.ready === "function") {
+    window.activityDeadlineManager.ready().then(applyMatrizDeadlineLock).catch(function() {
+      applyMatrizDeadlineLock();
+    });
+  } else {
+    applyMatrizDeadlineLock();
+  }
   setTimeout(checkLockState, 1500);
 });
+
+window.addEventListener("activity-deadlines-updated", applyMatrizDeadlineLock);
+window.addEventListener("guia2-state-applied", checkLockState);
 
 /* ── Exportar Matrix (.doc) ────────────────────────────────────────────── */
 var MATRIZ_DRIVE_FOLDERS = {

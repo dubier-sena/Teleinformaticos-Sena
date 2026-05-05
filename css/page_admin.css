@@ -1330,3 +1330,207 @@ body.modal-open {
   min-width: 110px;
   transition: background 0.3s;
 }
+
+/* ── Explorador de actividades ── */
+.act-explorer {
+  padding: 0;
+  overflow: hidden;
+}
+
+.act-explorer h2 {
+  padding: 20px 24px 16px;
+  margin: 0;
+  border-bottom: 1px solid var(--border-soft, #e2e8f0);
+  font-size: 16px;
+}
+
+.act-explorer__guide-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border-soft, #e2e8f0);
+  background: var(--surface-2, #f8fafc);
+}
+
+.act-explorer__guide-title {
+  padding: 12px 24px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+  background: var(--surface-2, #f8fafc);
+  border-bottom: 1px solid var(--border-soft, #e2e8f0);
+}
+
+.act-explorer__guide-btn {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border-soft, #e2e8f0);
+  background: var(--surface-1, #fff);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--text-main, #1e293b);
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.act-explorer__guide-btn:hover {
+  background: var(--sena-green-tint, #e8f5e9);
+  border-color: var(--sena-green, #39a900);
+}
+
+.act-explorer__guide-btn.is-active {
+  background: var(--sena-green, #39a900);
+  border-color: var(--sena-green, #39a900);
+  color: #fff;
+  font-weight: 600;
+}
+
+.act-explorer__layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  min-height: 360px;
+}
+
+.act-explorer__activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 8px;
+  border-right: 1px solid var(--border-soft, #e2e8f0);
+  background: var(--surface-2, #f8fafc);
+  overflow-y: auto;
+}
+
+.act-explorer__activity-btn {
+  text-align: left;
+  padding: 9px 12px;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--text-main, #1e293b);
+  line-height: 1.35;
+  transition: background 0.12s, color 0.12s;
+}
+
+.act-explorer__activity-btn:hover {
+  background: var(--sena-green-tint, #e8f5e9);
+}
+
+.act-explorer__activity-btn.is-active {
+  background: var(--sena-green, #39a900);
+  color: #fff;
+  font-weight: 600;
+}
+
+.act-explorer__student-panel {
+  padding: 20px 24px;
+  overflow-x: auto;
+}
+
+.act-explorer__activity-heading {
+  margin: 0 0 14px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main, #1e293b);
+}
+
+.act-explorer__table-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+.act-explorer__table-count {
+  font-size: 12px;
+  color: var(--text-muted, #64748b);
+  font-weight: 500;
+}
+
+.act-explorer__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn--sm {
+  padding: 5px 12px;
+  font-size: 12px;
+}
+
+.act-delivery-status {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 12px;
+}
+
+.act-delivery-status--sent {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.act-delivery-status--pending {
+  background: #fef3c7;
+  color: #92400e;
+  font-weight: 400;
+  font-style: italic;
+}
+
+.act-delivery-filename {
+  display: block;
+  margin-top: 3px;
+  color: var(--text-muted, #64748b);
+  font-size: 11px;
+  word-break: break-all;
+}
+
+.game-solution-title {
+  margin: 16px 0 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main, #1e293b);
+  border-top: 1px solid var(--border-soft, #e2e8f0);
+  padding-top: 14px;
+}
+
+.game-words-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.game-word-chip {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 14px;
+  background: #dcfce7;
+  color: #166534;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid #bbf7d0;
+}
+
+@media (max-width: 860px) {
+  .act-explorer__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .act-explorer__activity-list {
+    flex-direction: row;
+    flex-wrap: wrap;
+    border-right: none;
+    border-bottom: 1px solid var(--border-soft, #e2e8f0);
+  }
+
+  .act-explorer__activity-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+}

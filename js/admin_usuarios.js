@@ -13,6 +13,8 @@
   let redesSocializacionSummaries = {};
   let redesQuizSummaries = {};
   let activeActivitiesSubtab = null;
+  let activeActivitiesGuide = null;
+  let activeActivitiesActivity = null;
   let activeGradesGroup = null;
   let currentResponsesExport = null;
 
@@ -91,7 +93,27 @@
     "grupo-10b-guia-02-herramientas-informaticas-digitales.html": {
       cloudFileName: "10b_guia2.html",
     },
+    "grupo-11a-guia-05-herramientas-informaticas-digitales.html": {
+      cloudFileName: "11a_guia.html",
+    },
+    "grupo-11b-guia-05-herramientas-informaticas-digitales.html": {
+      cloudFileName: "11b_guia.html",
+    },
   };
+  const GUIDE2_WORD_SEARCH_LEADERBOARD_SCOPE = "leaderboard:guia2-sopa";
+  const GUIDE2_MATCHING_GAME_LEADERBOARD_SCOPE = "leaderboard:guia2-relaciona";
+
+  const GUIDE1_INDUCCION_FILES = {
+    "grupo-10a-guia-01-induccion.html": { pageFile: "grupo-10a-guia-01-induccion" },
+    "grupo-10b-guia-01-induccion.html": { pageFile: "grupo-10b-guia-01-induccion" },
+  };
+  const GUIDE1_ACTIVITIES = [
+    { id: "arbol312",      label: "Actividad 3.1.2 - El Árbol de la Vida",              deliveryOnly: true },
+    { id: "sena331",       label: "Actividad 3.3.1 - Análisis de símbolos SENA",         deliveryOnly: true },
+    { id: "programa332",   label: "Actividad 3.3.2 - Cuestionario diseño curricular",    deliveryOnly: true },
+    { id: "plataformas334",label: "Actividad 3.3.4 - Taller plataformas tecnológicas",   deliveryOnly: true },
+    { id: "portafolio342", label: "Actividad 3.4.2 - Portafolio de evidencias",          deliveryOnly: true },
+  ];
   const GUIDE2_EXTENSION_IDS = [
     "doc",
     "xlsx",
@@ -225,6 +247,8 @@
     { id: "sistemas332", label: "Actividad 6 - Requerimientos minimos", keys: GUIDE2_SYSTEM_ACTIVITY_KEYS },
     { id: "colaborativas334", label: "Actividad 8 - Herramientas colaborativas", keys: GUIDE2_COLLABORATIVE_ACTIVITY_KEYS },
     { id: "transferReto341", label: "Actividad 10 - Reto final", keys: GUIDE2_TRANSFER_RETO_KEYS },
+    { id: "matriz322", label: "Actividad 3.2.2 - Matriz de Diagnóstico Digital", auxiliar: true },
+    { id: "fichaCaso", label: "Actividad 4 - Ficha de caso", auxiliar: true },
   ];
 
   function getById(id) {
@@ -470,6 +494,7 @@
     const guide2Activities = getGuide2ActivitiesForFile(fileName);
     if (guide2Activities.length) return guide2Activities;
     if (getGuide6Config(fileName)) return GUIDE6_ACTIVITIES;
+    if (getGuide1Config(fileName)) return GUIDE1_ACTIVITIES;
     return [];
   }
 
@@ -568,10 +593,96 @@
     return `${String(usernameKey || "").trim().toLowerCase()}::${fileName}`;
   }
 
+  function normalizeLookupText(value) {
+    return String(value || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  async function readGuide2LeaderboardSnapshot(scopeKey, cloudFileName) {
+    if (
+      !scopeKey ||
+      !cloudFileName ||
+      !window._firebaseDb ||
+      typeof window._firebaseDb.cloudGetGuideData !== "function"
+    ) {
+      return [];
+    }
+
+    try {
+      const snapshot = await window._firebaseDb.cloudGetGuideData(scopeKey, cloudFileName);
+      const entries = Array.isArray(snapshot?.state?.entries) ? snapshot.state.entries : [];
+      return entries.filter((entry) => entry && typeof entry === "object");
+    } catch {
+      return [];
+    }
+  }
+
+  async function loadGuide2LeaderboardMaps(users) {
+    const configs = new Map();
+    users.forEach((user) => {
+      (user.progress?.guides || []).forEach((guide) => {
+        const config = getGuide2ResponseConfig(guide.fileName);
+        if (config?.cloudFileName) {
+          configs.set(guide.fileName, config);
+        }
+      });
+    });
+
+    const maps = {
+      wordSearch: {},
+      matching: {},
+    };
+
+    await Promise.all(
+      Array.from(configs.entries()).map(async ([fileName, config]) => {
+        const [wordSearchEntries, matchingEntries] = await Promise.all([
+          readGuide2LeaderboardSnapshot(GUIDE2_WORD_SEARCH_LEADERBOARD_SCOPE, config.cloudFileName),
+          readGuide2LeaderboardSnapshot(GUIDE2_MATCHING_GAME_LEADERBOARD_SCOPE, config.cloudFileName),
+        ]);
+        maps.wordSearch[fileName] = wordSearchEntries;
+        maps.matching[fileName] = matchingEntries;
+      })
+    );
+
+    return maps;
+  }
+
+  function findGuide2LeaderboardEntry(entries, user) {
+    const list = Array.isArray(entries) ? entries : [];
+    const usernameKey = String(user?.usernameKey || "").trim().toLowerCase();
+    const username = String(user?.username || "").trim().toLowerCase();
+    const fullName = normalizeLookupText(user?.fullName);
+    const ficha = String(user?.ficha || "").trim();
+
+    const byKey = list.find((entry) => {
+      const playerKey = String(entry?.playerKey || "").trim().toLowerCase();
+      return playerKey && (playerKey === usernameKey || playerKey === username);
+    });
+    if (byKey) {
+      return byKey;
+    }
+
+    return list.find((entry) => {
+      const entryFicha = String(entry?.ficha || "").trim();
+      const entryName = normalizeLookupText(entry?.playerName);
+      return entryName && entryName === fullName && (!ficha || !entryFicha || entryFicha === ficha);
+    }) || null;
+  }
+
   function getGuide6Config(fileName) {
     const config = GUIDE6_FILES[fileName];
     if (!config) return null;
     return { ...config, title: auth.getGuideTitle(fileName) };
+  }
+
+  function getGuide1Config(fileName) {
+    return GUIDE1_INDUCCION_FILES[fileName] || null;
   }
 
   function isGuide6File(fileName) {
@@ -1192,9 +1303,34 @@
       mistakes: Number(result.mistakes) || 0,
       variant: Number(result.variant) || 1,
       words,
+      wordCount: words.length,
       completed: Boolean(result.completedAt),
       completedAt: result.completedAt || "",
       updatedAt: snapshot?.updatedAt || result.completedAt || result.startedAt || "",
+      source: "responses",
+    };
+  }
+
+  function summaryFromWordSearchLeaderboardEntry(entry, user) {
+    if (!entry || Number(entry.score) <= 0) {
+      return null;
+    }
+
+    const foundCount = Number(entry.foundCount) || 0;
+    return {
+      playerName: entry.playerName || user.fullName,
+      username: user.username,
+      ficha: entry.ficha || user.ficha,
+      score: Number(entry.score) || 0,
+      elapsedMs: Number(entry.elapsedMs) || 0,
+      mistakes: Number(entry.mistakes) || 0,
+      variant: Number(entry.variant) || 1,
+      words: [],
+      wordCount: foundCount,
+      completed: true,
+      completedAt: entry.completedAt || entry.updatedAt || "",
+      updatedAt: entry.updatedAt || entry.completedAt || "",
+      source: "leaderboard",
     };
   }
 
@@ -1219,6 +1355,29 @@
       completed: Boolean(result.completedAt),
       completedAt: result.completedAt || "",
       updatedAt: snapshot?.updatedAt || result.completedAt || result.startedAt || "",
+      source: "responses",
+    };
+  }
+
+  function summaryFromMatchingLeaderboardEntry(entry, user) {
+    if (!entry || Number(entry.score) <= 0) {
+      return null;
+    }
+
+    return {
+      playerName: entry.playerName || user.fullName,
+      username: user.username,
+      ficha: entry.ficha || user.ficha,
+      score: Number(entry.score) || 0,
+      elapsedMs: Number(entry.elapsedMs) || 0,
+      mistakes: Number(entry.mistakes) || 0,
+      variant: Number(entry.variant) || 1,
+      correctCount: Number(entry.correctCount) || 0,
+      totalPairs: Number(entry.totalPairs) || Number(entry.correctCount) || 0,
+      completed: true,
+      completedAt: entry.completedAt || entry.updatedAt || "",
+      updatedAt: entry.updatedAt || entry.completedAt || "",
+      source: "leaderboard",
     };
   }
 
@@ -1226,6 +1385,7 @@
     const nextSummaries = {};
     const nextMatchingSummaries = {};
     const tasks = [];
+    const leaderboardMaps = await loadGuide2LeaderboardMaps(users);
 
     users.forEach((user) => {
       (user.progress?.guides || []).forEach((guide) => {
@@ -1237,8 +1397,16 @@
         tasks.push(
           loadGuide2Responses(user.usernameKey, guide.fileName)
             .then(({ snapshot }) => {
-              nextSummaries[key] = extractWordSearchSummary(snapshot, user);
-              nextMatchingSummaries[key] = extractMatchingGameSummary(snapshot, user);
+              const wordSearchSummary = extractWordSearchSummary(snapshot, user);
+              const matchingSummary = extractMatchingGameSummary(snapshot, user);
+              nextSummaries[key] = wordSearchSummary || summaryFromWordSearchLeaderboardEntry(
+                findGuide2LeaderboardEntry(leaderboardMaps.wordSearch[guide.fileName], user),
+                user
+              );
+              nextMatchingSummaries[key] = matchingSummary || summaryFromMatchingLeaderboardEntry(
+                findGuide2LeaderboardEntry(leaderboardMaps.matching[guide.fileName], user),
+                user
+              );
               const st = snapshot?.state || {};
               if (st["322-finalizada"] === true || st["322-finalizada"] === "true") {
                 matriz322Summaries[user.usernameKey] = {
@@ -1584,21 +1752,25 @@
     const hasResult = hasWordSearchResult(result, words);
     const user = context?.user || {};
 
-    return renderAnswerTable(
+    const statsTable = renderAnswerTable(
       ["Dato", "Resultado"],
       [
-        ["Aprendiz que realizo", result.playerName || state["actividad4:nombre_completo"] || user.fullName],
-        ["Usuario", user.username || result.playerKey || "Sin registro"],
-        ["Ficha registrada", state["actividad4:ficha"] || user.ficha || "Sin registro"],
-        ["Puntaje", hasResult ? `${score} / 10000` : "Sin registro"],
-        ["Sopa asignada", hasResult ? `Version ${Number(result.variant) || 1}` : "Sin registro"],
+        ["Aprendiz", result.playerName || state["actividad4:nombre_completo"] || user.fullName || "Sin registro"],
+        ["Versión asignada", hasResult ? `Versión ${Number(result.variant) || 1}` : "Sin registro"],
+        ["Puntaje", hasResult ? `${score.toLocaleString("es")} pts` : "Sin registro"],
+        ["Palabras encontradas", hasResult ? `${words.length}` : "Sin registro"],
         ["Errores", hasResult ? String(Number(result.mistakes) || 0) : "Sin registro"],
         ["Tiempo usado", elapsedMs ? formatDurationMs(elapsedMs) : "Sin registro"],
-        ["Palabras encontradas", words.length ? words.join(", ") : "Sin registro"],
-        ["Total de palabras", words.length ? String(words.length) : "Sin registro"],
-        ["Fecha de finalizacion", result.completedAt ? formatDate(result.completedAt) : "Sin registro"],
+        ["Fecha de finalización", result.completedAt ? formatDate(result.completedAt) : "Sin registro"],
       ]
     );
+
+    const wordsHtml = words.length
+      ? `<div class="game-solution-title">Palabras encontradas en la sopa</div>
+         <div class="game-words-grid">${words.map((w) => `<span class="game-word-chip">${escapeHtml(w)}</span>`).join("")}</div>`
+      : `<p class="activities-empty">No se registraron palabras encontradas.</p>`;
+
+    return statsTable + wordsHtml;
   }
 
   function renderMatchingGameResult(state, context) {
@@ -1609,26 +1781,38 @@
     const hasResult = hasMatchingGameResult(result, pairs);
     const user = context?.user || {};
     const correctCount = Number(result.correctCount) || pairs.length || 0;
-    const totalPairs = Number(result.totalPairs) || 0;
-    const pairText = pairs
-      .map((pair) => `${pair.tool || "Herramienta"}: ${pair.answer || "Sin respuesta"}`)
-      .join(" | ");
+    const totalPairs = Number(result.totalPairs) || pairs.length || 0;
 
-    return renderAnswerTable(
+    const statsTable = renderAnswerTable(
       ["Dato", "Resultado"],
       [
-        ["Aprendiz que realizo", result.playerName || state["actividad4:nombre_completo"] || user.fullName],
-        ["Usuario", user.username || result.playerKey || "Sin registro"],
-        ["Ficha registrada", state["actividad4:ficha"] || user.ficha || "Sin registro"],
-        ["Puntaje", hasResult ? `${score} / 10000` : "Sin registro"],
-        ["Version asignada", hasResult ? `Version ${Number(result.variant) || 1}` : "Sin registro"],
-        ["Respuestas correctas", hasResult ? `${correctCount} / ${totalPairs || correctCount}` : "Sin registro"],
+        ["Aprendiz", result.playerName || state["actividad4:nombre_completo"] || user.fullName || "Sin registro"],
+        ["Versión asignada", hasResult ? `Versión ${Number(result.variant) || 1}` : "Sin registro"],
+        ["Puntaje", hasResult ? `${score.toLocaleString("es")} pts` : "Sin registro"],
+        ["Parejas correctas", hasResult ? `${correctCount} / ${totalPairs}` : "Sin registro"],
         ["Errores", hasResult ? String(Number(result.mistakes) || 0) : "Sin registro"],
         ["Tiempo usado", elapsedMs ? formatDurationMs(elapsedMs) : "Sin registro"],
-        ["Parejas correctas", pairText || "Sin registro"],
-        ["Fecha de finalizacion", result.completedAt ? formatDate(result.completedAt) : "Sin registro"],
+        ["Fecha de finalización", result.completedAt ? formatDate(result.completedAt) : "Sin registro"],
       ]
     );
+
+    const pairsHtml = pairs.length
+      ? `<div class="game-solution-title">Juego resuelto — parejas relacionadas por el aprendiz</div>
+         <div class="answer-table-wrap">
+           <table class="answer-table">
+             <thead><tr><th>#</th><th>Herramienta</th><th>Función asignada por el aprendiz</th></tr></thead>
+             <tbody>${pairs.map((pair, i) => `
+               <tr>
+                 <td>${i + 1}</td>
+                 <td><strong>${escapeHtml(pair.tool || "—")}</strong></td>
+                 <td>${escapeHtml(pair.answer || "Sin respuesta")}</td>
+               </tr>`).join("")}
+             </tbody>
+           </table>
+         </div>`
+      : `<p class="activities-empty">No se registraron parejas relacionadas.</p>`;
+
+    return statsTable + pairsHtml;
   }
 
   function renderGuide2ResponsesBody(state, context) {
@@ -1898,6 +2082,120 @@
     });
   }
 
+  async function handleExportGuideActivityDirect(button) {
+    const usernameKey = button.getAttribute("data-user") || "";
+    const fileName = button.getAttribute("data-guide-file") || "";
+    const activityId = button.getAttribute("data-export-activity") || "";
+    const guideKind = button.getAttribute("data-guide-kind") || "";
+    const activityLabel = button.getAttribute("data-activity-label") || "Actividad";
+    const user = allUsers.find((item) => item.usernameKey === usernameKey);
+    const guide = user?.progress?.guides?.find((item) => item.fileName === fileName);
+
+    if (!user || !fileName || !activityId) {
+      setFeedback("No fue posible identificar la actividad seleccionada.", "error");
+      return;
+    }
+
+    const origText = button.textContent;
+    button.disabled = true;
+    button.textContent = "Generando…";
+
+    try {
+      let bodyHtml = null;
+      let meta = "";
+
+      if (guideKind === "guia1") {
+        const g1Config = getGuide1Config(fileName);
+        const record = g1Config ? readDeliveryRecord(user.usernameKey, g1Config.pageFile, activityId) : null;
+        const deliveredAt = record?.submittedAt || record?.updatedAt || "";
+        if (!deliveredAt) {
+          setFeedback(`${user.fullName} no tiene entrega registrada para esta actividad.`, "error");
+          return;
+        }
+        const savedFile = record?.savedFileName || "Sin nombre de archivo";
+        const driveUrl = record?.driveUrl || "";
+        meta = [
+          `Aprendiz: ${user.fullName}`,
+          `Grupo: ${user.grupo}`,
+          `Ficha: ${user.ficha}`,
+          `Guia: ${auth.getGuideTitle(fileName)}`,
+          `Fecha de entrega: ${formatDate(deliveredAt)}`,
+        ].join(" | ");
+        bodyHtml = `<div class="answers-grid"><article class="answer-card">
+          <h3>${escapeHtml(activityLabel)}</h3>
+          ${renderAnswerTable(
+            ["Campo", "Valor"],
+            [
+              ["Aprendiz", user.fullName],
+              ["Grupo", user.grupo],
+              ["Ficha", user.ficha],
+              ["Fecha y hora de entrega", formatDate(deliveredAt)],
+              ["Archivo entregado", savedFile],
+              ...(driveUrl ? [["Enlace Drive", driveUrl]] : []),
+            ]
+          )}
+        </article></div>`;
+      } else if (guideKind === "guia6") {
+        const config = getGuide6Config(fileName);
+        const snapshot = config ? await loadGuide6Responses(usernameKey, config) : null;
+        meta = [
+          `Aprendiz: ${user.fullName}`,
+          `Grupo: ${user.grupo}`,
+          `Ficha: ${user.ficha}`,
+          `Guia: ${guide?.title || config?.title || auth.getGuideTitle(fileName)}`,
+          `Fuente: ${snapshot?.sourceLabel || "Sin registro"}`,
+          `Actualizado: ${formatDate(snapshot?.updatedAt)}`,
+        ].join(" | ");
+        bodyHtml = snapshot?.state
+          ? `<div class="answers-grid">${renderGuide6ActivityResponsesBody(activityId, snapshot.state)}</div>`
+          : null;
+      } else {
+        const { guideConfig, snapshot } = await loadGuide2Responses(usernameKey, fileName);
+        meta = [
+          `Aprendiz: ${user.fullName}`,
+          `Grupo: ${user.grupo}`,
+          `Ficha: ${user.ficha}`,
+          `Guia: ${guide?.title || guideConfig?.title || auth.getGuideTitle(fileName)}`,
+          `Fuente: ${snapshot?.sourceLabel || "Sin registro"}`,
+          `Actualizado: ${formatDate(snapshot?.updatedAt)}`,
+        ].join(" | ");
+        bodyHtml = snapshot?.state
+          ? `<div class="answers-grid">${renderGuide2ActivityResponsesBody(activityId, snapshot.state || {}, { user, guide })}</div>`
+          : null;
+      }
+
+      if (!bodyHtml) {
+        setFeedback(`${user.fullName} aún no tiene respuestas guardadas para esta actividad.`, "error");
+        return;
+      }
+
+      const exportData = {
+        title: activityLabel,
+        subtitle: `${user.fullName} | ${auth.getGuideTitle(fileName)}`,
+        meta,
+        bodyHtml,
+      };
+      const html = buildAdminResponsesWordDocument(exportData);
+      const blob = new Blob(["﻿", html], { type: "application/msword" });
+      const url = URL.createObjectURL(blob);
+      const safeLearner = sanitizeFileName(user.fullName || user.usernameKey);
+      const safeTitle = sanitizeFileName(activityLabel);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${safeTitle}_${safeLearner}.doc`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setFeedback(`Soporte exportado para ${user.fullName}.`, "success");
+    } catch (err) {
+      setFeedback(`No fue posible exportar: ${err?.message || "intenta de nuevo."}`, "error");
+    } finally {
+      button.disabled = false;
+      button.textContent = origText;
+    }
+  }
+
   function setFeedback(message, type) {
     const box = getById("admin-feedback");
     if (!box) {
@@ -2030,6 +2328,8 @@
       `;
     }
 
+    const wordCount = Number(summary.wordCount) || (Array.isArray(summary.words) ? summary.words.length : 0);
+    const sourceText = summary.source === "leaderboard" ? " | Fuente Top 5" : "";
     return `
       <div class="word-search-admin-summary">
         <span>Actividad 1 - Sopa de letras</span>
@@ -2040,7 +2340,7 @@
           Puntaje ${escapeHtml(summary.score)} / 10000 |
           Tiempo ${escapeHtml(formatDurationMs(summary.elapsedMs))} |
           Errores ${escapeHtml(summary.mistakes)} |
-          Palabras ${escapeHtml(summary.words.length)}
+          Palabras ${escapeHtml(wordCount)}${sourceText}
         </small>
       </div>
     `;
@@ -2069,6 +2369,7 @@
       `;
     }
 
+    const sourceText = summary.source === "leaderboard" ? " | Fuente Top 5" : "";
     return `
       <div class="word-search-admin-summary">
         <span>Actividad 2 - Relaciona funciones</span>
@@ -2078,7 +2379,7 @@
           Puntaje ${escapeHtml(summary.score)} / 10000 |
           Tiempo ${escapeHtml(formatDurationMs(summary.elapsedMs))} |
           Errores ${escapeHtml(summary.mistakes)} |
-          Correctas ${escapeHtml(summary.correctCount)} / ${escapeHtml(summary.totalPairs || summary.correctCount)}
+          Correctas ${escapeHtml(summary.correctCount)} / ${escapeHtml(summary.totalPairs || summary.correctCount)}${sourceText}
         </small>
       </div>
     `;
@@ -2112,6 +2413,8 @@
         ? "progress-container"
         : tab === "actividades"
         ? "activities-container"
+        : tab === "fechas"
+        ? "deadlines-container"
         : "users-container";
     const container = getById(id);
     if (!container) {
@@ -3139,109 +3442,253 @@
     return groups.sort((a, b) => a.label.localeCompare(b.label, "es"));
   }
 
-  function buildActivitiesPanels(groupUsers) {
-    const wordSearchRows = [];
-    const matchingRows = [];
-
-    groupUsers.forEach((user) => {
+  function getUniqueInteractiveGuides(users) {
+    const seen = new Set();
+    const guides = [];
+    users.forEach((user) => {
       (user.progress?.guides || []).forEach((guide) => {
-        if (!getGuide2ResponseConfig(guide.fileName)) return;
-        const key = getGuide2SummaryKey(user.usernameKey, guide.fileName);
-        const ws = guide2WordSearchSummaries[key];
-        const mg = guide2MatchingGameSummaries[key];
-        if (ws) wordSearchRows.push({ summary: ws, user, guide });
-        if (mg) matchingRows.push({ summary: mg, user, guide });
+        if (seen.has(guide.fileName)) return;
+        const activities = getUnlockActivitiesForGuide(guide.fileName);
+        if (!activities.length) return;
+        seen.add(guide.fileName);
+        const guideKind = getGuide2ResponseConfig(guide.fileName) ? "guia2"
+          : getGuide6Config(guide.fileName) ? "guia6"
+          : getGuide1Config(guide.fileName) ? "guia1"
+          : "";
+        guides.push({
+          fileName: guide.fileName,
+          title: guide.title || auth.getGuideTitle(guide.fileName),
+          guideKind,
+        });
       });
     });
+    return guides;
+  }
 
-    const stillLoading = groupUsers.some((user) =>
-      (user.progress?.guides || []).some((guide) => {
-        if (!getGuide2ResponseConfig(guide.fileName)) return false;
-        const key = getGuide2SummaryKey(user.usernameKey, guide.fileName);
+  function readDeliveryRecord(usernameKey, pageFile, activityId) {
+    const storageBase = `${pageFile}:delivery:${activityId}`;
+    const key = auth.getStudentStorageKey(usernameKey, storageBase, { area: "guide-data" });
+    return readJson(localStorage.getItem(key), null);
+  }
+
+  function buildActivitiesStudentTable(groupUsers, fileName, activityId, activityLabel, guideKind) {
+    // \u2500\u2500 Actividades auxiliares (p\u00e1gina propia) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+    if (activityId === "matriz322") {
+      const usersWithGuide = groupUsers.filter((u) =>
+        (u.progress?.guides || []).some((g) => g.fileName === fileName)
+      );
+      const stillLoading = usersWithGuide.some((u) => {
+        const key = getGuide2SummaryKey(u.usernameKey, fileName);
         return !(key in guide2WordSearchSummaries);
-      })
+      });
+      if (stillLoading) return '<p class="activities-loading">Cargando resultados\u2026</p>';
+      const rows = usersWithGuide
+        .filter((u) => matriz322Summaries[u.usernameKey])
+        .map((u) => ({ summary: matriz322Summaries[u.usernameKey] }));
+      return buildMatriz322Table(rows);
+    }
+
+    if (activityId === "fichaCaso") {
+      const usersWithFicha = groupUsers.filter((u) => getFichaCasoFileName(u));
+      if (!usersWithFicha.length) {
+        return '<p class="activities-empty">Esta actividad no est\u00e1 disponible para el grupo seleccionado.</p>';
+      }
+      const loading = usersWithFicha.some((u) => !(u.usernameKey in fichaCasoSummaries));
+      if (loading) return '<p class="activities-loading">Cargando respuestas\u2026</p>';
+      const rows = [];
+      usersWithFicha.forEach((user) => {
+        const snapshot = fichaCasoSummaries[user.usernameKey];
+        if (snapshot?.state) rows.push({ user, snapshot });
+      });
+      return buildFichaCasoTable(rows);
+    }
+
+    // \u2500\u2500 Actividades normales \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+    const usersWithGuide = groupUsers.filter((u) =>
+      (u.progress?.guides || []).some((g) => g.fileName === fileName)
     );
-
-    const fichaCasoRows = [];
-    const fichaCasoLoading = groupUsers
-      .filter((u) => getFichaCasoFileName(u))
-      .some((u) => !(u.usernameKey in fichaCasoSummaries));
-    groupUsers.forEach((user) => {
-      if (!getFichaCasoFileName(user)) return;
-      const snapshot = fichaCasoSummaries[user.usernameKey];
-      if (snapshot?.state) fichaCasoRows.push({ user, snapshot });
-    });
-
-    const matriz322Rows = [];
-    groupUsers.forEach((user) => {
-      const summary = matriz322Summaries[user.usernameKey];
-      if (summary) matriz322Rows.push({ summary });
-    });
-
-    const redesSbUsers = groupUsers.filter((u) => REDES_SB_CLOUD_FILES[u.ficha]);
-    const hasRedes = redesSbUsers.length > 0;
-    const redesLoading = redesSbUsers.some((u) => !(u.usernameKey in redesSocializacionSummaries));
-    const redesRows = redesSbUsers.map((u) => redesSocializacionSummaries[u.usernameKey]).filter(Boolean).map((s) => ({ summary: s }));
-    const redesQuizLoading = redesSbUsers.some((u) => !(u.usernameKey in redesQuizSummaries));
-    const redesQuizRows = redesSbUsers.map((u) => redesQuizSummaries[u.usernameKey]).filter(Boolean).map((s) => ({ summary: s }));
-
-    const loadingHtml = '<p class="activities-loading">Cargando resultados\u2026</p>';
-
-    const hasGuia2Activities = groupUsers.some((u) =>
-      (u.progress?.guides || []).some((g) => getGuide2ResponseConfig(g.fileName))
-    );
-    const hasFichaCaso = groupUsers.some((u) => getFichaCasoFileName(u));
-
-    let html = "";
-
-    html += `
-      <section class="panel">
-        <h2>Respuestas por actividad individual</h2>
-        <p class="activities-section-copy">Selecciona una actividad para ver solo sus respuestas y exportarlas como soporte en Word.</p>
-        ${buildAvailableGuideActivityCards(groupUsers)}
-      </section>
-    `;
-
-    if (hasGuia2Activities) {
-      html += `
-        <section class="panel">
-          <h2>Actividad 1 \u2014 Sopa de letras</h2>
-          ${stillLoading ? loadingHtml : buildActivitiesTable(wordSearchRows, "wordsearch")}
-        </section>
-        <section class="panel">
-          <h2>Actividad 2 \u2014 Relacionar funciones</h2>
-          ${stillLoading ? loadingHtml : buildActivitiesTable(matchingRows, "matching")}
-        </section>
-        <section class="panel">
-          <h2>Actividad 3.2.2 \u2014 Matriz de Diagn\u00f3stico Digital</h2>
-          ${stillLoading ? loadingHtml : buildMatriz322Table(matriz322Rows)}
-        </section>
-      `;
+    if (!usersWithGuide.length) {
+      return '<p class="activities-empty">Ning\u00fan aprendiz tiene esta gu\u00eda asignada en el grupo actual.</p>';
     }
-    if (hasFichaCaso) {
-      html += `
-        <section class="panel">
-          <h2>Actividad 4 \u2014 Ficha de caso</h2>
-          ${fichaCasoLoading ? loadingHtml : buildFichaCasoTable(fichaCasoRows)}
-        </section>
-      `;
+
+    if (guideKind === "guia1") {
+      const guide1Config = getGuide1Config(fileName);
+      const rows = usersWithGuide.map((user) => {
+        const record = guide1Config
+          ? readDeliveryRecord(user.usernameKey, guide1Config.pageFile, activityId)
+          : null;
+        const deliveredAt = record?.submittedAt || record?.updatedAt || "";
+        const savedFile = record?.savedFileName || "";
+        const statusHtml = deliveredAt
+          ? `<span class="act-delivery-status act-delivery-status--sent">${escapeHtml(formatDate(deliveredAt))}</span>${savedFile ? `<br><small class="act-delivery-filename">${escapeHtml(savedFile)}</small>` : ""}`
+          : `<span class="act-delivery-status act-delivery-status--pending">Sin entrega registrada</span>`;
+        const exportBtn = deliveredAt
+          ? `<button class="btn ghost btn--sm" type="button"
+               data-export-activity="${escapeHtml(activityId)}"
+               data-guide-kind="${escapeHtml(guideKind)}"
+               data-guide-file="${escapeHtml(fileName)}"
+               data-activity-label="${escapeHtml(activityLabel)}"
+               data-user="${escapeHtml(user.usernameKey)}">Exportar soporte</button>`
+          : "";
+        return `<tr>
+          <td>${escapeHtml(user.fullName)}</td>
+          <td>${escapeHtml(user.grupo)}</td>
+          <td>${statusHtml}</td>
+          <td class="act-explorer__actions">${exportBtn}</td>
+        </tr>`;
+      }).join("");
+      return `
+        <div class="act-explorer__table-header">
+          <span class="act-explorer__table-count">${usersWithGuide.length} aprendice${usersWithGuide.length !== 1 ? "s" : ""}</span>
+        </div>
+        <div class="answer-table-wrap">
+          <table class="answer-table">
+            <thead><tr><th>Aprendiz</th><th>Grupo</th><th>Fecha y hora de entrega</th><th>Acciones</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`;
     }
-    if (hasRedes) {
-      html += `
-        <section class="panel">
-          <h2>Quiz 3.2.1.H \u2014 Redes Santa B\u00e1rbara</h2>
-          ${redesQuizLoading ? loadingHtml : buildRedesQuizTable(redesQuizRows)}
-        </section>
-        <section class="panel">
-          <h2>Socializaci\u00f3n 3.1.1 \u2014 Santa B\u00e1rbara</h2>
-          ${redesLoading ? loadingHtml : buildRedesSocializacionTable(redesRows)}
-        </section>
-      `;
+
+    const rows = usersWithGuide.map((user) => {
+      const key = getGuide2SummaryKey(user.usernameKey, fileName);
+      const isGameActivity = activityId === "wordsearch" || activityId === "matching";
+      const summary = activityId === "wordsearch"
+        ? guide2WordSearchSummaries[key]
+        : activityId === "matching"
+        ? guide2MatchingGameSummaries[key]
+        : null;
+      const statusHtml = !isGameActivity
+        ? `<span class="act-delivery-status act-delivery-status--pending">Consultar respuestas</span>`
+        : summary
+        ? `<span class="act-delivery-status act-delivery-status--sent">${summary.completed ? "Completada" : "Iniciada"}</span>
+           <small class="act-delivery-filename">Puntaje ${escapeHtml(summary.score)} / 10000${summary.source === "leaderboard" ? " - Top 5" : ""}</small>`
+        : `<span class="act-delivery-status act-delivery-status--pending">Sin registro</span>`;
+
+      return `
+        <tr>
+          <td>${escapeHtml(user.fullName)}</td>
+          <td>${escapeHtml(user.grupo)}</td>
+          <td>${statusHtml}</td>
+          <td class="act-explorer__actions">
+            <button class="btn secondary btn--sm" type="button"
+              data-view-guide-activity="${escapeHtml(activityId)}"
+              data-guide-kind="${escapeHtml(guideKind)}"
+              data-guide-file="${escapeHtml(fileName)}"
+              data-activity-label="${escapeHtml(activityLabel)}"
+              data-user="${escapeHtml(user.usernameKey)}">Ver respuestas</button>
+            <button class="btn ghost btn--sm" type="button"
+              data-export-activity="${escapeHtml(activityId)}"
+              data-guide-kind="${escapeHtml(guideKind)}"
+              data-guide-file="${escapeHtml(fileName)}"
+              data-activity-label="${escapeHtml(activityLabel)}"
+              data-user="${escapeHtml(user.usernameKey)}">Exportar soporte</button>
+          </td>
+        </tr>`;
+    }).join("");
+    return `
+      <div class="act-explorer__table-header">
+        <span class="act-explorer__table-count">${usersWithGuide.length} aprendice${usersWithGuide.length !== 1 ? "s" : ""}</span>
+      </div>
+      <div class="answer-table-wrap">
+        <table class="answer-table">
+          <thead><tr><th>Aprendiz</th><th>Grupo</th><th>Estado</th><th>Acciones</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  }
+
+  function buildActivitiesPanels(groupUsers) {
+    const guides = getUniqueInteractiveGuides(groupUsers);
+
+    if (!guides.length) {
+      return '<div class="empty-state">No hay actividades interactivas registradas para este grupo.</div>';
     }
-    if (!html) {
-      html = '<div class="empty-state">No hay actividades registradas para este grupo.</div>';
+
+    if (!activeActivitiesGuide || !guides.find((g) => g.fileName === activeActivitiesGuide)) {
+      activeActivitiesGuide = guides[0].fileName;
+      activeActivitiesActivity = null;
     }
-    return html;
+
+    const selectedGuide = guides.find((g) => g.fileName === activeActivitiesGuide) || guides[0];
+    const activities = getUnlockActivitiesForGuide(selectedGuide.fileName);
+
+    if (!activeActivitiesActivity || !activities.find((a) => a.id === activeActivitiesActivity)) {
+      activeActivitiesActivity = activities[0]?.id || null;
+    }
+
+    const selectedActivity = activities.find((a) => a.id === activeActivitiesActivity);
+
+    const guideFilterHtml = guides.length > 1
+      ? `<div class="act-explorer__guide-filter">
+          ${guides.map((g) => `
+            <button class="act-explorer__guide-btn${g.fileName === selectedGuide.fileName ? " is-active" : ""}"
+              type="button" data-activities-guide="${escapeHtml(g.fileName)}">
+              ${escapeHtml(g.title)}
+            </button>`).join("")}
+         </div>`
+      : `<div class="act-explorer__guide-title">${escapeHtml(selectedGuide.title)}</div>`;
+
+    const activityListHtml = `
+      <nav class="act-explorer__activity-list">
+        ${activities.map((a) => `
+          <button class="act-explorer__activity-btn${a.id === activeActivitiesActivity ? " is-active" : ""}"
+            type="button" data-activities-activity="${escapeHtml(a.id)}">
+            ${escapeHtml(a.label)}
+          </button>`).join("")}
+      </nav>`;
+
+    const studentPanelHtml = selectedActivity
+      ? buildActivitiesStudentTable(
+          groupUsers,
+          selectedGuide.fileName,
+          selectedActivity.id,
+          selectedActivity.label,
+          selectedGuide.guideKind
+        )
+      : '<p class="activities-empty">Selecciona una actividad.</p>';
+
+    return `
+      <section class="panel act-explorer">
+        <h2>Respuestas por actividad</h2>
+        ${guideFilterHtml}
+        <div class="act-explorer__layout">
+          ${activityListHtml}
+          <div class="act-explorer__student-panel">
+            ${selectedActivity ? `<h3 class="act-explorer__activity-heading">${escapeHtml(selectedActivity.label)}</h3>` : ""}
+            ${studentPanelHtml}
+          </div>
+        </div>
+      </section>`;
+  }
+
+  function renderDeadlinesTab(users) {
+    const container = getById("deadlines-container");
+    if (!container) return;
+
+    if (!users.length) {
+      container.innerHTML = '<div class="empty-state">No hay usuarios que coincidan con la búsqueda actual.</div>';
+      return;
+    }
+
+    const groups = getActivitiesGroups(users);
+    if (!activeActivitiesSubtab || !groups.find((g) => g.key === activeActivitiesSubtab)) {
+      activeActivitiesSubtab = groups[0]?.key || null;
+    }
+    const subTabsHtml = groups.length > 1
+      ? `<nav class="activities-subtabs">
+          ${groups.map((g) => `
+            <button class="activities-subtab${g.key === activeActivitiesSubtab ? " is-active" : ""}"
+              type="button" data-activities-subtab="${escapeHtml(g.key)}">
+              ${escapeHtml(g.label)}
+            </button>`).join("")}
+         </nav>`
+      : "";
+    const groupUsers = activeActivitiesSubtab
+      ? users.filter((u) => `${u.grupo}::${u.ficha}` === activeActivitiesSubtab)
+      : users;
+
+    const panel = buildDeadlineConfigPanel(groupUsers);
+    container.innerHTML = subTabsHtml + (panel || '<div class="empty-state">No hay actividades con fechas de entrega configuradas para este grupo.</div>');
   }
 
   function renderActivitiesTab(users) {
@@ -3273,7 +3720,7 @@
       ? users.filter((u) => `${u.grupo}::${u.ficha}` === activeActivitiesSubtab)
       : users;
 
-    container.innerHTML = subTabsHtml + buildDeadlineConfigPanel(groupUsers) + buildActivitiesPanels(groupUsers);
+    container.innerHTML = subTabsHtml + buildActivitiesPanels(groupUsers);
   }
 
   // ── Pestaña Juicios de evaluación ───────────────────────────────────────────
@@ -3620,6 +4067,8 @@
       renderProgressTab(users);
     } else if (tab === "actividades") {
       renderActivitiesTab(users);
+    } else if (tab === "fechas") {
+      renderDeadlinesTab(users);
     } else if (tab === "notas") {
       renderGradesTab(users);
     } else {
@@ -3979,6 +4428,27 @@
       if (subtabButton) {
         activeActivitiesSubtab = subtabButton.getAttribute("data-activities-subtab") || null;
         renderUsers();
+        return;
+      }
+
+      const activitiesGuideBtn = event.target.closest("[data-activities-guide]");
+      if (activitiesGuideBtn) {
+        activeActivitiesGuide = activitiesGuideBtn.getAttribute("data-activities-guide") || null;
+        activeActivitiesActivity = null;
+        renderUsers();
+        return;
+      }
+
+      const activitiesActivityBtn = event.target.closest("[data-activities-activity]");
+      if (activitiesActivityBtn) {
+        activeActivitiesActivity = activitiesActivityBtn.getAttribute("data-activities-activity") || null;
+        renderUsers();
+        return;
+      }
+
+      const exportActivityButton = event.target.closest("[data-export-activity]");
+      if (exportActivityButton) {
+        await handleExportGuideActivityDirect(exportActivityButton);
         return;
       }
 
