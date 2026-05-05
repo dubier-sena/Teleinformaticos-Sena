@@ -25,6 +25,10 @@ assertIncludes("function getRedesActivitiesForFile", "actividades de redes en ex
 assertIncludes("function buildStandardActivityButtons", "botones estandar de acciones");
 assertIncludes("function buildGuide1ActivityResponsePayload", "detalle de entregas de Guia 1");
 assertIncludes("function buildRedesActivityResponsePayload", "detalle de actividades de redes");
+assertIncludes("let guide2ResponseSnapshots", "cache de respuestas completas de Guia 2");
+assertIncludes("function getGuide2ActivityStatusHtml", "estado real por actividad de Guia 2");
+assertIncludes("Sin respuestas guardadas", "estado sin respuestas");
+assertIncludes("Respuestas guardadas", "estado con respuestas");
 assertIncludes('isRedesSbGuideFile(fileName) ? "redes"', "tipo de guia redes");
 assertIncludes("guideKind === \"redes\"", "tabla de actividades de redes");
 assertIncludes("data-view-guide-activity", "boton Ver respuestas");

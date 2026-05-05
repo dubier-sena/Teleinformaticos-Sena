@@ -6,6 +6,7 @@
   }
 
   let allUsers = [];
+  let guide2ResponseSnapshots = {};
   let guide2WordSearchSummaries = {};
   let guide2MatchingGameSummaries = {};
   let fichaCasoSummaries = {};
@@ -1435,29 +1436,31 @@
   }
 
   async function hydrateGuide2WordSearchSummaries(users) {
+    const nextSnapshots = {};
     const nextSummaries = {};
     const nextMatchingSummaries = {};
     const tasks = [];
     const leaderboardMaps = await loadGuide2LeaderboardMaps(users);
 
     users.forEach((user) => {
-      (user.progress?.guides || []).forEach((guide) => {
-        if (!getGuide2ResponseConfig(guide.fileName)) {
+      getOfficialGuideFilesForUsers([user]).forEach((fileName) => {
+        if (!getGuide2ResponseConfig(fileName)) {
           return;
         }
 
-        const key = getGuide2SummaryKey(user.usernameKey, guide.fileName);
+        const key = getGuide2SummaryKey(user.usernameKey, fileName);
         tasks.push(
-          loadGuide2Responses(user.usernameKey, guide.fileName)
+          loadGuide2Responses(user.usernameKey, fileName)
             .then(({ snapshot }) => {
+              nextSnapshots[key] = snapshot || null;
               const wordSearchSummary = extractWordSearchSummary(snapshot, user);
               const matchingSummary = extractMatchingGameSummary(snapshot, user);
               nextSummaries[key] = wordSearchSummary || summaryFromWordSearchLeaderboardEntry(
-                findGuide2LeaderboardEntry(leaderboardMaps.wordSearch[guide.fileName], user),
+                findGuide2LeaderboardEntry(leaderboardMaps.wordSearch[fileName], user),
                 user
               );
               nextMatchingSummaries[key] = matchingSummary || summaryFromMatchingLeaderboardEntry(
-                findGuide2LeaderboardEntry(leaderboardMaps.matching[guide.fileName], user),
+                findGuide2LeaderboardEntry(leaderboardMaps.matching[fileName], user),
                 user
               );
               const st = snapshot?.state || {};
@@ -1473,6 +1476,7 @@
               }
             })
             .catch(() => {
+              nextSnapshots[key] = null;
               nextSummaries[key] = null;
               nextMatchingSummaries[key] = null;
             })
@@ -1481,12 +1485,14 @@
     });
 
     if (!tasks.length) {
+      guide2ResponseSnapshots = {};
       guide2WordSearchSummaries = {};
       guide2MatchingGameSummaries = {};
       return;
     }
 
     await Promise.all(tasks);
+    guide2ResponseSnapshots = nextSnapshots;
     guide2WordSearchSummaries = nextSummaries;
     guide2MatchingGameSummaries = nextMatchingSummaries;
   }
@@ -3650,6 +3656,20 @@
     };
   }
 
+  function getGuide2ActivityStatusHtml(activityId, snapshot) {
+    const activity = GUIDE2_ACTIVITIES.find((item) => item.id === activityId);
+    const keys = Array.isArray(activity?.keys) ? activity.keys : [];
+    const state = snapshot?.state || {};
+    const hasAnswers = keys.some((key) => hasMeaningfulValue(state[key]));
+    if (!hasAnswers) {
+      return '<span class="act-delivery-status act-delivery-status--pending">Sin respuestas guardadas</span>';
+    }
+
+    const locked = keys.some((key) => /-locked$/.test(key) && state[key] === true);
+    const updatedAt = snapshot?.updatedAt ? `<small class="act-delivery-filename">${escapeHtml(formatDate(snapshot.updatedAt))}</small>` : "";
+    return `<span class="act-delivery-status act-delivery-status--sent">${locked ? "Entregada" : "Respuestas guardadas"}</span>${updatedAt}`;
+  }
+
   function buildActivitiesStudentTable(groupUsers, fileName, activityId, activityLabel, guideKind) {
     // \u2500\u2500 Actividades auxiliares (p\u00e1gina propia) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
     if (activityId === "matriz322") {
@@ -3775,17 +3795,23 @@
     const rows = usersWithGuide.map((user) => {
       const key = getGuide2SummaryKey(user.usernameKey, fileName);
       const isGameActivity = activityId === "wordsearch" || activityId === "matching";
+      const hasLoadedSnapshot = key in guide2ResponseSnapshots;
+      const snapshot = guide2ResponseSnapshots[key] || null;
       const summary = activityId === "wordsearch"
         ? guide2WordSearchSummaries[key]
         : activityId === "matching"
         ? guide2MatchingGameSummaries[key]
         : null;
       const statusHtml = !isGameActivity
-        ? `<span class="act-delivery-status act-delivery-status--pending">Consultar respuestas</span>`
+        ? hasLoadedSnapshot
+          ? getGuide2ActivityStatusHtml(activityId, snapshot)
+          : `<span class="act-delivery-status act-delivery-status--pending">Cargando respuestas...</span>`
         : summary
         ? `<span class="act-delivery-status act-delivery-status--sent">${summary.completed ? "Completada" : "Iniciada"}</span>
            <small class="act-delivery-filename">Puntaje ${escapeHtml(summary.score)} / 10000${summary.source === "leaderboard" ? " - Top 5" : ""}</small>`
-        : `<span class="act-delivery-status act-delivery-status--pending">Sin registro</span>`;
+        : hasLoadedSnapshot
+          ? `<span class="act-delivery-status act-delivery-status--pending">Sin respuestas guardadas</span>`
+          : `<span class="act-delivery-status act-delivery-status--pending">Cargando respuestas...</span>`;
 
       return `
         <tr>
