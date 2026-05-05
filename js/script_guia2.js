@@ -771,6 +771,7 @@ function applyCloudStateSnapshot(snapshot) {
   applyExtensionesLock();
   applySistemasLock();
   updateProgress();
+  window.dispatchEvent(new CustomEvent("guia2-state-applied", { detail: { fileName: GUIDE_DATA_FILE } }));
 }
 
 async function loadCloudState(force) {
