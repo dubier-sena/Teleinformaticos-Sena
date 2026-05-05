@@ -3,11 +3,6 @@ const path = require("path");
 const vm = require("vm");
 
 const root = process.cwd();
-const guidePages = [
-  "grupo-10a-guia-02-herramientas-informaticas-digitales.html",
-  "grupo-10b-guia-02-herramientas-informaticas-digitales.html",
-];
-
 let failed = false;
 
 function assertIncludes(content, marker, label) {
@@ -17,12 +12,14 @@ function assertIncludes(content, marker, label) {
   }
 }
 
-for (const page of guidePages) {
-  const html = fs.readFileSync(path.join(root, page), "utf8");
-  assertIncludes(html, "data/calendario_2026_records.js?v=20260410_1", `${page} carga registros del calendario`);
-  assertIncludes(html, "data/calendario_2026_seed.js?v=20260410_1", `${page} carga estado base del calendario`);
-  assertIncludes(html, "js/guia_template.js?v=20260411_1", `${page} usa cache actualizado de plantilla`);
-}
+const routerJs = fs.readFileSync(path.join(root, "js", "guia_router.js"), "utf8");
+[
+  "data/calendario_2026_records.js",
+  "data/calendario_2026_seed.js",
+  "js/guia_template.js",
+  "10a-guia-2-herramientas",
+  "10b-guia-2-herramientas",
+].forEach((marker) => assertIncludes(routerJs, marker, "rutas de guia cargan calendario"));
 
 const templateJs = fs.readFileSync(path.join(root, "js", "guia_template.js"), "utf8");
 [
@@ -36,6 +33,8 @@ const templateJs = fs.readFileSync(path.join(root, "js", "guia_template.js"), "u
   "findCurrentGuideClass",
   "findNextGuideClass",
   "findNextGuideDelivery",
+  "findNextGuideNotice",
+  "getGuideRecordHorario",
   "loadGuideCalendarState",
   "cloudGetCalendar",
   "guideScheduleNextClass",
@@ -44,7 +43,16 @@ const templateJs = fs.readFileSync(path.join(root, "js", "guia_template.js"), "u
   "Proxima clase",
   "Entrega pendiente",
   "Sin entrega proxima",
+  "Novedad de clase",
 ].forEach((marker) => assertIncludes(templateJs, marker, "logica de calendario en plantilla"));
+
+const calendarHtml = fs.readFileSync(path.join(root, "calendario-academico-2026.html"), "utf8");
+[
+  "calculateRecordHorario",
+  "const getH=r=>estados[r.id]?.horario??r.horario",
+  "current.horario=getH(record)",
+  "horario-preview",
+].forEach((marker) => assertIncludes(calendarHtml, marker, "edicion de grado y horario en calendario"));
 
 const css = fs.readFileSync(path.join(root, "css", "guia_template.css"), "utf8");
 [
@@ -75,6 +83,7 @@ function loadTemplateHooks(todayOverride, minutesOverride) {
       location: { pathname: "/grupo-10a-guia-02-herramientas-informaticas-digitales.html" },
       GUIDE_SCHEDULE_TODAY_OVERRIDE: todayOverride,
       GUIDE_SCHEDULE_MINUTES_OVERRIDE: minutesOverride,
+      addEventListener() {},
     },
     localStorage: {
       getItem() {
@@ -82,6 +91,9 @@ function loadTemplateHooks(todayOverride, minutesOverride) {
       },
       setItem() {},
       removeItem() {},
+    },
+    document: {
+      addEventListener() {},
     },
     console,
   };
@@ -97,17 +109,23 @@ function loadTemplateHooks(todayOverride, minutesOverride) {
   );
 
   const instrumentedTemplate = templateJs.replace(
-    "\n  ensureGuideRevealShell();",
+    '\n  window.addEventListener("pagehide"',
     `
   window.__guideTemplateTestHooks = {
     findCurrentGuideClass,
     findNextGuideClass,
+    findNextGuideNotice,
+    getGuideRecordHorario,
     getGuideScheduleTimeValue,
     getGuideNowMinutes,
     isGuideClassAfterNow,
+    __setGuideCalendarState(nextState) {
+      const previous = guideCalendarState;
+      guideCalendarState = nextState || {};
+      return previous;
+    },
   };
-  return;
-  ensureGuideRevealShell();`
+  window.addEventListener("pagehide"`
   );
   vm.runInContext(instrumentedTemplate, context);
   return context.window.__guideTemplateTestHooks;
@@ -208,6 +226,69 @@ if (!currentDuringClass || currentDuringClass.fecha !== "2026-04-10") {
     }`
   );
   failed = true;
+}
+
+const changedScheduleHooks = loadTemplateHooks("2026-02-25", 6 * 60);
+const changedRecord = calendarWindow.CALENDAR_2026_RECORDS.find(
+  (record) => record.fecha === "2026-02-25" && record.colegio.includes("Santa") && record.grado === "11A"
+);
+if (!changedRecord) {
+  console.error("[FAIL] No se encontro registro base SB 11A para probar cambio de grupo.");
+  failed = true;
+} else {
+  const changedState = {
+    [changedRecord.id]: {
+      grado: "11B",
+      horario: "10:50am-11:45am; 2:15pm-4:15pm",
+      estado: "Activa",
+      obs: "Cambio de grupo y horario",
+    },
+  };
+  const originalState = changedScheduleHooks.__setGuideCalendarState
+    ? changedScheduleHooks.__setGuideCalendarState(changedState)
+    : null;
+  const nextFor10B = changedScheduleHooks.findNextGuideClass({
+    inst: "Institucion Educativa Santa Barbara",
+    grupo: "11B",
+  });
+  if (!nextFor10B || nextFor10B.id !== changedRecord.id || changedScheduleHooks.getGuideRecordHorario(nextFor10B) !== "10:50am-11:45am; 2:15pm-4:15pm") {
+    console.error("[FAIL] El aprendiz 11B debe ver la clase cambiada con el horario actualizado.");
+    failed = true;
+  }
+  if (changedScheduleHooks.__setGuideCalendarState && originalState) {
+    changedScheduleHooks.__setGuideCalendarState(originalState);
+  }
+}
+
+const noticeHooks = loadTemplateHooks("2026-05-05", 6 * 60);
+const noticeRecord = calendarWindow.CALENDAR_2026_RECORDS.find(
+  (record) => record.fecha >= "2026-05-05" && record.colegio.includes("Kennedy") && record.grado === "10B"
+);
+if (!noticeRecord) {
+  console.error("[FAIL] No se encontro registro JFK 10B para probar novedad.");
+  failed = true;
+} else {
+  const originalState = noticeHooks.__setGuideCalendarState
+    ? noticeHooks.__setGuideCalendarState({
+        [noticeRecord.id]: {
+          estado: "Cancelada",
+          obs: "Clase cancelada por evento institucional",
+          grado: "10B",
+          horario: noticeRecord.horario,
+        },
+      })
+    : null;
+  const notice = noticeHooks.findNextGuideNotice({
+    inst: "Institucion Educativa Jhon F. Kennedy",
+    grupo: "10B",
+  });
+  if (!notice || notice.id !== noticeRecord.id) {
+    console.error("[FAIL] El aprendiz debe ver la proxima novedad de clase cancelada.");
+    failed = true;
+  }
+  if (noticeHooks.__setGuideCalendarState && originalState) {
+    noticeHooks.__setGuideCalendarState(originalState);
+  }
 }
 
 if (failed) {

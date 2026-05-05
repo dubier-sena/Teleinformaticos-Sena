@@ -83,7 +83,8 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
       <div id="grade-section" style="display:none;">
         <label class="modal-lbl">Grado asignado</label>
         <select id="m-grado" class="modal-sel"></select>
-        <div class="grade-note">Este cambio se aplica a todas las franjas de esa clase.</div>
+        <div class="grade-note">Este cambio se aplica a esta clase y toma el horario del grado seleccionado.</div>
+        <div id="horario-preview" class="grade-note"></div>
       </div>
 
       <div id="act-section" style="display:none;">
@@ -182,7 +183,7 @@ const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className
 const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const fmtActFecha=s=>{if(!s)return '';const[y,m,d]=s.split('-');return `${d}/${m}/${y}`;};
 const getHorarioSortValue=record=>{
-  const label=String(record?.horario||'');
+  const label=String((typeof getH==='function'?getH(record):record?.horario)||'');
   const match=label.match(/(\d{1,2}):(\d{2})(am|pm)/i);
   if(!match)return 9999;
   let hour=Number(match[1])%12;
@@ -295,6 +296,20 @@ const getE=r=>estados[r.id]?.estado??r.defE;
 const getO=r=>estados[r.id]?.obs??r.defO;
 const getAct=r=>estados[r.id]?.act||null; // {nombre, fecha}
 const getG=r=>estados[r.id]?.grado??r.grado;
+const getH=r=>estados[r.id]?.horario??r.horario;
+
+function calculateRecordHorario(record,grade){
+  if(record.tipo!=='CLASE')return record.horario||'';
+  const selectedGrade=grade||getG(record);
+  if(record.colegio===SB){
+    const weekday=iwd(parseD(record.fecha));
+    return SBH[selectedGrade]?.[weekday]||record.horario||'';
+  }
+  if(record.colegio===JFK){
+    return jhr(Number(String(record.fecha||'').slice(5,7))||0);
+  }
+  return record.horario||'';
+}
 
 function getGradeOptionsForRecord(record){
   const baseOptions=GRADE_OPTIONS[record.colegio]||[];
@@ -303,10 +318,16 @@ function getGradeOptionsForRecord(record){
 
 function applyGradeToRecord(record,grade){
   const next={...(estados[record.id]||{})};
+  const nextHorario=calculateRecordHorario(record,grade);
   if(!grade||grade===record.grado){
     delete next.grado;
   } else {
     next.grado=grade;
+  }
+  if(nextHorario&&nextHorario!==record.horario){
+    next.horario=nextHorario;
+  } else {
+    delete next.horario;
   }
   estados[record.id]=next;
 }
@@ -335,6 +356,7 @@ function buildSyncStatePayload(){
     current.sourceRow=record.sourceRow;
     if(record.tipo==='CLASE'){
       current.grado=getG(record);
+      current.horario=getH(record);
     }
     payload[record.id]=current;
   });
@@ -972,7 +994,7 @@ function buildRegSection(main,label,recs,finde){
       <td><b>${escapeHtml(r.fecha.split('-').reverse().join('/'))}</b></td>
       <td style="font-size:11px;color:var(--gray)">${escapeHtml((r.mes||'').slice(0,3))}</td>
       <td>${instB}</td><td>${gradoB}</td>
-      <td style="font-size:11px;max-width:150px">${escapeHtml(r.horario||'')}</td>
+      <td style="font-size:11px;max-width:150px">${escapeHtml(getH(r)||'')}</td>
       <td style="font-size:11px;color:var(--gray)">${escapeHtml((r.dia||'').slice(0,3))}</td>
       <td><span style="font-size:10px;background:#EEF2FF;color:#3730a3;padding:2px 7px;border-radius:10px;font-weight:700">${escapeHtml(r.tipo)}</span></td>
       <td>${eB}</td>
@@ -1133,7 +1155,7 @@ function buildCalMonth(m){
                     e==='Cancelada'&&isDesplazamiento?'🚗 '+sh+' '+grade:
                     sh+' '+grade;
           pill.innerHTML=`<div class="cp-lbl" style="color:${es.tc};${es.str?'text-decoration:line-through':''}">${escapeHtml(lbl)}</div>
-            <div class="cp-hr">${escapeHtml(r.horario||'')}</div>`;
+            <div class="cp-hr">${escapeHtml(getH(r)||'')}</div>`;
           if(act?.nombre){
             pill.innerHTML+=`<div class="cp-act">📋 ${escapeHtml(act.nombre.slice(0,18))}${act.nombre.length>18?'…':''}</div>`;
             if(act?.fecha)pill.innerHTML+=`<div class="act-badge">🗓 ${escapeHtml(fmtActFecha(act.fecha))}</div>`;
@@ -1231,7 +1253,7 @@ function openModal(r){
   document.getElementById('m-sub').textContent=
     `${r.fecha.split('-').reverse().join('/')} · ${r.dia} · ${r.mes}${r.slotCount>1?` · Clase ${r.slotIndex} de ${r.slotCount}`:''}`;
   const hrDiv=document.getElementById('m-hr');
-  if(r.horario&&r.horario!=='—'){hrDiv.textContent='🕐 '+r.horario;hrDiv.style.display='inline-block';}
+  if(getH(r)&&getH(r)!=='—'){hrDiv.textContent='🕐 '+getH(r);hrDiv.style.display='inline-block';}
   else hrDiv.style.display='none';
 
   const opts=isFinde?['No aplica','SEDE SENA','DESPLAZAMIENTO']:
@@ -1249,9 +1271,12 @@ function openModal(r){
     const gradeOptions=getGradeOptionsForRecord(r);
     gradeSel.innerHTML=gradeOptions.map(option=>`<option value="${option}">${option}</option>`).join('');
     gradeSel.value=gradeOptions.includes(grade)?grade:(gradeOptions[0]||grade);
+    gradeSel.onchange=updateHorarioPreview;
     gradeSec.style.display='block';
+    updateHorarioPreview();
   } else {
     gradeSel.innerHTML='';
+    gradeSel.onchange=null;
     gradeSec.style.display='none';
   }
 
@@ -1282,6 +1307,19 @@ function updateActPreview(){
 }
 document.getElementById('m-act-nombre').addEventListener('input',updateActPreview);
 document.getElementById('m-act-fecha').addEventListener('change',updateActPreview);
+
+function updateHorarioPreview(){
+  if(!modalRec)return;
+  const grade=document.getElementById('m-grado').value||getG(modalRec);
+  const horario=calculateRecordHorario(modalRec,grade);
+  const prev=document.getElementById('horario-preview');
+  const hrDiv=document.getElementById('m-hr');
+  if(prev)prev.textContent=horario&&horario!=='—'?`Horario del grupo ${grade}: ${horario}`:'Sin horario programado para este grupo.';
+  if(hrDiv){
+    if(horario&&horario!=='—'){hrDiv.textContent='🕐 '+horario;hrDiv.style.display='inline-block';}
+    else hrDiv.style.display='none';
+  }
+}
 
 function closeModal(){document.getElementById('modal-bg').classList.remove('open');modalRec=null;}
 function saveModal(){

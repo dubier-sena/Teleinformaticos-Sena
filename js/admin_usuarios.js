@@ -243,12 +243,12 @@
   const GUIDE2_ACTIVITIES = [
     { id: "wordsearch", label: "Sopa de letras", keys: ["wordSearch:guia2-sopa"] },
     { id: "matching", label: "Relaciona herramientas", keys: ["matchingGame:guia2-relaciona"] },
+    { id: "matriz322", label: "Actividad 3.2.2 - Matriz de Diagnóstico Digital", auxiliar: true },
+    { id: "fichaCaso", label: "Actividad 4 - Ficha de caso", auxiliar: true },
     { id: "extensiones331", label: "Actividad 5 - Extensiones de archivo", keys: GUIDE2_EXTENSION_ACTIVITY_KEYS },
     { id: "sistemas332", label: "Actividad 6 - Requerimientos minimos", keys: GUIDE2_SYSTEM_ACTIVITY_KEYS },
     { id: "colaborativas334", label: "Actividad 8 - Herramientas colaborativas", keys: GUIDE2_COLLABORATIVE_ACTIVITY_KEYS },
     { id: "transferReto341", label: "Actividad 10 - Reto final", keys: GUIDE2_TRANSFER_RETO_KEYS },
-    { id: "matriz322", label: "Actividad 3.2.2 - Matriz de Diagnóstico Digital", auxiliar: true },
-    { id: "fichaCaso", label: "Actividad 4 - Ficha de caso", auxiliar: true },
   ];
 
   function getById(id) {
@@ -490,12 +490,65 @@
     return getGuide2ResponseConfig(fileName) ? GUIDE2_ACTIVITIES : [];
   }
 
+  function getRedesActivitiesForFile(fileName) {
+    if (!isRedesSbGuideFile(fileName)) {
+      return [];
+    }
+    return [
+      ...REDES_ADMIN_QUIZ_CONFIGS.map((config) => ({
+        id: config.key,
+        label: config.label,
+        redesQuiz: true,
+      })),
+      ...REDES_LAB_ACTIVITIES.map((activity) => ({
+        ...activity,
+        redesLab: true,
+      })),
+    ];
+  }
+
   function getUnlockActivitiesForGuide(fileName) {
     const guide2Activities = getGuide2ActivitiesForFile(fileName);
     if (guide2Activities.length) return guide2Activities;
+    const redesActivities = getRedesActivitiesForFile(fileName);
+    if (redesActivities.length) return redesActivities;
     if (getGuide6Config(fileName)) return GUIDE6_ACTIVITIES;
     if (getGuide1Config(fileName)) return GUIDE1_ACTIVITIES;
     return [];
+  }
+
+  function getOfficialGuideFilesForUsers(users) {
+    const ficha = String(users?.[0]?.ficha || "").trim();
+    if (ficha && typeof auth.getGuidesForFicha === "function") {
+      return auth.getGuidesForFicha(ficha);
+    }
+    const seen = new Set();
+    const files = [];
+    users.forEach((user) => {
+      (user.progress?.guides || []).forEach((guide) => {
+        if (!seen.has(guide.fileName)) {
+          seen.add(guide.fileName);
+          files.push(guide.fileName);
+        }
+      });
+    });
+    return files;
+  }
+
+  function userHasOfficialGuide(user, fileName) {
+    const ficha = String(user?.ficha || "").trim();
+    if (ficha && typeof auth.getGuidesForFicha === "function") {
+      return auth.getGuidesForFicha(ficha).includes(fileName);
+    }
+    return (user?.progress?.guides || []).some((guide) => guide.fileName === fileName);
+  }
+
+  function getGuideKind(fileName) {
+    return getGuide2ResponseConfig(fileName) ? "guia2"
+      : isRedesSbGuideFile(fileName) ? "redes"
+      : getGuide6Config(fileName) ? "guia6"
+      : getGuide1Config(fileName) ? "guia1"
+      : "";
   }
 
   function getGuide2ScopeKey(usernameKey) {
@@ -2063,6 +2116,40 @@
       return;
     }
 
+    if (guideKind === "guia1") {
+      const payload = buildGuide1ActivityResponsePayload(user, fileName, activityId, activityLabel);
+      openGuide2ResponsesModal({
+        title: activityLabel,
+        subtitle: `${user.fullName} | ${auth.getGuideTitle(fileName)}`,
+        meta: payload?.meta || [
+          `Aprendiz: ${user.fullName}`,
+          `Grupo: ${user.grupo}`,
+          `Ficha: ${user.ficha}`,
+          `Guia: ${auth.getGuideTitle(fileName)}`,
+          "Fuente: Sin entrega",
+        ].join(" | "),
+        bodyHtml: payload?.bodyHtml || '<div class="response-status">Este aprendiz aun no tiene entrega registrada para esta actividad.</div>',
+      });
+      return;
+    }
+
+    if (guideKind === "redes") {
+      const payload = await buildRedesActivityResponsePayload(user, fileName, activityId, activityLabel);
+      openGuide2ResponsesModal({
+        title: activityLabel,
+        subtitle: `${user.fullName} | ${auth.getGuideTitle(fileName)}`,
+        meta: payload?.meta || [
+          `Aprendiz: ${user.fullName}`,
+          `Grupo: ${user.grupo}`,
+          `Ficha: ${user.ficha}`,
+          `Guia: ${auth.getGuideTitle(fileName)}`,
+          "Fuente: Sin registro",
+        ].join(" | "),
+        bodyHtml: payload?.bodyHtml || '<div class="response-status">Este aprendiz aun no tiene respuestas guardadas para esta actividad.</div>',
+      });
+      return;
+    }
+
     const { guideConfig, snapshot } = await loadGuide2Responses(usernameKey, fileName);
     const meta = [
       `Aprendiz: ${user.fullName}`,
@@ -2105,36 +2192,9 @@
       let meta = "";
 
       if (guideKind === "guia1") {
-        const g1Config = getGuide1Config(fileName);
-        const record = g1Config ? readDeliveryRecord(user.usernameKey, g1Config.pageFile, activityId) : null;
-        const deliveredAt = record?.submittedAt || record?.updatedAt || "";
-        if (!deliveredAt) {
-          setFeedback(`${user.fullName} no tiene entrega registrada para esta actividad.`, "error");
-          return;
-        }
-        const savedFile = record?.savedFileName || "Sin nombre de archivo";
-        const driveUrl = record?.driveUrl || "";
-        meta = [
-          `Aprendiz: ${user.fullName}`,
-          `Grupo: ${user.grupo}`,
-          `Ficha: ${user.ficha}`,
-          `Guia: ${auth.getGuideTitle(fileName)}`,
-          `Fecha de entrega: ${formatDate(deliveredAt)}`,
-        ].join(" | ");
-        bodyHtml = `<div class="answers-grid"><article class="answer-card">
-          <h3>${escapeHtml(activityLabel)}</h3>
-          ${renderAnswerTable(
-            ["Campo", "Valor"],
-            [
-              ["Aprendiz", user.fullName],
-              ["Grupo", user.grupo],
-              ["Ficha", user.ficha],
-              ["Fecha y hora de entrega", formatDate(deliveredAt)],
-              ["Archivo entregado", savedFile],
-              ...(driveUrl ? [["Enlace Drive", driveUrl]] : []),
-            ]
-          )}
-        </article></div>`;
+        const payload = buildGuide1ActivityResponsePayload(user, fileName, activityId, activityLabel);
+        meta = payload?.meta || "";
+        bodyHtml = payload?.bodyHtml || null;
       } else if (guideKind === "guia6") {
         const config = getGuide6Config(fileName);
         const snapshot = config ? await loadGuide6Responses(usernameKey, config) : null;
@@ -2149,6 +2209,10 @@
         bodyHtml = snapshot?.state
           ? `<div class="answers-grid">${renderGuide6ActivityResponsesBody(activityId, snapshot.state)}</div>`
           : null;
+      } else if (guideKind === "redes") {
+        const payload = await buildRedesActivityResponsePayload(user, fileName, activityId, activityLabel);
+        meta = payload?.meta || "";
+        bodyHtml = payload?.bodyHtml || null;
       } else {
         const { guideConfig, snapshot } = await loadGuide2Responses(usernameKey, fileName);
         meta = [
@@ -3443,26 +3507,17 @@
   }
 
   function getUniqueInteractiveGuides(users) {
-    const seen = new Set();
-    const guides = [];
-    users.forEach((user) => {
-      (user.progress?.guides || []).forEach((guide) => {
-        if (seen.has(guide.fileName)) return;
-        const activities = getUnlockActivitiesForGuide(guide.fileName);
-        if (!activities.length) return;
-        seen.add(guide.fileName);
-        const guideKind = getGuide2ResponseConfig(guide.fileName) ? "guia2"
-          : getGuide6Config(guide.fileName) ? "guia6"
-          : getGuide1Config(guide.fileName) ? "guia1"
-          : "";
-        guides.push({
-          fileName: guide.fileName,
-          title: guide.title || auth.getGuideTitle(guide.fileName),
-          guideKind,
-        });
-      });
-    });
-    return guides;
+    return getOfficialGuideFilesForUsers(users)
+      .map((fileName) => {
+        const activities = getUnlockActivitiesForGuide(fileName);
+        if (!activities.length) return null;
+        return {
+          fileName,
+          title: auth.getGuideTitle(fileName),
+          guideKind: getGuideKind(fileName),
+        };
+      })
+      .filter(Boolean);
   }
 
   function readDeliveryRecord(usernameKey, pageFile, activityId) {
@@ -3471,12 +3526,134 @@
     return readJson(localStorage.getItem(key), null);
   }
 
+  function buildStandardActivityButtons(activityId, guideKind, fileName, activityLabel, user) {
+    return `
+      <button class="btn secondary btn--sm" type="button"
+        data-view-guide-activity="${escapeHtml(activityId)}"
+        data-guide-kind="${escapeHtml(guideKind)}"
+        data-guide-file="${escapeHtml(fileName)}"
+        data-activity-label="${escapeHtml(activityLabel)}"
+        data-user="${escapeHtml(user.usernameKey)}">Ver respuestas</button>
+      <button class="btn ghost btn--sm" type="button"
+        data-export-activity="${escapeHtml(activityId)}"
+        data-guide-kind="${escapeHtml(guideKind)}"
+        data-guide-file="${escapeHtml(fileName)}"
+        data-activity-label="${escapeHtml(activityLabel)}"
+        data-user="${escapeHtml(user.usernameKey)}">Exportar soporte</button>`;
+  }
+
+  function buildGuide1ActivityResponsePayload(user, fileName, activityId, activityLabel) {
+    const g1Config = getGuide1Config(fileName);
+    const record = g1Config ? readDeliveryRecord(user.usernameKey, g1Config.pageFile, activityId) : null;
+    const deliveredAt = record?.submittedAt || record?.updatedAt || "";
+    if (!deliveredAt) {
+      return null;
+    }
+    const savedFile = record?.savedFileName || "Sin nombre de archivo";
+    const driveUrl = record?.driveUrl || "";
+    const meta = [
+      `Aprendiz: ${user.fullName}`,
+      `Grupo: ${user.grupo}`,
+      `Ficha: ${user.ficha}`,
+      `Guia: ${auth.getGuideTitle(fileName)}`,
+      `Fecha de entrega: ${formatDate(deliveredAt)}`,
+    ].join(" | ");
+    const bodyHtml = `<div class="answers-grid"><article class="answer-card">
+      <h3>${escapeHtml(activityLabel)}</h3>
+      ${renderAnswerTable(
+        ["Campo", "Valor"],
+        [
+          ["Aprendiz", user.fullName],
+          ["Grupo", user.grupo],
+          ["Ficha", user.ficha],
+          ["Fecha y hora de entrega", formatDate(deliveredAt)],
+          ["Archivo entregado", savedFile],
+          ...(driveUrl ? [["Enlace Drive", driveUrl]] : []),
+        ]
+      )}
+    </article></div>`;
+    return { meta, bodyHtml };
+  }
+
+  function getRedesActivityStateRows(activity, state) {
+    const keys = Array.isArray(activity?.keys) ? activity.keys : [];
+    return keys.flatMap((key) => {
+      const answerKey = String(key).replace(/-locked$/, "");
+      const rows = [[key, state?.[key] ? "Completada / bloqueada" : "Pendiente"]];
+      if (answerKey && answerKey !== key && state?.[answerKey] !== undefined) {
+        rows.unshift([answerKey, state?.[answerKey]]);
+      }
+      return rows;
+    });
+  }
+
+  async function buildRedesActivityResponsePayload(user, fileName, activityId, activityLabel) {
+    const guideTitle = auth.getGuideTitle(fileName);
+    const metaParts = [
+      `Aprendiz: ${user.fullName}`,
+      `Grupo: ${user.grupo}`,
+      `Ficha: ${user.ficha}`,
+      `Guia: ${guideTitle}`,
+    ];
+
+    const activity = getRedesActivitiesForFile(fileName).find((item) => item.id === activityId);
+    if (activity?.redesQuiz) {
+      const summary = redesQuizSummaries[user.usernameKey] || null;
+      if (!summary) return null;
+      metaParts.push(`Fecha de presentacion: ${formatDate(summary.submittedAt)}`);
+      metaParts.push(`Fuente: ${summary.sourceLabel || "Sin registro"}`);
+      return {
+        meta: metaParts.join(" | "),
+        bodyHtml: renderRedesQuizDetail(summary),
+      };
+    }
+
+    if (activityId === "socializacion311") {
+      const summary = redesSocializacionSummaries[user.usernameKey] || null;
+      if (!summary) return null;
+      metaParts.push(`Actualizado: ${formatDate(summary.updatedAt)}`);
+      return {
+        meta: metaParts.join(" | "),
+        bodyHtml: `<div class="answers-grid"><article class="answer-card">
+          <h3>${escapeHtml(activityLabel)}</h3>
+          ${renderAnswerTable(
+            ["Campo", "Valor"],
+            [
+              ["Notas enviadas", summary.text || "(sin respuesta)"],
+              ["Estado", summary.locked ? "Enviado" : "Pendiente"],
+              ["Actualizado", formatDate(summary.updatedAt)],
+            ]
+          )}
+        </article></div>`,
+      };
+    }
+
+    const snapshot = await loadRedesGuideSnapshot(user.usernameKey, fileName, user.ficha);
+    const state =
+      snapshot?.data && typeof snapshot.data === "object"
+        ? snapshot.data
+        : snapshot?.state && typeof snapshot.state === "object"
+          ? snapshot.state
+          : {};
+    const rows = getRedesActivityStateRows(activity, state);
+    if (!rows.length || rows.every(([, value]) => !value || value === "Pendiente")) {
+      return null;
+    }
+    metaParts.push(`Fuente: ${snapshot?.sourceLabel || "Sin registro"}`);
+    metaParts.push(`Actualizado: ${formatDate(snapshot?.updatedAt)}`);
+    return {
+      meta: metaParts.join(" | "),
+      bodyHtml: `<div class="answers-grid"><article class="answer-card">
+        <h3>${escapeHtml(activityLabel)}</h3>
+        ${renderAnswerTable(["Campo", "Valor"], rows)}
+      </article></div>`,
+    };
+  }
+
   function buildActivitiesStudentTable(groupUsers, fileName, activityId, activityLabel, guideKind) {
     // \u2500\u2500 Actividades auxiliares (p\u00e1gina propia) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
     if (activityId === "matriz322") {
-      const usersWithGuide = groupUsers.filter((u) =>
-        (u.progress?.guides || []).some((g) => g.fileName === fileName)
-      );
+      const usersWithGuide = groupUsers.filter((u) => userHasOfficialGuide(u, fileName));
       const stillLoading = usersWithGuide.some((u) => {
         const key = getGuide2SummaryKey(u.usernameKey, fileName);
         return !(key in guide2WordSearchSummaries);
@@ -3504,9 +3681,7 @@
     }
 
     // \u2500\u2500 Actividades normales \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-    const usersWithGuide = groupUsers.filter((u) =>
-      (u.progress?.guides || []).some((g) => g.fileName === fileName)
-    );
+    const usersWithGuide = groupUsers.filter((u) => userHasOfficialGuide(u, fileName));
     if (!usersWithGuide.length) {
       return '<p class="activities-empty">Ning\u00fan aprendiz tiene esta gu\u00eda asignada en el grupo actual.</p>';
     }
@@ -3522,19 +3697,11 @@
         const statusHtml = deliveredAt
           ? `<span class="act-delivery-status act-delivery-status--sent">${escapeHtml(formatDate(deliveredAt))}</span>${savedFile ? `<br><small class="act-delivery-filename">${escapeHtml(savedFile)}</small>` : ""}`
           : `<span class="act-delivery-status act-delivery-status--pending">Sin entrega registrada</span>`;
-        const exportBtn = deliveredAt
-          ? `<button class="btn ghost btn--sm" type="button"
-               data-export-activity="${escapeHtml(activityId)}"
-               data-guide-kind="${escapeHtml(guideKind)}"
-               data-guide-file="${escapeHtml(fileName)}"
-               data-activity-label="${escapeHtml(activityLabel)}"
-               data-user="${escapeHtml(user.usernameKey)}">Exportar soporte</button>`
-          : "";
         return `<tr>
           <td>${escapeHtml(user.fullName)}</td>
           <td>${escapeHtml(user.grupo)}</td>
           <td>${statusHtml}</td>
-          <td class="act-explorer__actions">${exportBtn}</td>
+          <td class="act-explorer__actions">${buildStandardActivityButtons(activityId, guideKind, fileName, activityLabel, user)}</td>
         </tr>`;
       }).join("");
       return `
@@ -3544,6 +3711,62 @@
         <div class="answer-table-wrap">
           <table class="answer-table">
             <thead><tr><th>Aprendiz</th><th>Grupo</th><th>Fecha y hora de entrega</th><th>Acciones</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`;
+    }
+
+    if (guideKind === "redes") {
+      const activity = getRedesActivitiesForFile(fileName).find((item) => item.id === activityId);
+      const rows = usersWithGuide.map((user) => {
+        let statusHtml = '<span class="act-delivery-status act-delivery-status--pending">Pendiente por consultar</span>';
+        let extraActionsHtml = "";
+
+        if (activity?.redesQuiz) {
+          const summary = redesQuizSummaries[user.usernameKey];
+          statusHtml = summary
+            ? `<span class="act-delivery-status act-delivery-status--sent">${summary.locked || summary.status === "completed" ? "Completado" : "En progreso"}</span>
+               <small class="act-delivery-filename">Puntaje ${escapeHtml(summary.score)} / ${escapeHtml(summary.maxScore || 100)}</small>`
+            : '<span class="act-delivery-status act-delivery-status--pending">Sin registro</span>';
+          extraActionsHtml = `<button class="btn ghost btn--sm" type="button"
+              data-unlock-redes-quiz="${escapeHtml(activity.id)}"
+              data-guide-file="${escapeHtml(fileName)}"
+              data-user="${escapeHtml(user.usernameKey)}">Reabrir</button>`;
+        } else if (activityId === "socializacion311") {
+          const summary = redesSocializacionSummaries[user.usernameKey];
+          statusHtml = summary?.locked
+            ? `<span class="act-delivery-status act-delivery-status--sent">Enviado</span>
+               <small class="act-delivery-filename">${escapeHtml(formatDate(summary.updatedAt))}</small>`
+            : '<span class="act-delivery-status act-delivery-status--pending">Sin envío registrado</span>';
+          extraActionsHtml = `<button class="btn ghost btn--sm" type="button"
+              data-unlock-redes-activity="${escapeHtml(activityId)}"
+              data-guide-file="${escapeHtml(fileName)}"
+              data-user="${escapeHtml(user.usernameKey)}">Reabrir</button>`;
+        } else {
+          extraActionsHtml = `<button class="btn ghost btn--sm" type="button"
+              data-unlock-redes-activity="${escapeHtml(activityId)}"
+              data-guide-file="${escapeHtml(fileName)}"
+              data-user="${escapeHtml(user.usernameKey)}">Reabrir</button>`;
+        }
+
+        return `<tr>
+          <td>${escapeHtml(user.fullName)}</td>
+          <td>${escapeHtml(user.grupo)}</td>
+          <td>${statusHtml}</td>
+          <td class="act-explorer__actions">
+            ${buildStandardActivityButtons(activityId, guideKind, fileName, activityLabel, user)}
+            ${extraActionsHtml}
+          </td>
+        </tr>`;
+      }).join("");
+
+      return `
+        <div class="act-explorer__table-header">
+          <span class="act-explorer__table-count">${usersWithGuide.length} aprendice${usersWithGuide.length !== 1 ? "s" : ""}</span>
+        </div>
+        <div class="answer-table-wrap">
+          <table class="answer-table">
+            <thead><tr><th>Aprendiz</th><th>Grupo</th><th>Estado</th><th>Acciones</th></tr></thead>
             <tbody>${rows}</tbody>
           </table>
         </div>`;
@@ -3570,18 +3793,7 @@
           <td>${escapeHtml(user.grupo)}</td>
           <td>${statusHtml}</td>
           <td class="act-explorer__actions">
-            <button class="btn secondary btn--sm" type="button"
-              data-view-guide-activity="${escapeHtml(activityId)}"
-              data-guide-kind="${escapeHtml(guideKind)}"
-              data-guide-file="${escapeHtml(fileName)}"
-              data-activity-label="${escapeHtml(activityLabel)}"
-              data-user="${escapeHtml(user.usernameKey)}">Ver respuestas</button>
-            <button class="btn ghost btn--sm" type="button"
-              data-export-activity="${escapeHtml(activityId)}"
-              data-guide-kind="${escapeHtml(guideKind)}"
-              data-guide-file="${escapeHtml(fileName)}"
-              data-activity-label="${escapeHtml(activityLabel)}"
-              data-user="${escapeHtml(user.usernameKey)}">Exportar soporte</button>
+            ${buildStandardActivityButtons(activityId, guideKind, fileName, activityLabel, user)}
           </td>
         </tr>`;
     }).join("");

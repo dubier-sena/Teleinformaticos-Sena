@@ -491,7 +491,12 @@
       obs: entry.obs || record.defO || "",
       act: entry.act || null,
       grado: entry.grado || record.grado || "",
+      horario: entry.horario || record.horario || "",
     };
+  }
+
+  function getGuideRecordHorario(record) {
+    return getGuideCalendarEntry(record).horario || record.horario || "";
   }
 
   function formatGuideScheduleDateKey(date) {
@@ -534,7 +539,7 @@
   }
 
   function getGuideScheduleTimeValue(record) {
-    const match = String(record?.horario || "").match(/(\d{1,2}):(\d{2})(am|pm)/i);
+    const match = String(getGuideRecordHorario(record)).match(/(\d{1,2}):(\d{2})(am|pm)/i);
     if (!match) {
       return 9999;
     }
@@ -546,7 +551,7 @@
   }
 
   function parseGuideScheduleRange(record) {
-    const match = String(record?.horario || "").match(
+    const match = String(getGuideRecordHorario(record)).match(
       /(\d{1,2}):(\d{2})(am|pm)\D+(\d{1,2}):(\d{2})(am|pm)/i
     );
     if (!match) {
@@ -594,6 +599,15 @@
   function isGuideClassAvailable(record) {
     const estado = normalizeGuideText(getGuideCalendarEntry(record).estado);
     return !["cancelada", "sin programacion", "no aplica", "novedad"].includes(estado);
+  }
+
+  function isGuideClassNotice(record) {
+    const entry = getGuideCalendarEntry(record);
+    const estado = normalizeGuideText(entry.estado);
+    return (
+      ["cancelada", "sin programacion", "recuperada"].includes(estado) ||
+      (entry.horario && record.horario && entry.horario !== record.horario)
+    );
   }
 
   function isGuideClassAfterNow(record) {
@@ -656,6 +670,19 @@
       })
       .sort(compareGuideScheduleRecords)
       .slice(0, Math.max(1, limit || 5));
+  }
+
+  function findNextGuideNotice(selection) {
+    return getGuideCalendarRecords()
+      .filter(function (record) {
+        return (
+          record.tipo === "CLASE" &&
+          isGuideClassAfterNow(record) &&
+          matchesGuideScheduleSelection(record, selection) &&
+          isGuideClassNotice(record)
+        );
+      })
+      .sort(compareGuideScheduleRecords)[0] || null;
   }
 
   function findNextGuideDelivery(selection) {
@@ -733,13 +760,16 @@
 
     const items = classes
       .map(function (record, index) {
+        const entry = getGuideCalendarEntry(record);
+        const suffix = isGuideClassNotice(record) ? " - " + (entry.estado || "Novedad") : "";
         const text =
           index +
           1 +
           ". " +
           formatGuideClassListDate(record.fecha) +
           " · " +
-          formatGuideClassListTime(record.horario);
+          formatGuideClassListTime(getGuideRecordHorario(record)) +
+          suffix;
         return '<div class="guide-schedule-popover__item">' + escapeHtml(text) + "</div>";
       })
       .join("");
@@ -805,11 +835,12 @@
 
     const currentClass = findCurrentGuideClass(selection);
     const nextClass = findNextGuideClass(selection);
+    const nextNotice = findNextGuideNotice(selection);
     const nextClasses = findNextGuideClasses(selection, 5);
     const nextClassesPanel = buildGuideNextClassesPanel(nextClasses);
 
     if (currentClass) {
-      const currentBody = [formatGuideDate(currentClass.fecha), currentClass.horario]
+      const currentBody = [formatGuideDate(currentClass.fecha), getGuideRecordHorario(currentClass)]
         .filter(Boolean)
         .join(" - ");
       renderGuideScheduleItem(
@@ -821,7 +852,7 @@
         nextClassesPanel
       );
     } else if (nextClass) {
-      const classBody = [formatGuideDate(nextClass.fecha), nextClass.horario]
+      const classBody = [formatGuideDate(nextClass.fecha), getGuideRecordHorario(nextClass)]
         .filter(Boolean)
         .join(" - ");
       renderGuideScheduleItem(nodes.classItem, "class", "Proxima clase", classBody, false, nextClassesPanel);
@@ -836,10 +867,21 @@
     }
 
     if (currentClass && nextClass) {
-      const nextClassBody = [formatGuideDate(nextClass.fecha), nextClass.horario]
+      const nextClassBody = [formatGuideDate(nextClass.fecha), getGuideRecordHorario(nextClass)]
         .filter(Boolean)
         .join(" - ");
       renderGuideScheduleItem(nodes.deliveryItem, "class", "Proxima clase", nextClassBody, false);
+    } else if (nextNotice) {
+      const noticeEntry = getGuideCalendarEntry(nextNotice);
+      const noticeBody = [
+        formatGuideDate(nextNotice.fecha),
+        noticeEntry.estado || "Novedad",
+        getGuideRecordHorario(nextNotice),
+        noticeEntry.obs && noticeEntry.obs !== nextNotice.defO ? noticeEntry.obs : "",
+      ]
+        .filter(Boolean)
+        .join(" - ");
+      renderGuideScheduleItem(nodes.deliveryItem, "delivery", "Novedad de clase", noticeBody, false);
     } else {
       const nextDelivery = findNextGuideDelivery(selection);
       if (nextDelivery) {
