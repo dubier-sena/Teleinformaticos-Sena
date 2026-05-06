@@ -256,7 +256,7 @@ test("guia_template adds a five-class hover list to the next class chip", () => 
   assert.match(source, /function buildGuideNextClassesPanel\(classes\)/);
   assert.match(source, /Proximas clases/);
   assert.match(source, /guide-schedule-popover/);
-  assert.match(source, /formatGuideClassListDate\(record\.fecha\)[\s\S]*" · "[\s\S]*formatGuideClassListTime\(record\.horario\)/);
+  assert.match(source, /formatGuideClassListDate\(record\.fecha\)[\s\S]*" · "[\s\S]*formatGuideClassListTime\(getGuideRecordHorario\(record\)\)/);
 
   assert.match(css, /\.guide-schedule-popover/);
   assert.match(css, /\.guide-schedule-item:hover \.guide-schedule-popover/);

@@ -337,6 +337,18 @@ function getDeliveryIdentityRedes() {
   };
 }
 
+function validateRedesImageUpload(delivery, file) {
+  if (!delivery || typeof delivery.validateFile !== "function") {
+    throw new Error("La validacion segura de archivos no esta disponible.");
+  }
+
+  delivery.validateFile(file, {
+    allowedExtensions: [".png", ".jpg", ".jpeg", ".webp"],
+    allowedMimeTypes: ["image/png", "image/jpeg", "image/webp"],
+    maxUploadBytes: 5 * 1024 * 1024,
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Render
 // ---------------------------------------------------------------------------
@@ -581,6 +593,7 @@ window.subirImagenBloqueA = async function (input) {
     if (!delivery || typeof delivery.uploadToAppsScript !== "function") {
       throw new Error("El sistema de entrega no está disponible.");
     }
+    validateRedesImageUpload(delivery, file);
     const identity = getDeliveryIdentityRedes();
     const usernameKey = identity.usernameKey;
     const ficha = identity.ficha || "0000";
@@ -704,6 +717,7 @@ window.subirImagenBloqueB = async function (input) {
     if (!delivery || typeof delivery.uploadToAppsScript !== "function") {
       throw new Error("El sistema de entrega no está disponible.");
     }
+    validateRedesImageUpload(delivery, file);
     const identity = getDeliveryIdentityRedes();
     const usernameKey = identity.usernameKey;
     const ficha = identity.ficha || "0000";
@@ -908,6 +922,7 @@ window.subirImagenBloqueE = async function (input) {
     if (!delivery || typeof delivery.uploadToAppsScript !== "function") {
       throw new Error("El sistema de entrega no está disponible.");
     }
+    validateRedesImageUpload(delivery, file);
     const identity = getDeliveryIdentityRedes();
     const usernameKey = identity.usernameKey;
     const ficha = identity.ficha || "0000";
@@ -2165,6 +2180,7 @@ window.subirPantallazoTallerIPEj4 = async function (input) {
     if (!delivery || typeof delivery.uploadToAppsScript !== "function") {
       throw new Error("El sistema de entrega no est\u00e1 disponible.");
     }
+    validateRedesImageUpload(delivery, file);
     const identity = getDeliveryIdentityRedes();
     const usernameKey = identity.usernameKey;
     const ficha = identity.ficha || "0000";
@@ -2409,6 +2425,7 @@ window.subirPantallazoLab1 = async function (slotKey, input) {
     if (!delivery || typeof delivery.uploadToAppsScript !== "function") {
       throw new Error("El sistema de entrega no esta disponible.");
     }
+    validateRedesImageUpload(delivery, file);
 
     const identity = getDeliveryIdentityRedes();
     const usernameKey = identity.usernameKey;
@@ -2653,6 +2670,7 @@ window.subirPantallazoLab2 = async function (slotKey, input) {
     if (!delivery || typeof delivery.uploadToAppsScript !== "function") {
       throw new Error("El sistema de entrega no esta disponible.");
     }
+    validateRedesImageUpload(delivery, file);
 
     const identity = getDeliveryIdentityRedes();
     const usernameKey = identity.usernameKey;
@@ -2897,6 +2915,7 @@ window.subirPantallazoLab3 = async function (slotKey, input) {
     if (!delivery || typeof delivery.uploadToAppsScript !== "function") {
       throw new Error("El sistema de entrega no esta disponible.");
     }
+    validateRedesImageUpload(delivery, file);
 
     const identity = getDeliveryIdentityRedes();
     const usernameKey = identity.usernameKey;
@@ -3072,6 +3091,7 @@ window.subirImagenBloqueIP3 = async function (input) {
     if (!delivery || typeof delivery.uploadToAppsScript !== "function") {
       throw new Error("El sistema de entrega no est\u00e1 disponible.");
     }
+    validateRedesImageUpload(delivery, file);
     const identity = getDeliveryIdentityRedes();
     const usernameKey = identity.usernameKey;
     const ficha = identity.ficha || "0000";
@@ -3189,6 +3209,7 @@ window.subirImagenBloqueIP1 = async function (input) {
     if (!delivery || typeof delivery.uploadToAppsScript !== "function") {
       throw new Error("El sistema de entrega no est\u00e1 disponible.");
     }
+    validateRedesImageUpload(delivery, file);
     const identity = getDeliveryIdentityRedes();
     const usernameKey = identity.usernameKey;
     const ficha = identity.ficha || "0000";
@@ -3307,6 +3328,7 @@ window.subirImagenSocial = async function (input) {
     if (!delivery || typeof delivery.uploadToAppsScript !== "function") {
       throw new Error("El sistema de entrega no est\u00e1 disponible.");
     }
+    validateRedesImageUpload(delivery, file);
     const identity = getDeliveryIdentityRedes();
     const usernameKey = identity.usernameKey;
     const ficha = identity.ficha || "0000";

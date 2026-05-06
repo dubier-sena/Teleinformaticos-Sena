@@ -25,10 +25,34 @@
     return response.json();
   }
 
+  function resolveBundledPartial(bundledPartials, url) {
+    const normalizedUrl = String(url || "").replace(/\\/g, "/");
+    const cleanUrl = normalizedUrl.split(/[?#]/)[0];
+    const fileName = cleanUrl.split("/").pop() || cleanUrl;
+    const fileStem = fileName.replace(/\.html$/i, "");
+    const candidates = [
+      url,
+      normalizedUrl,
+      cleanUrl,
+      cleanUrl.replace(/^\.\//, ""),
+      fileName,
+      fileStem,
+    ];
+
+    for (const candidate of candidates) {
+      if (Object.prototype.hasOwnProperty.call(bundledPartials, candidate)) {
+        return { found: true, value: bundledPartials[candidate] };
+      }
+    }
+
+    return { found: false, value: "" };
+  }
+
   async function fetchText(url) {
     const bundledPartials = window.__PAGE_RUNTIME_PARTIALS__ || {};
-    if (Object.prototype.hasOwnProperty.call(bundledPartials, url)) {
-      return bundledPartials[url];
+    const bundledPartial = resolveBundledPartial(bundledPartials, url);
+    if (bundledPartial.found) {
+      return bundledPartial.value;
     }
 
     const response = await fetch(url);

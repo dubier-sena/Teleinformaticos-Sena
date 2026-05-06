@@ -4,6 +4,23 @@
   var MODAL_ID = "shared-apps-script-modal";
   var STYLE_ID = "shared-apps-script-style";
   var DEFAULT_ALLOWED_HOSTS = ["script.google.com", "script.googleusercontent.com"];
+  var BLOCKED_UPLOAD_EXTENSIONS = [
+    ".bat",
+    ".cmd",
+    ".com",
+    ".exe",
+    ".html",
+    ".hta",
+    ".jar",
+    ".js",
+    ".msi",
+    ".php",
+    ".ps1",
+    ".scr",
+    ".sh",
+    ".svg",
+    ".vbs",
+  ];
   var currentContext = null;
 
   function getPortalAuth() {
@@ -382,8 +399,18 @@
       throw new Error("Selecciona el archivo que vas a entregar.");
     }
 
-    if (integrations.maxUploadBytes && file.size > integrations.maxUploadBytes) {
+    var maxUploadBytes =
+      context && Number(context.maxUploadBytes) > 0
+        ? Number(context.maxUploadBytes)
+        : integrations.maxUploadBytes;
+
+    if (maxUploadBytes && file.size > maxUploadBytes) {
       throw new Error("El archivo supera el tamano maximo permitido para esta entrega.");
+    }
+
+    var extension = getFileExtension(file.name);
+    if (!extension || BLOCKED_UPLOAD_EXTENSIONS.indexOf(extension) >= 0) {
+      throw new Error("El archivo no tiene una extension permitida para la entrega.");
     }
 
     var allowed = getAllowedExtensions(context);
@@ -396,6 +423,19 @@
       if (!matches) {
         throw new Error("El archivo no tiene una extension permitida para la entrega.");
       }
+    }
+
+    var allowedMimeTypes =
+      context && Array.isArray(context.allowedMimeTypes)
+        ? context.allowedMimeTypes
+            .map(function (mimeType) {
+              return String(mimeType || "").trim().toLowerCase();
+            })
+            .filter(Boolean)
+        : [];
+    var fileType = String(file.type || "").trim().toLowerCase();
+    if (allowedMimeTypes.length && fileType && allowedMimeTypes.indexOf(fileType) < 0) {
+      throw new Error("El tipo de archivo no esta permitido para esta entrega.");
     }
   }
 

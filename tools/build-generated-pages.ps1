@@ -1,6 +1,11 @@
+param(
+  [string]$OutputRoot = ""
+)
+
 $ErrorActionPreference = "Stop"
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
+$targetRoot = if ($OutputRoot) { $OutputRoot } else { $repoRoot }
 $variantsPath = Join-Path $repoRoot "data\generated_page_variants.json"
 $templatesRoot = Join-Path $repoRoot "sources\generated"
 
@@ -147,7 +152,7 @@ $variants = ConvertTo-Hashtable -Value (ConvertFrom-Json -InputObject $variantsR
 foreach ($variantEntry in $variants.GetEnumerator()) {
   $variant = $variantEntry.Value
   $templatePath = Join-Path $templatesRoot ([string]$variant.template)
-  $outputPath = Join-Path $repoRoot ([string]$variant.outputFile)
+  $outputPath = Join-Path $targetRoot ([string]$variant.outputFile)
   $outputDir = Split-Path -Parent $outputPath
   $templateText = Get-Content -LiteralPath $templatePath -Raw
   $tokens = Get-VariantTokens -Variant $variant

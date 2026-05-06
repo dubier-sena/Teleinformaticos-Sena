@@ -2,30 +2,60 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Colecciones del portal SENA — acceso abierto via API key publica.
-    // La seguridad se basa en que la API key no permite operaciones
-    // destructivas masivas y el plan Spark limita lecturas/escrituras diarias.
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function adminEmails() {
+      return [
+        "admin@example.com"
+      ];
+    }
+
+    function isAdmin() {
+      return signedIn() && request.auth.token.email in adminEmails();
+    }
+
+    function isOwner(usernameKey) {
+      return signedIn()
+        && request.auth.token.usernameKey == usernameKey;
+    }
+
     match /sena_portal_users/{usernameKey} {
-      allow read, write: if true;
+      allow read: if isAdmin() || isOwner(usernameKey);
+      allow create, update: if isAdmin() || isOwner(usernameKey);
+      allow delete: if isAdmin();
     }
 
     match /sena_portal_progress/{usernameKey} {
-      allow read, write: if true;
+      allow read, write: if isAdmin() || isOwner(usernameKey);
     }
 
     match /sena_portal_guide_state/{docId} {
-      allow read, write: if true;
+      allow read: if isAdmin()
+        || (signedIn() && resource.data.usernameKey == request.auth.token.usernameKey);
+      allow create: if isAdmin()
+        || (signedIn() && request.resource.data.usernameKey == request.auth.token.usernameKey);
+      allow update: if isAdmin()
+        || (
+          signedIn()
+          && resource.data.usernameKey == request.auth.token.usernameKey
+          && request.resource.data.usernameKey == request.auth.token.usernameKey
+        );
+      allow delete: if isAdmin();
     }
 
     match /sena_portal_calendar/{calendarId} {
-      allow read, write: if true;
+      allow read: if signedIn();
+      allow write: if isAdmin();
     }
 
     match /sena_portal_tutoring_bookings/{bookingId} {
-      allow read, write: if true;
+      allow read: if signedIn();
+      allow create: if signedIn();
+      allow update, delete: if isAdmin();
     }
 
-    // Bloquear cualquier otra coleccion no prevista
     match /{document=**} {
       allow read, write: if false;
     }

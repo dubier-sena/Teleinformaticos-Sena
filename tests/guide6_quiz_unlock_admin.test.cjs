@@ -7,11 +7,15 @@ const adminScript = fs.readFileSync(
   path.join(__dirname, "..", "js", "admin_usuarios.js"),
   "utf8"
 );
+const progressScript = fs.readFileSync(
+  path.join(__dirname, "..", "js", "admin_progress.js"),
+  "utf8"
+);
 
 test("admin unlock for Guia 6 quiz clears local and cloud attempt state", () => {
   assert.match(adminScript, /"grupo-11a-guia-06-planificar-informacion\.html":\s*\{[^}]*cloudFileName:\s*"11a_guia6\.html"/s);
   assert.match(adminScript, /"grupo-11b-guia-06-planificar-informacion\.html":\s*\{[^}]*cloudFileName:\s*"11b_guia6\.html"/s);
-  assert.match(adminScript, /data-guide-file="\$\{escapeHtml\(guide\.fileName\)\}"/);
+  assert.match(progressScript, /data-guide-file="\$\{escapeHtml\(guide\.fileName\)\}"/);
   assert.match(adminScript, /patchGuideCloudState/);
   assert.match(adminScript, /cloudGetGuideData/);
   assert.match(adminScript, /cloudSaveGuideData/);

@@ -653,10 +653,20 @@ select {
   border-radius: 999px;
   background: #e5edf5;
   overflow: hidden;
+  border: 0;
 }
 
-.progress-fill {
-  height: 100%;
+.progress-bar::-webkit-progress-bar {
+  border-radius: 999px;
+  background: #e5edf5;
+}
+
+.progress-bar::-webkit-progress-value {
+  border-radius: 999px;
+  background: linear-gradient(135deg, #0f766e 0%, var(--admin-accent) 100%);
+}
+
+.progress-bar::-moz-progress-bar {
   border-radius: 999px;
   background: linear-gradient(135deg, #0f766e 0%, var(--admin-accent) 100%);
 }
@@ -745,6 +755,97 @@ select {
   border: 1px dashed var(--border-soft);
   border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.86);
+}
+
+.audit-log {
+  display: grid;
+  gap: 12px;
+}
+
+.audit-entry {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  background: #ffffff;
+}
+
+.audit-entry__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.audit-entry__action {
+  margin: 0;
+  color: var(--text-strong);
+  font-weight: 800;
+}
+
+.admin-confirmation-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1600;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(15, 23, 42, 0.48);
+}
+
+.admin-confirmation-card {
+  width: min(440px, 100%);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.24);
+}
+
+.admin-confirmation-body {
+  padding: 22px 22px 10px;
+}
+
+.admin-confirmation-title {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.admin-confirmation-message {
+  margin: 0;
+  color: #475569;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+.admin-confirmation-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 22px 20px;
+}
+
+.admin-confirmation-button {
+  min-height: 38px;
+  border: 0;
+  border-radius: 7px;
+  padding: 0 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.admin-confirmation-button--cancel {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.admin-confirmation-button--confirm {
+  background: #b91c1c;
+  color: #ffffff;
 }
 
 .modal-shell[hidden] {
@@ -847,6 +948,39 @@ body.modal-open {
   line-height: 1.6;
 }
 
+.redes-status-label {
+  font-weight: 700;
+}
+
+.redes-status-label--warning {
+  color: #b45309;
+}
+
+.redes-status-label--success {
+  color: #166534;
+}
+
+.redes-status-label--progress {
+  color: #1d4ed8;
+}
+
+.redes-socialization-notes {
+  max-width: 340px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.redes-quiz-evidence-list {
+  margin: 0;
+  padding-left: 18px;
+  line-height: 1.7;
+}
+
+.redes-quiz-actions {
+  display: grid;
+  gap: 8px;
+}
+
 .answers-grid {
   display: grid;
   gap: 14px;
@@ -857,6 +991,10 @@ body.modal-open {
   border-radius: 18px;
   padding: 16px;
   background: linear-gradient(180deg, #fcfefe 0%, #ffffff 100%);
+}
+
+.answer-card--wide {
+  grid-column: 1 / -1;
 }
 
 .answer-card h3 {
@@ -887,6 +1025,68 @@ body.modal-open {
 .answer-value.empty {
   color: var(--text-muted);
   font-style: italic;
+}
+
+.answer-conclusion {
+  margin-top: 12px;
+}
+
+.answer-conclusion__label {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.answer-conclusion__value {
+  margin-top: 6px;
+}
+
+.matriz322-table-wrap {
+  margin-bottom: 16px;
+}
+
+.matriz322-table {
+  min-width: 580px;
+}
+
+.matriz322-actor-cell {
+  width: 22%;
+  background: #f0f9ff;
+  font-size: 13px;
+}
+
+.matriz322-response-cell {
+  font-size: 13px;
+}
+
+.matriz322-note-card {
+  margin-bottom: 10px;
+  padding: 14px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.matriz322-note-card:last-child {
+  margin-bottom: 0;
+}
+
+.matriz322-note-title {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  color: #1e293b;
+}
+
+.matriz322-note-copy {
+  font-size: 14px;
+  color: #334155;
+  white-space: pre-wrap;
+}
+
+.user-section-title--progress {
+  margin-top: 12px;
 }
 
 .answer-table-wrap {
@@ -1217,6 +1417,58 @@ body.modal-open {
 
 /* ── Panel de juicios de evaluación ── */
 /* Acordeón por guía */
+.grades-group-select {
+  max-width: 320px;
+}
+
+.grades-import-box {
+  margin: 20px 0;
+  padding: 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.grades-import-title {
+  margin: 0 0 10px;
+  font-weight: 600;
+}
+
+.grades-import-copy {
+  margin: 0 0 12px;
+  color: #475569;
+  font-size: 13px;
+}
+
+.grades-import-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.grades-import-button {
+  align-items: center;
+  cursor: pointer;
+  display: inline-flex;
+  gap: 6px;
+}
+
+.grades-import-input {
+  display: none;
+}
+
+.grades-import-status {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.grades-import-divider {
+  margin: 24px 0 20px;
+  border: 0;
+  border-top: 1px solid #e2e8f0;
+}
+
 .grades-guide-accordion {
   border: 1px solid var(--border-soft, #e2e8f0);
   border-radius: 10px;

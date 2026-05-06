@@ -1,6 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
+const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 
@@ -83,6 +84,8 @@ test("generated page variants expose the approved small-page families", () => {
 });
 
 test("generated page build script renders the expected public files", () => {
+  const outputRoot = fs.mkdtempSync(path.join(os.tmpdir(), "portal-generated-pages-"));
+
   const result = spawnSync(
     "powershell",
     [
@@ -91,6 +94,8 @@ test("generated page build script renders the expected public files", () => {
       "Bypass",
       "-File",
       BUILD_SCRIPT,
+      "-OutputRoot",
+      outputRoot,
     ],
     {
       cwd: REPO_ROOT,
@@ -101,7 +106,7 @@ test("generated page build script renders the expected public files", () => {
   assert.equal(result.status, 0, result.stderr || result.stdout);
 
   for (const variant of Object.values(EXPECTED_VARIANTS)) {
-    const outputPath = path.join(REPO_ROOT, variant.outputFile);
+    const outputPath = path.join(outputRoot, variant.outputFile);
     const html = readUtf8(outputPath);
 
     assert.match(html, new RegExp(variant.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));

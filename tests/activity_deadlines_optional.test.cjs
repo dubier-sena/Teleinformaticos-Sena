@@ -177,6 +177,7 @@ test("public guide entry and admin panel load the optional deadline manager", ()
 
 test("admin and guide scripts wire the optional deadline controls", () => {
   const adminScript = fs.readFileSync(path.join(REPO_ROOT, "js", "admin_usuarios.js"), "utf8");
+  const adminDeadlinesScript = fs.readFileSync(path.join(REPO_ROOT, "js", "admin_deadlines.js"), "utf8");
   const inductionScript = fs.readFileSync(path.join(REPO_ROOT, "js", "script_induccion.js"), "utf8");
   const guide2Script = fs.readFileSync(path.join(REPO_ROOT, "js", "script_guia2.js"), "utf8");
   const guide6Script = fs.readFileSync(path.join(REPO_ROOT, "js", "script_guia6.js"), "utf8");
@@ -184,8 +185,9 @@ test("admin and guide scripts wire the optional deadline controls", () => {
   const deadlineScript = fs.readFileSync(path.join(REPO_ROOT, "js", "activity_deadlines.js"), "utf8");
   const sharedDrive = fs.readFileSync(path.join(REPO_ROOT, "js", "shared_drive_delivery.js"), "utf8");
 
-  assert.match(adminScript, /Fechas opcionales de entrega/);
-  assert.match(adminScript, /data-save-activity-deadline/);
+  assert.match(adminScript, /window\.adminDeadlines\.buildConfigPanel/);
+  assert.match(adminDeadlinesScript, /Fechas opcionales de entrega/);
+  assert.match(adminDeadlinesScript, /data-save-activity-deadline/);
   assert.match(inductionScript, /installInduccionDeadlineControls/);
   assert.match(inductionScript, /arbol312/);
   assert.match(guide2Script, /activityDeadlineManager/);
