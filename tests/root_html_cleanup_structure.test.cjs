@@ -80,6 +80,18 @@ test("legacy guide wrappers now live under pages/guias and not in the root", () 
   }
 });
 
+test("legacy guide wrappers resolve shared assets from the repository root", () => {
+  const guideRoot = path.join(REPO_ROOT, "pages", "guias");
+
+  for (const fileName of EXPECTED_GUIDE_WRAPPERS) {
+    const html = readUtf8(path.join(guideRoot, fileName));
+
+    assert.match(html, /<base\s+href="\.\.\/\.\.\/">/);
+    assert.match(html, /src="js\/portal_auth\.js/);
+    assert.match(html, /href="css\/site_tokens\.css/);
+  }
+});
+
 test("guide 2 shared partial points auxiliary links to pages/auxiliares", () => {
   const partial = readUtf8(path.join(REPO_ROOT, "partials", "guia-02-herramientas-content.html"));
 
@@ -95,4 +107,16 @@ test("the shared redes guide points theoretical content to pages/auxiliares", ()
   const partial = readUtf8(path.join(REPO_ROOT, "partials", "guia-redes-rap01-content.html"));
 
   assert.match(partial, /href="pages\/auxiliares\/santa-barbara-guia-02-contenido-teorico-redes\.html"/);
+});
+
+test("web source files keep stable LF endings across local Windows runs", () => {
+  const attrsPath = path.join(REPO_ROOT, ".gitattributes");
+  assert.equal(fs.existsSync(attrsPath), true, ".gitattributes should pin line endings");
+  const attrs = readUtf8(attrsPath);
+
+  assert.match(attrs, /\*\.html\s+text\s+eol=lf/);
+  assert.match(attrs, /\*\.js\s+text\s+eol=lf/);
+  assert.match(attrs, /\*\.css\s+text\s+eol=lf/);
+  assert.match(attrs, /\*\.cjs\s+text\s+eol=lf/);
+  assert.match(attrs, /\*\.ps1\s+text\s+eol=lf/);
 });

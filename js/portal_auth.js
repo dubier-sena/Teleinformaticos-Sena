@@ -3,6 +3,7 @@
   const USERS_KEY = `${STORAGE_PREFIX}_users_v1`;
   const SESSION_KEY = `${STORAGE_PREFIX}_session_v1`;
   const FLASH_KEY = `${STORAGE_PREFIX}_flash_v1`;
+  const PASSWORD_MIN_LENGTH = 6;
 
   const ADMIN_PROFILE = {
     fullName: "Dubier Orlando Millan Barbosa",
@@ -31,23 +32,6 @@
     "santa-barbara-10b-guia-02-redes-rap01.html":
       "Guía 2 - Definir los parámetros y recursos de la red de acuerdo con normativa de telecomunicaciones | Grupo 10B",
   };
-
-  Object.assign(GUIDE_TITLES, {
-    "grupo-10a-guia-01-induccion.html": "Gu\u00eda 1 - Inducci\u00f3n | Grupo 10A",
-    "grupo-10a-guia-02-herramientas-informaticas-digitales.html":
-      "Gu\u00eda 2 - Operar herramientas inform\u00e1ticas y digitales | Grupo 10A",
-    "grupo-10b-guia-01-induccion.html": "Gu\u00eda 1 - Inducci\u00f3n | Grupo 10B",
-    "grupo-10b-guia-02-herramientas-informaticas-digitales.html":
-      "Gu\u00eda 2 - Operar herramientas inform\u00e1ticas y digitales | Grupo 10B",
-    "grupo-11a-guia-05-herramientas-informaticas-digitales.html":
-      "Gu\u00eda 5 - Operar herramientas inform\u00e1ticas y digitales | Grupo 11A",
-    "grupo-11a-guia-06-planificar-informacion.html":
-      "Gu\u00eda 6 - Planificar la informaci\u00f3n | Grupo 11A",
-    "grupo-11b-guia-05-herramientas-informaticas-digitales.html":
-      "Gu\u00eda 5 - Operar herramientas inform\u00e1ticas y digitales | Grupo 11B",
-    "grupo-11b-guia-06-planificar-informacion.html":
-      "Gu\u00eda 6 - Planificar la informaci\u00f3n | Grupo 11B",
-  });
 
   const GUIDE_PROGRESS_CONFIG = {
     "grupo-10a-guia-01-induccion.html": {
@@ -165,6 +149,11 @@
 
   function normalizeFicha(value) {
     return normalizeText(value).replace(/\D+/g, "");
+  }
+
+  function getGradeFromGroup(grupo) {
+    const match = normalizeText(grupo).match(/^(\d{1,2})/);
+    return match ? match[1] : "";
   }
 
   function normalizeUsername(value) {
@@ -347,14 +336,20 @@
     return (getFichaInfo(ficha)?.guias || []).slice();
   }
 
+  function getGradeFromGroup(grupo) {
+    const match = normalizeText(grupo).match(/^(\d{1,2})/);
+    return match ? match[1] : "";
+  }
+
   function getSelectionForFicha(ficha) {
     const info = getFichaInfo(ficha);
     if (!info) {
-      return { ficha: normalizeFicha(ficha), inst: "", grupo: "" };
+      return { ficha: normalizeFicha(ficha), inst: "", grado: "", grupo: "" };
     }
     return {
       ficha: normalizeFicha(ficha),
       inst: info.inst,
+      grado: info.grado || getGradeFromGroup(info.grupo),
       grupo: info.grupo,
     };
   }
@@ -372,6 +367,12 @@
       localStorage.removeItem("sena_inst");
     }
 
+    if (selection?.grado) {
+      localStorage.setItem("sena_grado", selection.grado);
+    } else {
+      localStorage.removeItem("sena_grado");
+    }
+
     if (selection?.grupo) {
       localStorage.setItem("sena_grupo", selection.grupo);
     } else {
@@ -380,7 +381,7 @@
   }
 
   function clearSelection() {
-    applySelection({ ficha: "", inst: "", grupo: "" });
+    applySelection({ ficha: "", inst: "", grado: "", grupo: "" });
   }
 
   function getSessionRecord() {
@@ -483,6 +484,7 @@
     return {
       ficha: localStorage.getItem("sena_ficha") || normalizedDefaults.ficha || "",
       inst: localStorage.getItem("sena_inst") || normalizedDefaults.inst || "",
+      grado: localStorage.getItem("sena_grado") || normalizedDefaults.grado || "",
       grupo: localStorage.getItem("sena_grupo") || normalizedDefaults.grupo || "",
     };
   }
@@ -885,10 +887,10 @@
       };
     }
 
-    if (password.length < 4) {
+    if (password.length < PASSWORD_MIN_LENGTH) {
       return {
         ok: false,
-        message: "La contrase\u00f1a debe tener al menos 4 caracteres.",
+        message: "La contrase\u00f1a debe tener al menos 6 caracteres.",
       };
     }
 
@@ -924,6 +926,7 @@
       usernameKey: validation.usernameKey,
       ficha: validation.ficha,
       inst: selection.inst,
+      grado: selection.grado,
       grupo: selection.grupo,
       passwordHash: await hashSecret(validation.password),
       createdAt: new Date().toISOString(),
@@ -1297,10 +1300,10 @@
 
     const normalizedKey = normalizeUsername(usernameKey);
     const cleanPassword = normalizeText(newPassword);
-    if (!cleanPassword || cleanPassword.length < 4) {
+    if (!cleanPassword || cleanPassword.length < PASSWORD_MIN_LENGTH) {
       return {
         ok: false,
-        message: "La nueva contrase\u00f1a debe tener al menos 4 caracteres.",
+        message: "La nueva contrase\u00f1a debe tener al menos 6 caracteres.",
       };
     }
 
@@ -1414,6 +1417,7 @@
       usernameKey: validation.usernameKey,
       ficha: validation.ficha,
       inst: selection.inst,
+      grado: selection.grado,
       grupo: selection.grupo,
       updatedAt: new Date().toISOString(),
     };
@@ -1477,6 +1481,7 @@
       ...users[index],
       ficha: cleanFicha,
       inst: selection.inst,
+      grado: selection.grado,
       grupo: selection.grupo,
       updatedAt: new Date().toISOString(),
     };
@@ -1621,8 +1626,10 @@ window.portalAuth = {
   const USERS_KEY = `${STORAGE_PREFIX}_users_v1`;
   const SESSION_KEY = `${STORAGE_PREFIX}_session_v1`;
   const FLASH_KEY = `${STORAGE_PREFIX}_flash_v1`;
+  const PASSWORD_MIN_LENGTH = 6;
   const ADMIN_PASSWORD_HASH =
     "d7ee7806b5161383528f4256cceb048a6cd50c80783eb6425428f832916361a7";
+  const SESSION_MAX_AGE_MS = 12 * 60 * 60 * 1000;
   const PROGRESS_SYNC_DELAY = 900;
   const API_TIMEOUT_MS = 4500;
 
@@ -1759,15 +1766,19 @@ window.portalAuth = {
     if (!user || typeof user !== "object") {
       return null;
     }
+    const ficha = normalizeFicha(user.ficha);
+    const selection = auth.getSelectionForFicha(ficha);
+    const grupo = normalizeText(user.grupo) || selection.grupo;
 
     return {
       id: normalizeText(user.id),
       fullName: normalizeText(user.fullName),
       username: normalizeText(user.username),
       usernameKey: normalizeUsername(user.usernameKey || user.username),
-      ficha: normalizeFicha(user.ficha),
-      inst: normalizeText(user.inst),
-      grupo: normalizeText(user.grupo),
+      ficha,
+      inst: normalizeText(user.inst) || selection.inst,
+      grado: normalizeText(user.grado) || selection.grado || getGradeFromGroup(grupo),
+      grupo,
       createdAt: normalizeText(user.createdAt),
       updatedAt: normalizeText(user.updatedAt),
       passwordHash: normalizeText(user.passwordHash),
@@ -1812,6 +1823,15 @@ window.portalAuth = {
     return session && typeof session === "object" ? session : null;
   }
 
+  function isSessionExpired(session) {
+    const loggedAt = Date.parse(normalizeText(session && session.loggedAt));
+    if (!Number.isFinite(loggedAt)) {
+      return true;
+    }
+
+    return Date.now() - loggedAt > SESSION_MAX_AGE_MS;
+  }
+
   function persistSessionRecord(session) {
     if (!session) {
       writeJson(SESSION_KEY, null);
@@ -1845,6 +1865,11 @@ window.portalAuth = {
   function getCurrentSessionPatched() {
     const record = getSessionRecord();
     if (!record) {
+      return null;
+    }
+
+    if (isSessionExpired(record)) {
+      persistSessionRecord(null);
       return null;
     }
 
@@ -2215,6 +2240,7 @@ window.portalAuth = {
     return {
       ficha: localStorage.getItem("sena_ficha") || normalizedDefaults.ficha || "",
       inst: localStorage.getItem("sena_inst") || normalizedDefaults.inst || "",
+      grado: localStorage.getItem("sena_grado") || normalizedDefaults.grado || "",
       grupo: localStorage.getItem("sena_grupo") || normalizedDefaults.grupo || "",
     };
   }
@@ -2321,10 +2347,10 @@ window.portalAuth = {
       };
     }
 
-    if (password.length < 4) {
+    if (password.length < PASSWORD_MIN_LENGTH) {
       return {
         ok: false,
-        message: "La contrase\u00f1a debe tener al menos 4 caracteres.",
+        message: "La contrase\u00f1a debe tener al menos 6 caracteres.",
       };
     }
 
@@ -2575,6 +2601,9 @@ window.portalAuth = {
         username: validation.username,
         usernameKey: validation.usernameKey,
         ficha: validation.ficha,
+        inst: buildLocalSelection(validation.ficha).inst,
+        grado: buildLocalSelection(validation.ficha).grado,
+        grupo: buildLocalSelection(validation.ficha).grupo,
         passwordHash,
       },
     });
@@ -2753,10 +2782,10 @@ window.portalAuth = {
   auth.updateStudentPassword = async function updateStudentPasswordPatched(usernameKey, newPassword) {
     const cleanUsernameKey = normalizeUsername(usernameKey);
     const cleanPassword = normalizeText(newPassword);
-    if (!cleanPassword || cleanPassword.length < 4) {
+    if (!cleanPassword || cleanPassword.length < PASSWORD_MIN_LENGTH) {
       return {
         ok: false,
-        message: "La nueva contrase\u00f1a debe tener al menos 4 caracteres.",
+        message: "La nueva contrase\u00f1a debe tener al menos 6 caracteres.",
       };
     }
 
@@ -2863,6 +2892,7 @@ window.portalAuth = {
         usernameKey: cleanUsernameKey,
         ficha: cleanFicha,
         inst: selection.inst,
+        grado: selection.grado,
         grupo: selection.grupo,
         updatedAt: new Date().toISOString(),
       },
