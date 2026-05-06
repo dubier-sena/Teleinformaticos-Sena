@@ -98,6 +98,7 @@ function createHarness({
   pageRootPresent = true,
   bundledContexts = null,
   bundledPartials = null,
+  routePageFile = "",
 } = {}) {
   const loaderSource = fs.readFileSync(LOADER_FILE, "utf8");
   const eventLog = [];
@@ -158,7 +159,11 @@ function createHarness({
   };
 
   const runtimeWindow = {
-    __PAGE_CONTEXT__: { key: contextKey, family: registryPayload[contextKey]?.family || "unknown" },
+    __PAGE_CONTEXT__: {
+      key: contextKey,
+      family: registryPayload[contextKey]?.family || "unknown",
+      ...(routePageFile ? { routePageFile } : {}),
+    },
     location: { pathname },
     recordPartialScript(grupo) {
       eventLog.push("partial script executed");
@@ -302,6 +307,23 @@ test("generic runtime loader can boot from bundled data for local file navigatio
     bundledContexts: EXPECTED_CONTEXTS,
     bundledPartials: {
       "partials/guia-02-herramientas-content.html": SHARED_HTML,
+    },
+  });
+
+  assert.match(harness.root.innerHTML, /runtime-fragment/);
+  assert.deepEqual(harness.fetchLog, []);
+  assert.equal(harness.getCounts().templateInitCalls, 1);
+  assert.equal(harness.getCounts().pageBootCalls, 1);
+});
+
+test("generic runtime loader accepts legacy short bundled partial keys on routed guia.html", async () => {
+  const harness = await runLoader({
+    contextKey: "jfk-induccion-10a",
+    pathname: "/guia.html",
+    routePageFile: "guia.html",
+    bundledContexts: EXPECTED_CONTEXTS,
+    bundledPartials: {
+      "guia-01-induccion-content": SHARED_HTML,
     },
   });
 
