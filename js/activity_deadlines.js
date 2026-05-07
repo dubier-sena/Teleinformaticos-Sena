@@ -55,6 +55,24 @@
       { id: "diagnostico332", label: "Actividad 3.3.2 - Diagnostico tecnico" },
       { id: "presupuesto341", label: "Actividad 3.4.1 - Presupuesto final" },
     ],
+    "grupo-10a-guia-03-planificar-informacion.html": [
+      { id: "bitacora311", label: "Bitacora 3.1.1" },
+      { id: "socializacion312", label: "Socializacion 3.1.2" },
+      { id: "tabla321", label: "Actividad 3.2.1 - Tabla resumen" },
+      { id: "mapa322", label: "Actividad 3.2.2 - Mapa conceptual" },
+      { id: "checklist331", label: "Actividad 3.3.1 - Checklist de instalacion" },
+      { id: "diagnostico332", label: "Actividad 3.3.2 - Diagnostico tecnico" },
+      { id: "presupuesto341", label: "Actividad 3.4.1 - Presupuesto final" },
+    ],
+    "grupo-10b-guia-03-planificar-informacion.html": [
+      { id: "bitacora311", label: "Bitacora 3.1.1" },
+      { id: "socializacion312", label: "Socializacion 3.1.2" },
+      { id: "tabla321", label: "Actividad 3.2.1 - Tabla resumen" },
+      { id: "mapa322", label: "Actividad 3.2.2 - Mapa conceptual" },
+      { id: "checklist331", label: "Actividad 3.3.1 - Checklist de instalacion" },
+      { id: "diagnostico332", label: "Actividad 3.3.2 - Diagnostico tecnico" },
+      { id: "presupuesto341", label: "Actividad 3.4.1 - Presupuesto final" },
+    ],
     "grupo-11a-guia-05-herramientas-informaticas-digitales.html": [
       { id: "guia5-311", label: "Actividad 3.1.1 - Bitacora o analisis del caso" },
       { id: "guia5-331", label: "Actividad 3.3.1 - Evidencias de herramientas" },
@@ -109,6 +127,8 @@
     "11b_guia.html": "grupo-11b-guia-05-herramientas-informaticas-digitales.html",
     "11a_guia6.html": "grupo-11a-guia-06-planificar-informacion.html",
     "11b_guia6.html": "grupo-11b-guia-06-planificar-informacion.html",
+    "10a_guia3.html": "grupo-10a-guia-03-planificar-informacion.html",
+    "10b_guia3.html": "grupo-10b-guia-03-planificar-informacion.html",
     "sb_10a_redes.html": "santa-barbara-10a-guia-02-redes-rap01.html",
     "sb_10b_redes.html": "santa-barbara-10b-guia-02-redes-rap01.html",
   };

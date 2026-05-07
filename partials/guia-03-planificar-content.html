@@ -1,0 +1,1230 @@
+﻿<button class="hamburger" onclick="toggleSidebar()" aria-label="Menú">&#9776;</button>
+<button class="btn-sb-expand" onclick="showSidebar()" title="Mostrar barra lateral">&#9776;</button>
+
+<div class="layout app-layout">
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="badge">SENA · FPI</div>
+      <h2>Guia 3 - Planificar la informacion</h2>
+      <p>Sistemas Teleinformaticos</p>
+      <button class="btn-sb-collapse" onclick="hideSidebar()" title="Ocultar barra lateral">&#9664;</button>
+    </div>
+
+    <div class="sidebar-ficha" id="sb-ficha-ok" style="display:none">
+      <div class="sf-label">Tu grupo</div>
+      <div class="sf-inst" id="sb-inst"></div>
+      <div class="sf-meta" id="sb-grupo-meta"></div>
+      <div class="sf-badge" id="sb-badge"></div>
+    </div>
+    <div class="sidebar-noficha" id="sb-ficha-warn">
+      <a href="index.html">Inicio | Seleccionar grupo / ficha</a>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span>Progreso</span>
+        <span id="progressValue">0%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <p class="progress-note">El avance se guarda localmente en este navegador.</p>
+      <button type="button" class="reset-button" id="resetProgress">Reiniciar respuestas</button>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Informaci&oacute;n</div>
+      <a class="nav-link active" href="#identificacion" onclick="setActive(this)">
+        <span class="icon">&#128203;</span> Identificaci&oacute;n
+      </a>
+      <a class="nav-link" href="#presentacion" onclick="setActive(this)">
+        <span class="icon">&#128075;</span> Presentaci&oacute;n
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Actividades</div>
+      <a class="nav-link" href="#reflexion" onclick="setActive(this)">
+        <span class="icon">&#128172;</span> 3.1 Reflexi&oacute;n Inicial
+        <span class="check">&#10003;</span>
+      </a>
+      <a class="nav-link" href="#contexto" onclick="setActive(this)">
+        <span class="icon">&#128269;</span> 3.2 Contextualizaci&oacute;n
+        <span class="check">&#10003;</span>
+      </a>
+      <a class="nav-link" href="#apropiacion" onclick="setActive(this)">
+        <span class="icon">&#128218;</span> 3.3 Apropiaci&oacute;n
+        <span class="check">&#10003;</span>
+      </a>
+      <a class="nav-link" href="#transferencia" onclick="setActive(this)">
+        <span class="icon">&#128640;</span> 3.4 Transferencia
+        <span class="check">&#10003;</span>
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Recursos</div>
+      <a class="nav-link" href="#evidencias" onclick="setActive(this)">
+        <span class="icon">&#128202;</span> Evidencias
+      </a>
+      <a class="nav-link" href="#glosario" onclick="setActive(this)">
+        <span class="icon">&#128214;</span> Glosario
+      </a>
+      <a class="nav-link" href="#referencias" onclick="setActive(this)">
+        <span class="icon">&#128279;</span> Referencias
+      </a>
+      <a class="nav-link" href="#material-apoyo" onclick="setActive(this)">
+        <span class="icon">&#128194;</span> Material de Apoyo
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Guia asignada</div>
+      <a class="nav-guide current" id="currentGuideNavLink" href="grupo-10a-guia-03-planificar-informacion.html" data-current-file="grupo-10a-guia-03-planificar-informacion.html">
+        <span class="g-icon">&#128215;</span>
+        <span class="g-info">
+          <span class="g-num">Guia 3</span>
+          <span class="g-name" id="currentGuideNavLabel">Planificar la informacion | 10A</span>
+        </span>
+        <span class="g-tag actual">Actual</span>
+      </a>
+    </div>
+
+    <a class="nav-home-link" href="calendario-academico-2026.html">&#128197; <span>Calendario 2026</span></a>
+    <a class="nav-home-link" href="index.html">&#127968; <span>Volver al Inicio</span></a>
+  </nav>
+
+  <div class="main app-main">
+    <div class="topbar">
+      <div class="topbar-title">
+        <strong>Guia 3 - Planificar la informacion</strong>
+      </div>
+      <div class="topbar-meta">
+        <span class="meta-item"><span>&#9201;</span><span>56 horas</span></span>
+        <span class="meta-item"><span>&#128197;</span><span>2026</span></span>
+        <span class="meta-item"><span>&#127979;</span><span id="topbarCampus">Jhon F. Kennedy | 10A</span></span>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="hero" id="inicio">
+        <div class="tag">Guia 3 | Fase: Planeacion</div>
+        <h1>Implementar herramientas tecnologicas para una MiPyme</h1>
+        <p>
+          En esta guia estudiarás, instalarás y verificarás herramientas tecnológicas
+          de uso real en soporte técnico, aplicarás un diagnóstico básico y elaborarás
+          un presupuesto de implementación para una MiPyme de Boyacá.
+        </p>
+        <div class="hero-meta">
+          <div class="hero-meta-item">&#127963; SENA &mdash; Servicio Nacional de Aprendizaje</div>
+          <div class="hero-meta-item">&#128205; Competencia: Operar herramientas informaticas y digitales</div>
+          <div class="hero-meta-item">&#9201; 56 horas</div>
+          <div class="hero-meta-item">&#127891; C&oacute;digo: 233108 &middot; V1</div>
+        </div>
+      </div>
+
+      <div id="identificacion" class="section-title">Identificaci&oacute;n de la Gu&iacute;a</div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#e8f5e9">&#128203;</div>
+            <div>
+              <h3>Datos del Programa de Formaci&oacute;n</h3>
+              <p>Informaci&oacute;n oficial del programa y la competencia</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="table-scroll">
+            <table class="data-table ident-table">
+              <tbody>
+                <tr><td>Denominaci&oacute;n del Programa</td><td>T&eacute;cnico en Sistemas Teleinform&aacute;ticos</td></tr>
+                <tr><td>C&oacute;digo del Programa</td><td>233108 &middot; V1.0</td></tr>
+                <tr><td>Nombre del Proyecto Formativo</td><td>Alfabetizaci&oacute;n Digital, Asesor&iacute;a T&eacute;cnica y Ciberseguridad para la Mejora de Actividades Productivas Locales en la zona de influencia del CIAS Puerto Boyac&aacute;.</td></tr>
+                <tr><td>Fase del Proyecto</td><td>Planeaci&oacute;n</td></tr>
+                <tr><td>Actividad del Proyecto</td><td>Implementar procesos para el mantenimiento f&iacute;sico, l&oacute;gico y herramientas tecnol&oacute;gicas de los equipos de c&oacute;mputo y redes de datos.</td></tr>
+                <tr><td>Competencia</td><td>220501121 - Operar herramientas inform&aacute;ticas y digitales de acuerdo con protocolos y manuales t&eacute;cnicos.</td></tr>
+                <tr><td>Resultado de Aprendizaje</td><td>RAP 02 Implementar componentes de las herramientas tecnol&oacute;gicas seg&uacute;n procedimientos de la organizaci&oacute;n.</td></tr>
+                <tr><td>Duraci&oacute;n</td><td>56 Horas (40 horas directas y 16 horas indirectas)</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="presentacion" class="section-title">Presentaci&oacute;n</div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#e3f2fd">&#128075;</div>
+            <div>
+              <h3>Bienvenida a la Gu&iacute;a</h3>
+              <p>Conoce el contexto, el alcance y las metas de este recorrido formativo</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <p class="intro-text">
+            Las ferreterias, droguerias, cooperativas agropecuarias y oficinas del
+            Magdalena Medio y el Occidente de Boyaca dependen cada vez mas de
+            computadores para funcionar, pero pocas cuentan con alguien que los
+            instale y configure correctamente. Ahi radica la importancia y el objeto
+            de estudio de esta guia: implementar herramientas tecnologicas, como
+            suites ofimaticas, antivirus, navegadores, software de diagnostico y
+            plataformas colaborativas, siguiendo manuales tecnicos y procedimientos
+            organizacionales, para que los equipos realmente sirvan a lo que la
+            empresa necesita.
+          </p>
+          <p class="intro-text">
+            Esta competencia, enmarcada en el RAP 02 de la Norma 220501121, es una
+            de las mas demandadas en el mercado laboral del sector servicios para el
+            tecnico en asistencia y soporte de tecnologias de la informacion. Dominarla
+            te abrira puertas laborales reales en tu municipio y en todo el
+            departamento, y te formara como un profesional que toma decisiones
+            fundamentadas, trabaja con procedimientos claros y entrega resultados
+            verificables. Piensa en esta situacion concreta: el dueno de un negocio en
+            Puerto Boyaca te pide que dejes listos tres computadores nuevos en dos
+            dias. ¿Por donde empiezas? ¿Que instalas primero y por que? ¿Como
+            verificas que todo funciona antes de entregar?
+          </p>
+          <p class="intro-text">
+            Es probable que ya hayas instalado algun programa, buscado un tutorial o
+            explorado las configuraciones de tu equipo: ese conocimiento informal es
+            tu punto de partida. En esta guia lo convertiras en saber profesional
+            siguiendo un recorrido de menor a mayor complejidad: primero
+            reflexionaras conectando tu experiencia previa con los nuevos conceptos;
+            luego estudiaras las herramientas clave del soporte tecnico y construiras
+            un mapa conceptual; en la apropiacion instalaras y configuraras software
+            real en el laboratorio y realizaras un diagnostico tecnico completo de un
+            equipo; y en la transferencia elaboraras un presupuesto de implementacion
+            tecnologica para una MiPyme real de tu region.
+          </p>
+          <p class="intro-text">
+            Algunas actividades las haras de forma individual, para fortalecer tu
+            autonomia y tu disciplina de trabajo sistematico y organizado, y otras en
+            equipo, porque en el entorno laboral la colaboracion y la comunicacion son
+            tan importantes como el dominio tecnico. Todo lo que hagas esta articulado
+            con el proyecto formativo orientado al fortalecimiento de los servicios
+            teleinformaticos para las MiPymes de la region de Boyaca.
+          </p>
+          <div class="info-box green" style="margin-top:14px">
+            <div class="label">Nota antes de comenzar cada actividad</div>
+            <p>
+              Lee las instrucciones completas antes de actuar. Ten los materiales
+              listos. Guarda tus evidencias con nombres descriptivos en una carpeta
+              organizada. No saltes pasos. Las evidencias que generes en esta guia
+              formaran parte de tu portafolio de aprendizaje y seran evaluadas con
+              criterios tecnicos precisos.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div id="reflexion" class="section-title">3.1 &middot; Actividades de Reflexi&oacute;n Inicial</div>
+      <div class="info-box blue" style="margin-bottom:16px">
+        <p>Estas actividades se desarrollan al inicio de cada sesion de 8 horas. Buscan activar tu pensamiento, conectar tu experiencia previa con la nueva competencia y prepararte para el trabajo tecnico del dia.</p>
+      </div>
+      <div class="card open cat-reflexion">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128172;</div>
+            <div>
+              <h3>Actividades de Reflexi&oacute;n Inicial</h3>
+              <p>2 actividades &middot; Duraci&oacute;n aproximada: 1 hora</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.1.1</span>
+              <span class="activity-title">Estudio de caso: la empresa sin herramientas adecuadas</span>
+              <span class="mission-chip">Mision de arranque</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <article class="story-card">
+                <h3>Escenario de trabajo</h3>
+                <p>La empresa <strong>TechBoyCa S.A.S.</strong> acaba de adquirir 20 equipos de computo nuevos para su area administrativa. El gerente le pide al tecnico de sistemas dejarlos listos para trabajar en dos dias habiles.</p>
+                <p>Al revisar, el tecnico descubre que los equipos no tienen suite ofimatica instalada, que el antivirus esta desactualizado y que no existe ningun registro del trabajo tecnico anterior.</p>
+              </article>
+
+              <article class="support-card" style="margin-top:16px;">
+                <h3>Datos de la actividad</h3>
+                <ul class="note-list">
+                  <li>Duracion: 30 minutos.</li>
+                  <li>Ambiente: laboratorio de informatica o aula con videobeam.</li>
+                  <li>Estrategia: aprendizaje basado en problemas mediante estudio de caso.</li>
+                  <li>Materiales: escenario proyectado o impreso y bitacora de aprendizaje.</li>
+                  <li>Herramientas TIC sugeridas: Mentimeter, LibreOffice Writer o Bloc de notas.</li>
+                </ul>
+              </article>
+
+              <article class="notes-card" style="margin-top:16px;">
+                <h3>Bitacora individual de analisis</h3>
+                <label>
+                  <span>1. Que herramientas informaticas deberia instalar el tecnico y por que</span>
+                  <textarea rows="5" data-store="reflexion_herramientas" data-track placeholder="Justifica herramientas ofimaticas, seguridad, diagnostico, correo o colaboracion."></textarea>
+                </label>
+                <label>
+                  <span>2. Que informacion deberia registrar el tecnico en una ficha tecnica o formato de inventario</span>
+                  <textarea rows="5" data-store="reflexion_registro" data-track placeholder="Describe datos como software, version, licencia, responsable, fecha y observaciones."></textarea>
+                </label>
+                <label>
+                  <span>3. Que consecuencias tiene para una empresa no tener documentados sus procesos tecnologicos</span>
+                  <textarea rows="4" data-store="reflexion_consecuencias" data-track placeholder="Relaciona riesgos, tiempos, errores, soporte y control del servicio."></textarea>
+                </label>
+                <label>
+                  <span>4. Has vivido una situacion parecida en casa, el colegio o una empresa</span>
+                  <textarea rows="4" data-store="reflexion_experiencia" data-track placeholder="Describe brevemente una experiencia propia o cercana."></textarea>
+                </label>
+                <div id="bitacora311DeadlineControls" style="margin-top:16px"></div>
+                <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+                  <button type="button" id="btnGuardarBitacora"
+                    onclick="guardarBitacora311()"
+                    style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button class="btn-export-word" type="button" onclick="openBitacoraExportModal()">
+                    &#128196; Exportar bitacora a Word
+                  </button>
+                </div>
+                <div id="bitacoraStatus311" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+            </div>
+          </div>
+
+          <div class="activity mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.1.2</span>
+              <span class="activity-title">Socializacion en grupo</span>
+              <span class="mission-chip">Mision de arranque</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <article class="support-card">
+                <h3>Preparacion del equipo</h3>
+                <ul class="note-list">
+                  <li>Conformar el grupo de tres aprendices.</li>
+                  <li>Asignar roles: moderador, argumentador y quien concluye.</li>
+                  <li>Enfocar la discusion en por que es clave instalar las herramientas correctas antes de entregar un equipo.</li>
+                  <li>Preparar una conclusion grupal para presentar en maximo 5 minutos.</li>
+                </ul>
+              </article>
+
+              <article class="notes-card" style="margin-top:16px;">
+                <h3>Conclusion grupal</h3>
+                <label>
+                  <span>Resumen de la socializacion</span>
+                  <textarea rows="6" data-store="socializacion_conclusion" data-track placeholder="Escribe la conclusion del equipo sobre por que un tecnico debe instalar y verificar correctamente las herramientas."></textarea>
+                </label>
+                <label>
+                  <span>Pregunta orientadora que responderan al grupo</span>
+                  <textarea rows="3" data-store="socializacion_pregunta_central" data-track placeholder="Formula la idea central que sustentaran en la plenaria."></textarea>
+                </label>
+                <div id="socializacion312DeadlineControls" style="margin-top:16px"></div>
+                <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+                  <button type="button" id="btnGuardarSocializacion"
+                    onclick="guardarSocializacion312()"
+                    style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                    &#128190; Guardar respuestas
+                  </button>
+                </div>
+                <div id="socializacionStatus312" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+
+              <div class="info-box" style="margin-top:16px">
+                <div class="label">&#129504; Quiz individual de herramientas tecnologicas</div>
+                <p>Al cerrar la actividad, presenta el quiz individual de 10 preguntas sobre herramientas ofimaticas, seguridad, diagnostico y buenas practicas de instalacion.</p>
+                <ul style="margin-top:8px">
+                  <li>La variante se asigna al azar entre <strong>A</strong>, <strong>B</strong> y <strong>C</strong> al iniciar.</li>
+                  <li>Puntaje maximo: <strong>100</strong>. Hay 2 advertencias por cambio de pestana.</li>
+                  <li>En la segunda advertencia el sistema envia lo contestado autom&aacute;ticamente.</li>
+                </ul>
+              </div>
+              <div id="quizHerramientasStatus" class="info-box blue" style="margin-top:12px;display:none"></div>
+              <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+                <a id="quizHerramientasActionLink" class="btn-drive"
+                  href="#"
+                  style="min-height:unset;border-radius:10px;padding:10px 20px;font-size:0.95rem;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none">
+                  &#128218; Presentar quiz aleatorio
+                </a>
+              </div>
+
+              <div class="info-box" style="margin-top:16px">
+                <div class="label">Cierre sugerido</div>
+                <p>Cuando el instructor abra la plenaria, participa en <strong>Mentimeter</strong> con la herramienta que instalarias primero y prep&aacute;rate para el quiz de cierre.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="contexto" class="section-title">3.2 &middot; Contextualizaci&oacute;n e Identificaci&oacute;n de Conocimientos</div>
+      <div class="info-box blue" style="margin-bottom:16px">
+        <p>En esta etapa construir&aacute;s la base conceptual necesaria para implementar herramientas tecnol&oacute;gicas, reconocer fuentes oficiales y relacionar cada herramienta con su aplicaci&oacute;n real en una MiPyme.</p>
+      </div>
+      <div class="card open cat-contexto">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128269;</div>
+            <div>
+              <h3>Actividades de Contextualizaci&oacute;n</h3>
+              <p>2 actividades &middot; Duraci&oacute;n aproximada: 8 horas</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.2.1</span>
+              <span class="activity-title">Estudio de contenidos tematicos</span>
+              <span class="mission-chip">Mision diagnostica</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <div class="info-box">
+                <div class="label">Ruta de trabajo</div>
+                <p>Forma un equipo de tres personas, distribuyan los temas del bloque, estudien con apoyo de las fuentes sugeridas y elaboren una tabla resumen con tres columnas: herramienta o proceso, para que sirve y aplicacion en una MiPyme de Boyaca.</p>
+              </div>
+
+              <div class="table-scroll" style="margin-top:16px;">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Tema</th>
+                      <th>Que debes aprender</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>Manual tecnico: funcion, estructura y uso</td><td>Como esta organizado un manual tecnico, que informacion contiene y por que debe consultarse antes de instalar cualquier herramienta.</td></tr>
+                    <tr><td>Procedimiento de instalacion de software y herramientas ofimaticas</td><td>Pasos estandar de instalacion, verificacion de compatibilidad, tipos de licencia y almacenamiento requerido.</td></tr>
+                    <tr><td>Herramientas de diagnostico para soporte tecnico</td><td>CPU-Z, CrystalDiskInfo, Belarc Advisor y otras herramientas: que diagnostican y como interpretar sus reportes.</td></tr>
+                    <tr><td>Motores de busqueda tecnica</td><td>Como identificar fuentes oficiales, usar operadores de busqueda y localizar documentacion confiable.</td></tr>
+                    <tr><td>Plataformas de gestion y colaboracion</td><td>Google Workspace, Microsoft 365, Teams y herramientas afines para trabajo corporativo.</td></tr>
+                    <tr><td>Compatibilidad y resolucion de problemas basicos</td><td>Como verificar requisitos del sistema y que hacer ante errores frecuentes de instalacion.</td></tr>
+                    <tr><td>Gestion de cuentas de acceso corporativas</td><td>Tipos de cuentas, permisos, configuracion basica y buenas practicas de seguridad.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <article class="support-card" style="margin-top:16px;">
+                <h3>Instrucciones</h3>
+                <ol class="note-list" style="padding-left:1.2em">
+                  <li>Forma un equipo de 3 personas. Distribuyan los 7 temas del Bloque A entre los integrantes (2 o 3 temas por persona).</li>
+                  <li>Estudia los temas que te corresponden usando los recursos indicados. Toma apuntes organizados en LibreOffice Writer o en tu bit&aacute;cora. Tiempo de estudio aut&oacute;nomo: 2 horas.</li>
+                  <li>En la sesi&oacute;n presencial, cada integrante explica sus temas al equipo (5 minutos por tema). Mientras escuchas, completa los apuntes de los temas que no estudiaste.</li>
+                  <li>Como equipo, elaboren una tabla resumen en Google Sheets (sheets.google.com) o LibreOffice Calc con 3 columnas: &ldquo;Herramienta o proceso&rdquo;, &ldquo;Para qu&eacute; sirve&rdquo;, &ldquo;Aplicaci&oacute;n en una MiPyme de Boyac&aacute;&rdquo;.</li>
+                  <li>Exporta la tabla a PDF (Archivo &gt; Exportar como PDF en LibreOffice Calc, o Archivo &gt; Descargar &gt; PDF en Google Sheets). Nombre: <strong>BloqueA_Resumen_[TuNombre]_v1.0.pdf</strong>. Comp&aacute;rtela con el instructor.</li>
+                  <li>Anota en tu bit&aacute;cora las dudas que te quedaron para resolverlas antes del mapa conceptual.</li>
+                </ol>
+              </article>
+
+
+              <!-- Ejemplo de fila completa -->
+              <div style="background:#fffde7;border:1px solid #f9a825;border-radius:8px;padding:14px 16px;margin-top:16px">
+                <div style="font-size:0.76rem;font-weight:700;color:#e65100;letter-spacing:.05em;margin-bottom:10px">&#128161; EJEMPLO — así se ve una fila completa de la tabla resumen</div>
+                <div style="overflow-x:auto">
+                  <table style="width:100%;border-collapse:collapse;font-size:0.85rem">
+                    <thead>
+                      <tr style="background:#fff9c4">
+                        <th style="border:1px solid #f9a825;padding:7px 10px;text-align:left">Herramienta o proceso</th>
+                        <th style="border:1px solid #f9a825;padding:7px 10px;text-align:left">Para qué sirve</th>
+                        <th style="border:1px solid #f9a825;padding:7px 10px;text-align:left">Aplicación en una MiPyme de Boyacá</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr style="background:#fff">
+                        <td style="border:1px solid #f9a825;padding:7px 10px;font-weight:600">CPU-Z</td>
+                        <td style="border:1px solid #f9a825;padding:7px 10px">Muestra el procesador, la RAM y la placa base del equipo en tiempo real.</td>
+                        <td style="border:1px solid #f9a825;padding:7px 10px">Diagnosticar un computador antes de hacerle mantenimiento en una drogueria de Tunja.</td>
+                      </tr>
+                      <tr style="background:#fffde7">
+                        <td style="border:1px solid #f9a825;padding:7px 10px;font-weight:600">Procedimiento de instalacion</td>
+                        <td style="border:1px solid #f9a825;padding:7px 10px">Secuencia de pasos para instalar software sin errores: descarga oficial → verificacion de compatibilidad → instalacion → configuracion → prueba.</td>
+                        <td style="border:1px solid #f9a825;padding:7px 10px">Instalar LibreOffice en 3 computadores nuevos de una ferreteria de Puerto Boyaca sin que el gerente pierda informacion.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <p style="margin:8px 0 0;font-size:0.8rem;color:#777">Completa una fila por cada uno de los 7 temas del Bloque A. Usa tus propias palabras.</p>
+              </div>
+
+              <div class="info-box green" style="margin-top:14px">
+                <div class="label">Recurso recomendado</div>
+                <p>Consulta Cisco NetAcad, documentacion de LibreOffice, soporte Microsoft 365 y Biblioteca Virtual SENA para consolidar la informacion del equipo.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="activity mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.2.2</span>
+              <span class="activity-title">Construccion del mapa conceptual</span>
+              <span class="mission-chip">Mision diagnostica</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <article class="support-card">
+                <h3>Requisitos m&iacute;nimos del mapa</h3>
+                <p style="margin-bottom:12px">El mapa conceptual debe integrar y demostrar la comprensi&oacute;n de las herramientas tecnol&oacute;gicas para soporte t&eacute;cnico. Debe incluir m&iacute;nimo:</p>
+                <table style="width:100%;border-collapse:collapse;font-size:0.9rem">
+                  <tbody>
+                    <tr style="border:1px solid #c8e6c9">
+                      <td style="border:1px solid #c8e6c9;padding:10px 12px;font-weight:700;background:#e8f5e9;width:2.5rem;text-align:center;vertical-align:top">A</td>
+                      <td style="border:1px solid #c8e6c9;padding:10px 12px;vertical-align:top">Las categor&iacute;as de herramientas tecnol&oacute;gicas para soporte t&eacute;cnico (ofim&aacute;tica, diagn&oacute;stico, seguridad, colaboraci&oacute;n).</td>
+                    </tr>
+                    <tr style="border:1px solid #c8e6c9">
+                      <td style="border:1px solid #c8e6c9;padding:10px 12px;font-weight:700;background:#e8f5e9;width:2.5rem;text-align:center;vertical-align:top">B</td>
+                      <td style="border:1px solid #c8e6c9;padding:10px 12px;vertical-align:top">Los pasos del proceso de instalaci&oacute;n y configuraci&oacute;n: descarga &rarr; verificaci&oacute;n de compatibilidad &rarr; instalaci&oacute;n &rarr; configuraci&oacute;n &rarr; verificaci&oacute;n de funcionamiento.</td>
+                    </tr>
+                    <tr style="border:1px solid #c8e6c9">
+                      <td style="border:1px solid #c8e6c9;padding:10px 12px;font-weight:700;background:#e8f5e9;width:2.5rem;text-align:center;vertical-align:top">C</td>
+                      <td style="border:1px solid #c8e6c9;padding:10px 12px;vertical-align:top">Los tipos de licencia de software (libre, propietario, suscripci&oacute;n) con al menos un ejemplo real de cada uno.</td>
+                    </tr>
+                    <tr style="border:1px solid #c8e6c9">
+                      <td style="border:1px solid #c8e6c9;padding:10px 12px;font-weight:700;background:#e8f5e9;width:2.5rem;text-align:center;vertical-align:top">D</td>
+                      <td style="border:1px solid #c8e6c9;padding:10px 12px;vertical-align:top">La relaci&oacute;n entre: herramienta &rarr; manual t&eacute;cnico &rarr; instalaci&oacute;n &rarr; verificaci&oacute;n &rarr; servicio al cliente.</td>
+                    </tr>
+                    <tr style="border:1px solid #c8e6c9">
+                      <td style="border:1px solid #c8e6c9;padding:10px 12px;font-weight:700;background:#e8f5e9;width:2.5rem;text-align:center;vertical-align:top">E</td>
+                      <td style="border:1px solid #c8e6c9;padding:10px 12px;vertical-align:top">Al menos 2 herramientas con nombre real que usar&iacute;a un t&eacute;cnico en una MiPyme del Magdalena Medio u Occidente de Boyac&aacute;.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </article>
+
+              <!-- Diagrama visual de estructura del mapa -->
+              <div style="background:#f9fbe7;border:1px solid #c8e6c9;border-radius:10px;padding:16px;margin-top:16px">
+                <div style="font-size:0.76rem;font-weight:700;color:#e65100;letter-spacing:.05em;margin-bottom:14px">&#128161; EJEMPLO — estructura básica del mapa (tu versión puede ser diferente)</div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+                  <div style="background:#1b5e20;color:#fff;border-radius:8px;padding:9px 22px;font-weight:700;font-size:0.9rem">Herramientas Tecnológicas para Soporte Técnico</div>
+                  <div style="font-size:1rem;color:#2e7d32;font-weight:700">↓ &nbsp; se clasifican en</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center">
+                    <div style="border:2px solid #2e7d32;border-radius:8px;padding:8px 12px;background:#e8f5e9;font-size:0.82rem;text-align:center">
+                      <div style="font-weight:700;color:#1b5e20">Ofimática</div>
+                      <div style="color:#555;font-size:0.77rem;margin-top:3px">LibreOffice · Microsoft 365</div>
+                      <div style="color:#888;font-size:0.73rem;margin-top:2px;font-style:italic">Licencia: libre / propietaria</div>
+                    </div>
+                    <div style="border:2px solid #2e7d32;border-radius:8px;padding:8px 12px;background:#e8f5e9;font-size:0.82rem;text-align:center">
+                      <div style="font-weight:700;color:#1b5e20">Diagnóstico</div>
+                      <div style="color:#555;font-size:0.77rem;margin-top:3px">CPU-Z · CrystalDiskInfo</div>
+                      <div style="color:#888;font-size:0.73rem;margin-top:2px;font-style:italic">Licencia: libre / gratuita</div>
+                    </div>
+                    <div style="border:2px solid #2e7d32;border-radius:8px;padding:8px 12px;background:#e8f5e9;font-size:0.82rem;text-align:center">
+                      <div style="font-weight:700;color:#1b5e20">Seguridad</div>
+                      <div style="color:#555;font-size:0.77rem;margin-top:3px">Windows Defender · Antivirus</div>
+                      <div style="color:#888;font-size:0.73rem;margin-top:2px;font-style:italic">Licencia: libre / propietaria</div>
+                    </div>
+                    <div style="border:2px solid #2e7d32;border-radius:8px;padding:8px 12px;background:#e8f5e9;font-size:0.82rem;text-align:center">
+                      <div style="font-weight:700;color:#1b5e20">Colaboración</div>
+                      <div style="color:#555;font-size:0.77rem;margin-top:3px">Google Drive · Teams</div>
+                      <div style="color:#888;font-size:0.73rem;margin-top:2px;font-style:italic">Licencia: suscripción / libre</div>
+                    </div>
+                  </div>
+                  <div style="font-size:1rem;color:#2e7d32;font-weight:700;margin-top:2px">↓ &nbsp; cada una requiere</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center">
+                    <div style="background:#fff;border:1px solid #a5d6a7;border-radius:6px;padding:5px 10px;font-size:0.78rem;color:#2e7d32">📄 Manual técnico</div>
+                    <div style="background:#fff;border:1px solid #a5d6a7;border-radius:6px;padding:5px 10px;font-size:0.78rem;color:#2e7d32">⬇ Descarga oficial</div>
+                    <div style="background:#fff;border:1px solid #a5d6a7;border-radius:6px;padding:5px 10px;font-size:0.78rem;color:#2e7d32">⚙ Instalación y configuración</div>
+                    <div style="background:#fff;border:1px solid #a5d6a7;border-radius:6px;padding:5px 10px;font-size:0.78rem;color:#2e7d32">✅ Verificación de funcionamiento</div>
+                    <div style="background:#fff;border:1px solid #a5d6a7;border-radius:6px;padding:5px 10px;font-size:0.78rem;color:#2e7d32">📷 Captura de evidencia</div>
+                  </div>
+                </div>
+                <p style="margin:12px 0 0;font-size:0.8rem;color:#777;text-align:center">Usa palabras enlace entre los nodos: "se instala con", "requiere leer", "produce", "se verifica con"</p>
+              </div>
+
+              <article class="support-card" style="margin-top:16px;">
+                <h3>Instrucciones</h3>
+                <ol style="padding-left:1.4rem;margin:0;line-height:1.7">
+                  <li>Con tu equipo de la actividad 3.2.1, elijan la herramienta digital: Canva (canva.com), MindMeister (mindmeister.com) o CmapTools (cmap.ihmc.us &mdash; descarga gratuita). Sin internet, usen papel y marcadores.</li>
+                  <li>Definan juntos la estructura del mapa: &iquest;cu&aacute;l ser&aacute; el concepto central? &iquest;cu&aacute;les las ramas principales? Antes de dise&ntilde;ar en digital, hagan un borrador a mano en 10 minutos.</li>
+                  <li>Construyan el mapa asegurando que incluya todos los elementos A hasta E. Usen conectores con palabras enlace claras: &ldquo;se instala con&rdquo;, &ldquo;requiere leer&rdquo;, &ldquo;produce&rdquo;, &ldquo;se verifica con&rdquo;.</li>
+                  <li>Revisen que el mapa sea visualmente claro (colores por categor&iacute;a, texto m&iacute;nimo 12pt, jerarqu&iacute;a visible). Debe entenderse sin haber estudiado los temas.</li>
+                  <li>Exporten el mapa a PDF: Canva &gt; Descargar &gt; PDF est&aacute;ndar | MindMeister &gt; Exportar &gt; PDF | CmapTools &gt; Archivo &gt; Exportar &gt; Como imagen. Nombre: <strong>MapaConceptual_RAP02_[NombreEquipo]_v1.0.pdf</strong>.</li>
+                  <li>Preparen una presentaci&oacute;n oral de m&aacute;ximo 10 minutos para explicar el mapa al grupo. Cada integrante habla al menos 3 minutos. Practiquen en voz alta antes de presentar.</li>
+                  <li>Presenten en la fecha que indique el instructor. Recibir&aacute;n retroalimentaci&oacute;n usando la Lista de Chequeo IE-01.</li>
+                </ol>
+              </article>
+
+              <div class="info-box green">
+                <div class="label">Evidencia e instrumento</div>
+                <p>Trabaja con tu mismo equipo, hagan un borrador a mano antes de pasar a digital, exporten el mapa a PDF y preparen una presentacion oral de maximo 10 minutos. Instrumento: Lista de chequeo IE-01.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="apropiacion" class="section-title">3.3 &middot; Actividades de Apropiaci&oacute;n</div>
+      <div class="info-box blue" style="margin-bottom:16px">
+        <p>En esta fase pondr&aacute;s en pr&aacute;ctica los conocimientos adquiridos mediante instalaci&oacute;n guiada de herramientas tecnol&oacute;gicas y diagn&oacute;stico t&eacute;cnico de un equipo del laboratorio.</p>
+      </div>
+      <div class="card open cat-apropiacion">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128218;</div>
+            <div>
+              <h3>Actividades de Apropiaci&oacute;n</h3>
+              <p>2 actividades &middot; Duraci&oacute;n aproximada: 18 horas</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.3.1</span>
+              <span class="activity-title">Instalacion y configuracion de herramientas tecnologicas</span>
+              <span class="mission-chip">Mision tecnica</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+
+              <div style="background:#1b5e20;color:#fff;border-radius:8px 8px 0 0;padding:10px 16px;font-size:0.82rem;font-weight:700;letter-spacing:0.04em;display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:0">
+                <span>&#128203; EVIDENCIA &mdash; Tipo: Evidencia de Desempe&ntilde;o</span>
+                <span style="opacity:0.5">|</span>
+                <span>Instrumento: Lista de Chequeo IE-02</span>
+              </div>
+              <div class="table-scroll" style="margin-top:0;border-radius:0 0 8px 8px;overflow:hidden;border:1px solid #c8e6c9;border-top:none">
+                <table class="data-table" style="margin:0">
+                  <thead>
+                    <tr>
+                      <th style="width:2rem;text-align:center">#</th>
+                      <th>Herramienta</th>
+                      <th>Criterio de verificaci&oacute;n</th>
+                      <th>Fuente oficial</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td style="text-align:center;font-weight:700">1</td>
+                      <td>Suite ofim&aacute;tica (LibreOffice o Microsoft 365 seg&uacute;n disponibilidad)</td>
+                      <td>Procesador de texto, hoja de c&aacute;lculo y presentaciones abriendo correctamente. Captura de cada m&oacute;dulo.</td>
+                      <td><a href="https://www.libreoffice.org" target="_blank" rel="noopener">libreoffice.org</a> o <a href="https://www.microsoft.com/es-co/microsoft-365" target="_blank" rel="noopener">microsoft.com</a></td>
+                    </tr>
+                    <tr>
+                      <td style="text-align:center;font-weight:700">2</td>
+                      <td>Navegador web actualizado con extensiones b&aacute;sicas de seguridad</td>
+                      <td>Extensi&oacute;n de seguridad instalada (bloqueador de anuncios, HTTPS). Captura de la configuraci&oacute;n.</td>
+                      <td><a href="https://www.mozilla.org/es-ES/firefox/" target="_blank" rel="noopener">mozilla.org</a> o <a href="https://www.google.com/intl/es/chrome/" target="_blank" rel="noopener">google.com/chrome</a></td>
+                    </tr>
+                    <tr>
+                      <td style="text-align:center;font-weight:700">3</td>
+                      <td>Cliente de correo electr&oacute;nico configurado</td>
+                      <td>Cuenta de prueba configurada. Env&iacute;o y recepci&oacute;n de correo de prueba exitoso. Captura de la bandeja.</td>
+                      <td><a href="https://www.thunderbird.net/es-ES/" target="_blank" rel="noopener">thunderbird.net</a> o <a href="https://mail.google.com" target="_blank" rel="noopener">gmail.com</a></td>
+                    </tr>
+                    <tr>
+                      <td style="text-align:center;font-weight:700">4</td>
+                      <td>Herramienta de compresi&oacute;n y descompresi&oacute;n (7-Zip)</td>
+                      <td>Comprimir y descomprimir un archivo de prueba. Captura del proceso completo.</td>
+                      <td><a href="https://www.7-zip.org" target="_blank" rel="noopener">7-zip.org</a></td>
+                    </tr>
+                    <tr>
+                      <td style="text-align:center;font-weight:700">5</td>
+                      <td>Software antivirus / protecci&oacute;n integrada (Windows Defender)</td>
+                      <td>Estado &ldquo;Protegido&rdquo;, definiciones actualizadas, an&aacute;lisis r&aacute;pido ejecutado. Captura del reporte.</td>
+                      <td>Integrado en Windows</td>
+                    </tr>
+                    <tr>
+                      <td style="text-align:center;font-weight:700">6</td>
+                      <td>Al menos una herramienta de diagn&oacute;stico (CPU-Z, CrystalDiskInfo)</td>
+                      <td>Instalada y mostrando reporte del hardware del equipo. Captura del reporte generado.</td>
+                      <td><a href="https://www.cpuid.com/softwares/cpu-z.html" target="_blank" rel="noopener">cpuid.com</a> o <a href="https://crystalmark.info/en/software/crystaldiskinfo/" target="_blank" rel="noopener">crystalmark.info</a></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="info-box green" style="margin-top:14px">
+                <div class="label">&#128274; Importante</div>
+                <p>Descarga el instalador &Uacute;NICAMENTE del sitio oficial del fabricante (columna &ldquo;Fuente oficial&rdquo;). Nunca uses fuentes no oficiales. Ante cualquier duda, consulta al instructor antes de descargar.</p>
+              </div>
+
+              <article class="support-card" style="margin-top:14px">
+                <h3>Para cada herramienta instalada debes:</h3>
+                <ol style="padding-left:1.4rem;margin:0;line-height:1.75">
+                  <li>Consultar el manual t&eacute;cnico o gu&iacute;a de instalaci&oacute;n oficial (sitio del fabricante).</li>
+                  <li>Verificar compatibilidad con el sistema operativo del equipo (32 o 64 bits &mdash; revisa en <code>msinfo32</code> con <kbd>Windows + R</kbd>).</li>
+                  <li>Ejecutar el proceso de instalaci&oacute;n paso a paso siguiendo el asistente.</li>
+                  <li>Configurar los par&aacute;metros b&aacute;sicos seg&uacute;n el manual t&eacute;cnico del instructor.</li>
+                  <li>Verificar que la herramienta funcione correctamente ejecutando una tarea b&aacute;sica y tomando captura con Recortes de Windows (<kbd>Win + May&uacute;s + S</kbd>) o Greenshot (getgreenshot.org).</li>
+                  <li>Registrar cada instalaci&oacute;n en el checklist: nombre, versi&oacute;n (Ayuda &gt; Acerca de), fecha, configuraci&oacute;n aplicada, resultado y observaciones. Si falla, anotar el mensaje de error exacto y la soluci&oacute;n aplicada.</li>
+                  <li>Organizar todas las capturas en una carpeta llamada <strong>Evidencias_Act331_[TuNombre]</strong>, numeradas: <code>01_LibreOffice.png</code>, <code>02_Navegador.png</code>, etc. Entregar checklist y carpeta al instructor.</li>
+                </ol>
+              </article>
+
+            </div>
+          </div>
+
+          <div class="activity mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.3.2</span>
+              <span class="activity-title">Diagnostico con herramientas de soporte tecnico</span>
+              <span class="mission-chip">Mision tecnica</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+
+              <div style="border:1px solid #c8e6c9;border-radius:10px;overflow:hidden;margin-bottom:16px">
+                <div style="background:#e8f5e9;padding:10px 16px;font-weight:700;color:#1b5e20;font-size:0.9rem">
+                  &#128187; Herramientas TIC que vas a usar
+                </div>
+                <div style="padding:12px 16px;display:flex;flex-wrap:wrap;gap:8px">
+                  <a href="https://www.cpuid.com/softwares/cpu-z.html" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;background:#f0f9f4;border:1px solid #c8e6c9;border-radius:6px;padding:5px 11px;font-size:0.83rem;font-weight:600;color:#1b5e20;text-decoration:none">&#128190; CPU-Z <span style="font-weight:400;color:#666;font-size:0.78rem">— hardware detallado</span></a>
+                  <a href="https://crystalmark.info/en/software/crystaldiskinfo/" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;background:#f0f9f4;border:1px solid #c8e6c9;border-radius:6px;padding:5px 11px;font-size:0.83rem;font-weight:600;color:#1b5e20;text-decoration:none">&#128190; CrystalDiskInfo <span style="font-weight:400;color:#666;font-size:0.78rem">— salud del disco</span></a>
+                  <a href="https://www.belarc.com/products/belarc-advisor" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;background:#f0f9f4;border:1px solid #c8e6c9;border-radius:6px;padding:5px 11px;font-size:0.83rem;font-weight:600;color:#1b5e20;text-decoration:none">&#128190; Belarc Advisor <span style="font-weight:400;color:#666;font-size:0.78rem">— inventario HTML</span></a>
+                  <span style="display:inline-flex;align-items:center;gap:5px;background:#f0f9f4;border:1px solid #c8e6c9;border-radius:6px;padding:5px 11px;font-size:0.83rem;font-weight:600;color:#1b5e20"><code style="background:none;padding:0">msinfo32</code> <span style="font-weight:400;color:#666;font-size:0.78rem">— resumen del sistema</span></span>
+                  <span style="display:inline-flex;align-items:center;gap:5px;background:#f0f9f4;border:1px solid #c8e6c9;border-radius:6px;padding:5px 11px;font-size:0.83rem;font-weight:600;color:#1b5e20">Administrador de tareas <span style="font-weight:400;color:#666;font-size:0.78rem">— rendimiento en vivo</span></span>
+                  <span style="display:inline-flex;align-items:center;gap:5px;background:#f0f9f4;border:1px solid #c8e6c9;border-radius:6px;padding:5px 11px;font-size:0.83rem;font-weight:600;color:#1b5e20">CMD: <code style="background:none;padding:0">ipconfig /all</code>, <code style="background:none;padding:0">ping 8.8.8.8</code></span>
+                  <span style="display:inline-flex;align-items:center;gap:5px;background:#f0f9f4;border:1px solid #c8e6c9;border-radius:6px;padding:5px 11px;font-size:0.83rem;font-weight:600;color:#1b5e20">LibreOffice Calc / Google Sheets <span style="font-weight:400;color:#666;font-size:0.78rem">— inventario</span></span>
+                  <a href="https://getgreenshot.org" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;background:#f0f9f4;border:1px solid #c8e6c9;border-radius:6px;padding:5px 11px;font-size:0.83rem;font-weight:600;color:#1b5e20;text-decoration:none">Recortes de Windows / Greenshot <span style="font-weight:400;color:#666;font-size:0.78rem">— capturas</span></a>
+                </div>
+              </div>
+
+              <p style="margin:0 0 16px;color:var(--text-muted);line-height:1.7">Vas a hacer un diagn&oacute;stico completo de un equipo del laboratorio. Sigue cada paso, toma la captura indicada y organiza todo en tu carpeta de evidencias.</p>
+
+              <!-- Paso 1 -->
+              <div style="border:1px solid #c8e6c9;border-radius:10px;overflow:hidden;margin-bottom:12px">
+                <div style="background:#e8f5e9;padding:10px 16px;display:flex;align-items:center;gap:10px">
+                  <span style="background:#2e7d32;color:#fff;border-radius:50%;width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:800;flex-shrink:0">1</span>
+                  <strong style="color:#1b5e20">Hardware &mdash; CPU-Z</strong>
+                  <a href="https://www.cpuid.com/softwares/cpu-z.html" target="_blank" rel="noopener" style="margin-left:auto;font-size:12px;color:#2e7d32;font-weight:700">&#8599; cpuid.com</a>
+                </div>
+                <div style="padding:12px 16px;font-size:0.92rem;line-height:1.7">
+                  <p style="margin:0 0 8px">Abre CPU-Z y revisa las siguientes pesta&ntilde;as:</p>
+                  <ul style="margin:0;padding-left:1.2rem">
+                    <li><strong>CPU:</strong> nombre del procesador, velocidad y n&uacute;cleos.</li>
+                    <li><strong>Memory:</strong> capacidad y tipo de RAM.</li>
+                    <li><strong>Mainboard:</strong> fabricante y modelo de la placa base.</li>
+                  </ul>
+                  <div style="margin-top:10px;background:#f0f9f4;border-left:3px solid #2e7d32;padding:8px 12px;border-radius:0 6px 6px 0;font-size:0.85rem">
+                    &#128247; <strong>Captura:</strong> una imagen por cada pesta&ntilde;a &rarr; <code>01_Hardware_CPU-Z.png</code>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Paso 2 -->
+              <div style="border:1px solid #c8e6c9;border-radius:10px;overflow:hidden;margin-bottom:12px">
+                <div style="background:#e8f5e9;padding:10px 16px;display:flex;align-items:center;gap:10px">
+                  <span style="background:#2e7d32;color:#fff;border-radius:50%;width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:800;flex-shrink:0">2</span>
+                  <strong style="color:#1b5e20">Sistema Operativo</strong>
+                </div>
+                <div style="padding:12px 16px;font-size:0.92rem;line-height:1.7">
+                  <p style="margin:0 0 8px">Ve a <strong>Configuraci&oacute;n &rarr; Sistema &rarr; Acerca de</strong> y anota:</p>
+                  <ul style="margin:0;padding-left:1.2rem">
+                    <li>Versi&oacute;n exacta de Windows.</li>
+                    <li>Estado del licenciamiento.</li>
+                    <li>Actualizaciones pendientes.</li>
+                  </ul>
+                  <div style="margin-top:10px;background:#f0f9f4;border-left:3px solid #2e7d32;padding:8px 12px;border-radius:0 6px 6px 0;font-size:0.85rem">
+                    &#128247; <strong>Captura:</strong> pantalla de &ldquo;Acerca de&rdquo; &rarr; <code>02_SO_version.png</code>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Paso 3 -->
+              <div style="border:1px solid #c8e6c9;border-radius:10px;overflow:hidden;margin-bottom:12px">
+                <div style="background:#e8f5e9;padding:10px 16px;display:flex;align-items:center;gap:10px">
+                  <span style="background:#2e7d32;color:#fff;border-radius:50%;width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:800;flex-shrink:0">3</span>
+                  <strong style="color:#1b5e20">Estado del disco &mdash; CrystalDiskInfo</strong>
+                  <a href="https://crystalmark.info/en/software/crystaldiskinfo/" target="_blank" rel="noopener" style="margin-left:auto;font-size:12px;color:#2e7d32;font-weight:700">&#8599; crystalmark.info</a>
+                </div>
+                <div style="padding:12px 16px;font-size:0.92rem;line-height:1.7">
+                  <p style="margin:0 0 8px">Abre CrystalDiskInfo y verifica:</p>
+                  <ul style="margin:0;padding-left:1.2rem">
+                    <li><strong>Salud general:</strong> debe decir Bueno (azul). Si dice Precauci&oacute;n o Malo, inf&oacute;rmalo al instructor.</li>
+                    <li><strong>Temperatura</strong> del disco.</li>
+                    <li><strong>Espacio disponible</strong>.</li>
+                  </ul>
+                  <div style="margin-top:10px;background:#f0f9f4;border-left:3px solid #2e7d32;padding:8px 12px;border-radius:0 6px 6px 0;font-size:0.85rem">
+                    &#128247; <strong>Captura:</strong> ventana principal de CrystalDiskInfo &rarr; <code>03_Disco_CrystalDisk.png</code>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Paso 4 -->
+              <div style="border:1px solid #c8e6c9;border-radius:10px;overflow:hidden;margin-bottom:12px">
+                <div style="background:#e8f5e9;padding:10px 16px;display:flex;align-items:center;gap:10px">
+                  <span style="background:#2e7d32;color:#fff;border-radius:50%;width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:800;flex-shrink:0">4</span>
+                  <strong style="color:#1b5e20">Inventario de software</strong>
+                </div>
+                <div style="padding:12px 16px;font-size:0.92rem;line-height:1.7">
+                  <p style="margin:0 0 8px">Ve a <strong>Panel de Control &rarr; Programas &rarr; Programas y caracter&iacute;sticas</strong>.</p>
+                  <p style="margin:0 0 8px">Elabora una tabla en LibreOffice Calc o Google Sheets con estas columnas:</p>
+                  <div style="overflow-x:auto">
+                    <table style="width:100%;border-collapse:collapse;font-size:0.85rem;min-width:360px">
+                      <thead>
+                        <tr style="background:#e8f5e9">
+                          <th style="border:1px solid #c8e6c9;padding:6px 10px;text-align:left">Nombre</th>
+                          <th style="border:1px solid #c8e6c9;padding:6px 10px;text-align:left">Versi&oacute;n</th>
+                          <th style="border:1px solid #c8e6c9;padding:6px 10px;text-align:left">Fecha instalaci&oacute;n</th>
+                          <th style="border:1px solid #c8e6c9;padding:6px 10px;text-align:left">Tipo de licencia</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr style="background:#fffde7">
+                          <td style="border:1px solid #c8e6c9;padding:6px 10px;font-size:0.8rem;color:#e65100;font-weight:700" colspan="4">&#128161; Ejemplo de cómo completar las filas:</td>
+                        </tr>
+                        <tr style="background:#fff9c4">
+                          <td style="border:1px solid #f9a825;padding:6px 10px;font-style:italic;color:#555">LibreOffice</td>
+                          <td style="border:1px solid #f9a825;padding:6px 10px;font-style:italic;color:#555">24.8.0</td>
+                          <td style="border:1px solid #f9a825;padding:6px 10px;font-style:italic;color:#555">2026-04-01</td>
+                          <td style="border:1px solid #f9a825;padding:6px 10px;font-style:italic;color:#555">Libre (gratuita)</td>
+                        </tr>
+                        <tr style="background:#fff9c4">
+                          <td style="border:1px solid #f9a825;padding:6px 10px;font-style:italic;color:#555">Google Chrome</td>
+                          <td style="border:1px solid #f9a825;padding:6px 10px;font-style:italic;color:#555">124.0.6367</td>
+                          <td style="border:1px solid #f9a825;padding:6px 10px;font-style:italic;color:#555">2026-03-15</td>
+                          <td style="border:1px solid #f9a825;padding:6px 10px;font-style:italic;color:#555">Libre (gratuita)</td>
+                        </tr>
+                        <tr>
+                          <td style="border:1px solid #c8e6c9;padding:6px 10px;color:#aaa;font-style:italic" colspan="4">Agrega una fila por cada programa que encuentres instalado en el equipo&hellip;</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Paso 5 -->
+              <div style="border:1px solid #c8e6c9;border-radius:10px;overflow:hidden;margin-bottom:12px">
+                <div style="background:#e8f5e9;padding:10px 16px;display:flex;align-items:center;gap:10px">
+                  <span style="background:#2e7d32;color:#fff;border-radius:50%;width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:800;flex-shrink:0">5</span>
+                  <strong style="color:#1b5e20">Conectividad de red &mdash; CMD</strong>
+                </div>
+                <div style="padding:12px 16px;font-size:0.92rem;line-height:1.7">
+                  <p style="margin:0 0 8px">Abre el s&iacute;mbolo del sistema: <kbd>Windows + R</kbd> &rarr; escribe <code>cmd</code> &rarr; Enter.</p>
+                  <p style="margin:0 4px"><strong>a)</strong> Ejecuta <code>ipconfig /all</code> y anota: IP, m&aacute;scara de subred, puerta de enlace y DNS.</p>
+                  <p style="margin:0 4px"><strong>b)</strong> Ejecuta <code>ping 8.8.8.8</code> y verifica que haya respuesta (conectividad activa).</p>
+                  <div style="margin-top:10px;background:#f0f9f4;border-left:3px solid #2e7d32;padding:8px 12px;border-radius:0 6px 6px 0;font-size:0.85rem">
+                    &#128247; <strong>Captura:</strong> resultado de cada comando &rarr; <code>04_ipconfig.png</code> y <code>05_ping.png</code>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Paso 6 -->
+              <div style="border:1px solid #c8e6c9;border-radius:10px;overflow:hidden;margin-bottom:12px">
+                <div style="background:#e8f5e9;padding:10px 16px;display:flex;align-items:center;gap:10px">
+                  <span style="background:#2e7d32;color:#fff;border-radius:50%;width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:800;flex-shrink:0">6</span>
+                  <strong style="color:#1b5e20">Reporte completo (opcional) &mdash; Belarc Advisor</strong>
+                  <a href="https://www.belarc.com/products/belarc-advisor" target="_blank" rel="noopener" style="margin-left:auto;font-size:12px;color:#2e7d32;font-weight:700">&#8599; belarc.com</a>
+                </div>
+                <div style="padding:12px 16px;font-size:0.92rem;line-height:1.7">
+                  <p style="margin:0">Si el instructor lo autoriza, ejecuta Belarc Advisor. Genera autom&aacute;ticamente un reporte HTML completo del equipo (hardware, software y licencias). Gu&aacute;rdalo como evidencia adicional con el nombre <code>06_Belarc_Reporte.html</code>.</p>
+                </div>
+              </div>
+
+              <!-- Paso 7 – Entrega -->
+              <div style="border:2px solid #1b5e20;border-radius:10px;overflow:hidden;margin-bottom:4px">
+                <div style="background:#1b5e20;padding:10px 16px;display:flex;align-items:center;gap:10px">
+                  <span style="background:#fff;color:#1b5e20;border-radius:50%;width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:800;flex-shrink:0">7</span>
+                  <strong style="color:#fff">Organiza y entrega</strong>
+                </div>
+                <div style="padding:12px 16px;font-size:0.92rem;line-height:1.7">
+                  <p style="margin:0 0 8px">Crea una carpeta con el nombre: <strong>Diagnostico_[TuNombre]_[Fecha]</strong></p>
+                  <p style="margin:0 0 8px">Dentro coloca todas las capturas numeradas:</p>
+                  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
+                    <code style="background:#e8f5e9;padding:3px 8px;border-radius:4px;font-size:0.82rem">01_Hardware_CPU-Z.png</code>
+                    <code style="background:#e8f5e9;padding:3px 8px;border-radius:4px;font-size:0.82rem">02_SO_version.png</code>
+                    <code style="background:#e8f5e9;padding:3px 8px;border-radius:4px;font-size:0.82rem">03_Disco_CrystalDisk.png</code>
+                    <code style="background:#e8f5e9;padding:3px 8px;border-radius:4px;font-size:0.82rem">04_ipconfig.png</code>
+                    <code style="background:#e8f5e9;padding:3px 8px;border-radius:4px;font-size:0.82rem">05_ping.png</code>
+                  </div>
+                  <p style="margin:0 0 4px">En tu bit&aacute;cora escribe un p&aacute;rrafo de conclusi&oacute;n respondiendo:</p>
+                  <ul style="margin:0;padding-left:1.2rem">
+                    <li>&iquest;El equipo est&aacute; en buen estado para usarse en una empresa?</li>
+                    <li>&iquest;Qu&eacute; recomendar&iacute;as mejorar?</li>
+                  </ul>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div id="transferencia" class="section-title">3.4 &middot; Actividades de Transferencia del Conocimiento</div>
+      <div class="info-box blue" style="margin-bottom:16px">
+        <p>Esta actividad integra todo lo trabajado y lo lleva al contexto del proyecto formativo: simular la labor de un tecnico que debe seleccionar, justificar y presupuestar herramientas para una MiPyme.</p>
+      </div>
+      <div class="card open cat-transferencia">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128640;</div>
+            <div>
+              <h3>Actividades de Transferencia</h3>
+              <p>1 actividad &middot; Duraci&oacute;n aproximada: 8 horas</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.4.1</span>
+              <span class="activity-title">Presupuesto de implementacion tecnologica</span>
+              <span class="mission-chip">Mision aplicada</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+
+              <!-- Encabezado de evidencia IE-03 -->
+              <div style="border:1px solid #c8e6c9;border-radius:10px;overflow:hidden;margin-bottom:16px">
+                <div style="background:#1b5e20;color:#fff;padding:11px 16px;font-size:0.82rem;font-weight:700;letter-spacing:.04em;display:flex;flex-wrap:wrap;gap:12px;align-items:center">
+                  <span>EVIDENCIA</span>
+                  <span style="opacity:.6">|</span>
+                  <span>Tipo: Evidencia de Producto</span>
+                  <span style="opacity:.6">|</span>
+                  <span>Instrumento: Lista de Chequeo IE-03</span>
+                </div>
+                <div style="padding:14px 16px 10px;background:#f9fbe7">
+                  <p style="margin:0 0 12px;font-weight:600;font-size:0.95rem">El presupuesto debe incluir como minimo:</p>
+                  <div style="overflow-x:auto">
+                    <table style="width:100%;border-collapse:collapse;font-size:0.83rem">
+                      <thead>
+                        <tr style="background:#1b5e20;color:#fff">
+                          <th style="padding:8px 10px;text-align:center;width:32px">#</th>
+                          <th style="padding:8px 10px;text-align:left">Item / Software</th>
+                          <th style="padding:8px 10px;text-align:left">Tipo de licencia</th>
+                          <th style="padding:8px 10px;text-align:center">Precio unitario (COP)</th>
+                          <th style="padding:8px 10px;text-align:center">Cant.</th>
+                          <th style="padding:8px 10px;text-align:left">Justificacion tecnica</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr style="background:#fff">
+                          <td style="padding:8px 10px;text-align:center;border-bottom:1px solid #e0e0e0;font-weight:700">1</td>
+                          <td style="padding:8px 10px;border-bottom:1px solid #e0e0e0">Software y licencias (suite ofimatica)</td>
+                          <td style="padding:8px 10px;border-bottom:1px solid #e0e0e0">Libre / Propietaria / Suscripcion</td>
+                          <td style="padding:8px 10px;text-align:center;border-bottom:1px solid #e0e0e0;font-family:monospace">=precio*cant.</td>
+                          <td style="padding:8px 10px;text-align:center;border-bottom:1px solid #e0e0e0">3</td>
+                          <td style="padding:8px 10px;border-bottom:1px solid #e0e0e0;color:#555;font-style:italic">¿Por que esta suite para la MiPyme?</td>
+                        </tr>
+                        <tr style="background:#f9fbe7">
+                          <td style="padding:8px 10px;text-align:center;border-bottom:1px solid #e0e0e0;font-weight:700">2</td>
+                          <td style="padding:8px 10px;border-bottom:1px solid #e0e0e0">Herramientas de diagnostico y soporte</td>
+                          <td style="padding:8px 10px;border-bottom:1px solid #e0e0e0">Libre (gratuita)</td>
+                          <td style="padding:8px 10px;text-align:center;border-bottom:1px solid #e0e0e0;font-weight:700">$0</td>
+                          <td style="padding:8px 10px;text-align:center;border-bottom:1px solid #e0e0e0">1</td>
+                          <td style="padding:8px 10px;border-bottom:1px solid #e0e0e0;color:#555;font-style:italic">¿Para que la necesita el tecnico de soporte?</td>
+                        </tr>
+                        <tr style="background:#fff">
+                          <td style="padding:8px 10px;text-align:center;border-bottom:1px solid #e0e0e0;font-weight:700">3</td>
+                          <td style="padding:8px 10px;border-bottom:1px solid #e0e0e0">Proteccion antivirus / seguridad</td>
+                          <td style="padding:8px 10px;border-bottom:1px solid #e0e0e0">Libre / Propietaria</td>
+                          <td style="padding:8px 10px;text-align:center;border-bottom:1px solid #e0e0e0;font-family:monospace">=precio*cant.</td>
+                          <td style="padding:8px 10px;text-align:center;border-bottom:1px solid #e0e0e0">3</td>
+                          <td style="padding:8px 10px;border-bottom:1px solid #e0e0e0;color:#555;font-style:italic">¿Que riesgo previene en la empresa?</td>
+                        </tr>
+                        <tr style="background:#f9fbe7">
+                          <td style="padding:8px 10px;text-align:center;border-bottom:1px solid #e0e0e0;font-weight:700">4</td>
+                          <td style="padding:8px 10px;border-bottom:1px solid #e0e0e0">Servicios en la nube (correo / almacenamiento)</td>
+                          <td style="padding:8px 10px;border-bottom:1px solid #e0e0e0">Suscripcion / Libre</td>
+                          <td style="padding:8px 10px;text-align:center;border-bottom:1px solid #e0e0e0;font-family:monospace">=precio*cant.</td>
+                          <td style="padding:8px 10px;text-align:center;border-bottom:1px solid #e0e0e0">1</td>
+                          <td style="padding:8px 10px;border-bottom:1px solid #e0e0e0;color:#555;font-style:italic">¿Que ganaria la empresa con este servicio?</td>
+                        </tr>
+                        <tr style="background:#fff">
+                          <td style="padding:8px 10px;text-align:center;border-bottom:1px solid #e0e0e0;font-weight:700">5</td>
+                          <td style="padding:8px 10px;border-bottom:1px solid #e0e0e0">Software de respaldo (copias de seguridad)</td>
+                          <td style="padding:8px 10px;border-bottom:1px solid #e0e0e0">Libre / Propietaria</td>
+                          <td style="padding:8px 10px;text-align:center;border-bottom:1px solid #e0e0e0;font-family:monospace">=precio*cant.</td>
+                          <td style="padding:8px 10px;text-align:center;border-bottom:1px solid #e0e0e0">3</td>
+                          <td style="padding:8px 10px;border-bottom:1px solid #e0e0e0;color:#555;font-style:italic">¿Que perderia el negocio sin copias de seguridad?</td>
+                        </tr>
+                        <tr style="background:#c8e6c9">
+                          <td colspan="2" style="padding:8px 10px;font-weight:700;text-align:center;border-top:2px solid #2e7d32">TOTAL</td>
+                          <td style="padding:8px 10px;border-top:2px solid #2e7d32"></td>
+                          <td style="padding:8px 10px;text-align:center;border-top:2px solid #2e7d32;font-family:monospace;font-weight:700">=SUMA(...)</td>
+                          <td colspan="2" style="padding:8px 10px;border-top:2px solid #2e7d32"></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Ejemplo de fila completada -->
+              <div style="background:#fffde7;border:1px solid #f9a825;border-radius:8px;padding:14px 16px;margin-bottom:16px">
+                <div style="font-size:0.76rem;font-weight:700;color:#e65100;letter-spacing:.05em;margin-bottom:10px">&#128161; EJEMPLO — así se ve una fila correctamente completada en LibreOffice Calc</div>
+                <div style="overflow-x:auto">
+                  <table style="width:100%;border-collapse:collapse;font-size:0.83rem">
+                    <thead>
+                      <tr style="background:#fff9c4">
+                        <th style="border:1px solid #f9a825;padding:6px 8px;text-align:center">#</th>
+                        <th style="border:1px solid #f9a825;padding:6px 8px;text-align:left">Ítem / Software</th>
+                        <th style="border:1px solid #f9a825;padding:6px 8px;text-align:left">Tipo de licencia</th>
+                        <th style="border:1px solid #f9a825;padding:6px 8px;text-align:center">Precio unitario (COP)</th>
+                        <th style="border:1px solid #f9a825;padding:6px 8px;text-align:center">Cant.</th>
+                        <th style="border:1px solid #f9a825;padding:6px 8px;text-align:center">Total</th>
+                        <th style="border:1px solid #f9a825;padding:6px 8px;text-align:left">Justificación técnica</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr style="background:#fff">
+                        <td style="border:1px solid #f9a825;padding:6px 8px;text-align:center;font-weight:700;color:#555">1</td>
+                        <td style="border:1px solid #f9a825;padding:6px 8px;color:#555;font-style:italic">LibreOffice (suite ofimática)</td>
+                        <td style="border:1px solid #f9a825;padding:6px 8px;color:#555;font-style:italic">Libre (gratuita)</td>
+                        <td style="border:1px solid #f9a825;padding:6px 8px;text-align:center;color:#555;font-style:italic">$0</td>
+                        <td style="border:1px solid #f9a825;padding:6px 8px;text-align:center;color:#555;font-style:italic">3</td>
+                        <td style="border:1px solid #f9a825;padding:6px 8px;text-align:center;font-family:monospace;color:#1b5e20;font-weight:700">=$0*3 → $0</td>
+                        <td style="border:1px solid #f9a825;padding:6px 8px;color:#555;font-style:italic">La droguería solo necesita Word y Excel básico; LibreOffice es gratuito, compatible con .docx y no requiere suscripción mensual.</td>
+                      </tr>
+                      <tr style="background:#fffde7">
+                        <td style="border:1px solid #f9a825;padding:6px 8px;text-align:center;font-weight:700;color:#555">3</td>
+                        <td style="border:1px solid #f9a825;padding:6px 8px;color:#555;font-style:italic">Bitdefender Antivirus Plus</td>
+                        <td style="border:1px solid #f9a825;padding:6px 8px;color:#555;font-style:italic">Propietaria (suscripción anual)</td>
+                        <td style="border:1px solid #f9a825;padding:6px 8px;text-align:center;color:#555;font-style:italic">$89.000</td>
+                        <td style="border:1px solid #f9a825;padding:6px 8px;text-align:center;color:#555;font-style:italic">3</td>
+                        <td style="border:1px solid #f9a825;padding:6px 8px;text-align:center;font-family:monospace;color:#1b5e20;font-weight:700">=89000*3 → $267.000</td>
+                        <td style="border:1px solid #f9a825;padding:6px 8px;color:#555;font-style:italic">Previene ransomware y phishing; la droguería maneja datos de clientes y recetas que no pueden comprometerse.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <p style="margin:8px 0 0;font-size:0.79rem;color:#777">Nota: en LibreOffice Calc la fórmula va en la celda de la columna "Total". El programa calcula el resultado automáticamente.</p>
+              </div>
+
+              <!-- Instrucciones de elaboracion -->
+              <article class="support-card" style="margin-top:16px">
+                <h3>Instrucciones</h3>
+                <ol style="padding-left:1.4rem;margin:0;line-height:1.8">
+                  <li>Abre <strong>LibreOffice Calc</strong> (o Google Sheets) y crea una nueva hoja con el titulo <em>"Presupuesto de Implementacion Tecnologica"</em>.</li>
+                  <li>Construye la tabla con las <strong>6 columnas</strong> del cuadro superior: #, Item/Software, Tipo de licencia, Precio unitario (COP), Cant. y Justificacion tecnica.</li>
+                  <li>Incluye los <strong>5 items obligatorios</strong> de la tabla de referencia. Puedes agregar filas adicionales si la MiPyme lo requiere.</li>
+                  <li>En la columna <em>Precio unitario</em> consulta precios reales en sitios oficiales (tienda del fabricante, App Store, etc.) y anota la fuente en la celda o en una nota.</li>
+                  <li>En la columna <em>Total</em> usa la formula <code style="background:#f1f8e9;padding:1px 5px;border-radius:4px">=precio*cant.</code> para que el valor se calcule automaticamente.</li>
+                  <li>En la fila <strong>TOTAL</strong> usa <code style="background:#f1f8e9;padding:1px 5px;border-radius:4px">=SUMA(...)</code> para sumar todos los totales.</li>
+                  <li>En la columna <em>Justificacion tecnica</em> responde la pregunta orientadora de cada item con una o dos oraciones propias del contexto de la MiPyme elegida.</li>
+                  <li>Revisa que compares al menos <strong>una opcion libre y una propietaria</strong> para los items que lo permiten.</li>
+                  <li>Exporta el archivo a <strong>PDF</strong> y conserva tambien el archivo fuente (.ods o .xlsx).</li>
+                  <li>Entrega ambos archivos a traves del boton <em>"Entregar"</em> de la seccion <em>Documentos base del proyecto</em>.</li>
+                </ol>
+              </article>
+
+              <div class="info-box green" style="margin-top:16px">
+                <div class="label">Producto esperado — IE-03</div>
+                <p>PDF del presupuesto con los 5 items minimos, formulas visibles, justificacion tecnica para cada item y fila de TOTAL calculada automaticamente. Adjunta ademas el archivo fuente editable (.ods o .xlsx).</p>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div id="evidencias" class="section-title">Planteamiento de Evidencias de Aprendizaje</div>
+      <div class="card open cat-evaluacion">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128202;</div>
+            <div>
+              <h3>Evidencias y Criterios de Evaluaci&oacute;n</h3>
+              <p>Resumen de productos, desempenos e instrumentos definidos para la guia</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Fase</th>
+                  <th>Actividad del proyecto</th>
+                  <th>Actividad de aprendizaje</th>
+                  <th>Evidencias</th>
+                  <th>Criterios</th>
+                  <th>Tecnicas e instrumentos</th>
+                </tr>
+              </thead>
+              <tbody id="evidenceTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="glosario" class="section-title">Glosario de T&eacute;rminos</div>
+      <div class="card open cat-glosario">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128214;</div>
+            <div>
+              <h3>Glosario de T&eacute;rminos</h3>
+              <p>Definiciones esenciales para comprender herramientas, instalacion, diagnostico y licenciamiento</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <label class="search-box">
+            <span>Buscar termino</span>
+            <input type="search" id="glossarySearch" placeholder="Ejemplo: licenciamiento, checklist, versionado, hardening">
+          </label>
+          <div class="glossary-grid" id="glossaryGrid"></div>
+        </div>
+      </div>
+
+      <div id="referencias" class="section-title">Referentes Bibliogr&aacute;ficos</div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#ede7f6">&#128279;</div>
+            <div>
+              <h3>Referencias Bibliogr&aacute;ficas</h3>
+              <p>Fuentes institucionales, tecnicas y webgraficas usadas en la guia</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <ol class="reference-list">
+            <li>Cisco Networking Academy. <em>IT Essentials: PC Hardware and Software (v8.0)</em>. <a href="https://www.netacad.com" target="_blank" rel="noopener noreferrer">netacad.com</a></li>
+            <li>Servicio Nacional de Aprendizaje SENA. Biblioteca Virtual SENA. <a href="https://biblioteca.sena.edu.co" target="_blank" rel="noopener noreferrer">biblioteca.sena.edu.co</a></li>
+            <li>Microsoft. Soporte y configuracion de Microsoft 365. <a href="https://support.microsoft.com/es-es/microsoft-365" target="_blank" rel="noopener noreferrer">support.microsoft.com</a></li>
+            <li>LibreOffice. Documentacion oficial de LibreOffice. <a href="https://documentation.libreoffice.org/es/" target="_blank" rel="noopener noreferrer">documentation.libreoffice.org</a></li>
+            <li>Belarc Advisor. Herramienta de inventario de sistema. <a href="https://www.belarc.com/products/belarc-advisor" target="_blank" rel="noopener noreferrer">belarc.com</a></li>
+            <li>CrystalMark. CrystalDiskInfo. <a href="https://crystalmark.info/en/software/crystaldiskinfo/" target="_blank" rel="noopener noreferrer">crystalmark.info</a></li>
+            <li>Cisco Networking Academy. <em>IT Essentials - Video Learning</em>. <a href="https://www.youtube.com/@CiscoNetAcad" target="_blank" rel="noopener noreferrer">@CiscoNetAcad</a></li>
+            <li>Microsoft. Videos de instalacion y configuracion. <a href="https://www.youtube.com/@Microsoft" target="_blank" rel="noopener noreferrer">@Microsoft</a></li>
+            <li>ICONTEC. NTC-ISO/IEC 27001: Sistemas de gestion de la seguridad de la informacion.</li>
+            <li>Ministerio TIC. Guia para la gestion de activos de informacion. <a href="https://www.mintic.gov.co/portal/inicio/" target="_blank" rel="noopener noreferrer">mintic.gov.co</a></li>
+          </ol>
+        </div>
+      </div>
+
+      <div id="material-apoyo" class="section-title">Material de Apoyo</div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#e8f0fe">&#128194;</div>
+            <div>
+              <h3>Material de Apoyo y Recursos</h3>
+              <p>Recursos oficiales, archivos locales y utilitarios para desarrollar la guia</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="info-box drive-submit-box">
+            <div class="label">Portafolio de evidencias &mdash; Carpeta de Drive</div>
+            <p>Accede a la carpeta de Drive de tu grupo para subir tus evidencias y entregas de la Gu&iacute;a 6. La carpeta se determina autom&aacute;ticamente seg&uacute;n tu ficha activa.</p>
+            <div class="drive-action-group">
+              <button type="button" class="btn-drive" onclick="openDriveFolder()">&#128193; Abrir carpeta de Drive</button>
+              <button type="button" class="btn-qr" onclick="showDriveFolderQR()">&#128241; Ver QR para m&oacute;vil</button>
+            </div>
+            <div class="drive-helper-note">La carpeta se define autom&aacute;ticamente seg&uacute;n la ficha activa. Si no tienes sesi&oacute;n iniciada, regresa al portal y selecciona tu grupo.</div>
+          </div>
+
+          <div class="material-heading">Paquete general</div>
+          <div class="resource-grid" id="supportBundleGrid"></div>
+
+          <div class="material-heading">Enlaces y documentos clave</div>
+          <div class="resource-grid" id="supportDocsGrid"></div>
+
+          <div class="material-heading">Herramientas y utilitarios</div>
+          <div class="resource-grid" id="supportToolsGrid"></div>
+
+          <div class="panel-grid" style="margin-top:16px;">
+            <div class="support-card">
+              <img src="assets/img/guia6_portada.png" alt="Portada base de la guia 3">
+              <p>Referencia visual del documento base usado para construir esta guia interactiva.</p>
+            </div>
+            <div class="checklist-card">
+              <h3>Materiales generales sugeridos</h3>
+              <ul class="note-list">
+                <li>Consulta primero Cisco NetAcad, Biblioteca SENA y los sitios oficiales de cada herramienta.</li>
+                <li>Utiliza CmapTools para el mapa conceptual y LibreOffice o Calc para las entregas escritas.</li>
+                <li>Apoya el diagnostico tecnico con CPU-Z, CrystalDiskInfo y los comandos de red indicados por el instructor.</li>
+                <li>Conserva una copia del paquete ZIP y organiza las evidencias en carpetas con nombres claros.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="bitacora-export-modal" onclick="if(event.target===this)closeBitacoraExportModal()">
+  <div class="modal-box">
+    <h3>&#128196; Exportar bitacora de analisis</h3>
+    <p>Ingresa tu <strong>nombre completo</strong> para descargar esta actividad en formato Word.</p>
+
+    <div class="modal-ficha-warn" id="bitacora-modal-warn" style="display:none">
+      &#9888; <strong>No has seleccionado tu ficha.</strong><br>
+      Regresa a <a href="index.html">la pagina de inicio</a> y elige tu institucion y grupo antes de exportar.
+    </div>
+
+    <div class="modal-ficha-ok" id="bitacora-modal-ok" style="display:none">
+      <div class="mf-label">Nombre sugerido del archivo</div>
+      <div class="mf-file" id="bitacora-filename-preview">Bitacora_Analisis_Nombre.doc</div>
+    </div>
+
+    <input
+      type="text"
+      id="bitacora-nombre"
+      placeholder="Nombre y apellidos del aprendiz"
+      maxlength="80"
+      oninput="updateBitacoraFilenamePreview()"
+      onkeydown="if(event.key==='Enter')doExportBitacoraWord()"
+    >
+    <div class="modal-error-msg" id="bitacora-modal-error">Por favor ingresa tu nombre antes de continuar.</div>
+
+    <div class="modal-actions">
+      <button class="modal-btn-cancel" type="button" onclick="closeBitacoraExportModal()">Cancelar</button>
+      <button class="modal-btn-ok" id="bitacora-modal-btn" type="button" onclick="doExportBitacoraWord()">Descargar Word</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  function buildGuideRouteHref(fileName) {
+    return "guia.html?g=" + encodeURIComponent(fileName);
+  }
+
+  var grupo = String((document.body && document.body.dataset && document.body.dataset.defaultGrupo) || "10A").toUpperCase();
+  var config = {
+    "10A": {
+      currentFile: "grupo-10a-guia-03-planificar-informacion.html",
+      currentLabel: "Planificar la informacion | 10A",
+      campus: "Jhon F. Kennedy | 10A"
+    },
+    "10B": {
+      currentFile: "grupo-10b-guia-03-planificar-informacion.html",
+      currentLabel: "Planificar la informacion | 10B",
+      campus: "Jhon F. Kennedy | 10B"
+    }
+  }[grupo] || null;
+
+  if (!config) {
+    return;
+  }
+
+  var currentGuideNavLink = document.getElementById("currentGuideNavLink");
+  var currentGuideNavLabel = document.getElementById("currentGuideNavLabel");
+  var topbarCampus = document.getElementById("topbarCampus");
+
+  if (currentGuideNavLink) {
+    currentGuideNavLink.href = buildGuideRouteHref(config.currentFile);
+    currentGuideNavLink.dataset.currentFile = config.currentFile;
+  }
+  if (currentGuideNavLabel) {
+    currentGuideNavLabel.textContent = config.currentLabel;
+  }
+  if (topbarCampus) {
+    topbarCampus.textContent = config.campus;
+  }
+})();
+</script>
