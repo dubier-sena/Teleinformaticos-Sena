@@ -215,6 +215,14 @@
       stateKey: "guia_interactiva_11b_guia6_html",
       cloudFileName: "11b_guia6.html",
     },
+    "grupo-10a-guia-03-planificar-informacion.html": {
+      stateKey: "guia_interactiva_10a_guia3_html",
+      cloudFileName: "10a_guia3.html",
+    },
+    "grupo-10b-guia-03-planificar-informacion.html": {
+      stateKey: "guia_interactiva_10b_guia3_html",
+      cloudFileName: "10b_guia3.html",
+    },
   };
 
   const GUIDE6_INSTALL_IDS = ["suite", "browser", "email", "zip", "antivirus", "diagnostic"];
