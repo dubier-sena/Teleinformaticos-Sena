@@ -16,9 +16,13 @@
     "grupo-10a-guia-01-induccion.html": "Guía 1 - Inducción | Grupo 10A",
     "grupo-10a-guia-02-herramientas-informaticas-digitales.html":
       "Guía 2 - Operar herramientas informáticas y digitales | Grupo 10A",
+    "grupo-10a-guia-03-planificar-informacion.html":
+      "Guía 3 - Planificar la información | Grupo 10A",
     "grupo-10b-guia-01-induccion.html": "Guía 1 - Inducción | Grupo 10B",
     "grupo-10b-guia-02-herramientas-informaticas-digitales.html":
       "Guía 2 - Operar herramientas informáticas y digitales | Grupo 10B",
+    "grupo-10b-guia-03-planificar-informacion.html":
+      "Guía 3 - Planificar la información | Grupo 10B",
     "grupo-11a-guia-05-herramientas-informaticas-digitales.html":
       "Guía 5 - Operar herramientas informáticas y digitales | Grupo 11A",
     "grupo-11a-guia-06-planificar-informacion.html":
@@ -64,6 +68,20 @@
       pageKey: "10b_guia2",
       stateKey: "guia_interactiva_10b_guia2_html",
     },
+    "grupo-10a-guia-03-planificar-informacion.html": {
+      mode: "state-with-activity",
+      total: 105,
+      activityTotal: 7,
+      pageKey: "10a_guia3",
+      stateKey: "guia_interactiva_10a_guia3_html",
+    },
+    "grupo-10b-guia-03-planificar-informacion.html": {
+      mode: "state-with-activity",
+      total: 105,
+      activityTotal: 7,
+      pageKey: "10b_guia3",
+      stateKey: "guia_interactiva_10b_guia3_html",
+    },
     "grupo-11a-guia-05-herramientas-informaticas-digitales.html": {
       mode: "state-with-activity",
       total: 111,
@@ -101,6 +119,7 @@
       guias: [
         "grupo-10a-guia-01-induccion.html",
         "grupo-10a-guia-02-herramientas-informaticas-digitales.html",
+        "grupo-10a-guia-03-planificar-informacion.html",
       ],
     },
     "3441942": {
@@ -109,6 +128,7 @@
       guias: [
         "grupo-10b-guia-01-induccion.html",
         "grupo-10b-guia-02-herramientas-informaticas-digitales.html",
+        "grupo-10b-guia-03-planificar-informacion.html",
       ],
     },
     "3441944": {

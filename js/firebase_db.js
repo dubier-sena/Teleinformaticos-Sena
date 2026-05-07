@@ -564,6 +564,8 @@
       "10b_guia.html",
       "10a_guia2.html",
       "10b_guia2.html",
+      "10a_guia3.html",
+      "10b_guia3.html",
       "11a_guia.html",
       "11b_guia.html",
       "11a_guia6.html",
@@ -580,6 +582,8 @@
       "grupo-11b-guia-05-herramientas-informaticas-digitales.html",
       "grupo-11a-guia-06-planificar-informacion.html",
       "grupo-11b-guia-06-planificar-informacion.html",
+      "grupo-10a-guia-03-planificar-informacion.html",
+      "grupo-10b-guia-03-planificar-informacion.html",
       "grupo-10a-guia-02-ficha-caso.html",
       "grupo-10b-guia-02-ficha-caso.html",
     ];

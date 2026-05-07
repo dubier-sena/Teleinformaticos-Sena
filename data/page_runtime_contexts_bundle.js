@@ -35,6 +35,24 @@ window.__PAGE_RUNTIME_CONTEXTS__ = {
     "ficha": "3441942",
     "boot": "initGuia2"
   },
+  "jfk-guia3-10a": {
+    "family": "guia-03-planificar",
+    "pageFile": "grupo-10a-guia-03-planificar-informacion.html",
+    "partialPath": "partials/guia-03-planificar-content.html",
+    "inst": "Institucion Educativa Jhon F. Kennedy",
+    "grupo": "10A",
+    "ficha": "3441939",
+    "boot": "initGuia3"
+  },
+  "jfk-guia3-10b": {
+    "family": "guia-03-planificar",
+    "pageFile": "grupo-10b-guia-03-planificar-informacion.html",
+    "partialPath": "partials/guia-03-planificar-content.html",
+    "inst": "Institucion Educativa Jhon F. Kennedy",
+    "grupo": "10B",
+    "ficha": "3441942",
+    "boot": "initGuia3"
+  },
   "sb-guia5-11a": {
     "family": "guia-05-herramientas",
     "pageFile": "grupo-11a-guia-05-herramientas-informaticas-digitales.html",
