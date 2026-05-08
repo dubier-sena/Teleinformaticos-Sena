@@ -19,6 +19,7 @@
   let activeActivitiesActivity = null;
   let activeGradesGroup = null;
   let currentResponsesExport = null;
+  let habilitacionFilters = { name: "", ficha: "", guide: "", activity: "" };
 
   const REDES_SB_CLOUD_FILES = {
     "3441944": "sb_10a_redes.html",
@@ -109,10 +110,10 @@
     "grupo-10b-guia-01-induccion.html": { pageFile: "grupo-10b-guia-01-induccion" },
   };
   const GUIDE1_ACTIVITIES = [
-    { id: "arbol312",      label: "Actividad 3.1.2 - El Ãrbol de la Vida",              deliveryOnly: true },
-    { id: "sena331",       label: "Actividad 3.3.1 - AnÃ¡lisis de sÃ­mbolos SENA",         deliveryOnly: true },
-    { id: "programa332",   label: "Actividad 3.3.2 - Cuestionario diseÃ±o curricular",    deliveryOnly: true },
-    { id: "plataformas334",label: "Actividad 3.3.4 - Taller plataformas tecnolÃ³gicas",   deliveryOnly: true },
+    { id: "arbol312",      label: "Actividad 3.1.2 - El Árbol de la Vida",              deliveryOnly: true },
+    { id: "sena331",       label: "Actividad 3.3.1 - Análisis de símbolos SENA",         deliveryOnly: true },
+    { id: "programa332",   label: "Actividad 3.3.2 - Cuestionario diseño curricular",    deliveryOnly: true },
+    { id: "plataformas334",label: "Actividad 3.3.4 - Taller plataformas tecnológicas",   deliveryOnly: true },
     { id: "portafolio342", label: "Actividad 3.4.2 - Portafolio de evidencias",          deliveryOnly: true },
   ];
   const GUIDE2_EXTENSION_IDS = [
@@ -230,17 +231,17 @@
   const GUIDE6_BUDGET_IDS = ["suite", "diagnostic", "security", "cloud", "backup"];
 
   const GUIDE6_ACTIVITIES = [
-    { id: "bitacora311", label: "BitÃ¡cora 3.1.1", keys: ["reflexion_herramientas", "reflexion_registro", "reflexion_consecuencias", "reflexion_experiencia", "bitacora311-locked"] },
-    { id: "socializacion312", label: "SocializaciÃ³n 3.1.2", keys: ["socializacion_conclusion", "socializacion_pregunta_central", "socializacion312-locked"] },
-    { id: "quiz312", label: "Quiz herramientas 3.1.2", keys: ["quiz-guia6-312"] },
-    { id: "contexto321", label: "Apuntes 3.2.1", keys: ["ctx_apuntes"] },
-    { id: "mapa322", label: "Mapa conceptual 3.2.2", keys: ["map_central", "map_ramas"] },
+    { id: "bitacora311", label: "Bitácora 3.1.1", keys: ["reflexion_herramientas", "reflexion_registro", "reflexion_consecuencias", "reflexion_experiencia", "bitacora311-locked"] },
+    { id: "socializacion312", label: "Socialización 3.1.2", keys: ["socializacion_conclusion", "socializacion_pregunta_central", "socializacion312-locked"] },
+    { id: "quiz312", label: "Quiz herramientas 3.1.2", keys: ["quiz-guia6-312", "quiz-guia3-312"] },
+    { id: "tabla321", label: "Tabla resumen 3.2.1", keys: [] },
+    { id: "mapa322", label: "Mapa conceptual 3.2.2", keys: [] },
     {
-      id: "instalacion331", label: "Checklist instalaciÃ³n 3.3.1",
+      id: "checklist331", label: "Checklist instalación 3.3.1",
       keys: GUIDE6_INSTALL_IDS.flatMap((id) => [`inst_source_${id}`, `inst_version_${id}`, `inst_verify_${id}`, `inst_done_${id}`, `inst_notes_${id}`]),
     },
     {
-      id: "diagnostico331", label: "DiagnÃ³stico 3.3.1",
+      id: "diagnostico332", label: "Diagnóstico técnico 3.3.2",
       keys: [...GUIDE6_DIAG_IDS.flatMap((id) => [`diag_result_${id}`, `diag_action_${id}`]), "diag_conclusion"],
     },
     {
@@ -252,7 +253,7 @@
   const GUIDE2_ACTIVITIES = [
     { id: "wordsearch", label: "Sopa de letras", keys: ["wordSearch:guia2-sopa"] },
     { id: "matching", label: "Relaciona herramientas", keys: ["matchingGame:guia2-relaciona"] },
-    { id: "matriz322", label: "Actividad 3.2.2 - Matriz de DiagnÃ³stico Digital", auxiliar: true },
+    { id: "matriz322", label: "Actividad 3.2.2 - Matriz de Diagnóstico Digital", auxiliar: true },
     { id: "fichaCaso", label: "Actividad 4 - Ficha de caso", auxiliar: true },
     { id: "extensiones331", label: "Actividad 5 - Extensiones de archivo", keys: GUIDE2_EXTENSION_ACTIVITY_KEYS },
     { id: "sistemas332", label: "Actividad 6 - Requerimientos minimos", keys: GUIDE2_SYSTEM_ACTIVITY_KEYS },
@@ -365,6 +366,10 @@
 
   function getGuide2ActivitiesForFile(fileName) {
     return getGuide2ResponseConfig(fileName) ? GUIDE2_ACTIVITIES : [];
+  }
+
+  function isRedesSbGuideFile(fileName) {
+    return Object.prototype.hasOwnProperty.call(REDES_SB_GUIDE_FILES, fileName);
   }
 
   function getRedesActivitiesForFile(fileName) {
@@ -677,6 +682,47 @@
     return window.adminActivities.buildMatriz322Table(rows, { escapeHtml, formatDate });
   }
 
+  function getFichaCasoFileName(user) {
+    const grupo = String(user?.grupo || "").toUpperCase().trim();
+    return FICHA_CASO_FILES[grupo] || "";
+  }
+
+  function buildFichaCasoTable(rows) {
+    if (!rows.length) {
+      return '<p class="activities-loading">Ningún aprendiz ha finalizado la Ficha de caso aún.</p>';
+    }
+    const headerHtml = ["Aprendiz", "Grupo", "Ficha asignada", "Fecha de entrega", ""]
+      .map((h) => `<th>${escapeHtml(h)}</th>`)
+      .join("");
+    const rowHtml = rows
+      .map(({ user, snapshot }) => {
+        const fichaEmoji = escapeHtml(snapshot.fichaEmoji || "");
+        const fichaNombre = escapeHtml(snapshot.fichaNombre || "Ficha " + (snapshot.fichaIdx != null ? snapshot.fichaIdx + 1 : "—"));
+        const savedAt = escapeHtml(snapshot.savedAt || formatDate(snapshot.updatedAt) || "—");
+        return `
+          <tr>
+            <td><strong>${escapeHtml(user.fullName || user.username)}</strong></td>
+            <td>${escapeHtml(user.grupo || "")}</td>
+            <td>${fichaEmoji ? fichaEmoji + " " : ""}${fichaNombre}</td>
+            <td>${savedAt}</td>
+            <td>
+              <button class="btn ghost btn--sm" type="button"
+                data-ficha-caso-user="${escapeHtml(user.usernameKey)}">
+                Ver respuestas
+              </button>
+            </td>
+          </tr>`;
+      })
+      .join("");
+    return `
+      <div class="answer-table-wrap">
+        <table class="answer-table activities-table">
+          <thead><tr>${headerHtml}</tr></thead>
+          <tbody>${rowHtml}</tbody>
+        </table>
+      </div>`;
+  }
+
   function openMatriz322Modal(summary) {
     const payload = window.adminActivities.buildMatriz322ModalPayload(summary, { escapeHtml, formatDate });
     openGuide2ResponsesModal(payload);
@@ -724,6 +770,92 @@
     `;
   }
 
+  // ── Helpers: word search & matching game ─────────────────────────────────
+  function getWordSearchResult(state) {
+    return state && typeof state["wordSearch:guia2-sopa"] === "object"
+      ? state["wordSearch:guia2-sopa"]
+      : {};
+  }
+
+  function getWordSearchWords(result) {
+    if (Array.isArray(result.foundLabels)) return result.foundLabels;
+    if (Array.isArray(result.found)) return result.found;
+    return [];
+  }
+
+  function hasWordSearchResult(result, words) {
+    return Boolean(result.completedAt || result.startedAt || (words && words.length));
+  }
+
+  function getMatchingGameResult(state) {
+    return state && typeof state["matchingGame:guia2-relaciona"] === "object"
+      ? state["matchingGame:guia2-relaciona"]
+      : {};
+  }
+
+  function getMatchingGamePairs(result) {
+    return Array.isArray(result.matchedPairs) ? result.matchedPairs : [];
+  }
+
+  function hasMatchingGameResult(result, pairs) {
+    return Boolean(result.completedAt || result.startedAt || (pairs && pairs.length));
+  }
+
+  function extractWordSearchSummary(snapshot, user) {
+    const state = snapshot?.state || {};
+    const result = getWordSearchResult(state);
+    if (!result.completedAt && !result.startedAt && !result.score) return null;
+    const words = getWordSearchWords(result);
+    return {
+      completed: Boolean(result.completedAt),
+      score: String(result.score || 0),
+      playerName: result.playerName || user.fullName || "",
+      ficha: result.ficha || user.ficha || "",
+      elapsedMs: Number(result.elapsedMs) || 0,
+      mistakes: String(result.mistakes || 0),
+      wordCount: words.length,
+      words,
+      source: "snapshot",
+    };
+  }
+
+  function extractMatchingGameSummary(snapshot, user) {
+    const state = snapshot?.state || {};
+    const result = getMatchingGameResult(state);
+    if (!result.completedAt && !result.startedAt && !result.score) return null;
+    const pairs = getMatchingGamePairs(result);
+    return {
+      completed: Boolean(result.completedAt),
+      score: String(result.score || 0),
+      playerName: result.playerName || user.fullName || "",
+      ficha: result.ficha || user.ficha || "",
+      elapsedMs: Number(result.elapsedMs) || 0,
+      mistakes: String(result.mistakes || 0),
+      correctCount: String(Number(result.correctCount) || pairs.length || 0),
+      totalPairs: String(Number(result.totalPairs) || pairs.length || 0),
+      source: "snapshot",
+    };
+  }
+
+  async function hydrateGuide2WordSearchSummaries(users) {
+    const tasks = users.map(async (user) => {
+      const guide2Files = (user.progress?.guides || [])
+        .map((g) => g.fileName)
+        .filter((fileName) => getGuide2ResponseConfig(fileName));
+      for (const fileName of guide2Files) {
+        const key = getGuide2SummaryKey(user.usernameKey, fileName);
+        if (key in guide2ResponseSnapshots) continue;
+        const { snapshot } = await loadGuide2Responses(user.usernameKey, fileName);
+        guide2ResponseSnapshots[key] = snapshot;
+        guide2WordSearchSummaries[key] = snapshot ? extractWordSearchSummary(snapshot, user) : null;
+        guide2MatchingGameSummaries[key] = snapshot ? extractMatchingGameSummary(snapshot, user) : null;
+      }
+    });
+    await Promise.all(tasks);
+    renderUsers();
+  }
+  // ── End helpers ───────────────────────────────────────────────────────────
+
   function renderWordSearchResult(state, context) {
     const result = getWordSearchResult(state);
     const words = getWordSearchWords(result);
@@ -736,12 +868,12 @@
       ["Dato", "Resultado"],
       [
         ["Aprendiz", result.playerName || state["actividad4:nombre_completo"] || user.fullName || "Sin registro"],
-        ["VersiÃ³n asignada", hasResult ? `VersiÃ³n ${Number(result.variant) || 1}` : "Sin registro"],
+        ["Versión asignada", hasResult ? `Versión ${Number(result.variant) || 1}` : "Sin registro"],
         ["Puntaje", hasResult ? `${score.toLocaleString("es")} pts` : "Sin registro"],
         ["Palabras encontradas", hasResult ? `${words.length}` : "Sin registro"],
         ["Errores", hasResult ? String(Number(result.mistakes) || 0) : "Sin registro"],
         ["Tiempo usado", elapsedMs ? formatDurationMs(elapsedMs) : "Sin registro"],
-        ["Fecha de finalizaciÃ³n", result.completedAt ? formatDate(result.completedAt) : "Sin registro"],
+        ["Fecha de finalización", result.completedAt ? formatDate(result.completedAt) : "Sin registro"],
       ]
     );
 
@@ -767,24 +899,24 @@
       ["Dato", "Resultado"],
       [
         ["Aprendiz", result.playerName || state["actividad4:nombre_completo"] || user.fullName || "Sin registro"],
-        ["VersiÃ³n asignada", hasResult ? `VersiÃ³n ${Number(result.variant) || 1}` : "Sin registro"],
+        ["Versión asignada", hasResult ? `Versión ${Number(result.variant) || 1}` : "Sin registro"],
         ["Puntaje", hasResult ? `${score.toLocaleString("es")} pts` : "Sin registro"],
         ["Parejas correctas", hasResult ? `${correctCount} / ${totalPairs}` : "Sin registro"],
         ["Errores", hasResult ? String(Number(result.mistakes) || 0) : "Sin registro"],
         ["Tiempo usado", elapsedMs ? formatDurationMs(elapsedMs) : "Sin registro"],
-        ["Fecha de finalizaciÃ³n", result.completedAt ? formatDate(result.completedAt) : "Sin registro"],
+        ["Fecha de finalización", result.completedAt ? formatDate(result.completedAt) : "Sin registro"],
       ]
     );
 
     const pairsHtml = pairs.length
-      ? `<div class="game-solution-title">Juego resuelto â€” parejas relacionadas por el aprendiz</div>
+      ? `<div class="game-solution-title">Juego resuelto — parejas relacionadas por el aprendiz</div>
          <div class="answer-table-wrap">
            <table class="answer-table">
-             <thead><tr><th>#</th><th>Herramienta</th><th>FunciÃ³n asignada por el aprendiz</th></tr></thead>
+             <thead><tr><th>#</th><th>Herramienta</th><th>Función asignada por el aprendiz</th></tr></thead>
              <tbody>${pairs.map((pair, i) => `
                <tr>
                  <td>${i + 1}</td>
-                 <td><strong>${escapeHtml(pair.tool || "â€”")}</strong></td>
+                 <td><strong>${escapeHtml(pair.tool || "—")}</strong></td>
                  <td>${escapeHtml(pair.answer || "Sin respuesta")}</td>
                </tr>`).join("")}
              </tbody>
@@ -1112,7 +1244,7 @@
 
     const origText = button.textContent;
     button.disabled = true;
-    button.textContent = "Generandoâ€¦";
+    button.textContent = "Generando…";
 
     try {
       let bodyHtml = null;
@@ -1156,7 +1288,7 @@
       }
 
       if (!bodyHtml) {
-        setFeedback(`${user.fullName} aÃºn no tiene respuestas guardadas para esta actividad.`, "error");
+        setFeedback(`${user.fullName} aún no tiene respuestas guardadas para esta actividad.`, "error");
         return;
       }
 
@@ -1398,6 +1530,10 @@
         ? "activities-container"
         : tab === "fechas"
         ? "deadlines-container"
+        : tab === "notas"
+        ? "grades-container"
+        : tab === "habilitacion"
+        ? "habilitacion-container"
         : tab === "auditoria"
         ? "audit-container"
         : "users-container";
@@ -1432,15 +1568,15 @@
     const config = getGuide6Config(fileName);
     if (!config) return;
     openGuide2ResponsesModal({
-      title: "Respuestas â€” GuÃ­a 6",
+      title: "Respuestas — Guía 6",
       subtitle: `${user.fullName} | ${config.title}`,
-      meta: "Leyendo respuestas del aprendizâ€¦",
-      bodyHtml: '<div class="response-status">Consultandoâ€¦</div>',
+      meta: "Leyendo respuestas del aprendiz…",
+      bodyHtml: '<div class="response-status">Consultando…</div>',
     });
     const snapshot = await loadGuide6Responses(usernameKey, config);
     if (!snapshot?.state) {
       openGuide2ResponsesModal({
-        title: "Respuestas â€” GuÃ­a 6",
+        title: "Respuestas — Guía 6",
         subtitle: `${user.fullName} | ${config.title}`,
         meta: `Aprendiz: ${user.fullName} | Grupo: ${user.grupo}`,
         bodyHtml: '<div class="response-status">Este aprendiz aun no tiene respuestas guardadas en la Guia 6 sincronizadas.</div>',
@@ -1448,7 +1584,7 @@
       return;
     }
     openGuide2ResponsesModal({
-      title: "Respuestas â€” GuÃ­a 6",
+      title: "Respuestas — Guía 6",
       subtitle: `${user.fullName} | ${config.title}`,
       meta: `Aprendiz: ${user.fullName} | Grupo: ${user.grupo} | Fuente: ${snapshot.sourceLabel || "Sin registro"} | Actualizado: ${formatDate(snapshot.updatedAt)}`,
       bodyHtml: renderGuide6ResponsesBody(snapshot.state),
@@ -1468,11 +1604,11 @@
     }
     const activity = getUnlockActivitiesForGuide(fileName).find((a) => a.id === activityId);
     if (!activity) {
-      setFeedback("No se encontrÃ³ la configuraciÃ³n de la actividad.", "error");
+      setFeedback("No se encontró la configuración de la actividad.", "error");
       return;
     }
     const confirmed = await confirmAdminAction(
-      `Â¿Habilitar de nuevo "${label}" para ${user.fullName}?\n\nEsto borrarÃ¡ las respuestas guardadas en esa actividad.`
+      `¿Habilitar de nuevo "${label}" para ${user.fullName}?\n\nEsto borrará las respuestas guardadas en esa actividad.`
     );
     if (!confirmed) return;
     const updatedAt = new Date().toISOString();
@@ -1651,7 +1787,17 @@
   }
 
   function buildProgressUserCard(user) {
-    const guides = user.progress?.guides || [];
+    let guides = user.progress?.guides || [];
+    if (!guides.length && typeof auth.getGuidesForFicha === "function") {
+      guides = (auth.getGuidesForFicha(user.ficha) || []).map((fileName) => ({
+        fileName,
+        title: auth.getGuideTitle ? auth.getGuideTitle(fileName) : fileName,
+        completed: 0,
+        total: 0,
+        percent: 0,
+        source: "default",
+      }));
+    }
     const overall = user.progress?.percent || 0;
     return `
       <article class="user-card" data-user-card="${escapeHtml(user.usernameKey)}">
@@ -1682,7 +1828,12 @@
       container.innerHTML = '<div class="empty-state">No hay usuarios que coincidan con la b\u00fasqueda actual.</div>';
       return;
     }
-    container.innerHTML = users.map((user) => buildProgressUserCard(user)).join("");
+    try {
+      container.innerHTML = users.map((user) => buildProgressUserCard(user)).join("");
+    } catch (e) {
+      console.error("[admin] renderProgressTab error:", e);
+      container.innerHTML = `<div class="empty-state" style="color:#b91c1c;">Error al cargar avance de gu\u00edas: ${escapeHtml(e.message)}</div>`;
+    }
   }
 
 
@@ -2282,36 +2433,109 @@
     activeActivitiesActivity = result.activeActivity;
     return result.html;
   }
+  function getUserActivityLocked(usernameKey, fileName, activityId) {
+    const stateKey = getGuideActivityStateKey(fileName);
+    if (!stateKey) return false;
+    const storageKey = auth.getStudentStorageKey(usernameKey, stateKey, { area: "guide-data" });
+    const state = readJson(localStorage.getItem(storageKey), {});
+    const activities = getUnlockActivitiesForGuide(fileName);
+    const activity = activities.find((a) => a.id === activityId);
+    if (!activity || !Array.isArray(activity.keys)) return false;
+    return activity.keys.some((k) => /-locked$/.test(k) && state[k] === true);
+  }
+
+  function renderHabilitacionTab(users) {
+    const container = getById("habilitacion-container");
+    if (!container) return;
+
+    if (!window.adminHabilitacion) {
+      container.innerHTML = '<div class="empty-state">El módulo de habilitación no está disponible.</div>';
+      return;
+    }
+
+    try {
+      container.innerHTML = window.adminHabilitacion.buildHabilitacionPanel(users.length ? users : allUsers, {
+        auth,
+        deadlineManager,
+        readJson,
+        getUnlockActivitiesForGuide,
+        getGuideActivityStateKey,
+        filters: habilitacionFilters,
+      });
+
+      // Wire habilitación filter inputs
+      ["hab-filter-name", "hab-filter-ficha", "hab-filter-guide", "hab-filter-activity"].forEach((id) => {
+        const el = getById(id);
+        if (!el) return;
+        const key = id.replace("hab-filter-", "");
+        el.addEventListener("input", () => {
+          habilitacionFilters[key] = el.value;
+          renderHabilitacionTab(users.length ? users : allUsers);
+        });
+        el.addEventListener("change", () => {
+          habilitacionFilters[key] = el.value;
+          renderHabilitacionTab(users.length ? users : allUsers);
+        });
+      });
+    } catch (e) {
+      console.error("[admin] renderHabilitacionTab error:", e);
+      container.innerHTML = `<div class="empty-state" style="color:#b91c1c;">Error al cargar habilitación: ${escapeHtml(e.message)}</div>`;
+    }
+  }
+
   function renderDeadlinesTab(users) {
     const container = getById("deadlines-container");
     if (!container) return;
 
     if (!users.length) {
-      container.innerHTML = '<div class="empty-state">No hay usuarios que coincidan con la bÃºsqueda actual.</div>';
+      container.innerHTML = '<div class="empty-state">No hay usuarios que coincidan con la búsqueda actual.</div>';
       return;
     }
 
-    const groups = getActivitiesGroups(users);
-    if (!activeActivitiesSubtab || !groups.find((g) => g.key === activeActivitiesSubtab)) {
-      activeActivitiesSubtab = groups[0]?.key || null;
-    }
-    const subTabsHtml = groups.length > 1
-      ? `<nav class="activities-subtabs">
-          ${groups.map((g) => `
-            <button class="activities-subtab${g.key === activeActivitiesSubtab ? " is-active" : ""}"
-              type="button" data-activities-subtab="${escapeHtml(g.key)}">
-              ${escapeHtml(g.label)}
-            </button>`).join("")}
-         </nav>`
-      : "";
-    const groupUsers = activeActivitiesSubtab
-      ? users.filter((u) => `${u.grupo}::${u.ficha}` === activeActivitiesSubtab)
-      : users;
+    try {
+      const groups = getActivitiesGroups(users);
+      if (!activeActivitiesSubtab || !groups.find((g) => g.key === activeActivitiesSubtab)) {
+        activeActivitiesSubtab = groups[0]?.key || null;
+      }
+      const subTabsHtml = groups.length > 1
+        ? `<nav class="activities-subtabs">
+            ${groups.map((g) => `
+              <button class="activities-subtab${g.key === activeActivitiesSubtab ? " is-active" : ""}"
+                type="button" data-activities-subtab="${escapeHtml(g.key)}">
+                ${escapeHtml(g.label)}
+              </button>`).join("")}
+           </nav>`
+        : "";
+      const groupUsers = activeActivitiesSubtab
+        ? users.filter((u) => `${u.grupo}::${u.ficha}` === activeActivitiesSubtab)
+        : users;
 
-    const panel = window.adminDeadlines
-      ? window.adminDeadlines.buildConfigPanel(groupUsers, { auth, deadlineManager, escapeHtml })
-      : "";
-    container.innerHTML = subTabsHtml + (panel || '<div class="empty-state">No hay actividades con fechas de entrega configuradas para este grupo.</div>');
+      let configPanel = "";
+      try {
+        configPanel = window.adminDeadlines
+          ? window.adminDeadlines.buildConfigPanel(groupUsers, { auth, deadlineManager, escapeHtml })
+          : "";
+      } catch (e) {
+        console.error("[admin] buildConfigPanel error:", e);
+        configPanel = `<div class="empty-state" style="color:#b91c1c;">Error en panel de fechas: ${escapeHtml(e.message)}</div>`;
+      }
+
+      let statusPanel = "";
+      try {
+        statusPanel = window.adminDeadlines?.buildStatusPanel
+          ? window.adminDeadlines.buildStatusPanel(groupUsers, { auth, deadlineManager, escapeHtml, getUserActivityLocked })
+          : "";
+      } catch (e) {
+        console.error("[admin] buildStatusPanel error:", e);
+        statusPanel = "";
+      }
+
+      const combined = configPanel + statusPanel;
+      container.innerHTML = subTabsHtml + (combined || '<div class="empty-state">No hay actividades con fechas de entrega configuradas para este grupo.</div>');
+    } catch (e) {
+      console.error("[admin] renderDeadlinesTab error:", e);
+      container.innerHTML = `<div class="empty-state" style="color:#b91c1c;">Error al cargar fechas de entrega: ${escapeHtml(e.message)}</div>`;
+    }
   }
 
   function renderActivitiesTab(users) {
@@ -2323,37 +2547,55 @@
       return;
     }
 
-    const groups = getActivitiesGroups(users);
+    try {
+      const groups = getActivitiesGroups(users);
 
-    if (!activeActivitiesSubtab || !groups.find((g) => g.key === activeActivitiesSubtab)) {
-      activeActivitiesSubtab = groups[0]?.key || null;
+      if (!activeActivitiesSubtab || !groups.find((g) => g.key === activeActivitiesSubtab)) {
+        activeActivitiesSubtab = groups[0]?.key || null;
+      }
+
+      const subTabsHtml = groups.length > 1
+        ? `<nav class="activities-subtabs">
+            ${groups.map((g) => `
+              <button class="activities-subtab${g.key === activeActivitiesSubtab ? " is-active" : ""}"
+                type="button" data-activities-subtab="${escapeHtml(g.key)}">
+                ${escapeHtml(g.label)}
+              </button>`).join("")}
+           </nav>`
+        : "";
+
+      const groupUsers = activeActivitiesSubtab
+        ? users.filter((u) => `${u.grupo}::${u.ficha}` === activeActivitiesSubtab)
+        : users;
+
+      container.innerHTML = subTabsHtml + buildActivitiesPanels(groupUsers);
+    } catch (e) {
+      console.error("[admin] renderActivitiesTab error:", e);
+      container.innerHTML = `<div class="empty-state" style="color:#b91c1c;">Error al cargar actividades: ${escapeHtml(e.message)}</div>`;
     }
-
-    const subTabsHtml = groups.length > 1
-      ? `<nav class="activities-subtabs">
-          ${groups.map((g) => `
-            <button class="activities-subtab${g.key === activeActivitiesSubtab ? " is-active" : ""}"
-              type="button" data-activities-subtab="${escapeHtml(g.key)}">
-              ${escapeHtml(g.label)}
-            </button>`).join("")}
-         </nav>`
-      : "";
-
-    const groupUsers = activeActivitiesSubtab
-      ? users.filter((u) => `${u.grupo}::${u.ficha}` === activeActivitiesSubtab)
-      : users;
-
-    container.innerHTML = subTabsHtml + buildActivitiesPanels(groupUsers);
   }
 
-  // â”€â”€ PestaÃ±a Juicios de evaluaciÃ³n â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // â”€â”€ Pestaña Juicios de evaluación â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+  const GRADES_FAMILY_PATTERNS = {
+    "guia-01-induccion":    /guia-01/,
+    "guia-02-herramientas": /guia-02-herramientas/,
+    "guia-redes-rap01":     /redes/,
+    "guia-05-herramientas": /guia-05/,
+    "guia-06-planificar":   /guia-06|guia-03-planificar/,
+  };
 
   function buildGradesPanel(users) {
     const gradesManager = window.activityGradesManager;
     const catalog = gradesManager?.GRADE_CATALOG || {};
-    const guideFamilies = Object.entries(catalog);
-    if (!gradesManager || !guideFamilies.length) {
-      return '<div class="empty-state">El modulo de notas no esta disponible.</div>';
+    const officialFiles = getOfficialGuideFilesForUsers(users);
+    const guideFamilies = Object.entries(catalog).filter(([guideFamily]) => {
+      const pattern = GRADES_FAMILY_PATTERNS[guideFamily];
+      if (!pattern) return true;
+      return officialFiles.some((f) => pattern.test(f));
+    });
+    if (!gradesManager || !Object.keys(catalog).length) {
+      return '<div class="empty-state">El módulo de notas no está disponible.</div>';
     }
     if (!users.length) {
       return '<div class="empty-state">No hay aprendices para calificar en este grupo.</div>';
@@ -2365,6 +2607,9 @@
         const grades = gradesManager.getStudentGrades(user.usernameKey, guideFamily) || {};
         (guideConfig.activities || []).forEach((activity) => {
           const currentGrade = grades[activity.id] || "";
+          const currentObs = typeof gradesManager.getStudentActivityObservation === "function"
+            ? gradesManager.getStudentActivityObservation(user.usernameKey, guideFamily, activity.id)
+            : (grades[activity.id + ":obs"] || "");
           rows.push(`
             <tr>
               <td>${escapeHtml(user.fullName)}</td>
@@ -2382,7 +2627,22 @@
                   <option value=""${currentGrade === "" ? " selected" : ""}>Sin nota</option>
                   <option value="A"${currentGrade === "A" ? " selected" : ""}>Aprobado</option>
                   <option value="D"${currentGrade === "D" ? " selected" : ""}>No aprobado</option>
+                  <option value="P"${currentGrade === "P" ? " selected" : ""}>Pendiente</option>
                 </select>
+              </td>
+              <td>
+                <input
+                  type="text"
+                  class="grades-obs-input"
+                  placeholder="Observación (opcional)"
+                  maxlength="300"
+                  value="${escapeHtml(currentObs)}"
+                  data-obs-user="${escapeHtml(user.usernameKey)}"
+                  data-obs-guide-family="${escapeHtml(guideFamily)}"
+                  data-obs-activity="${escapeHtml(activity.id)}"
+                  data-obs-label="${escapeHtml(activity.label || activity.id)}"
+                  data-obs-user-name="${escapeHtml(user.fullName)}"
+                >
               </td>
             </tr>`);
         });
@@ -2396,9 +2656,10 @@
             <tr>
               <th>Aprendiz</th>
               <th>Grupo</th>
-              <th>Guia</th>
+              <th>Guía</th>
               <th>Actividad</th>
               <th>Juicio</th>
+              <th>Observaciones</th>
             </tr>
           </thead>
           <tbody>${rows.join("")}</tbody>
@@ -2419,7 +2680,7 @@
     const activityLabel = select.getAttribute("data-activity-label") || activityId;
     const previousGrade = select.getAttribute("data-previous-grade") || "";
     const newGrade = select.value || "";
-    const label = newGrade === "A" ? "Aprobado" : newGrade === "D" ? "No aprobado" : "Sin nota";
+    const label = newGrade === "A" ? "Aprobado" : newGrade === "D" ? "No aprobado" : newGrade === "P" ? "Pendiente" : "Sin nota";
 
     const confirmed = await confirmAdminAction(
       `Guardar juicio "${label}" para ${userName} en ${activityLabel}?`
@@ -2476,67 +2737,80 @@
     const container = getById("grades-container");
     if (!container) return;
 
-    // Group selector
-    const groups = [];
-    const seen = new Set();
-    users.forEach((u) => {
-      const key = `${u.grupo}::${u.ficha}`;
-      if (!seen.has(key)) { seen.add(key); groups.push({ key, label: `${u.grupo} â€” Ficha ${u.ficha}` }); }
-    });
+    try {
+      // Group selector
+      const groups = [];
+      const seen = new Set();
+      users.forEach((u) => {
+        const key = `${u.grupo}::${u.ficha}`;
+        if (!seen.has(key)) { seen.add(key); groups.push({ key, label: `${u.grupo} — Ficha ${u.ficha}` }); }
+      });
 
-    if (!activeGradesGroup || !groups.find((g) => g.key === activeGradesGroup)) {
-      activeGradesGroup = groups[0]?.key || null;
-    }
+      if (!activeGradesGroup || !groups.find((g) => g.key === activeGradesGroup)) {
+        activeGradesGroup = groups[0]?.key || null;
+      }
 
-    const groupSelectOptions = groups.map((g) =>
-      `<option value="${escapeHtml(g.key)}"${activeGradesGroup === g.key ? " selected" : ""}>${escapeHtml(g.label)}</option>`
-    ).join("");
+      const groupSelectOptions = groups.map((g) =>
+        `<option value="${escapeHtml(g.key)}"${activeGradesGroup === g.key ? " selected" : ""}>${escapeHtml(g.label)}</option>`
+      ).join("");
 
-    const groupSelector = groups.length > 1
-      ? `<div class="grades-group-selector">
-           <label for="grades-group-select"><strong>Grupo / Ficha:</strong></label>
-           <select id="grades-group-select" class="activity-deadline-input grades-group-select">
-             ${groupSelectOptions}
-           </select>
-         </div>`
-      : "";
+      const groupSelector = groups.length > 1
+        ? `<div class="grades-group-selector">
+             <label for="grades-group-select"><strong>Grupo / Ficha:</strong></label>
+             <select id="grades-group-select" class="activity-deadline-input grades-group-select">
+               ${groupSelectOptions}
+             </select>
+           </div>`
+        : "";
 
-    const groupUsers = activeGradesGroup
-      ? users.filter((u) => `${u.grupo}::${u.ficha}` === activeGradesGroup)
-      : users;
+      const groupUsers = activeGradesGroup
+        ? users.filter((u) => `${u.grupo}::${u.ficha}` === activeGradesGroup)
+        : users;
 
-    container.innerHTML = `
-      <section class="panel">
-        <h2>Juicios de evaluaciÃ³n</h2>
-        <p class="activities-section-copy">
-          Importa el archivo Excel <strong>Plan de Trabajo Concertado</strong> para cargar
-          las notas automÃ¡ticamente. TambiÃ©n puedes editar cada nota directamente en la tabla.
-          Los cambios quedan guardados de inmediato y el aprendiz los ve al abrir su guÃ­a.
-        </p>
+      let gradesTableHtml = "";
+      try {
+        gradesTableHtml = buildGradesPanel(groupUsers);
+      } catch (e) {
+        console.error("[admin] buildGradesPanel error:", e);
+        gradesTableHtml = `<div class="empty-state" style="color:#b91c1c;">Error al cargar tabla de notas: ${escapeHtml(e.message)}</div>`;
+      }
 
-        ${groupSelector}
-
-        <div class="grades-import-box">
-          <p class="grades-import-title">ðŸ“‚ Importar desde Excel</p>
-          <p class="grades-import-copy">
-            Acepta el archivo <em>Plan de Trabajo Concertado</em> (.xlsx).
-            Las notas se asignan automÃ¡ticamente segÃºn el nombre del aprendiz.
+      container.innerHTML = `
+        <section class="panel">
+          <h2>Juicios de evaluación</h2>
+          <p class="activities-section-copy">
+            Importa el archivo Excel <strong>Plan de Trabajo Concertado</strong> para cargar
+            las notas automáticamente. También puedes editar cada nota directamente en la tabla.
+            Los cambios quedan guardados de inmediato y el aprendiz los ve al abrir su guía.
           </p>
-          <div class="grades-import-actions">
-            <label class="btn secondary grades-import-button">
-              ðŸ“„ Seleccionar Excel
-              <input class="grades-import-input" type="file" accept=".xlsx,.xls" id="grades-excel-input">
-            </label>
-            <span class="grades-import-status" id="grades-import-status"></span>
+
+          ${groupSelector}
+
+          <div class="grades-import-box">
+            <p class="grades-import-title">📂 Importar desde Excel</p>
+            <p class="grades-import-copy">
+              Acepta el archivo <em>Plan de Trabajo Concertado</em> (.xlsx).
+              Las notas se asignan automáticamente según el nombre del aprendiz.
+            </p>
+            <div class="grades-import-actions">
+              <label class="btn secondary grades-import-button">
+                🔄 Seleccionar Excel
+                <input class="grades-import-input" type="file" accept=".xlsx,.xls" id="grades-excel-input">
+              </label>
+              <span class="grades-import-status" id="grades-import-status"></span>
+            </div>
           </div>
-        </div>
 
-        <hr class="grades-import-divider">
+          <hr class="grades-import-divider">
 
-        <div id="grades-table-area">
-          ${buildGradesPanel(groupUsers)}
-        </div>
-      </section>`;
+          <div id="grades-table-area">
+            ${gradesTableHtml}
+          </div>
+        </section>`;
+    } catch (e) {
+      console.error("[admin] renderGradesTab error:", e);
+      container.innerHTML = `<div class="empty-state" style="color:#b91c1c;">Error al cargar juicios de evaluación: ${escapeHtml(e.message)}</div>`;
+    }
 
     // Wire file input
     const fileInput = container.querySelector("#grades-excel-input");
@@ -2547,7 +2821,7 @@
         const status = container.querySelector("#grades-import-status");
         const validation = adminGrades.validateExcelFile(file);
         if (!validation.ok) {
-          if (status) status.textContent = "âŒ " + validation.message;
+          if (status) status.textContent = "❌ " + validation.message;
           fileInput.value = "";
           return;
         }
@@ -2555,10 +2829,10 @@
         try {
           const parsed = await readGradesFromExcelFile(file);
           if (parsed.error) {
-            if (status) status.textContent = "âŒ " + parsed.error;
+            if (status) status.textContent = "❌ " + parsed.error;
           } else {
             const confirmed = await confirmAdminAction(
-              `Se importaran juicios de evaluacion para ${parsed.students.length} aprendices. Â¿Deseas continuar?`
+              `Se importaran juicios de evaluacion para ${parsed.students.length} aprendices. ¿Deseas continuar?`
             );
             if (!confirmed) {
               if (status) status.textContent = "Importacion cancelada.";
@@ -2571,7 +2845,7 @@
               target: parsed.guideFamily,
               detail: `${result.saved} aprendices actualizados desde ${file.name || "Excel"}`,
             });
-            const msg = `âœ… ${result.saved} aprendices actualizados.` +
+            const msg = `✅ ${result.saved} aprendices actualizados.` +
               (result.unmatched.length ? ` Sin coincidencia: ${result.unmatched.join(", ")}.` : "");
             if (status) status.textContent = msg;
             // Re-render table
@@ -2579,7 +2853,7 @@
             if (tableArea) tableArea.innerHTML = buildGradesPanel(groupUsers);
           }
         } catch (err) {
-          if (status) status.textContent = "âŒ Error al procesar: " + err.message;
+          if (status) status.textContent = "❌ Error al procesar: " + err.message;
         }
         fileInput.value = "";
       });
@@ -2587,7 +2861,7 @@
   }
 
   async function readGradesFromExcelFile(file) {
-    if (!window.XLSX) return { error: "LibrerÃ­a XLSX no disponible." };
+    if (!window.XLSX) return { error: "Librería XLSX no disponible." };
     return new Promise((resolve) => {
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -2617,6 +2891,8 @@
       renderDeadlinesTab(users);
     } else if (tab === "notas") {
       renderGradesTab(users);
+    } else if (tab === "habilitacion") {
+      renderHabilitacionTab(users);
     } else if (tab === "auditoria") {
       renderAuditTab();
     } else {
@@ -2640,6 +2916,7 @@
       );
     }
 
+    guide2ResponseSnapshots = {};
     guide2WordSearchSummaries = {};
     guide2MatchingGameSummaries = {};
     fichaCasoSummaries = {};
@@ -2649,12 +2926,17 @@
     if (deadlineManager?.refreshPolicies) {
       await deadlineManager.refreshPolicies(true);
     }
-    await Promise.all([
-      hydrateGuide2WordSearchSummaries(allUsers),
-      hydrateFichaCasoSummaries(allUsers),
+    const hydrateTasks = [
       hydrateRedesSocializacionSummaries(allUsers),
       hydrateRedesQuizSummaries(allUsers),
-    ]);
+    ];
+    if (typeof hydrateGuide2WordSearchSummaries === "function") {
+      hydrateTasks.push(hydrateGuide2WordSearchSummaries(allUsers));
+    }
+    if (typeof hydrateFichaCasoSummaries === "function") {
+      hydrateTasks.push(hydrateFichaCasoSummaries(allUsers));
+    }
+    await Promise.all(hydrateTasks);
     renderUsers();
   }
 
@@ -2675,7 +2957,7 @@
       return;
     }
     const confirmed = await confirmAdminAction(
-      `Se guardara la fecha de cierre de "${activityLabel}" para ${auth.getGuideTitle(fileName)}. Â¿Deseas continuar?`
+      `Se guardara la fecha de cierre de "${activityLabel}" para ${auth.getGuideTitle(fileName)}. ¿Deseas continuar?`
     );
     if (!confirmed) {
       return;
@@ -2705,7 +2987,7 @@
     const activityId = button.getAttribute("data-activity-id") || "";
     const activityLabel = button.getAttribute("data-activity-label") || activityId;
     const confirmed = await confirmAdminAction(
-      `Se eliminara la fecha de cierre de "${activityLabel}" para ${auth.getGuideTitle(fileName)}. Â¿Deseas continuar?`
+      `Se eliminara la fecha de cierre de "${activityLabel}" para ${auth.getGuideTitle(fileName)}. ¿Deseas continuar?`
     );
     if (!confirmed) {
       return;
@@ -2736,7 +3018,7 @@
     }
 
     const confirmed = await confirmAdminAction(
-      `Se cambiara la contrasena de ${user.fullName}. Â¿Deseas continuar?`
+      `Se cambiara la contrasena de ${user.fullName}. ¿Deseas continuar?`
     );
     if (!confirmed) {
       return;
@@ -2784,7 +3066,7 @@
     }
 
     const confirmed = await confirmAdminAction(
-      `Se actualizaran los datos de ${user.fullName}. Â¿Deseas continuar?`
+      `Se actualizaran los datos de ${user.fullName}. ¿Deseas continuar?`
     );
     if (!confirmed) {
       return;
@@ -2885,6 +3167,88 @@
     });
     setFeedback(`Todo el avance de ${user.fullName} fue reiniciado.`, "success");
     await refreshUsers();
+  }
+
+  async function handleHabilitacionUnlock(button) {
+    const usernameKey = button.getAttribute("data-hab-unlock") || "";
+    const fileName = button.getAttribute("data-hab-guide") || "";
+    const activityId = button.getAttribute("data-hab-activity") || "";
+    const stateKey = button.getAttribute("data-hab-state-key") || "";
+    const activityLabel = button.getAttribute("data-hab-label") || activityId;
+    const guideTitle = button.getAttribute("data-hab-guide-title") || fileName;
+    const learnerName = button.getAttribute("data-hab-learner") || usernameKey;
+    const ficha = button.getAttribute("data-hab-ficha") || "";
+    const lockKeysRaw = button.getAttribute("data-hab-lock-keys") || "";
+    const lockKeys = lockKeysRaw ? lockKeysRaw.split(",").map((k) => k.trim()).filter(Boolean) : [];
+
+    const user = allUsers.find((u) => u.usernameKey === usernameKey);
+    if (!user || !stateKey || !activityId || !lockKeys.length) {
+      setFeedback("No fue posible identificar la actividad a habilitar.", "error");
+      return;
+    }
+
+    // Read motivo from the sibling input
+    const motivoInput = document.querySelector(
+      `[data-hab-motivo="${CSS.escape(usernameKey)}::${CSS.escape(fileName)}::${CSS.escape(activityId)}"]`
+    );
+    const motivo = motivoInput?.value?.trim() || "";
+
+    const confirmed = await confirmAdminAction(
+      `¿Habilitar nuevamente "${activityLabel}" para ${learnerName}?\n\nEsto borrará el bloqueo de la actividad y el aprendiz podrá modificarla o entregarla de nuevo.`
+    );
+    if (!confirmed) return;
+
+    const updatedAt = new Date().toISOString();
+    const updatedBy = `admin-hab-unlock:${activityId}`;
+
+    // Patch local state
+    patchGuideState(usernameKey, stateKey, lockKeys, { updatedAt, updatedBy });
+
+    // Patch cloud state
+    const guideConfig = getGuide6Config(fileName) || getGuide2ResponseConfig(fileName);
+    if (guideConfig?.cloudFileName) {
+      await patchGuideCloudState(usernameKey, guideConfig.cloudFileName, lockKeys, { updatedAt, updatedBy });
+    }
+
+    // Record trazabilidad
+    if (window.adminHabilitacion?.recordUnlock) {
+      window.adminHabilitacion.recordUnlock({
+        usernameKey,
+        learnerName,
+        ficha,
+        guideFile: fileName,
+        guideTitle,
+        activityId,
+        activityLabel,
+        motivo,
+      });
+    }
+    recordAdminAuditAction({
+      action: "activity-habilitacion",
+      target: learnerName,
+      detail: `${activityLabel} | ${guideTitle}${motivo ? ` | Motivo: ${motivo}` : ""}`,
+    });
+
+    setFeedback(`Actividad "${activityLabel}" habilitada nuevamente para ${learnerName}.`, "success");
+    renderHabilitacionTab(getFilteredUsers());
+  }
+
+  async function handleObservationSave(input) {
+    const gradesManager = window.activityGradesManager;
+    if (!gradesManager || typeof gradesManager.setStudentActivityObservation !== "function") return;
+    const usernameKey = input.getAttribute("data-obs-user") || "";
+    const guideFamily = input.getAttribute("data-obs-guide-family") || "";
+    const activityId = input.getAttribute("data-obs-activity") || "";
+    const activityLabel = input.getAttribute("data-obs-label") || activityId;
+    const userName = input.getAttribute("data-obs-user-name") || usernameKey;
+    const obs = input.value?.trim() || "";
+    gradesManager.setStudentActivityObservation(usernameKey, guideFamily, activityId, obs);
+    recordAdminAuditAction({
+      action: "observation-save",
+      target: userName,
+      detail: `${guideFamily} | ${activityLabel}`,
+    });
+    setFeedback(`Observación guardada para ${userName}.`, "success");
   }
 
   function bindEvents() {
@@ -3089,6 +3453,21 @@
       const resetAllButton = event.target.closest("[data-reset-all]");
       if (resetAllButton) {
         await handleResetAll(resetAllButton);
+        return;
+      }
+
+      const habUnlockButton = event.target.closest("[data-hab-unlock]");
+      if (habUnlockButton) {
+        await handleHabilitacionUnlock(habUnlockButton);
+        return;
+      }
+    });
+
+    // Save observations on blur
+    document.addEventListener("change", async (event) => {
+      const obsInput = event.target.closest(".grades-obs-input");
+      if (obsInput) {
+        await handleObservationSave(obsInput);
       }
     });
 
