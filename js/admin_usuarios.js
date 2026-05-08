@@ -2111,6 +2111,26 @@
     await Promise.all(tasks);
   }
 
+  async function hydrateFichaCasoSummaries(users) {
+    const tasks = users
+      .filter((user) => getFichaCasoFileName(user))
+      .map(async (user) => {
+        if (user.usernameKey in fichaCasoSummaries) return;
+        const cloudFileName = getFichaCasoFileName(user);
+        try {
+          const snapshot = await window._firebaseDb?.cloudGetGuideData?.(
+            getGuide2ScopeKey(user.usernameKey),
+            cloudFileName
+          );
+          fichaCasoSummaries[user.usernameKey] = snapshot?.state ? snapshot : null;
+        } catch {
+          fichaCasoSummaries[user.usernameKey] = null;
+        }
+      });
+    await Promise.all(tasks);
+    renderUsers();
+  }
+
   function buildRedesQuizTable(rows) {
     if (!rows.length) {
       return '<p class="activities-loading">Ningun aprendiz de Santa Barbara ha presentado el quiz 3.2.1.H aun.</p>';
