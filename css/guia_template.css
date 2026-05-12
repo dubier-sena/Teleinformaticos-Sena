@@ -1156,68 +1156,102 @@ code {
   word-break: break-word;
 }
 
-.btn-export-word {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: linear-gradient(135deg, #1e40af, #2563eb);
-  color: #fff;
-  font-size: 13px;
-  font-weight: 700;
-  padding: 10px 20px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  text-decoration: none;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
-  font-family: inherit;
-}
-
-.btn-export-word:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
-}
-
-.drive-submit-box {
-  margin-bottom: 16px;
-}
-
-.drive-action-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 12px;
-}
-
+/* ── Botones de actividad estándar ─────────────────────────────────────────
+   Todos los botones de actividad comparten el mismo tamaño base.
+   Se diferencian solo por color. Se apilan en columna dentro de .act-btn-group
+   o .drive-action-group.
+──────────────────────────────────────────────────────────────────────────── */
+.btn-save-response,
+.btn-export-word,
 .btn-drive,
 .btn-qr {
-  border: none;
-  border-radius: 14px;
-  min-height: 52px;
-  padding: 0 18px;
-  font-size: 15px;
-  font-weight: 800;
-  cursor: pointer;
   display: inline-flex;
   align-items: center;
+  gap: 10px;
+  width: auto;
+  min-width: 180px;
+  box-sizing: border-box;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  text-decoration: none;
+  transition: filter 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Dentro de grupos flex los botones crecen igual */
+.act-btn-group .btn-save-response,
+.act-btn-group .btn-export-word,
+.act-btn-group .btn-drive,
+.drive-action-group .btn-drive,
+.drive-action-group .btn-qr,
+.drive-action-group .btn-apps-script {
+  flex: 1 1 0;
+  width: auto;
   justify-content: center;
-  text-align: center;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14);
+}
+
+.btn-save-response {
+  background: linear-gradient(135deg, #1b5e20, #2e7d32);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(27, 94, 32, 0.25);
+}
+
+.btn-export-word {
+  background: linear-gradient(135deg, #1e40af, #2563eb);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
 }
 
 .btn-drive {
   background: linear-gradient(135deg, #1d4ed8, #2563eb);
   color: #fff;
+  box-shadow: 0 2px 8px rgba(29, 78, 216, 0.25);
+}
+
+.btn-save-response:hover,
+.btn-export-word:hover,
+.btn-drive:hover,
+.btn-qr:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.btn-save-response:disabled,
+.btn-export-word:disabled,
+.btn-drive:disabled,
+.btn-qr:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  filter: none;
 }
 
 .btn-qr {
   background: linear-gradient(135deg, #172554, #1e293b);
   color: #fff;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18);
 }
 
-.btn-drive:hover,
-.btn-qr:hover {
-  transform: translateY(-1px);
+/* Grupos de botones: fila horizontal, mismo tamaño */
+.act-btn-group,
+.drive-action-group {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+  align-items: stretch;
+}
+
+
+.drive-submit-box {
+  margin-bottom: 16px;
 }
 
 .drive-helper-note {
@@ -1824,6 +1858,7 @@ code {
 
 .word-search-actions .btn-drive,
 .word-search-actions .btn-qr {
+  width: auto;
   min-height: 44px;
 }
 
@@ -2426,6 +2461,7 @@ body.word-search-fullscreen-lock {
 
 .matching-game-actions .btn-drive,
 .matching-game-actions .btn-qr {
+  width: auto;
   min-height: 44px;
 }
 

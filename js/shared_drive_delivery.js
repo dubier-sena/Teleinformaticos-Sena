@@ -240,23 +240,14 @@
     actionGroup.appendChild(
       createActionButton(
         "btn-drive",
-        panelConfig.driveLabel || "Subir al portafolio de Drive",
+        panelConfig.driveLabel || "📂 Subir al portafolio de Drive",
         panelHandlers.onDriveClick
       )
     );
-    if (!panelConfig.hideQr && typeof panelHandlers.onQrClick === "function") {
-      actionGroup.appendChild(
-        createActionButton(
-          "btn-qr",
-          panelConfig.qrLabel || "Abrir en movil - Ver QR",
-          panelHandlers.onQrClick
-        )
-      );
-    }
     if (typeof panelHandlers.onSecureUploadClick === "function") {
       var secureButton = createActionButton(
         "btn-drive btn-apps-script",
-        panelConfig.secureLabel || "Entregar por formulario seguro",
+        panelConfig.secureLabel || "📤 Entregar por formulario seguro",
         function () {
           panelHandlers.onSecureUploadClick(panelConfig.activityContext || {});
         }

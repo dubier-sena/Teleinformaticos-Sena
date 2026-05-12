@@ -260,9 +260,9 @@
                   <textarea rows="4" data-store="reflexion-5-problemas" data-track placeholder="Describe la situaci&oacute;n, los s&iacute;ntomas y lo que hiciste o hubieras hecho."></textarea>
                 </label>
               </div>
-              <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+              <div class="act-btn-group">
                 <button type="button" id="btnGuardarReflexion" onclick="guardarReflexion311()"
-                  style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                  class="btn-save-response">
                   &#128190; Guardar respuestas
                 </button>
                 <button type="button" onclick="exportarReflexion311()" class="btn-export-word">
@@ -274,9 +274,8 @@
                 <p>Cuando termines la reflexi&oacute;n y el documento en Word, sube esta evidencia desde el bot&oacute;n de entrega.</p>
                 <div class="drive-action-group">
                   <button type="button" id="btnSubirReflexion311" class="btn-drive"
-                    style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit;min-height:unset;border-radius:10px"
                     onclick="subirReflexion311AlDrive()">
-                    &#128193; Subir al Drive
+                    &#128193; Entregar a Drive
                   </button>
                 </div>
                 <div class="drive-helper-note">Entrega sugerida: documento Word de la reflexi&oacute;n individual de la actividad 3.1.1.</div>
@@ -294,7 +293,7 @@
                 </label>
                 <div style="margin-top:12px">
                   <button type="button" id="btnEnviarSocializacion" onclick="enviarSocializacion311()"
-                    style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:9px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                    class="btn-save-response"
                     &#128228; Enviar
                   </button>
                 </div>
@@ -400,7 +399,7 @@
               </div>
               <div style="margin-top:16px">
                 <button type="button" id="btnGuardarBloqueA" onclick="guardarBloqueA()"
-                  style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                  class="btn-save-response">
                   &#128190; Guardar respuestas
                 </button>
               </div>
@@ -460,7 +459,7 @@
               </div>
               <div style="margin-top:16px">
                 <button type="button" id="btnGuardarBloqueB" onclick="guardarBloqueB()"
-                  style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                  class="btn-save-response">
                   &#128190; Guardar respuestas
                 </button>
               </div>
@@ -549,7 +548,7 @@
               </div>
               <div style="margin-top:16px">
                 <button type="button" id="btnGuardarBloqueC" onclick="guardarBloqueC()"
-                  style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                  class="btn-save-response">
                   &#128190; Guardar respuestas
                 </button>
               </div>
@@ -656,7 +655,7 @@
               </div>
               <div style="margin-top:16px">
                 <button type="button" id="btnGuardarBloqueD" onclick="guardarBloqueD()"
-                  style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                  class="btn-save-response">
                   &#128190; Guardar respuestas
                 </button>
               </div>
@@ -718,7 +717,7 @@
               </div>
               <div style="margin-top:16px">
                 <button type="button" id="btnGuardarBloqueE" onclick="guardarBloqueE()"
-                  style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                  class="btn-save-response">
                   &#128190; Guardar respuestas
                 </button>
               </div>
@@ -809,7 +808,6 @@
               </div>
               <div style="margin-top:14px">
                 <button type="button" class="btn-drive"
-                  style="min-height:unset;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;display:inline-flex;align-items:center;gap:8px"
                   onclick="window.sharedAppsScriptDelivery.openDeliveryModal({guideLabel:'Guia 2',activityNumber:'3.2.2',activityTitle:'Mapa mental integrador de fundamentos de redes',activityLabel:'Actividad 3.2.2',fileNamePrefix:'MapaMental_Redes',learnerNameMode:'full'})">
                   &#128193; Subir mapa mental al Drive
                 </button>
@@ -860,7 +858,7 @@
               </div>
               <div style="margin-top:16px">
                 <button type="button" id="btnGuardarSocial" onclick="guardarSocializacion()"
-                  style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                  class="btn-save-response">
                   &#128190; Guardar respuestas
                 </button>
               </div>
@@ -893,9 +891,9 @@
                 autom&aacute;ticamente lo que lleves contestado y ya no podr&aacute;s responder m&aacute;s.
               </div>
               <div id="quizRedesStatus" class="info-box blue" style="margin-top:14px;display:none"></div>
-              <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+              <div class="act-btn-group">
                 <a id="quizRedesActionLink" class="btn-drive" href="#"
-                  style="min-height:unset;border-radius:10px;padding:10px 20px;font-size:0.95rem;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none">
+                  style="text-decoration:none">
                   &#128218; Presentar quiz aleatorio
                 </a>
               </div>
@@ -995,7 +993,7 @@
               </div>
               <div style="margin-top:16px">
                 <button type="button" id="btnGuardarIP1" onclick="guardarBloqueIP1()"
-                  style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                  class="btn-save-response">
                   &#128190; Guardar respuestas
                 </button>
               </div>
@@ -1104,7 +1102,7 @@
               </div>
               <div style="margin-top:16px">
                 <button type="button" id="btnGuardarIP2" onclick="guardarBloqueIP2()"
-                  style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                  class="btn-save-response">
                   &#128190; Guardar respuestas
                 </button>
               </div>
@@ -1205,7 +1203,7 @@
               </div>
               <div style="margin-top:16px">
                 <button type="button" id="btnGuardarIP3" onclick="guardarBloqueIP3()"
-                  style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                  class="btn-save-response">
                   &#128190; Guardar respuestas
                 </button>
               </div>
@@ -1240,9 +1238,9 @@
                 &#9888; <strong>Regla de integridad:</strong> el quiz tiene puntaje máximo de <strong>100</strong>. Hay <strong>2 advertencias por cambio de pestaña</strong>; en la segunda advertencia se envía automáticamente lo que lleves contestado y ya no podrás responder más.
               </div>
               <div id="quizIPStatus" class="info-box blue" style="margin-top:14px;display:none"></div>
-              <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+              <div class="act-btn-group">
                 <a id="quizIPActionLink" class="btn-drive" href="#"
-                  style="min-height:unset;border-radius:10px;padding:10px 20px;font-size:0.95rem;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none">
+                  style="text-decoration:none">
                   &#128218; Presentar quiz aleatorio
                 </a>
               </div>
@@ -1309,7 +1307,7 @@
                 </div>
                 <div style="margin-top:16px">
                   <button type="button" id="btnGuardarTallerIPEj1" onclick="guardarTallerIPEj1()"
-                    style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                    class="btn-save-response">
                     &#128190; Guardar respuestas
                   </button>
                 </div>
@@ -1356,7 +1354,7 @@
                 </div>
                 <div style="margin-top:16px">
                   <button type="button" id="btnGuardarTallerIPEj2" onclick="guardarTallerIPEj2()"
-                    style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                    class="btn-save-response">
                     &#128190; Guardar respuestas
                   </button>
                 </div>
@@ -1406,7 +1404,7 @@
                 </label>
                 <div style="margin-top:16px">
                   <button type="button" id="btnGuardarTallerIPEj3" onclick="guardarTallerIPEj3()"
-                    style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                    class="btn-save-response">
                     &#128190; Guardar respuestas
                   </button>
                 </div>
@@ -1486,7 +1484,7 @@
                 </div>
                 <div style="margin-top:16px">
                   <button type="button" id="btnGuardarTallerIPEj4" onclick="guardarTallerIPEj4()"
-                    style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                    class="btn-save-response">
                     &#128190; Guardar respuestas
                   </button>
                 </div>
@@ -1565,7 +1563,7 @@
                 </div>
                 <div style="margin-top:16px">
                   <button id="btnGuardarTallerIPEj5" type="button" onclick="guardarTallerIPEj5()"
-                    style="background:#2e7d32;color:#fff;border:none;padding:12px 22px;border-radius:10px;font-weight:700;cursor:pointer">
+                    class="btn-save-response"
                     &#128190; Guardar respuestas
                   </button>
                 </div>
@@ -1873,7 +1871,7 @@
                 </div>
                 <div style="margin-top:16px">
                   <button id="btnGuardarLab1" type="button" onclick="guardarLab1Transferencia()"
-                    style="background:#2e7d32;color:#fff;border:none;padding:12px 22px;border-radius:10px;font-weight:700;cursor:pointer">
+                    class="btn-save-response"
                     &#128190; Guardar respuestas del laboratorio
                   </button>
                 </div>
@@ -2094,7 +2092,7 @@
                 </div>
                 <div style="margin-top:16px">
                   <button id="btnGuardarLab2" type="button" onclick="guardarLab2Arbol()"
-                    style="background:#2e7d32;color:#fff;border:none;padding:12px 22px;border-radius:10px;font-weight:700;cursor:pointer">
+                    class="btn-save-response"
                     &#128190; Guardar respuestas del laboratorio
                   </button>
                 </div>
@@ -2146,7 +2144,7 @@
                   </div>
                   <div style="background:#fff;border:1px solid #bfdbfe;border-radius:14px;padding:14px">
                     <strong style="display:block;color:#1d4ed8;margin-bottom:6px">Evidencia esperada</strong>
-                    <span style="color:#334155;font-size:.92rem">4 pantallazos obligatorios, an&aacute;lisis corto en la gu&iacute;a y archivo final <code>.pkt</code> del laboratorio.</span>
+                    <span style="color:#334155;font-size:.92rem">5 pantallazos obligatorios, an&aacute;lisis corto en la gu&iacute;a y archivo final <code>.pkt</code> del laboratorio.</span>
                   </div>
                 </div>
               </div>
@@ -2264,7 +2262,7 @@
 
               <div style="margin-top:14px;padding:16px;border:1px dashed #93c5fd;border-radius:16px;background:#f8fbff">
                 <h3 style="margin:0 0 8px;color:#1d4ed8">Evidencias visuales obligatorias</h3>
-                <p style="margin:0 0 14px;color:#475569;font-size:.92rem">Sube aqu&iacute; los 4 pantallazos del laboratorio. Debe verse la topolog&iacute;a o el comando ejecutado y su resultado.</p>
+                <p style="margin:0 0 14px;color:#475569;font-size:.92rem">Sube aqu&iacute; los 5 pantallazos del laboratorio. Debe verse la topolog&iacute;a o el comando ejecutado y su resultado.</p>
                 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px">
                   <div style="padding:14px;border-radius:14px;background:#fff;border:1px solid #dbeafe">
                     <strong style="display:block;color:#0f172a;margin-bottom:6px">1. Topolog&iacute;a completa</strong>
@@ -2318,6 +2316,19 @@
                       <div id="lab3IpconfigWifiNombre" style="margin-top:8px;color:#334155;font-size:.84rem"></div>
                     </div>
                   </div>
+                  <div style="padding:14px;border-radius:14px;background:#fff;border:1px solid #dbeafe">
+                    <strong style="display:block;color:#0f172a;margin-bottom:6px">5. ipconfig equipo cableado</strong>
+                    <span style="display:block;color:#64748b;font-size:.88rem;margin-bottom:10px">Comando: <code>ipconfig</code> &mdash; Debe verse IP, m&aacute;scara y gateway del equipo.</span>
+                    <input type="file" id="lab3IpconfigCableadoInput" accept="image/*" style="display:none" onchange="subirPantallazoLab3('ipconfigCableado', this)">
+                    <button type="button" id="btnSubirLab3IpconfigCableado" onclick="document.getElementById('lab3IpconfigCableadoInput').click()"
+                      style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                      &#128248; Subir pantallazo
+                    </button>
+                    <div id="lab3IpconfigCableadoPreview" style="display:none;margin-top:12px">
+                      <img id="lab3IpconfigCableadoImg" alt="Pantallazo ipconfig equipo cableado" style="width:100%;border-radius:10px;border:1px solid #cbd5e1;display:block">
+                      <div id="lab3IpconfigCableadoNombre" style="margin-top:8px;color:#334155;font-size:.84rem"></div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -2328,6 +2339,10 @@
                   <label style="display:block">
                     <span style="display:block;margin-bottom:6px;font-weight:600">&iquest;D&oacute;nde aparece la topolog&iacute;a estrella y qu&eacute; elementos la evidencian?</span>
                     <textarea rows="3" data-store="lab3-topologia" data-track placeholder="Describe en qu&eacute; zonas observaste la conexi&oacute;n en estrella y qu&eacute; papel cumple el switch local."></textarea>
+                  </label>
+                  <label style="display:block">
+                    <span style="display:block;margin-bottom:6px;font-weight:600">&iquest;D&oacute;nde aparece la topolog&iacute;a &aacute;rbol y qu&eacute; equipos la forman?</span>
+                    <textarea rows="3" data-store="lab3-arbol" data-track placeholder="Indica qu&eacute; equipos forman la parte &aacute;rbol y por qu&eacute; los switches de bloque se interconectan al switch central."></textarea>
                   </label>
                   <label style="display:block">
                     <span style="display:block;margin-bottom:6px;font-weight:600">Resultado del ping entre bloques. &iquest;Funcion&oacute; y qu&eacute; demuestra sobre la conectividad de la sede?</span>
@@ -2344,7 +2359,7 @@
                 </div>
                 <div style="margin-top:16px">
                   <button id="btnGuardarLab3" type="button" onclick="guardarLab3Hibrida()"
-                    style="background:#2e7d32;color:#fff;border:none;padding:12px 22px;border-radius:10px;font-weight:700;cursor:pointer">
+                    class="btn-save-response">
                     &#128190; Guardar respuestas del laboratorio
                   </button>
                 </div>

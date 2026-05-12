@@ -305,7 +305,18 @@
 
   function getActivitiesForGuide(fileName) {
     const resolvedFileName = resolvePageFile(fileName);
-    return Array.isArray(catalog[resolvedFileName]) ? catalog[resolvedFileName].map((item) => ({ ...item })) : [];
+    if (Array.isArray(catalog[resolvedFileName])) {
+      return catalog[resolvedFileName].map((item) => ({ ...item }));
+    }
+    // Fallback: guías registradas con ActivityStandard.registerGuide()
+    const std = window.ActivityStandard;
+    if (std && typeof std.getActivitiesForGuide === "function") {
+      return std.getActivitiesForGuide(resolvedFileName).map((act) => ({
+        id: act.id,
+        label: act.label,
+      }));
+    }
+    return [];
   }
 
   function resolvePageFile(fileName) {
