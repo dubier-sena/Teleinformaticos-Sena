@@ -103,6 +103,8 @@
     const ficha = readMetaField(meta, "Ficha");
     const grupo = readMetaField(meta, "Grupo");
     const institucion = readMetaField(meta, "Institucion") || readMetaField(meta, "Institución");
+    const fechaEntrega = readMetaField(meta, "Fecha de entrega") || readMetaField(meta, "Guardado") || readMetaField(meta, "Fecha") || "—";
+    const activityName = readMetaField(meta, "Actividad") || title;
 
     return `<!doctype html>
 <html lang="es">
@@ -117,20 +119,25 @@
     <strong>Servicio Nacional de Aprendizaje - SENA</strong>
   </div>
   <table class="institutional-header" width="100%" align="left" style="width:100%;margin-left:0;margin-right:0;">
-    <tr><td class="label">Programa</td><td>${escapeHtml(metadata.program)}</td></tr>
-    <tr><td class="label">Fecha de elaboracion</td><td>${escapeHtml(today)}</td></tr>
-    <tr><td class="label">Guia / actividad</td><td>${escapeHtml(`${metadata.guideName} - ${title}`)}</td></tr>
+    <tr><td class="label">Programa de formacion</td><td>${escapeHtml(metadata.program)}</td></tr>
     <tr><td class="label">Competencia</td><td>${escapeHtml(metadata.competencia)}</td></tr>
     <tr><td class="label">Resultado de Aprendizaje</td><td>${escapeHtml(metadata.resultado)}</td></tr>
     <tr><td class="label">Nombre completo del aprendiz</td><td>${escapeHtml(learnerName)}</td></tr>
+    <tr><td class="label">Institucion educativa</td><td>${escapeHtml(institucion)}</td></tr>
     <tr><td class="label">Numero de ficha</td><td>${escapeHtml(ficha)}</td></tr>
-    <tr><td class="label">Grado</td><td>${escapeHtml(grupo)}</td></tr>
-    <tr><td class="label">Institucion</td><td>${escapeHtml(institucion)}</td></tr>
+    <tr><td class="label">Grado / grupo</td><td>${escapeHtml(grupo)}</td></tr>
+    <tr><td class="label">Nombre de la guia</td><td>${escapeHtml(metadata.guideName)}</td></tr>
+    <tr><td class="label">Nombre de la actividad</td><td>${escapeHtml(activityName)}</td></tr>
+    <tr><td class="label">Fecha de entrega</td><td>${escapeHtml(fechaEntrega)}</td></tr>
+    <tr><td class="label">Fecha de elaboracion del documento</td><td>${escapeHtml(today)}</td></tr>
   </table>
   <h1>${escapeHtml(title)}</h1>
   <p><strong>${escapeHtml(subtitle)}</strong></p>
-  <p>${escapeHtml(meta)}</p>
   ${bodyHtml}
+  <h2>Observaciones</h2>
+  <table class="institutional-header" width="100%" style="width:100%;margin-top:0;">
+    <tr><td style="height:80pt;vertical-align:top;"> </td></tr>
+  </table>
 </body>
 </html>`;
   }

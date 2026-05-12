@@ -282,10 +282,10 @@
                   <textarea rows="4" data-store="reflexion_experiencia" data-track placeholder="Describe brevemente una experiencia propia o cercana."></textarea>
                 </label>
                 <div id="bitacora311DeadlineControls" style="margin-top:16px"></div>
-                <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+                <div class="act-btn-group">
                   <button type="button" id="btnGuardarBitacora"
                     onclick="guardarBitacora311()"
-                    style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                    class="btn-save-response">
                     &#128190; Guardar respuestas
                   </button>
                   <button class="btn-export-word" type="button" onclick="openBitacoraExportModal()">
@@ -328,10 +328,10 @@
                   <textarea rows="3" data-store="socializacion_pregunta_central" data-track placeholder="Formula la idea central que sustentaran en la plenaria."></textarea>
                 </label>
                 <div id="socializacion312DeadlineControls" style="margin-top:16px"></div>
-                <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+                <div class="act-btn-group">
                   <button type="button" id="btnGuardarSocializacion"
                     onclick="guardarSocializacion312()"
-                    style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit">
+                    class="btn-save-response">
                     &#128190; Guardar respuestas
                   </button>
                 </div>
@@ -350,10 +350,10 @@
                 </ul>
               </div>
               <div id="quizHerramientasStatus" class="info-box blue" style="margin-top:12px;display:none"></div>
-              <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+              <div class="act-btn-group">
                 <a id="quizHerramientasActionLink" class="btn-drive"
                   href="#"
-                  style="min-height:unset;border-radius:10px;padding:10px 20px;font-size:0.95rem;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none">
+                  style="text-decoration:none">
                   &#128218; Presentar quiz aleatorio
                 </a>
               </div>
@@ -1122,7 +1122,6 @@
             <p>Accede a la carpeta de Drive de tu grupo para subir tus evidencias y entregas de la Gu&iacute;a 6. La carpeta se determina autom&aacute;ticamente seg&uacute;n tu ficha activa.</p>
             <div class="drive-action-group">
               <button type="button" class="btn-drive" onclick="openDriveFolder()">&#128193; Abrir carpeta de Drive</button>
-              <button type="button" class="btn-qr" onclick="showDriveFolderQR()">&#128241; Ver QR para m&oacute;vil</button>
             </div>
             <div class="drive-helper-note">La carpeta se define autom&aacute;ticamente seg&uacute;n la ficha activa. Si no tienes sesi&oacute;n iniciada, regresa al portal y selecciona tu grupo.</div>
           </div>

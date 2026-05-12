@@ -1406,6 +1406,7 @@ const IMAGE_KEYS_REDES = ["bloqueA-imagen", "bloqueB-imagen", "social-mapa", "ip
   "lab3-ping-bloques-image",
   "lab3-ping-wifi-image",
   "lab3-ipconfig-wifi-image",
+  "lab3-ipconfig-cableado-image",
 ].forEach((key) => IMAGE_KEYS_REDES.push(key));
 
 function buildCloudSnapshotRedes() {
@@ -2773,6 +2774,7 @@ window.subirEntregaFinalLab2 = function () {
 
 const LAB3_ANALYSIS_KEYS = [
   "lab3-topologia",
+  "lab3-arbol",
   "lab3-ping-bloques",
   "lab3-ping-wifi",
   "lab3-ipconfig-wifi",
@@ -2818,6 +2820,16 @@ const LAB3_EVIDENCE_SLOTS = {
     previewId: "lab3IpconfigWifiPreview",
     imageId: "lab3IpconfigWifiImg",
     nameId: "lab3IpconfigWifiNombre",
+  },
+  ipconfigCableado: {
+    title: "ipconfig equipo cableado",
+    fileToken: "ipconfig_cableado",
+    baseKey: "lab3-ipconfig-cableado",
+    inputId: "lab3IpconfigCableadoInput",
+    buttonId: "btnSubirLab3IpconfigCableado",
+    previewId: "lab3IpconfigCableadoPreview",
+    imageId: "lab3IpconfigCableadoImg",
+    nameId: "lab3IpconfigCableadoNombre",
   },
 };
 
@@ -2974,7 +2986,7 @@ window.subirPantallazoLab3 = async function (slotKey, input) {
 window.guardarLab3Hibrida = async function () {
   const emptyAnalysis = LAB3_ANALYSIS_KEYS.filter((key) => !String(state[key] || "").trim());
   if (emptyAnalysis.length > 0) {
-    alert("Responde las 4 preguntas del analisis antes de guardar.");
+    alert("Responde las 5 preguntas del analisis antes de guardar.");
     return;
   }
 
@@ -2982,7 +2994,7 @@ window.guardarLab3Hibrida = async function () {
     (slotKey) => !state[getLab3EvidenceStateKey(slotKey, "url")]
   );
   if (pendingEvidence.length > 0) {
-    alert("Debes subir los 4 pantallazos del laboratorio antes de guardar.");
+    alert("Debes subir los 5 pantallazos del laboratorio antes de guardar.");
     return;
   }
 

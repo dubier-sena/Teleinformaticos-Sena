@@ -396,6 +396,9 @@
     if (redesActivities.length) return redesActivities;
     if (getGuide6Config(fileName)) return GUIDE6_ACTIVITIES;
     if (getGuide1Config(fileName)) return GUIDE1_ACTIVITIES;
+    // Consultar el registro centralizado (guías nuevas que usan activity_standard.js)
+    const stdActivities = window.ActivityStandard?.getActivitiesForGuide(fileName);
+    if (stdActivities && stdActivities.length) return stdActivities;
     return [];
   }
 
@@ -676,6 +679,9 @@
   function getGuideActivityStateKey(fileName) {
     const g6 = GUIDE6_FILES[fileName];
     if (g6) return g6.stateKey;
+    // Consultar el registro centralizado (guías nuevas que usan activity_standard.js)
+    const stdKey = window.ActivityStandard?.getStateKeyForGuide(fileName);
+    if (stdKey) return stdKey;
     return auth.GUIDE_PROGRESS_CONFIG?.[fileName]?.stateKey || "";
   }
   function buildMatriz322Table(rows) {
@@ -726,6 +732,51 @@
   function openMatriz322Modal(summary) {
     const payload = window.adminActivities.buildMatriz322ModalPayload(summary, { escapeHtml, formatDate });
     openGuide2ResponsesModal(payload);
+  }
+
+  async function handleViewFichaCaso(button) {
+    const usernameKey = button.getAttribute("data-ficha-caso-user") || "";
+    const user = allUsers.find((u) => u.usernameKey === usernameKey);
+    if (!user) {
+      setFeedback("No fue posible identificar el aprendiz.", "error");
+      return;
+    }
+    const snapshot = fichaCasoSummaries[usernameKey];
+    if (!snapshot?.state) {
+      openGuide2ResponsesModal({
+        title: "Actividad 4 - Ficha de caso",
+        subtitle: `${user.fullName || user.username} | Grupo ${user.grupo}`,
+        meta: `Aprendiz: ${user.fullName} | Grupo: ${user.grupo} | Ficha: ${user.ficha}`,
+        bodyHtml: '<div class="response-status">Este aprendiz aún no ha guardado respuestas.</div>',
+      });
+      return;
+    }
+    const state = snapshot.state;
+    const fichaEmoji = snapshot.fichaEmoji || "";
+    const fichaNombre = snapshot.fichaNombre || ("Ficha " + ((snapshot.fichaIdx != null ? snapshot.fichaIdx + 1 : "—")));
+    const savedAt = snapshot.savedAt || formatDate(snapshot.updatedAt) || "—";
+    const numPregs = Object.keys(state).filter((k) => /^preg_\d+$/.test(k)).length || 4;
+    const letras = ["A", "B", "C", "D", "E", "F"];
+    const qRows = Array.from({ length: numPregs }, (_, i) => {
+      const preg = String(state["preg_" + i] || "").trim();
+      const resp = String(state["resp_" + i] || "").trim();
+      return `
+        <div class="matriz322-note-card">
+          <strong class="matriz322-note-title">${letras[i] || (i + 1)}. ${escapeHtml(preg)}</strong>
+          <div class="matriz322-note-copy">${resp ? escapeHtml(resp).replace(/\r?\n/g, "<br>") : "<em>Sin respuesta registrada.</em>"}</div>
+        </div>`;
+    }).join("");
+    openGuide2ResponsesModal({
+      title: "Actividad 4 - Ficha de caso",
+      subtitle: `${escapeHtml(user.fullName || user.username)} | Grupo ${escapeHtml(user.grupo)}`,
+      meta: `Aprendiz: ${user.fullName} | Grupo: ${user.grupo} | Ficha: ${user.ficha} | Ficha asignada: ${fichaEmoji} ${fichaNombre} | Guardado: ${savedAt}`,
+      bodyHtml: `
+        <div class="matriz322-note-card" style="margin-bottom:12px;">
+          <strong class="matriz322-note-title">Ficha asignada</strong>
+          <div class="matriz322-note-copy">${fichaEmoji ? fichaEmoji + " " : ""}${escapeHtml(fichaNombre)}</div>
+        </div>
+        ${qRows}`,
+    });
   }
 
   function renderAnswerValue(value) {

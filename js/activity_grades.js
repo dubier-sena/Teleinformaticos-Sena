@@ -121,6 +121,27 @@
     localStorage.setItem(key, JSON.stringify(all));
   }
 
+  function setStudentActivityObservation(usernameKey, guideFamily, activityId, obs) {
+    var key = getGradesKey(usernameKey);
+    if (!key) return;
+    var all = readJson(localStorage.getItem(key), {});
+    if (!all[guideFamily]) all[guideFamily] = {};
+    var obsKey = activityId + ":obs";
+    if (!obs || !String(obs).trim()) {
+      delete all[guideFamily][obsKey];
+    } else {
+      all[guideFamily][obsKey] = String(obs).trim().slice(0, 500);
+    }
+    localStorage.setItem(key, JSON.stringify(all));
+  }
+
+  function getStudentActivityObservation(usernameKey, guideFamily, activityId) {
+    var key = getGradesKey(usernameKey);
+    if (!key) return "";
+    var all = readJson(localStorage.getItem(key), {});
+    return String((all[guideFamily] || {})[activityId + ":obs"] || "");
+  }
+
   // ── Lectura para el aprendiz activo ─────────────────────────────────────────
   function getMyGrades(guideFamily) {
     var auth = window.portalAuth;
@@ -186,6 +207,10 @@
         badgeClass = "activity-grade-badge activity-grade-badge--desaprobado";
         icon = "❌";
         text = "No aprobado";
+      } else if (grade === "P") {
+        badgeClass = "activity-grade-badge activity-grade-badge--pendiente";
+        icon = "⏳";
+        text = "Pendiente de evaluación";
       } else {
         badgeClass = "activity-grade-badge activity-grade-badge--sin-nota";
         icon = "📋";
@@ -207,6 +232,8 @@
     getStudentGrades: getStudentGrades,
     setStudentGrades: setStudentGrades,
     setStudentActivityGrade: setStudentActivityGrade,
+    setStudentActivityObservation: setStudentActivityObservation,
+    getStudentActivityObservation: getStudentActivityObservation,
     getMyGrades: getMyGrades,
     renderGradeBadges: renderGradeBadges,
   };
