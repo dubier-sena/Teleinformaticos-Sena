@@ -965,7 +965,7 @@
   }
 
   function createSecureButton(context) {
-    var button = createElement("button", "btn-drive btn-apps-script", "Entregar por formulario seguro");
+    var button = createElement("button", "btn-drive btn-apps-script", "📁 Entregar a Drive");
     button.type = "button";
     button.setAttribute("data-apps-script-trigger", "true");
     button.addEventListener("click", function () {
