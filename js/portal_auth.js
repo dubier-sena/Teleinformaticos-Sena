@@ -17,12 +17,12 @@
     "grupo-10a-guia-02-herramientas-informaticas-digitales.html":
       "Guía 2 - Operar herramientas informáticas y digitales | Grupo 10A",
     "grupo-10a-guia-03-planificar-informacion.html":
-      "Guía 3 - Planificar la información | Grupo 10A",
+      "Guía 3 - Implementar componentes | Grupo 10A",
     "grupo-10b-guia-01-induccion.html": "Guía 1 - Inducción | Grupo 10B",
     "grupo-10b-guia-02-herramientas-informaticas-digitales.html":
       "Guía 2 - Operar herramientas informáticas y digitales | Grupo 10B",
     "grupo-10b-guia-03-planificar-informacion.html":
-      "Guía 3 - Planificar la información | Grupo 10B",
+      "Guía 3 - Implementar componentes | Grupo 10B",
     "grupo-11a-guia-05-herramientas-informaticas-digitales.html":
       "Guía 5 - Operar herramientas informáticas y digitales | Grupo 11A",
     "grupo-11a-guia-06-planificar-informacion.html":
