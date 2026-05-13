@@ -86,56 +86,81 @@ const budgetItems = [
 
 const evidenceRows = [
   {
-    phase: "Ejecucion",
+    phase: "Planeacion",
     project:
       "Implementar procesos para el mantenimiento fisico, logico y herramientas tecnologicas de los equipos de computo y redes de datos.",
-    learning: "Act. 3.2.2 - Mapa conceptual de herramientas tecnologicas (RAP 02).",
+    learning: "Act. 3.2.2 - Mapa conceptual: herramientas tecnologicas y documentacion tecnica.",
     evidence:
-      "CONOCIMIENTO: mapa conceptual digital integrador sobre herramientas tecnologicas para soporte tecnico, presentado oralmente al grupo.",
+      "CONOCIMIENTO: Mapa conceptual integrador sobre herramientas y documentacion tecnica.",
     criteria:
       "Diferencia herramientas TIC, tipos de software y servicios segun necesidades de la organizacion.",
     methods: "Tecnica: Exposicion oral. Instrumento: Lista de chequeo IE-01.",
   },
   {
-    phase: "Ejecucion",
+    phase: "Planeacion",
     project:
       "Implementar procesos para el mantenimiento fisico, logico y herramientas tecnologicas de los equipos de computo y redes de datos.",
-    learning: "Act. 3.3.1 - Instalacion y configuracion de herramientas tecnologicas (RAP 02).",
+    learning: "Act. 3.3.1 y 3.3.2 - Instalacion y diagnostico de herramientas tecnologicas (RAP 02).",
     evidence:
-      "DESEMPENO: checklist de instalacion diligenciado con evidencias y capturas de pantalla.",
+      "DESEMPENO: Checklist de instalacion y diagnostico diligenciado con evidencias (capturas de pantalla).",
     criteria:
-      "Instala sistemas operativos, aplicaciones, herramientas ofimaticas y software utilitario de acuerdo con manuales y necesidades de la organizacion.",
+      "Instala aplicaciones, herramientas ofimaticas y software utilitario de acuerdo con necesidades de la organizacion, recursos tecnologicos y manuales. Utiliza motores de busqueda considerando requerimientos tecnicos de los dispositivos.",
     methods: "Tecnica: Observacion directa. Instrumento: Lista de chequeo IE-02.",
   },
   {
-    phase: "Ejecucion",
+    phase: "Planeacion",
     project:
       "Implementar procesos para el mantenimiento fisico, logico y herramientas tecnologicas de los equipos de computo y redes de datos.",
-    learning: "Act. 3.4.1 - Presupuesto de implementacion tecnologica para MiPyme (RAP 02).",
+    learning: "Act. 3.3.3 - Documento tecnico de gestion de informacion con protocolos aplicados.",
     evidence:
-      "PRODUCTO: documento PDF con presupuesto detallado, tabla de elementos con precios de sitios oficiales, justificacion tecnica por herramienta y conclusion.",
+      "PRODUCTO: Documento tecnico (.docx o .pdf) con inventario de activos, registros de procedimientos, resultados del diagnostico, estructura de carpetas y conclusiones.",
     criteria:
-      "Adapta herramientas TIC de acuerdo con las necesidades de la entidad y utiliza motores de busqueda considerando requerimientos tecnicos de los dispositivos.",
+      "Mantiene la documentacion segun manual tecnico. Aplica controles de gestion de informacion segun protocolos establecidos.",
     methods: "Tecnica: Valoracion de producto. Instrumento: Lista de chequeo IE-03.",
+  },
+  {
+    phase: "Planeacion",
+    project:
+      "Implementar procesos para el mantenimiento fisico, logico y herramientas tecnologicas de los equipos de computo y redes de datos.",
+    learning: "Act. 3.4.1 - Presupuesto de implementacion tecnologica para una MiPyme (RAP 02).",
+    evidence:
+      "PRODUCTO: Presupuesto de implementacion tecnologica en PDF con tabla de costos, licencias, cantidades, totales y justificacion tecnica.",
+    criteria:
+      "Adapta herramientas TIC de acuerdo con las necesidades de la entidad. Propone procesos de mejora en el manejo de la informacion con base en la normativa vigente.",
+    methods: "Tecnica: Valoracion de producto. Instrumento: Lista de chequeo IE-04.",
+  },
+  {
+    phase: "Planeacion",
+    project:
+      "Implementar procesos para el mantenimiento fisico, logico y herramientas tecnologicas de los equipos de computo y redes de datos.",
+    learning: "Act. 3.4.2 - Presentacion y sustentacion oral del proceso tecnico realizado.",
+    evidence:
+      "DESEMPENO: Sustentacion oral de 8 a 12 minutos sobre instalacion, diagnostico, documentacion y decisiones tecnicas.",
+    criteria:
+      "Explica el procedimiento tecnico aplicado, sustenta decisiones y propone mejoras de acuerdo con necesidades de la organizacion.",
+    methods: "Tecnica: Exposicion oral. Instrumento: Lista de chequeo IE-05.",
   },
 ];
 
 const glossaryTerms = [
-  ["Activo de informacion", "Dato, software, equipo o proceso que tiene valor para la organizacion y debe ser protegido y gestionado."],
-  ["Checklist", "Lista estructurada que permite verificar paso a paso si un procedimiento tecnico se ejecuto correctamente."],
-  ["Compatibilidad", "Capacidad de un software o hardware para funcionar con otros sistemas o configuraciones sin generar conflictos."],
-  ["Convencion de nombres", "Reglas para nombrar archivos y carpetas de manera coherente, identificando contenido, version y fecha."],
-  ["Documentacion tecnica", "Registros escritos que describen caracteristicas, procedimientos y estado de equipos y sistemas tecnologicos."],
-  ["Ficha tecnica", "Documento con caracteristicas tecnicas de un equipo o software: marca, modelo, serie, configuracion y fechas."],
-  ["Gestion de la informacion", "Procesos que garantizan la recoleccion, organizacion, almacenamiento, recuperacion y proteccion de la informacion."],
-  ["Hardening", "Proceso de configuracion para reducir vulnerabilidades y mejorar la seguridad de un sistema."],
-  ["Herramienta de diagnostico", "Software que analiza hardware y software para detectar fallas y generar reportes tecnicos."],
-  ["Inventario tecnologico", "Registro actualizado de activos de hardware y software con caracteristicas, ubicacion, estado y responsable."],
-  ["Licenciamiento", "Acuerdo legal que autoriza el uso de un software bajo determinadas condiciones."],
-  ["Manual tecnico", "Documento oficial con procedimientos para instalar, configurar, operar y mantener un equipo o software."],
-  ["Protocolo", "Conjunto de reglas o procedimientos establecidos para realizar una tarea de manera estandarizada."],
-  ["Software utilitario", "Programas de apoyo para compresion, seguridad, diagnostico, copias de seguridad y tareas del sistema."],
-  ["Versionado", "Sistema para controlar y registrar cambios realizados a un documento o archivo."],
+  ["Activo de informacion", "Dato, documento, software, equipo, servicio o proceso que tiene valor para la organizacion y que debe identificarse, protegerse, respaldarse y mantenerse actualizado."],
+  ["Checklist", "Instrumento estructurado que permite comprobar si un procedimiento tecnico se ejecuto correctamente, registrando cumplimiento, evidencias y observaciones."],
+  ["Compatibilidad", "Condicion que permite que un software, dispositivo o controlador funcione con el sistema operativo, la arquitectura del equipo y los recursos disponibles sin generar conflictos."],
+  ["Configuracion basica", "Ajustes iniciales que se aplican a una herramienta tecnologica despues de instalarla para dejarla lista para su uso: idioma, permisos, seguridad, actualizaciones y preferencias."],
+  ["Convencion de nombres", "Reglas para nombrar archivos y carpetas de manera uniforme, incorporando datos como actividad, aprendiz, ficha, fecha y version para facilitar la busqueda y trazabilidad."],
+  ["Diagnostico tecnico", "Proceso de revision de hardware, software, sistema operativo, almacenamiento y red para identificar el estado del equipo, posibles fallas y recomendaciones de mejora."],
+  ["Documentacion tecnica", "Conjunto de registros, fichas, manuales, evidencias y reportes que describen caracteristicas, procedimientos, configuraciones, resultados y responsables de una intervencion tecnologica."],
+  ["Evidencia digital", "Archivo, captura de pantalla, reporte, documento o registro que demuestra la ejecucion de una actividad tecnica y permite su verificacion por parte del instructor."],
+  ["Ficha tecnica", "Documento que resume los datos principales de un equipo o software: marca, modelo, serial, sistema operativo, componentes, ubicacion, responsable, estado y observaciones."],
+  ["Gestion de la informacion", "Conjunto de acciones para recolectar, organizar, proteger, almacenar, recuperar y respaldar informacion tecnica de forma segura y ordenada."],
+  ["Herramienta de diagnostico", "Software o utilidad del sistema que permite consultar informacion del equipo, validar funcionamiento, detectar fallas y generar reportes tecnicos; por ejemplo, CPU-Z, CrystalDiskInfo, msinfo32, ipconfig o ping."],
+  ["Inventario tecnologico", "Registro actualizado de los activos de hardware y software de una organizacion, incluyendo caracteristicas, version, licencia, estado, ubicacion y responsable."],
+  ["Licenciamiento de software", "Condiciones legales que autorizan el uso de una aplicacion. Puede ser software libre, codigo abierto, gratuito, propietario, educativo, por suscripcion o de prueba."],
+  ["Manual tecnico", "Documento del fabricante o de la organizacion que orienta la instalacion, configuracion, uso, mantenimiento, solucion de fallas y requisitos de una herramienta tecnologica."],
+  ["Proteccion en tiempo real", "Funcion de seguridad que monitorea continuamente archivos, procesos y descargas para detectar y bloquear amenazas mientras el equipo esta en uso."],
+  ["Registro de procedimiento", "Descripcion ordenada de los pasos realizados durante una instalacion, configuracion o diagnostico, incluyendo fecha, responsable, herramienta usada, resultado, evidencias y observaciones."],
+  ["Software utilitario", "Aplicacion de apoyo que facilita tareas especificas del sistema, como compresion de archivos, diagnostico, seguridad, copias de respaldo, limpieza o administracion de recursos."],
+  ["Versionado", "Metodo para identificar y controlar cambios en documentos o archivos mediante numeros, fechas o codigos de version, conservando trazabilidad y evitando confusiones."],
 ];
 
 const supportBundle = [
@@ -151,14 +176,6 @@ const supportBundle = [
 
 const supportDocuments = [
   {
-    title: "Formato de inscripcion de proyecto",
-    file: "GFPI-F-165FormatoSeleccionModificacionAlternativaEtapaProductiva.xlsx",
-    type: "XLSX local",
-    description:
-      "Formato complementario para diligenciar la inscripcion o seleccion solicitada por el instructor.",
-    cta: "Abrir formato",
-  },
-  {
     title: "Conceptos de seguridad",
     file: "Conceptos Seguridad.pdf",
     type: "PDF local",
@@ -170,28 +187,7 @@ const supportDocuments = [
     file: "ITE7_Chp13 - Seguridad.pdf",
     type: "PDF local",
     description:
-      "Lectura de apoyo sobre seguridad, amenazas y buenas practicas relacionadas con el soporte tecnico.",
-  },
-  {
-    title: "Guia Accountability y Habeas Data",
-    file: "Guia-Accountability - Habeas Data.pdf",
-    type: "PDF local",
-    description:
-      "Documento de consulta para tratamiento responsable de datos y cumplimiento de buenas practicas.",
-  },
-  {
-    title: "Ley 1581 de 2012",
-    file: "Ley_1581_de_2012.pdf",
-    type: "PDF local",
-    description:
-      "Normativa colombiana de referencia para proteccion de datos personales.",
-  },
-  {
-    title: "Presentacion Ley 1581 de 2012",
-    file: "PRESENTACION LEY 1581 de 2012.pptx",
-    type: "PPTX local",
-    description:
-      "Apoyo visual para socializar la proteccion de datos y su aplicacion en contextos reales.",
+      "Lectura de apoyo sobre seguridad, amenazas y buenas practicas segun IT Essentials (Cisco).",
   },
   {
     title: "NTC-ISO-IEC 27001:2013",
@@ -227,20 +223,6 @@ const supportDocuments = [
     type: "PDF local",
     description:
       "Consejos concretos sobre respaldo, recuperacion y eliminacion segura de archivos.",
-  },
-  {
-    title: "MinTIC - Gestion y clasificacion de incidentes",
-    file: "MinTIC_Guia_Gestion_Clasificacion_Incidentes.pdf",
-    type: "PDF local",
-    description:
-      "Apoyo para reconocer incidentes, documentarlos y responderlos desde el rol tecnico.",
-  },
-  {
-    title: "MinEducacion - Politica de seguridad digital",
-    file: "MinEducacion_Guia_Implementacion_Politica_Seguridad_Digital.pdf",
-    type: "PDF local",
-    description:
-      "Orientacion institucional sobre seguridad digital y medidas de implementacion.",
   },
   {
     title: "Cisco Networking Academy - IT Essentials",
@@ -400,15 +382,41 @@ const GUIDE3_DRIVE_ACTIVITY_TARGETS = [
     },
   },
   {
+    activityNumber: "3.3.3",
+    panelKey: "guide3-3-3-3",
+    deadlineActivityId: "documento333",
+    description:
+      "Sube a Drive el documento tecnico de gestion de informacion con inventario, procedimientos, diagnostico y conclusiones.",
+    note: "Entrega sugerida: documento en formato .docx o .pdf con todos los componentes solicitados.",
+    activityContext: {
+      activityTitle: "Documento tecnico de gestion de informacion",
+      fileNamePrefix: "DocTecnico_Guia3",
+      learnerNameMode: "full",
+    },
+  },
+  {
     activityNumber: "3.4.1",
     panelKey: "guide3-3-4-1",
     deadlineActivityId: "presupuesto341",
     description:
       "Sube a Drive el presupuesto en PDF junto con el archivo editable y la justificacion tecnica final.",
-    note: "Entrega sugerida: presupuesto PDF, archivo fuente y conclusion tecnica.",
+    note: "Entrega sugerida: presupuesto PDF, archivo fuente (.ods o .xlsx) y conclusion tecnica.",
     activityContext: {
       activityTitle: "Presupuesto de implementacion tecnologica",
       fileNamePrefix: "Presupuesto_Guia3",
+      learnerNameMode: "full",
+    },
+  },
+  {
+    activityNumber: "3.4.2",
+    panelKey: "guide3-3-4-2",
+    deadlineActivityId: "sustentacion342",
+    description:
+      "Sube a Drive la presentacion utilizada en la sustentacion oral y cualquier evidencia adicional del proceso.",
+    note: "Entrega sugerida: presentacion en PDF o Impress (.odp) de maximo 10 diapositivas.",
+    activityContext: {
+      activityTitle: "Presentacion y sustentacion oral",
+      fileNamePrefix: "Sustentacion_Guia3",
       learnerNameMode: "full",
     },
   },
