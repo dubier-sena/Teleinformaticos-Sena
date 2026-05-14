@@ -729,6 +729,100 @@
     return fsGet(COL_GUIDE_STATE, docId);
   }
 
+  function readSnapshotPayload(doc) {
+    if (!doc || typeof doc !== "object") return null;
+    if (typeof doc.snapshotJson === "string") {
+      try { return JSON.parse(doc.snapshotJson); } catch (e) {}
+    }
+    return doc;
+  }
+
+  function plainObject(value) {
+    return value && typeof value === "object" && !Array.isArray(value);
+  }
+
+  function snapshotState(snapshot) {
+    if (plainObject(snapshot && snapshot.state)) return snapshot.state;
+    if (plainObject(snapshot && snapshot.data)) return snapshot.data;
+    return {};
+  }
+
+  function hasMeaningfulGuideValue(value) {
+    if (value == null) return false;
+    if (typeof value === "string") return value.trim().length > 0;
+    if (typeof value === "number") return !isNaN(value);
+    if (typeof value === "boolean") return value === true;
+    if (Array.isArray(value)) return value.length > 0;
+    if (plainObject(value)) return Object.keys(value).length > 0;
+    return true;
+  }
+
+  function mergeGuideValue(previous, incoming) {
+    if (plainObject(previous) && plainObject(incoming)) {
+      var nested = Object.assign({}, previous);
+      Object.keys(incoming).forEach(function (key) {
+        nested[key] = mergeGuideValue(previous[key], incoming[key]);
+      });
+      return nested;
+    }
+
+    if (!hasMeaningfulGuideValue(incoming) && hasMeaningfulGuideValue(previous)) {
+      return previous;
+    }
+
+    return incoming;
+  }
+
+  function mergeGuideState(previousState, incomingState, allowMissingLockRemoval) {
+    var previous = plainObject(previousState) ? previousState : {};
+    var incoming = plainObject(incomingState) ? incomingState : {};
+    var next = Object.assign({}, previous);
+
+    if (allowMissingLockRemoval) {
+      Object.keys(previous).forEach(function (key) {
+        if (/-locked$/.test(key) && !Object.prototype.hasOwnProperty.call(incoming, key)) {
+          delete next[key];
+        }
+      });
+    }
+
+    Object.keys(incoming).forEach(function (key) {
+      if (/-locked$/.test(key)) {
+        if (incoming[key]) next[key] = true;
+        else delete next[key];
+        return;
+      }
+      next[key] = mergeGuideValue(previous[key], incoming[key]);
+    });
+
+    return next;
+  }
+
+  function mergeGuideDataSnapshotForSave(existingSnapshot, incomingSnapshot) {
+    var existing = plainObject(existingSnapshot) ? existingSnapshot : {};
+    var incoming = plainObject(incomingSnapshot) ? incomingSnapshot : {};
+    var updatedBy = String(incoming.updatedBy || "").toLowerCase();
+    var allowMissingLockRemoval = Boolean(
+      incoming.reabierta ||
+      incoming.permiteEdicion ||
+      /admin|unlock|habilit|reabiert/.test(updatedBy)
+    );
+    var mergedState = mergeGuideState(snapshotState(existing), snapshotState(incoming), allowMissingLockRemoval);
+    var merged = Object.assign({}, existing, incoming);
+
+    if (Object.prototype.hasOwnProperty.call(incoming, "data") || Object.prototype.hasOwnProperty.call(existing, "data")) {
+      merged.data = mergedState;
+    }
+    if (Object.prototype.hasOwnProperty.call(incoming, "state") || Object.prototype.hasOwnProperty.call(existing, "state")) {
+      merged.state = mergedState;
+    }
+    if (!Object.prototype.hasOwnProperty.call(merged, "state") && !Object.prototype.hasOwnProperty.call(merged, "data")) {
+      merged.state = mergedState;
+    }
+
+    return merged;
+  }
+
   async function saveGuideStateDoc(prefix, kind, scopeKey, fileName, payload) {
     var docId = guideStateDocId(prefix, scopeKey, fileName);
     var fallbackSaved = await fsPatch(COL_PROGRESS, docId, Object.assign({
@@ -743,20 +837,21 @@
     if (!scopeKey || !fileName) return null;
     var doc = await readGuideStateDoc(GUIDE_DATA_FALLBACK_PREFIX, scopeKey, fileName);
     if (!doc) return null;
-    if (typeof doc.snapshotJson === "string") {
-      try { return JSON.parse(doc.snapshotJson); } catch (e) {}
-    }
-    return doc;
+    return readSnapshotPayload(doc);
   }
 
   async function cloudSaveGuideData(scopeKey, fileName, snapshot) {
     if (!scopeKey || !fileName) return false;
-    var updatedAt = (snapshot && snapshot.updatedAt) || new Date().toISOString();
+    var existing = readSnapshotPayload(await readGuideStateDoc(GUIDE_DATA_FALLBACK_PREFIX, scopeKey, fileName));
+    var safeSnapshot = existing
+      ? mergeGuideDataSnapshotForSave(existing, snapshot || {})
+      : (snapshot || {});
+    var updatedAt = (safeSnapshot && safeSnapshot.updatedAt) || new Date().toISOString();
     var payload = {
       scopeKey: scopeKey,
       fileName: fileName,
       updatedAt: updatedAt,
-      snapshotJson: JSON.stringify(snapshot || {}),
+      snapshotJson: JSON.stringify(safeSnapshot || {}),
     };
     return saveGuideStateDoc(
       GUIDE_DATA_FALLBACK_PREFIX,
@@ -1265,6 +1360,7 @@
     cloudSaveCalendar: cloudSaveCalendar,
     cloudGetGuideData: cloudGetGuideData,
     cloudSaveGuideData: cloudSaveGuideData,
+    mergeGuideDataSnapshotForSave: mergeGuideDataSnapshotForSave,
     cloudGetGuideUiState: cloudGetGuideUiState,
     cloudSaveGuideUiState: cloudSaveGuideUiState,
     cloudListTutoringBookings:        cloudListTutoringBookings,
