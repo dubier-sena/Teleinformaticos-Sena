@@ -242,6 +242,10 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
                 <h2>Reportes disponibles</h2>
                 <p>Reportes calculados desde localStorage y progreso existente.</p>
               </div>
+              <div class="admin-row-actions">
+                <button class="admin-button admin-button--ghost" type="button" id="reports-download-csv">CSV</button>
+                <button class="admin-button admin-button--ghost" type="button" id="reports-download-json">JSON</button>
+              </div>
             </div>
             <div id="reports-list"></div>
           </article>
@@ -262,7 +266,7 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
           <div class="admin-panel__header">
             <div>
               <h2>Configuracion y seguridad</h2>
-              <p>Estado de integraciones, sesion administrativa y riesgos pendientes.</p>
+              <p>Estado de integraciones y sesion administrativa.</p>
             </div>
           </div>
           <div id="settings-panel"></div>
