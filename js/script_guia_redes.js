@@ -19,7 +19,14 @@ const CLOUD_SYNC_DELAY_REDES = 1200;
 const CLOUD_REFRESH_REDES = 60000;
 
 const DRIVE_FOLDERS_REDES = {};
-const DRIVE_LINK_REFLEXION_311 = ""; // TODO: reemplazar con el enlace del Drive
+const DRIVE_LINKS_REDES = {
+  "redes:reflexion-3.1.1": "",
+  ...(window.REDES_DRIVE_LINKS || {}),
+};
+function getConfiguredDriveLinkRedes(key) {
+  return String(DRIVE_LINKS_REDES[key] || "").trim();
+}
+const DRIVE_LINK_REFLEXION_311 = getConfiguredDriveLinkRedes("redes:reflexion-3.1.1");
 
 // ---------------------------------------------------------------------------
 // Evidence rows

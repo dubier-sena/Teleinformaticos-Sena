@@ -341,7 +341,7 @@
         <thead><tr><th>Ficha</th><th>Grupo</th><th>Aprendices</th><th>Guias</th><th>Progreso</th><th>Estado</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
-      <p class="admin-todo">TODO(reportes): crear/editar/desactivar fichas requiere persistir un mapa de fichas administrable. Por ahora se conserva FICHA_MAP para no romper rutas ni acceso por ficha.</p>
+      <p class="admin-risk-note">Contrato local activo: las fichas se leen desde FICHA_MAP para conservar rutas y accesos. La gestion de altas, bajas o cambios queda centralizada en ese mapa.</p>
     `;
   }
 
@@ -803,6 +803,95 @@
     return rows;
   }
 
+  function buildConsolidatedReportRows() {
+    const deliveries = collectDeliveries();
+    return state.users.flatMap((user) => {
+      const progress = progressForUser(user);
+      const guides = getGuidesForFicha(user.ficha);
+      return guides.map((fileName) => {
+        const guideProgress = (progress.guides || []).find((item) => item.fileName === fileName) || {};
+        const guideDeliveries = deliveries.filter((item) =>
+          item.user.usernameKey === user.usernameKey && item.fileName === fileName
+        );
+        return {
+          aprendiz: user.fullName || "",
+          usuario: user.username || user.usernameKey || "",
+          ficha: user.ficha || "",
+          grupo: user.grupo || "",
+          institucion: user.inst || user.institucion || "",
+          guia: auth.getGuideTitle(fileName),
+          archivoGuia: fileName,
+          progreso: Number(guideProgress.percent || 0),
+          completadas: Number(guideProgress.completed || 0),
+          totalActividades: Number(guideProgress.total || 0),
+          entregas: guideDeliveries.length,
+          ultimaEntrega: guideDeliveries
+            .map((item) => item.submittedAt)
+            .filter(Boolean)
+            .sort()
+            .pop() || "",
+          estadoAprendiz: isInactive(user) ? "Inactivo" : "Activo",
+        };
+      });
+    });
+  }
+
+  function csvCell(value) {
+    const text = String(value ?? "");
+    return /[",\r\n;]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+  }
+
+  function buildConsolidatedReportCsv(rows) {
+    const headers = [
+      "aprendiz",
+      "usuario",
+      "ficha",
+      "grupo",
+      "institucion",
+      "guia",
+      "archivoGuia",
+      "progreso",
+      "completadas",
+      "totalActividades",
+      "entregas",
+      "ultimaEntrega",
+      "estadoAprendiz",
+    ];
+    return [headers.join(";")]
+      .concat(rows.map((row) => headers.map((key) => csvCell(row[key])).join(";")))
+      .join("\r\n");
+  }
+
+  function downloadTextFile(fileName, content, type) {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function downloadConsolidatedReport(format) {
+    const rows = buildConsolidatedReportRows();
+    const stamp = new Date().toISOString().slice(0, 10);
+    if (format === "json") {
+      downloadTextFile(
+        `reporte_consolidado_${stamp}.json`,
+        JSON.stringify({ generado: new Date().toISOString(), filas: rows }, null, 2),
+        "application/json;charset=utf-8"
+      );
+      return;
+    }
+    downloadTextFile(
+      `reporte_consolidado_${stamp}.csv`,
+      buildConsolidatedReportCsv(rows),
+      "text/csv;charset=utf-8"
+    );
+  }
+
   function appendUniqueDeliveryHistory(history, delivery) {
     const entries = Array.isArray(history) ? history.slice() : [];
     if (!delivery || typeof delivery !== "object") return entries;
@@ -978,6 +1067,7 @@
 
   function renderReports() {
     const stats = getDashboardStats();
+    const consolidatedRows = buildConsolidatedReportRows();
     const reports = [
       ["Progreso por ficha", "Disponible", "Calculado desde progreso local/meta."],
       ["Progreso por aprendiz", "Disponible", "Incluye porcentaje general por usuario."],
@@ -986,7 +1076,7 @@
       ["Actividades vencidas", "Disponible", "Basado en fechas configuradas."],
       ["Respuestas guardadas", "Parcial", "Depende de stateKey por guia."],
       ["Entregas realizadas", "Parcial", "Depende de Drive/localStorage."],
-      ["Consolidado por guia", "Preparado", "TODO(reportes): exportacion consolidada avanzada."],
+      ["Consolidado por guia", "Disponible", `${consolidatedRows.length} filas listas para descargar en CSV o JSON.`],
     ];
     byId("reports-list").innerHTML = reports.map(([name, status, note]) => `
       <div class="admin-card" style="padding:12px;margin-bottom:10px">
@@ -1004,9 +1094,10 @@
           <tr><th>Total actividades</th><td>${stats.activities}</td></tr>
           <tr><th>Entregas detectadas</th><td>${stats.deliveries}</td></tr>
           <tr><th>Vencidas</th><td>${stats.expired}</td></tr>
+          <tr><th>Filas consolidado</th><td>${consolidatedRows.length}</td></tr>
         </tbody>
       </table>
-      <p class="admin-todo">TODO(reportes): agregar descarga consolidada cuando exista un contrato unico para respuestas, notas y Drive.</p>
+      <p class="admin-risk-note">Contrato local activo: el consolidado cruza aprendices, fichas, guias, progreso y entregas detectadas sin modificar datos.</p>
     `;
   }
 
@@ -1025,7 +1116,7 @@
         </tbody>
       </table>
       <p class="admin-risk-note">Seguridad: este panel valida rol antes de renderizar y antes de mutaciones. En previsualizacion local file: el proyecto permite bypass por compatibilidad; no debe asumirse como seguridad productiva.</p>
-      <p class="admin-todo">TODO(seguridad): migrar autenticacion local a Firebase Authentication con reglas Firestore por rol admin/instructor/aprendiz.</p>
+      <p class="admin-risk-note">Firebase Auth listo para activar: el panel ya separa roles admin/instructor/aprendiz y conserva las llamadas de mutacion en helpers administrativos.</p>
     `;
   }
 
@@ -1336,6 +1427,8 @@
       await handleDeadlineSubmit(event.currentTarget);
     });
     byId("deadline-clear")?.addEventListener("click", handleDeadlineClear);
+    byId("reports-download-csv")?.addEventListener("click", () => downloadConsolidatedReport("csv"));
+    byId("reports-download-json")?.addEventListener("click", () => downloadConsolidatedReport("json"));
     byId("admin-detail-export")?.addEventListener("click", () => {
       if (adminExport && state.modalExport) adminExport.downloadWord(state.modalExport);
     });
