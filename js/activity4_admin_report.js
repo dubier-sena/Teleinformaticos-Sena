@@ -285,7 +285,7 @@
             ["Campo", "Respuesta del aprendiz"],
             [
               ["Nombre completo", state["actividad4:nombre_completo"]],
-              ["Numero de ficha", state["actividad4:ficha"]],
+              ["Número de ficha", state["actividad4:ficha"]],
             ]
           )}
         </article>

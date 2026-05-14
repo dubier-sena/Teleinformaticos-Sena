@@ -1026,10 +1026,10 @@ const guide5ExportConfig = {
     description: "Exporta la tabla diligenciada de extensiones de archivo a un documento Word.",
   },
   systems: {
-    title: "Actividad 2: Requerimientos minimos de sistemas operativos",
+    title: "Actividad 2: Requerimientos mínimos de sistemas operativos",
     filePrefix: "Actividad2_Requerimientos_Minimos",
     description:
-      "Exporta la matriz diligenciada de requerimientos minimos de sistemas operativos a un documento Word.",
+      "Exporta la matriz diligenciada de requerimientos mínimos de sistemas operativos a un documento Word.",
   },
 };
 
@@ -1111,12 +1111,12 @@ function escapeWordValue(value) {
 }
 
 const GUIDE5_WORD_METADATA = {
-  guideName: "Guia 5 - Operar Herramientas Informaticas y Digitales",
-  program: "Sistemas Teleinformaticos",
+  guideName: "Guía 5 - Operar herramientas informáticas y digitales",
+  program: "Sistemas Teleinformáticos",
   competencia:
-    "Operar herramientas informaticas y digitales de acuerdo con protocolos y manuales tecnicos.",
+    "Operar herramientas informáticas y digitales de acuerdo con protocolos y manuales técnicos.",
   resultado:
-    "RAP 1 - Caracterizar herramientas informaticas segun el contexto tecnologico de la organizacion.",
+    "RAP 1 - Caracterizar herramientas informáticas según el contexto tecnológico de la organización.",
 };
 
 function getSenaLogoUrl() {
@@ -1135,14 +1135,15 @@ function buildInstitutionalWordHeader(title, learnerName, selection, today) {
   </div>
   <table class="institutional-header" width="100%" align="left" style="width:100%;margin-left:0;margin-right:0;">
     <tr><td class="label">Programa</td><td>${escapeWordValue(GUIDE5_WORD_METADATA.program)}</td></tr>
-    <tr><td class="label">Fecha de elaboracion</td><td>${escapeWordValue(today)}</td></tr>
-    <tr><td class="label">Guia / actividad</td><td>${escapeWordValue(`${GUIDE5_WORD_METADATA.guideName} - ${title}`)}</td></tr>
+    <tr><td class="label">Fecha de elaboración</td><td>${escapeWordValue(today)}</td></tr>
+    <tr><td class="label">Guía</td><td>${escapeWordValue(GUIDE5_WORD_METADATA.guideName)}</td></tr>
+    <tr><td class="label">Actividad</td><td>${escapeWordValue(title)}</td></tr>
     <tr><td class="label">Competencia</td><td>${escapeWordValue(GUIDE5_WORD_METADATA.competencia)}</td></tr>
-    <tr><td class="label">Resultado de Aprendizaje</td><td>${escapeWordValue(GUIDE5_WORD_METADATA.resultado)}</td></tr>
+    <tr><td class="label">Resultado de aprendizaje</td><td>${escapeWordValue(GUIDE5_WORD_METADATA.resultado)}</td></tr>
     <tr><td class="label">Nombre completo del aprendiz</td><td>${escapeWordValue(learnerName)}</td></tr>
-    <tr><td class="label">Numero de ficha</td><td>${escapeWordValue(selection.ficha)}</td></tr>
+    <tr><td class="label">Número de ficha</td><td>${escapeWordValue(selection.ficha)}</td></tr>
     <tr><td class="label">Grado</td><td>${escapeWordValue(selection.grupo)}</td></tr>
-    <tr><td class="label">Institucion</td><td>${escapeWordValue(selection.inst)}</td></tr>
+    <tr><td class="label">Institución</td><td>${escapeWordValue(selection.inst)}</td></tr>
   </table>`;
 }
 
@@ -1208,9 +1209,9 @@ function buildGuide5ExportDocument(mode, learnerName) {
       `
       : `
         <tr>
-          <th>Extension</th>
+          <th>Extensión</th>
           <th>Programa / referencia</th>
-          <th>Descripcion o tipo de archivo</th>
+          <th>Descripción o tipo de archivo</th>
         </tr>
       `;
   const tableRows =
@@ -1268,7 +1269,7 @@ function buildGuide5ExportDocument(mode, learnerName) {
     </tbody>
   </table>
 
-  <p class="note">Documento exportado desde la guia interactiva. Verifica y complementa la informacion antes de la entrega final.</p>
+  <p class="note">Documento exportado desde la guía interactiva. Verifica y complementa la información antes de la entrega final.</p>
 </body>
 </html>`;
 }

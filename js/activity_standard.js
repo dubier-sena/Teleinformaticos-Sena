@@ -34,7 +34,7 @@
    *   guideNumber: string,     // "3"
    *   guideTitle:  string,     // "Guia 3 - Planificar la informacion"
    *   stateKey:    string,     // clave base de localStorage, p.ej. "guia_interactiva_10a_guia3"
-   *   program:     string,     // "Sistemas Teleinformaticos"
+   *   program:     string,     // "Sistemas Teleinformáticos"
    *   competencia: string,
    *   resultado:   string,
    *   activities:  ActivityDef[]
@@ -399,14 +399,15 @@
       "</div>",
       '<table class="institutional-header" width="100%" style="width:100%;border-collapse:collapse;margin:0 0 12pt;">',
       '<tr><td class="label">Programa</td><td>' + escWord(opts.program) + "</td></tr>",
-      '<tr><td class="label">Fecha de elaboracion</td><td>' + escWord(opts.fecha) + "</td></tr>",
-      '<tr><td class="label">Guia / actividad</td><td>' + escWord(opts.guideTitle + " - " + opts.title) + "</td></tr>",
+      '<tr><td class="label">Fecha de elaboración</td><td>' + escWord(opts.fecha) + "</td></tr>",
+      '<tr><td class="label">Guía</td><td>' + escWord(opts.guideTitle) + "</td></tr>",
+      '<tr><td class="label">Actividad</td><td>' + escWord(opts.title) + "</td></tr>",
       '<tr><td class="label">Competencia</td><td>' + escWord(opts.competencia) + "</td></tr>",
-      '<tr><td class="label">Resultado de Aprendizaje</td><td>' + escWord(opts.resultado) + "</td></tr>",
+      '<tr><td class="label">Resultado de aprendizaje</td><td>' + escWord(opts.resultado) + "</td></tr>",
       '<tr><td class="label">Nombre completo del aprendiz</td><td>' + escWord(opts.learnerName) + "</td></tr>",
-      '<tr><td class="label">Numero de ficha</td><td>' + escWord(opts.ficha) + "</td></tr>",
+      '<tr><td class="label">Número de ficha</td><td>' + escWord(opts.ficha) + "</td></tr>",
       '<tr><td class="label">Grado</td><td>' + escWord(opts.grupo) + "</td></tr>",
-      '<tr><td class="label">Institucion</td><td>' + escWord(opts.inst) + "</td></tr>",
+      '<tr><td class="label">Institución</td><td>' + escWord(opts.inst) + "</td></tr>",
       "</table>",
     ].join("\n");
   }
@@ -470,7 +471,7 @@
       "  " + _buildInstitutionalHeader(opts),
       "  " + contextHtml,
       "  " + sectionsHtml,
-      '  <div class="footer">Documento generado el ' + escWord(opts.fecha) + " - SENA CIAS Puerto Boyaca</div>",
+      '  <div class="footer">Documento generado el ' + escWord(opts.fecha) + " - SENA CIAS Puerto Boyacá.</div>",
       "</body>",
       "</html>",
     ].join("\n");
@@ -510,7 +511,7 @@
       "    Ingresa tu nombre completo para continuar.",
       "  </p>",
       '  <p id="act-std-word-ficha-warn" style="display:none;color:#e65100;font-size:13px;margin:6px 0 0">',
-      "    No se encontro la ficha activa. Selecciona tu grupo en el portal antes de exportar.",
+      "    No se encontró la ficha activa. Selecciona tu grupo en el portal antes de exportar.",
       "  </p>",
       '  <p id="act-std-word-preview" style="margin:10px 0 0;font-size:12px;color:#555"></p>',
       '  <div style="margin-top:18px;display:flex;gap:10px;justify-content:flex-end">',

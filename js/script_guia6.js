@@ -1045,12 +1045,12 @@ function escapeWordValue(value) {
 }
 
 const GUIDE6_WORD_METADATA = {
-  guideName: "Guia 6 - Planificar la informacion",
-  program: "Sistemas Teleinformaticos",
+  guideName: "Guía 6 - Planificar la información",
+  program: "Sistemas Teleinformáticos",
   competencia:
-    "220501121 - Operar herramientas informaticas y digitales de acuerdo con protocolos y manuales tecnicos.",
+    "220501121 - Operar herramientas informáticas y digitales de acuerdo con protocolos y manuales técnicos.",
   resultado:
-    "RAP 02 - Implementar componentes de las herramientas tecnologicas segun procedimientos de la organizacion.",
+    "RAP 02 - Implementar componentes de las herramientas tecnológicas según procedimientos de la organización.",
 };
 
 function getSenaLogoUrl() {
@@ -1069,14 +1069,15 @@ function buildInstitutionalWordHeader(title, learnerName, selection, fecha) {
   </div>
   <table class="institutional-header" width="100%" align="left" style="width:100%;margin-left:0;margin-right:0;">
     <tr><td class="label">Programa</td><td>${escapeWordValue(GUIDE6_WORD_METADATA.program)}</td></tr>
-    <tr><td class="label">Fecha de elaboracion</td><td>${escapeWordValue(fecha)}</td></tr>
-    <tr><td class="label">Guia / actividad</td><td>${escapeWordValue(`${GUIDE6_WORD_METADATA.guideName} - ${title}`)}</td></tr>
+    <tr><td class="label">Fecha de elaboración</td><td>${escapeWordValue(fecha)}</td></tr>
+    <tr><td class="label">Guía</td><td>${escapeWordValue(GUIDE6_WORD_METADATA.guideName)}</td></tr>
+    <tr><td class="label">Actividad</td><td>${escapeWordValue(title)}</td></tr>
     <tr><td class="label">Competencia</td><td>${escapeWordValue(GUIDE6_WORD_METADATA.competencia)}</td></tr>
-    <tr><td class="label">Resultado de Aprendizaje</td><td>${escapeWordValue(GUIDE6_WORD_METADATA.resultado)}</td></tr>
+    <tr><td class="label">Resultado de aprendizaje</td><td>${escapeWordValue(GUIDE6_WORD_METADATA.resultado)}</td></tr>
     <tr><td class="label">Nombre completo del aprendiz</td><td>${escapeWordValue(learnerName)}</td></tr>
-    <tr><td class="label">Numero de ficha</td><td>${escapeWordValue(selection.ficha)}</td></tr>
+    <tr><td class="label">Número de ficha</td><td>${escapeWordValue(selection.ficha)}</td></tr>
     <tr><td class="label">Grado</td><td>${escapeWordValue(selection.grupo)}</td></tr>
-    <tr><td class="label">Institucion</td><td>${escapeWordValue(selection.inst)}</td></tr>
+    <tr><td class="label">Institución</td><td>${escapeWordValue(selection.inst)}</td></tr>
   </table>`;
 }
 
@@ -1172,19 +1173,19 @@ function doExportBitacoraWord() {
 
   const answers = [
     {
-      title: "1. Que herramientas informaticas deberia instalar el tecnico y por que",
+      title: "1. Qué herramientas informáticas debería instalar el técnico y por qué",
       value: fieldValue("reflexion_herramientas", "(Sin respuesta)"),
     },
     {
-      title: "2. Que informacion deberia registrar en una ficha tecnica o inventario",
+      title: "2. Qué información debería registrar en una ficha técnica o inventario",
       value: fieldValue("reflexion_registro", "(Sin respuesta)"),
     },
     {
-      title: "3. Consecuencias de no documentar procesos tecnologicos",
+      title: "3. Consecuencias de no documentar procesos tecnológicos",
       value: fieldValue("reflexion_consecuencias", "(Sin respuesta)"),
     },
     {
-      title: "4. Situacion parecida vivida en casa, colegio o empresa",
+      title: "4. Situación parecida vivida en casa, colegio o empresa",
       value: fieldValue("reflexion_experiencia", "(Sin respuesta)"),
     },
   ];
@@ -1204,7 +1205,7 @@ function doExportBitacoraWord() {
       xmlns="http://www.w3.org/TR/REC-html40">
 <head>
 <meta charset="utf-8">
-<title>Bitacora de analisis - ${escapeWordText(nombre)}</title>
+<title>Bitácora de análisis - ${escapeWordText(nombre)}</title>
 <!--[if gte mso 9]><xml>
 <w:WordDocument>
   <w:View>Print</w:View>
@@ -1241,24 +1242,24 @@ function doExportBitacoraWord() {
     <p>${escapeWordValue(GUIDE6_WORD_METADATA.guideName)}</p>
   </div>
 
-  <h1>Bitacora individual de analisis</h1>
+  <h1>Bitácora individual de análisis</h1>
   <p class="lead">
-    Actividad 3.1.1 de reflexion inicial. Documento exportado desde la guia interactiva para registrar
-    el analisis del caso empresarial y las respuestas del aprendiz.
+    Actividad 3.1.1 de reflexión inicial. Documento exportado desde la guía interactiva para registrar
+    el análisis del caso empresarial y las respuestas del aprendiz.
   </p>
 
-  ${buildInstitutionalWordHeader("Actividad 3.1.1 - Bitacora individual de analisis", nombre, selection, fecha)}
+  ${buildInstitutionalWordHeader("Actividad 3.1.1 - Bitácora individual de análisis", nombre, selection, fecha)}
 
   <div class="case-box">
     <strong>Escenario de trabajo:</strong><br>
-    La empresa TechBoyCa S.A.S. adquiere 20 equipos de computo nuevos para el area administrativa.
-    El tecnico debe dejarlos listos en dos dias habiles, pero encuentra ausencia de suite ofimatica,
-    antivirus desactualizado y falta de herramientas configuradas para la operacion diaria.
+    La empresa TechBoyCa S.A.S. adquiere 20 equipos de cómputo nuevos para el área administrativa.
+    El técnico debe dejarlos listos en dos días hábiles, pero encuentra ausencia de suite ofimática,
+    antivirus desactualizado y falta de herramientas configuradas para la operación diaria.
   </div>
 
   ${sections}
 
-  <div class="footer">Documento generado el ${escapeWordText(fecha)} - SENA CIAS Puerto Boyaca</div>
+  <div class="footer">Documento generado el ${escapeWordText(fecha)} - SENA CIAS Puerto Boyacá.</div>
 </body>
 </html>`;
 

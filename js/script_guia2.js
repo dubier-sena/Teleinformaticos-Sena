@@ -243,9 +243,9 @@ const evidenceRows = [
     learning:
       "Actividades 5, 6, 7, 8 y 9: extensiones de archivo, requerimientos de sistemas operativos, suite ofim?tica, herramientas colaborativas y ciberseguridad b?sica.",
     evidence:
-      "Tabla de extensiones organizada con riesgos identificados, matriz de requerimientos m?nimos con fuentes, productos ofim?ticos funcionales, pr?ctica colaborativa y gu?a b?sica de ciberseguridad con lista de verificaci?n.",
+      "Tabla de extensiones organizada con riesgos identificados, matriz de requerimientos mínimos con fuentes, productos ofimáticos funcionales, práctica colaborativa y guía básica de ciberseguridad con lista de verificación.",
     criteria:
-      "Clasifica extensiones de archivo e identifica riesgos de seguridad. Determina requerimientos m?nimos de sistemas operativos. Elabora productos ofim?ticos funcionales, usa herramientas colaborativas y orienta en buenas pr?cticas de ciberseguridad adaptadas al contexto local.",
+      "Clasifica extensiones de archivo e identifica riesgos de seguridad. Determina requerimientos mínimos de sistemas operativos. Elabora productos ofimáticos funcionales, usa herramientas colaborativas y orienta en buenas prácticas de ciberseguridad adaptadas al contexto local.",
     methods:
       "T?cnica: desempe?o en taller pr?ctico y revisi?n documental. Instrumento: Lista de chequeo LC-02.",
   },
@@ -276,7 +276,7 @@ const glossaryTerms = [
   ["M?quina virtual (VM)", "Entorno de computador simulado dentro del equipo real, que permite instalar y probar sistemas operativos sin afectar el sistema anfitri?n."],
   ["VirtualBox", "Programa gratuito de Oracle para crear y administrar m?quinas virtuales en Windows, Linux y macOS."],
   ["Hipervisor", "Software que administra las m?quinas virtuales y controla el acceso a recursos f?sicos como CPU, RAM y disco del equipo anfitri?n."],
-  ["Requisitos m?nimos de SO", "Caracter?sticas b?sicas de hardware necesarias para que un sistema operativo funcione: procesador, RAM y espacio en disco."],
+  ["Requisitos mínimos de SO", "Características básicas de hardware necesarias para que un sistema operativo funcione: procesador, RAM y espacio en disco."],
   ["Extensi?n de archivo", "Parte final del nombre de un archivo que indica su tipo y el programa con que se abre. Ejemplos: .pdf, .docx, .xlsx, .exe y .png."],
   ["Controlador (Driver)", "Software que permite al sistema operativo comunicarse correctamente con un dispositivo de hardware."],
   ["Suite ofim?tica", "Conjunto de programas para tareas de oficina: procesador de texto, hoja de c?lculo y presentaciones. Ejemplos: Microsoft Office, LibreOffice y Google Workspace."],
@@ -3095,8 +3095,8 @@ function openSistemasWordDelivery() {
   delivery.openDeliveryModal({
     guideLabel: "Guia 2",
     activityNumber: "3.3.2",
-    activityTitle: "Actividad 6: Requerimientos minimos de sistemas operativos",
-    activityLabel: "Actividad 6 - Requerimientos minimos de sistemas operativos",
+    activityTitle: "Actividad 6: Requerimientos mínimos de sistemas operativos",
+    activityLabel: "Actividad 6 - Requerimientos mínimos de sistemas operativos",
     allowedExtensions: [".doc", ".docx"],
     fileNamePrefix: "Actividad_6_Requerimientos_SO",
     learnerNameMode: "full",
@@ -3642,10 +3642,10 @@ const guide5ExportConfig = {
     description: "Exporta la tabla diligenciada de extensiones de archivo a un documento Word.",
   },
   systems: {
-    title: "Actividad 6: Requerimientos m?nimos de sistemas operativos",
+    title: "Actividad 6: Requerimientos mínimos de sistemas operativos",
     filePrefix: "Guia2_Actividad6_Requerimientos_Minimos",
     description:
-      "Exporta la matriz diligenciada de requerimientos m?nimos de sistemas operativos a un documento Word.",
+      "Exporta la matriz diligenciada de requerimientos mínimos de sistemas operativos a un documento Word.",
   },
   collaborative: {
     title: "Actividad 8: Herramientas colaborativas y comunicacion digital",
@@ -3801,12 +3801,12 @@ function escapeWordValue(value) {
 }
 
 const GUIDE2_WORD_METADATA = {
-  guideName: "Guia 2 - Operar Herramientas Informaticas y Digitales",
-  program: "Sistemas Teleinformaticos",
+  guideName: "Guía 2 - Operar herramientas informáticas y digitales",
+  program: "Sistemas Teleinformáticos",
   competencia:
-    "220501121 - Operar herramientas informaticas y digitales de acuerdo con protocolos y manuales tecnicos.",
+    "220501121 - Operar herramientas informáticas y digitales de acuerdo con protocolos y manuales técnicos.",
   resultado:
-    "RAP 01 - Caracterizar herramientas informaticas segun el contexto tecnologico de la organizacion.",
+    "RAP 01 - Caracterizar herramientas informáticas según el contexto tecnológico de la organización.",
 };
 
 function getSenaLogoUrl() {
@@ -3825,14 +3825,15 @@ function buildInstitutionalWordHeader(title, learnerName, selection, today) {
   </div>
   <table class="institutional-header" width="100%" align="left" style="width:100%;margin-left:0;margin-right:0;">
     <tr><td class="label">Programa</td><td>${escapeWordValue(GUIDE2_WORD_METADATA.program)}</td></tr>
-    <tr><td class="label">Fecha de elaboracion</td><td>${escapeWordValue(today)}</td></tr>
-    <tr><td class="label">Guia / actividad</td><td>${escapeWordValue(`${GUIDE2_WORD_METADATA.guideName} - ${title}`)}</td></tr>
+    <tr><td class="label">Fecha de elaboración</td><td>${escapeWordValue(today)}</td></tr>
+    <tr><td class="label">Guía</td><td>${escapeWordValue(GUIDE2_WORD_METADATA.guideName)}</td></tr>
+    <tr><td class="label">Actividad</td><td>${escapeWordValue(title)}</td></tr>
     <tr><td class="label">Competencia</td><td>${escapeWordValue(GUIDE2_WORD_METADATA.competencia)}</td></tr>
-    <tr><td class="label">Resultado de Aprendizaje</td><td>${escapeWordValue(GUIDE2_WORD_METADATA.resultado)}</td></tr>
+    <tr><td class="label">Resultado de aprendizaje</td><td>${escapeWordValue(GUIDE2_WORD_METADATA.resultado)}</td></tr>
     <tr><td class="label">Nombre completo del aprendiz</td><td>${escapeWordValue(learnerName)}</td></tr>
-    <tr><td class="label">Numero de ficha</td><td>${escapeWordValue(selection.ficha)}</td></tr>
+    <tr><td class="label">Número de ficha</td><td>${escapeWordValue(selection.ficha)}</td></tr>
     <tr><td class="label">Grado</td><td>${escapeWordValue(selection.grupo)}</td></tr>
-    <tr><td class="label">Institucion</td><td>${escapeWordValue(selection.inst)}</td></tr>
+    <tr><td class="label">Institución</td><td>${escapeWordValue(selection.inst)}</td></tr>
   </table>`;
 }
 
@@ -4593,6 +4594,4 @@ window.guia2WordSearch = {
 // Expone una función para forzar sincronización inmediata con Firestore
 // (usada por guardarFormulario() al finalizar la Actividad 4)
 window.guia2SyncNow = () => syncCloudState(true);
-
-
 

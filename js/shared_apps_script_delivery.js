@@ -608,7 +608,7 @@
     nameField.appendChild(nameInput);
 
     var fichaField = createElement("label", "shared-apps-script-field");
-    var fichaLabel = createElement("span", "", "Numero de ficha");
+    var fichaLabel = createElement("span", "", "Número de ficha");
     var fichaInput = document.createElement("input");
     fichaInput.type = "text";
     fichaInput.inputMode = "numeric";

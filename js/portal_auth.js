@@ -1638,6 +1638,160 @@ window.portalAuth = {
 
 (function () {
   const auth = window.portalAuth;
+  if (!auth || auth.__adminStatusGuardInstalled) return;
+  auth.__adminStatusGuardInstalled = true;
+
+  const originalLoginStudent = auth.loginStudent;
+  auth.loginStudent = async function loginStudentWithInactiveGuard(data) {
+    const result = await originalLoginStudent.call(auth, data);
+    if (!result?.ok) return result;
+    const usernameKey = result.user?.usernameKey || result.session?.usernameKey;
+    const user = auth.getStudentByUsernameKey?.(usernameKey) || result.user;
+    if (user && (user.active === false || String(user.status || "").toLowerCase() === "inactive")) {
+      await auth.logout?.();
+      return {
+        ok: false,
+        message: "Tu usuario esta inactivo. Solicita al instructor que habilite el acceso.",
+      };
+    }
+    return result;
+  };
+})();
+
+(function () {
+  const auth = window.portalAuth;
+  if (!auth) return;
+
+  const USERS_KEY = "sena_portal_users_v1";
+  const PASSWORD_MIN_LENGTH = 6;
+
+  function normalizeText(value) {
+    return String(value || "").trim();
+  }
+
+  function normalizeFicha(value) {
+    return normalizeText(value).replace(/\D+/g, "");
+  }
+
+  function normalizeUsername(value) {
+    return normalizeText(value).toLowerCase();
+  }
+
+  function readUsers() {
+    try {
+      const users = JSON.parse(localStorage.getItem(USERS_KEY) || "[]");
+      return Array.isArray(users) ? users : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function writeUsers(users) {
+    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  }
+
+  function validateAdminMutation() {
+    if (!auth.isAdminSession || !auth.isAdminSession()) {
+      return { ok: false, message: "Solo el administrador puede modificar aprendices." };
+    }
+    return { ok: true };
+  }
+
+  async function adminCreateStudent(data) {
+    const access = validateAdminMutation();
+    if (!access.ok) return access;
+
+    const fullName = normalizeText(data?.fullName);
+    const username = normalizeText(data?.username);
+    const usernameKey = normalizeUsername(username);
+    const ficha = normalizeFicha(data?.ficha);
+    const password = normalizeText(data?.password);
+
+    if (fullName.length < 6) {
+      return { ok: false, message: "Ingresa el nombre completo del aprendiz." };
+    }
+    if (!/^[a-z0-9._-]{3,30}$/i.test(username)) {
+      return { ok: false, message: "El usuario debe tener entre 3 y 30 caracteres validos." };
+    }
+    if (usernameKey === normalizeUsername(auth.ADMIN_PROFILE?.usernameKey || "dubier")) {
+      return { ok: false, message: "Ese usuario esta reservado para el administrador." };
+    }
+    if (!auth.getFichaInfo || !auth.getFichaInfo(ficha)) {
+      return { ok: false, message: "La ficha seleccionada no existe en el portal." };
+    }
+    if (password.length < PASSWORD_MIN_LENGTH) {
+      return { ok: false, message: "La contrasena debe tener al menos 6 caracteres." };
+    }
+
+    const users = readUsers();
+    if (users.some((item) => normalizeUsername(item.usernameKey || item.username) === usernameKey)) {
+      return { ok: false, message: "Ese nombre de usuario ya existe." };
+    }
+
+    const selection = auth.getSelectionForFicha(ficha);
+    const user = {
+      id: `student_${Date.now()}`,
+      fullName,
+      username,
+      usernameKey,
+      ficha,
+      inst: selection.inst,
+      grado: selection.grado,
+      grupo: selection.grupo,
+      passwordHash: await auth.hashSecret(password),
+      active: true,
+      status: "active",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    users.push(user);
+    writeUsers(users);
+    return { ok: true, user };
+  }
+
+  function updateStudentStatus(usernameKey, active) {
+    const access = validateAdminMutation();
+    if (!access.ok) return access;
+
+    const cleanKey = normalizeUsername(usernameKey);
+    const users = readUsers();
+    const index = users.findIndex((item) => normalizeUsername(item.usernameKey || item.username) === cleanKey);
+    if (index === -1) {
+      return { ok: false, message: "No se encontro el aprendiz solicitado." };
+    }
+
+    users[index] = {
+      ...users[index],
+      active: Boolean(active),
+      status: active ? "active" : "inactive",
+      updatedAt: new Date().toISOString(),
+    };
+    writeUsers(users);
+    return { ok: true, user: users[index] };
+  }
+
+  auth.adminCreateStudent = adminCreateStudent;
+  auth.updateStudentStatus = updateStudentStatus;
+
+  const originalLoginStudentForStatus = auth.loginStudent;
+  auth.loginStudent = async function loginStudentWithStatusCheck(data) {
+    const result = await originalLoginStudentForStatus.call(auth, data);
+    if (!result?.ok) return result;
+    const user = result.user || auth.getStudentByUsernameKey?.(result.user?.usernameKey);
+    if (user && (user.active === false || String(user.status || "").toLowerCase() === "inactive")) {
+      auth.logout?.();
+      return {
+        ok: false,
+        message: "Tu usuario esta inactivo. Solicita al instructor que habilite el acceso.",
+      };
+    }
+    return result;
+  };
+})();
+
+(function () {
+  const auth = window.portalAuth;
   if (!auth) {
     return;
   }
@@ -3006,4 +3160,26 @@ window.portalAuth = {
       migrateLocalDataIfNeeded().catch(() => {});
     }, 120);
   }
+})();
+
+(function () {
+  const auth = window.portalAuth;
+  if (!auth || auth.__adminStatusGuardInstalledFinal) return;
+  auth.__adminStatusGuardInstalledFinal = true;
+
+  const originalLoginStudent = auth.loginStudent;
+  auth.loginStudent = async function loginStudentWithInactiveGuard(data) {
+    const result = await originalLoginStudent.call(auth, data);
+    if (!result?.ok) return result;
+    const usernameKey = result.user?.usernameKey || result.session?.usernameKey;
+    const user = auth.getStudentByUsernameKey?.(usernameKey) || result.user;
+    if (user && (user.active === false || String(user.status || "").toLowerCase() === "inactive")) {
+      await auth.logout?.();
+      return {
+        ok: false,
+        message: "Tu usuario esta inactivo. Solicita al instructor que habilite el acceso.",
+      };
+    }
+    return result;
+  };
 })();

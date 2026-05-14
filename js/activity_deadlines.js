@@ -21,7 +21,7 @@
       { id: "analisis313", label: "Actividad 3 - Bitacora de analisis" },
       { id: "matriz322", label: "Actividad 3.2.2 - Matriz de Diagnostico Digital" },
       { id: "extensiones331", label: "Actividad 5 - Extensiones de archivo" },
-      { id: "sistemas332", label: "Actividad 6 - Requerimientos minimos" },
+      { id: "sistemas332", label: "Actividad 6 - Requerimientos mínimos" },
       { id: "fichaCaso", label: "Actividad 4 - Ficha de caso" },
       { id: "suite333", label: "Actividad 7 - Suite ofimatica en accion" },
       { id: "colaborativas334", label: "Actividad 8 - Herramientas colaborativas" },
@@ -31,7 +31,7 @@
       { id: "analisis313", label: "Actividad 3 - Bitacora de analisis" },
       { id: "matriz322", label: "Actividad 3.2.2 - Matriz de Diagnostico Digital" },
       { id: "extensiones331", label: "Actividad 5 - Extensiones de archivo" },
-      { id: "sistemas332", label: "Actividad 6 - Requerimientos minimos" },
+      { id: "sistemas332", label: "Actividad 6 - Requerimientos mínimos" },
       { id: "fichaCaso", label: "Actividad 4 - Ficha de caso" },
       { id: "suite333", label: "Actividad 7 - Suite ofimatica en accion" },
       { id: "colaborativas334", label: "Actividad 8 - Herramientas colaborativas" },
@@ -679,4 +679,3 @@
   loadPolicies(false).catch(function () {
   });
 })();
-
