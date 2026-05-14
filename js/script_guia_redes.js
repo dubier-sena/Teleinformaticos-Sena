@@ -208,7 +208,7 @@ function escapeHtml(str) {
 
 const REDES_WORD_METADATA = {
   guideName: "Guia 2 - Redes RAP01",
-  program: "Sistemas Teleinformaticos",
+  program: "Sistemas Teleinformáticos",
   competencia:
     "280102129 - Evaluar red de acuerdo con procedimientos de telecomunicaciones y normativa tecnica.",
   resultado:
@@ -249,14 +249,15 @@ function buildInstitutionalWordHeaderRedes(title, fullName, identity, fecha) {
 </div>
 <table class="institutional-header" width="100%" align="left" style="width:100%;margin-left:0;margin-right:0;">
   <tr><td class="label">Programa</td><td>${escapeHtml(REDES_WORD_METADATA.program)}</td></tr>
-  <tr><td class="label">Fecha de elaboracion</td><td>${escapeHtml(fecha)}</td></tr>
-  <tr><td class="label">Guia / actividad</td><td>${escapeHtml(`${REDES_WORD_METADATA.guideName} - ${title}`)}</td></tr>
+  <tr><td class="label">Fecha de elaboración</td><td>${escapeHtml(fecha)}</td></tr>
+  <tr><td class="label">Guía</td><td>${escapeHtml(REDES_WORD_METADATA.guideName)}</td></tr>
+  <tr><td class="label">Actividad</td><td>${escapeHtml(title)}</td></tr>
   <tr><td class="label">Competencia</td><td>${escapeHtml(REDES_WORD_METADATA.competencia)}</td></tr>
-  <tr><td class="label">Resultado de Aprendizaje</td><td>${escapeHtml(REDES_WORD_METADATA.resultado)}</td></tr>
+  <tr><td class="label">Resultado de aprendizaje</td><td>${escapeHtml(REDES_WORD_METADATA.resultado)}</td></tr>
   <tr><td class="label">Nombre completo del aprendiz</td><td>${escapeHtml(fullName || "Aprendiz")}</td></tr>
-  <tr><td class="label">Numero de ficha</td><td>${escapeHtml(getWordIdentityValueRedes(identity, "ficha") || "0000")}</td></tr>
+  <tr><td class="label">Número de ficha</td><td>${escapeHtml(getWordIdentityValueRedes(identity, "ficha") || "0000")}</td></tr>
   <tr><td class="label">Grado</td><td>${escapeHtml(getWordIdentityValueRedes(identity, "grupo"))}</td></tr>
-  <tr><td class="label">Institucion</td><td>${escapeHtml(getWordIdentityValueRedes(identity, "inst"))}</td></tr>
+  <tr><td class="label">Institución</td><td>${escapeHtml(getWordIdentityValueRedes(identity, "inst"))}</td></tr>
 </table>`;
 }
 
@@ -1119,10 +1120,11 @@ window.exportarWordContextualizacion = async function (evt) {
 
     function makeInstitutionalDocxRows() {
       return [
-        ["Programa", REDES_WORD_METADATA.program, "Fecha de elaboracion", fecha],
-        ["Guia / actividad", `${REDES_WORD_METADATA.guideName} - Actividad 3.2.1`, "Numero de ficha", ficha],
+        ["Programa", REDES_WORD_METADATA.program, "Fecha de elaboración", fecha],
+        ["Guía", REDES_WORD_METADATA.guideName, "Número de ficha", ficha],
+        ["Actividad", "Actividad 3.2.1", "", ""],
         ["Competencia", REDES_WORD_METADATA.competencia, "Grado", grupo],
-        ["Resultado de Aprendizaje", REDES_WORD_METADATA.resultado, "Institucion", institucion],
+        ["Resultado de aprendizaje", REDES_WORD_METADATA.resultado, "Institución", institucion],
         ["Nombre completo del aprendiz", fullName, "", ""],
       ].map((row) => new TableRow({
         children: row.map((cell, index) => new TableCell({
