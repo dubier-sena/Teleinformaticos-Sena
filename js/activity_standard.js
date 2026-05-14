@@ -256,24 +256,31 @@
     var hora = fmtTime(record.submittedAt);
     var viewUrl = toViewOnlyDriveUrl(record.driveUrl || "");
     var fileName = record.savedFileName || "—";
+    var reopened = record.status === "reabierta" || record.estado === "reabierta" || record.reabierta === true;
+    var title = reopened ? "Actividad reabierta por el instructor." : "Actividad entregada correctamente.";
+    var stateLabel = reopened ? "Reabierta" : "Entregada";
 
     var linkHtml = viewUrl
       ? '<a href="' + escHtml(viewUrl) + '" target="_blank" rel="noopener noreferrer"' +
         ' class="act-std-delivery-link">Ver archivo entregado ↗</a>'
       : "(Enlace no disponible)";
 
-    var noticeHtml = '<p class="act-std-delivery-notice">' +
-      'Esta actividad ya fue entregada el ' + escHtml(fecha) + ' a las ' + escHtml(hora) + '. ' +
-      'Puede consultar el archivo entregado en el enlace de arriba. ' +
-      'Para modificar o reemplazar la entrega, debe solicitar al instructor o administrador ' +
-      'que habilite nuevamente la actividad.' +
-      '</p>';
+    var noticeHtml = reopened
+      ? '<p class="act-std-delivery-notice">' +
+        'La entrega anterior se conserva. Puedes continuar editando y realizar una nueva entrega si corresponde.' +
+        '</p>'
+      : '<p class="act-std-delivery-notice">' +
+        'Esta actividad ya fue entregada el ' + escHtml(fecha) + ' a las ' + escHtml(hora) + '. ' +
+        'Puede consultar el archivo entregado en el enlace de arriba. ' +
+        'Para modificar o reemplazar la entrega, debe solicitar al instructor o administrador ' +
+        'que habilite nuevamente la actividad.' +
+        '</p>';
 
     mountEl.innerHTML = [
       '<div class="act-std-delivery-panel">',
-      '  <p class="act-std-delivery-title">&#9989; Actividad entregada correctamente.</p>',
+      '  <p class="act-std-delivery-title">&#9989; ' + escHtml(title) + '</p>',
       '  <ul>',
-      '    <li><strong>Estado:</strong> Entregada</li>',
+      '    <li><strong>Estado:</strong> ' + escHtml(stateLabel) + '</li>',
       '    <li><strong>Fecha de entrega:</strong> ' + escHtml(fecha) + '</li>',
       '    <li><strong>Hora de entrega:</strong> ' + escHtml(hora) + '</li>',
       '    <li><strong>Archivo entregado:</strong> ' + escHtml(fileName) + '</li>',
@@ -315,6 +322,26 @@
    */
   function _persistDeliveryToState(activityId, record, stateCtx) {
     var state = stateCtx.getState();
+    var previous = state[activityId + "-delivery"];
+    var previousRecord = previous && typeof previous === "object" ? previous : {};
+    var history = Array.isArray(previousRecord.historialEntregas)
+      ? previousRecord.historialEntregas.slice()
+      : [];
+    var previousFingerprint = [
+      previousRecord.submittedAt || "",
+      previousRecord.savedFileName || "",
+      previousRecord.driveUrl || "",
+    ].join("|");
+    if (previousFingerprint.replace(/\|/g, "")) {
+      var exists = history.some(function (item) {
+        return [
+          item && item.submittedAt || "",
+          item && item.savedFileName || "",
+          item && item.driveUrl || "",
+        ].join("|") === previousFingerprint;
+      });
+      if (!exists) history.push(previousRecord);
+    }
     state[activityId + "-locked"] = true;
     state[activityId + "-delivery"] = {
       learnerName:    record.fullName || record.learnerName || "",
@@ -326,6 +353,12 @@
       savedFileName:  record.savedFileName || "",
       driveUrl:       toViewOnlyDriveUrl(record.driveUrl || ""),
       status:         "delivered",
+      estado:         "entregada",
+      fechaEntregaOriginal: previousRecord.fechaEntregaOriginal || previousRecord.submittedAt || record.submittedAt || "",
+      historialEntregas: history,
+      historialReaperturas: Array.isArray(previousRecord.historialReaperturas)
+        ? previousRecord.historialReaperturas
+        : [],
     };
     stateCtx.saveState();
   }
@@ -337,14 +370,16 @@
   function _restoreDeliveryFromState(activityDef, stateCtx) {
     var state = stateCtx.getState();
     var record = state[activityDef.id + "-delivery"];
-    if (!record || record.status !== "delivered") return;
+    if (!record || (record.status !== "delivered" && record.status !== "reabierta" && record.estado !== "reabierta")) return;
 
     var panelKey = (activityDef.driveTarget || {}).panelKey || activityDef.id;
     var mountEl = _findOrCreateDeliveryMount(activityDef.id, panelKey);
     if (mountEl) renderDeliveryStatus(record, mountEl);
 
-    // Ocultar botón "Entregar a Drive" si ya fue entregada
-    _hideDeliveryButton(activityDef.id, panelKey);
+    if (record.status !== "reabierta" && record.estado !== "reabierta" && record.reabierta !== true) {
+      // Ocultar boton "Entregar a Drive" si ya fue entregada y no esta reabierta.
+      _hideDeliveryButton(activityDef.id, panelKey);
+    }
   }
 
   function _hideDeliveryButton(activityId, panelKey) {

@@ -112,6 +112,13 @@
     const grupo = readMetaField(meta, "Grupo");
     const institucion = readMetaField(meta, "Institucion") || readMetaField(meta, "Institución");
     const fechaEntrega = readMetaField(meta, "Fecha de entrega") || readMetaField(meta, "Guardado") || readMetaField(meta, "Fecha") || "—";
+    const guideName = readMetaField(meta, "Guia") || readMetaField(meta, "GuÃ­a") || metadata.guideName;
+    const fechaElaboracion =
+      readMetaField(meta, "Fecha de elaboraci\u00f3n") ||
+      readMetaField(meta, "Fecha de " + "elaboracion") ||
+      readMetaField(meta, "Fecha de elaboraciÃ³n") ||
+      readMetaField(meta, "Primer guardado") ||
+      fechaEntrega;
     const activityName = readMetaField(meta, "Actividad") || title;
     const projectLink = exportData?.projectLink || getProjectLink();
     const projectLinkHtml = projectLink
@@ -139,9 +146,12 @@
     <tr><td class="label">Número de ficha</td><td>${escapeHtml(ficha)}</td></tr>
     <tr><td class="label">Grado / grupo</td><td>${escapeHtml(grupo)}</td></tr>
     <tr><td class="label">Nombre de la guía</td><td>${escapeHtml(metadata.guideName)}</td></tr>
+    <tr><td class="label">Guia seleccionada</td><td>${escapeHtml(guideName)}</td></tr>
     <tr><td class="label">Nombre de la actividad</td><td>${escapeHtml(activityName)}</td></tr>
+    <tr><td class="label">Fecha de elaboraci&oacute;n original</td><td>${escapeHtml(fechaElaboracion)}</td></tr>
     <tr><td class="label">Fecha de entrega</td><td>${escapeHtml(fechaEntrega)}</td></tr>
     <tr><td class="label">Fecha de elaboración del documento</td><td>${escapeHtml(today)}</td></tr>
+    <tr><td class="label">Fecha de exportaci&oacute;n del soporte</td><td>${escapeHtml(today)}</td></tr>
   </table>
   <h1>${escapeHtml(title)}</h1>
   <p><strong>${escapeHtml(subtitle)}</strong></p>
@@ -151,6 +161,8 @@
     <tr><td style="height:80pt;vertical-align:top;"> </td></tr>
   </table>
   <div class="word-footer">
+    Este soporte se genera para seguimiento formativo institucional. La exportaci&oacute;n no modifica respuestas, entregas ni fechas registradas.
+    <br>
     <strong>Enlace del proyecto:</strong> ${projectLinkHtml}
   </div>
 </body>

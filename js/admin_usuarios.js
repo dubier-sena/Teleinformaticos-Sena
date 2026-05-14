@@ -19,6 +19,9 @@
       activityGuide: "",
       responsesFicha: "",
       responsesGuide: "",
+      responsesLearner: "",
+      responsesActivity: "",
+      responsesStatus: "",
       responsesText: "",
       deliveriesFicha: "",
       deliveriesText: "",
@@ -456,9 +459,20 @@
   }
 
   function getGuideStateKey(fileName) {
-    return window.ActivityStandard?.getStateKeyForGuide?.(fileName) ||
+    const configured = window.ActivityStandard?.getStateKeyForGuide?.(fileName) ||
       auth.GUIDE_PROGRESS_CONFIG?.[fileName]?.stateKey ||
       "";
+    if (configured) return configured;
+    const aliases = {
+      "grupo-10a-guia-01-induccion.html": "guia_induccion_10a_guia_html",
+      "grupo-10b-guia-01-induccion.html": "guia_induccion_10b_guia_html",
+      "santa-barbara-10a-guia-02-redes-rap01.html": "sb_10a_redes.html",
+      "santa-barbara-10b-guia-02-redes-rap01.html": "sb_10b_redes.html",
+    };
+    if (aliases[fileName] && /^guia_/.test(aliases[fileName])) return aliases[fileName];
+    const storageFile = aliases[fileName] || fileName;
+    if (!storageFile) return "";
+    return "guia_interactiva_" + storageFile.replace(/[^a-z0-9]+/gi, "_").toLowerCase();
   }
 
   function readStudentGuideState(usernameKey, fileName) {
@@ -466,6 +480,13 @@
     if (!stateKey || typeof auth.getStudentStorageKey !== "function") return null;
     const storageKey = auth.getStudentStorageKey(usernameKey, stateKey, { area: "guide-data" });
     return readJson(localStorage.getItem(storageKey), null);
+  }
+
+  function readStudentGuideMeta(usernameKey, fileName) {
+    const stateKey = getGuideStateKey(fileName);
+    if (!stateKey || typeof auth.getStudentStorageKey !== "function") return {};
+    const storageKey = auth.getStudentStorageKey(usernameKey, stateKey, { area: "guide-data" });
+    return readJson(localStorage.getItem(`${storageKey}__meta`), {});
   }
 
   function stateHasAnswers(record) {
@@ -478,37 +499,279 @@
     });
   }
 
+  function getResponseActivities(fileName) {
+    const activities = deadlineManager?.getActivitiesForGuide?.(fileName) || window.ActivityStandard?.getActivitiesForGuide?.(fileName) || [];
+    return activities.map((activity) => ({
+      id: activity.id,
+      label: activity.label || activity.id,
+      keys: Array.isArray(activity.keys) ? activity.keys : [],
+    }));
+  }
+
+  function getResponseActivity(fileName, activityId) {
+    return getResponseActivities(fileName).find((activity) => activity.id === activityId) || {
+      id: activityId,
+      label: activityId || "Actividad",
+      keys: [],
+    };
+  }
+
+  function responseValueText(value) {
+    if (value == null || value === "") return "Sin respuesta";
+    if (typeof value === "boolean") return value ? "Si" : "No";
+    if (Array.isArray(value)) return value.length ? value.join(", ") : "Sin respuesta";
+    if (typeof value === "object") return Object.keys(value).length ? JSON.stringify(value, null, 2) : "Sin respuesta";
+    const text = String(value).trim();
+    return text || "Sin respuesta";
+  }
+
+  function humanizeResponseKey(key) {
+    return String(key || "")
+      .replace(/[-_:]+/g, " ")
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+  }
+
+  function isAnswerKey(key) {
+    return !/(^_|-locked$|-delivery$|historial|updatedAt|updatedBy|fechaReapertura|reabiertaPor|observacionReapertura)/i.test(String(key || ""));
+  }
+
+  function keyMatchesActivity(key, activityId) {
+    const text = String(key || "").toLowerCase();
+    const activity = String(activityId || "").toLowerCase();
+    if (!activity || !isAnswerKey(text)) return false;
+    if (text === activity || text.startsWith(activity + "-") || text.startsWith(activity + "_") || text.startsWith(activity + ":")) return true;
+    const aliases = {
+      bitacora311: ["reflexion_"],
+      socializacion312: ["socializacion_"],
+      extensiones331: ["extension:", "extensions-"],
+      sistemas332: ["system:", "systems-"],
+      colaborativas334: ["collab:"],
+      transferReto341: ["transfer-reto-"],
+      reflexion311: ["reflexion_", "red-reflexion", "reflexion-redes"],
+      ip1: ["ip1-", "ip1_"],
+      ip3: ["ip3-", "ip3_"],
+      "taller-ip-ej1": ["ej1-"],
+      "taller-ip-ej2": ["ej2-"],
+      "taller-ip-ej3": ["ej3-"],
+      "taller-ip-ej4": ["ej4-"],
+      "taller-ip-ej5": ["ej5-"],
+      lab1: ["lab1-"],
+      lab2: ["lab2-"],
+      lab3: ["lab3-"],
+      "guia5-311": ["bitacora-"],
+      "guia5-331": ["evidencia-", "herramienta-"],
+      "guia5-341": ["informe-", "transferencia-"],
+      arbol312: ["arbol:"],
+      programa332: ["curriculo:"],
+      plataformas334: ["plataforma:"],
+      portafolio342: ["portafolio:"],
+    };
+    return (aliases[activityId] || []).some((prefix) => text.startsWith(prefix.toLowerCase()));
+  }
+
+  function getActivityQuestionSpecs(fileName, activityId, guideState) {
+    const stdConfig = window.ActivityStandard?.getConfigForGuide?.(fileName);
+    const stdActivity = stdConfig?.activities?.find?.((activity) => activity.id === activityId);
+    const sectionSpecs = stdActivity?.wordExport?.sections?.map((section) => ({
+      key: section.storeKey,
+      label: section.label || humanizeResponseKey(section.storeKey),
+    })) || [];
+    const fieldSpecs = (stdActivity?.formFields || []).map((key) => ({
+      key,
+      label: humanizeResponseKey(key),
+    }));
+    const known = [...sectionSpecs, ...fieldSpecs].filter((item) => item.key);
+    const knownKeys = new Set(known.map((item) => item.key));
+    const dynamicKeys = Object.keys(guideState || {})
+      .filter((key) => !knownKeys.has(key) && keyMatchesActivity(key, activityId))
+      .map((key) => ({ key, label: humanizeResponseKey(key) }));
+    if (known.length || dynamicKeys.length) return [...known, ...dynamicKeys];
+
+    return [];
+  }
+
+  function getActivityDates(guideState, guideMeta, activityId) {
+    const delivery = guideState?.[`${activityId}-delivery`];
+    const submittedAt = delivery?.submittedAt || delivery?.updatedAt || "";
+    const first =
+      guideState?.fechaElaboracion ||
+      guideState?.fechaPrimerGuardado ||
+      guideState?.[`${activityId}-fechaPrimerGuardado`] ||
+      submittedAt ||
+      guideMeta?.createdAt ||
+      guideMeta?.updatedAt ||
+      "";
+    const last =
+      guideState?.fechaUltimaActualizacion ||
+      guideState?.[`${activityId}-fechaUltimaActualizacion`] ||
+      guideMeta?.updatedAt ||
+      submittedAt ||
+      "";
+    return { first, last, submittedAt };
+  }
+
+  function collectActivityResponses(user, fileName, activityId) {
+    const guideState = readStudentGuideState(user.usernameKey, fileName) || {};
+    const guideMeta = readStudentGuideMeta(user.usernameKey, fileName);
+    const activity = getResponseActivity(fileName, activityId);
+    const questions = getActivityQuestionSpecs(fileName, activityId, guideState).map((spec) => {
+      const raw = guideState[spec.key];
+      const answer = responseValueText(raw);
+      return {
+        key: spec.key,
+        question: spec.label || humanizeResponseKey(spec.key),
+        answer,
+        answered: answer !== "Sin respuesta",
+      };
+    });
+    const answeredCount = questions.filter((item) => item.answered).length;
+    const delivery = guideState[`${activityId}-delivery`] || null;
+    const reopened = delivery?.estado === "reabierta" || delivery?.status === "reabierta";
+    const delivered = Boolean(delivery?.submittedAt || delivery?.driveUrl || delivery?.status === "delivered");
+    const locked = Boolean(guideState[`${activityId}-locked`]);
+    const status = reopened
+      ? "reabierta"
+      : delivered
+        ? "entregada"
+        : questions.length && answeredCount === questions.length
+          ? "completa"
+          : answeredCount > 0 || locked
+            ? "parcial"
+            : "sin-respuesta";
+    const dates = getActivityDates(guideState, guideMeta, activityId);
+    return {
+      user,
+      fileName,
+      guideTitle: auth.getGuideTitle(fileName),
+      activityId,
+      activityLabel: activity.label,
+      guideState,
+      guideMeta,
+      questions,
+      answeredCount,
+      totalQuestions: questions.length,
+      status,
+      delivery,
+      fechaPrimerGuardado: dates.first,
+      fechaUltimaActualizacion: dates.last,
+      fechaEntrega: dates.submittedAt,
+    };
+  }
+
+  function buildResponsesView(summary) {
+    const rows = summary.questions.map((item) => `
+      <tr>
+        <td>${escapeHtml(item.question)}</td>
+        <td><div class="answer-value">${escapeHtml(item.answer)}</div></td>
+      </tr>
+    `).join("");
+    return `
+      <table class="admin-data-table">
+        <tbody>
+          <tr><th>Programa</th><td>Sistemas Teleinformaticos</td></tr>
+          <tr><th>Institucion</th><td>${escapeHtml(summary.user.inst || summary.user.institucion || "")}</td></tr>
+          <tr><th>Ficha / grupo</th><td>${escapeHtml(summary.user.ficha)} / ${escapeHtml(summary.user.grupo || "")}</td></tr>
+          <tr><th>Aprendiz</th><td>${escapeHtml(summary.user.fullName)}</td></tr>
+          <tr><th>Guia</th><td>${escapeHtml(summary.guideTitle)}</td></tr>
+          <tr><th>Actividad</th><td>${escapeHtml(summary.activityLabel)}</td></tr>
+          <tr><th>Fecha de elaboracion</th><td>${escapeHtml(formatDate(summary.fechaPrimerGuardado))}</td></tr>
+          <tr><th>Ultima actualizacion</th><td>${escapeHtml(formatDate(summary.fechaUltimaActualizacion))}</td></tr>
+          <tr><th>Fecha de entrega</th><td>${escapeHtml(formatDate(summary.fechaEntrega))}</td></tr>
+          <tr><th>Estado</th><td>${escapeHtml(summary.status)}</td></tr>
+        </tbody>
+      </table>
+      <h3>Preguntas y respuestas</h3>
+      <table class="admin-data-table">
+        <thead><tr><th>Pregunta / campo</th><th>Respuesta</th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="2">Sin respuesta</td></tr>'}</tbody>
+      </table>
+    `;
+  }
+
+  function buildExportableActivityDocument(summary) {
+    const bodyHtml = buildResponsesView(summary);
+    return {
+      title: "Soporte de respuestas por actividad",
+      subtitle: `${summary.user.fullName} | ${summary.activityLabel}`,
+      meta: [
+        `Aprendiz: ${summary.user.fullName}`,
+        `Ficha: ${summary.user.ficha}`,
+        `Grupo: ${summary.user.grupo || ""}`,
+        `Institucion: ${summary.user.inst || summary.user.institucion || ""}`,
+        `Guia: ${summary.guideTitle}`,
+        `Actividad: ${summary.activityLabel}`,
+        `Fecha de elaboracion: ${formatDate(summary.fechaPrimerGuardado)}`,
+        `Guardado: ${formatDate(summary.fechaUltimaActualizacion)}`,
+        `Fecha de entrega: ${formatDate(summary.fechaEntrega)}`,
+        `Estado: ${summary.status}`,
+      ].join(" | "),
+      bodyHtml,
+    };
+  }
+
   function renderResponses() {
     const ficha = state.filters.responsesFicha || "";
     const guide = state.filters.responsesGuide || "";
+    const learner = state.filters.responsesLearner || "";
+    const activity = state.filters.responsesActivity || "";
+    const statusFilter = state.filters.responsesStatus || "";
     byId("responses-ficha-filter").innerHTML = getFichaOptions(ficha, true);
     byId("responses-guide-filter").innerHTML = getGuideOptionsForFicha(ficha, guide, true);
+    const learnersForFilter = state.users.filter((user) => !ficha || String(user.ficha) === ficha);
+    byId("responses-learner-filter").innerHTML =
+      '<option value="">Todos los aprendices</option>' +
+      learnersForFilter.map((user) =>
+        `<option value="${escapeHtml(user.usernameKey)}"${learner === user.usernameKey ? " selected" : ""}>${escapeHtml(user.fullName)}</option>`
+      ).join("");
+    const activitiesForFilter = guide ? getResponseActivities(guide) : [];
+    byId("responses-activity-filter").innerHTML =
+      '<option value="">Todas las actividades</option>' +
+      activitiesForFilter.map((item) =>
+        `<option value="${escapeHtml(item.id)}"${activity === item.id ? " selected" : ""}>${escapeHtml(item.label)}</option>`
+      ).join("");
+    byId("responses-status-filter").value = statusFilter;
     const text = normalizeText(state.filters.responsesText);
     const users = state.users.filter((user) =>
       (!ficha || String(user.ficha) === ficha) &&
+      (!learner || user.usernameKey === learner) &&
       (!text || normalizeText(`${user.fullName} ${user.username}`).includes(text))
     );
     const rows = users.flatMap((user) => {
       const guides = guide ? [guide] : getGuidesForFicha(user.ficha);
-      return guides.map((fileName) => {
-        const record = readStudentGuideState(user.usernameKey, fileName);
-        const hasAnswers = stateHasAnswers(record);
+      return guides.flatMap((fileName) => {
+        const activities = activity ? [getResponseActivity(fileName, activity)] : getResponseActivities(fileName);
+        return activities.map((activityItem) => {
+          const summary = collectActivityResponses(user, fileName, activityItem.id);
+          if (statusFilter && summary.status !== statusFilter) return "";
+          const hasAnswers = summary.answeredCount > 0 || stateHasAnswers(summary.delivery);
+          const statusClass = summary.status === "sin-respuesta"
+            ? "admin-status--warn"
+            : summary.status === "entregada" || summary.status === "completa"
+              ? "admin-status--safe"
+              : "admin-status--warn";
         return `
           <tr>
             <td>${escapeHtml(user.fullName)}<br><span class="admin-muted">${escapeHtml(user.usernameKey)}</span></td>
             <td>${escapeHtml(user.ficha)}</td>
             <td>${escapeHtml(auth.getGuideTitle(fileName))}</td>
-            <td><span class="admin-status ${hasAnswers ? "admin-status--safe" : "admin-status--warn"}">${hasAnswers ? "Guardada" : "Sin registro"}</span></td>
-            <td>${escapeHtml(formatDate(readJson(localStorage.getItem(`${auth.getStudentStorageKey?.(user.usernameKey, getGuideStateKey(fileName), { area: "guide-data" })}__meta`), {})?.updatedAt))}</td>
-            <td><button class="admin-button admin-button--ghost" type="button" data-view-responses="${escapeHtml(user.usernameKey)}" data-guide-file="${escapeHtml(fileName)}">Ver</button></td>
+            <td>${escapeHtml(summary.activityLabel)}</td>
+            <td><span class="admin-status ${statusClass}">${escapeHtml(hasAnswers ? summary.status : "sin-respuesta")}</span></td>
+            <td>${escapeHtml(formatDate(summary.fechaPrimerGuardado))}</td>
+            <td>${escapeHtml(formatDate(summary.fechaUltimaActualizacion))}</td>
+            <td>${escapeHtml(formatDate(summary.fechaEntrega))}</td>
+            <td class="admin-row-actions">
+              <button class="admin-button admin-button--ghost" type="button" data-view-activity-response="${escapeHtml(user.usernameKey)}" data-guide-file="${escapeHtml(fileName)}" data-activity-id="${escapeHtml(activityItem.id)}">Ver</button>
+              <button class="admin-button admin-button--ghost" type="button" data-export-activity-response="${escapeHtml(user.usernameKey)}" data-guide-file="${escapeHtml(fileName)}" data-activity-id="${escapeHtml(activityItem.id)}">Exportar soporte</button>
+            </td>
           </tr>
         `;
+        });
       });
-    }).join("");
+    }).filter(Boolean).join("");
     byId("responses-table").innerHTML = `
       <table class="admin-data-table">
-        <thead><tr><th>Aprendiz</th><th>Ficha</th><th>Guia</th><th>Estado</th><th>Guardado</th><th>Acciones</th></tr></thead>
-        <tbody>${rows || '<tr><td colspan="6">No hay respuestas visibles con los filtros actuales.</td></tr>'}</tbody>
+        <thead><tr><th>Aprendiz</th><th>Ficha</th><th>Guia</th><th>Actividad</th><th>Estado</th><th>Elaboracion</th><th>Actualizacion</th><th>Entrega</th><th>Acciones</th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="9">No hay respuestas visibles con los filtros actuales.</td></tr>'}</tbody>
       </table>
     `;
   }
@@ -526,15 +789,147 @@
             user,
             fileName,
             activityId: key.replace(/-delivery$/, ""),
+            stateKey: getGuideStateKey(fileName),
+            deliveryKey: key,
             submittedAt: value.submittedAt || value.updatedAt || "",
             savedFileName: value.savedFileName || "",
             driveUrl: value.driveUrl || "",
             status: value.status || "delivered",
+            estado: value.estado || value.status || "delivered",
           });
         });
       });
     });
     return rows;
+  }
+
+  function appendUniqueDeliveryHistory(history, delivery) {
+    const entries = Array.isArray(history) ? history.slice() : [];
+    if (!delivery || typeof delivery !== "object") return entries;
+    const fingerprint = [
+      delivery.submittedAt || "",
+      delivery.savedFileName || "",
+      delivery.driveUrl || "",
+    ].join("|");
+    if (!fingerprint.replace(/\|/g, "")) return entries;
+    const exists = entries.some((item) => [
+      item?.submittedAt || "",
+      item?.savedFileName || "",
+      item?.driveUrl || "",
+    ].join("|") === fingerprint);
+    return exists ? entries : entries.concat([delivery]);
+  }
+
+  function getAdminActorLabel() {
+    const session = auth.getCurrentSession?.();
+    return session?.user?.fullName || session?.usernameKey || session?.role || "admin";
+  }
+
+  function buildReopenedDeliveryRecord(previous, context) {
+    const now = context.now || new Date().toISOString();
+    const motivo = String(context.motivo || "").trim();
+    const previousRecord = previous && typeof previous === "object" ? previous : {};
+    const previousStatus = previousRecord.estado || previousRecord.status || "entregada";
+    const historyBase = appendUniqueDeliveryHistory(previousRecord.historialEntregas, previousRecord);
+    return {
+      ...previousRecord,
+      status: "reabierta",
+      estado: "reabierta",
+      habilitada: true,
+      permiteEdicion: true,
+      permiteEntrega: true,
+      reabierta: true,
+      fechaReapertura: now,
+      reabiertaPor: context.admin || "admin",
+      observacionReapertura: motivo,
+      fechaEntregaOriginal: previousRecord.fechaEntregaOriginal || previousRecord.submittedAt || "",
+      historialEntregas: historyBase,
+      historialReaperturas: (Array.isArray(previousRecord.historialReaperturas) ? previousRecord.historialReaperturas : []).concat([{
+        fecha: now,
+        admin: context.admin || "admin",
+        motivo,
+        estadoAnterior: previousStatus,
+        estadoNuevo: "reabierta",
+      }]),
+    };
+  }
+
+  async function syncReopenedActivityToCloud(usernameKey, fileName, stateKey, activityId, deliveryRecord, updatedAt, adminLabel) {
+    if (!window._firebaseDb || typeof window._firebaseDb.cloudSaveGuideData !== "function") return false;
+    return window._firebaseDb.cloudSaveGuideData(usernameKey, fileName, {
+      state: {
+        [`${activityId}-locked`]: false,
+        [`${activityId}-delivery`]: deliveryRecord,
+      },
+      updatedAt,
+      updatedBy: `admin-reopen:${adminLabel || "admin"}`,
+      reabierta: true,
+      permiteEdicion: true,
+      permiteEntrega: true,
+      stateKey,
+    });
+  }
+
+  async function reopenDeliveredActivity(button) {
+    if (!hasAdminPanelAccess()) {
+      setFeedback("Solo el administrador o instructor puede reabrir actividades.", "error");
+      return;
+    }
+    const usernameKey = button.dataset.reopenDelivery;
+    const fileName = button.dataset.guideFile;
+    const activityId = button.dataset.activityId;
+    const user = getUser(usernameKey);
+    const stateKey = getGuideStateKey(fileName);
+    if (!usernameKey || !fileName || !activityId || !stateKey) {
+      setFeedback("No fue posible identificar la actividad a reabrir.", "error");
+      return;
+    }
+
+    const confirmed = await confirmAdminAction(
+      "Desea reabrir esta actividad para el aprendiz? Las respuestas y entregas anteriores se conservaran. El aprendiz podra continuar o volver a entregar la actividad."
+    );
+    if (!confirmed) return;
+
+    const motivo = window.prompt?.("Observacion de reapertura (opcional):", "") || "";
+    let newDueAt = "";
+    if (deadlineManager && typeof deadlineManager.savePolicy === "function") {
+      newDueAt = window.prompt?.("Nueva fecha limite opcional (YYYY-MM-DDTHH:mm). Deja vacio para conservar la logica actual:", "") || "";
+    }
+
+    const storageKey = auth.getStudentStorageKey(usernameKey, stateKey, { area: "guide-data" });
+    const guideState = readJson(localStorage.getItem(storageKey), {});
+    const deliveryKey = `${activityId}-delivery`;
+    const lockKey = `${activityId}-locked`;
+    const now = new Date().toISOString();
+    const adminLabel = getAdminActorLabel();
+    const deliveryRecord = buildReopenedDeliveryRecord(guideState[deliveryKey], {
+      now,
+      admin: adminLabel,
+      motivo,
+    });
+
+    guideState[lockKey] = false;
+    guideState[deliveryKey] = deliveryRecord;
+    localStorage.setItem(storageKey, JSON.stringify(guideState));
+    localStorage.setItem(`${storageKey}__meta`, JSON.stringify({
+      updatedAt: now,
+      updatedBy: `admin-reopen:${adminLabel}`,
+      reabierta: true,
+      activityId,
+    }));
+
+    if (newDueAt.trim()) {
+      await deadlineManager.savePolicy(fileName, activityId, newDueAt.trim(), adminLabel);
+    }
+
+    await syncReopenedActivityToCloud(usernameKey, fileName, stateKey, activityId, deliveryRecord, now, adminLabel).catch(() => false);
+    recordAudit({
+      action: "activity-reopen",
+      target: `${usernameKey}:${fileName}:${activityId}`,
+      detail: motivo || "Actividad reabierta",
+    });
+    setFeedback(`Actividad reabierta para ${user?.fullName || usernameKey}.`, "success");
+    renderAll();
   }
 
   function renderDeliveries() {
@@ -548,6 +943,9 @@
     const rows = deliveries.map((item) => {
       const policy = deadlineManager?.getPolicy?.(item.fileName, item.activityId);
       const late = policy?.dueAt && new Date(item.submittedAt).getTime() > new Date(policy.dueAt).getTime();
+      const reopened = normalizeText(item.estado) === "reabierta" || normalizeText(item.status) === "reabierta";
+      const statusText = reopened ? "Reabierta" : late ? "Tardia" : "Entregada";
+      const statusClass = reopened ? "admin-status--warn" : late ? "admin-status--danger" : "admin-status--safe";
       return `
         <tr>
           <td>${escapeHtml(item.savedFileName || "Sin nombre")}</td>
@@ -556,14 +954,23 @@
           <td>${escapeHtml(auth.getGuideTitle(item.fileName))}</td>
           <td>${escapeHtml(item.activityId)}</td>
           <td>${escapeHtml(formatDate(item.submittedAt))}</td>
-          <td><span class="admin-status ${late ? "admin-status--danger" : "admin-status--safe"}">${late ? "Tardia" : "Entregada"}</span></td>
-          <td>${item.driveUrl ? `<a class="admin-button admin-button--ghost" href="${escapeHtml(item.driveUrl)}" target="_blank" rel="noopener noreferrer">Ver</a>` : "Sin enlace"}</td>
+          <td><span class="admin-status ${statusClass}">${escapeHtml(statusText)}</span></td>
+          <td class="admin-row-actions">
+            ${item.driveUrl ? `<a class="admin-button admin-button--ghost" href="${escapeHtml(item.driveUrl)}" target="_blank" rel="noopener noreferrer">Ver</a>` : '<span class="admin-muted">Sin enlace</span>'}
+            <button
+              class="admin-button admin-button--ghost"
+              type="button"
+              data-reopen-delivery="${escapeHtml(item.user.usernameKey)}"
+              data-guide-file="${escapeHtml(item.fileName)}"
+              data-activity-id="${escapeHtml(item.activityId)}"
+            >Reabrir actividad</button>
+          </td>
         </tr>
       `;
     }).join("");
     byId("deliveries-table").innerHTML = `
       <table class="admin-data-table">
-        <thead><tr><th>Archivo</th><th>Aprendiz</th><th>Ficha</th><th>Guia</th><th>Actividad</th><th>Fecha</th><th>Estado</th><th>Enlace</th></tr></thead>
+        <thead><tr><th>Archivo</th><th>Aprendiz</th><th>Ficha</th><th>Guia</th><th>Actividad</th><th>Fecha</th><th>Estado</th><th>Acciones</th></tr></thead>
         <tbody>${rows || '<tr><td colspan="8">No hay entregas registradas en los datos locales actuales.</td></tr>'}</tbody>
       </table>
     `;
@@ -732,34 +1139,29 @@
     `);
   }
 
-  function openResponses(usernameKey, fileName) {
+  function openResponses(usernameKey, fileName, activityId) {
     const user = getUser(usernameKey);
-    const record = user ? readStudentGuideState(usernameKey, fileName) : null;
-    const rows = record && typeof record === "object"
-      ? Object.keys(record).map((key) => `
-          <tr>
-            <td>${escapeHtml(key)}</td>
-            <td><div class="answer-value">${escapeHtml(typeof record[key] === "object" ? JSON.stringify(record[key], null, 2) : record[key])}</div></td>
-          </tr>
-        `).join("")
-      : "";
-    const bodyHtml = `
-      <table class="admin-data-table">
-        <thead><tr><th>Campo</th><th>Respuesta / registro</th></tr></thead>
-        <tbody>${rows || '<tr><td colspan="2">No hay respuestas guardadas para esta guia.</td></tr>'}</tbody>
-      </table>
-    `;
+    if (!user) return;
+    const summary = collectActivityResponses(user, fileName, activityId);
+    const bodyHtml = buildResponsesView(summary);
+    const exportData = buildExportableActivityDocument(summary);
     openModal(
-      "Respuestas guardadas",
-      `${user?.fullName || usernameKey} | ${auth.getGuideTitle(fileName)}`,
+      "Respuestas por actividad",
+      `${user.fullName} | ${summary.activityLabel}`,
       bodyHtml,
-      rows ? {
-        title: "Respuestas guardadas",
-        subtitle: `${user?.fullName || usernameKey} | ${auth.getGuideTitle(fileName)}`,
-        meta: `Aprendiz: ${user?.fullName || usernameKey} | Ficha: ${user?.ficha || ""} | Guia: ${auth.getGuideTitle(fileName)}`,
-        bodyHtml,
-      } : null
+      exportData
     );
+  }
+
+  function exportActivityResponse(usernameKey, fileName, activityId) {
+    const user = getUser(usernameKey);
+    if (!user || !adminExport) return;
+    const summary = collectActivityResponses(user, fileName, activityId);
+    const exportData = buildExportableActivityDocument(summary);
+    adminExport.downloadWord(exportData, {
+      learnerName: user.fullName,
+      title: `${summary.activityId}_${summary.status}`,
+    });
   }
 
   async function handleCreateStudent(form) {
@@ -891,11 +1293,26 @@
     byId("deadline-activity")?.addEventListener("change", () => renderDeadlineSelectors());
     byId("responses-ficha-filter")?.addEventListener("change", (event) => {
       state.filters.responsesFicha = event.target.value;
+      state.filters.responsesLearner = "";
       state.filters.responsesGuide = "";
+      state.filters.responsesActivity = "";
+      renderResponses();
+    });
+    byId("responses-learner-filter")?.addEventListener("change", (event) => {
+      state.filters.responsesLearner = event.target.value;
       renderResponses();
     });
     byId("responses-guide-filter")?.addEventListener("change", (event) => {
       state.filters.responsesGuide = event.target.value;
+      state.filters.responsesActivity = "";
+      renderResponses();
+    });
+    byId("responses-activity-filter")?.addEventListener("change", (event) => {
+      state.filters.responsesActivity = event.target.value;
+      renderResponses();
+    });
+    byId("responses-status-filter")?.addEventListener("change", (event) => {
+      state.filters.responsesStatus = event.target.value;
       renderResponses();
     });
     byId("responses-search")?.addEventListener("input", (event) => {
@@ -958,7 +1375,22 @@
       }
       const responses = event.target.closest("[data-view-responses]");
       if (responses) {
-        openResponses(responses.dataset.viewResponses, responses.dataset.guideFile);
+        openResponses(responses.dataset.viewResponses, responses.dataset.guideFile, responses.dataset.activityId);
+        return;
+      }
+      const activityResponse = event.target.closest("[data-view-activity-response]");
+      if (activityResponse) {
+        openResponses(activityResponse.dataset.viewActivityResponse, activityResponse.dataset.guideFile, activityResponse.dataset.activityId);
+        return;
+      }
+      const exportResponse = event.target.closest("[data-export-activity-response]");
+      if (exportResponse) {
+        exportActivityResponse(exportResponse.dataset.exportActivityResponse, exportResponse.dataset.guideFile, exportResponse.dataset.activityId);
+        return;
+      }
+      const reopenDelivery = event.target.closest("[data-reopen-delivery]");
+      if (reopenDelivery) {
+        await reopenDeliveredActivity(reopenDelivery);
         return;
       }
       if (event.target.closest("[data-close-admin-modal]")) {
@@ -975,6 +1407,8 @@
     byId("create-student-form").querySelector("select[name='ficha']").innerHTML = getFichaOptions("", false);
     byId("activity-ficha-filter").innerHTML = getFichaOptions("", false);
     byId("responses-ficha-filter").innerHTML = getFichaOptions("", true);
+    byId("responses-learner-filter").innerHTML = '<option value="">Todos los aprendices</option>';
+    byId("responses-activity-filter").innerHTML = '<option value="">Todas las actividades</option>';
     byId("deliveries-ficha-filter").innerHTML = getFichaOptions("", true);
   }
 
