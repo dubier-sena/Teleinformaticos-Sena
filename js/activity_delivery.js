@@ -148,7 +148,7 @@
       path.textContent =
         identity.ficha && identity.fullName
           ? destinationPreview
-          : "Ruta pendiente de completar con nombre y ficha.";
+          : "Ingresa nombre y ficha para ver la ruta de entrega.";
     }
   }
 

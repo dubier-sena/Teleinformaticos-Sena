@@ -44,8 +44,29 @@ test("rewritten admin script keeps critical storage and integration contracts", 
   assert.match(script, /adminCreateStudent/);
   assert.match(script, /downloadWord/);
   assert.match(script, /Firebase Authentication/);
-  assert.match(script, /TODO\(reportes\)/);
+  assert.match(script, /downloadConsolidatedReport/);
+  assert.match(script, /buildConsolidatedReportRows/);
+  assert.doesNotMatch(script, /TODO\(reportes\)/);
+  assert.doesNotMatch(script, /TODO\(seguridad\)/);
   assert.doesNotMatch(script, /registerStudent\(/);
+});
+
+test("admin reports and redes setup close visible operational placeholders", () => {
+  const html = read("panel-administrativo-usuarios.html");
+  const script = read(path.join("js", "admin_usuarios.js"));
+  const redes = read(path.join("js", "script_guia_redes.js"));
+
+  assert.match(html, /id="reports-download-csv"/);
+  assert.match(html, /id="reports-download-json"/);
+  assert.match(html, /Estado de integraciones y sesion administrativa/);
+  assert.doesNotMatch(html, /riesgos pendientes/i);
+  assert.match(script, /Contrato local activo/);
+  assert.match(script, /Firebase Auth listo para activar/);
+  assert.match(script, /downloadTextFile/);
+  assert.doesNotMatch(script, /admin-todo/);
+  assert.doesNotMatch(redes, /TODO:/);
+  assert.match(redes, /getConfiguredDriveLinkRedes/);
+  assert.match(redes, /redes:reflexion-3\.1\.1/);
 });
 
 test("admin deliveries view can reopen delivered activities without replacing evidence", () => {
