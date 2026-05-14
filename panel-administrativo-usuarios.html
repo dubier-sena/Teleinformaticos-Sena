@@ -201,7 +201,17 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
           </div>
           <div class="admin-toolbar">
             <select id="responses-ficha-filter"></select>
+            <select id="responses-learner-filter"></select>
             <select id="responses-guide-filter"></select>
+            <select id="responses-activity-filter"></select>
+            <select id="responses-status-filter" aria-label="Filtrar respuestas por estado">
+              <option value="">Todos los estados</option>
+              <option value="completa">Completas</option>
+              <option value="parcial">Parciales</option>
+              <option value="sin-respuesta">Sin respuesta</option>
+              <option value="entregada">Entregadas</option>
+              <option value="reabierta">Reabiertas</option>
+            </select>
             <input id="responses-search" type="search" placeholder="Buscar aprendiz">
           </div>
           <div class="admin-table-wrap" id="responses-table"></div>
