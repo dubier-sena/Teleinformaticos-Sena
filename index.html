@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="es">
 <head>
 <meta charset="utf-8">
@@ -12,8 +12,7 @@
 <meta name="description" content="Portal de acceso a las gu&iacute;as interactivas del programa Sistemas Teleinform&aacute;ticos.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/site_tokens.css?v=20260412_2">
 <link rel="stylesheet" href="css/shared_shell.css?v=20260425_1">
 <link rel="stylesheet" href="css/page_portal.css?v=20260412_3">
@@ -23,483 +22,494 @@
 <script defer src="js/index_auth.js?v=20260411_2"></script>
 <script defer src="js/shared_shell.js?v=20260508_1"></script>
 </head>
-<body class="app-shell app-shell--portal">
-
-<!-- ------------------------------------------------------
-     CONTENIDO PRINCIPAL
-     ------------------------------------------------------ -->
-<main class="main app-main portal-grid">
-
-  <!-- ── Encabezado del portal ── -->
-  <div class="portal-hero">
-    <img class="portal-hero__logo" src="assets/img/sena-logo.png" alt="Logo SENA" height="56">
-    <h1 class="portal-hero__title">Sistemas <span>Teleinform&aacute;ticos</span></h1>
-    <p class="portal-hero__sub">Selecciona tu instituci&oacute;n y grupo para acceder a las gu&iacute;as de aprendizaje &middot; El avance de cada aprendiz queda guardado de forma segura.</p>
-    <div class="portal-hero__chips">
-      <span class="portal-hero__chip">👨‍🏫 Dubier Orlando Millan Barbosa</span>
-      <span class="portal-hero__chip">✉️ domillan@sena.edu.co</span>
+<body class="app-shell app-shell--portal portal-redesign">
+<main class="portal-home" id="portal-home">
+  <section class="portal-home__hero" aria-labelledby="portal-title">
+    <div class="portal-home__hero-copy">
+      <img class="portal-home__logo" src="assets/img/sena-logo.png" alt="Logo SENA" height="64">
+      <p class="portal-home__eyebrow">Portal educativo SENA</p>
+      <h1 id="portal-title">Sistemas <span>Teleinform&aacute;ticos</span></h1>
+      <p class="portal-home__lead">
+        Selecciona primero tu instituci&oacute;n educativa, luego tu grupo y ficha para ingresar a tus gu&iacute;as de aprendizaje.
+      </p>
     </div>
-  </div>
-
-  <!-- ── Col izquierda: Acceso + herramientas admin ── -->
-  <div class="portal-col portal-col--auth">
-
-  <div class="section-label">Acceso al Portal</div>
-
-  <div class="auth-panel anim-2" id="portal-access-panel" data-reveal>
-
-    <!-- Mensaje flash (errores / confirmaciones entre paginas) -->
-    <div class="auth-feedback" id="portal-flash"></div>
-
-    <!-- Tarjeta: sesion activa -->
-    <div class="auth-session-card" id="auth-session-card" style="display:none">
-      <div class="auth-session-top">
-        <div>
-          <span class="auth-role" id="auth-session-role">Estudiante</span>
-          <h3 id="auth-session-name">Usuario activo</h3>
-          <p id="auth-session-meta">-</p>
-        </div>
-        <button class="btn-share ghost" type="button" id="auth-session-logout">Cerrar sesi&oacute;n</button>
-      </div>
-      <div class="auth-guide-list" id="auth-session-guides"></div>
-      <p class="auth-inline-note">El avance de las gu&iacute;as se guarda por usuario en este navegador y en la nube.</p>
-      <div class="auth-session-actions" id="auth-student-actions" style="display:none">
-        <a class="btn-share secondary" id="btn-productive-stage-access" href="etapa-productiva-estudiante.html">
-          Mi proyecto y retroalimentacion
-        </a>
-      </div>
-      <div class="auth-session-actions" id="auth-session-actions" style="display:none">
-        <a class="btn-share primary" href="calendario-academico-2026.html">Abrir calendario 2026</a>
-        <a class="btn-share secondary" href="panel-administrativo-usuarios.html">Administrar usuarios</a>
-      </div>
-    </div>
-
-    <!-- Tarjeta: visitante (sin sesion) -->
-    <div id="auth-guest-card">
-      <div class="auth-header">
-        <h3>Registro e inicio de sesi&oacute;n</h3>
-        <p>
-          Cada estudiante puede crear su usuario con nombre completo, nombre de usuario,
-      n&uacute;mero de ficha y contrase&ntilde;a. La ficha define autom&aacute;ticamente las gu&iacute;as que puede abrir.
-        </p>
-      </div>
-
-      <!-- Pestanas: Ingresar / Crear usuario / Administrador -->
-      <div class="auth-tabs">
-        <button class="auth-tab active" type="button" data-auth-tab="login">Ingresar</button>
-        <button class="auth-tab"        type="button" data-auth-tab="register">Crear usuario</button>
-        <button class="auth-tab"        type="button" data-auth-tab="admin">Administrador</button>
-      </div>
-
-      <!-- Pestana: Login -->
-      <div class="auth-pane active" data-auth-pane="login">
-        <h4>Ingreso del estudiante</h4>
-        <p>Usa el nombre de usuario y la contrase&ntilde;a que registraste en este navegador.</p>
-        <form class="auth-form" id="auth-login-form" novalidate>
-          <label for="auth-login-user">Nombre de usuario</label>
-          <input class="auth-input" id="auth-login-user" type="text"
-                 maxlength="30" autocomplete="username" spellcheck="false" placeholder="mi.usuario">
-          <label for="auth-login-password">Contrase&ntilde;a</label>
-          <input class="auth-input" id="auth-login-password" type="password"
-                 maxlength="60" autocomplete="current-password" placeholder="********">
-          <button class="auth-submit" type="submit">Iniciar sesi&oacute;n</button>
-        </form>
-        <div class="auth-feedback" id="auth-login-feedback"></div>
-      </div>
-
-      <!-- Pestana: Registro -->
-      <div class="auth-pane" data-auth-pane="register">
-        <h4>Crear usuario del estudiante</h4>
-        <p>La ficha se valida contra las gu&iacute;as disponibles y prepara autom&aacute;ticamente el acceso a tu grupo.</p>
-        <form class="auth-form" id="auth-register-form" novalidate>
-          <label for="auth-register-name">Nombre completo</label>
-          <input class="auth-input" id="auth-register-name" type="text"
-                 maxlength="80" autocomplete="name" placeholder="Nombre Apellido">
-          <label for="auth-register-user">Nombre de usuario</label>
-          <input class="auth-input" id="auth-register-user" type="text"
-                 maxlength="30" autocomplete="username" spellcheck="false" placeholder="nombre.apellido">
-          <label for="auth-register-ficha">N&uacute;mero de ficha</label>
-          <input class="auth-input" id="auth-register-ficha" type="text"
-                 maxlength="10" inputmode="numeric" placeholder="3441939">
-          <label for="auth-register-password">Contrase&ntilde;a</label>
-          <input class="auth-input" id="auth-register-password" type="password"
-                 minlength="6" maxlength="60" autocomplete="new-password" placeholder="M&iacute;nimo 6 caracteres">
-          <button class="auth-submit" type="submit">Crear usuario</button>
-        </form>
-        <div class="auth-feedback" id="auth-register-feedback"></div>
-      </div>
-
-      <!-- Pestana: Admin -->
-      <div class="auth-pane" data-auth-pane="admin">
-        <h4>Acceso administrativo</h4>
-        <p id="auth-admin-help">Ingresa la clave administrativa para usar los m&oacute;dulos restringidos.</p>
-        <form class="auth-form" id="auth-admin-form" novalidate>
-          <label for="auth-admin-password">Clave del administrador</label>
-          <input class="auth-input" id="auth-admin-password" type="password"
-                 maxlength="60" autocomplete="current-password" placeholder="********">
-          <button class="auth-submit" type="submit" id="auth-admin-submit">Ingresar como administrador</button>
-        </form>
-        <div class="auth-feedback" id="auth-admin-feedback"></div>
-      </div>
-    </div>
-
-  </div><!-- /auth-panel -->
-
-  <!-- -- Llamado al calendario (solo admin) -- -->
-  <div class="instruction calendar-callout" id="calendar-callout" style="display:none" data-reveal>
-    <p id="calendar-access-note">
-      <strong>Calendario 2026 disponible.</strong>
-      Consulta el dashboard, el registro completo y los meses programados.
-    </p>
-    <a class="btn-share primary" id="btn-calendar-access" href="calendario-academico-2026.html">
-      Abrir calendario 2026
-    </a>
-  </div>
-
-  </div><!-- /portal-col--auth -->
-
-  <!-- ── Col derecha: Instituciones educativas ── -->
-  <div class="portal-col portal-col--content">
-
-  <!-- ------------------------------------------------------
-       INSTITUCIONES EDUCATIVAS
-       ------------------------------------------------------ -->
-  <div class="section-label">Instituciones Educativas</div>
-
-  <!-- -- IE Jhon F. Kennedy -- -->
-  <div class="inst-card" data-reveal>
-    <div class="inst-header">
-      <div class="inst-icon">IE</div>
+    <aside class="portal-home__identity" aria-label="Informacion del programa">
       <div>
-        <h2>Instituci&oacute;n Educativa Jhon F. Kennedy</h2>
-        <p>2 grupos vinculados | Calendario A y B</p>
+        <span>Instructor</span>
+        <strong>Dubier Orlando Millan Barbosa</strong>
       </div>
-    </div>
-    <div class="inst-body">
-
-      <div class="groups-grid portal-guides">
-        <button
-          class="group-btn guide-card"
-          type="button"
-          onclick="selectGroup(this)"
-          data-inst="Institucion Educativa Jhon F. Kennedy"
-          data-grado="Decimo"
-          data-grupo="10A"
-          data-ficha="3441939"
-          data-guia="grupo-10a-guia-01-induccion.html"
-        >
-          <span class="guide-card__badge">Guia disponible</span>
-          <div class="group-grade">10<sup>A</sup></div>
-          <div class="group-ficha">Ficha <span>3441939</span></div>
-          <span class="group-nivel nivel-decimo">Decimo</span>
-        </button>
-
-        <button
-          class="group-btn guide-card"
-          type="button"
-          onclick="selectGroup(this)"
-          data-inst="Institucion Educativa Jhon F. Kennedy"
-          data-grado="Decimo"
-          data-grupo="10B"
-          data-ficha="3441942"
-          data-guia="grupo-10b-guia-01-induccion.html"
-        >
-          <span class="guide-card__badge">Guia disponible</span>
-          <div class="group-grade">10<sup>B</sup></div>
-          <div class="group-ficha">Ficha <span>3441942</span></div>
-          <span class="group-nivel nivel-decimo">Decimo</span>
-        </button>
-      </div>
-
-      <!-- Horario JFK -->
-      <button class="btn-horario" type="button" id="btn-horario-jfk" onclick="toggleHorario('jfk')">
-        Ver horario de formacion <span class="hor-arrow">&#9662;</span>
-      </button>
-
-      <div class="horario-panel" id="horario-jfk">
-        <div class="horario-inner">
-          <div class="cal-card cal-a">
-            <div class="cal-title"><span class="cal-badge">Cal. A</span> Calendario A</div>
-            <div class="cal-row"><span class="cal-dot"></span><span class="cal-lbl">Inicio</span><span class="cal-time">6:10 am</span></div>
-            <hr class="cal-sep">
-            <div class="cal-row"><span class="cal-dot"></span><span class="cal-lbl">Restaurante</span><span class="cal-time">7:30 am - 7:50 am</span></div>
-            <hr class="cal-sep">
-            <div class="cal-row"><span class="cal-dot"></span><span class="cal-lbl">Finaliza</span><span class="cal-time">10:10 am</span></div>
-          </div>
-          <div class="cal-card cal-b">
-            <div class="cal-title"><span class="cal-badge">Cal. B</span> Calendario B</div>
-            <div class="cal-row"><span class="cal-dot"></span><span class="cal-lbl">Inicio</span><span class="cal-time">2:10 pm</span></div>
-            <hr class="cal-sep">
-            <div class="cal-row"><span class="cal-dot"></span><span class="cal-lbl">Finaliza</span><span class="cal-time">6:10 pm</span></div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div><!-- /IE JFK -->
-
-  <!-- -- IE Santa Barbara -- -->
-  <div class="inst-card" data-reveal>
-    <div class="inst-header">
-      <div class="inst-icon">IE</div>
       <div>
-        <h2>Instituci&oacute;n Educativa Santa B&aacute;rbara</h2>
-        <p>4 grupos vinculados | Grados 10 y 11</p>
+        <span>Correo</span>
+        <a href="mailto:domillan@sena.edu.co">domillan@sena.edu.co</a>
       </div>
+      <div>
+        <span>Programa</span>
+        <strong>C&oacute;digo 233108 V1</strong>
+      </div>
+    </aside>
+  </section>
+
+  <section class="portal-role-layout">
+    <div class="portal-learning" aria-label="Flujo de ingreso a guias">
+      <section class="flow-panel" aria-labelledby="flow-title">
+        <div class="flow-panel__header">
+          <p class="portal-section-kicker">Ruta del aprendiz</p>
+          <h2 id="flow-title">Ingresa a tus gu&iacute;as sin perderte</h2>
+          <p>Verifica que est&aacute;s seleccionando tu grupo y ficha correctamente. Si tienes dudas, consulta con tu instructor antes de continuar.</p>
+        </div>
+        <div class="flow-steps">
+          <article class="flow-step" data-step="1">
+            <span>Paso 1</span>
+            <strong>Instituci&oacute;n educativa</strong>
+            <p>Elige primero tu instituci&oacute;n.</p>
+          </article>
+          <article class="flow-step" data-step="2">
+            <span>Paso 2</span>
+            <strong>Grupo y ficha</strong>
+            <p>Revisa el grado, grupo y n&uacute;mero de ficha.</p>
+          </article>
+          <article class="flow-step" data-step="3">
+            <span>Paso 3</span>
+            <strong>Gu&iacute;as</strong>
+            <p>Confirma la selecci&oacute;n e ingresa.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="institution-step" aria-labelledby="institution-title">
+        <div class="step-heading">
+          <div>
+            <p class="portal-section-kicker">Paso 1</p>
+            <h2 id="institution-title">Selecciona tu instituci&oacute;n educativa</h2>
+          </div>
+          <p>El sistema mostrar&aacute; solo los grupos de la instituci&oacute;n seleccionada.</p>
+        </div>
+
+        <div class="institution-selector" role="list">
+          <button class="institution-option active" type="button" data-inst-key="jfk" aria-pressed="true">
+            <span class="institution-option__mark">IE</span>
+            <span>
+              <strong>Instituci&oacute;n Educativa Jhon F. Kennedy</strong>
+              <small>Grado 10 | Calendario A y B | 2 fichas</small>
+            </span>
+          </button>
+          <button class="institution-option" type="button" data-inst-key="santa-barbara" aria-pressed="false">
+            <span class="institution-option__mark">IE</span>
+            <span>
+              <strong>Instituci&oacute;n Educativa Santa B&aacute;rbara</strong>
+              <small>Grados 10 y 11 | 4 fichas</small>
+            </span>
+          </button>
+        </div>
+      </section>
+
+      <section class="group-step" aria-labelledby="group-title">
+        <div class="step-heading">
+          <div>
+            <p class="portal-section-kicker">Paso 2</p>
+            <h2 id="group-title">Selecciona tu grupo y ficha</h2>
+          </div>
+          <p class="group-step__hint" id="group-step-hint">Ahora se muestran los grupos de la instituci&oacute;n seleccionada.</p>
+        </div>
+
+        <div class="institution-groups active" id="groups-jfk" data-inst-key="jfk" data-inst-label="Institucion Educativa Jhon F. Kennedy">
+          <div class="institution-groups__header">
+            <h3>Instituci&oacute;n Educativa Jhon F. Kennedy</h3>
+            <p>Grupos disponibles por grado.</p>
+          </div>
+          <section class="grade-section" aria-labelledby="jfk-grade-10">
+            <h4 id="jfk-grade-10">D&eacute;cimo</h4>
+            <div class="groups-grid portal-guides">
+              <article class="group-card">
+                <div class="group-card__summary">
+                  <span class="guide-card__badge">Gu&iacute;as disponibles para este grupo</span>
+                  <span class="group-inst">Instituci&oacute;n Educativa Jhon F. Kennedy</span>
+                  <div class="group-grade">10<sup>A</sup></div>
+                  <div class="group-ficha">Ficha <span>3441939</span></div>
+                  <span class="group-status">Estado: gu&iacute;as habilitadas</span>
+                </div>
+                <div class="group-card__actions">
+                  <button
+                    class="group-btn"
+                    type="button"
+                    onclick="selectGroup(this)"
+                    data-inst="Institucion Educativa Jhon F. Kennedy"
+                    data-grado="Decimo"
+                    data-grupo="10A"
+                    data-ficha="3441939"
+                    data-guia="grupo-10a-guia-01-induccion.html"
+                    data-inst-key="jfk"
+                  >
+                    Ingresar a mis gu&iacute;as
+                  </button>
+                  <button class="btn-horario group-schedule-btn" type="button" data-open-horario="jfk">
+                    Consultar horario del grupo <span class="hor-arrow">&#9662;</span>
+                  </button>
+                </div>
+              </article>
+
+              <article class="group-card">
+                <div class="group-card__summary">
+                  <span class="guide-card__badge">Gu&iacute;as disponibles para este grupo</span>
+                  <span class="group-inst">Instituci&oacute;n Educativa Jhon F. Kennedy</span>
+                  <div class="group-grade">10<sup>B</sup></div>
+                  <div class="group-ficha">Ficha <span>3441942</span></div>
+                  <span class="group-status">Estado: gu&iacute;as habilitadas</span>
+                </div>
+                <div class="group-card__actions">
+                  <button
+                    class="group-btn"
+                    type="button"
+                    onclick="selectGroup(this)"
+                    data-inst="Institucion Educativa Jhon F. Kennedy"
+                    data-grado="Decimo"
+                    data-grupo="10B"
+                    data-ficha="3441942"
+                    data-guia="grupo-10b-guia-01-induccion.html"
+                    data-inst-key="jfk"
+                  >
+                    Ingresar a mis gu&iacute;as
+                  </button>
+                  <button class="btn-horario group-schedule-btn" type="button" data-open-horario="jfk">
+                    Consultar horario del grupo <span class="hor-arrow">&#9662;</span>
+                  </button>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <div class="horario-panel portal-schedule" id="horario-jfk">
+            <div class="horario-inner">
+              <div class="cal-card cal-a">
+                <div class="cal-title"><span class="cal-badge">Cal. A</span> Calendario A</div>
+                <div class="cal-row"><span class="cal-dot"></span><span class="cal-lbl">Inicio</span><span class="cal-time">6:10 am</span></div>
+                <hr class="cal-sep">
+                <div class="cal-row"><span class="cal-dot"></span><span class="cal-lbl">Restaurante</span><span class="cal-time">7:30 am - 7:50 am</span></div>
+                <hr class="cal-sep">
+                <div class="cal-row"><span class="cal-dot"></span><span class="cal-lbl">Finaliza</span><span class="cal-time">10:10 am</span></div>
+              </div>
+              <div class="cal-card cal-b">
+                <div class="cal-title"><span class="cal-badge">Cal. B</span> Calendario B</div>
+                <div class="cal-row"><span class="cal-dot"></span><span class="cal-lbl">Inicio</span><span class="cal-time">2:10 pm</span></div>
+                <hr class="cal-sep">
+                <div class="cal-row"><span class="cal-dot"></span><span class="cal-lbl">Finaliza</span><span class="cal-time">6:10 pm</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="institution-groups" id="groups-santa-barbara" data-inst-key="santa-barbara" data-inst-label="Institucion Educativa Santa Barbara">
+          <div class="institution-groups__header">
+            <h3>Instituci&oacute;n Educativa Santa B&aacute;rbara</h3>
+            <p>Grupos disponibles por grado.</p>
+          </div>
+          <section class="grade-section" aria-labelledby="sb-grade-10">
+            <h4 id="sb-grade-10">D&eacute;cimo</h4>
+            <div class="groups-grid portal-guides">
+              <article class="group-card">
+                <div class="group-card__summary">
+                  <span class="guide-card__badge">Gu&iacute;as disponibles para este grupo</span>
+                  <span class="group-inst">Instituci&oacute;n Educativa Santa B&aacute;rbara</span>
+                  <div class="group-grade">10<sup>A</sup></div>
+                  <div class="group-ficha">Ficha <span>3441944</span></div>
+                  <span class="group-status">Estado: gu&iacute;as habilitadas</span>
+                </div>
+                <div class="group-card__actions">
+                  <button
+                    class="group-btn"
+                    type="button"
+                    onclick="selectGroup(this)"
+                    data-inst="Institucion Educativa Santa Barbara"
+                    data-grado="Decimo"
+                    data-grupo="10A"
+                    data-ficha="3441944"
+                    data-guia="santa-barbara-10a-guia-02-redes-rap01.html"
+                    data-inst-key="santa-barbara"
+                    data-hor-tab="hor-sb-10a"
+                  >
+                    Ingresar a mis gu&iacute;as
+                  </button>
+                  <button class="btn-horario group-schedule-btn" type="button" data-open-horario="sb" data-hor-tab="hor-sb-10a">
+                    Consultar horario del grupo <span class="hor-arrow">&#9662;</span>
+                  </button>
+                </div>
+              </article>
+
+              <article class="group-card">
+                <div class="group-card__summary">
+                  <span class="guide-card__badge">Gu&iacute;as disponibles para este grupo</span>
+                  <span class="group-inst">Instituci&oacute;n Educativa Santa B&aacute;rbara</span>
+                  <div class="group-grade">10<sup>B</sup></div>
+                  <div class="group-ficha">Ficha <span>3441950</span></div>
+                  <span class="group-status">Estado: gu&iacute;as habilitadas</span>
+                </div>
+                <div class="group-card__actions">
+                  <button
+                    class="group-btn"
+                    type="button"
+                    onclick="selectGroup(this)"
+                    data-inst="Institucion Educativa Santa Barbara"
+                    data-grado="Decimo"
+                    data-grupo="10B"
+                    data-ficha="3441950"
+                    data-guia="santa-barbara-10b-guia-02-redes-rap01.html"
+                    data-inst-key="santa-barbara"
+                    data-hor-tab="hor-sb-10b"
+                  >
+                    Ingresar a mis gu&iacute;as
+                  </button>
+                  <button class="btn-horario group-schedule-btn" type="button" data-open-horario="sb" data-hor-tab="hor-sb-10b">
+                    Consultar horario del grupo <span class="hor-arrow">&#9662;</span>
+                  </button>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section class="grade-section" aria-labelledby="sb-grade-11">
+            <h4 id="sb-grade-11">Und&eacute;cimo</h4>
+            <div class="groups-grid portal-guides">
+              <article class="group-card">
+                <div class="group-card__summary">
+                  <span class="guide-card__badge">Gu&iacute;as disponibles para este grupo</span>
+                  <span class="group-inst">Instituci&oacute;n Educativa Santa B&aacute;rbara</span>
+                  <div class="group-grade">11<sup>A</sup></div>
+                  <div class="group-ficha">Ficha <span>3168850</span></div>
+                  <span class="group-status">Estado: gu&iacute;as habilitadas</span>
+                </div>
+                <div class="group-card__actions">
+                  <button
+                    class="group-btn"
+                    type="button"
+                    onclick="selectGroup(this)"
+                    data-inst="Institucion Educativa Santa Barbara"
+                    data-grado="Undecimo"
+                    data-grupo="11A"
+                    data-ficha="3168850"
+                    data-guia="grupo-11a-guia-06-planificar-informacion.html"
+                    data-inst-key="santa-barbara"
+                    data-hor-tab="hor-sb-11a"
+                  >
+                    Ingresar a mis gu&iacute;as
+                  </button>
+                  <button class="btn-horario group-schedule-btn" type="button" data-open-horario="sb" data-hor-tab="hor-sb-11a">
+                    Consultar horario del grupo <span class="hor-arrow">&#9662;</span>
+                  </button>
+                </div>
+              </article>
+
+              <article class="group-card">
+                <div class="group-card__summary">
+                  <span class="guide-card__badge">Gu&iacute;as disponibles para este grupo</span>
+                  <span class="group-inst">Instituci&oacute;n Educativa Santa B&aacute;rbara</span>
+                  <div class="group-grade">11<sup>B</sup></div>
+                  <div class="group-ficha">Ficha <span>3168852</span></div>
+                  <span class="group-status">Estado: gu&iacute;as habilitadas</span>
+                </div>
+                <div class="group-card__actions">
+                  <button
+                    class="group-btn"
+                    type="button"
+                    onclick="selectGroup(this)"
+                    data-inst="Institucion Educativa Santa Barbara"
+                    data-grado="Undecimo"
+                    data-grupo="11B"
+                    data-ficha="3168852"
+                    data-guia="grupo-11b-guia-06-planificar-informacion.html"
+                    data-inst-key="santa-barbara"
+                    data-hor-tab="hor-sb-11b"
+                  >
+                    Ingresar a mis gu&iacute;as
+                  </button>
+                  <button class="btn-horario group-schedule-btn" type="button" data-open-horario="sb" data-hor-tab="hor-sb-11b">
+                    Consultar horario del grupo <span class="hor-arrow">&#9662;</span>
+                  </button>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <div class="horario-panel portal-schedule" id="horario-sb">
+            <div class="hor-tabs">
+              <button class="hor-tab active" type="button" onclick="switchHorTab(this, 'hor-sb-10a')">10<sup>A</sup></button>
+              <button class="hor-tab" type="button" onclick="switchHorTab(this, 'hor-sb-10b')">10<sup>B</sup></button>
+              <button class="hor-tab" type="button" onclick="switchHorTab(this, 'hor-sb-11a')">11<sup>A</sup></button>
+              <button class="hor-tab" type="button" onclick="switchHorTab(this, 'hor-sb-11b')">11<sup>B</sup></button>
+            </div>
+
+            <div class="hor-group-panel active" id="hor-sb-10a">
+              <div class="hor-day"><div class="hor-day-name">Lunes</div><div class="hor-slots"><span class="hor-slot">7:00 am - 9:55 am</span><span class="hor-slot">2:15 pm - 4:15 pm</span></div></div>
+              <div class="hor-day"><div class="hor-day-name">Mi&eacute;rcoles</div><div class="hor-slots"><span class="hor-slot">7:00 am - 7:55 am</span><span class="hor-slot">2:15 pm - 4:15 pm</span></div></div>
+              <div class="hor-day"><div class="hor-day-name">Viernes</div><div class="hor-slots"><span class="hor-slot">9:00 am - 9:55 am</span><span class="hor-slot">12:05 pm - 1:55 pm</span></div></div>
+            </div>
+            <div class="hor-group-panel" id="hor-sb-10b">
+              <div class="hor-day"><div class="hor-day-name">Lunes</div><div class="hor-slots"><span class="hor-slot">12:05 pm - 1:55 pm</span></div></div>
+              <div class="hor-day"><div class="hor-day-name">Martes</div><div class="hor-slots"><span class="hor-slot">7:00 am - 9:55 am</span><span class="hor-slot">2:15 pm - 4:15 pm</span></div></div>
+              <div class="hor-day"><div class="hor-day-name">Jueves</div><div class="hor-slots"><span class="hor-slot">7:00 am - 7:55 am</span><span class="hor-slot">9:55 am - 10:50 am</span><span class="hor-slot">2:15 pm - 4:15 pm</span></div></div>
+            </div>
+            <div class="hor-group-panel" id="hor-sb-11a">
+              <div class="hor-day"><div class="hor-day-name">Lunes</div><div class="hor-slots"><span class="hor-slot">9:00 am - 9:55 am</span><span class="hor-slot">2:15 pm - 4:15 pm</span></div></div>
+              <div class="hor-day"><div class="hor-day-name">Martes</div><div class="hor-slots"><span class="hor-slot">7:00 am - 8:50 am</span><span class="hor-slot">10:50 am - 1:00 pm</span></div></div>
+              <div class="hor-day"><div class="hor-day-name">Mi&eacute;rcoles</div><div class="hor-slots"><span class="hor-slot">9:00 am - 9:55 am</span></div></div>
+              <div class="hor-day"><div class="hor-day-name">Jueves</div><div class="hor-slots"><span class="hor-slot">2:15 pm - 4:15 pm</span></div></div>
+              <div class="hor-day"><div class="hor-day-name">Viernes</div><div class="hor-slots"><span class="hor-slot">7:00 am - 7:55 am</span></div></div>
+            </div>
+            <div class="hor-group-panel" id="hor-sb-11b">
+              <div class="hor-day"><div class="hor-day-name">Lunes</div><div class="hor-slots"><span class="hor-slot">7:00 am - 7:55 am</span><span class="hor-slot">9:55 am - 10:50 am</span></div></div>
+              <div class="hor-day"><div class="hor-day-name">Martes</div><div class="hor-slots"><span class="hor-slot">2:15 pm - 4:15 pm</span></div></div>
+              <div class="hor-day"><div class="hor-day-name">Mi&eacute;rcoles</div><div class="hor-slots"><span class="hor-slot">10:50 am - 11:45 am</span><span class="hor-slot">2:15 pm - 4:15 pm</span></div></div>
+              <div class="hor-day"><div class="hor-day-name">Jueves</div><div class="hor-slots"><span class="hor-slot">7:00 am - 10:50 am</span></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="entry-step" aria-labelledby="entry-title">
+        <div class="step-heading">
+          <div>
+            <p class="portal-section-kicker">Paso 3</p>
+            <h2 id="entry-title">Ingresa a tus gu&iacute;as de aprendizaje</h2>
+          </div>
+          <p>Antes de abrir una gu&iacute;a, confirma que la ficha sea la correcta.</p>
+        </div>
+
+        <div class="cta-panel" id="cta-panel" data-reveal>
+          <h3>Grupo y ficha seleccionados</h3>
+          <p>Verifica que la instituci&oacute;n, el grupo y la ficha correspondan a tu formaci&oacute;n antes de continuar.</p>
+          <div class="selected-info">
+            <div class="row"><span class="lbl">Instituci&oacute;n</span><span class="val" id="si-inst">-</span></div>
+            <div class="row"><span class="lbl">Grupo</span><span class="val" id="si-grupo">-</span></div>
+            <div class="row"><span class="lbl">Ficha</span><span class="val"><b id="si-ficha">-</b></span></div>
+            <div class="row"><span class="lbl">Gu&iacute;a</span><span class="val" id="si-guia">-</span></div>
+          </div>
+          <div class="guide-options" id="guide-options"></div>
+          <div class="productive-stage-cta-wrap" id="productive-stage-cta-wrap" style="display:none">
+            <a class="btn-share secondary btn-productive-stage-cta" id="btn-productive-stage-cta" href="etapa-productiva-estudiante.html">Ver etapa productiva</a>
+            <a class="btn-share secondary" id="btn-productive-stage-student-view" href="etapa-productiva-estudiante.html" style="display:none">Ver proyectos de aprendices</a>
+          </div>
+          <div class="cta-actions">
+            <a class="btn-enter" id="btn-enter" href="#">Ingresar a mis gu&iacute;as <span class="arrow">&rarr;</span></a>
+            <button class="btn-change-selection" type="button" id="btn-change-selection">Cambiar grupo/ficha</button>
+          </div>
+          <p class="access-note" id="access-note">Inicia sesi&oacute;n para abrir las gu&iacute;as habilitadas seg&uacute;n tu usuario.</p>
+        </div>
+      </section>
     </div>
-    <div class="inst-body">
 
-      <div class="groups-grid portal-guides">
-        <button
-          class="group-btn guide-card"
-          type="button"
-          onclick="selectGroup(this)"
-          data-inst="Institucion Educativa Santa Barbara"
-          data-grado="Decimo"
-          data-grupo="10A"
-          data-ficha="3441944"
-          data-guia="santa-barbara-10a-guia-02-redes-rap01.html"
-        >
-          <span class="guide-card__badge">Guia disponible</span>
-          <div class="group-grade">10<sup>A</sup></div>
-          <div class="group-ficha">Ficha <span>3441944</span></div>
-          <span class="group-nivel nivel-decimo">Decimo</span>
-        </button>
+    <aside class="portal-access" aria-label="Accesos rapidos">
+      <p class="portal-section-kicker">Accesos r&aacute;pidos</p>
+      <div class="auth-panel anim-2" id="portal-access-panel" data-reveal>
+        <div class="auth-feedback" id="portal-flash"></div>
 
-        <button
-          class="group-btn guide-card"
-          type="button"
-          onclick="selectGroup(this)"
-          data-inst="Institucion Educativa Santa Barbara"
-          data-grado="Decimo"
-          data-grupo="10B"
-          data-ficha="3441950"
-          data-guia="santa-barbara-10b-guia-02-redes-rap01.html"
-        >
-          <span class="guide-card__badge">Guia disponible</span>
-          <div class="group-grade">10<sup>B</sup></div>
-          <div class="group-ficha">Ficha <span>3441950</span></div>
-          <span class="group-nivel nivel-decimo">Decimo</span>
-        </button>
+        <div class="auth-session-card" id="auth-session-card" style="display:none">
+          <div class="auth-session-top">
+            <div>
+              <span class="auth-role" id="auth-session-role">Estudiante</span>
+              <h3 id="auth-session-name">Usuario activo</h3>
+              <p id="auth-session-meta">-</p>
+            </div>
+            <button class="btn-share ghost" type="button" id="auth-session-logout">Cerrar sesi&oacute;n</button>
+          </div>
+          <div class="auth-guide-list" id="auth-session-guides"></div>
+          <p class="auth-inline-note">El avance de las gu&iacute;as se guarda por usuario en este navegador y en la nube.</p>
+          <div class="auth-session-actions" id="auth-student-actions" style="display:none">
+            <a class="btn-share secondary" id="btn-productive-stage-access" href="etapa-productiva-estudiante.html">Mi proyecto y retroalimentaci&oacute;n</a>
+          </div>
+          <div class="auth-session-actions" id="auth-session-actions" style="display:none">
+            <a class="btn-share primary" href="calendario-academico-2026.html">Abrir calendario 2026</a>
+            <a class="btn-share secondary" href="panel-administrativo-usuarios.html">Administrar usuarios</a>
+          </div>
+        </div>
 
-        <button
-          class="group-btn guide-card"
-          type="button"
-          onclick="selectGroup(this)"
-          data-inst="Institucion Educativa Santa Barbara"
-          data-grado="Undecimo"
-          data-grupo="11A"
-          data-ficha="3168850"
-          data-guia="grupo-11a-guia-06-planificar-informacion.html"
-        >
-          <span class="guide-card__badge">Guia disponible</span>
-          <div class="group-grade">11<sup>A</sup></div>
-          <div class="group-ficha">Ficha <span>3168850</span></div>
-          <span class="group-nivel nivel-undecimo">Undecimo</span>
-        </button>
-
-        <button
-          class="group-btn guide-card"
-          type="button"
-          onclick="selectGroup(this)"
-          data-inst="Institucion Educativa Santa Barbara"
-          data-grado="Undecimo"
-          data-grupo="11B"
-          data-ficha="3168852"
-          data-guia="grupo-11b-guia-06-planificar-informacion.html"
-        >
-          <span class="guide-card__badge">Guia disponible</span>
-          <div class="group-grade">11<sup>B</sup></div>
-          <div class="group-ficha">Ficha <span>3168852</span></div>
-          <span class="group-nivel nivel-undecimo">Undecimo</span>
-        </button>
+        <div id="auth-guest-card">
+          <div class="auth-header">
+            <h3>Registro e inicio de sesi&oacute;n</h3>
+            <p>Cada aprendiz ingresa con su usuario. La ficha define autom&aacute;ticamente las gu&iacute;as que puede abrir.</p>
+          </div>
+          <div class="auth-tabs">
+            <button class="auth-tab active" type="button" data-auth-tab="login">Ingresar</button>
+            <button class="auth-tab" type="button" data-auth-tab="register">Crear usuario</button>
+            <button class="auth-tab" type="button" data-auth-tab="admin">Administrador</button>
+          </div>
+          <div class="auth-pane active" data-auth-pane="login">
+            <h4>Ingreso del aprendiz</h4>
+            <p>Usa el nombre de usuario y la contrase&ntilde;a registrados.</p>
+            <form class="auth-form" id="auth-login-form" novalidate>
+              <label for="auth-login-user">Nombre de usuario</label>
+              <input class="auth-input" id="auth-login-user" type="text" maxlength="30" autocomplete="username" spellcheck="false" placeholder="mi.usuario">
+              <label for="auth-login-password">Contrase&ntilde;a</label>
+              <input class="auth-input" id="auth-login-password" type="password" maxlength="60" autocomplete="current-password" placeholder="********">
+              <button class="auth-submit" type="submit">Iniciar sesi&oacute;n</button>
+            </form>
+            <div class="auth-feedback" id="auth-login-feedback"></div>
+          </div>
+          <div class="auth-pane" data-auth-pane="register">
+            <h4>Crear usuario del aprendiz</h4>
+            <p>La ficha se valida contra los grupos disponibles del portal.</p>
+            <form class="auth-form" id="auth-register-form" novalidate>
+              <label for="auth-register-name">Nombre completo</label>
+              <input class="auth-input" id="auth-register-name" type="text" maxlength="80" autocomplete="name" placeholder="Nombre Apellido">
+              <label for="auth-register-user">Nombre de usuario</label>
+              <input class="auth-input" id="auth-register-user" type="text" maxlength="30" autocomplete="username" spellcheck="false" placeholder="nombre.apellido">
+              <label for="auth-register-ficha">N&uacute;mero de ficha</label>
+              <input class="auth-input" id="auth-register-ficha" type="text" maxlength="10" inputmode="numeric" placeholder="3441939">
+              <label for="auth-register-password">Contrase&ntilde;a</label>
+              <input class="auth-input" id="auth-register-password" type="password" minlength="6" maxlength="60" autocomplete="new-password" placeholder="M&iacute;nimo 6 caracteres">
+              <button class="auth-submit" type="submit">Crear usuario</button>
+            </form>
+            <div class="auth-feedback" id="auth-register-feedback"></div>
+          </div>
+          <div class="auth-pane" data-auth-pane="admin">
+            <h4>Acceso administrativo</h4>
+            <p id="auth-admin-help">Ingresa la clave administrativa para usar los m&oacute;dulos restringidos.</p>
+            <form class="auth-form" id="auth-admin-form" novalidate>
+              <label for="auth-admin-password">Clave del administrador</label>
+              <input class="auth-input" id="auth-admin-password" type="password" maxlength="60" autocomplete="current-password" placeholder="********">
+              <button class="auth-submit" type="submit" id="auth-admin-submit">Ingresar como administrador</button>
+            </form>
+            <div class="auth-feedback" id="auth-admin-feedback"></div>
+          </div>
+        </div>
       </div>
 
-      <!-- Horario Santa Barbara -->
-      <button class="btn-horario" type="button" id="btn-horario-sb" onclick="toggleHorario('sb')">
-        Ver horario de formacion <span class="hor-arrow">&#9662;</span>
-      </button>
-
-      <div class="horario-panel" id="horario-sb">
-        <!-- Pestanas por grupo -->
-        <div class="hor-tabs">
-          <button class="hor-tab active" type="button" onclick="switchHorTab(this, 'hor-sb-10a')">10<sup>A</sup></button>
-          <button class="hor-tab"        type="button" onclick="switchHorTab(this, 'hor-sb-10b')">10<sup>B</sup></button>
-          <button class="hor-tab"        type="button" onclick="switchHorTab(this, 'hor-sb-11a')">11<sup>A</sup></button>
-          <button class="hor-tab"        type="button" onclick="switchHorTab(this, 'hor-sb-11b')">11<sup>B</sup></button>
+      <section class="admin-overview" id="admin-overview" style="display:none" aria-labelledby="admin-overview-title">
+        <p class="portal-section-kicker">Vista administrador</p>
+        <h2 id="admin-overview-title">Herramientas de gesti&oacute;n</h2>
+        <div class="admin-overview__links">
+          <a class="btn-share primary" href="panel-administrativo-usuarios.html">Panel Admin</a>
+          <a class="btn-share secondary" href="panel-administrativo-usuarios.html">Panel de usuarios</a>
+          <a class="btn-share secondary" href="calendario-academico-2026.html">Calendario 2026</a>
+          <a class="btn-share secondary" href="etapa-productiva-admin.html">Etapa productiva</a>
         </div>
+        <p>Desde el panel puedes administrar usuarios, fichas, actividades, fechas de entrega y avance de aprendices.</p>
+      </section>
 
-        <!-- 10A -->
-        <div class="hor-group-panel active" id="hor-sb-10a">
-          <div class="hor-day">
-            <div class="hor-day-name">Lunes</div>
-            <div class="hor-slots">
-              <span class="hor-slot">7:00 am - 9:55 am</span>
-              <span class="hor-slot">2:15 pm - 4:15 pm</span>
-            </div>
-          </div>
-          <div class="hor-day">
-              <div class="hor-day-name">Mi&eacute;rcoles</div>
-            <div class="hor-slots">
-              <span class="hor-slot">7:00 am - 7:55 am</span>
-              <span class="hor-slot">2:15 pm - 4:15 pm</span>
-            </div>
-          </div>
-          <div class="hor-day">
-            <div class="hor-day-name">Viernes</div>
-            <div class="hor-slots">
-              <span class="hor-slot">9:00 am - 9:55 am</span>
-              <span class="hor-slot">12:05 pm - 1:55 pm</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 10B -->
-        <div class="hor-group-panel" id="hor-sb-10b">
-          <div class="hor-day">
-            <div class="hor-day-name">Lunes</div>
-            <div class="hor-slots"><span class="hor-slot">12:05 pm - 1:55 pm</span></div>
-          </div>
-          <div class="hor-day">
-            <div class="hor-day-name">Martes</div>
-            <div class="hor-slots">
-              <span class="hor-slot">7:00 am - 9:55 am</span>
-              <span class="hor-slot">2:15 pm - 4:15 pm</span>
-            </div>
-          </div>
-          <div class="hor-day">
-            <div class="hor-day-name">Jueves</div>
-            <div class="hor-slots">
-              <span class="hor-slot">7:00 am - 7:55 am</span>
-              <span class="hor-slot">9:55 am - 10:50 am</span>
-              <span class="hor-slot">2:15 pm - 4:15 pm</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 11A -->
-        <div class="hor-group-panel" id="hor-sb-11a">
-          <div class="hor-day">
-            <div class="hor-day-name">Lunes</div>
-            <div class="hor-slots">
-              <span class="hor-slot">9:00 am - 9:55 am</span>
-              <span class="hor-slot">2:15 pm - 4:15 pm</span>
-            </div>
-          </div>
-          <div class="hor-day">
-            <div class="hor-day-name">Martes</div>
-            <div class="hor-slots">
-              <span class="hor-slot">7:00 am - 8:50 am</span>
-              <span class="hor-slot">10:50 am - 1:00 pm</span>
-            </div>
-          </div>
-          <div class="hor-day">
-              <div class="hor-day-name">Mi&eacute;rcoles</div>
-            <div class="hor-slots"><span class="hor-slot">9:00 am - 9:55 am</span></div>
-          </div>
-          <div class="hor-day">
-            <div class="hor-day-name">Jueves</div>
-            <div class="hor-slots"><span class="hor-slot">2:15 pm - 4:15 pm</span></div>
-          </div>
-          <div class="hor-day">
-            <div class="hor-day-name">Viernes</div>
-            <div class="hor-slots"><span class="hor-slot">7:00 am - 7:55 am</span></div>
-          </div>
-        </div>
-
-        <!-- 11B -->
-        <div class="hor-group-panel" id="hor-sb-11b">
-          <div class="hor-day">
-            <div class="hor-day-name">Lunes</div>
-            <div class="hor-slots">
-              <span class="hor-slot">7:00 am - 7:55 am</span>
-              <span class="hor-slot">9:55 am - 10:50 am</span>
-            </div>
-          </div>
-          <div class="hor-day">
-            <div class="hor-day-name">Martes</div>
-            <div class="hor-slots"><span class="hor-slot">2:15 pm - 4:15 pm</span></div>
-          </div>
-          <div class="hor-day">
-              <div class="hor-day-name">Mi&eacute;rcoles</div>
-            <div class="hor-slots">
-              <span class="hor-slot">10:50 am - 11:45 am</span>
-              <span class="hor-slot">2:15 pm - 4:15 pm</span>
-            </div>
-          </div>
-          <div class="hor-day">
-            <div class="hor-day-name">Jueves</div>
-            <div class="hor-slots"><span class="hor-slot">7:00 am - 10:50 am</span></div>
-          </div>
-        </div>
-      </div><!-- /horario-sb -->
-
-    </div>
-  </div><!-- /IE Santa Barbara -->
-
-
-  <!-- ------------------------------------------------------
-       PANEL CTA | ACCESO A LA GUIA SELECCIONADA
-       ------------------------------------------------------ -->
-  <div class="cta-panel" id="cta-panel" data-reveal>
-    <h3>Grupo seleccionado</h3>
-    <p>Verifica tus datos antes de ingresar a la gu&iacute;a de aprendizaje.</p>
-
-    <div class="selected-info">
-      <div class="row"><span class="lbl">Instituci&oacute;n</span><span class="val" id="si-inst">-</span></div>
-      <div class="row"><span class="lbl">Grupo</span><span class="val" id="si-grupo">-</span></div>
-      <div class="row"><span class="lbl">Ficha</span><span class="val"><b id="si-ficha">-</b></span></div>
-      <div class="row"><span class="lbl">Gu&iacute;a</span><span class="val" id="si-guia">-</span></div>
-    </div>
-
-    <!-- Selector de guia cuando el grupo tiene mas de una -->
-    <div class="guide-options" id="guide-options"></div>
-
-    <div class="productive-stage-cta-wrap" id="productive-stage-cta-wrap" style="display:none">
-      <a
-        class="btn-share secondary btn-productive-stage-cta"
-        id="btn-productive-stage-cta"
-        href="etapa-productiva-estudiante.html"
-      >
-        Ver etapa productiva
-      </a>
-      <a
-        class="btn-share secondary"
-        id="btn-productive-stage-student-view"
-        href="etapa-productiva-estudiante.html"
-        style="display:none"
-      >
-        Ver proyectos de aprendices
-      </a>
-    </div>
-
-    <a class="btn-enter" id="btn-enter" href="#">
-      Ingresar a la gu&iacute;a <span class="arrow">&rarr;</span>
-    </a>
-    <p class="access-note" id="access-note">
-      Inicia sesi&oacute;n para abrir las gu&iacute;as habilitadas seg&uacute;n tu usuario.
-    </p>
-  </div>
-
-  </div><!-- /portal-col--content -->
-
+      <div class="instruction calendar-callout" id="calendar-callout" style="display:none" data-reveal>
+        <p id="calendar-access-note"><strong>Calendario 2026 disponible.</strong> Consulta el dashboard, el registro completo y los meses programados.</p>
+        <a class="btn-share primary" id="btn-calendar-access" href="calendario-academico-2026.html">Abrir calendario 2026</a>
+      </div>
+    </aside>
+  </section>
 </main>
 
-<!-- ------------------------------------------------------
-     FOOTER
-     ------------------------------------------------------ -->
+<div class="selection-modal" id="selection-confirm-modal" aria-hidden="true">
+  <div class="selection-modal__backdrop" data-confirm-close></div>
+  <section class="selection-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="selection-confirm-title">
+    <p class="selection-modal__eyebrow">Confirmar selecci&oacute;n</p>
+    <h2 id="selection-confirm-title">Verifica tu grupo y ficha</h2>
+    <p id="selection-confirm-message">Est&aacute;s ingresando a tus gu&iacute;as. &iquest;Deseas continuar?</p>
+    <div class="selection-modal__actions">
+      <button class="btn-share primary" type="button" id="confirm-selection-continue">Continuar</button>
+      <button class="btn-share ghost" type="button" id="confirm-selection-change" data-confirm-close>Cambiar selecci&oacute;n</button>
+    </div>
+  </section>
+</div>
+
 <footer class="footer" data-reveal>
-  <span>SENA</span> | Servicio Nacional de Aprendizaje &nbsp;|&nbsp;
-  Sistemas Teleinform&aacute;ticos | C&oacute;digo 233108 V1 &nbsp;|&nbsp;
-  Portal de gu&iacute;as interactivas &nbsp;|&nbsp;
-  <a href="mailto:domillan@sena.edu.co">domillan@sena.edu.co</a>
+  <span>SENA</span> | Servicio Nacional de Aprendizaje | Sistemas Teleinform&aacute;ticos | C&oacute;digo 233108 V1 | <a href="mailto:domillan@sena.edu.co">domillan@sena.edu.co</a>
 </footer>
 
-<!-- ------------------------------------------------------
-     SCRIPTS INLINE | Logica del portal
-     ------------------------------------------------------ -->
 <script>
-  /* -- Mapas de datos ----------------------------------- */
   function getPortalAuth() {
     return window.portalAuth || null;
   }
@@ -525,24 +535,80 @@
     );
   }
 
-  /* -- Horarios ----------------------------------------- */
+  function getInstKeyFromName(inst) {
+    return String(inst || "").toLowerCase().includes("santa") ? "santa-barbara" : "jfk";
+  }
+
+  function showInstitutionGroups(instKey, options) {
+    const key = instKey || "jfk";
+    const revealAll = options?.revealAll === true;
+
+    document.querySelectorAll(".institution-option").forEach((button) => {
+      const active = button.dataset.instKey === key;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-pressed", String(active));
+    });
+
+    document.querySelectorAll(".institution-groups").forEach((panel) => {
+      panel.classList.toggle("active", revealAll || panel.dataset.instKey === key);
+    });
+
+    const hint = document.getElementById("group-step-hint");
+    if (hint) {
+      hint.textContent = revealAll
+        ? "Como administrador puedes revisar todas las instituciones, grupos y fichas."
+        : "Ahora se muestran los grupos de la instituci\u00f3n seleccionada.";
+    }
+  }
+
+  function openSchedule(id, tabId) {
+    const panel = document.getElementById("horario-" + id);
+    if (!panel) return;
+    panel.classList.add("open");
+
+    document.querySelectorAll(`[data-open-horario="${id}"]`).forEach((button) => {
+      button.classList.add("open");
+      const arrow = button.querySelector(".hor-arrow");
+      if (arrow) arrow.textContent = "\u25B4";
+    });
+
+    const legacyButton = document.getElementById("btn-horario-" + id);
+    if (legacyButton) {
+      legacyButton.classList.add("open");
+      const arrow = legacyButton.querySelector(".hor-arrow");
+      if (arrow) arrow.textContent = "\u25B4";
+    }
+
+    if (tabId) {
+      const tab = document.querySelector(`#horario-${id} .hor-tab[onclick*="${tabId}"]`);
+      if (tab) switchHorTab(tab, tabId);
+    }
+  }
+
   function toggleHorario(id) {
     const panel = document.getElementById("horario-" + id);
-    const btn   = document.getElementById("btn-horario-" + id);
-    const open  = panel.classList.toggle("open");
-    btn.classList.toggle("open", open);
-    btn.querySelector(".hor-arrow").textContent = open ? "\u25B4" : "\u25BE";
+    if (!panel) return;
+    const open = panel.classList.toggle("open");
+    const buttons = [
+      ...document.querySelectorAll(`[data-open-horario="${id}"]`),
+      ...document.querySelectorAll(`#btn-horario-${id}`),
+    ];
+    buttons.forEach((button) => {
+      button.classList.toggle("open", open);
+      const arrow = button.querySelector(".hor-arrow");
+      if (arrow) arrow.textContent = open ? "\u25B4" : "\u25BE";
+    });
   }
 
   function switchHorTab(btn, panelId) {
     const container = btn.closest(".horario-panel");
-    container.querySelectorAll(".hor-tab").forEach((t) => t.classList.remove("active"));
-    container.querySelectorAll(".hor-group-panel").forEach((p) => p.classList.remove("active"));
+    if (!container) return;
+    container.querySelectorAll(".hor-tab").forEach((tab) => tab.classList.remove("active"));
+    container.querySelectorAll(".hor-group-panel").forEach((panel) => panel.classList.remove("active"));
     btn.classList.add("active");
-    container.querySelector("#" + panelId).classList.add("active");
+    container.querySelector("#" + panelId)?.classList.add("active");
   }
 
-  /* -- Seleccion de grupo ------------------------------- */
   function selectGroup(btn) {
     const session = window.portalAuth?.getCurrentSession?.();
     if (session?.role === "student" && btn.dataset.ficha !== session.user.ficha) {
@@ -551,12 +617,15 @@
     }
 
     document.querySelectorAll(".group-btn.active").forEach((el) => el.classList.remove("active"));
+    document.querySelectorAll(".group-card.active").forEach((el) => el.classList.remove("active"));
     btn.classList.add("active");
+    btn.closest(".group-card")?.classList.add("active");
 
-    const { inst, grado, grupo, ficha, guia } = btn.dataset;
+    const { inst, grupo, ficha, guia, instKey } = btn.dataset;
+    showInstitutionGroups(instKey || getInstKeyFromName(inst), { revealAll: session?.role === "admin" });
     localStorage.setItem("sena_ficha", ficha);
     localStorage.setItem("sena_grupo", grupo);
-    localStorage.setItem("sena_inst",  inst);
+    localStorage.setItem("sena_inst", inst);
 
     showCTA(inst, grupo, ficha, guia);
   }
@@ -574,8 +643,8 @@
 
   function renderGuideOptions(inst, grupo, ficha, guia) {
     const container = document.getElementById("guide-options");
-    const guides    = getPortalAuth()?.getGuidesForFicha?.(ficha) || [guia];
-    const selected  = guides.includes(guia) ? guia : guides[0];
+    const guides = getPortalAuth()?.getGuidesForFicha?.(ficha) || [guia];
+    const selected = guides.includes(guia) ? guia : guides[0];
 
     container.textContent = "";
     guides.forEach((file) => {
@@ -584,9 +653,7 @@
       button.className = `guide-chip${file === selected ? " active" : ""}`;
       button.dataset.guide = file;
       button.textContent = getGuideTitle(file);
-      button.addEventListener("click", () => {
-        selectGuideOption(button, file, inst, grupo, ficha);
-      });
+      button.addEventListener("click", () => selectGuideOption(button, file, inst, grupo, ficha));
       container.appendChild(button);
     });
 
@@ -594,35 +661,26 @@
   }
 
   function selectGuideOption(btn, guia, inst, grupo, ficha) {
-    document.querySelectorAll(".guide-chip").forEach((c) => c.classList.remove("active"));
+    document.querySelectorAll(".guide-chip").forEach((chip) => chip.classList.remove("active"));
     btn.classList.add("active");
     setGuideEntry(inst, grupo, ficha, guia);
   }
 
   function canShowProductiveStageForFicha(ficha, session) {
     const fichaValue = String(ficha || "");
-    if (!["3168850", "3168852"].includes(fichaValue)) {
-      return false;
-    }
-
-    if (session?.role === "admin") {
-      return true;
-    }
-
+    if (!["3168850", "3168852"].includes(fichaValue)) return false;
+    if (session?.role === "admin") return true;
     return session?.role === "student" && String(session.user?.ficha || "") === fichaValue;
   }
 
-  function updateProductiveStageCta(ficha, inst, grupo, accessState) {
+  function updateProductiveStageCta(ficha, inst, grupo) {
     const wrap = document.getElementById("productive-stage-cta-wrap");
     const button = document.getElementById("btn-productive-stage-cta");
     const btnStudentView = document.getElementById("btn-productive-stage-student-view");
     const session = getPortalAuth()?.getCurrentSession?.() || null;
     const visible = canShowProductiveStageForFicha(ficha, session);
 
-    if (!wrap || !button) {
-      return;
-    }
-
+    if (!wrap || !button) return;
     wrap.style.display = visible ? "" : "none";
     if (!visible) {
       button.removeAttribute("data-ficha");
@@ -649,29 +707,37 @@
   }
 
   function refreshSelectedGroupPanel() {
+    const session = getPortalAuth()?.getCurrentSession?.() || null;
     const ficha = localStorage.getItem("sena_ficha");
     const fichaMap = getFichaMap();
+
+    document.body.classList.toggle("is-admin-session", session?.role === "admin");
+    if (session?.role === "admin") {
+      showInstitutionGroups("jfk", { revealAll: true });
+    }
 
     if (!ficha || !fichaMap[ficha]) {
       return;
     }
 
     const { inst, grupo, guia } = fichaMap[ficha];
+    showInstitutionGroups(getInstKeyFromName(inst), { revealAll: session?.role === "admin" });
     const activeButton = document.querySelector(`.group-btn[data-ficha="${ficha}"]`);
     if (activeButton) {
       document.querySelectorAll(".group-btn.active").forEach((btn) => btn.classList.remove("active"));
+      document.querySelectorAll(".group-card.active").forEach((card) => card.classList.remove("active"));
       activeButton.classList.add("active");
+      activeButton.closest(".group-card")?.classList.add("active");
     }
     showCTA(inst, grupo, ficha, guia);
   }
 
   function setGuideEntry(inst, grupo, ficha, guia) {
     document.getElementById("si-guia").textContent = getGuideTitle(guia);
-
-    const params      = new URLSearchParams({ g: guia, ficha, inst, grupo });
-    const target      = "guia.html?" + params.toString();
+    const params = new URLSearchParams({ g: guia, ficha, inst, grupo });
+    const target = "guia.html?" + params.toString();
     const enterButton = document.getElementById("btn-enter");
-    const session     = getPortalAuth()?.getCurrentSession?.() || null;
+    const session = getPortalAuth()?.getCurrentSession?.() || null;
 
     let accessState = "login-required";
     if (session?.role === "admin") {
@@ -681,47 +747,119 @@
     }
 
     const canOpen = accessState === "ready";
-    enterButton.href              = canOpen ? target : "#";
-    enterButton.dataset.target    = target;
-    enterButton.dataset.ficha     = ficha;
-    enterButton.dataset.grupo     = grupo;
+    enterButton.href = canOpen ? target : "#";
+    enterButton.dataset.target = target;
+    enterButton.dataset.ficha = ficha;
+    enterButton.dataset.grupo = grupo;
+    enterButton.dataset.inst = inst;
     enterButton.dataset.accessState = accessState;
+    enterButton.dataset.confirmed = "false";
     enterButton.setAttribute("aria-disabled", canOpen ? "false" : "true");
     enterButton.classList.toggle("is-disabled", !canOpen);
-    updateProductiveStageCta(ficha, inst, grupo, accessState);
+    updateProductiveStageCta(ficha, inst, grupo);
   }
 
-  /* -- Inicializacion ----------------------------------- */
-  document.addEventListener("DOMContentLoaded", () => {
-    refreshSelectedGroupPanel();
-  });
+  function closeGuideConfirmation() {
+    const modal = document.getElementById("selection-confirm-modal");
+    if (!modal) return;
+    modal.classList.remove("is-open");
+    modal.setAttribute("aria-hidden", "true");
+    window.pendingGuideEntry = null;
+  }
+
+  function openGuideConfirmation(btn) {
+    const session = getPortalAuth()?.getCurrentSession?.() || null;
+    if (session?.role !== "student") return false;
+
+    const modal = document.getElementById("selection-confirm-modal");
+    const message = document.getElementById("selection-confirm-message");
+    if (!modal || !message) return false;
+
+    const grupo = btn.dataset.grupo || "-";
+    const ficha = btn.dataset.ficha || "-";
+    const inst = btn.dataset.inst || "-";
+    message.textContent = `Est\u00e1s ingresando al grupo ${grupo}, ficha ${ficha}, de la ${inst}. \u00bfDeseas continuar?`;
+    window.pendingGuideEntry = btn;
+    modal.classList.add("is-open");
+    modal.setAttribute("aria-hidden", "false");
+    document.getElementById("confirm-selection-continue")?.focus();
+    return true;
+  }
 
   window.refreshSelectedGroupPanel = refreshSelectedGroupPanel;
+  window.openGuideConfirmation = openGuideConfirmation;
+  window.showInstitutionGroups = showInstitutionGroups;
 
-  /* -- Clic en boton de entrada ------------------------- */
-  document.getElementById("btn-enter").addEventListener("click", (event) => {
-    const btn         = event.currentTarget;
-    const target      = btn.dataset.target;
-    const ficha       = btn.dataset.ficha;
-    const accessState = btn.dataset.accessState || "";
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll(".institution-option").forEach((button) => {
+      button.addEventListener("click", () => {
+        const session = getPortalAuth()?.getCurrentSession?.() || null;
+        showInstitutionGroups(button.dataset.instKey, { revealAll: session?.role === "admin" });
+        document.getElementById("cta-panel")?.classList.remove("visible");
+      });
+    });
 
-    if (accessState === "login-required") {
-      event.preventDefault();
-      alert("Primero crea tu usuario o inicia sesi\u00f3n para abrir la gu\u00eda.");
-      return;
-    }
-    if (accessState === "forbidden") {
-      event.preventDefault();
-      alert("Tu usuario solo puede abrir las gu\u00edas de su propia ficha.");
-      return;
-    }
-    if (!target || !ficha) {
-      event.preventDefault();
-      alert("Primero selecciona tu grupo en el panel de instituciones.");
-    }
+    document.querySelectorAll("[data-open-horario]").forEach((button) => {
+      button.addEventListener("click", () => {
+        openSchedule(button.dataset.openHorario, button.dataset.horTab);
+      });
+    });
+
+    document.getElementById("btn-enter").addEventListener("click", (event) => {
+      const btn = event.currentTarget;
+      const target = btn.dataset.target;
+      const ficha = btn.dataset.ficha;
+      const accessState = btn.dataset.accessState || "";
+
+      if (accessState === "login-required") {
+        event.preventDefault();
+        alert("Primero crea tu usuario o inicia sesi\u00f3n para abrir la gu\u00eda.");
+        return;
+      }
+      if (accessState === "forbidden") {
+        event.preventDefault();
+        alert("Tu usuario solo puede abrir las gu\u00edas de su propia ficha.");
+        return;
+      }
+      if (!target || !ficha) {
+        event.preventDefault();
+        alert("Primero selecciona tu grupo y ficha.");
+        return;
+      }
+      if (openGuideConfirmation(btn)) {
+        event.preventDefault();
+      }
+    });
+
+    document.getElementById("btn-change-selection")?.addEventListener("click", () => {
+      document.getElementById("cta-panel")?.classList.remove("visible");
+      document.querySelectorAll(".group-btn.active").forEach((el) => el.classList.remove("active"));
+      document.querySelectorAll(".group-card.active").forEach((el) => el.classList.remove("active"));
+      document.querySelector(".institution-step")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+
+    document.querySelectorAll("[data-confirm-close]").forEach((button) => {
+      button.addEventListener("click", closeGuideConfirmation);
+    });
+
+    document.getElementById("confirm-selection-continue")?.addEventListener("click", () => {
+      const btn = window.pendingGuideEntry;
+      const target = btn?.dataset?.target;
+      if (!target) {
+        closeGuideConfirmation();
+        return;
+      }
+      btn.dataset.confirmed = "true";
+      window.location.href = target;
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") closeGuideConfirmation();
+    });
+
+    showInstitutionGroups("jfk");
+    refreshSelectedGroupPanel();
   });
 </script>
-
-
 </body>
 </html>

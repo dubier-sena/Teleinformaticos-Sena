@@ -293,6 +293,15 @@
       return;
     }
 
+    if (
+      window.portalAuth &&
+      typeof window.portalAuth.requireFileAccess === "function" &&
+      !window.portalAuth.requireFileAccess(route.pageFile, { redirectUrl: "index.html" })
+    ) {
+      showRouterError("No tienes permiso para abrir esta guia con el usuario actual.");
+      return;
+    }
+
     window.__RUNTIME_PAGE_FILE__ = route.pageFile;
     document.title = route.title + " | SENA Teleinformaticos";
 
