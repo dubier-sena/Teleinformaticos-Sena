@@ -96,6 +96,8 @@
   function updateSensitivePanels(session) {
     const isAdmin = session?.role === "admin";
     setVisible(getById("calendar-callout"), isAdmin);
+    setVisible(getById("admin-overview"), isAdmin);
+    document.body?.classList.toggle("is-admin-session", isAdmin);
   }
 
   function restrictGroupsForStudent(session) {
@@ -323,8 +325,20 @@
           return;
         }
 
+        if (
+          session.role === "student" &&
+          enterButton.dataset.confirmed !== "true" &&
+          typeof window.openGuideConfirmation === "function" &&
+          window.openGuideConfirmation(enterButton)
+        ) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          return;
+        }
+
         event.preventDefault();
         event.stopImmediatePropagation();
+        enterButton.dataset.confirmed = "false";
         window.location.href = target;
       },
       true
