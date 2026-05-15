@@ -430,8 +430,21 @@
     byId("deadline-due-at").value = policy?.dueAt || "";
   }
 
+  function buildOptionalDeadlineConfigPanel() {
+    if (!window.adminDeadlines || typeof window.adminDeadlines.buildConfigPanel !== "function") {
+      return "";
+    }
+
+    return window.adminDeadlines.buildConfigPanel(state.users, {
+      auth,
+      deadlineManager,
+      escapeHtml,
+    });
+  }
+
   function renderDeadlines() {
     renderDeadlineSelectors();
+    const optionalConfigPanel = buildOptionalDeadlineConfigPanel();
     const rows = getFichaEntries().flatMap(([ficha, info]) =>
       (info.guias || []).flatMap((fileName) =>
         (deadlineManager?.getActivitiesForGuide?.(fileName) || []).map((activity) => {
@@ -455,6 +468,7 @@
         <thead><tr><th>Ficha</th><th>Guia</th><th>Actividad</th><th>Fecha limite</th><th>Estado</th></tr></thead>
         <tbody>${rows || '<tr><td colspan="5">No hay actividades con fechas configurables.</td></tr>'}</tbody>
       </table>
+      ${optionalConfigPanel}
     `;
   }
 
