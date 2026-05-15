@@ -428,12 +428,17 @@ code {
 .topbar-title {
   font-size: 14px;
   color: var(--text-muted);
+  flex: 1 1 auto;
+  min-width: 0;
+  margin-right: 18px;
 }
 
 .topbar-title strong {
   color: var(--sena-green);
+  display: block;
   font-family: var(--font-display);
   font-weight: 700;
+  line-height: 1.25;
 }
 
 .topbar-meta {
