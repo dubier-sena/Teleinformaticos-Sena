@@ -41,11 +41,19 @@
 
     for (const candidate of candidates) {
       if (Object.prototype.hasOwnProperty.call(bundledPartials, candidate)) {
-        return { found: true, value: bundledPartials[candidate] };
+        return { found: true, value: normalizeBundledPartial(bundledPartials[candidate]) };
       }
     }
 
     return { found: false, value: "" };
+  }
+
+  function normalizeBundledPartial(partial) {
+    if (partial && typeof partial === "object" && typeof partial.value === "string") {
+      return partial.value;
+    }
+
+    return partial;
   }
 
   async function fetchText(url) {

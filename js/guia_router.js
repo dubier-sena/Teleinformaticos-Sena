@@ -15,7 +15,7 @@
         "js/guia_template.js?v=20260430_2",
         "data/page_runtime_contexts_bundle.js?v=20260429_1",
         "partials/guia-01-induccion-bundle.js?v=20260508_1",
-        "js/page_runtime_loader.js?v=20260430_1",
+        "js/page_runtime_loader.js?v=20260515_1",
       ],
     },
     "10b-guia-1": {
@@ -32,7 +32,7 @@
         "js/guia_template.js?v=20260430_2",
         "data/page_runtime_contexts_bundle.js?v=20260429_1",
         "partials/guia-01-induccion-bundle.js?v=20260508_1",
-        "js/page_runtime_loader.js?v=20260430_1",
+        "js/page_runtime_loader.js?v=20260515_1",
       ],
     },
     "10a-guia-2-herramientas": {
@@ -53,7 +53,7 @@
         "js/fichas_casos.js?v=20260414_1",
         "data/page_runtime_contexts_bundle.js?v=20260429_1",
         "partials/guia-02-herramientas-bundle.js?v=20260508_1",
-        "js/page_runtime_loader.js?v=20260430_1",
+        "js/page_runtime_loader.js?v=20260515_1",
       ],
     },
     "10b-guia-2-herramientas": {
@@ -74,7 +74,7 @@
         "js/fichas_casos.js?v=20260414_1",
         "data/page_runtime_contexts_bundle.js?v=20260429_1",
         "partials/guia-02-herramientas-bundle.js?v=20260508_1",
-        "js/page_runtime_loader.js?v=20260430_1",
+        "js/page_runtime_loader.js?v=20260515_1",
       ],
     },
     "10a-guia-3": {
@@ -94,7 +94,7 @@
         "data/calendario_2026_records.js?v=20260425_1",
         "data/page_runtime_contexts_bundle.js?v=20260506_1",
         "partials/guia-03-planificar-bundle.js?v=20260508_1",
-        "js/page_runtime_loader.js?v=20260430_1",
+        "js/page_runtime_loader.js?v=20260515_1",
       ],
     },
     "10b-guia-3": {
@@ -114,7 +114,7 @@
         "data/calendario_2026_records.js?v=20260425_1",
         "data/page_runtime_contexts_bundle.js?v=20260506_1",
         "partials/guia-03-planificar-bundle.js?v=20260508_1",
-        "js/page_runtime_loader.js?v=20260430_1",
+        "js/page_runtime_loader.js?v=20260515_1",
       ],
     },
     "11a-guia-5": {
@@ -133,7 +133,7 @@
         "data/calendario_2026_records.js?v=20260425_1",
         "data/page_runtime_contexts_bundle.js?v=20260429_1",
         "partials/guia-05-herramientas-bundle.js?v=20260429_1",
-        "js/page_runtime_loader.js?v=20260430_1",
+        "js/page_runtime_loader.js?v=20260515_1",
       ],
     },
     "11b-guia-5": {
@@ -152,7 +152,7 @@
         "data/calendario_2026_records.js?v=20260425_1",
         "data/page_runtime_contexts_bundle.js?v=20260429_1",
         "partials/guia-05-herramientas-bundle.js?v=20260429_1",
-        "js/page_runtime_loader.js?v=20260430_1",
+        "js/page_runtime_loader.js?v=20260515_1",
       ],
     },
     "11a-guia-6": {
@@ -172,7 +172,7 @@
         "data/calendario_2026_records.js?v=20260425_1",
         "data/page_runtime_contexts_bundle.js?v=20260429_1",
         "partials/guia-06-planificar-bundle.js?v=20260508_1",
-        "js/page_runtime_loader.js?v=20260430_1",
+        "js/page_runtime_loader.js?v=20260515_1",
       ],
     },
     "11b-guia-6": {
@@ -192,7 +192,7 @@
         "data/calendario_2026_records.js?v=20260425_1",
         "data/page_runtime_contexts_bundle.js?v=20260429_1",
         "partials/guia-06-planificar-bundle.js?v=20260508_1",
-        "js/page_runtime_loader.js?v=20260430_1",
+        "js/page_runtime_loader.js?v=20260515_1",
       ],
     },
     "10a-guia-2-redes": {
@@ -326,4 +326,3 @@
     showRouterError("No fue posible cargar esta guia. Recarga la pagina o vuelve a entrar desde el portal.");
   });
 })();
-
