@@ -45,6 +45,24 @@ const EXPECTED_CONTEXTS = {
     ficha: "3441942",
     boot: "initGuia2",
   },
+  "jfk-guia3-10a": {
+    family: "guia-03-planificar",
+    pageFile: "grupo-10a-guia-03-planificar-informacion.html",
+    partialPath: "partials/guia-03-planificar-content.html",
+    inst: "Institucion Educativa Jhon F. Kennedy",
+    grupo: "10A",
+    ficha: "3441939",
+    boot: "initGuia3",
+  },
+  "jfk-guia3-10b": {
+    family: "guia-03-planificar",
+    pageFile: "grupo-10b-guia-03-planificar-informacion.html",
+    partialPath: "partials/guia-03-planificar-content.html",
+    inst: "Institucion Educativa Jhon F. Kennedy",
+    grupo: "10B",
+    ficha: "3441942",
+    boot: "initGuia3",
+  },
   "sb-guia5-11a": {
     family: "guia-05-herramientas",
     pageFile: "grupo-11a-guia-05-herramientas-informaticas-digitales.html",
@@ -184,6 +202,11 @@ function createHarness({
       eventLog.push("initGuia2");
       assert.ok(eventLog.includes("initGuiaTemplateShell"));
     },
+    initGuia3() {
+      pageBootCalls += 1;
+      eventLog.push("initGuia3");
+      assert.ok(eventLog.includes("initGuiaTemplateShell"));
+    },
     initGuia5() {
       pageBootCalls += 1;
       eventLog.push("initGuia5");
@@ -274,6 +297,7 @@ test("page runtime contexts expose the approved guide families", () => {
   assert.deepEqual(Object.keys(contexts).sort(), Object.keys(EXPECTED_CONTEXTS).sort());
   assert.deepEqual(contexts["jfk-induccion-10a"], EXPECTED_CONTEXTS["jfk-induccion-10a"]);
   assert.deepEqual(contexts["jfk-guia2-10b"], EXPECTED_CONTEXTS["jfk-guia2-10b"]);
+  assert.deepEqual(contexts["jfk-guia3-10a"], EXPECTED_CONTEXTS["jfk-guia3-10a"]);
   assert.deepEqual(contexts["sb-guia6-11b"], EXPECTED_CONTEXTS["sb-guia6-11b"]);
 });
 
@@ -311,6 +335,23 @@ test("generic runtime loader can boot from bundled data for local file navigatio
   });
 
   assert.match(harness.root.innerHTML, /runtime-fragment/);
+  assert.deepEqual(harness.fetchLog, []);
+  assert.equal(harness.getCounts().templateInitCalls, 1);
+  assert.equal(harness.getCounts().pageBootCalls, 1);
+});
+
+test("generic runtime loader unwraps object-shaped bundled partials", async () => {
+  const harness = await runLoader({
+    contextKey: "jfk-guia2-10a",
+    pathname: "/grupo-10a-guia-02-herramientas-informaticas-digitales.html",
+    bundledContexts: EXPECTED_CONTEXTS,
+    bundledPartials: {
+      "partials/guia-02-herramientas-content.html": { value: SHARED_HTML },
+    },
+  });
+
+  assert.match(harness.root.innerHTML, /runtime-fragment/);
+  assert.doesNotMatch(harness.root.innerHTML, /\[object Object\]/);
   assert.deepEqual(harness.fetchLog, []);
   assert.equal(harness.getCounts().templateInitCalls, 1);
   assert.equal(harness.getCounts().pageBootCalls, 1);
