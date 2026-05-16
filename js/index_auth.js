@@ -258,7 +258,17 @@
       return;
     }
 
-    auth.setFlashMessage("Sesi\u00f3n iniciada correctamente.", "success");
+    // Onboarding: mensaje contextual con nombre, ficha y guias disponibles.
+    const user = result.user || {};
+    const guidesForFicha = (typeof auth.getGuidesForFicha === "function")
+      ? auth.getGuidesForFicha(user.ficha)
+      : [];
+    const firstName = String(user.fullName || user.username || "")
+      .split(/\s+/)[0] || "aprendiz";
+    const welcomeMsg = `Hola, ${firstName}! Estas en la ficha ${user.ficha || "(sin ficha)"} `
+      + `con ${guidesForFicha.length} gu\u00eda${guidesForFicha.length === 1 ? "" : "s"} disponible`
+      + `${guidesForFicha.length === 1 ? "" : "s"}.`;
+    auth.setFlashMessage(welcomeMsg, "success");
     window.location.reload();
   }
 

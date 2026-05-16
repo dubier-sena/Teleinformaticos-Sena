@@ -142,21 +142,55 @@
     };
   }
 
+  // Colombia no usa horario de verano: offset fijo -05:00 todo el ano.
+  const BOGOTA_OFFSET = "-05:00";
+  const BOGOTA_OFFSET_HOURS = -5;
+
+  // Convierte cualquier representacion razonable de una fecha a un ISO 8601
+  // en UTC (terminado en "Z"). El input puede venir como:
+  //   - "YYYY-MM-DDTHH:mm" (datetime-local del navegador, asumido Bogota)
+  //   - "YYYY-MM-DDTHH:mm:ss"          (asumido Bogota)
+  //   - ISO completo con zona (Z o +/-HH:MM) -> se acepta tal cual
+  // Asi todo lo que vive en localStorage / Firestore es UTC y los aprendices
+  // ven la hora correcta sin importar la zona horaria del equipo.
   function normalizeDueAt(value) {
     const text = String(value || "").trim();
     if (!text) {
       return "";
     }
+    // Formato local sin zona explicita: lo interpretamos como hora Bogota.
+    const localMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}(?:\.\d+)?))?$/);
+    if (localMatch) {
+      const [, y, mo, d, hh, mm, ss = "00"] = localMatch;
+      const isoWithOffset = `${y}-${mo}-${d}T${hh}:${mm}:${ss}${BOGOTA_OFFSET}`;
+      const parsed = new Date(isoWithOffset);
+      if (Number.isNaN(parsed.getTime())) {
+        return "";
+      }
+      return parsed.toISOString();
+    }
+    // ISO con zona explicita.
     const parsed = new Date(text);
     if (Number.isNaN(parsed.getTime())) {
       return "";
     }
-    const year = parsed.getFullYear();
-    const month = String(parsed.getMonth() + 1).padStart(2, "0");
-    const day = String(parsed.getDate()).padStart(2, "0");
-    const hours = String(parsed.getHours()).padStart(2, "0");
-    const minutes = String(parsed.getMinutes()).padStart(2, "0");
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
+    return parsed.toISOString();
+  }
+
+  // Convierte un ISO UTC al formato del input datetime-local en hora Bogota.
+  function dueAtForInput(isoValue) {
+    if (!isoValue) return "";
+    const parsed = new Date(isoValue);
+    if (Number.isNaN(parsed.getTime())) return "";
+    // Truco: sumamos el offset Bogota al UTC del Date y leemos como UTC.
+    const bogotaMs = parsed.getTime() + BOGOTA_OFFSET_HOURS * 3600000;
+    const b = new Date(bogotaMs);
+    const y = b.getUTCFullYear();
+    const mo = String(b.getUTCMonth() + 1).padStart(2, "0");
+    const d = String(b.getUTCDate()).padStart(2, "0");
+    const hh = String(b.getUTCHours()).padStart(2, "0");
+    const mm = String(b.getUTCMinutes()).padStart(2, "0");
+    return `${y}-${mo}-${d}T${hh}:${mm}`;
   }
 
   function normalizePolicies(rawPolicies) {
@@ -305,16 +339,18 @@
 
   function getActivitiesForGuide(fileName) {
     const resolvedFileName = resolvePageFile(fileName);
-    if (Array.isArray(catalog[resolvedFileName])) {
-      return catalog[resolvedFileName].map((item) => ({ ...item }));
-    }
-    // Fallback: guías registradas con ActivityStandard.registerGuide()
+    // Fuente primaria: guías registradas en ActivityStandard (guide_declarations.js).
     const std = window.ActivityStandard;
     if (std && typeof std.getActivitiesForGuide === "function") {
-      return std.getActivitiesForGuide(resolvedFileName).map((act) => ({
-        id: act.id,
-        label: act.label,
-      }));
+      const fromStd = std.getActivitiesForGuide(resolvedFileName);
+      if (Array.isArray(fromStd) && fromStd.length > 0) {
+        return fromStd.map((act) => ({ id: act.id, label: act.label }));
+      }
+    }
+    // Fallback: catálogo hardcoded (legacy, conservado para guías que aún no
+    // se hayan registrado en ActivityStandard).
+    if (Array.isArray(catalog[resolvedFileName])) {
+      return catalog[resolvedFileName].map((item) => ({ ...item }));
     }
     return [];
   }
@@ -337,7 +373,10 @@
     if (Number.isNaN(parsed.getTime())) {
       return "Sin fecha";
     }
+    // timeZone explicito para que TODOS los aprendices vean la hora Bogota
+    // independientemente de la zona horaria del equipo del navegador.
     return parsed.toLocaleString("es-CO", {
+      timeZone: "America/Bogota",
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
@@ -567,7 +606,7 @@
       const input = adminShell.querySelector(".activity-deadline-admin-inline__input");
       const summary = adminShell.querySelector(".activity-deadline-admin-inline__head span");
       if (input) {
-        input.value = evaluation.hasDeadline ? evaluation.dueAt : "";
+        input.value = evaluation.hasDeadline ? dueAtForInput(evaluation.dueAt) : "";
       }
       if (summary) {
         summary.textContent = evaluation.hasDeadline
@@ -656,6 +695,7 @@
     getPolicy,
     getSnapshot,
     formatDueAt,
+    dueAtForInput,
     evaluatePolicy,
     getActivityLabel,
     applyAvailability,
@@ -667,6 +707,7 @@
     ready,
     __test: {
       normalizeDueAt,
+      dueAtForInput,
       normalizePolicies,
       cloneSnapshot,
       resolvePageFile,

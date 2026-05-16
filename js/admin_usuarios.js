@@ -38,6 +38,7 @@
     fechas: "Fechas de entrega",
     respuestas: "Seguimiento de respuestas",
     entregas: "Seguimiento de entregas",
+    habilitacion: "Habilitacion de actividades",
     reportes: "Reportes",
     configuracion: "Configuracion",
   };
@@ -1038,11 +1039,24 @@
   function renderDeliveries() {
     const ficha = state.filters.deliveriesFicha || "";
     const text = normalizeText(state.filters.deliveriesText);
+    const fromIso = state.filters.deliveriesFrom || "";
+    const toIso = state.filters.deliveriesTo || "";
+    const fromMs = fromIso ? Date.parse(fromIso + "T00:00:00-05:00") : null; // inicio del dia en Bogota
+    const toMs = toIso ? Date.parse(toIso + "T23:59:59-05:00") : null;       // fin del dia en Bogota
     byId("deliveries-ficha-filter").innerHTML = getFichaOptions(ficha, true);
-    const deliveries = collectDeliveries().filter((item) =>
-      (!ficha || String(item.user.ficha) === ficha) &&
-      (!text || normalizeText(`${item.user.fullName} ${item.savedFileName} ${item.activityId}`).includes(text))
-    );
+    const deliveries = collectDeliveries().filter((item) => {
+      if (ficha && String(item.user.ficha) !== ficha) return false;
+      if (text && !normalizeText(`${item.user.fullName} ${item.savedFileName} ${item.activityId}`).includes(text)) return false;
+      const submittedMs = item.submittedAt ? Date.parse(item.submittedAt) : null;
+      if (fromMs != null) {
+        if (submittedMs == null || isNaN(submittedMs) || submittedMs < fromMs) return false;
+      }
+      if (toMs != null) {
+        if (submittedMs == null || isNaN(submittedMs) || submittedMs > toMs) return false;
+      }
+      return true;
+    });
+    state.filteredDeliveries = deliveries;
     const rows = deliveries.map((item) => {
       const policy = deadlineManager?.getPolicy?.(item.fileName, item.activityId);
       const late = policy?.dueAt && new Date(item.submittedAt).getTime() > new Date(policy.dueAt).getTime();
@@ -1077,6 +1091,74 @@
         <tbody>${rows || '<tr><td colspan="8">No hay entregas registradas en los datos locales actuales.</td></tr>'}</tbody>
       </table>
     `;
+  }
+
+  // Convierte el array de entregas filtradas a CSV y descarga.
+  function csvEscape(value) {
+    const text = String(value == null ? "" : value);
+    if (/[",\n;]/.test(text)) {
+      return '"' + text.replace(/"/g, '""') + '"';
+    }
+    return text;
+  }
+
+  function exportDeliveriesCsv() {
+    const rows = Array.isArray(state.filteredDeliveries) ? state.filteredDeliveries : collectDeliveries();
+    if (!rows.length) {
+      setFeedback("No hay entregas para exportar con los filtros actuales.", "info");
+      return;
+    }
+    const header = [
+      "Archivo", "Aprendiz", "Usuario", "Ficha", "Institucion", "Grupo",
+      "Guia (archivo)", "Guia (titulo)", "Actividad", "Estado",
+      "Fecha entrega (ISO)", "Fecha entrega (Bogota)", "URL Drive",
+    ];
+    const lines = [header.map(csvEscape).join(",")];
+    rows.forEach((item) => {
+      const submittedISO = item.submittedAt || "";
+      let submittedLocal = "";
+      const ms = submittedISO ? Date.parse(submittedISO) : NaN;
+      if (Number.isFinite(ms)) {
+        submittedLocal = new Date(ms).toLocaleString("es-CO", {
+          timeZone: "America/Bogota",
+          year: "numeric", month: "2-digit", day: "2-digit",
+          hour: "2-digit", minute: "2-digit",
+        });
+      }
+      lines.push([
+        item.savedFileName || "",
+        item.user.fullName || "",
+        item.user.username || item.user.usernameKey || "",
+        item.user.ficha || "",
+        item.user.inst || "",
+        item.user.grupo || "",
+        item.fileName || "",
+        auth.getGuideTitle ? auth.getGuideTitle(item.fileName) : "",
+        item.activityId || "",
+        item.estado || item.status || "",
+        submittedISO,
+        submittedLocal,
+        item.driveUrl || "",
+      ].map(csvEscape).join(","));
+    });
+    // BOM UTF-8 para que Excel reconozca acentos
+    const csv = "﻿" + lines.join("\r\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const stamp = new Date().toISOString().slice(0, 10);
+    link.href = url;
+    link.download = `entregas_sena_${stamp}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    recordAudit({
+      action: "deliveries-export-csv",
+      target: "entregas",
+      detail: `${rows.length} filas exportadas`,
+    });
+    setFeedback(`CSV exportado con ${rows.length} entregas.`, "success");
   }
 
   function renderReports() {
@@ -1173,6 +1255,184 @@
       panel.hidden = panel.dataset.adminPanel !== moduleName;
       panel.classList.toggle("is-active", panel.dataset.adminPanel === moduleName);
     });
+    // Render perezoso del panel de habilitacion (necesita el estado actual
+    // de usuarios y se reconstruye cada vez que se entra al modulo).
+    if (moduleName === "habilitacion") {
+      renderHabilitacionPanel();
+    }
+    if (moduleName === "configuracion") {
+      renderAuditPanel();
+    }
+  }
+
+  function renderAuditPanel() {
+    const host = byId("audit-host");
+    if (!host) return;
+    const audit = window.adminAudit;
+    if (audit && typeof audit.renderAuditTab === "function") {
+      audit.renderAuditTab(host);
+    } else {
+      host.innerHTML = '<p class="activities-empty">Modulo adminAudit no disponible.</p>';
+    }
+  }
+
+
+  // ── Habilitacion de actividades ─────────────────────────────────────────
+  // Helpers que admin_habilitacion.js consume vía deps. Derivan de
+  // ActivityStandard (poblado por guide_declarations.js).
+  function getUnlockActivitiesForGuide(fileName) {
+    const std = window.ActivityStandard;
+    if (std && typeof std.getActivitiesForGuide === "function") {
+      const list = std.getActivitiesForGuide(fileName);
+      if (Array.isArray(list) && list.length) return list;
+    }
+    return [];
+  }
+
+  function getGuideActivityStateKey(fileName) {
+    const std = window.ActivityStandard;
+    if (std && typeof std.getConfigForGuide === "function") {
+      const cfg = std.getConfigForGuide(fileName);
+      return cfg && cfg.stateKey ? cfg.stateKey : "";
+    }
+    return "";
+  }
+
+  function readJsonSafe(value, fallback) {
+    try {
+      return value ? JSON.parse(value) : fallback;
+    } catch (_) {
+      return fallback;
+    }
+  }
+
+  function renderHabilitacionPanel() {
+    const host = byId("habilitacion-host");
+    if (!host) return;
+    const hab = window.adminHabilitacion;
+    if (!hab || typeof hab.buildHabilitacionPanel !== "function") {
+      host.innerHTML = '<p class="activities-empty">Modulo adminHabilitacion no esta disponible.</p>';
+      return;
+    }
+    const deps = {
+      auth,
+      deadlineManager: window.activityDeadlineManager,
+      readJson: readJsonSafe,
+      getUnlockActivitiesForGuide,
+      getGuideActivityStateKey,
+      filters: state.habilitacionFilters || {},
+    };
+    host.innerHTML = hab.buildHabilitacionPanel(state.users || [], deps);
+    bindHabilitacionHandlers();
+  }
+
+  function bindHabilitacionHandlers() {
+    const host = byId("habilitacion-host");
+    if (!host) return;
+
+    // Filtros (live)
+    const onFilter = () => {
+      state.habilitacionFilters = {
+        name: host.querySelector("#hab-filter-name")?.value || "",
+        ficha: host.querySelector("#hab-filter-ficha")?.value || "",
+        guide: host.querySelector("#hab-filter-guide")?.value || "",
+        activity: host.querySelector("#hab-filter-activity")?.value || "",
+      };
+      renderHabilitacionPanel();
+    };
+    host.querySelector("#hab-filter-name")?.addEventListener("input", debounce(onFilter, 250));
+    host.querySelector("#hab-filter-ficha")?.addEventListener("change", onFilter);
+    host.querySelector("#hab-filter-guide")?.addEventListener("change", onFilter);
+    host.querySelector("#hab-filter-activity")?.addEventListener("input", debounce(onFilter, 250));
+
+    // Botones "Habilitar"
+    host.querySelectorAll("[data-hab-unlock]").forEach((button) => {
+      button.addEventListener("click", () => handleUnlockClick(button));
+    });
+  }
+
+  function debounce(fn, ms) {
+    let timer = null;
+    return function debounced(...args) {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => { timer = null; fn.apply(this, args); }, ms);
+    };
+  }
+
+  async function handleUnlockClick(button) {
+    const usernameKey = button.dataset.habUnlock;
+    const guideFile = button.dataset.habGuide;
+    const activityId = button.dataset.habActivity;
+    const stateKey = button.dataset.habStateKey;
+    const activityLabel = button.dataset.habLabel;
+    const guideTitle = button.dataset.habGuideTitle;
+    const learnerName = button.dataset.habLearner;
+    const ficha = button.dataset.habFicha;
+    const lockKeys = String(button.dataset.habLockKeys || "").split(",").filter(Boolean);
+
+    const motivoInput = byId("habilitacion-host")
+      ?.querySelector(`[data-hab-motivo="${usernameKey}::${guideFile}::${activityId}"]`);
+    const motivo = motivoInput ? String(motivoInput.value || "").trim() : "";
+
+    const confirmed = window.confirm(
+      `Habilitar la actividad "${activityLabel}" para ${learnerName} (ficha ${ficha})?\n` +
+      "Se desbloqueara y el aprendiz podra modificar/reenviar su entrega."
+    );
+    if (!confirmed) return;
+
+    button.disabled = true;
+    const previousLabel = button.textContent;
+    button.textContent = "Habilitando...";
+    window.portalSaveStatus?.saving("Habilitando actividad...");
+
+    try {
+      if (!auth || !auth.getStudentStorageKey) throw new Error("portalAuth no disponible");
+      const storageKey = auth.getStudentStorageKey(usernameKey, stateKey, { area: "guide-data" });
+      if (!storageKey) throw new Error("No se pudo derivar la clave de almacenamiento.");
+
+      const currentState = readJsonSafe(localStorage.getItem(storageKey), {});
+      const nextState = Object.assign({}, currentState);
+      lockKeys.forEach((key) => {
+        if (/-locked$/.test(key)) delete nextState[key];
+      });
+      nextState.reabierta = true;
+      nextState.permiteEdicion = true;
+      nextState.updatedAt = new Date().toISOString();
+      localStorage.setItem(storageKey, JSON.stringify(nextState));
+
+      // Registrar en el log especifico de habilitaciones
+      window.adminHabilitacion?.recordUnlock({
+        usernameKey,
+        learnerName,
+        ficha,
+        guideFile,
+        guideTitle,
+        activityId,
+        activityLabel,
+        motivo,
+      });
+      // Y en el audit general (visible en Configuracion -> Auditoria local)
+      recordAudit({
+        action: "activity-unlock",
+        target: usernameKey + " / " + activityId,
+        detail: activityLabel + (motivo ? " · Motivo: " + motivo : ""),
+      });
+
+      // Refrescar usuarios desde portalAuth para que el siguiente render no
+      // muestre la actividad como bloqueada.
+      if (typeof auth.fetchStudentsWithProgress === "function") {
+        try { state.users = await auth.fetchStudentsWithProgress(); } catch (_) {}
+      }
+      renderHabilitacionPanel();
+      window.portalSaveStatus?.saved("Actividad habilitada");
+      setFeedback(`Actividad "${activityLabel}" habilitada para ${learnerName}.`, "success");
+    } catch (error) {
+      console.warn("[admin] Error al habilitar actividad:", error);
+      window.portalSaveStatus?.error("Error al habilitar");
+      setFeedback("No se pudo habilitar la actividad: " + (error?.message || "error"), "error");
+      button.disabled = false;
+      button.textContent = previousLabel;
+    }
   }
 
   function getUser(usernameKey) {
@@ -1202,7 +1462,19 @@
         <td>${escapeHtml(guide.title || auth.getGuideTitle(guide.fileName))}</td>
         <td>${escapeHtml(guide.completed)} / ${escapeHtml(guide.total)}</td>
         <td><progress value="${escapeHtml(guide.percent)}" max="100">${escapeHtml(guide.percent)}%</progress></td>
-        <td><a class="admin-button admin-button--ghost" href="${escapeHtml(guideHref(guide.fileName, user.ficha))}">Abrir</a></td>
+        <td>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <a class="admin-button admin-button--ghost" href="${escapeHtml(guideHref(guide.fileName, user.ficha))}">Abrir</a>
+            <button
+              class="admin-button admin-button--ghost"
+              type="button"
+              data-reset-guide="${escapeHtml(guide.fileName)}"
+              data-reset-user="${escapeHtml(user.usernameKey)}"
+              data-reset-guide-title="${escapeHtml(guide.title || auth.getGuideTitle(guide.fileName))}"
+              title="Reiniciar el progreso de esta guia para este aprendiz"
+            >Reiniciar</button>
+          </div>
+        </td>
       </tr>
     `).join("");
     return `
@@ -1217,10 +1489,99 @@
       </table>
       <h3>Guias asignadas</h3>
       <table class="admin-data-table">
-        <thead><tr><th>Guia</th><th>Avance</th><th>Progreso</th><th>Acceso</th></tr></thead>
+        <thead><tr><th>Guia</th><th>Avance</th><th>Progreso</th><th>Acciones</th></tr></thead>
         <tbody>${guideRows || '<tr><td colspan="4">Sin guias asignadas.</td></tr>'}</tbody>
       </table>
+      <div style="margin-top:1.2rem;display:flex;justify-content:flex-end;">
+        <button
+          class="admin-button"
+          type="button"
+          data-reset-all-user="${escapeHtml(user.usernameKey)}"
+          style="background:var(--color-danger, #c0382b);color:#fff;"
+          title="Reinicia el progreso de TODAS las guias del aprendiz"
+        >Reiniciar TODO el progreso de este aprendiz</button>
+      </div>
     `;
+  }
+
+  async function handleResetGuide(button) {
+    const usernameKey = button.dataset.resetUser;
+    const fileName = button.dataset.resetGuide;
+    const guideTitle = button.dataset.resetGuideTitle || fileName;
+    const user = getUser(usernameKey);
+    if (!user || !fileName) return;
+    const confirmed = await confirmAdminAction(
+      `Reiniciar el progreso de "${guideTitle}" para ${user.fullName}? Esta accion no se puede deshacer.`
+    );
+    if (!confirmed) return;
+    if (typeof auth.resetStudentGuideProgress !== "function") {
+      setFeedback("La funcion de reset no esta disponible.", "error");
+      return;
+    }
+    window.portalSaveStatus?.saving("Reiniciando progreso...");
+    try {
+      const result = await auth.resetStudentGuideProgress(usernameKey, fileName);
+      if (result && result.ok === false) {
+        window.portalSaveStatus?.error(result.message || "Error");
+        setFeedback(result.message || "No se pudo reiniciar el progreso.", "error");
+        return;
+      }
+      recordAudit({
+        action: "progress-reset",
+        target: usernameKey + " / " + fileName,
+        detail: "Reset una guia: " + guideTitle,
+      });
+      window.portalSaveStatus?.saved("Progreso reiniciado");
+      setFeedback("Progreso reiniciado para esa guia.", "success");
+      await loadUsers();
+      const refreshedUser = getUser(usernameKey);
+      if (refreshedUser) {
+        openModal(
+          "Detalle del aprendiz",
+          refreshedUser.fullName,
+          renderLearnerDetail(refreshedUser)
+        );
+      }
+    } catch (error) {
+      console.warn("[admin] Error al reiniciar progreso:", error);
+      setFeedback("Error al reiniciar: " + (error?.message || "desconocido"), "error");
+    }
+  }
+
+  async function handleResetAll(button) {
+    const usernameKey = button.dataset.resetAllUser;
+    const user = getUser(usernameKey);
+    if (!user) return;
+    const confirmed = await confirmAdminAction(
+      `Reiniciar TODO el progreso de ${user.fullName}? Esto borrara las respuestas, entregas y avance de TODAS sus guias. No se puede deshacer.`
+    );
+    if (!confirmed) return;
+    if (typeof auth.resetStudentAllProgress !== "function") {
+      setFeedback("La funcion de reset total no esta disponible.", "error");
+      return;
+    }
+    window.portalSaveStatus?.saving("Reiniciando todo el progreso...");
+    try {
+      const result = await auth.resetStudentAllProgress(usernameKey);
+      if (result && result.ok === false) {
+        window.portalSaveStatus?.error(result.message || "Error");
+        setFeedback(result.message || "No se pudo reiniciar el progreso completo.", "error");
+        return;
+      }
+      recordAudit({
+        action: "progress-reset-all",
+        target: usernameKey,
+        detail: "Reset total del aprendiz: " + user.fullName,
+      });
+      window.portalSaveStatus?.saved("Progreso total reiniciado");
+      setFeedback("Progreso total reiniciado.", "success");
+      await loadUsers();
+      closeModal();
+    } catch (error) {
+      console.warn("[admin] Error al reset total:", error);
+      window.portalSaveStatus?.error("Error al reiniciar");
+      setFeedback("Error: " + (error?.message || "desconocido"), "error");
+    }
   }
 
   function openEditLearner(user) {
@@ -1273,13 +1634,16 @@
     const data = Object.fromEntries(new FormData(form).entries());
     const confirmed = await confirmAdminAction(`Crear aprendiz ${data.fullName}?`);
     if (!confirmed) return;
+    window.portalSaveStatus?.saving("Creando aprendiz...");
     const result = await auth.adminCreateStudent(data);
     if (!result.ok) {
+      window.portalSaveStatus?.error(result.message || "Error al crear");
       setFeedback(result.message || "No fue posible crear el aprendiz.", "error");
       return;
     }
     recordAudit({ action: "student-create", target: result.user.usernameKey, detail: result.user.fullName });
     form.reset();
+    window.portalSaveStatus?.saved("Aprendiz creado");
     setFeedback("Aprendiz creado correctamente.", "success");
     await loadUsers();
   }
@@ -1289,13 +1653,16 @@
     const data = Object.fromEntries(new FormData(form).entries());
     const confirmed = await confirmAdminAction("Guardar cambios del aprendiz?");
     if (!confirmed) return;
+    window.portalSaveStatus?.saving("Guardando cambios...");
     const result = await auth.updateStudentAccount(usernameKey, data);
     if (!result.ok) {
+      window.portalSaveStatus?.error(result.message || "Error al actualizar");
       setFeedback(result.message || "No fue posible actualizar el aprendiz.", "error");
       return;
     }
     recordAudit({ action: "account-update", target: usernameKey, detail: data.fullName });
     closeModal();
+    window.portalSaveStatus?.saved("Aprendiz actualizado");
     setFeedback("Aprendiz actualizado.", "success");
     await loadUsers();
   }
@@ -1305,13 +1672,16 @@
     const password = form.querySelector("input[name='password']")?.value || "";
     const confirmed = await confirmAdminAction("Cambiar la contrasena del aprendiz?");
     if (!confirmed) return;
+    window.portalSaveStatus?.saving("Actualizando contrasena...");
     const result = await auth.updateStudentPassword(usernameKey, password);
     if (!result.ok) {
+      window.portalSaveStatus?.error(result.message || "Error al actualizar");
       setFeedback(result.message || "No fue posible actualizar la contrasena.", "error");
       return;
     }
     recordAudit({ action: "password-change", target: usernameKey, detail: "Cambio desde panel admin" });
     closeModal();
+    window.portalSaveStatus?.saved("Contrasena actualizada");
     setFeedback("Contrasena actualizada.", "success");
   }
 
@@ -1321,12 +1691,15 @@
     const user = getUser(usernameKey);
     const confirmed = await confirmAdminAction(`${nextActive ? "Activar" : "Desactivar"} a ${user?.fullName || usernameKey}?`);
     if (!confirmed) return;
+    window.portalSaveStatus?.saving(nextActive ? "Activando..." : "Desactivando...");
     const result = auth.updateStudentStatus(usernameKey, nextActive);
     if (!result.ok) {
+      window.portalSaveStatus?.error(result.message || "Error");
       setFeedback(result.message || "No fue posible cambiar el estado.", "error");
       return;
     }
     recordAudit({ action: "student-status", target: usernameKey, detail: nextActive ? "active" : "inactive" });
+    window.portalSaveStatus?.saved(nextActive ? "Aprendiz activado" : "Aprendiz desactivado");
     setFeedback("Estado actualizado.", "success");
     await loadUsers();
   }
@@ -1341,8 +1714,10 @@
     const confirmed = await confirmAdminAction(`Guardar fecha para ${activityLabel}?`);
     if (!confirmed) return;
     const session = auth.getCurrentSession?.();
+    window.portalSaveStatus?.saving("Guardando fecha...");
     await deadlineManager.savePolicy(data.guide, data.activity, data.dueAt, session?.usernameKey || "admin");
     recordAudit({ action: "deadline-save", target: `${data.guide}:${data.activity}`, detail: data.dueAt });
+    window.portalSaveStatus?.saved("Fecha guardada");
     setFeedback("Fecha de entrega guardada.", "success");
     renderAll();
   }
@@ -1432,6 +1807,17 @@
       state.filters.deliveriesText = event.target.value;
       renderDeliveries();
     });
+    byId("deliveries-from")?.addEventListener("change", (event) => {
+      state.filters.deliveriesFrom = event.target.value;
+      renderDeliveries();
+    });
+    byId("deliveries-to")?.addEventListener("change", (event) => {
+      state.filters.deliveriesTo = event.target.value;
+      renderDeliveries();
+    });
+    byId("deliveries-export-csv")?.addEventListener("click", () => {
+      exportDeliveriesCsv();
+    });
     byId("create-student-form")?.addEventListener("submit", async (event) => {
       event.preventDefault();
       await handleCreateStudent(event.currentTarget);
@@ -1498,6 +1884,16 @@
       const reopenDelivery = event.target.closest("[data-reopen-delivery]");
       if (reopenDelivery) {
         await reopenDeliveredActivity(reopenDelivery);
+        return;
+      }
+      const resetGuide = event.target.closest("[data-reset-guide]");
+      if (resetGuide) {
+        await handleResetGuide(resetGuide);
+        return;
+      }
+      const resetAll = event.target.closest("[data-reset-all-user]");
+      if (resetAll) {
+        await handleResetAll(resetAll);
         return;
       }
       if (event.target.closest("[data-close-admin-modal]")) {

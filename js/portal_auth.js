@@ -3269,6 +3269,31 @@ window.portalAuth = {
     }
   }
 
+  // Traduce codigos de Firebase Auth a mensajes amigables en espanol.
+  // Devuelve null si el codigo no se conoce (para que el caller use su
+  // mensaje generico de fallback).
+  function mapBridgeErrorToMessage(code) {
+    if (!code) return null;
+    const map = {
+      "auth/wrong-password":           "La contrasena no es correcta.",
+      "auth/invalid-credential":       "Usuario o contrasena incorrectos.",
+      "auth/invalid-password":         "La contrasena no es valida.",
+      "auth/invalid-email":            "El nombre de usuario no es valido.",
+      "auth/user-not-found":           "No existe un usuario registrado con ese nombre.",
+      "auth/user-disabled":            "Este usuario esta inactivo. Solicita al instructor que habilite el acceso.",
+      "auth/too-many-requests":        "Demasiados intentos fallidos. Espera unos minutos antes de volver a intentarlo.",
+      "auth/network-request-failed":   "Sin conexion a Internet. Verifica tu red e intenta de nuevo.",
+      "auth/weak-password":            "La contrasena debe tener al menos 6 caracteres.",
+      "auth/email-already-in-use":     "Este usuario ya esta registrado.",
+      "auth/operation-not-allowed":    "El sistema de autenticacion esta desactivado. Avisa al instructor.",
+      "auth/disabled":                 "La sincronizacion con la nube esta desactivada en este equipo.",
+      "auth/unavailable":              "No se pudo conectar con el servicio de autenticacion. Reintenta en unos segundos.",
+      "auth/exception":                "Ocurrio un error inesperado al iniciar sesion. Reintenta.",
+      "auth/invalid-usernameKey":      "Ingresa tu nombre de usuario.",
+    };
+    return map[code] || null;
+  }
+
   async function ensureAdminRoleDoc(uid, fullName) {
     const b = getBridge();
     if (!b || !uid) return false;
@@ -3411,7 +3436,9 @@ window.portalAuth = {
 
     const fb = await signInBridge(normalizedKey, password);
     if (!fb.ok) {
-      // Mantener mensaje original si lo habia, o uno generico
+      // Traduccion de codigos de Firebase Auth a mensajes amigables en es-CO.
+      const friendly = mapBridgeErrorToMessage(fb.error);
+      if (friendly) return { ok: false, message: friendly };
       if (result && result.message) return result;
       return { ok: false, message: "Usuario o contrasena incorrectos." };
     }
