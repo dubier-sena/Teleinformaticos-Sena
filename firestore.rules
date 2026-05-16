@@ -2,60 +2,97 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // ───── Helpers ─────────────────────────────────────────────────────────
+
     function signedIn() {
       return request.auth != null;
     }
 
-    function adminEmails() {
-      return [
-        "admin@example.com"
-      ];
+    // El cliente Firebase Auth firma con email sintetico
+    // "{usernameKey}@sena-portal.local". Eso permite derivar el dueño
+    // sin Custom Claims (que requeririan Cloud Functions / plan Blaze).
+    function emailForUsername(usernameKey) {
+      return usernameKey + "@sena-portal.local";
+    }
+
+    function isOwnerByUsernameKey(usernameKey) {
+      return signedIn()
+        && request.auth.token.email == emailForUsername(usernameKey);
     }
 
     function isAdmin() {
-      return signedIn() && request.auth.token.email in adminEmails();
-    }
-
-    function isOwner(usernameKey) {
       return signedIn()
-        && request.auth.token.usernameKey == usernameKey;
+        && exists(/databases/$(database)/documents/sena_portal_roles/$(request.auth.uid))
+        && get(/databases/$(database)/documents/sena_portal_roles/$(request.auth.uid)).data.role == "admin";
     }
 
+    // ───── Roles administrativos ───────────────────────────────────────────
+    // Cualquier usuario autenticado puede leer SOLO su propio doc (para que
+    // el cliente sepa si es admin tras login).
+    // Bootstrap: el primer admin (dubier@sena-portal.local) puede CREAR su
+    // propio doc role la primera vez. Despues, solo otro admin existente
+    // puede modificar la coleccion.
+    match /sena_portal_roles/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow create: if isAdmin()
+        || (
+          signedIn()
+          && request.auth.uid == uid
+          && request.auth.token.email == "dubier@sena-portal.local"
+          && request.resource.data.role == "admin"
+        );
+      allow update, delete: if isAdmin();
+    }
+
+    // ───── Usuarios (perfil + metadatos del aprendiz) ──────────────────────
     match /sena_portal_users/{usernameKey} {
-      allow read: if isAdmin() || isOwner(usernameKey);
-      allow create, update: if isAdmin() || isOwner(usernameKey);
+      allow read: if isAdmin() || isOwnerByUsernameKey(usernameKey);
+      allow create, update: if isAdmin() || isOwnerByUsernameKey(usernameKey);
       allow delete: if isAdmin();
     }
 
+    // ───── Progreso por aprendiz ───────────────────────────────────────────
     match /sena_portal_progress/{usernameKey} {
-      allow read, write: if isAdmin() || isOwner(usernameKey);
+      allow read, write: if isAdmin() || isOwnerByUsernameKey(usernameKey);
     }
 
+    // ───── Estado de guias (un doc por aprendiz x guia) ────────────────────
+    // El doc debe contener un campo "usernameKey" para validar pertenencia.
     match /sena_portal_guide_state/{docId} {
       allow read: if isAdmin()
-        || (signedIn() && resource.data.usernameKey == request.auth.token.usernameKey);
+        || (signedIn() && resource.data.usernameKey != null
+            && isOwnerByUsernameKey(resource.data.usernameKey));
       allow create: if isAdmin()
-        || (signedIn() && request.resource.data.usernameKey == request.auth.token.usernameKey);
+        || (signedIn() && request.resource.data.usernameKey != null
+            && isOwnerByUsernameKey(request.resource.data.usernameKey));
       allow update: if isAdmin()
         || (
           signedIn()
-          && resource.data.usernameKey == request.auth.token.usernameKey
-          && request.resource.data.usernameKey == request.auth.token.usernameKey
+          && resource.data.usernameKey != null
+          && request.resource.data.usernameKey != null
+          && isOwnerByUsernameKey(resource.data.usernameKey)
+          && isOwnerByUsernameKey(request.resource.data.usernameKey)
         );
       allow delete: if isAdmin();
     }
 
+    // ───── Calendario academico ────────────────────────────────────────────
+    // Lectura para cualquier sesion autenticada, escritura solo admin.
     match /sena_portal_calendar/{calendarId} {
       allow read: if signedIn();
       allow write: if isAdmin();
     }
 
+    // ───── Reservas de tutoria ─────────────────────────────────────────────
+    // Lectura y creacion para cualquier sesion autenticada (estudiante reserva
+    // su propia fecha). Modificacion y borrado solo admin.
     match /sena_portal_tutoring_bookings/{bookingId} {
       allow read: if signedIn();
       allow create: if signedIn();
       allow update, delete: if isAdmin();
     }
 
+    // ───── Default: cierre total ───────────────────────────────────────────
     match /{document=**} {
       allow read, write: if false;
     }
