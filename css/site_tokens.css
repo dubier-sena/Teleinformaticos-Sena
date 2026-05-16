@@ -1,32 +1,110 @@
-/* css/site_tokens.css */
+/* css/site_tokens.css
+ *
+ * Tokens unicos de diseno del portal SENA Teleinformaticos.
+ *
+ * REGLA: cualquier color, fuente, radio o sombra que se use en mas de un
+ * archivo CSS debe declararse aqui como variable. Los CSS de pagina solo
+ * deben consumir var(--...). Si una pagina necesita un valor unico
+ * (ej. un gradiente especifico de un hero), puede definirse local PERO
+ * derivado siempre de los tokens base.
+ *
+ * Las hojas page_admin.css / page_calendar.css / page_portal.css / styles.css
+ * todavia mantienen sus :root locales por compatibilidad — esos valores se
+ * van migrando a estos tokens unificados de forma incremental.
+ */
 :root {
+  /* ── Tipografia ────────────────────────────────────────────────────────── */
   --font-display: "Outfit", "Segoe UI", system-ui, sans-serif;
   --font-body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --font: var(--font-body); /* alias legacy usado por page_portal.css */
 
+  --font-size-xs: 0.78rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 0.95rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.375rem;
+  --font-size-2xl: 1.75rem;
+
+  /* ── Paleta institucional SENA ─────────────────────────────────────────── */
   --bg-canvas: #edf3ef;
   --surface-1: #ffffff;
   --surface-2: #f5faf7;
   --surface-dark: #071a12;
 
+  /* Verde institucional SENA */
+  --brand-900: #07391e;
+  --brand-800: #08552c;
   --brand-700: #0a5c31;
   --brand-600: #007934;
   --brand-500: #0fbf64;
+  --brand-400: #5acf8f;
   --brand-300: #9fe3b7;
+  --brand-200: #cdf0db;
+  --brand-100: #e9f8ef;
+
+  /* Aliases legacy mantenidos para compatibilidad incremental. */
+  --green: var(--brand-600);
+  --green-dark: var(--brand-700);
+  --admin-primary: var(--brand-700); /* antes era #0b6b3a en page_admin */
+
+  /* Oro institucional */
   --accent-gold: #f5b700;
+  --gold-light: #fff0c0;
+  --gold-strong: #c98d00;
 
+  /* Estados semanticos */
+  --color-info: #1d5fa5;
+  --color-success: var(--brand-600);
+  --color-warning: var(--accent-gold);
+  --color-danger: #c0382b;
+  --color-danger-soft: #fde6e3;
+
+  /* Texto */
   --text-strong: #102117;
+  --text-body: #1e2f24;
   --text-muted: #5f7468;
-  --border-soft: #d6e2da;
+  --text-soft: #8aa093;
+  --text-on-brand: #ffffff;
+  --text-on-gold: #102117;
 
+  /* Bordes */
+  --border-soft: #d6e2da;
+  --border-medium: #b6c8be;
+  --border-strong: #97ad9f;
+
+  /* ── Forma ─────────────────────────────────────────────────────────────── */
+  --radius-xs: 6px;
   --radius-sm: 10px;
   --radius-md: 18px;
   --radius-lg: 28px;
+  --radius-pill: 999px;
 
   --shadow-sm: 0 6px 18px rgba(7, 26, 18, 0.08);
   --shadow-md: 0 14px 36px rgba(7, 26, 18, 0.12);
+  --shadow-lg: 0 24px 60px rgba(7, 26, 18, 0.18);
+  --shadow-focus: 0 0 0 3px rgba(245, 183, 0, 0.45);
 
+  /* ── Espaciado base (multiplos de 4px) ─────────────────────────────────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* ── Movimiento ────────────────────────────────────────────────────────── */
   --motion-fast: 160ms ease;
   --motion-base: 240ms ease;
+  --motion-slow: 400ms ease;
 
+  /* ── Layout ────────────────────────────────────────────────────────────── */
   --navbar-height: 60px;
+  --container-max: 1200px;
+
+  /* Tamano minimo de hit-target (WCAG 2.5.5 Target Size AAA = 44x44px) */
+  --hit-target-min: 44px;
 }

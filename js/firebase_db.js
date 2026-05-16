@@ -835,16 +835,56 @@
     return next;
   }
 
+  // Lee un timestamp ISO 8601 del snapshot. Devuelve epoch ms o NaN.
+  function snapshotTimestamp(snapshot) {
+    if (!plainObject(snapshot)) return NaN;
+    var candidates = [
+      snapshot.updatedAt,
+      snapshot.lastModified,
+      snapshot.savedAt,
+      snapshot.timestamp,
+    ];
+    for (var i = 0; i < candidates.length; i++) {
+      var parsed = Date.parse(candidates[i] || "");
+      if (Number.isFinite(parsed)) return parsed;
+    }
+    return NaN;
+  }
+
   function mergeGuideDataSnapshotForSave(existingSnapshot, incomingSnapshot) {
     var existing = plainObject(existingSnapshot) ? existingSnapshot : {};
     var incoming = plainObject(incomingSnapshot) ? incomingSnapshot : {};
     var updatedBy = String(incoming.updatedBy || "").toLowerCase();
-    var allowMissingLockRemoval = Boolean(
+    var isAdminOverride = Boolean(
       incoming.reabierta ||
       incoming.permiteEdicion ||
       /admin|unlock|habilit|reabiert/.test(updatedBy)
     );
-    var mergedState = mergeGuideState(snapshotState(existing), snapshotState(incoming), allowMissingLockRemoval);
+
+    // Resolución de conflictos por timestamp (LWW = Last Write Wins).
+    // Si el doc remoto es más nuevo y el incoming no es una acción admin
+    // explícita, preservamos el remoto para no sobreescribir cambios hechos
+    // en otro equipo entre el load y el save. Tolerancia de 1s para jitter
+    // de relojes mal sincronizados.
+    var existingTs = snapshotTimestamp(existing);
+    var incomingTs = snapshotTimestamp(incoming);
+    if (
+      !isAdminOverride &&
+      Number.isFinite(existingTs) &&
+      Number.isFinite(incomingTs) &&
+      existingTs > incomingTs + 1000
+    ) {
+      if (typeof console !== "undefined" && console.warn) {
+        console.warn(
+          "[firebase_db] Conflicto de sincronizacion: el doc remoto es mas nuevo (" +
+          new Date(existingTs).toISOString() + ") que el incoming (" +
+          new Date(incomingTs).toISOString() + "). Se preserva el remoto."
+        );
+      }
+      return existing;
+    }
+
+    var mergedState = mergeGuideState(snapshotState(existing), snapshotState(incoming), isAdminOverride);
     var merged = Object.assign({}, existing, incoming);
 
     if (Object.prototype.hasOwnProperty.call(incoming, "data") || Object.prototype.hasOwnProperty.call(existing, "data")) {

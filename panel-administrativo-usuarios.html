@@ -13,18 +13,21 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/site_tokens.css?v=20260412_2">
+<link rel="stylesheet" href="css/site_tokens.css?v=20260516_1">
+<link rel="stylesheet" href="css/components.css?v=20260516_1">
 <link rel="stylesheet" href="css/shared_shell.css?v=20260425_1">
 <link rel="stylesheet" href="css/page_admin.css?v=20260513_1">
-<script src="js/portal_auth.js?v=20260515_5"></script>
+<script src="js/portal_auth.js?v=20260516_1"></script>
 <script src="js/firebase-config.js?v=20260414_1"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
 <script src="js/firebase_auth_bridge.js?v=20260515_1"></script>
-<script src="js/firebase_db.js?v=20260515_2"></script>
+<script src="js/firebase_db.js?v=20260516_1"></script>
+<script defer src="js/firebase_status_banner.js?v=20260516_1"></script>
+<script defer src="js/save_status.js?v=20260516_1"></script>
 <script src="js/activity_standard.js?v=20260508_1"></script>
-<script src="js/guide_declarations.js?v=20260508_1"></script>
-<script src="js/activity_deadlines.js?v=20260508_1"></script>
+<script src="js/guide_declarations.js?v=20260516_1"></script>
+<script src="js/activity_deadlines.js?v=20260516_2"></script>
 <script src="js/activity_grades.js?v=20260507_1"></script>
 <script defer src="js/shared_shell.js?v=20260508_1"></script>
 <script>
@@ -53,6 +56,7 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
         <button class="admin-nav__item" type="button" data-admin-module="fechas">Fechas de entrega</button>
         <button class="admin-nav__item" type="button" data-admin-module="respuestas">Respuestas</button>
         <button class="admin-nav__item" type="button" data-admin-module="entregas">Entregas</button>
+        <button class="admin-nav__item" type="button" data-admin-module="habilitacion">Habilitar actividades</button>
         <button class="admin-nav__item" type="button" data-admin-module="reportes">Reportes</button>
         <button class="admin-nav__item" type="button" data-admin-module="configuracion">Configuracion</button>
       </nav>
@@ -142,6 +146,12 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
               <p>Fichas definidas en el mapa actual del portal, sin cambiar rutas ni estructura de guias.</p>
             </div>
           </div>
+          <p class="activities-section-copy" style="background:var(--brand-100, #e9f8ef);border:1px solid var(--brand-300, #9fe3b7);border-radius:10px;padding:12px 16px;color:var(--brand-800, #08552c);">
+            <strong>Solo lectura.</strong> Para agregar o eliminar una ficha, edita
+            <code>FICHA_MAP</code> en <code>js/portal_auth.js</code> y la lista correspondiente
+            de guias en <code>FICHA_MAP[ficha].guias</code>. Las guias deben estar registradas
+            en <code>js/guide_declarations.js</code> antes de aparecer aqui.
+          </p>
           <div class="admin-table-wrap" id="fichas-table"></div>
         </div>
       </section>
@@ -232,9 +242,22 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
           <div class="admin-toolbar">
             <select id="deliveries-ficha-filter"></select>
             <input id="deliveries-search" type="search" placeholder="Buscar archivo o aprendiz">
+            <label class="toolbar-select" for="deliveries-from">
+              <span>Desde</span>
+              <input id="deliveries-from" type="date">
+            </label>
+            <label class="toolbar-select" for="deliveries-to">
+              <span>Hasta</span>
+              <input id="deliveries-to" type="date">
+            </label>
+            <button class="admin-button admin-button--ghost" type="button" id="deliveries-export-csv">Exportar CSV</button>
           </div>
           <div class="admin-table-wrap" id="deliveries-table"></div>
         </div>
+      </section>
+
+      <section class="admin-module" id="module-habilitacion" data-admin-panel="habilitacion" hidden>
+        <div id="habilitacion-host"></div>
       </section>
 
       <section class="admin-module" id="module-reportes" data-admin-panel="reportes" hidden>
@@ -274,6 +297,15 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
           </div>
           <div id="settings-panel"></div>
         </div>
+        <div class="admin-panel" style="margin-top:1.5rem;">
+          <div class="admin-panel__header">
+            <div>
+              <h2>Auditoria local</h2>
+              <p>Historial de acciones administrativas realizadas en este navegador (creacion/desactivacion de aprendices, habilitacion de actividades, cambios de password, etc.).</p>
+            </div>
+          </div>
+          <div id="audit-host"></div>
+        </div>
       </section>
     </main>
   </div>
@@ -308,7 +340,7 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
   <script src="js/admin_activities.js?v=20260505_1"></script>
   <script src="js/admin_guide6.js?v=20260505_1"></script>
   <script src="js/admin_progress.js?v=20260505_1"></script>
-  <script src="js/admin_habilitacion.js?v=20260507_1"></script>
-  <script src="js/admin_usuarios.js?v=20260513_1"></script>
+  <script src="js/admin_habilitacion.js?v=20260516_1"></script>
+  <script src="js/admin_usuarios.js?v=20260516_4"></script>
 </body>
 </html>
