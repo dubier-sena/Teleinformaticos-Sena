@@ -357,12 +357,28 @@
     return String(value || "").replace(/[^a-z0-9:_-]/gi, "_");
   }
 
+  // Obtiene los headers con Authorization: Bearer <idToken> si Firebase Auth
+  // tiene una sesion activa. Sin sesion, se devuelven los headers base sin
+  // Authorization — las Firestore Rules rechazaran la peticion (403) y el
+  // codigo cae al modo localStorage.
+  async function authHeaders(extra) {
+    var headers = Object.assign({}, extra || {});
+    var bridge = window.portalFirebaseAuth;
+    if (bridge && typeof bridge.getIdToken === "function") {
+      try {
+        var token = await bridge.getIdToken();
+        if (token) headers["Authorization"] = "Bearer " + token;
+      } catch (_) { /* sin token, se hara la peticion sin auth */ }
+    }
+    return headers;
+  }
+
   // GET un documento. Retorna objeto JS o null.
   async function fsGet(collection, docId) {
     try {
       var res = await fetchWithTimeout(
         docUrl(collection, docId),
-        { method: "GET", cache: "no-store" },
+        { method: "GET", cache: "no-store", headers: await authHeaders() },
         API_TIMEOUT_MS
       );
       if (res.status === 404) {
@@ -384,7 +400,7 @@
         docUrl(collection, docId),
         {
           method:  "PATCH",
-          headers: { "Content-Type": "application/json" },
+          headers: await authHeaders({ "Content-Type": "application/json" }),
           body:    JSON.stringify(toFsDoc(data)),
         },
         API_TIMEOUT_MS
@@ -399,7 +415,7 @@
     try {
       var res = await fetchWithTimeout(
         docUrl(collection, docId),
-        { method: "DELETE" },
+        { method: "DELETE", headers: await authHeaders() },
         API_TIMEOUT_MS
       );
       if (res.ok || res.status === 404) registerFirestoreOperation("delete", 1);
@@ -417,7 +433,7 @@
         docUrl(collection, docId, "updateMask.fieldPaths=" + encodeURIComponent(fieldName)),
         {
           method:  "PATCH",
-          headers: { "Content-Type": "application/json" },
+          headers: await authHeaders({ "Content-Type": "application/json" }),
           body:    JSON.stringify(body),
         },
         API_TIMEOUT_MS
@@ -431,7 +447,11 @@
   async function fsList(collection) {
     try {
       var url = BASE_URL + "/" + collection + "?key=" + FIREBASE_API_KEY + "&pageSize=300";
-      var res = await fetchWithTimeout(url, { method: "GET", cache: "no-store" }, API_TIMEOUT_MS);
+      var res = await fetchWithTimeout(
+        url,
+        { method: "GET", cache: "no-store", headers: await authHeaders() },
+        API_TIMEOUT_MS
+      );
       if (!res.ok) return [];
       var payload = await res.json();
       var docs = (payload.documents || []).map(fromFsDoc).filter(Boolean);
@@ -454,7 +474,7 @@
         batchUrl,
         {
           method:  "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: await authHeaders({ "Content-Type": "application/json" }),
           body:    JSON.stringify({ documents: docPaths }),
         },
         API_TIMEOUT_MS
@@ -481,10 +501,22 @@
     checkInProgress = (async function () {
       try {
         var url = docUrl(COL_PROGRESS, AVAILABILITY_DOC_ID);
-        var res = await fetchWithTimeout(url, { method: "GET", cache: "no-store" }, CHECK_TIMEOUT_MS);
-        var ok = res.ok || res.status === 200 || res.status === 404;
-        if (ok) registerFirestoreOperation("read", 1);
-        if (ok) availabilityCache = true; // Solo cachear si funciono
+        var res = await fetchWithTimeout(
+          url,
+          { method: "GET", cache: "no-store", headers: await authHeaders() },
+          CHECK_TIMEOUT_MS
+        );
+        // 200 = OK, 404 = doc no existe (Firestore vivo), 401/403 = sin auth
+        // pero Firestore vivo: aceptamos como "disponible" porque las
+        // operaciones reales se haran tras login con idToken.
+        var ok =
+          res.ok ||
+          res.status === 200 ||
+          res.status === 404 ||
+          res.status === 401 ||
+          res.status === 403;
+        if (res.ok || res.status === 404) registerFirestoreOperation("read", 1);
+        if (ok) availabilityCache = true;
         return ok;
       } catch (e) {
         return false; // No cachear fallos — reintentar la proxima vez
@@ -512,7 +544,12 @@
 
   async function cloudSaveUser(user) {
     if (!user || !user.usernameKey) return false;
-    return fsPatch(COL_USERS, user.usernameKey, user);
+    // No persistir passwordHash en Firestore. Firebase Auth es la fuente de
+    // verdad del password. El hash sigue en localStorage para que el login
+    // local funcione offline-first en el equipo del aprendiz.
+    var sanitized = Object.assign({}, user);
+    delete sanitized.passwordHash;
+    return fsPatch(COL_USERS, user.usernameKey, sanitized);
   }
 
   async function cloudListUsers() {

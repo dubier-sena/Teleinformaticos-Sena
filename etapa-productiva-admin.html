@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta
   http-equiv="Content-Security-Policy"
-  content="default-src 'self' blob: data:; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https:; media-src 'self' blob: data: https:; frame-src 'self' https://es.educaplay.com;"
+  content="default-src 'self' blob: data:; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' blob: https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https:; media-src 'self' blob: data: https:; frame-src 'self' https://es.educaplay.com;"
 >
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>Etapa Productiva | Portal de Guias</title>
@@ -20,9 +20,12 @@
 <link rel="stylesheet" href="css/shared_shell.css?v=20260425_1">
 <link rel="stylesheet" href="css/page_admin.css?v=20260411_2">
 <link rel="stylesheet" href="css/page_productive_stage_admin.css?v=20260427_1">
-<script src="js/portal_auth.js?v=20260422_2"></script>
+<script src="js/portal_auth.js?v=20260515_5"></script>
 <script src="js/firebase-config.js?v=20260414_1"></script>
-<script src="js/firebase_db.js?v=20260427_1"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script src="js/firebase_auth_bridge.js?v=20260515_1"></script>
+<script src="js/firebase_db.js?v=20260515_2"></script>
 <script defer src="js/shared_shell.js?v=20260508_1"></script>
 <script defer src="js/vendor/mammoth.browser.min.js?v=20260411_1"></script>
 <script defer src="js/productive_stage_import.js?v=20260411_2"></script>

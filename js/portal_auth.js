@@ -3183,3 +3183,327 @@ window.portalAuth = {
     return result;
   };
 })();
+
+(function () {
+  if (typeof window === "undefined" || typeof window.addEventListener !== "function") return;
+  if (window.__senaPortalCrossTabSyncInstalled) return;
+  window.__senaPortalCrossTabSyncInstalled = true;
+
+  const SESSION_KEY = "sena_portal_session_v1";
+
+  function parseSession(raw) {
+    if (!raw) return null;
+    try { return JSON.parse(raw); } catch (_) { return null; }
+  }
+
+  function identityOf(record) {
+    if (!record || typeof record !== "object") return "";
+    const role = String(record.role || "");
+    const key = String(
+      record.usernameKey || (record.user && record.user.usernameKey) || ""
+    );
+    return role + "|" + key;
+  }
+
+  function isIndexLikePath() {
+    const path = String(window.location.pathname || "").toLowerCase();
+    return /\/index\.html?$/.test(path) || path === "/" || path.endsWith("/");
+  }
+
+  window.addEventListener("storage", function (event) {
+    if (!event || event.key !== SESSION_KEY) return;
+
+    const newRecord = parseSession(event.newValue);
+    const oldRecord = parseSession(event.oldValue);
+
+    if (identityOf(newRecord) === identityOf(oldRecord)) return;
+
+    if (!newRecord) {
+      if (isIndexLikePath()) {
+        window.location.reload();
+      } else {
+        window.location.replace("index.html");
+      }
+      return;
+    }
+
+    window.location.reload();
+  });
+})();
+
+// ════════════════════════════════════════════════════════════════════════════
+//  INTEGRACION CON FIREBASE AUTH (firebase_auth_bridge.js)
+//
+//  Tras validar el login local con hash SHA-256, autenticamos al mismo
+//  usuario en Firebase Auth usando email sintetico
+//      {usernameKey}@sena-portal.local
+//  El idToken resultante lo usa firebase_db.js para llamar a Firestore con
+//  Authorization: Bearer y pasar las nuevas Firestore Rules.
+//
+//  Si Firebase Auth NO esta disponible (offline, SDK no cargado, config
+//  apagada), el login local sigue funcionando — solo se pierde la sync
+//  cross-device.
+// ════════════════════════════════════════════════════════════════════════════
+
+(function () {
+  const auth = window.portalAuth;
+  if (!auth || auth.__firebaseAuthBridgeInstalled) return;
+  auth.__firebaseAuthBridgeInstalled = true;
+
+  function getBridge() {
+    return window.portalFirebaseAuth;
+  }
+
+  function bridgeEnabled() {
+    const b = getBridge();
+    return b && typeof b.isEnabled === "function" && b.isEnabled();
+  }
+
+  async function signInBridge(usernameKey, password) {
+    const b = getBridge();
+    if (!b || !bridgeEnabled()) return { ok: false, error: "auth/disabled" };
+    try {
+      return await b.ensureSignedIn(usernameKey, password);
+    } catch (error) {
+      return { ok: false, error: "auth/exception", raw: error && error.message };
+    }
+  }
+
+  async function ensureAdminRoleDoc(uid, fullName) {
+    const b = getBridge();
+    if (!b || !uid) return false;
+    const cfg = window.PORTAL_FIREBASE_CONFIG;
+    if (!cfg || !cfg.projectId || !cfg.apiKey) return false;
+
+    let idToken = null;
+    try { idToken = await b.getIdToken(); } catch (_) {}
+    if (!idToken) return false;
+
+    const base = `https://firestore.googleapis.com/v1/projects/${cfg.projectId}/databases/(default)/documents`;
+    const url = `${base}/sena_portal_roles/${encodeURIComponent(uid)}?key=${cfg.apiKey}`;
+
+    try {
+      const head = await fetch(url, {
+        headers: { Authorization: "Bearer " + idToken },
+      });
+      if (head.ok) return true; // ya existe
+      if (head.status !== 404) {
+        console.warn("[portal_auth] Estado inesperado leyendo role admin:", head.status);
+        return false;
+      }
+
+      const body = {
+        fields: {
+          role: { stringValue: "admin" },
+          fullName: { stringValue: String(fullName || "") },
+          createdAt: { stringValue: new Date().toISOString() },
+        },
+      };
+      const create = await fetch(url, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + idToken,
+        },
+        body: JSON.stringify(body),
+      });
+      if (!create.ok) {
+        console.warn("[portal_auth] No se pudo crear doc role admin:", create.status);
+        return false;
+      }
+      console.info("[portal_auth] Doc role admin creado en sena_portal_roles/" + uid);
+      return true;
+    } catch (error) {
+      console.warn("[portal_auth] Error en ensureAdminRoleDoc:", error);
+      return false;
+    }
+  }
+
+  // ── Helpers para deserializar docs de Firestore REST ───────────────────
+  function fsValueToJs(value) {
+    if (!value || typeof value !== "object") return null;
+    if ("stringValue" in value) return value.stringValue;
+    if ("integerValue" in value) return Number(value.integerValue);
+    if ("doubleValue" in value) return Number(value.doubleValue);
+    if ("booleanValue" in value) return value.booleanValue;
+    if ("nullValue" in value) return null;
+    if ("timestampValue" in value) return value.timestampValue;
+    if ("mapValue" in value) return fsFieldsToObject(value.mapValue.fields || {});
+    if ("arrayValue" in value) {
+      const arr = (value.arrayValue.values || []).map(fsValueToJs);
+      return arr;
+    }
+    return null;
+  }
+  function fsFieldsToObject(fields) {
+    const out = {};
+    for (const k in fields) out[k] = fsValueToJs(fields[k]);
+    return out;
+  }
+
+  async function fetchCloudUserDoc(usernameKey, idToken) {
+    const cfg = window.PORTAL_FIREBASE_CONFIG;
+    if (!cfg || !cfg.projectId || !cfg.apiKey || !idToken) return null;
+    const url = `https://firestore.googleapis.com/v1/projects/${cfg.projectId}/databases/(default)/documents/sena_portal_users/${encodeURIComponent(usernameKey)}?key=${cfg.apiKey}`;
+    try {
+      const res = await fetch(url, { headers: { Authorization: "Bearer " + idToken } });
+      if (!res.ok) return null;
+      const doc = await res.json();
+      return doc && doc.fields ? fsFieldsToObject(doc.fields) : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function upsertLocalUserSync(user) {
+    if (!user || !user.usernameKey) return;
+    try {
+      const users = JSON.parse(localStorage.getItem("sena_portal_users_v1") || "[]");
+      const list = Array.isArray(users) ? users : [];
+      const idx = list.findIndex((u) => u && u.usernameKey === user.usernameKey);
+      if (idx === -1) list.push(user);
+      else list[idx] = Object.assign({}, list[idx], user, {
+        passwordHash: user.passwordHash || list[idx].passwordHash || "",
+      });
+      localStorage.setItem("sena_portal_users_v1", JSON.stringify(list));
+    } catch (_) { /* sin cache local, fallara el login local */ }
+  }
+
+  // ── Engancha loginStudent ──────────────────────────────────────────────
+  // index_auth.js invoca auth.loginStudent({username, password}).
+  // Flujo:
+  //   1. Login local rapido. Si ok → ademas autenticar en Firebase para sync.
+  //   2. Si local falla → intentar login via Firebase Auth (fuente de verdad
+  //      del password). Si Auth ok → recuperar perfil desde Firestore, cachear
+  //      en localStorage, reintentar login local.
+  const prevLoginStudent = auth.loginStudent;
+  auth.loginStudent = async function loginStudentWithFirebaseBridge(data) {
+    let result = await prevLoginStudent.call(auth, data);
+
+    const usernameKey =
+      (result && result.user && result.user.usernameKey) ||
+      (data && typeof data === "object" && (data.usernameKey || data.username)) ||
+      "";
+    const password =
+      typeof data === "string" ? data : (data && data.password) || "";
+    const normalizedKey = String(usernameKey || "").trim().toLowerCase();
+
+    // CASO A: login local OK -> tambien autenticar en Firebase
+    if (result && result.ok) {
+      if (!bridgeEnabled() || !normalizedKey || !password) return result;
+      const fb = await signInBridge(normalizedKey, password);
+      if (!fb.ok) {
+        console.warn(
+          "[portal_auth] Firebase Auth no logueo al aprendiz (modo offline-only):",
+          fb.error
+        );
+      } else {
+        console.info(
+          "[portal_auth] Firebase Auth ok para aprendiz " + normalizedKey +
+          (fb.created ? " (cuenta creada)" : "")
+        );
+      }
+      return result;
+    }
+
+    // CASO B: login local fallo. Intentar via Firebase Auth como fallback.
+    if (!bridgeEnabled() || !normalizedKey || !password) return result;
+
+    const fb = await signInBridge(normalizedKey, password);
+    if (!fb.ok) {
+      // Mantener mensaje original si lo habia, o uno generico
+      if (result && result.message) return result;
+      return { ok: false, message: "Usuario o contrasena incorrectos." };
+    }
+
+    // Firebase Auth nos reconocio. Recuperar perfil del usuario desde Firestore.
+    let idToken = null;
+    try { idToken = await window.portalFirebaseAuth.getIdToken(); } catch (_) {}
+    if (!idToken) {
+      return { ok: false, message: "No se pudo obtener token de sesion." };
+    }
+
+    const cloudUser = await fetchCloudUserDoc(normalizedKey, idToken);
+    if (!cloudUser) {
+      // Tiene cuenta Auth pero no hay perfil en Firestore. Cerrar sesion
+      // y reportar — la cuenta sera limpiada manualmente o el admin
+      // la recreara.
+      try { await window.portalFirebaseAuth.signOut(); } catch (_) {}
+      return {
+        ok: false,
+        message: "No existe un perfil de aprendiz con ese usuario.",
+      };
+    }
+
+    // Si el cloudUser no trae passwordHash (post-Fase C de limpieza), lo
+    // regeneramos a partir del password que Firebase Auth acaba de validar.
+    // Asi el login local en este equipo funciona aunque Firestore ya no
+    // almacene hashes.
+    if (!cloudUser.passwordHash && typeof auth.hashSecret === "function") {
+      try {
+        cloudUser.passwordHash = await auth.hashSecret(password);
+      } catch (_) { /* sin hash el login local fallara, pero Auth ya valido */ }
+    }
+
+    // Cachear en localStorage para que el login local funcione en este equipo
+    upsertLocalUserSync(cloudUser);
+    console.info("[portal_auth] Perfil recuperado de Firestore para " + normalizedKey);
+
+    // Reintentar el login local: ahora si encontrara el hash en localStorage.
+    result = await prevLoginStudent.call(auth, data);
+    return result;
+  };
+
+  // ── Engancha loginAdmin ────────────────────────────────────────────────
+  // index_auth.js invoca auth.loginAdmin(passwordString) directamente.
+  // El loginAdmin original acepta tanto string como {password}, asi que
+  // el wrapper extrae la password en cualquiera de los dos formatos.
+  const prevLoginAdmin = auth.loginAdmin;
+  if (typeof prevLoginAdmin === "function") {
+    auth.loginAdmin = async function loginAdminWithFirebaseBridge(data) {
+      const result = await prevLoginAdmin.call(auth, data);
+      if (!result || !result.ok) return result;
+      if (!bridgeEnabled()) return result;
+
+      const profile = auth.ADMIN_PROFILE || { usernameKey: "dubier", fullName: "" };
+      const password =
+        typeof data === "string" ? data : (data && data.password) || "";
+      if (!password) return result;
+
+      const fb = await signInBridge(profile.usernameKey, password);
+      if (!fb.ok) {
+        console.warn(
+          "[portal_auth] Firebase Auth no logueo al admin (modo offline-only):",
+          fb.error
+        );
+        return result;
+      }
+      console.info(
+        "[portal_auth] Firebase Auth ok para admin " + profile.usernameKey +
+        (fb.created ? " (cuenta creada)" : "")
+      );
+
+      // Bootstrap: si esta es la primera vez, crear doc role admin
+      try {
+        await ensureAdminRoleDoc(fb.uid, profile.fullName);
+      } catch (error) {
+        console.warn("[portal_auth] ensureAdminRoleDoc fallo:", error);
+      }
+      return result;
+    };
+  }
+
+  // ── Engancha logout ────────────────────────────────────────────────────
+  const prevLogout = auth.logout;
+  auth.logout = async function logoutWithFirebaseBridge() {
+    try {
+      const b = getBridge();
+      if (b && bridgeEnabled()) {
+        await b.signOut();
+      }
+    } catch (_) { /* no bloquea logout local */ }
+    if (typeof prevLogout === "function") {
+      return prevLogout.call(auth);
+    }
+  };
+})();
