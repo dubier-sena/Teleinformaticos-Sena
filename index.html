@@ -13,16 +13,19 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/site_tokens.css?v=20260412_2">
+<link rel="stylesheet" href="css/site_tokens.css?v=20260516_1">
+<link rel="stylesheet" href="css/components.css?v=20260516_1">
 <link rel="stylesheet" href="css/shared_shell.css?v=20260425_1">
 <link rel="stylesheet" href="css/page_portal.css?v=20260412_3">
-<script defer src="js/portal_auth.js?v=20260515_5"></script>
+<script defer src="js/portal_auth.js?v=20260516_1"></script>
 <script src="js/firebase-config.js?v=20260414_1"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
 <script src="js/firebase_auth_bridge.js?v=20260515_1"></script>
-<script defer src="js/firebase_db.js?v=20260515_2"></script>
-<script defer src="js/index_auth.js?v=20260411_2"></script>
+<script defer src="js/firebase_db.js?v=20260516_1"></script>
+<script defer src="js/firebase_status_banner.js?v=20260516_1"></script>
+<script defer src="js/save_status.js?v=20260516_1"></script>
+<script defer src="js/index_auth.js?v=20260516_1"></script>
 <script defer src="js/shared_shell.js?v=20260508_1"></script>
 </head>
 <body class="app-shell app-shell--portal portal-redesign">
@@ -445,6 +448,12 @@
               <button class="auth-submit" type="submit">Iniciar sesi&oacute;n</button>
             </form>
             <div class="auth-feedback" id="auth-login-feedback"></div>
+            <details class="auth-forgot" style="margin-top:14px;font-size:0.85rem;color:var(--text-muted, #5f7468);">
+              <summary style="cursor:pointer;font-weight:600;color:var(--brand-700, #0a5c31);">&iquest;Olvidaste tu contrase&ntilde;a?</summary>
+              <p style="margin:8px 0 0 0;">
+                Acercate a tu instructor con el nombre completo y la ficha. El instructor puede asignarte una nueva contrase&ntilde;a desde el panel administrativo. Por seguridad, las contrase&ntilde;as no se pueden recuperar autom&aacute;ticamente.
+              </p>
+            </details>
           </div>
           <div class="auth-pane" data-auth-pane="register">
             <h4>Crear usuario del aprendiz</h4>
