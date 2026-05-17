@@ -153,6 +153,20 @@ function resolveTargetFolder(rootFolder, ficha, payload) {
 
 function buildDeliveryFileName(fullName, ficha, activityLabel, originalFileName, payload) {
   const extension = getFileExtension(originalFileName);
+  // Formato estándar OBLIGATORIO cuando el cliente envía guideNumber + activityNumber:
+  //   Guia_{N}_Actividad_{ActNum}_{NombreBreve}_{Ficha}_{Aprendiz}.{ext}
+  const guideNumber = sanitizeFileSegment(payload.guideNumber, "");
+  const activityNumber = sanitizeFileSegment(String(payload.activityNumber || "").replace(/\./g, ""), "");
+  if (guideNumber && activityNumber) {
+    const shortName = sanitizeFileSegment(
+      payload.shortName || payload.activityTitle || activityLabel,
+      "Actividad"
+    );
+    const fichaLabel = sanitizeFileSegment(ficha, "SIN_FICHA");
+    const learnerFull = normalizeLearnerLabel(fullName, "full");
+    return `Guia_${guideNumber}_Actividad_${activityNumber}_${shortName}_${fichaLabel}_${learnerFull}${extension}`;
+  }
+  // Fallback legado para guías que aún no envíen guideNumber/activityNumber.
   const prefix = sanitizeFileSegment(payload.fileNamePrefix, "");
   const learnerLabel = normalizeLearnerLabel(fullName, payload.learnerNameMode);
   if (prefix) {

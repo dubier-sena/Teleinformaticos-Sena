@@ -135,6 +135,56 @@
     return context && context.learnerNameMode === "full" ? "full" : "firstToken";
   }
 
+  // Resuelve el número de guía y el shortName desde ActivityStandard para
+  // generar el nombre estándar incluso si el contexto no los trae.
+  function resolveGuideStandardContext(context) {
+    var std = window.ActivityStandard;
+    if (!std || typeof std.getConfigForGuide !== "function") return null;
+    var pageFile =
+      (context && context.pageFile) ||
+      window.__RUNTIME_PAGE_FILE__ ||
+      (window.location.pathname.split("/").pop() || "");
+    var config = std.getConfigForGuide(pageFile);
+    if (!config) return null;
+    var actId =
+      (context && (context.deadlineActivityId || context.activityId || context.panelKey)) || "";
+    var actDef = (config.activities || []).find(function (act) {
+      return (
+        act.id === actId ||
+        act.id === (context && context.deadlineActivityId) ||
+        act.number === (context && context.activityNumber)
+      );
+    }) || null;
+    return {
+      guideNumber: config.guideNumber || "",
+      shortName: (actDef && actDef.shortName) || "",
+    };
+  }
+
+  function buildStandardFileName(fullName, context, originalFileName, ficha) {
+    var std = window.ActivityStandard;
+    if (!std || typeof std.generateEvidenceFileName !== "function") return "";
+    var resolved = resolveGuideStandardContext(context) || {};
+    var guideNumber = (context && context.guideNumber) || resolved.guideNumber || "";
+    var shortName =
+      (context && (context.shortName || context.activityShortName)) ||
+      resolved.shortName ||
+      (context && context.activityTitle) ||
+      (context && context.activityLabel) ||
+      "";
+    var activityNumber =
+      (context && (context.activityNumber || context.activityLabel)) || "";
+    if (!guideNumber || !activityNumber) return "";
+    return std.generateEvidenceFileName({
+      guiaNumero: guideNumber,
+      actividadNumero: activityNumber,
+      actividadTitulo: shortName,
+      ficha: (context && context.ficha) || ficha,
+      nombreAprendiz: fullName,
+      originalFileName: originalFileName || "",
+    });
+  }
+
   function buildDeliveryFileNamePreview(fullName, contextOrActivityLabel, fileName, ficha) {
     var context =
       contextOrActivityLabel && typeof contextOrActivityLabel === "object"
@@ -143,6 +193,9 @@
     var extension = getFileExtension(fileName || ".ext");
     var prefix = getFileNamePrefix(context);
     var learnerLabel = normalizeLearnerLabel(fullName, getLearnerNameMode(context));
+
+    var standard = buildStandardFileName(fullName, context, fileName, ficha);
+    if (standard) return standard;
 
     if (prefix) {
       return (
@@ -893,11 +946,22 @@
 
     try {
       var fileBase64 = await readFileAsBase64(file);
+      var stdCtx = resolveGuideStandardContext(currentContext) || {};
+      var guideNumber = currentContext.guideNumber || stdCtx.guideNumber || "";
+      var shortName =
+        currentContext.shortName ||
+        currentContext.activityShortName ||
+        stdCtx.shortName ||
+        currentContext.activityTitle ||
+        currentContext.activityLabel ||
+        "";
       var payload = {
         guideLabel: currentContext.guideLabel,
         activityLabel: currentContext.activityLabel,
         activityNumber: currentContext.activityNumber || "",
         activityTitle: currentContext.activityTitle || "",
+        guideNumber: guideNumber,
+        shortName: shortName,
         fileName: file.name,
         mimeType: file.type || "application/octet-stream",
         fileBase64: fileBase64,
@@ -931,21 +995,32 @@
         nodes.resultLink.hidden = false;
       }
 
+      var standardName = buildStandardFileName(fullName, currentContext, file.name, ficha);
       var record = {
         guideLabel: currentContext.guideLabel,
         activityNumber: currentContext.activityNumber || "",
         activityTitle: currentContext.activityTitle || "",
         activityLabel: currentContext.activityLabel || "Actividad",
         panelKey: currentContext.panelKey || "",
+        guiaNumero: guideNumber,
+        actividadNumero: currentContext.activityNumber || "",
+        actividadTitulo: currentContext.activityTitle || currentContext.activityLabel || "",
+        shortName: shortName,
+        nombreAprendiz: fullName,
+        nombreArchivoOriginal: file.name || "",
+        originalFileName: file.name || "",
+        nombreArchivoEstandar: response.savedFileName || standardName || "",
         pageFile: identity.pageFile,
         fullName: fullName,
         ficha: ficha,
         grupo: identity.grupo,
         institucion: identity.institucion,
         submittedAt: payload.submittedAt,
+        fechaEntrega: payload.submittedAt,
         folderPath: response.folderPath || "",
-        savedFileName: response.savedFileName || file.name || "",
+        savedFileName: response.savedFileName || standardName || file.name || "",
         driveUrl: response.driveUrl || "",
+        enlaceDrive: response.driveUrl || "",
         status: "delivered",
       };
       saveDeliveryRecord(currentContext, record);
