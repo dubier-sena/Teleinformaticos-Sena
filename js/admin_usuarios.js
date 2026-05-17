@@ -516,11 +516,29 @@
 
   function getResponseActivities(fileName) {
     const activities = deadlineManager?.getActivitiesForGuide?.(fileName) || window.ActivityStandard?.getActivitiesForGuide?.(fileName) || [];
-    return activities.map((activity) => ({
+    const declared = activities.map((activity) => ({
       id: activity.id,
       label: activity.label || activity.id,
       keys: Array.isArray(activity.keys) ? activity.keys : [],
     }));
+    // Fallback: si hay state-keys -delivery o -locked en localStorage de cualquier
+    // aprendiz para esta guia que no correspondan a actividades declaradas,
+    // surfacearlas como "Actividad <id>" para que el admin no pierda visibilidad.
+    const known = new Set(declared.map((item) => item.id));
+    const extra = new Map();
+    (state.users || []).forEach((user) => {
+      if (!user || !user.usernameKey) return;
+      const record = readStudentGuideState(user.usernameKey, fileName);
+      if (!record || typeof record !== "object") return;
+      Object.keys(record).forEach((key) => {
+        const match = String(key).match(/^(.+)-(?:delivery|locked)$/);
+        if (!match) return;
+        const id = match[1];
+        if (!id || known.has(id) || extra.has(id)) return;
+        extra.set(id, { id, label: "Actividad " + id + " (sin registrar)", keys: [] });
+      });
+    });
+    return declared.concat(Array.from(extra.values()));
   }
 
   function getResponseActivity(fileName, activityId) {

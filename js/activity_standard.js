@@ -148,19 +148,46 @@
   // ── Nombre estándar de archivo ─────────────────────────────────────────────
 
   /**
-   * Genera el nombre de archivo con la estructura estándar:
-   *   Guia{N}_{ActNum}_{NombreBreve}_{Ficha}_{NombreAprendiz}
+   * Genera el nombre estándar OBLIGATORIO para cualquier archivo de evidencia:
+   *   Guia_{NumeroGuia}_Actividad_{NumeroActividad}_{NombreBreveActividad}_{NumeroFicha}_{NombreAprendiz}.{ext}
+   *
+   * Es la única función autorizada para construir nombres de entrega/exportación.
+   * Conserva la extensión original cuando se proporciona vía `ext` o `originalFileName`.
+   * Reemplaza tildes/espacios y caracteres especiales sin perder información útil.
    */
-  function buildFileName(opts) {
-    var ext = opts.ext || ".doc";
-    var actNum = sanitizeSegment(String(opts.activityNumber || "").replace(/\./g, ""));
+  function generateEvidenceFileName(opts) {
+    opts = opts || {};
+    var ext = String(opts.ext || "").trim();
+    if (!ext && opts.originalFileName) {
+      var m = String(opts.originalFileName).match(/(\.[a-zA-Z0-9]+)$/);
+      if (m) ext = m[1];
+    }
+    if (!ext) ext = ".doc";
+    if (ext.charAt(0) !== ".") ext = "." + ext;
+    ext = ext.toLowerCase();
+
+    var guiaNumero = sanitizeSegment(String(opts.guiaNumero != null ? opts.guiaNumero : opts.guideNumber || ""));
+    var actividadNumero = sanitizeSegment(
+      String(opts.actividadNumero != null ? opts.actividadNumero : opts.activityNumber || "").replace(/\./g, "")
+    );
+    var nombreBreve = sanitizeSegment(opts.actividadTitulo || opts.shortName) || "Actividad";
+    var ficha = sanitizeSegment(opts.ficha) || "SinFicha";
+    var aprendiz = sanitizeSegment(opts.nombreAprendiz || opts.learnerName) || "Aprendiz";
+
     return [
-      "Guia" + sanitizeSegment(opts.guideNumber || ""),
-      actNum,
-      sanitizeSegment(opts.shortName) || "Actividad",
-      sanitizeSegment(opts.ficha) || "SinFicha",
-      sanitizeSegment(opts.learnerName) || "Aprendiz",
+      "Guia_" + (guiaNumero || "X"),
+      "Actividad_" + (actividadNumero || "X"),
+      nombreBreve,
+      ficha,
+      aprendiz,
     ].join("_") + ext;
+  }
+
+  // Wrapper de compatibilidad. Acepta tanto el contrato viejo
+  //   { guideNumber, activityNumber, shortName, ficha, learnerName, ext }
+  // como el nuevo. Toda llamada produce el formato estándar nuevo.
+  function buildFileName(opts) {
+    return generateEvidenceFileName(opts);
   }
 
   // ── URL de solo lectura en Drive ──────────────────────────────────────────
@@ -342,6 +369,16 @@
       });
       if (!exists) history.push(previousRecord);
     }
+    var guideMeta = (stateCtx.getGuideMetadata && stateCtx.getGuideMetadata()) || {};
+    var savedName = record.savedFileName || "";
+    var standardName = generateEvidenceFileName({
+      guiaNumero: guideMeta.guideNumber,
+      actividadNumero: record.activityNumber,
+      actividadTitulo: record.shortName || record.activityTitle || record.activityLabel,
+      ficha: record.ficha,
+      nombreAprendiz: record.fullName || record.learnerName,
+      originalFileName: savedName || record.originalFileName || "",
+    });
     state[activityId + "-locked"] = true;
     state[activityId + "-delivery"] = {
       learnerName:    record.fullName || record.learnerName || "",
@@ -349,9 +386,17 @@
       institucion:    record.institucion || "",
       activityNumber: record.activityNumber || "",
       activityTitle:  record.activityTitle || record.activityLabel || "",
+      guiaNumero:     guideMeta.guideNumber || "",
+      actividadNumero: record.activityNumber || "",
+      actividadTitulo: record.activityTitle || record.activityLabel || "",
+      nombreAprendiz: record.fullName || record.learnerName || "",
+      nombreArchivoOriginal: record.originalFileName || savedName || "",
+      nombreArchivoEstandar: standardName,
       submittedAt:    record.submittedAt || "",
-      savedFileName:  record.savedFileName || "",
+      fechaEntrega:   record.submittedAt || "",
+      savedFileName:  savedName,
       driveUrl:       toViewOnlyDriveUrl(record.driveUrl || ""),
+      enlaceDrive:    toViewOnlyDriveUrl(record.driveUrl || ""),
       status:         "delivered",
       estado:         "entregada",
       fechaEntregaOriginal: previousRecord.fechaEntregaOriginal || previousRecord.submittedAt || record.submittedAt || "",
@@ -891,6 +936,7 @@
     // Word
     buildWordDocument: buildWordDocument,
     buildFileName: buildFileName,
+    generateEvidenceFileName: generateEvidenceFileName,
     downloadWordDoc: downloadWordDoc,
     openWordModal: openWordModal,
 

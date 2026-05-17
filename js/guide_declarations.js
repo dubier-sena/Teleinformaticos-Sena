@@ -101,7 +101,9 @@
       { id: "mapa322",        number: "3.2.2", label: "Mapa conceptual",                     shortName: "MapaConceptual",type: "form" },
       { id: "checklist331",   number: "3.3.1", label: "Checklist de instalacion",            shortName: "Checklist",     type: "form" },
       { id: "diagnostico332", number: "3.3.2", label: "Diagnostico tecnico",                 shortName: "Diagnostico",   type: "form" },
+      { id: "documento333",   number: "3.3.3", label: "Documento tecnico de gestion de informacion", shortName: "DocTecnico", type: "file" },
       { id: "presupuesto341", number: "3.4.1", label: "Presupuesto final",                   shortName: "Presupuesto",   type: "form" },
+      { id: "sustentacion342",number: "3.4.2", label: "Presentacion y sustentacion oral",    shortName: "Sustentacion",  type: "file" },
     ],
   });
 
