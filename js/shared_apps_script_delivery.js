@@ -1021,6 +1021,11 @@
         savedFileName: response.savedFileName || standardName || file.name || "",
         driveUrl: response.driveUrl || "",
         enlaceDrive: response.driveUrl || "",
+        backupDriveUrl: response.backupDriveUrl || "",
+        respaldoDriveUrl: response.backupDriveUrl || "",
+        backupFolderPath: response.backupFolderPath || "",
+        backupSavedFileName: response.backupSavedFileName || "",
+        backupError: response.backupError || "",
         status: "delivered",
       };
       saveDeliveryRecord(currentContext, record);

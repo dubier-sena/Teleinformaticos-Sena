@@ -67,12 +67,34 @@ function doPost(e) {
     );
     const uploaded = destination.folder.createFile(blob);
 
+    // Copia automática a Respaldos/ dentro de la misma carpeta de ficha.
+    // Conserva la misma jerarquía Guia/Actividad para trazabilidad.
+    // Si la copia falla NO se aborta la entrega: el archivo principal ya quedó subido.
+    let backupInfo = { url: "", folderPath: "", fileName: "", error: "" };
+    try {
+      const backupRoot = ensureFolderByName(rootFolder, "Respaldos");
+      const backupDestination = resolveBackupTargetFolder(backupRoot, ficha, payload);
+      const backupCopy = uploaded.makeCopy(finalFileName, backupDestination.folder);
+      backupInfo = {
+        url: backupCopy.getUrl(),
+        folderPath: backupDestination.folderPath,
+        fileName: finalFileName,
+        error: "",
+      };
+    } catch (backupError) {
+      backupInfo.error = backupError && backupError.message ? backupError.message : "Backup error";
+    }
+
     return jsonResponse({
       ok: true,
       message: "Entrega registrada correctamente en Drive en la carpeta correspondiente.",
       driveUrl: uploaded.getUrl(),
       folderPath: destination.folderPath,
       savedFileName: finalFileName,
+      backupDriveUrl: backupInfo.url,
+      backupFolderPath: backupInfo.folderPath,
+      backupSavedFileName: backupInfo.fileName,
+      backupError: backupInfo.error,
     });
   } catch (error) {
     return jsonResponse({
@@ -132,6 +154,30 @@ function buildActivityFolderName(payload) {
 function resolveTargetFolder(rootFolder, ficha, payload) {
   let currentFolder = rootFolder;
   const pathSegments = [`Ficha ${sanitizeLabel(ficha, "SIN_FICHA")}`];
+
+  const guideFolderName = buildGuideFolderName(payload);
+  if (guideFolderName) {
+    currentFolder = ensureFolderByName(currentFolder, guideFolderName);
+    pathSegments.push(guideFolderName);
+  }
+
+  const activityFolderName = buildActivityFolderName(payload);
+  if (activityFolderName) {
+    currentFolder = ensureFolderByName(currentFolder, activityFolderName);
+    pathSegments.push(activityFolderName);
+  }
+
+  return {
+    folder: currentFolder,
+    folderPath: pathSegments.join(" / "),
+  };
+}
+
+// La carpeta Respaldos vive dentro de la misma raíz de ficha y replica la
+// jerarquía Guia/Actividad para mantener trazabilidad por entrega.
+function resolveBackupTargetFolder(backupRoot, ficha, payload) {
+  let currentFolder = backupRoot;
+  const pathSegments = [`Ficha ${sanitizeLabel(ficha, "SIN_FICHA")}`, "Respaldos"];
 
   const guideFolderName = buildGuideFolderName(payload);
   if (guideFolderName) {
