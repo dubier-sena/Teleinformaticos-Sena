@@ -86,59 +86,37 @@ const budgetItems = [
 
 const evidenceRows = [
   {
-    phase: "Planeacion",
+    phase: "Planeación",
     project:
-      "Implementar procesos para el mantenimiento fisico, logico y herramientas tecnologicas de los equipos de computo y redes de datos.",
-    learning: "Act. 3.2.2 - Mapa conceptual: herramientas tecnologicas y documentacion tecnica.",
+      "Implementar procesos para el mantenimiento físico, lógico y herramientas tecnológicas de los equipos de cómputo y redes de datos.",
+    learning: "Mapa conceptual sobre herramientas tecnológicas y documentación técnica (Act. 3.2.2).",
     evidence:
-      "CONOCIMIENTO: Mapa conceptual integrador sobre herramientas y documentacion tecnica.",
+      "CONOCIMIENTO: Mapa conceptual integrador sobre herramientas tecnológicas, proceso técnico y documentación.",
     criteria:
-      "Diferencia herramientas TIC, tipos de software y servicios segun necesidades de la organizacion.",
-    methods: "Tecnica: Exposicion oral. Instrumento: Lista de chequeo IE-01.",
+      "Diferencia herramientas TIC, tipos de software y servicios según necesidades de la organización.",
+    methods: "Técnica: Exposición oral. Instrumento: Lista de chequeo IE-01.",
   },
   {
-    phase: "Planeacion",
+    phase: "Planeación",
     project:
-      "Implementar procesos para el mantenimiento fisico, logico y herramientas tecnologicas de los equipos de computo y redes de datos.",
-    learning: "Act. 3.3.1 y 3.3.2 - Instalacion y diagnostico de herramientas tecnologicas (RAP 02).",
+      "Implementar procesos para el mantenimiento físico, lógico y herramientas tecnológicas de los equipos de cómputo y redes de datos.",
+    learning: "Instalación, configuración y diagnóstico de herramientas tecnológicas (Acts. 3.3.1 y 3.3.2).",
     evidence:
-      "DESEMPENO: Checklist de instalacion y diagnostico diligenciado con evidencias (capturas de pantalla).",
+      "DESEMPEÑO: Checklist de instalación y diagnóstico diligenciado, con capturas y verificación técnica.",
     criteria:
-      "Instala aplicaciones, herramientas ofimaticas y software utilitario de acuerdo con necesidades de la organizacion, recursos tecnologicos y manuales. Utiliza motores de busqueda considerando requerimientos tecnicos de los dispositivos.",
-    methods: "Tecnica: Observacion directa. Instrumento: Lista de chequeo IE-02.",
+      "Instala aplicaciones, herramientas ofimáticas y software utilitario según necesidades, recursos tecnológicos y manuales. Utiliza motores de búsqueda según requerimientos técnicos. Adapta herramientas TIC según necesidades de la entidad.",
+    methods: "Técnica: Observación directa. Instrumento: Lista de chequeo IE-02.",
   },
   {
-    phase: "Planeacion",
+    phase: "Planeación",
     project:
-      "Implementar procesos para el mantenimiento fisico, logico y herramientas tecnologicas de los equipos de computo y redes de datos.",
-    learning: "Act. 3.3.3 - Documento tecnico de gestion de informacion con protocolos aplicados.",
+      "Implementar procesos para el mantenimiento físico, lógico y herramientas tecnológicas de los equipos de cómputo y redes de datos.",
+    learning: "Documento técnico, presupuesto de implementación tecnológica y sustentación oral (Acts. 3.3.3, 3.4.1 y 3.4.2).",
     evidence:
-      "PRODUCTO: Documento tecnico (.docx o .pdf) con inventario de activos, registros de procedimientos, resultados del diagnostico, estructura de carpetas y conclusiones.",
+      "PRODUCTO: Documento técnico con inventario, procedimientos, diagnóstico, estructura de carpetas, conclusiones y recomendaciones; presupuesto tecnológico en PDF. DESEMPEÑO: Sustentación oral de 8 a 12 minutos.",
     criteria:
-      "Mantiene la documentacion segun manual tecnico. Aplica controles de gestion de informacion segun protocolos establecidos.",
-    methods: "Tecnica: Valoracion de producto. Instrumento: Lista de chequeo IE-03.",
-  },
-  {
-    phase: "Planeacion",
-    project:
-      "Implementar procesos para el mantenimiento fisico, logico y herramientas tecnologicas de los equipos de computo y redes de datos.",
-    learning: "Act. 3.4.1 - Presupuesto de implementacion tecnologica para una MiPyme (RAP 02).",
-    evidence:
-      "PRODUCTO: Presupuesto de implementacion tecnologica en PDF con tabla de costos, licencias, cantidades, totales y justificacion tecnica.",
-    criteria:
-      "Adapta herramientas TIC de acuerdo con las necesidades de la entidad. Propone procesos de mejora en el manejo de la informacion con base en la normativa vigente.",
-    methods: "Tecnica: Valoracion de producto. Instrumento: Lista de chequeo IE-04.",
-  },
-  {
-    phase: "Planeacion",
-    project:
-      "Implementar procesos para el mantenimiento fisico, logico y herramientas tecnologicas de los equipos de computo y redes de datos.",
-    learning: "Act. 3.4.2 - Presentacion y sustentacion oral del proceso tecnico realizado.",
-    evidence:
-      "DESEMPENO: Sustentacion oral de 8 a 12 minutos sobre instalacion, diagnostico, documentacion y decisiones tecnicas.",
-    criteria:
-      "Explica el procedimiento tecnico aplicado, sustenta decisiones y propone mejoras de acuerdo con necesidades de la organizacion.",
-    methods: "Tecnica: Exposicion oral. Instrumento: Lista de chequeo IE-05.",
+      "Mantiene la documentación según manual técnico. Aplica controles de gestión de información según protocolos. Propone mejoras en el manejo de la información con base en normativa vigente. Adapta herramientas TIC según necesidades de la entidad.",
+    methods: "Técnica: Valoración de producto y exposición oral. Instrumento: Lista de chequeo IE-03.",
   },
 ];
 
