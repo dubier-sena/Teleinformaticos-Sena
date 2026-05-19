@@ -55,8 +55,38 @@
       document.querySelector("main.app-main") ||
       document.querySelector("main") ||
       document.querySelector(".app-main") ||
-      document.body
+      null
     );
+  }
+
+  function waitForMount(timeoutMs) {
+    return new Promise(function (resolve) {
+      var existing = findMount();
+      if (existing) {
+        resolve(existing);
+        return;
+      }
+      var resolved = false;
+      var observer = new MutationObserver(function () {
+        var mount = findMount();
+        if (mount && !resolved) {
+          resolved = true;
+          observer.disconnect();
+          resolve(mount);
+        }
+      });
+      observer.observe(document.body || document.documentElement, {
+        childList: true,
+        subtree: true,
+      });
+      window.setTimeout(function () {
+        if (!resolved) {
+          resolved = true;
+          observer.disconnect();
+          resolve(findMount() || document.body);
+        }
+      }, Math.max(1000, timeoutMs || 5000));
+    });
   }
 
   function buildSection(rows) {
@@ -154,7 +184,7 @@
 
     if (rows.length === 0) return;
 
-    var mount = findMount();
+    var mount = await waitForMount(5000);
     if (!mount) return;
 
     var existing = document.getElementById("guide-deadline-summary");
