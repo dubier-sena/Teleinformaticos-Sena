@@ -611,6 +611,7 @@ function initGuia2() {
   applySistemasLock();
   applyColaborativasLock();
   applyTransferRetoLock();
+  renderQuizHerramientasStatus();
   initializeWordSearchGame();
   initializeMatchingGame();
   bindEvents();
@@ -770,6 +771,7 @@ function applyCloudStateSnapshot(snapshot) {
   hydrateFields();
   applyExtensionesLock();
   applySistemasLock();
+  renderQuizHerramientasStatus();
   updateProgress();
   window.dispatchEvent(new CustomEvent("guia2-state-applied", { detail: { fileName: GUIDE_DATA_FILE } }));
 }
@@ -3962,23 +3964,18 @@ function buildGuide5ExportDocument(mode, learnerName) {
 </w:WordDocument>
 </xml><![endif]-->
 <style>
-  @page { margin: 2.54cm; }
-  body { font-family: "Times New Roman", Times, serif; font-size: 12pt; line-height: 2; color: #1a1a1a; }
-  .header { text-align: center; border-bottom: 2px solid #007934; padding-bottom: 8pt; margin-bottom: 14pt; }
-  .header h1 { margin: 0 0 4pt; font-size: 18pt; color: #007934; }
+  /* Hoja base centralizada (export_styles.js): A4, márgenes 2.54cm,
+     tipografía Times 12pt y seguridad de tabla. Fallback inline para
+     no romper la exportación si el helper no se cargó. */
+  ${(window.senaExportStyles && window.senaExportStyles.getBaseStyles && window.senaExportStyles.getBaseStyles()) || '@page { size: A4; margin: 2.54cm; } body { font-family: "Times New Roman", Times, serif; font-size: 12pt; line-height: 1.5; color: #1a1a1a; } table { width: 100%; max-width: 100%; border-collapse: collapse; table-layout: fixed; overflow-wrap: anywhere; word-break: break-word; } th, td { padding: 6pt; vertical-align: top; border: 1px solid #b7c9bc; overflow-wrap: anywhere; word-break: break-word; }'}
+  /* Overrides locales (solo cosméticos): .meta y .data heredan
+     la seguridad de tabla de la hoja base. */
+  .header { text-align: center; border-bottom: 2px solid #1b5e20; padding-bottom: 8pt; margin-bottom: 14pt; }
+  .header h1 { margin: 0 0 4pt; }
   .header p { margin: 2pt 0; }
-  table { max-width: 100%; table-layout: fixed; overflow-wrap: break-word; word-break: break-word; }
-  .word-logo-line { text-align: left; margin: 0 0 8pt; font-size: 10pt; line-height: 1.2; color: #1b5e20; }
-  .word-logo-line img { width: 36pt; height: 36pt; vertical-align: middle; margin-right: 8pt; }
-  .institutional-header { width: 100%; max-width: 100%; table-layout: fixed; border-collapse: collapse; margin: 0 0 12pt; }
-  .institutional-header td { border: 1px solid #b7c9bc; padding: 7pt; vertical-align: middle; font-size: 10pt; line-height: 1.35; }
-  .institutional-header .label { width: 30%; font-weight: 700; background: #f3f4f6; color: #1b5e20; }
-  .meta { width: 100%; border-collapse: collapse; margin: 0 0 16pt; }
-  .meta td { border: 1px solid #d1d5db; padding: 8pt; vertical-align: top; font-size: 10.5pt; line-height: 1.35; }
-  .meta .label { font-weight: 700; background: #f3f4f6; width: 28%; }
-  .data { width: 100%; border-collapse: collapse; }
-  .data th, .data td { border: 1px solid #9ca3af; padding: 6pt; vertical-align: top; font-size: 10pt; line-height: 1.35; }
-  .data th { background: #e8f5e9; text-align: left; }
+  .meta td { font-size: 10.5pt; }
+  .meta .label { width: 28%; font-weight: 700; background: #f3f4f6; }
+  .data th, .data td { font-size: 10pt; }
   .note { margin-top: 12pt; font-size: 10pt; color: #4b5563; }
 </style>
 </head>
@@ -4584,6 +4581,56 @@ window.guia2Activity4ReportSource = {
   },
   getSnapshot: getActivity4ReportSnapshot,
 };
+
+const QUIZ_PAGE_URLS = {
+  "grupo-10a-guia-02-herramientas-informaticas-digitales.html": "pages/auxiliares/grupo-10a-guia-02-herramientas-quiz.html",
+  "grupo-10b-guia-02-herramientas-informaticas-digitales.html": "pages/auxiliares/grupo-10b-guia-02-herramientas-quiz.html",
+};
+
+function renderQuizHerramientasStatus() {
+  const panel = document.getElementById("quizHerramientasStatus");
+  const actionLink = document.getElementById("quizHerramientasActionLink");
+  if (!actionLink) return;
+
+  const quizUrl = QUIZ_PAGE_URLS[PAGE_FILE] || "";
+  if (quizUrl) actionLink.setAttribute("href", quizUrl);
+
+  const attempt = state?.["quiz-guia2-342"];
+  if (!panel) return;
+
+  if (!attempt || typeof attempt !== "object") {
+    panel.style.display = "none";
+    actionLink.innerHTML = "&#128218; Presentar quiz aleatorio";
+    return;
+  }
+
+  const statusLabel = attempt.locked || attempt.status === "completed"
+    ? "Completado"
+    : attempt.status === "terminated_visibility"
+    ? "Finalizado por visibilidad"
+    : attempt.startedAt ? "En progreso" : "Pendiente";
+
+  const variant = String(attempt.variant || "Sin asignar");
+  const warnings = Number(attempt.warningCount) || 0;
+  const score = Number(attempt.score) || 0;
+  const maxScore = Number(attempt.maxScore) || 100;
+
+  panel.style.display = "block";
+  panel.innerHTML =
+    `<div class="label">&#128221; Estado del quiz 3.4.2</div>` +
+    `<p style="margin:8px 0 0"><strong>Estado:</strong> ${statusLabel} | ` +
+    `<strong>Variante:</strong> ${variant} | ` +
+    `<strong>Advertencias:</strong> ${warnings} / 2</p>` +
+    (attempt.locked
+      ? `<p style="margin:8px 0 0"><strong>Puntaje:</strong> ${score} / ${maxScore}</p>`
+      : `<p style="margin:8px 0 0">Tienes un intento iniciado. Al volver continuaras con la misma variante.</p>`);
+
+  if (attempt.locked) {
+    actionLink.innerHTML = "&#128065; Ver quiz presentado";
+  } else {
+    actionLink.innerHTML = "&#9205; Continuar quiz";
+  }
+}
 
 window.guia2WordSearch = {
   getPuzzle: getWordSearchPuzzle,

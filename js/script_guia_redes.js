@@ -236,16 +236,37 @@ function getWordIdentityValueRedes(identity, key) {
   return identity[key] || "";
 }
 
+// Hoja base centralizada — se antepone al <style> de cada exportador de
+// redes. Usa export_styles.js si está cargado; si no, devuelve un fallback
+// inline equivalente con A4, márgenes 2.54cm y seguridad de tabla.
+function getBaseExportStylesRedes() {
+  return (
+    (window.senaExportStyles && window.senaExportStyles.getBaseStyles && window.senaExportStyles.getBaseStyles()) ||
+    ('@page{size:A4;margin:2.54cm}body{font-family:"Times New Roman",Times,serif;font-size:12pt;line-height:1.5;color:#1a1a1a}' +
+      'table{width:100%;max-width:100%;border-collapse:collapse;table-layout:fixed;overflow-wrap:anywhere;word-break:break-word}' +
+      'th,td{padding:6pt;vertical-align:top;border:1px solid #b7c9bc;overflow-wrap:anywhere;word-break:break-word}' +
+      '.institutional-header{width:100%;max-width:100%;table-layout:fixed;border-collapse:collapse;margin:0 0 14pt}' +
+      '.institutional-header td{border:1px solid #b7c9bc;padding:7pt;vertical-align:top;font-size:10pt;line-height:1.35;overflow-wrap:anywhere;word-break:break-word}' +
+      '.institutional-header .label{width:30%;font-weight:700;background:#f3f4f6;color:#1b5e20}' +
+      '.word-logo-line{margin:0 0 8pt;font-size:10pt;color:#1b5e20}' +
+      '.word-logo-line img{width:36pt;height:36pt;vertical-align:middle;margin-right:8pt}')
+  );
+}
+
 function buildInstitutionalWordStylesRedes() {
+  // Se invoca AL FINAL del <style> en cada exportador, por lo que sus
+  // reglas ganan sobre la hoja base para selectores compartidos
+  // (.institutional-header, .word-logo-line, .meta). Conservamos las
+  // propiedades de seguridad de tabla por si la hoja base no se cargó.
   return `
-table{max-width:100%;table-layout:fixed;overflow-wrap:break-word;word-break:break-word}
+table{width:100%;max-width:100%;border-collapse:collapse;table-layout:fixed;overflow-wrap:anywhere;word-break:break-word}
 .word-logo-line{text-align:left;margin:0 0 8pt;font-size:10pt;line-height:1.2;color:#1b5e20}
 .word-logo-line img{width:36pt;height:36pt;vertical-align:middle;margin-right:8pt}
 .institutional-header{width:100%;max-width:100%;table-layout:fixed;border-collapse:collapse;margin:0 0 12pt}
-.institutional-header td{border:1px solid #b7c9bc;padding:7pt;vertical-align:middle;font-size:10pt;line-height:1.35}
+.institutional-header td{border:1px solid #b7c9bc;padding:7pt;vertical-align:top;font-size:10pt;line-height:1.35;overflow-wrap:anywhere;word-break:break-word}
 .institutional-header .label,.meta .label{width:30%;font-weight:700;background:#f3f4f6;color:#1b5e20}
-.meta{width:100%;border-collapse:collapse;margin:0 0 16pt}
-.meta td{border:1px solid #d1d5db;padding:8pt;vertical-align:top;font-size:10.5pt;line-height:1.35}`;
+.meta{width:100%;border-collapse:collapse;margin:0 0 16pt;table-layout:fixed}
+.meta td{border:1px solid #d1d5db;padding:8pt;vertical-align:top;font-size:10.5pt;line-height:1.35;overflow-wrap:anywhere;word-break:break-word}`;
 }
 
 function buildInstitutionalWordHeaderRedes(title, fullName, identity, fecha) {
@@ -1621,8 +1642,12 @@ function buildReflexion311WordFile() {
     xmlns:w='urn:schemas-microsoft-com:office:word'
     xmlns='http://www.w3.org/TR/REC-html40'>
 <head><meta charset='utf-8'><title>Reflexión 3.1.1</title>
-<style>@page{margin:2.54cm}body{font-family:"Times New Roman",Times,serif;font-size:12pt;line-height:2;margin:0}
-h1{font-size:16pt;color:#1b5e20}h2{font-size:13pt}p{margin:6pt 0;line-height:1.5}
+<style>
+/* Hoja base centralizada (A4, márgenes 2.54cm, tabla segura). */
+${getBaseExportStylesRedes()}
+/* Overrides locales del documento. */
+body{margin:0}
+h1{font-size:16pt;color:#1b5e20}h2{font-size:13pt;color:#1b5e20}p{margin:6pt 0;line-height:1.5}
 ${buildInstitutionalWordStylesRedes()}</style>
 </head><body>
 ${buildInstitutionalWordHeaderRedes("Actividad 3.1.1 - Reflexion Individual Escrita", sel.fullName || "Aprendiz", sel, new Date().toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric" }))}
@@ -1737,11 +1762,16 @@ window.exportarWordBloques123IP = function (evt) {
       xmlns:w='urn:schemas-microsoft-com:office:word'
       xmlns='http://www.w3.org/TR/REC-html40'>
 <head><meta charset='utf-8'><title>Bloques IP 1-3</title>
-<style>@page{margin:2.54cm}body{font-family:"Times New Roman",Times,serif;font-size:12pt;line-height:2;margin:0}
+<style>
+/* Hoja base centralizada (A4, márgenes 2.54cm, tabla segura). */
+${getBaseExportStylesRedes()}
+/* Overrides locales del documento (tabla compacta de clases IP). */
+body{margin:0}
 h1{font-size:16pt;color:#1b5e20}h2{font-size:13pt;color:#1b5e20;border-bottom:1px solid #c8e6c9;padding-bottom:4pt}
 h3{font-size:11pt;color:#1e40af}p{margin:6pt 0;line-height:1.5}
-table{border-collapse:collapse;width:100%;max-width:100%;table-layout:fixed;overflow-wrap:break-word;word-break:break-word}th,td{border:1px solid #ccc;padding:5pt;font-size:10pt;line-height:1.35}
-th{background:#c8e6c9}
+table{border-collapse:collapse;width:100%;max-width:100%;table-layout:fixed;overflow-wrap:anywhere;word-break:break-word}
+th,td{border:1px solid #ccc;padding:5pt;font-size:10pt;line-height:1.35;vertical-align:top;overflow-wrap:anywhere;word-break:break-word}
+th{background:#c8e6c9;color:#1b5e20}
 ${buildInstitutionalWordStylesRedes()}</style>
 </head><body>
 ${buildInstitutionalWordHeaderRedes("Actividad 3.3 - Direccionamiento IP (Bloques 1-3)", fullName, sel, fecha)}
@@ -1868,12 +1898,15 @@ window.exportarWordTallerIP = function (evt) {
       xmlns='http://www.w3.org/TR/REC-html40'>
 <head><meta charset='utf-8'><title>Taller IP</title>
 <style>
-@page{margin:2.54cm}
-body{font-family:"Times New Roman",Times,serif;font-size:12pt;line-height:2;margin:0;color:#263238}
+/* Hoja base centralizada (A4, márgenes 2.54cm, tabla segura). */
+${getBaseExportStylesRedes()}
+/* Overrides locales del documento (tabla compacta Taller IP). */
+body{margin:0;color:#263238}
 h1{font-size:16pt;color:#1b5e20}h2{font-size:13pt;color:#1b5e20;border-bottom:1px solid #c8e6c9;padding-bottom:4pt}
 h3{font-size:11pt;color:#1e40af}p{margin:6pt 0;line-height:1.5}
-table{border-collapse:collapse;width:100%;max-width:100%;table-layout:fixed;overflow-wrap:break-word;word-break:break-word;margin-top:8pt}th,td{border:1px solid #ccc;padding:6pt;font-size:10pt;line-height:1.35;vertical-align:top}
-th{background:#c8e6c9}
+table{border-collapse:collapse;width:100%;max-width:100%;table-layout:fixed;overflow-wrap:anywhere;word-break:break-word;margin-top:8pt}
+th,td{border:1px solid #ccc;padding:6pt;font-size:10pt;line-height:1.35;vertical-align:top;overflow-wrap:anywhere;word-break:break-word}
+th{background:#c8e6c9;color:#1b5e20}
 ${buildInstitutionalWordStylesRedes()}
 </style>
 </head><body>

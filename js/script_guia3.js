@@ -1052,7 +1052,7 @@ function escapeWordValue(value) {
 }
 
 const GUIDE3_WORD_METADATA = {
-  guideName: "Guía 3 - Planificar la información",
+  guideName: "Guía 3 - Implementar componentes de las herramientas tecnológicas",
   program: "Sistemas Teleinformáticos",
   competencia:
     "220501121 - Operar herramientas informáticas y digitales de acuerdo con protocolos y manuales técnicos.",
@@ -1221,24 +1221,21 @@ function doExportBitacoraWord() {
 </w:WordDocument>
 </xml><![endif]-->
 <style>
-  @page { margin: 2.54cm; }
-  body { font-family: "Times New Roman", Times, serif; font-size: 12pt; line-height: 2; color: #1a1a1a; }
-  .header { text-align: center; border-bottom: 2px solid #007934; padding-bottom: 8pt; margin-bottom: 14pt; }
+  /* Hoja base centralizada (export_styles.js): A4, márgenes 2.54cm,
+     tipografía Times 12pt y seguridad de tabla. Fallback inline para
+     no romper la exportación si el helper no se cargó. */
+  ${(window.senaExportStyles && window.senaExportStyles.getBaseStyles && window.senaExportStyles.getBaseStyles()) || '@page { size: A4; margin: 2.54cm; } body { font-family: "Times New Roman", Times, serif; font-size: 12pt; line-height: 1.5; color: #1a1a1a; } table { width: 100%; max-width: 100%; border-collapse: collapse; table-layout: fixed; overflow-wrap: anywhere; word-break: break-word; } th, td { padding: 6pt; vertical-align: top; border: 1px solid #b7c9bc; overflow-wrap: anywhere; word-break: break-word; }'}
+  /* Overrides locales (cosméticos): .meta y .case-box heredan la
+     seguridad de tabla y los márgenes de la hoja base. */
+  .header { text-align: center; border-bottom: 2px solid #1b5e20; padding-bottom: 8pt; margin-bottom: 14pt; }
   .header p { margin: 2pt 0; }
-  table { max-width: 100%; table-layout: fixed; overflow-wrap: break-word; word-break: break-word; }
-  .word-logo-line { text-align: left; margin: 0 0 8pt; font-size: 10pt; line-height: 1.2; color: #1b5e20; }
-  .word-logo-line img { width: 36pt; height: 36pt; vertical-align: middle; margin-right: 8pt; }
-  .institutional-header { width: 100%; max-width: 100%; table-layout: fixed; border-collapse: collapse; margin: 0 0 12pt; }
-  .institutional-header td { border: 1px solid #b7c9bc; padding: 7pt; vertical-align: middle; font-size: 10pt; line-height: 1.35; }
-  .institutional-header .label { width: 30%; font-weight: 700; background: #f3f4f6; color: #1b5e20; }
-  .meta { width: 100%; border-collapse: collapse; margin: 12pt 0 16pt; }
-  .meta td { border: 1pt solid #cfd8dc; padding: 6pt 10pt; font-size: 10.5pt; line-height: 1.35; }
-  .meta .label { width: 120pt; font-weight: bold; background: #f0faf4; color: #007934; }
-  h1 { text-align: center; color: #007934; font-size: 18pt; margin: 12pt 0 6pt; }
+  .meta td { padding: 6pt 10pt; font-size: 10.5pt; }
+  .meta .label { width: 120pt; font-weight: bold; background: #f0faf4; }
+  h1 { text-align: center; }
   .lead { font-size: 10pt; color: #4b5563; line-height: 1.6; margin-bottom: 10pt; }
-  .case-box { background: #f9fef9; border-left: 4pt solid #39b54a; padding: 10pt 12pt; margin-bottom: 14pt; }
-  .sec-title { font-size: 12pt; font-weight: bold; color: #007934; margin: 16pt 0 6pt; }
-  .sec-body { border: 1pt solid #dfe7df; background: #ffffff; padding: 10pt 12pt; line-height: 1.7; min-height: 24pt; }
+  .case-box { background: #f9fef9; border-left: 4pt solid #39b54a; padding: 10pt 12pt; margin-bottom: 14pt; word-wrap: break-word; overflow-wrap: anywhere; word-break: break-word; }
+  .sec-title { font-size: 12pt; font-weight: bold; color: #1b5e20; margin: 16pt 0 6pt; }
+  .sec-body { border: 1pt solid #dfe7df; background: #ffffff; padding: 10pt 12pt; line-height: 1.7; min-height: 24pt; word-wrap: break-word; overflow-wrap: anywhere; word-break: break-word; }
   .footer { margin-top: 28pt; text-align: center; font-size: 9pt; color: #6b7280; border-top: 1pt solid #e5e7eb; padding-top: 8pt; }
 </style>
 </head>

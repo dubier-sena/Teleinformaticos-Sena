@@ -82,18 +82,18 @@
     ],
   });
 
-  // ── Guia 3 — Planificar la informacion (10A + 10B) ─────────────────────────
+  // ── Guia 3 — Implementar componentes de las herramientas tecnologicas (10A + 10B) ────
   register({
     files: [
       "grupo-10a-guia-03-planificar-informacion.html",
       "grupo-10b-guia-03-planificar-informacion.html",
     ],
     guideNumber: "3",
-    guideTitle: "Guia 3 - Planificar la informacion",
+    guideTitle: "Guia 3 - Implementar componentes de las herramientas tecnologicas",
     stateKey: "guia_interactiva_10a_guia3_html",
     program: PROGRAM,
-    competencia: COMPETENCIA,
-    resultado: RAP_PLANIFICAR,
+    competencia: "220501121 - Operar herramientas informaticas y digitales de acuerdo con protocolos y manuales tecnicos.",
+    resultado: "RAP 02 - Implementar componentes de las herramientas tecnologicas segun procedimientos de la organizacion.",
     activities: [
       { id: "bitacora311",    number: "3.1.1", label: "Bitacora individual de analisis",     shortName: "Bitacora",      type: "form" },
       { id: "socializacion312",number: "3.1.2", label: "Socializacion del analisis",         shortName: "Socializacion", type: "form" },
