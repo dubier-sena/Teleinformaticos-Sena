@@ -204,6 +204,32 @@ const COLLABORATIVE_TOOLS_ACTIVITY_STORES = collaborativeTools.flatMap((row) => 
   `collab:${row.id}:license`,
 ]);
 
+const digitalCompetencyChecklist = [
+  { id: "doc-word", label: "Crear y dar formato a documentos en Word (encabezados, tablas, listas, estilos)." },
+  { id: "excel-formulas", label: "Aplicar formulas basicas en Excel (SUMA, PROMEDIO, MAX) y crear graficos con titulo y leyenda." },
+  { id: "extensiones-archivo", label: "Reconocer extensiones de archivo comunes (.docx, .xlsx, .pdf, .exe, .iso) e identificar riesgos de seguridad." },
+  { id: "requerimientos-so", label: "Determinar requerimientos minimos de un sistema operativo (procesador, RAM, espacio en disco)." },
+  { id: "drive-permisos", label: "Crear, organizar y compartir carpetas en Google Drive con los permisos adecuados." },
+  { id: "docs-colaborativo", label: "Editar documentos colaborativos en Google Docs en tiempo real con otras personas." },
+  { id: "reuniones-virtuales", label: "Convocar y administrar reuniones virtuales en Meet, Teams o Zoom (compartir pantalla, chat, grabacion)." },
+  { id: "wetransfer", label: "Enviar archivos pesados con WeTransfer y verificar la confirmacion de entrega." },
+  { id: "presentaciones", label: "Disenar presentaciones profesionales en Canva o PowerPoint y exportarlas a PDF." },
+  { id: "correo-formal", label: "Redactar correos electronicos formales con asunto, saludo, cuerpo claro, adjuntos y despedida profesional." },
+  { id: "contrasena-phishing", label: "Crear contrasenas seguras y reconocer correos o mensajes de phishing." },
+  { id: "backup-doble", label: "Realizar copias de seguridad de mis archivos en al menos dos ubicaciones (USB y nube)." },
+  { id: "comprimir", label: "Comprimir y descomprimir archivos en formatos .zip o .rar para enviarlos o respaldarlos." },
+  { id: "busqueda-fuente", label: "Buscar informacion confiable en internet, comparar fuentes y citar la fuente correctamente." },
+  { id: "privacidad", label: "Proteger mi informacion personal y laboral en redes sociales, dispositivos compartidos o redes Wi-Fi publicas." },
+];
+
+const DIGITAL_CHECKLIST_LEVELS = [
+  { value: "domino", label: "Lo domino", emoji: "⭐", color: "#1b5e20", bg: "#e8f5e9" },
+  { value: "reforzar", label: "Necesito reforzar", emoji: "📝", color: "#8a5a00", bg: "#fff8e1" },
+  { value: "nopracticado", label: "No lo he practicado", emoji: "⚠", color: "#a13029", bg: "#fdecea" },
+];
+
+const DIGITAL_CHECKLIST_STORES = digitalCompetencyChecklist.map((item) => `checklist:${item.id}`);
+
 const TRANSFER_RETO_ACTIVITY_STORES = [
   "transfer-reto-uso",
   "transfer-reto-guia",
@@ -603,10 +629,13 @@ function initGuia2() {
   renderConceptLegend();
   renderEvidenceTable();
   renderGlossary();
+  renderDigitalChecklist();
   renderSupportMaterials();
   renderDriveDeliveryPanel();
   prefillActivity4Identity();
   hydrateFields();
+  updateDigitalChecklistSummary();
+  applyDigitalChecklistRowColors();
   applyExtensionesLock();
   applySistemasLock();
   applyColaborativasLock();
@@ -769,6 +798,8 @@ function applyCloudStateSnapshot(snapshot) {
   });
   renderStatefulSections();
   hydrateFields();
+  updateDigitalChecklistSummary();
+  applyDigitalChecklistRowColors();
   applyExtensionesLock();
   applySistemasLock();
   renderQuizHerramientasStatus();
@@ -3910,6 +3941,57 @@ function buildGuide5CollaborativeRows() {
     .join("");
 }
 
+function buildGuide5ChecklistSection() {
+  const levelLabels = {
+    domino: "Lo domino",
+    reforzar: "Necesito reforzar",
+    nopracticado: "No lo he practicado",
+  };
+  const counts = { domino: 0, reforzar: 0, nopracticado: 0, pendiente: 0 };
+  const rows = digitalCompetencyChecklist
+    .map((item, index) => {
+      const raw = document.querySelector(`[data-store="checklist:${item.id}"]`)?.value
+        || String(state[`checklist:${item.id}`] || "");
+      const value = String(raw).trim();
+      if (value && levelLabels[value]) {
+        counts[value] += 1;
+      } else {
+        counts.pendiente += 1;
+      }
+      const levelText = levelLabels[value] || "(sin marcar)";
+      return `
+        <tr>
+          <td style="text-align:center;width:36pt">${index + 1}</td>
+          <td>${escapeWordValue(item.label)}</td>
+          <td style="width:120pt">${escapeWordValue(levelText)}</td>
+        </tr>
+      `;
+    })
+    .join("");
+  const total = digitalCompetencyChecklist.length;
+  return `
+    <h2 style="margin-top:18pt;margin-bottom:6pt;color:#1b5e20">Lista de verificacion de competencias digitales (${total} items)</h2>
+    <p style="margin:0 0 8pt;font-size:10.5pt;color:#4b5563">Autoevaluacion del aprendiz. Marca el nivel actual en cada competencia trabajada en la Guia 2.</p>
+    <table class="data">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Competencia digital</th>
+          <th>Mi nivel</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <p style="margin-top:8pt;font-size:10.5pt">
+      <strong>Resumen:</strong>
+      Domino: ${counts.domino} / ${total} &middot;
+      A reforzar: ${counts.reforzar} / ${total} &middot;
+      No practicado: ${counts.nopracticado} / ${total} &middot;
+      Sin marcar: ${counts.pendiente} / ${total}.
+    </p>
+  `;
+}
+
 function buildGuide5ExportDocument(mode, learnerName) {
   const config = getGuide5ExportConfig(mode);
   const selection = getGuideSelection();
@@ -3996,6 +4078,8 @@ function buildGuide5ExportDocument(mode, learnerName) {
     </tbody>
   </table>
 
+  ${mode === "collaborative" ? buildGuide5ChecklistSection() : ""}
+
   <p class="note">Documento exportado desde la guia interactiva. Verifica y complementa la informacion antes de la entrega final.</p>
 </body>
 </html>`;
@@ -4081,6 +4165,67 @@ function renderGlossary() {
       `
     )
     .join("");
+}
+
+function renderDigitalChecklist() {
+  const tbody = document.getElementById("digitalChecklistBody");
+  if (!tbody) {
+    return;
+  }
+  const options = DIGITAL_CHECKLIST_LEVELS
+    .map((level) => `<option value="${level.value}">${level.emoji}  ${escapeHtml(level.label)}</option>`)
+    .join("");
+  tbody.innerHTML = digitalCompetencyChecklist
+    .map((item, index) => `
+      <tr data-checklist-row="${escapeHtml(item.id)}">
+        <td style="text-align:center;font-weight:700;color:#1b5e20">${index + 1}</td>
+        <td>${escapeHtml(item.label)}</td>
+        <td>
+          <select data-store="checklist:${escapeHtml(item.id)}" data-track data-checklist-select aria-label="Mi nivel: ${escapeHtml(item.label)}" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #bcd2c0;background:#fff;font-family:inherit;font-size:.9rem">
+            <option value="">— Selecciona —</option>
+            ${options}
+          </select>
+        </td>
+      </tr>
+    `)
+    .join("");
+  updateDigitalChecklistSummary();
+  applyDigitalChecklistRowColors();
+}
+
+function applyDigitalChecklistRowColors() {
+  digitalCompetencyChecklist.forEach((item) => {
+    const row = document.querySelector(`[data-checklist-row="${item.id}"]`);
+    if (!row) {
+      return;
+    }
+    const select = row.querySelector(`[data-store="checklist:${item.id}"]`);
+    const value = select ? select.value : "";
+    const level = DIGITAL_CHECKLIST_LEVELS.find((entry) => entry.value === value);
+    row.style.background = level ? level.bg : "";
+  });
+}
+
+function updateDigitalChecklistSummary() {
+  const summary = document.getElementById("digitalChecklistSummary");
+  if (!summary) {
+    return;
+  }
+  const counts = { domino: 0, reforzar: 0, nopracticado: 0, pendiente: 0 };
+  digitalCompetencyChecklist.forEach((item) => {
+    const value = String(state[`checklist:${item.id}`] || "").trim();
+    if (value === "domino" || value === "reforzar" || value === "nopracticado") {
+      counts[value] += 1;
+    } else {
+      counts.pendiente += 1;
+    }
+  });
+  Object.keys(counts).forEach((key) => {
+    const target = summary.querySelector(`[data-summary="${key}"]`);
+    if (target) {
+      target.textContent = String(counts[key]);
+    }
+  });
 }
 
 function hydrateFields() {
@@ -4206,9 +4351,10 @@ window.guardarSistemas332 = guardarSistemas332;
 
 function applyColaborativasLock() {
   const locked = Boolean(state["colaborativas334-locked"]);
+  const fieldKeys = COLLABORATIVE_TOOLS_ACTIVITY_STORES.concat(DIGITAL_CHECKLIST_STORES);
   applyOptionalDeadlineGate("colaborativas334", {
     isLocked: locked,
-    fieldSelector: COLLABORATIVE_TOOLS_ACTIVITY_STORES.map((key) => `[data-store="${key}"]`).join(","),
+    fieldSelector: fieldKeys.map((key) => `[data-store="${key}"]`).join(","),
     buttonId: "btnGuardarColaborativas",
     statusId: "colaborativasStatus334",
     activeButtonText: "Guardar respuestas",
@@ -4227,18 +4373,34 @@ function guardarColaborativas334() {
   if (!window.activityDeadlineManager?.canSubmit({ pageFile: GUIDE_DATA_FILE, activityId: "colaborativas334" })) {
     return;
   }
-  const empty = COLLABORATIVE_TOOLS_ACTIVITY_STORES.filter((key) => !readStoreValue(key));
-  if (empty.length > 0) {
+  const emptyTable = COLLABORATIVE_TOOLS_ACTIVITY_STORES.filter((key) => !readStoreValue(key));
+  if (emptyTable.length > 0) {
     alert("Por favor completa la tabla comparativa antes de guardar.");
     return;
   }
+  const emptyChecklist = DIGITAL_CHECKLIST_STORES.filter((key) => !readStoreValue(key));
+  if (emptyChecklist.length > 0) {
+    alert(
+      "Antes de guardar, marca tu nivel en los 15 items de la lista de verificacion de competencias digitales. Faltan " +
+        emptyChecklist.length +
+        " por marcar."
+    );
+    const firstPending = document.querySelector(`[data-store="${emptyChecklist[0]}"]`);
+    if (firstPending && typeof firstPending.scrollIntoView === "function") {
+      firstPending.scrollIntoView({ behavior: "smooth", block: "center" });
+      firstPending.focus();
+    }
+    return;
+  }
 
-  COLLABORATIVE_TOOLS_ACTIVITY_STORES.forEach((key) => {
+  COLLABORATIVE_TOOLS_ACTIVITY_STORES.concat(DIGITAL_CHECKLIST_STORES).forEach((key) => {
     state[key] = readStoreValue(key);
   });
   state["colaborativas334-locked"] = true;
   saveState();
   applyColaborativasLock();
+  updateDigitalChecklistSummary();
+  applyDigitalChecklistRowColors();
 }
 
 window.guardarColaborativas334 = guardarColaborativas334;
@@ -4331,6 +4493,10 @@ function bindEvents() {
       if (matchingFeedback) {
         matchingFeedback.textContent = "";
       }
+    }
+    if (field.matches("[data-checklist-select]")) {
+      updateDigitalChecklistSummary();
+      applyDigitalChecklistRowColors();
     }
     saveState();
     if (
