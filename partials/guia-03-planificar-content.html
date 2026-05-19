@@ -76,6 +76,9 @@
       <a class="nav-link" href="#material-apoyo" onclick="setActive(this)">
         <span class="icon">&#128194;</span> Material de Apoyo
       </a>
+      <a class="nav-link" href="#control-documento" onclick="setActive(this)">
+        <span class="icon">&#128221;</span> Control del Documento
+      </a>
     </div>
 
     <div class="nav-section">
@@ -888,6 +891,82 @@
           </div>
         </div>
       </div>
+
+      <div id="control-documento" class="section-title">Control del Documento</div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#f3e5f5">&#128221;</div>
+            <div>
+              <h3>Autor&iacute;a y Control de Cambios</h3>
+              <p>Registro oficial de autor&iacute;a, dependencia y modificaciones de la gu&iacute;a</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <h4 style="margin:0 0 8px;color:#1b5e20;font-size:0.95rem">7. Control del Documento</h4>
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Cargo</th>
+                  <th>Dependencia</th>
+                  <th>Fecha</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Peter Emerson Pinchao</td>
+                  <td>Experto Tem&aacute;tico</td>
+                  <td>CTPI</td>
+                  <td>2/11/2022</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h4 style="margin:18px 0 8px;color:#1b5e20;font-size:0.95rem">8. Control de Cambios</h4>
+          <p style="font-size:0.85rem;color:#666;margin:0 0 8px">(Diligenciar &uacute;nicamente si se realizan ajustes a la gu&iacute;a)</p>
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Cargo</th>
+                  <th>Dependencia</th>
+                  <th>Fecha</th>
+                  <th>Raz&oacute;n del cambio</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Peter Emerson Pinchao</td>
+                  <td>Experto Tem&aacute;tico</td>
+                  <td>CTPI</td>
+                  <td>2/11/2022</td>
+                  <td>&mdash;</td>
+                </tr>
+                <tr>
+                  <td>Gilberto Gonz&aacute;lez Medina</td>
+                  <td>Experto t&eacute;cnico</td>
+                  <td>CTPI Cauca</td>
+                  <td>14/06/2023</td>
+                  <td>Actualizaci&oacute;n</td>
+                </tr>
+                <tr>
+                  <td>Dubier Orlando Mill&aacute;n Barbosa</td>
+                  <td>Instructor T&eacute;cnico</td>
+                  <td>CIAS &mdash; Regional Boyac&aacute;</td>
+                  <td>May. 2025</td>
+                  <td>Ajuste a RAP 02.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -963,496 +1042,4 @@
   }
 })();
 </script>
-<!-- INTERACTIVE_HELP_INLINE_START -->
-<style data-ihelp-inline>
-/* css/interactive_help.css
- *
- * Componente "Material de apoyo interactivo" — patron usado en la guia de
- * Redes RAP01 (boton verde + panel lateral deslizante con contenido rico).
- *
- * Reusable en cualquier guia. Coexiste con el sistema preexistente
- * #teoria-panel/abrirTeoriaPanel() de la guia de Redes (usa IDs distintos).
- *
- * Estructura HTML esperada:
- *
- *   <div class="ihelp-trigger">
- *     <button type="button" class="ihelp-btn" data-ihelp-target="ihelp-XYZ">
- *       <span class="ihelp-btn__icon" aria-hidden="true">📚</span>
- *       <span class="ihelp-btn__text">
- *         <span class="ihelp-btn__kicker">MATERIAL DE APOYO INTERACTIVO</span>
- *         <span class="ihelp-btn__title">Titulo del tema</span>
- *       </span>
- *       <span class="ihelp-btn__arrow" aria-hidden="true">→</span>
- *     </button>
- *     <template id="ihelp-XYZ" data-ihelp-title="Titulo">
- *       ...HTML enriquecido para el panel...
- *     </template>
- *   </div>
- *
- * El panel y el backdrop se inyectan una sola vez por la JS.
- */
 
-/* --- Boton trigger --------------------------------------------------------- */
-.ihelp-trigger {
-  margin: 14px 0 16px;
-}
-
-.ihelp-trigger + .ihelp-trigger {
-  margin-top: 8px;
-}
-
-.ihelp-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 44px;
-  padding: 12px 20px;
-  border: 0;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #007934 0%, #0a5c31 100%);
-  color: #fff;
-  font: 700 0.9rem/1.2 inherit;
-  text-align: left;
-  cursor: pointer;
-  box-shadow: 0 6px 18px rgba(7, 26, 18, 0.18);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
-  font-family: inherit;
-  max-width: 100%;
-}
-
-.ihelp-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 28px rgba(7, 26, 18, 0.25);
-}
-
-.ihelp-btn:focus-visible {
-  outline: 2px solid #f5b700;
-  outline-offset: 3px;
-}
-
-.ihelp-btn:active {
-  transform: translateY(0);
-  filter: brightness(0.95);
-}
-
-.ihelp-btn__icon {
-  font-size: 1.3rem;
-  flex-shrink: 0;
-  line-height: 1;
-}
-
-.ihelp-btn__text {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.ihelp-btn__kicker {
-  display: block;
-  font-size: 0.72rem;
-  font-weight: 600;
-  opacity: 0.85;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.ihelp-btn__title {
-  display: block;
-  font-size: 0.92rem;
-  font-weight: 700;
-  line-height: 1.25;
-}
-
-.ihelp-btn__arrow {
-  margin-left: 6px;
-  font-size: 1.1rem;
-  opacity: 0.85;
-  flex-shrink: 0;
-  transition: transform 0.2s ease;
-}
-
-.ihelp-btn:hover .ihelp-btn__arrow {
-  transform: translateX(2px);
-}
-
-/* --- Panel lateral --------------------------------------------------------- */
-.ihelp-panel {
-  position: fixed;
-  top: 0;
-  right: 0;
-  width: min(500px, 100vw);
-  height: 100dvh;
-  background: #f8fafc;
-  box-shadow: -4px 0 32px rgba(0, 0, 0, 0.22);
-  z-index: 9999;
-  transform: translateX(110%);
-  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-  display: flex;
-  flex-direction: column;
-  font-family: inherit;
-}
-
-.ihelp-panel[data-open="true"] {
-  transform: translateX(0);
-}
-
-.ihelp-panel__header {
-  background: linear-gradient(135deg, #007934, #0a5c31);
-  color: #fff;
-  padding: 16px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-shrink: 0;
-  gap: 12px;
-}
-
-.ihelp-panel__title {
-  font-weight: 700;
-  font-size: 1rem;
-  line-height: 1.3;
-  margin: 0;
-  flex: 1 1 auto;
-}
-
-.ihelp-panel__close {
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  color: #fff;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  font-size: 1.1rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: background 0.2s ease;
-  font-family: inherit;
-}
-
-.ihelp-panel__close:hover,
-.ihelp-panel__close:focus-visible {
-  background: rgba(255, 255, 255, 0.35);
-  outline: none;
-}
-
-.ihelp-panel__body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px 18px;
-  color: #1e2f24;
-  font-size: 0.93rem;
-  line-height: 1.55;
-}
-
-.ihelp-panel__body p {
-  margin: 0 0 10px;
-}
-
-.ihelp-panel__body ul,
-.ihelp-panel__body ol {
-  margin: 6px 0 12px;
-  padding-left: 22px;
-}
-
-.ihelp-panel__body li + li {
-  margin-top: 4px;
-}
-
-.ihelp-panel__body h3,
-.ihelp-panel__body h4 {
-  margin: 14px 0 8px;
-  color: #102117;
-  font-weight: 700;
-  line-height: 1.25;
-}
-
-.ihelp-panel__body h3 {
-  font-size: 1.05rem;
-}
-
-.ihelp-panel__body h4 {
-  font-size: 0.95rem;
-}
-
-.ihelp-panel__body strong {
-  color: #102117;
-}
-
-.ihelp-panel__body code {
-  background: #e8f5e9;
-  color: #1b5e20;
-  padding: 1px 6px;
-  border-radius: 4px;
-  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-  font-size: 0.88em;
-}
-
-.ihelp-panel__example {
-  margin: 10px 0;
-  padding: 10px 12px;
-  background: #fff9e6;
-  border-left: 3px solid #f5b700;
-  border-radius: 6px;
-  font-size: 0.88rem;
-  color: #6e5300;
-}
-
-.ihelp-panel__example::before {
-  content: "Ejemplo:";
-  display: inline-block;
-  margin-right: 6px;
-  font-weight: 700;
-  font-size: 0.74rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #8b6a00;
-}
-
-.ihelp-panel__card {
-  background: #fff;
-  border: 1px solid #d6e2da;
-  border-radius: 10px;
-  padding: 12px 14px;
-  margin: 10px 0;
-  box-shadow: 0 1px 2px rgba(7, 26, 18, 0.05);
-}
-
-.ihelp-panel__tip {
-  background: #e6f7ed;
-  border-left: 3px solid #007934;
-  padding: 10px 12px;
-  border-radius: 6px;
-  margin: 10px 0;
-  color: #07391e;
-  font-size: 0.88rem;
-}
-
-.ihelp-panel__warn {
-  background: #fff5d6;
-  border-left: 3px solid #f5b700;
-  padding: 10px 12px;
-  border-radius: 6px;
-  margin: 10px 0;
-  color: #6e5300;
-  font-size: 0.88rem;
-}
-
-/* --- Backdrop -------------------------------------------------------------- */
-.ihelp-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  z-index: 9998;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.35s ease;
-}
-
-.ihelp-backdrop[data-open="true"] {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-/* --- Reduced motion -------------------------------------------------------- */
-@media (prefers-reduced-motion: reduce) {
-  .ihelp-panel,
-  .ihelp-backdrop,
-  .ihelp-btn,
-  .ihelp-btn__arrow {
-    transition: none !important;
-  }
-}
-
-/* --- Pantallas pequeñas ---------------------------------------------------- */
-@media (max-width: 480px) {
-  .ihelp-btn {
-    width: 100%;
-    padding: 11px 16px;
-  }
-  .ihelp-btn__title {
-    font-size: 0.88rem;
-  }
-}
-
-</style>
-<script data-ihelp-inline>
-/* js/interactive_help.js
- *
- * Componente "Material de apoyo interactivo" — boton verde que abre un panel
- * lateral con contenido rico. Mismo patron visual que el sistema preexistente
- * `abrirTeoriaPanel()` de la guia de Redes, pero generico y reusable en
- * cualquier guia.
- *
- * - Usa IDs distintos a los de la guia de Redes (ihelp-panel / ihelp-backdrop)
- *   para coexistir sin colisionar.
- * - Inyecta el panel y el backdrop una sola vez en document.body.
- * - Event delegation sobre document, asi funciona aun cuando los botones se
- *   inyectan dinamicamente desde un partial.
- * - Cada boton lleva data-ihelp-target="ID" apuntando a un <template id="ID"
- *   data-ihelp-title="...">. La JS extrae el title y el innerHTML del
- *   template y los muestra en el panel.
- * - Atajos: Escape cierra. Click en backdrop cierra.
- */
-(function () {
-  "use strict";
-
-  if (typeof window === "undefined" || typeof document === "undefined") {
-    return;
-  }
-
-  if (window.__INTERACTIVE_HELP_LOADED__) {
-    return;
-  }
-  window.__INTERACTIVE_HELP_LOADED__ = true;
-
-  var panelEl = null;
-  var backdropEl = null;
-  var titleEl = null;
-  var bodyEl = null;
-  var lastTrigger = null;
-
-  function ensurePanel() {
-    if (panelEl && document.body.contains(panelEl)) {
-      return;
-    }
-
-    panelEl = document.createElement("div");
-    panelEl.className = "ihelp-panel";
-    panelEl.setAttribute("role", "dialog");
-    panelEl.setAttribute("aria-modal", "true");
-    panelEl.setAttribute("aria-labelledby", "ihelp-panel-title");
-    panelEl.setAttribute("data-open", "false");
-    panelEl.setAttribute("aria-hidden", "true");
-
-    var header = document.createElement("div");
-    header.className = "ihelp-panel__header";
-
-    titleEl = document.createElement("h2");
-    titleEl.className = "ihelp-panel__title";
-    titleEl.id = "ihelp-panel-title";
-    header.appendChild(titleEl);
-
-    var closeBtn = document.createElement("button");
-    closeBtn.type = "button";
-    closeBtn.className = "ihelp-panel__close";
-    closeBtn.setAttribute("aria-label", "Cerrar material de apoyo");
-    closeBtn.textContent = "✕";
-    closeBtn.addEventListener("click", closePanel);
-    header.appendChild(closeBtn);
-
-    bodyEl = document.createElement("div");
-    bodyEl.className = "ihelp-panel__body";
-
-    panelEl.appendChild(header);
-    panelEl.appendChild(bodyEl);
-
-    backdropEl = document.createElement("div");
-    backdropEl.className = "ihelp-backdrop";
-    backdropEl.setAttribute("data-open", "false");
-    backdropEl.addEventListener("click", closePanel);
-
-    document.body.appendChild(backdropEl);
-    document.body.appendChild(panelEl);
-  }
-
-  function openPanel(title, html, triggerEl) {
-    ensurePanel();
-    titleEl.textContent = title || "";
-    bodyEl.innerHTML = html || "";
-    bodyEl.scrollTop = 0;
-    panelEl.setAttribute("data-open", "true");
-    panelEl.setAttribute("aria-hidden", "false");
-    backdropEl.setAttribute("data-open", "true");
-    document.body.style.overflow = "hidden";
-    lastTrigger = triggerEl || null;
-    // Move focus to close button for keyboard users
-    try {
-      var close = panelEl.querySelector(".ihelp-panel__close");
-      if (close) {
-        close.focus({ preventScroll: true });
-      }
-    } catch (e) {
-      /* noop */
-    }
-  }
-
-  function closePanel() {
-    if (!panelEl) return;
-    panelEl.setAttribute("data-open", "false");
-    panelEl.setAttribute("aria-hidden", "true");
-    if (backdropEl) backdropEl.setAttribute("data-open", "false");
-    document.body.style.overflow = "";
-    // Restore focus to the trigger that opened the panel
-    if (lastTrigger && typeof lastTrigger.focus === "function") {
-      try { lastTrigger.focus({ preventScroll: true }); } catch (e) { /* noop */ }
-    }
-    lastTrigger = null;
-  }
-
-  function resolveContent(triggerBtn) {
-    var targetId = triggerBtn.getAttribute("data-ihelp-target");
-    if (!targetId) return null;
-    var tpl = document.getElementById(targetId);
-    if (!tpl) return null;
-    var title =
-      tpl.getAttribute("data-ihelp-title") ||
-      (triggerBtn.querySelector(".ihelp-btn__title") &&
-        triggerBtn.querySelector(".ihelp-btn__title").textContent.trim()) ||
-      "Material de apoyo";
-
-    // <template> exposes content via .innerHTML even if .content is empty
-    var html = "";
-    if (tpl.tagName && tpl.tagName.toUpperCase() === "TEMPLATE" && tpl.innerHTML) {
-      html = tpl.innerHTML;
-    } else if (tpl.tagName && tpl.tagName.toUpperCase() === "SCRIPT") {
-      html = tpl.textContent || "";
-    } else {
-      html = tpl.innerHTML || "";
-    }
-    return { title: title, html: html };
-  }
-
-  function onDocumentClick(event) {
-    var trigger = event.target && event.target.closest
-      ? event.target.closest(".ihelp-btn[data-ihelp-target]")
-      : null;
-    if (!trigger) return;
-    var content = resolveContent(trigger);
-    if (!content) return;
-    event.preventDefault();
-    openPanel(content.title, content.html, trigger);
-  }
-
-  function onDocumentKeydown(event) {
-    if (event.key === "Escape" || event.key === "Esc") {
-      if (panelEl && panelEl.getAttribute("data-open") === "true") {
-        event.preventDefault();
-        closePanel();
-      }
-    }
-  }
-
-  document.addEventListener("click", onDocumentClick);
-  document.addEventListener("keydown", onDocumentKeydown);
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", ensurePanel, { once: true });
-  } else {
-    ensurePanel();
-  }
-
-  window.InteractiveHelp = {
-    open: openPanel,
-    close: closePanel,
-    ensurePanel: ensurePanel,
-  };
-})();
-
-</script>
-<!-- INTERACTIVE_HELP_INLINE_END -->

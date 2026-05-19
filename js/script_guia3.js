@@ -77,11 +77,9 @@ const diagnosticSections = [
 ];
 
 const budgetItems = [
-  { id: "suite", name: "Software y licencias (suite ofimatica)", license: "Libre / Propietaria / Suscripcion" },
-  { id: "diagnostic", name: "Herramientas de diagnostico y soporte", license: "Libre (gratuita)" },
-  { id: "security", name: "Proteccion antivirus / seguridad", license: "Libre / Propietaria" },
-  { id: "cloud", name: "Servicios en la nube (correo / almacenamiento)", license: "Suscripcion / Libre" },
-  { id: "backup", name: "Software de respaldo (copias de seguridad)", license: "Libre / Propietaria" },
+  { id: "suite", name: "Software y licencias", license: "Libre / Propietaria / Suscripción" },
+  { id: "diagnostic", name: "Herramientas de diagnóstico y soporte técnico", license: "Libre (gratuita)" },
+  { id: "cloud", name: "Servicios en la nube (si aplica)", license: "Suscripción / Libre" },
 ];
 
 const evidenceRows = [
@@ -121,24 +119,24 @@ const evidenceRows = [
 ];
 
 const glossaryTerms = [
-  ["Activo de informacion", "Dato, documento, software, equipo, servicio o proceso que tiene valor para la organizacion y que debe identificarse, protegerse, respaldarse y mantenerse actualizado."],
-  ["Checklist", "Instrumento estructurado que permite comprobar si un procedimiento tecnico se ejecuto correctamente, registrando cumplimiento, evidencias y observaciones."],
-  ["Compatibilidad", "Condicion que permite que un software, dispositivo o controlador funcione con el sistema operativo, la arquitectura del equipo y los recursos disponibles sin generar conflictos."],
-  ["Configuracion basica", "Ajustes iniciales que se aplican a una herramienta tecnologica despues de instalarla para dejarla lista para su uso: idioma, permisos, seguridad, actualizaciones y preferencias."],
-  ["Convencion de nombres", "Reglas para nombrar archivos y carpetas de manera uniforme, incorporando datos como actividad, aprendiz, ficha, fecha y version para facilitar la busqueda y trazabilidad."],
-  ["Diagnostico tecnico", "Proceso de revision de hardware, software, sistema operativo, almacenamiento y red para identificar el estado del equipo, posibles fallas y recomendaciones de mejora."],
-  ["Documentacion tecnica", "Conjunto de registros, fichas, manuales, evidencias y reportes que describen caracteristicas, procedimientos, configuraciones, resultados y responsables de una intervencion tecnologica."],
-  ["Evidencia digital", "Archivo, captura de pantalla, reporte, documento o registro que demuestra la ejecucion de una actividad tecnica y permite su verificacion por parte del instructor."],
-  ["Ficha tecnica", "Documento que resume los datos principales de un equipo o software: marca, modelo, serial, sistema operativo, componentes, ubicacion, responsable, estado y observaciones."],
-  ["Gestion de la informacion", "Conjunto de acciones para recolectar, organizar, proteger, almacenar, recuperar y respaldar informacion tecnica de forma segura y ordenada."],
-  ["Herramienta de diagnostico", "Software o utilidad del sistema que permite consultar informacion del equipo, validar funcionamiento, detectar fallas y generar reportes tecnicos; por ejemplo, CPU-Z, CrystalDiskInfo, msinfo32, ipconfig o ping."],
-  ["Inventario tecnologico", "Registro actualizado de los activos de hardware y software de una organizacion, incluyendo caracteristicas, version, licencia, estado, ubicacion y responsable."],
-  ["Licenciamiento de software", "Condiciones legales que autorizan el uso de una aplicacion. Puede ser software libre, codigo abierto, gratuito, propietario, educativo, por suscripcion o de prueba."],
-  ["Manual tecnico", "Documento del fabricante o de la organizacion que orienta la instalacion, configuracion, uso, mantenimiento, solucion de fallas y requisitos de una herramienta tecnologica."],
-  ["Proteccion en tiempo real", "Funcion de seguridad que monitorea continuamente archivos, procesos y descargas para detectar y bloquear amenazas mientras el equipo esta en uso."],
-  ["Registro de procedimiento", "Descripcion ordenada de los pasos realizados durante una instalacion, configuracion o diagnostico, incluyendo fecha, responsable, herramienta usada, resultado, evidencias y observaciones."],
-  ["Software utilitario", "Aplicacion de apoyo que facilita tareas especificas del sistema, como compresion de archivos, diagnostico, seguridad, copias de respaldo, limpieza o administracion de recursos."],
-  ["Versionado", "Metodo para identificar y controlar cambios en documentos o archivos mediante numeros, fechas o codigos de version, conservando trazabilidad y evitando confusiones."],
+  ["Activo de información", "Dato, documento, software, equipo, servicio o proceso que tiene valor para la organización y que debe identificarse, protegerse, respaldarse y mantenerse actualizado."],
+  ["Checklist (Lista de verificación)", "Instrumento estructurado que permite comprobar si un procedimiento técnico se ejecutó correctamente, registrando cumplimiento, evidencias y observaciones."],
+  ["Compatibilidad", "Condición que permite que un software, dispositivo o controlador funcione con el sistema operativo, la arquitectura del equipo y los recursos disponibles sin generar conflictos."],
+  ["Configuración básica", "Ajustes iniciales que se aplican a una herramienta tecnológica después de instalarla para dejarla lista para su uso: idioma, permisos, seguridad, actualizaciones, ubicación de archivos y preferencias."],
+  ["Convención de nombres", "Reglas para nombrar archivos y carpetas de manera uniforme, incorporando datos como actividad, aprendiz, ficha, fecha y versión para facilitar la búsqueda y trazabilidad."],
+  ["Diagnóstico técnico", "Proceso de revisión de hardware, software, sistema operativo, almacenamiento y red para identificar el estado del equipo, posibles fallas y recomendaciones de mejora."],
+  ["Documentación técnica", "Conjunto de registros, fichas, manuales, evidencias y reportes que describen características, procedimientos, configuraciones, resultados y responsables de una intervención tecnológica."],
+  ["Evidencia digital", "Archivo, captura de pantalla, reporte, documento o registro que demuestra la ejecución de una actividad técnica y permite su verificación por parte del instructor."],
+  ["Ficha técnica", "Documento que resume los datos principales de un equipo o software: marca, modelo, serial, sistema operativo, componentes, ubicación, responsable, estado y observaciones."],
+  ["Gestión de la información", "Conjunto de acciones para recolectar, organizar, proteger, almacenar, recuperar y respaldar información técnica de forma segura y ordenada."],
+  ["Herramienta de diagnóstico", "Software o utilidad del sistema que permite consultar información del equipo, validar funcionamiento, detectar fallas y generar reportes técnicos; por ejemplo, CPU-Z, CrystalDiskInfo, msinfo32, ipconfig o ping."],
+  ["Inventario tecnológico", "Registro actualizado de los activos de hardware y software de una organización, incluyendo características, versión, licencia, estado, ubicación y responsable."],
+  ["Licenciamiento de software", "Condiciones legales que autorizan el uso de una aplicación. Puede ser software libre, código abierto, gratuito, propietario, educativo, por suscripción o de prueba."],
+  ["Manual técnico", "Documento del fabricante o de la organización que orienta la instalación, configuración, uso, mantenimiento, solución de fallas y requisitos de una herramienta tecnológica."],
+  ["Protección en tiempo real", "Función de seguridad que monitorea continuamente archivos, procesos y descargas para detectar y bloquear amenazas mientras el equipo está en uso."],
+  ["Registro de procedimiento", "Descripción ordenada de los pasos realizados durante una instalación, configuración o diagnóstico, incluyendo fecha, responsable, herramienta usada, resultado, evidencias y observaciones."],
+  ["Software utilitario", "Aplicación de apoyo que facilita tareas específicas del sistema, como compresión de archivos, diagnóstico, seguridad, copias de respaldo, limpieza o administración de recursos."],
+  ["Versionado", "Método para identificar y controlar cambios en documentos o archivos mediante números, fechas o códigos de versión, conservando trazabilidad y evitando confusiones."],
 ];
 
 const supportBundle = [
@@ -154,101 +152,44 @@ const supportBundle = [
 
 const supportDocuments = [
   {
-    title: "Conceptos de seguridad",
-    file: "Conceptos Seguridad.pdf",
-    type: "PDF local",
-    description:
-      "Material base de consulta para repasar principios de seguridad aplicados al trabajo tecnico.",
-  },
-  {
-    title: "IT Essentials - Capitulo 13 Seguridad",
-    file: "ITE7_Chp13 - Seguridad.pdf",
-    type: "PDF local",
-    description:
-      "Lectura de apoyo sobre seguridad, amenazas y buenas practicas segun IT Essentials (Cisco).",
-  },
-  {
-    title: "NTC-ISO-IEC 27001:2013",
-    file: "NTC-ISO-IEC 27001_2013.pdf",
-    type: "PDF local",
-    description:
-      "Referencia tecnica sobre sistemas de gestion de seguridad de la informacion.",
-  },
-  {
-    title: "Guia de copias de seguridad",
-    file: "guia-copias-de-seguridad.pdf",
-    type: "PDF local",
-    description:
-      "Material para fortalecer practicas de respaldo, continuidad y proteccion de informacion.",
-  },
-  {
-    title: "INCIBE - Proteccion de la informacion",
-    file: "INCIBE_Proteccion_de_la_informacion_mirror_uv.pdf",
-    type: "PDF local",
-    description:
-      "Guia practica para mejorar el manejo seguro de la informacion en equipos y organizaciones.",
-  },
-  {
-    title: "INCIBE - Ciberseguridad para todos",
-    file: "INCIBE_guia_ciberseguridad_para_todos.pdf",
-    type: "PDF local",
-    description:
-      "Lectura complementaria con recomendaciones de ciberseguridad aplicables al aula y a la empresa.",
-  },
-  {
-    title: "INCIBE - Copias y borrado seguro",
-    file: "INCIBE_Copias_borrado_seguro_12_consejos.pdf",
-    type: "PDF local",
-    description:
-      "Consejos concretos sobre respaldo, recuperacion y eliminacion segura de archivos.",
-  },
-  {
-    title: "Cisco Networking Academy - IT Essentials",
-    href: "https://www.netacad.com",
+    title: "Cisco Networking Academy - IT Support Essentials",
+    href: "https://www.netacad.com/courses/it-support-essentials",
     type: "Recurso web oficial",
     description:
-      "Material de referencia principal para estudiar herramientas de soporte, instalacion y diagnostico.",
+      "Material de referencia oficial citado en la guía para herramientas de soporte y documentación.",
     cta: "Abrir NetAcad",
   },
   {
     title: "Biblioteca Virtual SENA",
-    href: "https://biblioteca.sena.edu.co",
+    href: "https://biblioteca.sena.edu.co/",
     type: "Recurso institucional",
     description:
-      "Acceso a colecciones, guias y consultas tecnicas recomendadas por el programa.",
+      "Sistema de Bibliotecas SENA: colecciones, guías y consultas técnicas recomendadas por el programa.",
     cta: "Abrir biblioteca",
   },
   {
-    title: "Documentacion LibreOffice",
-    href: "https://documentation.libreoffice.org/es/",
+    title: "Documentación LibreOffice",
+    href: "https://documentation.libreoffice.org/",
     type: "Recurso web oficial",
     description:
-      "Manual y ayudas para instalacion, uso basico y exportacion de productos en la suite ofimatica.",
-    cta: "Abrir documentacion",
+      "Manuales y ayudas oficiales de LibreOffice (Writer, Calc, Impress) citados en la guía.",
+    cta: "Abrir documentación",
   },
   {
-    title: "Soporte Microsoft 365",
-    href: "https://support.microsoft.com/es-es/microsoft-365",
+    title: "INCIBE - Buenas prácticas en informática",
+    href: "https://www.incibe.es/empresas/que-te-interesa/buenas-practicas-area-informatica",
     type: "Recurso web oficial",
     description:
-      "Guia oficial para instalacion y configuracion de herramientas de productividad.",
-    cta: "Abrir soporte",
+      "Referencia oficial citada en la guía sobre buenas prácticas en el área de informática.",
+    cta: "Abrir INCIBE",
   },
   {
-    title: "Belarc Advisor",
-    href: "https://www.belarc.com/products/belarc-advisor",
+    title: "MinTIC - Lineamientos de activos de información",
+    href: "https://gobiernodigital.mintic.gov.co/692/articles-401773_recurso_1.pdf",
     type: "Recurso web oficial",
     description:
-      "Herramienta recomendada para inventario y diagnostico adicional del equipo.",
-    cta: "Abrir sitio oficial",
-  },
-  {
-    title: "CrystalDiskInfo",
-    href: "https://crystalmark.info/en/software/crystaldiskinfo/",
-    type: "Recurso web oficial",
-    description:
-      "Recurso oficial para revisar salud del disco y complementar el diagnostico tecnico.",
-    cta: "Abrir sitio oficial",
+      "Lineamientos para el inventario y clasificación de activos de información (MinTIC, 2025).",
+    cta: "Abrir lineamientos",
   },
 ];
 
