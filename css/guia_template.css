@@ -455,6 +455,33 @@ code {
   gap: 4px;
 }
 
+/* Los chips del topbar-meta se renderizan como <a> para abrir el calendario
+ * completo del aprendiz. Resetear estilos por defecto del anchor para
+ * conservar la apariencia de chip. */
+a.guide-schedule-item,
+a.guide-schedule-item:hover,
+a.guide-schedule-item:visited,
+a.guide-schedule-item:focus,
+a.guide-schedule-item:active {
+  text-decoration: none;
+  color: inherit;
+}
+
+a.guide-schedule-item {
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+a.guide-schedule-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgba(1, 47, 28, 0.12);
+}
+
+a.guide-schedule-item:focus-visible {
+  outline: 2px solid var(--brand-600, #007934);
+  outline-offset: 2px;
+}
+
 .guide-schedule-item {
   position: relative;
   max-width: 280px;

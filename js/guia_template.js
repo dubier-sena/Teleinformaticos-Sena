@@ -796,17 +796,25 @@
     let classItem = document.getElementById("guideScheduleNextClass");
     let deliveryItem = document.getElementById("guideScheduleNextDelivery");
 
-    if (!classItem) {
-      classItem = document.createElement("span");
-      classItem.id = "guideScheduleNextClass";
-      meta.appendChild(classItem);
+    // Los chips se renderizan como <a> para que al hacer click abran el
+    // calendario completo del aprendiz. Si ya existen como <span> (version
+    // anterior), se reemplazan en sitio para mantener la posicion.
+    function ensureAnchor(existing, id) {
+      if (existing && existing.tagName === "A") return existing;
+      const anchor = document.createElement("a");
+      anchor.id = id;
+      anchor.href = "calendario-aprendiz.html";
+      anchor.setAttribute("aria-label", "Abrir mi calendario de clases");
+      if (existing && existing.parentNode) {
+        existing.parentNode.replaceChild(anchor, existing);
+      } else {
+        meta.appendChild(anchor);
+      }
+      return anchor;
     }
 
-    if (!deliveryItem) {
-      deliveryItem = document.createElement("span");
-      deliveryItem.id = "guideScheduleNextDelivery";
-      meta.appendChild(deliveryItem);
-    }
+    classItem = ensureAnchor(classItem, "guideScheduleNextClass");
+    deliveryItem = ensureAnchor(deliveryItem, "guideScheduleNextDelivery");
 
     return { classItem, deliveryItem };
   }

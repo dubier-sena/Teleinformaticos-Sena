@@ -751,8 +751,16 @@
       _usernameKey: calendarFallbackDocId(calendarId),
       _kind: "calendar",
     }, payload));
-    if (fallbackSaved) return true;
-    return fsPatch(COL_CALENDAR, calendarId, payload);
+    // Publicar tambien en la coleccion canonica para que los aprendices puedan leerlo.
+    // Las reglas de Firestore permiten lectura a cualquier sesion autenticada y
+    // escritura solo al admin (que es quien dispara este save).
+    var canonicalSaved = false;
+    try {
+      canonicalSaved = await fsPatch(COL_CALENDAR, calendarId, payload);
+    } catch (e) {
+      canonicalSaved = false;
+    }
+    return fallbackSaved || canonicalSaved;
   }
 
   function guideStateDocId(prefix, scopeKey, fileName) {

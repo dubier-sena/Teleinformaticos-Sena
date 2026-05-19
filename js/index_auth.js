@@ -195,7 +195,11 @@
     }
     renderGuideChips(guides, guideLabels);
     setVisible(actions, false);
-    setVisible(studentActions, canAccessProductiveStage(session));
+    // Estudiante: el contenedor de acciones siempre visible (para "Mi calendario
+    // de clases"). El boton de etapa productiva se muestra solo si la ficha
+    // tiene proyecto habilitado.
+    setVisible(studentActions, true);
+    setVisible(productiveStageButton, canAccessProductiveStage(session));
     if (productiveStageButton) {
       productiveStageButton.href = "etapa-productiva-estudiante.html";
       productiveStageButton.textContent = "Mi proyecto y retroalimentacion";

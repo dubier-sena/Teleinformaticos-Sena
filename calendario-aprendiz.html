@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta
+  http-equiv="Content-Security-Policy"
+  content="default-src 'self' blob: data:; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' blob: https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https:; media-src 'self' blob: data: https:; frame-src 'self' https://es.educaplay.com;"
+>
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Mi calendario de clases | Sistemas Teleinformaticos</title>
+<meta name="description" content="Listado de proximas clases para el aprendiz, filtrado por su ficha o grupo.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/site_tokens.css?v=20260516_1">
+<link rel="stylesheet" href="css/components.css?v=20260516_1">
+<link rel="stylesheet" href="css/shared_shell.css?v=20260425_1">
+<link rel="stylesheet" href="css/page_student_calendar.css?v=20260519_1">
+<script src="js/portal_auth.js?v=20260516_1"></script>
+<script src="js/firebase-config.js?v=20260414_1"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script src="js/firebase_auth_bridge.js?v=20260515_1"></script>
+<script src="js/firebase_db.js?v=20260516_1"></script>
+<script defer src="js/firebase_status_banner.js?v=20260516_1"></script>
+<script defer src="js/save_status.js?v=20260516_1"></script>
+<script defer src="js/shared_shell.js?v=20260508_1"></script>
+<script src="data/calendario_2026_records.js?v=20260425_1"></script>
+<script defer src="js/student_calendar.js?v=20260519_1"></script>
+<script>
+(function () {
+  // Gate: cualquier sesion autenticada (aprendiz o admin).
+  function isFileProtocol() {
+    return /^file:$/i.test(String(window.location.protocol || ""));
+  }
+  if (isFileProtocol()) return;
+  var auth = window.portalAuth;
+  if (!auth || typeof auth.getCurrentSession !== "function") return;
+  var session = auth.getCurrentSession();
+  if (!session || (session.role !== "student" && session.role !== "admin")) {
+    window.location.replace("index.html");
+  }
+})();
+</script>
+</head>
+<body class="app-shell app-shell--student-calendar">
+  <header class="app-hero student-cal-hero">
+    <div class="app-hero__inner student-cal-hero__inner">
+      <div class="student-cal-hero__copy" data-reveal>
+        <div class="student-badge">Mi calendario</div>
+        <h1>Pr&oacute;ximas clases</h1>
+        <p>Aqu&iacute; ves &uacute;nicamente las clases programadas para tu grupo, desde hoy en adelante.</p>
+      </div>
+      <div class="student-cal-hero__meta" id="sc-meta" data-reveal>
+        <div class="meta-row"><span class="meta-key">Aprendiz</span><span class="meta-val" id="sc-meta-name">&mdash;</span></div>
+        <div class="meta-row"><span class="meta-key">Instituci&oacute;n</span><span class="meta-val" id="sc-meta-inst">&mdash;</span></div>
+        <div class="meta-row"><span class="meta-key">Grupo</span><span class="meta-val" id="sc-meta-grupo">&mdash;</span></div>
+        <div class="meta-row"><span class="meta-key">Ficha</span><span class="meta-val" id="sc-meta-ficha">&mdash;</span></div>
+      </div>
+    </div>
+  </header>
+
+  <svg class="wave" viewBox="0 0 1440 40" preserveAspectRatio="none" height="40" aria-hidden="true">
+    <path fill="currentColor" d="M0,20 C360,40 1080,0 1440,20 L1440,40 L0,40 Z"></path>
+  </svg>
+
+  <main class="app-main student-cal-main">
+    <section class="app-card student-cal-card" data-reveal>
+      <div class="student-cal-card__head">
+        <div>
+          <h2>Listado de pr&oacute;ximas clases</h2>
+          <p class="student-cal-card__sub">Se muestran solo las clases de tu grupo desde hoy.</p>
+        </div>
+        <div class="student-cal-card__actions">
+          <span class="student-cal-card__status" id="sc-status"></span>
+          <button class="c-btn c-btn--ghost" type="button" id="sc-reload">Actualizar</button>
+          <a class="c-btn c-btn--ghost" href="index.html">Volver al portal</a>
+        </div>
+      </div>
+      <div id="sc-list" class="student-cal-list" aria-live="polite">
+        <div class="msg msg--info"><h3>Cargando&hellip;</h3><p>Consultando el calendario.</p></div>
+      </div>
+      <p class="student-cal-footnote">
+        &iquest;Tu calendario muestra datos incorrectos? Consulta con tu instructor.
+      </p>
+    </section>
+  </main>
+
+  <footer class="footer" data-reveal>
+    <span>SENA</span> | Servicio Nacional de Aprendizaje | Sistemas Teleinform&aacute;ticos | C&oacute;digo 233108 V1 | <a href="mailto:domillan@sena.edu.co">domillan@sena.edu.co</a>
+  </footer>
+</body>
+</html>
