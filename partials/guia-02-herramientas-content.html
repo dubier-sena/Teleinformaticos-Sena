@@ -977,6 +977,39 @@
                 </table>
               </div>
 
+              <div class="digital-checklist" style="margin-top:24px;padding:18px 18px 14px;border:1px solid #cfe0d3;border-left:5px solid #2e7d32;border-radius:12px;background:linear-gradient(180deg,#f6fbf6,#ffffff)">
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+                  <span style="font-size:1.4rem" aria-hidden="true">&#9989;</span>
+                  <h3 style="margin:0;color:#1b5e20;font-size:1.05rem">Lista de verificaci&oacute;n de competencias digitales (15 &iacute;tems)</h3>
+                </div>
+                <p class="intro-text" style="margin:6px 0 12px;text-align:justify">Marca con honestidad tu nivel actual en cada competencia digital trabajada en la Gu&iacute;a 2. Esta autoevaluaci&oacute;n te ayuda a saber qu&eacute; debes reforzar antes de la fase de transferencia y queda guardada como evidencia.</p>
+                <div style="display:flex;flex-wrap:wrap;gap:10px;font-size:.82rem;margin-bottom:14px">
+                  <span style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:#e8f5e9;color:#1b5e20"><span aria-hidden="true">&#127775;</span> Lo domino</span>
+                  <span style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:#fff8e1;color:#8a5a00"><span aria-hidden="true">&#128221;</span> Necesito reforzar</span>
+                  <span style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:#fdecea;color:#a13029"><span aria-hidden="true">&#9888;</span> No lo he practicado</span>
+                </div>
+                <div class="table-scroll">
+                  <table class="data-table digital-checklist-table">
+                    <thead>
+                      <tr>
+                        <th style="width:42px">#</th>
+                        <th>Competencia digital</th>
+                        <th style="width:230px">Mi nivel</th>
+                      </tr>
+                    </thead>
+                    <tbody id="digitalChecklistBody">
+                      <!-- Filas generadas por script_guia2.js (renderDigitalChecklist) -->
+                    </tbody>
+                  </table>
+                </div>
+                <div id="digitalChecklistSummary" class="digital-checklist-summary" aria-live="polite" style="margin-top:14px;display:flex;flex-wrap:wrap;gap:10px;font-size:.88rem">
+                  <span class="dc-summary dc-summary--domino" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;background:#e8f5e9;color:#1b5e20;font-weight:600"><span aria-hidden="true">&#127775;</span> Domino: <span data-summary="domino">0</span> / 15</span>
+                  <span class="dc-summary dc-summary--reforzar" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;background:#fff8e1;color:#8a5a00;font-weight:600"><span aria-hidden="true">&#128221;</span> A reforzar: <span data-summary="reforzar">0</span> / 15</span>
+                  <span class="dc-summary dc-summary--nopracticado" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;background:#fdecea;color:#a13029;font-weight:600"><span aria-hidden="true">&#9888;</span> No practicado: <span data-summary="nopracticado">0</span> / 15</span>
+                  <span class="dc-summary dc-summary--pendiente" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;background:#eceff1;color:#37474f;font-weight:600"><span aria-hidden="true">&#9898;</span> Sin marcar: <span data-summary="pendiente">15</span> / 15</span>
+                </div>
+              </div>
+
               <div id="colaborativas334DeadlineControls" style="margin-top:16px"></div>
               <div class="act-btn-group">
                 <button type="button" id="btnGuardarColaborativas"
