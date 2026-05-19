@@ -82,22 +82,24 @@
   }
 
   function buildWordStyles() {
-    return `
-      @page { size: 8.5in 11in; margin: 2.54cm; }
-      body { font-family: "Times New Roman", serif; font-size: 12pt; line-height: 2; color: #111827; }
-      .word-logo-line { display: flex; align-items: center; gap: 8pt; margin: 0 0 8pt; color: #0b6b2b; font-weight: bold; }
-      .institutional-header, .answer-card table { width: 100%; border-collapse: collapse; table-layout: fixed; margin: 0 0 14pt; }
-      .institutional-header td, .answer-card th, .answer-card td { border: 1px solid #b7c7bc; padding: 6pt; vertical-align: top; word-wrap: break-word; overflow-wrap: break-word; }
-      .institutional-header .label, .answer-card th { background: #f1f5f9; color: #0b5d28; font-weight: bold; }
-      h1 { font-size: 16pt; color: #14532d; margin: 18pt 0 8pt; line-height: 1.35; }
-      h2 { font-size: 14pt; color: #14532d; margin: 16pt 0 8pt; line-height: 1.35; }
-      h3 { font-size: 12pt; color: #111827; margin: 12pt 0 6pt; line-height: 1.35; }
-      .answer-card { page-break-inside: avoid; margin: 0 0 14pt; }
+    // Hoja base centralizada (A4, márgenes 2.54cm, seguridad de tabla).
+    // Si export_styles.js no llegó a cargarse, hacemos fallback a la hoja
+    // local original para no romper la exportación.
+    var base =
+      (window.senaExportStyles && window.senaExportStyles.getBaseStyles && window.senaExportStyles.getBaseStyles()) ||
+      `@page { size: A4; margin: 2.54cm; }
+       body { font-family: "Times New Roman", serif; font-size: 12pt; line-height: 1.5; color: #111827; }
+       table { width: 100%; max-width: 100%; border-collapse: collapse; table-layout: fixed; word-wrap: break-word; overflow-wrap: anywhere; word-break: break-word; }
+       th, td { padding: 6pt; vertical-align: top; border: 1px solid #b7c7bc; word-wrap: break-word; overflow-wrap: anywhere; word-break: break-word; }`;
+
+    // Estilos locales del panel admin (sólo overrides cosméticos sobre la
+    // base; no redefinen márgenes ni reglas de seguridad de tabla).
+    var local = `
       .response-status { border: 1px solid #d1d5db; padding: 10pt; border-radius: 4pt; }
-      .word-footer { margin-top: 28pt; border-top: 1pt solid #e5e7eb; padding-top: 8pt; font-size: 9pt; line-height: 1.4; color: #4b5563; word-break: break-all; }
-      p { margin: 0 0 10pt; }
-      small { color: #4b5563; }
+      .answer-card { page-break-inside: avoid; margin: 0 0 14pt; }
     `;
+
+    return base + "\n" + local;
   }
 
   function buildWordDocument(exportData) {

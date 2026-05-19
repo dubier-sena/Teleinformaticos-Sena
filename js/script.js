@@ -1232,23 +1232,18 @@ function buildGuide5ExportDocument(mode, learnerName) {
 </w:WordDocument>
 </xml><![endif]-->
 <style>
-  @page { margin: 2.54cm; }
-  body { font-family: "Times New Roman", Times, serif; font-size: 12pt; line-height: 2; color: #1a1a1a; }
-  .header { text-align: center; border-bottom: 2px solid #007934; padding-bottom: 8pt; margin-bottom: 14pt; }
-  .header h1 { margin: 0 0 4pt; font-size: 18pt; color: #007934; }
+  /* Hoja base centralizada (export_styles.js): A4, márgenes 2.54cm,
+     tipografía Times 12pt y seguridad de tabla. Fallback inline para
+     no romper la exportación si el helper no se cargó. */
+  ${(window.senaExportStyles && window.senaExportStyles.getBaseStyles && window.senaExportStyles.getBaseStyles()) || '@page { size: A4; margin: 2.54cm; } body { font-family: "Times New Roman", Times, serif; font-size: 12pt; line-height: 1.5; color: #1a1a1a; } table { width: 100%; max-width: 100%; border-collapse: collapse; table-layout: fixed; overflow-wrap: anywhere; word-break: break-word; } th, td { padding: 6pt; vertical-align: top; border: 1px solid #b7c9bc; overflow-wrap: anywhere; word-break: break-word; }'}
+  /* Overrides locales (solo cosméticos): header, .meta y .data heredan
+     la seguridad de tabla de la hoja base. */
+  .header { text-align: center; border-bottom: 2px solid #1b5e20; padding-bottom: 8pt; margin-bottom: 14pt; }
+  .header h1 { margin: 0 0 4pt; }
   .header p { margin: 2pt 0; }
-  table { max-width: 100%; table-layout: fixed; overflow-wrap: break-word; word-break: break-word; }
-  .word-logo-line { text-align: left; margin: 0 0 8pt; font-size: 10pt; line-height: 1.2; color: #1b5e20; }
-  .word-logo-line img { width: 36pt; height: 36pt; vertical-align: middle; margin-right: 8pt; }
-  .institutional-header { width: 100%; max-width: 100%; table-layout: fixed; border-collapse: collapse; margin: 0 0 12pt; }
-  .institutional-header td { border: 1px solid #b7c9bc; padding: 7pt; vertical-align: middle; font-size: 10pt; line-height: 1.35; }
-  .institutional-header .label { width: 30%; font-weight: 700; background: #f3f4f6; color: #1b5e20; }
-  .meta { width: 100%; border-collapse: collapse; margin: 0 0 16pt; }
-  .meta td { border: 1px solid #d1d5db; padding: 8pt; vertical-align: top; font-size: 10.5pt; line-height: 1.35; }
-  .meta .label { font-weight: 700; background: #f3f4f6; width: 28%; }
-  .data { width: 100%; border-collapse: collapse; }
-  .data th, .data td { border: 1px solid #9ca3af; padding: 6pt; vertical-align: top; font-size: 10pt; line-height: 1.35; }
-  .data th { background: #e8f5e9; text-align: left; }
+  .meta td { font-size: 10.5pt; }
+  .meta .label { width: 28%; font-weight: 700; background: #f3f4f6; }
+  .data th, .data td { font-size: 10pt; }
   .note { margin-top: 12pt; font-size: 10pt; color: #4b5563; }
 </style>
 </head>
