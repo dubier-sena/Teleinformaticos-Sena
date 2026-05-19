@@ -1081,7 +1081,77 @@
                     </div>
                   </li>
                   <li>Elabora un documento de una p&aacute;gina (Word o Google Docs) llamado 'Gu&iacute;a de ciberseguridad para [Nombre del actor productivo]'. Incluye m&iacute;nimo 8 recomendaciones concretas adaptadas al perfil del usuario: contrase&ntilde;as seguras, bloqueo de pantalla, actualizaciones del sistema, no abrir adjuntos desconocidos, respaldo en la nube, uso responsable de redes sociales en el equipo de trabajo, etc. Escr&iacute;bela en lenguaje sencillo, sin tecnicismos.</li>
-                  <li>El instructor comparte un ejemplo de correo o mensaje de WhatsApp de phishing (simulado, sin datos reales). Identifica: qu&eacute; se&ntilde;ales delatan que es falso; qu&eacute; har&iacute;a el actor productivo si lo recibe; c&oacute;mo le explicar&iacute;as en dos minutos que no debe hacer clic. Documenta tu an&aacute;lisis en la bit&aacute;cora.</li>
+                  <li>El instructor comparte un ejemplo de correo o mensaje de WhatsApp de phishing (simulado, sin datos reales). Identifica: qu&eacute; se&ntilde;ales delatan que es falso; qu&eacute; har&iacute;a el actor productivo si lo recibe; c&oacute;mo le explicar&iacute;as en dos minutos que no debe hacer clic. Documenta tu an&aacute;lisis en la bit&aacute;cora.
+                    <div class="ihelp-trigger" style="margin-top:10px">
+                      <button type="button" class="ihelp-btn" data-ihelp-target="ihelp-g2-11">
+                        <span class="ihelp-btn__icon" aria-hidden="true">&#128218;</span>
+                        <span class="ihelp-btn__text">
+                          <span class="ihelp-btn__kicker">MATERIAL DE APOYO INTERACTIVO</span>
+                          <span class="ihelp-btn__title">Caso simulado: detecta el phishing</span>
+                        </span>
+                        <span class="ihelp-btn__arrow" aria-hidden="true">&rarr;</span>
+                      </button>
+                      <template id="ihelp-g2-11" data-ihelp-title="Caso simulado: detecta el phishing">
+                        <p>Estos son <strong>dos mensajes simulados</strong> (no son reales). T&uacute; rol es identificar las se&ntilde;ales que delatan que son enga&ntilde;os y preparar una explicaci&oacute;n breve para el actor productivo de tu caso.</p>
+
+                        <h3>1. Correo electr&oacute;nico sospechoso</h3>
+                        <div class="ihelp-panel__card" style="font-family:'Segoe UI', Arial, sans-serif;font-size:.9rem">
+                          <div style="border-bottom:1px solid #eee;padding-bottom:6px;margin-bottom:8px">
+                            <div><strong>De:</strong> <code>bancol0mbia-seguridad@gmail.com</code> <span style="color:#a13029;font-size:.78rem">&#9888; dominio sospechoso</span></div>
+                            <div><strong>Para:</strong> Estimado Cliente <span style="color:#a13029;font-size:.78rem">&#9888; saludo gen&eacute;rico</span></div>
+                            <div><strong>Asunto:</strong> URGENTE: Su cuenta ser&aacute; bloqueada en 1 hora <span style="color:#a13029;font-size:.78rem">&#9888; urgencia exagerada</span></div>
+                          </div>
+                          <p style="margin:0 0 6px">Estimado Cliente,</p>
+                          <p style="margin:0 0 6px">Hemos detectado un movimiento <em>sospechozo</em> en su cuenta. Por su seguridad, debe confirmar sus datos en el siguiente enlace antes de 1 hora o su cuenta sera bloquiada permanentemente. <span style="color:#a13029;font-size:.78rem">&#9888; errores ortogr&aacute;ficos</span></p>
+                          <p style="margin:0 0 6px"><a href="#" style="color:#1a73e8;text-decoration:underline">Haga clic aqu&iacute; para verificar su cuenta</a><br><span style="color:#a13029;font-size:.78rem">&#9888; enlace real apunta a <code>http://bancol0mbia-verifica.tk/login</code>, no al sitio oficial</span></p>
+                          <p style="margin:0">Gracias por su confianza.<br>Equipo de Seguridad Bancol0mbia</p>
+                        </div>
+
+                        <h3>2. Mensaje de WhatsApp sospechoso</h3>
+                        <div class="ihelp-panel__card" style="background:#e7ffdb;border-color:#b6dba0;font-family:'Segoe UI', Arial, sans-serif;font-size:.9rem;max-width:340px">
+                          <div style="font-size:.74rem;color:#3f6f1a;font-weight:700;margin-bottom:4px">+57 300 000 1234 &middot; n&uacute;mero desconocido <span style="color:#a13029">&#9888;</span></div>
+                          <p style="margin:0 0 4px">&#127881; &iexcl;FELICIDADES! Usted ha sido seleccionado por DAVIVIENDA para recibir un bono de $500.000. <span style="color:#a13029;font-size:.78rem">&#9888; premio inesperado</span></p>
+                          <p style="margin:0 0 4px">Reclame aqu&iacute; antes de hoy a las 8 PM: <code>bit.ly/dvv-bono500k</code> <span style="color:#a13029;font-size:.78rem">&#9888; enlace acortado oculta el destino</span></p>
+                          <p style="margin:0">Solicitamos N&uacute;mero de c&eacute;dula y clave de su tarjeta para confirmar. <span style="color:#a13029;font-size:.78rem">&#9888; ning&uacute;n banco pide la clave por chat</span></p>
+                        </div>
+
+                        <h3>Se&ntilde;ales que delatan que son falsos</h3>
+                        <ol>
+                          <li><strong>Remitente sospechoso:</strong> <code>bancol0mbia</code> (cero en vez de o) o dominio <code>@gmail.com</code> en lugar del oficial.</li>
+                          <li><strong>Saludo gen&eacute;rico</strong> ("Estimado Cliente") en vez de su nombre real.</li>
+                          <li><strong>Urgencia exagerada</strong> ("1 hora", "hoy a las 8 PM") para que no piense.</li>
+                          <li><strong>Errores ortogr&aacute;ficos</strong> ("sospechozo", "bloquiada"): un banco real revisa sus textos.</li>
+                          <li><strong>Enlaces extra&ntilde;os o acortados</strong> (<code>.tk</code>, <code>bit.ly</code>) que ocultan el destino real.</li>
+                          <li><strong>Piden datos sensibles por chat o correo</strong> (clave, c&eacute;dula, c&oacute;digo OTP). Ning&uacute;n banco lo hace.</li>
+                          <li><strong>Premio o promoci&oacute;n inesperada</strong> que usted nunca solicit&oacute;.</li>
+                          <li><strong>N&uacute;mero o cuenta desconocida</strong> que no est&aacute; en sus contactos.</li>
+                        </ol>
+
+                        <h3>&iquest;Qu&eacute; deber&iacute;a hacer el actor productivo si lo recibe?</h3>
+                        <ul>
+                          <li><strong>No hacer clic</strong> en el enlace ni descargar archivos adjuntos.</li>
+                          <li><strong>No responder</strong> ni reenviar el mensaje a familiares.</li>
+                          <li><strong>Verificar por canal oficial:</strong> llamar al banco al n&uacute;mero impreso en la tarjeta o entrar a la p&aacute;gina escribiendo la direcci&oacute;n a mano.</li>
+                          <li><strong>Reportar y borrar:</strong> marcar como spam o phishing y eliminar el mensaje.</li>
+                          <li><strong>Cambiar la clave</strong> si por error hizo clic, y avisar al banco.</li>
+                        </ul>
+
+                        <div class="ihelp-panel__tip">
+                          <strong>Gui&oacute;n de 2 minutos para explicarle al actor productivo:</strong>
+                          <ol style="margin:6px 0 0">
+                            <li><em>Don/Do&ntilde;a [nombre]</em>, este mensaje <strong>no es del banco</strong>. Se lo demuestro: aqu&iacute; falta una letra en el remitente y el enlace lleva a otra p&aacute;gina.</li>
+                            <li>Los bancos <strong>nunca</strong> piden su clave por correo ni por WhatsApp. Si la pidieran, perder&iacute;a su dinero.</li>
+                            <li>Si vuelve a recibir algo as&iacute;: <strong>no haga clic</strong>, llame al banco al n&uacute;mero de su tarjeta y, si yo estoy disponible, me escribe primero.</li>
+                            <li>Vamos a <strong>borrar este mensaje</strong> y a marcarlo como spam para que no le llegue de nuevo.</li>
+                          </ol>
+                        </div>
+
+                        <div class="ihelp-panel__warn">
+                          <strong>Para la bit&aacute;cora,</strong> documenta: (a) las se&ntilde;ales que identificaste en cada mensaje, (b) lo que el actor productivo har&iacute;a si lo recibe y (c) el gui&oacute;n que usar&iacute;as para explicarle. Incluye una captura del mensaje simulado que us&oacute; el instructor (sin datos reales).
+                        </div>
+                      </template>
+                    </div>
+                  </li>
                   <li>Con base en el perfil del actor productivo de tu caso, responde: &iquest;tiene antivirus activo? &iquest;Sus archivos importantes tienen copia de seguridad? &iquest;Usa contrase&ntilde;as distintas para cuentas diferentes? Elabora una lista de verificaci&oacute;n de ciberseguridad de 10 &iacute;tems que le entregar&iacute;as al finalizar la asesor&iacute;a.</li>
                 </ol>
               </div>
