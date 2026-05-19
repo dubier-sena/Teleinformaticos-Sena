@@ -1,0 +1,365 @@
+/* page_student_calendar.css
+ *
+ * Vista "Mi calendario de clases" para el aprendiz (calendario-aprendiz.html).
+ * Lista tipo tarjetas con las proximas clases del grupo del aprendiz.
+ */
+
+.app-shell--student-calendar {
+  background: var(--bg-canvas);
+}
+
+.student-cal-hero {
+  background: linear-gradient(135deg, var(--brand-700), var(--brand-500));
+  color: var(--text-on-brand);
+}
+
+.student-cal-hero__inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  gap: var(--space-6);
+  align-items: center;
+}
+
+.student-cal-hero__copy h1 {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 2.4vw, 2.4rem);
+  margin: var(--space-2) 0 var(--space-3);
+}
+
+.student-cal-hero__copy .student-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.student-cal-hero__copy p {
+  color: rgba(255, 255, 255, 0.88);
+  max-width: 60ch;
+}
+
+.student-cal-hero__meta {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-5);
+  backdrop-filter: blur(8px);
+}
+
+.student-cal-hero__meta .meta-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.student-cal-hero__meta .meta-row:last-child {
+  border-bottom: 0;
+}
+
+.student-cal-hero__meta .meta-key {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: var(--font-size-sm);
+}
+
+.student-cal-hero__meta .meta-val {
+  color: #fff;
+  font-weight: 600;
+  text-align: right;
+  max-width: 60%;
+  overflow-wrap: anywhere;
+}
+
+.wave {
+  display: block;
+  color: var(--brand-500);
+}
+
+.student-cal-main {
+  padding: var(--space-6) var(--space-4) var(--space-10);
+}
+
+.student-cal-card {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: var(--space-6);
+}
+
+.student-cal-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: var(--space-5);
+}
+
+.student-cal-card__head h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  color: var(--text-strong);
+  font-size: var(--font-size-xl);
+}
+
+.student-cal-card__sub {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.student-cal-card__actions {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.student-cal-card__status {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.student-cal-list {
+  display: grid;
+  gap: var(--space-4);
+}
+
+/* ── Tarjeta de clase ────────────────────────────────────────────── */
+.class-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--motion-fast), box-shadow var(--motion-fast);
+}
+
+.class-card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.class-card[data-status="Hoy"] {
+  border-color: var(--brand-500);
+  background: linear-gradient(180deg, #f1faf3 0%, #ffffff 60%);
+}
+
+.class-card[data-status="Cancelada"] {
+  border-color: var(--color-danger);
+  background: linear-gradient(180deg, var(--color-danger-soft) 0%, #ffffff 70%);
+}
+
+.class-card[data-status="Reprogramada"] {
+  border-color: var(--accent-gold);
+  background: linear-gradient(180deg, var(--gold-light) 0%, #ffffff 70%);
+}
+
+.class-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.class-card__date {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.fecha-larga {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--font-size-lg);
+  color: var(--text-strong);
+  text-transform: capitalize;
+}
+
+.tag {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.tag--proxima-clase {
+  background: var(--brand-100);
+  color: var(--brand-700);
+  border: 1px solid var(--brand-300);
+}
+
+.status {
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.status--hoy {
+  background: var(--brand-600);
+  color: #fff;
+}
+
+.status--proxima {
+  background: #e8eefc;
+  color: #1d3a76;
+  border: 1px solid #c5d6f5;
+}
+
+.status--cancelada {
+  background: var(--color-danger);
+  color: #fff;
+}
+
+.status--reprogramada {
+  background: var(--accent-gold);
+  color: var(--text-on-gold);
+}
+
+.class-card__body {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: var(--space-3);
+  font-size: var(--font-size-sm);
+}
+
+.row-key {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.row-val {
+  color: var(--text-body);
+  overflow-wrap: anywhere;
+}
+
+.row--hor .row-val {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.hor-slot {
+  background: var(--brand-100);
+  color: var(--brand-800);
+  border: 1px solid var(--brand-200);
+  border-radius: var(--radius-sm);
+  padding: 2px 10px;
+  font-weight: 600;
+}
+
+.hor-empty {
+  color: var(--text-soft);
+  font-style: italic;
+}
+
+.row--tema .row-val {
+  color: var(--text-strong);
+  font-weight: 600;
+}
+
+.tema-fecha {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* ── Mensajes (vacios / errores) ────────────────────────────────── */
+.msg {
+  padding: var(--space-5);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-soft);
+  background: var(--surface-2);
+  text-align: center;
+}
+
+.msg h3 {
+  margin: 0 0 var(--space-2);
+  color: var(--text-strong);
+}
+
+.msg p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.msg--warn {
+  background: var(--gold-light);
+  border-color: var(--accent-gold);
+}
+
+.msg--error {
+  background: var(--color-danger-soft);
+  border-color: var(--color-danger);
+}
+
+.empty-state {
+  padding: var(--space-8) var(--space-5);
+  text-align: center;
+  border: 1px dashed var(--border-medium);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+}
+
+.empty-state h3 {
+  margin: 0 0 var(--space-2);
+  color: var(--text-strong);
+  font-family: var(--font-display);
+}
+
+.empty-state p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.student-cal-footnote {
+  margin-top: var(--space-5);
+  font-size: var(--font-size-xs);
+  color: var(--text-soft);
+  text-align: right;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────── */
+@media (max-width: 720px) {
+  .student-cal-hero__inner {
+    grid-template-columns: 1fr;
+  }
+
+  .student-cal-hero__meta {
+    margin-top: var(--space-2);
+  }
+
+  .student-cal-card {
+    padding: var(--space-4);
+  }
+
+  .student-cal-card__head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .row {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+}
