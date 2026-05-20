@@ -3629,6 +3629,12 @@ function openGuia2SupportPanel(key) {
   if (key === "activity10-cases") {
     body.innerHTML = buildActivity10PanelHtml();
     attachActivity10PanelHandlers(body);
+    // Trae el roster de la ficha desde Firestore para que el aprendiz pueda
+    // ver a sus companeros aunque ellos nunca hayan iniciado sesion en este
+    // navegador. Re-renderiza si llegaron usuarios nuevos.
+    syncRosterFromCloudForActivity10().then((changed) => {
+      if (changed) rerenderActivity10Panel();
+    });
   } else if (ACTIVITY_CASE_ASSIGNMENTS[key]) {
     body.innerHTML = buildAssignedActivityCaseHtml(key);
   } else {
@@ -4203,6 +4209,58 @@ function getRosterForCurrentFicha() {
     }))
     .filter((u) => u.usernameKey && u.fullName)
     .sort((a, b) => a.fullName.localeCompare(b.fullName, "es"));
+}
+
+// Trae el roster completo desde Firestore y lo fusiona en sena_portal_users_v1
+// para que el wizard de Actividad 10 pueda listar a los companeros de ficha.
+// Sin esto, cada aprendiz solo veria a quienes han iniciado sesion en SU
+// navegador (es decir, normalmente solo a si mismo).
+let activity10RosterSyncPromise = null;
+function syncRosterFromCloudForActivity10() {
+  if (activity10RosterSyncPromise) return activity10RosterSyncPromise;
+  const db = window._firebaseDb;
+  if (!db || typeof db.cloudListUsers !== "function") {
+    return Promise.resolve(false);
+  }
+  activity10RosterSyncPromise = (async () => {
+    try {
+      const cloudUsers = await db.cloudListUsers();
+      if (!Array.isArray(cloudUsers) || cloudUsers.length === 0) return false;
+      const existing = window.portalAuth?.getUsers?.() || [];
+      const byKey = new Map(existing.map((u) => [String(u.usernameKey || "").toLowerCase(), u]));
+      let changed = false;
+      cloudUsers.forEach((u) => {
+        if (!u || !u.usernameKey) return;
+        const key = String(u.usernameKey).toLowerCase();
+        const prev = byKey.get(key);
+        if (!prev) {
+          byKey.set(key, Object.assign({}, u, { usernameKey: key }));
+          changed = true;
+        } else {
+          const merged = Object.assign({}, prev, u, {
+            usernameKey: key,
+            passwordHash: prev.passwordHash || u.passwordHash || "",
+          });
+          if (merged.fullName !== prev.fullName || merged.ficha !== prev.ficha) {
+            byKey.set(key, merged);
+            changed = true;
+          }
+        }
+      });
+      if (changed) {
+        try {
+          localStorage.setItem("sena_portal_users_v1", JSON.stringify(Array.from(byKey.values())));
+        } catch (_) {}
+      }
+      return changed;
+    } catch (_) {
+      return false;
+    } finally {
+      // Permitir reintentos manuales mas adelante (p. ej. al abrir el panel otra vez).
+      window.setTimeout(() => { activity10RosterSyncPromise = null; }, 30000);
+    }
+  })();
+  return activity10RosterSyncPromise;
 }
 
 function formatEquipo341DateForDisplay(iso) {

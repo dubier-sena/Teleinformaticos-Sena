@@ -358,6 +358,23 @@
     return String(value || "").replace(/[^a-z0-9:_-]/gi, "_");
   }
 
+  // Espera UNA VEZ a que Firebase Auth termine de hidratar la sesion desde
+  // IndexedDB. Sin esta espera, las primeras lecturas tras un reload salen
+  // sin Authorization, Firestore responde 403 y el banner amarillo de
+  // "Sesion sin sincronizacion" parpadea durante la hidratacion (~1-2 s).
+  var _authHydrationPromise = null;
+  function ensureAuthHydrated() {
+    if (_authHydrationPromise) return _authHydrationPromise;
+    var bridge = window.portalFirebaseAuth;
+    if (!bridge || typeof bridge.waitForAuthHydration !== "function") {
+      _authHydrationPromise = Promise.resolve(false);
+      return _authHydrationPromise;
+    }
+    _authHydrationPromise = Promise.resolve(bridge.waitForAuthHydration(2500))
+      .catch(function () { return false; });
+    return _authHydrationPromise;
+  }
+
   // Obtiene los headers con Authorization: Bearer <idToken> si Firebase Auth
   // tiene una sesion activa. Sin sesion, se devuelven los headers base sin
   // Authorization — las Firestore Rules rechazaran la peticion (403) y el
@@ -367,6 +384,7 @@
     var bridge = window.portalFirebaseAuth;
     if (bridge && typeof bridge.getIdToken === "function") {
       try {
+        await ensureAuthHydrated();
         var token = await bridge.getIdToken();
         if (token) headers["Authorization"] = "Bearer " + token;
       } catch (_) { /* sin token, se hara la peticion sin auth */ }
