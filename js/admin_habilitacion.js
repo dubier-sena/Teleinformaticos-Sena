@@ -62,6 +62,95 @@
     return String(v || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
   }
 
+  // ── Aliases de archivo para sincronizacion Firestore ──────────────────────
+  // Cada script de guia define su STORAGE_FILE_ALIASES (pageFile → cloudAlias).
+  // El admin necesita conocer esos aliases para hacer cloudGetGuideData con
+  // la cloudAlias correcta. Mantener sincronizado con los scripts de guia.
+  const CLOUD_FILE_ALIASES = {
+    "grupo-10a-guia-01-induccion.html": "10a_guia.html",
+    "grupo-10b-guia-01-induccion.html": "10b_guia.html",
+    "grupo-10a-guia-02-herramientas-informaticas-digitales.html": "10a_guia2.html",
+    "grupo-10b-guia-02-herramientas-informaticas-digitales.html": "10b_guia2.html",
+    "grupo-10a-guia-03-planificar-informacion.html": "10a_guia3.html",
+    "grupo-10b-guia-03-planificar-informacion.html": "10b_guia3.html",
+    "grupo-11a-guia-05-herramientas-informaticas-digitales.html": "11a_guia.html",
+    "grupo-11b-guia-05-herramientas-informaticas-digitales.html": "11b_guia.html",
+    "grupo-11a-guia-06-planificar-informacion.html": "11a_guia6.html",
+    "grupo-11b-guia-06-planificar-informacion.html": "11b_guia6.html",
+    // Redes (Santa Barbara) usa su propio nombre sin alias
+  };
+
+  function getCloudFileName(pageFile) {
+    return CLOUD_FILE_ALIASES[pageFile] || pageFile;
+  }
+
+  // ── Sincronizacion de estado desde Firestore ──────────────────────────────
+  // Tras pull, los datos quedan en localStorage del navegador del admin con la
+  // misma clave que usa el aprendiz, asi getLockedActivities los detecta.
+  async function pullCloudStateForUsers(users, deps) {
+    const auth = deps?.auth || window.portalAuth;
+    const fb = window._firebaseDb;
+    if (!fb || typeof fb.cloudGetGuideData !== "function") {
+      throw new Error("Firebase no esta disponible.");
+    }
+    if (typeof auth?.getStudentStorageKey !== "function") {
+      throw new Error("portalAuth.getStudentStorageKey no esta disponible.");
+    }
+    const getStateKey = deps?.getGuideActivityStateKey;
+    if (typeof getStateKey !== "function") {
+      throw new Error("getGuideActivityStateKey no esta disponible.");
+    }
+    const onProgress = typeof deps?.onProgress === "function" ? deps.onProgress : null;
+    const totalUsers = users.length;
+    const results = { fetched: 0, merged: 0, errors: 0 };
+
+    for (let i = 0; i < users.length; i++) {
+      const user = users[i];
+      const usernameKey = user.usernameKey;
+      if (!usernameKey) continue;
+      const scopeKey = `student:${usernameKey}`;
+      const guideFiles = typeof auth.getGuidesForFicha === "function"
+        ? auth.getGuidesForFicha(user.ficha)
+        : [];
+      for (const pageFile of guideFiles) {
+        const stateKey = getStateKey(pageFile);
+        if (!stateKey) continue;
+        const cloudFileName = getCloudFileName(pageFile);
+        try {
+          results.fetched += 1;
+          if (onProgress) onProgress({ idx: i + 1, total: totalUsers, fullName: user.fullName, pageFile });
+          const remote = await fb.cloudGetGuideData(scopeKey, cloudFileName);
+          if (!remote || typeof remote !== "object") continue;
+          // El payload puede ser el state directo o estar dentro de .state
+          const remoteState = remote.state && typeof remote.state === "object"
+            ? remote.state
+            : remote;
+          if (!remoteState || typeof remoteState !== "object") continue;
+          // Mergear con lo que ya este en localStorage (last-write-wins por -locked).
+          const storageKey = auth.getStudentStorageKey(usernameKey, stateKey, { area: "guide-data" });
+          let localState = {};
+          try {
+            const raw = localStorage.getItem(storageKey);
+            localState = raw ? JSON.parse(raw) : {};
+          } catch (_) { localState = {}; }
+          const merged = Object.assign({}, localState, remoteState);
+          localStorage.setItem(storageKey, JSON.stringify(merged));
+          // Guardar tambien el meta updatedAt si viene
+          if (remote.updatedAt) {
+            try {
+              localStorage.setItem(`${storageKey}__meta`, JSON.stringify({ updatedAt: remote.updatedAt }));
+            } catch (_) { /* noop */ }
+          }
+          results.merged += 1;
+        } catch (err) {
+          results.errors += 1;
+          console.warn("[adminHabilitacion] pull failed for", usernameKey, pageFile, err);
+        }
+      }
+    }
+    return results;
+  }
+
   // ── Detección de actividades bloqueadas ────────────────────────────────────
   // Recibe una lista de usuarios y el catálogo de actividades por guía;
   // devuelve un array plano de { user, guideFile, guideTitle, activityId, activityLabel, lockedAt }.
@@ -177,7 +266,14 @@
         </label>
         <input type="search" id="hab-filter-activity" placeholder="Buscar actividad"
           value="${esc(filters.activity || "")}">
+        <button type="button" id="hab-cloud-sync"
+          class="btn secondary btn--sm"
+          title="Trae desde Firestore el estado de los aprendices de la ficha filtrada (o de todas las fichas) y refresca la lista de actividades bloqueadas. Util cuando el aprendiz guardo desde otro navegador o dispositivo."
+          style="display:inline-flex;align-items:center;gap:6px;font-weight:600">
+          &#128260; Cargar estado desde la nube
+        </button>
       </div>
+      <div id="hab-cloud-sync-status" style="margin-top:8px;font-size:.82rem;color:#4b5563;min-height:18px"></div>
     `;
 
     if (!locked.length) {
@@ -315,5 +411,7 @@
     recordUnlock,
     readUnlockLog,
     getLockedActivities,
+    pullCloudStateForUsers,
+    getCloudFileName,
   });
 })();
