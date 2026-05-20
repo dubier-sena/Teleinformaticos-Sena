@@ -235,6 +235,94 @@ const TRANSFER_RETO_ACTIVITY_STORES = [
   "transfer-reto-guia",
 ];
 
+// ── Actividad 9 (3.3.5 Ciberseguridad) ────────────────────────────────────
+const CIBERSEG_335_CHECKLIST_ITEMS = [
+  { id: "antivirus", label: "Tiene antivirus activo y actualizado" },
+  { id: "backup", label: "Sus archivos importantes tienen copia de seguridad reciente" },
+  { id: "contrasenas", label: "Usa contrasenas distintas para cuentas diferentes (no reutiliza)" },
+  { id: "bloqueo", label: "Bloquea la pantalla del equipo cuando se aleja del puesto de trabajo" },
+  { id: "actualizaciones", label: "Mantiene actualizado el sistema operativo y las aplicaciones" },
+  { id: "adjuntos", label: "No abre adjuntos ni enlaces de correos o WhatsApp sospechosos" },
+  { id: "remitente", label: "Verifica el remitente antes de hacer clic o responder" },
+  { id: "cuentas", label: "Separa la cuenta personal de la cuenta de trabajo" },
+  { id: "wifi", label: "Evita conectarse a redes Wi-Fi publicas sin proteccion (VPN)" },
+  { id: "reporte", label: "Reporta inmediatamente cualquier intento sospechoso al instructor o autoridad" },
+];
+
+const CIBERSEG_335_CHECKLIST_LEVELS = [
+  { value: "cumple", label: "Cumple", color: "#1b5e20", bg: "#e8f5e9" },
+  { value: "mejora", label: "Necesita mejora", color: "#8a5a00", bg: "#fff8e1" },
+  { value: "no-aplica", label: "No aplica", color: "#37474f", bg: "#eceff1" },
+];
+
+const CIBERSEG_335_SECTIONS = [
+  {
+    id: "amenazas",
+    activityId: "cibersegAmenazas335",
+    lockStateKey: "cibersegAmenazas335-locked",
+    sectionTitle: "Amenazas identificadas para el actor productivo",
+    buttonId: "btnGuardarCibersegAmenazas",
+    statusId: "cibersegAmenazas335Status",
+    deadlineMount: "#cibersegAmenazas335DeadlineControls",
+    activeText: "Guardar amenazas identificadas",
+    lockedText: "Amenazas guardadas",
+    emptyMessage: "Antes de guardar, responde las 2 preguntas sobre amenazas identificadas.",
+    fields: [
+      { key: "ciberseg:amenazas:listado", label: "Amenazas mas probables" },
+      { key: "ciberseg:amenazas:consecuencia", label: "Consecuencia mas grave si no se actua" },
+    ],
+  },
+  {
+    id: "guia",
+    activityId: "cibersegGuia335",
+    lockStateKey: "cibersegGuia335-locked",
+    sectionTitle: "Borrador de la Guia de ciberseguridad",
+    buttonId: "btnGuardarCibersegGuia",
+    statusId: "cibersegGuia335Status",
+    deadlineMount: "#cibersegGuia335DeadlineControls",
+    activeText: "Guardar borrador de la guia",
+    lockedText: "Borrador guardado",
+    emptyMessage: "Antes de guardar, completa el nombre del actor y al menos 8 recomendaciones.",
+    fields: [
+      { key: "ciberseg:guia:actor", label: "Nombre del actor productivo" },
+      { key: "ciberseg:guia:recomendaciones", label: "Recomendaciones (minimo 8, una por linea)" },
+    ],
+  },
+  {
+    id: "phishing",
+    activityId: "cibersegPhishing335",
+    lockStateKey: "cibersegPhishing335-locked",
+    sectionTitle: "Analisis del mensaje de phishing",
+    buttonId: "btnGuardarCibersegPhishing",
+    statusId: "cibersegPhishing335Status",
+    deadlineMount: "#cibersegPhishing335DeadlineControls",
+    activeText: "Guardar analisis",
+    lockedText: "Analisis guardado",
+    emptyMessage: "Antes de guardar, completa las 3 preguntas del analisis del phishing.",
+    fields: [
+      { key: "ciberseg:phishing:senales", label: "Senales que delatan que es falso" },
+      { key: "ciberseg:phishing:reaccion", label: "Que haria el actor productivo si lo recibe" },
+      { key: "ciberseg:phishing:guion", label: "Guion de 2 minutos para explicarle" },
+    ],
+  },
+  {
+    id: "checklist",
+    activityId: "cibersegChecklist335",
+    lockStateKey: "cibersegChecklist335-locked",
+    sectionTitle: "Lista de verificacion de ciberseguridad (10 items)",
+    buttonId: "btnGuardarCibersegChecklist",
+    statusId: "cibersegChecklist335Status",
+    deadlineMount: "#cibersegChecklist335DeadlineControls",
+    activeText: "Guardar lista de verificacion",
+    lockedText: "Lista guardada",
+    emptyMessage: "Antes de guardar, marca el estado de los 10 items de la lista.",
+    fields: CIBERSEG_335_CHECKLIST_ITEMS.map((item) => ({
+      key: `ciberseg:checklist:${item.id}`,
+      label: item.label,
+    })),
+  },
+];
+
 const SOPORTE_341_SECTIONS = [
   {
     id: "perfil",
@@ -548,6 +636,18 @@ const GUIDE2_DRIVE_ACTIVITY_TARGETS = [
       "Entrega sugerida: documento .docx, archivo .xlsx, enlace de Drive y correo formal de entrega.",
   },
   {
+    activityNumber: "3.3.5",
+    panelKey: "guide2-3-3-5",
+    deadlineActivityId: "ciberseguridad335",
+    description:
+      "Sube a Drive el documento \"Guia de ciberseguridad para [actor productivo]\" con minimo 8 recomendaciones concretas y la lista de verificacion de 10 items.",
+    note: "Entrega sugerida: documento .docx o .pdf de 1 pagina con la Guia de ciberseguridad para tu actor productivo.",
+    mountSelector: '[data-step-delivery-mount="ciberseguridad335"]',
+    activityContext: {
+      activityTitle: "Actividad 9 - Guia de ciberseguridad",
+    },
+  },
+  {
     activityNumber: "3.3.4",
     panelKey: "guide2-3-3-4",
     deadlineActivityId: "colaborativas334",
@@ -757,6 +857,8 @@ function initGuia2() {
   applyColaborativasLock();
   applyTransferRetoLock();
   applySoporte341Lock();
+  renderCibersegChecklist335();
+  applyCiberseg335Lock();
   renderQuizHerramientasStatus();
   initializeWordSearchGame();
   initializeMatchingGame();
@@ -5598,6 +5700,186 @@ window.guardarSoporteIdeacion = guardarSoporteIdeacion;
 window.guardarSoporteRetroalimentacion = guardarSoporteRetroalimentacion;
 window.guardarSoporteAutoeval = guardarSoporteAutoeval;
 
+// ════════════════════════════════════════════════════════════════════════════
+// CIBERSEGURIDAD 335 (Actividad 9) — handlers, render checklist y export Word
+// ════════════════════════════════════════════════════════════════════════════
+
+function getCibersegSectionById(id) {
+  return CIBERSEG_335_SECTIONS.find((s) => s.id === id);
+}
+
+function applyCibersegSectionLock(section) {
+  const locked = Boolean(state[section.lockStateKey]);
+  applyOptionalDeadlineGate(section.activityId, {
+    isLocked: locked,
+    fieldSelector: section.fields.map((f) => `[data-store="${f.key}"]`).join(","),
+    buttonId: section.buttonId,
+    statusId: section.statusId,
+    activeButtonText: section.activeText,
+    lockedButtonText: section.lockedText,
+    closedButtonText: "Entrega cerrada",
+    adminMount: { mountSelector: section.deadlineMount },
+    noticeMount: { mountSelector: section.deadlineMount },
+  });
+  const status = document.getElementById(section.statusId);
+  if (status) status.style.display = locked ? "" : "none";
+}
+
+function applyCiberseg335Lock() {
+  CIBERSEG_335_SECTIONS.forEach(applyCibersegSectionLock);
+}
+
+function guardarCiberseg335Section(section) {
+  if (!window.activityDeadlineManager?.canSubmit({ pageFile: GUIDE_DATA_FILE, activityId: section.activityId })) {
+    return;
+  }
+  const empty = section.fields.filter((f) => !readStoreValue(f.key));
+  if (empty.length > 0) {
+    alert(`${section.emptyMessage} Faltan ${empty.length} por responder.`);
+    const firstPending = document.querySelector(`[data-store="${empty[0].key}"]`);
+    if (firstPending && typeof firstPending.scrollIntoView === "function") {
+      firstPending.scrollIntoView({ behavior: "smooth", block: "center" });
+      firstPending.focus();
+    }
+    return;
+  }
+  section.fields.forEach((f) => {
+    state[f.key] = readStoreValue(f.key);
+  });
+  state[section.lockStateKey] = true;
+  saveState();
+  applyCibersegSectionLock(section);
+}
+
+function guardarCibersegAmenazas335() { guardarCiberseg335Section(getCibersegSectionById("amenazas")); }
+function guardarCibersegGuia335() { guardarCiberseg335Section(getCibersegSectionById("guia")); }
+function guardarCibersegPhishing335() { guardarCiberseg335Section(getCibersegSectionById("phishing")); }
+function guardarCibersegChecklist335() { guardarCiberseg335Section(getCibersegSectionById("checklist")); }
+
+window.guardarCibersegAmenazas335 = guardarCibersegAmenazas335;
+window.guardarCibersegGuia335 = guardarCibersegGuia335;
+window.guardarCibersegPhishing335 = guardarCibersegPhishing335;
+window.guardarCibersegChecklist335 = guardarCibersegChecklist335;
+
+function renderCibersegChecklist335() {
+  const tbody = document.getElementById("cibersegChecklistBody");
+  if (!tbody) return;
+  const options = CIBERSEG_335_CHECKLIST_LEVELS
+    .map((lvl) => `<option value="${lvl.value}">${escapeHtml(lvl.label)}</option>`)
+    .join("");
+  tbody.innerHTML = CIBERSEG_335_CHECKLIST_ITEMS
+    .map((item, i) => `
+      <tr data-ciberseg-row="${escapeHtml(item.id)}">
+        <td style="text-align:center;font-weight:700;color:#1b5e20">${i + 1}</td>
+        <td>${escapeHtml(item.label)}</td>
+        <td>
+          <select data-store="ciberseg:checklist:${escapeHtml(item.id)}" data-track aria-label="Estado: ${escapeHtml(item.label)}" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #bcd2c0;background:#fff;font-family:inherit;font-size:.88rem">
+            <option value="">— Selecciona —</option>
+            ${options}
+          </select>
+        </td>
+      </tr>`)
+    .join("");
+}
+
+function buildCibersegGuia335WordDocument(learnerName) {
+  const selection = getGuideSelection();
+  const today = new Date().toLocaleDateString("es-CO");
+  const title = "Actividad 9: Guia de ciberseguridad para actor productivo";
+  const actor = String(state["ciberseg:guia:actor"] || "").trim() || "(actor productivo)";
+  const recomendaciones = String(state["ciberseg:guia:recomendaciones"] || "").trim();
+  const amenazas = String(state["ciberseg:amenazas:listado"] || "").trim();
+  const consecuencia = String(state["ciberseg:amenazas:consecuencia"] || "").trim();
+  const senales = String(state["ciberseg:phishing:senales"] || "").trim();
+  const reaccion = String(state["ciberseg:phishing:reaccion"] || "").trim();
+  const guion = String(state["ciberseg:phishing:guion"] || "").trim();
+  const checklistLevelLabels = {
+    "cumple": "Cumple",
+    "mejora": "Necesita mejora",
+    "no-aplica": "No aplica",
+  };
+  const checklistRows = CIBERSEG_335_CHECKLIST_ITEMS.map((item, i) => {
+    const value = String(state[`ciberseg:checklist:${item.id}`] || "").trim();
+    const label = checklistLevelLabels[value] || "(sin marcar)";
+    return `<tr><td style="text-align:center">${i + 1}</td><td>${escapeWordValue(item.label)}</td><td>${escapeWordValue(label)}</td></tr>`;
+  }).join("");
+  const recomList = recomendaciones
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .map((l) => `<li>${escapeWordValue(l.replace(/^\d+[\.\)]\s*/, ""))}</li>`)
+    .join("");
+
+  return `<!DOCTYPE html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<title>${escapeHtml(title)} - ${escapeHtml(learnerName)}</title>
+<style>
+  ${(window.senaExportStyles && window.senaExportStyles.getBaseStyles && window.senaExportStyles.getBaseStyles()) || '@page { size: A4; margin: 2.54cm; } body { font-family: "Times New Roman", Times, serif; font-size: 12pt; line-height: 1.5; color: #1a1a1a; } table { width: 100%; border-collapse: collapse; } th, td { padding: 6pt; vertical-align: top; border: 1px solid #b7c9bc; }'}
+  .header { text-align: center; border-bottom: 2px solid #1b5e20; padding-bottom: 8pt; margin-bottom: 14pt; }
+  .meta td { font-size: 10.5pt; }
+  .meta .label { width: 28%; font-weight: 700; background: #f3f4f6; }
+  .data td.label { width: 34%; font-weight: 700; background: #f3f4f6; font-size: 10.5pt; }
+</style>
+</head>
+<body>
+  <div class="header">
+    <h1>${escapeHtml(title)}</h1>
+    <p>${escapeWordValue(GUIDE2_WORD_METADATA.guideName)}</p>
+  </div>
+  ${buildInstitutionalWordHeader(title, learnerName, selection, today)}
+
+  <h2 style="margin-top:14pt;color:#1b5e20">1. Actor productivo</h2>
+  <p>${escapeWordValue(actor)}</p>
+
+  <h2 style="margin-top:14pt;color:#1b5e20">2. Amenazas identificadas</h2>
+  <p><strong>Amenazas mas probables:</strong></p>
+  <p>${escapeWordValue(amenazas)}</p>
+  <p><strong>Consecuencia mas grave si no se actua:</strong></p>
+  <p>${escapeWordValue(consecuencia)}</p>
+
+  <h2 style="margin-top:14pt;color:#1b5e20">3. Recomendaciones de ciberseguridad</h2>
+  ${recomList ? `<ol>${recomList}</ol>` : "<p>(Sin recomendaciones registradas)</p>"}
+
+  <h2 style="margin-top:14pt;color:#1b5e20">4. Analisis del mensaje de phishing</h2>
+  <p><strong>Senales que delatan que es falso:</strong></p>
+  <p>${escapeWordValue(senales)}</p>
+  <p><strong>Que haria el actor productivo si lo recibe:</strong></p>
+  <p>${escapeWordValue(reaccion)}</p>
+  <p><strong>Guion de 2 minutos para explicarle:</strong></p>
+  <p>${escapeWordValue(guion)}</p>
+
+  <h2 style="margin-top:14pt;color:#1b5e20">5. Lista de verificacion de ciberseguridad</h2>
+  <table class="data"><thead><tr><th>#</th><th>Item</th><th>Estado</th></tr></thead><tbody>${checklistRows}</tbody></table>
+
+  <p class="note" style="margin-top:12pt;font-size:10pt;color:#4b5563">Documento generado desde la guia interactiva. Revise y complemente antes de la entrega final.</p>
+</body>
+</html>`;
+}
+
+function exportCibersegGuia335ToWord() {
+  const learnerName = getCurrentLearnerName();
+  if (!learnerName) {
+    alert("Antes de exportar, inicie sesion para que su nombre aparezca en el documento.");
+    return;
+  }
+  const selection = getGuideSelection();
+  const doc = buildCibersegGuia335WordDocument(learnerName);
+  const blob = new Blob(["﻿", doc], { type: "application/msword" });
+  const url = URL.createObjectURL(blob);
+  const safeName = learnerName.replace(/[^\w\s-]/g, "").replace(/\s+/g, "_");
+  const ficha = selection.ficha ? `_${selection.ficha}` : "";
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `Guia2_Actividad9_Ciberseguridad${ficha}_${safeName || "Aprendiz"}.doc`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+window.exportCibersegGuia335ToWord = exportCibersegGuia335ToWord;
+
 function buildSoporte341WordDocument(learnerName) {
   const selection = getGuideSelection();
   const today = new Date().toLocaleDateString("es-CO");
@@ -5687,6 +5969,7 @@ window.addEventListener("activity-deadlines-updated", () => {
   applyColaborativasLock();
   applyTransferRetoLock();
   applySoporte341Lock();
+  applyCiberseg335Lock();
 });
 
 function bindEvents() {
