@@ -235,6 +235,100 @@ const TRANSFER_RETO_ACTIVITY_STORES = [
   "transfer-reto-guia",
 ];
 
+const SOPORTE_341_SECTIONS = [
+  {
+    id: "perfil",
+    activityId: "soportePerfil341",
+    lockStateKey: "soportePerfil341-locked",
+    sectionTitle: "Perfil Digital del actor productivo",
+    buttonId: "btnGuardarSoportePerfil",
+    statusId: "soportePerfilStatus",
+    deadlineMount: "#soportePerfilDeadlineControls",
+    activeText: "Guardar Perfil Digital",
+    lockedText: "Perfil guardado",
+    emptyMessage: "Antes de guardar el Perfil Digital, complete las 5 preguntas del actor productivo.",
+    fields: [
+      { key: "soporte:actor:nombre", label: "Nombre o tipo de negocio / actor productivo" },
+      { key: "soporte:actor:actividades", label: "Actividades que realiza" },
+      { key: "soporte:actor:herramientas-actuales", label: "Herramientas que usa actualmente" },
+      { key: "soporte:actor:dificultades", label: "Mayores dificultades con la tecnologia" },
+      { key: "soporte:actor:dispositivos", label: "Dispositivos disponibles" },
+    ],
+  },
+  {
+    id: "problema",
+    activityId: "soporteProblema341",
+    lockStateKey: "soporteProblema341-locked",
+    sectionTitle: "Definicion del problema",
+    buttonId: "btnGuardarSoporteProblema",
+    statusId: "soporteProblemaStatus",
+    deadlineMount: "#soporteProblemaDeadlineControls",
+    activeText: "Guardar definicion del problema",
+    lockedText: "Definicion guardada",
+    emptyMessage: "Antes de guardar, complete las dos preguntas de la definicion del problema.",
+    fields: [
+      { key: "soporte:problema:descripcion", label: "Principal obstaculo digital (maximo 3 oraciones)" },
+      { key: "soporte:problema:consecuencia", label: "Consecuencia en su actividad economica" },
+    ],
+  },
+  {
+    id: "ideacion",
+    activityId: "soporteIdeacion341",
+    lockStateKey: "soporteIdeacion341-locked",
+    sectionTitle: "Ideacion: herramientas propuestas (maximo 3)",
+    buttonId: "btnGuardarSoporteIdeacion",
+    statusId: "soporteIdeacionStatus",
+    deadlineMount: "#soporteIdeacionDeadlineControls",
+    activeText: "Guardar herramientas propuestas",
+    lockedText: "Herramientas guardadas",
+    emptyMessage: "Antes de guardar, complete las 3 herramientas con su nombre y justificacion.",
+    fields: [
+      { key: "soporte:herramienta1:nombre", label: "Herramienta 1" },
+      { key: "soporte:herramienta1:justificacion", label: "Justificacion herramienta 1" },
+      { key: "soporte:herramienta2:nombre", label: "Herramienta 2" },
+      { key: "soporte:herramienta2:justificacion", label: "Justificacion herramienta 2" },
+      { key: "soporte:herramienta3:nombre", label: "Herramienta 3" },
+      { key: "soporte:herramienta3:justificacion", label: "Justificacion herramienta 3" },
+    ],
+  },
+  {
+    id: "retroalimentacion",
+    activityId: "soporteRetro341",
+    lockStateKey: "soporteRetro341-locked",
+    sectionTitle: "Notas de la retroalimentacion recibida",
+    buttonId: "btnGuardarSoporteRetro",
+    statusId: "soporteRetroStatus",
+    deadlineMount: "#soporteRetroDeadlineControls",
+    activeText: "Guardar notas de la retroalimentacion",
+    lockedText: "Notas guardadas",
+    emptyMessage: "Antes de guardar las notas, complete las 4 secciones de retroalimentacion.",
+    fields: [
+      { key: "soporte:retro:instructor", label: "Sugerencias del instructor" },
+      { key: "soporte:retro:companeros", label: "Sugerencias de companeros o de otros equipos" },
+      { key: "soporte:retro:fortalezas", label: "Fortalezas destacadas" },
+      { key: "soporte:retro:ajustes", label: "Ajustes que aplicare antes de la entrega final" },
+    ],
+  },
+  {
+    id: "autoeval",
+    activityId: "soporteAutoeval341",
+    lockStateKey: "soporteAutoeval341-locked",
+    sectionTitle: "Rubrica de autoevaluacion del aprendizaje",
+    buttonId: "btnGuardarSoporteAutoeval",
+    statusId: "soporteAutoevalStatus",
+    deadlineMount: "#soporteAutoevalDeadlineControls",
+    activeText: "Guardar autoevaluacion",
+    lockedText: "Autoevaluacion guardada",
+    emptyMessage: "Antes de guardar la autoevaluacion, responda las 4 preguntas de reflexion.",
+    fields: [
+      { key: "soporte:auto:aprendido", label: "Que aprendiste con esta actividad" },
+      { key: "soporte:auto:costo", label: "Que te costo mas" },
+      { key: "soporte:auto:diferente", label: "Que harias diferente si volvieras a hacerlo" },
+      { key: "soporte:auto:reforzar", label: "Que aun necesitas reforzar" },
+    ],
+  },
+];
+
 const evidenceRows = [
   {
     phase: "An?lisis",
@@ -464,11 +558,33 @@ const GUIDE2_DRIVE_ACTIVITY_TARGETS = [
   },
   {
     activityNumber: "3.4.1",
-    panelKey: "guide2-3-4-1",
-    deadlineActivityId: "transferReto341",
+    panelKey: "guide2-3-4-1-portafolio-equipo",
+    deadlineActivityId: "portafolioEquipo341",
     description:
-      "Sube a Drive el perfil digital, la herramienta construida, la gu?a de uso r?pido y la presentaci?n final de la soluci?n digital.",
-    note: "Entrega sugerida: portafolio final organizado en las carpetas 01 a 04 y compartido con el instructor.",
+      "Paso 9 - Entrega del portafolio final del equipo (estructura 01_Perfil_Digital, 02_Herramienta, 03_Guia_Uso_Rapido, 04_Presentacion). Cualquier integrante del equipo puede subir el archivo; quedara registrado para todo el equipo.",
+    note: "Entrega sugerida: archivo .zip con las 4 carpetas o enlace de la carpeta compartida en Drive.",
+    mountSelector: '[data-step-delivery-mount="entregaPortafolio341"]',
+    isTeamDelivery: true,
+  },
+  {
+    activityNumber: "3.4.1",
+    panelKey: "guide2-3-4-1-paso5-herramienta",
+    deadlineActivityId: "entregaHerramienta341",
+    description:
+      "Paso 5 - Entrega la herramienta digital construida para el actor productivo del caso asignado (Excel/Calc, Word/Writer, presentacion o carpeta de Drive). Debe ser completamente funcional, con logo ficticio del negocio y lenguaje adaptado al usuario.",
+    note: "Entrega sugerida: archivo principal de la herramienta (.xlsx, .docx, .pptx o enlace de Drive). El archivo queda asociado al caso que te fue asignado.",
+    mountSelector: '[data-step-delivery-mount="entregaHerramienta341"]',
+    caseAwareTitle: "Actividad 10 - Paso 5 - Herramienta digital",
+  },
+  {
+    activityNumber: "3.4.1",
+    panelKey: "guide2-3-4-1-paso6-guiauso",
+    deadlineActivityId: "entregaGuiaUso341",
+    description:
+      "Paso 6 - Entrega la Guia de uso rapido (maximo 2 paginas) en lenguaje sencillo, con instrucciones paso a paso y al menos 3 capturas o ilustraciones. Debe poder seguirla un usuario sin experiencia tecnica.",
+    note: "Entrega sugerida: documento .docx o .pdf con la guia de uso del actor productivo del caso asignado.",
+    mountSelector: '[data-step-delivery-mount="entregaGuiaUso341"]',
+    caseAwareTitle: "Actividad 10 - Paso 6 - Guia de uso rapido",
   },
 ];
 
@@ -640,6 +756,7 @@ function initGuia2() {
   applySistemasLock();
   applyColaborativasLock();
   applyTransferRetoLock();
+  applySoporte341Lock();
   renderQuizHerramientasStatus();
   initializeWordSearchGame();
   initializeMatchingGame();
@@ -3509,9 +3626,14 @@ function openGuia2SupportPanel(key) {
   }
 
   title.textContent = content.title;
-  body.innerHTML = ACTIVITY_CASE_ASSIGNMENTS[key]
-    ? buildAssignedActivityCaseHtml(key)
-    : content.html;
+  if (key === "activity10-cases") {
+    body.innerHTML = buildActivity10PanelHtml();
+    attachActivity10PanelHandlers(body);
+  } else if (ACTIVITY_CASE_ASSIGNMENTS[key]) {
+    body.innerHTML = buildAssignedActivityCaseHtml(key);
+  } else {
+    body.innerHTML = content.html;
+  }
   panel.style.transform = "translateX(0)";
   backdrop.style.opacity = "1";
   backdrop.style.pointerEvents = "auto";
@@ -3629,13 +3751,674 @@ function closeActivityQR() {
 }
 
 function renderDriveDeliveryPanel() {
+  const assignedCase = getAssignedActivityCase("activity10-cases");
+  const team = getEquipo341FromState();
+  // El panel del portafolio cambia su contexto cuando el equipo se confirma o
+  // cambia: lo eliminamos para que el helper lo recree con la metadata actual.
+  const stalePortfolioPanel = document.querySelector('[data-drive-panel="guide2-3-4-1-portafolio-equipo"]');
+  if (stalePortfolioPanel) stalePortfolioPanel.remove();
+  const targets = GUIDE2_DRIVE_ACTIVITY_TARGETS.map((target) => {
+    let nextTarget = target;
+    if (target.caseAwareTitle && assignedCase) {
+      const caseSummary = `Caso ${assignedCase.number}: ${assignedCase.title}`;
+      nextTarget = Object.assign({}, nextTarget, {
+        description: `${nextTarget.description} Caso asignado: ${caseSummary}.`,
+        activityContext: Object.assign({}, nextTarget.activityContext || {}, {
+          activityTitle: `${target.caseAwareTitle} - ${caseSummary}`,
+        }),
+      });
+    }
+    if (target.isTeamDelivery && team) {
+      // Naming dedicado SOLO para el portafolio de Actividad 10.
+      // Folder destino: "Ficha N / Guia 2 / 3.4.1 - {portfolioTitle}".
+      // portfolioTitle ejemplos:
+      //   "Caso 1 - Papeleria La Esperanza - Equipo G3F7 - JPerez_ALopez_MGomez_RDiaz"
+      //   "Caso 1 - Papeleria La Esperanza - Individual - Perez_Juan"
+      const portfolioTitle = buildPortfolioFolderTitle(team, assignedCase);
+      const descriptionSuffix = team.mode === "grupo" && Array.isArray(team.members)
+        ? ` Equipo ${buildEquipo341Code4(team)}: ${team.members.map((m) => m.fullName).join(", ")}.`
+        : ` Modalidad individual: ${getCurrentFullName() || "Aprendiz"}.`;
+      nextTarget = Object.assign({}, nextTarget, {
+        description: `${nextTarget.description}${descriptionSuffix}`,
+        activityContext: Object.assign({}, nextTarget.activityContext || {}, {
+          activityTitle: portfolioTitle,
+        }),
+      });
+    }
+    return nextTarget;
+  });
   window.sharedDriveDelivery?.appendDriveDeliveryPanels({
-    targets: GUIDE2_DRIVE_ACTIVITY_TARGETS,
+    targets,
     helperSuffix: "La carpeta se define automaticamente segun la ficha activa.",
     hideQr: true,
     onDriveClick: openDriveFolder,
   });
+  relocateStepDeliveryPanels();
+  renderActivity10AssignedCase();
+  renderEquipo341Block();
 }
+
+function relocateStepDeliveryPanels() {
+  GUIDE2_DRIVE_ACTIVITY_TARGETS.forEach((target) => {
+    if (!target.mountSelector || !target.panelKey) {
+      return;
+    }
+    const mount = document.querySelector(target.mountSelector);
+    const panel = document.querySelector(`[data-drive-panel="${target.panelKey}"]`);
+    if (!mount || !panel) {
+      return;
+    }
+    if (panel.parentElement !== mount) {
+      mount.innerHTML = "";
+      mount.appendChild(panel);
+    }
+  });
+}
+
+function renderActivity10AssignedCase() {
+  const mount = document.getElementById("actividad10CasoAsignado");
+  if (!mount) {
+    return;
+  }
+  const assignedCase = getAssignedActivityCase("activity10-cases");
+  if (!assignedCase) {
+    mount.innerHTML = "";
+    return;
+  }
+  const lines = assignedCase.lines
+    .map(
+      ([label, value]) => `
+        <li><strong>${escapeHtml(label)}:</strong> ${escapeHtml(value)}</li>`
+    )
+    .join("");
+  mount.innerHTML = `
+    <div style="padding:14px 16px;border:1px solid #cfe0d3;border-left:5px solid #0b6b35;border-radius:10px;background:linear-gradient(180deg,#f1f9f3,#ffffff)">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <span aria-hidden="true" style="font-size:1.1rem">&#127922;</span>
+        <strong style="color:#0b6b35;font-size:.95rem">Caso ${escapeHtml(String(assignedCase.number))} asignado: ${escapeHtml(assignedCase.title)}</strong>
+      </div>
+      <p style="margin:0 0 8px;font-size:.86rem;color:#455a64">Tu herramienta digital y tu gu&iacute;a de uso r&aacute;pido deben dise&ntilde;arse para este actor productivo. Las entregas de los pasos 5 y 6 quedar&aacute;n vinculadas autom&aacute;ticamente al caso.</p>
+      <ul style="margin:0 0 0 18px;padding:0;font-size:.85rem;line-height:1.55;color:#37474f">${lines}</ul>
+    </div>
+  `;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// MODALIDAD DE TRABAJO PARA ACTIVIDAD 10 (SOLO / EQUIPO + PORTAFOLIO COMPARTIDO)
+// ════════════════════════════════════════════════════════════════════════════
+
+const EQUIPO_341_STATE_KEY = "equipo341";
+const EQUIPO_341_EMAIL_DOMAIN = "@sena-portal.local";
+
+// Estado transitorio del wizard (vive solo mientras el panel esta abierto).
+let equipo341WizardState = null;
+let equipo341InitialFetchDone = false;
+
+function getCurrentUsernameKey() {
+  const session = window.portalAuth?.getCurrentSession?.();
+  return String(session?.usernameKey || session?.user?.usernameKey || "").trim().toLowerCase();
+}
+
+function getCurrentFullName() {
+  return getCurrentLearnerName();
+}
+
+function getEquipo341FromState() {
+  const raw = state[EQUIPO_341_STATE_KEY];
+  if (!raw || typeof raw !== "object") return null;
+  if (raw.mode === "solo") return raw;
+  if (raw.mode === "grupo" && Array.isArray(raw.members) && raw.members.length >= 2) return raw;
+  return null;
+}
+
+function setEquipo341InState(value) {
+  state[EQUIPO_341_STATE_KEY] = value;
+  saveState();
+}
+
+function clearEquipo341FromState() {
+  delete state[EQUIPO_341_STATE_KEY];
+  delete state[`${EQUIPO_341_STATE_KEY}-delivery`];
+  saveState();
+}
+
+function buildEquipo341GroupKey(ficha, memberKeys) {
+  const sorted = memberKeys.slice().map((k) => String(k || "").trim().toLowerCase()).sort();
+  const seed = `g2-act10:${ficha}:${sorted.join("__")}`;
+  return `g2act10_${ficha}_${hashString(seed).toString(16)}`;
+}
+
+// ── Helpers de nomenclatura para el folder del portafolio ────────────────────
+// Codigo corto de equipo: 4 caracteres hex tomados del hash determinista de los
+// memberKeys ordenados. Mismo set de miembros => mismo codigo.
+function buildEquipo341Code4(team) {
+  if (!team || !Array.isArray(team.memberKeys)) return "";
+  const sorted = team.memberKeys.slice().map((k) => String(k || "").trim().toLowerCase()).sort();
+  const seed = `code:${team.ficha || ""}:${sorted.join("__")}`;
+  const hex = hashString(seed).toString(16).toUpperCase().padStart(8, "0");
+  return hex.slice(0, 4);
+}
+
+function getFullNameParts(fullName) {
+  return String(fullName || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+// "JPerez" -> primera letra del primer nombre + apellido (ultima palabra).
+function formatInitialLastname(fullName) {
+  const parts = getFullNameParts(fullName);
+  if (parts.length === 0) return "Aprendiz";
+  if (parts.length === 1) return parts[0];
+  const initial = parts[0].charAt(0).toUpperCase();
+  const last = parts[parts.length - 1];
+  return `${initial}${last}`;
+}
+
+// "Perez_Juan" -> Apellido (ultima palabra) + nombre (primera palabra).
+function formatLastnameFirstName(fullName) {
+  const parts = getFullNameParts(fullName);
+  if (parts.length === 0) return "Aprendiz";
+  if (parts.length === 1) return parts[0];
+  const last = parts[parts.length - 1];
+  const first = parts[0];
+  return `${last}_${first}`;
+}
+
+// Para el nombre del caso, tomar la parte antes del " - " (sin la localidad).
+// "Papeleria La Esperanza - Puerto Boyaca" -> "Papeleria La Esperanza".
+function getCaseActorShortName(assignedCase) {
+  if (!assignedCase || !assignedCase.title) return "";
+  return String(assignedCase.title).split(" - ")[0].trim();
+}
+
+// Construye el nombre del folder del portafolio (sin el prefijo "3.4.1 - ").
+function buildPortfolioFolderTitle(team, assignedCase) {
+  const caseTag = assignedCase ? `Caso ${assignedCase.number}` : "Caso ND";
+  const actorTag = getCaseActorShortName(assignedCase);
+  const caseAndActor = actorTag ? `${caseTag} - ${actorTag}` : caseTag;
+  if (team.mode === "grupo" && Array.isArray(team.members)) {
+    const code4 = buildEquipo341Code4(team);
+    const members = team.members
+      .slice()
+      .sort((a, b) => formatInitialLastname(a.fullName).localeCompare(formatInitialLastname(b.fullName), "es"))
+      .map((m) => formatInitialLastname(m.fullName))
+      .join("_");
+    return `${caseAndActor} - Equipo ${code4} - ${members}`;
+  }
+  const selfName = getCurrentFullName() || "Aprendiz";
+  return `${caseAndActor} - Individual - ${formatLastnameFirstName(selfName)}`;
+}
+
+function getRosterForCurrentFicha() {
+  const selection = getGuideSelection();
+  const ficha = String(selection.ficha || "").trim();
+  if (!ficha || !window.portalAuth?.getUsers) return [];
+  const allUsers = window.portalAuth.getUsers() || [];
+  return allUsers
+    .filter((u) => String(u?.ficha || "").trim() === ficha)
+    .filter((u) => u?.role !== "admin")
+    .map((u) => ({
+      usernameKey: String(u.usernameKey || "").trim().toLowerCase(),
+      fullName: String(u.fullName || u.username || "").trim(),
+      ficha,
+    }))
+    .filter((u) => u.usernameKey && u.fullName)
+    .sort((a, b) => a.fullName.localeCompare(b.fullName, "es"));
+}
+
+function formatEquipo341DateForDisplay(iso) {
+  try {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return String(iso || "");
+    return d.toLocaleString("es-CO", { timeZone: "America/Bogota" });
+  } catch (_) {
+    return String(iso || "");
+  }
+}
+
+// ── Panel lateral: wizard + caso ─────────────────────────────────────────────
+
+function buildActivity10PanelHtml() {
+  const team = getEquipo341FromState();
+  const caseHtml = buildAssignedActivityCaseHtml("activity10-cases");
+  if (team) {
+    return buildActivity10SummaryHtml(team) + caseHtml;
+  }
+  return buildActivity10WizardHtml() + caseHtml;
+}
+
+function buildActivity10WizardHtml() {
+  // Estado transitorio en module-scope. Si no existe, inicializar.
+  if (!equipo341WizardState) {
+    equipo341WizardState = { mode: null, size: null, selectedKeys: [] };
+  }
+  const selfKey = getCurrentUsernameKey();
+  const selfName = getCurrentFullName();
+  const selection = getGuideSelection();
+  const ficha = String(selection.ficha || "").trim();
+  const sessionMissing = !selfKey || !ficha;
+
+  let body = "";
+  if (sessionMissing) {
+    body = `<p style="margin:0;color:#a13029;font-size:.88rem">Inicia sesion como aprendiz con ficha asignada para configurar la modalidad.</p>`;
+    return wrapActivity10WizardCard(body);
+  }
+
+  // PASO 1: Solo o grupo
+  const isSolo = equipo341WizardState.mode === "solo";
+  const isGrupo = equipo341WizardState.mode === "grupo";
+  body += `
+    <div style="margin-bottom:12px">
+      <div style="font-weight:700;color:#0b6b35;font-size:.92rem;margin-bottom:6px">1. ¿Vas a desarrollar la actividad solo o en grupo?</div>
+      <label style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid ${isSolo ? "#0b6b35" : "#cfe0d3"};border-radius:8px;cursor:pointer;background:${isSolo ? "#e8f5e9" : "#ffffff"};margin-bottom:6px">
+        <input type="radio" name="equipo341-mode" value="solo" ${isSolo ? "checked" : ""} data-equipo341-mode>
+        <span style="font-weight:600;color:#1b5e20">Trabajaré solo/a</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid ${isGrupo ? "#0b6b35" : "#cfe0d3"};border-radius:8px;cursor:pointer;background:${isGrupo ? "#e8f5e9" : "#ffffff"}">
+        <input type="radio" name="equipo341-mode" value="grupo" ${isGrupo ? "checked" : ""} data-equipo341-mode>
+        <span style="font-weight:600;color:#1b5e20">Trabajaré en grupo</span>
+      </label>
+    </div>`;
+
+  // PASO 2: Cantidad (solo si grupo)
+  if (isGrupo) {
+    const size = equipo341WizardState.size;
+    body += `
+      <div style="margin-bottom:12px">
+        <div style="font-weight:700;color:#0b6b35;font-size:.92rem;margin-bottom:6px">2. ¿Cuántos compañeros además de ti?</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          ${[2, 3].map((n) => `
+            <label style="flex:1;min-width:120px;display:flex;align-items:center;gap:6px;padding:8px 10px;border:1px solid ${size === n ? "#0b6b35" : "#cfe0d3"};border-radius:8px;cursor:pointer;background:${size === n ? "#e8f5e9" : "#ffffff"}">
+              <input type="radio" name="equipo341-size" value="${n}" ${size === n ? "checked" : ""} data-equipo341-size>
+              <span style="font-weight:600;color:#1b5e20">${n} compañeros (equipo de ${n + 1})</span>
+            </label>`).join("")}
+        </div>
+      </div>`;
+  }
+
+  // PASO 3: Roster (solo si grupo + size definido)
+  if (isGrupo && equipo341WizardState.size) {
+    const roster = getRosterForCurrentFicha().filter((u) => u.usernameKey !== selfKey);
+    if (roster.length === 0) {
+      body += `
+        <div style="padding:10px 12px;background:#fdecea;border-left:4px solid #a13029;border-radius:6px;color:#a13029;font-size:.86rem">
+          Aún no hay compañeros registrados en tu ficha (${escapeHtml(ficha)}). Pídeles que inicien sesión en el portal al menos una vez para que aparezcan aquí.
+        </div>`;
+    } else {
+      const selectedSet = new Set(equipo341WizardState.selectedKeys);
+      const rows = roster
+        .map((u) => {
+          const checked = selectedSet.has(u.usernameKey);
+          return `
+            <label style="display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid ${checked ? "#0b6b35" : "#e0e8e2"};border-radius:6px;cursor:pointer;background:${checked ? "#e8f5e9" : "#ffffff"}">
+              <input type="checkbox" data-equipo341-key="${escapeHtml(u.usernameKey)}" data-equipo341-name="${escapeHtml(u.fullName)}" ${checked ? "checked" : ""}>
+              <span style="color:#37474f">${escapeHtml(u.fullName)}</span>
+            </label>`;
+        })
+        .join("");
+      body += `
+        <div style="margin-bottom:12px">
+          <div style="font-weight:700;color:#0b6b35;font-size:.92rem;margin-bottom:6px">3. Selecciona a tus compañeros de la ficha ${escapeHtml(ficha)} (marca exactamente ${equipo341WizardState.size}):</div>
+          <div style="padding:8px 10px;background:#f6fbf6;border:1px solid #cfe0d3;border-radius:8px;margin-bottom:6px;font-size:.85rem;color:#1b5e20"><strong>Tú:</strong> ${escapeHtml(selfName || selfKey)} (ya incluido)</div>
+          <div style="display:flex;flex-direction:column;gap:6px;max-height:240px;overflow:auto;padding:8px 10px;border:1px solid #cfe0d3;border-radius:8px;background:#ffffff">${rows}</div>
+          <div id="equipo341WizardCounter" style="margin-top:6px;font-size:.82rem;color:#4b5563"></div>
+        </div>`;
+    }
+  }
+
+  // Botón confirmar
+  const canConfirm = isSolo || (isGrupo && equipo341WizardState.size && equipo341WizardState.selectedKeys.length === equipo341WizardState.size);
+  body += `
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+      <button type="button" data-equipo341-confirm style="display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border:none;background:${canConfirm ? "#0b6b35" : "#b0bec5"};color:#fff;border-radius:8px;font-family:inherit;font-size:.9rem;font-weight:700;cursor:${canConfirm ? "pointer" : "not-allowed"}" ${canConfirm ? "" : "disabled"}>&#9989; Confirmar modalidad</button>
+    </div>`;
+  return wrapActivity10WizardCard(body);
+}
+
+function wrapActivity10WizardCard(inner) {
+  return `
+    <div class="tp-sec">
+      <p class="tp-h">Antes de empezar la Actividad 10</p>
+      <div class="tp-card" style="border-left:5px solid #0b6b35">
+        <p style="margin:0 0 10px;color:#455a64;font-size:.88rem;line-height:1.55">Para que el portafolio final llegue correctamente al instructor, dinos como vas a trabajar.</p>
+        ${inner}
+      </div>
+    </div>`;
+}
+
+function buildActivity10SummaryHtml(team) {
+  if (team.mode === "solo") {
+    return `
+      <div class="tp-sec">
+        <p class="tp-h">Modalidad confirmada</p>
+        <div class="tp-card" style="border-left:5px solid #0b6b35">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <span aria-hidden="true" style="font-size:1.2rem">&#128104;</span>
+            <strong style="color:#0b6b35;font-size:.95rem">Trabajo individual</strong>
+          </div>
+          <p style="margin:0 0 8px;color:#455a64;font-size:.86rem">Vas a desarrollar la actividad por tu cuenta. El portafolio final se entregara con tu nombre.</p>
+          <button type="button" data-equipo341-reset style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid #f5c1bb;background:#fdecea;color:#a13029;border-radius:6px;font-family:inherit;font-size:.82rem;cursor:pointer;font-weight:600">&#128683; Cambiar modalidad</button>
+        </div>
+      </div>`;
+  }
+  const memberList = team.members
+    .map((m) => `<li>${escapeHtml(m.fullName)} <span style="color:#78909c;font-size:.78rem">(${escapeHtml(m.usernameKey)})</span></li>`)
+    .join("");
+  return `
+    <div class="tp-sec">
+      <p class="tp-h">Modalidad confirmada</p>
+      <div class="tp-card" style="border-left:5px solid #0b6b35">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <span aria-hidden="true" style="font-size:1.2rem">&#128101;</span>
+          <strong style="color:#0b6b35;font-size:.95rem">Equipo de ${team.members.length} integrantes</strong>
+        </div>
+        <ul style="margin:6px 0 8px 18px;padding:0;font-size:.88rem;color:#37474f;line-height:1.55">${memberList}</ul>
+        <p style="margin:0 0 8px;color:#455a64;font-size:.84rem">Cualquiera del equipo puede subir el portafolio final desde el paso 9. Los demas integrantes lo veran automaticamente como entregado.</p>
+        <button type="button" data-equipo341-reset style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid #f5c1bb;background:#fdecea;color:#a13029;border-radius:6px;font-family:inherit;font-size:.82rem;cursor:pointer;font-weight:600">&#128683; Cambiar modalidad</button>
+      </div>
+    </div>`;
+}
+
+function attachActivity10PanelHandlers(root) {
+  if (!root) return;
+
+  // Selección de modalidad (radios)
+  root.querySelectorAll("[data-equipo341-mode]").forEach((radio) => {
+    radio.addEventListener("change", () => {
+      if (!equipo341WizardState) equipo341WizardState = {};
+      equipo341WizardState.mode = radio.value;
+      if (radio.value === "solo") {
+        equipo341WizardState.size = null;
+        equipo341WizardState.selectedKeys = [];
+      }
+      rerenderActivity10Panel();
+    });
+  });
+
+  // Selección de cantidad
+  root.querySelectorAll("[data-equipo341-size]").forEach((radio) => {
+    radio.addEventListener("change", () => {
+      equipo341WizardState.size = parseInt(radio.value, 10);
+      // Trim la selección si excede la nueva cantidad
+      if (equipo341WizardState.selectedKeys.length > equipo341WizardState.size) {
+        equipo341WizardState.selectedKeys = equipo341WizardState.selectedKeys.slice(0, equipo341WizardState.size);
+      }
+      rerenderActivity10Panel();
+    });
+  });
+
+  // Selección de compañeros
+  root.querySelectorAll("[data-equipo341-key]").forEach((cb) => {
+    cb.addEventListener("change", () => {
+      const key = cb.dataset.equipo341Key;
+      if (!equipo341WizardState.selectedKeys) equipo341WizardState.selectedKeys = [];
+      const set = new Set(equipo341WizardState.selectedKeys);
+      if (cb.checked) {
+        if (set.size >= equipo341WizardState.size) {
+          cb.checked = false;
+          alert(`Solo puedes seleccionar ${equipo341WizardState.size} compañeros. Desmarca uno antes de agregar otro.`);
+          return;
+        }
+        set.add(key);
+      } else {
+        set.delete(key);
+      }
+      equipo341WizardState.selectedKeys = Array.from(set);
+      rerenderActivity10Panel();
+    });
+  });
+
+  // Confirmar modalidad
+  root.querySelectorAll("[data-equipo341-confirm]").forEach((btn) => {
+    btn.addEventListener("click", () => confirmarEquipo341Wizard());
+  });
+
+  // Reset modalidad (en summary)
+  root.querySelectorAll("[data-equipo341-reset]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (!confirm("¿Seguro que quieres cambiar la modalidad? Tu entrega previa seguira registrada, pero podras volver a configurar.")) return;
+      clearEquipo341FromState();
+      equipo341WizardState = null;
+      equipo341InitialFetchDone = false;
+      const stalePanel = document.querySelector('[data-drive-panel="guide2-3-4-1-portafolio-equipo"]');
+      if (stalePanel) stalePanel.remove();
+      rerenderActivity10Panel();
+      renderEquipo341Block();
+      renderDriveDeliveryPanel();
+    });
+  });
+}
+
+function rerenderActivity10Panel() {
+  const body = document.getElementById("guia2-support-panel-body");
+  if (!body) return;
+  body.innerHTML = buildActivity10PanelHtml();
+  attachActivity10PanelHandlers(body);
+}
+
+function confirmarEquipo341Wizard() {
+  const selfKey = getCurrentUsernameKey();
+  const selfName = getCurrentFullName();
+  const selection = getGuideSelection();
+  const ficha = String(selection.ficha || "").trim();
+  if (!selfKey || !ficha) {
+    alert("No se pudo identificar tu sesion o ficha. Vuelve a iniciar sesion.");
+    return;
+  }
+  if (!equipo341WizardState || !equipo341WizardState.mode) {
+    alert("Selecciona si vas a trabajar solo o en grupo.");
+    return;
+  }
+
+  if (equipo341WizardState.mode === "solo") {
+    const team = {
+      mode: "solo",
+      ficha,
+      confirmedAt: new Date().toISOString(),
+      confirmedBy: { usernameKey: selfKey, fullName: selfName || selfKey },
+    };
+    setEquipo341InState(team);
+    equipo341WizardState = null;
+    rerenderActivity10Panel();
+    renderEquipo341Block();
+    renderDriveDeliveryPanel();
+    return;
+  }
+
+  // Modo grupo
+  const size = equipo341WizardState.size;
+  const selectedKeys = equipo341WizardState.selectedKeys || [];
+  if (!size || selectedKeys.length !== size) {
+    alert(`Selecciona exactamente ${size || "2 o 3"} compañeros antes de confirmar.`);
+    return;
+  }
+  const roster = getRosterForCurrentFicha();
+  const rosterByKey = new Map(roster.map((u) => [u.usernameKey, u]));
+  const selectedMembers = selectedKeys.map((k) => {
+    const found = rosterByKey.get(k);
+    return found ? { usernameKey: found.usernameKey, fullName: found.fullName } : { usernameKey: k, fullName: k };
+  });
+  const allMembers = [{ usernameKey: selfKey, fullName: selfName || selfKey }, ...selectedMembers];
+  const memberKeys = allMembers.map((m) => m.usernameKey);
+  const memberEmails = memberKeys.map((k) => k + EQUIPO_341_EMAIL_DOMAIN);
+  const groupKey = buildEquipo341GroupKey(ficha, memberKeys);
+
+  const team = {
+    mode: "grupo",
+    groupKey,
+    ficha,
+    members: allMembers,
+    memberKeys,
+    memberEmails,
+    activity: "actividad10_341",
+    guide: GUIDE_DATA_FILE,
+    confirmedAt: new Date().toISOString(),
+    confirmedBy: { usernameKey: selfKey, fullName: selfName || selfKey },
+  };
+  setEquipo341InState(team);
+
+  if (window._firebaseDb && typeof window._firebaseDb.cloudSaveGroup === "function") {
+    Promise.resolve(window._firebaseDb.cloudSaveGroup(groupKey, {
+      ficha,
+      guide: GUIDE_DATA_FILE,
+      activity: "actividad10_341",
+      members: allMembers,
+      memberKeys,
+      memberEmails,
+      updatedAt: new Date().toISOString(),
+    })).catch(() => {});
+  }
+  equipo341WizardState = null;
+  rerenderActivity10Panel();
+  renderEquipo341Block();
+  renderDriveDeliveryPanel();
+  refrescarEquipo341();
+}
+
+// ── Render inline en el paso 9 ───────────────────────────────────────────────
+
+function renderEquipo341Block() {
+  const summary = document.getElementById("equipo341Summary");
+  if (!summary) return;
+  const team = getEquipo341FromState();
+  if (!team) {
+    summary.innerHTML = `
+      <div style="padding:10px 12px;background:#fff8e1;border:1px solid #ffe0a3;border-left:4px solid #f5b700;border-radius:6px;color:#6e5300;font-size:.86rem">
+        <strong>Antes de entregar:</strong> abre <em>"Descubre tu caso de la Actividad 10"</em> en el paso 1 y confirma si vas a trabajar solo o en grupo. Sin esa configuracion no se habilita la entrega del portafolio.
+      </div>`;
+    renderEquipo341DeliveryStatus();
+    return;
+  }
+  if (team.mode === "solo") {
+    summary.innerHTML = `
+      <div style="padding:10px 12px;background:#e8f5e9;border:1px solid #b6dba0;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:.86rem">
+        <strong>Modalidad:</strong> trabajo individual. Subiras tu portafolio con tu nombre. Puedes cambiar la modalidad desde el panel <em>"Descubre tu caso de la Actividad 10"</em> en el paso 1.
+      </div>`;
+  } else {
+    const memberList = team.members
+      .map((m) => `<li>${escapeHtml(m.fullName)}</li>`)
+      .join("");
+    summary.innerHTML = `
+      <div style="padding:10px 12px;background:#e8f5e9;border:1px solid #b6dba0;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:.86rem">
+        <strong>Equipo confirmado (${team.members.length} integrantes):</strong>
+        <ul style="margin:6px 0 6px 18px;padding:0;line-height:1.5">${memberList}</ul>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <button type="button" onclick="refrescarEquipo341()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid #cfe0d3;background:#f6fbf6;color:#0b6b35;border-radius:6px;font-family:inherit;font-size:.82rem;cursor:pointer;font-weight:600">&#128260; Verificar entregas del equipo</button>
+          <span id="equipo341LastSync" style="font-size:.78rem;color:#78909c"></span>
+        </div>
+      </div>`;
+    if (!equipo341InitialFetchDone) {
+      equipo341InitialFetchDone = true;
+      setTimeout(() => refrescarEquipo341(), 250);
+    }
+  }
+  renderEquipo341DeliveryStatus();
+}
+
+function renderEquipo341DeliveryStatus() {
+  const mount = document.getElementById("equipo341DeliveryStatus");
+  if (!mount) return;
+  const team = getEquipo341FromState();
+  const delivery = state[`${EQUIPO_341_STATE_KEY}-delivery`];
+  if (!team) {
+    mount.innerHTML = "";
+    return;
+  }
+  if (!delivery || !delivery.submittedAt) {
+    mount.innerHTML = team.mode === "grupo"
+      ? `<div style="padding:10px 12px;background:#fff8e1;border:1px solid #ffe0a3;border-left:4px solid #f5b700;border-radius:6px;color:#6e5300;font-size:.86rem">El portafolio aun no ha sido entregado. Cualquiera de los ${team.members.length} integrantes puede subirlo desde el panel de abajo.</div>`
+      : `<div style="padding:10px 12px;background:#fff8e1;border:1px solid #ffe0a3;border-left:4px solid #f5b700;border-radius:6px;color:#6e5300;font-size:.86rem">Tu portafolio individual aun no ha sido entregado. Sube el archivo desde el panel de abajo.</div>`;
+    return;
+  }
+  const driveLinkHtml = delivery.driveUrl
+    ? `<a href="${escapeHtml(delivery.driveUrl)}" target="_blank" rel="noopener" style="color:#0b6b35;font-weight:600">Ver archivo en Drive &rarr;</a>`
+    : "<span style='color:#78909c'>(enlace no disponible)</span>";
+  const fileNameHtml = delivery.fileName
+    ? `<div style="font-size:.82rem;color:#37474f;margin-top:4px"><strong>Archivo:</strong> ${escapeHtml(delivery.fileName)}</div>`
+    : "";
+  const fechaLegible = formatEquipo341DateForDisplay(delivery.submittedAt);
+  const heading = team.mode === "grupo"
+    ? "&#9989; Portafolio entregado por el equipo"
+    : "&#9989; Portafolio entregado";
+  const submittedByHtml = team.mode === "grupo"
+    ? `<div><strong>Entregado por:</strong> ${escapeHtml(delivery.submittedBy?.fullName || delivery.submittedBy?.usernameKey || "compañero del equipo")}</div>`
+    : "";
+  mount.innerHTML = `
+    <div style="padding:12px 14px;border:1px solid #b6dba0;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:8px;color:#1b5e20;font-size:.88rem">
+      <div style="font-weight:700;margin-bottom:4px">${heading}</div>
+      ${submittedByHtml}
+      <div><strong>Fecha y hora:</strong> ${escapeHtml(fechaLegible)}</div>
+      ${fileNameHtml}
+      <div style="margin-top:6px">${driveLinkHtml}</div>
+    </div>`;
+}
+
+async function refrescarEquipo341() {
+  const team = getEquipo341FromState();
+  if (!team || team.mode !== "grupo" || !window._firebaseDb?.cloudGetGroup) return;
+  const sync = document.getElementById("equipo341LastSync");
+  if (sync) sync.textContent = "Consultando estado del equipo...";
+  try {
+    const remote = await window._firebaseDb.cloudGetGroup(team.groupKey);
+    if (remote && remote.delivery && remote.delivery.submittedAt) {
+      state[`${EQUIPO_341_STATE_KEY}-delivery`] = remote.delivery;
+      saveState();
+    }
+  } catch (err) {
+    // sin red: dejar lo que haya en local
+  }
+  renderEquipo341DeliveryStatus();
+  if (sync) sync.textContent = `Ultima sincronizacion: ${new Date().toLocaleTimeString("es-CO", { timeZone: "America/Bogota" })}`;
+}
+
+window.refrescarEquipo341 = refrescarEquipo341;
+
+// Al recibir un delivery del portafolio, publicarlo en el doc del grupo si aplica.
+document.addEventListener("guide-delivery-registered", (event) => {
+  const detail = event?.detail || {};
+  const isPortafolio = detail.panelKey === "guide2-3-4-1-portafolio-equipo";
+  if (!isPortafolio) return;
+  const team = getEquipo341FromState();
+  if (!team) return;
+  const selfKey = getCurrentUsernameKey();
+  const deliveryRecord = {
+    submittedBy: {
+      usernameKey: selfKey,
+      fullName: getCurrentFullName() || selfKey,
+    },
+    submittedAt: detail.submittedAt || new Date().toISOString(),
+    fileName: detail.savedFileName || detail.fileName || "",
+    driveUrl: normalizeEquipo341DriveUrl(detail.driveUrl || detail.fileUrl || ""),
+    panelKey: detail.panelKey,
+    activityNumber: detail.activityNumber || "3.4.1",
+  };
+  state[`${EQUIPO_341_STATE_KEY}-delivery`] = deliveryRecord;
+  saveState();
+  if (team.mode === "grupo" && window._firebaseDb && typeof window._firebaseDb.cloudUpdateGroupDelivery === "function") {
+    Promise.resolve(
+      window._firebaseDb.cloudUpdateGroupDelivery(team.groupKey, deliveryRecord)
+    ).catch(() => {});
+  }
+  renderEquipo341DeliveryStatus();
+});
+
+function normalizeEquipo341DriveUrl(url) {
+  if (!url) return "";
+  const match = String(url).match(/\/d\/([A-Za-z0-9_-]+)/);
+  if (match) {
+    return `https://drive.google.com/file/d/${match[1]}/view?usp=sharing`;
+  }
+  return url;
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState !== "visible") return;
+  const team = getEquipo341FromState();
+  if (!team || team.mode !== "grupo") return;
+  refrescarEquipo341();
+});
 
 function renderMaterialGroup(containerId, items) {
   const container = document.getElementById(containerId);
@@ -4448,11 +5231,167 @@ function guardarTransferReto341() {
 
 window.guardarTransferReto341 = guardarTransferReto341;
 
+function applySoporte341SectionLock(section) {
+  const locked = Boolean(state[section.lockStateKey]);
+  applyOptionalDeadlineGate(section.activityId, {
+    isLocked: locked,
+    fieldSelector: section.fields.map((field) => `[data-store="${field.key}"]`).join(","),
+    buttonId: section.buttonId,
+    statusId: section.statusId,
+    activeButtonText: section.activeText,
+    lockedButtonText: section.lockedText,
+    closedButtonText: "Entrega cerrada",
+    adminMount: { mountSelector: section.deadlineMount },
+    noticeMount: { mountSelector: section.deadlineMount },
+  });
+  const status = document.getElementById(section.statusId);
+  if (status) {
+    status.style.display = locked ? "" : "none";
+  }
+}
+
+function applySoporte341Lock() {
+  SOPORTE_341_SECTIONS.forEach(applySoporte341SectionLock);
+}
+
+function guardarSoporte341Section(section) {
+  if (!window.activityDeadlineManager?.canSubmit({ pageFile: GUIDE_DATA_FILE, activityId: section.activityId })) {
+    return;
+  }
+  const empty = section.fields.filter((field) => !readStoreValue(field.key));
+  if (empty.length > 0) {
+    alert(`${section.emptyMessage} Faltan ${empty.length} por responder.`);
+    const firstPending = document.querySelector(`[data-store="${empty[0].key}"]`);
+    if (firstPending && typeof firstPending.scrollIntoView === "function") {
+      firstPending.scrollIntoView({ behavior: "smooth", block: "center" });
+      firstPending.focus();
+    }
+    return;
+  }
+
+  section.fields.forEach((field) => {
+    state[field.key] = readStoreValue(field.key);
+  });
+  state[section.lockStateKey] = true;
+  saveState();
+  applySoporte341SectionLock(section);
+}
+
+function getSoporteSectionById(id) {
+  return SOPORTE_341_SECTIONS.find((section) => section.id === id);
+}
+
+function guardarSoportePerfil() {
+  guardarSoporte341Section(getSoporteSectionById("perfil"));
+}
+function guardarSoporteProblema() {
+  guardarSoporte341Section(getSoporteSectionById("problema"));
+}
+function guardarSoporteIdeacion() {
+  guardarSoporte341Section(getSoporteSectionById("ideacion"));
+}
+function guardarSoporteRetroalimentacion() {
+  guardarSoporte341Section(getSoporteSectionById("retroalimentacion"));
+}
+function guardarSoporteAutoeval() {
+  guardarSoporte341Section(getSoporteSectionById("autoeval"));
+}
+
+window.guardarSoportePerfil = guardarSoportePerfil;
+window.guardarSoporteProblema = guardarSoporteProblema;
+window.guardarSoporteIdeacion = guardarSoporteIdeacion;
+window.guardarSoporteRetroalimentacion = guardarSoporteRetroalimentacion;
+window.guardarSoporteAutoeval = guardarSoporteAutoeval;
+
+function buildSoporte341WordDocument(learnerName) {
+  const selection = getGuideSelection();
+  const today = new Date().toLocaleDateString("es-CO");
+  const title = "Actividad 10: Soporte de la solucion digital para actor productivo";
+  const sectionsHtml = SOPORTE_341_SECTIONS.map((section) => {
+      const rows = section.fields
+        .map((field) => {
+          const value = document.querySelector(`[data-store="${field.key}"]`)?.value ?? state[field.key] ?? "";
+          return `
+            <tr>
+              <td class="label">${escapeWordValue(field.label)}</td>
+              <td>${escapeWordValue(value)}</td>
+            </tr>`;
+        })
+        .join("");
+      const savedFlag = state[section.lockStateKey]
+        ? '<span style="font-size:9.5pt;color:#1b5e20"> (guardada)</span>'
+        : '<span style="font-size:9.5pt;color:#a13029"> (borrador sin guardar)</span>';
+      return `
+        <h2 style="margin-top:14pt;margin-bottom:6pt;color:#1b5e20">${escapeHtml(section.sectionTitle)}${savedFlag}</h2>
+        <table class="data">
+          <tbody>${rows}</tbody>
+        </table>`;
+    })
+    .join("");
+
+  return `<!DOCTYPE html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office"
+      xmlns:w="urn:schemas-microsoft-com:office:word"
+      xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<title>${escapeHtml(title)} - ${escapeHtml(learnerName)}</title>
+<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>90</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument></xml><![endif]-->
+<style>
+  ${(window.senaExportStyles && window.senaExportStyles.getBaseStyles && window.senaExportStyles.getBaseStyles()) || '@page { size: A4; margin: 2.54cm; } body { font-family: "Times New Roman", Times, serif; font-size: 12pt; line-height: 1.5; color: #1a1a1a; } table { width: 100%; max-width: 100%; border-collapse: collapse; table-layout: fixed; overflow-wrap: anywhere; word-break: break-word; } th, td { padding: 6pt; vertical-align: top; border: 1px solid #b7c9bc; overflow-wrap: anywhere; word-break: break-word; }'}
+  .header { text-align: center; border-bottom: 2px solid #1b5e20; padding-bottom: 8pt; margin-bottom: 14pt; }
+  .header h1 { margin: 0 0 4pt; }
+  .meta td { font-size: 10.5pt; }
+  .meta .label { width: 28%; font-weight: 700; background: #f3f4f6; }
+  .data td.label { width: 34%; font-weight: 700; background: #f3f4f6; font-size: 10.5pt; }
+  .data td { font-size: 10.5pt; }
+  .note { margin-top: 12pt; font-size: 10pt; color: #4b5563; }
+</style>
+</head>
+<body>
+  <div class="header">
+    <h1>${escapeHtml(title)}</h1>
+    <p>${escapeWordValue(GUIDE2_WORD_METADATA.guideName)}</p>
+  </div>
+
+  ${buildInstitutionalWordHeader(title, learnerName, selection, today)}
+
+  ${sectionsHtml}
+
+  <p class="note">Borrador exportado desde la guia interactiva. Usalo como base para construir el Perfil Digital, la Guia de uso rapido y la Presentacion que entregaras en Drive.</p>
+</body>
+</html>`;
+}
+
+function exportSoporte341ToWord() {
+  const learnerName = getCurrentLearnerName();
+  if (!learnerName) {
+    alert("Antes de exportar, inicie sesion para que su nombre aparezca en el documento.");
+    return;
+  }
+  const selection = getGuideSelection();
+  const doc = buildSoporte341WordDocument(learnerName);
+  const blob = new Blob(["﻿", doc], { type: "application/msword" });
+  const url = URL.createObjectURL(blob);
+  const safeName = learnerName.replace(/[^\w\s-]/g, "").replace(/\s+/g, "_");
+  const ficha = selection.ficha ? `_${selection.ficha}` : "";
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `Guia2_Actividad10_Soporte${ficha}_${safeName || "Aprendiz"}.doc`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+window.exportSoporte341ToWord = exportSoporte341ToWord;
+
 window.addEventListener("activity-deadlines-updated", () => {
   applyExtensionesLock();
   applySistemasLock();
   applyColaborativasLock();
   applyTransferRetoLock();
+  applySoporte341Lock();
 });
 
 function bindEvents() {

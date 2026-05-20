@@ -1192,6 +1192,8 @@
             <div class="activity-body">
               <p class="intro-text"><strong>Prop&oacute;sito:</strong> dise&ntilde;ar e implementar una soluci&oacute;n digital completa (perfil + herramienta + gu&iacute;a de uso + presentaci&oacute;n) para un actor productivo real o simulado. Es el proyecto integrador del RAP 01.</p>
 
+              <div id="actividad10CasoAsignado" data-activity10-case-card style="margin:14px 0 18px"></div>
+
               <div class="ihelp-trigger">
               <button type="button" class="ihelp-btn" data-ihelp-target="ihelp-g2-9">
                 <span class="ihelp-btn__icon" aria-hidden="true">&#128218;</span>
@@ -1224,17 +1226,126 @@
                       </button>
                     </div>
                   </li>
-                  <li>Construye el Perfil Digital del actor productivo respondiendo: &iquest;qu&eacute; actividades realiza?, &iquest;qu&eacute; herramientas usa actualmente?, &iquest;cu&aacute;les son sus mayores dificultades con la tecnolog&iacute;a?, &iquest;qu&eacute; dispositivos tiene? Registra todo en el Formato de Perfil Digital (entregado por el instructor). Este perfil es el punto de partida de toda la soluci&oacute;n.</li>
-                  <li>Define el problema: escribe en m&aacute;ximo tres oraciones cu&aacute;l es el principal obst&aacute;culo digital y qu&eacute; consecuencia tiene en su actividad econ&oacute;mica. Comparte con otro equipo para recibir retroalimentaci&oacute;n antes de avanzar. Un problema bien definido es la mitad de la soluci&oacute;n.</li>
-                  <li>Fase de ideaci&oacute;n: el equipo propone y discute qu&eacute; herramientas son m&aacute;s pertinentes para resolver el problema. Seleccionen m&aacute;ximo tres herramientas y justifiquen por qu&eacute; aportan valor real al actor productivo en su contexto espec&iacute;fico. Recuerda: la herramienta m&aacute;s adecuada no es la m&aacute;s avanzada, sino la que el usuario puede operar de forma aut&oacute;noma.</li>
-                  <li>Dise&ntilde;a y construye la herramienta digital personalizada: plantilla en Excel/Calc (registro de ventas, inventario, costos), modelo de carta o factura en Word/Writer, presentaci&oacute;n en PowerPoint/Impress, o estructura de carpetas organizada en Google Drive. Debe tener logo ficticio del negocio, lenguaje adaptado al usuario y ser completamente funcional y f&aacute;cil de usar.</li>
-                  <li>Prepara la &quot;Gu&iacute;a de uso r&aacute;pido&quot;: documento de m&aacute;ximo dos p&aacute;ginas, redactado en lenguaje sencillo sin jerga t&eacute;cnica, con instrucciones paso a paso y al menos tres capturas de pantalla o ilustraciones. Prueba de calidad: si un tendero de 50 a&ntilde;os que nunca us&oacute; Excel puede seguirla sin ayuda, est&aacute; bien escrita.</li>
+                  <li>Construye el Perfil Digital del actor productivo respondiendo: &iquest;qu&eacute; actividades realiza?, &iquest;qu&eacute; herramientas usa actualmente?, &iquest;cu&aacute;les son sus mayores dificultades con la tecnolog&iacute;a?, &iquest;qu&eacute; dispositivos tiene? Registra todo en el Formato de Perfil Digital (entregado por el instructor). Este perfil es el punto de partida de toda la soluci&oacute;n.
+                    <div class="soporte-actividad10-block" style="margin-top:12px;padding:14px 14px 12px;border:1px solid #cfe0d3;border-left:5px solid #2e7d32;border-radius:10px;background:linear-gradient(180deg,#f6fbf6,#ffffff)">
+                      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-weight:700;color:#1b5e20;font-size:.92rem"><span aria-hidden="true">&#128221;</span> Borrador del Perfil Digital del actor productivo</div>
+                      <label style="display:block;margin-bottom:10px"><span style="display:block;font-weight:600;font-size:.85rem;margin-bottom:4px">Nombre o tipo de negocio / actor productivo</span><input type="text" data-store="soporte:actor:nombre" data-track placeholder="Ej.: Panaderia Don Ramiro" style="width:100%;padding:8px 10px;border:1px solid #bcd2c0;border-radius:6px;font-family:inherit;font-size:.9rem"></label>
+                      <label style="display:block;margin-bottom:10px"><span style="display:block;font-weight:600;font-size:.85rem;margin-bottom:4px">&iquest;Qu&eacute; actividades realiza?</span><textarea data-store="soporte:actor:actividades" data-track rows="2" placeholder="Describe brevemente sus principales actividades economicas o productivas." style="width:100%;padding:8px 10px;border:1px solid #bcd2c0;border-radius:6px;font-family:inherit;font-size:.9rem"></textarea></label>
+                      <label style="display:block;margin-bottom:10px"><span style="display:block;font-weight:600;font-size:.85rem;margin-bottom:4px">&iquest;Qu&eacute; herramientas usa actualmente?</span><textarea data-store="soporte:actor:herramientas-actuales" data-track rows="2" placeholder="Cuaderno, calculadora, celular, computador, software especifico, etc." style="width:100%;padding:8px 10px;border:1px solid #bcd2c0;border-radius:6px;font-family:inherit;font-size:.9rem"></textarea></label>
+                      <label style="display:block;margin-bottom:10px"><span style="display:block;font-weight:600;font-size:.85rem;margin-bottom:4px">&iquest;Cu&aacute;les son sus mayores dificultades con la tecnolog&iacute;a?</span><textarea data-store="soporte:actor:dificultades" data-track rows="2" placeholder="Lo que mas se le complica: usar el celular, llevar cuentas, conectarse, etc." style="width:100%;padding:8px 10px;border:1px solid #bcd2c0;border-radius:6px;font-family:inherit;font-size:.9rem"></textarea></label>
+                      <label style="display:block;margin-bottom:12px"><span style="display:block;font-weight:600;font-size:.85rem;margin-bottom:4px">&iquest;Qu&eacute; dispositivos tiene disponibles?</span><textarea data-store="soporte:actor:dispositivos" data-track rows="2" placeholder="Celular Android, computador, impresora, internet, etc." style="width:100%;padding:8px 10px;border:1px solid #bcd2c0;border-radius:6px;font-family:inherit;font-size:.9rem"></textarea></label>
+                      <div id="soportePerfilDeadlineControls" style="margin-top:6px"></div>
+                      <div class="act-btn-group" style="margin-top:8px">
+                        <button type="button" id="btnGuardarSoportePerfil" onclick="guardarSoportePerfil()" class="btn-save-response">&#128190; Guardar Perfil Digital</button>
+                      </div>
+                      <div id="soportePerfilStatus" style="display:none;margin-top:8px;padding:8px 12px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.85rem">&#9989; Perfil Digital guardado.</div>
+                    </div>
+                  </li>
+                  <li>Define el problema: escribe en m&aacute;ximo tres oraciones cu&aacute;l es el principal obst&aacute;culo digital y qu&eacute; consecuencia tiene en su actividad econ&oacute;mica. Comparte con otro equipo para recibir retroalimentaci&oacute;n antes de avanzar. Un problema bien definido es la mitad de la soluci&oacute;n.
+                    <div class="soporte-actividad10-block" style="margin-top:12px;padding:14px 14px 12px;border:1px solid #cfe0d3;border-left:5px solid #2e7d32;border-radius:10px;background:linear-gradient(180deg,#f6fbf6,#ffffff)">
+                      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-weight:700;color:#1b5e20;font-size:.92rem"><span aria-hidden="true">&#128300;</span> Borrador de la definici&oacute;n del problema</div>
+                      <label style="display:block;margin-bottom:10px"><span style="display:block;font-weight:600;font-size:.85rem;margin-bottom:4px">Principal obst&aacute;culo digital (m&aacute;ximo 3 oraciones)</span><textarea data-store="soporte:problema:descripcion" data-track rows="3" placeholder="Describe en pocas oraciones cual es el obstaculo digital mas relevante." style="width:100%;padding:8px 10px;border:1px solid #bcd2c0;border-radius:6px;font-family:inherit;font-size:.9rem"></textarea></label>
+                      <label style="display:block;margin-bottom:12px"><span style="display:block;font-weight:600;font-size:.85rem;margin-bottom:4px">Consecuencia en su actividad econ&oacute;mica</span><textarea data-store="soporte:problema:consecuencia" data-track rows="3" placeholder="Que pierde, que demora, que riesgo tiene si no se resuelve." style="width:100%;padding:8px 10px;border:1px solid #bcd2c0;border-radius:6px;font-family:inherit;font-size:.9rem"></textarea></label>
+                      <div id="soporteProblemaDeadlineControls" style="margin-top:6px"></div>
+                      <div class="act-btn-group" style="margin-top:8px">
+                        <button type="button" id="btnGuardarSoporteProblema" onclick="guardarSoporteProblema()" class="btn-save-response">&#128190; Guardar definici&oacute;n del problema</button>
+                      </div>
+                      <div id="soporteProblemaStatus" style="display:none;margin-top:8px;padding:8px 12px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.85rem">&#9989; Definici&oacute;n del problema guardada.</div>
+                    </div>
+                  </li>
+                  <li>Fase de ideaci&oacute;n: el equipo propone y discute qu&eacute; herramientas son m&aacute;s pertinentes para resolver el problema. Seleccionen m&aacute;ximo tres herramientas y justifiquen por qu&eacute; aportan valor real al actor productivo en su contexto espec&iacute;fico. Recuerda: la herramienta m&aacute;s adecuada no es la m&aacute;s avanzada, sino la que el usuario puede operar de forma aut&oacute;noma.
+                    <div class="soporte-actividad10-block" style="margin-top:12px;padding:14px 14px 12px;border:1px solid #cfe0d3;border-left:5px solid #2e7d32;border-radius:10px;background:linear-gradient(180deg,#f6fbf6,#ffffff)">
+                      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-weight:700;color:#1b5e20;font-size:.92rem"><span aria-hidden="true">&#128161;</span> Borrador de las herramientas propuestas (m&aacute;ximo 3)</div>
+                      <div class="table-scroll">
+                        <table class="data-table" style="margin:0 0 12px">
+                          <thead>
+                            <tr>
+                              <th style="width:36px">#</th>
+                              <th style="width:32%">Herramienta</th>
+                              <th>Justificaci&oacute;n (por qu&eacute; aporta valor real al actor)</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr>
+                              <td style="text-align:center;font-weight:700;color:#1b5e20">1</td>
+                              <td><input type="text" data-store="soporte:herramienta1:nombre" data-track placeholder="Ej.: Excel" style="width:100%;padding:6px 8px;border:1px solid #bcd2c0;border-radius:6px;font-family:inherit;font-size:.88rem"></td>
+                              <td><textarea data-store="soporte:herramienta1:justificacion" data-track rows="2" placeholder="Por que es la mas pertinente para este actor." style="width:100%;padding:6px 8px;border:1px solid #bcd2c0;border-radius:6px;font-family:inherit;font-size:.88rem"></textarea></td>
+                            </tr>
+                            <tr>
+                              <td style="text-align:center;font-weight:700;color:#1b5e20">2</td>
+                              <td><input type="text" data-store="soporte:herramienta2:nombre" data-track placeholder="Ej.: Google Drive" style="width:100%;padding:6px 8px;border:1px solid #bcd2c0;border-radius:6px;font-family:inherit;font-size:.88rem"></td>
+                              <td><textarea data-store="soporte:herramienta2:justificacion" data-track rows="2" placeholder="Por que es la mas pertinente para este actor." style="width:100%;padding:6px 8px;border:1px solid #bcd2c0;border-radius:6px;font-family:inherit;font-size:.88rem"></textarea></td>
+                            </tr>
+                            <tr>
+                              <td style="text-align:center;font-weight:700;color:#1b5e20">3</td>
+                              <td><input type="text" data-store="soporte:herramienta3:nombre" data-track placeholder="Ej.: WhatsApp Business" style="width:100%;padding:6px 8px;border:1px solid #bcd2c0;border-radius:6px;font-family:inherit;font-size:.88rem"></td>
+                              <td><textarea data-store="soporte:herramienta3:justificacion" data-track rows="2" placeholder="Por que es la mas pertinente para este actor." style="width:100%;padding:6px 8px;border:1px solid #bcd2c0;border-radius:6px;font-family:inherit;font-size:.88rem"></textarea></td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div id="soporteIdeacionDeadlineControls" style="margin-top:6px"></div>
+                      <div class="act-btn-group" style="margin-top:8px">
+                        <button type="button" id="btnGuardarSoporteIdeacion" onclick="guardarSoporteIdeacion()" class="btn-save-response">&#128190; Guardar herramientas propuestas</button>
+                      </div>
+                      <div id="soporteIdeacionStatus" style="display:none;margin-top:8px;padding:8px 12px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.85rem">&#9989; Herramientas propuestas guardadas.</div>
+                    </div>
+                  </li>
+                  <li>Dise&ntilde;a y construye la herramienta digital personalizada: plantilla en Excel/Calc (registro de ventas, inventario, costos), modelo de carta o factura en Word/Writer, presentaci&oacute;n en PowerPoint/Impress, o estructura de carpetas organizada en Google Drive. Debe tener logo ficticio del negocio, lenguaje adaptado al usuario y ser completamente funcional y f&aacute;cil de usar.
+                    <div data-step-delivery-mount="entregaHerramienta341" style="margin-top:12px"></div>
+                  </li>
+                  <li>Prepara la &quot;Gu&iacute;a de uso r&aacute;pido&quot;: documento de m&aacute;ximo dos p&aacute;ginas, redactado en lenguaje sencillo sin jerga t&eacute;cnica, con instrucciones paso a paso y al menos tres capturas de pantalla o ilustraciones. Prueba de calidad: si un tendero de 50 a&ntilde;os que nunca us&oacute; Excel puede seguirla sin ayuda, est&aacute; bien escrita.
+                    <div data-step-delivery-mount="entregaGuiaUso341" style="margin-top:12px"></div>
+                  </li>
                   <li>Ensaya la presentaci&oacute;n final durante 15 minutos con tu equipo: distribuyan qui&eacute;n explica el perfil del actor, qui&eacute;n presenta el problema definido, qui&eacute;n muestra la herramienta construida y qui&eacute;n entrega la gu&iacute;a de uso. La presentaci&oacute;n debe fluir como una asesor&iacute;a real &mdash; no como una lectura de diapositivas.</li>
-                  <li>Presenta la soluci&oacute;n digital ante el grupo (m&aacute;ximo 15 minutos). El instructor y los dem&aacute;s equipos dan retroalimentaci&oacute;n con la r&uacute;brica de evaluaci&oacute;n. Toma nota de todas las sugerencias &mdash; las necesitar&aacute;s en el siguiente paso.</li>
-                  <li>Realiza los ajustes se&ntilde;alados en la retroalimentaci&oacute;n. Guarda la versi&oacute;n final de todos los productos en tu carpeta de Google Drive con esta estructura: 01_Perfil_Digital, 02_Herramienta, 03_Guia_Uso_Rapido, 04_Presentacion. Comparte la carpeta con el instructor. Este portafolio es tu evidencia de producto para la evaluaci&oacute;n del RAP 01.</li>
-                  <li>Cierra respondiendo la &quot;R&uacute;brica de autoevaluaci&oacute;n del aprendizaje&quot;: reflexiona honestamente sobre lo que aprendiste, lo que te cost&oacute; m&aacute;s, qu&eacute; har&iacute;as diferente y qu&eacute; a&uacute;n necesitas reforzar. Esta reflexi&oacute;n vale tanto como el producto &mdash; un t&eacute;cnico que no eval&uacute;a su propio desempe&ntilde;o no mejora.</li>
+                  <li>Presenta la soluci&oacute;n digital ante el grupo (m&aacute;ximo 15 minutos). El instructor y los dem&aacute;s equipos dan retroalimentaci&oacute;n con la r&uacute;brica de evaluaci&oacute;n. Toma nota de todas las sugerencias &mdash; las necesitar&aacute;s en el siguiente paso.
+                    <div class="soporte-actividad10-block" style="margin-top:12px;padding:14px 14px 12px;border:1px solid #cfe0d3;border-left:5px solid #2e7d32;border-radius:10px;background:linear-gradient(180deg,#f6fbf6,#ffffff)">
+                      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-weight:700;color:#1b5e20;font-size:.92rem"><span aria-hidden="true">&#128172;</span> Notas de la retroalimentaci&oacute;n recibida</div>
+                      <p class="intro-text" style="margin:0 0 10px;font-size:.85rem;color:#4b5563">Toma nota durante la presentaci&oacute;n. Estas observaciones te ser&aacute;n &uacute;tiles en el paso 9 para ajustar los entregables antes de la entrega final en Drive.</p>
+                      <label style="display:block;margin-bottom:10px"><span style="display:block;font-weight:600;font-size:.85rem;margin-bottom:4px">Sugerencias del instructor</span><textarea data-store="soporte:retro:instructor" data-track rows="3" placeholder="Que dijo el instructor sobre tu solucion digital." style="width:100%;padding:8px 10px;border:1px solid #bcd2c0;border-radius:6px;font-family:inherit;font-size:.9rem"></textarea></label>
+                      <label style="display:block;margin-bottom:10px"><span style="display:block;font-weight:600;font-size:.85rem;margin-bottom:4px">Sugerencias de los compa&ntilde;eros o de otros equipos</span><textarea data-store="soporte:retro:companeros" data-track rows="3" placeholder="Comentarios y preguntas que hicieron los demas equipos durante tu exposicion." style="width:100%;padding:8px 10px;border:1px solid #bcd2c0;border-radius:6px;font-family:inherit;font-size:.9rem"></textarea></label>
+                      <label style="display:block;margin-bottom:10px"><span style="display:block;font-weight:600;font-size:.85rem;margin-bottom:4px">Fortalezas destacadas</span><textarea data-store="soporte:retro:fortalezas" data-track rows="2" placeholder="Que reconocieron como bien logrado en tu solucion digital." style="width:100%;padding:8px 10px;border:1px solid #bcd2c0;border-radius:6px;font-family:inherit;font-size:.9rem"></textarea></label>
+                      <label style="display:block;margin-bottom:12px"><span style="display:block;font-weight:600;font-size:.85rem;margin-bottom:4px">Ajustes que voy a aplicar antes de la entrega final</span><textarea data-store="soporte:retro:ajustes" data-track rows="3" placeholder="Cambios concretos que haras al perfil, la herramienta, la guia de uso o la presentacion." style="width:100%;padding:8px 10px;border:1px solid #bcd2c0;border-radius:6px;font-family:inherit;font-size:.9rem"></textarea></label>
+                      <div id="soporteRetroDeadlineControls" style="margin-top:6px"></div>
+                      <div class="act-btn-group" style="margin-top:8px">
+                        <button type="button" id="btnGuardarSoporteRetro" onclick="guardarSoporteRetroalimentacion()" class="btn-save-response">&#128190; Guardar notas de la retroalimentaci&oacute;n</button>
+                      </div>
+                      <div id="soporteRetroStatus" style="display:none;margin-top:8px;padding:8px 12px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.85rem">&#9989; Notas de retroalimentaci&oacute;n guardadas.</div>
+                    </div>
+                  </li>
+                  <li>Realiza los ajustes se&ntilde;alados en la retroalimentaci&oacute;n. Guarda la versi&oacute;n final de todos los productos en tu carpeta de Google Drive con esta estructura: 01_Perfil_Digital, 02_Herramienta, 03_Guia_Uso_Rapido, 04_Presentacion. Comparte la carpeta con el instructor. Este portafolio es tu evidencia de producto para la evaluaci&oacute;n del RAP 01.
+                    <div class="soporte-actividad10-block" style="margin-top:14px;padding:14px 16px;border:1px solid #cfe0d3;border-left:5px solid #0b6b35;border-radius:10px;background:linear-gradient(180deg,#f1f9f3,#ffffff)">
+                      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-weight:700;color:#0b6b35;font-size:.95rem"><span aria-hidden="true">&#128101;</span> Entrega del portafolio final</div>
+                      <div id="equipo341Summary"></div>
+                      <div id="equipo341DeliveryStatus" style="margin:10px 0 0"></div>
+                      <div data-step-delivery-mount="entregaPortafolio341" style="margin-top:10px"></div>
+                    </div>
+                  </li>
+                  <li>Cierra respondiendo la &quot;R&uacute;brica de autoevaluaci&oacute;n del aprendizaje&quot;: reflexiona honestamente sobre lo que aprendiste, lo que te cost&oacute; m&aacute;s, qu&eacute; har&iacute;as diferente y qu&eacute; a&uacute;n necesitas reforzar. Esta reflexi&oacute;n vale tanto como el producto &mdash; un t&eacute;cnico que no eval&uacute;a su propio desempe&ntilde;o no mejora.
+                    <div class="soporte-actividad10-block" style="margin-top:12px;padding:14px 14px 12px;border:1px solid #cfe0d3;border-left:5px solid #2e7d32;border-radius:10px;background:linear-gradient(180deg,#f6fbf6,#ffffff)">
+                      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-weight:700;color:#1b5e20;font-size:.92rem"><span aria-hidden="true">&#128221;</span> R&uacute;brica de autoevaluaci&oacute;n del aprendizaje</div>
+                      <label style="display:block;margin-bottom:10px"><span style="display:block;font-weight:600;font-size:.85rem;margin-bottom:4px">&iquest;Qu&eacute; aprendiste con esta actividad?</span><textarea data-store="soporte:auto:aprendido" data-track rows="2" placeholder="Habilidades, herramientas o conceptos nuevos que ya manejas." style="width:100%;padding:8px 10px;border:1px solid #bcd2c0;border-radius:6px;font-family:inherit;font-size:.9rem"></textarea></label>
+                      <label style="display:block;margin-bottom:10px"><span style="display:block;font-weight:600;font-size:.85rem;margin-bottom:4px">&iquest;Qu&eacute; te cost&oacute; m&aacute;s?</span><textarea data-store="soporte:auto:costo" data-track rows="2" placeholder="La parte mas dificil o que tomo mas tiempo." style="width:100%;padding:8px 10px;border:1px solid #bcd2c0;border-radius:6px;font-family:inherit;font-size:.9rem"></textarea></label>
+                      <label style="display:block;margin-bottom:10px"><span style="display:block;font-weight:600;font-size:.85rem;margin-bottom:4px">&iquest;Qu&eacute; har&iacute;as diferente si volvieras a hacerlo?</span><textarea data-store="soporte:auto:diferente" data-track rows="2" placeholder="Cambios o mejoras que aplicarias en otra entrega." style="width:100%;padding:8px 10px;border:1px solid #bcd2c0;border-radius:6px;font-family:inherit;font-size:.9rem"></textarea></label>
+                      <label style="display:block;margin-bottom:12px"><span style="display:block;font-weight:600;font-size:.85rem;margin-bottom:4px">&iquest;Qu&eacute; a&uacute;n necesitas reforzar?</span><textarea data-store="soporte:auto:reforzar" data-track rows="2" placeholder="Temas o herramientas en los que sabes que debes mejorar." style="width:100%;padding:8px 10px;border:1px solid #bcd2c0;border-radius:6px;font-family:inherit;font-size:.9rem"></textarea></label>
+                      <div id="soporteAutoevalDeadlineControls" style="margin-top:6px"></div>
+                      <div class="act-btn-group" style="margin-top:8px">
+                        <button type="button" id="btnGuardarSoporteAutoeval" onclick="guardarSoporteAutoeval()" class="btn-save-response">&#128190; Guardar autoevaluaci&oacute;n</button>
+                      </div>
+                      <div id="soporteAutoevalStatus" style="display:none;margin-top:8px;padding:8px 12px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.85rem">&#9989; Autoevaluaci&oacute;n guardada.</div>
+                    </div>
+                  </li>
                 </ol>
               </div>
+
+              <div class="act-btn-group" style="margin-top:16px">
+                <button class="btn-export-word" type="button" onclick="exportSoporte341ToWord()">
+                  &#128196; Exportar borrador completo a Word
+                </button>
+              </div>
+              <p class="intro-text" style="margin-top:8px;font-size:.85rem;color:#4b5563">
+                El borrador exporta lo que ya guard&oacute; en cada una de las cuatro secciones del soporte. &Uacute;selo como base para construir los entregables de Drive.
+              </p>
 
               <div class="guide-source-achievement">
                 <strong>&#10004; LOGRO DESBLOQUEADO:</strong>
