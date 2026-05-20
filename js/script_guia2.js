@@ -3750,6 +3750,14 @@ function closeActivityQR() {
   }
 }
 
+// Etiquetas de archivo distintas por panel para que los 3 entregables de
+// Actividad 10 convivan en la MISMA carpeta sin colisionar.
+const ACTIVITY_10_FILE_LABELS = {
+  "guide2-3-4-1-paso5-herramienta": "Paso 5 Herramienta",
+  "guide2-3-4-1-paso6-guiauso": "Paso 6 GuiaUso",
+  "guide2-3-4-1-portafolio-equipo": "Paso 9 Portafolio",
+};
+
 function renderDriveDeliveryPanel() {
   const assignedCase = getAssignedActivityCase("activity10-cases");
   const team = getEquipo341FromState();
@@ -3757,8 +3765,29 @@ function renderDriveDeliveryPanel() {
   // cambia: lo eliminamos para que el helper lo recree con la metadata actual.
   const stalePortfolioPanel = document.querySelector('[data-drive-panel="guide2-3-4-1-portafolio-equipo"]');
   if (stalePortfolioPanel) stalePortfolioPanel.remove();
+  // Cuando hay modalidad confirmada, los 3 paneles de Actividad 10 comparten
+  // la MISMA carpeta dedicada del aprendiz/equipo. Los archivos se distinguen
+  // por activityLabel (que controla el nombre del archivo, no del folder).
+  const unifiedActivity10Title = team ? buildPortfolioFolderTitle(team, assignedCase) : null;
   const targets = GUIDE2_DRIVE_ACTIVITY_TARGETS.map((target) => {
     let nextTarget = target;
+    // Paneles de Actividad 10 con modalidad confirmada: unificar folder.
+    if (target.activityNumber === "3.4.1" && unifiedActivity10Title) {
+      const fileLabel = ACTIVITY_10_FILE_LABELS[target.panelKey] || "Actividad 10";
+      const descriptionSuffix = team.mode === "grupo" && Array.isArray(team.members)
+        ? ` Carpeta del equipo (${buildEquipo341Code4(team)}): los pasos 5, 6 y 9 quedan juntos.`
+        : ` Carpeta individual: los pasos 5, 6 y 9 quedan juntos.`;
+      nextTarget = Object.assign({}, nextTarget, {
+        description: `${nextTarget.description}${descriptionSuffix}`,
+        activityContext: Object.assign({}, nextTarget.activityContext || {}, {
+          activityTitle: unifiedActivity10Title,
+          activityLabel: fileLabel,
+        }),
+      });
+      return nextTarget;
+    }
+    // Fallback (sin modalidad confirmada o paneles fuera de Actividad 10):
+    // mantener el comportamiento case-aware existente para no perder contexto.
     if (target.caseAwareTitle && assignedCase) {
       const caseSummary = `Caso ${assignedCase.number}: ${assignedCase.title}`;
       nextTarget = Object.assign({}, nextTarget, {
@@ -3769,11 +3798,6 @@ function renderDriveDeliveryPanel() {
       });
     }
     if (target.isTeamDelivery && team) {
-      // Naming dedicado SOLO para el portafolio de Actividad 10.
-      // Folder destino: "Ficha N / Guia 2 / 3.4.1 - {portfolioTitle}".
-      // portfolioTitle ejemplos:
-      //   "Caso 1 - Papeleria La Esperanza - Equipo G3F7 - JPerez_ALopez_MGomez_RDiaz"
-      //   "Caso 1 - Papeleria La Esperanza - Individual - Perez_Juan"
       const portfolioTitle = buildPortfolioFolderTitle(team, assignedCase);
       const descriptionSuffix = team.mode === "grupo" && Array.isArray(team.members)
         ? ` Equipo ${buildEquipo341Code4(team)}: ${team.members.map((m) => m.fullName).join(", ")}.`
@@ -3782,6 +3806,7 @@ function renderDriveDeliveryPanel() {
         description: `${nextTarget.description}${descriptionSuffix}`,
         activityContext: Object.assign({}, nextTarget.activityContext || {}, {
           activityTitle: portfolioTitle,
+          activityLabel: ACTIVITY_10_FILE_LABELS[target.panelKey] || target.activityContext?.activityLabel,
         }),
       });
     }
@@ -3813,99 +3838,185 @@ function relocateStepDeliveryPanels() {
       mount.appendChild(panel);
     }
   });
-  customizePortfolioDriveButton();
+  customizeActivity10DriveButtons();
 }
 
-// Reemplaza el handler del boton "Subir al portafolio de Drive" SOLO para el
-// panel del portafolio de Actividad 10. El resto de paneles conserva el
-// comportamiento estandar (abre la carpeta principal de la ficha).
-function customizePortfolioDriveButton() {
-  const panel = document.querySelector('[data-drive-panel="guide2-3-4-1-portafolio-equipo"]');
-  if (!panel) return;
-  // Selecciona el primer .btn-drive (es el de Drive; el segundo es Apps Script).
-  const btn = panel.querySelector(".btn-drive:not(.btn-apps-script)");
-  if (!btn || btn.dataset.guia2PortfolioCustomized === "1") return;
-  // Clonar el boton elimina el listener original; lo reemplazamos.
-  const clone = btn.cloneNode(true);
-  btn.parentNode.replaceChild(clone, btn);
-  clone.dataset.guia2PortfolioCustomized = "1";
-  clone.addEventListener("click", openPortfolioDriveDestination);
+// Reemplaza el handler del boton "Subir al portafolio de Drive" para TODOS
+// los paneles de Drive de la Actividad 10 (pasos 5, 6 y 9). Cada panel abre
+// su propia carpeta dedicada (case-aware) o muestra un modal con el nombre
+// exacto cuando aun no hay entrega. El resto de paneles (otras actividades,
+// otras guias) conservan el comportamiento estandar.
+function customizeActivity10DriveButtons() {
+  GUIDE2_DRIVE_ACTIVITY_TARGETS
+    .filter((target) => target.activityNumber === "3.4.1" && target.panelKey)
+    .forEach((target) => {
+      const panel = document.querySelector(`[data-drive-panel="${target.panelKey}"]`);
+      if (!panel) return;
+      const btn = panel.querySelector(".btn-drive:not(.btn-apps-script)");
+      if (!btn || btn.dataset.guia2Activity10Customized === "1") return;
+      const clone = btn.cloneNode(true);
+      btn.parentNode.replaceChild(clone, btn);
+      clone.dataset.guia2Activity10Customized = "1";
+      clone.addEventListener("click", () => openActivity10DriveDestination(target));
+    });
 }
 
-function openPortfolioDriveDestination() {
-  const team = getEquipo341FromState();
+// Devuelve el nombre del folder exacto que el Apps Script creara para este
+// panel, replicando la logica de buildActivityFolderLabel. Para Actividad 10
+// con modalidad confirmada, los 3 paneles comparten el mismo nombre.
+function getExpectedFolderNameForTarget(target) {
   const assignedCase = getAssignedActivityCase("activity10-cases");
-  const delivery = state[`${EQUIPO_341_STATE_KEY}-delivery`];
-  // Caso 1: ya hay una entrega del equipo (o individual). Abrir el archivo
-  // en Drive permite ver el breadcrumb y subir al folder dedicado.
-  if (delivery && delivery.driveUrl) {
-    window.open(delivery.driveUrl, "_blank", "noopener,noreferrer");
-    return;
+  const activityNumber = "3.4.1";
+  // Actividad 10 con modalidad confirmada => carpeta unificada.
+  if (target.activityNumber === "3.4.1") {
+    const team = getEquipo341FromState();
+    if (team) {
+      return `${activityNumber} - ${buildPortfolioFolderTitle(team, assignedCase)}`;
+    }
+    // Sin modalidad confirmada: fallback al case-aware del panel (steps 5/6)
+    // o un placeholder del portafolio.
+    if (target.isTeamDelivery) {
+      return `${activityNumber} - Portafolio del equipo`;
+    }
+    if (target.caseAwareTitle && assignedCase) {
+      return `${activityNumber} - ${target.caseAwareTitle} - Caso ${assignedCase.number}: ${assignedCase.title}`;
+    }
+    if (target.caseAwareTitle) {
+      return `${activityNumber} - ${target.caseAwareTitle}`;
+    }
   }
-  // Caso 2: aun no hay entrega. Mostrar modal con el nombre exacto del folder
-  // esperado y atajos a Drive.
-  if (!team) {
-    alert("Antes de continuar, confirma tu modalidad (solo o equipo) en el panel \"Descubre tu caso de la Actividad 10\" del paso 1.");
-    return;
-  }
-  showPortfolioDriveHelperModal(team, assignedCase);
+  return activityNumber;
 }
 
-function showPortfolioDriveHelperModal(team, assignedCase) {
-  const folderTitle = buildPortfolioFolderTitle(team, assignedCase);
-  const folderFullName = `3.4.1 - ${folderTitle}`;
-  const fichaFolderUrl = getDriveFolderUrl();
-  const searchQuery = team.mode === "grupo"
-    ? `Equipo ${buildEquipo341Code4(team)}`
-    : folderFullName;
-  const searchUrl = `https://drive.google.com/drive/u/0/search?q=${encodeURIComponent(searchQuery)}`;
+// Recupera la entrega registrada para este panel. Para Actividad 10 con
+// modalidad confirmada, busca tambien en las entregas de los OTROS paneles
+// (estan en la misma carpeta dedicada), asi el boton siempre puede abrir
+// "algun" archivo en esa carpeta aunque este panel no este entregado todavia.
+function getStoredDeliveryForTarget(target) {
+  if (target.isTeamDelivery) {
+    const teamDelivery = state[`${EQUIPO_341_STATE_KEY}-delivery`];
+    if (teamDelivery && teamDelivery.driveUrl) {
+      return teamDelivery;
+    }
+  }
+  if (window.sharedAppsScriptDelivery && typeof window.sharedAppsScriptDelivery.loadDeliveryRecord === "function") {
+    const ctx = {
+      panelKey: target.panelKey,
+      activityNumber: target.activityNumber,
+    };
+    try {
+      const record = window.sharedAppsScriptDelivery.loadDeliveryRecord(ctx);
+      if (record && record.driveUrl) return record;
+    } catch (_) { /* noop */ }
+  }
+  // Cross-panel fallback solo cuando la modalidad esta confirmada (los 3
+  // paneles realmente comparten folder).
+  if (target.activityNumber === "3.4.1" && getEquipo341FromState()) {
+    const otherTargets = GUIDE2_DRIVE_ACTIVITY_TARGETS.filter(
+      (t) => t.activityNumber === "3.4.1" && t.panelKey !== target.panelKey
+    );
+    for (const other of otherTargets) {
+      if (other.isTeamDelivery) {
+        const teamDelivery = state[`${EQUIPO_341_STATE_KEY}-delivery`];
+        if (teamDelivery && teamDelivery.driveUrl) return teamDelivery;
+      }
+      if (window.sharedAppsScriptDelivery && typeof window.sharedAppsScriptDelivery.loadDeliveryRecord === "function") {
+        try {
+          const rec = window.sharedAppsScriptDelivery.loadDeliveryRecord({
+            panelKey: other.panelKey,
+            activityNumber: other.activityNumber,
+          });
+          if (rec && rec.driveUrl) return rec;
+        } catch (_) { /* noop */ }
+      }
+    }
+  }
+  return null;
+}
 
-  let modal = document.getElementById("portfolio-drive-helper-modal");
+function openActivity10DriveDestination(target) {
+  // Para el portafolio del equipo: requiere modalidad confirmada (solo/equipo).
+  if (target.isTeamDelivery && !getEquipo341FromState()) {
+    alert('Antes de continuar, confirma tu modalidad (solo o equipo) en el panel "Descubre tu caso de la Actividad 10" del paso 1.');
+    return;
+  }
+  const stored = getStoredDeliveryForTarget(target);
+  if (stored && stored.driveUrl) {
+    // El archivo ya esta en Drive. Abrirlo permite ver el breadcrumb y
+    // navegar a la carpeta dedicada padre.
+    window.open(stored.driveUrl, "_blank", "noopener,noreferrer");
+    return;
+  }
+  showActivity10DriveHelperModal(target);
+}
+
+function showActivity10DriveHelperModal(target) {
+  const folderFullName = getExpectedFolderNameForTarget(target);
+  const fichaFolderUrl = getDriveFolderUrl();
+  const team = target.isTeamDelivery ? getEquipo341FromState() : null;
+  // Termino corto buscable: para el portafolio usamos el codigo del equipo;
+  // para los pasos 5/6 usamos el caseAwareTitle.
+  let searchQuery = folderFullName;
+  if (target.isTeamDelivery && team && team.mode === "grupo") {
+    searchQuery = `Equipo ${buildEquipo341Code4(team)}`;
+  } else if (target.caseAwareTitle) {
+    searchQuery = target.caseAwareTitle;
+  }
+  const searchUrl = `https://drive.google.com/drive/u/0/search?q=${encodeURIComponent(searchQuery)}`;
+  const headerLabel = target.isTeamDelivery
+    ? "Tu carpeta del portafolio en Drive"
+    : target.caseAwareTitle
+      ? `Tu carpeta de la entrega en Drive`
+      : "Tu carpeta de entrega en Drive";
+  const subjectHint = target.isTeamDelivery && team && team.mode === "grupo"
+    ? "cualquier integrante del equipo"
+    : "tu";
+
+  let modal = document.getElementById("activity10-drive-helper-modal");
   if (modal) modal.remove();
   modal = document.createElement("div");
-  modal.id = "portfolio-drive-helper-modal";
+  modal.id = "activity10-drive-helper-modal";
   modal.className = "modal-overlay";
   modal.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px";
   modal.innerHTML = `
     <div style="background:#fff;border-radius:12px;padding:22px 24px;max-width:560px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,0.18);font-family:inherit">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
         <span aria-hidden="true" style="font-size:1.4rem">&#128193;</span>
-        <h3 style="margin:0;color:#0b6b35;font-size:1.05rem">Tu carpeta del portafolio en Drive</h3>
+        <h3 style="margin:0;color:#0b6b35;font-size:1.05rem">${escapeHtml(headerLabel)}</h3>
       </div>
       <p style="margin:0 0 12px;color:#455a64;font-size:.88rem;line-height:1.55">
-        Aun no has subido el portafolio. Tu carpeta dedicada se crea automaticamente cuando ${team.mode === "grupo" ? "cualquier integrante del equipo" : "tu"} subas el primer archivo desde <em>"Entregar por formulario seguro"</em>.
+        Aun no has subido esta entrega. Tu carpeta dedicada se crea automaticamente cuando ${escapeHtml(subjectHint)} subas el primer archivo desde <em>"Entregar por formulario seguro"</em>.
       </p>
       <div style="background:#f1f9f3;border:1px solid #cfe0d3;border-left:4px solid #0b6b35;border-radius:8px;padding:10px 12px;margin-bottom:14px">
         <div style="font-weight:700;color:#0b6b35;font-size:.82rem;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em">Nombre exacto de tu carpeta</div>
-        <code id="portfolio-folder-name-text" style="display:block;font-family:Consolas,Monaco,monospace;font-size:.86rem;color:#1b5e20;word-break:break-word;line-height:1.5">${escapeHtml(folderFullName)}</code>
-        <button type="button" id="portfolio-folder-copy-btn" style="margin-top:8px;display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid #cfe0d3;background:#ffffff;color:#0b6b35;border-radius:6px;font-family:inherit;font-size:.82rem;cursor:pointer;font-weight:600">&#128203; Copiar nombre</button>
+        <code id="activity10-folder-name-text" style="display:block;font-family:Consolas,Monaco,monospace;font-size:.86rem;color:#1b5e20;word-break:break-word;line-height:1.5">${escapeHtml(folderFullName)}</code>
+        <button type="button" id="activity10-folder-copy-btn" style="margin-top:8px;display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid #cfe0d3;background:#ffffff;color:#0b6b35;border-radius:6px;font-family:inherit;font-size:.82rem;cursor:pointer;font-weight:600">&#128203; Copiar nombre</button>
       </div>
       <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
-        <a id="portfolio-open-ficha-link" href="${escapeHtml(fichaFolderUrl || "#")}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;background:#0b6b35;color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:.9rem ${fichaFolderUrl ? "" : ";pointer-events:none;opacity:.5"}">&#128193; Abrir carpeta principal de la ficha</a>
+        <a id="activity10-open-ficha-link" href="${escapeHtml(fichaFolderUrl || "#")}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;background:#0b6b35;color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:.9rem${fichaFolderUrl ? "" : ";pointer-events:none;opacity:.5"}">&#128193; Abrir carpeta principal de la ficha</a>
         <a href="${escapeHtml(searchUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;background:#ffffff;color:#0b6b35;border:1px solid #cfe0d3;border-radius:8px;text-decoration:none;font-weight:600;font-size:.9rem">&#128269; Buscar mi carpeta en Drive</a>
       </div>
       <div style="display:flex;justify-content:flex-end">
-        <button type="button" id="portfolio-helper-close-btn" style="padding:8px 16px;border:none;background:#eceff1;color:#37474f;border-radius:6px;font-family:inherit;font-size:.88rem;cursor:pointer;font-weight:600">Cerrar</button>
+        <button type="button" id="activity10-helper-close-btn" style="padding:8px 16px;border:none;background:#eceff1;color:#37474f;border-radius:6px;font-family:inherit;font-size:.88rem;cursor:pointer;font-weight:600">Cerrar</button>
       </div>
     </div>
   `;
   modal.addEventListener("click", (event) => {
-    if (event.target === modal) closePortfolioDriveHelperModal();
+    if (event.target === modal) closeActivity10DriveHelperModal();
   });
   document.body.appendChild(modal);
-  document.getElementById("portfolio-helper-close-btn")?.addEventListener("click", closePortfolioDriveHelperModal);
-  document.getElementById("portfolio-folder-copy-btn")?.addEventListener("click", () => {
+  document.getElementById("activity10-helper-close-btn")?.addEventListener("click", closeActivity10DriveHelperModal);
+  document.getElementById("activity10-folder-copy-btn")?.addEventListener("click", () => {
     const text = folderFullName;
     if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
       navigator.clipboard.writeText(text).then(() => {
-        const btn = document.getElementById("portfolio-folder-copy-btn");
+        const btn = document.getElementById("activity10-folder-copy-btn");
         if (btn) {
           const original = btn.innerHTML;
           btn.innerHTML = "&#9989; Copiado";
           setTimeout(() => { btn.innerHTML = original; }, 1800);
         }
       }).catch(() => {
-        // Fallback en caso de fallo de clipboard API
         legacyCopyToClipboard(text);
       });
     } else {
@@ -3913,7 +4024,7 @@ function showPortfolioDriveHelperModal(team, assignedCase) {
     }
   });
   if (!fichaFolderUrl) {
-    const link = document.getElementById("portfolio-open-ficha-link");
+    const link = document.getElementById("activity10-open-ficha-link");
     if (link) {
       link.addEventListener("click", (event) => {
         event.preventDefault();
@@ -3923,8 +4034,8 @@ function showPortfolioDriveHelperModal(team, assignedCase) {
   }
 }
 
-function closePortfolioDriveHelperModal() {
-  const modal = document.getElementById("portfolio-drive-helper-modal");
+function closeActivity10DriveHelperModal() {
+  const modal = document.getElementById("activity10-drive-helper-modal");
   if (modal) modal.remove();
 }
 
