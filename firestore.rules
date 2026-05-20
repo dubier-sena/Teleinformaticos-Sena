@@ -92,6 +92,29 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // ───── Equipos de trabajo (grupos colaborativos) ───────────────────────
+    // Cada doc representa un equipo de 3-4 aprendices que entrega una
+    // actividad en conjunto (p. ej. portafolio Actividad 10 de Guia 2).
+    // El doc almacena la lista de emails sinteticos de los miembros para que
+    // las reglas puedan validar pertenencia sin Custom Claims.
+    function isGroupMemberOfResource() {
+      return signedIn()
+        && resource.data.memberEmails is list
+        && resource.data.memberEmails.hasAny([request.auth.token.email]);
+    }
+    function isGroupMemberOfRequest() {
+      return signedIn()
+        && request.resource.data.memberEmails is list
+        && request.resource.data.memberEmails.hasAny([request.auth.token.email]);
+    }
+    match /sena_portal_groups/{groupId} {
+      allow read: if isAdmin() || isGroupMemberOfResource();
+      allow create: if isAdmin() || isGroupMemberOfRequest();
+      allow update: if isAdmin()
+        || (isGroupMemberOfResource() && isGroupMemberOfRequest());
+      allow delete: if isAdmin();
+    }
+
     // ───── Default: cierre total ───────────────────────────────────────────
     match /{document=**} {
       allow read, write: if false;

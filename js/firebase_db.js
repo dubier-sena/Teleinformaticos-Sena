@@ -67,6 +67,7 @@
   var COL_CALENDAR = "sena_portal_calendar";
   var COL_GUIDE_STATE = "sena_portal_guide_state";
   var COL_TUTORING = "sena_portal_tutoring_bookings";
+  var COL_GROUPS = "sena_portal_groups";
   var CALENDAR_FALLBACK_PREFIX = "__calendar__:";
   var AVAILABILITY_DOC_ID = CALENDAR_FALLBACK_PREFIX + "calendario_2026_admin";
   var GUIDE_DATA_FALLBACK_PREFIX = "__guide_data__:";
@@ -554,6 +555,24 @@
 
   async function cloudListUsers() {
     return fsList(COL_USERS);
+  }
+
+  // ── Equipos de trabajo (grupos colaborativos) ─────────────────────────────
+  // Doc Firestore por grupo. Identificador determinista a partir de los
+  // usernameKeys ordenados (mismo set de miembros ⇒ mismo doc).
+  async function cloudGetGroup(groupKey) {
+    if (!groupKey) return null;
+    return fsGet(COL_GROUPS, groupKey);
+  }
+
+  async function cloudSaveGroup(groupKey, data) {
+    if (!groupKey || !data) return false;
+    return fsPatch(COL_GROUPS, groupKey, data);
+  }
+
+  async function cloudUpdateGroupDelivery(groupKey, deliveryRecord) {
+    if (!groupKey || !deliveryRecord) return false;
+    return fsUpdateField(COL_GROUPS, groupKey, "delivery", deliveryRecord);
   }
 
   async function cloudGetProgress(usernameKey) {
@@ -1453,6 +1472,9 @@
     cloudGetTutoringBooking:          cloudGetTutoringBooking,
     cloudSaveTutoringBooking:         cloudSaveTutoringBooking,
     cloudDeleteTutoringBooking:       cloudDeleteTutoringBooking,
+    cloudGetGroup:            cloudGetGroup,
+    cloudSaveGroup:           cloudSaveGroup,
+    cloudUpdateGroupDelivery: cloudUpdateGroupDelivery,
     shouldDeferCloudReads: shouldDeferCloudReads,
     shouldSkipGuideUiCloudSave: shouldSkipGuideUiCloudSave,
     getBudgetStatus:    getFirestoreBudgetStatus,
