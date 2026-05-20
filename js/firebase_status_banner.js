@@ -127,7 +127,10 @@
         // Solo consideramos auth issues como senal de "no-auth"
         if (res && (res.status === 401 || res.status === 403)) {
           markFailure("no-auth");
-        } else if (res && res.ok) {
+        } else if (res && (res.ok || res.status === 404)) {
+          // 404 = "el doc aun no existe" — Firestore esta respondiendo bien.
+          // Es normal cuando el aprendiz abre una guia que nunca ha guardado
+          // (cloudGetGuideData, cloudGetGuideUiState, etc.). No es un fallo.
           markOnline();
         } else {
           markFailure("rejected");
