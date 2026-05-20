@@ -56,7 +56,7 @@
     if (!d) return fecha || "";
     var dia = DAY_NAMES[d.getDay()];
     var mes = MONTH_NAMES[d.getMonth()];
-    return dia + ", " + d.getDate() + " de " + mes + " de " + d.getFullYear();
+    return dia + ", " + d.getDate() + " de " + mes.toLowerCase() + " de " + d.getFullYear();
   }
 
   function horarioStartMinutes(horario) {

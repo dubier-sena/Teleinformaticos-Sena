@@ -183,7 +183,6 @@
   font-weight: 700;
   font-size: var(--font-size-lg);
   color: var(--text-strong);
-  text-transform: capitalize;
 }
 
 .tag {
