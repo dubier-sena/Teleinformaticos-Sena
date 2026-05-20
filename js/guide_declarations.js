@@ -96,11 +96,28 @@
     resultado: "RAP 02 - Implementar componentes de las herramientas tecnologicas segun procedimientos de la organizacion.",
     activities: [
       { id: "bitacora311",    number: "3.1.1", label: "Bitacora individual de analisis",     shortName: "Bitacora",      type: "form" },
-      { id: "socializacion312",number: "3.1.2", label: "Socializacion del analisis",         shortName: "Socializacion", type: "form" },
-      { id: "tabla321",       number: "3.2.1", label: "Tabla resumen",                       shortName: "TablaResumen",  type: "form" },
-      { id: "mapa322",        number: "3.2.2", label: "Mapa conceptual",                     shortName: "MapaConceptual",type: "form" },
-      { id: "checklist331",   number: "3.3.1", label: "Checklist de instalacion",            shortName: "Checklist",     type: "form" },
-      { id: "diagnostico332", number: "3.3.2", label: "Diagnostico tecnico",                 shortName: "Diagnostico",   type: "form" },
+      // 3.1.2, 3.2.1 y 3.2.2: la guia dice "equipos de tres (3)" - comparten el mismo equipo (scope: "guide").
+      {
+        id: "socializacion312", number: "3.1.2", label: "Socializacion del analisis", shortName: "Socializacion", type: "form",
+        teamRequirement: { required: true, allowSolo: false, min: 3, max: 3, scope: "guide" },
+      },
+      {
+        id: "tabla321", number: "3.2.1", label: "Tabla resumen", shortName: "TablaResumen", type: "form",
+        teamRequirement: { required: true, allowSolo: false, min: 3, max: 3, scope: "guide" },
+      },
+      {
+        id: "mapa322", number: "3.2.2", label: "Mapa conceptual", shortName: "MapaConceptual", type: "form",
+        teamRequirement: { required: true, allowSolo: false, min: 3, max: 3, scope: "guide" },
+      },
+      // 3.3.1 y 3.3.2: la guia indica carpeta individual con plantilla especifica.
+      {
+        id: "checklist331", number: "3.3.1", label: "Checklist de instalacion", shortName: "Checklist", type: "form",
+        dedicatedFolder: { enabled: true, template: "Evidencias_Act331_{learnerLastFirst}", fileLabel: "Checklist Instalacion" },
+      },
+      {
+        id: "diagnostico332", number: "3.3.2", label: "Diagnostico tecnico", shortName: "Diagnostico", type: "form",
+        dedicatedFolder: { enabled: true, template: "Diagnostico_{learnerLastFirst}_{date}", fileLabel: "Diagnostico Tecnico" },
+      },
       { id: "documento333",   number: "3.3.3", label: "Documento tecnico de gestion de informacion", shortName: "DocTecnico", type: "file" },
       { id: "presupuesto341", number: "3.4.1", label: "Presupuesto final",                   shortName: "Presupuesto",   type: "form" },
       { id: "sustentacion342",number: "3.4.2", label: "Presentacion y sustentacion oral",    shortName: "Sustentacion",  type: "file" },
@@ -140,11 +157,28 @@
     resultado: RAP_PLANIFICAR,
     activities: [
       { id: "bitacora311",     number: "3.1.1", label: "Bitacora individual de analisis", shortName: "Bitacora",      type: "form" },
-      { id: "socializacion312",number: "3.1.2", label: "Socializacion del analisis",      shortName: "Socializacion", type: "form" },
-      { id: "tabla321",        number: "3.2.1", label: "Tabla resumen",                   shortName: "TablaResumen",  type: "form" },
-      { id: "mapa322",         number: "3.2.2", label: "Mapa conceptual",                 shortName: "MapaConceptual",type: "form" },
-      { id: "checklist331",    number: "3.3.1", label: "Checklist de instalacion",        shortName: "Checklist",     type: "form" },
-      { id: "diagnostico332",  number: "3.3.2", label: "Diagnostico tecnico",             shortName: "Diagnostico",   type: "form" },
+      // 3.1.2, 3.2.1 y 3.2.2: la guia 6 (grado 11) dice "equipos de 3" - comparten el mismo equipo.
+      {
+        id: "socializacion312", number: "3.1.2", label: "Socializacion del analisis", shortName: "Socializacion", type: "form",
+        teamRequirement: { required: true, allowSolo: false, min: 3, max: 3, scope: "guide" },
+      },
+      {
+        id: "tabla321", number: "3.2.1", label: "Tabla resumen", shortName: "TablaResumen", type: "form",
+        teamRequirement: { required: true, allowSolo: false, min: 3, max: 3, scope: "guide" },
+      },
+      {
+        id: "mapa322", number: "3.2.2", label: "Mapa conceptual", shortName: "MapaConceptual", type: "form",
+        teamRequirement: { required: true, allowSolo: false, min: 3, max: 3, scope: "guide" },
+      },
+      // 3.3.1 y 3.3.2: la guia indica carpeta individual con plantilla especifica.
+      {
+        id: "checklist331", number: "3.3.1", label: "Checklist de instalacion", shortName: "Checklist", type: "form",
+        dedicatedFolder: { enabled: true, template: "Evidencias_Act331_{learnerLastFirst}", fileLabel: "Checklist Instalacion" },
+      },
+      {
+        id: "diagnostico332", number: "3.3.2", label: "Diagnostico tecnico", shortName: "Diagnostico", type: "form",
+        dedicatedFolder: { enabled: true, template: "Diagnostico_{learnerLastFirst}_{date}", fileLabel: "Diagnostico Tecnico" },
+      },
       { id: "presupuesto341",  number: "3.4.1", label: "Presupuesto final",               shortName: "Presupuesto",   type: "form" },
     ],
   });

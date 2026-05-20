@@ -905,13 +905,466 @@ function closeDriveFolderQR() {
   }
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+// EQUIPO DE TRABAJO Y CARPETAS DEDICADAS PARA GUIA 6 (grado 11)
+// Mismo patron que Guia 3: lee declaraciones de ActivityStandard y aplica
+// wizard de equipo (scope: "guide") + override de carpeta dedicada para
+// actividades con dedicatedFolder.template.
+// ════════════════════════════════════════════════════════════════════════════
+
+const EQUIPO_GUIA6_STATE_KEY = "equipoGuia6";
+const EQUIPO_GUIA6_EMAIL_DOMAIN = "@sena-portal.local";
+let equipoGuia6WizardActive = false;
+
+function getGuia6ActivityDeclarations() {
+  if (window.ActivityStandard && typeof window.ActivityStandard.getActivitiesForGuide === "function") {
+    return window.ActivityStandard.getActivitiesForGuide(GUIDE_DATA_FILE) || [];
+  }
+  return [];
+}
+
+function getCurrentUsernameKey() {
+  const session = window.portalAuth?.getCurrentSession?.();
+  return String(session?.usernameKey || session?.user?.usernameKey || "").trim().toLowerCase();
+}
+
+function getEquipoGuia6FromState() {
+  const raw = state[EQUIPO_GUIA6_STATE_KEY];
+  if (!raw || typeof raw !== "object") return null;
+  if (raw.mode !== "grupo") return null;
+  if (!Array.isArray(raw.members) || raw.members.length < 2) return null;
+  return raw;
+}
+
+function setEquipoGuia6InState(team) {
+  state[EQUIPO_GUIA6_STATE_KEY] = team;
+  saveState();
+}
+
+function clearEquipoGuia6FromState() {
+  delete state[EQUIPO_GUIA6_STATE_KEY];
+  saveState();
+}
+
+function buildEquipoGuia6GroupKey(ficha, memberKeys) {
+  const sorted = memberKeys.slice().map((k) => String(k || "").trim().toLowerCase()).sort();
+  const seed = "g6:" + ficha + ":" + sorted.join("__");
+  let hash = 2166136261;
+  for (let i = 0; i < seed.length; i++) {
+    hash ^= seed.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return "g6_" + ficha + "_" + (hash >>> 0).toString(16);
+}
+
+function buildEquipoGuia6Code4(team) {
+  if (!team || !Array.isArray(team.memberKeys)) return "";
+  const sorted = team.memberKeys.slice().map((k) => String(k || "").trim().toLowerCase()).sort();
+  const seed = "code:" + (team.ficha || "") + ":" + sorted.join("__");
+  let hash = 2166136261;
+  for (let i = 0; i < seed.length; i++) {
+    hash ^= seed.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(16).toUpperCase().padStart(8, "0").slice(0, 4);
+}
+
+function getFullNameParts(fullName) {
+  return String(fullName || "").trim().split(/\s+/).filter(Boolean);
+}
+
+function formatInitialLastname(fullName) {
+  const parts = getFullNameParts(fullName);
+  if (parts.length === 0) return "Aprendiz";
+  if (parts.length === 1) return parts[0];
+  return parts[0].charAt(0).toUpperCase() + parts[parts.length - 1];
+}
+
+function formatLastnameFirstName(fullName) {
+  const parts = getFullNameParts(fullName);
+  if (parts.length === 0) return "Aprendiz";
+  if (parts.length === 1) return parts[0];
+  return parts[parts.length - 1] + "_" + parts[0];
+}
+
+function todayDateStampYYYYMMDD() {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return yyyy + mm + dd;
+}
+
+function resolveDedicatedFolderTemplate(template) {
+  if (!template) return "";
+  const selfName = getCurrentLearnerName();
+  const lastFirst = formatLastnameFirstName(selfName);
+  const team = getEquipoGuia6FromState();
+  const teamCode = team ? buildEquipoGuia6Code4(team) : "";
+  const teamInitials = team && Array.isArray(team.members)
+    ? team.members.slice().sort((a, b) => formatInitialLastname(a.fullName).localeCompare(formatInitialLastname(b.fullName), "es")).map((m) => formatInitialLastname(m.fullName)).join("_")
+    : "";
+  const selection = getGuideSelection();
+  return String(template)
+    .replace(/\{learnerName\}/g, selfName || "Aprendiz")
+    .replace(/\{learnerLastFirst\}/g, lastFirst)
+    .replace(/\{teamCode\}/g, teamCode)
+    .replace(/\{teamInitials\}/g, teamInitials)
+    .replace(/\{ficha\}/g, selection.ficha || "")
+    .replace(/\{date\}/g, todayDateStampYYYYMMDD());
+}
+
+function getActivityDeclarationForTarget(target) {
+  return getGuia6ActivityDeclarations().find((a) => a.id === target.deadlineActivityId) || null;
+}
+
+// ── Wizard (UI mount: equipoGuia6Mount al inicio del partial) ──────────────
+
+function renderEquipoGuia6Block() {
+  const summary = document.getElementById("equipoGuia6Summary");
+  const config = document.getElementById("equipoGuia6Config");
+  if (!summary || !config) return;
+  const team = getEquipoGuia6FromState();
+  if (team && !equipoGuia6WizardActive) {
+    config.style.display = "none";
+    renderEquipoGuia6Summary(team);
+    return;
+  }
+  summary.innerHTML = "";
+  config.style.display = "";
+  renderEquipoGuia6Roster();
+}
+
+function renderEquipoGuia6Summary(team) {
+  const summary = document.getElementById("equipoGuia6Summary");
+  if (!summary) return;
+  const code4 = buildEquipoGuia6Code4(team);
+  const memberList = team.members
+    .map((m) => `<li>${escapeHtml(m.fullName)} <span style="color:#78909c;font-size:.78rem">(${escapeHtml(m.usernameKey)})</span></li>`)
+    .join("");
+  summary.innerHTML = `
+    <div style="padding:10px 12px;background:#e8f5e9;border:1px solid #b6dba0;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:.88rem">
+      <div style="font-weight:700;margin-bottom:4px">Equipo confirmado &middot; <code style="background:#fff;padding:2px 6px;border-radius:4px;color:#0b6b35">Equipo ${escapeHtml(code4)}</code></div>
+      <ul style="margin:6px 0 6px 18px;padding:0;line-height:1.55">${memberList}</ul>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+        <button type="button" onclick="reconfigurarEquipoGuia6()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid #f5c1bb;background:#fdecea;color:#a13029;border-radius:6px;font-family:inherit;font-size:.82rem;cursor:pointer;font-weight:600">&#128683; Cambiar de equipo</button>
+      </div>
+    </div>`;
+}
+
+function renderEquipoGuia6Roster() {
+  const mount = document.getElementById("equipoGuia6RosterMount");
+  const hint = document.getElementById("equipoGuia6FormHint");
+  if (!mount) return;
+  const selfKey = getCurrentUsernameKey();
+  const selfName = getCurrentLearnerName();
+  const selection = getGuideSelection();
+  const ficha = String(selection.ficha || "").trim();
+  if (!selfKey || !ficha) {
+    mount.innerHTML = "";
+    if (hint) hint.textContent = "Inicia sesion como aprendiz con ficha asignada para configurar el equipo.";
+    return;
+  }
+  const roster = (window.portalAuth?.getUsers?.() || [])
+    .filter((u) => String(u?.ficha || "").trim() === ficha)
+    .filter((u) => u?.role !== "admin")
+    .filter((u) => String(u.usernameKey || "").toLowerCase() !== selfKey)
+    .map((u) => ({
+      usernameKey: String(u.usernameKey || "").trim().toLowerCase(),
+      fullName: String(u.fullName || u.username || "").trim(),
+    }))
+    .filter((u) => u.usernameKey && u.fullName)
+    .sort((a, b) => a.fullName.localeCompare(b.fullName, "es"));
+  if (roster.length === 0) {
+    mount.innerHTML = `<p style="margin:0;font-size:.86rem;color:#a13029">Aun no hay companeros registrados en la ficha ${escapeHtml(ficha)}. Pideles que inicien sesion al menos una vez para que aparezcan aqui.</p>`;
+    if (hint) hint.textContent = "El listado se actualiza cuando los companeros ingresan al portal.";
+    return;
+  }
+  const selfRow = `
+    <label style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;background:#e8f5e9">
+      <input type="checkbox" checked disabled>
+      <span style="font-weight:600;color:#1b5e20">${escapeHtml(selfName || selfKey)} <span style="font-weight:400;color:#37474f">(tu)</span></span>
+    </label>`;
+  const rows = roster
+    .map((u) => `
+      <label style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer" data-equipo-guia6-row>
+        <input type="checkbox" data-equipo-guia6-key="${escapeHtml(u.usernameKey)}" data-equipo-guia6-name="${escapeHtml(u.fullName)}">
+        <span style="color:#37474f">${escapeHtml(u.fullName)}</span>
+      </label>`)
+    .join("");
+  mount.innerHTML = selfRow + rows;
+  if (hint) {
+    hint.textContent = `Tu ficha tiene ${roster.length + 1} aprendices registrados. La guia indica equipos de 3 (incluyendote): selecciona exactamente 2 companeros.`;
+  }
+  mount.querySelectorAll("[data-equipo-guia6-key]").forEach((cb) => {
+    cb.addEventListener("change", () => {
+      const checked = mount.querySelectorAll("[data-equipo-guia6-key]:checked").length;
+      if (checked > 2) {
+        cb.checked = false;
+        alert("La guia indica equipos de 3 integrantes. Solo puedes seleccionar 2 companeros. Desmarca uno antes de agregar otro.");
+      }
+    });
+  });
+}
+
+function confirmarEquipoGuia6() {
+  const selfKey = getCurrentUsernameKey();
+  const selfName = getCurrentLearnerName();
+  const selection = getGuideSelection();
+  const ficha = String(selection.ficha || "").trim();
+  if (!selfKey || !ficha) {
+    alert("No se pudo identificar tu sesion o ficha. Vuelve a iniciar sesion.");
+    return;
+  }
+  const checks = document.querySelectorAll("[data-equipo-guia6-key]:checked");
+  const selected = Array.from(checks).map((c) => ({
+    usernameKey: c.dataset.equipoGuia6Key,
+    fullName: c.dataset.equipoGuia6Name,
+  }));
+  if (selected.length !== 2) {
+    alert("Selecciona exactamente 2 companeros (equipo de 3 incluyendote).");
+    return;
+  }
+  const allMembers = [{ usernameKey: selfKey, fullName: selfName || selfKey }, ...selected];
+  const memberKeys = allMembers.map((m) => m.usernameKey);
+  const memberEmails = memberKeys.map((k) => k + EQUIPO_GUIA6_EMAIL_DOMAIN);
+  const groupKey = buildEquipoGuia6GroupKey(ficha, memberKeys);
+  const team = {
+    mode: "grupo",
+    groupKey,
+    ficha,
+    members: allMembers,
+    memberKeys,
+    memberEmails,
+    scope: "guide",
+    guide: GUIDE_DATA_FILE,
+    confirmedAt: new Date().toISOString(),
+    confirmedBy: { usernameKey: selfKey, fullName: selfName || selfKey },
+  };
+  setEquipoGuia6InState(team);
+  equipoGuia6WizardActive = false;
+  if (window._firebaseDb && typeof window._firebaseDb.cloudSaveGroup === "function") {
+    Promise.resolve(window._firebaseDb.cloudSaveGroup(groupKey, {
+      ficha,
+      guide: GUIDE_DATA_FILE,
+      activity: "guia6_equipo",
+      members: allMembers,
+      memberKeys,
+      memberEmails,
+      updatedAt: new Date().toISOString(),
+    })).catch(() => {});
+  }
+  renderEquipoGuia6Block();
+  renderDriveDeliveryPanel();
+}
+
+function cancelarEquipoGuia6Config() {
+  if (getEquipoGuia6FromState()) {
+    equipoGuia6WizardActive = false;
+    renderEquipoGuia6Block();
+  }
+}
+
+function reconfigurarEquipoGuia6() {
+  if (!confirm("Cambiar de equipo borrara la configuracion actual. Tus entregas previas quedan en la carpeta del equipo anterior. Continuar?")) return;
+  clearEquipoGuia6FromState();
+  equipoGuia6WizardActive = true;
+  document.querySelectorAll('[data-drive-panel^="guide6-"]').forEach((p) => p.remove());
+  renderEquipoGuia6Block();
+  renderDriveDeliveryPanel();
+}
+
+window.confirmarEquipoGuia6 = confirmarEquipoGuia6;
+window.cancelarEquipoGuia6Config = cancelarEquipoGuia6Config;
+window.reconfigurarEquipoGuia6 = reconfigurarEquipoGuia6;
+
+// ── Drive delivery panel con overrides ────────────────────────────────────
+
+const GUIA6_TEAM_FILE_LABELS = {
+  "guide6-3-2-1": "TablaResumen",
+  "guide6-3-2-2": "MapaConceptual",
+};
+
+function buildGuia6TeamFolderTitle(team) {
+  const code4 = buildEquipoGuia6Code4(team);
+  const initials = team.members
+    .slice()
+    .sort((a, b) => formatInitialLastname(a.fullName).localeCompare(formatInitialLastname(b.fullName), "es"))
+    .map((m) => formatInitialLastname(m.fullName))
+    .join("_");
+  return `Equipo ${code4} - ${initials}`;
+}
+
 function renderDriveDeliveryPanel() {
+  const team = getEquipoGuia6FromState();
+  const enrichedTargets = GUIDE6_DRIVE_ACTIVITY_TARGETS.map((target) => {
+    const decl = getActivityDeclarationForTarget(target);
+    let next = target;
+    if (decl && decl.dedicatedFolder && decl.dedicatedFolder.enabled && decl.dedicatedFolder.template) {
+      const folderTitle = resolveDedicatedFolderTemplate(decl.dedicatedFolder.template);
+      next = Object.assign({}, next, {
+        description: `${next.description} Carpeta dedicada: ${folderTitle}.`,
+        activityContext: Object.assign({}, next.activityContext || {}, {
+          activityTitle: folderTitle,
+          activityLabel: decl.dedicatedFolder.fileLabel || next.activityContext?.activityLabel,
+        }),
+      });
+    }
+    if (decl && decl.teamRequirement && decl.teamRequirement.required && team) {
+      const teamFolder = buildGuia6TeamFolderTitle(team);
+      const fileLabel = GUIA6_TEAM_FILE_LABELS[target.panelKey] || next.activityContext?.activityLabel;
+      next = Object.assign({}, next, {
+        description: `${next.description} Equipo: ${team.members.map((m) => m.fullName).join(", ")}.`,
+        activityContext: Object.assign({}, next.activityContext || {}, {
+          activityTitle: teamFolder,
+          activityLabel: fileLabel,
+        }),
+      });
+    }
+    return next;
+  });
   window.sharedDriveDelivery?.appendDriveDeliveryPanels({
-    targets: GUIDE6_DRIVE_ACTIVITY_TARGETS,
+    targets: enrichedTargets,
     helperSuffix: "La carpeta se define automaticamente segun la ficha activa.",
     onDriveClick: openDriveFolder,
     onQrClick: showDriveFolderQR,
   });
+  customizeGuia6DriveButtons();
+  renderEquipoGuia6Block();
+}
+
+function customizeGuia6DriveButtons() {
+  const decls = getGuia6ActivityDeclarations();
+  GUIDE6_DRIVE_ACTIVITY_TARGETS.forEach((target) => {
+    const decl = decls.find((a) => a.id === target.deadlineActivityId);
+    if (!decl) return;
+    const needsOverride = (decl.teamRequirement && decl.teamRequirement.required) ||
+      (decl.dedicatedFolder && decl.dedicatedFolder.enabled);
+    if (!needsOverride) return;
+    const panel = document.querySelector(`[data-drive-panel="${target.panelKey}"]`);
+    if (!panel) return;
+    const btn = panel.querySelector(".btn-drive:not(.btn-apps-script)");
+    if (!btn || btn.dataset.guia6Customized === "1") return;
+    const clone = btn.cloneNode(true);
+    btn.parentNode.replaceChild(clone, btn);
+    clone.dataset.guia6Customized = "1";
+    clone.addEventListener("click", () => openGuia6DriveDestination(target, decl));
+  });
+}
+
+function openGuia6DriveDestination(target, decl) {
+  if (decl.teamRequirement && decl.teamRequirement.required && !getEquipoGuia6FromState()) {
+    alert('Antes de subir, confirma tu equipo de trabajo en el panel "Mi equipo de trabajo de la Guia 6" al inicio de la guia.');
+    return;
+  }
+  const stored = getStoredDeliveryForPanel(target);
+  if (stored && stored.driveUrl) {
+    window.open(stored.driveUrl, "_blank", "noopener,noreferrer");
+    return;
+  }
+  showGuia6DriveHelperModal(target, decl);
+}
+
+function getStoredDeliveryForPanel(target) {
+  if (window.sharedAppsScriptDelivery && typeof window.sharedAppsScriptDelivery.loadDeliveryRecord === "function") {
+    try {
+      const record = window.sharedAppsScriptDelivery.loadDeliveryRecord({
+        panelKey: target.panelKey,
+        activityNumber: target.activityNumber,
+      });
+      if (record && record.driveUrl) return record;
+    } catch (_) { /* noop */ }
+  }
+  return null;
+}
+
+function getExpectedGuia6FolderName(target, decl) {
+  const team = getEquipoGuia6FromState();
+  const activityNumber = target.activityNumber || "";
+  let activityTitle = "";
+  if (decl.dedicatedFolder && decl.dedicatedFolder.enabled) {
+    activityTitle = resolveDedicatedFolderTemplate(decl.dedicatedFolder.template);
+  } else if (decl.teamRequirement && decl.teamRequirement.required && team) {
+    activityTitle = buildGuia6TeamFolderTitle(team);
+  } else {
+    activityTitle = target.activityContext?.activityTitle || "Actividad";
+  }
+  return activityNumber ? `${activityNumber} - ${activityTitle}` : activityTitle;
+}
+
+function showGuia6DriveHelperModal(target, decl) {
+  const folderFullName = getExpectedGuia6FolderName(target, decl);
+  const fichaFolderUrl = getDriveFolderUrl();
+  const team = getEquipoGuia6FromState();
+  let searchQuery = folderFullName;
+  if (decl.teamRequirement && decl.teamRequirement.required && team) {
+    searchQuery = "Equipo " + buildEquipoGuia6Code4(team);
+  }
+  const searchUrl = `https://drive.google.com/drive/u/0/search?q=${encodeURIComponent(searchQuery)}`;
+  const subjectHint = (decl.teamRequirement && decl.teamRequirement.required)
+    ? "cualquier integrante del equipo"
+    : "tu";
+  let modal = document.getElementById("guia6-drive-helper-modal");
+  if (modal) modal.remove();
+  modal = document.createElement("div");
+  modal.id = "guia6-drive-helper-modal";
+  modal.className = "modal-overlay";
+  modal.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px";
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:12px;padding:22px 24px;max-width:560px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,0.18);font-family:inherit">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <span aria-hidden="true" style="font-size:1.4rem">&#128193;</span>
+        <h3 style="margin:0;color:#0b6b35;font-size:1.05rem">Tu carpeta de entrega en Drive</h3>
+      </div>
+      <p style="margin:0 0 12px;color:#455a64;font-size:.88rem;line-height:1.55">
+        Aun no has subido esta entrega. Tu carpeta dedicada se crea automaticamente cuando ${escapeHtml(subjectHint)} subas el primer archivo desde <em>"Entregar por formulario seguro"</em>.
+      </p>
+      <div style="background:#f1f9f3;border:1px solid #cfe0d3;border-left:4px solid #0b6b35;border-radius:8px;padding:10px 12px;margin-bottom:14px">
+        <div style="font-weight:700;color:#0b6b35;font-size:.82rem;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em">Nombre exacto de tu carpeta</div>
+        <code id="guia6-folder-name-text" style="display:block;font-family:Consolas,Monaco,monospace;font-size:.86rem;color:#1b5e20;word-break:break-word;line-height:1.5">${escapeHtml(folderFullName)}</code>
+        <button type="button" id="guia6-folder-copy-btn" style="margin-top:8px;display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid #cfe0d3;background:#ffffff;color:#0b6b35;border-radius:6px;font-family:inherit;font-size:.82rem;cursor:pointer;font-weight:600">&#128203; Copiar nombre</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+        <a id="guia6-open-ficha-link" href="${escapeHtml(fichaFolderUrl || "#")}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;background:#0b6b35;color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:.9rem${fichaFolderUrl ? "" : ";pointer-events:none;opacity:.5"}">&#128193; Abrir carpeta principal de la ficha</a>
+        <a href="${escapeHtml(searchUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;background:#ffffff;color:#0b6b35;border:1px solid #cfe0d3;border-radius:8px;text-decoration:none;font-weight:600;font-size:.9rem">&#128269; Buscar mi carpeta en Drive</a>
+      </div>
+      <div style="display:flex;justify-content:flex-end">
+        <button type="button" id="guia6-helper-close-btn" style="padding:8px 16px;border:none;background:#eceff1;color:#37474f;border-radius:6px;font-family:inherit;font-size:.88rem;cursor:pointer;font-weight:600">Cerrar</button>
+      </div>
+    </div>
+  `;
+  modal.addEventListener("click", (event) => { if (event.target === modal) closeGuia6DriveHelperModal(); });
+  document.body.appendChild(modal);
+  document.getElementById("guia6-helper-close-btn")?.addEventListener("click", closeGuia6DriveHelperModal);
+  document.getElementById("guia6-folder-copy-btn")?.addEventListener("click", () => {
+    const text = folderFullName;
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById("guia6-folder-copy-btn");
+        if (btn) { const original = btn.innerHTML; btn.innerHTML = "&#9989; Copiado"; setTimeout(() => { btn.innerHTML = original; }, 1800); }
+      }).catch(() => guia6LegacyCopyToClipboard(text));
+    } else {
+      guia6LegacyCopyToClipboard(text);
+    }
+  });
+}
+
+function closeGuia6DriveHelperModal() {
+  const modal = document.getElementById("guia6-drive-helper-modal");
+  if (modal) modal.remove();
+}
+
+function guia6LegacyCopyToClipboard(text) {
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+  } catch (_) { /* noop */ }
 }
 
 function renderMaterialGroup(containerId, items) {
