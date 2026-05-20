@@ -78,6 +78,12 @@
       { id: "sistemas332",     number: "3.3.2", label: "Requerimientos minimos",            shortName: "Requerimientos",  type: "form" },
       { id: "suite333",        number: "3.3.3", label: "Suite ofimatica en accion",         shortName: "Suite",           type: "form" },
       { id: "colaborativas334",number: "3.3.4", label: "Herramientas colaborativas",        shortName: "Colaborativas",   type: "form" },
+      // Actividad 9 (3.3.5) - Ciberseguridad: 4 secciones inline + entrega Drive.
+      { id: "cibersegAmenazas335",  number: "3.3.5", label: "Ciberseguridad - Amenazas",     shortName: "CiberAmenazas",   type: "form" },
+      { id: "cibersegGuia335",      number: "3.3.5", label: "Ciberseguridad - Guia",         shortName: "CiberGuia",       type: "form" },
+      { id: "cibersegPhishing335",  number: "3.3.5", label: "Ciberseguridad - Phishing",     shortName: "CiberPhishing",   type: "form" },
+      { id: "cibersegChecklist335", number: "3.3.5", label: "Ciberseguridad - Checklist",    shortName: "CiberChecklist",  type: "form" },
+      { id: "ciberseguridad335",    number: "3.3.5", label: "Ciberseguridad - Entrega Drive",shortName: "CiberDoc",        type: "file" },
       { id: "transferReto341", number: "3.4.1", label: "Reto final",                        shortName: "RetoFinal",       type: "form" },
     ],
   });
