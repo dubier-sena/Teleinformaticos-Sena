@@ -45,8 +45,14 @@ service cloud.firestore {
     }
 
     // ───── Usuarios (perfil + metadatos del aprendiz) ──────────────────────
+    // Lectura: cualquier sesion autenticada puede leer/listar user docs. El
+    // doc cloud NO contiene passwordHash (se elimina en cloudSaveUser de
+    // firebase_db.js), asi que solo expone nombre y ficha — necesario para
+    // que un aprendiz pueda armar equipos de trabajo seleccionando a sus
+    // companeros de la misma ficha (p. ej. Actividad 10 de Guia 2).
+    // Escritura: solo admin o el propio aprendiz.
     match /sena_portal_users/{usernameKey} {
-      allow read: if isAdmin() || isOwnerByUsernameKey(usernameKey);
+      allow read: if signedIn();
       allow create, update: if isAdmin() || isOwnerByUsernameKey(usernameKey);
       allow delete: if isAdmin();
     }
