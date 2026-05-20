@@ -1156,6 +1156,76 @@
                 </ol>
               </div>
 
+              <!-- Scaffolding inline: 4 secciones (paso 1 amenazas, paso 2 borrador guia, paso 3 analisis phishing, paso 4 checklist) -->
+              <div class="soporte-actividad10-block" style="margin-top:18px;padding:14px 16px;border:1px solid #cfe0d3;border-left:5px solid #2e7d32;border-radius:10px;background:linear-gradient(180deg,#f6fbf6,#ffffff)">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-weight:700;color:#1b5e20;font-size:.95rem"><span aria-hidden="true">&#128274;</span> Borrador de tu trabajo de ciberseguridad</div>
+                <p class="intro-text" style="margin:0 0 10px;font-size:.86rem;color:#455a64;line-height:1.55">Documenta aqu&iacute; tu an&aacute;lisis y borrador. Lo que guardes ser&aacute; la base de la "Gu&iacute;a de ciberseguridad" que entregar&aacute;s en el panel de Drive de abajo.</p>
+
+                <!-- Paso 1: Amenazas identificadas -->
+                <div style="margin-top:12px;padding:12px;border:1px solid #cfe0d3;border-radius:8px;background:#ffffff">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-weight:600;color:#1b5e20;font-size:.88rem"><span aria-hidden="true">&#128737;</span> Paso 1 &mdash; Amenazas identificadas para el actor productivo</div>
+                  <label style="display:block;margin-bottom:8px"><span style="display:block;font-weight:600;font-size:.82rem;margin-bottom:4px">Amenazas m&aacute;s probables (selecciona y describe c&oacute;mo se producen y qu&eacute; consecuencia tendr&iacute;an)</span><textarea data-store="ciberseg:amenazas:listado" data-track rows="4" placeholder="Ej.: Phishing por WhatsApp: el negocio recibe mensajes falsos del banco. Consecuencia: perdida de dinero o acceso a cuentas." style="width:100%;padding:8px 10px;border:1px solid #bcd2c0;border-radius:6px;font-family:inherit;font-size:.88rem"></textarea></label>
+                  <label style="display:block;margin-bottom:8px"><span style="display:block;font-weight:600;font-size:.82rem;margin-bottom:4px">Consecuencia m&aacute;s grave si no se actua</span><textarea data-store="ciberseg:amenazas:consecuencia" data-track rows="2" placeholder="Que perderia el negocio: dinero, datos, confianza de los clientes, etc." style="width:100%;padding:8px 10px;border:1px solid #bcd2c0;border-radius:6px;font-family:inherit;font-size:.88rem"></textarea></label>
+                  <div id="cibersegAmenazas335DeadlineControls" style="margin-top:6px"></div>
+                  <div class="act-btn-group" style="margin-top:8px">
+                    <button type="button" id="btnGuardarCibersegAmenazas" onclick="guardarCibersegAmenazas335()" class="btn-save-response">&#128190; Guardar amenazas identificadas</button>
+                  </div>
+                  <div id="cibersegAmenazas335Status" style="display:none;margin-top:8px;padding:8px 12px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.85rem">&#9989; Amenazas guardadas.</div>
+                </div>
+
+                <!-- Paso 2: Borrador de la guia -->
+                <div style="margin-top:12px;padding:12px;border:1px solid #cfe0d3;border-radius:8px;background:#ffffff">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-weight:600;color:#1b5e20;font-size:.88rem"><span aria-hidden="true">&#128221;</span> Paso 2 &mdash; Borrador de la Gu&iacute;a de ciberseguridad (m&iacute;n. 8 recomendaciones)</div>
+                  <label style="display:block;margin-bottom:8px"><span style="display:block;font-weight:600;font-size:.82rem;margin-bottom:4px">Nombre del actor productivo</span><input type="text" data-store="ciberseg:guia:actor" data-track placeholder="Ej.: Panaderia Don Ramiro" style="width:100%;padding:8px 10px;border:1px solid #bcd2c0;border-radius:6px;font-family:inherit;font-size:.88rem"></label>
+                  <label style="display:block;margin-bottom:8px"><span style="display:block;font-weight:600;font-size:.82rem;margin-bottom:4px">Recomendaciones (m&iacute;nimo 8, una por linea, en lenguaje sencillo)</span><textarea data-store="ciberseg:guia:recomendaciones" data-track rows="10" placeholder="1. Usa contrasenas distintas para cada cuenta (no reutilice).&#10;2. Activa el bloqueo de pantalla con clave o huella.&#10;3. No abras adjuntos ni enlaces de personas que no conoces.&#10;4. Mantiene Windows y el antivirus actualizados.&#10;5. Haga copia de seguridad de los archivos importantes en Drive o USB.&#10;6. ..." style="width:100%;padding:8px 10px;border:1px solid #bcd2c0;border-radius:6px;font-family:inherit;font-size:.88rem"></textarea></label>
+                  <div id="cibersegGuia335DeadlineControls" style="margin-top:6px"></div>
+                  <div class="act-btn-group" style="margin-top:8px">
+                    <button type="button" id="btnGuardarCibersegGuia" onclick="guardarCibersegGuia335()" class="btn-save-response">&#128190; Guardar borrador de la gu&iacute;a</button>
+                    <button class="btn-export-word" type="button" onclick="exportCibersegGuia335ToWord()">&#128196; Exportar borrador a Word</button>
+                  </div>
+                  <div id="cibersegGuia335Status" style="display:none;margin-top:8px;padding:8px 12px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.85rem">&#9989; Borrador guardado. Usalo como base del documento que entregar&aacute;s en Drive.</div>
+                </div>
+
+                <!-- Paso 3: Analisis del phishing -->
+                <div style="margin-top:12px;padding:12px;border:1px solid #cfe0d3;border-radius:8px;background:#ffffff">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-weight:600;color:#1b5e20;font-size:.88rem"><span aria-hidden="true">&#128172;</span> Paso 3 &mdash; An&aacute;lisis del mensaje de phishing</div>
+                  <label style="display:block;margin-bottom:8px"><span style="display:block;font-weight:600;font-size:.82rem;margin-bottom:4px">Se&ntilde;ales que delatan que es falso</span><textarea data-store="ciberseg:phishing:senales" data-track rows="3" placeholder="Remitente sospechoso, errores ortograficos, urgencia exagerada, enlaces extranos, etc." style="width:100%;padding:8px 10px;border:1px solid #bcd2c0;border-radius:6px;font-family:inherit;font-size:.88rem"></textarea></label>
+                  <label style="display:block;margin-bottom:8px"><span style="display:block;font-weight:600;font-size:.82rem;margin-bottom:4px">Qu&eacute; har&iacute;a el actor productivo si lo recibe</span><textarea data-store="ciberseg:phishing:reaccion" data-track rows="3" placeholder="Pasos concretos: no hacer clic, verificar por canal oficial, reportar, borrar..." style="width:100%;padding:8px 10px;border:1px solid #bcd2c0;border-radius:6px;font-family:inherit;font-size:.88rem"></textarea></label>
+                  <label style="display:block;margin-bottom:8px"><span style="display:block;font-weight:600;font-size:.82rem;margin-bottom:4px">Gui&oacute;n de 2 minutos para explicarle que no debe hacer clic</span><textarea data-store="ciberseg:phishing:guion" data-track rows="4" placeholder="Como se lo explicarias en lenguaje sencillo. Incluye las senales que veras juntos en el mensaje." style="width:100%;padding:8px 10px;border:1px solid #bcd2c0;border-radius:6px;font-family:inherit;font-size:.88rem"></textarea></label>
+                  <div id="cibersegPhishing335DeadlineControls" style="margin-top:6px"></div>
+                  <div class="act-btn-group" style="margin-top:8px">
+                    <button type="button" id="btnGuardarCibersegPhishing" onclick="guardarCibersegPhishing335()" class="btn-save-response">&#128190; Guardar an&aacute;lisis</button>
+                  </div>
+                  <div id="cibersegPhishing335Status" style="display:none;margin-top:8px;padding:8px 12px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.85rem">&#9989; An&aacute;lisis del phishing guardado.</div>
+                </div>
+
+                <!-- Paso 4: Checklist de 10 items -->
+                <div style="margin-top:12px;padding:12px;border:1px solid #cfe0d3;border-radius:8px;background:#ffffff">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-weight:600;color:#1b5e20;font-size:.88rem"><span aria-hidden="true">&#9989;</span> Paso 4 &mdash; Lista de verificaci&oacute;n de ciberseguridad (10 &iacute;tems)</div>
+                  <p class="intro-text" style="margin:0 0 6px;font-size:.82rem;color:#4b5563">Marca cada &iacute;tem como Cumple, Necesita mejora o No aplica seg&uacute;n la situaci&oacute;n actual del actor productivo.</p>
+                  <div class="table-scroll">
+                    <table class="data-table" style="margin:0 0 10px">
+                      <thead>
+                        <tr>
+                          <th style="width:32px">#</th>
+                          <th>&Iacute;tem a verificar con el actor productivo</th>
+                          <th style="width:170px">Estado</th>
+                        </tr>
+                      </thead>
+                      <tbody id="cibersegChecklistBody"></tbody>
+                    </table>
+                  </div>
+                  <div id="cibersegChecklist335DeadlineControls" style="margin-top:6px"></div>
+                  <div class="act-btn-group" style="margin-top:8px">
+                    <button type="button" id="btnGuardarCibersegChecklist" onclick="guardarCibersegChecklist335()" class="btn-save-response">&#128190; Guardar lista de verificaci&oacute;n</button>
+                  </div>
+                  <div id="cibersegChecklist335Status" style="display:none;margin-top:8px;padding:8px 12px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.85rem">&#9989; Lista de verificaci&oacute;n guardada.</div>
+                </div>
+              </div>
+
+              <!-- Drive delivery mount -->
+              <div data-step-delivery-mount="ciberseguridad335" style="margin-top:16px"></div>
+
               <div class="guide-source-info-blue">
                 <strong>&iquest;SAB&Iacute;AS QUE...?</strong>
                 <p>Seg&uacute;n la CCIT (2024), el 59 % de las empresas colombianas sufri&oacute; alg&uacute;n incidente de ciberseguridad en el &uacute;ltimo a&ntilde;o.</p>
