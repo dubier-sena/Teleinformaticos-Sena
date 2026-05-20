@@ -1367,6 +1367,75 @@
     host.querySelectorAll("[data-hab-unlock]").forEach((button) => {
       button.addEventListener("click", () => handleUnlockClick(button));
     });
+
+    // Boton "Cargar estado desde la nube"
+    const cloudBtn = host.querySelector("#hab-cloud-sync");
+    if (cloudBtn) {
+      cloudBtn.addEventListener("click", () => handleHabilitacionCloudSync(cloudBtn));
+    }
+  }
+
+  async function handleHabilitacionCloudSync(button) {
+    const hab = window.adminHabilitacion;
+    if (!hab || typeof hab.pullCloudStateForUsers !== "function") {
+      window.alert("El modulo de habilitacion no esta cargado.");
+      return;
+    }
+    const host = byId("habilitacion-host");
+    const statusEl = host?.querySelector("#hab-cloud-sync-status");
+    const filters = state.habilitacionFilters || {};
+    const fichaFilter = String(filters.ficha || "").trim();
+    const users = (state.users || []).filter((u) => {
+      if (fichaFilter && String(u.ficha) !== fichaFilter) return false;
+      return true;
+    });
+    if (!users.length) {
+      window.alert("No hay aprendices en el filtro actual.");
+      return;
+    }
+    // Confirmacion con estimacion de costo de lecturas
+    const guideCount = typeof auth.getGuidesForFicha === "function"
+      ? (auth.getGuidesForFicha(users[0]?.ficha) || []).length
+      : 0;
+    const estimated = users.length * Math.max(1, guideCount);
+    const fichaLabel = fichaFilter ? `ficha ${fichaFilter}` : "TODAS las fichas";
+    const confirmed = window.confirm(
+      `Traer estado desde Firestore para ${users.length} aprendices de ${fichaLabel}.\n` +
+      `Aproximadamente ${estimated} lecturas de Firestore.\n\n` +
+      `Continuar?`
+    );
+    if (!confirmed) return;
+
+    button.disabled = true;
+    const originalLabel = button.innerHTML;
+    button.innerHTML = "&#9203; Sincronizando&hellip;";
+    if (statusEl) statusEl.textContent = "Iniciando sincronizacion&hellip;";
+
+    try {
+      const result = await hab.pullCloudStateForUsers(users, {
+        auth,
+        getGuideActivityStateKey,
+        onProgress: ({ idx, total, fullName, pageFile }) => {
+          if (statusEl) {
+            statusEl.textContent = `Sincronizando ${idx}/${total}: ${fullName} - ${pageFile}`;
+          }
+        },
+      });
+      if (statusEl) {
+        statusEl.textContent =
+          `Sincronizacion terminada. ${result.merged} estados actualizados, ` +
+          `${result.fetched} lecturas, ${result.errors} errores. Refrescando lista...`;
+      }
+      // Re-render con los nuevos estados ya en localStorage
+      renderHabilitacionPanel();
+    } catch (err) {
+      console.error("[admin] cloud sync failed:", err);
+      if (statusEl) statusEl.textContent = "Error: " + (err?.message || "error desconocido");
+      window.alert("No se pudo sincronizar: " + (err?.message || "error"));
+    } finally {
+      button.disabled = false;
+      button.innerHTML = originalLabel;
+    }
   }
 
   function debounce(fn, ms) {
