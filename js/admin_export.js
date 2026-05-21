@@ -18,7 +18,7 @@
       resultado: "RAP 01 - Caracterizar herramientas informáticas según el contexto tecnológico de la organización.",
     },
     guia6: {
-      guideName: "Guía 6 - Planificar la información",
+      guideName: "Guía 6 - Implementar componentes de las herramientas tecnológicas según procedimientos de la organización",
       program: "Sistemas Teleinformáticos",
       competencia:
         "220501121 - Operar herramientas informáticas y digitales de acuerdo con protocolos y manuales técnicos.",

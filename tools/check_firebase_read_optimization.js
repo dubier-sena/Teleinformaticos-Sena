@@ -73,10 +73,14 @@ expectIncludes(
   "function isGuideDocumentVisible() {",
   "La plantilla compartida debe poder pausar lecturas cuando la guia no esta visible."
 );
+// NOTA: el corto-circuito por frescura del snapshot local fue retirado porque
+// los cambios del calendario admin no llegaban a la guia hasta que expirara
+// la TTL de 15 min. Ahora la guia siempre intenta una lectura remota (subject
+// al quota guard), pintando el local optimista antes de refrescar.
 expectIncludes(
   guideTemplate,
-  "if (localSnapshot && isGuideCalendarSnapshotFresh(localSnapshot)) {",
-  "La plantilla compartida debe reutilizar el snapshot local reciente del calendario antes de consultar Firebase."
+  "if (window._firebaseDb?.shouldDeferCloudReads?.()) {",
+  "La plantilla compartida debe respetar el quota guard para no exceder lecturas diarias."
 );
 expectIncludes(
   guideTemplate,

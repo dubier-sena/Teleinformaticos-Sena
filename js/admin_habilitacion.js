@@ -77,6 +77,8 @@
     "grupo-11b-guia-05-herramientas-informaticas-digitales.html": "11b_guia.html",
     "grupo-11a-guia-06-planificar-informacion.html": "11a_guia6.html",
     "grupo-11b-guia-06-planificar-informacion.html": "11b_guia6.html",
+    "grupo-11a-guia-07-planificar-informacion-ciberseguridad.html": "11a_guia7.html",
+    "grupo-11b-guia-07-planificar-informacion-ciberseguridad.html": "11b_guia7.html",
     // Redes (Santa Barbara) usa su propio nombre sin alias
   };
 

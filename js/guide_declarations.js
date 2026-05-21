@@ -149,18 +149,20 @@
     ],
   });
 
-  // ── Guia 6 — Planificar la informacion (11A + 11B) ─────────────────────────
+  // ── Guia 6 — Implementar componentes de las herramientas tecnologicas (11A + 11B) ────
+  var RAP_IMPLEMENTAR_HERRAMIENTAS = "RAP 02 - Implementar componentes de las herramientas tecnologicas segun procedimientos de la organizacion.";
+  var COMP_OPERAR_HERRAMIENTAS = "220501121 - Operar herramientas informaticas y digitales de acuerdo con protocolos y manuales tecnicos.";
   register({
     files: [
       "grupo-11a-guia-06-planificar-informacion.html",
       "grupo-11b-guia-06-planificar-informacion.html",
     ],
     guideNumber: "6",
-    guideTitle: "Guia 6 - Planificar la informacion (Grado 11)",
+    guideTitle: "Guia 6 - Implementar componentes de las herramientas tecnologicas segun procedimientos de la organizacion (Grado 11)",
     stateKey: "guia_interactiva_11a_guia6_html",
     program: PROGRAM,
-    competencia: COMPETENCIA,
-    resultado: RAP_PLANIFICAR,
+    competencia: COMP_OPERAR_HERRAMIENTAS,
+    resultado: RAP_IMPLEMENTAR_HERRAMIENTAS,
     activities: [
       { id: "bitacora311",     number: "3.1.1", label: "Bitacora individual de analisis", shortName: "Bitacora",      type: "form" },
       // 3.1.2, 3.2.1 y 3.2.2: la guia 6 (grado 11) dice "equipos de 3" - comparten el mismo equipo.
@@ -186,6 +188,172 @@
         dedicatedFolder: { enabled: true, template: "Diagnostico_{learnerLastFirst}_{date}", fileLabel: "Diagnostico Tecnico" },
       },
       { id: "presupuesto341",  number: "3.4.1", label: "Presupuesto final",               shortName: "Presupuesto",   type: "form" },
+    ],
+  });
+
+  // ── Guia 7 — Planificar la informacion segun criterios de ciberseguridad (11A + 11B) ────
+  var RAP_CIBERSEGURIDAD = "RAP 03 - Planificar la informacion segun criterios de ciberseguridad.";
+  var COMP_CIBERSEG = "220501121 - Operar herramientas informaticas y digitales de acuerdo con protocolos y manuales tecnicos.";
+  register({
+    files: [
+      "grupo-11a-guia-07-planificar-informacion-ciberseguridad.html",
+      "grupo-11b-guia-07-planificar-informacion-ciberseguridad.html",
+    ],
+    guideNumber: "7",
+    guideTitle: "Guia 7 - Planificar la informacion segun criterios de ciberseguridad (Grado 11)",
+    stateKey: "guia_interactiva_11a_guia7_html",
+    program: PROGRAM,
+    competencia: COMP_CIBERSEG,
+    resultado: RAP_CIBERSEGURIDAD,
+    activities: [
+      {
+        id: "caso311", number: "3.1.1", label: "Analisis del caso ElectroBoyca",
+        shortName: "CasoElectroBoyca", type: "form",
+        formFields: ["g7_311_pregunta1", "g7_311_pregunta2", "g7_311_pregunta3", "g7_311_pregunta4"],
+        buttonIds: { save: "btnGuardarCaso311", status: "statusCaso311" },
+        wordExport: {
+          contextBox:
+            "Caso ElectroBoyca S.A.S. (Puerto Boyaca): distribuidora victima de phishing y ransomware. Sin copias de seguridad, antivirus desactivado, sin politica de seguridad.",
+          sections: [
+            { label: "1. Ataques como este: lo que sabes", storeKey: "g7_311_pregunta1" },
+            { label: "2. Por que una MiPyme como ElectroBoyca puede ser victima", storeKey: "g7_311_pregunta2" },
+            { label: "3. Medidas ANTES del ataque (minimo 3)", storeKey: "g7_311_pregunta3" },
+            { label: "4. Informacion mas valiosa de una empresa", storeKey: "g7_311_pregunta4" },
+          ],
+        },
+      },
+      {
+        id: "plenaria312", number: "3.1.2", label: "Socializacion en plenaria",
+        shortName: "Plenaria", type: "form",
+        formFields: ["g7_312_bitacora"],
+        buttonIds: { save: "btnGuardarPlenaria312", status: "statusPlenaria312" },
+        wordExport: {
+          contextBox: "Plenaria grupal sobre el caso ElectroBoyca y los saberes previos de ciberseguridad.",
+          sections: [
+            { label: "Bitacora de la plenaria (cambios en tu comprension y preguntas pendientes)", storeKey: "g7_312_bitacora" },
+          ],
+        },
+      },
+      {
+        id: "bloqueAB321", number: "3.2.1", label: "Estudio de contenidos (Bloques A y B) - Tabla resumen",
+        shortName: "BloqueAB", type: "both",
+        formFields: ["g7_321_temas", "g7_321_fila", "g7_321_dudas"],
+        buttonIds: { save: "btnGuardarBloqueAB321", status: "statusBloqueAB321" },
+        wordExport: {
+          contextBox:
+            "Estudio en equipo de los 9 temas conceptuales de ciberseguridad (Bloques A y B). Entregable de equipo: tabla resumen PDF.",
+          sections: [
+            { label: "1. Temas que estudiaste", storeKey: "g7_321_temas" },
+            { label: "2. Fila mas importante de la tabla resumen", storeKey: "g7_321_fila" },
+            { label: "3. Dudas pendientes para el mapa conceptual", storeKey: "g7_321_dudas" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "guia7-3-2-1",
+          deadlineActivityId: "bloqueAB321",
+          activityTitle: "Tabla resumen de los Bloques A y B (BloqueAB_[TuNombre]_v1.0.pdf)",
+          description: "Sube a Drive la tabla resumen en PDF construida por el equipo (3 columnas: Concepto, En que consiste, Ejemplo en una MiPyme).",
+          note: "Nombre sugerido: BloqueAB_[TuNombre]_v1.0.pdf",
+        },
+      },
+      {
+        id: "mapa322", number: "3.2.2", label: "Mapa conceptual de ciberseguridad RAP 03",
+        shortName: "MapaConceptual", type: "both",
+        formFields: ["g7_322_central", "g7_322_ramas", "g7_322_enlaces", "g7_322_cia_mipyme"],
+        buttonIds: { save: "btnGuardarMapa322", status: "statusMapa322" },
+        wordExport: {
+          contextBox:
+            "Mapa conceptual de ciberseguridad RAP 03: minimo 15 conceptos, Triada CIA, normativa (ISO 27001, NIST CSF, Ley 1273), 2 controles de hardening. Evidencia de Conocimiento (IE-01).",
+          sections: [
+            { label: "1. Concepto central elegido", storeKey: "g7_322_central" },
+            { label: "2. Ramas principales (min. 4)", storeKey: "g7_322_ramas" },
+            { label: "3. Palabras de enlace mas usadas", storeKey: "g7_322_enlaces" },
+            { label: "4. Aplicacion concreta de la Triada CIA en una MiPyme", storeKey: "g7_322_cia_mipyme" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "guia7-3-2-2",
+          deadlineActivityId: "mapa322",
+          activityTitle: "Mapa conceptual RAP 03 (MapaConceptual_RAP03_[Equipo]_v1.0.pdf)",
+          description: "Sube a Drive el mapa conceptual exportado a PDF y la evidencia de la presentacion oral del equipo.",
+          note: "Nombre sugerido: MapaConceptual_RAP03_[Equipo]_v1.0.pdf",
+        },
+      },
+      {
+        id: "diagnostico331", number: "3.3.1", label: "Diagnostico del estado de seguridad del equipo",
+        shortName: "Diagnostico", type: "both",
+        formFields: ["g7_331_estado", "g7_331_hallazgos", "g7_331_prioridades", "g7_331_conclusion"],
+        buttonIds: { save: "btnGuardarDiagnostico331", status: "statusDiagnostico331" },
+        wordExport: {
+          contextBox:
+            "Diagnostico del estado de seguridad de un equipo Windows real con Windows Security, Belarc Advisor, secpol.msc, lusrmgr.msc. Evidencia de Conocimiento + Desempeno (IE-02 items 1-6).",
+          sections: [
+            { label: "1. Estado general de seguridad del equipo", storeKey: "g7_331_estado" },
+            { label: "2. Los 3 hallazgos mas criticos (con nivel de riesgo)", storeKey: "g7_331_hallazgos" },
+            { label: "3. Controles que priorizarias y por que", storeKey: "g7_331_prioridades" },
+            { label: "4. Conclusion tecnica (minimo 8 lineas)", storeKey: "g7_331_conclusion" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "guia7-3-3-1",
+          deadlineActivityId: "diagnostico331",
+          activityTitle: "Diagnostico de seguridad (Diagnostico_[TuNombre]_[Fecha])",
+          description: "Sube a Drive la Tabla de Diagnostico, las 6 capturas numeradas y el reporte HTML de Belarc Advisor.",
+          note: "Carpeta sugerida: Diagnostico_[TuNombre]_[Fecha]",
+        },
+      },
+      {
+        id: "hardening332", number: "3.3.2", label: "Implementacion de controles de hardening",
+        shortName: "Hardening", type: "both",
+        formFields: ["g7_332_orden", "g7_332_resumen", "g7_332_errores", "g7_332_conclusion"],
+        buttonIds: { save: "btnGuardarHardening332", status: "statusHardening332" },
+        wordExport: {
+          contextBox:
+            "Implementacion de 7 controles de hardening de Windows priorizando por nivel de riesgo del diagnostico. Evidencia de Desempeno (IE-02 items 7-13).",
+          sections: [
+            { label: "1. Orden de aplicacion de los 7 controles", storeKey: "g7_332_orden" },
+            { label: "2. Resumen de cambios (antes / accion / despues)", storeKey: "g7_332_resumen" },
+            { label: "3. Errores encontrados y solucion aplicada", storeKey: "g7_332_errores" },
+            { label: "4. Conclusion comparativa (minimo 10 lineas)", storeKey: "g7_332_conclusion" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "guia7-3-3-2",
+          deadlineActivityId: "hardening332",
+          activityTitle: "Hardening del equipo (Hardening_[TuNombre]_[Fecha])",
+          description: "Sube a Drive la Bitacora de cambios y las 7 capturas numeradas y descriptivas de los controles aplicados.",
+          note: "Carpeta sugerida: Hardening_[TuNombre]_[Fecha]",
+        },
+      },
+      {
+        id: "plan341", number: "3.4.1", label: "Plan de Ciberseguridad para una MiPyme + Sustentacion oral",
+        shortName: "PlanCiberseguridad", type: "both",
+        formFields: [
+          "g7_341_sec_a", "g7_341_sec_b", "g7_341_sec_c", "g7_341_sec_d",
+          "g7_341_sec_e", "g7_341_sec_f", "g7_341_sec_g",
+        ],
+        buttonIds: { save: "btnGuardarPlan341", status: "statusPlan341" },
+        wordExport: {
+          contextBox:
+            "Plan de Ciberseguridad para ElectroBoyca S.A.S. integrando diagnostico, controles, inventario y estrategia 3-2-1. Producto + Sustentacion oral (IE-03). Indice borrador previo a la redaccion.",
+          sections: [
+            { label: "A. Resumen ejecutivo", storeKey: "g7_341_sec_a" },
+            { label: "B. Diagnostico de seguridad", storeKey: "g7_341_sec_b" },
+            { label: "C. Controles implementados", storeKey: "g7_341_sec_c" },
+            { label: "D. Inventario de activos con valoracion de riesgos", storeKey: "g7_341_sec_d" },
+            { label: "E. Estrategia de copias de seguridad 3-2-1", storeKey: "g7_341_sec_e" },
+            { label: "F. Recomendaciones a mediano plazo (minimo 3 con norma)", storeKey: "g7_341_sec_f" },
+            { label: "G. Bibliografia (minimo 5 fuentes, APA o IEEE)", storeKey: "g7_341_sec_g" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "guia7-3-4-1",
+          deadlineActivityId: "plan341",
+          activityTitle: "Plan de Ciberseguridad (PlanCiberseguridad_[TuNombre].pdf)",
+          description: "Sube a Drive el Plan de Ciberseguridad en PDF (minimo 8 paginas, secciones A-G) y la presentacion para la sustentacion oral.",
+          note: "Nombre sugerido: PlanCiberseguridad_[TuNombre].pdf",
+        },
+      },
     ],
   });
 
