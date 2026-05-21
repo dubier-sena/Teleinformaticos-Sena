@@ -1195,6 +1195,9 @@
     }
 
     const total = Math.max(0, Number(progress?.total) || 0);
+    if (total <= 0) {
+      return;
+    }
     const completed = clampNumber(Math.max(0, Number(progress?.completed) || 0), 0, total || 0);
     const percent = total
       ? Math.round((completed / total) * 100)
@@ -2741,6 +2744,7 @@ window.portalAuth = {
     }
 
     const total = Math.max(0, Number(progress && progress.total) || 0);
+    if (total <= 0) return;
     const completed = clampNumber(Math.max(0, Number(progress && progress.completed) || 0), 0, total || 0);
     const percent = total
       ? Math.round((completed / total) * 100)
