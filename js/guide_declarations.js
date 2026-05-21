@@ -102,18 +102,18 @@
     resultado: "RAP 02 - Implementar componentes de las herramientas tecnologicas segun procedimientos de la organizacion.",
     activities: [
       { id: "bitacora311",    number: "3.1.1", label: "Bitacora individual de analisis",     shortName: "Bitacora",      type: "form" },
-      // 3.1.2, 3.2.1 y 3.2.2: la guia dice "equipos de tres (3)" - comparten el mismo equipo (scope: "guide").
+      // 3.1.2, 3.2.1 y 3.2.2: la guia dice "equipos de tres (3)" - cada actividad puede tener su PROPIO equipo (scope: "activity").
       {
         id: "socializacion312", number: "3.1.2", label: "Socializacion del analisis", shortName: "Socializacion", type: "form",
-        teamRequirement: { required: true, allowSolo: false, min: 3, max: 3, scope: "guide" },
+        teamRequirement: { required: true, allowSolo: false, min: 3, max: 3, scope: "activity" },
       },
       {
         id: "tabla321", number: "3.2.1", label: "Tabla resumen", shortName: "TablaResumen", type: "form",
-        teamRequirement: { required: true, allowSolo: false, min: 3, max: 3, scope: "guide" },
+        teamRequirement: { required: true, allowSolo: false, min: 3, max: 3, scope: "activity" },
       },
       {
         id: "mapa322", number: "3.2.2", label: "Mapa conceptual", shortName: "MapaConceptual", type: "form",
-        teamRequirement: { required: true, allowSolo: false, min: 3, max: 3, scope: "guide" },
+        teamRequirement: { required: true, allowSolo: false, min: 3, max: 3, scope: "activity" },
       },
       // 3.3.1 y 3.3.2: la guia indica carpeta individual con plantilla especifica.
       {

@@ -353,14 +353,22 @@ function initGuia3() {
   }
 
   guia3Booted = true;
+  migrateLegacyEquipoGuia3();
   renderStatefulSections();
   renderEvidenceTable();
   renderGlossary();
   renderSupportMaterials();
+  renderTabla321();
+  renderChecklist331();
+  updateChecklist331FolderHint();
   renderDriveDeliveryPanel();
   hydrateFields();
   applyBitacoraLock();
   applyBitacoraSocializacionLock();
+  applyTabla321Lock();
+  applyMapa322Lock();
+  applyChecklist331Lock();
+  cmDemoApply();
   renderQuizHerramientasStatus();
   updateBudgetSummary();
   bindEvents();
@@ -423,6 +431,15 @@ function renderStatefulSections() {
   renderInstallationTable();
   renderDiagnosticTable();
   renderBudgetTable();
+  if (typeof renderTabla321 === "function") {
+    renderTabla321();
+  }
+  if (typeof renderChecklist331 === "function") {
+    renderChecklist331();
+  }
+  if (typeof updateChecklist331FolderHint === "function") {
+    updateChecklist331FolderHint();
+  }
 }
 
 function readStateMeta() {
@@ -505,10 +522,14 @@ function applyCloudStateSnapshot(snapshot) {
     updatedAt: snapshot?.updatedAt || new Date().toISOString(),
     updatedBy: snapshot?.updatedBy || getCloudActor(),
   });
+  migrateLegacyEquipoGuia3();
   renderStatefulSections();
   hydrateFields();
   updateBudgetSummary();
   updateProgress();
+  if (typeof renderDriveDeliveryPanel === "function") {
+    renderDriveDeliveryPanel();
+  }
 }
 
 async function loadCloudState(force) {
@@ -833,21 +854,27 @@ function closeDriveFolderQR() {
 
 // ════════════════════════════════════════════════════════════════════════════
 // EQUIPO DE TRABAJO Y CARPETAS DEDICADAS PARA GUIA 3
-// Lee las declaraciones de cada actividad (teamRequirement, dedicatedFolder)
-// desde ActivityStandard y aplica:
-//   - Wizard de seleccion de equipo (un solo equipo compartido para 3.1.2,
-//     3.2.1, 3.2.2 segun scope: "guide").
-//   - Override del activityTitle para que las entregas del equipo caigan en
-//     una carpeta unificada por equipo.
+// Cada actividad con teamRequirement (3.1.2, 3.2.1, 3.2.2) tiene su PROPIO
+// equipo: el aprendiz puede trabajar con companeros distintos en cada una.
+// El wizard se monta dentro de cada actividad mediante un boton
+// "Configurar equipo de trabajo".
+// Tambien se aplica:
+//   - Override del activityTitle para que cada entrega caiga en la carpeta
+//     del equipo de esa actividad.
 //   - Override del activityTitle para 3.3.1 y 3.3.2 con la plantilla de
 //     carpeta indicada en la guia (Evidencias_Act331_..., Diagnostico_..._YYYYMMDD).
-//   - Override del boton "Subir al portafolio de Drive" en esas 4 entregas
-//     (mismo UX que Actividad 10 de Guia 2).
+//   - Override del boton "Subir al portafolio de Drive" en esas entregas.
 // ════════════════════════════════════════════════════════════════════════════
 
 const EQUIPO_GUIA3_STATE_KEY = "equipoGuia3";
 const EQUIPO_GUIA3_EMAIL_DOMAIN = "@sena-portal.local";
-let equipoGuia3WizardActive = false;
+const EQUIPO_GUIA3_ACTIVITY_IDS = ["socializacion312", "tabla321", "mapa322"];
+const EQUIPO_GUIA3_ACTIVITY_LABELS = {
+  socializacion312: "3.1.2 Socializacion en grupo",
+  tabla321: "3.2.1 Tabla resumen",
+  mapa322: "3.2.2 Mapa conceptual",
+};
+const equipoGuia3WizardActive = new Set();
 
 function getGuia3ActivityDeclarations() {
   if (window.ActivityStandard && typeof window.ActivityStandard.getActivitiesForGuide === "function") {
@@ -861,21 +888,63 @@ function getCurrentUsernameKey() {
   return String(session?.usernameKey || session?.user?.usernameKey || "").trim().toLowerCase();
 }
 
-function getEquipoGuia3FromState() {
-  const raw = state[EQUIPO_GUIA3_STATE_KEY];
-  if (!raw || typeof raw !== "object") return null;
-  if (raw.mode !== "grupo") return null;
-  if (!Array.isArray(raw.members) || raw.members.length < 2) return null;
-  return raw;
+function isValidEquipoGuia3Team(raw) {
+  if (!raw || typeof raw !== "object") return false;
+  if (raw.mode !== "grupo") return false;
+  if (!Array.isArray(raw.members) || raw.members.length < 2) return false;
+  return true;
 }
 
-function setEquipoGuia3InState(team) {
-  state[EQUIPO_GUIA3_STATE_KEY] = team;
+function migrateLegacyEquipoGuia3() {
+  const raw = state[EQUIPO_GUIA3_STATE_KEY];
+  if (!raw || typeof raw !== "object") return;
+  // Si ya es un mapa por actividad ({socializacion312: {...}, ...}) no hace falta migrar.
+  if (!isValidEquipoGuia3Team(raw) && Object.keys(raw).some((k) => EQUIPO_GUIA3_ACTIVITY_IDS.includes(k))) {
+    return;
+  }
+  // Era el formato antiguo (un solo equipo compartido). Lo copiamos a las 3 actividades.
+  if (isValidEquipoGuia3Team(raw)) {
+    const perActivity = {};
+    EQUIPO_GUIA3_ACTIVITY_IDS.forEach((id) => {
+      perActivity[id] = Object.assign({}, raw, { activityId: id });
+    });
+    state[EQUIPO_GUIA3_STATE_KEY] = perActivity;
+    saveState();
+  }
+}
+
+function getEquipoGuia3Map() {
+  const raw = state[EQUIPO_GUIA3_STATE_KEY];
+  if (!raw || typeof raw !== "object") return {};
+  // Formato nuevo: mapa por actividad.
+  if (Object.keys(raw).some((k) => EQUIPO_GUIA3_ACTIVITY_IDS.includes(k))) {
+    return raw;
+  }
+  // Formato antiguo aun no migrado: devolver vacio (la migracion correra al cargar).
+  return {};
+}
+
+function getEquipoGuia3FromState(activityId) {
+  const map = getEquipoGuia3Map();
+  const team = map[activityId];
+  return isValidEquipoGuia3Team(team) ? team : null;
+}
+
+function setEquipoGuia3InState(activityId, team) {
+  const map = Object.assign({}, getEquipoGuia3Map());
+  map[activityId] = Object.assign({}, team, { activityId });
+  state[EQUIPO_GUIA3_STATE_KEY] = map;
   saveState();
 }
 
-function clearEquipoGuia3FromState() {
-  delete state[EQUIPO_GUIA3_STATE_KEY];
+function clearEquipoGuia3FromState(activityId) {
+  const map = Object.assign({}, getEquipoGuia3Map());
+  delete map[activityId];
+  if (Object.keys(map).length === 0) {
+    delete state[EQUIPO_GUIA3_STATE_KEY];
+  } else {
+    state[EQUIPO_GUIA3_STATE_KEY] = map;
+  }
   saveState();
 }
 
@@ -928,11 +997,12 @@ function todayDateStampYYYYMMDD() {
   return yyyy + mm + dd;
 }
 
-function resolveDedicatedFolderTemplate(template) {
+function resolveDedicatedFolderTemplate(template, activityIdOpt) {
   if (!template) return "";
   const selfName = getCurrentLearnerName();
   const lastFirst = formatLastnameFirstName(selfName);
-  const team = getEquipoGuia3FromState();
+  const activityId = activityIdOpt || "";
+  const team = activityId ? getEquipoGuia3FromState(activityId) : null;
   const teamCode = team ? buildEquipoGuia3Code4(team) : "";
   const teamInitials = team && Array.isArray(team.members)
     ? team.members.slice().sort((a, b) => formatInitialLastname(a.fullName).localeCompare(formatInitialLastname(b.fullName), "es")).map((m) => formatInitialLastname(m.fullName)).join("_")
@@ -951,25 +1021,55 @@ function getActivityDeclarationForTarget(target) {
   return getGuia3ActivityDeclarations().find((a) => a.id === target.deadlineActivityId) || null;
 }
 
-// ── Wizard (UI mount: equipoGuia3Mount al inicio del partial) ──────────────
+// ── Wizard (un panel por actividad, montado dentro del activity-body) ──────
 
-function renderEquipoGuia3Block() {
-  const summary = document.getElementById("equipoGuia3Summary");
-  const config = document.getElementById("equipoGuia3Config");
+function renderAllEquipoGuia3Blocks() {
+  EQUIPO_GUIA3_ACTIVITY_IDS.forEach((id) => renderEquipoGuia3Block(id));
+}
+
+function getEquipoGuia3MountElements(activityId) {
+  return {
+    summary: document.getElementById(`equipoGuia3Summary_${activityId}`),
+    config: document.getElementById(`equipoGuia3Config_${activityId}`),
+    roster: document.getElementById(`equipoGuia3RosterMount_${activityId}`),
+    hint: document.getElementById(`equipoGuia3FormHint_${activityId}`),
+  };
+}
+
+function renderEquipoGuia3Block(activityId) {
+  const { summary, config } = getEquipoGuia3MountElements(activityId);
   if (!summary || !config) return;
-  const team = getEquipoGuia3FromState();
-  if (team && !equipoGuia3WizardActive) {
+  const team = getEquipoGuia3FromState(activityId);
+  const wizardActive = equipoGuia3WizardActive.has(activityId);
+  if (team && !wizardActive) {
     config.style.display = "none";
-    renderEquipoGuia3Summary(team);
+    renderEquipoGuia3Summary(activityId, team);
+    return;
+  }
+  if (!team && !wizardActive) {
+    config.style.display = "none";
+    renderEquipoGuia3EmptyCta(activityId);
     return;
   }
   summary.innerHTML = "";
   config.style.display = "";
-  renderEquipoGuia3Roster();
+  renderEquipoGuia3Roster(activityId);
 }
 
-function renderEquipoGuia3Summary(team) {
-  const summary = document.getElementById("equipoGuia3Summary");
+function renderEquipoGuia3EmptyCta(activityId) {
+  const { summary } = getEquipoGuia3MountElements(activityId);
+  if (!summary) return;
+  summary.innerHTML = `
+    <div style="padding:10px 12px;background:#fffbe6;border:1px solid #f3e0a3;border-left:4px solid #c79a00;border-radius:6px;color:#5a4500;font-size:.86rem">
+      <div style="margin-bottom:8px">Aun no has configurado el equipo de trabajo para esta actividad.</div>
+      <button type="button" onclick="abrirEquipoGuia3Wizard('${escapeHtml(activityId)}')" class="btn-save-response" style="display:inline-flex;align-items:center;gap:6px">
+        &#128101; Configurar equipo de trabajo
+      </button>
+    </div>`;
+}
+
+function renderEquipoGuia3Summary(activityId, team) {
+  const { summary } = getEquipoGuia3MountElements(activityId);
   if (!summary) return;
   const code4 = buildEquipoGuia3Code4(team);
   const memberList = team.members
@@ -980,14 +1080,13 @@ function renderEquipoGuia3Summary(team) {
       <div style="font-weight:700;margin-bottom:4px">Equipo confirmado &middot; <code style="background:#fff;padding:2px 6px;border-radius:4px;color:#0b6b35">Equipo ${escapeHtml(code4)}</code></div>
       <ul style="margin:6px 0 6px 18px;padding:0;line-height:1.55">${memberList}</ul>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
-        <button type="button" onclick="reconfigurarEquipoGuia3()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid #f5c1bb;background:#fdecea;color:#a13029;border-radius:6px;font-family:inherit;font-size:.82rem;cursor:pointer;font-weight:600">&#128683; Cambiar de equipo</button>
+        <button type="button" onclick="reconfigurarEquipoGuia3('${escapeHtml(activityId)}')" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid #f5c1bb;background:#fdecea;color:#a13029;border-radius:6px;font-family:inherit;font-size:.82rem;cursor:pointer;font-weight:600">&#128683; Cambiar de equipo</button>
       </div>
     </div>`;
 }
 
-function renderEquipoGuia3Roster() {
-  const mount = document.getElementById("equipoGuia3RosterMount");
-  const hint = document.getElementById("equipoGuia3FormHint");
+function renderEquipoGuia3Roster(activityId) {
+  const { roster: mount, hint } = getEquipoGuia3MountElements(activityId);
   if (!mount) return;
   const selfKey = getCurrentUsernameKey();
   const selfName = getCurrentLearnerName();
@@ -998,7 +1097,7 @@ function renderEquipoGuia3Roster() {
     if (hint) hint.textContent = "Inicia sesion como aprendiz con ficha asignada para configurar el equipo.";
     return;
   }
-  const roster = (window.portalAuth?.getUsers?.() || [])
+  const rosterList = (window.portalAuth?.getUsers?.() || [])
     .filter((u) => String(u?.ficha || "").trim() === ficha)
     .filter((u) => u?.role !== "admin")
     .filter((u) => String(u.usernameKey || "").toLowerCase() !== selfKey)
@@ -1008,7 +1107,7 @@ function renderEquipoGuia3Roster() {
     }))
     .filter((u) => u.usernameKey && u.fullName)
     .sort((a, b) => a.fullName.localeCompare(b.fullName, "es"));
-  if (roster.length === 0) {
+  if (rosterList.length === 0) {
     mount.innerHTML = `<p style="margin:0;font-size:.86rem;color:#a13029">Aun no hay companeros registrados en la ficha ${escapeHtml(ficha)}. Pideles que inicien sesion al menos una vez para que aparezcan aqui.</p>`;
     if (hint) hint.textContent = "El listado se actualiza cuando los companeros ingresan al portal.";
     return;
@@ -1018,21 +1117,21 @@ function renderEquipoGuia3Roster() {
       <input type="checkbox" checked disabled>
       <span style="font-weight:600;color:#1b5e20">${escapeHtml(selfName || selfKey)} <span style="font-weight:400;color:#37474f">(tu)</span></span>
     </label>`;
-  const rows = roster
+  const rows = rosterList
     .map((u) => `
-      <label style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer" data-equipo-guia3-row>
-        <input type="checkbox" data-equipo-guia3-key="${escapeHtml(u.usernameKey)}" data-equipo-guia3-name="${escapeHtml(u.fullName)}">
+      <label style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer" data-equipo-guia3-row="${escapeHtml(activityId)}">
+        <input type="checkbox" data-equipo-guia3-key="${escapeHtml(u.usernameKey)}" data-equipo-guia3-name="${escapeHtml(u.fullName)}" data-equipo-guia3-activity="${escapeHtml(activityId)}">
         <span style="color:#37474f">${escapeHtml(u.fullName)}</span>
       </label>`)
     .join("");
   mount.innerHTML = selfRow + rows;
   if (hint) {
-    hint.textContent = `Tu ficha tiene ${roster.length + 1} aprendices registrados. La guia indica equipos de 3 (incluyendote): selecciona exactamente 2 companeros.`;
+    hint.textContent = `Tu ficha tiene ${rosterList.length + 1} aprendices registrados. La guia indica equipos de 3 (incluyendote): selecciona exactamente 2 companeros.`;
   }
-  // Hook para limitar a 2 checks
-  mount.querySelectorAll("[data-equipo-guia3-key]").forEach((cb) => {
+  // Hook para limitar a 2 checks DENTRO DE ESTE ROSTER (no interfiere con otras actividades)
+  mount.querySelectorAll(`[data-equipo-guia3-activity="${activityId}"]`).forEach((cb) => {
     cb.addEventListener("change", () => {
-      const checked = mount.querySelectorAll("[data-equipo-guia3-key]:checked").length;
+      const checked = mount.querySelectorAll(`[data-equipo-guia3-activity="${activityId}"]:checked`).length;
       if (checked > 2) {
         cb.checked = false;
         alert("La guia indica equipos de 3 integrantes. Solo puedes seleccionar 2 companeros. Desmarca uno antes de agregar otro.");
@@ -1041,7 +1140,12 @@ function renderEquipoGuia3Roster() {
   });
 }
 
-function confirmarEquipoGuia3() {
+function abrirEquipoGuia3Wizard(activityId) {
+  equipoGuia3WizardActive.add(activityId);
+  renderEquipoGuia3Block(activityId);
+}
+
+function confirmarEquipoGuia3(activityId) {
   const selfKey = getCurrentUsernameKey();
   const selfName = getCurrentLearnerName();
   const selection = getGuideSelection();
@@ -1050,7 +1154,9 @@ function confirmarEquipoGuia3() {
     alert("No se pudo identificar tu sesion o ficha. Vuelve a iniciar sesion.");
     return;
   }
-  const checks = document.querySelectorAll("[data-equipo-guia3-key]:checked");
+  const { roster: mount } = getEquipoGuia3MountElements(activityId);
+  if (!mount) return;
+  const checks = mount.querySelectorAll(`[data-equipo-guia3-activity="${activityId}"]:checked`);
   const selected = Array.from(checks).map((c) => ({
     usernameKey: c.dataset.equipoGuia3Key,
     fullName: c.dataset.equipoGuia3Name,
@@ -1062,7 +1168,7 @@ function confirmarEquipoGuia3() {
   const allMembers = [{ usernameKey: selfKey, fullName: selfName || selfKey }, ...selected];
   const memberKeys = allMembers.map((m) => m.usernameKey);
   const memberEmails = memberKeys.map((k) => k + EQUIPO_GUIA3_EMAIL_DOMAIN);
-  const groupKey = buildEquipoGuia3GroupKey(ficha, memberKeys);
+  const groupKey = buildEquipoGuia3GroupKey(ficha, memberKeys.concat([activityId]));
   const team = {
     mode: "grupo",
     groupKey,
@@ -1070,46 +1176,54 @@ function confirmarEquipoGuia3() {
     members: allMembers,
     memberKeys,
     memberEmails,
-    scope: "guide",
+    scope: "activity",
+    activityId,
     guide: GUIDE_DATA_FILE,
     confirmedAt: new Date().toISOString(),
     confirmedBy: { usernameKey: selfKey, fullName: selfName || selfKey },
   };
-  setEquipoGuia3InState(team);
-  equipoGuia3WizardActive = false;
+  setEquipoGuia3InState(activityId, team);
+  equipoGuia3WizardActive.delete(activityId);
   // Sincroniza el doc del grupo en Firestore (mismo coleccion que Guia 2).
   if (window._firebaseDb && typeof window._firebaseDb.cloudSaveGroup === "function") {
     Promise.resolve(window._firebaseDb.cloudSaveGroup(groupKey, {
       ficha,
       guide: GUIDE_DATA_FILE,
-      activity: "guia3_equipo",
+      activity: `guia3_equipo_${activityId}`,
+      activityId,
       members: allMembers,
       memberKeys,
       memberEmails,
       updatedAt: new Date().toISOString(),
     })).catch(() => {});
   }
-  renderEquipoGuia3Block();
+  renderEquipoGuia3Block(activityId);
   renderDriveDeliveryPanel();
 }
 
-function cancelarEquipoGuia3Config() {
-  if (getEquipoGuia3FromState()) {
-    equipoGuia3WizardActive = false;
-    renderEquipoGuia3Block();
+function cancelarEquipoGuia3Config(activityId) {
+  if (getEquipoGuia3FromState(activityId)) {
+    equipoGuia3WizardActive.delete(activityId);
+    renderEquipoGuia3Block(activityId);
+  } else {
+    // Sin equipo guardado: solo cierra el wizard y vuelve al CTA.
+    equipoGuia3WizardActive.delete(activityId);
+    renderEquipoGuia3Block(activityId);
   }
 }
 
-function reconfigurarEquipoGuia3() {
-  if (!confirm("Cambiar de equipo borrara la configuracion actual. Tus entregas previas quedan en la carpeta del equipo anterior. Continuar?")) return;
-  clearEquipoGuia3FromState();
-  equipoGuia3WizardActive = true;
-  // Limpiar paneles obsoletos
+function reconfigurarEquipoGuia3(activityId) {
+  const label = EQUIPO_GUIA3_ACTIVITY_LABELS[activityId] || activityId;
+  if (!confirm(`Cambiar el equipo de la actividad ${label} borrara la configuracion actual de esa actividad. Las entregas previas quedan en la carpeta del equipo anterior. Continuar?`)) return;
+  clearEquipoGuia3FromState(activityId);
+  equipoGuia3WizardActive.add(activityId);
+  // Limpiar paneles de Drive obsoletos para que se regeneren con el nuevo equipo (o sin equipo).
   document.querySelectorAll('[data-drive-panel^="guide3-"]').forEach((p) => p.remove());
-  renderEquipoGuia3Block();
+  renderEquipoGuia3Block(activityId);
   renderDriveDeliveryPanel();
 }
 
+window.abrirEquipoGuia3Wizard = abrirEquipoGuia3Wizard;
 window.confirmarEquipoGuia3 = confirmarEquipoGuia3;
 window.cancelarEquipoGuia3Config = cancelarEquipoGuia3Config;
 window.reconfigurarEquipoGuia3 = reconfigurarEquipoGuia3;
@@ -1132,13 +1246,13 @@ function buildGuia3TeamFolderTitle(team) {
 }
 
 function renderDriveDeliveryPanel() {
-  const team = getEquipoGuia3FromState();
   const enrichedTargets = GUIDE3_DRIVE_ACTIVITY_TARGETS.map((target) => {
     const decl = getActivityDeclarationForTarget(target);
+    const activityId = target.deadlineActivityId;
     let next = target;
     // (1) Override: carpeta dedicada individual (3.3.1, 3.3.2 por ahora).
     if (decl && decl.dedicatedFolder && decl.dedicatedFolder.enabled && decl.dedicatedFolder.template) {
-      const folderTitle = resolveDedicatedFolderTemplate(decl.dedicatedFolder.template);
+      const folderTitle = resolveDedicatedFolderTemplate(decl.dedicatedFolder.template, activityId);
       next = Object.assign({}, next, {
         description: `${next.description} Carpeta dedicada: ${folderTitle}.`,
         activityContext: Object.assign({}, next.activityContext || {}, {
@@ -1147,17 +1261,21 @@ function renderDriveDeliveryPanel() {
         }),
       });
     }
-    // (2) Override: actividades de equipo confirmadas (3.2.1, 3.2.2).
-    if (decl && decl.teamRequirement && decl.teamRequirement.required && team) {
-      const teamFolder = buildGuia3TeamFolderTitle(team);
-      const fileLabel = GUIA3_TEAM_FILE_LABELS[target.panelKey] || next.activityContext?.activityLabel;
-      next = Object.assign({}, next, {
-        description: `${next.description} Equipo: ${team.members.map((m) => m.fullName).join(", ")}.`,
-        activityContext: Object.assign({}, next.activityContext || {}, {
-          activityTitle: teamFolder,
-          activityLabel: fileLabel,
-        }),
-      });
+    // (2) Override: actividades de equipo confirmadas (3.2.1, 3.2.2) — cada
+    //     actividad usa SU PROPIO equipo.
+    if (decl && decl.teamRequirement && decl.teamRequirement.required) {
+      const team = getEquipoGuia3FromState(activityId);
+      if (team) {
+        const teamFolder = buildGuia3TeamFolderTitle(team);
+        const fileLabel = GUIA3_TEAM_FILE_LABELS[target.panelKey] || next.activityContext?.activityLabel;
+        next = Object.assign({}, next, {
+          description: `${next.description} Equipo: ${team.members.map((m) => m.fullName).join(", ")}.`,
+          activityContext: Object.assign({}, next.activityContext || {}, {
+            activityTitle: teamFolder,
+            activityLabel: fileLabel,
+          }),
+        });
+      }
     }
     return next;
   });
@@ -1168,7 +1286,7 @@ function renderDriveDeliveryPanel() {
     onQrClick: showDriveFolderQR,
   });
   customizeGuia3DriveButtons();
-  renderEquipoGuia3Block();
+  renderAllEquipoGuia3Blocks();
 }
 
 // ── Override del boton "Subir al portafolio de Drive" para paneles con
@@ -1194,8 +1312,10 @@ function customizeGuia3DriveButtons() {
 }
 
 function openGuia3DriveDestination(target, decl) {
-  if (decl.teamRequirement && decl.teamRequirement.required && !getEquipoGuia3FromState()) {
-    alert('Antes de subir, confirma tu equipo de trabajo en el panel "Mi equipo de trabajo de la Guia 3" al inicio de la guia.');
+  const activityId = target.deadlineActivityId;
+  if (decl.teamRequirement && decl.teamRequirement.required && !getEquipoGuia3FromState(activityId)) {
+    const label = EQUIPO_GUIA3_ACTIVITY_LABELS[activityId] || activityId;
+    alert(`Antes de subir, configura el equipo de trabajo dentro de la actividad ${label} usando el boton "Configurar equipo de trabajo".`);
     return;
   }
   const stored = getStoredDeliveryForPanel(target);
@@ -1220,11 +1340,12 @@ function getStoredDeliveryForPanel(target) {
 }
 
 function getExpectedGuia3FolderName(target, decl) {
-  const team = getEquipoGuia3FromState();
+  const activityId = target.deadlineActivityId;
+  const team = getEquipoGuia3FromState(activityId);
   const activityNumber = target.activityNumber || "";
   let activityTitle = "";
   if (decl.dedicatedFolder && decl.dedicatedFolder.enabled) {
-    activityTitle = resolveDedicatedFolderTemplate(decl.dedicatedFolder.template);
+    activityTitle = resolveDedicatedFolderTemplate(decl.dedicatedFolder.template, activityId);
   } else if (decl.teamRequirement && decl.teamRequirement.required && team) {
     activityTitle = buildGuia3TeamFolderTitle(team);
   } else {
@@ -1234,9 +1355,10 @@ function getExpectedGuia3FolderName(target, decl) {
 }
 
 function showGuia3DriveHelperModal(target, decl) {
+  const activityId = target.deadlineActivityId;
   const folderFullName = getExpectedGuia3FolderName(target, decl);
   const fichaFolderUrl = getDriveFolderUrl();
-  const team = getEquipoGuia3FromState();
+  const team = getEquipoGuia3FromState(activityId);
   let searchQuery = folderFullName;
   if (decl.teamRequirement && decl.teamRequirement.required && team) {
     searchQuery = "Equipo " + buildEquipoGuia3Code4(team);
@@ -1838,6 +1960,698 @@ function renderQuizHerramientasStatus() {
 const BITACORA_311_STORES = ["reflexion_herramientas", "reflexion_registro", "reflexion_consecuencias", "reflexion_experiencia"];
 const SOCIALIZACION_312_STORES = ["socializacion_conclusion", "socializacion_pregunta_central"];
 
+const TABLA_321_TOPICS = [
+  { id: "a1", bloque: "A", topic: "Manual tecnico: funcion, estructura y uso." },
+  { id: "a2", bloque: "A", topic: "Procedimiento de instalacion de software y herramientas ofimaticas." },
+  { id: "a3", bloque: "A", topic: "Parametros de licenciamiento y almacenamiento." },
+  { id: "a4", bloque: "A", topic: "Herramientas de diagnostico para soporte tecnico." },
+  { id: "a5", bloque: "A", topic: "Motores de busqueda tecnica: uso eficiente." },
+  { id: "a6", bloque: "A", topic: "Plataformas de gestion: Google Workspace, Microsoft 365, Teams." },
+  { id: "a7", bloque: "A", topic: "Compatibilidad de herramientas y resolucion de problemas basicos." },
+  { id: "a8", bloque: "A", topic: "Gestion de cuentas de acceso corporativas." },
+  { id: "b1", bloque: "B", topic: "Documentacion tecnica: fichas tecnicas, hojas de vida de equipos." },
+  { id: "b2", bloque: "B", topic: "Inventario de activos de software y hardware." },
+  { id: "b3", bloque: "B", topic: "Formatos y plantillas de registro tecnico." },
+  { id: "b4", bloque: "B", topic: "Listas de chequeo (checklist): elaboracion y uso." },
+  { id: "b5", bloque: "B", topic: "Convencion de nombres y versionado de archivos." },
+  { id: "b6", bloque: "B", topic: "Tipos documentales en tecnologia." },
+  { id: "b7", bloque: "B", topic: "Gestion de la informacion: proteccion, organizacion y respaldo." },
+  { id: "b8", bloque: "B", topic: "Buenas practicas de documentacion segun manuales." },
+];
+
+function tabla321FieldKey(rowId, column) {
+  return `tabla321_row_${rowId}_${column}`;
+}
+
+function tabla321AllStores() {
+  const keys = [];
+  TABLA_321_TOPICS.forEach((row) => {
+    keys.push(tabla321FieldKey(row.id, "herramienta"));
+    keys.push(tabla321FieldKey(row.id, "para_que"));
+    keys.push(tabla321FieldKey(row.id, "aplicacion"));
+  });
+  return keys;
+}
+
+function renderTabla321() {
+  const tbody = document.getElementById("tabla321Body");
+  if (!tbody) return;
+  tbody.innerHTML = TABLA_321_TOPICS.map((row) => {
+    const kH = tabla321FieldKey(row.id, "herramienta");
+    const kP = tabla321FieldKey(row.id, "para_que");
+    const kA = tabla321FieldKey(row.id, "aplicacion");
+    return `
+      <tr>
+        <td style="vertical-align:top">
+          <span class="muted-inline" style="display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.04em;color:${row.bloque === "A" ? "#1b5e20" : "#0d47a1"};margin-bottom:4px">BLOQUE ${row.bloque}</span>
+          <textarea rows="2" data-store="${kH}" data-track placeholder="Herramienta o proceso">${escapeHtml(fieldValue(kH, row.topic))}</textarea>
+        </td>
+        <td style="vertical-align:top">
+          <textarea rows="3" data-store="${kP}" data-track placeholder="Para que sirve esta herramienta o proceso en el trabajo tecnico.">${escapeHtml(fieldValue(kP))}</textarea>
+        </td>
+        <td style="vertical-align:top">
+          <textarea rows="3" data-store="${kA}" data-track placeholder="Como se usaria en una empresa local de tu entorno (ferreteria, droguria, taller, granja, etc.).">${escapeHtml(fieldValue(kA))}</textarea>
+        </td>
+      </tr>`;
+  }).join("");
+}
+
+function applyTabla321Lock() {
+  const locked = Boolean(state["tabla321-locked"]);
+  tabla321AllStores().forEach((key) => {
+    const el = document.querySelector(`[data-store="${key}"]`);
+    if (!el) return;
+    el.disabled = locked;
+    el.style.opacity = locked ? "0.75" : "";
+  });
+  const btn = document.getElementById("btnGuardarTabla321");
+  if (btn) {
+    btn.disabled = locked;
+    btn.textContent = locked ? "✅ Tabla enviada" : "💾 Guardar tabla";
+  }
+  const status = document.getElementById("tabla321Status");
+  if (status) status.style.display = locked ? "block" : "none";
+}
+
+function guardarTabla321() {
+  const incomplete = TABLA_321_TOPICS.filter((row) => {
+    const h = String(state[tabla321FieldKey(row.id, "herramienta")] || row.topic || "").trim();
+    const p = String(state[tabla321FieldKey(row.id, "para_que")] || "").trim();
+    const a = String(state[tabla321FieldKey(row.id, "aplicacion")] || "").trim();
+    return !h || !p || !a;
+  });
+  if (incomplete.length > 0) {
+    alert(`Falta completar ${incomplete.length} fila(s) de la tabla. Cada fila debe tener herramienta o proceso, para que sirve y aplicacion en una empresa local.`);
+    return;
+  }
+  if (!getEquipoGuia3FromState("tabla321")) {
+    alert('Antes de guardar la tabla, configura el equipo de trabajo de la actividad 3.2.1 usando el boton "Configurar equipo de trabajo".');
+    return;
+  }
+  state["tabla321-locked"] = true;
+  saveState();
+  applyTabla321Lock();
+}
+
+function exportarTabla321Word() {
+  const selection = getGuideSelection();
+  const learnerName = getCurrentLearnerName() || "Aprendiz";
+  const fecha = new Date().toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric" });
+  const team = getEquipoGuia3FromState("tabla321");
+  const teamBox = team
+    ? `<div class="team-box"><strong>Equipo:</strong> ${escapeWordText(team.members.map((m) => m.fullName).join(", "))}</div>`
+    : `<div class="team-box" style="background:#fff7e6;border-left-color:#c79a00"><strong>Equipo:</strong> (sin confirmar &mdash; configurelo en el panel de la actividad).</div>`;
+  const rows = TABLA_321_TOPICS
+    .map((row) => {
+      const h = String(state[tabla321FieldKey(row.id, "herramienta")] || row.topic || "");
+      const p = String(state[tabla321FieldKey(row.id, "para_que")] || "(Sin respuesta)");
+      const a = String(state[tabla321FieldKey(row.id, "aplicacion")] || "(Sin respuesta)");
+      return `
+        <tr>
+          <td><strong>Bloque ${escapeWordText(row.bloque)}.</strong><br>${escapeWordText(h)}</td>
+          <td>${escapeWordText(p)}</td>
+          <td>${escapeWordText(a)}</td>
+        </tr>`;
+    })
+    .join("");
+
+  const html = `<!DOCTYPE html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office"
+      xmlns:w="urn:schemas-microsoft-com:office:word"
+      xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<title>Tabla resumen 3.2.1 - ${escapeWordText(learnerName)}</title>
+<!--[if gte mso 9]><xml>
+<w:WordDocument>
+  <w:View>Print</w:View>
+  <w:Zoom>90</w:Zoom>
+  <w:DoNotOptimizeForBrowser/>
+</w:WordDocument>
+</xml><![endif]-->
+<style>
+  ${(window.senaExportStyles && window.senaExportStyles.getBaseStyles && window.senaExportStyles.getBaseStyles()) || '@page { size: A4; margin: 2.54cm; } body { font-family: "Times New Roman", Times, serif; font-size: 12pt; line-height: 1.5; color: #1a1a1a; } table { width: 100%; max-width: 100%; border-collapse: collapse; table-layout: fixed; overflow-wrap: anywhere; word-break: break-word; } th, td { padding: 6pt; vertical-align: top; border: 1px solid #b7c9bc; overflow-wrap: anywhere; word-break: break-word; }'}
+  .header { text-align: center; border-bottom: 2px solid #1b5e20; padding-bottom: 8pt; margin-bottom: 14pt; }
+  .header p { margin: 2pt 0; }
+  .meta td { padding: 6pt 10pt; font-size: 10.5pt; }
+  .meta .label { width: 120pt; font-weight: bold; background: #f0faf4; }
+  h1 { text-align: center; }
+  .lead { font-size: 10pt; color: #4b5563; line-height: 1.6; margin-bottom: 10pt; }
+  .team-box { background: #f1f9f3; border-left: 4pt solid #1b5e20; padding: 8pt 12pt; margin: 10pt 0 14pt; font-size: 10.5pt; }
+  .resumen th { background: #1b5e20; color: #fff; font-weight: bold; text-align: left; }
+  .footer { margin-top: 28pt; text-align: center; font-size: 9pt; color: #6b7280; border-top: 1pt solid #e5e7eb; padding-top: 8pt; }
+</style>
+</head>
+<body>
+  <div class="header">
+    <p><strong>SERVICIO NACIONAL DE APRENDIZAJE - SENA</strong></p>
+    <p>${escapeWordValue(GUIDE3_WORD_METADATA.program)}</p>
+    <p>${escapeWordValue(GUIDE3_WORD_METADATA.guideName)}</p>
+  </div>
+
+  <h1>Tabla resumen del bloque tem&aacute;tico</h1>
+  <p class="lead">
+    Actividad 3.2.1 - Estudio de contenidos tem&aacute;ticos. Documento exportado desde la gu&iacute;a interactiva
+    con la tabla resumen elaborada por el equipo, integrando los Bloques A y B del estudio.
+  </p>
+
+  ${buildInstitutionalWordHeader("Actividad 3.2.1 - Tabla resumen del bloque tematico", learnerName, selection, fecha)}
+
+  ${teamBox}
+
+  <table class="resumen">
+    <thead>
+      <tr>
+        <th style="width:28%">Herramienta o proceso</th>
+        <th>&iquest;Para qu&eacute; sirve?</th>
+        <th>Aplicaci&oacute;n en una empresa local</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rows}
+    </tbody>
+  </table>
+
+  <div class="footer">Documento generado el ${escapeWordText(fecha)} - SENA CIAS Puerto Boyac&aacute;.</div>
+</body>
+</html>`;
+
+  const blob = new Blob(["﻿", html], { type: "application/msword" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  const safeName = sanitizeFileName(learnerName) || "Aprendiz";
+  const safeFicha = sanitizeFileName(selection.ficha) || "SinFicha";
+  a.download = `TablaResumen_Guia3_3-2-1_${safeName}_${safeFicha}.doc`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+window.guardarTabla321 = guardarTabla321;
+window.exportarTabla321Word = exportarTabla321Word;
+
+// ── Actividad 3.2.2 - Mapa conceptual (panel de planeacion) ────────────────
+
+const MAPA_322_STORES = [
+  "mapa322_central",
+  "mapa322_ramas",
+  "mapa322_subconceptos",
+  "mapa322_enlaces",
+  "mapa322_aplicacion",
+  "mapa322_herramienta",
+];
+
+const MAPA_322_SECTIONS = [
+  { key: "mapa322_central",      label: "1. Concepto central" },
+  { key: "mapa322_ramas",        label: "2. Ramas principales (4 a 5)" },
+  { key: "mapa322_subconceptos", label: "3. Sub-conceptos clave (minimo 10)" },
+  { key: "mapa322_enlaces",      label: "4. Palabras de enlace (minimo 5)" },
+  { key: "mapa322_aplicacion",   label: "5. Aplicacion concreta en una empresa local" },
+  { key: "mapa322_herramienta",  label: "6. Herramienta elegida para dibujar el mapa" },
+];
+
+function applyMapa322Lock() {
+  const locked = Boolean(state["mapa322-locked"]);
+  MAPA_322_STORES.forEach((key) => {
+    const el = document.querySelector(`[data-store="${key}"]`);
+    if (!el) return;
+    el.disabled = locked;
+    el.style.opacity = locked ? "0.75" : "";
+  });
+  const btn = document.getElementById("btnGuardarMapa322");
+  if (btn) {
+    btn.disabled = locked;
+    btn.textContent = locked ? "✅ Planeacion enviada" : "💾 Guardar planeacion";
+  }
+  const status = document.getElementById("mapa322Status");
+  if (status) status.style.display = locked ? "block" : "none";
+}
+
+function guardarMapa322() {
+  const empty = MAPA_322_STORES.filter((k) => !String(state[k] || "").trim());
+  if (empty.length > 0) {
+    alert(`Faltan ${empty.length} campo(s) por completar en la planeacion del mapa. Cada uno de los 6 campos es obligatorio.`);
+    return;
+  }
+  if (!getEquipoGuia3FromState("mapa322")) {
+    alert('Antes de guardar, configura el equipo de trabajo de la actividad 3.2.2 usando el boton "Configurar equipo de trabajo".');
+    return;
+  }
+  state["mapa322-locked"] = true;
+  saveState();
+  applyMapa322Lock();
+}
+
+function exportarMapa322Word() {
+  const selection = getGuideSelection();
+  const learnerName = getCurrentLearnerName() || "Aprendiz";
+  const fecha = new Date().toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric" });
+  const team = getEquipoGuia3FromState("mapa322");
+  const teamBox = team
+    ? `<div class="team-box"><strong>Equipo:</strong> ${escapeWordText(team.members.map((m) => m.fullName).join(", "))}</div>`
+    : `<div class="team-box" style="background:#fff7e6;border-left-color:#c79a00"><strong>Equipo:</strong> (sin confirmar &mdash; configurelo en el panel de la actividad).</div>`;
+
+  const sections = MAPA_322_SECTIONS
+    .map((sec) => `
+      <div class="sec-title">${escapeWordText(sec.label)}</div>
+      <div class="sec-body">${escapeWordValue(state[sec.key])}</div>
+    `)
+    .join("");
+
+  const html = `<!DOCTYPE html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office"
+      xmlns:w="urn:schemas-microsoft-com:office:word"
+      xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<title>Planeacion del mapa conceptual 3.2.2 - ${escapeWordText(learnerName)}</title>
+<!--[if gte mso 9]><xml>
+<w:WordDocument>
+  <w:View>Print</w:View>
+  <w:Zoom>90</w:Zoom>
+  <w:DoNotOptimizeForBrowser/>
+</w:WordDocument>
+</xml><![endif]-->
+<style>
+  ${(window.senaExportStyles && window.senaExportStyles.getBaseStyles && window.senaExportStyles.getBaseStyles()) || '@page { size: A4; margin: 2.54cm; } body { font-family: "Times New Roman", Times, serif; font-size: 12pt; line-height: 1.5; color: #1a1a1a; } table { width: 100%; max-width: 100%; border-collapse: collapse; table-layout: fixed; overflow-wrap: anywhere; word-break: break-word; } th, td { padding: 6pt; vertical-align: top; border: 1px solid #b7c9bc; overflow-wrap: anywhere; word-break: break-word; }'}
+  .header { text-align: center; border-bottom: 2px solid #1b5e20; padding-bottom: 8pt; margin-bottom: 14pt; }
+  .header p { margin: 2pt 0; }
+  .meta td { padding: 6pt 10pt; font-size: 10.5pt; }
+  .meta .label { width: 120pt; font-weight: bold; background: #f0faf4; }
+  h1 { text-align: center; }
+  .lead { font-size: 10pt; color: #4b5563; line-height: 1.6; margin-bottom: 10pt; }
+  .team-box { background: #f1f9f3; border-left: 4pt solid #1b5e20; padding: 8pt 12pt; margin: 10pt 0 14pt; font-size: 10.5pt; }
+  .sec-title { font-size: 12pt; font-weight: bold; color: #1b5e20; margin: 16pt 0 6pt; }
+  .sec-body { border: 1pt solid #dfe7df; background: #ffffff; padding: 10pt 12pt; line-height: 1.7; min-height: 24pt; word-wrap: break-word; overflow-wrap: anywhere; word-break: break-word; }
+  .footer { margin-top: 28pt; text-align: center; font-size: 9pt; color: #6b7280; border-top: 1pt solid #e5e7eb; padding-top: 8pt; }
+</style>
+</head>
+<body>
+  <div class="header">
+    <p><strong>SERVICIO NACIONAL DE APRENDIZAJE - SENA</strong></p>
+    <p>${escapeWordValue(GUIDE3_WORD_METADATA.program)}</p>
+    <p>${escapeWordValue(GUIDE3_WORD_METADATA.guideName)}</p>
+  </div>
+
+  <h1>Planeaci&oacute;n del mapa conceptual</h1>
+  <p class="lead">
+    Actividad 3.2.2 - Construcci&oacute;n del mapa conceptual. Este documento contiene la planeaci&oacute;n
+    del equipo (concepto central, ramas, sub-conceptos, enlaces, aplicaci&oacute;n y herramienta) que sirve
+    de gu&iacute;a para dibujar el mapa final.
+  </p>
+
+  ${buildInstitutionalWordHeader("Actividad 3.2.2 - Planeacion del mapa conceptual", learnerName, selection, fecha)}
+
+  ${teamBox}
+
+  ${sections}
+
+  <div class="footer">Documento generado el ${escapeWordText(fecha)} - SENA CIAS Puerto Boyac&aacute;.</div>
+</body>
+</html>`;
+
+  const blob = new Blob(["﻿", html], { type: "application/msword" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  const safeName = sanitizeFileName(learnerName) || "Aprendiz";
+  const safeFicha = sanitizeFileName(selection.ficha) || "SinFicha";
+  a.download = `PlaneacionMapa_Guia3_3-2-2_${safeName}_${safeFicha}.doc`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+window.guardarMapa322 = guardarMapa322;
+window.exportarMapa322Word = exportarMapa322Word;
+
+// ── Mapa conceptual demo interactivo (constructor paso a paso) ─────────────
+
+const CM_DEMO_MAX_STEP = 4;
+let __cmDemoStep = 1;
+let __cmDemoPlayTimer = null;
+
+function cmDemoApply() {
+  const svg = document.getElementById("cmDemoSvg");
+  if (!svg) return;
+  svg.querySelectorAll(".cm-layer").forEach((layer) => {
+    const s = Number(layer.dataset.step || 0);
+    layer.classList.toggle("cm-on", s <= __cmDemoStep);
+  });
+  const label = document.getElementById("cmDemoStepLabel");
+  if (label) label.textContent = `Paso ${__cmDemoStep} de ${CM_DEMO_MAX_STEP}`;
+  const prev = document.getElementById("cmDemoPrev");
+  const next = document.getElementById("cmDemoNext");
+  if (prev) prev.disabled = __cmDemoStep <= 1;
+  if (next) next.disabled = __cmDemoStep >= CM_DEMO_MAX_STEP;
+}
+
+function cmDemoStep(delta) {
+  cmDemoStopPlay();
+  __cmDemoStep = Math.max(1, Math.min(CM_DEMO_MAX_STEP, __cmDemoStep + delta));
+  cmDemoApply();
+}
+
+function cmDemoReset() {
+  cmDemoStopPlay();
+  __cmDemoStep = 1;
+  cmDemoApply();
+}
+
+function cmDemoStopPlay() {
+  if (__cmDemoPlayTimer) {
+    window.clearInterval(__cmDemoPlayTimer);
+    __cmDemoPlayTimer = null;
+  }
+  const playBtn = document.getElementById("cmDemoPlay");
+  if (playBtn) playBtn.textContent = "▶▶ Reproducir";
+}
+
+function cmDemoPlay() {
+  if (__cmDemoPlayTimer) {
+    cmDemoStopPlay();
+    return;
+  }
+  __cmDemoStep = 1;
+  cmDemoApply();
+  const playBtn = document.getElementById("cmDemoPlay");
+  if (playBtn) playBtn.textContent = "⏸ Pausar";
+  __cmDemoPlayTimer = window.setInterval(() => {
+    if (__cmDemoStep >= CM_DEMO_MAX_STEP) {
+      cmDemoStopPlay();
+      return;
+    }
+    __cmDemoStep += 1;
+    cmDemoApply();
+  }, 1200);
+}
+
+window.cmDemoStep = cmDemoStep;
+window.cmDemoReset = cmDemoReset;
+window.cmDemoPlay = cmDemoPlay;
+
+// ── Actividad 3.3.1 - Bitacora de instalacion de herramientas ──────────────
+
+const CHECKLIST_331_TOOLS = [
+  {
+    id: "suite",
+    icon: "🧩",
+    name: "Suite ofimatica (LibreOffice)",
+    detail: "Procesador (Writer), hoja de calculo (Calc) y presentaciones (Impress). Compatible con .docx, .xlsx, .pptx.",
+    captureName: "01_LibreOffice.png",
+    versionHint: "Ayuda → Acerca de LibreOffice",
+  },
+  {
+    id: "navegador",
+    icon: "🌐",
+    name: "Navegador web actualizado",
+    detail: "Firefox, Chrome o Edge con extensiones basicas de seguridad (bloqueador de anuncios, HTTPS).",
+    captureName: "02_Navegador.png",
+    versionHint: "Menu → Ayuda → Acerca de",
+  },
+  {
+    id: "compresor",
+    icon: "🗜️",
+    name: "Compresion y descompresion de archivos",
+    detail: "7-Zip o WinRAR. Verifica creando un archivo .zip de prueba.",
+    captureName: "03_Compresor.png",
+    versionHint: "Menu Ayuda → Acerca de",
+  },
+  {
+    id: "antivirus",
+    icon: "🛡️",
+    name: "Software antivirus / proteccion",
+    detail: "Windows Defender configurado (proteccion en tiempo real activa, definiciones actualizadas) u otra solucion validada.",
+    captureName: "04_Antivirus.png",
+    versionHint: "Configuracion → Privacidad y seguridad → Seguridad de Windows",
+  },
+  {
+    id: "diagnostico",
+    icon: "🔧",
+    name: "Herramienta de diagnostico",
+    detail: "CPU-Z, CrystalDiskInfo u otra del documento 'Herramientas de Diagnostico'.",
+    captureName: "05_Diagnostico.png",
+    versionHint: "Menu Ayuda → Acerca de",
+  },
+];
+
+function checklist331FieldKey(toolId, column) {
+  return `checklist331_${toolId}_${column}`;
+}
+
+function checklist331AllStores() {
+  const keys = [];
+  CHECKLIST_331_TOOLS.forEach((tool) => {
+    keys.push(checklist331FieldKey(tool.id, "version"));
+    keys.push(checklist331FieldKey(tool.id, "config"));
+    keys.push(checklist331FieldKey(tool.id, "resultado"));
+    keys.push(checklist331FieldKey(tool.id, "obs"));
+    keys.push(checklist331FieldKey(tool.id, "captura"));
+  });
+  keys.push("checklist331_reflexion");
+  return keys;
+}
+
+function renderChecklist331() {
+  const mount = document.getElementById("checklist331Cards");
+  if (!mount) return;
+  mount.innerHTML = CHECKLIST_331_TOOLS.map((tool) => {
+    const kV = checklist331FieldKey(tool.id, "version");
+    const kC = checklist331FieldKey(tool.id, "config");
+    const kR = checklist331FieldKey(tool.id, "resultado");
+    const kO = checklist331FieldKey(tool.id, "obs");
+    const kCap = checklist331FieldKey(tool.id, "captura");
+    const resultadoVal = String(fieldValue(kR, "")).trim();
+    const capturaChecked = isChecked(kCap) ? " checked" : "";
+    const opt = (val, label) => `<option value="${escapeHtml(val)}"${resultadoVal === val ? " selected" : ""}>${escapeHtml(label)}</option>`;
+    return `
+      <div class="checklist331-card" style="padding:14px 16px;border:1px solid #cfe0d3;border-left:5px solid #0b6b35;border-radius:10px;background:linear-gradient(180deg,#f1f9f3,#ffffff)">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;font-weight:700;color:#0b6b35;font-size:.98rem">
+          <span aria-hidden="true">${tool.icon}</span> ${escapeHtml(tool.name)}
+        </div>
+        <p style="margin:0 0 10px;font-size:.84rem;color:#455a64;line-height:1.55">${escapeHtml(tool.detail)}</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <label style="margin:0">
+            <span style="font-size:.82rem"><strong>Version instalada</strong> <span style="color:#78909c">(${escapeHtml(tool.versionHint)})</span></span>
+            <input type="text" data-store="${kV}" data-track value="${escapeHtml(fieldValue(kV))}" placeholder="Ej.: 24.8.3">
+          </label>
+          <label style="margin:0">
+            <span style="font-size:.82rem"><strong>Resultado</strong></span>
+            <select data-store="${kR}" data-track>
+              <option value=""${resultadoVal === "" ? " selected" : ""}>-- Seleccionar --</option>
+              ${opt("Funciona", "✅ Funciona correctamente")}
+              ${opt("Falla parcial", "⚠️ Falla parcial (anotar abajo)")}
+              ${opt("No instalada", "❌ No se pudo instalar")}
+            </select>
+          </label>
+        </div>
+        <label style="margin-top:10px;display:block">
+          <span style="font-size:.82rem"><strong>Configuracion aplicada</strong> (idioma, permisos, actualizaciones, etc.)</span>
+          <textarea rows="2" data-store="${kC}" data-track placeholder="Ej.: idioma espanol, autoguardado cada 5 min, extension PDF activada.">${escapeHtml(fieldValue(kC))}</textarea>
+        </label>
+        <label style="margin-top:10px;display:block">
+          <span style="font-size:.82rem"><strong>Observaciones / errores / solucion aplicada</strong></span>
+          <textarea rows="2" data-store="${kO}" data-track placeholder="Si todo funciono escribe 'Sin novedad'. Si fallo: mensaje exacto y como lo resolviste.">${escapeHtml(fieldValue(kO))}</textarea>
+        </label>
+        <label style="margin-top:10px;display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;background:#fff;border:1px dashed #b6dba0;border-radius:6px">
+          <input type="checkbox" data-store="${kCap}" data-track${capturaChecked} style="width:18px;height:18px;cursor:pointer">
+          <span style="font-size:.86rem;color:#1b5e20">Captura guardada en mi carpeta como <code style="background:#e8f5e9;padding:2px 6px;border-radius:4px;color:#1b5e20">${escapeHtml(tool.captureName)}</code></span>
+        </label>
+      </div>
+    `;
+  }).join("");
+}
+
+function getChecklist331FolderName() {
+  const learnerName = getCurrentLearnerName() || "Aprendiz";
+  return `Evidencias_Act331_${formatLastnameFirstName(learnerName)}`;
+}
+
+function updateChecklist331FolderHint() {
+  const hint = document.getElementById("checklist331FolderHint");
+  if (!hint) return;
+  hint.textContent = getChecklist331FolderName();
+}
+
+function copiarCarpetaChecklist331() {
+  const name = getChecklist331FolderName();
+  const fallback = () => {
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = name;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    } catch (_) { /* noop */ }
+  };
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(name).catch(fallback);
+  } else {
+    fallback();
+  }
+  const hint = document.getElementById("checklist331FolderHint");
+  if (hint) {
+    const original = hint.style.background;
+    hint.style.background = "#e8f5e9";
+    window.setTimeout(() => { hint.style.background = original; }, 900);
+  }
+}
+
+function applyChecklist331Lock() {
+  const locked = Boolean(state["checklist331-locked"]);
+  checklist331AllStores().forEach((key) => {
+    const el = document.querySelector(`[data-store="${key}"]`);
+    if (!el) return;
+    el.disabled = locked;
+    el.style.opacity = locked ? "0.75" : "";
+  });
+  const btn = document.getElementById("btnGuardarChecklist331");
+  if (btn) {
+    btn.disabled = locked;
+    btn.textContent = locked ? "✅ Bitacora enviada" : "💾 Guardar bitacora";
+  }
+  const status = document.getElementById("checklist331Status");
+  if (status) status.style.display = locked ? "block" : "none";
+}
+
+function guardarChecklist331() {
+  // Cada herramienta requiere version, resultado y captura confirmada.
+  const incomplete = CHECKLIST_331_TOOLS.filter((tool) => {
+    const v = String(state[checklist331FieldKey(tool.id, "version")] || "").trim();
+    const r = String(state[checklist331FieldKey(tool.id, "resultado")] || "").trim();
+    const c = Boolean(state[checklist331FieldKey(tool.id, "captura")]);
+    return !v || !r || !c;
+  });
+  if (incomplete.length > 0) {
+    const names = incomplete.map((t) => t.name).join(", ");
+    alert(`Falta completar ${incomplete.length} herramienta(s): ${names}. Cada tarjeta necesita version instalada, resultado seleccionado y captura confirmada.`);
+    return;
+  }
+  const reflexion = String(state["checklist331_reflexion"] || "").trim();
+  if (reflexion.length < 60) {
+    alert("La reflexion final debe tener al menos 60 caracteres (alrededor de 4 lineas). Anade un poco mas de detalle.");
+    return;
+  }
+  state["checklist331-locked"] = true;
+  saveState();
+  applyChecklist331Lock();
+}
+
+function exportarChecklist331Word() {
+  const selection = getGuideSelection();
+  const learnerName = getCurrentLearnerName() || "Aprendiz";
+  const fecha = new Date().toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric" });
+  const folder = getChecklist331FolderName();
+
+  const cards = CHECKLIST_331_TOOLS.map((tool) => {
+    const v = String(state[checklist331FieldKey(tool.id, "version")] || "(sin registrar)");
+    const c = String(state[checklist331FieldKey(tool.id, "config")] || "(sin registrar)");
+    const r = String(state[checklist331FieldKey(tool.id, "resultado")] || "(sin registrar)");
+    const o = String(state[checklist331FieldKey(tool.id, "obs")] || "(sin novedad)");
+    const cap = state[checklist331FieldKey(tool.id, "captura")] ? "Si" : "No";
+    return `
+      <tr>
+        <td><strong>${escapeWordText(tool.name)}</strong></td>
+        <td>${escapeWordText(v)}</td>
+        <td>${escapeWordText(r)}</td>
+        <td>${escapeWordText(c)}</td>
+        <td>${escapeWordText(o)}</td>
+        <td style="text-align:center">${escapeWordText(cap)} (${escapeWordText(tool.captureName)})</td>
+      </tr>`;
+  }).join("");
+
+  const reflexion = String(state["checklist331_reflexion"] || "(Sin respuesta)");
+
+  const html = `<!DOCTYPE html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office"
+      xmlns:w="urn:schemas-microsoft-com:office:word"
+      xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<title>Bitacora de instalacion 3.3.1 - ${escapeWordText(learnerName)}</title>
+<!--[if gte mso 9]><xml>
+<w:WordDocument>
+  <w:View>Print</w:View>
+  <w:Zoom>90</w:Zoom>
+  <w:DoNotOptimizeForBrowser/>
+</w:WordDocument>
+</xml><![endif]-->
+<style>
+  ${(window.senaExportStyles && window.senaExportStyles.getBaseStyles && window.senaExportStyles.getBaseStyles()) || '@page { size: A4; margin: 2.54cm; } body { font-family: "Times New Roman", Times, serif; font-size: 12pt; line-height: 1.5; color: #1a1a1a; } table { width: 100%; max-width: 100%; border-collapse: collapse; table-layout: fixed; overflow-wrap: anywhere; word-break: break-word; } th, td { padding: 6pt; vertical-align: top; border: 1px solid #b7c9bc; overflow-wrap: anywhere; word-break: break-word; }'}
+  .header { text-align: center; border-bottom: 2px solid #1b5e20; padding-bottom: 8pt; margin-bottom: 14pt; }
+  .header p { margin: 2pt 0; }
+  .meta td { padding: 6pt 10pt; font-size: 10.5pt; }
+  .meta .label { width: 120pt; font-weight: bold; background: #f0faf4; }
+  h1 { text-align: center; }
+  .lead { font-size: 10pt; color: #4b5563; line-height: 1.6; margin-bottom: 10pt; }
+  .folder-box { background: #e3f2fd; border-left: 4pt solid #0d47a1; padding: 8pt 12pt; margin: 10pt 0 14pt; font-size: 10.5pt; color: #0d47a1; }
+  .bitacora th { background: #1b5e20; color: #fff; font-weight: bold; text-align: left; }
+  .sec-title { font-size: 12pt; font-weight: bold; color: #1b5e20; margin: 16pt 0 6pt; }
+  .sec-body { border: 1pt solid #dfe7df; background: #ffffff; padding: 10pt 12pt; line-height: 1.7; min-height: 24pt; word-wrap: break-word; overflow-wrap: anywhere; word-break: break-word; }
+  .footer { margin-top: 28pt; text-align: center; font-size: 9pt; color: #6b7280; border-top: 1pt solid #e5e7eb; padding-top: 8pt; }
+</style>
+</head>
+<body>
+  <div class="header">
+    <p><strong>SERVICIO NACIONAL DE APRENDIZAJE - SENA</strong></p>
+    <p>${escapeWordValue(GUIDE3_WORD_METADATA.program)}</p>
+    <p>${escapeWordValue(GUIDE3_WORD_METADATA.guideName)}</p>
+  </div>
+
+  <h1>Bit&aacute;cora de instalaci&oacute;n y configuraci&oacute;n</h1>
+  <p class="lead">
+    Actividad 3.3.1 - Instalaci&oacute;n y configuraci&oacute;n de herramientas tecnol&oacute;gicas (RAP 02).
+    Documento exportado desde la gu&iacute;a interactiva con el registro completo de las 5 herramientas instaladas,
+    sus capturas de evidencia y la reflexi&oacute;n final del aprendiz.
+  </p>
+
+  ${buildInstitutionalWordHeader("Actividad 3.3.1 - Bitacora de instalacion y configuracion", learnerName, selection, fecha)}
+
+  <div class="folder-box">
+    <strong>Carpeta de evidencias:</strong> ${escapeWordText(folder)}<br>
+    <em>Esta carpeta contiene las 5 capturas (.png) referenciadas en la bit&aacute;cora.</em>
+  </div>
+
+  <table class="bitacora">
+    <thead>
+      <tr>
+        <th style="width:18%">Herramienta</th>
+        <th style="width:10%">Versi&oacute;n</th>
+        <th style="width:14%">Resultado</th>
+        <th>Configuraci&oacute;n aplicada</th>
+        <th>Observaciones / errores</th>
+        <th style="width:14%">Captura</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${cards}
+    </tbody>
+  </table>
+
+  <div class="sec-title">Reflexi&oacute;n final</div>
+  <div class="sec-body">${escapeWordValue(reflexion)}</div>
+
+  <div class="footer">Documento generado el ${escapeWordText(fecha)} - SENA CIAS Puerto Boyac&aacute;.</div>
+</body>
+</html>`;
+
+  const blob = new Blob(["﻿", html], { type: "application/msword" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  const safeName = sanitizeFileName(learnerName) || "Aprendiz";
+  const safeFicha = sanitizeFileName(selection.ficha) || "SinFicha";
+  a.download = `Bitacora_Instalacion_Guia3_3-3-1_${safeName}_${safeFicha}.doc`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+window.guardarChecklist331 = guardarChecklist331;
+window.exportarChecklist331Word = exportarChecklist331Word;
+window.copiarCarpetaChecklist331 = copiarCarpetaChecklist331;
+
 function applyOptionalDeadlineGate(activityId, options) {
   if (!window.activityDeadlineManager?.applyAvailability) {
     return { blocked: false, state: "none", hasDeadline: false };
@@ -1941,6 +2755,54 @@ window.guardarSocializacion312 = guardarSocializacion312;
     });
   };
 
+  const originalApplyTabla321Lock = applyTabla321Lock;
+  applyTabla321Lock = function () {
+    originalApplyTabla321Lock.apply(this, arguments);
+    applyOptionalDeadlineGate("tabla321", {
+      isLocked: Boolean(state["tabla321-locked"]),
+      fieldSelector: tabla321AllStores().map((key) => `[data-store="${key}"]`).join(","),
+      buttonId: "btnGuardarTabla321",
+      statusId: "tabla321Status",
+      activeButtonText: "Guardar tabla",
+      lockedButtonText: "Tabla enviada",
+      closedButtonText: "Entrega cerrada",
+      adminMount: { mountSelector: "#tabla321DeadlineControls" },
+      noticeMount: { mountSelector: "#tabla321DeadlineControls" },
+    });
+  };
+
+  const originalApplyMapa322Lock = applyMapa322Lock;
+  applyMapa322Lock = function () {
+    originalApplyMapa322Lock.apply(this, arguments);
+    applyOptionalDeadlineGate("mapa322", {
+      isLocked: Boolean(state["mapa322-locked"]),
+      fieldSelector: MAPA_322_STORES.map((key) => `[data-store="${key}"]`).join(","),
+      buttonId: "btnGuardarMapa322",
+      statusId: "mapa322Status",
+      activeButtonText: "Guardar planeacion",
+      lockedButtonText: "Planeacion enviada",
+      closedButtonText: "Entrega cerrada",
+      adminMount: { mountSelector: "#mapa322DeadlineControls" },
+      noticeMount: { mountSelector: "#mapa322DeadlineControls" },
+    });
+  };
+
+  const originalApplyChecklist331Lock = applyChecklist331Lock;
+  applyChecklist331Lock = function () {
+    originalApplyChecklist331Lock.apply(this, arguments);
+    applyOptionalDeadlineGate("checklist331", {
+      isLocked: Boolean(state["checklist331-locked"]),
+      fieldSelector: checklist331AllStores().map((key) => `[data-store="${key}"]`).join(","),
+      buttonId: "btnGuardarChecklist331",
+      statusId: "checklist331Status",
+      activeButtonText: "Guardar bitacora",
+      lockedButtonText: "Bitacora enviada",
+      closedButtonText: "Entrega cerrada",
+      adminMount: { mountSelector: "#checklist331DeadlineControls" },
+      noticeMount: { mountSelector: "#checklist331DeadlineControls" },
+    });
+  };
+
   const originalGuardarBitacora311 = guardarBitacora311;
   guardarBitacora311 = function () {
     if (!window.activityDeadlineManager?.canSubmit({ pageFile: GUIDE_DATA_FILE, activityId: "bitacora311" })) {
@@ -1957,11 +2819,41 @@ window.guardarSocializacion312 = guardarSocializacion312;
     return originalGuardarSocializacion312.apply(this, arguments);
   };
 
+  const originalGuardarTabla321 = guardarTabla321;
+  guardarTabla321 = function () {
+    if (!window.activityDeadlineManager?.canSubmit({ pageFile: GUIDE_DATA_FILE, activityId: "tabla321" })) {
+      return;
+    }
+    return originalGuardarTabla321.apply(this, arguments);
+  };
+
+  const originalGuardarMapa322 = guardarMapa322;
+  guardarMapa322 = function () {
+    if (!window.activityDeadlineManager?.canSubmit({ pageFile: GUIDE_DATA_FILE, activityId: "mapa322" })) {
+      return;
+    }
+    return originalGuardarMapa322.apply(this, arguments);
+  };
+
+  const originalGuardarChecklist331 = guardarChecklist331;
+  guardarChecklist331 = function () {
+    if (!window.activityDeadlineManager?.canSubmit({ pageFile: GUIDE_DATA_FILE, activityId: "checklist331" })) {
+      return;
+    }
+    return originalGuardarChecklist331.apply(this, arguments);
+  };
+
   window.guardarBitacora311 = guardarBitacora311;
   window.guardarSocializacion312 = guardarSocializacion312;
+  window.guardarTabla321 = guardarTabla321;
+  window.guardarMapa322 = guardarMapa322;
+  window.guardarChecklist331 = guardarChecklist331;
 })();
 
 window.addEventListener("activity-deadlines-updated", () => {
   applyBitacoraLock();
   applyBitacoraSocializacionLock();
+  applyTabla321Lock();
+  applyMapa322Lock();
+  applyChecklist331Lock();
 });
