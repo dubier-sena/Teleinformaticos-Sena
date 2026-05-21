@@ -11,8 +11,10 @@
     "grupo-10b-guia-03-planificar-informacion.html": "10b_guia3.html",
     "grupo-11a-guia-05-herramientas-informaticas-digitales.html": "11a_guia.html",
     "grupo-11a-guia-06-planificar-informacion.html": "11a_guia6.html",
+    "grupo-11a-guia-07-planificar-informacion-ciberseguridad.html": "11a_guia7.html",
     "grupo-11b-guia-05-herramientas-informaticas-digitales.html": "11b_guia.html",
     "grupo-11b-guia-06-planificar-informacion.html": "11b_guia6.html",
+    "grupo-11b-guia-07-planificar-informacion-ciberseguridad.html": "11b_guia7.html",
     "plantilla-grado-11-guia-05-herramientas-informaticas-digitales.html": "grado_guia.html",
     "plantilla-grado-11-guia-06-planificar-informacion.html": "grado_guia6.html",
     "santa-barbara-10a-guia-02-redes-rap01.html": "sb_10a_redes.html",
@@ -452,11 +454,14 @@
 
     guideCalendarRemotePromise = (async function () {
       const localSnapshot = readGuideCalendarLocalSnapshot();
-      if (localSnapshot && isGuideCalendarSnapshotFresh(localSnapshot)) {
-        guideCalendarState = mergeGuideCalendarSnapshots(localSnapshot, null);
-        guideCalendarRemoteLoaded = true;
-        return guideCalendarState;
-      }
+      // Solo saltamos Firebase si el quota guard lo indica (ya estamos
+      // cerca del limite diario). Antes evitabamos la lectura cuando el
+      // snapshot local era menor a 15 min, pero eso impedia que los
+      // cambios del admin llegaran al aprendiz hasta que expirara la TTL.
+      // Ahora cada apertura de guia hace UNA lectura de Firebase como
+      // maximo (gracias a guideCalendarRemotePromise), pintando primero
+      // el local de forma optimista y refrescando despues con la version
+      // canonica.
       if (window._firebaseDb?.shouldDeferCloudReads?.()) {
         guideCalendarState = mergeGuideCalendarSnapshots(localSnapshot, null);
         guideCalendarRemoteLoaded = true;
