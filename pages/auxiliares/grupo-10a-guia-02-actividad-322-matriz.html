@@ -14,25 +14,27 @@
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>Matriz de Diagnóstico Digital | Actividad 3.2.2 | Guía 2 | Grupo 10A</title>
 <meta name="description" content="Matriz de Diagnóstico Digital | Actividad 3.2.2 | Guía 2 | Grupo 10A">
-<script defer src="../js/portal_auth.js?v=20260516_1"></script>
-<script src="../js/firebase-config.js?v=20260414_1"></script>
+<script defer src="../../js/portal_auth.js?v=20260516_1"></script>
+<script src="../../js/firebase-config.js?v=20260414_1"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
-<script src="../js/firebase_auth_bridge.js?v=20260515_1"></script>
-<script defer src="../js/firebase_db.js?v=20260520_1"></script>
-<script defer src="../js/firebase_status_banner.js?v=20260520_1"></script>
-<script defer src="../js/save_status.js?v=20260516_1"></script>
-<script defer src="../js/activity_deadlines.js?v=20260516_2"></script>
-<script defer src="../js/guide_deadline_summary.js?v=20260518_2"></script>
+<script src="../../js/firebase_auth_bridge.js?v=20260515_1"></script>
+<script defer src="../../js/firebase_db.js?v=20260520_1"></script>
+<script defer src="../../js/firebase_status_banner.js?v=20260520_1"></script>
+<script defer src="../../js/save_status.js?v=20260516_1"></script>
+<script defer src="../../js/activity_deadlines.js?v=20260516_2"></script>
+<script defer src="../../js/guide_deadline_summary.js?v=20260518_2"></script>
+<script defer src="../../js/project_integrations.js?v=20260411_1"></script>
+<script defer src="../../js/shared_apps_script_delivery.js?v=20260516_2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../css/site_tokens.css?v=20260516_1">
-<link rel="stylesheet" href="../css/components.css?v=20260516_1">
-<link rel="stylesheet" href="../css/interactive_help.css?v=20260519_1">
-<script defer src="../js/interactive_help.js?v=20260519_1"></script>
-<link rel="stylesheet" href="../css/shared_shell.css?v=20260425_1">
-<link rel="stylesheet" href="../css/guia_template.css?v=20260519_1">
+<link rel="stylesheet" href="../../css/site_tokens.css?v=20260516_1">
+<link rel="stylesheet" href="../../css/components.css?v=20260516_1">
+<link rel="stylesheet" href="../../css/interactive_help.css?v=20260519_1">
+<script defer src="../../js/interactive_help.js?v=20260519_1"></script>
+<link rel="stylesheet" href="../../css/shared_shell.css?v=20260425_1">
+<link rel="stylesheet" href="../../css/guia_template.css?v=20260519_1">
 <style>
   .matriz-page .app-main { padding: 24px 0 64px; }
   .matriz-page .content {
@@ -220,9 +222,9 @@
   .btn-export:hover { background: #15803d; transform: translateY(-1px); }
   .drive-link-panel { display: none; margin-top: 14px; }
 </style>
-<script defer src="../js/shared_shell.js?v=20260508_1"></script>
-<script defer src="../js/export_styles.js?v=20260517_1"></script>
-<script defer src="../js/script_guia2.js?v=20260520_1"></script>
+<script defer src="../../js/shared_shell.js?v=20260508_1"></script>
+<script defer src="../../js/export_styles.js?v=20260517_1"></script>
+<script defer src="../../js/script_guia2.js?v=20260520_1"></script>
 </head>
 <body
   class="app-shell app-shell--guide matriz-page"
@@ -414,11 +416,14 @@
 
       <!-- Panel de exportación y entrega -->
       <div class="export-panel">
-        <h3>&#128196; Exportar y subir a Drive</h3>
-        <p>Cuando termines de diligenciar la matriz, exporta el documento con tus respuestas y súbelo a la carpeta de Drive correspondiente a tu ficha de aprendiz.</p>
-        <div class="export-actions">
+        <h3>&#128196; Exportar y entregar a Drive</h3>
+        <p>Cuando termines de diligenciar la matriz: (1) exporta el documento con tus respuestas y (2) entrégalo a Drive mediante el formulario seguro. El archivo se guardará en la carpeta de tu ficha.</p>
+        <div class="export-actions" style="display:flex;gap:10px;flex-wrap:wrap;">
           <button type="button" class="btn-export" onclick="exportarMatriz()">
             &#128202; Exportar Matriz (.doc)
+          </button>
+          <button type="button" class="btn-export" id="btn-entregar-matriz" onclick="entregarMatrizADrive()" style="background:#0b6b35;">
+            &#128228; Entregar a Drive
           </button>
         </div>
         <div class="drive-link-panel" id="drive-link-panel"></div>
@@ -673,6 +678,85 @@ function exportarMatriz() {
     panel.style.display = "block";
   }
 }
+
+/* \u2500\u2500 Entregar Matriz a Drive (formulario seguro Apps Script) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+function entregarMatrizADrive() {
+  var delivery = window.sharedAppsScriptDelivery;
+  if (!delivery || typeof delivery.openDeliveryModal !== "function") {
+    alert("El formulario seguro de entrega no esta disponible. Recarga la pagina e intenta de nuevo.");
+    return;
+  }
+  var session = window.portalAuth && typeof window.portalAuth.getCurrentSession === "function"
+    ? window.portalAuth.getCurrentSession() : null;
+  if (!session || session.role !== "student") {
+    alert("Debes iniciar sesion como aprendiz para entregar la matriz.");
+    return;
+  }
+  delivery.openDeliveryModal({
+    guideLabel: "Guia 2",
+    activityNumber: "3.2.2",
+    activityTitle: "Actividad 4: Matriz de Diagnostico Digital",
+    activityLabel: "Actividad 4 - Matriz de Diagnostico Digital",
+    panelKey: "guia2-3-2-2",
+    guideNumber: "2",
+    shortName: "MatrizDigital",
+    allowedExtensions: [".doc", ".docx"],
+    fileNamePrefix: "Actividad_4_MatrizDigital",
+    learnerNameMode: "full",
+  });
+}
+
+/* ── Render confirmacion + restaurar al abrir la pagina ───────────────── */
+function renderMatrizDeliveryConfirmation(record) {
+  if (!record || record.status !== "delivered") return;
+  var panel = document.getElementById("drive-link-panel");
+  if (!panel) return;
+  var btn = document.getElementById("btn-entregar-matriz");
+  if (btn) {
+    btn.disabled = true;
+    btn.style.background = "#16a34a";
+    btn.style.cursor = "default";
+    btn.innerHTML = "✓ Entregado";
+  }
+  var fecha = "";
+  try {
+    fecha = new Date(record.submittedAt || record.fechaEntrega).toLocaleString("es-CO", {
+      year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit"
+    });
+  } catch (e) {}
+  var fileName = record.savedFileName || record.nombreArchivoEstandar || record.originalFileName || "";
+  var driveUrl = record.driveUrl || record.enlaceDrive || "";
+  panel.innerHTML =
+    "<div style='background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:14px;'>"
+    + "<p style='font-size:.92rem;color:#15803d;font-weight:700;margin:0 0 8px;'>✅ Actividad entregada correctamente</p>"
+    + (fecha ? "<p style='font-size:.84rem;color:#166534;margin:0 0 4px;'>Fecha de entrega: " + escapeW(fecha) + "</p>" : "")
+    + (fileName ? "<p style='font-size:.84rem;color:#166534;margin:0 0 8px;'>Archivo entregado: " + escapeW(fileName) + "</p>" : "")
+    + (driveUrl
+        ? "<p style='margin:8px 0 0;'><a href='" + driveUrl + "' target='_blank' rel='noopener noreferrer' class='btn-export' style='background:#15803d;text-decoration:none;'>&#128194; Ver archivo en Drive &#8599;</a></p>"
+        : "")
+    + "<p style='font-size:.78rem;color:#475569;margin:10px 0 0;'>Para modificar la entrega, solicita al instructor que habilite nuevamente la actividad.</p>"
+    + "</div>";
+  panel.style.display = "block";
+}
+
+document.addEventListener("guide-delivery-registered", function (event) {
+  var detail = (event && event.detail) || {};
+  if (detail.panelKey === "guia2-3-2-2" || detail.activityNumber === "3.2.2") {
+    renderMatrizDeliveryConfirmation(detail);
+  }
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+  var delivery = window.sharedAppsScriptDelivery;
+  if (!delivery || typeof delivery.loadDeliveryRecord !== "function") return;
+  var record = delivery.loadDeliveryRecord({
+    guideLabel: "Guia 2",
+    activityNumber: "3.2.2",
+    activityLabel: "Actividad 4 - Matriz de Diagnostico Digital",
+    panelKey: "guia2-3-2-2",
+  });
+  if (record) renderMatrizDeliveryConfirmation(record);
+});
 </script>
 
 </body>
