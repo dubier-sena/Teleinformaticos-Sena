@@ -327,7 +327,10 @@
 
   function fromFsDoc(doc) {
     if (!doc || !doc.fields) return null;
-    var result = {};
+    var result = {
+      _docId: String(doc.name || "").split("/").pop(),
+      _docName: doc.name || "",
+    };
     Object.keys(doc.fields).forEach(function (k) {
       result[k] = fromFsValue(doc.fields[k]);
     });
@@ -555,6 +558,24 @@
   // (sin puntos ni caracteres especiales).
   function fileNameToKey(fileName) {
     return String(fileName || "").replace(/\./g, "_").replace(/[^a-z0-9_-]/gi, "_");
+  }
+
+  function guideDataFileName(fileName) {
+    var aliases = {
+      "grupo-10a-guia-01-induccion.html": "10a_guia.html",
+      "grupo-10b-guia-01-induccion.html": "10b_guia.html",
+      "grupo-10a-guia-02-herramientas-informaticas-digitales.html": "10a_guia2.html",
+      "grupo-10b-guia-02-herramientas-informaticas-digitales.html": "10b_guia2.html",
+      "grupo-10a-guia-03-planificar-informacion.html": "10a_guia3.html",
+      "grupo-10b-guia-03-planificar-informacion.html": "10b_guia3.html",
+      "grupo-11a-guia-05-herramientas-informaticas-digitales.html": "11a_guia.html",
+      "grupo-11b-guia-05-herramientas-informaticas-digitales.html": "11b_guia.html",
+      "grupo-11a-guia-06-planificar-informacion.html": "11a_guia6.html",
+      "grupo-11b-guia-06-planificar-informacion.html": "11b_guia6.html",
+      "santa-barbara-10a-guia-02-redes-rap01.html": "sb_10a_redes.html",
+      "santa-barbara-10b-guia-02-redes-rap01.html": "sb_10b_redes.html",
+    };
+    return aliases[fileName] || fileName;
   }
 
   async function cloudGetUser(usernameKey) {
@@ -837,6 +858,35 @@
     if (Array.isArray(value)) return value.length > 0;
     if (plainObject(value)) return Object.keys(value).length > 0;
     return true;
+  }
+
+  function countMeaningfulGuideValues(record) {
+    if (!plainObject(record)) return 0;
+    return Object.keys(record).filter(function (key) {
+      return hasMeaningfulGuideValue(record[key]);
+    }).length;
+  }
+
+  function deriveProgressFromGuideDataDoc(fileName, doc) {
+    var snapshot = readSnapshotPayload(doc);
+    var state = snapshotState(snapshot);
+    var completedFromState = countMeaningfulGuideValues(state);
+    if (completedFromState <= 0) return null;
+
+    var auth = window.portalAuth || {};
+    var config = auth.GUIDE_PROGRESS_CONFIG && auth.GUIDE_PROGRESS_CONFIG[fileName];
+    var total = Math.max(0, Number(config && config.total) || 0);
+    if (total <= 0) {
+      total = completedFromState;
+    }
+    var completed = Math.min(completedFromState, total);
+    return {
+      completed: completed,
+      total: total,
+      percent: total ? Math.round((completed / total) * 100) : 0,
+      updatedAt: (snapshot && snapshot.updatedAt) || (doc && doc.updatedAt) || "",
+      source: "guide-data",
+    };
   }
 
   function mergeGuideValue(previous, incoming) {
@@ -1205,6 +1255,7 @@
 
     var usernameKey = session.user.usernameKey;
     var total       = Math.max(0, Number(progress && progress.total) || 0);
+    if (total <= 0) return;
     var completed   = Math.min(Math.max(0, Number(progress && progress.completed) || 0), total || 0);
     var percent     = total ? Math.round((completed / total) * 100) : 0;
 
@@ -1329,36 +1380,56 @@
       var usernames   = cloudUsers.map(function (u) { return u.usernameKey; });
       var progressDocs = await fsBatchGet(COL_PROGRESS, usernames);
 
-      // Indexar progreso por usernameKey
-      var progressIndex = {};
+      var progressByUser       = {};
+
       progressDocs.forEach(function (doc) {
+        if (doc && doc._docId) {
+          progressByUser[doc._docId] = doc;
+          progressByUser[decodeURIComponent(doc._docId)] = doc;
+        }
         if (doc && doc._usernameKey) {
-          progressIndex[doc._usernameKey] = doc;
+          progressByUser[doc._usernameKey] = doc;
         }
       });
 
-      // Como batchGet no garantiza orden ni incluye el usernameKey en el doc,
-      // hacemos la asociacion por posicion solo si los docs tienen alguna clave
-      // identificadora. En su defecto, consultamos individualmente (cache local).
-      // Solucion robusta: construir el mapa a partir del nombre del documento
-      // (no disponible en fromFsDoc). Usamos la alternativa de leer el campo
-      // especial que guardamos en cada documento de progreso.
+      cloudUsers.forEach(function (u) {
+        if (!progressByUser[u.usernameKey]) {
+          progressByUser[u.usernameKey] = {};
+        }
+      });
 
-      // Para mayor robustez, leemos el progreso de cada usuario en paralelo
-      // solo cuando batchGet no devuelve datos con identificador claro.
-      var needsIndividualFetch = progressDocs.length === 0 && cloudUsers.length > 0;
-      var progressByUser       = {};
-
-      if (needsIndividualFetch) {
-        var fetches = cloudUsers.map(async function (u) {
-          var p = await cloudGetProgress(u.usernameKey);
-          progressByUser[u.usernameKey] = p || {};
+      var guideDataRequests = [];
+      cloudUsers.forEach(function (user) {
+        auth.getGuidesForFicha(user.ficha || "").forEach(function (fileName) {
+          var progressKey = fileNameToKey(fileName);
+          var entry = progressByUser[user.usernameKey] && progressByUser[user.usernameKey][progressKey];
+          if (entry && Number(entry.total) > 0) return;
+          guideDataRequests.push({
+            usernameKey: user.usernameKey,
+            fileName: fileName,
+            progressKey: progressKey,
+            docId: guideStateDocId(GUIDE_DATA_FALLBACK_PREFIX, "student:" + user.usernameKey, guideDataFileName(fileName)),
+          });
         });
-        await Promise.all(fetches);
-      } else {
-        // batchGet devuelve docs en el mismo orden que los IDs solicitados
-        cloudUsers.forEach(function (u, i) {
-          progressByUser[u.usernameKey] = progressDocs[i] || {};
+      });
+
+      if (guideDataRequests.length) {
+        var guideDataDocs = await fsBatchGet(COL_PROGRESS, guideDataRequests.map(function (item) { return item.docId; }));
+        var guideDataByDocId = {};
+        guideDataDocs.forEach(function (doc) {
+          if (doc && doc._docId) {
+            guideDataByDocId[decodeURIComponent(doc._docId)] = doc;
+            guideDataByDocId[doc._docId] = doc;
+          }
+        });
+        guideDataRequests.forEach(function (item) {
+          var doc = guideDataByDocId[item.docId];
+          var derived = deriveProgressFromGuideDataDoc(item.fileName, doc);
+          if (!derived) return;
+          if (!progressByUser[item.usernameKey]) {
+            progressByUser[item.usernameKey] = {};
+          }
+          progressByUser[item.usernameKey][item.progressKey] = derived;
         });
       }
 
