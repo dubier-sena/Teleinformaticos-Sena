@@ -56,7 +56,7 @@
       ],
     },
     "guia-06-planificar": {
-      label: "Guía 6 — Planificar la Información",
+      label: "Guía 6 — Implementar componentes de las herramientas tecnológicas",
       activities: [
         { id: "bitacora311",      label: "3.1.1 Bitácora estudio de caso" },
         { id: "socializacion312", label: "3.1.2 Socialización" },

@@ -26,11 +26,15 @@
     "grupo-11a-guia-05-herramientas-informaticas-digitales.html":
       "Guía 5 - Operar herramientas informáticas y digitales | Grupo 11A",
     "grupo-11a-guia-06-planificar-informacion.html":
-      "Guía 6 - Planificar la información | Grupo 11A",
+      "Guía 6 - Implementar componentes de las herramientas tecnológicas según procedimientos de la organización | Grupo 11A",
     "grupo-11b-guia-05-herramientas-informaticas-digitales.html":
       "Guía 5 - Operar herramientas informáticas y digitales | Grupo 11B",
     "grupo-11b-guia-06-planificar-informacion.html":
-      "Guía 6 - Planificar la información | Grupo 11B",
+      "Guía 6 - Implementar componentes de las herramientas tecnológicas según procedimientos de la organización | Grupo 11B",
+    "grupo-11a-guia-07-planificar-informacion-ciberseguridad.html":
+      "Guía 7 - Planificar la información según criterios de ciberseguridad | Grupo 11A",
+    "grupo-11b-guia-07-planificar-informacion-ciberseguridad.html":
+      "Guía 7 - Planificar la información según criterios de ciberseguridad | Grupo 11B",
     "santa-barbara-10a-guia-02-redes-rap01.html":
       "Guía 2 - Definir los parámetros y recursos de la red de acuerdo con normativa de telecomunicaciones | Grupo 10A",
     "santa-barbara-10b-guia-02-redes-rap01.html":
@@ -110,6 +114,20 @@
       pageKey: "11b_guia6",
       stateKey: "guia_interactiva_11b_guia6_html",
     },
+    "grupo-11a-guia-07-planificar-informacion-ciberseguridad.html": {
+      mode: "state-with-activity",
+      total: 100,
+      activityTotal: 7,
+      pageKey: "11a_guia7",
+      stateKey: "guia_interactiva_11a_guia7_html",
+    },
+    "grupo-11b-guia-07-planificar-informacion-ciberseguridad.html": {
+      mode: "state-with-activity",
+      total: 100,
+      activityTotal: 7,
+      pageKey: "11b_guia7",
+      stateKey: "guia_interactiva_11b_guia7_html",
+    },
   };
 
   const FICHA_MAP = {
@@ -144,12 +162,20 @@
     "3168850": {
       inst: "Institucion Educativa Santa Barbara",
       grupo: "11A",
-      guias: ["grupo-11a-guia-05-herramientas-informaticas-digitales.html", "grupo-11a-guia-06-planificar-informacion.html"],
+      guias: [
+        "grupo-11a-guia-05-herramientas-informaticas-digitales.html",
+        "grupo-11a-guia-06-planificar-informacion.html",
+        "grupo-11a-guia-07-planificar-informacion-ciberseguridad.html",
+      ],
     },
     "3168852": {
       inst: "Institucion Educativa Santa Barbara",
       grupo: "11B",
-      guias: ["grupo-11b-guia-05-herramientas-informaticas-digitales.html", "grupo-11b-guia-06-planificar-informacion.html"],
+      guias: [
+        "grupo-11b-guia-05-herramientas-informaticas-digitales.html",
+        "grupo-11b-guia-06-planificar-informacion.html",
+        "grupo-11b-guia-07-planificar-informacion-ciberseguridad.html",
+      ],
     },
   };
 

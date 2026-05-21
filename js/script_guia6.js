@@ -427,6 +427,9 @@ function initGuia6() {
   }
 
   guia6Booted = true;
+  // Migra el legacy state.equipoGuia6 (un solo equipo) a las 3 actividades
+  // antes de cualquier render para que las tres muestren el equipo previo.
+  migrateLegacyEquipoGuia6();
   renderStatefulSections();
   renderEvidenceTable();
   renderGlossary();
@@ -912,9 +915,38 @@ function closeDriveFolderQR() {
 // actividades con dedicatedFolder.template.
 // ════════════════════════════════════════════════════════════════════════════
 
-const EQUIPO_GUIA6_STATE_KEY = "equipoGuia6";
+const EQUIPO_GUIA6_LEGACY_KEY = "equipoGuia6";
+const EQUIPO_GUIA6_STATE_KEY_PREFIX = "equipoGuia6_";
+const EQUIPO_GUIA6_ACTIVITY_IDS = ["socializacion312", "tabla321", "mapa322"];
 const EQUIPO_GUIA6_EMAIL_DOMAIN = "@sena-portal.local";
-let equipoGuia6WizardActive = false;
+// Map actId -> bool. true mientras el aprendiz tiene el wizard abierto.
+const equipoGuia6WizardActive = {};
+
+function equipoGuia6StateKey(actId) {
+  return EQUIPO_GUIA6_STATE_KEY_PREFIX + String(actId || "");
+}
+
+// Migracion: si existe un equipo global legacy (state.equipoGuia6, una sola
+// configuracion para toda la guia), lo copia como valor inicial a cada
+// actividad que aun no tenga uno propio. El aprendiz puede reconfigurar cada
+// actividad despues. No borra el legacy hasta que una reconfiguracion lo haga.
+function migrateLegacyEquipoGuia6() {
+  const legacy = state[EQUIPO_GUIA6_LEGACY_KEY];
+  if (!legacy || typeof legacy !== "object") return;
+  if (legacy.mode !== "grupo") return;
+  if (!Array.isArray(legacy.members) || legacy.members.length < 2) return;
+  let migrated = false;
+  EQUIPO_GUIA6_ACTIVITY_IDS.forEach((actId) => {
+    const key = equipoGuia6StateKey(actId);
+    if (!state[key]) {
+      state[key] = Object.assign({}, legacy, { scope: "activity", activityId: actId });
+      migrated = true;
+    }
+  });
+  if (migrated) {
+    saveState();
+  }
+}
 
 function getGuia6ActivityDeclarations() {
   if (window.ActivityStandard && typeof window.ActivityStandard.getActivitiesForGuide === "function") {
@@ -928,21 +960,24 @@ function getCurrentUsernameKey() {
   return String(session?.usernameKey || session?.user?.usernameKey || "").trim().toLowerCase();
 }
 
-function getEquipoGuia6FromState() {
-  const raw = state[EQUIPO_GUIA6_STATE_KEY];
+function getEquipoGuia6FromState(actId) {
+  if (!actId) return null;
+  const raw = state[equipoGuia6StateKey(actId)];
   if (!raw || typeof raw !== "object") return null;
   if (raw.mode !== "grupo") return null;
   if (!Array.isArray(raw.members) || raw.members.length < 2) return null;
   return raw;
 }
 
-function setEquipoGuia6InState(team) {
-  state[EQUIPO_GUIA6_STATE_KEY] = team;
+function setEquipoGuia6InState(actId, team) {
+  if (!actId) return;
+  state[equipoGuia6StateKey(actId)] = team;
   saveState();
 }
 
-function clearEquipoGuia6FromState() {
-  delete state[EQUIPO_GUIA6_STATE_KEY];
+function clearEquipoGuia6FromState(actId) {
+  if (!actId) return;
+  delete state[equipoGuia6StateKey(actId)];
   saveState();
 }
 
@@ -995,11 +1030,14 @@ function todayDateStampYYYYMMDD() {
   return yyyy + mm + dd;
 }
 
-function resolveDedicatedFolderTemplate(template) {
+// Para actividades con `dedicatedFolder` (3.3.1, 3.3.2). Las plantillas actuales
+// solo usan {learnerLastFirst}, {ficha}, {date} (no requieren equipo). El
+// parametro opcional `team` se mantiene para soportar plantillas futuras con
+// {teamCode}/{teamInitials} a nivel de actividad individual.
+function resolveDedicatedFolderTemplate(template, team) {
   if (!template) return "";
   const selfName = getCurrentLearnerName();
   const lastFirst = formatLastnameFirstName(selfName);
-  const team = getEquipoGuia6FromState();
   const teamCode = team ? buildEquipoGuia6Code4(team) : "";
   const teamInitials = team && Array.isArray(team.members)
     ? team.members.slice().sort((a, b) => formatInitialLastname(a.fullName).localeCompare(formatInitialLastname(b.fullName), "es")).map((m) => formatInitialLastname(m.fullName)).join("_")
@@ -1018,25 +1056,33 @@ function getActivityDeclarationForTarget(target) {
   return getGuia6ActivityDeclarations().find((a) => a.id === target.deadlineActivityId) || null;
 }
 
-// ── Wizard (UI mount: equipoGuia6Mount al inicio del partial) ──────────────
+// ── Wizard por actividad (3.1.2, 3.2.1, 3.2.2) ────────────────────────────
+// Cada actividad tiene su propio mount data-equipo-mount="<actId>". Permite
+// que el aprendiz configure equipos distintos para socializacion (3.1.2),
+// tabla resumen (3.2.1) y mapa conceptual (3.2.2).
 
-function renderEquipoGuia6Block() {
-  const summary = document.getElementById("equipoGuia6Summary");
-  const config = document.getElementById("equipoGuia6Config");
+function renderEquipoGuia6Block(actId) {
+  // Si no se pasa actId, renderiza los tres mounts visibles en el DOM.
+  if (!actId) {
+    EQUIPO_GUIA6_ACTIVITY_IDS.forEach((id) => renderEquipoGuia6Block(id));
+    return;
+  }
+  const summary = document.querySelector(`[data-equipo-summary="${actId}"]`);
+  const config = document.querySelector(`[data-equipo-config="${actId}"]`);
   if (!summary || !config) return;
-  const team = getEquipoGuia6FromState();
-  if (team && !equipoGuia6WizardActive) {
+  const team = getEquipoGuia6FromState(actId);
+  if (team && !equipoGuia6WizardActive[actId]) {
     config.style.display = "none";
-    renderEquipoGuia6Summary(team);
+    renderEquipoGuia6Summary(actId, team);
     return;
   }
   summary.innerHTML = "";
   config.style.display = "";
-  renderEquipoGuia6Roster();
+  renderEquipoGuia6Roster(actId);
 }
 
-function renderEquipoGuia6Summary(team) {
-  const summary = document.getElementById("equipoGuia6Summary");
+function renderEquipoGuia6Summary(actId, team) {
+  const summary = document.querySelector(`[data-equipo-summary="${actId}"]`);
   if (!summary) return;
   const code4 = buildEquipoGuia6Code4(team);
   const memberList = team.members
@@ -1044,17 +1090,17 @@ function renderEquipoGuia6Summary(team) {
     .join("");
   summary.innerHTML = `
     <div style="padding:10px 12px;background:#e8f5e9;border:1px solid #b6dba0;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:.88rem">
-      <div style="font-weight:700;margin-bottom:4px">Equipo confirmado &middot; <code style="background:#fff;padding:2px 6px;border-radius:4px;color:#0b6b35">Equipo ${escapeHtml(code4)}</code></div>
+      <div style="font-weight:700;margin-bottom:4px">Equipo confirmado para esta actividad &middot; <code style="background:#fff;padding:2px 6px;border-radius:4px;color:#0b6b35">Equipo ${escapeHtml(code4)}</code></div>
       <ul style="margin:6px 0 6px 18px;padding:0;line-height:1.55">${memberList}</ul>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
-        <button type="button" onclick="reconfigurarEquipoGuia6()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid #f5c1bb;background:#fdecea;color:#a13029;border-radius:6px;font-family:inherit;font-size:.82rem;cursor:pointer;font-weight:600">&#128683; Cambiar de equipo</button>
+        <button type="button" onclick="reconfigurarEquipoGuia6('${escapeHtml(actId)}')" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid #f5c1bb;background:#fdecea;color:#a13029;border-radius:6px;font-family:inherit;font-size:.82rem;cursor:pointer;font-weight:600">&#128683; Cambiar equipo de esta actividad</button>
       </div>
     </div>`;
 }
 
-function renderEquipoGuia6Roster() {
-  const mount = document.getElementById("equipoGuia6RosterMount");
-  const hint = document.getElementById("equipoGuia6FormHint");
+function renderEquipoGuia6Roster(actId) {
+  const mount = document.querySelector(`[data-equipo-roster="${actId}"]`);
+  const hint = document.querySelector(`[data-equipo-hint="${actId}"]`);
   if (!mount) return;
   const selfKey = getCurrentUsernameKey();
   const selfName = getCurrentLearnerName();
@@ -1087,8 +1133,8 @@ function renderEquipoGuia6Roster() {
     </label>`;
   const rows = roster
     .map((u) => `
-      <label style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer" data-equipo-guia6-row>
-        <input type="checkbox" data-equipo-guia6-key="${escapeHtml(u.usernameKey)}" data-equipo-guia6-name="${escapeHtml(u.fullName)}">
+      <label style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer">
+        <input type="checkbox" data-equipo-guia6-act="${escapeHtml(actId)}" data-equipo-guia6-key="${escapeHtml(u.usernameKey)}" data-equipo-guia6-name="${escapeHtml(u.fullName)}">
         <span style="color:#37474f">${escapeHtml(u.fullName)}</span>
       </label>`)
     .join("");
@@ -1096,9 +1142,9 @@ function renderEquipoGuia6Roster() {
   if (hint) {
     hint.textContent = `Tu ficha tiene ${roster.length + 1} aprendices registrados. La guia indica equipos de 3 (incluyendote): selecciona exactamente 2 companeros.`;
   }
-  mount.querySelectorAll("[data-equipo-guia6-key]").forEach((cb) => {
+  mount.querySelectorAll(`input[data-equipo-guia6-act="${actId}"]`).forEach((cb) => {
     cb.addEventListener("change", () => {
-      const checked = mount.querySelectorAll("[data-equipo-guia6-key]:checked").length;
+      const checked = mount.querySelectorAll(`input[data-equipo-guia6-act="${actId}"]:checked`).length;
       if (checked > 2) {
         cb.checked = false;
         alert("La guia indica equipos de 3 integrantes. Solo puedes seleccionar 2 companeros. Desmarca uno antes de agregar otro.");
@@ -1107,7 +1153,8 @@ function renderEquipoGuia6Roster() {
   });
 }
 
-function confirmarEquipoGuia6() {
+function confirmarEquipoGuia6(actId) {
+  if (!actId) return;
   const selfKey = getCurrentUsernameKey();
   const selfName = getCurrentLearnerName();
   const selection = getGuideSelection();
@@ -1116,7 +1163,7 @@ function confirmarEquipoGuia6() {
     alert("No se pudo identificar tu sesion o ficha. Vuelve a iniciar sesion.");
     return;
   }
-  const checks = document.querySelectorAll("[data-equipo-guia6-key]:checked");
+  const checks = document.querySelectorAll(`input[data-equipo-guia6-act="${actId}"]:checked`);
   const selected = Array.from(checks).map((c) => ({
     usernameKey: c.dataset.equipoGuia6Key,
     fullName: c.dataset.equipoGuia6Name,
@@ -1128,7 +1175,9 @@ function confirmarEquipoGuia6() {
   const allMembers = [{ usernameKey: selfKey, fullName: selfName || selfKey }, ...selected];
   const memberKeys = allMembers.map((m) => m.usernameKey);
   const memberEmails = memberKeys.map((k) => k + EQUIPO_GUIA6_EMAIL_DOMAIN);
-  const groupKey = buildEquipoGuia6GroupKey(ficha, memberKeys);
+  // Seed con el actId para que dos actividades con mismo trio generen
+  // groupKey distinto en Firestore.
+  const groupKey = buildEquipoGuia6GroupKey(ficha + ":" + actId, memberKeys);
   const team = {
     mode: "grupo",
     groupKey,
@@ -1136,41 +1185,48 @@ function confirmarEquipoGuia6() {
     members: allMembers,
     memberKeys,
     memberEmails,
-    scope: "guide",
+    scope: "activity",
+    activityId: actId,
     guide: GUIDE_DATA_FILE,
     confirmedAt: new Date().toISOString(),
     confirmedBy: { usernameKey: selfKey, fullName: selfName || selfKey },
   };
-  setEquipoGuia6InState(team);
-  equipoGuia6WizardActive = false;
+  setEquipoGuia6InState(actId, team);
+  equipoGuia6WizardActive[actId] = false;
   if (window._firebaseDb && typeof window._firebaseDb.cloudSaveGroup === "function") {
     Promise.resolve(window._firebaseDb.cloudSaveGroup(groupKey, {
       ficha,
       guide: GUIDE_DATA_FILE,
-      activity: "guia6_equipo",
+      activity: "guia6_equipo_" + actId,
       members: allMembers,
       memberKeys,
       memberEmails,
       updatedAt: new Date().toISOString(),
     })).catch(() => {});
   }
-  renderEquipoGuia6Block();
+  renderEquipoGuia6Block(actId);
   renderDriveDeliveryPanel();
 }
 
-function cancelarEquipoGuia6Config() {
-  if (getEquipoGuia6FromState()) {
-    equipoGuia6WizardActive = false;
-    renderEquipoGuia6Block();
+function cancelarEquipoGuia6Config(actId) {
+  if (!actId) return;
+  if (getEquipoGuia6FromState(actId)) {
+    equipoGuia6WizardActive[actId] = false;
+    renderEquipoGuia6Block(actId);
   }
 }
 
-function reconfigurarEquipoGuia6() {
-  if (!confirm("Cambiar de equipo borrara la configuracion actual. Tus entregas previas quedan en la carpeta del equipo anterior. Continuar?")) return;
-  clearEquipoGuia6FromState();
-  equipoGuia6WizardActive = true;
-  document.querySelectorAll('[data-drive-panel^="guide6-"]').forEach((p) => p.remove());
-  renderEquipoGuia6Block();
+function reconfigurarEquipoGuia6(actId) {
+  if (!actId) return;
+  if (!confirm("Cambiar el equipo de esta actividad borrara la configuracion actual. Tus entregas previas quedan en la carpeta del equipo anterior. Continuar?")) return;
+  clearEquipoGuia6FromState(actId);
+  equipoGuia6WizardActive[actId] = true;
+  // Solo elimina el panel Drive de ESTA actividad (no las otras).
+  const target = GUIDE6_DRIVE_ACTIVITY_TARGETS.find((t) => t.deadlineActivityId === actId);
+  if (target) {
+    document.querySelectorAll(`[data-drive-panel="${target.panelKey}"]`).forEach((p) => p.remove());
+  }
+  renderEquipoGuia6Block(actId);
   renderDriveDeliveryPanel();
 }
 
@@ -1196,7 +1252,6 @@ function buildGuia6TeamFolderTitle(team) {
 }
 
 function renderDriveDeliveryPanel() {
-  const team = getEquipoGuia6FromState();
   const enrichedTargets = GUIDE6_DRIVE_ACTIVITY_TARGETS.map((target) => {
     const decl = getActivityDeclarationForTarget(target);
     let next = target;
@@ -1210,16 +1265,20 @@ function renderDriveDeliveryPanel() {
         }),
       });
     }
-    if (decl && decl.teamRequirement && decl.teamRequirement.required && team) {
-      const teamFolder = buildGuia6TeamFolderTitle(team);
-      const fileLabel = GUIA6_TEAM_FILE_LABELS[target.panelKey] || next.activityContext?.activityLabel;
-      next = Object.assign({}, next, {
-        description: `${next.description} Equipo: ${team.members.map((m) => m.fullName).join(", ")}.`,
-        activityContext: Object.assign({}, next.activityContext || {}, {
-          activityTitle: teamFolder,
-          activityLabel: fileLabel,
-        }),
-      });
+    if (decl && decl.teamRequirement && decl.teamRequirement.required) {
+      // Cada actividad tiene su propio equipo (state.equipoGuia6_<actId>).
+      const team = getEquipoGuia6FromState(decl.id);
+      if (team) {
+        const teamFolder = buildGuia6TeamFolderTitle(team);
+        const fileLabel = GUIA6_TEAM_FILE_LABELS[target.panelKey] || next.activityContext?.activityLabel;
+        next = Object.assign({}, next, {
+          description: `${next.description} Equipo: ${team.members.map((m) => m.fullName).join(", ")}.`,
+          activityContext: Object.assign({}, next.activityContext || {}, {
+            activityTitle: teamFolder,
+            activityLabel: fileLabel,
+          }),
+        });
+      }
     }
     return next;
   });
@@ -1253,8 +1312,8 @@ function customizeGuia6DriveButtons() {
 }
 
 function openGuia6DriveDestination(target, decl) {
-  if (decl.teamRequirement && decl.teamRequirement.required && !getEquipoGuia6FromState()) {
-    alert('Antes de subir, confirma tu equipo de trabajo en el panel "Mi equipo de trabajo de la Guia 6" al inicio de la guia.');
+  if (decl.teamRequirement && decl.teamRequirement.required && !getEquipoGuia6FromState(decl.id)) {
+    alert('Antes de subir, confirma el equipo de trabajo de esta actividad en el bloque "Equipo de trabajo de esta actividad" dentro del panel de la actividad ' + (decl.number || "") + ".");
     return;
   }
   const stored = getStoredDeliveryForPanel(target);
@@ -1279,7 +1338,9 @@ function getStoredDeliveryForPanel(target) {
 }
 
 function getExpectedGuia6FolderName(target, decl) {
-  const team = getEquipoGuia6FromState();
+  const team = decl && decl.teamRequirement && decl.teamRequirement.required
+    ? getEquipoGuia6FromState(decl.id)
+    : null;
   const activityNumber = target.activityNumber || "";
   let activityTitle = "";
   if (decl.dedicatedFolder && decl.dedicatedFolder.enabled) {
@@ -1295,7 +1356,9 @@ function getExpectedGuia6FolderName(target, decl) {
 function showGuia6DriveHelperModal(target, decl) {
   const folderFullName = getExpectedGuia6FolderName(target, decl);
   const fichaFolderUrl = getDriveFolderUrl();
-  const team = getEquipoGuia6FromState();
+  const team = decl && decl.teamRequirement && decl.teamRequirement.required
+    ? getEquipoGuia6FromState(decl.id)
+    : null;
   let searchQuery = folderFullName;
   if (decl.teamRequirement && decl.teamRequirement.required && team) {
     searchQuery = "Equipo " + buildEquipoGuia6Code4(team);
@@ -1498,7 +1561,7 @@ function escapeWordValue(value) {
 }
 
 const GUIDE6_WORD_METADATA = {
-  guideName: "Guía 6 - Planificar la información",
+  guideName: "Guía 6 - Implementar componentes de las herramientas tecnológicas según procedimientos de la organización",
   program: "Sistemas Teleinformáticos",
   competencia:
     "220501121 - Operar herramientas informáticas y digitales de acuerdo con protocolos y manuales técnicos.",
