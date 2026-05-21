@@ -200,6 +200,14 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
             <button class="admin-button" type="submit">Guardar fecha</button>
             <button class="admin-button admin-button--ghost" type="button" id="deadline-clear">Eliminar fecha</button>
           </form>
+          <div class="admin-bulk-actions" style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 8px;">
+            <button class="admin-button" type="button" id="deadline-apply-guide" title="Aplica la fecha del campo de arriba a TODAS las actividades de la guia seleccionada">
+              Aplicar fecha a toda la guia
+            </button>
+            <button class="admin-button admin-button--ghost" type="button" id="deadline-clear-guide" title="Elimina la fecha de entrega de TODAS las actividades de la guia seleccionada">
+              Quitar fechas de toda la guia
+            </button>
+          </div>
           <div class="admin-table-wrap" id="deadlines-table"></div>
         </div>
       </section>
@@ -342,6 +350,6 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
   <script src="js/admin_guide6.js?v=20260505_1"></script>
   <script src="js/admin_progress.js?v=20260505_1"></script>
   <script src="js/admin_habilitacion.js?v=20260520_2"></script>
-  <script src="js/admin_usuarios.js?v=20260520_2"></script>
+  <script src="js/admin_usuarios.js?v=20260520_4"></script>
 </body>
 </html>

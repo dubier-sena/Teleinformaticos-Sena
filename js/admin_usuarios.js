@@ -446,8 +446,15 @@
   function renderDeadlines() {
     renderDeadlineSelectors();
     const optionalConfigPanel = buildOptionalDeadlineConfigPanel();
-    const rows = getFichaEntries().flatMap(([ficha, info]) =>
-      (info.guias || []).flatMap((fileName) =>
+    const selectedFicha = String(byId("deadline-ficha")?.value || "").trim();
+    const selectedGuide = String(byId("deadline-guide")?.value || "").trim();
+    const fichaEntries = getFichaEntries().filter(([ficha]) =>
+      !selectedFicha || String(ficha).trim() === selectedFicha
+    );
+    const rows = fichaEntries.flatMap(([ficha, info]) =>
+      (info.guias || [])
+        .filter((fileName) => !selectedGuide || fileName === selectedGuide)
+        .flatMap((fileName) =>
         (deadlineManager?.getActivitiesForGuide?.(fileName) || []).map((activity) => {
           const policy = deadlineManager?.getPolicy?.(fileName, activity.id);
           const evaluation = deadlineManager?.evaluatePolicy?.(policy);
@@ -1825,6 +1832,100 @@
     renderAll();
   }
 
+  async function handleDeadlineApplyToGuide() {
+    if (!deadlineManager) {
+      setFeedback("El gestor de fechas no esta disponible.", "error");
+      return;
+    }
+    const { guide } = selectedDeadlineValues();
+    const dueAt = byId("deadline-due-at")?.value || "";
+    if (!guide) {
+      setFeedback("Selecciona una guia.", "error");
+      return;
+    }
+    if (!dueAt) {
+      setFeedback("Indica una fecha y hora limite en el campo de arriba.", "error");
+      return;
+    }
+    const activities = deadlineManager.getActivitiesForGuide?.(guide) || [];
+    if (!activities.length) {
+      setFeedback("La guia seleccionada no tiene actividades configuradas.", "error");
+      return;
+    }
+    const guideTitle = auth.getGuideTitle?.(guide) || guide;
+    const confirmed = await confirmAdminAction(
+      `Aplicar la misma fecha a las ${activities.length} actividades de "${guideTitle}"?`
+    );
+    if (!confirmed) return;
+    const session = auth.getCurrentSession?.();
+    window.portalSaveStatus?.saving("Aplicando fecha...");
+    let ok = 0, failed = 0;
+    for (const activity of activities) {
+      try {
+        await deadlineManager.savePolicy(guide, activity.id, dueAt, session?.usernameKey || "admin");
+        ok += 1;
+      } catch (_) {
+        failed += 1;
+      }
+    }
+    recordAudit({
+      action: "deadline-bulk-save",
+      target: guide,
+      detail: `${ok}/${activities.length} actividades · dueAt=${dueAt}`,
+    });
+    if (failed) {
+      window.portalSaveStatus?.error(`Aplicada en ${ok}, fallaron ${failed}`);
+      setFeedback(`Fecha aplicada a ${ok} actividades; ${failed} fallaron.`, "error");
+    } else {
+      window.portalSaveStatus?.saved(`Fecha aplicada a ${ok} actividades`);
+      setFeedback(`Fecha aplicada a ${ok} actividades de la guia.`, "success");
+    }
+    renderAll();
+  }
+
+  async function handleDeadlineClearGuide() {
+    if (!deadlineManager) return;
+    const { guide } = selectedDeadlineValues();
+    if (!guide) {
+      setFeedback("Selecciona una guia.", "error");
+      return;
+    }
+    const activities = deadlineManager.getActivitiesForGuide?.(guide) || [];
+    if (!activities.length) {
+      setFeedback("La guia seleccionada no tiene actividades configuradas.", "error");
+      return;
+    }
+    const guideTitle = auth.getGuideTitle?.(guide) || guide;
+    const confirmed = await confirmAdminAction(
+      `Quitar la fecha de entrega de las ${activities.length} actividades de "${guideTitle}"?`
+    );
+    if (!confirmed) return;
+    const session = auth.getCurrentSession?.();
+    window.portalSaveStatus?.saving("Quitando fechas...");
+    let ok = 0, failed = 0;
+    for (const activity of activities) {
+      try {
+        await deadlineManager.clearPolicy(guide, activity.id, session?.usernameKey || "admin");
+        ok += 1;
+      } catch (_) {
+        failed += 1;
+      }
+    }
+    recordAudit({
+      action: "deadline-bulk-clear",
+      target: guide,
+      detail: `${ok}/${activities.length} actividades`,
+    });
+    if (failed) {
+      window.portalSaveStatus?.error(`Quitadas ${ok}, fallaron ${failed}`);
+      setFeedback(`Fechas eliminadas en ${ok} actividades; ${failed} fallaron.`, "error");
+    } else {
+      window.portalSaveStatus?.saved(`Fechas eliminadas en ${ok} actividades`);
+      setFeedback(`Fechas eliminadas en ${ok} actividades de la guia.`, "success");
+    }
+    renderAll();
+  }
+
   function bindEvents() {
     document.querySelectorAll("[data-admin-module]").forEach((button) => {
       button.addEventListener("click", () => setActiveModule(button.dataset.adminModule));
@@ -1855,7 +1956,7 @@
       renderActivities();
     });
     ["deadline-ficha", "deadline-guide"].forEach((id) => {
-      byId(id)?.addEventListener("change", () => renderDeadlineSelectors());
+      byId(id)?.addEventListener("change", () => renderDeadlines());
     });
     byId("deadline-activity")?.addEventListener("change", () => renderDeadlineSelectors());
     byId("responses-ficha-filter")?.addEventListener("change", (event) => {
@@ -1914,6 +2015,8 @@
       await handleDeadlineSubmit(event.currentTarget);
     });
     byId("deadline-clear")?.addEventListener("click", handleDeadlineClear);
+    byId("deadline-apply-guide")?.addEventListener("click", handleDeadlineApplyToGuide);
+    byId("deadline-clear-guide")?.addEventListener("click", handleDeadlineClearGuide);
     byId("reports-download-csv")?.addEventListener("click", () => downloadConsolidatedReport("csv"));
     byId("reports-download-json")?.addEventListener("click", () => downloadConsolidatedReport("json"));
     byId("admin-detail-export")?.addEventListener("click", () => {
