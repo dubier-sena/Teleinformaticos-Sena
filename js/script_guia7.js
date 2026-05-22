@@ -149,6 +149,263 @@
     };
   }
 
+  // ── Selector de equipo por actividad (max 3) ──────────────────────────────
+  // 3.1.2 Socializacion en plenaria: equipo de 3 (incluyendote 2 companeros).
+  // Por simetria con Guia 6, cada actividad puede tener su propio equipo. Por
+  // ahora solo se monta en 3.1.2; futuras actividades pueden agregar mounts.
+
+  const EQUIPO_G7_STATE_KEY_PREFIX = "equipoGuia7_";
+  const EQUIPO_G7_ACTIVITY_IDS = ["plenaria312"];
+  const EQUIPO_G7_EMAIL_DOMAIN = "@sena-portal.local";
+  const equipoGuia7WizardActive = {};
+
+  function equipoG7Key(actId) {
+    return EQUIPO_G7_STATE_KEY_PREFIX + String(actId || "");
+  }
+
+  function getCurrentUsernameKeyG7() {
+    const session = portalAuth?.getCurrentSession?.();
+    return String(session?.usernameKey || session?.user?.usernameKey || "").trim().toLowerCase();
+  }
+
+  function getEquipoG7FromState(actId) {
+    if (!actId) return null;
+    const raw = state[equipoG7Key(actId)];
+    if (!raw || typeof raw !== "object") return null;
+    if (raw.mode !== "grupo") return null;
+    if (!Array.isArray(raw.members) || raw.members.length < 2) return null;
+    return raw;
+  }
+
+  function setEquipoG7InState(actId, team) {
+    if (!actId) return;
+    state[equipoG7Key(actId)] = team;
+    saveState();
+  }
+
+  function clearEquipoG7FromState(actId) {
+    if (!actId) return;
+    delete state[equipoG7Key(actId)];
+    saveState();
+  }
+
+  function escG7(value) {
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function buildEquipoG7GroupKey(ficha, memberKeys) {
+    const sorted = memberKeys.slice().map((k) => String(k || "").trim().toLowerCase()).sort();
+    const seed = "g7:" + ficha + ":" + sorted.join("__");
+    let hash = 2166136261;
+    for (let i = 0; i < seed.length; i++) {
+      hash ^= seed.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+    return "g7_" + ficha + "_" + (hash >>> 0).toString(16);
+  }
+
+  function buildEquipoG7Code4(team) {
+    if (!team || !Array.isArray(team.memberKeys)) return "";
+    const sorted = team.memberKeys.slice().map((k) => String(k || "").trim().toLowerCase()).sort();
+    const seed = "code:" + (team.ficha || "") + ":" + sorted.join("__");
+    let hash = 2166136261;
+    for (let i = 0; i < seed.length; i++) {
+      hash ^= seed.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+    return (hash >>> 0).toString(16).toUpperCase().padStart(8, "0").slice(0, 4);
+  }
+
+  function renderEquipoG7Block(actId) {
+    if (!actId) {
+      EQUIPO_G7_ACTIVITY_IDS.forEach((id) => renderEquipoG7Block(id));
+      return;
+    }
+    const summary = document.querySelector(`[data-equipo-g7-summary="${actId}"]`);
+    const config = document.querySelector(`[data-equipo-g7-config="${actId}"]`);
+    if (!summary || !config) return;
+    const team = getEquipoG7FromState(actId);
+    if (team && !equipoGuia7WizardActive[actId]) {
+      config.style.display = "none";
+      renderEquipoG7Summary(actId, team);
+      return;
+    }
+    if (!equipoGuia7WizardActive[actId]) {
+      config.style.display = "none";
+      renderEquipoG7StartButton(actId);
+      return;
+    }
+    summary.innerHTML = "";
+    config.style.display = "";
+    renderEquipoG7Roster(actId);
+  }
+
+  function renderEquipoG7StartButton(actId) {
+    const summary = document.querySelector(`[data-equipo-g7-summary="${actId}"]`);
+    if (!summary) return;
+    summary.innerHTML = `
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+        <button type="button" onclick="iniciarEquipoGuia7('${escG7(actId)}')" class="btn-save-response" style="display:inline-flex;align-items:center;gap:6px">
+          &#128101; Configurar equipo de esta actividad
+        </button>
+        <span class="intro-text" style="margin:0;font-size:.82rem;color:#4b5563">A&uacute;n no has elegido equipo. Pulsa el bot&oacute;n para seleccionar a tus compa&ntilde;eros.</span>
+      </div>`;
+  }
+
+  function renderEquipoG7Summary(actId, team) {
+    const summary = document.querySelector(`[data-equipo-g7-summary="${actId}"]`);
+    if (!summary) return;
+    const code4 = buildEquipoG7Code4(team);
+    const memberList = team.members
+      .map((m) => `<li>${escG7(m.fullName)} <span style="color:#78909c;font-size:.78rem">(${escG7(m.usernameKey)})</span></li>`)
+      .join("");
+    summary.innerHTML = `
+      <div style="padding:10px 12px;background:#e8f5e9;border:1px solid #b6dba0;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:.88rem">
+        <div style="font-weight:700;margin-bottom:4px">Equipo confirmado para esta actividad &middot; <code style="background:#fff;padding:2px 6px;border-radius:4px;color:#0b6b35">Equipo ${escG7(code4)}</code></div>
+        <ul style="margin:6px 0 6px 18px;padding:0;line-height:1.55">${memberList}</ul>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+          <button type="button" onclick="reconfigurarEquipoGuia7('${escG7(actId)}')" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid #f5c1bb;background:#fdecea;color:#a13029;border-radius:6px;font-family:inherit;font-size:.82rem;cursor:pointer;font-weight:600">&#128683; Cambiar equipo de esta actividad</button>
+        </div>
+      </div>`;
+  }
+
+  function renderEquipoG7Roster(actId) {
+    const mount = document.querySelector(`[data-equipo-g7-roster="${actId}"]`);
+    const hint = document.querySelector(`[data-equipo-g7-hint="${actId}"]`);
+    if (!mount) return;
+    const selfKey = getCurrentUsernameKeyG7();
+    const selfName = getCurrentLearnerName();
+    const selection = getGuideSelection();
+    const ficha = String(selection.ficha || "").trim();
+    if (!selfKey || !ficha) {
+      mount.innerHTML = "";
+      if (hint) hint.textContent = "Inicia sesion como aprendiz con ficha asignada para configurar el equipo.";
+      return;
+    }
+    const roster = (window.portalAuth?.getUsers?.() || [])
+      .filter((u) => String(u?.ficha || "").trim() === ficha)
+      .filter((u) => u?.role !== "admin")
+      .filter((u) => String(u.usernameKey || "").toLowerCase() !== selfKey)
+      .map((u) => ({
+        usernameKey: String(u.usernameKey || "").trim().toLowerCase(),
+        fullName: String(u.fullName || u.username || "").trim(),
+      }))
+      .filter((u) => u.usernameKey && u.fullName)
+      .sort((a, b) => a.fullName.localeCompare(b.fullName, "es"));
+    if (roster.length === 0) {
+      mount.innerHTML = `<p style="margin:0;font-size:.86rem;color:#a13029">Aun no hay companeros registrados en la ficha ${escG7(ficha)}. Pideles que inicien sesion al menos una vez para que aparezcan aqui.</p>`;
+      if (hint) hint.textContent = "El listado se actualiza cuando los companeros ingresan al portal.";
+      return;
+    }
+    const selfRow = `
+      <label style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;background:#e8f5e9">
+        <input type="checkbox" checked disabled>
+        <span style="font-weight:600;color:#1b5e20">${escG7(selfName || selfKey)} <span style="font-weight:400;color:#37474f">(tu)</span></span>
+      </label>`;
+    const rows = roster
+      .map((u) => `
+        <label style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer">
+          <input type="checkbox" data-equipo-g7-act="${escG7(actId)}" data-equipo-g7-key="${escG7(u.usernameKey)}" data-equipo-g7-name="${escG7(u.fullName)}">
+          <span style="color:#37474f">${escG7(u.fullName)}</span>
+        </label>`)
+      .join("");
+    mount.innerHTML = selfRow + rows;
+    if (hint) {
+      hint.textContent = `Tu ficha tiene ${roster.length + 1} aprendices registrados. La guia indica equipos de 3 (incluyendote): selecciona maximo 2 companeros.`;
+    }
+    mount.querySelectorAll(`input[data-equipo-g7-act="${actId}"]`).forEach((cb) => {
+      cb.addEventListener("change", () => {
+        const checked = mount.querySelectorAll(`input[data-equipo-g7-act="${actId}"]:checked`).length;
+        if (checked > 2) {
+          cb.checked = false;
+          alert("La guia indica equipos de hasta 3 integrantes. Solo puedes seleccionar 2 companeros. Desmarca uno antes de agregar otro.");
+        }
+      });
+    });
+  }
+
+  function confirmarEquipoGuia7(actId) {
+    if (!actId) return;
+    const selfKey = getCurrentUsernameKeyG7();
+    const selfName = getCurrentLearnerName();
+    const selection = getGuideSelection();
+    const ficha = String(selection.ficha || "").trim();
+    if (!selfKey || !ficha) {
+      alert("No se pudo identificar tu sesion o ficha. Vuelve a iniciar sesion.");
+      return;
+    }
+    const checks = document.querySelectorAll(`input[data-equipo-g7-act="${actId}"]:checked`);
+    const selected = Array.from(checks).map((c) => ({
+      usernameKey: c.dataset.equipoG7Key,
+      fullName: c.dataset.equipoG7Name,
+    }));
+    if (selected.length < 1 || selected.length > 2) {
+      alert("Selecciona 1 o 2 companeros (equipo de maximo 3, incluyendote).");
+      return;
+    }
+    const allMembers = [{ usernameKey: selfKey, fullName: selfName || selfKey }, ...selected];
+    const memberKeys = allMembers.map((m) => m.usernameKey);
+    const memberEmails = memberKeys.map((k) => k + EQUIPO_G7_EMAIL_DOMAIN);
+    const groupKey = buildEquipoG7GroupKey(ficha + ":" + actId, memberKeys);
+    const team = {
+      mode: "grupo",
+      groupKey,
+      ficha,
+      members: allMembers,
+      memberKeys,
+      memberEmails,
+      scope: "activity",
+      activityId: actId,
+      guide: GUIDE_DATA_FILE,
+      confirmedAt: new Date().toISOString(),
+      confirmedBy: { usernameKey: selfKey, fullName: selfName || selfKey },
+    };
+    setEquipoG7InState(actId, team);
+    equipoGuia7WizardActive[actId] = false;
+    if (window._firebaseDb && typeof window._firebaseDb.cloudSaveGroup === "function") {
+      Promise.resolve(window._firebaseDb.cloudSaveGroup(groupKey, {
+        ficha,
+        guide: GUIDE_DATA_FILE,
+        activity: "guia7_equipo_" + actId,
+        members: allMembers,
+        memberKeys,
+        memberEmails,
+        updatedAt: new Date().toISOString(),
+      })).catch(() => {});
+    }
+    renderEquipoG7Block(actId);
+  }
+
+  function cancelarEquipoGuia7Config(actId) {
+    if (!actId) return;
+    equipoGuia7WizardActive[actId] = false;
+    renderEquipoG7Block(actId);
+  }
+
+  function iniciarEquipoGuia7(actId) {
+    if (!actId) return;
+    equipoGuia7WizardActive[actId] = true;
+    renderEquipoG7Block(actId);
+  }
+
+  function reconfigurarEquipoGuia7(actId) {
+    if (!actId) return;
+    if (!confirm("Cambiar el equipo de esta actividad borrara la configuracion actual. Continuar?")) return;
+    clearEquipoG7FromState(actId);
+    equipoGuia7WizardActive[actId] = true;
+    renderEquipoG7Block(actId);
+  }
+
+  window.confirmarEquipoGuia7 = confirmarEquipoGuia7;
+  window.cancelarEquipoGuia7Config = cancelarEquipoGuia7Config;
+  window.iniciarEquipoGuia7 = iniciarEquipoGuia7;
+  window.reconfigurarEquipoGuia7 = reconfigurarEquipoGuia7;
+
   // ── Drive delivery ────────────────────────────────────────────────────────
 
   function openDriveFolder() {
@@ -257,6 +514,7 @@
       window.ActivityStandard.mountActivities(getStateCtx());
     }
     mountDriveDelivery();
+    renderEquipoG7Block();
 
     updateProgress();
   }
