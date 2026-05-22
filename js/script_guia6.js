@@ -1076,9 +1076,26 @@ function renderEquipoGuia6Block(actId) {
     renderEquipoGuia6Summary(actId, team);
     return;
   }
+  if (!equipoGuia6WizardActive[actId]) {
+    config.style.display = "none";
+    renderEquipoGuia6StartButton(actId);
+    return;
+  }
   summary.innerHTML = "";
   config.style.display = "";
   renderEquipoGuia6Roster(actId);
+}
+
+function renderEquipoGuia6StartButton(actId) {
+  const summary = document.querySelector(`[data-equipo-summary="${actId}"]`);
+  if (!summary) return;
+  summary.innerHTML = `
+    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+      <button type="button" onclick="iniciarEquipoGuia6('${escapeHtml(actId)}')" class="btn-save-response" style="display:inline-flex;align-items:center;gap:6px">
+        &#128101; Configurar equipo de esta actividad
+      </button>
+      <span class="intro-text" style="margin:0;font-size:.82rem;color:#4b5563">A&uacute;n no has elegido equipo. Pulsa el bot&oacute;n para seleccionar a tus compa&ntilde;eros.</span>
+    </div>`;
 }
 
 function renderEquipoGuia6Summary(actId, team) {
@@ -1210,10 +1227,14 @@ function confirmarEquipoGuia6(actId) {
 
 function cancelarEquipoGuia6Config(actId) {
   if (!actId) return;
-  if (getEquipoGuia6FromState(actId)) {
-    equipoGuia6WizardActive[actId] = false;
-    renderEquipoGuia6Block(actId);
-  }
+  equipoGuia6WizardActive[actId] = false;
+  renderEquipoGuia6Block(actId);
+}
+
+function iniciarEquipoGuia6(actId) {
+  if (!actId) return;
+  equipoGuia6WizardActive[actId] = true;
+  renderEquipoGuia6Block(actId);
 }
 
 function reconfigurarEquipoGuia6(actId) {
@@ -1232,6 +1253,7 @@ function reconfigurarEquipoGuia6(actId) {
 
 window.confirmarEquipoGuia6 = confirmarEquipoGuia6;
 window.cancelarEquipoGuia6Config = cancelarEquipoGuia6Config;
+window.iniciarEquipoGuia6 = iniciarEquipoGuia6;
 window.reconfigurarEquipoGuia6 = reconfigurarEquipoGuia6;
 
 // ── Drive delivery panel con overrides ────────────────────────────────────
