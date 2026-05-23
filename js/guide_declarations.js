@@ -209,43 +209,53 @@
       {
         id: "caso311", number: "3.1.1", label: "Analisis del caso ElectroBoyca",
         shortName: "CasoElectroBoyca", type: "form",
-        formFields: ["g7_311_pregunta1", "g7_311_pregunta2", "g7_311_pregunta3", "g7_311_pregunta4"],
+        formFields: ["g7_311_pregunta1", "g7_311_pregunta2", "g7_311_pregunta3", "g7_311_pregunta4", "g7_311_pregunta5", "g7_311_pregunta6"],
         buttonIds: { save: "btnGuardarCaso311", status: "statusCaso311" },
         wordExport: {
           contextBox:
             "Caso ElectroBoyca S.A.S. (Puerto Boyaca): distribuidora victima de phishing y ransomware. Sin copias de seguridad, antivirus desactivado, sin politica de seguridad.",
           sections: [
-            { label: "1. Ataques como este: lo que sabes", storeKey: "g7_311_pregunta1" },
-            { label: "2. Por que una MiPyme como ElectroBoyca puede ser victima", storeKey: "g7_311_pregunta2" },
-            { label: "3. Medidas ANTES del ataque (minimo 3)", storeKey: "g7_311_pregunta3" },
-            { label: "4. Informacion mas valiosa de una empresa", storeKey: "g7_311_pregunta4" },
+            { label: "1. Vector de ataque y senales del caso", storeKey: "g7_311_pregunta1" },
+            { label: "2. Debilidades y evidencias del caso", storeKey: "g7_311_pregunta2" },
+            { label: "3. Impacto en Confidencialidad, Integridad y Disponibilidad", storeKey: "g7_311_pregunta3" },
+            { label: "4. Controles preventivos y prioridad alta", storeKey: "g7_311_pregunta4" },
+            { label: "5. Activos criticos en mayor riesgo", storeKey: "g7_311_pregunta5" },
+            { label: "6. Primeras 24 horas de contencion y recuperacion", storeKey: "g7_311_pregunta6" },
           ],
         },
       },
       {
         id: "plenaria312", number: "3.1.2", label: "Socializacion en plenaria",
         shortName: "Plenaria", type: "form",
-        formFields: ["g7_312_bitacora"],
+        formFields: ["g7_312_acuerdos", "g7_312_hallazgo", "g7_312_medida", "g7_312_preguntas", "g7_312_bitacora"],
         buttonIds: { save: "btnGuardarPlenaria312", status: "statusPlenaria312" },
         wordExport: {
           contextBox: "Plenaria grupal sobre el caso ElectroBoyca y los saberes previos de ciberseguridad.",
           sections: [
-            { label: "Bitacora de la plenaria (cambios en tu comprension y preguntas pendientes)", storeKey: "g7_312_bitacora" },
+            { label: "1. Acuerdos del equipo despues de comparar 3.1.1", storeKey: "g7_312_acuerdos" },
+            { label: "2. Hallazgo mas importante del equipo", storeKey: "g7_312_hallazgo" },
+            { label: "3. Medida de seguridad mas urgente para ElectroBoyca", storeKey: "g7_312_medida" },
+            { label: "4. Preguntas pendientes para resolver durante la guia", storeKey: "g7_312_preguntas" },
+            { label: "5. Sintesis personal de la socializacion", storeKey: "g7_312_bitacora" },
           ],
         },
       },
       {
         id: "bloqueAB321", number: "3.2.1", label: "Estudio de contenidos (Bloques A y B) - Tabla resumen",
         shortName: "BloqueAB", type: "both",
-        formFields: ["g7_321_temas", "g7_321_fila", "g7_321_dudas"],
+        formFields: ["g7_321_reparto", "g7_321_temas", "g7_321_concepto", "g7_321_consiste", "g7_321_ejemplo", "g7_321_aporte", "g7_321_dudas"],
         buttonIds: { save: "btnGuardarBloqueAB321", status: "statusBloqueAB321" },
         wordExport: {
           contextBox:
             "Estudio en equipo de los 9 temas conceptuales de ciberseguridad (Bloques A y B). Entregable de equipo: tabla resumen PDF.",
           sections: [
-            { label: "1. Temas que estudiaste", storeKey: "g7_321_temas" },
-            { label: "2. Fila mas importante de la tabla resumen", storeKey: "g7_321_fila" },
-            { label: "3. Dudas pendientes para el mapa conceptual", storeKey: "g7_321_dudas" },
+            { label: "1. Reparto de temas del equipo", storeKey: "g7_321_reparto" },
+            { label: "2. Temas que estudiaste", storeKey: "g7_321_temas" },
+            { label: "3. Concepto / control de tu fila", storeKey: "g7_321_concepto" },
+            { label: "4. En que consiste", storeKey: "g7_321_consiste" },
+            { label: "5. Ejemplo aplicado a una MiPyme de Boyaca", storeKey: "g7_321_ejemplo" },
+            { label: "6. Aporte agregado despues de la socializacion", storeKey: "g7_321_aporte" },
+            { label: "7. Dudas pendientes para el mapa conceptual", storeKey: "g7_321_dudas" },
           ],
         },
         driveTarget: {
