@@ -150,12 +150,12 @@
   }
 
   // ── Selector de equipo por actividad (max 3) ──────────────────────────────
-  // 3.1.2 Socializacion en plenaria: equipo de 3 (incluyendote 2 companeros).
+  // 3.1.2 y 3.2.1: equipo de 3 (incluyendote 2 companeros).
   // Por simetria con Guia 6, cada actividad puede tener su propio equipo. Por
-  // ahora solo se monta en 3.1.2; futuras actividades pueden agregar mounts.
+  // cada mount persiste su equipo de forma independiente.
 
   const EQUIPO_G7_STATE_KEY_PREFIX = "equipoGuia7_";
-  const EQUIPO_G7_ACTIVITY_IDS = ["plenaria312"];
+  const EQUIPO_G7_ACTIVITY_IDS = ["plenaria312", "bloqueAB321"];
   const EQUIPO_G7_EMAIL_DOMAIN = "@sena-portal.local";
   const equipoGuia7WizardActive = {};
 
@@ -438,9 +438,9 @@
   // ── Progreso ──────────────────────────────────────────────────────────────
 
   const FORM_FIELDS = [
-    "g7_311_pregunta1", "g7_311_pregunta2", "g7_311_pregunta3", "g7_311_pregunta4",
-    "g7_312_bitacora",
-    "g7_321_temas", "g7_321_fila", "g7_321_dudas",
+    "g7_311_pregunta1", "g7_311_pregunta2", "g7_311_pregunta3", "g7_311_pregunta4", "g7_311_pregunta5", "g7_311_pregunta6",
+    "g7_312_acuerdos", "g7_312_hallazgo", "g7_312_medida", "g7_312_preguntas", "g7_312_bitacora",
+    "g7_321_reparto", "g7_321_temas", "g7_321_concepto", "g7_321_consiste", "g7_321_ejemplo", "g7_321_aporte", "g7_321_dudas",
     "g7_322_central", "g7_322_ramas", "g7_322_enlaces", "g7_322_cia_mipyme",
     "g7_331_estado", "g7_331_hallazgos", "g7_331_prioridades", "g7_331_conclusion",
     "g7_332_orden", "g7_332_resumen", "g7_332_errores", "g7_332_conclusion",

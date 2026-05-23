@@ -244,21 +244,33 @@
 
               <article class="notes-card" style="margin-top:16px;">
                 <h3>Bit&aacute;cora individual de an&aacute;lisis</h3>
+                <p class="intro-text" style="margin-top:0;font-size:.9rem">
+                  Lee el caso como si fueras el t&eacute;cnico que debe entregar un primer diagn&oacute;stico:
+                  identifica qu&eacute; pas&oacute;, qu&eacute; evidencia lo demuestra y qu&eacute; controles habr&iacute;an reducido el riesgo.
+                </p>
                 <label>
-                  <span>1. &iquest;Has escuchado antes sobre ataques como este? &iquest;Qu&eacute; sabes sobre c&oacute;mo ocurren?</span>
-                  <textarea rows="4" data-store="g7_311_pregunta1" data-track placeholder="Escribe lo que recuerdes de noticias, conversaciones o experiencias previas."></textarea>
+                  <span>1. Vector de ataque: &iquest;c&oacute;mo ingres&oacute; la amenaza y qu&eacute; se&ntilde;ales del caso lo demuestran?</span>
+                  <textarea rows="4" data-store="g7_311_pregunta1" data-track placeholder="Ej.: correo falso del banco, enlace fraudulento, captura de usuario y contrase&ntilde;a, ransomware al d&iacute;a siguiente."></textarea>
                 </label>
                 <label>
-                  <span>2. &iquest;Por qu&eacute; crees que una empresa peque&ntilde;a como ElectroBoyc&aacute; puede ser v&iacute;ctima de un ciberataque?</span>
-                  <textarea rows="4" data-store="g7_311_pregunta2" data-track placeholder="Reflexiona sobre las debilidades t&iacute;picas de una MiPyme."></textarea>
+                  <span>2. Debilidades y evidencias del caso: &iquest;qu&eacute; fallas permitieron que el incidente causara da&ntilde;o?</span>
+                  <textarea rows="4" data-store="g7_311_pregunta2" data-track placeholder="Relaciona cada falla con una evidencia: sin copias, antivirus desactivado, sin pol&iacute;tica de seguridad, poca verificaci&oacute;n del correo."></textarea>
                 </label>
                 <label>
-                  <span>3. Si fueras el t&eacute;cnico de sistemas de ElectroBoyc&aacute;, &iquest;qu&eacute; habr&iacute;as recomendado ANTES del ataque? Lista al menos 3 medidas concretas.</span>
-                  <textarea rows="5" data-store="g7_311_pregunta3" data-track placeholder="Numera 3 medidas t&eacute;cnicas claras (ejemplo: copias de seguridad, antivirus, capacitaci&oacute;n, etc.)."></textarea>
+                  <span>3. Impacto sobre la informaci&oacute;n: explica c&oacute;mo se afectaron la Confidencialidad, Integridad y Disponibilidad.</span>
+                  <textarea rows="5" data-store="g7_311_pregunta3" data-track placeholder="CIA: confidencialidad si robaron credenciales; integridad si alteraron/cifraron archivos; disponibilidad si la empresa no puede operar."></textarea>
                 </label>
                 <label>
-                  <span>4. &iquest;Qu&eacute; informaci&oacute;n de una empresa consideras m&aacute;s valiosa? &iquest;Por qu&eacute; debe protegerse?</span>
-                  <textarea rows="4" data-store="g7_311_pregunta4" data-track placeholder="Piensa en datos de clientes, facturaci&oacute;n, n&oacute;mina, inventario, etc."></textarea>
+                  <span>4. Controles preventivos: propone 3 acciones, marca una como prioridad alta y justifica por qu&eacute;.</span>
+                  <textarea rows="5" data-store="g7_311_pregunta4" data-track placeholder="Ej.: copias 3-2-1, Defender activo, MFA, capacitaci&oacute;n anti-phishing, pol&iacute;tica de contrase&ntilde;as. Indica cu&aacute;l aplicar&iacute;as primero."></textarea>
+                </label>
+                <label>
+                  <span>5. Activos cr&iacute;ticos: &iquest;qu&eacute; datos, equipos o procesos de ElectroBoyc&aacute; quedaron en mayor riesgo?</span>
+                  <textarea rows="4" data-store="g7_311_pregunta5" data-track placeholder="Ej.: facturaci&oacute;n, cartera, inventario, base de clientes, computador administrativo, correo corporativo, continuidad de ventas."></textarea>
+                </label>
+                <label>
+                  <span>6. Primeras 24 horas: &iquest;qu&eacute; har&iacute;as primero para contener el incidente y recuperar la operaci&oacute;n?</span>
+                  <textarea rows="5" data-store="g7_311_pregunta6" data-track placeholder="Ordena acciones: desconectar equipo, avisar al responsable, preservar evidencias, revisar backups, cambiar contrase&ntilde;as, no pagar sin evaluar, documentar decisiones."></textarea>
                 </label>
                 <div id="caso311DeadlineControls" style="margin-top:16px"></div>
                 <div class="act-btn-group">
@@ -314,18 +326,34 @@
               <article class="support-card">
                 <h3>Instrucciones</h3>
                 <ol style="padding-left:1.4rem;margin:0;line-height:1.7">
-                  <li>En grupos de tres, comparten sus respuestas de la actividad 3.1.1 durante 10 minutos.</li>
-                  <li>Cada grupo presenta al grupo general en m&aacute;ximo 3 minutos: &iquest;cu&aacute;l fue el hallazgo m&aacute;s importante?</li>
-                  <li>El instructor registra en el tablero las ideas clave que surgen.</li>
-                  <li>Si el grupo usa Padlet, agrega una tarjeta con la medida de seguridad m&aacute;s urgente para ElectroBoyc&aacute;.</li>
+                  <li>Configura tu equipo de esta actividad y revisen juntos las respuestas de la actividad 3.1.1.</li>
+                  <li>Comparen qu&eacute; vector de ataque, debilidades y controles prioriz&oacute; cada integrante.</li>
+                  <li>Construyan dentro de esta gu&iacute;a un acuerdo de equipo: hallazgo principal, medida urgente y preguntas pendientes.</li>
+                  <li>Si el instructor abre una socializaci&oacute;n oral, usa estos campos como apoyo para presentar el resumen del equipo.</li>
                 </ol>
               </article>
 
               <article class="notes-card" style="margin-top:16px;">
-                <h3>Anotaci&oacute;n en bit&aacute;cora (m&iacute;nimo 5 l&iacute;neas)</h3>
+                <h3>Bit&aacute;cora de socializaci&oacute;n del equipo</h3>
                 <label>
-                  <span>&iquest;Qu&eacute; cambi&oacute; en tu comprensi&oacute;n del caso despu&eacute;s de escuchar al grupo? &iquest;Qu&eacute; preguntas tienes para resolver durante la gu&iacute;a?</span>
-                  <textarea rows="6" data-store="g7_312_bitacora" data-track placeholder="Escribe los aprendizajes de la plenaria, los puntos en com&uacute;n con tu equipo y las preguntas pendientes."></textarea>
+                  <span>1. Acuerdos del equipo: &iquest;en qu&eacute; coincidieron despu&eacute;s de comparar sus respuestas de 3.1.1?</span>
+                  <textarea rows="4" data-store="g7_312_acuerdos" data-track placeholder="Resume los puntos en com&uacute;n: vector de ataque, debilidades, impacto y controles que se repitieron en el equipo."></textarea>
+                </label>
+                <label>
+                  <span>2. Hallazgo m&aacute;s importante del equipo: &iquest;cu&aacute;l fue y por qu&eacute;?</span>
+                  <textarea rows="4" data-store="g7_312_hallazgo" data-track placeholder="Ej.: la falta de copias de seguridad hizo que el ransomware afectara la continuidad del negocio."></textarea>
+                </label>
+                <label>
+                  <span>3. Medida de seguridad m&aacute;s urgente para ElectroBoyc&aacute;: &iquest;qu&eacute; implementar&iacute;an primero?</span>
+                  <textarea rows="4" data-store="g7_312_medida" data-track placeholder="Indiquen una medida concreta, responsable sugerido y raz&oacute;n de prioridad."></textarea>
+                </label>
+                <label>
+                  <span>4. Preguntas pendientes para resolver durante la gu&iacute;a</span>
+                  <textarea rows="4" data-store="g7_312_preguntas" data-track placeholder="Escriban dudas sobre phishing, ransomware, copias de seguridad, controles o normatividad."></textarea>
+                </label>
+                <label>
+                  <span>5. S&iacute;ntesis personal (m&iacute;nimo 5 l&iacute;neas): &iquest;qu&eacute; cambi&oacute; en tu comprensi&oacute;n del caso?</span>
+                  <textarea rows="6" data-store="g7_312_bitacora" data-track placeholder="Escribe qu&eacute; aprendiste al comparar con tu equipo y c&oacute;mo cambi&oacute; tu lectura del caso."></textarea>
                 </label>
                 <div id="plenaria312DeadlineControls" style="margin-top:16px"></div>
                 <div class="act-btn-group">
@@ -376,16 +404,25 @@
             <div class="activity-body">
               <p class="intro-text"><strong>Prop&oacute;sito:</strong> estudiar en equipo los 9 temas conceptuales y consolidar una tabla resumen exportada a PDF: <code>BloqueAB_[TuNombre]_v1.0.pdf</code>.</p>
 
-              <article class="support-card">
-                <h3>Datos de la actividad</h3>
-                <ul class="note-list">
-                  <li>&#9201; Duraci&oacute;n: 8 horas (6 directas + 2 independientes previas).</li>
-                  <li>&#127979; Ambiente: laboratorio con acceso a internet.</li>
-                  <li>&#127919; Estrategia: aula invertida + trabajo colaborativo.</li>
-                  <li>&#128190; Herramientas TIC: Cisco Skills for All (skillsforall.com), Google Sheets / LibreOffice Calc, Drive / OneDrive.</li>
-                  <li>&#128218; Material de apoyo: INCIBE (incibe.es/empresas/guias), NIST CSF 2.0, Ley 1273 de 2009.</li>
-                </ul>
-              </article>
+              <div class="equipo-guia7-block" data-equipo-g7-mount="bloqueAB321" style="margin:12px 0 18px;padding:14px 16px;border:1px solid #cfe0d3;border-left:5px solid #0b6b35;border-radius:10px;background:linear-gradient(180deg,#f1f9f3,#ffffff)">
+                <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:10px">
+                  <div style="font-size:1.5rem;line-height:1">&#128101;</div>
+                  <div>
+                    <div style="font-weight:700;color:#0b6b35">Equipo para 3.2.1</div>
+                    <p class="intro-text" style="margin:2px 0 0;font-size:.88rem">La actividad se trabaja en grupo de 3 integrantes: t&uacute; y hasta 2 compa&ntilde;eros de tu ficha.</p>
+                  </div>
+                </div>
+                <div data-equipo-g7-summary="bloqueAB321"></div>
+                <div data-equipo-g7-config="bloqueAB321" style="display:none">
+                  <div style="margin:6px 0 6px;font-weight:600;font-size:.88rem;color:#1b5e20">Selecciona hasta 2 compa&ntilde;eros (tu nombre ya est&aacute; incluido):</div>
+                  <div data-equipo-g7-roster="bloqueAB321" style="display:flex;flex-direction:column;gap:6px;max-height:260px;overflow:auto;padding:8px 10px;border:1px solid #cfe0d3;border-radius:8px;background:#ffffff"></div>
+                  <div data-equipo-g7-hint="bloqueAB321" class="intro-text" style="margin:8px 0 0;font-size:.82rem;color:#4b5563">Cargando roster de la ficha&hellip;</div>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+                    <button type="button" onclick="confirmarEquipoGuia7('bloqueAB321')" class="btn-save-response">&#128101; Confirmar equipo de 3.2.1</button>
+                    <button type="button" onclick="cancelarEquipoGuia7Config('bloqueAB321')" style="padding:8px 16px;border:1px solid #cfe0d3;background:#ffffff;color:#37474f;border-radius:6px;font-family:inherit;font-size:.88rem;cursor:pointer">Cancelar</button>
+                  </div>
+                </div>
+              </div>
 
               <div class="info-box" style="margin-top:14px">
                 <div class="label">&#9200; Trabajo independiente (2 horas, ANTES de la sesi&oacute;n)</div>
@@ -428,30 +465,74 @@
               </div>
 
               <article class="support-card" style="margin-top:16px">
-                <h3>Instrucciones para la sesi&oacute;n directa</h3>
-                <ol style="padding-left:1.4rem;margin:0;line-height:1.7">
-                  <li>Equipo de 3 personas. Distribuyan los 9 temas (m&iacute;nimo 3 por integrante).</li>
-                  <li>1.&ordf; hora de clase: cada integrante explica brevemente sus temas (5 min/tema). Mientras escuchas, completa los apuntes.</li>
-                  <li>Abran Google Sheets / LibreOffice Calc y creen una tabla con 3 columnas: &laquo;Concepto / Control&raquo;, &laquo;&iquest;En qu&eacute; consiste?&raquo;, &laquo;Ejemplo en una MiPyme de Boyac&aacute;&raquo;. Una fila por tema.</li>
-                  <li>Plenaria de cierre: cada equipo comparte su fila m&aacute;s importante. Ajusta tu tabla con los aportes.</li>
-                  <li>Exporta a PDF: <code>Archivo &gt; Exportar como PDF</code> (Calc) o <code>Archivo &gt; Descargar &gt; PDF</code> (Sheets). Nombre: <strong>BloqueAB_[TuNombre]_v1.0.pdf</strong>.</li>
-                  <li>Comparte el PDF con el instructor por el medio que &eacute;l indique. Anota dudas en tu bit&aacute;cora.</li>
-                </ol>
+                <h3>Ruta de trabajo</h3>
+                <div class="table-scroll" style="margin-top:8px">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th style="width:18%">Paso</th>
+                        <th>Qu&eacute; haces</th>
+                        <th>Qu&eacute; debe quedar registrado</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><strong>Paso 1</strong><br>Organizar el equipo</td>
+                        <td>Confirmen el equipo de 3 y repartan los 9 temas. Cada integrante asume 3 temas.</td>
+                        <td>Escribe abajo el reparto de temas y responsable.</td>
+                      </tr>
+                      <tr>
+                        <td><strong>Paso 2</strong><br>Construir la tabla</td>
+                        <td>Por cada tema, completen una fila con: concepto/control, en qu&eacute; consiste y ejemplo en una MiPyme.</td>
+                        <td>Registra en esta gu&iacute;a tu fila modelo antes de pasarla a Sheets o Calc.</td>
+                      </tr>
+                      <tr>
+                        <td><strong>Paso 3</strong><br>Cerrar y entregar</td>
+                        <td>Elijan la fila m&aacute;s clara, ajusten con aportes de clase y exporten el PDF.</td>
+                        <td>Anota el aporte que agregaste y las dudas que quedan para el mapa conceptual.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="info-box green" style="margin-top:14px">
+                  <div class="label">&#128204; Producto final</div>
+                  <p>La tabla final puede hacerse en Google Sheets o LibreOffice Calc. Debe llamarse <strong>BloqueAB_[TuNombre]_v1.0.pdf</strong> y tener una fila por cada tema estudiado.</p>
+                </div>
               </article>
 
               <article class="notes-card" style="margin-top:16px">
-                <h3>Registro del aprendiz</h3>
+                <h3>Registro guiado del aprendiz</h3>
                 <label>
-                  <span>1. Temas que estudiaste t&uacute; (de los 9 distribuidos en tu equipo)</span>
-                  <textarea rows="3" data-store="g7_321_temas" data-track placeholder="Lista los 3 temas que te tocaron."></textarea>
+                  <span>1. Reparto del equipo: temas y responsable de cada uno</span>
+                  <textarea rows="4" data-store="g7_321_reparto" data-track placeholder="Ej.: Ana: fundamentos, ataques, normativa. Luis: controles, hardening, copias. Yo: documentos, inventario, protocolos."></textarea>
                 </label>
                 <label>
-                  <span>2. Tu fila m&aacute;s importante de la tabla resumen (concepto, en qu&eacute; consiste, ejemplo MiPyme)</span>
-                  <textarea rows="5" data-store="g7_321_fila" data-track placeholder="Describe la fila que sustentaste en plenaria."></textarea>
+                  <span>2. Temas que estudiaste t&uacute; (de los 9 distribuidos en tu equipo)</span>
+                  <textarea rows="3" data-store="g7_321_temas" data-track placeholder="Lista los 3 temas que te tocaron y la fuente principal que revisaste."></textarea>
+                </label>
+                <div class="info-box" style="margin-top:14px">
+                  <div class="label">&#128196; Plantilla de la fila que vas a entregar</div>
+                  <p>Completa estos tres campos antes de copiar tu aporte a la tabla final del equipo.</p>
+                </div>
+                <label>
+                  <span>3. Concepto / control</span>
+                  <textarea rows="2" data-store="g7_321_concepto" data-track placeholder="Ej.: Copias de seguridad 3-2-1."></textarea>
                 </label>
                 <label>
-                  <span>3. Dudas que quedaron para resolver antes del mapa conceptual</span>
-                  <textarea rows="4" data-store="g7_321_dudas" data-track placeholder="Anota tus preguntas conceptuales pendientes."></textarea>
+                  <span>4. &iquest;En qu&eacute; consiste?</span>
+                  <textarea rows="4" data-store="g7_321_consiste" data-track placeholder="Explica el concepto con tus palabras, sin copiar y pegar definiciones."></textarea>
+                </label>
+                <label>
+                  <span>5. Ejemplo aplicado a una MiPyme de Boyac&aacute;</span>
+                  <textarea rows="4" data-store="g7_321_ejemplo" data-track placeholder="Ej.: una ferreter&iacute;a guarda copia diaria de facturaci&oacute;n en disco externo y copia semanal cifrada en la nube."></textarea>
+                </label>
+                <label>
+                  <span>6. Aporte que agregaste despu&eacute;s de escuchar al equipo o al grupo</span>
+                  <textarea rows="4" data-store="g7_321_aporte" data-track placeholder="Escribe qu&eacute; mejoraste en tu fila despu&eacute;s de la socializaci&oacute;n."></textarea>
+                </label>
+                <label>
+                  <span>7. Dudas que quedaron para resolver antes del mapa conceptual</span>
+                  <textarea rows="4" data-store="g7_321_dudas" data-track placeholder="Anota preguntas concretas para aclarar antes de construir el mapa conceptual."></textarea>
                 </label>
                 <div id="bloqueAB321DeadlineControls" style="margin-top:16px"></div>
                 <div class="act-btn-group">
@@ -587,22 +668,10 @@
               <span class="activity-toggle">&#9662;</span>
             </div>
             <div class="activity-body">
-              <p class="intro-text"><strong>Prop&oacute;sito:</strong> diagnosticar el estado de seguridad de un equipo Windows real usando herramientas profesionales. Evidencia de Conocimiento y Desempe&ntilde;o (IE-02 &iacute;tems 1-6).</p>
-
-              <article class="support-card">
-                <h3>Datos de la actividad</h3>
-                <ul class="note-list">
-                  <li>&#9201; Duraci&oacute;n: 10 horas (8 directas + 2 independientes).</li>
-                  <li>&#127979; Ambiente: laboratorio con equipo Windows 10/11 asignado (o m&aacute;quina virtual).</li>
-                  <li>&#127919; Estrategia: laboratorio pr&aacute;ctico guiado &mdash; Learning by Doing.</li>
-                  <li>&#128190; Herramientas TIC: Windows Security Center, Belarc Advisor (belarc.com), <code>secpol.msc</code>, <code>lusrmgr.msc</code>, Recortes de Windows (<kbd>Win + May&uacute;s + S</kbd>) o Greenshot.</li>
-                </ul>
-              </article>
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> diagnosticar el estado de seguridad de un equipo Windows real usando herramientas profesionales.</p>
 
               <div style="background:#1b5e20;color:#fff;border-radius:8px 8px 0 0;padding:10px 16px;font-size:0.82rem;font-weight:700;letter-spacing:0.04em;display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:16px;margin-bottom:0">
                 <span>&#128203; EVIDENCIA &mdash; Tipo: Conocimiento + Desempe&ntilde;o</span>
-                <span style="opacity:0.5">|</span>
-                <span>Instrumento: Lista de Chequeo IE-02 (&iacute;tems 1-6)</span>
               </div>
               <div class="table-scroll" style="margin-top:0;border-radius:0 0 8px 8px;overflow:hidden;border:1px solid #c8e6c9;border-top:none">
                 <table class="data-table" style="margin:0">
