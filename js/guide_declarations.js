@@ -256,6 +256,7 @@
             { label: "5. Ejemplo aplicado a una MiPyme de Boyaca", storeKey: "g7_321_ejemplo" },
             { label: "6. Aporte agregado despues de la socializacion", storeKey: "g7_321_aporte" },
             { label: "7. Dudas pendientes para el mapa conceptual", storeKey: "g7_321_dudas" },
+            { label: "8. Tabla resumen construida en la guia (Paso 2)", storeKey: "g7_321_tabla_text" },
           ],
         },
         driveTarget: {
