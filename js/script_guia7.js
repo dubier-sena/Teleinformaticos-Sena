@@ -406,6 +406,128 @@
   window.iniciarEquipoGuia7 = iniciarEquipoGuia7;
   window.reconfigurarEquipoGuia7 = reconfigurarEquipoGuia7;
 
+  // ── Constructor de tabla 3.2.1 (Paso 2: una fila por tema) ────────────────
+
+  const G7_321_TABLA_KEY = "g7_321_tabla";
+  const G7_321_TABLA_TEXT_KEY = "g7_321_tabla_text";
+  const G7_321_TABLA_FIELDS = [
+    { key: "tema",     label: "Tema",              placeholder: "Ej.: Tipos de ciberataques" },
+    { key: "concepto", label: "Concepto / Control", placeholder: "Ej.: Phishing" },
+    { key: "consiste", label: "En que consiste",    placeholder: "Explica con tus palabras." },
+    { key: "ejemplo",  label: "Ejemplo en MiPyme",  placeholder: "Ej.: Correo falso suplantando un proveedor." },
+  ];
+
+  function isG7_321_Locked() {
+    return Boolean(state["bloqueAB321-locked"]);
+  }
+
+  function getG7_321_TablaRows() {
+    const raw = state[G7_321_TABLA_KEY];
+    return Array.isArray(raw) ? raw : [];
+  }
+
+  function serializeG7_321_Tabla(rows) {
+    if (!rows || !rows.length) return "";
+    return rows.map(function (row, i) {
+      const lines = G7_321_TABLA_FIELDS.map(function (f) {
+        const v = String((row && row[f.key]) || "").trim();
+        return "  - " + f.label + ": " + (v || "(vacio)");
+      });
+      return "Fila " + (i + 1) + "\n" + lines.join("\n");
+    }).join("\n\n");
+  }
+
+  function setG7_321_TablaRows(rows) {
+    state[G7_321_TABLA_KEY] = rows;
+    state[G7_321_TABLA_TEXT_KEY] = serializeG7_321_Tabla(rows);
+    saveState();
+  }
+
+  function renderG7_321_Tabla() {
+    const body = document.querySelector("[data-g7-tabla-body]");
+    const empty = document.querySelector("[data-g7-tabla-empty]");
+    const addBtn = document.getElementById("g7_321_add_row");
+    const clrBtn = document.getElementById("g7_321_clear_rows");
+    if (!body) return;
+    const locked = isG7_321_Locked();
+    if (addBtn) addBtn.style.display = locked ? "none" : "";
+    if (clrBtn) clrBtn.style.display = locked ? "none" : "";
+    const rows = getG7_321_TablaRows();
+    body.innerHTML = "";
+    if (rows.length === 0) {
+      if (empty) empty.style.display = "";
+      return;
+    }
+    if (empty) empty.style.display = "none";
+    rows.forEach(function (row, idx) {
+      const tr = document.createElement("tr");
+      G7_321_TABLA_FIELDS.forEach(function (f) {
+        const td = document.createElement("td");
+        const ta = document.createElement("textarea");
+        ta.rows = 3;
+        ta.placeholder = f.placeholder;
+        ta.value = (row && row[f.key]) || "";
+        ta.disabled = locked;
+        ta.style.cssText = "width:100%;box-sizing:border-box;resize:vertical;font-family:inherit;font-size:.88rem;padding:6px 8px;border:1px solid #cfe0d3;border-radius:6px;background:" + (locked ? "#f5f7f5" : "#ffffff") + ";opacity:" + (locked ? "0.85" : "1");
+        ta.addEventListener("input", function () {
+          if (isG7_321_Locked()) return;
+          const current = getG7_321_TablaRows();
+          if (!current[idx]) current[idx] = {};
+          current[idx][f.key] = ta.value;
+          setG7_321_TablaRows(current);
+        });
+        td.appendChild(ta);
+        tr.appendChild(td);
+      });
+      const tdAction = document.createElement("td");
+      tdAction.style.textAlign = "center";
+      tdAction.style.verticalAlign = "middle";
+      if (!locked) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.title = "Quitar esta fila";
+        btn.textContent = "Quitar";
+        btn.style.cssText = "padding:6px 10px;border:1px solid #f5c1bb;background:#fdecea;color:#a13029;border-radius:6px;font-family:inherit;font-size:.82rem;cursor:pointer;font-weight:600";
+        btn.addEventListener("click", function () {
+          if (isG7_321_Locked()) return;
+          if (!confirm("Quitar esta fila?")) return;
+          const current = getG7_321_TablaRows();
+          current.splice(idx, 1);
+          setG7_321_TablaRows(current);
+          renderG7_321_Tabla();
+        });
+        tdAction.appendChild(btn);
+      } else {
+        tdAction.textContent = "—";
+        tdAction.style.color = "#9aa5ad";
+      }
+      tr.appendChild(tdAction);
+      body.appendChild(tr);
+    });
+  }
+
+  function bindG7_321_TablaControls() {
+    const add = document.getElementById("g7_321_add_row");
+    const clr = document.getElementById("g7_321_clear_rows");
+    if (add) {
+      add.addEventListener("click", function () {
+        if (isG7_321_Locked()) return;
+        const current = getG7_321_TablaRows();
+        current.push({ tema: "", concepto: "", consiste: "", ejemplo: "" });
+        setG7_321_TablaRows(current);
+        renderG7_321_Tabla();
+      });
+    }
+    if (clr) {
+      clr.addEventListener("click", function () {
+        if (isG7_321_Locked()) return;
+        if (!confirm("Borrar TODAS las filas de la tabla?")) return;
+        setG7_321_TablaRows([]);
+        renderG7_321_Tabla();
+      });
+    }
+  }
+
   // ── Drive delivery ────────────────────────────────────────────────────────
 
   function openDriveFolder() {
@@ -515,6 +637,8 @@
     }
     mountDriveDelivery();
     renderEquipoG7Block();
+    bindG7_321_TablaControls();
+    renderG7_321_Tabla();
 
     updateProgress();
   }
@@ -527,5 +651,19 @@
 
   document.addEventListener("guide-activity-check-change", () => {
     window.requestAnimationFrame(() => updateProgress());
+  });
+
+  // Re-render del constructor cuando ActivityStandard bloquea/desbloquea 3.2.1
+  window.addEventListener("activity-deadlines-updated", function () {
+    renderG7_321_Tabla();
+  });
+  document.addEventListener("guide-delivery-registered", function () {
+    requestAnimationFrame(renderG7_321_Tabla);
+  });
+  document.addEventListener("click", function (ev) {
+    const t = ev.target;
+    if (t && t.id === "btnGuardarBloqueAB321") {
+      requestAnimationFrame(renderG7_321_Tabla);
+    }
   });
 })();
