@@ -84,10 +84,17 @@
   var API_TIMEOUT_MS   = 15000;
   var CHECK_TIMEOUT_MS = 10000;
   var FIRESTORE_BUDGET_STORAGE_KEY = "sena_portal_firestore_budget_v1";
+  // Presupuesto diario calibrado al uso real del portal:
+  //   - Capacidad maxima: 2 grupos x 30 aprendices = 60 aprendices/dia.
+  //   - Lecturas esperadas en dia normal: ~8 K (intervalo 60 s + cargas + admin).
+  //   - Escrituras esperadas en dia normal: ~300.
+  // Los niveles `warn`/`restrict`/`block` dejan margen 1.5x/3x/5x sobre el uso
+  // tipico, pero quedan por debajo del techo gratuito de Firebase (50K/20K).
+  // Si se dispara `warn` en consola, hay tiempo de reaccionar antes del bloqueo.
   var FIRESTORE_DAILY_BUDGET_LIMITS = {
-    read: { warn: 30000, restrict: 40000, block: 45000 },
-    write: { warn: 8000, restrict: 12000, block: 16000 },
-    delete: { warn: 100, restrict: 300, block: 500 },
+    read: { warn: 12000, restrict: 25000, block: 40000 },
+    write: { warn: 1500, restrict: 5000, block: 12000 },
+    delete: { warn: 50, restrict: 200, block: 450 },
   };
 
   // URL base de la API REST de Firestore
@@ -395,8 +402,61 @@
     return headers;
   }
 
+  // ── Gate de pre-fetch ───────────────────────────────────────────────────────
+  // Evita disparar peticiones a Firestore cuando se sabe que van a ser
+  // rechazadas. Las reglas se evaluan en cada peticion (incluso rechazadas) y
+  // consumen cuota de la API. Reduciendo rechazos protegemos el bloqueo diario
+  // de la consola.
+  //
+  // Bloquea cuando:
+  //   - Firebase Auth no esta hidratado o no hay currentUid (no podriamos
+  //     mandar Authorization → 403 garantizado).
+  //   - Hubo un 401/403 en los ultimos 60 s con el mismo uid (cooldown).
+  //     Si el uid cambia (login real), se sale del cooldown.
+  var FIRESTORE_COOLDOWN_AFTER_REJECTION_MS = 60000;
+  var _firestoreCooldownUntil = 0;
+  var _firestoreCooldownUid = null;
+
+  function getBridgeCurrentUid() {
+    var bridge = window.portalFirebaseAuth;
+    if (!bridge || typeof bridge.currentUid !== "function") return null;
+    try { return bridge.currentUid(); } catch (_) { return null; }
+  }
+
+  function markFirestoreRejection() {
+    _firestoreCooldownUntil = Date.now() + FIRESTORE_COOLDOWN_AFTER_REJECTION_MS;
+    _firestoreCooldownUid = getBridgeCurrentUid();
+  }
+
+  function markFirestoreSuccess() {
+    _firestoreCooldownUntil = 0;
+    _firestoreCooldownUid = null;
+  }
+
+  function isFirestoreInCooldown() {
+    if (Date.now() >= _firestoreCooldownUntil) return false;
+    // Si el uid cambio (nuevo login), invalidamos el cooldown — el token es otro.
+    if (getBridgeCurrentUid() !== _firestoreCooldownUid) return false;
+    return true;
+  }
+
+  async function canCallFirestore() {
+    if (!isConfigured) return false;
+    if (isFirestoreInCooldown()) return false;
+    var bridge = window.portalFirebaseAuth;
+    if (!bridge) return false;
+    await ensureAuthHydrated();
+    if (!getBridgeCurrentUid()) return false;
+    return true;
+  }
+
+  function isAuthRejection(status) {
+    return status === 401 || status === 403;
+  }
+
   // GET un documento. Retorna objeto JS o null.
   async function fsGet(collection, docId) {
+    if (!(await canCallFirestore())) return null;
     try {
       var res = await fetchWithTimeout(
         docUrl(collection, docId),
@@ -405,11 +465,16 @@
       );
       if (res.status === 404) {
         registerFirestoreOperation("read", 1);
+        markFirestoreSuccess();
         return null;
       }
-      if (!res.ok) return null;
+      if (!res.ok) {
+        if (isAuthRejection(res.status)) markFirestoreRejection();
+        return null;
+      }
       var payload = await res.json();
       registerFirestoreOperation("read", 1);
+      markFirestoreSuccess();
       return fromFsDoc(payload);
     } catch (e) { return null; }
   }
@@ -417,6 +482,7 @@
   // PATCH (upsert completo) de un documento.
   async function fsPatch(collection, docId, data) {
     if (shouldBlockCloudWrites()) return false;
+    if (!(await canCallFirestore())) return false;
     try {
       var res = await fetchWithTimeout(
         docUrl(collection, docId),
@@ -427,20 +493,31 @@
         },
         API_TIMEOUT_MS
       );
-      if (res.ok) registerFirestoreOperation("write", 1);
+      if (res.ok) {
+        registerFirestoreOperation("write", 1);
+        markFirestoreSuccess();
+      } else if (isAuthRejection(res.status)) {
+        markFirestoreRejection();
+      }
       return res.ok;
     } catch (e) { return false; }
   }
 
   async function fsDelete(collection, docId) {
     if (shouldBlockCloudDeletes()) return false;
+    if (!(await canCallFirestore())) return false;
     try {
       var res = await fetchWithTimeout(
         docUrl(collection, docId),
         { method: "DELETE", headers: await authHeaders() },
         API_TIMEOUT_MS
       );
-      if (res.ok || res.status === 404) registerFirestoreOperation("delete", 1);
+      if (res.ok || res.status === 404) {
+        registerFirestoreOperation("delete", 1);
+        markFirestoreSuccess();
+      } else if (isAuthRejection(res.status)) {
+        markFirestoreRejection();
+      }
       return res.ok || res.status === 404;
     } catch (e) { return false; }
   }
@@ -448,6 +525,7 @@
   // PATCH con updateMask: actualiza solo el campo indicado sin borrar los demas.
   async function fsUpdateField(collection, docId, fieldName, fieldValue) {
     if (shouldBlockCloudWrites()) return false;
+    if (!(await canCallFirestore())) return false;
     try {
       var body = { fields: {} };
       body.fields[fieldName] = toFsValue(fieldValue);
@@ -460,13 +538,19 @@
         },
         API_TIMEOUT_MS
       );
-      if (res.ok) registerFirestoreOperation("write", 1);
+      if (res.ok) {
+        registerFirestoreOperation("write", 1);
+        markFirestoreSuccess();
+      } else if (isAuthRejection(res.status)) {
+        markFirestoreRejection();
+      }
       return res.ok;
     } catch (e) { return false; }
   }
 
   // Lista todos los documentos de una coleccion (hasta 300).
   async function fsList(collection) {
+    if (!(await canCallFirestore())) return [];
     try {
       var url = BASE_URL + "/" + collection + "?key=" + FIREBASE_API_KEY + "&pageSize=300";
       var res = await fetchWithTimeout(
@@ -474,10 +558,14 @@
         { method: "GET", cache: "no-store", headers: await authHeaders() },
         API_TIMEOUT_MS
       );
-      if (!res.ok) return [];
+      if (!res.ok) {
+        if (isAuthRejection(res.status)) markFirestoreRejection();
+        return [];
+      }
       var payload = await res.json();
       var docs = (payload.documents || []).map(fromFsDoc).filter(Boolean);
       registerFirestoreOperation("read", Math.max(1, docs.length));
+      markFirestoreSuccess();
       return docs;
     } catch (e) { return []; }
   }
@@ -485,6 +573,7 @@
   // BatchGet: obtiene multiples documentos en una sola solicitud.
   async function fsBatchGet(collection, docIds) {
     if (!docIds || docIds.length === 0) return [];
+    if (!(await canCallFirestore())) return [];
     var batchUrl = "https://firestore.googleapis.com/v1/projects/" +
       FIREBASE_PROJECT_ID + "/databases/(default)/documents:batchGet?key=" + FIREBASE_API_KEY;
     var docPaths = docIds.map(function (id) {
@@ -501,10 +590,14 @@
         },
         API_TIMEOUT_MS
       );
-      if (!res.ok) return [];
+      if (!res.ok) {
+        if (isAuthRejection(res.status)) markFirestoreRejection();
+        return [];
+      }
       var results = await res.json();
       if (!Array.isArray(results)) return [];
       registerFirestoreOperation("read", Math.max(1, docIds.length));
+      markFirestoreSuccess();
       return results.map(function (r) { return r.found ? fromFsDoc(r.found) : null; }).filter(Boolean);
     } catch (e) { return []; }
   }
