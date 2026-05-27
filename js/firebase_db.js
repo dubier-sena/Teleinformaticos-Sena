@@ -448,9 +448,12 @@
 
   // Modo "fallback activo": gate bloquea Firestore Y Drive esta disponible.
   // Notifica a otros scripts (banner, UI) cuando cambia el estado.
+  // Tambien se considera "fallback" si el modo Drive primario esta forzado.
   var _lastFallbackActive = false;
   function isInDriveFallbackMode() {
-    return (isFirestoreInCooldown() || shouldBlockCloudWrites()) && isDriveFallbackEnabled();
+    if (!isDriveFallbackEnabled()) return false;
+    if (isForceDriveEnabled()) return true;
+    return isFirestoreInCooldown() || shouldBlockCloudWrites();
   }
 
   function notifyFallbackModeIfChanged() {
@@ -465,8 +468,24 @@
     } catch (_) {}
   }
 
+  // Si `useDriveAsPrimary` esta encendido en PORTAL_FIREBASE_CONFIG, todas las
+  // ops de datos se enrutan a Apps Script/Drive sin tocar Firestore. Firebase
+  // Auth (login/signup/changePassword) NO se ve afectado: usa identitytoolkit
+  // que tiene cuota separada.
+  // Tambien hay un "kill switch" por dispositivo via localStorage:
+  //   localStorage.setItem("sena_portal_force_drive", "1")
+  // Util para forzar el modo Drive en un navegador puntual sin redesplegar.
+  function isForceDriveEnabled() {
+    var cfg = window.PORTAL_FIREBASE_CONFIG;
+    if (cfg && cfg.useDriveAsPrimary === true) return true;
+    try {
+      return window.localStorage.getItem("sena_portal_force_drive") === "1";
+    } catch (_) { return false; }
+  }
+
   async function canCallFirestore() {
     if (!isConfigured) return false;
+    if (isForceDriveEnabled()) return false;
     if (isFirestoreInCooldown()) return false;
     var bridge = window.portalFirebaseAuth;
     if (!bridge) return false;
