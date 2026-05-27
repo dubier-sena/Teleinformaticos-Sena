@@ -3292,8 +3292,18 @@ window.portalAuth = {
   async function signInBridge(usernameKey, password) {
     const b = getBridge();
     if (!b || !bridgeEnabled()) return { ok: false, error: "auth/disabled" };
+    // Consultar la version del email Auth desde sena_portal_user_meta (lectura
+    // publica, sin auth previa). Si el admin reseteo la password, la version
+    // habra incrementado y el bridge construira un email sintetico nuevo.
+    let version = 1;
     try {
-      return await b.ensureSignedIn(usernameKey, password);
+      const dbApi = window._firebaseDb;
+      if (dbApi && typeof dbApi.cloudGetAuthVersion === "function") {
+        version = await dbApi.cloudGetAuthVersion(usernameKey);
+      }
+    } catch (_) { /* default v1 */ }
+    try {
+      return await b.ensureSignedIn(usernameKey, password, version);
     } catch (error) {
       return { ok: false, error: "auth/exception", raw: error && error.message };
     }

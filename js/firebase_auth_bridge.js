@@ -52,8 +52,26 @@
     return String(value || "").trim().toLowerCase();
   }
 
-  function buildEmail(usernameKey) {
-    return normalizeUsernameKey(usernameKey) + "@" + EMAIL_DOMAIN;
+  // Normaliza la version del email Auth. v1 (o ausente) usa el formato
+  // historico "{key}@dominio". v2 y superiores usan "{key}.v{N}@dominio".
+  // El versionado existe porque Firebase Auth en plan Spark no permite que
+  // un admin cambie la password de otra cuenta — cuando el admin resetea
+  // desde el panel, se incrementa la version y el aprendiz al loguear
+  // crea una cuenta Auth fresca con el nuevo email. La cuenta vieja queda
+  // huerfana pero no afecta cuotas relevantes (50K MAU en Spark).
+  function normalizeAuthEmailVersion(value) {
+    var n = Number(value);
+    if (!Number.isFinite(n) || n < 1) return 1;
+    return Math.floor(n);
+  }
+
+  function buildEmail(usernameKey, version) {
+    var key = normalizeUsernameKey(usernameKey);
+    var v = normalizeAuthEmailVersion(version);
+    if (v <= 1) {
+      return key + "@" + EMAIL_DOMAIN;
+    }
+    return key + ".v" + v + "@" + EMAIL_DOMAIN;
   }
 
   function logWarn(message, error) {
@@ -126,7 +144,7 @@
     return sdkReadyPromise;
   }
 
-  async function ensureSignedIn(usernameKey, password) {
+  async function ensureSignedIn(usernameKey, password, version) {
     var ready = await ensureSDK();
     if (!ready) {
       return { ok: false, error: "auth/unavailable" };
@@ -136,7 +154,7 @@
     if (!key) return { ok: false, error: "auth/invalid-usernameKey" };
     if (!password) return { ok: false, error: "auth/invalid-password" };
 
-    var email = buildEmail(key);
+    var email = buildEmail(key, version);
 
     var currentUser = firebaseAuth.currentUser;
     if (currentUser && currentUser.email === email) {
@@ -202,7 +220,8 @@
   }
 
   // El aprendiz cambia su propia password tras autenticarse con la vieja.
-  async function changePassword(usernameKey, oldPassword, newPassword) {
+  // version: numero opcional con la version del email Auth (default 1).
+  async function changePassword(usernameKey, oldPassword, newPassword, version) {
     var ready = await ensureSDK();
     if (!ready) return { ok: false, error: "auth/unavailable" };
 
@@ -210,7 +229,7 @@
     if (!key) return { ok: false, error: "auth/invalid-usernameKey" };
     if (!oldPassword || !newPassword) return { ok: false, error: "auth/invalid-password" };
 
-    var email = buildEmail(key);
+    var email = buildEmail(key, version);
     try {
       var cred = await firebaseAuth.signInWithEmailAndPassword(email, oldPassword);
       if (!cred || !cred.user) return { ok: false, error: "auth/user-not-found" };
