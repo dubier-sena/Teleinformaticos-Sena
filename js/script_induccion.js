@@ -15,7 +15,7 @@ const ACTIVE_STORAGE_KEY = portalAuth
 const STORAGE_META_KEY = `${ACTIVE_STORAGE_KEY}__meta`;
 const SCOPED_STORAGE_ENABLED = ACTIVE_STORAGE_KEY !== LEGACY_STORAGE_KEY;
 const CLOUD_SYNC_DELAY_MS = 1200;
-const CLOUD_REFRESH_MS = 60000;
+const CLOUD_REFRESH_MS = 300000;
 
 const treePrompts = [
   ["Raices", "Fortalezas que considera tiene para enfrentar este proceso formativo en Sistemas Teleinformaticos."],
