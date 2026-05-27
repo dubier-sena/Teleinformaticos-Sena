@@ -1622,19 +1622,53 @@
     if (localResult && localResult.ok) return localResult;
 
     var available = await checkAvailability();
-    if (!available) return localResult;
+    if (!available) {
+      console.warn("[firebase_db] Login fallback: Firestore no disponible. Devuelvo resultado local.");
+      return localResult;
+    }
 
     var usernameKey = String((data && data.username) || "").trim().toLowerCase();
     var password    = String((data && data.password) || "").trim();
     if (!usernameKey || !password) return localResult;
 
     var cloudUser = await cloudGetUser(usernameKey);
-    if (!cloudUser || !cloudUser.usernameKey) {
-      return { ok: false, message: "No existe un usuario registrado con ese nombre." };
+    if (!cloudUser) {
+      // fsGet devuelve null cuando: 404 sin Drive fallback, 5xx, error de red,
+      // o cuota Firestore agotada. Distinto a "doc realmente vacio".
+      console.warn(
+        "[firebase_db] Login fallback: cloudGetUser('" + usernameKey + "') devolvio null. " +
+        "Posibles causas: doc no existe, Firestore inalcanzable, cuota agotada o sin permisos."
+      );
+      if (localResult && localResult.message) return localResult;
+      return {
+        ok: false,
+        message: "No pudimos verificar tu usuario con la nube. Revisa tu conexion o intenta de nuevo.",
+      };
+    }
+    if (!cloudUser.usernameKey) {
+      // El doc existe pero le faltan los campos del perfil (corrupcion de datos).
+      console.error(
+        "[firebase_db] Login fallback: doc sena_portal_users/" + usernameKey +
+        " esta corrupto (sin usernameKey). Campos disponibles:",
+        Object.keys(cloudUser || {})
+      );
+      return {
+        ok: false,
+        message: "Tu perfil en la nube esta incompleto. Pide al instructor que lo recree.",
+      };
     }
 
     // Verificar contrasena contra el hash guardado en Firebase
     var hash = typeof auth.hashSecret === "function" ? await auth.hashSecret(password) : null;
+    if (!cloudUser.passwordHash) {
+      // Doc sin passwordHash: la fuente de verdad ahora es Firebase Auth (bridge).
+      // Si llegamos aqui, el bridge ya fracaso antes. Avisamos sin filtrar detalles.
+      console.warn(
+        "[firebase_db] Login fallback: doc sin passwordHash. " +
+        "Se esperaba que el bridge de Firebase Auth resolviera el login antes."
+      );
+      return { ok: false, message: "Usuario o contrasena incorrectos." };
+    }
     if (!hash || hash !== cloudUser.passwordHash) {
       return { ok: false, message: "La contrasena no es correcta." };
     }
