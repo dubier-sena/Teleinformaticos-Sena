@@ -17,7 +17,7 @@ const STORAGE_KEY = portalAuth
 const STORAGE_META_KEY = `${STORAGE_KEY}__meta`;
 const SCOPED_STORAGE_ENABLED = STORAGE_KEY !== LEGACY_STORAGE_KEY;
 const CLOUD_SYNC_DELAY_MS = 1200;
-const CLOUD_REFRESH_MS = 60000;
+const CLOUD_REFRESH_MS = 300000;
 const SUPPORT_BASE_PATH = "assets/materiales/guia5/";
 const DRIVE_FOLDERS = {
   "3168850": "https://drive.google.com/drive/folders/1fBPzXHU0OHDmKa18Y6V2tnomLyYWgiLp?usp=drive_link",

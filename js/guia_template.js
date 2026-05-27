@@ -23,7 +23,7 @@
   const pageStateFile = storageFileAliases[pageFile] || pageFile;
   const pageName = pageStateFile.replace(/\.html$/i, "");
   const GUIDE_UI_SYNC_DELAY_MS = 1200;
-  const GUIDE_UI_REFRESH_MS = 60000;
+  const GUIDE_UI_REFRESH_MS = 300000;
   const GUIDE_CALENDAR_REMOTE_REFRESH_MS = 15 * 60 * 1000;
   const GUIDE_REVEAL_SELECTOR = ".activity, .card, .support-card, .checklist-card";
   const GUIDE_CALENDAR_DOC = "calendario_2026_admin";

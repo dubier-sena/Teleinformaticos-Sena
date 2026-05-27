@@ -102,11 +102,24 @@
     return Boolean(result && result.ok);
   }
 
+  async function list(collection) {
+    var result = await call("list", { collection: collection });
+    if (!result || !result.ok || !Array.isArray(result.docs)) return [];
+    return result.docs.map(function (entry) {
+      // Devolvemos solo el data para que sea espejo de fsList.
+      // Si el caller necesita docId, viene en entry.data si fue guardado ahi.
+      return entry.data && typeof entry.data === "object"
+        ? Object.assign({ usernameKey: entry.docId }, entry.data)
+        : entry.data;
+    }).filter(Boolean);
+  }
+
   window.driveDb = {
     isEnabled: isEnabled,
     get: get,
     set: set,
     updateField: updateField,
     deleteDoc: deleteDoc,
+    list: list,
   };
 })();
