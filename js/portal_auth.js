@@ -3457,6 +3457,10 @@ window.portalAuth = {
           "[portal_auth] Firebase Auth ok para aprendiz " + normalizedKey +
           (fb.created ? " (cuenta creada)" : "")
         );
+        // Sincronizar el hash a la coleccion paralela con rules estrictas
+        // (sena_portal_user_auth). Asi cuando este aprendiz entre desde otro
+        // dispositivo, el hash queda disponible para verificacion local.
+        syncUserAuthHashAfterLogin(normalizedKey, password);
       }
       return result;
     }
@@ -3506,10 +3510,40 @@ window.portalAuth = {
     upsertLocalUserSync(cloudUser);
     console.info("[portal_auth] Perfil recuperado de Firestore para " + normalizedKey);
 
+    // Sincronizar el hash a sena_portal_user_auth (rules estrictas) para
+    // que cualquier dispositivo futuro tenga el hash actual disponible.
+    syncUserAuthHashAfterLogin(normalizedKey, password);
+
     // Reintentar el login local: ahora si encontrara el hash en localStorage.
     result = await prevLoginStudent.call(auth, data);
     return result;
   };
+
+  // Sincroniza el hash de password a sena_portal_user_auth/{key}. Solo se
+  // llama DESPUES de que Firebase Auth confirmo identidad — en ese momento
+  // las rules permiten escribir (isOwnerByUsernameKey). Best-effort: si la
+  // escritura falla, log pero no rompe el login.
+  async function syncUserAuthHashAfterLogin(usernameKey, password) {
+    if (!usernameKey || !password) return;
+    const dbApi = window._firebaseDb;
+    if (!dbApi || typeof dbApi.cloudSaveUserAuth !== "function") return;
+    if (typeof auth.hashSecret !== "function") return;
+    try {
+      const hash = await auth.hashSecret(password);
+      if (!hash) return;
+      const saved = await dbApi.cloudSaveUserAuth(usernameKey, hash);
+      if (saved) {
+        console.info(
+          "[portal_auth] Hash sincronizado en sena_portal_user_auth/" + usernameKey
+        );
+      }
+    } catch (error) {
+      console.warn(
+        "[portal_auth] No se pudo sincronizar hash a sena_portal_user_auth:",
+        error && error.message
+      );
+    }
+  }
 
   // ── Engancha loginAdmin ────────────────────────────────────────────────
   // index_auth.js invoca auth.loginAdmin(passwordString) directamente.
