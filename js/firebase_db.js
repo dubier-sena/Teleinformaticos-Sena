@@ -64,6 +64,7 @@
   // Nombres de colecciones en Firestore
   var COL_USERS    = "sena_portal_users";
   var COL_USER_AUTH = "sena_portal_user_auth";
+  var COL_USER_META = "sena_portal_user_meta";
   var COL_PROGRESS = "sena_portal_progress";
   var COL_CALENDAR = "sena_portal_calendar";
   var COL_GUIDE_STATE = "sena_portal_guide_state";
@@ -1749,6 +1750,12 @@
   };
 
   // ── Cambiar contrasena ────────────────────────────────────────────────────────
+  // El admin no puede tocar Firebase Auth directamente desde el panel (no
+  // tenemos Admin SDK en plan Spark). En vez de eso, incrementamos
+  // authEmailVersion en el doc del aprendiz: el bridge construira un email
+  // sintetico nuevo en el proximo login y Firebase Auth aceptara la
+  // password nueva como si fuera una cuenta nueva. La cuenta Auth vieja
+  // queda huerfana pero no afecta cuotas en Spark (50K MAU gratis).
   auth.updateStudentPassword = async function (usernameKey, newPassword) {
     var result = await prev.updateStudentPassword.call(auth, usernameKey, newPassword);
     if (result && result.ok) {
@@ -1759,26 +1766,91 @@
           if (!cloudUser) return;
           var hash = typeof auth.hashSecret === "function"
             ? await auth.hashSecret(newPassword) : null;
-          if (hash) {
-            // Touch del doc de perfil (updatedAt) y sync del hash a la
-            // coleccion paralela con rules estrictas (sena_portal_user_auth).
-            // Asi cualquier device del aprendiz puede recoger el hash nuevo.
-            cloudSaveUser(Object.assign({}, cloudUser, {
-              passwordHash: hash,
-              updatedAt:    new Date().toISOString(),
-            })).catch(function () {});
-            cloudSaveUserAuth(usernameKey, hash).catch(function (e) {
-              console.warn(
-                "[firebase_db] No se pudo sincronizar hash a sena_portal_user_auth/" +
-                usernameKey + ":", e && e.message
-              );
-            });
-          }
+          if (!hash) return;
+
+          // Incrementar authEmailVersion. v1 implicita si nunca se reseteo.
+          // Consulta la version desde user_meta (fuente publica y autoritativa)
+          // y si no esta, cae al campo en el doc de perfil.
+          var metaVersion = await cloudGetAuthVersion(usernameKey);
+          var profileVersion = Number(cloudUser.authEmailVersion) || 1;
+          var currentVersion = Math.max(metaVersion, profileVersion);
+          var nextVersion = currentVersion + 1;
+
+          // Touch del doc de perfil (updatedAt + nueva version) y sync del
+          // hash a la coleccion paralela con rules estrictas.
+          cloudSaveUser(Object.assign({}, cloudUser, {
+            authEmailVersion:       nextVersion,
+            authEmailVersionBumpAt: new Date().toISOString(),
+            updatedAt:              new Date().toISOString(),
+          })).catch(function () {});
+          cloudSaveUserAuth(usernameKey, hash).catch(function (e) {
+            console.warn(
+              "[firebase_db] No se pudo sincronizar hash a sena_portal_user_auth/" +
+              usernameKey + ":", e && e.message
+            );
+          });
+          // user_meta es la fuente que el bridge consulta sin auth previa
+          // (chicken-and-egg). Critico que se escriba correctamente.
+          cloudSaveAuthVersion(usernameKey, nextVersion).catch(function (e) {
+            console.error(
+              "[firebase_db] FALLO al escribir sena_portal_user_meta/" + usernameKey +
+              ". El aprendiz NO podra entrar con la nueva password hasta que esto se arregle. " +
+              "Error:", e && e.message
+            );
+          });
+          console.info(
+            "[firebase_db] Password de '" + usernameKey + "' rotada. " +
+            "authEmailVersion: " + currentVersion + " -> " + nextVersion +
+            ". El aprendiz puede entrar con la nueva password desde cualquier dispositivo."
+          );
         } catch (e) { /* silencioso */ }
       });
     }
     return result;
   };
+
+  // Lee la version del email Auth desde sena_portal_user_meta SIN requerir
+  // autenticacion. Necesario porque el bridge tiene que conocer la version
+  // ANTES de poder loguear en Firebase Auth (chicken-and-egg). Por eso esta
+  // funcion NO usa fsGet/canCallFirestore (que requieren auth previa) sino
+  // un fetch directo con solo el API key. Las rules permiten GET publico
+  // sobre esta coleccion (solo expone el numero de version, sin PII).
+  async function cloudGetAuthVersion(usernameKey) {
+    var key = String(usernameKey || "").trim().toLowerCase();
+    if (!key || !FIREBASE_API_KEY || !FIREBASE_PROJECT_ID) return 1;
+    var url = "https://firestore.googleapis.com/v1/projects/" +
+      FIREBASE_PROJECT_ID + "/databases/(default)/documents/" +
+      COL_USER_META + "/" + encodeURIComponent(key) +
+      "?key=" + FIREBASE_API_KEY;
+    try {
+      var res = await fetchWithTimeout(url, { method: "GET", cache: "no-store" }, API_TIMEOUT_MS);
+      if (res.status === 404) return 1; // doc no existe -> v1 implicita
+      if (!res.ok) {
+        console.warn(
+          "[firebase_db] cloudGetAuthVersion('" + key + "') status=" + res.status +
+          ". Asumo v1."
+        );
+        return 1;
+      }
+      var payload = await res.json();
+      var obj = payload && payload.fields ? fromFsDoc(payload) : null;
+      var v = Number(obj && obj.authEmailVersion);
+      return Number.isFinite(v) && v >= 1 ? v : 1;
+    } catch (e) {
+      return 1;
+    }
+  }
+
+  async function cloudSaveAuthVersion(usernameKey, version) {
+    var key = String(usernameKey || "").trim().toLowerCase();
+    var v = Math.max(1, Math.floor(Number(version) || 1));
+    if (!key) return false;
+    return fsPatch(COL_USER_META, key, {
+      usernameKey:      key,
+      authEmailVersion: v,
+      updatedAt:        new Date().toISOString(),
+    });
+  }
 
   auth.updateStudentFicha = async function (usernameKey, newFicha) {
     if (typeof prev.updateStudentFicha !== "function") {
@@ -2048,6 +2120,8 @@
     cloudUpdateGroupDelivery: cloudUpdateGroupDelivery,
     cloudGetUserAuth:         cloudGetUserAuth,
     cloudSaveUserAuth:        cloudSaveUserAuth,
+    cloudGetAuthVersion:      cloudGetAuthVersion,
+    cloudSaveAuthVersion:     cloudSaveAuthVersion,
     shouldDeferCloudReads: shouldDeferCloudReads,
     shouldSkipGuideUiCloudSave: shouldSkipGuideUiCloudSave,
     getBudgetStatus:    getFirestoreBudgetStatus,
