@@ -8,10 +8,11 @@
  * este navegador hasta que se restaure la sync.
  *
  * Estados:
- *   - "online"    -> Firestore acepta lecturas/escrituras (banner oculto)
- *   - "offline"   -> sin conexion al navegador (window.online === false)
- *   - "no-auth"   -> Firestore responde 401/403 sistematicamente
- *   - "rejected"  -> peticion explicitamente rechazada (timeout largo, etc.)
+ *   - "online"        -> Firestore acepta lecturas/escrituras (banner oculto)
+ *   - "offline"       -> sin conexion al navegador (window.online === false)
+ *   - "no-auth"       -> Firestore responde 401/403 sistematicamente
+ *   - "rejected"      -> peticion explicitamente rechazada (timeout largo, etc.)
+ *   - "drive-fallback"-> Firestore bloqueado pero Drive activo (sigue funcionando)
  *
  * No bloquea ni interrumpe al aprendiz. Solo informa.
  */
@@ -151,6 +152,36 @@
   window.addEventListener("offline", function () {
     failureStreak = FAILURE_THRESHOLD;
     markFailure("offline");
+  });
+
+  // ── Hook a modo respaldo (fase 2) ──────────────────────────────────────────
+  // Cuando firebase_db.js notifica que entro en modo fallback (Firestore caido
+  // pero Drive disponible), reemplazamos el banner por un mensaje informativo
+  // de color distinto. Al salir del modo, ocultamos.
+  window.addEventListener("sena-portal:fallback-mode-change", function (e) {
+    var active = e && e.detail && e.detail.active;
+    if (active) {
+      var el = ensureBanner();
+      if (el) {
+        // Color azul/turquesa para distinguir de los amarillos de error.
+        el.style.background = "#1f7a8c";
+        el.style.color = "#ffffff";
+      }
+      setBannerMessage(
+        "Modo respaldo activo: tus cambios se estan guardando en Drive. El sincronizado normal se restablecera automaticamente cuando la nube vuelva."
+      );
+      emitStatus("drive-fallback", "Modo respaldo activo");
+    } else {
+      var el2 = document.getElementById(BANNER_ID);
+      if (el2) {
+        el2.style.background = "#f5b700";
+        el2.style.color = "#102117";
+      }
+      // Solo ocultar si estabamos en drive-fallback (evita borrar otro estado).
+      if (lastStatus === "drive-fallback") {
+        markOnline();
+      }
+    }
   });
 
   // Estado inicial: si el navegador esta offline al cargar, mostrar de inmediato.

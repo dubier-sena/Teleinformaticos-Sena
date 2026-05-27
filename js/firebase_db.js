@@ -426,11 +426,15 @@
   function markFirestoreRejection() {
     _firestoreCooldownUntil = Date.now() + FIRESTORE_COOLDOWN_AFTER_REJECTION_MS;
     _firestoreCooldownUid = getBridgeCurrentUid();
+    notifyFallbackModeIfChanged();
   }
 
   function markFirestoreSuccess() {
     _firestoreCooldownUntil = 0;
     _firestoreCooldownUid = null;
+    // Si hay escrituras pendientes de Drive→Firestore, programar flush.
+    try { scheduleFlushPromotions(); } catch (_) {}
+    notifyFallbackModeIfChanged();
   }
 
   function isFirestoreInCooldown() {
@@ -438,6 +442,25 @@
     // Si el uid cambio (nuevo login), invalidamos el cooldown — el token es otro.
     if (getBridgeCurrentUid() !== _firestoreCooldownUid) return false;
     return true;
+  }
+
+  // Modo "fallback activo": gate bloquea Firestore Y Drive esta disponible.
+  // Notifica a otros scripts (banner, UI) cuando cambia el estado.
+  var _lastFallbackActive = false;
+  function isInDriveFallbackMode() {
+    return (isFirestoreInCooldown() || shouldBlockCloudWrites()) && isDriveFallbackEnabled();
+  }
+
+  function notifyFallbackModeIfChanged() {
+    var active = false;
+    try { active = isInDriveFallbackMode(); } catch (_) { active = false; }
+    if (active === _lastFallbackActive) return;
+    _lastFallbackActive = active;
+    try {
+      window.dispatchEvent(new CustomEvent("sena-portal:fallback-mode-change", {
+        detail: { active: active },
+      }));
+    } catch (_) {}
   }
 
   async function canCallFirestore() {
@@ -501,6 +524,129 @@
     return Boolean(window.driveDb && window.driveDb.isEnabled && window.driveDb.isEnabled());
   }
 
+  // ── Promocion Drive → Firestore en recuperacion (fase 3) ────────────────────
+  // Cada escritura que cae a Drive se registra en localStorage. Cuando una
+  // operacion Firestore vuelve a tener exito, lanzamos un flush debounced que
+  // intenta promover las escrituras pendientes. Se persiste en localStorage
+  // para sobrevivir recargas del navegador durante un bloqueo prolongado.
+  var FIRESTORE_PROMOTE_KEY = "sena_portal_pending_firestore_promote_v1";
+  var FIRESTORE_PROMOTE_FLUSH_DEBOUNCE_MS = 5000;
+  var _firestoreFlushTimer = null;
+
+  function readPendingPromotions() {
+    try {
+      var raw = window.localStorage.getItem(FIRESTORE_PROMOTE_KEY);
+      var list = raw ? JSON.parse(raw) : [];
+      return Array.isArray(list) ? list : [];
+    } catch (_) { return []; }
+  }
+
+  function writePendingPromotions(list) {
+    try {
+      if (!list || list.length === 0) {
+        window.localStorage.removeItem(FIRESTORE_PROMOTE_KEY);
+      } else {
+        window.localStorage.setItem(FIRESTORE_PROMOTE_KEY, JSON.stringify(list));
+      }
+    } catch (_) {}
+  }
+
+  function pendingPromotionKey(op) {
+    return op.collection + ":" + op.docId + ":" + (op.fieldName || "");
+  }
+
+  function recordPendingPromotion(op) {
+    var list = readPendingPromotions();
+    var key = pendingPromotionKey(op);
+    // Dedupe: una sola operacion por (collection, docId, fieldName).
+    // Si llega un nuevo set despues de un updateField sobre el mismo doc,
+    // el set lo reemplaza porque pisaria el campo de todas formas.
+    list = list.filter(function (other) {
+      if (op.type === "set" && other.collection === op.collection && other.docId === op.docId) {
+        return false;
+      }
+      return pendingPromotionKey(other) !== key;
+    });
+    list.push(Object.assign({ at: Date.now() }, op));
+    writePendingPromotions(list);
+  }
+
+  // Intenta promover una operacion a Firestore SIN fallback (para evitar bucles).
+  async function tryFirestorePromote(op) {
+    if (!isConfigured) return false;
+    try {
+      if (op.type === "set") {
+        var res = await fetchWithTimeout(
+          docUrl(op.collection, op.docId),
+          {
+            method: "PATCH",
+            headers: await authHeaders({ "Content-Type": "application/json" }),
+            body: JSON.stringify(toFsDoc(op.data)),
+          },
+          API_TIMEOUT_MS
+        );
+        if (res.ok) {
+          registerFirestoreOperation("write", 1);
+          return true;
+        }
+        return false;
+      }
+      if (op.type === "updateField") {
+        var body = { fields: {} };
+        body.fields[op.fieldName] = toFsValue(op.fieldValue);
+        var res = await fetchWithTimeout(
+          docUrl(op.collection, op.docId, "updateMask.fieldPaths=" + encodeURIComponent(op.fieldName)),
+          {
+            method: "PATCH",
+            headers: await authHeaders({ "Content-Type": "application/json" }),
+            body: JSON.stringify(body),
+          },
+          API_TIMEOUT_MS
+        );
+        if (res.ok) {
+          registerFirestoreOperation("write", 1);
+          return true;
+        }
+        return false;
+      }
+      if (op.type === "delete") {
+        var res = await fetchWithTimeout(
+          docUrl(op.collection, op.docId),
+          { method: "DELETE", headers: await authHeaders() },
+          API_TIMEOUT_MS
+        );
+        if (res.ok || res.status === 404) {
+          registerFirestoreOperation("delete", 1);
+          return true;
+        }
+        return false;
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  async function flushPendingPromotions() {
+    var list = readPendingPromotions();
+    if (list.length === 0) return;
+    if (!(await canCallFirestore())) return;
+    var remaining = [];
+    for (var i = 0; i < list.length; i++) {
+      var op = list[i];
+      var ok = await tryFirestorePromote(op);
+      if (!ok) remaining.push(op);
+    }
+    writePendingPromotions(remaining);
+  }
+
+  function scheduleFlushPromotions() {
+    if (_firestoreFlushTimer) return;
+    if (readPendingPromotions().length === 0) return; // no hay nada que promover
+    _firestoreFlushTimer = setTimeout(function () {
+      _firestoreFlushTimer = null;
+      flushPendingPromotions().catch(function () {});
+    }, FIRESTORE_PROMOTE_FLUSH_DEBOUNCE_MS);
+  }
+
   async function driveFallbackGet(collection, docId) {
     if (!isDriveFallbackEnabled()) return null;
     try { return await window.driveDb.get(collection, docId); } catch (_) { return null; }
@@ -508,19 +654,52 @@
 
   async function driveFallbackSet(collection, docId, data) {
     if (!isDriveFallbackEnabled()) return false;
-    try { return await window.driveDb.set(collection, docId, data); } catch (_) { return false; }
+    try {
+      var ok = await window.driveDb.set(collection, docId, data);
+      if (ok) recordPendingPromotion({ type: "set", collection: collection, docId: docId, data: data });
+      return ok;
+    } catch (_) { return false; }
   }
 
   async function driveFallbackUpdateField(collection, docId, fieldName, fieldValue) {
     if (!isDriveFallbackEnabled()) return false;
     try {
-      return await window.driveDb.updateField(collection, docId, fieldName, fieldValue);
+      var ok = await window.driveDb.updateField(collection, docId, fieldName, fieldValue);
+      if (ok) recordPendingPromotion({
+        type: "updateField",
+        collection: collection,
+        docId: docId,
+        fieldName: fieldName,
+        fieldValue: fieldValue,
+      });
+      return ok;
     } catch (_) { return false; }
   }
 
   async function driveFallbackDelete(collection, docId) {
     if (!isDriveFallbackEnabled()) return false;
-    try { return await window.driveDb.deleteDoc(collection, docId); } catch (_) { return false; }
+    try {
+      var ok = await window.driveDb.deleteDoc(collection, docId);
+      if (ok) recordPendingPromotion({ type: "delete", collection: collection, docId: docId });
+      return ok;
+    } catch (_) { return false; }
+  }
+
+  async function driveFallbackList(collection) {
+    if (!isDriveFallbackEnabled()) return [];
+    try { return await window.driveDb.list(collection); } catch (_) { return []; }
+  }
+
+  async function driveFallbackBatchGet(collection, docIds) {
+    if (!isDriveFallbackEnabled()) return [];
+    try {
+      var results = [];
+      for (var i = 0; i < docIds.length; i++) {
+        var data = await window.driveDb.get(collection, docIds[i]);
+        if (data) results.push(data);
+      }
+      return results;
+    } catch (_) { return []; }
   }
 
   // GET un documento. Retorna objeto JS o null.
@@ -657,7 +836,9 @@
 
   // Lista todos los documentos de una coleccion (hasta 300).
   async function fsList(collection) {
-    if (!(await canCallFirestore())) return [];
+    if (!(await canCallFirestore())) {
+      return await driveFallbackList(collection);
+    }
     try {
       var url = BASE_URL + "/" + collection + "?key=" + FIREBASE_API_KEY + "&pageSize=300";
       var res = await fetchWithTimeout(
@@ -666,7 +847,10 @@
         API_TIMEOUT_MS
       );
       if (!res.ok) {
-        if (isAuthRejection(res.status)) markFirestoreRejection();
+        if (isAuthRejection(res.status)) {
+          markFirestoreRejection();
+          return await driveFallbackList(collection);
+        }
         return [];
       }
       var payload = await res.json();
@@ -674,13 +858,17 @@
       registerFirestoreOperation("read", Math.max(1, docs.length));
       markFirestoreSuccess();
       return docs;
-    } catch (e) { return []; }
+    } catch (e) {
+      return await driveFallbackList(collection);
+    }
   }
 
   // BatchGet: obtiene multiples documentos en una sola solicitud.
   async function fsBatchGet(collection, docIds) {
     if (!docIds || docIds.length === 0) return [];
-    if (!(await canCallFirestore())) return [];
+    if (!(await canCallFirestore())) {
+      return await driveFallbackBatchGet(collection, docIds);
+    }
     var batchUrl = "https://firestore.googleapis.com/v1/projects/" +
       FIREBASE_PROJECT_ID + "/databases/(default)/documents:batchGet?key=" + FIREBASE_API_KEY;
     var docPaths = docIds.map(function (id) {
@@ -698,7 +886,10 @@
         API_TIMEOUT_MS
       );
       if (!res.ok) {
-        if (isAuthRejection(res.status)) markFirestoreRejection();
+        if (isAuthRejection(res.status)) {
+          markFirestoreRejection();
+          return await driveFallbackBatchGet(collection, docIds);
+        }
         return [];
       }
       var results = await res.json();
@@ -706,7 +897,9 @@
       registerFirestoreOperation("read", Math.max(1, docIds.length));
       markFirestoreSuccess();
       return results.map(function (r) { return r.found ? fromFsDoc(r.found) : null; }).filter(Boolean);
-    } catch (e) { return []; }
+    } catch (e) {
+      return await driveFallbackBatchGet(collection, docIds);
+    }
   }
 
   // ════════════════════════════════════════════════════════════════════════════

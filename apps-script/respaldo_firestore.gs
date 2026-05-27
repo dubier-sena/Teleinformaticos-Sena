@@ -54,6 +54,7 @@ function doPost(e) {
     if (action === "get") return handleGet(payload);
     if (action === "updatefield") return handleUpdateField(payload, userInfo);
     if (action === "delete") return handleDelete(payload);
+    if (action === "list") return handleList(payload);
 
     return jsonResponse({ ok: false, message: "Action desconocida: " + action });
   } catch (error) {
@@ -194,6 +195,38 @@ function handleDelete(payload) {
   const file = fileIt.next();
   file.setTrashed(true);
   return jsonResponse({ ok: true, action: "deleted" });
+}
+
+// Lista hasta 300 documentos de una coleccion. Para usos admin (panel).
+function handleList(payload) {
+  const collection = String(payload.collection || "");
+  if (!collection || !/^[a-zA-Z0-9_-]+$/.test(collection)) {
+    return jsonResponse({ ok: false, message: "Coleccion invalida." });
+  }
+  const collectionFolder = getCollectionFolderIfExists(collection);
+  if (!collectionFolder) {
+    return jsonResponse({ ok: true, docs: [] });
+  }
+  const docs = [];
+  const fileIt = collectionFolder.getFiles();
+  let count = 0;
+  while (fileIt.hasNext() && count < 300) {
+    try {
+      const file = fileIt.next();
+      const name = file.getName();
+      if (!/\.json$/i.test(name)) continue;
+      const parsed = JSON.parse(file.getBlob().getDataAsString());
+      docs.push({
+        docId: parsed.docId || name.replace(/\.json$/i, ""),
+        data: parsed.data,
+        savedAt: parsed.savedAt || "",
+      });
+      count += 1;
+    } catch (_) {
+      // archivo corrupto: lo saltamos
+    }
+  }
+  return jsonResponse({ ok: true, docs: docs });
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
