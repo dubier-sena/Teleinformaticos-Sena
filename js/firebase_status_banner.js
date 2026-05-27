@@ -32,6 +32,19 @@
   var failureStreak = 0;
   var lastStatus = null;
 
+  // Los banners de diagnostico (offline, no-auth, drive-fallback, etc.) solo
+  // se muestran al admin. Los aprendices no se benefician de mensajes tecnicos
+  // de infraestructura y podrian confundirse.
+  function isAdmin() {
+    try {
+      var auth = window.portalAuth;
+      if (auth && typeof auth.isAdminSession === "function") {
+        return Boolean(auth.isAdminSession());
+      }
+    } catch (_) {}
+    return false;
+  }
+
   function ensureBanner() {
     var existing = document.getElementById(BANNER_ID);
     if (existing) return existing;
@@ -60,6 +73,7 @@
   }
 
   function setBannerMessage(message) {
+    if (!isAdmin()) return; // aprendices no ven banners de diagnostico
     var el = ensureBanner();
     if (!el) return;
     el.textContent = message;
@@ -160,7 +174,11 @@
   // de color distinto. Al salir del modo, ocultamos.
   window.addEventListener("sena-portal:fallback-mode-change", function (e) {
     var active = e && e.detail && e.detail.active;
+    // Estado se sigue emitiendo (otros scripts pueden consumirlo) pero el
+    // banner visual solo aparece para admin.
     if (active) {
+      emitStatus("drive-fallback", "Modo respaldo activo");
+      if (!isAdmin()) return;
       var el = ensureBanner();
       if (el) {
         // Color azul/turquesa para distinguir de los amarillos de error.
@@ -170,7 +188,6 @@
       setBannerMessage(
         "Modo respaldo activo: tus cambios se estan guardando en Drive. El sincronizado normal se restablecera automaticamente cuando la nube vuelva."
       );
-      emitStatus("drive-fallback", "Modo respaldo activo");
     } else {
       var el2 = document.getElementById(BANNER_ID);
       if (el2) {
