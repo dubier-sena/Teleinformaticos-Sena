@@ -71,6 +71,20 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // ───── Metadata publica del aprendiz (version de email Auth) ───────────
+    // El bridge necesita conocer la version del email sintetico ANTES de
+    // poder loguear al aprendiz en Firebase Auth (chicken-and-egg). Por eso
+    // esta coleccion permite GET publico (sin requerir auth) pero NO permite
+    // LIST. Cada doc expone solo { authEmailVersion } — no hay PII.
+    // El versionado se incrementa cuando el admin resetea password desde el
+    // panel (ver updateStudentPassword en firebase_db.js).
+    match /sena_portal_user_meta/{usernameKey} {
+      allow get: if true;
+      allow list: if isAdmin();
+      allow create, update: if isAdmin() || isOwnerByUsernameKey(usernameKey);
+      allow delete: if isAdmin();
+    }
+
     // ───── Progreso por aprendiz ───────────────────────────────────────────
     match /sena_portal_progress/{usernameKey} {
       allow read, write: if isAdmin() || isOwnerByUsernameKey(usernameKey);
