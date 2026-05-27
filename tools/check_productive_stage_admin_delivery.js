@@ -14,7 +14,7 @@ function assertIncludes(content, expected, label) {
 
 assertIncludes(
   pageHtml,
-  'src="js/project_integrations.js?v=20260411_1"',
+  'src="js/project_integrations.js?v=20260526_2"',
   "integraciones del proyecto para subir avances desde etapa productiva admin"
 );
 assertIncludes(
