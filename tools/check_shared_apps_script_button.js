@@ -34,7 +34,7 @@ const appsScriptGs = read(path.join("apps-script", "entregas_actividades.gs"));
   const html = read(filePath);
   assertIncludes(
     html,
-    "js/project_integrations.js?v=20260411_1",
+    "js/project_integrations.js?v=20260526_2",
     `config de integraciones en ${filePath}`
   );
   assertIncludes(
