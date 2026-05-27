@@ -57,6 +57,20 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // ───── Hash de contrasena del aprendiz ─────────────────────────────────
+    // Coleccion paralela a sena_portal_users con visibilidad RESTRINGIDA:
+    // solo el propio aprendiz (autenticado via Firebase Auth) o el admin
+    // pueden leerla. Esto permite que el hash quede sincronizado en la nube
+    // (para que el aprendiz pueda entrar desde otro dispositivo) sin
+    // exponerlo a otros aprendices (que sí pueden leer sena_portal_users
+    // para armar equipos de trabajo).
+    // Estructura del doc: { usernameKey, passwordHash, updatedAt }
+    match /sena_portal_user_auth/{usernameKey} {
+      allow read: if isAdmin() || isOwnerByUsernameKey(usernameKey);
+      allow create, update: if isAdmin() || isOwnerByUsernameKey(usernameKey);
+      allow delete: if isAdmin();
+    }
+
     // ───── Progreso por aprendiz ───────────────────────────────────────────
     match /sena_portal_progress/{usernameKey} {
       allow read, write: if isAdmin() || isOwnerByUsernameKey(usernameKey);
