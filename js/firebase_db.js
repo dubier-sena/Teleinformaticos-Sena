@@ -454,9 +454,81 @@
     return status === 401 || status === 403;
   }
 
+  // ── Respaldo pasivo a Drive via Apps Script ─────────────────────────────────
+  // Tras cada fsPatch exitoso, mandamos una copia del documento al Web App
+  // de respaldo (apps-script/respaldo_firestore.gs). Es fire-and-forget: el
+  // aprendiz no espera, no se reintenta, los errores se silencian. El respaldo
+  // queda como JSON en Drive y sirve como red de seguridad por si Firebase
+  // vuelve a bloquearse.
+  function getBackupUrl() {
+    var pi = window.PROJECT_INTEGRATIONS;
+    var url = pi && typeof pi.respaldoFirestoreUrl === "string" ? pi.respaldoFirestoreUrl : "";
+    return url.trim();
+  }
+
+  function backupWriteToDrive(collection, docId, data) {
+    try {
+      var url = getBackupUrl();
+      if (!url) return; // respaldo deshabilitado
+      var bridge = window.portalFirebaseAuth;
+      if (!bridge || typeof bridge.getIdToken !== "function") return;
+      bridge.getIdToken().then(function (idToken) {
+        if (!idToken) return;
+        // Content-Type text/plain evita preflight CORS contra Apps Script.
+        fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({
+            action: "set",
+            idToken: idToken,
+            collection: collection,
+            docId: docId,
+            data: data,
+          }),
+          keepalive: true,
+        }).catch(function () { /* silencioso: es solo respaldo */ });
+      }).catch(function () { /* silencioso */ });
+    } catch (_) { /* silencioso */ }
+  }
+
+  // ── Router de fallback a Drive (fase 2) ─────────────────────────────────────
+  // Cuando el gate bloquea Firestore (sin sesion, en cooldown, budget en block)
+  // o cuando Firestore responde 401/403 explicitamente, el portal enruta la
+  // operacion al Web App de respaldo (apps-script/respaldo_firestore.gs) via
+  // window.driveDb. El portal sigue funcionando sin interrupcion, solo mas
+  // lento (~1-2s extra por la verificacion de idToken en el servidor).
+  function isDriveFallbackEnabled() {
+    return Boolean(window.driveDb && window.driveDb.isEnabled && window.driveDb.isEnabled());
+  }
+
+  async function driveFallbackGet(collection, docId) {
+    if (!isDriveFallbackEnabled()) return null;
+    try { return await window.driveDb.get(collection, docId); } catch (_) { return null; }
+  }
+
+  async function driveFallbackSet(collection, docId, data) {
+    if (!isDriveFallbackEnabled()) return false;
+    try { return await window.driveDb.set(collection, docId, data); } catch (_) { return false; }
+  }
+
+  async function driveFallbackUpdateField(collection, docId, fieldName, fieldValue) {
+    if (!isDriveFallbackEnabled()) return false;
+    try {
+      return await window.driveDb.updateField(collection, docId, fieldName, fieldValue);
+    } catch (_) { return false; }
+  }
+
+  async function driveFallbackDelete(collection, docId) {
+    if (!isDriveFallbackEnabled()) return false;
+    try { return await window.driveDb.deleteDoc(collection, docId); } catch (_) { return false; }
+  }
+
   // GET un documento. Retorna objeto JS o null.
+  // Si Firestore no esta disponible (sin sesion, cooldown, budget), enruta a Drive.
   async function fsGet(collection, docId) {
-    if (!(await canCallFirestore())) return null;
+    if (!(await canCallFirestore())) {
+      return await driveFallbackGet(collection, docId);
+    }
     try {
       var res = await fetchWithTimeout(
         docUrl(collection, docId),
@@ -466,23 +538,34 @@
       if (res.status === 404) {
         registerFirestoreOperation("read", 1);
         markFirestoreSuccess();
-        return null;
+        // Doc no existe en Firestore: probamos Drive por si lo tiene.
+        var driveResult = await driveFallbackGet(collection, docId);
+        return driveResult;
       }
       if (!res.ok) {
-        if (isAuthRejection(res.status)) markFirestoreRejection();
+        if (isAuthRejection(res.status)) {
+          markFirestoreRejection();
+          return await driveFallbackGet(collection, docId);
+        }
         return null;
       }
       var payload = await res.json();
       registerFirestoreOperation("read", 1);
       markFirestoreSuccess();
       return fromFsDoc(payload);
-    } catch (e) { return null; }
+    } catch (e) {
+      return await driveFallbackGet(collection, docId);
+    }
   }
 
   // PATCH (upsert completo) de un documento.
   async function fsPatch(collection, docId, data) {
-    if (shouldBlockCloudWrites()) return false;
-    if (!(await canCallFirestore())) return false;
+    if (shouldBlockCloudWrites()) {
+      return await driveFallbackSet(collection, docId, data);
+    }
+    if (!(await canCallFirestore())) {
+      return await driveFallbackSet(collection, docId, data);
+    }
     try {
       var res = await fetchWithTimeout(
         docUrl(collection, docId),
@@ -496,16 +579,26 @@
       if (res.ok) {
         registerFirestoreOperation("write", 1);
         markFirestoreSuccess();
-      } else if (isAuthRejection(res.status)) {
-        markFirestoreRejection();
+        backupWriteToDrive(collection, docId, data);
+        return true;
       }
-      return res.ok;
-    } catch (e) { return false; }
+      if (isAuthRejection(res.status)) {
+        markFirestoreRejection();
+        return await driveFallbackSet(collection, docId, data);
+      }
+      return false;
+    } catch (e) {
+      return await driveFallbackSet(collection, docId, data);
+    }
   }
 
   async function fsDelete(collection, docId) {
-    if (shouldBlockCloudDeletes()) return false;
-    if (!(await canCallFirestore())) return false;
+    if (shouldBlockCloudDeletes()) {
+      return await driveFallbackDelete(collection, docId);
+    }
+    if (!(await canCallFirestore())) {
+      return await driveFallbackDelete(collection, docId);
+    }
     try {
       var res = await fetchWithTimeout(
         docUrl(collection, docId),
@@ -515,17 +608,26 @@
       if (res.ok || res.status === 404) {
         registerFirestoreOperation("delete", 1);
         markFirestoreSuccess();
-      } else if (isAuthRejection(res.status)) {
-        markFirestoreRejection();
+        return true;
       }
-      return res.ok || res.status === 404;
-    } catch (e) { return false; }
+      if (isAuthRejection(res.status)) {
+        markFirestoreRejection();
+        return await driveFallbackDelete(collection, docId);
+      }
+      return false;
+    } catch (e) {
+      return await driveFallbackDelete(collection, docId);
+    }
   }
 
   // PATCH con updateMask: actualiza solo el campo indicado sin borrar los demas.
   async function fsUpdateField(collection, docId, fieldName, fieldValue) {
-    if (shouldBlockCloudWrites()) return false;
-    if (!(await canCallFirestore())) return false;
+    if (shouldBlockCloudWrites()) {
+      return await driveFallbackUpdateField(collection, docId, fieldName, fieldValue);
+    }
+    if (!(await canCallFirestore())) {
+      return await driveFallbackUpdateField(collection, docId, fieldName, fieldValue);
+    }
     try {
       var body = { fields: {} };
       body.fields[fieldName] = toFsValue(fieldValue);
@@ -541,11 +643,16 @@
       if (res.ok) {
         registerFirestoreOperation("write", 1);
         markFirestoreSuccess();
-      } else if (isAuthRejection(res.status)) {
-        markFirestoreRejection();
+        return true;
       }
-      return res.ok;
-    } catch (e) { return false; }
+      if (isAuthRejection(res.status)) {
+        markFirestoreRejection();
+        return await driveFallbackUpdateField(collection, docId, fieldName, fieldValue);
+      }
+      return false;
+    } catch (e) {
+      return await driveFallbackUpdateField(collection, docId, fieldName, fieldValue);
+    }
   }
 
   // Lista todos los documentos de una coleccion (hasta 300).
