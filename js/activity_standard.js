@@ -116,8 +116,39 @@
     });
   }
 
+  // Limpia etiquetas HTML que pudieran venir dentro del valor guardado (por
+  // datos viejos de un serializador previo o por texto pegado). Convierte
+  // estructura de tabla/parrafo a texto plano legible:
+  //   <br>, </tr>, </p>, </li>  -> salto de linea
+  //   </td>, </th>              -> separador
+  //   resto de etiquetas        -> se eliminan
+  // Si el valor no tiene '<' ni '&', se devuelve tal cual (rapido).
+  function cleanAnswerHtml(v) {
+    var s = String(v == null ? "" : v);
+    if (s.indexOf("<") === -1 && s.indexOf("&") === -1) return s;
+    // Decodificar entidades comunes primero (por si vienen escapadas).
+    s = s
+      .replace(/&nbsp;/gi, " ")
+      .replace(/&lt;/gi, "<")
+      .replace(/&gt;/gi, ">")
+      .replace(/&quot;/gi, '"')
+      .replace(/&#39;/gi, "'")
+      .replace(/&amp;/gi, "&");
+    // Estructura -> texto plano.
+    s = s
+      .replace(/<\s*br\s*\/?\s*>/gi, "\n")
+      .replace(/<\s*\/\s*tr\s*>/gi, "\n")
+      .replace(/<\s*\/\s*(td|th)\s*>/gi, "  ")
+      .replace(/<\s*\/\s*(p|div|li|h[1-6])\s*>/gi, "\n")
+      .replace(/<\/?[a-z!][^>]*>/gi, "");
+    // Normalizar espacios y saltos sobrantes.
+    s = s.replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n");
+    return s.trim();
+  }
+
   function escWord(v) {
-    return escHtml(String(v == null ? "" : v).replace(/\n/g, "<br>"));
+    // Orden correcto: limpiar HTML del valor -> escapar -> saltos a <br> reales.
+    return escHtml(cleanAnswerHtml(v)).replace(/\n/g, "<br>");
   }
 
   function sanitizeSegment(v) {
