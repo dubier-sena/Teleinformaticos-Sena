@@ -9,7 +9,7 @@
     fullName: "Dubier Orlando Millan Barbosa",
     username: "Dubier",
     usernameKey: "dubier",
-    passwordHash: "d7ee7806b5161383528f4256cceb048a6cd50c80783eb6425428f832916361a7",
+    passwordHash: "d3be23ee5ac7765c16cc9a3d2baae7d6afd6778ed3c27182868aef10203ced79",
   };
 
   const GUIDE_TITLES = {
@@ -1830,8 +1830,6 @@ window.portalAuth = {
   const SESSION_KEY = `${STORAGE_PREFIX}_session_v1`;
   const FLASH_KEY = `${STORAGE_PREFIX}_flash_v1`;
   const PASSWORD_MIN_LENGTH = 6;
-  const ADMIN_PASSWORD_HASH =
-    "d7ee7806b5161383528f4256cceb048a6cd50c80783eb6425428f832916361a7";
   const SESSION_MAX_AGE_MS = 12 * 60 * 60 * 1000;
   const PROGRESS_SYNC_DELAY = 900;
   const API_TIMEOUT_MS = 4500;
