@@ -14,9 +14,13 @@ window.PORTAL_FIREBASE_CONFIG = {
   enabled: true,
   projectId: "sena-portal",
   apiKey: "AIzaSyC0zKUJGVcT0aYcujZyrRBtsbVo1VjBkAA",
-  // IMPORTANTE: dejar en false hasta haber migrado TODOS los datos de
-  // Firestore a Drive. Activarlo con Drive vacio deja al admin sin lista
-  // de aprendices. El gate + failover (fase 2) ya protegen contra bloqueos
-  // sin necesidad de este flag.
-  useDriveAsPrimary: false,
+  // useDriveAsPrimary con ruteo POR COLECCION (ver firebase_db.js):
+  //   - Colecciones de CUENTA/AUTH (users, user_auth, user_meta, roles) SIEMPRE
+  //     van a Firestore. Son de bajo volumen (~400 lecturas/dia) y no saturan
+  //     la cuota. Asi el admin siempre ve los aprendices y el login funciona.
+  //   - Colecciones de DATOS (progress, guide_state, calendar, groups, tutoring)
+  //     van a Drive. Son el alto volumen que saturaba la cuota.
+  // El admin debe ejecutar el backfill UNA vez para poblar Drive con los datos
+  // existentes: en consola -> await window._firebaseDb.backfillToDrive()
+  useDriveAsPrimary: true,
 };

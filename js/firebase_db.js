@@ -483,9 +483,29 @@
     } catch (_) { return false; }
   }
 
-  async function canCallFirestore() {
+  // Colecciones de DATOS (alto volumen). En modo Drive primario, SOLO estas se
+  // enrutan a Drive. Las colecciones de cuenta/auth (users, user_auth,
+  // user_meta, roles) siguen SIEMPRE en Firestore porque son de bajo volumen
+  // (~400 lecturas/dia) y no saturan la cuota, ademas de mantener la seguridad
+  // de los hashes de password lejos de Drive.
+  var DRIVE_PRIMARY_COLLECTIONS = {};
+  DRIVE_PRIMARY_COLLECTIONS[COL_PROGRESS] = true;
+  DRIVE_PRIMARY_COLLECTIONS[COL_GUIDE_STATE] = true;
+  DRIVE_PRIMARY_COLLECTIONS[COL_CALENDAR] = true;
+  DRIVE_PRIMARY_COLLECTIONS[COL_GROUPS] = true;
+  DRIVE_PRIMARY_COLLECTIONS[COL_TUTORING] = true;
+
+  function isDriveDataCollection(collection) {
+    return Boolean(collection && DRIVE_PRIMARY_COLLECTIONS[collection]);
+  }
+
+  async function canCallFirestore(collection) {
     if (!isConfigured) return false;
-    if (isForceDriveEnabled()) return false;
+    // Modo Drive primario: solo las colecciones de DATOS van a Drive.
+    // Las de cuenta/auth siguen en Firestore.
+    if (isForceDriveEnabled() && isDriveDataCollection(collection)) return false;
+    // Cooldown (bloqueo real de Firestore): aplica a TODAS las colecciones —
+    // si Firestore esta caido de verdad, hasta las cuentas caen a Drive.
     if (isFirestoreInCooldown()) return false;
     var bridge = window.portalFirebaseAuth;
     if (!bridge) return false;
@@ -668,6 +688,13 @@
     }, FIRESTORE_PROMOTE_FLUSH_DEBOUNCE_MS);
   }
 
+  // Solo promover Drive→Firestore si NO estamos en modo Drive permanente para
+  // esta coleccion. En force-drive, Drive es el destino final (no un fallback
+  // temporal), asi que no tiene sentido devolver esos datos a Firestore.
+  function shouldRecordPromotion(collection) {
+    return !(isForceDriveEnabled() && isDriveDataCollection(collection));
+  }
+
   async function driveFallbackGet(collection, docId) {
     if (!isDriveFallbackEnabled()) return null;
     try { return await window.driveDb.get(collection, docId); } catch (_) { return null; }
@@ -677,7 +704,9 @@
     if (!isDriveFallbackEnabled()) return false;
     try {
       var ok = await window.driveDb.set(collection, docId, data);
-      if (ok) recordPendingPromotion({ type: "set", collection: collection, docId: docId, data: data });
+      if (ok && shouldRecordPromotion(collection)) {
+        recordPendingPromotion({ type: "set", collection: collection, docId: docId, data: data });
+      }
       return ok;
     } catch (_) { return false; }
   }
@@ -686,13 +715,15 @@
     if (!isDriveFallbackEnabled()) return false;
     try {
       var ok = await window.driveDb.updateField(collection, docId, fieldName, fieldValue);
-      if (ok) recordPendingPromotion({
-        type: "updateField",
-        collection: collection,
-        docId: docId,
-        fieldName: fieldName,
-        fieldValue: fieldValue,
-      });
+      if (ok && shouldRecordPromotion(collection)) {
+        recordPendingPromotion({
+          type: "updateField",
+          collection: collection,
+          docId: docId,
+          fieldName: fieldName,
+          fieldValue: fieldValue,
+        });
+      }
       return ok;
     } catch (_) { return false; }
   }
@@ -701,7 +732,9 @@
     if (!isDriveFallbackEnabled()) return false;
     try {
       var ok = await window.driveDb.deleteDoc(collection, docId);
-      if (ok) recordPendingPromotion({ type: "delete", collection: collection, docId: docId });
+      if (ok && shouldRecordPromotion(collection)) {
+        recordPendingPromotion({ type: "delete", collection: collection, docId: docId });
+      }
       return ok;
     } catch (_) { return false; }
   }
@@ -726,7 +759,7 @@
   // GET un documento. Retorna objeto JS o null.
   // Si Firestore no esta disponible (sin sesion, cooldown, budget), enruta a Drive.
   async function fsGet(collection, docId) {
-    if (!(await canCallFirestore())) {
+    if (!(await canCallFirestore(collection))) {
       return await driveFallbackGet(collection, docId);
     }
     try {
@@ -763,7 +796,7 @@
     if (shouldBlockCloudWrites()) {
       return await driveFallbackSet(collection, docId, data);
     }
-    if (!(await canCallFirestore())) {
+    if (!(await canCallFirestore(collection))) {
       return await driveFallbackSet(collection, docId, data);
     }
     try {
@@ -796,7 +829,7 @@
     if (shouldBlockCloudDeletes()) {
       return await driveFallbackDelete(collection, docId);
     }
-    if (!(await canCallFirestore())) {
+    if (!(await canCallFirestore(collection))) {
       return await driveFallbackDelete(collection, docId);
     }
     try {
@@ -825,7 +858,7 @@
     if (shouldBlockCloudWrites()) {
       return await driveFallbackUpdateField(collection, docId, fieldName, fieldValue);
     }
-    if (!(await canCallFirestore())) {
+    if (!(await canCallFirestore(collection))) {
       return await driveFallbackUpdateField(collection, docId, fieldName, fieldValue);
     }
     try {
@@ -857,7 +890,7 @@
 
   // Lista todos los documentos de una coleccion (hasta 300).
   async function fsList(collection) {
-    if (!(await canCallFirestore())) {
+    if (!(await canCallFirestore(collection))) {
       return await driveFallbackList(collection);
     }
     try {
@@ -887,7 +920,7 @@
   // BatchGet: obtiene multiples documentos en una sola solicitud.
   async function fsBatchGet(collection, docIds) {
     if (!docIds || docIds.length === 0) return [];
-    if (!(await canCallFirestore())) {
+    if (!(await canCallFirestore(collection))) {
       return await driveFallbackBatchGet(collection, docIds);
     }
     var batchUrl = "https://firestore.googleapis.com/v1/projects/" +
@@ -2119,9 +2152,76 @@
     } catch (e) { /* silencioso */ }
   }, 500);
 
+  // ── Backfill Firestore → Drive (migracion one-shot) ─────────────────────────
+  // Copia los docs de cada coleccion a Drive para que el modo Drive primario
+  // (y el failover) tengan datos. Lee Firestore DIRECTAMENTE (sin gate, con
+  // paginacion) y escribe a Drive directamente. Ejecutar UNA vez con Firestore
+  // disponible (no bloqueado). Idempotente: re-ejecutar solo sobreescribe.
+  async function firestoreListDirect(collection) {
+    var allDocs = [];
+    var pageToken = "";
+    try {
+      do {
+        var url = BASE_URL + "/" + collection + "?key=" + FIREBASE_API_KEY + "&pageSize=300";
+        if (pageToken) url += "&pageToken=" + encodeURIComponent(pageToken);
+        var res = await fetchWithTimeout(
+          url,
+          { method: "GET", cache: "no-store", headers: await authHeaders() },
+          API_TIMEOUT_MS
+        );
+        if (!res.ok) break;
+        var payload = await res.json();
+        var docs = (payload.documents || []).map(fromFsDoc).filter(Boolean);
+        allDocs = allDocs.concat(docs);
+        pageToken = payload.nextPageToken || "";
+      } while (pageToken && allDocs.length < 5000);
+    } catch (_) {}
+    return allDocs;
+  }
+
+  async function backfillToDrive(options) {
+    var opts = options || {};
+    var onProgress = typeof opts.onProgress === "function" ? opts.onProgress : null;
+    if (!isDriveFallbackEnabled()) {
+      return { ok: false, message: "Drive no configurado (falta respaldoFirestoreUrl)." };
+    }
+    // Por defecto migra TODAS las colecciones (datos + cuenta) para que el
+    // failover funcione completo. Se puede limitar con opts.collections.
+    var allCollections = [
+      COL_USERS, COL_USER_AUTH, COL_USER_META,
+      COL_PROGRESS, COL_GUIDE_STATE, COL_CALENDAR, COL_GROUPS, COL_TUTORING,
+    ];
+    var collections = Array.isArray(opts.collections) && opts.collections.length
+      ? opts.collections
+      : allCollections;
+    var report = { ok: true, collections: {}, totalWritten: 0, errors: 0 };
+    for (var c = 0; c < collections.length; c++) {
+      var collection = collections[c];
+      var docs = await firestoreListDirect(collection);
+      var written = 0;
+      for (var i = 0; i < docs.length; i++) {
+        var doc = docs[i];
+        var docId = doc._docId;
+        if (!docId) continue;
+        var clean = Object.assign({}, doc);
+        delete clean._docId;
+        delete clean._docName;
+        var ok = false;
+        try { ok = await window.driveDb.set(collection, docId, clean); } catch (_) { ok = false; }
+        if (ok) { written++; report.totalWritten++; } else { report.errors++; }
+        if (onProgress) onProgress({ collection: collection, done: i + 1, total: docs.length, written: written });
+      }
+      report.collections[collection] = { found: docs.length, written: written };
+      console.info("[backfill] " + collection + ": " + written + "/" + docs.length + " copiados a Drive");
+    }
+    console.info("[backfill] Completado. Escritos: " + report.totalWritten + ", errores: " + report.errors);
+    return report;
+  }
+
   // API de depuracion (solo disponible en consola del navegador)
   window._firebaseDb = {
     checkAvailability: checkAvailability,
+    backfillToDrive:   backfillToDrive,
     cloudGetCalendar:  cloudGetCalendar,
     cloudSaveCalendar: cloudSaveCalendar,
     cloudGetGuideData: cloudGetGuideData,
