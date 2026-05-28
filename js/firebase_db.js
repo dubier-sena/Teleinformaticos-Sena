@@ -468,14 +468,27 @@
     } catch (_) {}
   }
 
-  // Si `useDriveAsPrimary` esta encendido en PORTAL_FIREBASE_CONFIG, todas las
-  // ops de datos se enrutan a Apps Script/Drive sin tocar Firestore. Firebase
-  // Auth (login/signup/changePassword) NO se ve afectado: usa identitytoolkit
-  // que tiene cuota separada.
-  // Tambien hay un "kill switch" por dispositivo via localStorage:
-  //   localStorage.setItem("sena_portal_force_drive", "1")
-  // Util para forzar el modo Drive en un navegador puntual sin redesplegar.
+  // Si `useDriveAsPrimary` esta encendido en PORTAL_FIREBASE_CONFIG, las ops de
+  // DATOS de los APRENDICES se enrutan a Apps Script/Drive sin tocar Firestore.
+  // Firebase Auth (login/signup/changePassword) NO se ve afectado.
+  //
+  // EXCEPCION ADMIN: el admin SIEMPRE usa Firestore. Razon: el panel lee el
+  // progreso/estado de TODOS los aprendices, lo cual en Firestore es una sola
+  // peticion batch (rapida y completa), pero en Drive serian lecturas
+  // secuenciales una por una (~1-2s c/u = minutos para 45 aprendices). Como el
+  // admin lee a todos pocas veces al dia, es volumen minimo en Firestore y no
+  // lo bloquea. El alto volumen que satura la cuota es el de los aprendices.
+  //
+  // Kill switch por dispositivo: localStorage["sena_portal_force_drive"]="1".
+  function isCurrentUserAdmin() {
+    try {
+      var a = window.portalAuth;
+      return Boolean(a && typeof a.isAdminSession === "function" && a.isAdminSession());
+    } catch (_) { return false; }
+  }
+
   function isForceDriveEnabled() {
+    if (isCurrentUserAdmin()) return false; // el admin siempre usa Firestore
     var cfg = window.PORTAL_FIREBASE_CONFIG;
     if (cfg && cfg.useDriveAsPrimary === true) return true;
     try {
@@ -499,12 +512,18 @@
     return Boolean(collection && DRIVE_PRIMARY_COLLECTIONS[collection]);
   }
 
-  async function canCallFirestore(collection) {
+  // Patron REPLICA DE LECTURA:
+  //   - ESCRITURAS (isWrite=true) siempre van a Firestore (bajo volumen,
+  //     ~150/dia) + respaldo a Drive. Asi Firestore es la fuente de verdad y el
+  //     admin ve datos actuales.
+  //   - LECTURAS de DATOS de aprendices van a Drive (alto volumen que saturaba
+  //     la cuota). El admin lee de Firestore (excepcion admin, batched/completo).
+  //   - Cuenta/auth siempre en Firestore (bajo volumen).
+  //   - Cooldown (bloqueo real) manda TODO a Drive (failover de emergencia).
+  async function canCallFirestore(collection, isWrite) {
     if (!isConfigured) return false;
-    // Modo Drive primario: solo las colecciones de DATOS van a Drive.
-    // Las de cuenta/auth siguen en Firestore.
-    if (isForceDriveEnabled() && isDriveDataCollection(collection)) return false;
-    // Cooldown (bloqueo real de Firestore): aplica a TODAS las colecciones —
+    if (!isWrite && isForceDriveEnabled() && isDriveDataCollection(collection)) return false;
+    // Cooldown (bloqueo real de Firestore): aplica a TODO —
     // si Firestore esta caido de verdad, hasta las cuentas caen a Drive.
     if (isFirestoreInCooldown()) return false;
     var bridge = window.portalFirebaseAuth;
@@ -553,6 +572,25 @@
         }).catch(function () { /* silencioso: es solo respaldo */ });
       }).catch(function () { /* silencioso */ });
     } catch (_) { /* silencioso */ }
+  }
+
+  // Respaldo fire-and-forget de un updateField a Drive (mantiene la replica al
+  // dia para que las lecturas de aprendices desde Drive vean el ultimo valor).
+  function backupUpdateFieldToDrive(collection, docId, fieldName, fieldValue) {
+    try {
+      if (!window.driveDb || typeof window.driveDb.updateField !== "function") return;
+      if (!window.driveDb.isEnabled || !window.driveDb.isEnabled()) return;
+      window.driveDb.updateField(collection, docId, fieldName, fieldValue).catch(function () {});
+    } catch (_) {}
+  }
+
+  // Respaldo fire-and-forget de un delete a Drive.
+  function backupDeleteToDrive(collection, docId) {
+    try {
+      if (!window.driveDb || typeof window.driveDb.deleteDoc !== "function") return;
+      if (!window.driveDb.isEnabled || !window.driveDb.isEnabled()) return;
+      window.driveDb.deleteDoc(collection, docId).catch(function () {});
+    } catch (_) {}
   }
 
   // ── Router de fallback a Drive (fase 2) ─────────────────────────────────────
@@ -796,7 +834,7 @@
     if (shouldBlockCloudWrites()) {
       return await driveFallbackSet(collection, docId, data);
     }
-    if (!(await canCallFirestore(collection))) {
+    if (!(await canCallFirestore(collection, true))) {
       return await driveFallbackSet(collection, docId, data);
     }
     try {
@@ -829,7 +867,7 @@
     if (shouldBlockCloudDeletes()) {
       return await driveFallbackDelete(collection, docId);
     }
-    if (!(await canCallFirestore(collection))) {
+    if (!(await canCallFirestore(collection, true))) {
       return await driveFallbackDelete(collection, docId);
     }
     try {
@@ -841,6 +879,7 @@
       if (res.ok || res.status === 404) {
         registerFirestoreOperation("delete", 1);
         markFirestoreSuccess();
+        backupDeleteToDrive(collection, docId);
         return true;
       }
       if (isAuthRejection(res.status)) {
@@ -858,7 +897,7 @@
     if (shouldBlockCloudWrites()) {
       return await driveFallbackUpdateField(collection, docId, fieldName, fieldValue);
     }
-    if (!(await canCallFirestore(collection))) {
+    if (!(await canCallFirestore(collection, true))) {
       return await driveFallbackUpdateField(collection, docId, fieldName, fieldValue);
     }
     try {
@@ -876,6 +915,7 @@
       if (res.ok) {
         registerFirestoreOperation("write", 1);
         markFirestoreSuccess();
+        backupUpdateFieldToDrive(collection, docId, fieldName, fieldValue);
         return true;
       }
       if (isAuthRejection(res.status)) {
