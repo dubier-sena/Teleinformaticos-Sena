@@ -1269,6 +1269,68 @@
     renderAll();
   }
 
+  // ── Backfill Firestore → Drive ──────────────────────────────────────────
+  // Boton del panel Configuracion. Llama a window._firebaseDb.backfillToDrive()
+  // y muestra el avance en #backfill-status.
+  let backfillRunning = false;
+  async function runBackfillToDrive() {
+    if (backfillRunning) return;
+    const btn = byId("btn-backfill-drive");
+    const status = byId("backfill-status");
+    const fb = window._firebaseDb;
+
+    function show(message, color) {
+      if (!status) return;
+      status.style.display = "block";
+      status.style.color = color || "var(--admin-text, #102117)";
+      status.textContent = message;
+    }
+
+    if (!fb || typeof fb.backfillToDrive !== "function") {
+      show("El modulo de respaldo no esta disponible. Recarga la pagina (Ctrl+Shift+R).", "#b91c1c");
+      return;
+    }
+
+    backfillRunning = true;
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "Migrando...";
+    }
+    show("Iniciando migracion. Esto puede tardar varios minutos segun la cantidad de datos. No cierres esta pestana.", "#1f7a8c");
+
+    try {
+      const report = await fb.backfillToDrive({
+        onProgress: (p) => {
+          show(
+            "Migrando " + p.collection + ": " + p.done + " de " + p.total + " (" + p.written + " copiados)...",
+            "#1f7a8c"
+          );
+        },
+      });
+
+      if (report && report.ok) {
+        const detail = Object.keys(report.collections || {})
+          .map((c) => c + ": " + report.collections[c].written + "/" + report.collections[c].found)
+          .join("  ·  ");
+        show(
+          "Migracion completada. " + report.totalWritten + " documentos copiados a Drive" +
+          (report.errors ? " (" + report.errors + " errores)" : "") + ".  " + detail,
+          report.errors ? "#b45309" : "#15803d"
+        );
+      } else {
+        show("No se pudo completar la migracion: " + ((report && report.message) || "error desconocido") + ".", "#b91c1c");
+      }
+    } catch (error) {
+      show("Error durante la migracion: " + ((error && error.message) || error) + ".", "#b91c1c");
+    } finally {
+      backfillRunning = false;
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "Migrar datos a Drive";
+      }
+    }
+  }
+
   function setActiveModule(moduleName) {
     if (!MODULE_TITLES[moduleName]) return;
     state.activeModule = moduleName;
@@ -1934,6 +1996,7 @@
       button.addEventListener("click", () => setActiveModule(button.dataset.jumpModule));
     });
     byId("refresh-users")?.addEventListener("click", () => loadUsers());
+    byId("btn-backfill-drive")?.addEventListener("click", () => runBackfillToDrive());
     byId("user-search")?.addEventListener("input", (event) => {
       state.filters.text = event.target.value;
       renderLearners();

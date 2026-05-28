@@ -309,6 +309,20 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
         <div class="admin-panel" style="margin-top:1.5rem;">
           <div class="admin-panel__header">
             <div>
+              <h2>Respaldo de datos a Drive</h2>
+              <p>Copia los datos de progreso, guias, calendario, equipos y entregas desde Firestore hacia Google Drive. Ejecutalo una vez (o cuando quieras refrescar el respaldo). Las cuentas de aprendices se quedan en Firebase.</p>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:0.75rem;">
+            <button type="button" id="btn-backfill-drive" class="admin-button" style="align-self:flex-start;">
+              Migrar datos a Drive
+            </button>
+            <div id="backfill-status" role="status" aria-live="polite" style="display:none;font:500 14px/1.5 'Inter','Segoe UI',sans-serif;"></div>
+          </div>
+        </div>
+        <div class="admin-panel" style="margin-top:1.5rem;">
+          <div class="admin-panel__header">
+            <div>
               <h2>Auditoria local</h2>
               <p>Historial de acciones administrativas realizadas en este navegador (creacion/desactivacion de aprendices, habilitacion de actividades, cambios de password, etc.).</p>
             </div>
@@ -351,6 +365,6 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
   <script src="js/admin_guide6.js?v=20260505_1"></script>
   <script src="js/admin_progress.js?v=20260505_1"></script>
   <script src="js/admin_habilitacion.js?v=20260520_2"></script>
-  <script src="js/admin_usuarios.js?v=20260520_4"></script>
+  <script src="js/admin_usuarios.js?v=20260527_1"></script>
 </body>
 </html>
