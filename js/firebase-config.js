@@ -14,5 +14,9 @@ window.PORTAL_FIREBASE_CONFIG = {
   enabled: true,
   projectId: "sena-portal",
   apiKey: "AIzaSyC0zKUJGVcT0aYcujZyrRBtsbVo1VjBkAA",
-  useDriveAsPrimary: true,
+  // IMPORTANTE: dejar en false hasta haber migrado TODOS los datos de
+  // Firestore a Drive. Activarlo con Drive vacio deja al admin sin lista
+  // de aprendices. El gate + failover (fase 2) ya protegen contra bloqueos
+  // sin necesidad de este flag.
+  useDriveAsPrimary: false,
 };
