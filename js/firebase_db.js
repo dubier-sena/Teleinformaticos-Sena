@@ -70,6 +70,7 @@
   var COL_GUIDE_STATE = "sena_portal_guide_state";
   var COL_TUTORING = "sena_portal_tutoring_bookings";
   var COL_GROUPS = "sena_portal_groups";
+  var COL_USER_INDEX = "sena_portal_user_index";
   var CALENDAR_FALLBACK_PREFIX = "__calendar__:";
   var AVAILABILITY_DOC_ID = CALENDAR_FALLBACK_PREFIX + "calendario_2026_admin";
   var GUIDE_DATA_FALLBACK_PREFIX = "__guide_data__:";
@@ -1083,6 +1084,57 @@
 
   async function cloudListUsers() {
     return fsList(COL_USERS);
+  }
+
+  // Lista SOLO los aprendices de una ficha (server-side query via :runQuery).
+  // Reemplaza el cloudListUsers() completo en el lado del aprendiz para que
+  // las nuevas reglas (list constrained by requesterFicha()) permitan la
+  // consulta y el aprendiz no traiga datos de otras fichas.
+  async function cloudListUsersByFicha(ficha) {
+    var f = String(ficha || "").trim();
+    if (!f) return [];
+    if (!(await canCallFirestore(COL_USERS))) return [];
+    try {
+      var url = "https://firestore.googleapis.com/v1/projects/" + FIREBASE_PROJECT_ID +
+        "/databases/(default)/documents:runQuery?key=" + FIREBASE_API_KEY;
+      var body = { structuredQuery: {
+        from: [{ collectionId: COL_USERS }],
+        where: { fieldFilter: {
+          field: { fieldPath: "ficha" }, op: "EQUAL", value: { stringValue: f },
+        } },
+        limit: 300,
+      } };
+      var res = await fetchWithTimeout(url, {
+        method:  "POST",
+        headers: await authHeaders({ "Content-Type": "application/json" }),
+        body:    JSON.stringify(body),
+      }, API_TIMEOUT_MS);
+      if (!res.ok) {
+        if (isAuthRejection(res.status)) markFirestoreRejection();
+        return [];
+      }
+      var rows = await res.json();
+      var docs = (Array.isArray(rows) ? rows : [])
+        .map(function (r) { return r && r.document ? fromFsDoc(r.document) : null; })
+        .filter(Boolean);
+      registerFirestoreOperation("read", Math.max(1, docs.length));
+      markFirestoreSuccess();
+      return docs;
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // Escribe el indice uid -> ficha (sena_portal_user_index/{uid}) que las
+  // reglas usan para verificar la ficha del solicitante en la regla list de
+  // sena_portal_users. Se llama en cada login exitoso (ver portal_auth.js).
+  async function cloudSaveUserIndex(ficha) {
+    var uid = getBridgeCurrentUid();
+    if (!uid || !ficha) return false;
+    return fsPatch(COL_USER_INDEX, uid, {
+      ficha:     String(ficha),
+      updatedAt: new Date().toISOString(),
+    });
   }
 
   // ── Hash de contrasena (coleccion paralela con rules estrictas) ───────────
@@ -2279,6 +2331,8 @@
     cloudUpdateGroupDelivery: cloudUpdateGroupDelivery,
     cloudGetUserAuth:         cloudGetUserAuth,
     cloudSaveUserAuth:        cloudSaveUserAuth,
+    cloudListUsersByFicha:    cloudListUsersByFicha,
+    cloudSaveUserIndex:       cloudSaveUserIndex,
     cloudGetAuthVersion:      cloudGetAuthVersion,
     cloudSaveAuthVersion:     cloudSaveAuthVersion,
     shouldDeferCloudReads: shouldDeferCloudReads,
