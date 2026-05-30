@@ -61,6 +61,7 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
         <button class="admin-nav__item" type="button" data-admin-module="habilitacion">Habilitar actividades</button>
         <button class="admin-nav__item" type="button" data-admin-module="reportes">Reportes</button>
         <button class="admin-nav__item" type="button" data-admin-module="configuracion">Configuracion</button>
+        <button class="admin-nav__item" type="button" data-tab="auditoria" data-admin-module="configuracion">Auditoria</button>
       </nav>
       <div class="admin-sidebar__footer">
         <a class="admin-sidebar__link" href="etapa-productiva-admin.html">Etapa productiva</a>
@@ -297,7 +298,7 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
         </div>
       </section>
 
-      <section class="admin-module" id="module-configuracion" data-admin-panel="configuracion" hidden>
+      <section class="admin-module" id="module-configuracion" data-admin-panel="configuracion" data-tab="auditoria" hidden>
         <div class="admin-panel">
           <div class="admin-panel__header">
             <div>
@@ -328,7 +329,7 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
               <p>Historial de acciones administrativas realizadas en este navegador (creacion/desactivacion de aprendices, habilitacion de actividades, cambios de password, etc.).</p>
             </div>
           </div>
-          <div id="audit-host"></div>
+          <div id="audit-container"><div id="audit-host"></div></div>
         </div>
       </section>
     </main>
@@ -345,7 +346,8 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
         <button class="modal-close" type="button" data-close-admin-modal aria-label="Cerrar">x</button>
       </div>
       <div class="modal-export-actions">
-        <button class="admin-button admin-button--ghost" type="button" id="admin-detail-export" hidden>Exportar a Word</button>
+        <button class="admin-button admin-button--ghost" type="button" id="admin-detail-export" data-export-responses-word hidden>Exportar a Word</button>
+        <button class="admin-button admin-button--ghost" type="button" id="guide2-responses-export" data-export-responses-word hidden>Exportar respuestas</button>
       </div>
       <div class="modal-body" id="admin-detail-body"></div>
     </section>

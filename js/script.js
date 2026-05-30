@@ -24,6 +24,18 @@ const DRIVE_FOLDERS = {
   "3168852": "https://drive.google.com/drive/folders/1p9HdGinK1me8PsbaLHYio_OC-idAmorR?usp=drive_link",
 };
 
+const WORD_INSTITUTIONAL_HEADER_FIELDS = [
+  "sena-logo.png",
+  "Sistemas Teleinformáticos",
+  "Competencia",
+  "Resultado de aprendizaje",
+  "Nombre completo del aprendiz",
+  "Fecha de elaboración",
+  "Número de ficha",
+  "Grado",
+  "Institucion",
+];
+
 const wordList = [
   "RESTAURACION",
   "VIRUS",
@@ -1568,5 +1580,3 @@ function setupScrollSpy() {
     }
   });
 }
-
-

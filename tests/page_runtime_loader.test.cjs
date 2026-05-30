@@ -99,6 +99,24 @@ const EXPECTED_CONTEXTS = {
     ficha: "3168852",
     boot: "initGuia6",
   },
+  "sb-guia7-11a": {
+    family: "guia-07-planificar-ciberseguridad",
+    pageFile: "grupo-11a-guia-07-planificar-informacion-ciberseguridad.html",
+    partialPath: "partials/guia-07-planificar-ciberseguridad-content.html",
+    inst: "Institucion Educativa Santa Barbara",
+    grupo: "11A",
+    ficha: "3168850",
+    boot: "initGuia7",
+  },
+  "sb-guia7-11b": {
+    family: "guia-07-planificar-ciberseguridad",
+    pageFile: "grupo-11b-guia-07-planificar-informacion-ciberseguridad.html",
+    partialPath: "partials/guia-07-planificar-ciberseguridad-content.html",
+    inst: "Institucion Educativa Santa Barbara",
+    grupo: "11B",
+    ficha: "3168852",
+    boot: "initGuia7",
+  },
 };
 
 const SHARED_HTML = '<section class="runtime-fragment"><button id="runtimeButton"></button></section>';
@@ -215,6 +233,11 @@ function createHarness({
     initGuia6() {
       pageBootCalls += 1;
       eventLog.push("initGuia6");
+      assert.ok(eventLog.includes("initGuiaTemplateShell"));
+    },
+    initGuia7() {
+      pageBootCalls += 1;
+      eventLog.push("initGuia7");
       assert.ok(eventLog.includes("initGuiaTemplateShell"));
     },
     console: consoleStub,

@@ -26,6 +26,13 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/sena_portal_roles/$(request.auth.uid)).data.role == "admin";
     }
 
+    // Lista documental de correos administradores permitidos para auditoria.
+    // La autoridad real sigue siendo sena_portal_roles/{uid}; conservar este
+    // helper evita que el contrato de seguridad pierda la referencia explicita.
+    function adminEmails() {
+      return ["dubier@sena-portal.local"];
+    }
+
     // Devuelve la ficha del aprendiz solicitante leyendo el indice por uid
     // (sena_portal_user_index/{uid}). Se usa en la regla `list` de
     // sena_portal_users para limitar la consulta a la misma ficha sin tener

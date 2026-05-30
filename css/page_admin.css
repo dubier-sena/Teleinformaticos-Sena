@@ -500,6 +500,170 @@ progress::-moz-progress-bar {
   background: var(--admin-primary-2);
 }
 
+.progress-bar::-webkit-progress-value {
+  background: var(--admin-primary-2);
+}
+
+.progress-bar::-moz-progress-bar {
+  background: var(--admin-primary-2);
+}
+
+.user-section-title--progress {
+  margin-top: 12px;
+}
+
+.answer-card--wide {
+  grid-column: 1 / -1;
+}
+
+.answer-conclusion {
+  margin-top: 12px;
+}
+
+.answer-conclusion__label {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.answer-conclusion__value {
+  min-height: 42px;
+}
+
+.redes-quiz-actions,
+.grades-import-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.act-explorer__layout {
+  display: grid;
+  grid-template-columns: minmax(180px, 260px) minmax(0, 1fr);
+  gap: 14px;
+}
+
+.act-explorer__activity-list {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+
+.redes-quiz-evidence-list {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--admin-muted);
+  line-height: 1.55;
+}
+
+.redes-status-label {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.redes-status-label--warning {
+  background: #fff8e5;
+  color: #8a5a00;
+}
+
+.redes-status-label--success {
+  background: #edf8f1;
+  color: #176b3a;
+}
+
+.redes-status-label--progress {
+  background: #f3f8fc;
+  color: var(--admin-info);
+}
+
+.redes-socialization-notes {
+  max-width: 360px;
+  color: var(--admin-muted);
+  line-height: 1.45;
+}
+
+.matriz322-table-wrap {
+  overflow-x: auto;
+}
+
+.matriz322-table {
+  min-width: 720px;
+}
+
+.matriz322-actor-cell {
+  font-weight: 800;
+}
+
+.matriz322-response-cell {
+  min-width: 220px;
+}
+
+.matriz322-note-card {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--admin-line);
+  border-radius: var(--admin-radius);
+  background: var(--admin-surface-soft);
+}
+
+.matriz322-note-title {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.matriz322-note-copy {
+  margin: 0;
+  color: var(--admin-muted);
+}
+
+.grades-import-box {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--admin-line);
+  border-radius: var(--admin-radius);
+  background: var(--admin-surface-soft);
+}
+
+.grades-import-title {
+  margin: 0;
+}
+
+.grades-import-copy,
+.grades-import-status {
+  margin: 0;
+  color: var(--admin-muted);
+}
+
+.grades-import-button {
+  width: max-content;
+}
+
+.grades-import-input {
+  max-width: 320px;
+}
+
+.grades-import-divider {
+  height: 1px;
+  background: var(--admin-line);
+}
+
+.audit-log {
+  display: grid;
+  gap: 10px;
+}
+
+.audit-entry {
+  padding: 12px;
+  border: 1px solid var(--admin-line);
+  border-radius: var(--admin-radius);
+  background: var(--admin-surface-soft);
+}
+
 .modal-shell {
   position: fixed;
   inset: 0;
@@ -540,8 +704,13 @@ progress::-moz-progress-bar {
 
 .modal-header {
   display: flex;
+  flex-shrink: 0;
   justify-content: space-between;
   gap: 12px;
+}
+
+.modal-meta {
+  flex-shrink: 0;
 }
 
 .modal-header h2,

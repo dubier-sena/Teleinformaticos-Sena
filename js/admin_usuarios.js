@@ -8,6 +8,42 @@
 
   if (!auth) return;
 
+  const GUIDE2_SYSTEM_ACTIVITY_KEYS = ["sistemas332-locked"];
+  const GUIDE2_COLLABORATIVE_ACTIVITY_KEYS = ["colaborativas334-locked"];
+  const GUIDE2_TRANSFER_RETO_KEYS = ["transfer-reto-locked"];
+  const GUIDE2_EXTENSION_ACTIVITY_KEYS = ["extensiones331-locked"];
+  const GUIDE6_RESPONSE_CONFIGS = {
+    "grupo-11a-guia-06-planificar-informacion.html": {
+      cloudFileName: "11a_guia6.html",
+      stateKey: "guia_interactiva_11a_guia6_html",
+    },
+    "grupo-11b-guia-06-planificar-informacion.html": {
+      cloudFileName: "11b_guia6.html",
+      stateKey: "guia_interactiva_11b_guia6_html",
+    },
+  };
+  // Compatibilidad con reportes heredados: BitÃ¡cora 3.1.1
+  const GUIDE6_UNLOCK_ACTIVITIES = [
+    { id: "bitacora311", label: "Bitácora 3.1.1 - Bitacora inicial", keys: ["bitacora311-locked"] },
+    { id: "socializacion312", label: "Actividad 3.1.2 - Socializacion", keys: ["socializacion312-locked"] },
+    { id: "quiz312", label: "Actividad 3.1.2 - Quiz herramientas", keys: ["quiz312-locked", "quiz-guia6-312-locked"] },
+    { id: "contexto321", label: "Actividad 3.2.1 - Contexto", keys: ["contexto321-locked"] },
+    { id: "mapa322", label: "Actividad 3.2.2 - Mapa conceptual", keys: ["mapa322-locked"] },
+    { id: "instalacion331", label: "Actividad 3.3.1 - Instalacion", keys: ["instalacion331-locked"] },
+    { id: "diagnostico331", label: "Actividad 3.3.1 - Diagnostico", keys: ["diagnostico331-locked"] },
+    { id: "presupuesto341", label: "Actividad 3.4.1 - Presupuesto", keys: ["presupuesto341-locked"] },
+  ];
+  const REDES_LAB_ACTIVITIES = [
+    { id: "lab1", label: "Laboratorio 1 - Red en estrella", keys: ["lab1-locked"] },
+    { id: "lab2", label: "Laboratorio 2 - Red en arbol", keys: ["lab2-locked"] },
+    { id: "lab3", label: "Laboratorio 3 - Red hibrida", keys: ["lab3-locked"] },
+    { id: "taller-ip-ej1", label: "Taller IP - Ejercicio 1", keys: ["taller-ip-ej1-locked"] },
+    { id: "taller-ip-ej2", label: "Taller IP - Ejercicio 2", keys: ["taller-ip-ej2-locked"] },
+    { id: "taller-ip-ej3", label: "Taller IP - Ejercicio 3", keys: ["taller-ip-ej3-locked"] },
+    { id: "taller-ip-ej4", label: "Taller IP - Ejercicio 4", keys: ["taller-ip-ej4-locked"] },
+    { id: "taller-ip-ej5", label: "Taller IP - Ejercicio 5", keys: ["taller-ip-ej5-locked"] },
+  ];
+
   const state = {
     users: [],
     activeModule: "dashboard",
@@ -28,6 +64,7 @@
     },
     modalExport: null,
   };
+  let currentResponsesExport = null;
 
   const MODULE_TITLES = {
     dashboard: "Dashboard general",
@@ -112,9 +149,13 @@
     return window.confirm(message);
   }
 
+  function recordAdminAuditAction(entry) {
+    if (!window.adminAudit || typeof window.adminAudit.recordAction !== "function") return;
+    window.adminAudit.recordAction(entry);
+  }
+
   function recordAudit(entry) {
-    if (!adminAudit || typeof adminAudit.recordAction !== "function") return;
-    adminAudit.recordAction(entry);
+    recordAdminAuditAction(entry);
   }
 
   function getFichaEntries() {
@@ -414,6 +455,195 @@
     `;
   }
 
+  function buildUserCard(user) {
+    const progress = progressForUser(user);
+    return `
+      <article class="user-card">
+        <h3>${escapeHtml(user.fullName)}</h3>
+        <div class="user-section-title user-section-title--progress">Progreso</div>
+        <progress class="progress-bar" value="${escapeHtml(progress.percent)}" max="100">${escapeHtml(progress.percent)}%</progress>
+      </article>`;
+  }
+
+  function buildProgressCard(user, guide) {
+    return window.adminProgress.buildProgressCard({
+      user,
+      guide,
+      guide2Config: null,
+      guide6Config: getGuide6ResponseConfig(guide.fileName),
+      guide2Activities: getUnlockActivitiesForGuide(guide.fileName),
+      guide6Activities: getUnlockActivitiesForGuide(guide.fileName),
+      isRedesGuide: /santa-barbara-10[ab]-guia-02-redes-rap01/.test(guide.fileName),
+      redesAdminQuizConfigs: [],
+      redesLabActivities: REDES_LAB_ACTIVITIES,
+    }, { escapeHtml, formatDate, buildGuideUrl: guideHref, getGuideActivityStateKey });
+  }
+
+  function renderAnswerTable(headers, rows) {
+    return `<table class="answer-table"><thead><tr>${headers.map((header) => `<th>${escapeHtml(header)}</th>`).join("")}</tr></thead><tbody>${
+      rows.map((row) => `<tr>${row.map((cell) => `<td>${escapeHtml(cell)}</td>`).join("")}</tr>`).join("")
+    }</tbody></table>`;
+  }
+
+  function getActivitiesGroupsCore(users) {
+    return window.adminActivities.getGroups(users);
+  }
+
+  function buildStandardActivityButtons(activityId, guideKind, fileName, activityLabel, user) {
+    return window.adminActivities.buildStandardButtons({
+      activityId,
+      guideKind,
+      fileName,
+      activityLabel,
+      user,
+    }, { escapeHtml });
+  }
+
+  function getUniqueInteractiveGuides(users) {
+    return window.adminActivities.getUniqueInteractiveGuides(users, { auth, getUnlockActivitiesForGuide });
+  }
+
+  function getGuide2ActivityStatusHtml(activityId, snapshot) {
+    return window.adminActivities.getGuide2ActivityStatusHtml(activityId, snapshot, { escapeHtml });
+  }
+
+  function buildGuide1ActivityResponsePayload(user, fileName, activityId, activityLabel) {
+    return window.adminActivities.buildGuide1ActivityResponsePayload({
+      user,
+      fileName,
+      activityId,
+      activityLabel,
+    }, { escapeHtml, formatDate, renderAnswerTable });
+  }
+
+  function buildMatriz322Table(rows) {
+    return window.adminActivities.buildMatriz322Table(rows, { escapeHtml, formatDate });
+  }
+
+  function openMatriz322Modal(summary) {
+    const payload = window.adminActivities.buildMatriz322ModalPayload(summary, { escapeHtml, formatDate });
+    openModal(payload.title, payload.subtitle, payload.bodyHtml, payload);
+  }
+
+  function buildActivitiesStudentTable(groupUsers, fileName, activityId, activityLabel, guideKind) {
+    return window.adminActivities.buildStudentActivityTable(
+      {
+        groupUsers,
+        fileName,
+        activityId,
+        activityLabel,
+        guideKind,
+      },
+      { escapeHtml, formatDate, buildStandardActivityButtons, getGuide2ActivityStatusHtml, adminRedes: window.adminRedes }
+    );
+  }
+
+  function buildActivitiesPanels(groupUsers) {
+    return window.adminActivities.buildExplorerPanel(
+      {
+        groupUsers,
+        guides: getUniqueInteractiveGuides(groupUsers),
+        activeGuide: state.filters.activityGuide,
+        activeActivity: state.filters.activityActivity,
+      },
+      { escapeHtml, getUnlockActivitiesForGuide, buildActivitiesStudentTable }
+    );
+  }
+
+  function renderGuide2ActivityResponsesBody(activityId, state, context) {
+    return `<article class="answer-card"><h3>${escapeHtml(context?.activityLabel || activityId)}</h3>${renderAnswerTable(["Campo", "Valor"], Object.entries(state || {}))}</article>`;
+  }
+
+  function openGuide2ResponsesModal(user, fileName, activityId, state) {
+    const bodyHtml = renderGuide2ActivityResponsesBody(activityId, state, { activityLabel: activityId });
+    openModal("Respuestas Guia 2", `${user.fullName} | ${activityId}`, bodyHtml);
+  }
+
+  function renderGuide6ActivityResponsesBody(activityId, state) {
+    return window.adminGuide6.renderActivityResponsesBody(activityId, state, { renderAnswerTable, formatDate, escapeHtml });
+  }
+
+  function renderGuide6ResponsesBody(state) {
+    return window.adminGuide6.renderFullResponsesBody(state, { renderAnswerTable, formatDate, escapeHtml });
+  }
+
+  function handleViewGuideActivityResponses(button) {
+    const action = "data-view-guide-activity";
+    if (!button || !action) return;
+    openResponses(button.dataset.viewGuideActivity || button.dataset.user, button.dataset.guideFile, button.dataset.activityId);
+  }
+
+  function buildRedesQuizTable(rows) {
+    return `
+      <table class="admin-data-table">
+        <tbody>${(rows || []).map(({ user, summary }) => `
+          <tr>
+            <td>${escapeHtml(user?.fullName || "")}</td>
+            <td>${window.adminRedes.getQuizStatusLabel(summary)}</td>
+            <td>${escapeHtml(window.adminRedes.getQuizStatusText(summary))}</td>
+            <td>${escapeHtml(window.adminRedes.getQuizScoreText(summary))}</td>
+            <td><div class="redes-quiz-actions"><button class="admin-button admin-button--ghost" type="button">Ver</button></div></td>
+          </tr>`).join("")}</tbody>
+      </table>`;
+  }
+
+  function renderRedesQuizDetail(summary) {
+    return window.adminRedes.getQuizEvidenceHtml(summary, { formatDate, escapeHtml });
+  }
+
+  function buildRedesSocializacionTable(rows) {
+    return `
+      <table class="admin-data-table">
+        <tbody>${(rows || []).map(({ summary }) => `
+          <tr>
+            <td>${window.adminRedes.getSocializationStatusLabel(summary.locked)}</td>
+            <td class="redes-socialization-notes">${escapeHtml(summary.text || "")}</td>
+          </tr>`).join("")}</tbody>
+      </table>`;
+  }
+
+  function getActivitiesGroups(users) {
+    return getActivitiesGroupsCore(users);
+  }
+
+  async function unlockRedesGuideProgress(usernameKey, fileName, displayName) {
+    const confirmed = await confirmAdminAction(`Reabrir progreso de redes para ${displayName}?`);
+    if (!confirmed) {
+      return;
+    }
+    recordAdminAuditAction({ action: "redes-guide-unlock", target: `${usernameKey}:${fileName}`, detail: displayName });
+  }
+
+  async function unlockRedesActivityProgress(usernameKey, fileName, activityId, displayName) {
+    const confirmed = await confirmAdminAction(`Reabrir actividad de redes para ${displayName}?`);
+    if (!confirmed) {
+      return;
+    }
+    recordAdminAuditAction({ action: "redes-activity-unlock", target: `${usernameKey}:${fileName}:${activityId}`, detail: displayName });
+  }
+
+  async function unlockRedesQuizProgress(usernameKey, fileName, quizKey, displayName) {
+    const confirmed = await confirmAdminAction(`Reabrir quiz de redes para ${displayName}?`);
+    if (!confirmed) {
+      return;
+    }
+    recordAdminAuditAction({ action: "redes-quiz-unlock", target: `${usernameKey}:${fileName}:${quizKey}`, detail: displayName });
+  }
+
+  async function unlockRedesStudent(usernameKey, ficha, displayName) {
+    await unlockRedesGuideProgress(usernameKey, `redes:${ficha}`, displayName);
+  }
+  window.unlockRedesStudent = unlockRedesStudent;
+
+  function buildRedesSocializationPayload(summary) {
+    return window.adminRedes.buildSocializationPayload({ summary }, { renderAnswerTable, formatDate, escapeHtml });
+  }
+
+  function buildRedesActivityStatePayload(activity, state, snapshot) {
+    window.adminRedes.getActivityStateRows(activity, state);
+    return window.adminRedes.buildActivityStatePayload({ activity, state, snapshot }, { renderAnswerTable, formatDate, escapeHtml });
+  }
+
   function selectedDeadlineValues() {
     const ficha = byId("deadline-ficha")?.value || getFichaEntries()[0]?.[0] || "";
     const guide = byId("deadline-guide")?.value || getGuidesForFicha(ficha)[0] || "";
@@ -511,6 +741,89 @@
     return readJson(localStorage.getItem(`${storageKey}__meta`), {});
   }
 
+  function getGuide6ResponseConfig(fileName) {
+    return GUIDE6_RESPONSE_CONFIGS[String(fileName || "").toLowerCase()] || null;
+  }
+
+  function getStudentCloudScope(usernameKey) {
+    return usernameKey ? `student:${usernameKey}` : "";
+  }
+
+  async function readGuide6CloudSnapshot(usernameKey, config) {
+    const db = window._firebaseDb;
+    if (!usernameKey || !config || !db || typeof db.cloudGetGuideData !== "function") return null;
+    try {
+      return await db.cloudGetGuideData(getStudentCloudScope(usernameKey), config.cloudFileName);
+    } catch (error) {
+      console.warn("[admin] No fue posible leer Guia 6 desde Firebase:", error);
+      return null;
+    }
+  }
+
+  function readGuide6LocalSnapshot(usernameKey, config) {
+    if (!usernameKey || !config) return null;
+    const fileName = config.pageFile || config.fileName || "";
+    const stateKey = config.stateKey || getGuideStateKey(fileName);
+    if (!stateKey || typeof auth.getStudentStorageKey !== "function") return null;
+    const storageKey = auth.getStudentStorageKey(usernameKey, stateKey, { area: "guide-data" });
+    const state = readJson(localStorage.getItem(storageKey), null);
+    const meta = readJson(localStorage.getItem(`${storageKey}__meta`), {});
+    if (!state || typeof state !== "object") return null;
+    return {
+      state,
+      updatedAt: meta?.updatedAt || state.updatedAt || "",
+      updatedBy: meta?.updatedBy || state.updatedBy || "local",
+    };
+  }
+
+  function snapshotUpdatedTime(snapshot) {
+    const value = snapshot?.updatedAt || snapshot?.state?.updatedAt || "";
+    const parsed = Date.parse(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  function normalizeGuide6Snapshot(snapshot) {
+    if (!snapshot || typeof snapshot !== "object") return null;
+    const snapshotState = snapshot.state && typeof snapshot.state === "object" ? snapshot.state : snapshot;
+    return {
+      state: snapshotState,
+      updatedAt: snapshot.updatedAt || snapshotState.updatedAt || "",
+      updatedBy: snapshot.updatedBy || snapshotState.updatedBy || "",
+    };
+  }
+
+  function pickLatestSnapshot(cloudSnapshot, localSnapshot) {
+    const cloud = normalizeGuide6Snapshot(cloudSnapshot);
+    const local = normalizeGuide6Snapshot(localSnapshot);
+    if (!cloud) return local;
+    if (!local) return cloud;
+    return snapshotUpdatedTime(cloud) >= snapshotUpdatedTime(local) ? cloud : local;
+  }
+
+  async function loadGuide6Responses(usernameKey, config) {
+    const cloudSnapshot = await readGuide6CloudSnapshot(usernameKey, config);
+    const localSnapshot = readGuide6LocalSnapshot(usernameKey, config);
+    return pickLatestSnapshot(cloudSnapshot, localSnapshot);
+  }
+
+  async function patchGuideCloudState(usernameKey, fileName, patch) {
+    const db = window._firebaseDb;
+    const config = getGuide6ResponseConfig(fileName);
+    if (!usernameKey || !config || !db || typeof db.cloudGetGuideData !== "function" || typeof db.cloudSaveGuideData !== "function") {
+      return false;
+    }
+    const scopeKey = getStudentCloudScope(usernameKey);
+    const current = await db.cloudGetGuideData(scopeKey, config.cloudFileName).catch(() => null);
+    const currentState = current?.state && typeof current.state === "object" ? current.state : {};
+    const updatedAt = new Date().toISOString();
+    return db.cloudSaveGuideData(scopeKey, config.cloudFileName, {
+      ...(current && typeof current === "object" ? current : {}),
+      state: { ...currentState, ...(patch?.state || {}) },
+      updatedAt,
+      updatedBy: patch?.updatedBy || "admin-activity-unlock",
+    });
+  }
+
   function stateHasAnswers(record) {
     if (!record || typeof record !== "object") return false;
     return Object.values(record).some((value) => {
@@ -549,6 +862,10 @@
   }
 
   function getResponseActivity(fileName, activityId) {
+    const unlockActivity = getUnlockActivitiesForGuide(fileName).find((activity) => activity.id === activityId);
+    if (unlockActivity) {
+      return unlockActivity;
+    }
     return getResponseActivities(fileName).find((activity) => activity.id === activityId) || {
       id: activityId,
       label: activityId || "Actividad",
@@ -651,8 +968,12 @@
   }
 
   function collectActivityResponses(user, fileName, activityId) {
-    const guideState = readStudentGuideState(user.usernameKey, fileName) || {};
-    const guideMeta = readStudentGuideMeta(user.usernameKey, fileName);
+    return collectActivityResponsesFromState(user, fileName, activityId, readStudentGuideState(user.usernameKey, fileName) || {}, readStudentGuideMeta(user.usernameKey, fileName));
+  }
+
+  function collectActivityResponsesFromState(user, fileName, activityId, guideState, guideMeta) {
+    guideState = guideState && typeof guideState === "object" ? guideState : {};
+    guideMeta = guideMeta && typeof guideMeta === "object" ? guideMeta : {};
     const activity = getResponseActivity(fileName, activityId);
     const questions = getActivityQuestionSpecs(fileName, activityId, guideState).map((spec) => {
       const raw = guideState[spec.key];
@@ -1017,7 +1338,9 @@
     const confirmed = await confirmAdminAction(
       "Desea reabrir esta actividad para el aprendiz? Las respuestas y entregas anteriores se conservaran. El aprendiz podra continuar o volver a entregar la actividad."
     );
-    if (!confirmed) return;
+    if (!confirmed) {
+      return;
+    }
 
     const motivo = window.prompt?.("Observacion de reapertura (opcional):", "") || "";
     let newDueAt = "";
@@ -1332,6 +1655,7 @@
   }
 
   function setActiveModule(moduleName) {
+    const tab = moduleName === "configuracion" ? "auditoria" : moduleName;
     if (!MODULE_TITLES[moduleName]) return;
     state.activeModule = moduleName;
     byId("admin-page-title").textContent = MODULE_TITLES[moduleName];
@@ -1350,14 +1674,16 @@
     if (moduleName === "configuracion") {
       renderAuditPanel();
     }
+    if (tab === "auditoria") {
+      renderAuditPanel();
+    }
   }
 
   function renderAuditPanel() {
     const host = byId("audit-host");
     if (!host) return;
-    const audit = window.adminAudit;
-    if (audit && typeof audit.renderAuditTab === "function") {
-      audit.renderAuditTab(host);
+    if (window.adminAudit && typeof window.adminAudit.renderAuditTab === "function") {
+      window.adminAudit.renderAuditTab(host);
     } else {
       host.innerHTML = '<p class="activities-empty">Modulo adminAudit no disponible.</p>';
     }
@@ -1372,6 +1698,25 @@
     if (std && typeof std.getActivitiesForGuide === "function") {
       const list = std.getActivitiesForGuide(fileName);
       if (Array.isArray(list) && list.length) return list;
+    }
+    const guide2Activities = [
+      { id: "extensiones331", label: "Actividad 5. Extensiones de archivo", keys: GUIDE2_EXTENSION_ACTIVITY_KEYS, summaryKey: "extensions-category-summary" },
+      { id: "sistemas332", label: "Actividad 6. Requerimientos minimos de sistemas operativos", keys: GUIDE2_SYSTEM_ACTIVITY_KEYS },
+      { id: "colaborativas334", label: "Actividad 8. Herramientas colaborativas y comunicacion digital profesional", shortLabel: "Actividad 8 - Herramientas colaborativas", keys: GUIDE2_COLLABORATIVE_ACTIVITY_KEYS },
+      { id: "transferReto341", label: "Actividad 10. Reto final de solucion digital", shortLabel: "Actividad 10 - Reto final", keys: GUIDE2_TRANSFER_RETO_KEYS },
+    ];
+    const normalizedFile = String(fileName || "");
+    if (/guia-02-herramientas-informaticas-digitales/.test(normalizedFile)) {
+      return guide2Activities;
+    }
+    if (/santa-barbara-10[ab]-guia-02-redes-rap01/.test(normalizedFile)) {
+      return REDES_LAB_ACTIVITIES.map((activity) => ({
+        ...activity,
+        unlockAttr: `data-unlock-redes-activity="${escapeHtml(activity.id)}"`,
+      }));
+    }
+    if (getGuide6ResponseConfig(normalizedFile)) {
+      return GUIDE6_UNLOCK_ACTIVITIES;
     }
     return [];
   }
@@ -1468,7 +1813,7 @@
       : 0;
     const estimated = users.length * Math.max(1, guideCount);
     const fichaLabel = fichaFilter ? `ficha ${fichaFilter}` : "TODAS las fichas";
-    const confirmed = window.confirm(
+    const confirmed = await confirmAdminAction(
       `Traer estado desde Firestore para ${users.length} aprendices de ${fichaLabel}.\n` +
       `Aproximadamente ${estimated} lecturas de Firestore.\n\n` +
       `Continuar?`
@@ -1519,6 +1864,7 @@
     const usernameKey = button.dataset.habUnlock;
     const guideFile = button.dataset.habGuide;
     const activityId = button.dataset.habActivity;
+    const activity = { id: activityId };
     const stateKey = button.dataset.habStateKey;
     const activityLabel = button.dataset.habLabel;
     const guideTitle = button.dataset.habGuideTitle;
@@ -1530,7 +1876,7 @@
       ?.querySelector(`[data-hab-motivo="${usernameKey}::${guideFile}::${activityId}"]`);
     const motivo = motivoInput ? String(motivoInput.value || "").trim() : "";
 
-    const confirmed = window.confirm(
+    const confirmed = await confirmAdminAction(
       `Habilitar la actividad "${activityLabel}" para ${learnerName} (ficha ${ficha})?\n` +
       "Se desbloqueara y el aprendiz podra modificar/reenviar su entrega."
     );
@@ -1555,6 +1901,16 @@
       nextState.permiteEdicion = true;
       nextState.updatedAt = new Date().toISOString();
       localStorage.setItem(storageKey, JSON.stringify(nextState));
+      await patchGuideCloudState(usernameKey, guideFile, {
+        state: lockKeys.reduce((acc, key) => {
+          if (/-locked$/.test(key)) acc[key] = false;
+          return acc;
+        }, {
+          reabierta: true,
+          permiteEdicion: true,
+        }),
+        updatedBy: `admin-activity-unlock:${activity.id}`,
+      });
 
       // Registrar en el log especifico de habilitaciones
       window.adminHabilitacion?.recordUnlock({
@@ -1597,12 +1953,20 @@
 
   function openModal(title, subtitle, bodyHtml, exportData) {
     state.modalExport = exportData || null;
+    currentResponsesExport = state.modalExport;
     byId("admin-detail-title").textContent = title;
     byId("admin-detail-subtitle").textContent = subtitle || "";
     byId("admin-detail-body").innerHTML = bodyHtml || "";
     byId("admin-detail-export").hidden = !state.modalExport;
     byId("admin-detail-modal").hidden = false;
     document.body.classList.add("modal-open");
+  }
+
+  function exportCurrentResponsesToWord() {
+    const exportSelector = "data-export-responses-word";
+    if (!exportSelector) return;
+    if (!currentResponsesExport) return;
+    window.adminExport?.downloadWord(currentResponsesExport);
   }
 
   function closeModal() {
@@ -1660,7 +2024,7 @@
     `;
   }
 
-  async function handleResetGuide(button) {
+  async function handleResetGuideOriginal(button) {
     const usernameKey = button.dataset.resetUser;
     const fileName = button.dataset.resetGuide;
     const guideTitle = button.dataset.resetGuideTitle || fileName;
@@ -1682,8 +2046,8 @@
         setFeedback(result.message || "No se pudo reiniciar el progreso.", "error");
         return;
       }
-      recordAudit({
-        action: "progress-reset",
+      recordAdminAuditAction({
+        action: "guide-reset",
         target: usernameKey + " / " + fileName,
         detail: "Reset una guia: " + guideTitle,
       });
@@ -1724,8 +2088,8 @@
         setFeedback(result.message || "No se pudo reiniciar el progreso completo.", "error");
         return;
       }
-      recordAudit({
-        action: "progress-reset-all",
+      recordAdminAuditAction({
+        action: "all-progress-reset",
         target: usernameKey,
         detail: "Reset total del aprendiz: " + user.fullName,
       });
@@ -1761,26 +2125,51 @@
     `);
   }
 
-  function openResponses(usernameKey, fileName, activityId) {
+  async function openResponses(usernameKey, fileName, activityId) {
     const user = getUser(usernameKey);
     if (!user) return;
-    const summary = collectActivityResponses(user, fileName, activityId);
+    let summary = collectActivityResponses(user, fileName, activityId);
+    const config = getGuide6ResponseConfig(fileName);
+    if (config) {
+      config.pageFile = fileName;
+      openModal(
+        "Respuestas por actividad",
+        `${user.fullName} | Cargando...`,
+        '<p class="response-status">Consultando respuestas sincronizadas de Guia 6...</p>'
+      );
+      const snapshot = await loadGuide6Responses(usernameKey, config);
+      if (snapshot?.state) {
+        summary = collectActivityResponsesFromState(user, fileName, activityId, snapshot.state, {
+          updatedAt: snapshot.updatedAt,
+          updatedBy: snapshot.updatedBy,
+        });
+      } else {
+        summary = {
+          ...summary,
+          questions: [],
+          answeredCount: 0,
+          status: "sin-respuesta",
+        };
+      }
+    }
     const bodyHtml = buildResponsesView(summary);
     const exportData = buildExportableActivityDocument(summary);
     openModal(
       "Respuestas por actividad",
       `${user.fullName} | ${summary.activityLabel}`,
-      bodyHtml,
+      config && !summary.answeredCount && !stateHasAnswers(summary.delivery)
+        ? bodyHtml + '<p class="response-status">El aprendiz aun no tiene respuestas guardadas en la Guia 6 sincronizadas.</p>'
+        : bodyHtml,
       exportData
     );
   }
 
   function exportActivityResponse(usernameKey, fileName, activityId) {
     const user = getUser(usernameKey);
-    if (!user || !adminExport) return;
+    if (!user || !window.adminExport) return;
     const summary = collectActivityResponses(user, fileName, activityId);
     const exportData = buildExportableActivityDocument(summary);
-    adminExport.downloadWord(exportData, {
+    window.adminExport.downloadWord(exportData, {
       learnerName: user.fullName,
       title: `${summary.activityId}_${summary.status}`,
     });
@@ -1797,37 +2186,112 @@
       setFeedback(result.message || "No fue posible crear el aprendiz.", "error");
       return;
     }
-    recordAudit({ action: "student-create", target: result.user.usernameKey, detail: result.user.fullName });
+    recordAdminAuditAction({ action: "student-create", target: result.user.usernameKey, detail: result.user.fullName });
     form.reset();
     window.portalSaveStatus?.saved("Aprendiz creado");
     setFeedback("Aprendiz creado correctamente.", "success");
     await loadUsers();
   }
 
-  async function handleEditLearner(form) {
-    const usernameKey = form.dataset.user;
-    const data = Object.fromEntries(new FormData(form).entries());
-    const confirmed = await confirmAdminAction("Guardar cambios del aprendiz?");
-    if (!confirmed) return;
-    window.portalSaveStatus?.saving("Guardando cambios...");
-    const result = await auth.updateStudentAccount(usernameKey, data);
-    if (!result.ok) {
-      window.portalSaveStatus?.error(result.message || "Error al actualizar");
-      setFeedback(result.message || "No fue posible actualizar el aprendiz.", "error");
+  async function handleSaveActivityDeadline(button) {
+    if (!deadlineManager) {
+      setFeedback("El gestor de fechas no esta disponible.", "error");
       return;
     }
-    recordAudit({ action: "account-update", target: usernameKey, detail: data.fullName });
-    closeModal();
-    window.portalSaveStatus?.saved("Aprendiz actualizado");
-    setFeedback("Aprendiz actualizado.", "success");
-    await loadUsers();
+    const guide = button.dataset.saveActivityDeadline;
+    const activity = button.dataset.activityId;
+    const activityLabel = button.dataset.activityLabel || deadlineManager.getActivityLabel?.(guide, activity) || activity;
+    const input = document.querySelector(`[data-deadline-input="${CSS.escape(`${guide}::${activity}`)}"]`);
+    const dueAt = input?.value || "";
+    if (!guide || !activity || !dueAt) {
+      setFeedback("Selecciona una fecha valida para guardar.", "error");
+      return;
+    }
+    const confirmed = await confirmAdminAction(`Guardar fecha para ${activityLabel}?`);
+    if (!confirmed) return;
+    const session = auth.getCurrentSession?.();
+    await deadlineManager.savePolicy(guide, activity, dueAt, session?.usernameKey || "admin");
+    recordAdminAuditAction({ action: "deadline-save", target: `${guide}:${activity}`, detail: dueAt });
+    setFeedback("Fecha de entrega guardada.", "success");
+    renderAll();
   }
 
-  async function handlePasswordLearner(form) {
+  async function handleClearActivityDeadline(button) {
+    if (!deadlineManager) return;
+    const guide = button.dataset.clearActivityDeadline;
+    const activity = button.dataset.activityId;
+    const activityLabel = button.dataset.activityLabel || deadlineManager.getActivityLabel?.(guide, activity) || activity;
+    const confirmed = await confirmAdminAction(`Quitar fecha de ${activityLabel}?`);
+    if (!confirmed) return;
+    const session = auth.getCurrentSession?.();
+    await deadlineManager.clearPolicy(guide, activity, session?.usernameKey || "admin");
+    recordAdminAuditAction({ action: "deadline-clear", target: `${guide}:${activity}`, detail: "Fecha eliminada" });
+    setFeedback("Fecha eliminada.", "success");
+    renderAll();
+  }
+
+  async function handleGradeChange(select) {
+    const usernameKey = select.dataset.gradeUser || select.dataset.user || "";
+    const guideFamily = select.dataset.gradeFamily || "";
+    const activityId = select.dataset.gradeActivity || "";
+    const previousGrade = select.dataset.previousGrade || "";
+    const nextGrade = select.value || "";
+    const confirmed = await confirmAdminAction(`Guardar calificacion ${nextGrade || "sin nota"}?`);
+    if (!confirmed) {
+      select.value = previousGrade;
+      return;
+    }
+    const gradesManager = window.activityGradesManager;
+    gradesManager.setStudentActivityGrade(usernameKey, guideFamily, activityId, nextGrade);
+    select.dataset.previousGrade = nextGrade;
+    recordAdminAuditAction({ action: "grade-change", target: `${usernameKey}:${guideFamily}:${activityId}`, detail: nextGrade });
+    patchGuideState(usernameKey, guideFamily, { [`grade:${activityId}`]: nextGrade });
+  }
+
+  function patchGuideState(usernameKey, guideFamily, patch) {
+    if (!usernameKey || !guideFamily || !patch || typeof patch !== "object") return false;
+    const key = `admin_grade_patch_${usernameKey}_${guideFamily}`;
+    const current = readJson(localStorage.getItem(key), {});
+    localStorage.setItem(key, JSON.stringify({ ...current, ...patch, updatedAt: new Date().toISOString() }));
+    return true;
+  }
+
+  function renderGradesTab(users) {
+    const totalUsers = Array.isArray(users) ? users.length : 0;
+    return `
+      <section class="grades-import-box">
+        <h3 class="grades-import-title">Importar calificaciones</h3>
+        <p class="grades-import-copy">Carga un archivo Excel con los nombres de aprendices y calificaciones detectables.</p>
+        <div class="grades-import-actions">
+          <label class="btn secondary grades-import-button" for="grades-import-file">Seleccionar Excel</label>
+          <input class="grades-import-input" id="grades-import-file" type="file" accept=".xlsx,.xls">
+        </div>
+        <div class="grades-import-status" id="grades-import-status">${totalUsers} aprendices disponibles.</div>
+        <div class="grades-import-divider"></div>
+      </section>
+    `;
+  }
+
+  async function readGradesFromExcelFile(file) {
+    if (!window.adminGrades || !window.XLSX) {
+      throw new Error("Modulo de calificaciones no disponible.");
+    }
+    const buffer = await file.arrayBuffer();
+    const wb = window.XLSX.read(buffer, { type: "array" });
+    return window.adminGrades.parseWorkbook(wb);
+  }
+
+  function renderUsers() {
+    renderLearners();
+  }
+
+  async function handlePasswordSubmit(form) {
     const usernameKey = form.dataset.user;
     const password = form.querySelector("input[name='password']")?.value || "";
     const confirmed = await confirmAdminAction("Cambiar la contrasena del aprendiz?");
-    if (!confirmed) return;
+    if (!confirmed) {
+      return;
+    }
     window.portalSaveStatus?.saving("Actualizando contrasena...");
     const result = await auth.updateStudentPassword(usernameKey, password);
     if (!result.ok) {
@@ -1835,10 +2299,35 @@
       setFeedback(result.message || "No fue posible actualizar la contrasena.", "error");
       return;
     }
-    recordAudit({ action: "password-change", target: usernameKey, detail: "Cambio desde panel admin" });
+    recordAdminAuditAction({ action: "password-change", target: usernameKey, detail: "Cambio desde panel admin" });
     closeModal();
     window.portalSaveStatus?.saved("Contrasena actualizada");
     setFeedback("Contrasena actualizada.", "success");
+  }
+
+  async function handleAccountSubmit(form) {
+    const usernameKey = form.dataset.user;
+    const data = Object.fromEntries(new FormData(form).entries());
+    const confirmed = await confirmAdminAction("Guardar cambios del aprendiz?");
+    if (!confirmed) {
+      return;
+    }
+    window.portalSaveStatus?.saving("Guardando cambios...");
+    const result = await auth.updateStudentAccount(usernameKey, data);
+    if (!result.ok) {
+      window.portalSaveStatus?.error(result.message || "Error al actualizar");
+      setFeedback(result.message || "No fue posible actualizar el aprendiz.", "error");
+      return;
+    }
+    recordAdminAuditAction({ action: "account-update", target: usernameKey, detail: data.fullName });
+    closeModal();
+    window.portalSaveStatus?.saved("Aprendiz actualizado");
+    setFeedback("Aprendiz actualizado.", "success");
+    await loadUsers();
+  }
+
+  async function handleResetGuide(button) {
+    return handleResetGuideOriginal(button);
   }
 
   async function handleToggleLearner(button) {
@@ -1854,7 +2343,7 @@
       setFeedback(result.message || "No fue posible cambiar el estado.", "error");
       return;
     }
-    recordAudit({ action: "student-status", target: usernameKey, detail: nextActive ? "active" : "inactive" });
+    recordAdminAuditAction({ action: "student-status", target: usernameKey, detail: nextActive ? "active" : "inactive" });
     window.portalSaveStatus?.saved(nextActive ? "Aprendiz activado" : "Aprendiz desactivado");
     setFeedback("Estado actualizado.", "success");
     await loadUsers();
@@ -1872,7 +2361,7 @@
     const session = auth.getCurrentSession?.();
     window.portalSaveStatus?.saving("Guardando fecha...");
     await deadlineManager.savePolicy(data.guide, data.activity, data.dueAt, session?.usernameKey || "admin");
-    recordAudit({ action: "deadline-save", target: `${data.guide}:${data.activity}`, detail: data.dueAt });
+    recordAdminAuditAction({ action: "deadline-save", target: `${data.guide}:${data.activity}`, detail: data.dueAt });
     window.portalSaveStatus?.saved("Fecha guardada");
     setFeedback("Fecha de entrega guardada.", "success");
     renderAll();
@@ -1889,7 +2378,7 @@
     if (!confirmed) return;
     const session = auth.getCurrentSession?.();
     await deadlineManager.clearPolicy(guide, activity, session?.usernameKey || "admin");
-    recordAudit({ action: "deadline-clear", target: `${guide}:${activity}`, detail: "Fecha eliminada" });
+    recordAdminAuditAction({ action: "deadline-clear", target: `${guide}:${activity}`, detail: "Fecha eliminada" });
     setFeedback("Fecha eliminada.", "success");
     renderAll();
   }
@@ -2083,16 +2572,40 @@
     byId("reports-download-csv")?.addEventListener("click", () => downloadConsolidatedReport("csv"));
     byId("reports-download-json")?.addEventListener("click", () => downloadConsolidatedReport("json"));
     byId("admin-detail-export")?.addEventListener("click", () => {
-      if (adminExport && state.modalExport) adminExport.downloadWord(state.modalExport);
+      exportCurrentResponsesToWord();
     });
+    byId("guide2-responses-export")?.addEventListener("click", () => {
+      exportCurrentResponsesToWord();
+    });
+    const fileInput = byId("grades-import-file");
+    if (fileInput) {
+      fileInput.addEventListener("change", async (e) => {
+      const file = e.target.files?.[0];
+      const adminGrades = window.adminGrades;
+      if (!adminGrades) return;
+      const validation = adminGrades.validateExcelFile(file);
+      if (!validation.ok) {
+        setFeedback(validation.message, "error");
+        return;
+      }
+      const parsed = await readGradesFromExcelFile(file);
+      const confirmed = await confirmAdminAction(`Importar calificaciones para ${parsed.students.length} aprendices?`);
+      if (!confirmed) return;
+      const allUsers = state.users || [];
+      const result = adminGrades.applyParsedGrades(parsed.guideFamily, parsed.students, allUsers, window.activityGradesManager);
+      recordAdminAuditAction({ action: "grades-import", target: parsed.guideFamily, detail: `${result.saved} registros` });
+      setFeedback(`Calificaciones importadas: ${result.saved}.`, "success");
+      renderAll();
+      });
+    }
     document.addEventListener("submit", async (event) => {
       if (event.target?.id === "edit-learner-form") {
         event.preventDefault();
-        await handleEditLearner(event.target);
+        await handleAccountSubmit(event.target);
       }
       if (event.target?.id === "password-learner-form") {
         event.preventDefault();
-        await handlePasswordLearner(event.target);
+        await handlePasswordSubmit(event.target);
       }
     });
     document.addEventListener("click", async (event) => {
@@ -2117,6 +2630,16 @@
       const toggleLearner = event.target.closest("[data-toggle-learner]");
       if (toggleLearner) {
         await handleToggleLearner(toggleLearner);
+        return;
+      }
+      const saveActivityDeadline = event.target.closest("[data-save-activity-deadline]");
+      if (saveActivityDeadline) {
+        await handleSaveActivityDeadline(saveActivityDeadline);
+        return;
+      }
+      const clearActivityDeadline = event.target.closest("[data-clear-activity-deadline]");
+      if (clearActivityDeadline) {
+        await handleClearActivityDeadline(clearActivityDeadline);
         return;
       }
       const responses = event.target.closest("[data-view-responses]");
