@@ -16,8 +16,8 @@ function expectNotIncludes(source, snippet, message) {
   assert(!source.includes(snippet), `${message}\nNo esperado: ${snippet}`);
 }
 
-const page10A = read("santa-barbara-10a-guia-02-redes-rap01.html");
-const page10B = read("santa-barbara-10b-guia-02-redes-rap01.html");
+const page10A = read(path.join("pages", "guias", "santa-barbara-10a-guia-02-redes-rap01.html"));
+const page10B = read(path.join("pages", "guias", "santa-barbara-10b-guia-02-redes-rap01.html"));
 const guideJs = read(path.join("js", "script_guia_redes.js"));
 
 for (const [label, page] of [
@@ -26,13 +26,18 @@ for (const [label, page] of [
 ]) {
   expectIncludes(
     page,
-    "script-src 'self' 'unsafe-inline' blob:;",
-    `La guia ${label} debe mantener CSP que solo permite scripts locales o blob.`
+    "script-src 'self' 'unsafe-inline' blob:",
+    `La guia ${label} debe mantener CSP compatible con scripts locales o blob.`
   );
   expectIncludes(
     page,
-    'js/script_guia_redes.js?v=20260421_2',
-    `La guia ${label} debe apuntar a la version nueva de script_guia_redes.js para evitar cache antiguo.`
+    "https://www.gstatic.com",
+    `La guia ${label} debe permitir Firebase desde gstatic en CSP.`
+  );
+  expectIncludes(
+    page,
+    'src="js/script_guia_redes.js?v=',
+    `La guia ${label} debe apuntar a script_guia_redes.js versionado para evitar cache antiguo.`
   );
 }
 

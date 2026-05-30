@@ -149,12 +149,73 @@ service cloud.firestore {
     }
 
     // ───── Reservas de tutoria ─────────────────────────────────────────────
-    // Lectura y creacion para cualquier sesion autenticada (estudiante reserva
-    // su propia fecha). Modificacion y borrado solo admin.
+    // Lectura para cualquier sesion autenticada. El aprendiz solo puede crear,
+    // editar o borrar la reserva cuyo usernameKey coincide con su sesion.
     match /sena_portal_tutoring_bookings/{bookingId} {
+      function tutoringDocId(data) {
+        return data.date + "__" + data.ficha + "__" + data.usernameKey;
+      }
+
+      function isTutoringOwnerOfRequest() {
+        return signedIn()
+          && request.resource.data.usernameKey is string
+          && request.resource.data.date is string
+          && request.resource.data.ficha is string
+          && isOwnerByUsernameKey(request.resource.data.usernameKey)
+          && tutoringDocId(request.resource.data) == bookingId;
+      }
+
+      function isTutoringOwnerOfResource() {
+        return signedIn()
+          && resource.data.usernameKey is string
+          && isOwnerByUsernameKey(resource.data.usernameKey);
+      }
+
+      function isValidTutoringBooking() {
+        return request.resource.data.keys().hasOnly([
+          "date",
+          "ficha",
+          "grupo",
+          "inst",
+          "startTime",
+          "endTime",
+          "durationMinutes",
+          "usernameKey",
+          "studentName",
+          "topic",
+          "createdAt",
+          "updatedAt"
+        ])
+          && request.resource.data.date is string
+          && request.resource.data.date.matches("^20[0-9]{2}-[0-9]{2}-[0-9]{2}$")
+          && request.resource.data.ficha is string
+          && request.resource.data.ficha.matches("^[0-9]{6,8}$")
+          && request.resource.data.startTime in [
+            "14:00", "14:30", "15:00", "15:30",
+            "16:00", "16:30", "17:00", "17:30"
+          ]
+          && request.resource.data.endTime in [
+            "14:30", "15:00", "15:30", "16:00",
+            "16:30", "17:00", "17:30", "18:00"
+          ]
+          && request.resource.data.durationMinutes in [30, 60]
+          && request.resource.data.usernameKey is string
+          && request.resource.data.usernameKey.matches("^[a-z0-9._-]{3,30}$")
+          && request.resource.data.studentName is string
+          && request.resource.data.studentName.size() <= 120
+          && (!("topic" in request.resource.data)
+            || (request.resource.data.topic is string
+              && request.resource.data.topic.size() <= 120));
+      }
+
       allow read: if signedIn();
-      allow create: if signedIn();
-      allow update, delete: if isAdmin();
+      allow create: if isValidTutoringBooking()
+        && (isAdmin() || isTutoringOwnerOfRequest());
+      allow update: if isAdmin()
+        || (isValidTutoringBooking()
+          && isTutoringOwnerOfResource()
+          && isTutoringOwnerOfRequest());
+      allow delete: if isAdmin() || isTutoringOwnerOfResource();
     }
 
     // ───── Equipos de trabajo (grupos colaborativos) ───────────────────────

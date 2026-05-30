@@ -350,6 +350,8 @@ test("admin panel exposes a local audit tab for sensitive actions", () => {
   assert.doesNotMatch(adminScript, /window\.adminAudit\.getEntries/);
   assert.match(adminScript, /window\.adminAudit\.renderAuditTab/);
   assert.match(adminScript, /tab === "auditoria"/);
+  assert.match(adminScript, /setActiveModule\(button\.dataset\.adminModule,\s*\{ tab: button\.dataset\.tab \|\| "" \}\)/);
+  assert.match(adminScript, /Auditoria local/);
   assert.match(css, /\.audit-log/);
   assert.match(css, /\.audit-entry/);
 });

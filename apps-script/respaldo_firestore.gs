@@ -24,14 +24,13 @@
  *
  * ─── Setup ────────────────────────────────────────────────────────────────
  *   1. Crea carpeta Drive de respaldo, copia su ID.
- *   2. Pega ID en BACKUP_ROOT_FOLDER_ID y la apiKey en FIREBASE_API_KEY.
+ *   2. En Project Settings -> Script properties configura:
+ *      - BACKUP_ROOT_FOLDER_ID
+ *      - FIREBASE_API_KEY
  *   3. Deploy → New deployment → Web app → Execute as: Me / Access: Anyone.
  *   4. Pega la URL en js/project_integrations.js como `respaldoFirestoreUrl`.
  * ─────────────────────────────────────────────────────────────────────────
  */
-
-const BACKUP_ROOT_FOLDER_ID = "1HNyk1I-AjIU0MQQ5KX6nBmXq9LJe0pGe";
-const FIREBASE_API_KEY = "AIzaSyC0zKUJGVcT0aYcujZyrRBtsbVo1VjBkAA";
 
 function doPost(e) {
   try {
@@ -46,7 +45,7 @@ function doPost(e) {
     if (!userInfo.ok) {
       return jsonResponse({ ok: false, message: "Token invalido o expirado." });
     }
-    if (!BACKUP_ROOT_FOLDER_ID || BACKUP_ROOT_FOLDER_ID.indexOf("PEGAR_AQUI") === 0) {
+    if (!getBackupRootFolderId()) {
       return jsonResponse({ ok: false, message: "BACKUP_ROOT_FOLDER_ID no configurado." });
     }
 
@@ -245,21 +244,35 @@ function validatePathParams(payload) {
 }
 
 function ensureCollectionFolder(collection) {
-  const root = DriveApp.getFolderById(BACKUP_ROOT_FOLDER_ID);
+  const root = DriveApp.getFolderById(getBackupRootFolderId());
   return ensureFolder(root, collection);
 }
 
 function getCollectionFolderIfExists(collection) {
-  const root = DriveApp.getFolderById(BACKUP_ROOT_FOLDER_ID);
+  const root = DriveApp.getFolderById(getBackupRootFolderId());
   const it = root.getFoldersByName(collection);
   return it.hasNext() ? it.next() : null;
 }
 
+function getScriptProperty(name) {
+  return String(PropertiesService.getScriptProperties().getProperty(name) || "").trim();
+}
+
+function getBackupRootFolderId() {
+  return getScriptProperty("BACKUP_ROOT_FOLDER_ID");
+}
+
+function getFirebaseApiKey() {
+  return getScriptProperty("FIREBASE_API_KEY");
+}
+
 function verifyFirebaseIdToken(idToken) {
   try {
+    const apiKey = getFirebaseApiKey();
+    if (!apiKey) return { ok: false };
     const url =
       "https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=" +
-      encodeURIComponent(FIREBASE_API_KEY);
+      encodeURIComponent(apiKey);
     const response = UrlFetchApp.fetch(url, {
       method: "post",
       contentType: "application/json",

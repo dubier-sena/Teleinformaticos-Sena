@@ -4,6 +4,7 @@ const path = require("path");
 const root = process.cwd();
 const script = fs.readFileSync(path.join(root, "js", "script_guia2.js"), "utf8");
 const css = fs.readFileSync(path.join(root, "css", "guia_template.css"), "utf8");
+const partial = fs.readFileSync(path.join(root, "partials", "guia-02-herramientas-content.html"), "utf8");
 
 let failed = false;
 
@@ -37,13 +38,7 @@ function assertIncludes(content, marker, label) {
   'id="wordSearchFullscreen"',
   "Pantalla completa",
 ].forEach((marker) => {
-  for (const page of [
-    "grupo-10a-guia-02-herramientas-informaticas-digitales.html",
-    "grupo-10b-guia-02-herramientas-informaticas-digitales.html",
-  ]) {
-    const html = fs.readFileSync(path.join(root, page), "utf8");
-    assertIncludes(html, marker, `boton pantalla completa en ${page}`);
-  }
+  assertIncludes(partial, marker, "boton pantalla completa en el partial de Guia 2");
 });
 
 [
