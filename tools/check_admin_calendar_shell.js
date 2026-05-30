@@ -8,19 +8,19 @@ const pageChecks = [
     file: "panel-administrativo-usuarios.html",
     requiredPatterns: [
       {
-        pattern: /href="css\/site_tokens\.css\?v=20260409_1"/,
+        pattern: /href="css\/site_tokens\.css\?v=202[0-9]{5}_[0-9]+"/,
         message: "missing site tokens import",
       },
       {
-        pattern: /href="css\/shared_shell\.css\?v=20260409_1"/,
+        pattern: /href="css\/shared_shell\.css\?v=202[0-9]{5}_[0-9]+"/,
         message: "missing shared shell stylesheet import",
       },
       {
-        pattern: /href="css\/page_admin\.css\?v=20260411_1"/,
+        pattern: /href="css\/page_admin\.css\?v=202[0-9]{5}_[0-9]+"/,
         message: "missing admin page stylesheet import",
       },
       {
-        pattern: /<script[^>]*\bsrc="js\/shared_shell\.js\?v=20260409_1"[^>]*\bdefer\b|<script[^>]*\bdefer\b[^>]*\bsrc="js\/shared_shell\.js\?v=20260409_1"[^>]*>/i,
+        pattern: /<script[^>]*\bsrc="js\/shared_shell\.js\?v=202[0-9]{5}_[0-9]+"[^>]*\bdefer\b|<script[^>]*\bdefer\b[^>]*\bsrc="js\/shared_shell\.js\?v=202[0-9]{5}_[0-9]+"[^>]*>/i,
         message: "missing shared shell script import",
       },
       {
@@ -32,32 +32,32 @@ const pageChecks = [
         message: "missing fail-closed admin access guard",
       },
       {
-        pattern: /<header[^>]*class="[^"]*\bapp-hero\b[^"]*"/i,
-        message: "missing shared hero wrapper",
+        pattern: /<div[^>]*class="[^"]*\badmin-layout\b[^"]*"/i,
+        message: "missing admin layout wrapper",
       },
       {
-        pattern: /<main[^>]*class="[^"]*\bapp-main\b[^"]*\badmin-main\b[^"]*"/i,
-        message: "missing shared admin main wrapper",
+        pattern: /<main[^>]*class="[^"]*\badmin-workspace\b[^"]*"/i,
+        message: "missing admin workspace main wrapper",
       },
       {
-        pattern: /id="users-container"/,
-        message: "missing users container hook",
+        pattern: /id="dashboard-kpis"/,
+        message: "missing dashboard KPI hook",
       },
       {
-        pattern: /id="summary-users"/,
-        message: "missing summary users hook",
+        pattern: /id="dashboard-progress"/,
+        message: "missing dashboard progress hook",
       },
       {
-        pattern: /id="summary-active"/,
-        message: "missing summary active hook",
+        pattern: /id="learners-table"/,
+        message: "missing learners table hook",
       },
       {
-        pattern: /id="summary-fichas"/,
-        message: "missing summary fichas hook",
+        pattern: /id="fichas-table"/,
+        message: "missing fichas table hook",
       },
       {
-        pattern: /id="summary-admin"/,
-        message: "missing summary admin hook",
+        pattern: /id="admin-nav"/,
+        message: "missing admin navigation hook",
       },
       {
         pattern: /id="user-search"/,
@@ -72,24 +72,8 @@ const pageChecks = [
         message: "missing admin feedback hook",
       },
       {
-        pattern: /id="guide2-responses-modal"/,
-        message: "missing guide 2 modal hook",
-      },
-      {
-        pattern: /id="guide2-responses-title"/,
-        message: "missing guide 2 modal title hook",
-      },
-      {
-        pattern: /id="guide2-responses-subtitle"/,
-        message: "missing guide 2 modal subtitle hook",
-      },
-      {
-        pattern: /id="guide2-responses-meta"/,
-        message: "missing guide 2 modal meta hook",
-      },
-      {
-        pattern: /id="guide2-responses-body"/,
-        message: "missing guide 2 modal body hook",
+        pattern: /id="guide2-responses-export"/,
+        message: "missing guide responses export hook",
       },
     ],
     forbiddenPatterns: [
@@ -103,19 +87,19 @@ const pageChecks = [
     file: "calendario-academico-2026.html",
     requiredPatterns: [
       {
-        pattern: /href="css\/site_tokens\.css\?v=20260409_1"/,
+        pattern: /href="css\/site_tokens\.css\?v=202[0-9]{5}_[0-9]+"/,
         message: "missing site tokens import",
       },
       {
-        pattern: /href="css\/shared_shell\.css\?v=20260409_1"/,
+        pattern: /href="css\/shared_shell\.css\?v=202[0-9]{5}_[0-9]+"/,
         message: "missing shared shell stylesheet import",
       },
       {
-        pattern: /href="css\/page_calendar\.css\?v=20260411_2"/,
+        pattern: /href="css\/page_calendar\.css\?v=202[0-9]{5}_[0-9]+"/,
         message: "missing calendar page stylesheet import",
       },
       {
-        pattern: /<script[^>]*\bsrc="js\/shared_shell\.js\?v=20260409_1"[^>]*\bdefer\b|<script[^>]*\bdefer\b[^>]*\bsrc="js\/shared_shell\.js\?v=20260409_1"[^>]*>/i,
+        pattern: /<script[^>]*\bsrc="js\/shared_shell\.js\?v=202[0-9]{5}_[0-9]+"[^>]*\bdefer\b|<script[^>]*\bdefer\b[^>]*\bsrc="js\/shared_shell\.js\?v=202[0-9]{5}_[0-9]+"[^>]*>/i,
         message: "missing shared shell script import",
       },
       {

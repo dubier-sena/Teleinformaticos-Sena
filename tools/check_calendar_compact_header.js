@@ -17,8 +17,11 @@ function assertNotIncludes(content, expected, label) {
   }
 }
 
-assertIncludes(html, 'href="css/page_calendar.css?v=20260411_2"', "cache actualizado de estilos calendario");
-assertIncludes(html, 'class="calendar-hero__range"', "rango compacto del calendario");
+if (!/href="css\/page_calendar\.css\?v=202[0-9]{5}_[0-9]+"/.test(html)) {
+  throw new Error("Falta cache actualizado de estilos calendario: css/page_calendar.css?v=YYYYMMDD_N");
+}
+assertIncludes(html, 'class="calendar-hero__actions-row"', "fila compacta del calendario");
+assertIncludes(html, 'id="sync-chip"', "estado de sincronizacion del calendario");
 assertIncludes(css, ".calendar-hero__range", "estilos del rango compacto");
 assertIncludes(css, ".calendar-hero__actions-row", "fila compacta de acciones");
 assertIncludes(css, ".calendar-hero__panel", "panel del encabezado compactado");

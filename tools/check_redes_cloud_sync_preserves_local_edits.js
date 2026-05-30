@@ -4,10 +4,7 @@ const assert = require("assert");
 
 const root = path.resolve(__dirname, "..");
 const guideJs = fs.readFileSync(path.join(root, "js", "script_guia_redes.js"), "utf8");
-const page10B = fs.readFileSync(
-  path.join(root, "santa-barbara-10b-guia-02-redes-rap01.html"),
-  "utf8"
-);
+const content = fs.readFileSync(path.join(root, "partials", "guia-redes-rap01-content.html"), "utf8");
 
 function expectIncludes(snippet, message) {
   assert(guideJs.includes(snippet), `${message}\nEsperado: ${snippet}`);
@@ -58,7 +55,7 @@ expectNotIncludes(
   "La guia de redes no debe mezclar ciegamente datos remotos sobre el estado local durante el refresco."
 );
 assert(
-  (page10B.match(/data-store="/g) || []).length >= 100,
+  (content.match(/data-store="/g) || []).length >= 100,
   "La prueba debe ejecutarse sobre una guia con muchos campos editables para validar el bug a nivel general."
 );
 

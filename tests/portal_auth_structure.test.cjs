@@ -93,6 +93,17 @@ test("portal auth expires old local sessions and clears them", () => {
   assert.equal(localStorage.getItem("sena_portal_session_v1"), null);
 });
 
+test("local admin preview creates an admin session for admin modules", () => {
+  const { auth } = loadPortalAuth();
+
+  assert.equal(auth.getCurrentSession(), null);
+  assert.equal(auth.requireAdminAccess({ redirect: false }), true);
+
+  const session = auth.getCurrentSession();
+  assert.equal(session?.role, "admin");
+  assert.equal(session?.token, "local-preview");
+});
+
 test("portal auth rejects short passwords for registration and admin resets", async () => {
   const { auth, localStorage } = loadPortalAuth();
   const shortPassword = Array.from({ length: 5 }, (_item, index) => String(index)).join("");

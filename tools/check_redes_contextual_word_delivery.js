@@ -15,8 +15,9 @@ function expectIncludes(source, snippet, message) {
   );
 }
 
-const page10A = read("santa-barbara-10a-guia-02-redes-rap01.html");
-const page10B = read("santa-barbara-10b-guia-02-redes-rap01.html");
+const page10A = read(path.join("pages", "guias", "santa-barbara-10a-guia-02-redes-rap01.html"));
+const page10B = read(path.join("pages", "guias", "santa-barbara-10b-guia-02-redes-rap01.html"));
+const content = read(path.join("partials", "guia-redes-rap01-content.html"));
 const guideJs = read(path.join("js", "script_guia_redes.js"));
 const exportStart = guideJs.indexOf("window.exportarWordContextualizacion = async function");
 const exportEnd = guideJs.indexOf("window.enviarSocializacion311 = async function");
@@ -26,6 +27,17 @@ const exportChunk = guideJs.slice(exportStart, exportEnd);
 for (const [label, page] of [
   ["10A", page10A],
   ["10B", page10B],
+]) {
+  expectIncludes(
+    page,
+    'src="js/script_guia_redes.js?v=',
+    `La guia ${label} debe cargar el script compartido de redes.`
+  );
+}
+
+for (const [label, page] of [
+  ["10A", content],
+  ["10B", content],
 ]) {
   expectIncludes(
     page,

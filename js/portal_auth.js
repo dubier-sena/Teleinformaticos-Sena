@@ -1127,7 +1127,14 @@
   }
 
   function shouldBypassAccessGuardsForLocalPreview() {
-    return /^file:$/i.test(String(window.location.protocol || ""));
+    const protocol = String(window.location.protocol || "").toLowerCase();
+    const hostname = String(window.location.hostname || "").toLowerCase();
+    return (
+      protocol === "file:" ||
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "::1"
+    );
   }
 
   function requireFileAccess(fileName, options) {
@@ -1151,11 +1158,16 @@
   }
 
   function requireAdminAccess(options) {
-    if (shouldBypassAccessGuardsForLocalPreview()) {
+    if (isAdminSession()) {
       return true;
     }
 
-    if (isAdminSession()) {
+    if (shouldBypassAccessGuardsForLocalPreview()) {
+      persistSession({
+        role: "admin",
+        token: "local-preview",
+        loggedAt: new Date().toISOString(),
+      });
       return true;
     }
 
@@ -1905,7 +1917,14 @@ window.portalAuth = {
   }
 
   function shouldBypassAccessGuardsForLocalPreview() {
-    return /^file:$/i.test(String(window.location.protocol || ""));
+    const protocol = String(window.location.protocol || "").toLowerCase();
+    const hostname = String(window.location.hostname || "").toLowerCase();
+    return (
+      protocol === "file:" ||
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "::1"
+    );
   }
 
   function getStudentScope(usernameKey) {
@@ -2493,11 +2512,16 @@ window.portalAuth = {
   }
 
   function requireAdminAccessPatched(options) {
-    if (shouldBypassAccessGuardsForLocalPreview()) {
+    if (isAdminSessionPatched()) {
       return true;
     }
 
-    if (isAdminSessionPatched()) {
+    if (shouldBypassAccessGuardsForLocalPreview()) {
+      persistSessionRecord({
+        role: "admin",
+        token: "local-preview",
+        loggedAt: new Date().toISOString(),
+      });
       return true;
     }
 
