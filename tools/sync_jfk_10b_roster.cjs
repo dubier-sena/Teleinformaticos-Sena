@@ -6,11 +6,22 @@ const https = require("https");
 const path = require("path");
 
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || "sena-portal";
-const API_KEY = process.env.FIREBASE_API_KEY || "AIzaSyC0zKUJGVcT0aYcujZyrRBtsbVo1VjBkAA";
 const AUTH_TOKEN = process.env.FIREBASE_AUTH_TOKEN || "";
 const COLLECTION = "sena_portal_users";
 const FUENTE = "Listado oficial de fichas SENA";
 const BASE_URL = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents`;
+
+function requireEnv(name) {
+  const value = String(process.env[name] || "").trim();
+  if (!value) {
+    throw new Error(`Falta configurar ${name} en el entorno.`);
+  }
+  return value;
+}
+
+function firebaseApiKey() {
+  return requireEnv("FIREBASE_API_KEY");
+}
 
 const FICHA_META = {
   "3441939": { inst: "Institucion Educativa Jhon F. Kennedy", grupo: "10A", grado: "10" },
@@ -521,7 +532,7 @@ function requestJson(method, url, body) {
 }
 
 async function queryUsersByFicha(ficha) {
-  const url = `${BASE_URL}:runQuery?key=${API_KEY}`;
+  const url = `${BASE_URL}:runQuery?key=${firebaseApiKey()}`;
   const body = {
     structuredQuery: {
       from: [{ collectionId: COLLECTION }],
@@ -550,14 +561,14 @@ async function listUsersForOfficialFichas() {
 async function patchFields(docId, fields) {
   const fieldNames = Object.keys(fields);
   const mask = fieldNames.map((name) => `updateMask.fieldPaths=${encodeURIComponent(name)}`).join("&");
-  const url = `${BASE_URL}/${COLLECTION}/${encodeURIComponent(docId)}?key=${API_KEY}&${mask}`;
+  const url = `${BASE_URL}/${COLLECTION}/${encodeURIComponent(docId)}?key=${firebaseApiKey()}&${mask}`;
   const body = { fields: {} };
   fieldNames.forEach((name) => { body.fields[name] = fsValue(fields[name]); });
   await requestJson("PATCH", url, body);
 }
 
 async function createDoc(docId, fields) {
-  const url = `${BASE_URL}/${COLLECTION}/${encodeURIComponent(docId)}?key=${API_KEY}`;
+  const url = `${BASE_URL}/${COLLECTION}/${encodeURIComponent(docId)}?key=${firebaseApiKey()}`;
   const body = { fields: {} };
   Object.keys(fields).forEach((name) => { body.fields[name] = fsValue(fields[name]); });
   await requestJson("PATCH", url, body);

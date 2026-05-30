@@ -12,14 +12,26 @@ function expectIncludes(source, snippet, message) {
   assert(source.includes(snippet), `${message}\nEsperado: ${snippet}`);
 }
 
-const page10A = read("santa-barbara-10a-guia-02-redes-rap01.html");
-const page10B = read("santa-barbara-10b-guia-02-redes-rap01.html");
+const page10A = read(path.join("pages", "guias", "santa-barbara-10a-guia-02-redes-rap01.html"));
+const page10B = read(path.join("pages", "guias", "santa-barbara-10b-guia-02-redes-rap01.html"));
+const content = read(path.join("partials", "guia-redes-rap01-content.html"));
 const sharedDelivery = read(path.join("js", "shared_apps_script_delivery.js"));
 const appsScript = read(path.join("apps-script", "entregas_actividades.gs"));
 
 for (const [label, page] of [
   ["10A", page10A],
   ["10B", page10B],
+]) {
+  expectIncludes(
+    page,
+    'src="js/script_guia_redes.js?v=',
+    `La guia ${label} debe cargar el script compartido de redes.`
+  );
+}
+
+for (const [label, page] of [
+  ["10A", content],
+  ["10B", content],
 ]) {
   expectIncludes(
     page,

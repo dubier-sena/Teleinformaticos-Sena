@@ -1590,6 +1590,12 @@
       progress: progressForUser(user),
     }));
     renderAll();
+    if (!state.users.length) {
+      setFeedback(
+        "No hay aprendices cargados en este navegador. Inicia sesion admin real, configura Firebase o crea/importa aprendices para ver respuestas, entregas y reportes completos.",
+        "info"
+      );
+    }
   }
 
   // ── Backfill Firestore → Drive ──────────────────────────────────────────
@@ -1654,13 +1660,14 @@
     }
   }
 
-  function setActiveModule(moduleName) {
-    const tab = moduleName === "configuracion" ? "auditoria" : moduleName;
+  function setActiveModule(moduleName, options = {}) {
+    const tab = options.tab || "";
     if (!MODULE_TITLES[moduleName]) return;
     state.activeModule = moduleName;
-    byId("admin-page-title").textContent = MODULE_TITLES[moduleName];
+    byId("admin-page-title").textContent = tab === "auditoria" ? "Auditoria local" : MODULE_TITLES[moduleName];
     document.querySelectorAll("[data-admin-module]").forEach((button) => {
-      button.classList.toggle("is-active", button.dataset.adminModule === moduleName);
+      const buttonTab = button.dataset.tab || "";
+      button.classList.toggle("is-active", button.dataset.adminModule === moduleName && buttonTab === tab);
     });
     document.querySelectorAll("[data-admin-panel]").forEach((panel) => {
       panel.hidden = panel.dataset.adminPanel !== moduleName;
@@ -1676,6 +1683,9 @@
     }
     if (tab === "auditoria") {
       renderAuditPanel();
+      window.requestAnimationFrame(() => {
+        byId("audit-container")?.scrollIntoView({ block: "start", behavior: "smooth" });
+      });
     }
   }
 
@@ -2479,7 +2489,9 @@
 
   function bindEvents() {
     document.querySelectorAll("[data-admin-module]").forEach((button) => {
-      button.addEventListener("click", () => setActiveModule(button.dataset.adminModule));
+      button.addEventListener("click", () =>
+        setActiveModule(button.dataset.adminModule, { tab: button.dataset.tab || "" })
+      );
     });
     document.querySelectorAll("[data-jump-module]").forEach((button) => {
       button.addEventListener("click", () => setActiveModule(button.dataset.jumpModule));
