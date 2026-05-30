@@ -28,6 +28,18 @@ function getConfiguredDriveLinkRedes(key) {
 }
 const DRIVE_LINK_REFLEXION_311 = getConfiguredDriveLinkRedes("redes:reflexion-3.1.1");
 
+const WORD_INSTITUTIONAL_HEADER_FIELDS_REDES = [
+  "sena-logo.png",
+  "Sistemas Teleinformáticos",
+  "Competencia",
+  "Resultado de aprendizaje",
+  "Nombre completo del aprendiz",
+  "Fecha de elaboración",
+  "Número de ficha",
+  "Grado",
+  "Institucion",
+];
+
 // ---------------------------------------------------------------------------
 // Evidence rows
 // ---------------------------------------------------------------------------

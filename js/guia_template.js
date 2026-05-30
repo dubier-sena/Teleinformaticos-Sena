@@ -808,7 +808,7 @@
       if (existing && existing.tagName === "A") return existing;
       const anchor = document.createElement("a");
       anchor.id = id;
-      anchor.href = "calendario-aprendiz.html";
+      anchor.href = "pages/auxiliares/calendario-aprendiz.html";
       anchor.setAttribute("aria-label", "Abrir mi calendario de clases");
       if (existing && existing.parentNode) {
         existing.parentNode.replaceChild(anchor, existing);

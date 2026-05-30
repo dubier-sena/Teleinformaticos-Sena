@@ -167,9 +167,9 @@ test("admin response modal can export visible answers to Word", () => {
   assert.doesNotMatch(adminScript, /function sanitizeFileName/);
   assert.match(exportScript, /application\/msword/);
   assert.match(exportScript, /Servicio Nacional de Aprendizaje - SENA/);
-  assert.match(exportScript, /Sistemas Teleinformaticos/);
+  assert.match(exportScript, /Sistemas Teleinformáticos/);
   assert.match(exportScript, /Competencia/);
-  assert.match(exportScript, /Resultado de Aprendizaje/);
+  assert.match(exportScript, /Resultado de aprendizaje/);
   assert.match(adminScript, /data-export-responses-word/);
 });
 
