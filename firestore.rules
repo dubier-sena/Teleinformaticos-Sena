@@ -26,6 +26,14 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/sena_portal_roles/$(request.auth.uid)).data.role == "admin";
     }
 
+    // Devuelve la ficha del aprendiz solicitante leyendo el indice por uid
+    // (sena_portal_user_index/{uid}). Se usa en la regla `list` de
+    // sena_portal_users para limitar la consulta a la misma ficha sin tener
+    // que parsear el email (que puede venir versionado: dubier.v2@...).
+    function requesterFicha() {
+      return get(/databases/$(database)/documents/sena_portal_user_index/$(request.auth.uid)).data.ficha;
+    }
+
     // ───── Roles administrativos ───────────────────────────────────────────
     // Cualquier usuario autenticado puede leer SOLO su propio doc (para que
     // el cliente sepa si es admin tras login).
@@ -52,7 +60,15 @@ service cloud.firestore {
     // companeros de la misma ficha (p. ej. Actividad 10 de Guia 2).
     // Escritura: solo admin o el propio aprendiz.
     match /sena_portal_users/{usernameKey} {
-      allow read: if signedIn();
+      // get (un doc puntual): cualquier sesion autenticada. Lo usa el fallback
+      // de login y la verificacion de perfil del aprendiz.
+      allow get: if signedIn();
+      // list (query): admin ve todo; el aprendiz SOLO puede consultar SU ficha.
+      // La consulta DEBE incluir where('ficha','==', suFicha) — sino,
+      // resource.data.ficha != requesterFicha() para algun doc y la regla niega.
+      // Asi un aprendiz no puede listar a aprendices de otra ficha.
+      allow list: if isAdmin()
+        || (signedIn() && resource.data.ficha == requesterFicha());
       allow create, update: if isAdmin() || isOwnerByUsernameKey(usernameKey);
       allow delete: if isAdmin();
     }
@@ -83,6 +99,14 @@ service cloud.firestore {
       allow list: if isAdmin();
       allow create, update: if isAdmin() || isOwnerByUsernameKey(usernameKey);
       allow delete: if isAdmin();
+    }
+
+    // ───── Indice uid -> ficha (para regla list de sena_portal_users) ──────
+    // Solo el propio aprendiz (autenticado en Firebase Auth) o el admin
+    // pueden leer/escribir su indice. El doc expone solo { ficha, updatedAt }.
+    // El cliente lo escribe en cada login exitoso (ver portal_auth.js).
+    match /sena_portal_user_index/{uid} {
+      allow read, write: if signedIn() && (request.auth.uid == uid || isAdmin());
     }
 
     // ───── Progreso por aprendiz ───────────────────────────────────────────

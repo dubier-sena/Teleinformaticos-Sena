@@ -4321,12 +4321,15 @@ let activity10RosterSyncPromise = null;
 function syncRosterFromCloudForActivity10() {
   if (activity10RosterSyncPromise) return activity10RosterSyncPromise;
   const db = window._firebaseDb;
-  if (!db || typeof db.cloudListUsers !== "function") {
+  if (!db || typeof db.cloudListUsersByFicha !== "function") {
     return Promise.resolve(false);
   }
   activity10RosterSyncPromise = (async () => {
     try {
-      const cloudUsers = await db.cloudListUsers();
+      // Consulta server-side filtrada por ficha. Compatible con las nuevas
+      // reglas (list solo permitido si resource.data.ficha == requesterFicha()).
+      const ficha = String(getGuideSelection?.().ficha || "").trim();
+      const cloudUsers = ficha ? await db.cloudListUsersByFicha(ficha) : [];
       if (!Array.isArray(cloudUsers) || cloudUsers.length === 0) return false;
       const existing = window.portalAuth?.getUsers?.() || [];
       const byKey = new Map(existing.map((u) => [String(u.usernameKey || "").toLowerCase(), u]));

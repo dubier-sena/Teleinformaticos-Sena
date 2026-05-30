@@ -3469,6 +3469,15 @@ window.portalAuth = {
         // (sena_portal_user_auth). Asi cuando este aprendiz entre desde otro
         // dispositivo, el hash queda disponible para verificacion local.
         syncUserAuthHashAfterLogin(normalizedKey, password);
+        // Indice uid -> ficha (lo usa la regla `list` de sena_portal_users
+        // para verificar la ficha del solicitante sin parsear el email).
+        try {
+          const dbApi = window._firebaseDb;
+          const fichaVal = (result && result.user && result.user.ficha) || "";
+          if (dbApi && typeof dbApi.cloudSaveUserIndex === "function" && fichaVal) {
+            dbApi.cloudSaveUserIndex(fichaVal);
+          }
+        } catch (_) { /* indice es best-effort */ }
       }
       return result;
     }
@@ -3521,6 +3530,15 @@ window.portalAuth = {
     // Sincronizar el hash a sena_portal_user_auth (rules estrictas) para
     // que cualquier dispositivo futuro tenga el hash actual disponible.
     syncUserAuthHashAfterLogin(normalizedKey, password);
+
+    // Indice uid -> ficha (necesario para la regla list de sena_portal_users).
+    try {
+      const dbApi = window._firebaseDb;
+      const fichaVal = (cloudUser && cloudUser.ficha) || "";
+      if (dbApi && typeof dbApi.cloudSaveUserIndex === "function" && fichaVal) {
+        dbApi.cloudSaveUserIndex(fichaVal);
+      }
+    } catch (_) { /* indice es best-effort */ }
 
     // Reintentar el login local: ahora si encontrara el hash en localStorage.
     result = await prevLoginStudent.call(auth, data);
