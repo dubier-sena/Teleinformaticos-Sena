@@ -41,12 +41,12 @@ test("Word exports include the institutional SENA header fields", () => {
 
   for (const script of scripts) {
     assert.match(script, /sena-logo\.png/);
-    assert.match(script, /Sistemas Teleinformaticos/);
+    assert.match(script, /Sistemas Teleinformáticos/);
     assert.match(script, /Competencia/);
-    assert.match(script, /Resultado de Aprendizaje/);
+    assert.match(script, /Resultado de aprendizaje/);
     assert.match(script, /Nombre completo del aprendiz/);
-    assert.match(script, /Fecha de elaboracion/);
-    assert.match(script, /Numero de ficha/);
+    assert.match(script, /Fecha de elaboración/);
+    assert.match(script, /Número de ficha/);
     assert.match(script, /Grado/);
     assert.match(script, /Institucion/);
   }

@@ -255,6 +255,17 @@
       secureButton.setAttribute("data-apps-script-trigger", "true");
       actionGroup.appendChild(secureButton);
     }
+    if (!panelConfig.hideQr && typeof panelHandlers.onQrClick === "function") {
+      actionGroup.appendChild(
+        createActionButton(
+          "btn-qr",
+          panelConfig.qrLabel || "Ver QR de carpeta",
+          function () {
+            panelHandlers.onQrClick(panelConfig.activityContext || {});
+          }
+        )
+      );
+    }
     wrapper.appendChild(actionGroup);
 
     var helperParts = [];

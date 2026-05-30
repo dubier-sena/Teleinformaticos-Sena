@@ -28,6 +28,18 @@ const DRIVE_FOLDERS = {
   "3441942": "https://drive.google.com/drive/folders/1cv0DkFXhkMw22AddqIgC354DhUUHcQck?usp=drive_link",
 };
 
+const WORD_INSTITUTIONAL_HEADER_FIELDS = [
+  "sena-logo.png",
+  "Sistemas Teleinformáticos",
+  "Competencia",
+  "Resultado de aprendizaje",
+  "Nombre completo del aprendiz",
+  "Fecha de elaboración",
+  "Número de ficha",
+  "Grado",
+  "Institucion",
+];
+
 const wordList = [
   "RESTAURACION",
   "VIRUS",
@@ -6327,4 +6339,3 @@ window.guia2WordSearch = {
 // Expone una función para forzar sincronización inmediata con Firestore
 // (usada por guardarFormulario() al finalizar la Actividad 4)
 window.guia2SyncNow = () => syncCloudState(true);
-

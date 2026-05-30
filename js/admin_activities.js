@@ -165,8 +165,8 @@
       </tr>`)
       .join("");
     return `
-      <div class="answer-table-wrap">
-        <table class="answer-table activities-table">
+      <div class="answer-table-wrap matriz322-table-wrap">
+        <table class="answer-table matriz322-table">
           <thead><tr>${headerHtml}</tr></thead>
           <tbody>${rowHtml}</tbody>
         </table>
