@@ -517,12 +517,29 @@
       );
     }
 
+    // Seguridad: adjunta el idToken de Firebase Auth para que el Apps Script
+    // verifique que quien entrega es un usuario autenticado del portal (mismo
+    // patron que drive_db.js / respaldo_firestore.gs). Si no hay token, se
+    // envia sin el y el servidor decide (rechaza si exige autenticacion).
+    var finalPayload = payload;
+    try {
+      var bridge = window.portalFirebaseAuth;
+      if (bridge && typeof bridge.getIdToken === "function") {
+        var idToken = await bridge.getIdToken();
+        if (idToken) {
+          finalPayload = Object.assign({}, payload, { idToken: idToken });
+        }
+      }
+    } catch (tokenError) {
+      // Sin token disponible: el servidor aplicara su politica de seguridad.
+    }
+
     var response = await fetch(endpoint, {
       method: "POST",
       headers: {
         "Content-Type": "text/plain",
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(finalPayload),
     });
 
     var data = await response.json().catch(function () {
