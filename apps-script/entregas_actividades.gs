@@ -1,3 +1,20 @@
+/**
+ * entregas_actividades.gs — Recibe las entregas de archivos del portal y las
+ * guarda en Drive bajo Ficha / Guia / Actividad (+ copia en Respaldos/).
+ *
+ * Seguridad: doPost exige un idToken de Firebase Auth valido (verificado contra
+ * Identity Toolkit) antes de escribir nada en Drive. Sin token, se rechaza.
+ *
+ * ─── Despliegue (OBLIGATORIO tras esta version) ────────────────────────────
+ *   1. Project Settings -> Script properties: agrega FIREBASE_API_KEY con la
+ *      Firebase Web API key del proyecto (la misma de js/firebase-config.js).
+ *   2. Deploy -> Manage deployments -> edita el deployment Web App existente
+ *      y publica una nueva version (Execute as: Me / Access: Anyone).
+ *   3. Orden seguro: primero publica el cliente (git push), luego redeploy aqui.
+ *      Si redeployas el servidor antes que el cliente, las entregas fallaran
+ *      con "falta token de seguridad" hasta que el cliente nuevo este en linea.
+ * ─────────────────────────────────────────────────────────────────────────
+ */
 const FICHA_ROOT_FOLDERS = {
   "3441939": "1SLkk986REOKGEFaCyWV7rSeudj7lnUMs",
   "3441942": "1cv0DkFXhkMw22AddqIgC354DhUUHcQck",
@@ -25,6 +42,28 @@ const ALLOWED_EXTENSIONS = [
 function doPost(e) {
   try {
     const payload = JSON.parse(e.postData.contents || "{}");
+
+    // ───── Seguridad: solo usuarios autenticados del portal ────────────────
+    // El cliente (shared_apps_script_delivery.js) adjunta el idToken de
+    // Firebase Auth. Se verifica contra Identity Toolkit ANTES de tocar Drive,
+    // igual que respaldo_firestore.gs. Sin token valido se rechaza: esto cierra
+    // la subida anonima de archivos por cualquiera que conozca la URL del /exec.
+    // Requisito de despliegue: configurar la Script Property FIREBASE_API_KEY.
+    const idToken = String(payload.idToken || "");
+    if (!idToken) {
+      return jsonResponse({
+        ok: false,
+        message: "Debes iniciar sesion en el portal para entregar archivos (falta token de seguridad).",
+      });
+    }
+    const auth = verifyFirebaseIdToken(idToken);
+    if (!auth.ok) {
+      return jsonResponse({
+        ok: false,
+        message: "Tu sesion de seguridad expiro o no es valida. Vuelve a iniciar sesion e intenta de nuevo.",
+      });
+    }
+
     const ficha = String(payload.ficha || "").trim();
     const fullName = sanitizeLabel(payload.fullName, "Aprendiz");
     const activityLabel = sanitizeLabel(payload.activityLabel, "Actividad");
@@ -269,6 +308,40 @@ function validateUploadExtension(fileName, allowedExtensions) {
   const isAllowed = effectiveAllowed.some((extension) => lowerName.endsWith(extension));
   if (!isAllowed) {
     throw new Error("La extension del archivo no esta permitida para esta entrega.");
+  }
+}
+
+function getScriptProperty(name) {
+  return String(PropertiesService.getScriptProperties().getProperty(name) || "").trim();
+}
+
+function getFirebaseApiKey() {
+  return getScriptProperty("FIREBASE_API_KEY");
+}
+
+// Verifica el idToken de Firebase Auth contra Identity Toolkit. Devuelve
+// { ok, email, uid }. Mismo metodo probado en respaldo_firestore.gs: Google
+// valida la firma/expiracion del token, no hay que verificar el JWT a mano.
+function verifyFirebaseIdToken(idToken) {
+  try {
+    const apiKey = getFirebaseApiKey();
+    if (!apiKey) return { ok: false };
+    const url =
+      "https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=" +
+      encodeURIComponent(apiKey);
+    const response = UrlFetchApp.fetch(url, {
+      method: "post",
+      contentType: "application/json",
+      payload: JSON.stringify({ idToken: idToken }),
+      muteHttpExceptions: true,
+    });
+    if (response.getResponseCode() !== 200) return { ok: false };
+    const body = JSON.parse(response.getContentText() || "{}");
+    if (!Array.isArray(body.users) || body.users.length === 0) return { ok: false };
+    const u = body.users[0];
+    return { ok: true, email: u.email || "", uid: u.localId || "" };
+  } catch (_) {
+    return { ok: false };
   }
 }
 
