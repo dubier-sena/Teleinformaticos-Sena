@@ -1562,10 +1562,28 @@
 
   async function saveGuideStateDoc(prefix, kind, scopeKey, fileName, payload) {
     var docId = guideStateDocId(prefix, scopeKey, fileName);
-    var fallbackSaved = await fsPatch(COL_PROGRESS, docId, Object.assign({
+    var progressPayload = Object.assign({
       _usernameKey: docId,
       _kind: kind,
-    }, payload));
+    }, payload);
+    var fallbackSaved = await fsPatch(COL_PROGRESS, docId, progressPayload);
+    // Entrega CONFIABLE a Drive cuando escribe el ADMIN (fechas de entrega,
+    // desbloqueos, reaperturas). Los aprendices LEEN de Drive (useDriveAsPrimary),
+    // pero el admin escribe en Firestore; el respaldo a Drive normal es
+    // fire-and-forget y depende de la sesion. Aqui lo hacemos ESPERADO y al MISMO
+    // doc (COL_PROGRESS/docId) que leen los aprendices. Es Drive via Apps Script:
+    // NO consume cuota de Firestore.
+    if (
+      isCurrentUserAdmin() &&
+      window.driveDb &&
+      typeof window.driveDb.set === "function" &&
+      typeof window.driveDb.isEnabled === "function" &&
+      window.driveDb.isEnabled()
+    ) {
+      try {
+        await window.driveDb.set(COL_PROGRESS, docId, progressPayload);
+      } catch (_) { /* best-effort: si falla, queda el respaldo fire-and-forget */ }
+    }
     if (fallbackSaved) return true;
     return fsPatch(COL_GUIDE_STATE, docId, payload);
   }
