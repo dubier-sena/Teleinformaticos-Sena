@@ -2112,12 +2112,25 @@
       });
 
       if (guideDataRequests.length) {
-        var guideDataDocs = await fsBatchGet(COL_PROGRESS, guideDataRequests.map(function (item) { return item.docId; }));
+        var guideDataDocIds = guideDataRequests.map(function (item) { return item.docId; });
+        var guideDataDocs = await fsBatchGet(COL_PROGRESS, guideDataDocIds);
+        // Las respuestas del aprendiz pueden quedar en COL_GUIDE_STATE cuando la
+        // escritura con docId compuesto a COL_PROGRESS fue rechazada por reglas
+        // (403). Por eso el admin tambien lee guide_state y lo usa para rellenar
+        // lo que falte. COL_PROGRESS tiene precedencia si trae el documento.
+        var guideStateDocs = await fsBatchGet(COL_GUIDE_STATE, guideDataDocIds);
         var guideDataByDocId = {};
         guideDataDocs.forEach(function (doc) {
           if (doc && doc._docId) {
             guideDataByDocId[decodeURIComponent(doc._docId)] = doc;
             guideDataByDocId[doc._docId] = doc;
+          }
+        });
+        guideStateDocs.forEach(function (doc) {
+          if (doc && doc._docId) {
+            var decodedStateId = decodeURIComponent(doc._docId);
+            if (!guideDataByDocId[decodedStateId]) guideDataByDocId[decodedStateId] = doc;
+            if (!guideDataByDocId[doc._docId]) guideDataByDocId[doc._docId] = doc;
           }
         });
         guideDataRequests.forEach(function (item) {
