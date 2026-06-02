@@ -3569,6 +3569,50 @@ window.portalAuth = {
     return result;
   };
 
+  // ── Engancha registerStudent ───────────────────────────────────────────
+  // Al registrarse, ademas de crear el perfil local/nube, iniciamos sesion en
+  // Firebase Auth (igual que loginStudent). Sin esto, un aprendiz recien
+  // registrado que entra directo a las guias NO tendria sesion Firebase y las
+  // entregas autenticadas fallarian con "falta token de seguridad".
+  const prevRegisterStudent = auth.registerStudent;
+  if (typeof prevRegisterStudent === "function") {
+    auth.registerStudent = async function registerStudentWithFirebaseBridge(data) {
+      const result = await prevRegisterStudent.call(auth, data);
+      if (!result || !result.ok) return result;
+      if (!bridgeEnabled()) return result;
+
+      const usernameKey =
+        (result.user && result.user.usernameKey) ||
+        (data && (data.usernameKey || data.username)) || "";
+      const normalizedKey = String(usernameKey || "").trim().toLowerCase();
+      const password = (data && data.password) || "";
+      if (!normalizedKey || !password) return result;
+
+      const fb = await signInBridge(normalizedKey, password);
+      if (!fb.ok) {
+        console.warn(
+          "[portal_auth] Firebase Auth no logueo al aprendiz tras registro (modo offline-only):",
+          fb.error
+        );
+        return result;
+      }
+      console.info(
+        "[portal_auth] Firebase Auth ok tras registro para " + normalizedKey +
+        (fb.created ? " (cuenta creada)" : "")
+      );
+      // Mismo post-proceso que loginStudent: hash en coleccion estricta + indice ficha.
+      syncUserAuthHashAfterLogin(normalizedKey, password);
+      try {
+        const dbApi = window._firebaseDb;
+        const fichaVal = (result.user && result.user.ficha) || "";
+        if (dbApi && typeof dbApi.cloudSaveUserIndex === "function" && fichaVal) {
+          dbApi.cloudSaveUserIndex(fichaVal);
+        }
+      } catch (_) { /* indice best-effort */ }
+      return result;
+    };
+  }
+
   // Sincroniza el hash de password a sena_portal_user_auth/{key}. Solo se
   // llama DESPUES de que Firebase Auth confirmo identidad — en ese momento
   // las rules permiten escribir (isOwnerByUsernameKey). Best-effort: si la

@@ -525,6 +525,13 @@
     try {
       var bridge = window.portalFirebaseAuth;
       if (bridge && typeof bridge.getIdToken === "function") {
+        // Esperar a que la sesion de Firebase termine de hidratarse: al cambiar
+        // de pagina (index -> guia) el SDK rehidrata la sesion persistida de
+        // forma asincrona. Sin esta espera, getIdToken puede devolver null
+        // aunque el aprendiz si tenga sesion, y la entrega fallaria.
+        if (typeof bridge.waitForAuthHydration === "function") {
+          try { await bridge.waitForAuthHydration(4000); } catch (hydrationError) {}
+        }
         var idToken = await bridge.getIdToken();
         if (idToken) {
           finalPayload = Object.assign({}, payload, { idToken: idToken });
