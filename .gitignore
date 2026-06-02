@@ -11,8 +11,6 @@ firebase-debug.*.log
 .claude/
 memory/
 docs/*
-!docs/firebase-runtime-setup.md
-!docs/auditoria-fase1-inventario.md
 skills-lock.json
 js/firebase_runtime.local.js
 config/firebase.runtime.local.json
