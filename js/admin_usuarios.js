@@ -806,9 +806,27 @@
     return pickLatestSnapshot(cloudSnapshot, localSnapshot);
   }
 
+  // Resuelve cloudFileName + stateKey para CUALQUIER guia (no solo Guia 6), para
+  // que el unlock del admin se escriba en el MISMO documento que lee el aprendiz
+  // (scope student:{usernameKey} + el mismo cloudFileName/alias). Antes solo
+  // existia config para Guia 6, asi que habilitar actividades de otras guias no
+  // escribia nada a la nube y el aprendiz seguia viendolas bloqueadas.
+  function getGuideUnlockCloudConfig(fileName) {
+    const g6 = getGuide6ResponseConfig(fileName);
+    if (g6) return g6;
+    if (!fileName) return null;
+    const stateKey = getGuideStateKey(fileName);
+    if (!stateKey) return null;
+    const cloudFileName =
+      window.adminHabilitacion && typeof window.adminHabilitacion.getCloudFileName === "function"
+        ? window.adminHabilitacion.getCloudFileName(fileName)
+        : fileName;
+    return { cloudFileName, stateKey, pageFile: fileName };
+  }
+
   async function patchGuideCloudState(usernameKey, fileName, patch) {
     const db = window._firebaseDb;
-    const config = getGuide6ResponseConfig(fileName);
+    const config = getGuideUnlockCloudConfig(fileName);
     if (!usernameKey || !config || !db || typeof db.cloudGetGuideData !== "function" || typeof db.cloudSaveGuideData !== "function") {
       return false;
     }
@@ -1305,18 +1323,19 @@
   }
 
   async function syncReopenedActivityToCloud(usernameKey, fileName, stateKey, activityId, deliveryRecord, updatedAt, adminLabel) {
-    if (!window._firebaseDb || typeof window._firebaseDb.cloudSaveGuideData !== "function") return false;
-    return window._firebaseDb.cloudSaveGuideData(usernameKey, fileName, {
+    // Antes escribia con scope `usernameKey` (sin prefijo) y el pageFile crudo, por
+    // lo que el aprendiz —que lee con scope `student:{usernameKey}` y el cloudFileName—
+    // nunca veia la reapertura. Ahora se enruta por patchGuideCloudState, que usa el
+    // scope y cloudFileName correctos y mezcla con el estado actual (no pierde respuestas).
+    return patchGuideCloudState(usernameKey, fileName, {
       state: {
         [`${activityId}-locked`]: false,
         [`${activityId}-delivery`]: deliveryRecord,
+        reabierta: true,
+        permiteEdicion: true,
+        permiteEntrega: true,
       },
-      updatedAt,
       updatedBy: `admin-reopen:${adminLabel || "admin"}`,
-      reabierta: true,
-      permiteEdicion: true,
-      permiteEntrega: true,
-      stateKey,
     });
   }
 
