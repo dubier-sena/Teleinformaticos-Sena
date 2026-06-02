@@ -1394,7 +1394,28 @@
     var docId = guideStateDocId(prefix, scopeKey, fileName);
     var fallbackDoc = await fsGet(COL_PROGRESS, docId);
     if (fallbackDoc) return fallbackDoc;
-    return fsGet(COL_GUIDE_STATE, docId);
+    var stateDoc = await fsGet(COL_GUIDE_STATE, docId);
+    if (stateDoc) return stateDoc;
+    // El ADMIN lee de Firestore (excepcion admin), pero los datos del aprendiz
+    // pueden estar SOLO en Drive (si el aprendiz guardo sin sesion Firestore, o
+    // con useDriveAsPrimary). Como respaldo, el admin tambien lee de Drive para
+    // no perder ninguna respuesta/entrega. Es lectura Drive via Apps Script:
+    // NO consume cuota de Firestore.
+    if (
+      isCurrentUserAdmin() &&
+      window.driveDb &&
+      typeof window.driveDb.get === "function" &&
+      typeof window.driveDb.isEnabled === "function" &&
+      window.driveDb.isEnabled()
+    ) {
+      try {
+        var driveProgressDoc = await window.driveDb.get(COL_PROGRESS, docId);
+        if (driveProgressDoc) return driveProgressDoc;
+        var driveStateDoc = await window.driveDb.get(COL_GUIDE_STATE, docId);
+        if (driveStateDoc) return driveStateDoc;
+      } catch (_) { /* best-effort */ }
+    }
+    return null;
   }
 
   function readSnapshotPayload(doc) {
