@@ -8,7 +8,7 @@
       title: "Guia 1 - Induccion | Grupo 10A",
       type: "page",
       scripts: [
-        "js/shared_shell.js?v=20260508_1",
+        "js/shared_shell.js?v=20260603_1",
         "data/calendario_2026_records.js?v=20260410_1",
         "data/calendario_2026_seed.js?v=20260410_1",
         "js/script_induccion.js?v=20260502_1",
@@ -25,7 +25,7 @@
       title: "Guia 1 - Induccion | Grupo 10B",
       type: "page",
       scripts: [
-        "js/shared_shell.js?v=20260508_1",
+        "js/shared_shell.js?v=20260603_1",
         "data/calendario_2026_records.js?v=20260410_1",
         "data/calendario_2026_seed.js?v=20260410_1",
         "js/script_induccion.js?v=20260502_1",
@@ -42,7 +42,7 @@
       title: "Guia 2 - Operar Herramientas Informaticas y Digitales | Grupo 10A",
       type: "page",
       scripts: [
-        "js/shared_shell.js?v=20260508_1",
+        "js/shared_shell.js?v=20260603_1",
         "js/project_integrations.js?v=20260526_2",
         "js/shared_apps_script_delivery.js?v=20260601_2",
         "js/shared_drive_delivery.js?v=20260430_2",
@@ -63,7 +63,7 @@
       title: "Guia 2 - Operar Herramientas Informaticas y Digitales | Grupo 10B",
       type: "page",
       scripts: [
-        "js/shared_shell.js?v=20260508_1",
+        "js/shared_shell.js?v=20260603_1",
         "js/project_integrations.js?v=20260526_2",
         "js/shared_apps_script_delivery.js?v=20260601_2",
         "js/shared_drive_delivery.js?v=20260430_2",
@@ -84,7 +84,7 @@
       title: "Guia 3 - Implementar componentes | Grupo 10A",
       type: "page",
       scripts: [
-        "js/shared_shell.js?v=20260508_1",
+        "js/shared_shell.js?v=20260603_1",
         "js/project_integrations.js?v=20260526_2",
         "js/shared_apps_script_delivery.js?v=20260601_2",
         "js/shared_drive_delivery.js?v=20260430_2",
@@ -104,7 +104,7 @@
       title: "Guia 3 - Implementar componentes | Grupo 10B",
       type: "page",
       scripts: [
-        "js/shared_shell.js?v=20260508_1",
+        "js/shared_shell.js?v=20260603_1",
         "js/project_integrations.js?v=20260526_2",
         "js/shared_apps_script_delivery.js?v=20260601_2",
         "js/shared_drive_delivery.js?v=20260430_2",
@@ -124,7 +124,7 @@
       title: "Guia 5 - Operar Herramientas Informaticas y Digitales | Grupo 11A",
       type: "page",
       scripts: [
-        "js/shared_shell.js?v=20260508_1",
+        "js/shared_shell.js?v=20260603_1",
         "js/project_integrations.js?v=20260526_2",
         "js/shared_apps_script_delivery.js?v=20260601_2",
         "js/shared_drive_delivery.js?v=20260430_2",
@@ -143,7 +143,7 @@
       title: "Guia 5 - Operar Herramientas Informaticas y Digitales | Grupo 11B",
       type: "page",
       scripts: [
-        "js/shared_shell.js?v=20260508_1",
+        "js/shared_shell.js?v=20260603_1",
         "js/project_integrations.js?v=20260526_2",
         "js/shared_apps_script_delivery.js?v=20260601_2",
         "js/shared_drive_delivery.js?v=20260430_2",
@@ -162,7 +162,7 @@
       title: "Guia 6 - Implementar componentes de las herramientas tecnologicas | Grupo 11A",
       type: "page",
       scripts: [
-        "js/shared_shell.js?v=20260508_1",
+        "js/shared_shell.js?v=20260603_1",
         "js/project_integrations.js?v=20260526_2",
         "js/shared_apps_script_delivery.js?v=20260601_2",
         "js/shared_drive_delivery.js?v=20260430_2",
@@ -182,7 +182,7 @@
       title: "Guia 6 - Implementar componentes de las herramientas tecnologicas | Grupo 11B",
       type: "page",
       scripts: [
-        "js/shared_shell.js?v=20260508_1",
+        "js/shared_shell.js?v=20260603_1",
         "js/project_integrations.js?v=20260526_2",
         "js/shared_apps_script_delivery.js?v=20260601_2",
         "js/shared_drive_delivery.js?v=20260430_2",
@@ -202,7 +202,7 @@
       title: "Guia 7 - Planificar la informacion segun criterios de ciberseguridad | Grupo 11A",
       type: "page",
       scripts: [
-        "js/shared_shell.js?v=20260508_1",
+        "js/shared_shell.js?v=20260603_1",
         "js/project_integrations.js?v=20260526_2",
         "js/shared_apps_script_delivery.js?v=20260601_2",
         "js/shared_drive_delivery.js?v=20260430_2",
@@ -223,7 +223,7 @@
       title: "Guia 7 - Planificar la informacion segun criterios de ciberseguridad | Grupo 11B",
       type: "page",
       scripts: [
-        "js/shared_shell.js?v=20260508_1",
+        "js/shared_shell.js?v=20260603_1",
         "js/project_integrations.js?v=20260526_2",
         "js/shared_apps_script_delivery.js?v=20260601_2",
         "js/shared_drive_delivery.js?v=20260430_2",
@@ -244,7 +244,7 @@
       title: "Guia 2 - Redes RAP01 | Grupo 10A",
       type: "guide",
       scripts: [
-        "js/shared_shell.js?v=20260508_1",
+        "js/shared_shell.js?v=20260603_1",
         "js/project_integrations.js?v=20260526_2",
         "js/shared_apps_script_delivery.js?v=20260601_2",
         "js/shared_drive_delivery.js?v=20260430_2",
@@ -265,7 +265,7 @@
       title: "Guia 2 - Redes RAP01 | Grupo 10B",
       type: "guide",
       scripts: [
-        "js/shared_shell.js?v=20260508_1",
+        "js/shared_shell.js?v=20260603_1",
         "js/project_integrations.js?v=20260526_2",
         "js/shared_apps_script_delivery.js?v=20260601_2",
         "js/shared_drive_delivery.js?v=20260430_2",
@@ -286,7 +286,7 @@
       title: "Guia 3 - Comprobar la conectividad de la red (RAP 02) | Grupo 10A",
       type: "guide",
       scripts: [
-        "js/shared_shell.js?v=20260508_1",
+        "js/shared_shell.js?v=20260603_1",
         "js/project_integrations.js?v=20260526_2",
         "js/shared_apps_script_delivery.js?v=20260601_2",
         "js/shared_drive_delivery.js?v=20260430_2",
@@ -309,7 +309,7 @@
       title: "Guia 3 - Comprobar la conectividad de la red (RAP 02) | Grupo 10B",
       type: "guide",
       scripts: [
-        "js/shared_shell.js?v=20260508_1",
+        "js/shared_shell.js?v=20260603_1",
         "js/project_integrations.js?v=20260526_2",
         "js/shared_apps_script_delivery.js?v=20260601_2",
         "js/shared_drive_delivery.js?v=20260430_2",
