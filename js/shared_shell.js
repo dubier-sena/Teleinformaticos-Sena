@@ -21,6 +21,13 @@
   //  Root prefix (handles pages in subdirectories)
   // ─────────────────────────────────────────────
   function getNavRootPrefix() {
+    // Si la pagina define <base href> (p. ej. pages/auxiliares/*.html con
+    // <base href="../../">), las rutas relativas YA se resuelven desde esa base
+    // (la raiz del proyecto), asi que NO se debe anteponer prefijo: hacerlo
+    // duplica el salto y rompe los enlaces del navbar (404 al dominio raiz).
+    if (typeof document !== "undefined" && document.querySelector("base[href]")) {
+      return "";
+    }
     var path = window.location.pathname;
     if (path.indexOf("/pages/auxiliares/") !== -1) return "../../";
     if (path.indexOf("/pages/") !== -1) return "../";
