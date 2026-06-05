@@ -5,13 +5,13 @@
   --admin-line: #dce5df;
   --admin-text: #17211b;
   --admin-muted: #647067;
-  --admin-primary: #0b6b3a;
-  --admin-primary-2: #16834d;
+  --admin-primary: var(--brand-700, #0a5c31);
+  --admin-primary-2: var(--brand-600, #007934);
   --admin-warn: #a33a24;
   --admin-danger: #b42318;
   --admin-info: #1f5f99;
-  --admin-radius: 8px;
-  --admin-shadow: 0 14px 34px rgba(20, 34, 26, 0.08);
+  --admin-radius: 14px;
+  --admin-shadow: 0 12px 30px rgba(7, 26, 18, 0.07);
 }
 
 * {
@@ -21,7 +21,9 @@
 body.app-shell--admin {
   min-height: 100vh;
   margin: 0;
-  background: var(--admin-bg);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(15, 191, 100, 0.08), transparent 26%),
+    linear-gradient(180deg, #f7fbf9 0%, var(--admin-bg, #f5f7f6) 100%);
   color: var(--admin-text);
 }
 
@@ -52,8 +54,9 @@ a {
   gap: 18px;
   padding: 18px;
   border-right: 1px solid var(--admin-line);
-  background: #102419;
-  color: #f8fff9;
+  background: linear-gradient(180deg, #ffffff 0%, var(--surface-2, #f5faf7) 100%);
+  color: var(--admin-text, #17211b);
+  box-shadow: 10px 0 30px rgba(7, 26, 18, 0.05);
 }
 
 .admin-brand {
@@ -84,7 +87,7 @@ a {
 
 .admin-brand small {
   margin-top: 2px;
-  color: rgba(248, 255, 249, 0.68);
+  color: var(--admin-muted, #647067);
 }
 
 .admin-nav {
@@ -100,7 +103,7 @@ a {
   border: 1px solid transparent;
   border-radius: var(--admin-radius);
   background: transparent;
-  color: rgba(248, 255, 249, 0.78);
+  color: var(--admin-text, #17211b);
   cursor: pointer;
   text-align: left;
   font-weight: 700;
@@ -112,13 +115,13 @@ a {
 .admin-sidebar__link:hover,
 .admin-sidebar__link:focus-visible {
   outline: none;
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
+  background: var(--brand-100, #e9f8ef);
+  color: var(--brand-700, #0a5c31);
 }
 
 .admin-nav__item.is-active {
-  border-color: rgba(255, 255, 255, 0.16);
-  box-shadow: inset 3px 0 0 #35c66b;
+  border-color: var(--brand-200, #cdf0db);
+  box-shadow: inset 3px 0 0 var(--brand-600, #007934);
 }
 
 .admin-sidebar__footer {
@@ -217,6 +220,7 @@ a {
   margin-top: 8px;
   font-family: var(--font-display, Inter, sans-serif);
   font-size: 2rem;
+  color: var(--brand-700, #0a5c31);
 }
 
 .admin-kpi small {
@@ -296,16 +300,18 @@ a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 40px;
+  min-height: 42px;
   min-width: 112px;
-  padding: 0 14px;
-  border: 1px solid var(--admin-primary);
-  border-radius: var(--admin-radius);
-  background: var(--admin-primary);
+  padding: 0 18px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--brand-700, #0a5c31), var(--brand-500, #0fbf64));
   color: #ffffff;
   cursor: pointer;
   font-weight: 800;
   text-align: center;
+  box-shadow: 0 10px 22px rgba(0, 121, 52, 0.18);
+  transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
 }
 
 .admin-button:hover,
@@ -313,8 +319,8 @@ a {
 .btn:hover,
 .btn:focus-visible {
   outline: none;
-  background: var(--admin-primary-2);
-  border-color: var(--admin-primary-2);
+  transform: translateY(-1px);
+  box-shadow: 0 14px 26px rgba(0, 121, 52, 0.26);
 }
 
 .admin-button--ghost,
@@ -377,6 +383,134 @@ a {
 .admin-table-wrap {
   width: 100%;
   overflow-x: auto;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   SIMPLIFICACIÓN DEL PANEL — ocultar secciones no necesarias.
+   Reversible: borra este bloque para volver a mostrarlas. Oculta el ítem del
+   menú (data-admin-module) y la sección (#module-…) de: Fichas, Guías,
+   Actividades, Reportes, Configuración y Auditoría.
+   ════════════════════════════════════════════════════════════════════════ */
+[data-admin-module="fichas"],
+[data-admin-module="guias"],
+[data-admin-module="actividades"],
+[data-admin-module="reportes"],
+[data-admin-module="configuracion"],
+[data-admin-module="auditoria"],
+#module-fichas,
+#module-guias,
+#module-actividades,
+#module-reportes,
+#module-configuracion,
+#module-auditoria {
+  display: none !important;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   REDISEÑO DE DISTRIBUCIÓN — menú ARRIBA (ancho completo) + tablero de Inicio.
+   Capa de override (gana por orden). Reversible: borra este bloque para volver
+   al sidebar vertical.
+   ════════════════════════════════════════════════════════════════════════ */
+.admin-layout {
+  display: block;
+  min-height: auto;
+}
+
+/* La barra lateral se convierte en una barra de pestañas horizontal arriba. */
+.admin-sidebar {
+  position: sticky;
+  top: calc(var(--navbar-height, 60px) + 8px);
+  z-index: 30;
+  height: auto;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  width: min(1280px, calc(100% - 32px));
+  margin: 14px auto 0;
+  padding: 8px 10px;
+  border: 1px solid var(--admin-line);
+  border-radius: 999px;
+  background: var(--admin-surface, #fff);
+  box-shadow: var(--admin-shadow);
+  overflow-x: auto;
+}
+
+/* La marca se oculta: la barra superior global ya identifica el portal. */
+.admin-brand {
+  display: none;
+}
+
+.admin-nav {
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+}
+
+.admin-nav__item,
+.admin-sidebar__link {
+  border-radius: 999px;
+  white-space: nowrap;
+  min-width: auto;
+}
+
+.admin-nav__item.is-active {
+  border-color: transparent;
+  box-shadow: none;
+  background: var(--brand-100, #e9f8ef);
+  color: var(--brand-700, #0a5c31);
+}
+
+.admin-sidebar__footer {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  margin: 0 0 0 auto;
+}
+
+.admin-sidebar__link {
+  border: 1px solid var(--admin-line);
+  background: var(--admin-surface-soft, #f8faf9);
+}
+
+/* Contenido a todo el ancho (centrado, alineado con la barra superior). */
+.admin-workspace {
+  width: min(1280px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 20px 0 48px;
+}
+
+/* Tablero de Inicio: tarjetas de estadística grandes con acento de marca. */
+.admin-kpi-grid {
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 16px;
+}
+
+.admin-kpi {
+  position: relative;
+  overflow: hidden;
+  padding: 22px 22px 20px;
+}
+
+.admin-kpi::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, var(--brand-700, #0a5c31), var(--brand-500, #0fbf64), var(--accent-gold, #f5b700));
+}
+
+.admin-kpi strong {
+  font-size: 2.6rem;
+}
+
+@media (max-width: 760px) {
+  .admin-sidebar {
+    border-radius: 18px;
+  }
+  .admin-kpi strong {
+    font-size: 2.2rem;
+  }
 }
 
 .admin-data-table,

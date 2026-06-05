@@ -172,6 +172,11 @@
     if (!actId) return null;
     const raw = state[equipoG7Key(actId)];
     if (!raw || typeof raw !== "object") return null;
+    // Modo SOLO: el aprendiz trabaja sin companeros (1 integrante = el mismo).
+    // Permite continuar la actividad aunque el roster no cargue o prefiera individual.
+    if (raw.mode === "solo" || raw.solo === true) {
+      return Array.isArray(raw.members) && raw.members.length >= 1 ? raw : null;
+    }
     if (raw.mode !== "grupo") return null;
     if (!Array.isArray(raw.members) || raw.members.length < 2) return null;
     return raw;
@@ -253,23 +258,27 @@
         <button type="button" onclick="iniciarEquipoGuia7('${escG7(actId)}')" class="btn-save-response" style="display:inline-flex;align-items:center;gap:6px">
           &#128101; Configurar equipo de esta actividad
         </button>
-        <span class="intro-text" style="margin:0;font-size:.82rem;color:#4b5563">A&uacute;n no has elegido equipo. Pulsa el bot&oacute;n para seleccionar a tus compa&ntilde;eros.</span>
+        <button type="button" onclick="trabajarSoloGuia7('${escG7(actId)}')" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1px solid #b6dba0;background:#e8f5e9;color:#1b5e20;border-radius:6px;font-family:inherit;font-size:.86rem;cursor:pointer;font-weight:600">
+          &#128100; Trabajar solo
+        </button>
+        <span class="intro-text" style="margin:0;font-size:.82rem;color:#4b5563">Si no aparecen tus compa&ntilde;eros o prefieres hacerlo individual, pulsa "Trabajar solo" y contin&uacute;a.</span>
       </div>`;
   }
 
   function renderEquipoG7Summary(actId, team) {
     const summary = document.querySelector(`[data-equipo-g7-summary="${actId}"]`);
     if (!summary) return;
+    const isSolo = team.solo === true || team.mode === "solo";
     const code4 = buildEquipoG7Code4(team);
     const memberList = team.members
       .map((m) => `<li>${escG7(m.fullName)} <span style="color:#78909c;font-size:.78rem">(${escG7(m.usernameKey)})</span></li>`)
       .join("");
     summary.innerHTML = `
       <div style="padding:10px 12px;background:#e8f5e9;border:1px solid #b6dba0;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:.88rem">
-        <div style="font-weight:700;margin-bottom:4px">Equipo confirmado para esta actividad &middot; <code style="background:#fff;padding:2px 6px;border-radius:4px;color:#0b6b35">Equipo ${escG7(code4)}</code></div>
+        <div style="font-weight:700;margin-bottom:4px">${isSolo ? "&#128100; Trabajando de forma individual" : "Equipo confirmado para esta actividad"} &middot; <code style="background:#fff;padding:2px 6px;border-radius:4px;color:#0b6b35">${isSolo ? "Individual" : "Equipo " + escG7(code4)}</code></div>
         <ul style="margin:6px 0 6px 18px;padding:0;line-height:1.55">${memberList}</ul>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
-          <button type="button" onclick="reconfigurarEquipoGuia7('${escG7(actId)}')" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid #f5c1bb;background:#fdecea;color:#a13029;border-radius:6px;font-family:inherit;font-size:.82rem;cursor:pointer;font-weight:600">&#128683; Cambiar equipo de esta actividad</button>
+          <button type="button" onclick="reconfigurarEquipoGuia7('${escG7(actId)}')" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid #f5c1bb;background:#fdecea;color:#a13029;border-radius:6px;font-family:inherit;font-size:.82rem;cursor:pointer;font-weight:600">&#128683; ${isSolo ? "Cambiar a equipo" : "Cambiar equipo de esta actividad"}</button>
         </div>
       </div>`;
   }
@@ -298,8 +307,10 @@
       .filter((u) => u.usernameKey && u.fullName)
       .sort((a, b) => a.fullName.localeCompare(b.fullName, "es"));
     if (roster.length === 0) {
-      mount.innerHTML = `<p style="margin:0;font-size:.86rem;color:#a13029">Aun no hay companeros registrados en la ficha ${escG7(ficha)}. Pideles que inicien sesion al menos una vez para que aparezcan aqui.</p>`;
-      if (hint) hint.textContent = "El listado se actualiza cuando los companeros ingresan al portal.";
+      mount.innerHTML = `
+        <p style="margin:0 0 8px;font-size:.86rem;color:#a13029">Aun no hay companeros registrados en la ficha ${escG7(ficha)} (pueden tardar en cargar). Pideles que inicien sesion, o continua de forma individual.</p>
+        <button type="button" onclick="trabajarSoloGuia7('${escG7(actId)}')" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1px solid #b6dba0;background:#e8f5e9;color:#1b5e20;border-radius:6px;font-family:inherit;font-size:.86rem;cursor:pointer;font-weight:600">&#128100; Trabajar solo</button>`;
+      if (hint) hint.textContent = "Si no cargan tus companeros, puedes trabajar solo y continuar.";
       return;
     }
     const selfRow = `
@@ -393,6 +404,52 @@
     renderEquipoG7Block(actId);
   }
 
+  function trabajarSoloGuia7(actId) {
+    if (!actId) return;
+    const selfKey = getCurrentUsernameKeyG7();
+    const selfName = getCurrentLearnerName();
+    const selection = getGuideSelection();
+    const ficha = String(selection.ficha || "").trim();
+    if (!selfKey || !ficha) {
+      alert("No se pudo identificar tu sesion o ficha. Vuelve a iniciar sesion.");
+      return;
+    }
+    if (!confirm("Trabajar SOLO en esta actividad? Podras continuar sin companeros. Si luego consigues equipo, usa 'Cambiar a equipo'.")) return;
+    const allMembers = [{ usernameKey: selfKey, fullName: selfName || selfKey }];
+    const memberKeys = allMembers.map((m) => m.usernameKey);
+    const memberEmails = memberKeys.map((k) => k + EQUIPO_G7_EMAIL_DOMAIN);
+    const groupKey = buildEquipoG7GroupKey(ficha + ":" + actId + ":solo", memberKeys);
+    const team = {
+      mode: "solo",
+      solo: true,
+      groupKey,
+      ficha,
+      members: allMembers,
+      memberKeys,
+      memberEmails,
+      scope: "activity",
+      activityId: actId,
+      guide: GUIDE_DATA_FILE,
+      confirmedAt: new Date().toISOString(),
+      confirmedBy: { usernameKey: selfKey, fullName: selfName || selfKey },
+    };
+    setEquipoG7InState(actId, team);
+    equipoGuia7WizardActive[actId] = false;
+    if (window._firebaseDb && typeof window._firebaseDb.cloudSaveGroup === "function") {
+      Promise.resolve(window._firebaseDb.cloudSaveGroup(groupKey, {
+        ficha,
+        guide: GUIDE_DATA_FILE,
+        activity: "guia7_equipo_" + actId,
+        members: allMembers,
+        memberKeys,
+        memberEmails,
+        solo: true,
+        updatedAt: new Date().toISOString(),
+      })).catch(() => {});
+    }
+    renderEquipoG7Block(actId);
+  }
+
   function reconfigurarEquipoGuia7(actId) {
     if (!actId) return;
     if (!confirm("Cambiar el equipo de esta actividad borrara la configuracion actual. Continuar?")) return;
@@ -404,6 +461,7 @@
   window.confirmarEquipoGuia7 = confirmarEquipoGuia7;
   window.cancelarEquipoGuia7Config = cancelarEquipoGuia7Config;
   window.iniciarEquipoGuia7 = iniciarEquipoGuia7;
+  window.trabajarSoloGuia7 = trabajarSoloGuia7;
   window.reconfigurarEquipoGuia7 = reconfigurarEquipoGuia7;
 
   // ── Constructor de tabla 3.2.1 (Paso 2: una fila por tema) ────────────────

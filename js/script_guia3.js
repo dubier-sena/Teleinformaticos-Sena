@@ -1973,7 +1973,64 @@ const QUIZ_PAGE_URLS = {
   "grupo-10b-guia-03-planificar-informacion.html": "pages/auxiliares/grupo-10b-guia-03-herramientas-quiz.html",
 };
 
+// Quiz de la actividad 3.2.1 (Estudio de contenidos tematicos) - SOLO 10B.
+// Para 10A no hay entrada en el mapa, por lo que el enlace no se inyecta.
+const ACT321_QUIZ_PAGE_URLS = {
+  "grupo-10b-guia-03-planificar-informacion.html": "pages/auxiliares/grupo-10b-guia-03-act-3-2-1-quiz.html",
+};
+
+function findActivityBodyByNum(num) {
+  const nodes = document.querySelectorAll(".activity .activity-num");
+  for (let i = 0; i < nodes.length; i++) {
+    if (String(nodes[i].textContent || "").trim() === num) {
+      const act = nodes[i].closest(".activity");
+      if (act) return act.querySelector(".activity-body");
+    }
+  }
+  return null;
+}
+
+function renderAct321Quiz() {
+  const quizUrl = ACT321_QUIZ_PAGE_URLS[PAGE_FILE] || "";
+  if (!quizUrl) return; // solo 10B tiene este quiz
+  const body = findActivityBodyByNum("3.2.1");
+  if (!body) return;
+  const attempt = state && state["quiz-guia3-321"];
+  let statusLine = "";
+  if (attempt && typeof attempt === "object") {
+    const label = attempt.locked || attempt.status === "completed"
+      ? "Completado"
+      : attempt.status === "terminated_visibility"
+      ? "Finalizado por visibilidad"
+      : attempt.startedAt ? "En progreso" : "Pendiente";
+    statusLine =
+      '<div style="margin-top:6px;font-size:.82rem;color:#1b5e20">Estado: <strong>' +
+      escapeHtml(label) + "</strong> &middot; Variante " +
+      escapeHtml(String(attempt.variant || "-")) + " &middot; Puntaje " +
+      (Number(attempt.score) || 0) + "/100</div>";
+  }
+  // La fecha programada del quiz y el bloqueo de la guia los maneja
+  // js/quiz_schedule.js (modulo generico). Aqui solo se muestra la tarjeta.
+  const html =
+    '<div id="act321QuizCard" class="info-box green" style="margin:14px 0">' +
+    '<div class="label">&#128218; Quiz de contenidos tematicos (3.2.1)</div>' +
+    "<p style=\"margin:0 0 10px\">Pon a prueba lo que estudiaste del Bloque A y el Bloque B. " +
+    "Quiz aleatorio de 10 preguntas; se finaliza en la segunda salida de pestana.</p>" +
+    '<a href="' + escapeHtml(quizUrl) + '" class="btn-save-response" ' +
+    'style="display:inline-flex;align-items:center;gap:6px;text-decoration:none">' +
+    "&#128218; Presentar quiz 3.2.1</a>" +
+    statusLine +
+    "</div>";
+  const existing = body.querySelector("#act321QuizCard");
+  if (existing) {
+    existing.outerHTML = html;
+  } else {
+    body.insertAdjacentHTML("afterbegin", html);
+  }
+}
+
 function renderQuizHerramientasStatus() {
+  renderAct321Quiz();
   const panel = document.getElementById("quizHerramientasStatus");
   const actionLink = document.getElementById("quizHerramientasActionLink");
   if (!actionLink) return;

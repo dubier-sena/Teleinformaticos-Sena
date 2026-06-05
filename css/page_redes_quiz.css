@@ -1,8 +1,8 @@
 body.redes-quiz-page {
   margin: 0;
   background:
-    radial-gradient(circle at top right, rgba(29, 78, 216, 0.16), transparent 28%),
-    linear-gradient(180deg, #f7fafc 0%, #eef6ff 46%, #ffffff 100%);
+    radial-gradient(circle at top right, rgba(15, 191, 100, 0.12), transparent 28%),
+    linear-gradient(180deg, #f7fbf9 0%, #eef5f0 46%, #ffffff 100%);
   color: #0f172a;
 }
 
@@ -17,9 +17,9 @@ body.redes-quiz-page {
   padding: 28px;
   color: #fff;
   background:
-    linear-gradient(140deg, rgba(12, 74, 110, 0.98), rgba(29, 78, 216, 0.92)),
-    linear-gradient(120deg, #0f172a, #1d4ed8);
-  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.18);
+    radial-gradient(circle at 100% 0%, rgba(245, 183, 0, 0.16), transparent 32%),
+    linear-gradient(135deg, var(--brand-800, #08552c) 0%, var(--brand-600, #007934) 100%);
+  box-shadow: 0 18px 44px rgba(7, 26, 18, 0.18);
 }
 
 .redes-quiz-kicker {
@@ -133,7 +133,7 @@ body.redes-quiz-page {
   padding: 14px 16px;
   background: #e0f2fe;
   border: 1px solid #7dd3fc;
-  color: #0c4a6e;
+  color: #08552c;
   line-height: 1.55;
 }
 
@@ -182,7 +182,7 @@ body.redes-quiz-page {
 }
 
 .redes-quiz-button.secondary {
-  background: linear-gradient(135deg, #1d4ed8, #2563eb);
+  background: linear-gradient(135deg, #0a5c31, #0fbf64);
 }
 
 .redes-quiz-button[disabled] {
@@ -192,7 +192,7 @@ body.redes-quiz-page {
 }
 
 .redes-quiz-link {
-  color: #1d4ed8;
+  color: #0a5c31;
   border: 1px solid #bfdbfe;
   background: #eff6ff;
 }
@@ -225,7 +225,7 @@ body.redes-quiz-page {
   height: 42px;
   border-radius: 14px;
   background: #dbeafe;
-  color: #1d4ed8;
+  color: #0a5c31;
   font-weight: 800;
 }
 
@@ -284,7 +284,7 @@ body.redes-quiz-page {
   border-radius: 18px;
   border: 1px dashed #93c5fd;
   background: #eff6ff;
-  color: #1e3a8a;
+  color: #08552c;
   padding: 20px;
   line-height: 1.6;
 }

@@ -19,16 +19,33 @@
  * Cada documento se guarda como:
  *   {BACKUP_ROOT_FOLDER}/{collection}/{docId}.json
  *
- * Seguridad: idToken se verifica contra Identity Toolkit antes de cualquier
- * accion. Sin token valido, todo se rechaza.
+ * Seguridad:
+ *   1) idToken se verifica contra Identity Toolkit antes de cualquier accion.
+ *   2) AUTORIZACION por propiedad/rol (cierra IDOR C1): un aprendiz solo puede
+ *      leer/escribir SUS documentos (su usernameKey aparece como segmento del
+ *      docId); el admin (por email, sin leer Firestore → cero cuota) accede a
+ *      todo. El calendario se lee compartido pero solo el admin lo modifica, y
+ *      `list` en colecciones sensibles (user_auth con hashes, user_meta, users,
+ *      progress, guide_state) queda restringido al admin. Ver authorizeRequest()
+ *      y la prueba tests/apps_script_respaldo_authz.test.cjs.
  *
  * ─── Setup ────────────────────────────────────────────────────────────────
  *   1. Crea carpeta Drive de respaldo, copia su ID.
  *   2. En Project Settings -> Script properties configura:
  *      - BACKUP_ROOT_FOLDER_ID
  *      - FIREBASE_API_KEY
+ *      - ADMIN_EMAILS (opcional, csv; por defecto dubier@sena-portal.local)
  *   3. Deploy → New deployment → Web app → Execute as: Me / Access: Anyone.
  *   4. Pega la URL en js/project_integrations.js como `respaldoFirestoreUrl`.
+ *
+ * ─── IMPORTANTE al actualizar la autorizacion ──────────────────────────────
+ *   El /exec sirve la VERSION desplegada, NO el HEAD del editor. Para activar
+ *   este cambio: Gestionar implementaciones → Editar → Version nueva → Implementar.
+ *   Verificar en produccion (el admin debe tener sesion Firebase fresca):
+ *     - Aprendiz A logueado lee/escribe SUS datos: OK.
+ *     - Aprendiz A intenta leer progress/user_auth de B: rechazado.
+ *     - Admin lista usuarios y abre datos de cualquiera: OK.
+ *   Si algun flujo legitimo se bloquea, revisar el docId real de esa coleccion.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
@@ -47,6 +64,20 @@ function doPost(e) {
     }
     if (!getBackupRootFolderId()) {
       return jsonResponse({ ok: false, message: "BACKUP_ROOT_FOLDER_ID no configurado." });
+    }
+
+    // Autorizacion por propiedad/rol (cierra IDOR C1). El admin (por email)
+    // accede a todo; el aprendiz solo a SUS documentos.
+    var authz = authorizeRequest({
+      action: action,
+      collection: payload.collection,
+      docId: payload.docId,
+      email: userInfo.email,
+      uid: userInfo.uid,
+      adminEmails: getAdminEmails(),
+    });
+    if (!authz.ok) {
+      return jsonResponse({ ok: false, message: authz.message || "No autorizado." });
     }
 
     if (action === "set") return handleSet(payload, userInfo);
@@ -287,6 +318,101 @@ function verifyFirebaseIdToken(idToken) {
   } catch (_) {
     return { ok: false };
   }
+}
+
+// ─── Autorizacion: propiedad / membresia / rol ────────────────────────────
+// Cierra el IDOR (C1): un aprendiz autenticado solo puede leer/escribir SUS
+// documentos; el admin (por email, sin leer Firestore → cero cuota) accede a
+// todo. Las colecciones compartidas (calendario) se pueden leer por cualquier
+// sesion valida pero solo el admin las modifica.
+var ADMIN_EMAIL_DEFAULT = "dubier@sena-portal.local";
+
+function getAdminEmails() {
+  var raw = getScriptProperty("ADMIN_EMAILS");
+  var list = raw ? raw.split(",") : [ADMIN_EMAIL_DEFAULT];
+  return list
+    .map(function (s) { return String(s).trim().toLowerCase(); })
+    .filter(function (s) { return !!s; });
+}
+
+function usernameKeyFromEmail(email) {
+  return String(email || "").trim().toLowerCase().replace(/@.*$/, "");
+}
+
+function escapeRegExpLiteral(s) {
+  return String(s).replace(/[.*+?^${}()|[\]\\-]/g, "\\$&");
+}
+
+// True si `key` aparece como segmento delimitado dentro de docId (los limites
+// no-alfanumericos evitan que "juan" calce con "juana"). El docId propio de un
+// aprendiz siempre contiene su usernameKey (progress=clave exacta;
+// guide_state=...student:clave:...; groups=clave-clave; tutoring=...:clave).
+function docIdHasKeySegment(docId, key) {
+  if (!key) return false;
+  var re = new RegExp("(^|[^a-z0-9])" + escapeRegExpLiteral(key) + "([^a-z0-9]|$)", "i");
+  return re.test(String(docId || ""));
+}
+
+// `list` vuelca hasta 300 docs: en colecciones con datos privados/sensibles
+// (incluye hashes en user_auth) solo lo permite el admin.
+var LIST_ADMIN_ONLY_COLLECTIONS = {
+  "sena_portal_users": true,
+  "sena_portal_user_auth": true,
+  "sena_portal_user_meta": true,
+  "sena_portal_user_index": true,
+  "sena_portal_progress": true,
+  "sena_portal_guide_state": true
+};
+
+function isSharedReadDoc(collection, docId) {
+  if (collection === "sena_portal_calendar") return true;
+  // El calendario academico tambien se respalda dentro de progress.
+  if (collection === "sena_portal_progress" && String(docId || "").indexOf("__calendar__:") === 0) return true;
+  return false;
+}
+
+function actorOwnsDoc(collection, docId, actorKey, uid) {
+  if (collection === "sena_portal_user_index") {
+    return String(docId || "").trim().toLowerCase() === String(uid || "").trim().toLowerCase();
+  }
+  return docIdHasKeySegment(docId, actorKey);
+}
+
+// Decision PURA de autorizacion (sin Drive/Properties) para poder probarla.
+// action: get | set | updatefield | delete | list
+function authorizeRequest(opts) {
+  opts = opts || {};
+  var action = String(opts.action || "").toLowerCase();
+  var collection = String(opts.collection || "");
+  var docId = String(opts.docId || "");
+  var email = String(opts.email || "").trim().toLowerCase();
+  var uid = String(opts.uid || "");
+  var adminEmails = opts.adminEmails || [];
+
+  if (email && adminEmails.indexOf(email) !== -1) return { ok: true, admin: true };
+
+  var actorKey = usernameKeyFromEmail(email);
+  if (!actorKey) return { ok: false, message: "Sin identidad valida en el token." };
+
+  if (action === "list") {
+    if (LIST_ADMIN_ONLY_COLLECTIONS[collection]) {
+      return { ok: false, message: "Listado restringido al administrador." };
+    }
+    return { ok: true };
+  }
+  if (action === "get") {
+    if (isSharedReadDoc(collection, docId)) return { ok: true };
+    return actorOwnsDoc(collection, docId, actorKey, uid)
+      ? { ok: true }
+      : { ok: false, message: "No autorizado para este documento." };
+  }
+  // Escrituras: set | updatefield | delete
+  if (isSharedReadDoc(collection, docId)) {
+    return { ok: false, message: "Solo el administrador modifica datos compartidos." };
+  }
+  return actorOwnsDoc(collection, docId, actorKey, uid)
+    ? { ok: true }
+    : { ok: false, message: "No autorizado para este documento." };
 }
 
 function sanitizeDocId(docId) {

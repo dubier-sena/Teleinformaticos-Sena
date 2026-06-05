@@ -397,4 +397,143 @@
     ],
   });
 
+  // ── Guia 3 (Redes RAP02 - Comprobar conectividad - Santa Barbara) (10A + 10B) ──
+  var RAP_REDES_02 = "RAP 02 - Comprobar la conectividad de la red, de acuerdo con normativa de telecomunicaciones y orden de trabajo.";
+  register({
+    files: [
+      "santa-barbara-10a-guia-03-redes-rap02.html",
+      "santa-barbara-10b-guia-03-redes-rap02.html",
+    ],
+    guideNumber: "3",
+    guideTitle: "Guia 3 - Comprobar la conectividad de la red (RAP 02)",
+    stateKey: "guia_interactiva_santa_barbara_10a_guia_03_redes_rap02_html",
+    program: PROGRAM,
+    competencia: "220501121 - Definir los parametros y recursos de la red de acuerdo con normativa de telecomunicaciones.",
+    resultado: RAP_REDES_02,
+    activities: [
+      {
+        id: "reflexion311", number: "3.1.1", label: "Reflexion inicial - Caso Ferreteria Don Misael",
+        shortName: "Reflexion", type: "form",
+        formFields: ["g3r_311_p1", "g3r_311_p2", "g3r_311_p3", "g3r_311_p4", "g3r_311_p5"],
+        buttonIds: { save: "btnGuardarReflexion311", status: "statusReflexion311" },
+        wordExport: {
+          contextBox: "Caso Ferreteria Don Misael (Sogamoso): 5 PC en red, impresora compartida, camara IP y punto de venta. Fallas multiples de conectividad antes de visitar el local.",
+          sections: [
+            { label: "1. Por que el PC de caja no imprime si la LAN funciona", storeKey: "g3r_311_p1" },
+            { label: "2. Diferencia entre 'no tener internet' y 'no estar en la red'", storeKey: "g3r_311_p2" },
+            { label: "3. Por que la camara IP puede desaparecer aunque el cable siga conectado", storeKey: "g3r_311_p3" },
+            { label: "4. Que revisaria primero (router, cables o PCs) y por que ese orden", storeKey: "g3r_311_p4" },
+            { label: "5. Comandos de Windows que conoce para diagnosticar", storeKey: "g3r_311_p5" },
+          ],
+        },
+      },
+      {
+        id: "bloqueA321", number: "3.2.1", label: "Bloque A - Router, Switch y Access Point",
+        shortName: "BloqueA", type: "form",
+        formFields: ["g3r_321_q1", "g3r_321_q2", "g3r_321_q3"],
+        buttonIds: { save: "btnGuardarBloqueA321", status: "statusBloqueA321" },
+        wordExport: {
+          contextBox: "Bloque A: dispositivos activos (router, switch, access point) en la Ferreteria Don Misael.",
+          sections: [
+            { label: "1. Que dispositivo conecta los 5 PC y cual da salida a internet", storeKey: "g3r_321_q1" },
+            { label: "2. Por que el router tiene dos interfaces IP (LAN y WAN)", storeKey: "g3r_321_q2" },
+            { label: "3. Diferencia entre puerto LAN y puerto WAN", storeKey: "g3r_321_q3" },
+          ],
+        },
+      },
+      {
+        id: "bloqueB322", number: "3.2.2", label: "Bloque B - Protocolo TCP/IP y modelo de capas",
+        shortName: "BloqueB", type: "form",
+        formFields: ["g3r_322_q1", "g3r_322_q2", "g3r_322_q3"],
+        buttonIds: { save: "btnGuardarBloqueB322", status: "statusBloqueB322" },
+        wordExport: {
+          contextBox: "Bloque B: modelo TCP/IP de 4 capas y sus protocolos.",
+          sections: [
+            { label: "1. Que hace la capa de Red y que protocolo opera en ella", storeKey: "g3r_322_q1" },
+            { label: "2. Capa de Transporte: diferencia entre TCP y UDP", storeKey: "g3r_322_q2" },
+            { label: "3. En que capa opera ICMP cuando un PC hace ping", storeKey: "g3r_322_q3" },
+          ],
+        },
+      },
+      {
+        id: "bloqueC323", number: "3.2.3", label: "Bloque C - Servicios DHCP, DNS y Firewall",
+        shortName: "BloqueC", type: "form",
+        formFields: ["g3r_323_q1", "g3r_323_q2", "g3r_323_q3"],
+        buttonIds: { save: "btnGuardarBloqueC323", status: "statusBloqueC323" },
+        wordExport: {
+          contextBox: "Bloque C: servicios de red DHCP, DNS y Firewall y su impacto en la conectividad.",
+          sections: [
+            { label: "1. Que servicio asigna IPs automaticamente y que pasa si falla", storeKey: "g3r_323_q1" },
+            { label: "2. Por que dos PC de la misma red, uno sin internet (relacion con DHCP)", storeKey: "g3r_323_q2" },
+            { label: "3. Que tiene que ver el DNS con una pagina que no carga", storeKey: "g3r_323_q3" },
+          ],
+        },
+      },
+      {
+        id: "bloqueD324", number: "3.2.4", label: "Bloque D - IP publica vs privada y NAT",
+        shortName: "BloqueD", type: "form",
+        formFields: ["g3r_324_q1", "g3r_324_q2", "g3r_324_q3"],
+        buttonIds: { save: "btnGuardarBloqueD324", status: "statusBloqueD324" },
+        wordExport: {
+          contextBox: "Bloque D: IP publica vs privada y NAT en una MiPyme.",
+          sections: [
+            { label: "1. Por que 5 PC con IP privada salen con una sola IP publica", storeKey: "g3r_324_q1" },
+            { label: "2. Que es NAT y cual dispositivo lo realiza", storeKey: "g3r_324_q2" },
+            { label: "3. Ping a 8.8.8.8 funciona pero no abre google.com: que servicio fallo", storeKey: "g3r_324_q3" },
+          ],
+        },
+      },
+      {
+        id: "entregaContexto325", number: "3.2.5", label: "Entrega - Productos de contextualizacion (PDF)",
+        shortName: "Contextualizacion", type: "file",
+        driveTarget: {
+          panelKey: "g3redes-3-2-5", deadlineActivityId: "entregaContexto325",
+          activityTitle: "Contextualizacion de conectividad (PDF con los 4 productos)",
+          description: "Sube a Drive un solo PDF con los 4 productos: diagrama de red, tabla TCP/IP, analisis DHCP/DNS/Firewall y esquema NAT.",
+          note: "Nombre sugerido: Contextualizacion_Conectividad_NombreAprendiz_FICHA.pdf",
+        },
+      },
+      {
+        id: "comandos331", number: "3.3.1", label: "Comandos de diagnostico CLI",
+        shortName: "ComandosCLI", type: "form",
+        formFields: ["g3r_331_ipconfig", "g3r_331_ping_local", "g3r_331_ping_gw", "g3r_331_ping_8888", "g3r_331_ping_google", "g3r_331_tracert", "g3r_331_nslookup", "g3r_331_netstat"],
+        buttonIds: { save: "btnGuardarComandos331", status: "statusComandos331" },
+        wordExport: {
+          contextBox: "Registro de resultados de los comandos de diagnostico ejecutados en CMD (Windows + R -> cmd).",
+          sections: [
+            { label: "ipconfig /all (IP/DHCP, gateway, DNS)", storeKey: "g3r_331_ipconfig" },
+            { label: "ping 127.0.0.1 (tarjeta de red propia)", storeKey: "g3r_331_ping_local" },
+            { label: "ping [gateway] (comunicacion con el router)", storeKey: "g3r_331_ping_gw" },
+            { label: "ping 8.8.8.8 (internet por IP)", storeKey: "g3r_331_ping_8888" },
+            { label: "ping google.com (internet + DNS)", storeKey: "g3r_331_ping_google" },
+            { label: "tracert 8.8.8.8 (saltos hasta el destino)", storeKey: "g3r_331_tracert" },
+            { label: "nslookup google.com (resolucion DNS)", storeKey: "g3r_331_nslookup" },
+            { label: "netstat -n (conexiones activas)", storeKey: "g3r_331_netstat" },
+          ],
+        },
+      },
+      {
+        id: "presentacion332", number: "3.3.2", label: "Presentacion tecnica de averias (5 escenarios)",
+        shortName: "PresentacionAverias", type: "file",
+        driveTarget: {
+          panelKey: "g3redes-3-3-2", deadlineActivityId: "presentacion332",
+          activityTitle: "Presentacion de averias (minimo 15 diapositivas)",
+          description: "Sube a Drive la presentacion (PowerPoint, Canva o Google Slides, minimo 15 diapositivas) con los 5 escenarios de falla y el procedimiento de resolucion.",
+          note: "Nombre sugerido: PresentacionAverias_NombreAprendiz_FICHA",
+        },
+      },
+      {
+        id: "laboratorio341", number: "3.4.1", label: "Laboratorio Packet Tracer - Red de 2 plantas + 10 pruebas",
+        shortName: "LabConectividad", type: "file",
+        driveTarget: {
+          panelKey: "g3redes-3-4-1", deadlineActivityId: "laboratorio341",
+          activityTitle: "Laboratorio de conectividad (.pkt + PDF con 10 pruebas)",
+          description: "Sube a Drive el archivo .pkt y el PDF con las 10 capturas de las pruebas de conectividad, organizadas y comentadas.",
+          note: "Nombre sugerido: Lab_Conectividad_NombreAprendiz_FICHA.pkt",
+          allowedExtensions: [".pkt", ".pdf", ".zip"],
+        },
+      },
+    ],
+  });
+
 })();

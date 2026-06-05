@@ -601,6 +601,295 @@
     URL.revokeObjectURL(url);
   }
 
+  // ── Generación de .docx REAL (Office Open XML) ─────────────────────────────
+  // El HTML-como-.doc anterior NO abre en teléfonos ("documento dañado"). Esto
+  // arma un .docx válido (ZIP almacenado + OOXML), sin librerías externas, que
+  // abre en Word de escritorio y en las apps de Office/Docs/WPS de Android/iOS.
+  var _crcTable = null;
+  function _crc32(bytes) {
+    if (!_crcTable) {
+      _crcTable = [];
+      for (var n = 0; n < 256; n++) {
+        var c = n;
+        for (var k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+        _crcTable[n] = c >>> 0;
+      }
+    }
+    var crc = 0xFFFFFFFF;
+    for (var i = 0; i < bytes.length; i++) crc = (crc >>> 8) ^ _crcTable[(crc ^ bytes[i]) & 0xFF];
+    return (crc ^ 0xFFFFFFFF) >>> 0;
+  }
+  function _u16(n) { return new Uint8Array([n & 0xFF, (n >>> 8) & 0xFF]); }
+  function _u32(n) { return new Uint8Array([n & 0xFF, (n >>> 8) & 0xFF, (n >>> 16) & 0xFF, (n >>> 24) & 0xFF]); }
+  function _concat(parts) {
+    var len = 0, i;
+    for (i = 0; i < parts.length; i++) len += parts[i].length;
+    var out = new Uint8Array(len), off = 0;
+    for (i = 0; i < parts.length; i++) { out.set(parts[i], off); off += parts[i].length; }
+    return out;
+  }
+  // Logo SENA embebido (PNG base64) para el encabezado del .docx. Sincrono y
+  // sirve offline (no usa fetch). Si el decode falla, _logoImage() devuelve null
+  // y el .docx se arma con el encabezado de texto (comportamiento previo, seguro).
+  var SENA_LOGO_PNG_B64 = "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";
+  var SENA_LOGO_W = 243, SENA_LOGO_H = 230;
+  function _b64ToBytes(b64) {
+    try {
+      if (typeof atob !== "function") return null;
+      var bin = atob(b64);
+      var n = bin.length, a = new Uint8Array(n);
+      for (var i = 0; i < n; i++) a[i] = bin.charCodeAt(i);
+      return a;
+    } catch (e) { return null; }
+  }
+  function _logoImage() {
+    if (!SENA_LOGO_PNG_B64 || SENA_LOGO_PNG_B64.charAt(0) === "_") return null;
+    var bytes = _b64ToBytes(SENA_LOGO_PNG_B64);
+    return bytes && bytes.length ? { bytes: bytes, ext: "png", ct: "image/png" } : null;
+  }
+  function _logoDrawingPara() {
+    var cy = 1005840; // ~1.1 in de alto
+    var cx = Math.round((cy * SENA_LOGO_W) / SENA_LOGO_H);
+    return '<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:after="60"/></w:pPr><w:r><w:drawing>' +
+      '<wp:inline distT="0" distB="0" distL="0" distR="0">' +
+      '<wp:extent cx="' + cx + '" cy="' + cy + '"/>' +
+      '<wp:effectExtent l="0" t="0" r="0" b="0"/>' +
+      '<wp:docPr id="1" name="LogoSENA"/>' +
+      '<wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr>' +
+      '<a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">' +
+      '<a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">' +
+      '<pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">' +
+      '<pic:nvPicPr><pic:cNvPr id="1" name="LogoSENA"/><pic:cNvPicPr/></pic:nvPicPr>' +
+      '<pic:blipFill><a:blip r:embed="rIdLogo"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>' +
+      '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="' + cx + '" cy="' + cy + '"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>' +
+      '</pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>';
+  }
+  function _zipStore(files) {
+    var enc = new TextEncoder();
+    var chunks = [], central = [], offset = 0;
+    files.forEach(function (f) {
+      var nameBytes = enc.encode(f.name);
+      var data = f.bytes;
+      var crc = _crc32(data);
+      var size = data.length;
+      var local = _concat([
+        _u32(0x04034b50), _u16(20), _u16(0), _u16(0), _u16(0), _u16(0),
+        _u32(crc), _u32(size), _u32(size), _u16(nameBytes.length), _u16(0), nameBytes,
+      ]);
+      chunks.push(local, data);
+      central.push(_concat([
+        _u32(0x02014b50), _u16(20), _u16(20), _u16(0), _u16(0), _u16(0), _u16(0),
+        _u32(crc), _u32(size), _u32(size), _u16(nameBytes.length), _u16(0), _u16(0),
+        _u16(0), _u16(0), _u32(0), _u32(offset), nameBytes,
+      ]));
+      offset += local.length + data.length;
+    });
+    var centralBytes = _concat(central);
+    var eocd = _concat([
+      _u32(0x06054b50), _u16(0), _u16(0), _u16(files.length), _u16(files.length),
+      _u32(centralBytes.length), _u32(offset), _u16(0),
+    ]);
+    chunks.push(centralBytes, eocd);
+    return new Blob(chunks, { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+  }
+  function _xe(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&apos;");
+  }
+  function _runs(text, rpr) {
+    var lines = String(text == null ? "" : text).split(/\r?\n/);
+    var out = [];
+    for (var i = 0; i < lines.length; i++) {
+      if (i > 0) out.push("<w:r>" + rpr + "<w:br/></w:r>");
+      out.push("<w:r>" + rpr + '<w:t xml:space="preserve">' + _xe(lines[i]) + "</w:t></w:r>");
+    }
+    return out.join("");
+  }
+  function _rpr(o) {
+    o = o || {};
+    var s = "";
+    if (o.bold) s += "<w:b/>";
+    if (o.color) s += '<w:color w:val="' + o.color + '"/>';
+    if (o.sz) s += '<w:sz w:val="' + o.sz + '"/><w:szCs w:val="' + o.sz + '"/>';
+    return s ? "<w:rPr>" + s + "</w:rPr>" : "";
+  }
+  function _para(text, o) {
+    o = o || {};
+    var inner = "";
+    if (o.center) inner += '<w:jc w:val="center"/>';
+    if (o.spacing) inner += '<w:spacing w:before="' + (o.spacing.before || 0) + '" w:after="' + (o.spacing.after || 0) + '"/>';
+    var ppr = inner ? "<w:pPr>" + inner + "</w:pPr>" : "";
+    return "<w:p>" + ppr + _runs(text, _rpr(o)) + "</w:p>";
+  }
+  var _TBL_BORDERS = '<w:tblBorders><w:top w:val="single" w:sz="4" w:color="B7C9BC"/><w:left w:val="single" w:sz="4" w:color="B7C9BC"/><w:bottom w:val="single" w:sz="4" w:color="B7C9BC"/><w:right w:val="single" w:sz="4" w:color="B7C9BC"/><w:insideH w:val="single" w:sz="4" w:color="B7C9BC"/><w:insideV w:val="single" w:sz="4" w:color="B7C9BC"/></w:tblBorders>';
+  function _row(label, value) {
+    return "<w:tr>" +
+      '<w:tc><w:tcPr><w:tcW w:w="3000" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="F3F4F6"/></w:tcPr>' + _para(label, { bold: true, color: "1B5E20" }) + "</w:tc>" +
+      '<w:tc><w:tcPr><w:tcW w:w="6500" w:type="dxa"/></w:tcPr>' + _para(value) + "</w:tc>" +
+      "</w:tr>";
+  }
+  function _headerTable(rows) {
+    return '<w:tbl><w:tblPr><w:tblW w:w="9500" w:type="dxa"/>' + _TBL_BORDERS + '<w:tblLayout w:type="fixed"/></w:tblPr>' +
+      '<w:tblGrid><w:gridCol w:w="3000"/><w:gridCol w:w="6500"/></w:tblGrid>' +
+      rows.map(function (r) { return _row(r[0], r[1]); }).join("") + "</w:tbl>";
+  }
+  function buildDocxBlob(opts) {
+    opts = opts || {};
+    var body = [];
+    body.push(_para("SERVICIO NACIONAL DE APRENDIZAJE - SENA", { bold: true, center: true, color: "1B5E20", sz: 24 }));
+    if (opts.program) body.push(_para(opts.program, { center: true }));
+    if (opts.guideTitle) body.push(_para(opts.guideTitle, { center: true }));
+    body.push(_para(opts.title || "", { bold: true, center: true, sz: 32, spacing: { before: 120, after: 120 } }));
+    body.push(_headerTable([
+      ["Programa", opts.program || ""],
+      ["Fecha de elaboración", opts.fecha || ""],
+      ["Guía", opts.guideTitle || ""],
+      ["Actividad", opts.title || ""],
+      ["Competencia", opts.competencia || ""],
+      ["Resultado de aprendizaje", opts.resultado || ""],
+      ["Nombre completo del aprendiz", opts.learnerName || ""],
+      ["Número de ficha", opts.ficha || ""],
+      ["Grado", opts.grupo || ""],
+      ["Institución", opts.inst || ""],
+    ]));
+    body.push(_para(""));
+    if (opts.contextBox) {
+      body.push(_para("Contexto:", { bold: true, color: "1B5E20" }));
+      body.push(_para(opts.contextBox));
+    }
+    (opts.sections || []).forEach(function (s) {
+      body.push(_para(s.label || "", { bold: true, color: "1B5E20", spacing: { before: 160, after: 40 } }));
+      body.push(_para((s.value == null || s.value === "") ? "(Sin respuesta)" : s.value));
+    });
+    body.push(_para("Documento generado el " + (opts.fecha || "") + " - SENA CIAS Puerto Boyacá.", { center: true, color: "6B7280", sz: 18, spacing: { before: 240 } }));
+
+    var _logo = _logoImage();
+    if (_logo) body.unshift(_logoDrawingPara());
+    return _packDocx(body, _logo);
+  }
+
+  // Empaqueta un arreglo de párrafos/tablas OOXML en un .docx (ZIP store-only).
+  // Si `image` viene ({bytes, ext, ct}), se incrusta como word/media/image1.<ext>
+  // y se referencia con rId "rIdLogo" (el dibujo lo agrega quien llama).
+  function _packDocx(body, image) {
+    var sectPr = '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr>';
+    var documentXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"' +
+      ' xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"' +
+      ' xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"><w:body>' +
+      body.join("") + sectPr + "</w:body></w:document>";
+    var ctImage = image ? '<Default Extension="' + image.ext + '" ContentType="' + image.ct + '"/>' : "";
+    var contentTypes = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+      '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+      '<Default Extension="xml" ContentType="application/xml"/>' +
+      ctImage +
+      '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>';
+    var rels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>';
+    var enc = new TextEncoder();
+    var files = [
+      { name: "[Content_Types].xml", bytes: enc.encode(contentTypes) },
+      { name: "_rels/.rels", bytes: enc.encode(rels) },
+      { name: "word/document.xml", bytes: enc.encode(documentXml) },
+    ];
+    if (image) {
+      var docRels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+        '<Relationship Id="rIdLogo" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/image1.' + image.ext + '"/></Relationships>';
+      files.push({ name: "word/_rels/document.xml.rels", bytes: enc.encode(docRels) });
+      files.push({ name: "word/media/image1." + image.ext, bytes: image.bytes });
+    }
+    return _zipStore(files);
+  }
+
+  // Convierte HTML (cuerpo de respuestas del admin) en párrafos OOXML.
+  function _htmlToParagraphs(html) {
+    var paras = [];
+    var doc = null;
+    try {
+      if (typeof DOMParser !== "undefined") {
+        doc = new DOMParser().parseFromString("<body><div>" + String(html || "") + "</div></body>", "text/html");
+      }
+    } catch (e) { doc = null; }
+    if (!doc || !doc.body) {
+      var plain = String(html || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+      if (plain) paras.push(_para(plain));
+      return paras;
+    }
+    var BLOCK = { P: 1, DIV: 1, LI: 1, H1: 1, H2: 1, H3: 1, H4: 1, H5: 1, H6: 1, BLOCKQUOTE: 1, SECTION: 1, ARTICLE: 1, HEADER: 1, FOOTER: 1 };
+    function textOf(el) { return (el.textContent || "").replace(/\s+/g, " ").trim(); }
+    function blockText(el) {
+      var h = (el.innerHTML || "")
+        .replace(/<br\s*\/?>/gi, "\n")
+        .replace(/<\/(p|div|li|h[1-6])>/gi, "\n")
+        .replace(/<[^>]+>/g, "");
+      h = h.replace(/&nbsp;/g, " ").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+        .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&");
+      return h.replace(/[ \t]+\n/g, "\n").replace(/\n[ \t]+/g, "\n")
+        .replace(/\n{3,}/g, "\n\n").replace(/[ \t]{2,}/g, " ").trim();
+    }
+    function walk(node) {
+      for (var c = node.firstChild; c; c = c.nextSibling) {
+        if (c.nodeType !== 1) continue;
+        var tag = c.tagName;
+        if (tag === "TABLE") {
+          var trs = c.querySelectorAll("tr");
+          for (var r = 0; r < trs.length; r++) {
+            var cells = [], tcs = trs[r].children;
+            for (var x = 0; x < tcs.length; x++) { var tt = textOf(tcs[x]); if (tt) cells.push(tt); }
+            if (cells.length) paras.push(_para(cells.join(":  ")));
+          }
+          continue;
+        }
+        if (BLOCK[tag]) {
+          var hasBlockChild = false;
+          for (var k = c.firstChild; k; k = k.nextSibling) {
+            if (k.nodeType === 1 && (BLOCK[k.tagName] || k.tagName === "TABLE")) { hasBlockChild = true; break; }
+          }
+          if (hasBlockChild) { walk(c); }
+          else {
+            var t = blockText(c);
+            if (t) paras.push(_para(t, /^H[1-6]$/.test(tag) ? { bold: true, color: "1B5E20" } : {}));
+          }
+        } else {
+          walk(c);
+        }
+      }
+    }
+    walk(doc.body);
+    if (!paras.length) { var t2 = textOf(doc.body); if (t2) paras.push(_para(t2)); }
+    return paras;
+  }
+
+  // .docx genérico desde { title, subtitle, headerRows:[[label,value]], bodyHtml, footerLines:[] }
+  function buildDocxFromContent(model) {
+    model = model || {};
+    var body = [];
+    body.push(_para("SERVICIO NACIONAL DE APRENDIZAJE - SENA", { bold: true, center: true, color: "1B5E20", sz: 24 }));
+    body.push(_para(model.title || "", { bold: true, center: true, sz: 30, spacing: { before: 120, after: 60 } }));
+    if (model.subtitle) body.push(_para(model.subtitle, { center: true, color: "374151" }));
+    if (model.headerRows && model.headerRows.length) { body.push(_headerTable(model.headerRows)); body.push(_para("")); }
+    var bodyParas = _htmlToParagraphs(model.bodyHtml || "");
+    for (var i = 0; i < bodyParas.length; i++) body.push(bodyParas[i]);
+    (model.footerLines || []).forEach(function (line) {
+      body.push(_para(line, { center: true, color: "6B7280", sz: 18, spacing: { before: 120 } }));
+    });
+    var _logo = _logoImage();
+    if (_logo) body.unshift(_logoDrawingPara());
+    return _packDocx(body, _logo);
+  }
+  function downloadBlob(blob, fileName) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   // ── Modal compartido para exportar Word ───────────────────────────────────
 
   var WORD_MODAL_ID = "act-std-word-modal";
@@ -709,7 +998,7 @@
       return { label: s.label, value: String(state[s.storeKey] || "").trim() || "(Sin respuesta)" };
     });
 
-    var html = buildWordDocument({
+    var exportOpts = {
       title: "Actividad " + actDef.number + " - " + actDef.label,
       learnerName: nombre,
       ficha: selection.ficha,
@@ -722,15 +1011,21 @@
       guideTitle: meta.guideTitle,
       sections: sections,
       contextBox: actDef.wordExport && actDef.wordExport.contextBox || "",
-    });
-
-    downloadWordDoc(html, buildFileName({
+    };
+    var fileBase = buildFileName({
       guideNumber: meta.guideNumber,
       activityNumber: actDef.number,
       shortName: actDef.shortName,
       ficha: selection.ficha,
       learnerName: nombre,
-    }));
+    }).replace(/\.docx?$/i, "");
+
+    // .docx real (abre en teléfonos); fallback a HTML-doc en navegadores muy viejos.
+    if (typeof TextEncoder !== "undefined" && typeof Uint8Array !== "undefined") {
+      downloadBlob(buildDocxBlob(exportOpts), fileBase + ".docx");
+    } else {
+      downloadWordDoc(buildWordDocument(exportOpts), fileBase + ".doc");
+    }
     _closeWordModal();
   }
 
@@ -969,6 +1264,8 @@
 
     // Word
     buildWordDocument: buildWordDocument,
+    buildDocxBlob: buildDocxBlob,
+    buildDocxFromContent: buildDocxFromContent,
     buildFileName: buildFileName,
     generateEvidenceFileName: generateEvidenceFileName,
     downloadWordDoc: downloadWordDoc,

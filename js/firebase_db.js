@@ -506,7 +506,15 @@
   DRIVE_PRIMARY_COLLECTIONS[COL_PROGRESS] = true;
   DRIVE_PRIMARY_COLLECTIONS[COL_GUIDE_STATE] = true;
   DRIVE_PRIMARY_COLLECTIONS[COL_CALENDAR] = true;
-  DRIVE_PRIMARY_COLLECTIONS[COL_GROUPS] = true;
+  // sena_portal_groups NO va a Drive a proposito: sus docId son hashes
+  // deterministas (g2act10_/g6_/g7_<ficha>_<hash>) que NO contienen la
+  // usernameKey del miembro. La autorizacion del Apps Script
+  // (authorizeRequest/docIdHasKeySegment en respaldo_firestore.gs) decide la
+  // propiedad por SEGMENTO del docId, asi que para un hash daria falso y
+  // denegaria al propio integrante en cuanto se despliegue el fix C1. Los
+  // equipos son de bajo volumen (pocos por ficha), por lo que se quedan en
+  // Firestore, donde las reglas SI autorizan por memberEmails
+  // (isGroupMemberOfResource). Ver tests/firebase_groups_routing.test.cjs.
   DRIVE_PRIMARY_COLLECTIONS[COL_TUTORING] = true;
 
   function isDriveDataCollection(collection) {

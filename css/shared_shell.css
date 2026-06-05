@@ -39,6 +39,19 @@ body {
 /* Offset for the fixed navbar */
 body.app-shell {
   padding-top: var(--navbar-height, 60px);
+  /* Evita scroll horizontal por decoraciones anchas del hero (SVG/wave).
+     'clip' no crea contenedor de scroll, así que no rompe position:sticky. */
+  overflow-x: clip;
+}
+
+/* La onda decorativa del hero (.wave) tiene height fijo + viewBox 1440x40, lo
+   que la fuerza a 1440px de ancho intrínseco y genera scroll horizontal.
+   La limitamos al ancho del contenedor (se estira porque usa
+   preserveAspectRatio="none"). */
+.app-shell svg.wave,
+.app-shell .wave {
+  width: 100%;
+  max-width: 100%;
 }
 
 .app-shell {
@@ -48,7 +61,9 @@ body.app-shell {
 .app-hero {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, #04140d 0%, #0a2c1c 54%, #0d3f28 100%);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(245, 183, 0, 0.16), transparent 30%),
+    linear-gradient(135deg, var(--brand-800, #08552c) 0%, var(--brand-600, #007934) 100%);
   color: #fff;
 }
 
@@ -123,9 +138,11 @@ body.app-shell {
   right: 0;
   z-index: 500;
   height: var(--navbar-height, 60px);
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.88);
+  -webkit-backdrop-filter: saturate(150%) blur(12px);
+  backdrop-filter: saturate(150%) blur(12px);
   border-bottom: 1px solid var(--border-soft, #d6e2da);
-  box-shadow: 0 2px 8px rgba(10, 44, 28, 0.06);
+  box-shadow: 0 4px 18px rgba(7, 26, 18, 0.05);
 }
 
 .app-navbar__inner {
@@ -141,13 +158,13 @@ body.app-shell {
 .app-navbar__logo {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   text-decoration: none;
-  color: var(--brand-600, #007934);
+  color: var(--brand-700, #0a5c31);
   font-family: var(--font-display, "Outfit", sans-serif);
   font-weight: 800;
-  font-size: 15px;
-  letter-spacing: -0.01em;
+  font-size: 16px;
+  letter-spacing: -0.015em;
   padding-right: 28px;
   flex-shrink: 0;
   white-space: nowrap;
@@ -186,27 +203,27 @@ body.app-shell {
   display: flex;
   align-items: center;
   height: 100%;
-  padding: 0 14px;
-  font-size: 13.5px;
+  padding: 0 16px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text-muted, #5f7468);
   text-decoration: none;
   border: none;
   background: none;
   cursor: pointer;
-  border-bottom: 2px solid transparent;
+  border-bottom: 3px solid transparent;
   transition: color 140ms ease, border-color 140ms ease, background 140ms ease;
   white-space: nowrap;
 }
 
 .app-navbar__link:hover {
-  color: var(--brand-600, #007934);
-  background: rgba(0, 121, 52, 0.04);
+  color: var(--brand-700, #0a5c31);
+  background: rgba(15, 191, 100, 0.07);
   text-decoration: none;
 }
 
 .app-navbar__link.is-active {
-  color: var(--brand-600, #007934);
+  color: var(--brand-700, #0a5c31);
   border-bottom-color: var(--accent-gold, #f5b700);
   font-weight: 700;
 }
@@ -348,12 +365,12 @@ body.app-shell {
   justify-content: center;
   align-items: center;
   gap: 5px;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   background: none;
   border: 1px solid var(--border-soft, #d6e2da);
-  border-radius: 9px;
+  border-radius: 10px;
   cursor: pointer;
   color: var(--text-strong, #102117);
   transition: background 140ms ease;
@@ -437,8 +454,10 @@ body.app-shell {
     animation: none;
   }
 
+  /* En móvil ocultamos la píldora de usuario: ocupaba demasiado y empujaba el
+     botón de menú fuera de la pantalla. La sesión sigue visible en el menú. */
   .app-navbar__user {
-    max-width: none;
+    display: none;
   }
 }
 
