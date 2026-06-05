@@ -13,6 +13,7 @@ const EXPECTED_ROOT_HTML = [
   "guia.html",
   "index.html",
   "panel-administrativo-usuarios.html",
+  "panel-evidencias-integridad.html",
 ];
 
 const EXPECTED_GUIDE_WRAPPERS = [

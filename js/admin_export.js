@@ -172,18 +172,74 @@
 </html>`;
   }
 
+  function buildDocxModel(exportData) {
+    const title = exportData?.title || "Respuestas del aprendiz";
+    const subtitle = exportData?.subtitle || "";
+    const meta = exportData?.meta || "";
+    const metadata = getMetadata(title, subtitle);
+    const today = new Date().toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric" });
+    const learnerName = readMetaField(meta, "Aprendiz") || String(subtitle).split("|")[0]?.trim() || "Aprendiz";
+    const ficha = readMetaField(meta, "Ficha");
+    const grupo = readMetaField(meta, "Grupo");
+    const institucion = readMetaField(meta, "Institucion") || readMetaField(meta, "Instituci\u00f3n");
+    const fechaEntrega = readMetaField(meta, "Fecha de entrega") || readMetaField(meta, "Guardado") || readMetaField(meta, "Fecha") || "\u2014";
+    const guideName = readMetaField(meta, "Guia") || readMetaField(meta, "Gu\u00eda") || metadata.guideName;
+    const activityName = readMetaField(meta, "Actividad") || title;
+    const projectLink = exportData?.projectLink || getProjectLink();
+    return {
+      title,
+      subtitle,
+      headerRows: [
+        ["Programa de formaci\u00f3n", metadata.program],
+        ["Competencia", metadata.competencia],
+        ["Resultado de aprendizaje", metadata.resultado],
+        ["Nombre completo del aprendiz", learnerName],
+        ["Instituci\u00f3n educativa", institucion],
+        ["N\u00famero de ficha", ficha],
+        ["Grado / grupo", grupo],
+        ["Nombre de la gu\u00eda", metadata.guideName],
+        ["Gu\u00eda seleccionada", guideName],
+        ["Nombre de la actividad", activityName],
+        ["Fecha de entrega", fechaEntrega],
+        ["Fecha de elaboraci\u00f3n del documento", today],
+      ],
+      bodyHtml: exportData?.bodyHtml || "",
+      footerLines: [
+        "Este soporte se genera para seguimiento formativo institucional. La exportaci\u00f3n no modifica respuestas, entregas ni fechas registradas.",
+        "Enlace del proyecto: " + (projectLink || "No disponible"),
+      ],
+    };
+  }
+
   function downloadWord(exportData, options) {
     if (!exportData?.bodyHtml) {
       return false;
     }
+    const safeLearner = sanitizeFileName(options?.learnerName || readMetaField(exportData.meta, "Aprendiz") || "Aprendiz");
+    const safeTitle = sanitizeFileName(options?.title || exportData.title || "Respuestas");
+    const fileBase = `${safeTitle}_${safeLearner}`;
+    const AS = window.ActivityStandard;
+
+    // .docx real (abre en tel\u00e9fonos). Fallback a HTML-doc en navegadores muy viejos.
+    if (AS && typeof AS.buildDocxFromContent === "function" && typeof TextEncoder !== "undefined") {
+      const blob = AS.buildDocxFromContent(buildDocxModel(exportData));
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${fileBase}.docx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      return true;
+    }
+
     const html = buildWordDocument(exportData);
     const blob = new Blob(["\ufeff", html], { type: "application/msword" });
     const url = URL.createObjectURL(blob);
-    const safeLearner = sanitizeFileName(options?.learnerName || readMetaField(exportData.meta, "Aprendiz") || "Aprendiz");
-    const safeTitle = sanitizeFileName(options?.title || exportData.title || "Respuestas");
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${safeTitle}_${safeLearner}.doc`;
+    a.download = `${fileBase}.doc`;
     document.body.appendChild(a);
     a.click();
     a.remove();

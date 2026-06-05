@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta
+  http-equiv="Content-Security-Policy"
+  content="default-src 'self' blob: data:; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' blob: https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https:;"
+>
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Evidencia de integridad | Admin | SENA Teleinform&aacute;ticos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/site_tokens.css?v=20260516_1">
+<link rel="stylesheet" href="css/components.css?v=20260516_1">
+<link rel="stylesheet" href="css/shared_shell.css?v=20260603_2">
+<script defer src="js/portal_auth.js?v=20260604_1"></script>
+<script src="js/firebase-config.js?v=20260527_3"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script src="js/firebase_auth_bridge.js?v=20260527_1"></script>
+<script defer src="js/firebase_db.js?v=20260601_5"></script>
+<script defer src="js/project_integrations.js?v=20260526_2"></script>
+<script defer src="js/drive_db.js?v=20260526_2"></script>
+<script defer src="js/shared_shell.js?v=20260603_2"></script>
+<script defer src="js/admin_integridad.js?v=20260603_1"></script>
+<style>
+  body.app-shell { background:
+    radial-gradient(circle at 100% 0%, rgba(15,191,100,.10), transparent 30%),
+    linear-gradient(180deg, #f7fbf9 0%, var(--bg-canvas, #edf3ef) 100%); }
+  .ev-wrap { width: min(1240px, calc(100% - 32px)); margin: 0 auto; padding: 1.6rem 0 4rem; }
+  .ev-head { display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:1rem; margin-bottom:1.2rem; }
+  .ev-head h1 { font-family: var(--font-display, "Outfit", sans-serif); font-size: clamp(1.5rem, 3vw, 2.1rem); font-weight: 800; letter-spacing: -.02em; color: var(--text-strong, #102117); margin: 0; }
+  .ev-head p { margin:.3rem 0 0; color: var(--text-muted, #5f7468); max-width: 60ch; }
+  .ev-kicker { color: var(--brand-700, #0a5c31); font-size:.74rem; font-weight:800; letter-spacing:.14em; text-transform:uppercase; }
+  .ev-actions { display:flex; gap:.6rem; flex-wrap:wrap; }
+  .ev-note { display:flex; gap:.6rem; align-items:flex-start; padding:.85rem 1rem; border:1px solid var(--brand-200,#cdf0db); background: var(--brand-100,#e9f8ef); color: var(--brand-800,#08552c); border-radius: var(--radius-md,18px); font-size:.86rem; line-height:1.5; margin-bottom:1.1rem; }
+  .ev-panel { background: var(--surface-1,#fff); border:1px solid var(--border-soft,#d6e2da); border-radius: var(--radius-lg,28px); box-shadow: 0 12px 34px rgba(7,26,18,.07); padding: clamp(1rem,2.4vw,1.5rem); }
+  .ev-toolbar { display:flex; flex-wrap:wrap; gap:.7rem; align-items:center; justify-content:space-between; margin-bottom:1rem; }
+  .ev-toolbar input { min-height:44px; padding:0 .9rem; border:1px solid var(--border-medium,#b6c8be); border-radius: var(--radius-pill,999px); background:#fff; font:inherit; min-width: 240px; flex:1 1 240px; max-width: 420px; }
+  .ev-toolbar input:focus { outline:none; border-color: var(--brand-600,#007934); box-shadow: 0 0 0 3px rgba(15,191,100,.2); }
+  #ev-status { color: var(--text-muted,#5f7468); font-size:.86rem; font-weight:600; }
+  .ev-table-scroll { overflow-x: auto; }
+  table.ev-table { width:100%; border-collapse: collapse; font-size:.88rem; min-width: 760px; }
+  .ev-table th { text-align:left; padding:.6rem .7rem; border-bottom:2px solid var(--border-soft,#d6e2da); color: var(--text-muted,#5f7468); font-size:.72rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; white-space:nowrap; }
+  .ev-table td { padding:.7rem .7rem; border-bottom:1px solid var(--border-soft,#d6e2da); vertical-align: top; color: var(--text-body,#1e2f24); }
+  .ev-table td small { color: var(--text-soft,#8aa093); }
+  .ev-table tr:hover td { background: var(--surface-2,#f5faf7); }
+  .ev-num { font-variant-numeric: tabular-nums; }
+  .ev-badge { display:inline-block; padding:.12rem .55rem; border-radius: var(--radius-pill,999px); font-size:.68rem; font-weight:800; white-space:nowrap; }
+  .ev-badge--ok { background: var(--brand-100,#e9f8ef); color: var(--brand-700,#0a5c31); }
+  .ev-badge--warn { background: var(--gold-light,#fff0c0); color:#6e5300; }
+  .ev-badge--danger { background: var(--color-danger-soft,#fde6e3); color: var(--color-danger,#c0382b); }
+  #ev-empty { display:none; padding:2rem; text-align:center; color: var(--text-muted,#5f7468); }
+  .c-btn { cursor:pointer; }
+</style>
+</head>
+<body class="app-shell app-shell--admin">
+  <main class="ev-wrap">
+    <div class="ev-head">
+      <div>
+        <p class="ev-kicker">Panel administrativo</p>
+        <h1>Evidencia de integridad acad&eacute;mica</h1>
+        <p>Se&ntilde;ales de comportamiento capturadas mientras el aprendiz responde una gu&iacute;a. Es un <strong>indicio para tu revisi&oacute;n</strong>, no una prueba definitiva.</p>
+      </div>
+      <div class="ev-actions">
+        <button class="c-btn c-btn--secondary" id="ev-reload" type="button">&#8635; Recargar</button>
+        <button class="c-btn c-btn--primary" id="ev-export" type="button">&#11015; Exportar CSV</button>
+      </div>
+    </div>
+
+    <div class="ev-note">
+      <span>&#9432;</span>
+      <span>El aprendiz <strong>no ve</strong> esta captura. Recomendaci&oacute;n: avisa de forma general (reglamento/clase) que el trabajo se registra por integridad. La exportaci&oacute;n de aqu&iacute; es <strong>independiente</strong> de la exportaci&oacute;n de respuestas de la actividad.</span>
+    </div>
+
+    <section class="ev-panel">
+      <div class="ev-toolbar">
+        <input id="ev-search" type="search" placeholder="Buscar por aprendiz, ficha, grupo o gu&iacute;a&hellip;" autocomplete="off">
+        <span id="ev-status">Cargando&hellip;</span>
+      </div>
+      <div class="ev-table-scroll">
+        <table class="ev-table">
+          <thead>
+            <tr>
+              <th>Aprendiz</th>
+              <th>Ficha / Grupo</th>
+              <th>Gu&iacute;a</th>
+              <th>Pegados</th>
+              <th>Salidas de pesta&ntilde;a</th>
+              <th>Escritura</th>
+              <th>Alertas</th>
+              <th>Actualizado</th>
+            </tr>
+          </thead>
+          <tbody id="ev-rows"></tbody>
+        </table>
+        <div id="ev-empty">A&uacute;n no hay evidencia registrada. Aparecer&aacute; aqu&iacute; cuando los aprendices trabajen en las gu&iacute;as.</div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

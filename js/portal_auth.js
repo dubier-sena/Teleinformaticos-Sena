@@ -39,6 +39,10 @@
       "Guía 2 - Definir los parámetros y recursos de la red de acuerdo con normativa de telecomunicaciones | Grupo 10A",
     "santa-barbara-10b-guia-02-redes-rap01.html":
       "Guía 2 - Definir los parámetros y recursos de la red de acuerdo con normativa de telecomunicaciones | Grupo 10B",
+    "santa-barbara-10a-guia-03-redes-rap02.html":
+      "Guía 3 - Comprobar la conectividad de la red, de acuerdo con normativa de telecomunicaciones y orden de trabajo | Grupo 10A",
+    "santa-barbara-10b-guia-03-redes-rap02.html":
+      "Guía 3 - Comprobar la conectividad de la red, de acuerdo con normativa de telecomunicaciones y orden de trabajo | Grupo 10B",
   };
 
   const GUIDE_PROGRESS_CONFIG = {
@@ -128,6 +132,20 @@
       pageKey: "11b_guia7",
       stateKey: "guia_interactiva_11b_guia7_html",
     },
+    "santa-barbara-10a-guia-03-redes-rap02.html": {
+      mode: "state-with-activity",
+      total: 34,
+      activityTotal: 9,
+      pageKey: "sb_10a_guia3_redes",
+      stateKey: "guia_interactiva_santa_barbara_10a_guia_03_redes_rap02_html",
+    },
+    "santa-barbara-10b-guia-03-redes-rap02.html": {
+      mode: "state-with-activity",
+      total: 34,
+      activityTotal: 9,
+      pageKey: "sb_10b_guia3_redes",
+      stateKey: "guia_interactiva_santa_barbara_10b_guia_03_redes_rap02_html",
+    },
   };
 
   const FICHA_MAP = {
@@ -152,12 +170,12 @@
     "3441944": {
       inst: "Institucion Educativa Santa Barbara",
       grupo: "10A",
-      guias: ["grupo-10a-guia-01-induccion.html", "santa-barbara-10a-guia-02-redes-rap01.html"],
+      guias: ["grupo-10a-guia-01-induccion.html", "santa-barbara-10a-guia-02-redes-rap01.html", "santa-barbara-10a-guia-03-redes-rap02.html"],
     },
     "3441950": {
       inst: "Institucion Educativa Santa Barbara",
       grupo: "10B",
-      guias: ["grupo-10b-guia-01-induccion.html", "santa-barbara-10b-guia-02-redes-rap01.html"],
+      guias: ["grupo-10b-guia-01-induccion.html", "santa-barbara-10b-guia-02-redes-rap01.html", "santa-barbara-10b-guia-03-redes-rap02.html"],
     },
     "3168850": {
       inst: "Institucion Educativa Santa Barbara",
@@ -3677,6 +3695,103 @@ window.portalAuth = {
       return result;
     };
   }
+
+  // ── S3: confirmacion server-side del rol admin (defensa en profundidad) ──
+  // El gate cliente (requireAdminAccess / isAdminSession) confia en el campo
+  // `role` guardado en localStorage. Alguien podria editar localStorage para
+  // fingir una sesion admin y abrir el panel: solo veria el chrome de la UI y
+  // los datos ya cacheados en SU navegador. Firestore (reglas isAdmin()) y el
+  // Apps Script (rol/propiedad, fix C1) bloquean cualquier dato real de otra
+  // ficha. Esta verificacion cierra el hueco restante: confirma contra
+  // Firestore que el uid de la sesion Firebase realmente tiene
+  // sena_portal_roles/{uid}.role == "admin". Por las reglas, cualquier sesion
+  // autenticada puede leer SU PROPIO doc role, asi que la consulta no requiere
+  // ser admin: si el doc no existe (404) o el rol no es admin, la sesion miente.
+  // Solo degrada ante un NEGATIVO DEFINITIVO. Ante error de red, sesion no
+  // hidratada u offline (verdict "unknown"), NO actua: tolerancia offline,
+  // porque las reglas siguen protegiendo los datos del lado servidor.
+  function isLocalPreviewContext() {
+    const protocol = String(window.location.protocol || "").toLowerCase();
+    const hostname = String(window.location.hostname || "").toLowerCase();
+    return (
+      protocol === "file:" ||
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "::1"
+    );
+  }
+
+  async function fetchAdminRoleVerdict() {
+    const b = getBridge();
+    if (!b) return "unknown";
+    const cfg = window.PORTAL_FIREBASE_CONFIG;
+    if (!cfg || !cfg.projectId || !cfg.apiKey) return "unknown";
+    let uid = null;
+    try { uid = b.currentUid ? b.currentUid() : null; } catch (_) {}
+    let idToken = null;
+    try { idToken = await b.getIdToken(); } catch (_) {}
+    if (!uid || !idToken) return "unknown";
+    const base = `https://firestore.googleapis.com/v1/projects/${cfg.projectId}/databases/(default)/documents`;
+    const url = `${base}/sena_portal_roles/${encodeURIComponent(uid)}?key=${cfg.apiKey}`;
+    try {
+      const res = await fetch(url, { headers: { Authorization: "Bearer " + idToken } });
+      if (res.status === 404) return "not-admin"; // sin doc role => no es admin
+      if (res.status === 401 || res.status === 403) return "unknown"; // sesion dudosa: no degradar
+      if (!res.ok) return "unknown";
+      const doc = await res.json();
+      const role = doc && doc.fields && doc.fields.role && doc.fields.role.stringValue;
+      return role === "admin" ? "admin" : "not-admin";
+    } catch (_) {
+      return "unknown";
+    }
+  }
+
+  async function confirmAdminAccessServerSide(options) {
+    const opts = options || {};
+    if (isLocalPreviewContext()) return true; // preview local del maintainer (file:// / localhost)
+    if (!auth.isAdminSession || !auth.isAdminSession()) return true; // la sesion no reclama admin
+    if (!bridgeEnabled()) return true; // sin nube: tolerar (las reglas protegen los datos)
+    const b = getBridge();
+    if (b && typeof b.waitForAuthHydration === "function") {
+      try { await b.waitForAuthHydration(2500); } catch (_) {}
+    }
+    const verdict = await fetchAdminRoleVerdict();
+    if (verdict !== "not-admin") return verdict === "admin"; // "unknown" => no actuar
+    // Negativo definitivo: la sesion finge ser admin. Cerrar sesion y expulsar.
+    try { if (typeof auth.logout === "function") await auth.logout(); } catch (_) {}
+    try {
+      auth.setFlashMessage?.(
+        "Tu sesion no tiene permisos de administrador. Inicia sesion como administrador.",
+        "warn"
+      );
+    } catch (_) {}
+    if (opts.redirect !== false) {
+      window.location.replace(opts.redirectUrl || "index.html");
+    }
+    return false;
+  }
+
+  auth.confirmAdminAccessServerSide = confirmAdminAccessServerSide;
+
+  // Auto-verificacion al cargar una pagina de herramientas admin. Se excluye
+  // index.html (la pagina de login) a proposito: ahi loginAdmin recien crea el
+  // doc role (ensureAdminRoleDoc), y confirmar durante esa carrera degradaria
+  // al admin legitimo. En el panel ya se navega con el doc creado.
+  (function scheduleAdminServerConfirm() {
+    if (auth.__adminServerConfirmScheduled) return;
+    auth.__adminServerConfirmScheduled = true;
+    const page = (String(window.location.pathname || "").split("/").pop() || "").toLowerCase();
+    if (page === "" || page === "index.html") return;
+    const run = function () {
+      if (!auth.isAdminSession || !auth.isAdminSession()) return; // solo sesiones que reclaman admin
+      confirmAdminAccessServerSide({ redirectUrl: "index.html" }).catch(() => {});
+    };
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", run, { once: true });
+    } else {
+      run();
+    }
+  })();
 
   // ── Engancha logout ────────────────────────────────────────────────────
   const prevLogout = auth.logout;

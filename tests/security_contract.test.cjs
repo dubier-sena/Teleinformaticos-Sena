@@ -53,6 +53,40 @@ test("admin access guards only bypass authentication for local preview mode", ()
   });
 });
 
+test("admin gate is confirmed server-side against the Firestore role doc", () => {
+  const source = read(path.join("js", "portal_auth.js"));
+  const block = source.match(
+    /async function confirmAdminAccessServerSide\(options\) \{[\s\S]*?\n  \}/
+  );
+
+  assert.ok(block, "confirmAdminAccessServerSide should exist");
+  const body = block[0];
+
+  // Verifica contra el doc role del servidor, no solo contra localStorage.
+  assert.match(source, /sena_portal_roles\/\$\{encodeURIComponent\(uid\)\}/);
+  assert.match(source, /function fetchAdminRoleVerdict\(\)/);
+
+  // Solo degrada ante un negativo definitivo; tolera "unknown" (offline/red).
+  assert.match(body, /verdict !== "not-admin"/);
+  assert.match(body, /return verdict === "admin"/);
+
+  // 404 (sin doc role) es negativo definitivo; 401/403 NO degradan.
+  assert.match(source, /res\.status === 404[\s\S]*?return "not-admin"/);
+  assert.match(source, /res\.status === 401 \|\| res\.status === 403[\s\S]*?return "unknown"/);
+
+  // No corre en preview local ni cuando la sesion no reclama admin.
+  assert.match(body, /isLocalPreviewContext\(\)/);
+  assert.match(body, /auth\.isAdminSession\(\)/);
+
+  // Al detectar una sesion que finge admin, cierra sesion y expulsa.
+  assert.match(body, /auth\.logout/);
+  assert.match(body, /window\.location\.replace/);
+
+  // Expuesto en la API y auto-agendado fuera de index.html (carrera de bootstrap).
+  assert.match(source, /auth\.confirmAdminAccessServerSide = confirmAdminAccessServerSide;/);
+  assert.match(source, /page === "index\.html"/);
+});
+
 test("tutoring booking rules restrict write access to admins or booking owner", () => {
   const rules = read("firestore.rules");
   const tutoringBlock = rules.match(/match \/sena_portal_tutoring_bookings\/\{bookingId\} \{[\s\S]*?\n    \}/);

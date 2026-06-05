@@ -976,6 +976,11 @@ function getEquipoGuia6FromState(actId) {
   if (!actId) return null;
   const raw = state[equipoGuia6StateKey(actId)];
   if (!raw || typeof raw !== "object") return null;
+  // Modo SOLO: el aprendiz trabaja sin companeros (1 integrante = el mismo).
+  // Permite continuar la actividad aunque el roster no cargue o prefiera individual.
+  if (raw.mode === "solo" || raw.solo === true) {
+    return Array.isArray(raw.members) && raw.members.length >= 1 ? raw : null;
+  }
   if (raw.mode !== "grupo") return null;
   if (!Array.isArray(raw.members) || raw.members.length < 2) return null;
   return raw;
@@ -1106,23 +1111,27 @@ function renderEquipoGuia6StartButton(actId) {
       <button type="button" onclick="iniciarEquipoGuia6('${escapeHtml(actId)}')" class="btn-save-response" style="display:inline-flex;align-items:center;gap:6px">
         &#128101; Configurar equipo de esta actividad
       </button>
-      <span class="intro-text" style="margin:0;font-size:.82rem;color:#4b5563">A&uacute;n no has elegido equipo. Pulsa el bot&oacute;n para seleccionar a tus compa&ntilde;eros.</span>
+      <button type="button" onclick="trabajarSoloGuia6('${escapeHtml(actId)}')" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1px solid #b6dba0;background:#e8f5e9;color:#1b5e20;border-radius:6px;font-family:inherit;font-size:.86rem;cursor:pointer;font-weight:600">
+        &#128100; Trabajar solo
+      </button>
+      <span class="intro-text" style="margin:0;font-size:.82rem;color:#4b5563">Si no aparecen tus compa&ntilde;eros o prefieres hacerlo individual, pulsa "Trabajar solo" y contin&uacute;a.</span>
     </div>`;
 }
 
 function renderEquipoGuia6Summary(actId, team) {
   const summary = document.querySelector(`[data-equipo-summary="${actId}"]`);
   if (!summary) return;
+  const isSolo = team.solo === true || team.mode === "solo";
   const code4 = buildEquipoGuia6Code4(team);
   const memberList = team.members
     .map((m) => `<li>${escapeHtml(m.fullName)} <span style="color:#78909c;font-size:.78rem">(${escapeHtml(m.usernameKey)})</span></li>`)
     .join("");
   summary.innerHTML = `
     <div style="padding:10px 12px;background:#e8f5e9;border:1px solid #b6dba0;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:.88rem">
-      <div style="font-weight:700;margin-bottom:4px">Equipo confirmado para esta actividad &middot; <code style="background:#fff;padding:2px 6px;border-radius:4px;color:#0b6b35">Equipo ${escapeHtml(code4)}</code></div>
+      <div style="font-weight:700;margin-bottom:4px">${isSolo ? "&#128100; Trabajando de forma individual" : "Equipo confirmado para esta actividad"} &middot; <code style="background:#fff;padding:2px 6px;border-radius:4px;color:#0b6b35">${isSolo ? "Individual" : "Equipo " + escapeHtml(code4)}</code></div>
       <ul style="margin:6px 0 6px 18px;padding:0;line-height:1.55">${memberList}</ul>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
-        <button type="button" onclick="reconfigurarEquipoGuia6('${escapeHtml(actId)}')" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid #f5c1bb;background:#fdecea;color:#a13029;border-radius:6px;font-family:inherit;font-size:.82rem;cursor:pointer;font-weight:600">&#128683; Cambiar equipo de esta actividad</button>
+        <button type="button" onclick="reconfigurarEquipoGuia6('${escapeHtml(actId)}')" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid #f5c1bb;background:#fdecea;color:#a13029;border-radius:6px;font-family:inherit;font-size:.82rem;cursor:pointer;font-weight:600">&#128683; ${isSolo ? "Cambiar a equipo" : "Cambiar equipo de esta actividad"}</button>
       </div>
     </div>`;
 }
@@ -1151,8 +1160,10 @@ function renderEquipoGuia6Roster(actId) {
     .filter((u) => u.usernameKey && u.fullName)
     .sort((a, b) => a.fullName.localeCompare(b.fullName, "es"));
   if (roster.length === 0) {
-    mount.innerHTML = `<p style="margin:0;font-size:.86rem;color:#a13029">Aun no hay companeros registrados en la ficha ${escapeHtml(ficha)}. Pideles que inicien sesion al menos una vez para que aparezcan aqui.</p>`;
-    if (hint) hint.textContent = "El listado se actualiza cuando los companeros ingresan al portal.";
+    mount.innerHTML = `
+      <p style="margin:0 0 8px;font-size:.86rem;color:#a13029">Aun no hay companeros registrados en la ficha ${escapeHtml(ficha)} (pueden tardar en cargar). Pideles que inicien sesion, o continua de forma individual.</p>
+      <button type="button" onclick="trabajarSoloGuia6('${escapeHtml(actId)}')" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1px solid #b6dba0;background:#e8f5e9;color:#1b5e20;border-radius:6px;font-family:inherit;font-size:.86rem;cursor:pointer;font-weight:600">&#128100; Trabajar solo</button>`;
+    if (hint) hint.textContent = "Si no cargan tus companeros, puedes trabajar solo y continuar.";
     return;
   }
   const selfRow = `
@@ -1249,6 +1260,53 @@ function iniciarEquipoGuia6(actId) {
   renderEquipoGuia6Block(actId);
 }
 
+function trabajarSoloGuia6(actId) {
+  if (!actId) return;
+  const selfKey = getCurrentUsernameKey();
+  const selfName = getCurrentLearnerName();
+  const selection = getGuideSelection();
+  const ficha = String(selection.ficha || "").trim();
+  if (!selfKey || !ficha) {
+    alert("No se pudo identificar tu sesion o ficha. Vuelve a iniciar sesion.");
+    return;
+  }
+  if (!confirm("Trabajar SOLO en esta actividad? Podras continuar sin companeros. Si luego consigues equipo, usa 'Cambiar a equipo'.")) return;
+  const allMembers = [{ usernameKey: selfKey, fullName: selfName || selfKey }];
+  const memberKeys = allMembers.map((m) => m.usernameKey);
+  const memberEmails = memberKeys.map((k) => k + EQUIPO_GUIA6_EMAIL_DOMAIN);
+  const groupKey = buildEquipoGuia6GroupKey(ficha + ":" + actId + ":solo", memberKeys);
+  const team = {
+    mode: "solo",
+    solo: true,
+    groupKey,
+    ficha,
+    members: allMembers,
+    memberKeys,
+    memberEmails,
+    scope: "activity",
+    activityId: actId,
+    guide: GUIDE_DATA_FILE,
+    confirmedAt: new Date().toISOString(),
+    confirmedBy: { usernameKey: selfKey, fullName: selfName || selfKey },
+  };
+  setEquipoGuia6InState(actId, team);
+  equipoGuia6WizardActive[actId] = false;
+  if (window._firebaseDb && typeof window._firebaseDb.cloudSaveGroup === "function") {
+    Promise.resolve(window._firebaseDb.cloudSaveGroup(groupKey, {
+      ficha,
+      guide: GUIDE_DATA_FILE,
+      activity: "guia6_equipo_" + actId,
+      members: allMembers,
+      memberKeys,
+      memberEmails,
+      solo: true,
+      updatedAt: new Date().toISOString(),
+    })).catch(() => {});
+  }
+  renderEquipoGuia6Block(actId);
+  renderDriveDeliveryPanel();
+}
+
 function reconfigurarEquipoGuia6(actId) {
   if (!actId) return;
   if (!confirm("Cambiar el equipo de esta actividad borrara la configuracion actual. Tus entregas previas quedan en la carpeta del equipo anterior. Continuar?")) return;
@@ -1266,6 +1324,7 @@ function reconfigurarEquipoGuia6(actId) {
 window.confirmarEquipoGuia6 = confirmarEquipoGuia6;
 window.cancelarEquipoGuia6Config = cancelarEquipoGuia6Config;
 window.iniciarEquipoGuia6 = iniciarEquipoGuia6;
+window.trabajarSoloGuia6 = trabajarSoloGuia6;
 window.reconfigurarEquipoGuia6 = reconfigurarEquipoGuia6;
 
 // ── Drive delivery panel con overrides ────────────────────────────────────

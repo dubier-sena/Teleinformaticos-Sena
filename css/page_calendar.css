@@ -401,6 +401,20 @@ body.app-shell--calendar {
   color: #fff;
 }
 
+/* ════════════════════════════════════════════════════════════════════════
+   REDISEÑO claro: hero y encabezados de mes/sección con el verde de marca
+   VIVO (el mismo del banner del inicio), en vez de casi-negro. El texto
+   blanco sigue legible. Override directo para ganar sin importar el orden.
+   ════════════════════════════════════════════════════════════════════════ */
+.app-shell--calendar .app-hero {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(245, 183, 0, 0.18), transparent 30%),
+    linear-gradient(135deg, var(--brand-800, #08552c) 0%, var(--brand-600, #007934) 100%) !important;
+}
+.app-shell--calendar .gc-head {
+  background: linear-gradient(135deg, var(--brand-700, #0a5c31), var(--brand-500, #0fbf64)) !important;
+}
+
 .gc-body {
   padding: 14px 16px;
 }

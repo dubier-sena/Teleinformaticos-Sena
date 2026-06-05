@@ -36,6 +36,101 @@ body {
   min-height: 100vh;
 }
 
+/* ════════════════════════════════════════════════════════════════════════
+   REDISEÑO "claro y aireado" — capa de re-skin de la guía.
+   Cada partial trae un <style> embebido con un tema "navy" heredado del
+   template original (--sena-dark:#1a1a2e). Estas reglas, con mayor
+   especificidad (body.app-shell--guide ...), ganan a ese <style> y dejan la
+   guía on-brand sin tener que editar los 7 partials uno por uno.
+   ════════════════════════════════════════════════════════════════════════ */
+/* Sidebar CLARO: fondo claro, texto oscuro/marca. La cabecera del logo
+   conserva su verde como acento. Especificidad alta para ganar al <style>
+   embebido de cada guía. */
+body.app-shell--guide .sidebar {
+  background: linear-gradient(180deg, #ffffff 0%, var(--surface-2, #f5faf7) 100%);
+  border-right: 1px solid var(--border-soft, #d6e2da);
+  box-shadow: 10px 0 30px rgba(7, 26, 18, 0.05);
+}
+/* La cabecera del logo SIEMPRE verde (su texto es blanco): garantiza
+   legibilidad aunque el <style> embebido de la guía la deje transparente. */
+body.app-shell--guide .sidebar-logo {
+  background: linear-gradient(160deg, var(--brand-700, #0a5c31), var(--brand-500, #0fbf64));
+}
+/* Etiquetas de las otras guías ("Abrir"/"Actual") eran blancas translúcidas. */
+body.app-shell--guide .g-tag {
+  background: var(--brand-100, #e9f8ef);
+  color: var(--brand-700, #0a5c31);
+  border-color: var(--brand-200, #cdf0db);
+}
+body.app-shell--guide .g-tag.actual {
+  background: var(--brand-600, #007934);
+  color: #ffffff;
+  border-color: transparent;
+}
+body.app-shell--guide .sidebar-ficha {
+  background: var(--brand-100, #e9f8ef);
+  border-top-color: var(--border-soft, #d6e2da);
+  border-bottom-color: var(--border-soft, #d6e2da);
+}
+body.app-shell--guide .sf-label { color: var(--text-muted, #5f7468); }
+body.app-shell--guide .sf-inst { color: var(--text-strong, #102117); }
+body.app-shell--guide .sf-meta { color: var(--text-muted, #5f7468); }
+body.app-shell--guide .sidebar-noficha {
+  border-top-color: var(--border-soft, #d6e2da);
+  border-bottom-color: var(--border-soft, #d6e2da);
+}
+body.app-shell--guide .sidebar-noficha a { color: var(--text-muted, #5f7468); }
+body.app-shell--guide .sidebar-noficha a:hover { color: var(--brand-700, #0a5c31); }
+/* Barra de progreso del sidebar */
+body.app-shell--guide .progress-label,
+body.app-shell--guide .progress-label span { color: var(--text-strong, #102117); }
+body.app-shell--guide .progress-bar-bg { background: #e3ede7; }
+body.app-shell--guide .progress-note { color: var(--text-muted, #5f7468); }
+body.app-shell--guide .reset-button {
+  color: var(--text-muted, #5f7468);
+  border: 1px solid var(--border-medium, #b6c8be);
+  background: transparent;
+}
+body.app-shell--guide .reset-button:hover {
+  color: var(--brand-700, #0a5c31);
+  border-color: var(--brand-400, #5acf8f);
+  background: var(--brand-100, #e9f8ef);
+}
+/* Navegación lateral */
+body.app-shell--guide .nav-label { color: var(--text-soft, #8aa093); }
+body.app-shell--guide .nav-link,
+body.app-shell--guide .nav-guide,
+body.app-shell--guide .nav-home-link { color: var(--text-body, #1e2f24); }
+body.app-shell--guide .nav-link:hover,
+body.app-shell--guide .nav-guide:hover,
+body.app-shell--guide .nav-home-link:hover {
+  background: var(--brand-100, #e9f8ef);
+  color: var(--brand-700, #0a5c31);
+}
+body.app-shell--guide .nav-link.active,
+body.app-shell--guide .nav-guide.current {
+  background: var(--brand-100, #e9f8ef);
+  color: var(--brand-700, #0a5c31);
+}
+body.app-shell--guide .g-num { color: var(--brand-700, #0a5c31); }
+body.app-shell--guide .g-name { color: var(--text-strong, #102117); }
+/* Botones de acción internos: quitar el azul off-brand y unificar a pill verde. */
+body.app-shell--guide .btn-export-word {
+  background: #ffffff;
+  color: var(--brand-700, #0a5c31);
+  border: 1px solid var(--brand-400, #5acf8f);
+  border-radius: var(--radius-pill, 999px);
+  box-shadow: none;
+}
+body.app-shell--guide .btn-export-word:hover {
+  background: var(--brand-100, #e9f8ef);
+  color: var(--brand-800, #08552c);
+}
+body.app-shell--guide .btn-drive,
+body.app-shell--guide .btn-qr {
+  border-radius: var(--radius-pill, 999px);
+}
+
 a {
   color: var(--accent);
   text-decoration: none;
