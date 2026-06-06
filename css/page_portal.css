@@ -592,6 +592,86 @@
 }
 .admin-tip strong { color: var(--pg-brand-strong); }
 
+/* Tarjeta de tipo boton (misma apariencia que .tool enlace) */
+button.tool {
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  width: 100%;
+  color: inherit;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* ── Selector de guias (modal del Panel de gestion) ──────────────────────── */
+.guide-picker[hidden] { display: none; }
+.guide-picker {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+.guide-picker__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 44, 28, 0.45);
+}
+.guide-picker__panel {
+  position: relative;
+  width: min(560px, 100%);
+  max-height: min(80vh, 720px);
+  display: flex;
+  flex-direction: column;
+  background: var(--pg-surface, #fff);
+  border: 1px solid var(--pg-border);
+  border-radius: var(--pg-r, 16px);
+  box-shadow: 0 24px 60px rgba(10, 44, 28, 0.28);
+  padding: 1.1rem 1.2rem 1.3rem;
+}
+.guide-picker__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.guide-picker__head h3 {
+  margin: 0;
+  font-family: var(--pg-fd);
+  font-size: 1.15rem;
+  color: var(--pg-text);
+}
+.guide-picker__close {
+  border: 1px solid var(--pg-border);
+  background: #fff;
+  border-radius: 10px;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--pg-muted);
+}
+.guide-picker__close:hover {
+  color: var(--pg-text);
+  border-color: var(--brand-400, #5acf8f);
+}
+.guide-picker__hint {
+  margin: 0.4rem 0 0.6rem;
+  color: var(--pg-muted);
+  font-size: 0.85rem;
+}
+.guide-picker__body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.guide-picker__empty {
+  margin: 0;
+  color: var(--pg-muted);
+  font-size: 0.9rem;
+}
+
 /* ════════════════════════════════════════════════════════════════════════
    PIE
    ════════════════════════════════════════════════════════════════════════ */

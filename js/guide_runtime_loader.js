@@ -94,6 +94,11 @@
     if (typeof window.initGuiaRedes === "function") {
       window.initGuiaRedes();
     }
+    // Hook generico para guias nuevas: el script de la guia expone
+    // window.__GUIDE_INIT__ y el loader lo invoca tras inyectar el contenido.
+    if (typeof window.__GUIDE_INIT__ === "function") {
+      window.__GUIDE_INIT__();
+    }
   }
 
   window.__guideRuntimePromise = bootstrapGuideRuntime().catch(function (error) {

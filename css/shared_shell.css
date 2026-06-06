@@ -260,6 +260,13 @@ body.app-shell {
   top: calc(100% + 1px);
   left: 0;
   min-width: 220px;
+  /* El admin ve TODAS las guias (lista larga) y antes el panel se salia por
+     debajo del viewport sin forma de llegar a las ultimas. Acotamos la altura
+     a lo que queda bajo el navbar y habilitamos scroll. Para un aprendiz la
+     lista es corta y no aparece scroll. */
+  max-height: calc(100vh - var(--navbar-height, 60px) - 16px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   background: #ffffff;
   border: 1px solid var(--border-soft, #d6e2da);
   border-radius: 14px;
@@ -452,6 +459,10 @@ body.app-shell {
     margin-top: 2px;
     margin-left: 8px;
     animation: none;
+    /* En movil el panel fluye dentro de .app-navbar__links, que ya hace scroll;
+       evitamos un scroll anidado propio. */
+    max-height: none;
+    overflow: visible;
   }
 
   /* En móvil ocultamos la píldora de usuario: ocupaba demasiado y empujaba el

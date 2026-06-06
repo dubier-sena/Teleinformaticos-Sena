@@ -15,9 +15,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/site_tokens.css?v=20260516_1">
 <link rel="stylesheet" href="css/components.css?v=20260516_1">
-<link rel="stylesheet" href="css/shared_shell.css?v=20260603_2">
-<link rel="stylesheet" href="css/page_portal.css?v=20260603_4">
-<script defer src="js/portal_auth.js?v=20260604_2"></script>
+<link rel="stylesheet" href="css/shared_shell.css?v=20260605_1">
+<link rel="stylesheet" href="css/page_portal.css?v=20260605_1">
+<script defer src="js/portal_auth.js?v=20260605_1"></script>
 <script src="js/firebase-config.js?v=20260527_3"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
@@ -27,8 +27,8 @@
 <script defer src="js/drive_db.js?v=20260526_2"></script>
 <script defer src="js/firebase_status_banner.js?v=20260527_2"></script>
 <script defer src="js/save_status.js?v=20260516_1"></script>
-<script defer src="js/portal_home.js?v=20260603_2"></script>
-<script defer src="js/shared_shell.js?v=20260603_2"></script>
+<script defer src="js/portal_home.js?v=20260605_1"></script>
+<script defer src="js/shared_shell.js?v=20260605_1"></script>
 </head>
 <body class="app-shell app-shell--portal portal-redesign">
 <main class="portal-home" id="portal-home">
@@ -151,6 +151,12 @@
     </div>
 
     <div class="tools">
+      <button class="tool tool--btn" type="button" data-open-guide-picker>
+        <div class="tool__ico">&#128214;</div>
+        <h4>Gu&iacute;as</h4>
+        <p>Abrir o previsualizar cualquier gu&iacute;a de todas las fichas.</p>
+        <span class="tool__go">Ver gu&iacute;as &rarr;</span>
+      </button>
       <a class="tool" href="panel-administrativo-usuarios.html">
         <div class="tool__ico">&#128101;</div>
         <h4>Aprendices y fichas</h4>
@@ -176,7 +182,19 @@
         <span class="tool__go">Abrir &rarr;</span>
       </a>
     </div>
-    <p class="admin-tip">Para abrir o previsualizar cualquier gu&iacute;a, usa el men&uacute; <strong>Gu&iacute;as</strong> de la barra superior.</p>
+    <p class="admin-tip">Tambi&eacute;n puedes abrir cualquier gu&iacute;a con la tarjeta <strong>Gu&iacute;as</strong> de arriba o el men&uacute; <strong>Gu&iacute;as</strong> de la barra superior.</p>
+
+    <div id="guide-picker" class="guide-picker" hidden role="dialog" aria-modal="true" aria-labelledby="guide-picker-title">
+      <div class="guide-picker__backdrop" data-guide-picker-close></div>
+      <div class="guide-picker__panel" role="document">
+        <div class="guide-picker__head">
+          <h3 id="guide-picker-title">Abrir una gu&iacute;a</h3>
+          <button class="guide-picker__close" type="button" data-guide-picker-close aria-label="Cerrar">&#10005;</button>
+        </div>
+        <p class="guide-picker__hint">Elige una gu&iacute;a para abrirla en modo previsualizaci&oacute;n.</p>
+        <div class="guide-picker__body" id="guide-picker-body"></div>
+      </div>
+    </div>
   </section>
 
 </main>

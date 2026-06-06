@@ -1,0 +1,941 @@
+<button class="hamburger" onclick="toggleSidebar()" aria-label="Menú">&#9776;</button>
+<button class="btn-sb-expand" onclick="showSidebar()" title="Mostrar barra lateral">&#9776;</button>
+
+<div class="layout app-layout">
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="badge">SENA · FPI</div>
+      <h2>Guía - Práctica de Python</h2>
+      <p>Sistemas Teleinformáticos · Variables, condicionales y POO</p>
+      <button class="btn-sb-collapse" onclick="hideSidebar()" title="Ocultar barra lateral">&#9664;</button>
+    </div>
+
+    <div class="sidebar-ficha" id="sb-ficha-ok" style="display:none">
+      <div class="sf-label">Tu grupo</div>
+      <div class="sf-inst" id="sb-inst"></div>
+      <div class="sf-meta" id="sb-grupo-meta"></div>
+      <div class="sf-badge" id="sb-badge"></div>
+    </div>
+    <div class="sidebar-noficha" id="sb-ficha-warn">
+      <a href="index.html">Inicio | Seleccionar grupo / ficha</a>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span>Progreso</span>
+        <span id="progressValue">0%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <p class="progress-note">El avance se completa al entregar el reto integrador.</p>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Conceptos</div>
+      <a class="nav-link active" href="#presentacion" onclick="setActive(this)"><span class="icon">&#128075;</span> Presentación</a>
+      <a class="nav-link" href="#que-es-python" onclick="setActive(this)"><span class="icon">&#128013;</span> 1. ¿Qué es Python?</a>
+      <a class="nav-link" href="#variables" onclick="setActive(this)"><span class="icon">&#128230;</span> 2. Variables</a>
+      <a class="nav-link" href="#condicionales" onclick="setActive(this)"><span class="icon">&#128270;</span> 3. Condicionales</a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Ejercicios</div>
+      <a class="nav-link" href="#ejercicios" onclick="setActive(this)"><span class="icon">&#128221;</span> Ejercicios 1 a 7</a>
+      <a class="nav-link" href="#poo" onclick="setActive(this)"><span class="icon">&#129513;</span> 4. POO (Ej. 8 a 10)</a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Entrega</div>
+      <a class="nav-link" href="#reto" onclick="setActive(this)"><span class="icon">&#127919;</span> Reto integrador <span class="check">&#10003;</span></a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Recursos</div>
+      <a class="nav-link" href="#glosario" onclick="setActive(this)"><span class="icon">&#128214;</span> Glosario</a>
+    </div>
+
+    <a class="nav-home-link" href="calendario-academico-2026.html">&#128197; <span>Calendario 2026</span></a>
+    <a class="nav-home-link" href="index.html">&#127968; <span>Volver al Inicio</span></a>
+  </nav>
+
+  <div class="main app-main">
+    <div class="topbar">
+      <div class="topbar-title"><strong>Guía - Práctica de Python</strong></div>
+      <div class="topbar-meta">
+        <span class="meta-item"><span>&#128013;</span><span>10 ejercicios</span></span>
+        <span class="meta-item"><span>&#128197;</span><span>2026</span></span>
+        <span class="meta-item"><span>&#127979;</span><span id="topbarCampus">Santa Bárbara</span></span>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="hero" id="inicio">
+        <div class="tag">Guía complementaria · Programación</div>
+        <h1>Guía - Práctica de Python</h1>
+        <p>
+          10 ejercicios progresivos para entender los conceptos básicos de Python:
+          <strong>qué es Python, los tipos de variables más usados, cómo funcionan las
+          condicionales y cómo iniciar con Programación Orientada a Objetos (POO)</strong>
+          mediante ejemplos sencillos aplicados al contexto del aprendiz.
+        </p>
+        <div class="hero-meta">
+          <div class="hero-meta-item">&#127963; SENA &mdash; Servicio Nacional de Aprendizaje</div>
+          <div class="hero-meta-item">&#128013; Python · variables, condicionales y POO</div>
+          <div class="hero-meta-item">&#127891; Código: 233108 · V1</div>
+          <div class="hero-meta-item">&#127979; I.E. Santa Bárbara</div>
+        </div>
+      </div>
+
+      <div id="presentacion" class="section-title">Presentación</div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#e3f2fd">&#128075;</div>
+            <div><h3>Material de apoyo para clase</h3><p>De los conceptos a la práctica con código</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <p class="intro-text" style="margin-top:0">
+            Esta guía sirve como material de apoyo para explicar de forma práctica qué es Python,
+            cuáles son los tipos de variables más usados, cómo funcionan las condicionales y cómo
+            iniciar con Programación Orientada a Objetos, mediante ejemplos sencillos y progresivos.
+          </p>
+          <div class="info-box green" style="margin-top:14px">
+            <div class="label">&#128161; Idea clave: la indentación es obligatoria</div>
+            <p>En Python, los espacios al inicio de una línea indican qué instrucciones pertenecen a un
+            bloque (por ejemplo, dentro de un <code>if</code>, una función o una clase). Si la indentación
+            está mal, el programa no funciona.</p>
+          </div>
+          <div class="info-box" style="margin-top:12px">
+            <div class="label">&#128221; Cómo usar esta guía</div>
+            <p>Lee cada concepto, escribe y ejecuta el código sugerido en tu computador (puedes usar
+            <strong>IDLE</strong>, <strong>Thonny</strong> o <strong>Visual Studio Code</strong>), y resuelve
+            el reto de cada ejercicio. Al final entregas el <strong>reto integrador</strong>.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════ 1. ¿QUÉ ES PYTHON? ══════════════ -->
+      <div id="que-es-python" class="section-title">1. ¿Qué es Python?</div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#e8f5e9">&#128013;</div>
+            <div><h3>Explicación básica y elementos iniciales</h3><p>Para qué sirve y qué funciones usarás</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <p class="intro-text" style="margin-top:0">
+            <strong>Python es un lenguaje de programación</strong>: un idioma que usamos para darle
+            instrucciones a un computador. Escribimos esas órdenes en un archivo de texto con extensión
+            <code>.py</code> y el computador las ejecuta una por una, <strong>de arriba hacia abajo</strong>.
+          </p>
+          <p class="intro-text">
+            Es uno de los lenguajes más usados del mundo porque su forma de escribir es <strong>clara y
+            parecida al inglés</strong>: se lee casi como una receta. Por eso es ideal para empezar &mdash;
+            te concentras en <em>resolver el problema</em> y no en reglas de escritura complicadas.
+          </p>
+
+          <div class="info-box">
+            <div class="label">&#128640; ¿Para qué se usa en el mundo real?</div>
+            <p>Automatizar tareas repetitivas, analizar datos y generar reportes, crear páginas web y
+            aplicaciones, inteligencia artificial y chatbots, videojuegos sencillos y soluciones para
+            empresas y colegios. Plataformas como <strong>YouTube, Instagram, Netflix y Spotify</strong>
+            usan Python en parte de sus sistemas.</p>
+          </div>
+
+          <h4 style="margin:18px 0 6px">&#128075; Tu primer programa</h4>
+          <p class="intro-text" style="margin-top:0">Lo más simple es mostrar un mensaje en pantalla con la función <code>print()</code>:</p>
+<pre class="py-code"><span class="cmt"># mi_primer_programa.py</span>
+print("¡Hola! Estoy aprendiendo Python.")
+print("Programa: Sistemas Teleinformáticos")</pre>
+          <p class="intro-text" style="font-size:.9rem;margin-bottom:6px">Al ejecutarlo, el computador escribe:</p>
+<pre class="py-code">¡Hola! Estoy aprendiendo Python.
+Programa: Sistemas Teleinformáticos</pre>
+
+          <div class="info-box green" style="margin-top:14px">
+            <div class="label">&#128161; Tres reglas para no equivocarte</div>
+            <p><strong>1.</strong> Python distingue mayúsculas de minúsculas: <code>print</code> funciona,
+            <code>Print</code> da error. &nbsp; <strong>2.</strong> El texto va siempre entre comillas:
+            <code>"Hola"</code>. &nbsp; <strong>3.</strong> La <em>indentación</em> (los espacios al inicio de
+            una línea) es obligatoria e indica qué instrucciones pertenecen a un bloque.</p>
+          </div>
+
+          <h4 style="margin:18px 0 4px">Funciones y elementos que usarás en toda la guía</h4>
+          <p class="intro-text" style="margin-top:0;font-size:.86rem">Pulsa <strong>&#9654; probar</strong> en cada uno para ver el ejemplo escribirse y su resultado (o espera: se ejecutan solos al aparecer).</p>
+          <div class="fn-demos" data-fn-demos>
+            <div class="fn-row" data-fn="print">
+              <div class="fn-row__head">
+                <code class="fn-row__name">print()</code>
+                <span class="fn-row__desc">Muestra información en pantalla.</span>
+                <button type="button" class="fn-row__play" data-fn-play>&#9654; probar</button>
+              </div>
+              <div class="fn-row__console">
+                <div class="fn-row__line"><span class="fn-row__prompt">&gt;&gt;&gt;</span> <span class="fn-row__typed" data-fn-typed></span><span class="fn-row__caret"></span></div>
+                <div class="fn-row__out" data-fn-result></div>
+              </div>
+            </div>
+            <div class="fn-row" data-fn="input">
+              <div class="fn-row__head">
+                <code class="fn-row__name">input()</code>
+                <span class="fn-row__desc">Pide al usuario que escriba un dato (lo recibe como texto).</span>
+                <button type="button" class="fn-row__play" data-fn-play>&#9654; probar</button>
+              </div>
+              <div class="fn-row__console">
+                <div class="fn-row__line"><span class="fn-row__prompt">&gt;&gt;&gt;</span> <span class="fn-row__typed" data-fn-typed></span><span class="fn-row__caret"></span></div>
+                <div class="fn-row__out" data-fn-result></div>
+              </div>
+            </div>
+            <div class="fn-row" data-fn="int">
+              <div class="fn-row__head">
+                <code class="fn-row__name">int()</code>
+                <span class="fn-row__desc">Convierte un dato a número entero.</span>
+                <button type="button" class="fn-row__play" data-fn-play>&#9654; probar</button>
+              </div>
+              <div class="fn-row__console">
+                <div class="fn-row__line"><span class="fn-row__prompt">&gt;&gt;&gt;</span> <span class="fn-row__typed" data-fn-typed></span><span class="fn-row__caret"></span></div>
+                <div class="fn-row__out" data-fn-result></div>
+              </div>
+            </div>
+            <div class="fn-row" data-fn="float">
+              <div class="fn-row__head">
+                <code class="fn-row__name">float()</code>
+                <span class="fn-row__desc">Convierte un dato a número decimal.</span>
+                <button type="button" class="fn-row__play" data-fn-play>&#9654; probar</button>
+              </div>
+              <div class="fn-row__console">
+                <div class="fn-row__line"><span class="fn-row__prompt">&gt;&gt;&gt;</span> <span class="fn-row__typed" data-fn-typed></span><span class="fn-row__caret"></span></div>
+                <div class="fn-row__out" data-fn-result></div>
+              </div>
+            </div>
+            <div class="fn-row" data-fn="str">
+              <div class="fn-row__head">
+                <code class="fn-row__name">str()</code>
+                <span class="fn-row__desc">Convierte un dato a texto.</span>
+                <button type="button" class="fn-row__play" data-fn-play>&#9654; probar</button>
+              </div>
+              <div class="fn-row__console">
+                <div class="fn-row__line"><span class="fn-row__prompt">&gt;&gt;&gt;</span> <span class="fn-row__typed" data-fn-typed></span><span class="fn-row__caret"></span></div>
+                <div class="fn-row__out" data-fn-result></div>
+              </div>
+            </div>
+            <div class="fn-row" data-fn="bool">
+              <div class="fn-row__head">
+                <code class="fn-row__name">bool()</code>
+                <span class="fn-row__desc">Representa un valor lógico: verdadero o falso.</span>
+                <button type="button" class="fn-row__play" data-fn-play>&#9654; probar</button>
+              </div>
+              <div class="fn-row__console">
+                <div class="fn-row__line"><span class="fn-row__prompt">&gt;&gt;&gt;</span> <span class="fn-row__typed" data-fn-typed></span><span class="fn-row__caret"></span></div>
+                <div class="fn-row__out" data-fn-result></div>
+              </div>
+            </div>
+            <div class="fn-row" data-fn="type">
+              <div class="fn-row__head">
+                <code class="fn-row__name">type()</code>
+                <span class="fn-row__desc">Indica qué tipo de dato tiene una variable.</span>
+                <button type="button" class="fn-row__play" data-fn-play>&#9654; probar</button>
+              </div>
+              <div class="fn-row__console">
+                <div class="fn-row__line"><span class="fn-row__prompt">&gt;&gt;&gt;</span> <span class="fn-row__typed" data-fn-typed></span><span class="fn-row__caret"></span></div>
+                <div class="fn-row__out" data-fn-result></div>
+              </div>
+            </div>
+            <div class="fn-row" data-fn="comentario">
+              <div class="fn-row__head">
+                <code class="fn-row__name"># comentario</code>
+                <span class="fn-row__desc">Explica el código; Python no lo ejecuta.</span>
+                <button type="button" class="fn-row__play" data-fn-play>&#9654; probar</button>
+              </div>
+              <div class="fn-row__console">
+                <div class="fn-row__line"><span class="fn-row__prompt">&gt;&gt;&gt;</span> <span class="fn-row__typed" data-fn-typed></span><span class="fn-row__caret"></span></div>
+                <div class="fn-row__out" data-fn-result></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="info-box" style="margin-top:12px">
+            <div class="label">&#128296; ¿Dónde escribo y ejecuto el código?</div>
+            <p>Puedes usar <strong>IDLE</strong> (viene con Python), <strong>Thonny</strong> (muy recomendado
+            para principiantes) o <strong>Visual Studio Code</strong>. Escribe el código, guárdalo con
+            extensión <code>.py</code> y ejecútalo con el botón <em>Run</em> o la tecla <code>F5</code>.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════ 2. VARIABLES ══════════════ -->
+      <div id="variables" class="section-title">2. Tipos de variables en Python</div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#ede7f6">&#128230;</div>
+            <div><h3>Tipos de datos</h3><p>Texto, números, lógicos y colecciones</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <p class="intro-text" style="margin-top:0">
+            Una variable es un espacio en memoria donde se guarda información. En Python no es necesario
+            escribir el tipo de dato antes de crear la variable, porque Python lo identifica según el valor asignado.
+          </p>
+
+          <p class="intro-text" style="margin-bottom:8px"><strong>&#9654; Pulsa "probar"</strong> y verás a Python crear cada tipo de variable con su valor y su tipo (o se ejecutan en cascada al aparecer):</p>
+          <div class="fn-demos" data-fn-demos>
+            <div class="fn-row" data-fn="var_str"><div class="fn-row__head"><code class="fn-row__name">str</code><span class="fn-row__desc">Texto o cadena de caracteres.</span><button type="button" class="fn-row__play" data-fn-play>&#9654; probar</button></div></div>
+            <div class="fn-row" data-fn="var_int"><div class="fn-row__head"><code class="fn-row__name">int</code><span class="fn-row__desc">Número entero.</span><button type="button" class="fn-row__play" data-fn-play>&#9654; probar</button></div></div>
+            <div class="fn-row" data-fn="var_float"><div class="fn-row__head"><code class="fn-row__name">float</code><span class="fn-row__desc">Número decimal.</span><button type="button" class="fn-row__play" data-fn-play>&#9654; probar</button></div></div>
+            <div class="fn-row" data-fn="var_bool"><div class="fn-row__head"><code class="fn-row__name">bool</code><span class="fn-row__desc">Valor lógico: True o False.</span><button type="button" class="fn-row__play" data-fn-play>&#9654; probar</button></div></div>
+            <div class="fn-row" data-fn="var_list"><div class="fn-row__head"><code class="fn-row__name">list</code><span class="fn-row__desc">Lista ordenada y modificable.</span><button type="button" class="fn-row__play" data-fn-play>&#9654; probar</button></div></div>
+            <div class="fn-row" data-fn="var_tuple"><div class="fn-row__head"><code class="fn-row__name">tuple</code><span class="fn-row__desc">Colección ordenada que no se modifica.</span><button type="button" class="fn-row__play" data-fn-play>&#9654; probar</button></div></div>
+            <div class="fn-row" data-fn="var_dict"><div class="fn-row__head"><code class="fn-row__name">dict</code><span class="fn-row__desc">Diccionario con clave y valor.</span><button type="button" class="fn-row__play" data-fn-play>&#9654; probar</button></div></div>
+            <div class="fn-row" data-fn="var_set"><div class="fn-row__head"><code class="fn-row__name">set</code><span class="fn-row__desc">Conjunto sin datos repetidos.</span><button type="button" class="fn-row__play" data-fn-play>&#9654; probar</button></div></div>
+            <div class="fn-row" data-fn="var_none"><div class="fn-row__head"><code class="fn-row__name">None</code><span class="fn-row__desc">Representa ausencia de valor.</span><button type="button" class="fn-row__play" data-fn-play>&#9654; probar</button></div></div>
+          </div>
+          <div class="info-box" style="margin-top:12px">
+            <div class="label">&#128204; Recomendación</div>
+            <p>Antes de las condicionales, diferencia entre texto, número entero, número decimal y valor
+            lógico: los errores más comunes ocurren al comparar datos de tipos diferentes.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════ 3. CONDICIONALES ══════════════ -->
+      <div id="condicionales" class="section-title">3. Operadores y condicionales</div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#fff3e0">&#128270;</div>
+            <div><h3>Comparación, lógicos y tipos de condicional</h3><p>Para que el programa tome decisiones</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <p class="intro-text" style="margin-top:0">
+            Las condicionales permiten que un programa tome decisiones: ejecutan una acción solo si se
+            cumple una condición.
+          </p>
+          <h4 style="margin:14px 0 6px">Operadores de comparación <span style="font-weight:400;font-size:.82rem;color:#64748b">(dan True o False) &mdash; pulsa "probar"</span></h4>
+          <div class="fn-demos" data-fn-demos>
+            <div class="fn-row" data-fn="op_eq"><div class="fn-row__head"><code class="fn-row__name">==</code><span class="fn-row__desc">Igual a</span><button type="button" class="fn-row__play" data-fn-play>&#9654; probar</button></div></div>
+            <div class="fn-row" data-fn="op_ne"><div class="fn-row__head"><code class="fn-row__name">!=</code><span class="fn-row__desc">Diferente de</span><button type="button" class="fn-row__play" data-fn-play>&#9654; probar</button></div></div>
+            <div class="fn-row" data-fn="op_gt"><div class="fn-row__head"><code class="fn-row__name">&gt;</code><span class="fn-row__desc">Mayor que</span><button type="button" class="fn-row__play" data-fn-play>&#9654; probar</button></div></div>
+            <div class="fn-row" data-fn="op_lt"><div class="fn-row__head"><code class="fn-row__name">&lt;</code><span class="fn-row__desc">Menor que</span><button type="button" class="fn-row__play" data-fn-play>&#9654; probar</button></div></div>
+            <div class="fn-row" data-fn="op_ge"><div class="fn-row__head"><code class="fn-row__name">&gt;=</code><span class="fn-row__desc">Mayor o igual que</span><button type="button" class="fn-row__play" data-fn-play>&#9654; probar</button></div></div>
+            <div class="fn-row" data-fn="op_le"><div class="fn-row__head"><code class="fn-row__name">&lt;=</code><span class="fn-row__desc">Menor o igual que</span><button type="button" class="fn-row__play" data-fn-play>&#9654; probar</button></div></div>
+          </div>
+          <h4 style="margin:16px 0 6px">Operadores lógicos <span style="font-weight:400;font-size:.82rem;color:#64748b">(combinan condiciones) &mdash; pulsa "probar"</span></h4>
+          <div class="fn-demos" data-fn-demos>
+            <div class="fn-row" data-fn="log_and"><div class="fn-row__head"><code class="fn-row__name">and</code><span class="fn-row__desc">Todas las condiciones deben cumplirse.</span><button type="button" class="fn-row__play" data-fn-play>&#9654; probar</button></div></div>
+            <div class="fn-row" data-fn="log_or"><div class="fn-row__head"><code class="fn-row__name">or</code><span class="fn-row__desc">Al menos una condición debe cumplirse.</span><button type="button" class="fn-row__play" data-fn-play>&#9654; probar</button></div></div>
+            <div class="fn-row" data-fn="log_not"><div class="fn-row__head"><code class="fn-row__name">not</code><span class="fn-row__desc">Niega una condición.</span><button type="button" class="fn-row__play" data-fn-play>&#9654; probar</button></div></div>
+          </div>
+          <h4 style="margin:16px 0 6px">Tipos de condicionales</h4>
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead><tr><th>Tipo</th><th>Cuándo se usa</th></tr></thead>
+              <tbody>
+                <tr><td><code>if</code></td><td>Cuando solo se necesita validar una condición.</td></tr>
+                <tr><td><code>if - else</code></td><td>Cuando hay dos caminos posibles.</td></tr>
+                <tr><td><code>if - elif - else</code></td><td>Cuando hay varias opciones.</td></tr>
+                <tr><td>Condicional anidada</td><td>Cuando una condición depende de otra.</td></tr>
+                <tr><td>Condición compuesta</td><td>Cuando se combinan condiciones con and/or.</td></tr>
+                <tr><td>Condicional ternaria</td><td>Para una decisión corta en una línea.</td></tr>
+                <tr><td><code>match - case</code></td><td>Para evaluar varias opciones de forma ordenada.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="info-box" style="margin-top:12px">
+            <div class="label">&#9888; Nota sobre match-case</div>
+            <p>La estructura <code>match-case</code> está disponible desde Python 3.10. Si el computador usa
+            una versión anterior, se puede reemplazar por <code>if</code>, <code>elif</code> y <code>else</code>.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════ EJERCICIOS 1–7 ══════════════ -->
+      <div id="ejercicios" class="section-title">Ejercicios prácticos (1 a 7)</div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#e0f2f1">&#128221;</div>
+            <div><h3>Variables y condicionales</h3><p>7 ejercicios progresivos con código y explicación</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+
+          <div class="activity open">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">1</span><span class="activity-title">Registro básico del aprendiz</span><span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text" style="margin-top:0"><strong>Objetivo:</strong> identificar variables tipo texto, entero, decimal y booleano.</p>
+              <div class="info-box"><div class="label">&#129513; Conceptos</div><p>str, int, float, bool, print(), type()</p></div>
+              <p class="intro-text"><strong>Enunciado:</strong> crear un programa que registre los datos básicos de un aprendiz y muestre el tipo de dato de cada variable.</p>
+<pre class="py-code"><span class="cmt"># Ejercicio 1: Registro básico del aprendiz</span>
+nombre = "Laura Gómez"
+edad = 16
+promedio = 4.2
+matriculado = True
+
+print("=== DATOS DEL APRENDIZ ===")
+print("Nombre:", nombre)
+print("Edad:", edad)
+print("Promedio:", promedio)
+print("¿Está matriculado?:", matriculado)
+print()
+print("=== TIPOS DE DATOS ===")
+print(type(nombre))
+print(type(edad))
+print(type(promedio))
+print(type(matriculado))</pre>
+              <p class="intro-text" style="font-size:.9rem"><strong>Explicación:</strong></p>
+              <ul class="py-list">
+                <li><code>nombre</code> guarda texto → su tipo es <code>str</code>.</li>
+                <li><code>edad</code> guarda un entero → su tipo es <code>int</code>.</li>
+                <li><code>promedio</code> guarda un decimal → su tipo es <code>float</code>.</li>
+                <li><code>matriculado</code> guarda True/False → su tipo es <code>bool</code>.</li>
+                <li><code>type()</code> permite ver el tipo de dato de una variable.</li>
+              </ul>
+              <div class="info-box green"><div class="label">&#127919; Reto</div><p>Cambia los datos del aprendiz y agrega una nueva variable llamada <code>ficha</code>.</p></div>
+            </div>
+          </div>
+
+          <div class="activity open">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">2</span><span class="activity-title">Edad y condicional simple</span><span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text" style="margin-top:0"><strong>Objetivo:</strong> usar input(), int() y una condicional if para validar una edad.</p>
+              <div class="info-box"><div class="label">&#129513; Conceptos</div><p>input(), int, if, comparación &gt;=</p></div>
+              <p class="intro-text"><strong>Enunciado:</strong> pedir el nombre y la edad. Si tiene 15 años o más, mostrar que puede iniciar la formación técnica.</p>
+<pre class="py-code"><span class="cmt"># Ejercicio 2: Edad y condicional simple</span>
+nombre = input("Ingrese el nombre del aprendiz: ")
+edad = int(input("Ingrese la edad: "))
+
+print()
+print("Aprendiz:", nombre)
+print("Edad:", edad)
+
+if edad &gt;= 15:
+    print("Puede iniciar la formación técnica.")
+
+print("Fin del programa.")</pre>
+              <p class="intro-text" style="font-size:.9rem"><strong>Explicación:</strong></p>
+              <ul class="py-list">
+                <li><code>input()</code> recibe datos del usuario como texto.</li>
+                <li><code>int()</code> convierte la edad a número entero para poder compararla.</li>
+                <li><code>edad &gt;= 15</code> verifica si cumple la edad mínima.</li>
+                <li>Si es verdadera, Python ejecuta el mensaje indentado debajo del <code>if</code>.</li>
+              </ul>
+              <div class="info-box green"><div class="label">&#127919; Reto</div><p>Agrega una condición para mostrar un mensaje cuando la edad sea menor de 15 años.</p></div>
+            </div>
+          </div>
+
+          <div class="activity open">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3</span><span class="activity-title">Nota final con if y else</span><span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text" style="margin-top:0"><strong>Objetivo:</strong> aplicar una decisión con dos resultados: aprobado o no aprobado.</p>
+              <div class="info-box"><div class="label">&#129513; Conceptos</div><p>float, if, else, round()</p></div>
+              <p class="intro-text"><strong>Enunciado:</strong> pedir tres notas, calcular el promedio y decir si aprobó o no aprobó.</p>
+<pre class="py-code"><span class="cmt"># Ejercicio 3: Nota final con if y else</span>
+nombre = input("Ingrese el nombre del aprendiz: ")
+nota1 = float(input("Ingrese la nota 1: "))
+nota2 = float(input("Ingrese la nota 2: "))
+nota3 = float(input("Ingrese la nota 3: "))
+
+promedio = (nota1 + nota2 + nota3) / 3
+
+print()
+print("=== RESULTADO ===")
+print("Aprendiz:", nombre)
+print("Promedio:", round(promedio, 2))
+
+if promedio &gt;= 3.5:
+    print("Estado: Aprobado")
+else:
+    print("Estado: No aprobado")</pre>
+              <p class="intro-text" style="font-size:.9rem"><strong>Explicación:</strong></p>
+              <ul class="py-list">
+                <li><code>float()</code> se usa porque las notas pueden tener decimales.</li>
+                <li>El promedio se calcula sumando las tres notas y dividiendo entre 3.</li>
+                <li><code>round(promedio, 2)</code> muestra el promedio con dos decimales.</li>
+                <li><code>else</code> se ejecuta cuando la condición del <code>if</code> no se cumple.</li>
+              </ul>
+              <div class="info-box green"><div class="label">&#127919; Reto</div><p>Agrega una cuarta nota y modifica la fórmula del promedio.</p></div>
+            </div>
+          </div>
+
+          <div class="activity open">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">4</span><span class="activity-title">Promedio, asistencia y if-elif-else</span><span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text" style="margin-top:0"><strong>Objetivo:</strong> usar varias condiciones para clasificar el estado académico.</p>
+              <div class="info-box"><div class="label">&#129513; Conceptos</div><p>float, int, if, elif, else, and</p></div>
+              <p class="intro-text"><strong>Enunciado:</strong> calcular el promedio y revisar la asistencia; mostrar si aprueba, recupera, pierde por nota o por inasistencia.</p>
+<pre class="py-code"><span class="cmt"># Ejercicio 4: Promedio, asistencia y if-elif-else</span>
+nombre = input("Ingrese el nombre del aprendiz: ")
+nota1 = float(input("Ingrese la nota 1: "))
+nota2 = float(input("Ingrese la nota 2: "))
+nota3 = float(input("Ingrese la nota 3: "))
+asistencia = int(input("Ingrese el porcentaje de asistencia: "))
+
+promedio = (nota1 + nota2 + nota3) / 3
+
+print()
+print("=== REPORTE ACADÉMICO ===")
+print("Aprendiz:", nombre)
+print("Promedio:", round(promedio, 2))
+print("Asistencia:", asistencia, "%")
+
+if asistencia &lt; 75:
+    print("Estado: Perdió por inasistencia")
+elif promedio &gt;= 3.5 and asistencia &gt;= 75:
+    print("Estado: Aprobado")
+elif promedio &gt;= 3.0:
+    print("Estado: Debe recuperar")
+else:
+    print("Estado: Perdió por nota")</pre>
+              <p class="intro-text" style="font-size:.9rem"><strong>Explicación:</strong></p>
+              <ul class="py-list">
+                <li>Primero se valida la asistencia, porque afecta el resultado final.</li>
+                <li><code>elif</code> revisa otras condiciones si la anterior no se cumplió.</li>
+                <li><code>and</code> exige que se cumplan dos condiciones a la vez.</li>
+                <li>El <code>else</code> final cubre los casos restantes.</li>
+              </ul>
+              <div class="info-box green"><div class="label">&#127919; Reto</div><p>Cambia el porcentaje mínimo de asistencia de 75 a 80 y observa cómo cambia el resultado.</p></div>
+            </div>
+          </div>
+
+          <div class="activity open">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">5</span><span class="activity-title">Control de entrega de actividad</span><span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text" style="margin-top:0"><strong>Objetivo:</strong> trabajar con booleanos, None y condicionales anidadas.</p>
+              <div class="info-box"><div class="label">&#129513; Conceptos</div><p>bool, None, if, else, condicional anidada</p></div>
+              <p class="intro-text"><strong>Enunciado:</strong> indicar el estado de una actividad según si fue entregada, si fue tarde y si tiene observación.</p>
+<pre class="py-code"><span class="cmt"># Ejercicio 5: Control de entrega de actividad</span>
+aprendiz = input("Nombre del aprendiz: ")
+actividad = input("Nombre de la actividad: ")
+entrego = input("¿Entregó la actividad? si/no: ").lower() == "si"
+tarde = False
+observacion = None
+
+if entrego:
+    respuesta_tarde = input("¿La entregó tarde? si/no: ").lower()
+    if respuesta_tarde == "si":
+        tarde = True
+        observacion = "Entregó fuera de la fecha establecida"
+    else:
+        observacion = "Entrega realizada a tiempo"
+else:
+    observacion = "Actividad pendiente por entregar"
+
+print()
+print("=== ESTADO DE LA ACTIVIDAD ===")
+print("Aprendiz:", aprendiz)
+print("Actividad:", actividad)
+print("Entregó:", entrego)
+print("Entrega tarde:", tarde)
+print("Observación:", observacion)</pre>
+              <p class="intro-text" style="font-size:.9rem"><strong>Explicación:</strong></p>
+              <ul class="py-list">
+                <li><code>entrego</code> es booleana porque solo puede ser True o False.</li>
+                <li><code>None</code> se usa cuando una variable aún no tiene valor definido.</li>
+                <li><code>.lower()</code> convierte la respuesta a minúscula (evita errores por SI, Si o si).</li>
+                <li>La condicional anidada pregunta si entregó tarde solo si entregó la actividad.</li>
+              </ul>
+              <div class="info-box green"><div class="label">&#127919; Reto</div><p>Agrega una variable <code>calificacion</code> y muéstrala solo si el aprendiz entregó.</p></div>
+            </div>
+          </div>
+
+          <div class="activity open">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">6</span><span class="activity-title">Lista de actividades entregadas</span><span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text" style="margin-top:0"><strong>Objetivo:</strong> usar listas, cantidad de elementos y verificación de pertenencia.</p>
+              <div class="info-box"><div class="label">&#129513; Conceptos</div><p>list, len(), in, or, not</p></div>
+              <p class="intro-text"><strong>Enunciado:</strong> guardar las actividades entregadas y verificar si tiene pendiente la actividad de Python.</p>
+<pre class="py-code"><span class="cmt"># Ejercicio 6: Lista de actividades entregadas</span>
+aprendiz = "Carlos Pérez"
+actividades_entregadas = ["Inducción", "Variables", "Condicionales"]
+actividad_revisar = "Python"
+
+print("=== ACTIVIDADES ENTREGADAS ===")
+print("Aprendiz:", aprendiz)
+print("Actividades:", actividades_entregadas)
+print("Cantidad de actividades:", len(actividades_entregadas))
+
+if actividad_revisar in actividades_entregadas:
+    print("La actividad de Python ya fue entregada.")
+else:
+    print("La actividad de Python está pendiente.")
+
+if "Variables" in actividades_entregadas or "Condicionales" in actividades_entregadas:
+    print("El aprendiz ya inició la ruta de programación.")
+
+if not "POO" in actividades_entregadas:
+    print("Todavía no ha entregado Programación Orientada a Objetos.")</pre>
+              <p class="intro-text" style="font-size:.9rem"><strong>Explicación:</strong></p>
+              <ul class="py-list">
+                <li>Una lista guarda varios datos en una sola variable.</li>
+                <li><code>len()</code> cuenta cuántos elementos tiene la lista.</li>
+                <li><code>in</code> revisa si un dato está dentro de una lista.</li>
+                <li><code>or</code> permite que se cumpla una condición u otra; <code>not</code> invierte el resultado.</li>
+              </ul>
+              <div class="info-box green"><div class="label">&#127919; Reto</div><p>Agrega la actividad <code>"Python"</code> a la lista y vuelve a ejecutar el programa.</p></div>
+            </div>
+          </div>
+
+          <div class="activity open">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">7</span><span class="activity-title">Ficha con diccionario, conjunto y match-case</span><span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text" style="margin-top:0"><strong>Objetivo:</strong> integrar estructuras de datos y una condicional match-case.</p>
+              <div class="info-box"><div class="label">&#129513; Conceptos</div><p>dict, set, tuple, match-case, if anidado</p></div>
+              <p class="intro-text"><strong>Enunciado:</strong> guardar los datos en un diccionario, las evidencias en un conjunto y consultar con un menú.</p>
+<pre class="py-code"><span class="cmt"># Ejercicio 7: Ficha del aprendiz (dict, set, match-case)</span>
+aprendiz = {
+    "nombre": "María Torres",
+    "grado": "10A",
+    "ficha": 3441939,
+    "promedio": 4.1,
+    "activo": True
+}
+horario = ("Miércoles", "Viernes")
+evidencias = {"Variables", "Condicionales", "Listas"}
+
+print("=== MENÚ DE CONSULTA ===")
+print("1. Ver datos del aprendiz")
+print("2. Ver horario")
+print("3. Ver evidencias entregadas")
+print("4. Ver estado final")
+opcion = int(input("Seleccione una opción: "))
+
+match opcion:
+    case 1:
+        print("Nombre:", aprendiz["nombre"])
+        print("Grado:", aprendiz["grado"])
+        print("Ficha:", aprendiz["ficha"])
+    case 2:
+        print("Días de clase:", horario)
+    case 3:
+        print("Evidencias:", evidencias)
+        if "POO" in evidencias:
+            print("Ya entregó Programación Orientada a Objetos")
+        else:
+            print("Tiene pendiente Programación Orientada a Objetos")
+    case 4:
+        if aprendiz["activo"] and aprendiz["promedio"] &gt;= 3.5:
+            print("Estado: Activo y aprobado")
+        else:
+            print("Estado: Revisar situación académica")
+    case _:
+        print("Opción no válida")</pre>
+              <p class="intro-text" style="font-size:.9rem"><strong>Explicación:</strong></p>
+              <ul class="py-list">
+                <li>Un diccionario guarda datos con clave y valor (nombre, grado, ficha).</li>
+                <li>Una tupla guarda datos que no se modifican, como los días de clase.</li>
+                <li>Un conjunto <code>set</code> evita datos repetidos.</li>
+                <li><code>match-case</code> evalúa la opción de menú; <code>case _</code> es la opción por defecto.</li>
+              </ul>
+              <div class="info-box green"><div class="label">&#127919; Reto</div><p>Agrega una opción 5 al menú para mostrar si el aprendiz está activo o inactivo.</p></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ══════════════ 4. POO ══════════════ -->
+      <div id="poo" class="section-title">4. Introducción a la Programación Orientada a Objetos (POO)</div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#e8eaf6">&#129513;</div>
+            <div><h3>Clases, objetos, atributos y métodos</h3><p>Conceptos + ejercicios 8, 9 y 10</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <p class="intro-text" style="margin-top:0">
+            La POO permite organizar el código usando <strong>clases</strong> y <strong>objetos</strong>. En vez
+            de tener todo el programa en instrucciones sueltas, se crean moldes que representan elementos reales
+            (por ejemplo, un estudiante, una actividad o una ficha).
+          </p>
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead><tr><th>Concepto</th><th>Explicación sencilla</th><th>Ejemplo</th></tr></thead>
+              <tbody>
+                <tr><td>Clase</td><td>Molde o plantilla para crear objetos.</td><td><code>class Estudiante:</code></td></tr>
+                <tr><td>Objeto</td><td>Elemento creado a partir de una clase.</td><td><code>estudiante1 = Estudiante(...)</code></td></tr>
+                <tr><td>Atributo</td><td>Característica del objeto.</td><td><code>self.nombre</code></td></tr>
+                <tr><td>Método</td><td>Acción que puede realizar el objeto.</td><td><code>calcular_promedio()</code></td></tr>
+                <tr><td>Constructor __init__</td><td>Inicializa los atributos al crear el objeto.</td><td><code>def __init__(self, nombre):</code></td></tr>
+                <tr><td>self</td><td>Representa el objeto actual dentro de la clase.</td><td><code>self.nota1 = nota1</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="info-box" style="margin-top:12px">
+            <div class="label">&#128161; Forma sencilla de explicarlo</div>
+            <p>Una clase es como un formulario vacío. Cuando lo llenamos con datos reales, creamos un objeto.
+            Los datos del formulario son <strong>atributos</strong> y las acciones que puede hacer son <strong>métodos</strong>.</p>
+          </div>
+
+          <div class="activity open">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">8</span><span class="activity-title">POO 1: Clase Estudiante</span><span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text" style="margin-top:0"><strong>Objetivo:</strong> crear una clase con atributos, métodos y condicionales para obtener el estado académico.</p>
+              <div class="info-box"><div class="label">&#129513; Conceptos</div><p>class, __init__, self, atributos, métodos, if-else</p></div>
+              <p class="intro-text"><strong>Enunciado:</strong> clase <code>Estudiante</code> con nombre, grado y tres notas; calcula el promedio y muestra si aprobó o no.</p>
+<pre class="py-code"><span class="cmt"># Ejercicio 8: POO 1 - Clase Estudiante</span>
+class Estudiante:
+    def __init__(self, nombre, grado, nota1, nota2, nota3):
+        self.nombre = nombre
+        self.grado = grado
+        self.nota1 = nota1
+        self.nota2 = nota2
+        self.nota3 = nota3
+
+    def calcular_promedio(self):
+        return (self.nota1 + self.nota2 + self.nota3) / 3
+
+    def obtener_estado(self):
+        promedio = self.calcular_promedio()
+        if promedio &gt;= 3.5:
+            return "Aprobado"
+        else:
+            return "No aprobado"
+
+    def mostrar_informacion(self):
+        print("=== INFORMACIÓN DEL ESTUDIANTE ===")
+        print("Nombre:", self.nombre)
+        print("Grado:", self.grado)
+        print("Promedio:", round(self.calcular_promedio(), 2))
+        print("Estado:", self.obtener_estado())
+
+estudiante1 = Estudiante("Laura Gómez", "10A", 4.0, 3.8, 4.5)
+estudiante1.mostrar_informacion()</pre>
+              <p class="intro-text" style="font-size:.9rem"><strong>Explicación:</strong></p>
+              <ul class="py-list">
+                <li><code>class Estudiante</code> crea el molde para construir estudiantes.</li>
+                <li><code>__init__</code> recibe los datos iniciales; <code>self.nombre</code>, <code>self.grado</code>… son atributos.</li>
+                <li><code>calcular_promedio()</code> y <code>obtener_estado()</code> son métodos (acciones).</li>
+                <li><code>estudiante1</code> es un objeto creado a partir de la clase.</li>
+              </ul>
+              <div class="info-box green"><div class="label">&#127919; Reto</div><p>Agrega un atributo <code>asistencia</code> y modifica <code>obtener_estado()</code> para que pierda si la asistencia es menor a 75.</p></div>
+            </div>
+          </div>
+
+          <div class="activity open">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">9</span><span class="activity-title">POO 2: Clase EntregaActividad</span><span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text" style="margin-top:0"><strong>Objetivo:</strong> representar una entrega académica como objeto y evaluar su estado.</p>
+              <div class="info-box"><div class="label">&#129513; Conceptos</div><p>class, bool, None, if-elif-else, métodos</p></div>
+              <p class="intro-text"><strong>Enunciado:</strong> clase que guarde la información de una actividad entregada e indique si está pendiente, a tiempo, tarde o aprobada.</p>
+<pre class="py-code"><span class="cmt"># Ejercicio 9: POO 2 - Clase EntregaActividad</span>
+class EntregaActividad:
+    def __init__(self, aprendiz, actividad, entregada, tarde, nota=None):
+        self.aprendiz = aprendiz
+        self.actividad = actividad
+        self.entregada = entregada
+        self.tarde = tarde
+        self.nota = nota
+
+    def obtener_estado(self):
+        if not self.entregada:
+            return "Pendiente por entregar"
+        elif self.nota is None:
+            return "Entregada, pendiente por calificar"
+        elif self.tarde and self.nota &gt;= 3.5:
+            return "Aprobada, pero entregada tarde"
+        elif self.nota &gt;= 3.5:
+            return "Aprobada"
+        else:
+            return "No aprobada"
+
+    def mostrar_reporte(self):
+        print("=== REPORTE DE ENTREGA ===")
+        print("Aprendiz:", self.aprendiz)
+        print("Actividad:", self.actividad)
+        print("Entregada:", self.entregada)
+        print("Entrega tarde:", self.tarde)
+        print("Nota:", self.nota)
+        print("Estado:", self.obtener_estado())
+
+entrega1 = EntregaActividad("Carlos Pérez", "Condicionales", True, False, 4.2)
+entrega1.mostrar_reporte()</pre>
+              <p class="intro-text" style="font-size:.9rem"><strong>Explicación:</strong></p>
+              <ul class="py-list">
+                <li>La clase <code>EntregaActividad</code> representa una evidencia académica.</li>
+                <li><code>entregada</code> y <code>tarde</code> son booleanos; <code>nota=None</code> = sin calificar.</li>
+                <li><code>not self.entregada</code> verifica si no entregó; <code>elif</code> clasifica los estados.</li>
+              </ul>
+              <div class="info-box green"><div class="label">&#127919; Reto</div><p>Crea tres objetos diferentes: una entrega aprobada, una pendiente y una entregada tarde.</p></div>
+            </div>
+          </div>
+
+          <div class="activity open">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">10</span><span class="activity-title">POO 3: Clase Ficha con lista de aprendices</span><span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text" style="margin-top:0"><strong>Objetivo:</strong> usar una clase que contenga una lista de objetos y aplique condicionales para un reporte.</p>
+              <div class="info-box"><div class="label">&#129513; Conceptos</div><p>class, list, objetos, for, if, métodos</p></div>
+              <p class="intro-text"><strong>Enunciado:</strong> clase <code>Ficha</code> que guarde varios estudiantes, muestre cuántos tiene y liste quiénes están aprobados o en revisión.</p>
+<pre class="py-code"><span class="cmt"># Ejercicio 10: POO 3 - Clase Ficha con lista de aprendices</span>
+class Estudiante:
+    def __init__(self, nombre, promedio):
+        self.nombre = nombre
+        self.promedio = promedio
+
+    def esta_aprobado(self):
+        return self.promedio &gt;= 3.5
+
+class Ficha:
+    def __init__(self, numero, programa):
+        self.numero = numero
+        self.programa = programa
+        self.estudiantes = []
+
+    def agregar_estudiante(self, estudiante):
+        self.estudiantes.append(estudiante)
+
+    def mostrar_reporte(self):
+        print("=== REPORTE DE FICHA ===")
+        print("Ficha:", self.numero)
+        print("Programa:", self.programa)
+        print("Cantidad de estudiantes:", len(self.estudiantes))
+        for estudiante in self.estudiantes:
+            if estudiante.esta_aprobado():
+                estado = "Aprobado"
+            else:
+                estado = "En revisión"
+            print(estudiante.nombre, "- Promedio:", estudiante.promedio, "-", estado)
+
+ficha = Ficha(3441939, "Sistemas Teleinformáticos")
+ficha.agregar_estudiante(Estudiante("Laura Gómez", 4.3))
+ficha.agregar_estudiante(Estudiante("Carlos Pérez", 3.2))
+ficha.agregar_estudiante(Estudiante("María Torres", 3.8))
+ficha.mostrar_reporte()</pre>
+              <p class="intro-text" style="font-size:.9rem"><strong>Explicación:</strong></p>
+              <ul class="py-list">
+                <li>Se crean dos clases: <code>Estudiante</code> y <code>Ficha</code>.</li>
+                <li>La ficha tiene número, programa y una lista de estudiantes.</li>
+                <li><code>append()</code> agrega objetos a la lista; <code>for</code> recorre cada estudiante.</li>
+                <li>La condicional <code>if</code> decide si cada estudiante está aprobado o en revisión.</li>
+              </ul>
+              <div class="info-box green"><div class="label">&#127919; Reto</div><p>Agrega un método <code>contar_aprobados()</code> que muestre cuántos estudiantes aprobaron.</p></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ══════════════ RETO INTEGRADOR (ENTREGA) ══════════════ -->
+      <div id="reto" class="section-title">5. Reto integrador (entrega)</div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#fff8e1">&#127919;</div>
+            <div><h3>Sistema básico de seguimiento académico</h3><p>Aplica todo lo aprendido y entrega tu programa</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <article class="story-card">
+            <h3>&#128221; Descripción del reto</h3>
+            <p>Crear un programa en Python que permita registrar aprendices, actividades, notas, asistencia y
+            estado de entrega. El programa debe generar un <strong>reporte final</strong> del aprendiz aplicando
+            variables, tipos de datos, condicionales, listas, diccionarios y POO.</p>
+          </article>
+
+          <div class="info-box" style="margin-top:14px">
+            <div class="label">&#9989; Requisitos mínimos</div>
+            <p>
+              1) Clase <code>Aprendiz</code> con nombre, grado, ficha, asistencia y lista de actividades. ·
+              2) Clase <code>Actividad</code> con nombre, nota, estado de entrega y observación. ·
+              3) Usar <code>str, int, float, bool, list, dict, set, tuple</code> y <code>None</code>. ·
+              4) Usar <code>if</code>, <code>if-else</code>, <code>if-elif-else</code> y al menos una condicional anidada. ·
+              5) Usar <code>and</code>, <code>or</code> y <code>not</code>. ·
+              6) Crear mínimo tres objetos <code>Aprendiz</code>. ·
+              7) Mostrar un reporte final con promedio, asistencia, actividades pendientes y estado académico. ·
+              8) Agregar un menú con <code>match-case</code> (o <code>if-elif-else</code> si la versión no lo permite).
+            </p>
+          </div>
+
+          <div class="info-box green" style="margin-top:12px">
+            <div class="label">&#128203; Reglas del reto</div>
+            <p>
+              Si promedio &gt;= 3.5 y asistencia &gt;= 75 → aprueba. ·
+              Si asistencia &lt; 75 → en revisión por inasistencia. ·
+              Si tiene actividades pendientes → el reporte debe mostrarlas. ·
+              Si una actividad no tiene nota → se guarda con <code>None</code> y se muestra como pendiente por calificar. ·
+              Si no tiene actividades registradas → mostrar un mensaje de advertencia.
+            </p>
+          </div>
+
+          <div class="info-box" style="margin-top:12px">
+            <div class="label">&#128206; Producto esperado y nombre del archivo</div>
+            <p>Entrega el archivo <strong>.py funcionando</strong> y una <strong>captura de pantalla</strong> donde
+            se vea el reporte generado. Súbelo en un solo archivo (puedes comprimir el .py y la imagen en un .zip).
+            Sugerencia de nombre: <code>RetoPython_NombreAprendiz_FICHA.zip</code></p>
+          </div>
+
+          <div class="info-box" style="margin-top:12px">
+            <div class="label">&#128221; Criterios de evaluación</div>
+            <p>Funcionamiento del programa, uso correcto de variables, uso correcto de condicionales, aplicación
+            de POO, claridad del código, orden en la presentación y evidencia de prueba.</p>
+          </div>
+
+          <div class="activity open mission-card" style="margin-top:16px">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">5.1</span><span class="activity-title">Entrega del reto integrador (.py + captura)</span><span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text" style="margin-top:0">Sube tu programa <code>.py</code> funcionando y la captura del reporte que genera. El archivo se guarda automáticamente en la carpeta de tu ficha.</p>
+              <div data-act-std-delivery="retoPython"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════ GLOSARIO ══════════════ -->
+      <div id="glosario" class="section-title">Glosario rápido</div>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left"><div class="card-icon" style="background:#f3e5f5">&#128214;</div><div><h3>Glosario</h3><p>Términos clave de la guía</p></div></div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <dl class="glossary">
+            <dt>Variable</dt><dd>Espacio donde se guarda un dato.</dd>
+            <dt>Dato</dt><dd>Información que puede ser texto, número, verdadero/falso o una colección.</dd>
+            <dt>Condicional</dt><dd>Estructura que permite tomar decisiones en el programa.</dd>
+            <dt>Indentación</dt><dd>Espacios al inicio de una línea que indican pertenencia a un bloque.</dd>
+            <dt>Lista</dt><dd>Colección ordenada y modificable de datos.</dd>
+            <dt>Diccionario</dt><dd>Colección que guarda datos con clave y valor.</dd>
+            <dt>Clase</dt><dd>Molde para crear objetos.</dd>
+            <dt>Objeto</dt><dd>Elemento creado a partir de una clase.</dd>
+            <dt>Atributo</dt><dd>Característica de un objeto.</dd>
+            <dt>Método</dt><dd>Acción que puede realizar un objeto.</dd>
+          </dl>
+          <p class="intro-text" style="font-size:.82rem;color:#607d8b;margin-top:12px">Material de apoyo de Python — Programa Sistemas Teleinformáticos (233108 · V1), I.E. Santa Bárbara.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

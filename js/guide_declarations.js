@@ -536,4 +536,28 @@
     ],
   });
 
+  // ── Guia practica de Python (4 grupos Santa Barbara, 1 entrega) ───────────
+  register({
+    files: ["santa-barbara-guia-python.html"],
+    guideNumber: "Python",
+    guideTitle: "Guia - Practica de Python",
+    stateKey: "guia_interactiva_santa_barbara_guia_python_html",
+    program: PROGRAM,
+    competencia: "220501121 - Procesar la informacion de acuerdo con las necesidades de la organizacion.",
+    resultado: "Fundamentos de programacion en Python: variables, condicionales y Programacion Orientada a Objetos.",
+    activities: [
+      {
+        id: "retoPython", number: "5.1", label: "Reto integrador - Sistema basico de seguimiento academico",
+        shortName: "RetoIntegrador", type: "file",
+        driveTarget: {
+          panelKey: "python-reto", deadlineActivityId: "retoPython",
+          activityTitle: "Reto integrador de Python (.py + captura)",
+          description: "Sube tu programa .py funcionando y una captura de pantalla del reporte que genera. Puedes comprimir el .py y la imagen en un solo .zip.",
+          note: "Nombre sugerido: RetoPython_NombreAprendiz_FICHA.zip",
+          allowedExtensions: [".py", ".zip", ".png", ".jpg", ".jpeg", ".pdf"],
+        },
+      },
+    ],
+  });
+
 })();
