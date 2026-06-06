@@ -40,5 +40,14 @@ window.__GUIDE_RUNTIME_CONTEXTS__ = {
     "ficha": "3441950",
     "cloudFileName": "sb_10b_guia3_redes.html",
     "quizRedesUrl": "pages/auxiliares/santa-barbara-10b-guia-03-redes-rap02-quiz.html"
+  },
+  "sb-python": {
+    "template": "guia-python",
+    "partialPath": "partials/guia-python-content.html",
+    "pageFile": "santa-barbara-guia-python.html",
+    "inst": "Institucion Educativa Santa Barbara",
+    "grupo": "",
+    "ficha": "",
+    "cloudFileName": "santa-barbara-guia-python.html"
   }
 };

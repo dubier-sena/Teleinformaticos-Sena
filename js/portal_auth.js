@@ -43,6 +43,8 @@
       "Guía 3 - Comprobar la conectividad de la red, de acuerdo con normativa de telecomunicaciones y orden de trabajo | Grupo 10A",
     "santa-barbara-10b-guia-03-redes-rap02.html":
       "Guía 3 - Comprobar la conectividad de la red, de acuerdo con normativa de telecomunicaciones y orden de trabajo | Grupo 10B",
+    "santa-barbara-guia-python.html":
+      "Guía - Práctica de Python | Santa Bárbara",
   };
 
   const GUIDE_PROGRESS_CONFIG = {
@@ -146,6 +148,13 @@
       pageKey: "sb_10b_guia3_redes",
       stateKey: "guia_interactiva_santa_barbara_10b_guia_03_redes_rap02_html",
     },
+    "santa-barbara-guia-python.html": {
+      mode: "state-with-activity",
+      total: 1,
+      activityTotal: 1,
+      pageKey: "sb_guia_python",
+      stateKey: "guia_interactiva_santa_barbara_guia_python_html",
+    },
   };
 
   const FICHA_MAP = {
@@ -170,12 +179,12 @@
     "3441944": {
       inst: "Institucion Educativa Santa Barbara",
       grupo: "10A",
-      guias: ["grupo-10a-guia-01-induccion.html", "santa-barbara-10a-guia-02-redes-rap01.html", "santa-barbara-10a-guia-03-redes-rap02.html"],
+      guias: ["grupo-10a-guia-01-induccion.html", "santa-barbara-10a-guia-02-redes-rap01.html", "santa-barbara-10a-guia-03-redes-rap02.html", "santa-barbara-guia-python.html"],
     },
     "3441950": {
       inst: "Institucion Educativa Santa Barbara",
       grupo: "10B",
-      guias: ["grupo-10b-guia-01-induccion.html", "santa-barbara-10b-guia-02-redes-rap01.html", "santa-barbara-10b-guia-03-redes-rap02.html"],
+      guias: ["grupo-10b-guia-01-induccion.html", "santa-barbara-10b-guia-02-redes-rap01.html", "santa-barbara-10b-guia-03-redes-rap02.html", "santa-barbara-guia-python.html"],
     },
     "3168850": {
       inst: "Institucion Educativa Santa Barbara",
@@ -184,6 +193,7 @@
         "grupo-11a-guia-05-herramientas-informaticas-digitales.html",
         "grupo-11a-guia-06-planificar-informacion.html",
         "grupo-11a-guia-07-planificar-informacion-ciberseguridad.html",
+        "santa-barbara-guia-python.html",
       ],
     },
     "3168852": {
@@ -193,6 +203,7 @@
         "grupo-11b-guia-05-herramientas-informaticas-digitales.html",
         "grupo-11b-guia-06-planificar-informacion.html",
         "grupo-11b-guia-07-planificar-informacion-ciberseguridad.html",
+        "santa-barbara-guia-python.html",
       ],
     },
   };

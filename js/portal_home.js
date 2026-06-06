@@ -286,8 +286,51 @@
     window.location.reload();
   }
 
+  // ── Selector de guías para el admin (Panel de gestión) ───────────────────
+  // El admin no tiene "Mis guías" (no pertenece a una ficha). Ofrecemos un
+  // acceso desde el panel: un modal que CLONA la lista ya construida del navbar
+  // (fuente única en shared_shell.js), agrupada por institución. Los enlaces ya
+  // apuntan a guia.html?g=… así que funcionan tal cual.
+  function openGuidePicker() {
+    var modal = byId("guide-picker");
+    var body = byId("guide-picker-body");
+    if (!modal || !body) return;
+    var src = document.querySelector('.app-navbar__drop[data-nav-key="guias"] .app-navbar__drop-panel');
+    if (src && src.children.length) {
+      body.innerHTML = src.innerHTML;
+    } else {
+      body.innerHTML = '<p class="guide-picker__empty">No se pudo cargar la lista de guías. Usa el menú <strong>Guías</strong> de la barra superior.</p>';
+    }
+    modal.hidden = false;
+    document.body.classList.add("guide-picker-open");
+    var firstLink = body.querySelector("a");
+    if (firstLink) { try { firstLink.focus(); } catch (e) {} }
+  }
+
+  function closeGuidePicker() {
+    var modal = byId("guide-picker");
+    if (!modal) return;
+    modal.hidden = true;
+    document.body.classList.remove("guide-picker-open");
+  }
+
+  function bindGuidePicker() {
+    document.querySelectorAll("[data-open-guide-picker]").forEach(function (btn) {
+      btn.addEventListener("click", openGuidePicker);
+    });
+    document.querySelectorAll("[data-guide-picker-close]").forEach(function (el) {
+      el.addEventListener("click", closeGuidePicker);
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key !== "Escape") return;
+      var modal = byId("guide-picker");
+      if (modal && !modal.hidden) closeGuidePicker();
+    });
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     bindAuthTabs();
+    bindGuidePicker();
     var loginForm = byId("login-form");
     var registerForm = byId("register-form");
     var adminForm = byId("admin-form");
