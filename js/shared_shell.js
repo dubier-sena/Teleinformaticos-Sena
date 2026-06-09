@@ -83,6 +83,7 @@
       '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-10b-guia-01-induccion.html") + '" role="menuitem" data-guide-file="grupo-10b-guia-01-induccion.html">10B · Guía 1 — Inducción</a>',
       '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-10b-guia-02-herramientas-informaticas-digitales.html") + '" role="menuitem" data-guide-file="grupo-10b-guia-02-herramientas-informaticas-digitales.html">10B · Guía 2 — Herramientas</a>',
       '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-10b-guia-03-planificar-informacion.html") + '" role="menuitem" data-guide-file="grupo-10b-guia-03-planificar-informacion.html">10B · Guía 3 — Planificar</a>',
+      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "santa-barbara-guia-python.html") + '" role="menuitem" data-guide-file="santa-barbara-guia-python.html">10A/10B · Guía - Práctica de Python</a>',
       '          </div>',
       '          <div class="app-navbar__drop-group" data-guide-group>',
       '            <span class="app-navbar__drop-heading">Santa Bárbara · Grado 10</span>',

@@ -165,6 +165,7 @@
         "grupo-10a-guia-01-induccion.html",
         "grupo-10a-guia-02-herramientas-informaticas-digitales.html",
         "grupo-10a-guia-03-planificar-informacion.html",
+        "santa-barbara-guia-python.html",
       ],
     },
     "3441942": {
@@ -174,6 +175,7 @@
         "grupo-10b-guia-01-induccion.html",
         "grupo-10b-guia-02-herramientas-informaticas-digitales.html",
         "grupo-10b-guia-03-planificar-informacion.html",
+        "santa-barbara-guia-python.html",
       ],
     },
     "3441944": {
