@@ -341,6 +341,18 @@
     });
   }
 
+  // ── Link Programiz (solo grupos Kennedy) ─────────────────────────────────
+
+  var KENNEDY_FICHAS = ["3441939", "3441942"];
+
+  function applyProgramizLinks() {
+    var ficha = getSessionFicha();
+    var isKennedy = KENNEDY_FICHAS.includes(ficha);
+    document.querySelectorAll("[data-programiz-link]").forEach(function (el) {
+      el.style.display = isKennedy ? "" : "none";
+    });
+  }
+
   // ── Boot ──────────────────────────────────────────────────────────────────
 
   function initGuiaPython() {
@@ -350,6 +362,7 @@
       window.ActivityStandard.mountActivities(getStateCtx());
     }
     mountDriveDelivery();
+    applyProgramizLinks();
     initVarDemo();
     initFnDemos();
     updateProgress();
