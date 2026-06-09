@@ -96,6 +96,17 @@
     const session = portalAuth?.getCurrentSession?.();
     const fromUser = session?.user?.ficha;
     if (fromUser) return String(fromUser).trim();
+    // Fallback: leer directo de localStorage (disponible antes de que portalAuth inicialice)
+    try {
+      const raw = localStorage.getItem("sena_portal_session_v1");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        const ficha = parsed?.user?.ficha;
+        if (ficha) return String(ficha).trim();
+      }
+    } catch (e) { /* ignorar */ }
+    const stored = localStorage.getItem("sena_ficha");
+    if (stored) return String(stored).trim();
     const ds = document.body.dataset || {};
     return String(ds.ficha || ds.defaultFicha || "").trim();
   }
@@ -363,6 +374,8 @@
     }
     mountDriveDelivery();
     applyProgramizLinks();
+    // Reintento por si portalAuth aun no habia cargado la sesion al momento del init
+    setTimeout(applyProgramizLinks, 800);
     initVarDemo();
     initFnDemos();
     updateProgress();
