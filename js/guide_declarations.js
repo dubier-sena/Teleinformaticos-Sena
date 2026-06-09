@@ -536,7 +536,7 @@
     ],
   });
 
-  // ── Guia practica de Python (4 grupos Santa Barbara, 1 entrega) ───────────
+  // ── Guia practica de Python (todos los grupos, 10 retos + 1 entrega final) ─
   register({
     files: ["santa-barbara-guia-python.html"],
     guideNumber: "Python",
@@ -547,7 +547,117 @@
     resultado: "Fundamentos de programacion en Python: variables, condicionales y Programacion Orientada a Objetos.",
     activities: [
       {
-        id: "retoPython", number: "5.1", label: "Reto integrador - Sistema basico de seguimiento academico",
+        id: "retoEj1", number: "1.1", label: "Reto ejercicio 1 - Registro basico del aprendiz",
+        shortName: "RetoEj1", type: "file",
+        driveTarget: {
+          panelKey: "python-ej1", deadlineActivityId: "retoEj1",
+          activityTitle: "Reto ejercicio 1 - Registro basico del aprendiz",
+          description: "Sube la captura de pantalla o el archivo .py con el reto del ejercicio 1 resuelto.",
+          note: "Formato sugerido: .py o captura de pantalla.",
+          allowedExtensions: [".py", ".png", ".jpg", ".jpeg", ".pdf", ".zip"],
+        },
+      },
+      {
+        id: "retoEj2", number: "2.1", label: "Reto ejercicio 2 - Edad y condicional simple",
+        shortName: "RetoEj2", type: "file",
+        driveTarget: {
+          panelKey: "python-ej2", deadlineActivityId: "retoEj2",
+          activityTitle: "Reto ejercicio 2 - Edad y condicional simple",
+          description: "Sube la captura de pantalla o el archivo .py con el reto del ejercicio 2 resuelto.",
+          note: "Formato sugerido: .py o captura de pantalla.",
+          allowedExtensions: [".py", ".png", ".jpg", ".jpeg", ".pdf", ".zip"],
+        },
+      },
+      {
+        id: "retoEj3", number: "3.1", label: "Reto ejercicio 3 - Nota final con if y else",
+        shortName: "RetoEj3", type: "file",
+        driveTarget: {
+          panelKey: "python-ej3", deadlineActivityId: "retoEj3",
+          activityTitle: "Reto ejercicio 3 - Nota final con if y else",
+          description: "Sube la captura de pantalla o el archivo .py con el reto del ejercicio 3 resuelto.",
+          note: "Formato sugerido: .py o captura de pantalla.",
+          allowedExtensions: [".py", ".png", ".jpg", ".jpeg", ".pdf", ".zip"],
+        },
+      },
+      {
+        id: "retoEj4", number: "4.1", label: "Reto ejercicio 4 - Promedio, asistencia y if-elif-else",
+        shortName: "RetoEj4", type: "file",
+        driveTarget: {
+          panelKey: "python-ej4", deadlineActivityId: "retoEj4",
+          activityTitle: "Reto ejercicio 4 - Promedio, asistencia y if-elif-else",
+          description: "Sube la captura de pantalla o el archivo .py con el reto del ejercicio 4 resuelto.",
+          note: "Formato sugerido: .py o captura de pantalla.",
+          allowedExtensions: [".py", ".png", ".jpg", ".jpeg", ".pdf", ".zip"],
+        },
+      },
+      {
+        id: "retoEj5", number: "5.1", label: "Reto ejercicio 5 - Control de entrega de actividad",
+        shortName: "RetoEj5", type: "file",
+        driveTarget: {
+          panelKey: "python-ej5", deadlineActivityId: "retoEj5",
+          activityTitle: "Reto ejercicio 5 - Control de entrega de actividad",
+          description: "Sube la captura de pantalla o el archivo .py con el reto del ejercicio 5 resuelto.",
+          note: "Formato sugerido: .py o captura de pantalla.",
+          allowedExtensions: [".py", ".png", ".jpg", ".jpeg", ".pdf", ".zip"],
+        },
+      },
+      {
+        id: "retoEj6", number: "6.1", label: "Reto ejercicio 6 - Lista de actividades entregadas",
+        shortName: "RetoEj6", type: "file",
+        driveTarget: {
+          panelKey: "python-ej6", deadlineActivityId: "retoEj6",
+          activityTitle: "Reto ejercicio 6 - Lista de actividades entregadas",
+          description: "Sube la captura de pantalla o el archivo .py con el reto del ejercicio 6 resuelto.",
+          note: "Formato sugerido: .py o captura de pantalla.",
+          allowedExtensions: [".py", ".png", ".jpg", ".jpeg", ".pdf", ".zip"],
+        },
+      },
+      {
+        id: "retoEj7", number: "7.1", label: "Reto ejercicio 7 - Ficha con diccionario, conjunto y match-case",
+        shortName: "RetoEj7", type: "file",
+        driveTarget: {
+          panelKey: "python-ej7", deadlineActivityId: "retoEj7",
+          activityTitle: "Reto ejercicio 7 - Ficha con diccionario, conjunto y match-case",
+          description: "Sube la captura de pantalla o el archivo .py con el reto del ejercicio 7 resuelto.",
+          note: "Formato sugerido: .py o captura de pantalla.",
+          allowedExtensions: [".py", ".png", ".jpg", ".jpeg", ".pdf", ".zip"],
+        },
+      },
+      {
+        id: "retoEj8", number: "8.1", label: "Reto ejercicio 8 - POO 1: Clase Estudiante",
+        shortName: "RetoEj8", type: "file",
+        driveTarget: {
+          panelKey: "python-ej8", deadlineActivityId: "retoEj8",
+          activityTitle: "Reto ejercicio 8 - POO 1: Clase Estudiante",
+          description: "Sube la captura de pantalla o el archivo .py con el reto del ejercicio 8 resuelto.",
+          note: "Formato sugerido: .py o captura de pantalla.",
+          allowedExtensions: [".py", ".png", ".jpg", ".jpeg", ".pdf", ".zip"],
+        },
+      },
+      {
+        id: "retoEj9", number: "9.1", label: "Reto ejercicio 9 - POO 2: Clase EntregaActividad",
+        shortName: "RetoEj9", type: "file",
+        driveTarget: {
+          panelKey: "python-ej9", deadlineActivityId: "retoEj9",
+          activityTitle: "Reto ejercicio 9 - POO 2: Clase EntregaActividad",
+          description: "Sube la captura de pantalla o el archivo .py con el reto del ejercicio 9 resuelto.",
+          note: "Formato sugerido: .py o captura de pantalla.",
+          allowedExtensions: [".py", ".png", ".jpg", ".jpeg", ".pdf", ".zip"],
+        },
+      },
+      {
+        id: "retoEj10", number: "10.1", label: "Reto ejercicio 10 - POO 3: Clase Ficha con lista de aprendices",
+        shortName: "RetoEj10", type: "file",
+        driveTarget: {
+          panelKey: "python-ej10", deadlineActivityId: "retoEj10",
+          activityTitle: "Reto ejercicio 10 - POO 3: Clase Ficha con lista de aprendices",
+          description: "Sube la captura de pantalla o el archivo .py con el reto del ejercicio 10 resuelto.",
+          note: "Formato sugerido: .py o captura de pantalla.",
+          allowedExtensions: [".py", ".png", ".jpg", ".jpeg", ".pdf", ".zip"],
+        },
+      },
+      {
+        id: "retoPython", number: "R.1", label: "Reto integrador - Sistema basico de seguimiento academico",
         shortName: "RetoIntegrador", type: "file",
         driveTarget: {
           panelKey: "python-reto", deadlineActivityId: "retoPython",
