@@ -354,13 +354,15 @@
 
   // ── Link Programiz (solo grupos Kennedy) ─────────────────────────────────
 
-  var KENNEDY_FICHAS = ["3441939", "3441942"];
+  var SANTA_BARBARA_FICHAS = ["3441944", "3441950", "3168850", "3168852"];
 
   function applyProgramizLinks() {
     var ficha = getSessionFicha();
-    var isKennedy = KENNEDY_FICHAS.includes(ficha);
+    // Ocultar solo si la ficha es explicitamente Santa Barbara.
+    // Si no hay sesion o la ficha es Kennedy, mostrar el link.
+    var hide = SANTA_BARBARA_FICHAS.includes(ficha);
     document.querySelectorAll("[data-programiz-link]").forEach(function (el) {
-      el.style.display = isKennedy ? "" : "none";
+      el.style.display = hide ? "none" : "";
     });
   }
 
