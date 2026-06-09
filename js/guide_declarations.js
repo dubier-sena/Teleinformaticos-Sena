@@ -547,7 +547,7 @@
     resultado: "Fundamentos de programacion en Python: variables, condicionales y Programacion Orientada a Objetos.",
     activities: [
       {
-        id: "retoEj1", number: "1.1", label: "Reto ejercicio 1 - Registro basico del aprendiz",
+        id: "retoEj1", number: "1", label: "Reto ejercicio 1 - Registro basico del aprendiz",
         shortName: "RetoEj1", type: "file",
         driveTarget: {
           panelKey: "python-ej1", deadlineActivityId: "retoEj1",
@@ -558,7 +558,7 @@
         },
       },
       {
-        id: "retoEj2", number: "2.1", label: "Reto ejercicio 2 - Edad y condicional simple",
+        id: "retoEj2", number: "2", label: "Reto ejercicio 2 - Edad y condicional simple",
         shortName: "RetoEj2", type: "file",
         driveTarget: {
           panelKey: "python-ej2", deadlineActivityId: "retoEj2",
@@ -569,7 +569,7 @@
         },
       },
       {
-        id: "retoEj3", number: "3.1", label: "Reto ejercicio 3 - Nota final con if y else",
+        id: "retoEj3", number: "3", label: "Reto ejercicio 3 - Nota final con if y else",
         shortName: "RetoEj3", type: "file",
         driveTarget: {
           panelKey: "python-ej3", deadlineActivityId: "retoEj3",
@@ -580,7 +580,7 @@
         },
       },
       {
-        id: "retoEj4", number: "4.1", label: "Reto ejercicio 4 - Promedio, asistencia y if-elif-else",
+        id: "retoEj4", number: "4", label: "Reto ejercicio 4 - Promedio, asistencia y if-elif-else",
         shortName: "RetoEj4", type: "file",
         driveTarget: {
           panelKey: "python-ej4", deadlineActivityId: "retoEj4",
@@ -591,7 +591,7 @@
         },
       },
       {
-        id: "retoEj5", number: "5.1", label: "Reto ejercicio 5 - Control de entrega de actividad",
+        id: "retoEj5", number: "5", label: "Reto ejercicio 5 - Control de entrega de actividad",
         shortName: "RetoEj5", type: "file",
         driveTarget: {
           panelKey: "python-ej5", deadlineActivityId: "retoEj5",
@@ -602,7 +602,7 @@
         },
       },
       {
-        id: "retoEj6", number: "6.1", label: "Reto ejercicio 6 - Lista de actividades entregadas",
+        id: "retoEj6", number: "6", label: "Reto ejercicio 6 - Lista de actividades entregadas",
         shortName: "RetoEj6", type: "file",
         driveTarget: {
           panelKey: "python-ej6", deadlineActivityId: "retoEj6",
@@ -613,7 +613,7 @@
         },
       },
       {
-        id: "retoEj7", number: "7.1", label: "Reto ejercicio 7 - Ficha con diccionario, conjunto y match-case",
+        id: "retoEj7", number: "7", label: "Reto ejercicio 7 - Ficha con diccionario, conjunto y match-case",
         shortName: "RetoEj7", type: "file",
         driveTarget: {
           panelKey: "python-ej7", deadlineActivityId: "retoEj7",
@@ -624,7 +624,7 @@
         },
       },
       {
-        id: "retoEj8", number: "8.1", label: "Reto ejercicio 8 - POO 1: Clase Estudiante",
+        id: "retoEj8", number: "8", label: "Reto ejercicio 8 - POO 1: Clase Estudiante",
         shortName: "RetoEj8", type: "file",
         driveTarget: {
           panelKey: "python-ej8", deadlineActivityId: "retoEj8",
@@ -635,7 +635,7 @@
         },
       },
       {
-        id: "retoEj9", number: "9.1", label: "Reto ejercicio 9 - POO 2: Clase EntregaActividad",
+        id: "retoEj9", number: "9", label: "Reto ejercicio 9 - POO 2: Clase EntregaActividad",
         shortName: "RetoEj9", type: "file",
         driveTarget: {
           panelKey: "python-ej9", deadlineActivityId: "retoEj9",
@@ -646,7 +646,7 @@
         },
       },
       {
-        id: "retoEj10", number: "10.1", label: "Reto ejercicio 10 - POO 3: Clase Ficha con lista de aprendices",
+        id: "retoEj10", number: "10", label: "Reto ejercicio 10 - POO 3: Clase Ficha con lista de aprendices",
         shortName: "RetoEj10", type: "file",
         driveTarget: {
           panelKey: "python-ej10", deadlineActivityId: "retoEj10",
@@ -657,7 +657,7 @@
         },
       },
       {
-        id: "retoPython", number: "R.1", label: "Reto integrador - Sistema basico de seguimiento academico",
+        id: "retoPython", number: "5.1", label: "Reto integrador - Sistema basico de seguimiento academico",
         shortName: "RetoIntegrador", type: "file",
         driveTarget: {
           panelKey: "python-reto", deadlineActivityId: "retoPython",
