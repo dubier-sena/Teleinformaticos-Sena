@@ -1,13 +1,17 @@
 /**
  * entregas_actividades.gs — Recibe las entregas de archivos del portal y las
- * guarda en Drive bajo Ficha / Guia / Actividad (+ copia en Respaldos/).
+ * guarda en Drive bajo Ficha / Guia / Actividad (+ copia de respaldo en
+ * carpeta exclusiva del instructor, sin acceso para aprendices).
  *
  * Seguridad: doPost exige un idToken de Firebase Auth valido (verificado contra
  * Identity Toolkit) antes de escribir nada en Drive. Sin token, se rechaza.
  *
  * ─── Despliegue (OBLIGATORIO tras esta version) ────────────────────────────
- *   1. Project Settings -> Script properties: agrega FIREBASE_API_KEY con la
- *      Firebase Web API key del proyecto (la misma de js/firebase-config.js).
+ *   1. Project Settings -> Script properties: agrega:
+ *        FIREBASE_API_KEY   → la Firebase Web API key del proyecto
+ *        ADMIN_BACKUP_FOLDER_ID → (opcional) ID alternativo de carpeta Drive
+ *            para respaldos. Si no se define, se usa el ID hardcodeado en
+ *            el script (1TTl7KclP_GXEcIdq7tIwpK4T7PXyIO-r).
  *   2. Deploy -> Manage deployments -> edita el deployment Web App existente
  *      y publica una nueva version (Execute as: Me / Access: Anyone).
  *   3. Orden seguro: primero publica el cliente (git push), luego redeploy aqui.
@@ -106,20 +110,29 @@ function doPost(e) {
     );
     const uploaded = destination.folder.createFile(blob);
 
-    // Copia automática a Respaldos/ dentro de la misma carpeta de ficha.
-    // Conserva la misma jerarquía Guia/Actividad para trazabilidad.
-    // Si la copia falla NO se aborta la entrega: el archivo principal ya quedó subido.
+    // Copia de respaldo en carpeta exclusiva del instructor (ADMIN_BACKUP_FOLDER_ID).
+    // Esta carpeta NO es accesible por los aprendices; solo el instructor la ve.
+    // La jerarquía interna replica Ficha / Guia / Actividad para trazabilidad.
+    // Si el ID no está configurado o la copia falla, NO se aborta la entrega:
+    // el archivo principal ya quedó subido y el error queda en backupError.
     let backupInfo = { url: "", folderPath: "", fileName: "", error: "" };
     try {
-      const backupRoot = ensureFolderByName(rootFolder, "Respaldos");
-      const backupDestination = resolveBackupTargetFolder(backupRoot, ficha, payload);
-      const backupCopy = uploaded.makeCopy(finalFileName, backupDestination.folder);
-      backupInfo = {
-        url: backupCopy.getUrl(),
-        folderPath: backupDestination.folderPath,
-        fileName: finalFileName,
-        error: "",
-      };
+      // ID de la carpeta exclusiva del instructor para respaldos (sin acceso de aprendices).
+      // Si se necesita cambiar la carpeta, actualice esta constante y redeploy el script.
+      const adminBackupFolderId = getScriptProperty("ADMIN_BACKUP_FOLDER_ID") || "1TTl7KclP_GXEcIdq7tIwpK4T7PXyIO-r";
+      if (!adminBackupFolderId) {
+        backupInfo.error = "ADMIN_BACKUP_FOLDER_ID no configurado — respaldo omitido.";
+      } else {
+        const adminBackupRoot = DriveApp.getFolderById(adminBackupFolderId);
+        const backupDestination = resolveBackupTargetFolder(adminBackupRoot, ficha, payload);
+        const backupCopy = uploaded.makeCopy(finalFileName, backupDestination.folder);
+        backupInfo = {
+          url: backupCopy.getUrl(),
+          folderPath: backupDestination.folderPath,
+          fileName: finalFileName,
+          error: "",
+        };
+      }
     } catch (backupError) {
       backupInfo.error = backupError && backupError.message ? backupError.message : "Backup error";
     }
@@ -212,11 +225,13 @@ function resolveTargetFolder(rootFolder, ficha, payload) {
   };
 }
 
-// La carpeta Respaldos vive dentro de la misma raíz de ficha y replica la
-// jerarquía Guia/Actividad para mantener trazabilidad por entrega.
-function resolveBackupTargetFolder(backupRoot, ficha, payload) {
-  let currentFolder = backupRoot;
-  const pathSegments = [`Ficha ${sanitizeLabel(ficha, "SIN_FICHA")}`, "Respaldos"];
+// Crea la jerarquía Ficha / Guia / Actividad dentro de la carpeta de respaldo
+// del instructor (adminBackupRoot). Los aprendices no tienen acceso a esa raíz.
+function resolveBackupTargetFolder(adminBackupRoot, ficha, payload) {
+  // Crear subcarpeta por ficha dentro de la raíz de respaldo del instructor.
+  const fichaFolderName = `Ficha ${sanitizeLabel(ficha, "SIN_FICHA")}`;
+  let currentFolder = ensureFolderByName(adminBackupRoot, fichaFolderName);
+  const pathSegments = [fichaFolderName];
 
   const guideFolderName = buildGuideFolderName(payload);
   if (guideFolderName) {
