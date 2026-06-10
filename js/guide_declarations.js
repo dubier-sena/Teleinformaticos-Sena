@@ -413,9 +413,17 @@
     activities: [
       {
         id: "reflexion311", number: "3.1.1", label: "Reflexion inicial - Caso Ferreteria Don Misael",
-        shortName: "Reflexion", type: "form",
+        shortName: "Reflexion", type: "both",
         formFields: ["g3r_311_p1", "g3r_311_p2", "g3r_311_p3", "g3r_311_p4", "g3r_311_p5"],
         buttonIds: { save: "btnGuardarReflexion311", status: "statusReflexion311" },
+        allowedExtensions: [".pdf", ".doc", ".docx", ".jpg", ".jpeg", ".png"],
+        driveTarget: {
+          panelKey: "guia3-reflexion311",
+          deadlineActivityId: "reflexion311",
+          activityTitle: "Reflexion inicial - Caso Ferreteria Don Misael",
+          description: "Entrega tu reflexion individual escrita exportada a Word o en PDF.",
+          note: "Entrega sugerida: exporta a Word y convierte a PDF antes de subir.",
+        },
         wordExport: {
           contextBox: "Caso Ferreteria Don Misael (Sogamoso): 5 PC en red, impresora compartida, camara IP y punto de venta. Fallas multiples de conectividad antes de visitar el local.",
           sections: [
@@ -484,6 +492,34 @@
         },
       },
       {
+        // Exportación consolidada de los 4 bloques A-D — solo Word, sin save ni Drive
+        id: "exportBloques321a324", number: "3.2.x", label: "Exportar bloques A-D a Word",
+        shortName: "BloquesFinal", type: "form",
+        formFields: [],
+        buttonIds: { save: "_btnExportConsolidado_noexiste", status: "_statusExportConsolidado_noexiste" },
+        wordExport: {
+          contextBox: "Contextualización — Ferretería Don Misael (Sogamoso): 5 PC en red, impresora compartida, cámara IP y punto de venta. Análisis de dispositivos, protocolos TCP/IP, servicios de red e IPs públicas/privadas.",
+          sections: [
+            { label: "BLOQUE A — Router, Switch y Access Point", storeKey: "" },
+            { label: "A1. Dispositivo que conecta los 5 PC y cuál da salida a internet", storeKey: "g3r_321_q1" },
+            { label: "A2. Por qué el router tiene dos interfaces IP (LAN y WAN)", storeKey: "g3r_321_q2" },
+            { label: "A3. Diferencia entre puerto LAN y puerto WAN", storeKey: "g3r_321_q3" },
+            { label: "BLOQUE B — Protocolo TCP/IP y modelo de capas", storeKey: "" },
+            { label: "B1. Qué hace la capa de Red y qué protocolo opera en ella", storeKey: "g3r_322_q1" },
+            { label: "B2. Capa de Transporte: diferencia entre TCP y UDP", storeKey: "g3r_322_q2" },
+            { label: "B3. En qué capa opera ICMP cuando un PC hace ping", storeKey: "g3r_322_q3" },
+            { label: "BLOQUE C — Servicios DHCP, DNS y Firewall", storeKey: "" },
+            { label: "C1. Qué servicio asigna IPs automáticamente y qué pasa si falla", storeKey: "g3r_323_q1" },
+            { label: "C2. Por qué dos PC de la misma red, uno sin internet (relación con DHCP)", storeKey: "g3r_323_q2" },
+            { label: "C3. Qué tiene que ver el DNS con una página que no carga", storeKey: "g3r_323_q3" },
+            { label: "BLOQUE D — IP pública vs privada y NAT", storeKey: "" },
+            { label: "D1. Por qué 5 PC con IP privada salen con una sola IP pública", storeKey: "g3r_324_q1" },
+            { label: "D2. Qué es NAT y cuál dispositivo lo realiza", storeKey: "g3r_324_q2" },
+            { label: "D3. Ping a 8.8.8.8 funciona pero no abre google.com: qué servicio falló", storeKey: "g3r_324_q3" },
+          ],
+        },
+      },
+      {
         id: "entregaContexto325", number: "3.2.5", label: "Entrega - Productos de contextualizacion (PDF)",
         shortName: "Contextualizacion", type: "file",
         driveTarget: {
@@ -530,6 +566,18 @@
           activityTitle: "Laboratorio de conectividad (.pkt + PDF con 10 pruebas)",
           description: "Sube a Drive el archivo .pkt y el PDF con las 10 capturas de las pruebas de conectividad, organizadas y comentadas.",
           note: "Nombre sugerido: Lab_Conectividad_NombreAprendiz_FICHA.pkt",
+          allowedExtensions: [".pkt", ".pdf", ".zip"],
+        },
+      },
+      {
+        id: "caso342", number: "3.4.2",
+        label: "Laboratorio integral - Red con DHCP, DNS, AP y NAT (Packet Tracer)",
+        shortName: "LabIntegral", type: "file",
+        driveTarget: {
+          panelKey: "g3redes-3-4-2", deadlineActivityId: "caso342",
+          activityTitle: "Laboratorio integral - Red con DHCP, DNS, AP y NAT",
+          description: "Sube a Drive el archivo .pkt y el PDF con las 10 capturas de las pruebas comentadas.",
+          note: "Nombre sugerido: LabIntegral_NombreAprendiz_FICHA.pkt + PDF",
           allowedExtensions: [".pkt", ".pdf", ".zip"],
         },
       },
