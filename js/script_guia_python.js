@@ -352,16 +352,32 @@
     });
   }
 
-  // ── Link Programiz (solo grupos Kennedy) ─────────────────────────────────
+  // ── Modulo opcional de practica en linea ─────────────────────────────────
 
-  var SANTA_BARBARA_FICHAS = ["3441944", "3441950", "3168850", "3168852"];
-
-  function applyProgramizLinks() {
+  function isOnlinePracticeEnabled() {
     var ficha = getSessionFicha();
-    // Ocultar solo si la ficha es explicitamente Santa Barbara.
-    // Si no hay sesion o la ficha es Kennedy, mostrar el link.
-    var hide = SANTA_BARBARA_FICHAS.includes(ficha);
+    var selection = getGuideSelection();
+    var fichaInfo = portalAuth?.getFichaInfo?.(ficha) || null;
+    var modules = fichaInfo?.optionalModules || {};
+    var configured = modules.pythonOnlinePractice;
+    var globalConfig = window.PORTAL_PYTHON_ONLINE_PRACTICE || {};
+
+    if (Array.isArray(globalConfig.disabledFichas) && globalConfig.disabledFichas.includes(ficha)) return false;
+    if (Array.isArray(globalConfig.disabledGroups) && globalConfig.disabledGroups.includes(selection.grupo)) return false;
+    if (Array.isArray(globalConfig.enabledFichas) && globalConfig.enabledFichas.length) {
+      return globalConfig.enabledFichas.includes(ficha);
+    }
+    if (typeof configured === "boolean") return configured;
+    return globalConfig.enabled !== false;
+  }
+
+  function applyOnlinePracticeVisibility() {
+    var enabled = isOnlinePracticeEnabled();
+    document.querySelectorAll("[data-python-online-practice]").forEach(function (el) {
+      el.style.display = enabled ? "" : "none";
+    });
     document.querySelectorAll("[data-programiz-link]").forEach(function (el) {
+      var hide = !enabled || el.getAttribute("data-python-online-hidden") === "true";
       el.style.display = hide ? "none" : "";
     });
   }
@@ -375,9 +391,9 @@
       window.ActivityStandard.mountActivities(getStateCtx());
     }
     mountDriveDelivery();
-    applyProgramizLinks();
+    applyOnlinePracticeVisibility();
     // Reintento por si portalAuth aun no habia cargado la sesion al momento del init
-    setTimeout(applyProgramizLinks, 800);
+    setTimeout(applyOnlinePracticeVisibility, 800);
     initVarDemo();
     initFnDemos();
     updateProgress();

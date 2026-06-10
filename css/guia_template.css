@@ -4156,3 +4156,247 @@ body.sb-hidden .btn-sb-expand {
 }
 .fn-row__out.show { opacity: 1; transform: translateY(0); }
 .fn-row__out:not(:empty)::before { content: "\21B3 "; color: #64748b; }
+
+/* ── Página opcional de práctica Python ──────────────────────────────────── */
+.python-practice-page {
+  background: #eef5f1;
+}
+.python-practice-shell {
+  width: min(1180px, calc(100% - 28px));
+  margin: 0 auto;
+  padding: 18px 0 32px;
+}
+.python-practice-hero {
+  border: 1px solid #b7dfc2;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: clamp(16px, 3vw, 24px);
+  box-shadow: 0 16px 38px rgba(15, 23, 42, 0.08);
+}
+.python-practice-hero h1 {
+  margin: 8px 0 10px;
+  color: #123322;
+  font-family: var(--font-heading, "Outfit", sans-serif);
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  line-height: 1.05;
+}
+.python-practice-hero p {
+  max-width: 820px;
+  margin: 0;
+  color: #31443a;
+  font-size: 1rem;
+  line-height: 1.65;
+}
+.python-practice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+.python-practice-actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+.python-practice-disabled {
+  margin-top: 14px;
+  border: 1px solid #e6b86c;
+  border-radius: 10px;
+  background: #fff8e8;
+  padding: 14px;
+}
+.python-practice-disabled p {
+  margin: 6px 0 0;
+  color: #4a3a18;
+  line-height: 1.55;
+}
+
+/* ── Laboratorio interno de Python (opcion A) ────────────────────────────── */
+.python-lab-wrap {
+  margin-top: 14px;
+  border: 1px solid #b7dfc2;
+  border-radius: 12px;
+  background: #f7fcf8;
+  padding: 14px;
+}
+.python-lab-intro p,
+.python-lab-backup p {
+  margin: 6px 0 0;
+  color: var(--text-strong, #102117);
+  line-height: 1.55;
+}
+.python-lab {
+  margin-top: 12px;
+  border: 1px solid #c9d8d0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+}
+.python-lab__toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  background: #eef8f1;
+  border-bottom: 1px solid #c9d8d0;
+}
+.python-lab__toolbar strong {
+  display: block;
+  color: #123322;
+  font-size: 0.98rem;
+}
+.python-lab__toolbar span {
+  display: block;
+  color: #4f665b;
+  font-size: 0.82rem;
+  margin-top: 2px;
+}
+.python-lab__actions,
+.python-lab__quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.python-lab__btn,
+.python-lab__quick button {
+  min-height: 36px;
+  border: 1px solid #93b7a1;
+  border-radius: 8px;
+  background: #fff;
+  color: #143824;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.84rem;
+  padding: 7px 11px;
+  cursor: pointer;
+}
+.python-lab__btn:hover,
+.python-lab__quick button:hover { background: #f0f8f3; }
+.python-lab__btn--primary {
+  background: #0b7a43;
+  border-color: #0b7a43;
+  color: #fff;
+}
+.python-lab__btn--primary:hover { background: #096a3a; }
+.python-lab__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(250px, 0.6fr);
+  gap: 12px;
+  padding: 12px;
+}
+.python-lab--simple .python-lab__grid {
+  grid-template-columns: 1fr;
+}
+.python-lab__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.python-lab__field span {
+  color: #315240;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+.python-lab__code-editor {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
+  border: 1px solid #c9d8d0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #0f172a;
+}
+.python-lab__line-numbers {
+  min-height: 260px;
+  margin: 0;
+  padding: 12px 8px;
+  border-right: 1px solid #25324a;
+  background: #0b1220;
+  color: #7f8da8;
+  font-family: "Consolas", "SFMono-Regular", "Menlo", "Courier New", monospace;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  text-align: right;
+  user-select: none;
+  white-space: pre;
+}
+.python-lab__field textarea {
+  width: 100%;
+  min-height: 260px;
+  resize: vertical;
+  border: 0;
+  border-radius: 0;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-family: "Consolas", "SFMono-Regular", "Menlo", "Courier New", monospace;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  padding: 12px;
+  tab-size: 4;
+}
+.python-lab__field textarea:focus {
+  outline: 2px solid #74b88b;
+  outline-offset: -2px;
+}
+.python-lab--simple .python-lab__field textarea {
+  min-height: clamp(320px, 48vh, 560px);
+}
+.python-lab--simple .python-lab__line-numbers {
+  min-height: clamp(320px, 48vh, 560px);
+}
+.python-lab__side {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+.python-lab__side textarea { min-height: 130px; }
+.python-lab__result {
+  border-top: 1px solid #c9d8d0;
+  background: #0f172a;
+}
+.python-lab__result-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 12px;
+  border-bottom: 1px solid #1e293b;
+  color: #94a3b8;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.python-lab__result pre {
+  min-height: 120px;
+  max-height: 320px;
+  overflow: auto;
+  margin: 0;
+  padding: 12px;
+  color: #e2e8f0;
+  white-space: pre-wrap;
+  font-family: "Consolas", "SFMono-Regular", "Menlo", "Courier New", monospace;
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+.python-lab--simple .python-lab__result pre {
+  min-height: 180px;
+  max-height: 300px;
+}
+.python-lab-backup {
+  margin-top: 12px;
+  border-top: 1px dashed #b7dfc2;
+  padding-top: 12px;
+}
+.python-lab-backup a {
+  display: inline-flex;
+  margin-top: 8px;
+  color: var(--primary, #1565c0);
+  font-weight: 800;
+  text-decoration: none;
+}
+.python-lab-backup a:hover { text-decoration: underline; }
+@media (max-width: 820px) {
+  .python-lab__toolbar { align-items: stretch; flex-direction: column; }
+  .python-lab__grid { grid-template-columns: 1fr; }
+  .python-lab__field textarea { min-height: 220px; }
+  .python-lab__side textarea { min-height: 110px; }
+}

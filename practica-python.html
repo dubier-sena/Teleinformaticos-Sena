@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta
+  http-equiv="Content-Security-Policy"
+  content="default-src 'self' blob: data:; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; worker-src 'self'; script-src 'self' 'unsafe-inline' blob: https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https:; media-src 'self' blob: data: https:; frame-src 'self' https://es.educaplay.com https://player.vimeo.com;"
+>
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Práctica de Python en línea | SENA Teleinformáticos</title>
+<meta
+  name="description"
+  content="Módulo interno opcional para practicar Python desde el navegador, escribir código y ejecutarlo dentro del portal."
+>
+<script defer src="js/portal_auth.js?v=20260610_1"></script>
+<script src="js/firebase-config.js?v=20260527_3"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script src="js/firebase_auth_bridge.js?v=20260527_1"></script>
+<script defer src="js/firebase_db.js?v=20260604_1"></script>
+<script defer src="js/drive_db.js?v=20260526_2"></script>
+<script defer src="js/firebase_status_banner.js?v=20260527_2"></script>
+<script defer src="js/save_status.js?v=20260516_1"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/site_tokens.css?v=20260516_1">
+<link rel="stylesheet" href="css/components.css?v=20260516_1">
+<link rel="stylesheet" href="css/shared_shell.css?v=20260605_1">
+<link rel="stylesheet" href="css/guia_template.css?v=20260610_3">
+<script defer src="js/shared_shell.js?v=20260609_2"></script>
+<script defer src="js/project_integrations.js?v=20260526_2"></script>
+<script defer src="js/python_online_lab.js?v=20260610_7"></script>
+</head>
+<body class="app-shell app-shell--guide python-practice-page">
+  <main class="python-practice-shell">
+    <section class="python-practice-hero">
+      <div class="tag">Opción A · Módulo interno opcional</div>
+      <h1>Práctica de Python en línea</h1>
+      <p>
+        Escribe tu código Python y ejecútalo dentro del portal.
+      </p>
+      <div class="python-practice-actions">
+        <a class="python-lab__btn" href="guia.html?g=santa-barbara-guia-python.html#python-en-linea">Volver a la guía</a>
+      </div>
+    </section>
+
+    <section class="python-practice-disabled" data-python-disabled hidden>
+      <div class="label">Módulo opcional no habilitado</div>
+      <p>
+        Este laboratorio puede activarse o desactivarse por ficha o grupo. Si tu instructor
+        no lo habilitó, continúa la práctica normal con Python instalado y entrega tus archivos
+        como evidencia.
+      </p>
+    </section>
+
+    <section class="python-lab-wrap" data-python-online-practice>
+      <div class="python-lab python-lab--simple" data-python-lab>
+        <div class="python-lab__toolbar">
+          <div>
+            <strong>Editor Python</strong>
+          </div>
+          <div class="python-lab__actions">
+            <button type="button" class="python-lab__btn python-lab__btn--primary" data-python-run>Ejecutar</button>
+            <button type="button" class="python-lab__btn" data-python-download>Guardar .py</button>
+          </div>
+        </div>
+
+        <div class="python-lab__grid">
+          <label class="python-lab__field">
+            <span>Código Python</span>
+            <div class="python-lab__code-editor">
+              <pre class="python-lab__line-numbers" data-python-lines aria-hidden="true">1</pre>
+              <textarea data-python-code spellcheck="false"></textarea>
+            </div>
+          </label>
+        </div>
+
+        <div class="python-lab__result">
+          <div class="python-lab__result-head">
+            <span>Resultado</span>
+            <span data-python-status>Listo para practicar.</span>
+          </div>
+          <pre data-python-output>Presiona Ejecutar para ver el resultado.</pre>
+        </div>
+      </div>
+    </section>
+  </main>
+  <noscript>Necesitas JavaScript para usar la práctica de Python en línea.</noscript>
+</body>
+</html>

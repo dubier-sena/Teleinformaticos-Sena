@@ -52,6 +52,7 @@
 
     <div class="nav-section">
       <div class="nav-label">Recursos</div>
+      <a class="nav-link" href="#python-en-linea" onclick="setActive(this)" data-python-online-practice><span class="icon">&#128187;</span> Python en línea</a>
       <a class="nav-link" href="#glosario" onclick="setActive(this)"><span class="icon">&#128214;</span> Glosario</a>
     </div>
 
@@ -113,6 +114,27 @@
             <p>Lee cada concepto, escribe y ejecuta el código sugerido en tu computador (puedes usar
             <strong>IDLE</strong>, <strong>Thonny</strong> o <strong>Visual Studio Code</strong>), y resuelve
             el reto de cada ejercicio. Al final entregas el <strong>reto integrador</strong>.</p>
+          </div>
+          <div id="python-en-linea" class="python-lab-wrap" data-python-online-practice>
+            <div class="python-lab-intro">
+              <div class="label">&#128187; Opción A · Practicar Python en línea dentro del portal</div>
+              <p>
+                Módulo interno opcional para estudiantes que no pueden instalar programas o trabajan en equipos
+                lentos, prestados o institucionales. Permite escribir, ejecutar, validar y descargar código Python
+                sin salir del portal; no reemplaza la práctica normal ni las evidencias de la guía.
+              </p>
+              <a class="python-lab__btn python-lab__btn--primary" href="practica-python.html" style="display:inline-flex;align-items:center;text-decoration:none;margin-top:10px">
+                Abrir práctica interna
+              </a>
+            </div>
+
+            <div class="python-lab-backup">
+              <div class="label">&#128279; Opción B · Respaldo externo</div>
+              <p>El enlace externo que ya estaba en la guía queda solo como respaldo si el módulo interno no cubre un caso avanzado.</p>
+              <a href="https://www.programiz.com/python-programming/online-compiler/" target="_blank" rel="noopener noreferrer">
+                Abrir Programiz como respaldo &#8599;
+              </a>
+            </div>
           </div>
         </div>
       </div>
@@ -259,15 +281,12 @@ Programa: Sistemas Teleinformáticos</pre>
 
           <div class="info-box" style="margin-top:12px">
             <div class="label">&#128296; ¿Dónde escribo y ejecuto el código?</div>
-            <p>&#128187; <strong>Sin instalación (recomendado si no puedes instalar el programa):</strong>
-            usa el compilador en línea directamente desde el navegador:<br>
-            <a href="https://www.programiz.com/python-programming/online-compiler/" target="_blank" rel="noopener noreferrer"
-               style="color:var(--primary,#1565c0);font-weight:700;font-size:1.05em">
-              &#9654; Programiz — Compilador Python en línea &#8599;
-            </a></p>
-            <p style="margin-top:8px">&#128187; <strong>Con programa instalado:</strong> puedes usar <strong>IDLE</strong> (viene con Python), <strong>Thonny</strong> (muy recomendado
+            <p>&#128187; <strong>Con programa instalado:</strong> puedes usar <strong>IDLE</strong> (viene con Python), <strong>Thonny</strong> (muy recomendado
             para principiantes) o <strong>Visual Studio Code</strong>. Escribe el código, guárdalo con
             extensión <code>.py</code> y ejecútalo con el botón <em>Run</em> o la tecla <code>F5</code>.</p>
+            <p data-python-online-practice style="margin-top:8px">&#128187; <strong>Sin instalación:</strong>
+            usa primero la <a href="practica-python.html" style="color:var(--primary,#1565c0);font-weight:700">Opción A, laboratorio interno del portal</a>.
+            El enlace externo queda como Opción B de respaldo si necesitas probar algo fuera del portal.</p>
           </div>
         </div>
       </div>
@@ -381,9 +400,9 @@ Programa: Sistemas Teleinformáticos</pre>
                             <div data-programiz-link style="display:none;margin-bottom:10px">
                 <a href="https://www.programiz.com/python-programming/online-compiler/" target="_blank" rel="noopener noreferrer"
                    style="display:inline-flex;align-items:center;gap:6px;background:#e8f5e9;border:1.5px solid #43a047;border-radius:8px;padding:8px 14px;color:#2e7d32;font-weight:700;text-decoration:none;font-size:.97em">
-                  &#9654; Abrir compilador Python en línea (Programiz) &#8599;
+                  &#9654; Opción B · Programiz como respaldo &#8599;
                 </a>
-                <span style="display:block;font-size:.82em;color:#555;margin-top:4px">&#128204; Escribe y ejecuta tu reto aquí si no tienes el programa instalado.</span>
+                <span style="display:block;font-size:.82em;color:#555;margin-top:4px">&#128204; Respaldo externo: usa primero la Opción A interna del portal cuando esté habilitada.</span>
               </div>
               <p class="intro-text" style="margin-top:0"><strong>Objetivo:</strong> identificar variables tipo texto, entero, decimal y booleano.</p>
               <div class="info-box"><div class="label">&#129513; Conceptos</div><p>str, int, float, bool, print(), type()</p></div>
@@ -426,9 +445,9 @@ print(type(matriculado))</pre>
                             <div data-programiz-link style="display:none;margin-bottom:10px">
                 <a href="https://www.programiz.com/python-programming/online-compiler/" target="_blank" rel="noopener noreferrer"
                    style="display:inline-flex;align-items:center;gap:6px;background:#e8f5e9;border:1.5px solid #43a047;border-radius:8px;padding:8px 14px;color:#2e7d32;font-weight:700;text-decoration:none;font-size:.97em">
-                  &#9654; Abrir compilador Python en línea (Programiz) &#8599;
+                  &#9654; Opción B · Programiz como respaldo &#8599;
                 </a>
-                <span style="display:block;font-size:.82em;color:#555;margin-top:4px">&#128204; Escribe y ejecuta tu reto aquí si no tienes el programa instalado.</span>
+                <span style="display:block;font-size:.82em;color:#555;margin-top:4px">&#128204; Respaldo externo: usa primero la Opción A interna del portal cuando esté habilitada.</span>
               </div>
               <p class="intro-text" style="margin-top:0"><strong>Objetivo:</strong> usar input(), int() y una condicional if para validar una edad.</p>
               <div class="info-box"><div class="label">&#129513; Conceptos</div><p>input(), int, if, comparación &gt;=</p></div>
@@ -465,9 +484,9 @@ print("Fin del programa.")</pre>
                             <div data-programiz-link style="display:none;margin-bottom:10px">
                 <a href="https://www.programiz.com/python-programming/online-compiler/" target="_blank" rel="noopener noreferrer"
                    style="display:inline-flex;align-items:center;gap:6px;background:#e8f5e9;border:1.5px solid #43a047;border-radius:8px;padding:8px 14px;color:#2e7d32;font-weight:700;text-decoration:none;font-size:.97em">
-                  &#9654; Abrir compilador Python en línea (Programiz) &#8599;
+                  &#9654; Opción B · Programiz como respaldo &#8599;
                 </a>
-                <span style="display:block;font-size:.82em;color:#555;margin-top:4px">&#128204; Escribe y ejecuta tu reto aquí si no tienes el programa instalado.</span>
+                <span style="display:block;font-size:.82em;color:#555;margin-top:4px">&#128204; Respaldo externo: usa primero la Opción A interna del portal cuando esté habilitada.</span>
               </div>
               <p class="intro-text" style="margin-top:0"><strong>Objetivo:</strong> aplicar una decisión con dos resultados: aprobado o no aprobado.</p>
               <div class="info-box"><div class="label">&#129513; Conceptos</div><p>float, if, else, round()</p></div>
@@ -509,9 +528,9 @@ else:
                             <div data-programiz-link style="display:none;margin-bottom:10px">
                 <a href="https://www.programiz.com/python-programming/online-compiler/" target="_blank" rel="noopener noreferrer"
                    style="display:inline-flex;align-items:center;gap:6px;background:#e8f5e9;border:1.5px solid #43a047;border-radius:8px;padding:8px 14px;color:#2e7d32;font-weight:700;text-decoration:none;font-size:.97em">
-                  &#9654; Abrir compilador Python en línea (Programiz) &#8599;
+                  &#9654; Opción B · Programiz como respaldo &#8599;
                 </a>
-                <span style="display:block;font-size:.82em;color:#555;margin-top:4px">&#128204; Escribe y ejecuta tu reto aquí si no tienes el programa instalado.</span>
+                <span style="display:block;font-size:.82em;color:#555;margin-top:4px">&#128204; Respaldo externo: usa primero la Opción A interna del portal cuando esté habilitada.</span>
               </div>
               <p class="intro-text" style="margin-top:0"><strong>Objetivo:</strong> usar varias condiciones para clasificar el estado académico.</p>
               <div class="info-box"><div class="label">&#129513; Conceptos</div><p>float, int, if, elif, else, and</p></div>
@@ -559,9 +578,9 @@ else:
                             <div data-programiz-link style="display:none;margin-bottom:10px">
                 <a href="https://www.programiz.com/python-programming/online-compiler/" target="_blank" rel="noopener noreferrer"
                    style="display:inline-flex;align-items:center;gap:6px;background:#e8f5e9;border:1.5px solid #43a047;border-radius:8px;padding:8px 14px;color:#2e7d32;font-weight:700;text-decoration:none;font-size:.97em">
-                  &#9654; Abrir compilador Python en línea (Programiz) &#8599;
+                  &#9654; Opción B · Programiz como respaldo &#8599;
                 </a>
-                <span style="display:block;font-size:.82em;color:#555;margin-top:4px">&#128204; Escribe y ejecuta tu reto aquí si no tienes el programa instalado.</span>
+                <span style="display:block;font-size:.82em;color:#555;margin-top:4px">&#128204; Respaldo externo: usa primero la Opción A interna del portal cuando esté habilitada.</span>
               </div>
               <p class="intro-text" style="margin-top:0"><strong>Objetivo:</strong> trabajar con booleanos, None y condicionales anidadas.</p>
               <div class="info-box"><div class="label">&#129513; Conceptos</div><p>bool, None, if, else, condicional anidada</p></div>
@@ -610,9 +629,9 @@ print("Observación:", observacion)</pre>
                             <div data-programiz-link style="display:none;margin-bottom:10px">
                 <a href="https://www.programiz.com/python-programming/online-compiler/" target="_blank" rel="noopener noreferrer"
                    style="display:inline-flex;align-items:center;gap:6px;background:#e8f5e9;border:1.5px solid #43a047;border-radius:8px;padding:8px 14px;color:#2e7d32;font-weight:700;text-decoration:none;font-size:.97em">
-                  &#9654; Abrir compilador Python en línea (Programiz) &#8599;
+                  &#9654; Opción B · Programiz como respaldo &#8599;
                 </a>
-                <span style="display:block;font-size:.82em;color:#555;margin-top:4px">&#128204; Escribe y ejecuta tu reto aquí si no tienes el programa instalado.</span>
+                <span style="display:block;font-size:.82em;color:#555;margin-top:4px">&#128204; Respaldo externo: usa primero la Opción A interna del portal cuando esté habilitada.</span>
               </div>
               <p class="intro-text" style="margin-top:0"><strong>Objetivo:</strong> usar listas, cantidad de elementos y verificación de pertenencia.</p>
               <div class="info-box"><div class="label">&#129513; Conceptos</div><p>list, len(), in, or, not</p></div>
@@ -657,9 +676,9 @@ if not "POO" in actividades_entregadas:
                             <div data-programiz-link style="display:none;margin-bottom:10px">
                 <a href="https://www.programiz.com/python-programming/online-compiler/" target="_blank" rel="noopener noreferrer"
                    style="display:inline-flex;align-items:center;gap:6px;background:#e8f5e9;border:1.5px solid #43a047;border-radius:8px;padding:8px 14px;color:#2e7d32;font-weight:700;text-decoration:none;font-size:.97em">
-                  &#9654; Abrir compilador Python en línea (Programiz) &#8599;
+                  &#9654; Opción B · Programiz como respaldo &#8599;
                 </a>
-                <span style="display:block;font-size:.82em;color:#555;margin-top:4px">&#128204; Escribe y ejecuta tu reto aquí si no tienes el programa instalado.</span>
+                <span style="display:block;font-size:.82em;color:#555;margin-top:4px">&#128204; Respaldo externo: usa primero la Opción A interna del portal cuando esté habilitada.</span>
               </div>
               <p class="intro-text" style="margin-top:0"><strong>Objetivo:</strong> integrar estructuras de datos y una condicional match-case.</p>
               <div class="info-box"><div class="label">&#129513; Conceptos</div><p>dict, set, tuple, match-case, if anidado</p></div>
@@ -760,9 +779,9 @@ match opcion:
                             <div data-programiz-link style="display:none;margin-bottom:10px">
                 <a href="https://www.programiz.com/python-programming/online-compiler/" target="_blank" rel="noopener noreferrer"
                    style="display:inline-flex;align-items:center;gap:6px;background:#e8f5e9;border:1.5px solid #43a047;border-radius:8px;padding:8px 14px;color:#2e7d32;font-weight:700;text-decoration:none;font-size:.97em">
-                  &#9654; Abrir compilador Python en línea (Programiz) &#8599;
+                  &#9654; Opción B · Programiz como respaldo &#8599;
                 </a>
-                <span style="display:block;font-size:.82em;color:#555;margin-top:4px">&#128204; Escribe y ejecuta tu reto aquí si no tienes el programa instalado.</span>
+                <span style="display:block;font-size:.82em;color:#555;margin-top:4px">&#128204; Respaldo externo: usa primero la Opción A interna del portal cuando esté habilitada.</span>
               </div>
               <p class="intro-text" style="margin-top:0"><strong>Objetivo:</strong> crear una clase con atributos, métodos y condicionales para obtener el estado académico.</p>
               <div class="info-box"><div class="label">&#129513; Conceptos</div><p>class, __init__, self, atributos, métodos, if-else</p></div>
@@ -815,9 +834,9 @@ estudiante1.mostrar_informacion()</pre>
                             <div data-programiz-link style="display:none;margin-bottom:10px">
                 <a href="https://www.programiz.com/python-programming/online-compiler/" target="_blank" rel="noopener noreferrer"
                    style="display:inline-flex;align-items:center;gap:6px;background:#e8f5e9;border:1.5px solid #43a047;border-radius:8px;padding:8px 14px;color:#2e7d32;font-weight:700;text-decoration:none;font-size:.97em">
-                  &#9654; Abrir compilador Python en línea (Programiz) &#8599;
+                  &#9654; Opción B · Programiz como respaldo &#8599;
                 </a>
-                <span style="display:block;font-size:.82em;color:#555;margin-top:4px">&#128204; Escribe y ejecuta tu reto aquí si no tienes el programa instalado.</span>
+                <span style="display:block;font-size:.82em;color:#555;margin-top:4px">&#128204; Respaldo externo: usa primero la Opción A interna del portal cuando esté habilitada.</span>
               </div>
               <p class="intro-text" style="margin-top:0"><strong>Objetivo:</strong> representar una entrega académica como objeto y evaluar su estado.</p>
               <div class="info-box"><div class="label">&#129513; Conceptos</div><p>class, bool, None, if-elif-else, métodos</p></div>
@@ -873,9 +892,9 @@ entrega1.mostrar_reporte()</pre>
                             <div data-programiz-link style="display:none;margin-bottom:10px">
                 <a href="https://www.programiz.com/python-programming/online-compiler/" target="_blank" rel="noopener noreferrer"
                    style="display:inline-flex;align-items:center;gap:6px;background:#e8f5e9;border:1.5px solid #43a047;border-radius:8px;padding:8px 14px;color:#2e7d32;font-weight:700;text-decoration:none;font-size:.97em">
-                  &#9654; Abrir compilador Python en línea (Programiz) &#8599;
+                  &#9654; Opción B · Programiz como respaldo &#8599;
                 </a>
-                <span style="display:block;font-size:.82em;color:#555;margin-top:4px">&#128204; Escribe y ejecuta tu reto aquí si no tienes el programa instalado.</span>
+                <span style="display:block;font-size:.82em;color:#555;margin-top:4px">&#128204; Respaldo externo: usa primero la Opción A interna del portal cuando esté habilitada.</span>
               </div>
               <p class="intro-text" style="margin-top:0"><strong>Objetivo:</strong> usar una clase que contenga una lista de objetos y aplique condicionales para un reporte.</p>
               <div class="info-box"><div class="label">&#129513; Conceptos</div><p>class, list, objetos, for, if, métodos</p></div>
