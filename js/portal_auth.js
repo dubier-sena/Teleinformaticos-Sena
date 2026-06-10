@@ -161,6 +161,7 @@
     "3441939": {
       inst: "Institucion Educativa Jhon F. Kennedy",
       grupo: "10A",
+      optionalModules: { pythonOnlinePractice: true },
       guias: [
         "grupo-10a-guia-01-induccion.html",
         "grupo-10a-guia-02-herramientas-informaticas-digitales.html",
@@ -171,6 +172,7 @@
     "3441942": {
       inst: "Institucion Educativa Jhon F. Kennedy",
       grupo: "10B",
+      optionalModules: { pythonOnlinePractice: true },
       guias: [
         "grupo-10b-guia-01-induccion.html",
         "grupo-10b-guia-02-herramientas-informaticas-digitales.html",
@@ -181,16 +183,19 @@
     "3441944": {
       inst: "Institucion Educativa Santa Barbara",
       grupo: "10A",
+      optionalModules: { pythonOnlinePractice: true },
       guias: ["grupo-10a-guia-01-induccion.html", "santa-barbara-10a-guia-02-redes-rap01.html", "santa-barbara-10a-guia-03-redes-rap02.html", "santa-barbara-guia-python.html"],
     },
     "3441950": {
       inst: "Institucion Educativa Santa Barbara",
       grupo: "10B",
+      optionalModules: { pythonOnlinePractice: true },
       guias: ["grupo-10b-guia-01-induccion.html", "santa-barbara-10b-guia-02-redes-rap01.html", "santa-barbara-10b-guia-03-redes-rap02.html", "santa-barbara-guia-python.html"],
     },
     "3168850": {
       inst: "Institucion Educativa Santa Barbara",
       grupo: "11A",
+      optionalModules: { pythonOnlinePractice: true },
       guias: [
         "grupo-11a-guia-05-herramientas-informaticas-digitales.html",
         "grupo-11a-guia-06-planificar-informacion.html",
@@ -201,6 +206,7 @@
     "3168852": {
       inst: "Institucion Educativa Santa Barbara",
       grupo: "11B",
+      optionalModules: { pythonOnlinePractice: true },
       guias: [
         "grupo-11b-guia-05-herramientas-informaticas-digitales.html",
         "grupo-11b-guia-06-planificar-informacion.html",
