@@ -31,7 +31,7 @@
 <link rel="stylesheet" href="css/guia_template.css?v=20260610_3">
 <script defer src="js/shared_shell.js?v=20260609_2"></script>
 <script defer src="js/project_integrations.js?v=20260526_2"></script>
-<script defer src="js/python_online_lab.js?v=20260610_7"></script>
+<script defer src="js/python_online_lab.js?v=20260610_12"></script>
 </head>
 <body class="app-shell app-shell--guide python-practice-page">
   <main class="python-practice-shell">
@@ -72,7 +72,10 @@
             <span>Código Python</span>
             <div class="python-lab__code-editor">
               <pre class="python-lab__line-numbers" data-python-lines aria-hidden="true">1</pre>
-              <textarea data-python-code spellcheck="false"></textarea>
+              <div class="python-lab__code-pane">
+                <pre class="python-lab__highlight" data-python-highlight aria-hidden="true"></pre>
+                <textarea data-python-code spellcheck="false"></textarea>
+              </div>
             </div>
           </label>
         </div>
@@ -83,6 +86,10 @@
             <span data-python-status>Listo para practicar.</span>
           </div>
           <pre data-python-output>Presiona Ejecutar para ver el resultado.</pre>
+          <div class="python-lab__console-line" data-python-console-line hidden>
+            <span data-python-console-prompt></span>
+            <input type="text" data-python-console-input autocomplete="off" spellcheck="false">
+          </div>
         </div>
       </div>
     </section>

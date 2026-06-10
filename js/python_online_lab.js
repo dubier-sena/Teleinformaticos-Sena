@@ -11,6 +11,23 @@
   var EXECUTION_TIMEOUT_MS = 1500;
 
   var PYTHON_LAB_DEFAULT_CODE = "";
+  var FORBIDDEN_PATTERNS = [
+    { re: /\bimport\s+os\b|\bos\./, msg: "Uso de os/os.system bloqueado por seguridad." },
+    { re: /\bimport\s+subprocess\b|\bsubprocess\./, msg: "Uso de subprocess bloqueado por seguridad." },
+    { re: /\bopen\s*\(/, msg: "Lectura o escritura de archivos bloqueada por seguridad." },
+    { re: /\b__import__\s*\(/, msg: "Importacion dinamica bloqueada por seguridad." },
+    { re: /\beval\s*\(|\bexec\s*\(/, msg: "eval() y exec() estan bloqueados por seguridad." },
+    { re: /\b(socket|requests|urllib|http\.client)\b/, msg: "Conexiones externas bloqueadas por seguridad." },
+    { re: /\b(fetch|XMLHttpRequest|WebSocket)\b/, msg: "Acceso de red del navegador bloqueado por seguridad." },
+    { re: /\b(window|document|localStorage|sessionStorage|indexedDB|firebase|portalAuth)\b/, msg: "Acceso a datos del portal o del navegador bloqueado por seguridad." },
+    { re: /(^|[^.\w])(\.{2}\/|\/Users\/|\/etc\/|\/var\/|[A-Za-z]:\\)/, msg: "Acceso a rutas del sistema bloqueado por seguridad." },
+  ];
+
+  function assertSafeSource(code) {
+    FORBIDDEN_PATTERNS.forEach(function (item) {
+      if (item.re.test(code)) throw new Error(item.msg);
+    });
+  }
 
   function getSessionFicha() {
     var session = portalAuth?.getCurrentSession?.();
@@ -82,19 +99,20 @@
     void code;
   }
 
-  function collectInputValues(code) {
-    var inputs = [];
-    var re = /\binput\s*\(\s*(?:"([^"]*)"|'([^']*)')?\s*\)/g;
-    var match;
-    while ((match = re.exec(code))) {
-      var label = match[1] || match[2] || "Entrada: ";
-      inputs.push(window.prompt(label, "") || "");
-    }
-    return inputs.join("\n");
-  }
-
   function executePythonInWorker(code, stdinText) {
     return new Promise(function (resolve, reject) {
+      if (window.location.protocol === "file:") {
+        // Seguridad: al abrir como archivo local algunos navegadores bloquean Worker.
+        // En ese caso se usa el interprete restringido sin eval(), sin red, sin archivos
+        // y con ciclos for/while bloqueados para evitar congelar la pagina.
+        try {
+          assertSafeSource(String(code || ""));
+          resolve(runPythonEducational(code, stdinText));
+        } catch (err) {
+          reject(err);
+        }
+        return;
+      }
       if (typeof Worker !== "function") {
         reject(new Error("Tu navegador no permite ejecutar el modulo seguro de Python."));
         return;
@@ -127,6 +145,16 @@
       };
       worker.postMessage({ code: String(code || ""), stdin: String(stdinText || "") });
     });
+  }
+
+  function getInputPrompts(code) {
+    var prompts = [];
+    var re = /\binput\s*\(\s*(?:"([^"]*)"|'([^']*)')?\s*\)/g;
+    var match;
+    while ((match = re.exec(String(code || "")))) {
+      prompts.push(match[1] || match[2] || "Entrada: ");
+    }
+    return prompts;
   }
 
   function splitTopLevel(value, separator) {
@@ -181,8 +209,6 @@
         var value = "";
         if (inputIndex < inputLines.length && inputLines[inputIndex] !== "") {
           value = inputLines[inputIndex];
-        } else if (typeof window.prompt === "function") {
-          value = window.prompt(label, "") || "";
         }
         inputIndex += 1;
         output.push(label + value);
@@ -374,6 +400,7 @@
   }
 
   function runPythonEducational(code, stdinText) {
+    assertSafeSource(String(code || ""));
     var lines = parsePyLines(code);
     var env = {};
     var output = [];
@@ -495,6 +522,39 @@
     setTimeout(function () { URL.revokeObjectURL(url); }, 400);
   }
 
+  function escapeHtml(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  function highlightPythonLine(line) {
+    var parts = [];
+    var pattern = /(#.*$|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\b(?:if|elif|else|and|or|not|True|False|None|return|import|from|class|def|for|while|in|is)\b|\b(?:print|input|int|float|str|bool|len|round|type)\b|\b\d+(?:\.\d+)?\b)/g;
+    var last = 0;
+    var match;
+    while ((match = pattern.exec(line))) {
+      parts.push(escapeHtml(line.slice(last, match.index)));
+      var token = match[0];
+      var cls = "py-token";
+      if (token.startsWith("#")) cls = "py-token pytok-comment";
+      else if (token.startsWith('"') || token.startsWith("'")) cls = "py-token pytok-string";
+      else if (/^\d/.test(token)) cls = "py-token pytok-number";
+      else if (/^(print|input|int|float|str|bool|len|round|type)$/.test(token)) cls = "py-token pytok-builtin";
+      else cls = "py-token pytok-keyword";
+      parts.push('<span class="' + cls + '">' + escapeHtml(token) + '</span>');
+      last = pattern.lastIndex;
+    }
+    parts.push(escapeHtml(line.slice(last)));
+    return parts.join("");
+  }
+
+  function highlightPythonCode(code) {
+    // Seguridad: el codigo se escapa antes de pintar tokens; nunca se inserta HTML crudo del aprendiz.
+    return String(code || "").split("\n").map(highlightPythonLine).join("\n") || " ";
+  }
+
   function mountPythonOnlineLab() {
     applyOnlinePracticeVisibility();
     var lab = document.querySelector("[data-python-lab]");
@@ -502,32 +562,88 @@
     lab.dataset.labBooted = "1";
     var codeEl = lab.querySelector("[data-python-code]");
     var linesEl = lab.querySelector("[data-python-lines]");
-    var inputEl = lab.querySelector("[data-python-input]");
+    var highlightEl = lab.querySelector("[data-python-highlight]");
+    var consoleLineEl = lab.querySelector("[data-python-console-line]");
+    var consolePromptEl = lab.querySelector("[data-python-console-prompt]");
+    var consoleInputEl = lab.querySelector("[data-python-console-input]");
     var outputEl = lab.querySelector("[data-python-output]");
     var statusEl = lab.querySelector("[data-python-status]");
     if (!codeEl || !outputEl || !statusEl) return;
 
-    function updateLineNumbers() {
-      if (!linesEl) return;
+    function updateEditorView() {
       var count = String(codeEl.value || "").split("\n").length || 1;
-      var numbers = [];
-      for (var i = 1; i <= count; i += 1) numbers.push(String(i));
-      linesEl.textContent = numbers.join("\n");
-      linesEl.scrollTop = codeEl.scrollTop;
+      if (linesEl) {
+        var numbers = [];
+        for (var i = 1; i <= count; i += 1) numbers.push(String(i));
+        linesEl.textContent = numbers.join("\n");
+        linesEl.scrollTop = codeEl.scrollTop;
+      }
+      if (highlightEl) {
+        highlightEl.innerHTML = highlightPythonCode(codeEl.value);
+        highlightEl.scrollTop = codeEl.scrollTop;
+        highlightEl.scrollLeft = codeEl.scrollLeft;
+      }
     }
 
     codeEl.value = getSavedLabCode();
     try { localStorage.removeItem(STORAGE_KEY); } catch (_) {}
-    updateLineNumbers();
+    updateEditorView();
     codeEl.addEventListener("input", function () {
       saveLabCode(codeEl.value);
-      updateLineNumbers();
+      updateEditorView();
     });
-    codeEl.addEventListener("scroll", updateLineNumbers);
+    codeEl.addEventListener("scroll", updateEditorView);
 
     function setOutput(text, status) {
+      if (consoleLineEl) consoleLineEl.hidden = true;
       outputEl.textContent = text;
       statusEl.textContent = status || "Listo.";
+    }
+
+    function runWithConsoleInput(stdinText) {
+      setOutput("Ejecutando en entorno seguro...", "Ejecutando.");
+      executePythonInWorker(codeEl.value, stdinText)
+        .then(function (output) {
+          setOutput(output, "Ejecucion finalizada.");
+        })
+        .catch(function (err) {
+          setOutput("Error: " + (err?.message || err), "Revisa el codigo.");
+        });
+    }
+
+    function askInputsInConsole(prompts) {
+      if (!consoleLineEl || !consolePromptEl || !consoleInputEl) return false;
+      var values = [];
+      var index = 0;
+      outputEl.textContent = "";
+      statusEl.textContent = "Esperando entradas.";
+
+      function renderPrompt() {
+        consoleLineEl.hidden = false;
+        consolePromptEl.textContent = prompts[index] || "Entrada: ";
+        consoleInputEl.value = "";
+        consoleInputEl.focus();
+      }
+
+      consoleInputEl.onkeydown = function (event) {
+        if (event.key !== "Enter") return;
+        event.preventDefault();
+        var promptText = prompts[index] || "Entrada: ";
+        var value = consoleInputEl.value;
+        values.push(value);
+        outputEl.textContent += promptText + value + "\n";
+        outputEl.scrollTop = outputEl.scrollHeight;
+        index += 1;
+        if (index < prompts.length) {
+          renderPrompt();
+          return;
+        }
+        consoleLineEl.hidden = true;
+        runWithConsoleInput(values.join("\n"));
+      };
+
+      renderPrompt();
+      return true;
     }
 
     lab.querySelector("[data-python-run]")?.addEventListener("click", function () {
@@ -536,14 +652,9 @@
         setOutput("Escribe codigo Python en el editor y luego presiona Ejecutar.", "Sin codigo.");
         return;
       }
-      setOutput("Ejecutando en entorno seguro...", "Ejecutando.");
-      executePythonInWorker(codeEl.value, inputEl ? inputEl.value : collectInputValues(codeEl.value))
-        .then(function (output) {
-          setOutput(output, "Ejecucion finalizada.");
-        })
-        .catch(function (err) {
-          setOutput("Error: " + (err?.message || err), "Revisa el codigo.");
-        });
+      var prompts = getInputPrompts(codeEl.value);
+      if (prompts.length && askInputsInConsole(prompts)) return;
+      runWithConsoleInput("");
     });
 
     lab.querySelector("[data-python-validate]")?.addEventListener("click", function () {
