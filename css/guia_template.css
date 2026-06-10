@@ -4305,15 +4305,15 @@ body.sb-hidden .btn-sb-expand {
   border: 1px solid #c9d8d0;
   border-radius: 8px;
   overflow: hidden;
-  background: #0f172a;
+  background: #fbfcff;
 }
 .python-lab__line-numbers {
   min-height: 260px;
   margin: 0;
   padding: 12px 8px;
-  border-right: 1px solid #25324a;
-  background: #0b1220;
-  color: #7f8da8;
+  border-right: 1px solid #d8dee9;
+  background: #f3f6fa;
+  color: #7a8599;
   font-family: "Consolas", "SFMono-Regular", "Menlo", "Courier New", monospace;
   font-size: 0.86rem;
   line-height: 1.5;
@@ -4321,25 +4321,61 @@ body.sb-hidden .btn-sb-expand {
   user-select: none;
   white-space: pre;
 }
+.python-lab__code-pane {
+  position: relative;
+  min-height: 260px;
+  background: #fbfcff;
+}
+.python-lab__highlight {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  margin: 0;
+  padding: 12px;
+  color: #1f2937;
+  font-family: "Consolas", "SFMono-Regular", "Menlo", "Courier New", monospace;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  tab-size: 4;
+  pointer-events: none;
+}
+.pytok-comment { color: #5f8a68; }
+.pytok-string { color: #2f7d32; }
+.pytok-keyword { color: #1757d4; font-weight: 800; }
+.pytok-builtin { color: #5c4cb5; font-weight: 800; }
+.pytok-number { color: #b45309; }
 .python-lab__field textarea {
+  position: relative;
   width: 100%;
   min-height: 260px;
   resize: vertical;
   border: 0;
   border-radius: 0;
-  background: #0f172a;
-  color: #e2e8f0;
+  background: transparent;
+  color: transparent;
+  caret-color: #111827;
   font-family: "Consolas", "SFMono-Regular", "Menlo", "Courier New", monospace;
   font-size: 0.86rem;
   line-height: 1.5;
   padding: 12px;
   tab-size: 4;
+  white-space: pre-wrap;
+}
+.python-lab__field textarea::selection {
+  background: rgba(59, 130, 246, 0.25);
+  color: transparent;
 }
 .python-lab__field textarea:focus {
   outline: 2px solid #74b88b;
   outline-offset: -2px;
 }
 .python-lab--simple .python-lab__field textarea {
+  min-height: clamp(320px, 48vh, 560px);
+}
+.python-lab--simple .python-lab__code-pane,
+.python-lab--simple .python-lab__highlight {
   min-height: clamp(320px, 48vh, 560px);
 }
 .python-lab--simple .python-lab__line-numbers {
@@ -4376,6 +4412,31 @@ body.sb-hidden .btn-sb-expand {
   font-family: "Consolas", "SFMono-Regular", "Menlo", "Courier New", monospace;
   font-size: 0.86rem;
   line-height: 1.5;
+}
+.python-lab__console-line {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0 12px 12px;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-family: "Consolas", "SFMono-Regular", "Menlo", "Courier New", monospace;
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+.python-lab__console-line[hidden] { display: none; }
+.python-lab__console-line span {
+  white-space: pre-wrap;
+}
+.python-lab__console-line input {
+  flex: 1;
+  min-width: 120px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #e2e8f0;
+  font: inherit;
+  padding: 0;
 }
 .python-lab--simple .python-lab__result pre {
   min-height: 180px;
