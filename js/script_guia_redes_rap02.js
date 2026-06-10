@@ -249,6 +249,56 @@
     updateProgress();
   }
 
+  // Copiar comando al portapapeles — actividad 3.3.1
+  window.copiarComando331 = function (btn, texto) {
+    var original = btn.innerHTML;
+    function mostrarCopiado() {
+      btn.innerHTML = "&#10003; Copiado";
+      btn.style.background = "#e8f5e9";
+      btn.style.borderColor = "#2e7d32";
+      btn.style.color = "#1b5e20";
+      setTimeout(function () {
+        btn.innerHTML = original;
+        btn.style.background = "#e3f2fd";
+        btn.style.borderColor = "#1565c0";
+        btn.style.color = "#1565c0";
+      }, 1800);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(texto).then(mostrarCopiado).catch(function () {
+        fallbackCopiar(texto);
+        mostrarCopiado();
+      });
+    } else {
+      fallbackCopiar(texto);
+      mostrarCopiado();
+    }
+  };
+
+  function fallbackCopiar(texto) {
+    var ta = document.createElement("textarea");
+    ta.value = texto;
+    ta.style.cssText = "position:fixed;top:-9999px;left:-9999px";
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); } catch (e) { /* silencioso */ }
+    document.body.removeChild(ta);
+  }
+
+  // Pestañas de video para el Bloque C (3.2.3 — DHCP y DNS)
+  window.showVideoBloque323 = function (n) {
+    var active   = "flex:1;padding:8px 12px;border-radius:8px;border:2px solid #2e7d32;cursor:pointer;font-size:0.85rem;font-weight:600;font-family:inherit;background:#2e7d32;color:#fff";
+    var inactive = "flex:1;padding:8px 12px;border-radius:8px;border:2px solid #2e7d32;cursor:pointer;font-size:0.85rem;font-weight:600;font-family:inherit;background:#e8f5e9;color:#1b5e20";
+    var v1 = document.getElementById("videoC323-1");
+    var v2 = document.getElementById("videoC323-2");
+    var b1 = document.getElementById("tabC323-btn-1");
+    var b2 = document.getElementById("tabC323-btn-2");
+    if (v1) v1.style.display = n === 1 ? "block" : "none";
+    if (v2) v2.style.display = n === 2 ? "block" : "none";
+    if (b1) b1.style.cssText = n === 1 ? active : inactive;
+    if (b2) b2.style.cssText = n === 2 ? active : inactive;
+  };
+
   // El guide_runtime_loader llama window.initGuiaRedes() tras inyectar el contenido.
   window.initGuiaRedes = initGuia3Redes;
   window.initGuia3Redes = initGuia3Redes;
