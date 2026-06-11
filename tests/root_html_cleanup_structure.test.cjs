@@ -14,6 +14,7 @@ const EXPECTED_ROOT_HTML = [
   "index.html",
   "panel-administrativo-usuarios.html",
   "panel-evidencias-integridad.html",
+  "practica-python.html",
 ];
 
 const EXPECTED_GUIDE_WRAPPERS = [
