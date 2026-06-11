@@ -159,20 +159,96 @@
     });
   }
 
-  // ── Progreso (1 entrega: el reto integrador) ──────────────────────────────
+  // ── Progreso basado en entregas (20 actividades: 10 retos + 10 adicionales) ─
+
+  const PYTHON_PANEL_KEYS = [
+    "python-ej1","python-ej2","python-ej3","python-ej4","python-ej5",
+    "python-ej6","python-ej7","python-ej8","python-ej9","python-ej10",
+    "python-adicional-ej1","python-adicional-ej2","python-adicional-ej3",
+    "python-adicional-ej4","python-adicional-ej5","python-adicional-ej6",
+    "python-adicional-ej7","python-adicional-ej8","python-adicional-ej9",
+    "python-adicional-ej10",
+  ];
+
+  function loadAllDeliveryRecords() {
+    if (!window.sharedAppsScriptDelivery?.loadDeliveryRecord) return [];
+    return PYTHON_PANEL_KEYS.map(function (pk) {
+      return window.sharedAppsScriptDelivery.loadDeliveryRecord({ panelKey: pk });
+    }).filter(Boolean);
+  }
+
+  function isToday(isoString) {
+    if (!isoString) return false;
+    const d = new Date(isoString);
+    const now = new Date();
+    return d.getFullYear() === now.getFullYear() &&
+           d.getMonth()    === now.getMonth()    &&
+           d.getDate()     === now.getDate();
+  }
 
   function updateProgress() {
-    const delivered = Boolean(state["retoPython-locked"]);
-    const pct = delivered ? 100 : 0;
+    const records = loadAllDeliveryRecords();
+    const delivered = records.filter(r => r.status === "delivered").length;
+    const total = PYTHON_PANEL_KEYS.length;
+    const pct = Math.round((delivered / total) * 100);
+
     const bar = document.getElementById("progressBar");
     const lbl = document.getElementById("progressValue");
     if (bar) bar.style.width = pct + "%";
     if (lbl) lbl.textContent = pct + "%";
 
     const check = document.querySelector('.nav-link[href="#reto"] .check');
-    if (check) check.classList.toggle("done", delivered);
+    if (check) check.classList.toggle("done", delivered >= total);
 
-    document.dispatchEvent(new CustomEvent("guide-progress-changed", { detail: { pct } }));
+    document.dispatchEvent(new CustomEvent("guide-progress-changed", { detail: { pct, delivered, total } }));
+  }
+
+  function renderDeliverySummary() {
+    const container = document.getElementById("python-delivery-summary");
+    if (!container) return;
+
+    const records = loadAllDeliveryRecords();
+    const delivered = records.filter(r => r.status === "delivered").length;
+    const todayRecords = records.filter(r => r.status === "delivered" && isToday(r.submittedAt || r.fechaEntrega));
+
+    const pct = Math.round((delivered / PYTHON_PANEL_KEYS.length) * 100);
+
+    let rows = "";
+    if (todayRecords.length === 0) {
+      rows = '<p style="color:var(--text-muted,#666);font-size:0.92em;margin:0">Aún no has entregado ninguna actividad hoy.</p>';
+    } else {
+      rows = todayRecords.map(function (r) {
+        const titulo = r.actividadTitulo || r.activityTitle || r.activityLabel || "Actividad";
+        const archivo = r.savedFileName || r.nombreArchivoEstandar || r.originalFileName || "—";
+        const fecha = r.submittedAt || r.fechaEntrega || "";
+        let horaLabel = "";
+        try {
+          if (fecha) {
+            horaLabel = new Date(fecha).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" });
+          }
+        } catch (e) {}
+        return '<div style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid #e8e8f0;font-size:0.88em">' +
+          '<span style="color:#2e7d32;font-size:1.1em;flex-shrink:0">&#9989;</span>' +
+          '<div style="flex:1;min-width:0">' +
+            '<div style="font-weight:600;color:var(--text,#1a1a2e)">' + titulo + '</div>' +
+            '<div style="color:#555;margin-top:2px">&#128196; ' + archivo + '</div>' +
+          '</div>' +
+          '<div style="flex-shrink:0;color:#888;white-space:nowrap">' + (horaLabel || "Hoy") + '</div>' +
+        '</div>';
+      }).join("");
+    }
+
+    container.innerHTML =
+      '<div style="background:#f0f7ff;border:1px solid #b3d1f7;border-radius:10px;padding:16px 18px;margin-bottom:18px">' +
+        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">' +
+          '<span style="font-size:1.3em">&#128203;</span>' +
+          '<strong style="font-size:1em;color:#1a3c6e">Mis entregas de hoy</strong>' +
+          '<span style="margin-left:auto;background:#1976d2;color:#fff;border-radius:20px;padding:2px 10px;font-size:0.82em;font-weight:700">' +
+            delivered + ' / ' + PYTHON_PANEL_KEYS.length + ' &mdash; ' + pct + '%' +
+          '</span>' +
+        '</div>' +
+        '<div>' + rows + '</div>' +
+      '</div>';
   }
 
   // ── Demo animado de tipos de variable (seccion 2) ─────────────────────────
@@ -397,12 +473,16 @@
     initVarDemo();
     initFnDemos();
     updateProgress();
+    renderDeliverySummary();
   }
 
   window.__GUIDE_INIT__ = initGuiaPython;
   window.initGuiaPython = initGuiaPython;
 
   document.addEventListener("guide-delivery-registered", () => {
-    window.requestAnimationFrame(() => updateProgress());
+    window.requestAnimationFrame(() => {
+      updateProgress();
+      renderDeliverySummary();
+    });
   });
 })();
