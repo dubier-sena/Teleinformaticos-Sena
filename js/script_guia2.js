@@ -576,7 +576,7 @@ const supportDocuments = [
   },
   {
     title: "Guia rapida para el uso de las normas IEEE",
-    file: "Gu\u00eda+r\u00e1pida+para+el+uso+de+las+normas+IEEE.pdf",
+    file: "Guia_rapida_normas_IEEE.pdf",
     type: "PDF local",
     description:
       "Resumen practico para citar, ordenar bibliografia y presentar el informe tecnico final.",
