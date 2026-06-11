@@ -302,18 +302,28 @@
 
     targets.forEach(function (config) {
       var activityBody = findActivityBodyByNumber(config.activityNumber, settings.root);
+
+      // Fallback: si no hay .activity-num que coincida, buscar el div
+      // [data-act-std-delivery] por deadlineActivityId o panelKey e inyectar ahí.
+      var mountTarget = null;
       if (!activityBody) {
-        return;
+        var actId = config.deadlineActivityId || config.panelKey || "";
+        mountTarget = (actId && document.querySelector('[data-act-std-delivery="' + actId + '"]')) ||
+                      (config.panelKey && document.querySelector('[data-act-std-delivery="' + config.panelKey + '"]')) ||
+                      null;
+        if (!mountTarget) return;
       }
 
       var selector = "[data-drive-panel='" + String(config.panelKey || "") + "']";
-      if (activityBody.querySelector(selector)) {
+      var checkRoot = activityBody || mountTarget;
+      if (checkRoot.querySelector(selector) || (mountTarget && document.querySelector(selector))) {
         return;
       }
 
+      var contextSource = activityBody || mountTarget;
       var activityContext = Object.assign(
         {},
-        getActivityContextFromNode(activityBody),
+        getActivityContextFromNode(contextSource),
         config.activityContext || {}
       );
       activityContext.panelKey = config.panelKey || activityContext.panelKey || "";
@@ -345,8 +355,10 @@
               : null,
         }
       );
-      activityBody.appendChild(panel);
-      applyStoredDeliveryStatus(panel, activityBody.closest(".activity"), activityContext);
+      var appendNode = mountTarget || activityBody;
+      appendNode.appendChild(panel);
+      var closestActivity = appendNode.closest(".activity");
+      applyStoredDeliveryStatus(panel, closestActivity, activityContext);
     });
   }
 
