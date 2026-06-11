@@ -230,9 +230,10 @@
     }
     wrapper.style.marginTop = "16px";
 
-    wrapper.appendChild(
-      createTextElement("div", "label", "Entrega de esta actividad en Drive")
-    );
+    var headerLabel = panelConfig.activityTitle
+      ? "Entrega: " + panelConfig.activityTitle
+      : "Entrega de esta actividad en Drive";
+    wrapper.appendChild(createTextElement("div", "label", headerLabel));
     wrapper.appendChild(createTextElement("p", "", panelConfig.description || ""));
 
     var actionGroup = document.createElement("div");
@@ -335,6 +336,7 @@
       var panel = createDriveDeliveryPanel(
         {
           panelKey: config.panelKey,
+          activityTitle: config.activityTitle || "",
           deadlineActivityId: config.deadlineActivityId || activityContext.deadlineActivityId || "",
           description: config.description,
           note: config.note,
