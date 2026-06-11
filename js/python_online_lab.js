@@ -7,8 +7,8 @@
   var STORAGE_KEY = portalAuth
     ? portalAuth.getScopedStorageKey(BASE_STORAGE_KEY, { area: "guide-data" })
     : BASE_STORAGE_KEY;
-  var WORKER_URL = "js/python_lab_worker.js?v=20260610_1";
-  var EXECUTION_TIMEOUT_MS = 1500;
+  var WORKER_URL = "js/python_lab_worker.js?v=20260611_13";
+  var EXECUTION_TIMEOUT_MS = 4000;
 
   var PYTHON_LAB_DEFAULT_CODE = "";
   var FORBIDDEN_PATTERNS = [
@@ -103,14 +103,22 @@
     return new Promise(function (resolve, reject) {
       if (window.location.protocol === "file:") {
         // Seguridad: al abrir como archivo local algunos navegadores bloquean Worker.
-        // En ese caso se usa el interprete restringido sin eval(), sin red, sin archivos
-        // y con ciclos for/while bloqueados para evitar congelar la pagina.
+        // Se carga el mismo interprete del Worker como script normal (sin eval, sin red).
         try {
           assertSafeSource(String(code || ""));
-          resolve(runPythonEducational(code, stdinText));
         } catch (err) {
           reject(err);
+          return;
         }
+        ensureFallbackRunner()
+          .then(function (run) {
+            try {
+              resolve(run(String(code || ""), String(stdinText || "")));
+            } catch (err) {
+              reject(err);
+            }
+          })
+          .catch(reject);
         return;
       }
       if (typeof Worker !== "function") {
@@ -157,227 +165,6 @@
     return prompts;
   }
 
-  function splitTopLevel(value, separator) {
-    var parts = [];
-    var current = "";
-    var quote = "";
-    var depth = 0;
-    for (var i = 0; i < value.length; i += 1) {
-      var ch = value[i];
-      var prev = value[i - 1];
-      if (quote) {
-        current += ch;
-        if (ch === quote && prev !== "\\") quote = "";
-        continue;
-      }
-      if (ch === "'" || ch === '"') {
-        quote = ch;
-        current += ch;
-        continue;
-      }
-      if ("([{".includes(ch)) depth += 1;
-      if (")]}".includes(ch)) depth -= 1;
-      if (ch === separator && depth === 0) {
-        parts.push(current.trim());
-        current = "";
-        continue;
-      }
-      current += ch;
-    }
-    if (current.trim() || value.endsWith(separator)) parts.push(current.trim());
-    return parts;
-  }
-
-  function pyRepr(value) {
-    if (value === null || value === undefined) return "None";
-    if (value === true) return "True";
-    if (value === false) return "False";
-    if (Array.isArray(value)) return "[" + value.map(pyRepr).join(", ") + "]";
-    if (typeof value === "object") {
-      return "{" + Object.keys(value).map(function (key) {
-        return pyRepr(key) + ": " + pyRepr(value[key]);
-      }).join(", ") + "}";
-    }
-    return String(value);
-  }
-
-  function createPyHelpers(inputLines, output) {
-    var inputIndex = 0;
-    return {
-      input: function (prompt) {
-        var label = String(prompt == null ? "" : prompt);
-        var value = "";
-        if (inputIndex < inputLines.length && inputLines[inputIndex] !== "") {
-          value = inputLines[inputIndex];
-        }
-        inputIndex += 1;
-        output.push(label + value);
-        return value;
-      },
-      int: function (value) {
-        var parsed = parseInt(value, 10);
-        if (Number.isNaN(parsed)) throw new Error("int() no pudo convertir: " + value);
-        return parsed;
-      },
-      float: function (value) {
-        var parsed = parseFloat(value);
-        if (Number.isNaN(parsed)) throw new Error("float() no pudo convertir: " + value);
-        return parsed;
-      },
-      str: function (value) { return pyRepr(value); },
-      bool: function (value) { return Boolean(value); },
-      len: function (value) {
-        return value && typeof value.length === "number" ? value.length : Object.keys(value || {}).length;
-      },
-      round: function (value, digits) {
-        var places = digits == null ? 0 : Number(digits);
-        var factor = Math.pow(10, places);
-        return Math.round(Number(value) * factor) / factor;
-      },
-      type: function (value) {
-        if (Array.isArray(value)) return "<class 'list'>";
-        if (value === null || value === undefined) return "<class 'NoneType'>";
-        if (typeof value === "number") return Number.isInteger(value) ? "<class 'int'>" : "<class 'float'>";
-        if (typeof value === "string") return "<class 'str'>";
-        if (typeof value === "boolean") return "<class 'bool'>";
-        return "<class 'dict'>";
-      },
-    };
-  }
-
-  function isWrappedExpression(expr) {
-    if (!expr.startsWith("(") || !expr.endsWith(")")) return false;
-    var depth = 0;
-    var quote = "";
-    for (var i = 0; i < expr.length; i += 1) {
-      var ch = expr[i];
-      var prev = expr[i - 1];
-      if (quote) {
-        if (ch === quote && prev !== "\\") quote = "";
-        continue;
-      }
-      if (ch === "'" || ch === '"') {
-        quote = ch;
-        continue;
-      }
-      if (ch === "(") depth += 1;
-      if (ch === ")") depth -= 1;
-      if (depth === 0 && i < expr.length - 1) return false;
-    }
-    return depth === 0;
-  }
-
-  function unquotePyString(expr) {
-    var quote = expr[0];
-    var body = expr.slice(1, -1);
-    return body
-      .replace(new RegExp("\\\\" + quote, "g"), quote)
-      .replace(/\\n/g, "\n")
-      .replace(/\\t/g, "\t")
-      .replace(/\\\\/g, "\\");
-  }
-
-  function findTopLevelOperator(expr, operators) {
-    var quote = "";
-    var depth = 0;
-    for (var i = expr.length - 1; i >= 0; i -= 1) {
-      var ch = expr[i];
-      var prev = expr[i - 1];
-      if (quote) {
-        if (ch === quote && prev !== "\\") quote = "";
-        continue;
-      }
-      if (ch === "'" || ch === '"') {
-        quote = ch;
-        continue;
-      }
-      if (")]}".includes(ch)) depth += 1;
-      if ("([{".includes(ch)) depth -= 1;
-      if (depth !== 0) continue;
-      for (var o = 0; o < operators.length; o += 1) {
-        var op = operators[o];
-        var start = i - op.length + 1;
-        if (start < 0) continue;
-        if (expr.slice(start, i + 1) !== op) continue;
-        if ((op === "+" || op === "-") && start === 0) continue;
-        return { index: start, op: op };
-      }
-    }
-    return null;
-  }
-
-  function splitLogical(expr, word) {
-    var parts = splitTopLevel(expr, " ");
-    var groups = [];
-    var current = [];
-    parts.forEach(function (part) {
-      if (part === word) {
-        groups.push(current.join(" "));
-        current = [];
-      } else {
-        current.push(part);
-      }
-    });
-    groups.push(current.join(" "));
-    return groups.length > 1 ? groups : null;
-  }
-
-  function evaluatePyExpr(expr, env, helpers) {
-    expr = String(expr || "").trim();
-    if (!expr) return "";
-    while (isWrappedExpression(expr)) expr = expr.slice(1, -1).trim();
-
-    var orParts = splitLogical(expr, "or");
-    if (orParts) return orParts.some(function (part) { return Boolean(evaluatePyExpr(part, env, helpers)); });
-    var andParts = splitLogical(expr, "and");
-    if (andParts) return andParts.every(function (part) { return Boolean(evaluatePyExpr(part, env, helpers)); });
-    if (expr.startsWith("not ")) return !Boolean(evaluatePyExpr(expr.slice(4), env, helpers));
-
-    var compare = findTopLevelOperator(expr, ["==", "!=", ">=", "<=", ">", "<"]);
-    if (compare) {
-      var left = evaluatePyExpr(expr.slice(0, compare.index), env, helpers);
-      var right = evaluatePyExpr(expr.slice(compare.index + compare.op.length), env, helpers);
-      if (compare.op === "==") return left === right;
-      if (compare.op === "!=") return left !== right;
-      if (compare.op === ">=") return left >= right;
-      if (compare.op === "<=") return left <= right;
-      if (compare.op === ">") return left > right;
-      if (compare.op === "<") return left < right;
-    }
-
-    var add = findTopLevelOperator(expr, ["+", "-"]);
-    if (add) {
-      var addLeft = evaluatePyExpr(expr.slice(0, add.index), env, helpers);
-      var addRight = evaluatePyExpr(expr.slice(add.index + add.op.length), env, helpers);
-      return add.op === "+" ? addLeft + addRight : Number(addLeft) - Number(addRight);
-    }
-    var mul = findTopLevelOperator(expr, ["*", "/"]);
-    if (mul) {
-      var mulLeft = Number(evaluatePyExpr(expr.slice(0, mul.index), env, helpers));
-      var mulRight = Number(evaluatePyExpr(expr.slice(mul.index + mul.op.length), env, helpers));
-      return mul.op === "*" ? mulLeft * mulRight : mulLeft / mulRight;
-    }
-
-    if (/^[-+]?\d+(\.\d+)?$/.test(expr)) return Number(expr);
-    if (expr === "True") return true;
-    if (expr === "False") return false;
-    if (expr === "None") return null;
-    if ((expr.startsWith('"') && expr.endsWith('"')) || (expr.startsWith("'") && expr.endsWith("'"))) {
-      return unquotePyString(expr);
-    }
-    if (/^[A-Za-z_]\w*$/.test(expr) && Object.prototype.hasOwnProperty.call(env, expr)) return env[expr];
-
-    var callMatch = expr.match(/^([A-Za-z_]\w*)\((.*)\)$/);
-    if (callMatch && helpers[callMatch[1]]) {
-      var args = callMatch[2].trim() ? splitTopLevel(callMatch[2], ",").map(function (part) {
-        return evaluatePyExpr(part, env, helpers);
-      }) : [];
-      return helpers[callMatch[1]].apply(null, args);
-    }
-
-    throw new Error("No se pudo interpretar esta expresion: " + expr);
-  }
-
   function parsePyLines(code) {
     return String(code || "").replace(/\r\n?/g, "\n").split("\n").map(function (raw, index) {
       var indent = (raw.match(/^ */) || [""])[0].length;
@@ -385,93 +172,25 @@
     });
   }
 
-  function findBlockEnd(lines, start, parentIndent) {
-    var i = start;
-    while (i < lines.length) {
-      var line = lines[i];
-      if (!line.text || line.text.startsWith("#")) {
-        i += 1;
-        continue;
-      }
-      if (line.indent <= parentIndent) break;
-      i += 1;
+  // Fallback file://: carga el MISMO interprete del Worker como <script> normal.
+  // python_lab_worker.js expone __PYLAB_RUN__ y solo registra onmessage dentro
+  // de un Worker real, asi no hay dos copias del interprete que mantener.
+  var fallbackRunnerPromise = null;
+  function ensureFallbackRunner() {
+    if (typeof window.__PYLAB_RUN__ === "function") return Promise.resolve(window.__PYLAB_RUN__);
+    if (!fallbackRunnerPromise) {
+      fallbackRunnerPromise = new Promise(function (resolve, reject) {
+        var script = document.createElement("script");
+        script.src = WORKER_URL;
+        script.onload = function () {
+          if (typeof window.__PYLAB_RUN__ === "function") resolve(window.__PYLAB_RUN__);
+          else reject(new Error("No se pudo iniciar el interprete local."));
+        };
+        script.onerror = function () { reject(new Error("No se pudo cargar el interprete local.")); };
+        document.head.appendChild(script);
+      });
     }
-    return i;
-  }
-
-  function runPythonEducational(code, stdinText) {
-    assertSafeSource(String(code || ""));
-    var lines = parsePyLines(code);
-    var env = {};
-    var output = [];
-    var inputLines = String(stdinText || "").replace(/\r\n?/g, "\n").split("\n");
-    var helpers = createPyHelpers(inputLines, output);
-
-    function execRange(start, end, indent) {
-      var i = start;
-      while (i < end) {
-        var line = lines[i];
-        if (!line.text || line.text.startsWith("#")) {
-          i += 1;
-          continue;
-        }
-        if (line.indent < indent) return i;
-        if (line.indent > indent) throw new Error("Linea " + line.line + ": indentacion inesperada.");
-
-        var ifMatch = line.text.match(/^if\s+(.+):$/);
-        if (ifMatch) {
-          var handled = false;
-          var cursor = i;
-          while (cursor < end) {
-            var chainLine = lines[cursor];
-            var ifPart = chainLine.text.match(/^(if|elif)\s+(.+):$/);
-            var elsePart = chainLine.text.match(/^else:$/);
-            if (chainLine.indent !== indent || (!ifPart && !elsePart)) break;
-            var blockStart = cursor + 1;
-            var blockEnd = findBlockEnd(lines, blockStart, indent);
-            var shouldRun = elsePart ? !handled : (!handled && Boolean(evaluatePyExpr(ifPart[2], env, helpers)));
-            if (shouldRun) {
-              execRange(blockStart, blockEnd, indent + 4);
-              handled = true;
-            }
-            cursor = blockEnd;
-          }
-          i = cursor;
-          continue;
-        }
-
-        if (/^(elif\s+.+|else):$/.test(line.text)) return i;
-
-        var printMatch = line.text.match(/^print\((.*)\)$/);
-        if (printMatch) {
-          var values = splitTopLevel(printMatch[1], ",").map(function (part) {
-            return pyRepr(evaluatePyExpr(part, env, helpers));
-          });
-          output.push(values.join(" "));
-          i += 1;
-          continue;
-        }
-
-        var assignMatch = line.text.match(/^([A-Za-z_]\w*)\s*=\s*(.+)$/);
-        if (assignMatch) {
-          env[assignMatch[1]] = evaluatePyExpr(assignMatch[2], env, helpers);
-          i += 1;
-          continue;
-        }
-
-        if (/^(for|while|def|class)\b/.test(line.text)) {
-          throw new Error("Linea " + line.line + ": el laboratorio interno aun no ejecuta for, while, def o class. Descarga el .py para trabajarlo en Python instalado, o usa la Opcion B como respaldo.");
-        }
-
-        var value = evaluatePyExpr(line.text, env, helpers);
-        if (value !== undefined) output.push(pyRepr(value));
-        i += 1;
-      }
-      return i;
-    }
-
-    execRange(0, lines.length, 0);
-    return output.join("\n") || "(El programa termino sin imprimir resultados.)";
+    return fallbackRunnerPromise;
   }
 
   function validatePythonLabCode(code) {
@@ -480,8 +199,8 @@
     if (!text.trim()) messages.push("Escribe codigo Python antes de validar.");
     if (/\t/.test(text)) messages.push("Usa espacios en lugar de tabulaciones para indentar.");
     if (!/\bprint\s*\(/.test(text)) messages.push("Agrega al menos un print() para ver resultados en consola.");
-    if (/^(?:\s*)(for|while|def|class)\b/m.test(text)) {
-      messages.push("El laboratorio interno valida el archivo, pero solo ejecuta variables, input(), print() y condicionales. Para POO o ciclos, descarga el .py o usa la Opcion B.");
+    if (/^(?:\s*)(def|class)\b/m.test(text)) {
+      messages.push("El laboratorio ejecuta variables, input(), print(), condicionales y ciclos for/while. def y class aun no: descarga el .py para trabajarlos en Python instalado.");
     }
     [["(", ")"], ["[", "]"], ["{", "}"]].forEach(function (pair) {
       var open = pair[0];
@@ -594,20 +313,123 @@
     });
     codeEl.addEventListener("scroll", updateEditorView);
 
+    codeEl.placeholder =
+      '# Escribe tu programa y presiona Ejecutar (Ctrl + Enter)\n' +
+      'nombre = input("Como te llamas? ")\n' +
+      'print("Hola,", nombre)\n' +
+      'for i in range(3):\n' +
+      '    print("Python", i + 1)';
+
+    function insertAtCursor(text) {
+      var startPos = codeEl.selectionStart;
+      var endPos = codeEl.selectionEnd;
+      codeEl.value = codeEl.value.slice(0, startPos) + text + codeEl.value.slice(endPos);
+      codeEl.selectionStart = codeEl.selectionEnd = startPos + text.length;
+      updateEditorView();
+    }
+
+    codeEl.addEventListener("keydown", function (event) {
+      if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+        event.preventDefault();
+        lab.querySelector("[data-python-run]")?.click();
+        return;
+      }
+      if (event.key === "Tab" && !event.shiftKey) {
+        event.preventDefault();
+        insertAtCursor("    ");
+        return;
+      }
+      if (event.key === "Enter") {
+        // auto-indentacion: conserva la sangria y suma 4 espacios tras ":"
+        event.preventDefault();
+        var before = codeEl.value.slice(0, codeEl.selectionStart);
+        var lineStart = before.lastIndexOf("\n") + 1;
+        var currentLine = before.slice(lineStart);
+        var indent = (currentLine.match(/^ */) || [""])[0];
+        if (/:\s*$/.test(currentLine)) indent += "    ";
+        insertAtCursor("\n" + indent);
+      }
+    });
+
+    // ---- Consola tipo terminal -------------------------------------------
+    var termStreamTimer = null;
+
+    function termStop() {
+      if (termStreamTimer) {
+        clearInterval(termStreamTimer);
+        termStreamTimer = null;
+      }
+      lab.classList.remove("python-lab--running");
+    }
+
+    function termLine(text, cls) {
+      var el = document.createElement("span");
+      el.className = "pyterm-line" + (cls ? " " + cls : "");
+      el.textContent = text;
+      outputEl.appendChild(el);
+      outputEl.scrollTop = outputEl.scrollHeight;
+    }
+
+    function termClear() {
+      termStop();
+      outputEl.textContent = "";
+    }
+
+    function termCommandLine() {
+      termLine("$ python practica.py", "pyterm-cmd");
+    }
+
+    // Muestra la salida linea por linea para que se sienta una ejecucion real.
+    function termStream(text, cls, onDone) {
+      var streamLines = String(text == null ? "" : text).split("\n");
+      if (streamLines.length > 150) {
+        streamLines.forEach(function (l) { termLine(l, cls); });
+        if (onDone) onDone();
+        return;
+      }
+      var index = 0;
+      lab.classList.add("python-lab--running");
+      termStreamTimer = setInterval(function () {
+        if (index >= streamLines.length) {
+          termStop();
+          if (onDone) onDone();
+          return;
+        }
+        termLine(streamLines[index], cls);
+        index += 1;
+      }, 24);
+    }
+
+    function termWelcome() {
+      termLine("Practica de Python - consola del portal SENA", "pyterm-exit");
+      termLine("Escribe tu programa y presiona Ejecutar (o Ctrl + Enter).", "pyterm-exit");
+    }
+
     function setOutput(text, status) {
       if (consoleLineEl) consoleLineEl.hidden = true;
-      outputEl.textContent = text;
+      termClear();
+      if (text) {
+        String(text).split("\n").forEach(function (l) { termLine(l); });
+      }
       statusEl.textContent = status || "Listo.";
     }
 
     function runWithConsoleInput(stdinText) {
-      setOutput("Ejecutando en entorno seguro...", "Ejecutando.");
+      statusEl.textContent = "Ejecutando...";
+      lab.classList.add("python-lab--running");
       executePythonInWorker(codeEl.value, stdinText)
         .then(function (output) {
-          setOutput(output, "Ejecucion finalizada.");
+          termStream(output, null, function () {
+            termLine("[programa terminado - codigo 0]", "pyterm-exit");
+            statusEl.textContent = "Ejecucion finalizada.";
+          });
         })
         .catch(function (err) {
-          setOutput("Error: " + (err?.message || err), "Revisa el codigo.");
+          termStop();
+          termLine("Traceback (entorno seguro del portal):", "pyterm-err");
+          termLine("  " + (err?.message || err), "pyterm-err");
+          termLine("[programa terminado - codigo 1]", "pyterm-exit");
+          statusEl.textContent = "Revisa el codigo.";
         });
     }
 
@@ -615,8 +437,9 @@
       if (!consoleLineEl || !consolePromptEl || !consoleInputEl) return false;
       var values = [];
       var index = 0;
-      outputEl.textContent = "";
-      statusEl.textContent = "Esperando entradas.";
+      termClear();
+      termCommandLine();
+      statusEl.textContent = "El programa espera tus datos...";
 
       function renderPrompt() {
         consoleLineEl.hidden = false;
@@ -631,14 +454,17 @@
         var promptText = prompts[index] || "Entrada: ";
         var value = consoleInputEl.value;
         values.push(value);
-        outputEl.textContent += promptText + value + "\n";
-        outputEl.scrollTop = outputEl.scrollHeight;
+        termLine(promptText + value, "pyterm-echo");
         index += 1;
         if (index < prompts.length) {
           renderPrompt();
           return;
         }
         consoleLineEl.hidden = true;
+        // se repite la corrida completa: el eco de las entradas vuelve a salir
+        // en su posicion real dentro del programa, como en una consola.
+        termClear();
+        termCommandLine();
         runWithConsoleInput(values.join("\n"));
       };
 
@@ -652,10 +478,16 @@
         setOutput("Escribe codigo Python en el editor y luego presiona Ejecutar.", "Sin codigo.");
         return;
       }
+      if (consoleLineEl) consoleLineEl.hidden = true;
       var prompts = getInputPrompts(codeEl.value);
       if (prompts.length && askInputsInConsole(prompts)) return;
+      termClear();
+      termCommandLine();
       runWithConsoleInput("");
     });
+
+    termClear();
+    termWelcome();
 
     lab.querySelector("[data-python-validate]")?.addEventListener("click", function () {
       saveLabCode(codeEl.value);
@@ -673,7 +505,10 @@
     });
 
     lab.querySelector("[data-python-clear]")?.addEventListener("click", function () {
-      setOutput("", "Consola limpia.");
+      if (consoleLineEl) consoleLineEl.hidden = true;
+      termClear();
+      termWelcome();
+      statusEl.textContent = "Consola limpia.";
     });
   }
 
