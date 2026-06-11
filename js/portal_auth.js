@@ -751,24 +751,8 @@
     return sha256Fallback(value);
   }
 
-  async function verifySecret(secret, storedHash) {
-    const value = normalizeText(secret);
-    const normalizedStoredHash = normalizeText(storedHash);
-    if (!value || !normalizedStoredHash) {
-      return { ok: false, hash: "", migrated: false };
-    }
-
-    const computedHash = await hashSecret(value);
-    if (normalizedStoredHash === computedHash) {
-      return { ok: true, hash: computedHash, migrated: false };
-    }
-
-    if (normalizedStoredHash === `plain:${value}`) {
-      return { ok: true, hash: computedHash, migrated: true };
-    }
-
-    return { ok: false, hash: computedHash, migrated: false };
-  }
+  // NOTA: verifySecret esta definida mas abajo (junto a validateStudentPayload).
+  // Aqui existia una copia identica que quedaba sombreada por el hoisting.
 
   function buildProgressResult(fileName, completed, total, source, updatedAt) {
     const safeTotal = Math.max(0, Number(total) || 0);
