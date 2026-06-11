@@ -53,6 +53,8 @@
     <div class="nav-section">
       <div class="nav-label">Recursos</div>
       <a class="nav-link" href="#python-en-linea" onclick="setActive(this)" data-python-online-practice><span class="icon">&#128187;</span> Python en línea</a>
+      <a class="nav-link" href="#control-avance" onclick="setActive(this)"><span class="icon">&#9989;</span> Control de avance</a>
+      <a class="nav-link" href="#autoevaluacion" onclick="setActive(this)"><span class="icon">&#129300;</span> Autoevaluaci&oacute;n</a>
       <a class="nav-link" href="#glosario" onclick="setActive(this)"><span class="icon">&#128214;</span> Glosario</a>
     </div>
 
@@ -89,6 +91,24 @@
       </div>
 
       <div id="python-delivery-summary"></div>
+
+      <div id="control-avance" class="section-title">Tu control de avance</div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#e8f5e9">&#9989;</div>
+            <div><h3>&iquest;Qu&eacute; llevas y qu&eacute; te falta?</h3><p>Esta tabla se marca sola cuando entregas cada actividad a Drive</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div id="python-control-avance"><p class="intro-text">Cargando tu avance...</p></div>
+          <div class="gnote gnote--recuerda"><div class="gnote__label">&#128161; Recuerda</div>
+            <p>No tienes que marcar nada aqu&iacute;: cada fila cambia a <strong>Entregada</strong> autom&aacute;ticamente
+            cuando subes la evidencia con el bot&oacute;n de cada ejercicio. Si una fila sigue en Pendiente,
+            ese ejercicio a&uacute;n no tiene entrega registrada.</p></div>
+        </div>
+      </div>
 
       <div id="presentacion" class="section-title">Presentación</div>
       <div class="card open">
@@ -143,6 +163,8 @@
 
       <!-- ══════════════ 1. ¿QUÉ ES PYTHON? ══════════════ -->
       <div id="que-es-python" class="section-title">1. ¿Qué es Python?</div>
+      <p class="section-intro">&#128205; <strong>En esta secci&oacute;n:</strong> conoces el lenguaje y ves tu primer programa.
+      Solo lectura y pr&aacute;ctica libre &mdash; aqu&iacute; no se entrega nada todav&iacute;a.</p>
       <div class="card open">
         <div class="card-header" onclick="toggleCard(this.parentElement)">
           <div class="card-header-left">
@@ -295,6 +317,8 @@ Programa: Sistemas Teleinformáticos</pre>
 
       <!-- ══════════════ 2. VARIABLES ══════════════ -->
       <div id="variables" class="section-title">2. Tipos de variables en Python</div>
+      <p class="section-intro">&#128205; <strong>En esta secci&oacute;n:</strong> aprendes los tipos de datos (texto, n&uacute;meros,
+      booleanos, colecciones) con demos animadas. Esta teor&iacute;a es la base de los ejercicios 1 a 7.</p>
       <div class="card open">
         <div class="card-header" onclick="toggleCard(this.parentElement)">
           <div class="card-header-left">
@@ -331,6 +355,8 @@ Programa: Sistemas Teleinformáticos</pre>
 
       <!-- ══════════════ 3. CONDICIONALES ══════════════ -->
       <div id="condicionales" class="section-title">3. Operadores y condicionales</div>
+      <p class="section-intro">&#128205; <strong>En esta secci&oacute;n:</strong> aprendes a comparar valores y a que tu programa
+      tome decisiones con if / elif / else. La usar&aacute;s en casi todos los ejercicios.</p>
       <div class="card open">
         <div class="card-header" onclick="toggleCard(this.parentElement)">
           <div class="card-header-left">
@@ -384,6 +410,21 @@ Programa: Sistemas Teleinformáticos</pre>
 
       <!-- ══════════════ EJERCICIOS 1–7 ══════════════ -->
       <div id="ejercicios" class="section-title">Ejercicios prácticos (1 a 7)</div>
+      <p class="section-intro">&#128205; <strong>En esta secci&oacute;n:</strong> 7 ejercicios guiados. Cada uno tiene un
+      <strong>Reto</strong> y un <strong>Ejercicio adicional</strong> que se entregan a Drive (son tus evidencias).</p>
+      <div class="gnote gnote--ruta">
+        <div class="gnote__label">&#129517; &iquest;C&oacute;mo trabajar cada ejercicio? Son siempre los mismos 5 pasos</div>
+        <ol>
+          <li><strong>Lee el objetivo y el enunciado.</strong> Ah&iacute; dice qu&eacute; hace el programa y qu&eacute; conceptos practica.</li>
+          <li><strong>Escribe el c&oacute;digo de ejemplo</strong> en la <a href="practica-python.html">consola Python del portal</a>. Escr&iacute;belo t&uacute; mismo en lugar de copiar y pegar: as&iacute; es como se aprende.</li>
+          <li><strong>Ejec&uacute;talo y compara</strong> el resultado con lo que esperabas. Si sale un error, l&eacute;elo con calma: te dice en qu&eacute; l&iacute;nea est&aacute; el problema.</li>
+          <li><strong>Resuelve el Reto y el Ejercicio adicional</strong> modificando el c&oacute;digo por tu cuenta. La explicaci&oacute;n de cada ejercicio te sirve de ejemplo, pero la soluci&oacute;n es tuya.</li>
+          <li><strong>Entrega la evidencia</strong> (captura de pantalla o archivo .py) con el bot&oacute;n <em>Entregar actividad a Drive</em> que hay en cada ejercicio.</li>
+        </ol>
+      </div>
+      <div class="gnote gnote--recuerda"><div class="gnote__label">&#128161; Recuerda</div>
+        <p>No necesitas instalar nada: todo se puede hacer en la consola del portal. Equivocarse hace parte de
+        programar &mdash; cada error que corriges es algo que aprendiste.</p></div>
       <div class="card open">
         <div class="card-header" onclick="toggleCard(this.parentElement)">
           <div class="card-header-left">
@@ -775,6 +816,12 @@ match opcion:
 
       <!-- ══════════════ 4. POO ══════════════ -->
       <div id="poo" class="section-title">4. Introducción a la Programación Orientada a Objetos (POO)</div>
+      <p class="section-intro">&#128205; <strong>En esta secci&oacute;n:</strong> aprendes a crear clases y objetos (ejercicios 8, 9 y 10,
+      tambi&eacute;n con entrega). Es el paso previo al reto integrador, donde unir&aacute;s todo.</p>
+      <div class="gnote gnote--importante"><div class="gnote__label">&#10071; Importante</div>
+        <p>La POO parece dif&iacute;cil al principio y es normal. Idea clave: una <strong>clase</strong> es un molde
+        (como el formato en blanco de una ficha) y un <strong>objeto</strong> es el molde ya diligenciado con datos
+        reales. Con esa idea clara, los tres ejercicios salen.</p></div>
       <div class="card open">
         <div class="card-header" onclick="toggleCard(this.parentElement)">
           <div class="card-header-left">
@@ -1003,6 +1050,8 @@ ficha.mostrar_reporte()</pre>
 
       <!-- ══════════════ RETO INTEGRADOR (ENTREGA) ══════════════ -->
       <div id="reto" class="section-title">5. Reto integrador (entrega)</div>
+      <p class="section-intro">&#128205; <strong>En esta secci&oacute;n:</strong> el proyecto final de la gu&iacute;a. Una sola entrega:
+      tu programa .py funcionando + una captura del reporte que genera.</p>
       <div class="card open">
         <div class="card-header" onclick="toggleCard(this.parentElement)">
           <div class="card-header-left">
@@ -1051,12 +1100,40 @@ ficha.mostrar_reporte()</pre>
             Sugerencia de nombre: <code>RetoPython_NombreAprendiz_FICHA.zip</code></p>
           </div>
 
+          <div class="gnote gnote--ruta">
+            <div class="gnote__label">&#129517; &iquest;C&oacute;mo abordarlo sin enredarte? Orden sugerido</div>
+            <ol>
+              <li>Crea primero la clase <code>Actividad</code> y prueba crear una sola actividad con <code>print()</code>.</li>
+              <li>Despu&eacute;s crea la clase <code>Aprendiz</code> y agr&eacute;gale su lista de actividades.</li>
+              <li>Crea tus tres objetos <code>Aprendiz</code> con datos diferentes (uno que apruebe, uno con inasistencia, uno con pendientes).</li>
+              <li>Arma el reporte final con los condicionales de las reglas del reto.</li>
+              <li>Al final agrega el men&uacute; con <code>match-case</code>. Prueba en la consola del portal paso a paso, no todo de una vez.</li>
+            </ol>
+          </div>
           <div class="info-box" style="margin-top:12px">
             <div class="label">&#128221; Criterios de evaluación</div>
             <p>Funcionamiento del programa, uso correcto de variables, uso correcto de condicionales, aplicación
             de POO, claridad del código, orden en la presentación y evidencia de prueba.</p>
           </div>
 
+          <div class="gnote gnote--importante">
+            <div class="gnote__label">&#128221; &iquest;C&oacute;mo se eval&uacute;a? (en palabras simples)</div>
+            <ul>
+              <li><strong>Que funcione:</strong> el programa corre completo, sin errores, y muestra el reporte final.</li>
+              <li><strong>Que use lo aprendido:</strong> variables, condicionales, listas, diccionarios y las clases con sus objetos.</li>
+              <li><strong>Que se entienda:</strong> nombres de variables claros y c&oacute;digo ordenado (la indentaci&oacute;n cuenta).</li>
+              <li><strong>Que haya evidencia:</strong> el archivo .py y la captura donde se vea el reporte funcionando.</li>
+            </ul>
+          </div>
+          <div class="gnote gnote--entrega">
+            <div class="gnote__label">&#128230; Antes de entregar, revisa esta lista</div>
+            <ul>
+              <li>El programa corre de principio a fin sin errores.</li>
+              <li>Cumple los 8 requisitos m&iacute;nimos del recuadro de arriba.</li>
+              <li>La captura muestra el reporte final ya generado.</li>
+              <li>El archivo se llama <code>RetoPython_TuNombre_FICHA.zip</code> (el .py y la imagen van dentro).</li>
+            </ul>
+          </div>
           <div class="activity open mission-card" style="margin-top:16px">
             <div class="activity-header" onclick="toggleActivity(this.parentElement)">
               <span class="activity-num">5.1</span><span class="activity-title">Entrega del reto integrador (.py + captura)</span><span class="activity-toggle">&#9662;</span>
@@ -1070,6 +1147,33 @@ ficha.mostrar_reporte()</pre>
       </div>
 
       <!-- ══════════════ GLOSARIO ══════════════ -->
+      <div id="autoevaluacion" class="section-title">Autoevaluación y reflexión</div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#ede7f6">&#129300;</div>
+            <div><h3>&iquest;C&oacute;mo te sientes con lo aprendido?</h3><p>Es para ti, no es una nota. Se guarda autom&aacute;ticamente.</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <p class="intro-text" style="margin-top:0">Marca lo que ya sientes que dominas. Lo que quede sin marcar
+          te dice exactamente qu&eacute; repasar antes del reto integrador.</p>
+          <div class="autoeval-list">
+            <label><input type="checkbox" data-autoeval="variables"> S&eacute; crear variables y diferencio los tipos str, int, float y bool.</label>
+            <label><input type="checkbox" data-autoeval="condicionales"> Puedo escribir condicionales if / elif / else sin mirar el ejemplo.</label>
+            <label><input type="checkbox" data-autoeval="colecciones"> Entiendo para qu&eacute; sirven las listas y los diccionarios.</label>
+            <label><input type="checkbox" data-autoeval="poo"> Puedo crear una clase con sus atributos y m&eacute;todos.</label>
+            <label><input type="checkbox" data-autoeval="consola"> S&eacute; ejecutar y probar mis programas en la consola del portal.</label>
+          </div>
+          <label class="autoeval-reflexion">
+            <span>&#9997;&#65039; Tu reflexi&oacute;n: &iquest;qu&eacute; fue lo m&aacute;s dif&iacute;cil de esta gu&iacute;a y c&oacute;mo lo resolviste?</span>
+            <textarea rows="3" data-autoeval-text="reflexion" placeholder="Escribe aqu&iacute; tu reflexi&oacute;n..."></textarea>
+          </label>
+          <p class="autoeval-status" data-autoeval-status></p>
+        </div>
+      </div>
+
       <div id="glosario" class="section-title">Glosario rápido</div>
       <div class="card">
         <div class="card-header" onclick="toggleCard(this.parentElement)">

@@ -251,6 +251,100 @@
       '</div>';
   }
 
+  // ── Tabla de control de avance (se marca sola con las entregas) ───────────
+  function escapeHtml(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  function renderControlAvance() {
+    const container = document.getElementById("python-control-avance");
+    if (!container) return;
+    const config = window.ActivityStandard?.getConfigForGuide?.(GUIDE_DATA_FILE);
+    const activities = (config && config.activities) || [];
+    const deliverables = activities.filter((act) => act.driveTarget && act.driveTarget.panelKey);
+    if (!deliverables.length) {
+      container.innerHTML = '<p class="intro-text">El control de avance se activa cuando cargan las actividades.</p>';
+      return;
+    }
+
+    let delivered = 0;
+    const rows = deliverables.map(function (act) {
+      const record = window.sharedAppsScriptDelivery?.loadDeliveryRecord?.({ panelKey: act.driveTarget.panelKey });
+      const ok = record && record.status === "delivered";
+      if (ok) delivered += 1;
+      let fecha = "";
+      if (ok) {
+        try {
+          fecha = new Date(record.submittedAt || record.fechaEntrega)
+            .toLocaleDateString("es-CO", { day: "2-digit", month: "short" });
+        } catch (e) {}
+      }
+      const titulo = act.driveTarget.activityTitle || act.label || "Actividad";
+      return "<tr><td>" + escapeHtml(titulo) + "</td><td class=\"" +
+        (ok ? "estado--ok" : "estado--pend") + "\">" +
+        (ok ? "&#9989; Entregada" + (fecha ? " &middot; " + fecha : "") : "&#9711; Pendiente") +
+        "</td></tr>";
+    });
+
+    const pct = Math.round((delivered / deliverables.length) * 100);
+    container.innerHTML =
+      '<div class="avance-resumen"><strong>Tus evidencias de esta gu&iacute;a</strong>' +
+      '<span class="avance-chip">' + delivered + " / " + deliverables.length + " &middot; " + pct + "%</span></div>" +
+      '<table class="avance-table"><thead><tr><th>Actividad</th><th>Estado</th></tr></thead><tbody>' +
+      rows.join("") + "</tbody></table>";
+  }
+
+  // ── Autoevaluacion: se guarda en el estado de la guia (local + nube) ──────
+  function initAutoevaluacion() {
+    const boxes = document.querySelectorAll("[data-autoeval]");
+    const texts = document.querySelectorAll("[data-autoeval-text]");
+    const statusEl = document.querySelector("[data-autoeval-status]");
+    if (!boxes.length && !texts.length) return;
+
+    function refreshStatus() {
+      if (!statusEl) return;
+      const total = boxes.length;
+      let done = 0;
+      boxes.forEach(function (box) { if (box.checked) done += 1; });
+      statusEl.textContent = done === 0
+        ? ""
+        : done === total
+          ? "\u00A1" + done + " de " + total + "! Est\u00E1s listo para el reto integrador."
+          : done + " de " + total + " logros marcados. Guardado autom\u00E1ticamente.";
+    }
+
+    boxes.forEach(function (box) {
+      const key = "autoeval:" + box.dataset.autoeval;
+      box.checked = state[key] === true;
+      box.addEventListener("change", function () {
+        state[key] = box.checked;
+        saveState();
+        refreshStatus();
+      });
+    });
+
+    texts.forEach(function (area) {
+      const key = "autoeval-text:" + area.dataset.autoevalText;
+      area.value = typeof state[key] === "string" ? state[key] : "";
+      let timer = null;
+      area.addEventListener("input", function () {
+        clearTimeout(timer);
+        timer = setTimeout(function () {
+          state[key] = area.value;
+          saveState();
+          if (window.portalSaveStatus) {
+            window.portalSaveStatus.saved();
+          }
+        }, 700);
+      });
+    });
+
+    refreshStatus();
+  }
+
   // ── Demo animado de tipos de variable (seccion 2) ─────────────────────────
 
   function initVarDemo() {
@@ -474,6 +568,8 @@
     initFnDemos();
     updateProgress();
     renderDeliverySummary();
+    renderControlAvance();
+    initAutoevaluacion();
   }
 
   window.__GUIDE_INIT__ = initGuiaPython;
@@ -483,6 +579,7 @@
     window.requestAnimationFrame(() => {
       updateProgress();
       renderDeliverySummary();
+      renderControlAvance();
     });
   });
 })();
