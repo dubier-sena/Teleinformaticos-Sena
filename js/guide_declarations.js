@@ -705,6 +705,116 @@
         },
       },
       {
+        id: "adicionalEj1", number: "1A", label: "Ejercicio adicional 1 - Datos del instructor",
+        shortName: "AdicionalEj1", type: "file",
+        driveTarget: {
+          panelKey: "python-adicional-ej1", deadlineActivityId: "adicionalEj1",
+          activityTitle: "Ejercicio adicional 1 - Datos del instructor",
+          description: "Sube el archivo .py o captura del ejercicio adicional 1 resuelto.",
+          note: "Formato sugerido: .py o captura de pantalla.",
+          allowedExtensions: [".py", ".png", ".jpg", ".jpeg", ".pdf", ".zip"],
+        },
+      },
+      {
+        id: "adicionalEj2", number: "2A", label: "Ejercicio adicional 2 - Nota aprobatoria",
+        shortName: "AdicionalEj2", type: "file",
+        driveTarget: {
+          panelKey: "python-adicional-ej2", deadlineActivityId: "adicionalEj2",
+          activityTitle: "Ejercicio adicional 2 - Nota aprobatoria",
+          description: "Sube el archivo .py o captura del ejercicio adicional 2 resuelto.",
+          note: "Formato sugerido: .py o captura de pantalla.",
+          allowedExtensions: [".py", ".png", ".jpg", ".jpeg", ".pdf", ".zip"],
+        },
+      },
+      {
+        id: "adicionalEj3", number: "3A", label: "Ejercicio adicional 3 - Promedio de dos calificaciones",
+        shortName: "AdicionalEj3", type: "file",
+        driveTarget: {
+          panelKey: "python-adicional-ej3", deadlineActivityId: "adicionalEj3",
+          activityTitle: "Ejercicio adicional 3 - Promedio de dos calificaciones",
+          description: "Sube el archivo .py o captura del ejercicio adicional 3 resuelto.",
+          note: "Formato sugerido: .py o captura de pantalla.",
+          allowedExtensions: [".py", ".png", ".jpg", ".jpeg", ".pdf", ".zip"],
+        },
+      },
+      {
+        id: "adicionalEj4", number: "4A", label: "Ejercicio adicional 4 - Actividades y asistencia",
+        shortName: "AdicionalEj4", type: "file",
+        driveTarget: {
+          panelKey: "python-adicional-ej4", deadlineActivityId: "adicionalEj4",
+          activityTitle: "Ejercicio adicional 4 - Actividades y asistencia",
+          description: "Sube el archivo .py o captura del ejercicio adicional 4 resuelto.",
+          note: "Formato sugerido: .py o captura de pantalla.",
+          allowedExtensions: [".py", ".png", ".jpg", ".jpeg", ".pdf", ".zip"],
+        },
+      },
+      {
+        id: "adicionalEj5", number: "5A", label: "Ejercicio adicional 5 - Asistencia a laboratorio",
+        shortName: "AdicionalEj5", type: "file",
+        driveTarget: {
+          panelKey: "python-adicional-ej5", deadlineActivityId: "adicionalEj5",
+          activityTitle: "Ejercicio adicional 5 - Asistencia a laboratorio",
+          description: "Sube el archivo .py o captura del ejercicio adicional 5 resuelto.",
+          note: "Formato sugerido: .py o captura de pantalla.",
+          allowedExtensions: [".py", ".png", ".jpg", ".jpeg", ".pdf", ".zip"],
+        },
+      },
+      {
+        id: "adicionalEj6", number: "6A", label: "Ejercicio adicional 6 - Equipos del salon",
+        shortName: "AdicionalEj6", type: "file",
+        driveTarget: {
+          panelKey: "python-adicional-ej6", deadlineActivityId: "adicionalEj6",
+          activityTitle: "Ejercicio adicional 6 - Equipos del salon",
+          description: "Sube el archivo .py o captura del ejercicio adicional 6 resuelto.",
+          note: "Formato sugerido: .py o captura de pantalla.",
+          allowedExtensions: [".py", ".png", ".jpg", ".jpeg", ".pdf", ".zip"],
+        },
+      },
+      {
+        id: "adicionalEj7", number: "7A", label: "Ejercicio adicional 7 - Computador del aula con menu",
+        shortName: "AdicionalEj7", type: "file",
+        driveTarget: {
+          panelKey: "python-adicional-ej7", deadlineActivityId: "adicionalEj7",
+          activityTitle: "Ejercicio adicional 7 - Computador del aula con menu",
+          description: "Sube el archivo .py o captura del ejercicio adicional 7 resuelto.",
+          note: "Formato sugerido: .py o captura de pantalla.",
+          allowedExtensions: [".py", ".png", ".jpg", ".jpeg", ".pdf", ".zip"],
+        },
+      },
+      {
+        id: "adicionalEj8", number: "8A", label: "Ejercicio adicional 8 - Clase Computador",
+        shortName: "AdicionalEj8", type: "file",
+        driveTarget: {
+          panelKey: "python-adicional-ej8", deadlineActivityId: "adicionalEj8",
+          activityTitle: "Ejercicio adicional 8 - Clase Computador",
+          description: "Sube el archivo .py o captura del ejercicio adicional 8 resuelto.",
+          note: "Formato sugerido: .py o captura de pantalla.",
+          allowedExtensions: [".py", ".png", ".jpg", ".jpeg", ".pdf", ".zip"],
+        },
+      },
+      {
+        id: "adicionalEj9", number: "9A", label: "Ejercicio adicional 9 - Clase Asistencia",
+        shortName: "AdicionalEj9", type: "file",
+        driveTarget: {
+          panelKey: "python-adicional-ej9", deadlineActivityId: "adicionalEj9",
+          activityTitle: "Ejercicio adicional 9 - Clase Asistencia",
+          description: "Sube el archivo .py o captura del ejercicio adicional 9 resuelto.",
+          note: "Formato sugerido: .py o captura de pantalla.",
+          allowedExtensions: [".py", ".png", ".jpg", ".jpeg", ".pdf", ".zip"],
+        },
+      },
+      {
+        id: "adicionalEj10", number: "10A", label: "Ejercicio adicional 10 - Clase Aula con equipos",
+        shortName: "AdicionalEj10", type: "file",
+        driveTarget: {
+          panelKey: "python-adicional-ej10", deadlineActivityId: "adicionalEj10",
+          activityTitle: "Ejercicio adicional 10 - Clase Aula con equipos",
+          description: "Sube el archivo .py o captura del ejercicio adicional 10 resuelto.",
+          note: "Formato sugerido: .py o captura de pantalla.",
+          allowedExtensions: [".py", ".png", ".jpg", ".jpeg", ".pdf", ".zip"],
+        },
+      },
+      {
         id: "retoPython", number: "5.1", label: "Reto integrador - Sistema basico de seguimiento academico",
         shortName: "RetoIntegrador", type: "file",
         driveTarget: {
