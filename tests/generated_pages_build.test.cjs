@@ -9,6 +9,23 @@ const REPO_ROOT = path.join(__dirname, "..");
 const VARIANTS_FILE = path.join(REPO_ROOT, "data", "generated_page_variants.json");
 const BUILD_SCRIPT = path.join(REPO_ROOT, "tools", "build-generated-pages.ps1");
 
+// El script de build es PowerShell. En equipos sin PowerShell (p. ej. macOS sin
+// pwsh instalado) el test de ejecucion se omite; el test del catalogo de
+// variantes corre siempre.
+function findPowerShell() {
+  for (const candidate of ["pwsh", "powershell"]) {
+    const probe = spawnSync(candidate, ["-NoProfile", "-Command", "exit 0"], {
+      encoding: "utf8",
+    });
+    if (!probe.error && probe.status === 0) {
+      return candidate;
+    }
+  }
+  return null;
+}
+
+const POWERSHELL = findPowerShell();
+
 const EXPECTED_VARIANTS = {
   "redes-rap01-quiz-10a": {
     template: "redes-rap01-quiz.template.html",
@@ -83,11 +100,14 @@ test("generated page variants expose the approved small-page families", () => {
   assert.deepEqual(variants["guia2-matriz-322-10a"], EXPECTED_VARIANTS["guia2-matriz-322-10a"]);
 });
 
-test("generated page build script renders the expected public files", () => {
+test(
+  "generated page build script renders the expected public files",
+  { skip: POWERSHELL ? false : "PowerShell no disponible en este equipo" },
+  () => {
   const outputRoot = fs.mkdtempSync(path.join(os.tmpdir(), "portal-generated-pages-"));
 
   const result = spawnSync(
-    "powershell",
+    POWERSHELL,
     [
       "-NoProfile",
       "-ExecutionPolicy",
@@ -117,4 +137,5 @@ test("generated page build script renders the expected public files", () => {
       assert.match(html, new RegExp(variant.cloudFileName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
     }
   }
-});
+  }
+);
