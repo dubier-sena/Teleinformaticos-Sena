@@ -29,9 +29,10 @@
 <link rel="stylesheet" href="css/components.css?v=20260516_1">
 <link rel="stylesheet" href="css/shared_shell.css?v=20260609_1">
 <link rel="stylesheet" href="css/guia_template.css?v=20260610_3">
+<link rel="stylesheet" href="css/page_python_practice.css?v=20260611_13">
 <script defer src="js/shared_shell.js?v=20260609_2"></script>
 <script defer src="js/project_integrations.js?v=20260526_2"></script>
-<script defer src="js/python_online_lab.js?v=20260610_12"></script>
+<script defer src="js/python_online_lab.js?v=20260611_13"></script>
 </head>
 <body class="app-shell app-shell--guide python-practice-page">
   <main class="python-practice-shell">
@@ -39,7 +40,8 @@
       <div class="tag">Opción A · Módulo interno opcional</div>
       <h1>Práctica de Python en línea</h1>
       <p>
-        Escribe tu código Python y ejecútalo dentro del portal.
+        Escribe tu código Python y ejecútalo como en una consola real: con entradas,
+        ciclos y salida en vivo, sin instalar nada.
       </p>
       <div class="python-practice-actions">
         <a class="python-lab__btn" href="guia.html?g=santa-barbara-guia-python.html#python-en-linea">Volver a la guía</a>
@@ -60,9 +62,11 @@
         <div class="python-lab__toolbar">
           <div>
             <strong>Editor Python</strong>
+            <span class="python-lab__hint"><kbd>Tab</kbd> indenta &middot; <kbd>Ctrl</kbd>+<kbd>Enter</kbd> ejecuta</span>
           </div>
           <div class="python-lab__actions">
-            <button type="button" class="python-lab__btn python-lab__btn--primary" data-python-run>Ejecutar</button>
+            <button type="button" class="python-lab__btn python-lab__btn--primary" data-python-run>&#9654; Ejecutar</button>
+            <button type="button" class="python-lab__btn" data-python-clear>Limpiar consola</button>
             <button type="button" class="python-lab__btn" data-python-download>Guardar .py</button>
           </div>
         </div>
@@ -80,9 +84,10 @@
           </label>
         </div>
 
-        <div class="python-lab__result">
-          <div class="python-lab__result-head">
-            <span>Resultado</span>
+        <div class="python-lab__result python-lab__result--terminal">
+          <div class="pyterm-bar">
+            <span class="pyterm-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="pyterm-title">Consola &mdash; practica.py</span>
             <span data-python-status>Listo para practicar.</span>
           </div>
           <pre data-python-output>Presiona Ejecutar para ver el resultado.</pre>
