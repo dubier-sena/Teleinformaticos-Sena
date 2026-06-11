@@ -150,8 +150,8 @@
     },
     "santa-barbara-guia-python.html": {
       mode: "state-with-activity",
-      total: 1,
-      activityTotal: 1,
+      total: 20,
+      activityTotal: 20,
       pageKey: "sb_guia_python",
       stateKey: "guia_interactiva_santa_barbara_guia_python_html",
     },
