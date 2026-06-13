@@ -1149,7 +1149,88 @@
         _mountDeliveryWatcher(act, stateCtx);
       }
     });
+    _mountAvancePanel(stateCtx);
     return handles;
+  }
+
+  // ── Panel "Tu control de avance" (compartido por todas las guias) ─────────
+  // Se monta automaticamente si la guia tiene un <div data-act-std-avance>.
+  // Refleja TODO lo entregado/guardado hasta hoy: combina el registro local de
+  // entregas (sharedAppsScriptDelivery) con el estado sincronizado de la guia
+  // (state["{actId}-delivery"] / "-locked"), que viaja por Firebase/Drive, para
+  // que el avance aparezca aunque la entrega se haya hecho en otro dispositivo.
+
+  function _escapeAvance(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  function getActivityDeliveryInfo(act, state) {
+    var fromState = state ? state[act.id + "-delivery"] : null;
+    if (fromState && fromState.status === "delivered") {
+      return { kind: "delivered", when: fromState.submittedAt || "" };
+    }
+    if (act.driveTarget && act.driveTarget.panelKey && window.sharedAppsScriptDelivery?.loadDeliveryRecord) {
+      var record = window.sharedAppsScriptDelivery.loadDeliveryRecord({ panelKey: act.driveTarget.panelKey });
+      if (record && record.status === "delivered") {
+        return { kind: "delivered", when: record.submittedAt || record.fechaEntrega || "" };
+      }
+    }
+    if (state && state[act.id + "-locked"] === true && (act.type === "form" || act.type === "both")) {
+      return { kind: "saved", when: "" };
+    }
+    return { kind: "pending", when: "" };
+  }
+
+  function renderAvancePanel(stateCtx) {
+    var container = document.querySelector("[data-act-std-avance]");
+    if (!container) return;
+    var config = getConfigForGuide(stateCtx.getGuideDataFile());
+    var activities = (config && config.activities) || [];
+    if (!activities.length) {
+      container.innerHTML = '<p class="intro-text">El control de avance se activa cuando cargan las actividades.</p>';
+      return;
+    }
+
+    var state = null;
+    try { state = stateCtx.getState ? stateCtx.getState() : null; } catch (_) {}
+
+    var done = 0;
+    var rows = activities.map(function (act) {
+      var info = getActivityDeliveryInfo(act, state);
+      if (info.kind !== "pending") done += 1;
+      var fecha = "";
+      if (info.when) {
+        try {
+          fecha = new Date(info.when).toLocaleDateString("es-CO", { day: "2-digit", month: "short" });
+        } catch (_) {}
+      }
+      var titulo = (act.number ? act.number + " - " : "") +
+        ((act.driveTarget && act.driveTarget.activityTitle) || act.label || "Actividad");
+      var estado = info.kind === "delivered"
+        ? "&#9989; Entregada" + (fecha ? " &middot; " + fecha : "")
+        : info.kind === "saved"
+          ? "&#128190; Guardada"
+          : "&#9711; Pendiente";
+      var cls = info.kind === "pending" ? "estado--pend" : "estado--ok";
+      return "<tr><td>" + _escapeAvance(titulo) + '</td><td class="' + cls + '">' + estado + "</td></tr>";
+    });
+
+    var pct = Math.round((done / activities.length) * 100);
+    container.innerHTML =
+      '<div class="avance-resumen"><strong>Tus actividades de esta gu&iacute;a</strong>' +
+      '<span class="avance-chip">' + done + " / " + activities.length + " &middot; " + pct + "%</span></div>" +
+      '<table class="avance-table"><thead><tr><th>Actividad</th><th>Estado</th></tr></thead><tbody>' +
+      rows.join("") + "</tbody></table>";
+  }
+
+  function _mountAvancePanel(stateCtx) {
+    renderAvancePanel(stateCtx);
+    document.addEventListener("guide-delivery-registered", function () {
+      window.requestAnimationFrame(function () { renderAvancePanel(stateCtx); });
+    });
   }
 
   // ── Panel de entrega a Drive ───────────────────────────────────────────────
@@ -1243,6 +1324,8 @@
   // ── API pública ───────────────────────────────────────────────────────────
 
   window.ActivityStandard = Object.freeze({
+    renderAvancePanel: renderAvancePanel,
+    getActivityDeliveryInfo: getActivityDeliveryInfo,
     // Registro
     registerGuide: registerGuide,
     getConfigForGuide: getConfigForGuide,

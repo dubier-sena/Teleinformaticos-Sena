@@ -4527,30 +4527,3 @@ body.sb-hidden .btn-sb-expand {
 .avance-table tr:last-child td { border-bottom: 0; }
 .avance-table .estado--ok { color: #1b5e20; font-weight: 800; white-space: nowrap; }
 .avance-table .estado--pend { color: #8b959e; white-space: nowrap; }
-
-.autoeval-list { display: grid; gap: 8px; margin: 10px 0 16px; }
-.autoeval-list label {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 10px 12px;
-  border: 1px solid #dbe7de;
-  border-radius: 8px;
-  background: #f7faf8;
-  font-size: 0.92rem;
-  cursor: pointer;
-}
-.autoeval-list input { margin-top: 2px; accent-color: #2e7d32; width: 18px; height: 18px; flex-shrink: 0; }
-.autoeval-list label:has(input:checked) { background: #e8f5e9; border-color: #9ccc9f; }
-.autoeval-reflexion { display: block; }
-.autoeval-reflexion > span { display: block; margin-bottom: 6px; font-weight: 700; color: #315240; font-size: 0.9rem; }
-.autoeval-reflexion textarea {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #c9d8d0;
-  border-radius: 8px;
-  font: inherit;
-  font-size: 0.92rem;
-  resize: vertical;
-}
-.autoeval-status { margin: 8px 0 0; color: #2e7d32; font-size: 0.86rem; font-weight: 700; }

@@ -54,7 +54,6 @@
       <div class="nav-label">Recursos</div>
       <a class="nav-link" href="#python-en-linea" onclick="setActive(this)" data-python-online-practice><span class="icon">&#128187;</span> Python en línea</a>
       <a class="nav-link" href="#control-avance" onclick="setActive(this)"><span class="icon">&#9989;</span> Control de avance</a>
-      <a class="nav-link" href="#autoevaluacion" onclick="setActive(this)"><span class="icon">&#129300;</span> Autoevaluaci&oacute;n</a>
       <a class="nav-link" href="#glosario" onclick="setActive(this)"><span class="icon">&#128214;</span> Glosario</a>
     </div>
 
@@ -102,7 +101,7 @@
           <span class="card-toggle">&#9662;</span>
         </div>
         <div class="card-body">
-          <div id="python-control-avance"><p class="intro-text">Cargando tu avance...</p></div>
+          <div id="python-control-avance" data-act-std-avance><p class="intro-text">Cargando tu avance...</p></div>
           <div class="gnote gnote--recuerda"><div class="gnote__label">&#128161; Recuerda</div>
             <p>No tienes que marcar nada aqu&iacute;: cada fila cambia a <strong>Entregada</strong> autom&aacute;ticamente
             cuando subes la evidencia con el bot&oacute;n de cada ejercicio. Si una fila sigue en Pendiente,
@@ -1147,33 +1146,6 @@ ficha.mostrar_reporte()</pre>
       </div>
 
       <!-- ══════════════ GLOSARIO ══════════════ -->
-      <div id="autoevaluacion" class="section-title">Autoevaluación y reflexión</div>
-      <div class="card open">
-        <div class="card-header" onclick="toggleCard(this.parentElement)">
-          <div class="card-header-left">
-            <div class="card-icon" style="background:#ede7f6">&#129300;</div>
-            <div><h3>&iquest;C&oacute;mo te sientes con lo aprendido?</h3><p>Es para ti, no es una nota. Se guarda autom&aacute;ticamente.</p></div>
-          </div>
-          <span class="card-toggle">&#9662;</span>
-        </div>
-        <div class="card-body">
-          <p class="intro-text" style="margin-top:0">Marca lo que ya sientes que dominas. Lo que quede sin marcar
-          te dice exactamente qu&eacute; repasar antes del reto integrador.</p>
-          <div class="autoeval-list">
-            <label><input type="checkbox" data-autoeval="variables"> S&eacute; crear variables y diferencio los tipos str, int, float y bool.</label>
-            <label><input type="checkbox" data-autoeval="condicionales"> Puedo escribir condicionales if / elif / else sin mirar el ejemplo.</label>
-            <label><input type="checkbox" data-autoeval="colecciones"> Entiendo para qu&eacute; sirven las listas y los diccionarios.</label>
-            <label><input type="checkbox" data-autoeval="poo"> Puedo crear una clase con sus atributos y m&eacute;todos.</label>
-            <label><input type="checkbox" data-autoeval="consola"> S&eacute; ejecutar y probar mis programas en la consola del portal.</label>
-          </div>
-          <label class="autoeval-reflexion">
-            <span>&#9997;&#65039; Tu reflexi&oacute;n: &iquest;qu&eacute; fue lo m&aacute;s dif&iacute;cil de esta gu&iacute;a y c&oacute;mo lo resolviste?</span>
-            <textarea rows="3" data-autoeval-text="reflexion" placeholder="Escribe aqu&iacute; tu reflexi&oacute;n..."></textarea>
-          </label>
-          <p class="autoeval-status" data-autoeval-status></p>
-        </div>
-      </div>
-
       <div id="glosario" class="section-title">Glosario rápido</div>
       <div class="card">
         <div class="card-header" onclick="toggleCard(this.parentElement)">
