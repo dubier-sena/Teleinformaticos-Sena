@@ -1580,3 +1580,25 @@ function setupScrollSpy() {
     }
   });
 }
+
+
+// ── Control de avance compartido (ActivityStandard.renderAvancePanel) ───────
+(function mountAvancePanelGuia5() {
+  function render() {
+    if (!window.ActivityStandard || typeof window.ActivityStandard.renderAvancePanel !== "function") return;
+    if (!document.querySelector("[data-act-std-avance]")) return;
+    window.ActivityStandard.renderAvancePanel({
+      getGuideDataFile: function () { return PAGE_FILE; },
+      getState: function () { return state; },
+    });
+  }
+  document.addEventListener("guide-delivery-registered", function () {
+    window.requestAnimationFrame(render);
+  });
+  var tries = 0;
+  var timer = setInterval(function () {
+    tries += 1;
+    if (document.querySelector("[data-act-std-avance]")) { render(); }
+    if (tries > 20 || document.querySelector("[data-act-std-avance] .avance-table")) { clearInterval(timer); }
+  }, 300);
+})();
