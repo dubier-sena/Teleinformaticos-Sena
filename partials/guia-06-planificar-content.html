@@ -37,6 +37,9 @@
       <a class="nav-link active" href="#identificacion" onclick="setActive(this)">
         <span class="icon">&#128203;</span> Identificaci&oacute;n
       </a>
+      <a class="nav-link" href="#control-avance" onclick="setActive(this)">
+        <span class="icon">&#9989;</span> Control de avance
+      </a>
       <a class="nav-link" href="#presentacion" onclick="setActive(this)">
         <span class="icon">&#128075;</span> Presentaci&oacute;n
       </a>
@@ -120,6 +123,23 @@
           <div class="hero-meta-item">&#128205; Competencia: Operar herramientas informaticas y digitales</div>
           <div class="hero-meta-item">&#9201; 48 horas</div>
           <div class="hero-meta-item">&#127891; C&oacute;digo: 233108 &middot; V1</div>
+        </div>
+      </div>
+
+      <div id="control-avance" class="section-title">Tu control de avance</div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#e8f5e9">&#9989;</div>
+            <div><h3>&iquest;Qu&eacute; llevas y qu&eacute; te falta?</h3><p>Se actualiza solo con tus entregas y respuestas guardadas</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div data-act-std-avance><p class="intro-text">Cargando tu avance...</p></div>
+          <div class="gnote gnote--recuerda"><div class="gnote__label">&#128161; Recuerda</div>
+            <p>Esta tabla se marca sola: <strong>Entregada</strong> cuando subes la evidencia a Drive y
+            <strong>Guardada</strong> cuando guardas tus respuestas. Lo que siga en Pendiente es lo que te falta.</p></div>
         </div>
       </div>
 
