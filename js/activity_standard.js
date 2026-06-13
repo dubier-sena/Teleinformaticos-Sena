@@ -1181,7 +1181,35 @@
     if (state && state[act.id + "-locked"] === true && (act.type === "form" || act.type === "both")) {
       return { kind: "saved", when: "" };
     }
+    // Guias que NO usan el bloqueo por actividad (campos libres generados en
+    // runtime, p.ej. Induccion / Guia 5): se considera "Guardada" si el
+    // formulario tiene contenido. La guia declara como detectarlo con
+    // act.formFields (llaves exactas) o act.fieldPrefixes (prefijos data-store).
+    if (state && (act.type === "form" || act.type === "both")) {
+      if (_anyFormFieldFilled(state, act.formFields) || _anyPrefixFilled(state, act.fieldPrefixes)) {
+        return { kind: "saved", when: "" };
+      }
+    }
     return { kind: "pending", when: "" };
+  }
+
+  function _hasContent(value) {
+    if (value == null) return false;
+    if (typeof value === "boolean") return value === true;
+    if (Array.isArray(value)) return value.length > 0;
+    return String(value).trim() !== "";
+  }
+
+  function _anyFormFieldFilled(state, formFields) {
+    if (!Array.isArray(formFields) || !formFields.length) return false;
+    return formFields.some(function (key) { return _hasContent(state[key]); });
+  }
+
+  function _anyPrefixFilled(state, prefixes) {
+    if (!Array.isArray(prefixes) || !prefixes.length) return false;
+    return Object.keys(state).some(function (key) {
+      return prefixes.some(function (p) { return key.indexOf(p) === 0; }) && _hasContent(state[key]);
+    });
   }
 
   function renderAvancePanel(stateCtx) {
