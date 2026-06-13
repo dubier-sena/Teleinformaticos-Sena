@@ -4365,3 +4365,28 @@ if (!window.__GUIDE_CONTEXT__) {
 document.addEventListener("guide-activity-check-change", () => {
   window.requestAnimationFrame(updateProgressRedes);
 });
+
+
+// ── Control de avance compartido (ActivityStandard.renderAvancePanel) ───────
+// Refleja lo entregado/guardado hasta hoy (incluido lo sincronizado de otro
+// dispositivo). No altera la logica de actividades; solo pinta la tabla
+// cuando el contenedor [data-act-std-avance] existe en el DOM.
+(function mountAvancePanelGuiaRedes() {
+  function render() {
+    if (!window.ActivityStandard || typeof window.ActivityStandard.renderAvancePanel !== "function") return;
+    if (!document.querySelector("[data-act-std-avance]")) return;
+    window.ActivityStandard.renderAvancePanel({
+      getGuideDataFile: function () { return PAGE_FILE_REDES; },
+      getState: function () { return state; },
+    });
+  }
+  document.addEventListener("guide-delivery-registered", function () {
+    window.requestAnimationFrame(render);
+  });
+  var tries = 0;
+  var timer = setInterval(function () {
+    tries += 1;
+    if (document.querySelector("[data-act-std-avance]")) { render(); }
+    if (tries > 20 || document.querySelector("[data-act-std-avance] .avance-table")) { clearInterval(timer); }
+  }, 300);
+})();
