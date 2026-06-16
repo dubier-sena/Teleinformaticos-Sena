@@ -35,6 +35,20 @@ test("shared_utils.js exposes a canonical escapeHtml on window.portalUtils", () 
   assert.equal(escapeHtml(undefined), "");
 });
 
+test("shared_utils.js exposes portalAlert/portalConfirm with a safe no-DOM fallback", async () => {
+  const sandbox = { window: {} };
+  sandbox.globalThis = sandbox;
+  vm.runInNewContext(read(path.join("js", "shared_utils.js")), sandbox);
+
+  const utils = sandbox.window.portalUtils;
+  assert.equal(typeof utils.alert, "function");
+  assert.equal(typeof utils.confirm, "function");
+  // Sin document, alert() no debe lanzar y confirm() resuelve un booleano.
+  assert.doesNotThrow(() => utils.alert("hola"));
+  const result = await utils.confirm("¿seguro?");
+  assert.equal(typeof result, "boolean");
+});
+
 test("refactored modules delegate escapeHtml to the shared util (no duplicated bodies)", () => {
   DELEGATING_FILES.forEach((file) => {
     const source = read(file);

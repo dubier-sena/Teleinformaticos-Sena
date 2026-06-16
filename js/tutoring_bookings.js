@@ -280,12 +280,12 @@
   function openModal(date) {
     var user = getStudentUser();
     if (!user) {
-      window.alert("Debes iniciar sesion como aprendiz para reservar tutorias.");
+      window.portalAlert("Debes iniciar sesion como aprendiz para reservar tutorias.", { type: "warning" });
       return;
     }
     var record = findRecordByDate(date);
     if (!record) {
-      window.alert("Esta fecha no esta disponible para reservar.");
+      window.portalAlert("Esta fecha no esta disponible para reservar.", { type: "warning" });
       return;
     }
 
@@ -526,7 +526,7 @@
 
   async function handleCancelExisting() {
     if (!modalState.existingBooking) return;
-    if (!window.confirm("Seguro que deseas cancelar tu reserva de " + modalState.existingBooking.startTime + "?")) {
+    if (!(await window.portalConfirm("Seguro que deseas cancelar tu reserva de " + modalState.existingBooking.startTime + "?", { title: "Cancelar reserva", confirmText: "Si, cancelar" }))) {
       return;
     }
     setStatus("info", "Cancelando...");
@@ -812,13 +812,13 @@
     if (!key) return;
     var parts = key.split("|");
     var date = parts[0], ficha = parts[1], usernameKey = parts[2];
-    if (!window.confirm("Borrar la reserva de " + usernameKey + " del " + date + "?")) return;
+    if (!(await window.portalConfirm("Borrar la reserva de " + usernameKey + " del " + date + "?", { title: "Borrar reserva", confirmText: "Borrar" }))) return;
     var fdb = getFdb();
     if (!fdb) return;
     try {
       var ok = await fdb.cloudDeleteTutoringBooking(date, ficha, usernameKey);
       if (!ok) {
-        window.alert("No fue posible borrar la reserva. Verifica conexion.");
+        window.portalAlert("No fue posible borrar la reserva. Verifica conexion.", { type: "error" });
         return;
       }
       adminState.bookings = adminState.bookings.filter(function (b) {
@@ -826,7 +826,7 @@
       });
       renderAdminTable();
     } catch (error) {
-      window.alert("Error al borrar: " + (error && error.message ? error.message : error));
+      window.portalAlert("Error al borrar: " + (error && error.message ? error.message : error), { type: "error" });
     }
   }
 
