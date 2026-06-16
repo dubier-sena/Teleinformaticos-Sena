@@ -301,6 +301,24 @@ function verifyFirebaseIdToken(idToken) {
   try {
     const apiKey = getFirebaseApiKey();
     if (!apiKey) return { ok: false };
+
+    // Cache de verificacion: cada peticion verificaba el token con una llamada
+    // UrlFetchApp a Identity Toolkit, consumiendo la cuota diaria (20k/dia en
+    // cuentas Gmail, compartida con entregas_actividades.gs). El mismo idToken
+    // vale ~1h, asi que cacheamos el resultado OK por token ~30 min.
+    const cache = CacheService.getScriptCache();
+    const cacheKey =
+      "idtok_" +
+      Utilities.base64EncodeWebSafe(
+        Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, idToken)
+      );
+    const cached = cache.get(cacheKey);
+    if (cached) {
+      try {
+        return JSON.parse(cached);
+      } catch (_) {}
+    }
+
     const url =
       "https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=" +
       encodeURIComponent(apiKey);
@@ -314,7 +332,9 @@ function verifyFirebaseIdToken(idToken) {
     const body = JSON.parse(response.getContentText() || "{}");
     if (!Array.isArray(body.users) || body.users.length === 0) return { ok: false };
     const u = body.users[0];
-    return { ok: true, email: u.email || "", uid: u.localId || "" };
+    const result = { ok: true, email: u.email || "", uid: u.localId || "" };
+    cache.put(cacheKey, JSON.stringify(result), 1800); // 30 min
+    return result;
   } catch (_) {
     return { ok: false };
   }
