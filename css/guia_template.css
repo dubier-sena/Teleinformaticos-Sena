@@ -1323,6 +1323,15 @@ a.guide-schedule-item:focus-visible {
   justify-content: center;
 }
 
+/* Hit-target minimo (WCAG 2.5.5) para los botones de accion de la guia. */
+.btn-save-response,
+.btn-export-word,
+.btn-drive,
+.btn-apps-script,
+.btn-qr {
+  min-height: var(--hit-target-min, 44px);
+}
+
 .btn-save-response {
   background: linear-gradient(135deg, #1b5e20, #2e7d32);
   color: #fff;

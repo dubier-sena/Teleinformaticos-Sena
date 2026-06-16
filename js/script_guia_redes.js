@@ -1319,12 +1319,38 @@ window.enviarSocializacion311 = async function () {
 // ---------------------------------------------------------------------------
 // Progress
 // ---------------------------------------------------------------------------
+// Actividades de entrega de archivo (Lab 1/2/3, tipo "file"/"both"): no tienen
+// campos data-track, asi que el % las ignoraba. Se cuentan como hechas cuando
+// el aprendiz las entrega (o guarda/bloquea). La fuente es el registro de
+// ActivityStandard de esta guia, igual que el panel de avance.
+function getDeliverableActivitiesRedes() {
+  try {
+    const cfg = window.ActivityStandard && typeof window.ActivityStandard.getConfigForGuide === "function"
+      ? window.ActivityStandard.getConfigForGuide(PAGE_FILE_REDES)
+      : null;
+    const acts = (cfg && Array.isArray(cfg.activities)) ? cfg.activities : [];
+    return acts.filter((a) => a && (a.type === "file" || a.type === "both"));
+  } catch (_) {
+    return [];
+  }
+}
+
+function isDeliverableDoneRedes(act) {
+  const delivery = state[act.id + "-delivery"];
+  return (
+    (delivery && delivery.status === "delivered") ||
+    state[act.id + "-delivered"] === true ||
+    state[act.id + "-locked"] === true
+  );
+}
+
 function updateProgressRedes() {
   const tracked = Array.from(document.querySelectorAll("[data-track]")).filter(
     (field) => !field.closest("[data-ignore-progress='true']")
   );
   const checks = Array.from(document.querySelectorAll(".activity-check"));
-  const total = tracked.length + checks.length;
+  const deliverables = getDeliverableActivitiesRedes();
+  const total = tracked.length + checks.length + deliverables.length;
   if (total === 0) return;
 
   const filledTracked = tracked.filter((f) => {
@@ -1333,7 +1359,8 @@ function updateProgressRedes() {
   }).length;
 
   const filledChecks = checks.filter((c) => c.checked).length;
-  const filled = filledTracked + filledChecks;
+  const filledDeliverables = deliverables.filter(isDeliverableDoneRedes).length;
+  const filled = filledTracked + filledChecks + filledDeliverables;
   const pct = Math.round((filled / total) * 100);
 
   const bar = document.getElementById("progressBar");
@@ -4371,6 +4398,26 @@ if (!window.__GUIDE_CONTEXT__) {
 }
 
 document.addEventListener("guide-activity-check-change", () => {
+  window.requestAnimationFrame(updateProgressRedes);
+});
+
+// Al entregar una actividad de archivo a Drive, persistimos la entrega en el
+// state (por numero de actividad) para que cuente en el % aqui y al recargar,
+// y recalculamos la barra. Antes la entrega no movia el % de avance.
+document.addEventListener("guide-delivery-registered", (e) => {
+  try {
+    const detail = (e && e.detail) || {};
+    const num = detail.activityNumber != null ? String(detail.activityNumber) : "";
+    if (num) {
+      const match = getDeliverableActivitiesRedes().find(
+        (a) => a && a.number != null && String(a.number) === num
+      );
+      if (match && state[match.id + "-delivered"] !== true) {
+        state[match.id + "-delivered"] = true;
+        saveStateRedes();
+      }
+    }
+  } catch (_) {}
   window.requestAnimationFrame(updateProgressRedes);
 });
 
