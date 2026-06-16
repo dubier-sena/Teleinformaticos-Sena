@@ -1,4 +1,12 @@
 (function () {
+  // Fallback de escape HTML para cuando el modulo se usa sin pasar deps.escapeHtml.
+  // Defensa en profundidad: los llamadores normales siempre pasan escapeHtml.
+  function fallbackEscapeHtml(value) {
+    return String(value || "").replace(/[&<>"']/g, function (ch) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch];
+    });
+  }
+
   function buildProgressCard(config, deps) {
     const user = config?.user || {};
     const guide = config?.guide || {};
@@ -9,7 +17,7 @@
     const isRedesGuide = Boolean(config?.isRedesGuide);
     const redesAdminQuizConfigs = Array.isArray(config?.redesAdminQuizConfigs) ? config.redesAdminQuizConfigs : [];
     const redesLabActivities = Array.isArray(config?.redesLabActivities) ? config.redesLabActivities : [];
-    const escapeHtml = typeof deps?.escapeHtml === "function" ? deps.escapeHtml : (value) => String(value || "");
+    const escapeHtml = typeof deps?.escapeHtml === "function" ? deps.escapeHtml : fallbackEscapeHtml;
     const formatDate = typeof deps?.formatDate === "function" ? deps.formatDate : (value) => String(value || "");
     const buildGuideUrl = typeof deps?.buildGuideUrl === "function" ? deps.buildGuideUrl : () => "#";
     const getGuideActivityStateKey =

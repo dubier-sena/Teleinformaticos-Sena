@@ -1,4 +1,12 @@
 (function () {
+  // Fallback de escape HTML para cuando el modulo se usa sin pasar deps.escapeHtml.
+  // Defensa en profundidad: los llamadores normales siempre pasan escapeHtml.
+  function fallbackEscapeHtml(value) {
+    return String(value || "").replace(/[&<>"']/g, function (ch) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch];
+    });
+  }
+
   function getGroups(users) {
     const seen = new Set();
     const groups = [];
@@ -21,7 +29,7 @@
   }
 
   function buildStandardButtons(config, deps) {
-    const escapeHtml = typeof deps?.escapeHtml === "function" ? deps.escapeHtml : (value) => String(value || "");
+    const escapeHtml = typeof deps?.escapeHtml === "function" ? deps.escapeHtml : fallbackEscapeHtml;
     const activityId = config?.activityId || "";
     const guideKind = config?.guideKind || "";
     const fileName = config?.fileName || "";
@@ -75,7 +83,7 @@
       ? deps.hasMeaningfulValue
       : (value) => value !== undefined && value !== null && String(value).trim() !== "";
     const formatDate = typeof deps?.formatDate === "function" ? deps.formatDate : (value) => String(value || "");
-    const escapeHtml = typeof deps?.escapeHtml === "function" ? deps.escapeHtml : (value) => String(value || "");
+    const escapeHtml = typeof deps?.escapeHtml === "function" ? deps.escapeHtml : fallbackEscapeHtml;
     const activity = activities.find((item) => item.id === activityId);
     const keys = Array.isArray(activity?.keys) ? activity.keys : [];
     const state = snapshot?.state || {};
@@ -99,7 +107,7 @@
     const activityLabel = config?.activityLabel || "Actividad";
     const getGuideTitle = typeof deps?.getGuideTitle === "function" ? deps.getGuideTitle : (value) => String(value || "");
     const formatDate = typeof deps?.formatDate === "function" ? deps.formatDate : (value) => String(value || "");
-    const escapeHtml = typeof deps?.escapeHtml === "function" ? deps.escapeHtml : (value) => String(value || "");
+    const escapeHtml = typeof deps?.escapeHtml === "function" ? deps.escapeHtml : fallbackEscapeHtml;
     const renderAnswerTable = typeof deps?.renderAnswerTable === "function" ? deps.renderAnswerTable : () => "";
     const deliveredAt = record?.submittedAt || record?.updatedAt || "";
 
@@ -141,7 +149,7 @@
   ];
 
   function buildMatriz322Table(rows, deps) {
-    const escapeHtml = typeof deps?.escapeHtml === "function" ? deps.escapeHtml : (value) => String(value || "");
+    const escapeHtml = typeof deps?.escapeHtml === "function" ? deps.escapeHtml : fallbackEscapeHtml;
     const formatDate = typeof deps?.formatDate === "function" ? deps.formatDate : (value) => String(value || "");
     if (!rows.length) {
       return '<p class="activities-loading">Ningun aprendiz ha finalizado la Matriz 3.2.2 aun.</p>';
@@ -174,7 +182,7 @@
   }
 
   function buildMatriz322ModalPayload(summary, deps) {
-    const escapeHtml = typeof deps?.escapeHtml === "function" ? deps.escapeHtml : (value) => String(value || "");
+    const escapeHtml = typeof deps?.escapeHtml === "function" ? deps.escapeHtml : fallbackEscapeHtml;
     const formatDate = typeof deps?.formatDate === "function" ? deps.formatDate : (value) => String(value || "");
     const state = summary?.state || {};
     const valueOrEmpty = (key) => {
@@ -230,7 +238,7 @@
     const activityLabel = config?.activityLabel || "";
     const guideKind = config?.guideKind || "";
     const summaries = config?.summaries || {};
-    const escapeHtml = typeof deps?.escapeHtml === "function" ? deps.escapeHtml : (value) => String(value || "");
+    const escapeHtml = typeof deps?.escapeHtml === "function" ? deps.escapeHtml : fallbackEscapeHtml;
     const formatDate = typeof deps?.formatDate === "function" ? deps.formatDate : (value) => String(value || "");
     const userHasOfficialGuide = typeof deps?.userHasOfficialGuide === "function" ? deps.userHasOfficialGuide : () => true;
     const getGuide2SummaryKey = typeof deps?.getGuide2SummaryKey === "function" ? deps.getGuide2SummaryKey : () => "";
@@ -389,7 +397,7 @@
     const guides = Array.isArray(config?.guides) ? config.guides : [];
     const activeGuide = config?.activeGuide || "";
     const activeActivity = config?.activeActivity || "";
-    const escapeHtml = typeof deps?.escapeHtml === "function" ? deps.escapeHtml : (value) => String(value || "");
+    const escapeHtml = typeof deps?.escapeHtml === "function" ? deps.escapeHtml : fallbackEscapeHtml;
     const getUnlockActivitiesForGuide = typeof deps?.getUnlockActivitiesForGuide === "function"
       ? deps.getUnlockActivitiesForGuide
       : () => [];
