@@ -62,9 +62,17 @@ function doPost(e) {
     }
     const auth = verifyFirebaseIdToken(idToken);
     if (!auth.ok) {
+      // DIAGNOSTICO TEMPORAL: se incluye la causa exacta en el mensaje para
+      // resolver el rechazo en vivo. Quitar el "(diag: ...)" una vez corregido.
       return jsonResponse({
         ok: false,
-        message: "Tu sesion de seguridad expiro o no es valida. Vuelve a iniciar sesion e intenta de nuevo.",
+        message:
+          "Tu sesion de seguridad expiro o no es valida. Vuelve a iniciar sesion e intenta de nuevo. (diag: " +
+          (auth.reason || "unknown") +
+          (auth.detail ? " | " + auth.detail : "") +
+          ")",
+        diag: auth.reason || "unknown",
+        diagDetail: auth.detail || "",
       });
     }
 
@@ -340,7 +348,26 @@ function getFirebaseApiKey() {
 function verifyFirebaseIdToken(idToken) {
   try {
     const apiKey = getFirebaseApiKey();
-    if (!apiKey) return { ok: false };
+    if (!apiKey) return { ok: false, reason: "no-api-key" };
+
+    // Cache de verificacion: la llamada a Identity Toolkit consume cuota diaria
+    // de UrlFetchApp (20k/dia en cuentas Gmail, compartida entre todos los
+    // scripts de la cuenta). El mismo idToken es valido ~1h y el aprendiz puede
+    // entregar/reintentar varias veces, asi que cacheamos el resultado OK por
+    // token ~30 min para no agotar la cuota (causa real del "sesion expiro").
+    const cache = CacheService.getScriptCache();
+    const cacheKey =
+      "idtok_" +
+      Utilities.base64EncodeWebSafe(
+        Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, idToken)
+      );
+    const cached = cache.get(cacheKey);
+    if (cached) {
+      try {
+        return JSON.parse(cached);
+      } catch (_) {}
+    }
+
     const url =
       "https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=" +
       encodeURIComponent(apiKey);
@@ -350,13 +377,26 @@ function verifyFirebaseIdToken(idToken) {
       payload: JSON.stringify({ idToken: idToken }),
       muteHttpExceptions: true,
     });
-    if (response.getResponseCode() !== 200) return { ok: false };
-    const body = JSON.parse(response.getContentText() || "{}");
-    if (!Array.isArray(body.users) || body.users.length === 0) return { ok: false };
+    const code = response.getResponseCode();
+    const text = String(response.getContentText() || "");
+    if (code !== 200) {
+      // Causas tipicas: 403 = la API key tiene restriccion de referente HTTP o
+      // Identity Toolkit API deshabilitada; 400 = key de otro proyecto o token
+      // realmente vencido. El detalle de Google ayuda a distinguirlas.
+      Logger.log("verifyFirebaseIdToken lookup HTTP " + code + ": " + text);
+      return { ok: false, reason: "lookup-http-" + code, detail: text.slice(0, 400) };
+    }
+    const body = JSON.parse(text || "{}");
+    if (!Array.isArray(body.users) || body.users.length === 0) {
+      return { ok: false, reason: "no-users" };
+    }
     const u = body.users[0];
-    return { ok: true, email: u.email || "", uid: u.localId || "" };
-  } catch (_) {
-    return { ok: false };
+    const result = { ok: true, email: u.email || "", uid: u.localId || "" };
+    cache.put(cacheKey, JSON.stringify(result), 1800); // 30 min
+    return result;
+  } catch (err) {
+    Logger.log("verifyFirebaseIdToken exception: " + err);
+    return { ok: false, reason: "exception", detail: String(err).slice(0, 400) };
   }
 }
 
