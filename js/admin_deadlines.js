@@ -1,4 +1,12 @@
 (function () {
+  // Fallback de escape HTML para cuando el modulo se usa sin pasar deps.escapeHtml.
+  // Defensa en profundidad: los llamadores normales siempre pasan escapeHtml.
+  function fallbackEscapeHtml(value) {
+    return String(value || "").replace(/[&<>"']/g, function (ch) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch];
+    });
+  }
+
   function getConfigGuides(users, deps) {
     const auth = deps?.auth || null;
     const deadlineManager = deps?.deadlineManager || null;
@@ -14,7 +22,7 @@
   function buildConfigPanel(users, deps) {
     const auth = deps?.auth || null;
     const deadlineManager = deps?.deadlineManager || null;
-    const escapeHtml = typeof deps?.escapeHtml === "function" ? deps.escapeHtml : (value) => String(value || "");
+    const escapeHtml = typeof deps?.escapeHtml === "function" ? deps.escapeHtml : fallbackEscapeHtml;
 
     if (!deadlineManager || !users.length) {
       return "";

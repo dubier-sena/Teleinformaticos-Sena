@@ -1,4 +1,12 @@
 (function () {
+  // Fallback de escape HTML para cuando el modulo se usa sin pasar deps.escapeHtml.
+  // Defensa en profundidad: los llamadores normales siempre pasan escapeHtml.
+  function fallbackEscapeHtml(value) {
+    return String(value || "").replace(/[&<>"']/g, function (ch) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch];
+    });
+  }
+
   function getQuizStatusLabel(summary) {
     const statusText = getQuizStatusText(summary);
     const statusClass = summary?.status === "terminated_visibility"
@@ -31,7 +39,7 @@
 
   function getSocializationActivityStatusHtml(summary, deps) {
     const formatDate = typeof deps?.formatDate === "function" ? deps.formatDate : (value) => String(value || "");
-    const escapeHtml = typeof deps?.escapeHtml === "function" ? deps.escapeHtml : (value) => String(value || "");
+    const escapeHtml = typeof deps?.escapeHtml === "function" ? deps.escapeHtml : fallbackEscapeHtml;
     return summary?.locked
       ? `<span class="act-delivery-status act-delivery-status--sent">Enviado</span>
          <small class="act-delivery-filename">${escapeHtml(formatDate(summary.updatedAt))}</small>`
@@ -39,7 +47,7 @@
   }
 
   function getQuizActivityStatusHtml(summary, deps) {
-    const escapeHtml = typeof deps?.escapeHtml === "function" ? deps.escapeHtml : (value) => String(value || "");
+    const escapeHtml = typeof deps?.escapeHtml === "function" ? deps.escapeHtml : fallbackEscapeHtml;
     return summary
       ? `<span class="act-delivery-status act-delivery-status--sent">${escapeHtml(getQuizStatusText(summary))}</span>
          <small class="act-delivery-filename">${escapeHtml(getQuizScoreText(summary))}</small>`
@@ -47,7 +55,7 @@
   }
 
   function getUnlockButtonHtml(config, deps) {
-    const escapeHtml = typeof deps?.escapeHtml === "function" ? deps.escapeHtml : (value) => String(value || "");
+    const escapeHtml = typeof deps?.escapeHtml === "function" ? deps.escapeHtml : fallbackEscapeHtml;
     const type = config?.type === "quiz" ? "quiz" : "activity";
     const attrName = type === "quiz" ? "data-unlock-redes-quiz" : "data-unlock-redes-activity";
     const label = config?.label || "Reabrir";
@@ -59,7 +67,7 @@
 
   function getQuizEvidenceHtml(summary, deps) {
     const formatDate = typeof deps?.formatDate === "function" ? deps.formatDate : (value) => String(value || "");
-    const escapeHtml = typeof deps?.escapeHtml === "function" ? deps.escapeHtml : (value) => String(value || "");
+    const escapeHtml = typeof deps?.escapeHtml === "function" ? deps.escapeHtml : fallbackEscapeHtml;
     const events = Array.isArray(summary?.evidenceEvents) ? summary.evidenceEvents : [];
 
     if (!events.length) {
@@ -103,7 +111,7 @@
     const metaParts = Array.isArray(config?.metaParts) ? config.metaParts.slice() : [];
     const activityLabel = config?.activityLabel || "Socializacion";
     const formatDate = typeof deps?.formatDate === "function" ? deps.formatDate : (value) => String(value || "");
-    const escapeHtml = typeof deps?.escapeHtml === "function" ? deps.escapeHtml : (value) => String(value || "");
+    const escapeHtml = typeof deps?.escapeHtml === "function" ? deps.escapeHtml : fallbackEscapeHtml;
     const renderAnswerTable = typeof deps?.renderAnswerTable === "function" ? deps.renderAnswerTable : () => "";
     metaParts.push(`Actualizado: ${formatDate(summary.updatedAt)}`);
 
@@ -130,7 +138,7 @@
     const snapshot = config?.snapshot || null;
     const activityLabel = config?.activityLabel || "Actividad";
     const formatDate = typeof deps?.formatDate === "function" ? deps.formatDate : (value) => String(value || "");
-    const escapeHtml = typeof deps?.escapeHtml === "function" ? deps.escapeHtml : (value) => String(value || "");
+    const escapeHtml = typeof deps?.escapeHtml === "function" ? deps.escapeHtml : fallbackEscapeHtml;
     const renderAnswerTable = typeof deps?.renderAnswerTable === "function" ? deps.renderAnswerTable : () => "";
     const rows = getActivityStateRows(activity, state);
 

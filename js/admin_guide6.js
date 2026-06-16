@@ -1,4 +1,12 @@
 (function () {
+  // Fallback de escape HTML para cuando el modulo se usa sin pasar deps.escapeHtml.
+  // Defensa en profundidad: los llamadores normales siempre pasan escapeHtml.
+  function fallbackEscapeHtml(value) {
+    return String(value || "").replace(/[&<>"']/g, function (ch) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch];
+    });
+  }
+
   const INSTALL_IDS = ["suite", "browser", "email", "zip", "antivirus", "diagnostic"];
   const DIAG_IDS = ["hardware", "so", "disk", "software", "network"];
   const BUDGET_IDS = ["suite", "diagnostic", "security", "cloud", "backup"];
@@ -29,7 +37,7 @@
   function renderActivityResponsesBody(activityId, state, deps) {
     const renderAnswerTable = typeof deps?.renderAnswerTable === "function" ? deps.renderAnswerTable : () => "";
     const formatDate = typeof deps?.formatDate === "function" ? deps.formatDate : (value) => String(value || "");
-    const escapeHtml = typeof deps?.escapeHtml === "function" ? deps.escapeHtml : (value) => String(value || "");
+    const escapeHtml = typeof deps?.escapeHtml === "function" ? deps.escapeHtml : fallbackEscapeHtml;
     const val = (key) => String(state?.[key] ?? "").trim() || "Sin respuesta";
     const chk = (key) => state?.[key] ? "Si" : "No";
 
@@ -93,7 +101,7 @@
   function renderFullResponsesBody(state, deps) {
     const renderAnswerTable = typeof deps?.renderAnswerTable === "function" ? deps.renderAnswerTable : () => "";
     const formatDate = typeof deps?.formatDate === "function" ? deps.formatDate : (value) => String(value || "");
-    const escapeHtml = typeof deps?.escapeHtml === "function" ? deps.escapeHtml : (value) => String(value || "");
+    const escapeHtml = typeof deps?.escapeHtml === "function" ? deps.escapeHtml : fallbackEscapeHtml;
     const val = (key) => String(state?.[key] ?? "").trim() || "Sin respuesta";
     const chk = (key) => state?.[key] ? "Si" : "No";
     const quiz = state?.["quiz-guia6-312"];

@@ -215,14 +215,12 @@ function saveStateRedes(options) {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-function escapeHtml(str) {
-  if (str == null) return "";
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+function escapeHtml(value) {
+  var u = window.portalUtils;
+  if (u && typeof u.escapeHtml === "function") return u.escapeHtml(value);
+  return String(value == null ? "" : value).replace(/[&<>"']/g, function (ch) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch];
+  });
 }
 
 const REDES_WORD_METADATA = {
@@ -609,7 +607,7 @@ function restoreImagenBloqueA() {
     if (preview) preview.style.display = "block";
     if (nombre) nombre.innerHTML =
       `<a href="${driveUrl}" target="_blank" rel="noopener" style="color:#1e40af">&#128194; Ver imagen en Drive</a>` +
-      ` &mdash; ${state["bloqueA-imagen-nombre"] || "imagen guardada"}`;
+      ` &mdash; ${escapeHtml(state["bloqueA-imagen-nombre"] || "imagen guardada")}`;
   } else if (localBase64) {
     if (img) img.src = localBase64;
     if (preview) preview.style.display = "block";
@@ -733,7 +731,7 @@ function restoreImagenBloqueB() {
     if (preview) preview.style.display = "block";
     if (nombre) nombre.innerHTML =
       `<a href="${driveUrl}" target="_blank" rel="noopener" style="color:#1e40af">&#128194; Ver imagen en Drive</a>` +
-      ` &mdash; ${state["bloqueB-imagen-nombre"] || "imagen guardada"}`;
+      ` &mdash; ${escapeHtml(state["bloqueB-imagen-nombre"] || "imagen guardada")}`;
   } else if (localBase64) {
     if (img) img.src = localBase64;
     if (preview) preview.style.display = "block";
@@ -938,7 +936,7 @@ function restoreImagenBloqueE() {
     if (preview) preview.style.display = "block";
     if (nombre) nombre.innerHTML =
       `<a href="${driveUrl}" target="_blank" rel="noopener" style="color:#1e40af">&#128194; Ver imagen en Drive</a>` +
-      ` &mdash; ${state["bloqueE-imagen-nombre"] || "imagen guardada"}`;
+      ` &mdash; ${escapeHtml(state["bloqueE-imagen-nombre"] || "imagen guardada")}`;
   } else if (localBase64) {
     if (img) img.src = localBase64;
     if (preview) preview.style.display = "block";
@@ -2203,7 +2201,7 @@ function restorePantallazoTallerIPEj4() {
     if (img) img.src = thumb || driveUrl;
     if (preview) preview.style.display = "block";
     if (nombre) {
-      nombre.innerHTML = `<a href="${driveUrl}" target="_blank" rel="noopener">Ver pantallazo en Drive</a> \u2014 ${state["ej4-captura-nombre"] || "pantallazo adjunto"}`;
+      nombre.innerHTML = `<a href="${driveUrl}" target="_blank" rel="noopener">Ver pantallazo en Drive</a> \u2014 ${escapeHtml(state["ej4-captura-nombre"] || "pantallazo adjunto")}`;
     }
     if (uploadBtn && !state["taller-ip-ej4-locked"]) uploadBtn.innerHTML = "&#128247; Cambiar pantallazo";
     return;
@@ -3133,7 +3131,7 @@ function restoreImagenBloqueIP3() {
     if (img) img.src = thumb || driveUrl;
     if (preview) preview.style.display = "block";
     if (nombre) nombre.innerHTML =
-      `<a href="${driveUrl}" target="_blank" rel="noopener">Ver en Drive</a> \u2014 ${state["ip3-imagen-nombre"] || "imagen adjunta"}`;
+      `<a href="${driveUrl}" target="_blank" rel="noopener">Ver en Drive</a> \u2014 ${escapeHtml(state["ip3-imagen-nombre"] || "imagen adjunta")}`;
   } else if (localBase64) {
     if (img) img.src = localBase64;
     if (preview) preview.style.display = "block";
@@ -3251,7 +3249,7 @@ function restoreImagenBloqueIP1() {
     if (img) img.src = thumb || driveUrl;
     if (preview) preview.style.display = "block";
     if (nombre) nombre.innerHTML =
-      `<a href="${driveUrl}" target="_blank" rel="noopener">Ver en Drive</a> \u2014 ${state["ip1-imagen-nombre"] || "imagen adjunta"}`;
+      `<a href="${driveUrl}" target="_blank" rel="noopener">Ver en Drive</a> \u2014 ${escapeHtml(state["ip1-imagen-nombre"] || "imagen adjunta")}`;
   } else if (localBase64) {
     if (img) img.src = localBase64;
     if (preview) preview.style.display = "block";
@@ -3369,7 +3367,7 @@ function restoreImagenSocial() {
     if (img) img.src = thumb || driveUrl;
     if (preview) preview.style.display = "block";
     if (nombre) nombre.innerHTML =
-      `<a href="${driveUrl}" target="_blank" rel="noopener">Ver en Drive</a> \u2014 ${state["social-mapa-nombre"] || "mapa adjunto"}`;
+      `<a href="${driveUrl}" target="_blank" rel="noopener">Ver en Drive</a> \u2014 ${escapeHtml(state["social-mapa-nombre"] || "mapa adjunto")}`;
   } else if (localBase64) {
     if (img) img.src = localBase64;
     if (preview) preview.style.display = "block";
