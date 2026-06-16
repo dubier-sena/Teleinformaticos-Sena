@@ -151,7 +151,7 @@
     };
     const url = folders[sel.ficha] || "";
     if (url) window.open(url, "_blank", "noopener,noreferrer");
-    else alert("Selecciona primero tu ficha desde el panel lateral.");
+    else window.portalAlert("Selecciona primero tu ficha desde el panel lateral.", { type: "warning" });
   }
 
   function mountDriveDelivery() {
@@ -213,8 +213,8 @@
   function bindReset() {
     const btn = document.getElementById("resetProgress");
     if (!btn) return;
-    btn.addEventListener("click", () => {
-      if (!confirm("¿Reiniciar todas las respuestas guardadas en este navegador? Esta accion no se puede deshacer.")) return;
+    btn.addEventListener("click", async () => {
+      if (!(await window.portalConfirm("¿Reiniciar todas las respuestas guardadas en este navegador? Esta accion no se puede deshacer.", { title: "Reiniciar respuestas", confirmText: "Reiniciar" }))) return;
       state = {};
       try {
         localStorage.removeItem(STORAGE_KEY);

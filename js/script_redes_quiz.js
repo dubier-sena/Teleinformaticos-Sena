@@ -570,8 +570,9 @@
       return;
     }
 
-    const confirmed = window.confirm(
-      "Al enviar y finalizar, el quiz quedara bloqueado y ya no podras cambiar tus respuestas. Deseas continuar?"
+    const confirmed = await window.portalConfirm(
+      "Al enviar y finalizar, el quiz quedara bloqueado y ya no podras cambiar tus respuestas. Deseas continuar?",
+      { title: "Enviar y finalizar", confirmText: "Enviar" }
     );
     if (!confirmed) {
       return;
@@ -624,8 +625,9 @@
     renderStats();
 
     if (attempt.warningCount >= 2) {
-      window.alert(
-        "Advertencia 2 de 2: cambiaste de pestana nuevamente. El quiz se cerrara ahora y se enviara con lo contestado hasta este momento."
+      window.portalAlert(
+        "Advertencia 2 de 2: cambiaste de pestana nuevamente. El quiz se cerrara ahora y se enviara con lo contestado hasta este momento.",
+        { type: "warning", duration: 0 }
       );
       await finalizeQuiz("terminated_visibility");
       return;
@@ -636,8 +638,9 @@
       "Se detecto un cambio de pestana durante el intento. En la segunda advertencia el quiz se finaliza automaticamente.",
       "warning"
     );
-    window.alert(
-      "Advertencia 1 de 2: se detecto un cambio de pestana. Si vuelves a salir, el quiz se enviara automaticamente y quedara bloqueado."
+    window.portalAlert(
+      "Advertencia 1 de 2: se detecto un cambio de pestana. Si vuelves a salir, el quiz se enviara automaticamente y quedara bloqueado.",
+      { type: "warning", duration: 0 }
     );
     renderView();
   }

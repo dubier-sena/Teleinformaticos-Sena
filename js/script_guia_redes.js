@@ -619,7 +619,7 @@ window.subirImagenBloqueA = async function (input) {
   const file = input.files && input.files[0];
   if (!file) return;
   if (file.size > 5 * 1024 * 1024) {
-    alert("La imagen es demasiado grande (máx. 5 MB). Usa una foto más pequeña o comprímela.");
+    window.portalAlert("La imagen es demasiado grande (máx. 5 MB). Usa una foto más pequeña o comprímela.", { type: "warning" });
     input.value = "";
     return;
   }
@@ -672,7 +672,7 @@ window.subirImagenBloqueA = async function (input) {
 
     if (label) { label.innerHTML = "&#128247; Cambiar imagen"; label.style.pointerEvents = ""; }
   } catch (err) {
-    alert("Error al subir imagen: " + ((err && err.message) || "Intenta de nuevo."));
+    window.portalAlert("Error al subir imagen: " + ((err && err.message) || "Intenta de nuevo."), { type: "error" });
     if (label) { label.innerHTML = originalLabel; label.style.pointerEvents = ""; }
   }
 };
@@ -680,7 +680,7 @@ window.subirImagenBloqueA = async function (input) {
 window.guardarBloqueA = async function () {
   const empty = BLOQUEA_KEYS.slice(0, 3).filter((k) => !String(state[k] || "").trim());
   if (empty.length > 0) {
-    alert("Responde las 3 preguntas antes de guardar.");
+    window.portalAlert("Responde las 3 preguntas antes de guardar.", { type: "warning" });
     return;
   }
   const btn = document.getElementById("btnGuardarBloqueA");
@@ -743,7 +743,7 @@ window.subirImagenBloqueB = async function (input) {
   const file = input.files && input.files[0];
   if (!file) return;
   if (file.size > 5 * 1024 * 1024) {
-    alert("La imagen es demasiado grande (máx. 5 MB). Usa una foto más pequeña o comprímela.");
+    window.portalAlert("La imagen es demasiado grande (máx. 5 MB). Usa una foto más pequeña o comprímela.", { type: "warning" });
     input.value = "";
     return;
   }
@@ -794,7 +794,7 @@ window.subirImagenBloqueB = async function (input) {
 
     if (label) { label.innerHTML = "&#128247; Cambiar imagen"; label.style.pointerEvents = ""; }
   } catch (err) {
-    alert("Error al subir imagen: " + ((err && err.message) || "Intenta de nuevo."));
+    window.portalAlert("Error al subir imagen: " + ((err && err.message) || "Intenta de nuevo."), { type: "error" });
     if (label) { label.innerHTML = originalLabel; label.style.pointerEvents = ""; }
   }
 };
@@ -802,7 +802,7 @@ window.subirImagenBloqueB = async function (input) {
 window.guardarBloqueB = async function () {
   const empty = BLOQUEB_KEYS.filter((k) => !String(state[k] || "").trim());
   if (empty.length > 0) {
-    alert("Responde las 3 preguntas antes de guardar.");
+    window.portalAlert("Responde las 3 preguntas antes de guardar.", { type: "warning" });
     return;
   }
   const btn = document.getElementById("btnGuardarBloqueB");
@@ -836,7 +836,7 @@ function applyBloqueCLock() {
 window.guardarBloqueC = async function () {
   const empty = BLOQUEC_KEYS.filter((k) => !String(state[k] || "").trim());
   if (empty.length > 0) {
-    alert("Responde las 3 preguntas antes de guardar.");
+    window.portalAlert("Responde las 3 preguntas antes de guardar.", { type: "warning" });
     return;
   }
   const btn = document.getElementById("btnGuardarBloqueC");
@@ -885,7 +885,7 @@ function applyBloqueDLock() {
 window.guardarBloqueD = async function () {
   const empty = BLOQUED_KEYS.filter((k) => !String(state[k] || "").trim());
   if (empty.length > 0) {
-    alert("Responde las 3 preguntas antes de guardar.");
+    window.portalAlert("Responde las 3 preguntas antes de guardar.", { type: "warning" });
     return;
   }
   const btn = document.getElementById("btnGuardarBloqueD");
@@ -948,7 +948,7 @@ window.subirImagenBloqueE = async function (input) {
   const file = input.files && input.files[0];
   if (!file) return;
   if (file.size > 5 * 1024 * 1024) {
-    alert("La imagen es demasiado grande (máx. 5 MB). Usa una foto más pequeña o comprímela.");
+    window.portalAlert("La imagen es demasiado grande (máx. 5 MB). Usa una foto más pequeña o comprímela.", { type: "warning" });
     input.value = "";
     return;
   }
@@ -999,7 +999,7 @@ window.subirImagenBloqueE = async function (input) {
 
     if (label) { label.innerHTML = "&#128247; Cambiar imagen"; label.style.pointerEvents = ""; }
   } catch (err) {
-    alert("Error al subir imagen: " + ((err && err.message) || "Intenta de nuevo."));
+    window.portalAlert("Error al subir imagen: " + ((err && err.message) || "Intenta de nuevo."), { type: "error" });
     if (label) { label.innerHTML = originalLabel; label.style.pointerEvents = ""; }
   }
 };
@@ -1007,7 +1007,7 @@ window.subirImagenBloqueE = async function (input) {
 window.guardarBloqueE = async function () {
   const empty = BLOQUEE_KEYS.filter((k) => !String(state[k] || "").trim());
   if (empty.length > 0) {
-    alert("Responde las 3 preguntas antes de guardar.");
+    window.portalAlert("Responde las 3 preguntas antes de guardar.", { type: "warning" });
     return;
   }
   const btn = document.getElementById("btnGuardarBloqueE");
@@ -1297,14 +1297,14 @@ window.exportarWordContextualizacion = async function (evt) {
     }
 
   } catch (err) {
-    alert("Error al generar el Word: " + ((err && err.message) || "Intenta de nuevo."));
+    window.portalAlert("Error al generar el Word: " + ((err && err.message) || "Intenta de nuevo."), { type: "error" });
     if (btn) { btn.disabled = false; btn.innerHTML = origHTML; }
   }
 };
 
 window.enviarSocializacion311 = async function () {
   if (!String(state["reflexion-socializacion"] || "").trim()) {
-    alert("Escribe tus notas de la socialización antes de enviar.");
+    window.portalAlert("Escribe tus notas de la socialización antes de enviar.", { type: "warning" });
     return;
   }
   const btn = document.getElementById("btnEnviarSocializacion");
@@ -1375,7 +1375,7 @@ function bindEventsRedes() {
   const resetBtn = document.getElementById("resetProgress");
   if (resetBtn) {
     resetBtn.addEventListener("click", async () => {
-      if (!window.confirm("Se borraran las respuestas guardadas localmente. Deseas continuar?")) return;
+      if (!(await window.portalConfirm("Se borraran las respuestas guardadas localmente. Deseas continuar?", { title: "Reiniciar progreso", confirmText: "Borrar" }))) return;
       window.clearGuideActivityChecks?.();
       window.clearGuideLayoutState?.();
       localStorage.removeItem(STORAGE_KEY_REDES);
@@ -1630,7 +1630,7 @@ function applyReflexionLock() {
 window.guardarReflexion311 = async function () {
   const empty = REFLEXION_311_KEYS.filter((k) => !String(state[k] || "").trim());
   if (empty.length > 0) {
-    alert("Por favor responde todas las preguntas antes de guardar.");
+    window.portalAlert("Por favor responde todas las preguntas antes de guardar.", { type: "warning" });
     return;
   }
   const btn = document.getElementById("btnGuardarReflexion");
@@ -1819,7 +1819,7 @@ ${b3Rows}${b3Img}
 
     if (btn) { btn.disabled = false; btn.innerHTML = origHTML; }
   } catch (err) {
-    alert("Error al generar el Word: " + ((err && err.message) || "Intenta de nuevo."));
+    window.portalAlert("Error al generar el Word: " + ((err && err.message) || "Intenta de nuevo."), { type: "error" });
     if (btn) { btn.disabled = false; btn.innerHTML = origHTML; }
   }
 };
@@ -2002,7 +2002,7 @@ ${screenshotBlock}
 
     if (btn) { btn.disabled = false; btn.innerHTML = origHTML; }
   } catch (err) {
-    alert("Error al generar el Word: " + ((err && err.message) || "Intenta de nuevo."));
+    window.portalAlert("Error al generar el Word: " + ((err && err.message) || "Intenta de nuevo."), { type: "error" });
     if (btn) { btn.disabled = false; btn.innerHTML = origHTML; }
   }
 };
@@ -2032,7 +2032,7 @@ function applyBloqueIP2Lock() {
 window.guardarBloqueIP2 = async function () {
   const empty = ["ip2-1", "ip2-2", "ip2-3"].filter((k) => !String(state[k] || "").trim());
   if (empty.length > 0) {
-    alert("Responde las 3 preguntas antes de guardar.");
+    window.portalAlert("Responde las 3 preguntas antes de guardar.", { type: "warning" });
     return;
   }
   const btn = document.getElementById("btnGuardarIP2");
@@ -2075,7 +2075,7 @@ function applyTallerIPEj1Lock() {
 window.guardarTallerIPEj1 = async function () {
   const empty = TALLER_IP_EJ1_KEYS.filter((k) => !String(state[k] || "").trim());
   if (empty.length > 0) {
-    alert("Completa todas las respuestas del Ejercicio 1 antes de guardar.");
+    window.portalAlert("Completa todas las respuestas del Ejercicio 1 antes de guardar.", { type: "warning" });
     return;
   }
   const btn = document.getElementById("btnGuardarTallerIPEj1");
@@ -2111,7 +2111,7 @@ function applyTallerIPEj2Lock() {
 window.guardarTallerIPEj2 = async function () {
   const empty = TALLER_IP_EJ2_KEYS.filter((k) => !String(state[k] || "").trim());
   if (empty.length > 0) {
-    alert("Completa todas las respuestas del Ejercicio 2 antes de guardar.");
+    window.portalAlert("Completa todas las respuestas del Ejercicio 2 antes de guardar.", { type: "warning" });
     return;
   }
   const btn = document.getElementById("btnGuardarTallerIPEj2");
@@ -2152,7 +2152,7 @@ function applyTallerIPEj3Lock() {
 window.guardarTallerIPEj3 = async function () {
   const empty = TALLER_IP_EJ3_KEYS.filter((k) => !String(state[k] || "").trim());
   if (empty.length > 0) {
-    alert("Completa todas las respuestas del Ejercicio 3 antes de guardar.");
+    window.portalAlert("Completa todas las respuestas del Ejercicio 3 antes de guardar.", { type: "warning" });
     return;
   }
   const btn = document.getElementById("btnGuardarTallerIPEj3");
@@ -2218,7 +2218,7 @@ window.subirPantallazoTallerIPEj4 = async function (input) {
   const file = input.files && input.files[0];
   if (!file) return;
   if (file.size > 5 * 1024 * 1024) {
-    alert("La imagen es demasiado grande (m\u00e1x. 5 MB). Usa un pantallazo m\u00e1s liviano.");
+    window.portalAlert("La imagen es demasiado grande (m\u00e1x. 5 MB). Usa un pantallazo m\u00e1s liviano.", { type: "warning" });
     input.value = "";
     return;
   }
@@ -2275,7 +2275,7 @@ window.subirPantallazoTallerIPEj4 = async function (input) {
       uploadBtn.style.pointerEvents = "";
     }
   } catch (err) {
-    alert("Error al subir el pantallazo: " + ((err && err.message) || "Intenta de nuevo."));
+    window.portalAlert("Error al subir el pantallazo: " + ((err && err.message) || "Intenta de nuevo."), { type: "error" });
     if (uploadBtn) {
       uploadBtn.innerHTML = originalLabel;
       uploadBtn.style.pointerEvents = "";
@@ -2286,11 +2286,11 @@ window.subirPantallazoTallerIPEj4 = async function (input) {
 window.guardarTallerIPEj4 = async function () {
   const empty = TALLER_IP_EJ4_KEYS.filter((k) => !String(state[k] || "").trim());
   if (empty.length > 0) {
-    alert("Responde las 4 preguntas del Ejercicio 4 antes de guardar.");
+    window.portalAlert("Responde las 4 preguntas del Ejercicio 4 antes de guardar.", { type: "warning" });
     return;
   }
   if (!state["ej4-captura"] && !state["ej4-captura-url"]) {
-    alert("Primero sube el pantallazo de ipconfig /all.");
+    window.portalAlert("Primero sube el pantallazo de ipconfig /all.", { type: "warning" });
     return;
   }
   const btn = document.getElementById("btnGuardarTallerIPEj4");
@@ -2328,7 +2328,7 @@ function applyTallerIPEj5Lock() {
 window.guardarTallerIPEj5 = async function () {
   const empty = TALLER_IP_EJ5_KEYS.filter((k) => !String(state[k] || "").trim());
   if (empty.length > 0) {
-    alert("Completa todas las respuestas del Ejercicio 5 antes de guardar.");
+    window.portalAlert("Completa todas las respuestas del Ejercicio 5 antes de guardar.", { type: "warning" });
     return;
   }
   const btn = document.getElementById("btnGuardarTallerIPEj5");
@@ -2461,7 +2461,7 @@ window.subirPantallazoLab1 = async function (slotKey, input) {
   if (!slot || !file) return;
 
   if (file.size > 5 * 1024 * 1024) {
-    alert("La imagen es demasiado grande (max. 5 MB). Usa un pantallazo mas liviano.");
+    window.portalAlert("La imagen es demasiado grande (max. 5 MB). Usa un pantallazo mas liviano.", { type: "warning" });
     input.value = "";
     return;
   }
@@ -2526,7 +2526,7 @@ window.subirPantallazoLab1 = async function (slotKey, input) {
     }
     if (input) input.value = "";
   } catch (err) {
-    alert("Error al subir el pantallazo: " + ((err && err.message) || "Intenta de nuevo."));
+    window.portalAlert("Error al subir el pantallazo: " + ((err && err.message) || "Intenta de nuevo."), { type: "error" });
     if (uploadBtn) {
       uploadBtn.innerHTML = originalLabel;
       uploadBtn.style.pointerEvents = "";
@@ -2537,13 +2537,13 @@ window.subirPantallazoLab1 = async function (slotKey, input) {
 window.guardarLab1Transferencia = async function () {
   const emptyAnalysis = LAB1_ANALYSIS_KEYS.filter((key) => !String(state[key] || "").trim());
   if (emptyAnalysis.length > 0) {
-    alert("Responde las 4 preguntas del analisis antes de guardar.");
+    window.portalAlert("Responde las 4 preguntas del analisis antes de guardar.", { type: "warning" });
     return;
   }
 
   const pendingEvidence = Object.keys(LAB1_EVIDENCE_SLOTS).filter((slotKey) => !state[getLab1EvidenceStateKey(slotKey, "url")]);
   if (pendingEvidence.length > 0) {
-    alert("Debes subir los 4 pantallazos del laboratorio antes de guardar.");
+    window.portalAlert("Debes subir los 4 pantallazos del laboratorio antes de guardar.", { type: "warning" });
     return;
   }
 
@@ -2564,7 +2564,7 @@ window.subirEntregaFinalLab1 = function () {
     !window.sharedAppsScriptDelivery ||
     typeof window.sharedAppsScriptDelivery.openDeliveryModal !== "function"
   ) {
-    alert("El sistema de entrega no esta disponible en este momento.");
+    window.portalAlert("El sistema de entrega no esta disponible en este momento.", { type: "error" });
     return;
   }
 
@@ -2706,7 +2706,7 @@ window.subirPantallazoLab2 = async function (slotKey, input) {
   if (!slot || !file) return;
 
   if (file.size > 5 * 1024 * 1024) {
-    alert("La imagen es demasiado grande (max. 5 MB). Usa un pantallazo mas liviano.");
+    window.portalAlert("La imagen es demasiado grande (max. 5 MB). Usa un pantallazo mas liviano.", { type: "warning" });
     input.value = "";
     return;
   }
@@ -2771,7 +2771,7 @@ window.subirPantallazoLab2 = async function (slotKey, input) {
     }
     if (input) input.value = "";
   } catch (err) {
-    alert("Error al subir el pantallazo: " + ((err && err.message) || "Intenta de nuevo."));
+    window.portalAlert("Error al subir el pantallazo: " + ((err && err.message) || "Intenta de nuevo."), { type: "error" });
     if (uploadBtn) {
       uploadBtn.innerHTML = originalLabel;
       uploadBtn.style.pointerEvents = "";
@@ -2782,13 +2782,13 @@ window.subirPantallazoLab2 = async function (slotKey, input) {
 window.guardarLab2Arbol = async function () {
   const emptyAnalysis = LAB2_ANALYSIS_KEYS.filter((key) => !String(state[key] || "").trim());
   if (emptyAnalysis.length > 0) {
-    alert("Responde las 4 preguntas del analisis antes de guardar.");
+    window.portalAlert("Responde las 4 preguntas del analisis antes de guardar.", { type: "warning" });
     return;
   }
 
   const pendingEvidence = Object.keys(LAB2_EVIDENCE_SLOTS).filter((slotKey) => !state[getLab2EvidenceStateKey(slotKey, "url")]);
   if (pendingEvidence.length > 0) {
-    alert("Debes subir los 4 pantallazos del laboratorio antes de guardar.");
+    window.portalAlert("Debes subir los 4 pantallazos del laboratorio antes de guardar.", { type: "warning" });
     return;
   }
 
@@ -2809,7 +2809,7 @@ window.subirEntregaFinalLab2 = function () {
     !window.sharedAppsScriptDelivery ||
     typeof window.sharedAppsScriptDelivery.openDeliveryModal !== "function"
   ) {
-    alert("El sistema de entrega no esta disponible en este momento.");
+    window.portalAlert("El sistema de entrega no esta disponible en este momento.", { type: "error" });
     return;
   }
 
@@ -2962,7 +2962,7 @@ window.subirPantallazoLab3 = async function (slotKey, input) {
   if (!slot || !file) return;
 
   if (file.size > 5 * 1024 * 1024) {
-    alert("La imagen es demasiado grande (max. 5 MB). Usa un pantallazo mas liviano.");
+    window.portalAlert("La imagen es demasiado grande (max. 5 MB). Usa un pantallazo mas liviano.", { type: "warning" });
     input.value = "";
     return;
   }
@@ -3027,7 +3027,7 @@ window.subirPantallazoLab3 = async function (slotKey, input) {
     }
     if (input) input.value = "";
   } catch (err) {
-    alert("Error al subir el pantallazo: " + ((err && err.message) || "Intenta de nuevo."));
+    window.portalAlert("Error al subir el pantallazo: " + ((err && err.message) || "Intenta de nuevo."), { type: "error" });
     if (uploadBtn) {
       uploadBtn.innerHTML = originalLabel;
       uploadBtn.style.pointerEvents = "";
@@ -3038,7 +3038,7 @@ window.subirPantallazoLab3 = async function (slotKey, input) {
 window.guardarLab3Hibrida = async function () {
   const emptyAnalysis = LAB3_ANALYSIS_KEYS.filter((key) => !String(state[key] || "").trim());
   if (emptyAnalysis.length > 0) {
-    alert("Responde las 5 preguntas del analisis antes de guardar.");
+    window.portalAlert("Responde las 5 preguntas del analisis antes de guardar.", { type: "warning" });
     return;
   }
 
@@ -3046,7 +3046,7 @@ window.guardarLab3Hibrida = async function () {
     (slotKey) => !state[getLab3EvidenceStateKey(slotKey, "url")]
   );
   if (pendingEvidence.length > 0) {
-    alert("Debes subir los 5 pantallazos del laboratorio antes de guardar.");
+    window.portalAlert("Debes subir los 5 pantallazos del laboratorio antes de guardar.", { type: "warning" });
     return;
   }
 
@@ -3067,7 +3067,7 @@ window.subirEntregaFinalLab3 = function () {
     !window.sharedAppsScriptDelivery ||
     typeof window.sharedAppsScriptDelivery.openDeliveryModal !== "function"
   ) {
-    alert("El sistema de entrega no esta disponible en este momento.");
+    window.portalAlert("El sistema de entrega no esta disponible en este momento.", { type: "error" });
     return;
   }
 
@@ -3143,7 +3143,7 @@ window.subirImagenBloqueIP3 = async function (input) {
   const file = input.files && input.files[0];
   if (!file) return;
   if (file.size > 5 * 1024 * 1024) {
-    alert("La imagen es demasiado grande (m\u00e1x. 5 MB). Usa una foto m\u00e1s peque\u00f1a o comp\u00edmela.");
+    window.portalAlert("La imagen es demasiado grande (m\u00e1x. 5 MB). Usa una foto m\u00e1s peque\u00f1a o comp\u00edmela.", { type: "warning" });
     input.value = "";
     return;
   }
@@ -3192,7 +3192,7 @@ window.subirImagenBloqueIP3 = async function (input) {
     }
     if (label) { label.innerHTML = "&#128247; Cambiar imagen"; label.style.pointerEvents = ""; }
   } catch (err) {
-    alert("Error al subir imagen: " + ((err && err.message) || "Intenta de nuevo."));
+    window.portalAlert("Error al subir imagen: " + ((err && err.message) || "Intenta de nuevo."), { type: "error" });
     if (label) { label.innerHTML = originalLabel; label.style.pointerEvents = ""; }
   }
 };
@@ -3200,7 +3200,7 @@ window.subirImagenBloqueIP3 = async function (input) {
 window.guardarBloqueIP3 = async function () {
   const empty = BLOQUE_IP3_KEYS.filter((k) => !String(state[k] || "").trim());
   if (empty.length > 0) {
-    alert("Responde las 3 preguntas antes de guardar.");
+    window.portalAlert("Responde las 3 preguntas antes de guardar.", { type: "warning" });
     return;
   }
   const btn = document.getElementById("btnGuardarIP3");
@@ -3261,7 +3261,7 @@ window.subirImagenBloqueIP1 = async function (input) {
   const file = input.files && input.files[0];
   if (!file) return;
   if (file.size > 5 * 1024 * 1024) {
-    alert("La imagen es demasiado grande (m\u00e1x. 5 MB). Usa una foto m\u00e1s peque\u00f1a o comp\u00edmela.");
+    window.portalAlert("La imagen es demasiado grande (m\u00e1x. 5 MB). Usa una foto m\u00e1s peque\u00f1a o comp\u00edmela.", { type: "warning" });
     input.value = "";
     return;
   }
@@ -3310,7 +3310,7 @@ window.subirImagenBloqueIP1 = async function (input) {
     }
     if (label) { label.innerHTML = "&#128247; Cambiar imagen"; label.style.pointerEvents = ""; }
   } catch (err) {
-    alert("Error al subir imagen: " + ((err && err.message) || "Intenta de nuevo."));
+    window.portalAlert("Error al subir imagen: " + ((err && err.message) || "Intenta de nuevo."), { type: "error" });
     if (label) { label.innerHTML = originalLabel; label.style.pointerEvents = ""; }
   }
 };
@@ -3318,7 +3318,7 @@ window.subirImagenBloqueIP1 = async function (input) {
 window.guardarBloqueIP1 = async function () {
   const empty = BLOQUE_IP1_KEYS.filter((k) => !String(state[k] || "").trim());
   if (empty.length > 0) {
-    alert("Responde las preguntas antes de guardar.");
+    window.portalAlert("Responde las preguntas antes de guardar.", { type: "warning" });
     return;
   }
   const btn = document.getElementById("btnGuardarIP1");
@@ -3379,7 +3379,7 @@ window.subirImagenSocial = async function (input) {
   const file = input.files && input.files[0];
   if (!file) return;
   if (file.size > 5 * 1024 * 1024) {
-    alert("La imagen es demasiado grande (m\u00e1x. 5 MB). Usa una foto m\u00e1s peque\u00f1a o comp\u00edmela.");
+    window.portalAlert("La imagen es demasiado grande (m\u00e1x. 5 MB). Usa una foto m\u00e1s peque\u00f1a o comp\u00edmela.", { type: "warning" });
     input.value = "";
     return;
   }
@@ -3430,7 +3430,7 @@ window.subirImagenSocial = async function (input) {
 
     if (label) { label.innerHTML = "&#128247; Cambiar imagen"; label.style.pointerEvents = ""; }
   } catch (err) {
-    alert("Error al subir imagen: " + ((err && err.message) || "Intenta de nuevo."));
+    window.portalAlert("Error al subir imagen: " + ((err && err.message) || "Intenta de nuevo."), { type: "error" });
     if (label) { label.innerHTML = originalLabel; label.style.pointerEvents = ""; }
   }
 };
@@ -3438,7 +3438,7 @@ window.subirImagenSocial = async function (input) {
 window.guardarSocializacion = async function () {
   const empty = SOCIAL_KEYS.filter((k) => !String(state[k] || "").trim());
   if (empty.length > 0) {
-    alert("Responde las 4 preguntas antes de guardar.");
+    window.portalAlert("Responde las 4 preguntas antes de guardar.", { type: "warning" });
     return;
   }
   const btn = document.getElementById("btnGuardarSocial");

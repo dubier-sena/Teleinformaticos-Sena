@@ -843,8 +843,9 @@ function getDriveFolderUrl() {
 }
 
 function showDriveSelectionAlert() {
-  window.alert(
-    "No se encontro la carpeta de Drive para esta ficha. Regresa al portal y verifica que el grupo seleccionado sea el correcto."
+  window.portalAlert(
+    "No se encontro la carpeta de Drive para esta ficha. Regresa al portal y verifica que el grupo seleccionado sea el correcto.",
+    { type: "warning" }
   );
 }
 
@@ -1187,7 +1188,7 @@ function renderEquipoGuia6Roster(actId) {
       const checked = mount.querySelectorAll(`input[data-equipo-guia6-act="${actId}"]:checked`).length;
       if (checked > 2) {
         cb.checked = false;
-        alert("La guia indica equipos de 3 integrantes. Solo puedes seleccionar 2 companeros. Desmarca uno antes de agregar otro.");
+        window.portalAlert("La guia indica equipos de 3 integrantes. Solo puedes seleccionar 2 companeros. Desmarca uno antes de agregar otro.", { type: "warning" });
       }
     });
   });
@@ -1200,7 +1201,7 @@ function confirmarEquipoGuia6(actId) {
   const selection = getGuideSelection();
   const ficha = String(selection.ficha || "").trim();
   if (!selfKey || !ficha) {
-    alert("No se pudo identificar tu sesion o ficha. Vuelve a iniciar sesion.");
+    window.portalAlert("No se pudo identificar tu sesion o ficha. Vuelve a iniciar sesion.", { type: "error" });
     return;
   }
   const checks = document.querySelectorAll(`input[data-equipo-guia6-act="${actId}"]:checked`);
@@ -1209,7 +1210,7 @@ function confirmarEquipoGuia6(actId) {
     fullName: c.dataset.equipoGuia6Name,
   }));
   if (selected.length !== 2) {
-    alert("Selecciona exactamente 2 companeros (equipo de 3 incluyendote).");
+    window.portalAlert("Selecciona exactamente 2 companeros (equipo de 3 incluyendote).", { type: "warning" });
     return;
   }
   const allMembers = [{ usernameKey: selfKey, fullName: selfName || selfKey }, ...selected];
@@ -1260,17 +1261,17 @@ function iniciarEquipoGuia6(actId) {
   renderEquipoGuia6Block(actId);
 }
 
-function trabajarSoloGuia6(actId) {
+async function trabajarSoloGuia6(actId) {
   if (!actId) return;
   const selfKey = getCurrentUsernameKey();
   const selfName = getCurrentLearnerName();
   const selection = getGuideSelection();
   const ficha = String(selection.ficha || "").trim();
   if (!selfKey || !ficha) {
-    alert("No se pudo identificar tu sesion o ficha. Vuelve a iniciar sesion.");
+    window.portalAlert("No se pudo identificar tu sesion o ficha. Vuelve a iniciar sesion.", { type: "error" });
     return;
   }
-  if (!confirm("Trabajar SOLO en esta actividad? Podras continuar sin companeros. Si luego consigues equipo, usa 'Cambiar a equipo'.")) return;
+  if (!(await window.portalConfirm("Trabajar SOLO en esta actividad? Podras continuar sin companeros. Si luego consigues equipo, usa 'Cambiar a equipo'.", { title: "Trabajar solo", confirmText: "Si, solo" }))) return;
   const allMembers = [{ usernameKey: selfKey, fullName: selfName || selfKey }];
   const memberKeys = allMembers.map((m) => m.usernameKey);
   const memberEmails = memberKeys.map((k) => k + EQUIPO_GUIA6_EMAIL_DOMAIN);
@@ -1307,9 +1308,9 @@ function trabajarSoloGuia6(actId) {
   renderDriveDeliveryPanel();
 }
 
-function reconfigurarEquipoGuia6(actId) {
+async function reconfigurarEquipoGuia6(actId) {
   if (!actId) return;
-  if (!confirm("Cambiar el equipo de esta actividad borrara la configuracion actual. Tus entregas previas quedan en la carpeta del equipo anterior. Continuar?")) return;
+  if (!(await window.portalConfirm("Cambiar el equipo de esta actividad borrara la configuracion actual. Tus entregas previas quedan en la carpeta del equipo anterior. Continuar?", { title: "Cambiar equipo", confirmText: "Continuar" }))) return;
   clearEquipoGuia6FromState(actId);
   equipoGuia6WizardActive[actId] = true;
   // Solo elimina el panel Drive de ESTA actividad (no las otras).
@@ -1406,7 +1407,7 @@ function customizeGuia6DriveButtons() {
 
 function openGuia6DriveDestination(target, decl) {
   if (decl.teamRequirement && decl.teamRequirement.required && !getEquipoGuia6FromState(decl.id)) {
-    alert('Antes de subir, confirma el equipo de trabajo de esta actividad en el bloque "Equipo de trabajo de esta actividad" dentro del panel de la actividad ' + (decl.number || "") + ".");
+    window.portalAlert('Antes de subir, confirma el equipo de trabajo de esta actividad en el bloque "Equipo de trabajo de esta actividad" dentro del panel de la actividad ' + (decl.number || "") + ".", { type: "warning" });
     return;
   }
   const stored = getStoredDeliveryForPanel(target);
@@ -1602,8 +1603,9 @@ function bindEvents() {
   }
 
   document.getElementById("resetProgress")?.addEventListener("click", async () => {
-    const confirmed = window.confirm(
-      "Se borraran las respuestas guardadas localmente. Deseas continuar?"
+    const confirmed = await window.portalConfirm(
+      "Se borraran las respuestas guardadas localmente. Deseas continuar?",
+      { title: "Reiniciar progreso", confirmText: "Borrar" }
     );
     if (!confirmed) {
       return;
@@ -2100,7 +2102,7 @@ function applyBitacoraSocializacionLock() {
 function guardarBitacora311() {
   const empty = BITACORA_311_STORES.filter((k) => !String(state[k] || "").trim());
   if (empty.length > 0) {
-    alert("Por favor responde todas las preguntas antes de guardar.");
+    window.portalAlert("Por favor responde todas las preguntas antes de guardar.", { type: "warning" });
     return;
   }
   state["bitacora311-locked"] = true;
@@ -2111,7 +2113,7 @@ function guardarBitacora311() {
 function guardarSocializacion312() {
   const empty = SOCIALIZACION_312_STORES.filter((k) => !String(state[k] || "").trim());
   if (empty.length > 0) {
-    alert("Por favor completa los campos antes de guardar.");
+    window.portalAlert("Por favor completa los campos antes de guardar.", { type: "warning" });
     return;
   }
   state["socializacion312-locked"] = true;

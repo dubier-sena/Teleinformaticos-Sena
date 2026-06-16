@@ -334,7 +334,7 @@
         const checked = mount.querySelectorAll(`input[data-equipo-g7-act="${actId}"]:checked`).length;
         if (checked > 2) {
           cb.checked = false;
-          alert("La guia indica equipos de hasta 3 integrantes. Solo puedes seleccionar 2 companeros. Desmarca uno antes de agregar otro.");
+          window.portalAlert("La guia indica equipos de hasta 3 integrantes. Solo puedes seleccionar 2 companeros. Desmarca uno antes de agregar otro.", { type: "warning" });
         }
       });
     });
@@ -347,7 +347,7 @@
     const selection = getGuideSelection();
     const ficha = String(selection.ficha || "").trim();
     if (!selfKey || !ficha) {
-      alert("No se pudo identificar tu sesion o ficha. Vuelve a iniciar sesion.");
+      window.portalAlert("No se pudo identificar tu sesion o ficha. Vuelve a iniciar sesion.", { type: "error" });
       return;
     }
     const checks = document.querySelectorAll(`input[data-equipo-g7-act="${actId}"]:checked`);
@@ -356,7 +356,7 @@
       fullName: c.dataset.equipoG7Name,
     }));
     if (selected.length < 1 || selected.length > 2) {
-      alert("Selecciona 1 o 2 companeros (equipo de maximo 3, incluyendote).");
+      window.portalAlert("Selecciona 1 o 2 companeros (equipo de maximo 3, incluyendote).", { type: "warning" });
       return;
     }
     const allMembers = [{ usernameKey: selfKey, fullName: selfName || selfKey }, ...selected];
@@ -404,17 +404,17 @@
     renderEquipoG7Block(actId);
   }
 
-  function trabajarSoloGuia7(actId) {
+  async function trabajarSoloGuia7(actId) {
     if (!actId) return;
     const selfKey = getCurrentUsernameKeyG7();
     const selfName = getCurrentLearnerName();
     const selection = getGuideSelection();
     const ficha = String(selection.ficha || "").trim();
     if (!selfKey || !ficha) {
-      alert("No se pudo identificar tu sesion o ficha. Vuelve a iniciar sesion.");
+      window.portalAlert("No se pudo identificar tu sesion o ficha. Vuelve a iniciar sesion.", { type: "error" });
       return;
     }
-    if (!confirm("Trabajar SOLO en esta actividad? Podras continuar sin companeros. Si luego consigues equipo, usa 'Cambiar a equipo'.")) return;
+    if (!(await window.portalConfirm("Trabajar SOLO en esta actividad? Podras continuar sin companeros. Si luego consigues equipo, usa 'Cambiar a equipo'.", { title: "Trabajar solo", confirmText: "Si, solo" }))) return;
     const allMembers = [{ usernameKey: selfKey, fullName: selfName || selfKey }];
     const memberKeys = allMembers.map((m) => m.usernameKey);
     const memberEmails = memberKeys.map((k) => k + EQUIPO_G7_EMAIL_DOMAIN);
@@ -450,9 +450,9 @@
     renderEquipoG7Block(actId);
   }
 
-  function reconfigurarEquipoGuia7(actId) {
+  async function reconfigurarEquipoGuia7(actId) {
     if (!actId) return;
-    if (!confirm("Cambiar el equipo de esta actividad borrara la configuracion actual. Continuar?")) return;
+    if (!(await window.portalConfirm("Cambiar el equipo de esta actividad borrara la configuracion actual. Continuar?", { title: "Cambiar equipo", confirmText: "Continuar" }))) return;
     clearEquipoG7FromState(actId);
     equipoGuia7WizardActive[actId] = true;
     renderEquipoG7Block(actId);
@@ -546,9 +546,9 @@
         btn.title = "Quitar esta fila";
         btn.textContent = "Quitar";
         btn.style.cssText = "padding:6px 10px;border:1px solid #f5c1bb;background:#fdecea;color:#a13029;border-radius:6px;font-family:inherit;font-size:.82rem;cursor:pointer;font-weight:600";
-        btn.addEventListener("click", function () {
+        btn.addEventListener("click", async function () {
           if (isG7_321_Locked()) return;
-          if (!confirm("Quitar esta fila?")) return;
+          if (!(await window.portalConfirm("Quitar esta fila?", { title: "Quitar fila", confirmText: "Quitar" }))) return;
           const current = getG7_321_TablaRows();
           current.splice(idx, 1);
           setG7_321_TablaRows(current);
@@ -577,9 +577,9 @@
       });
     }
     if (clr) {
-      clr.addEventListener("click", function () {
+      clr.addEventListener("click", async function () {
         if (isG7_321_Locked()) return;
-        if (!confirm("Borrar TODAS las filas de la tabla?")) return;
+        if (!(await window.portalConfirm("Borrar TODAS las filas de la tabla?", { title: "Borrar tabla", confirmText: "Borrar" }))) return;
         setG7_321_TablaRows([]);
         renderG7_321_Tabla();
       });
@@ -596,7 +596,7 @@
     };
     const url = folders[sel.ficha] || "";
     if (url) window.open(url, "_blank", "noopener,noreferrer");
-    else alert("Selecciona primero tu ficha desde el panel lateral.");
+    else window.portalAlert("Selecciona primero tu ficha desde el panel lateral.", { type: "warning" });
   }
 
   function mountDriveDelivery() {
@@ -660,8 +660,8 @@
   function bindReset() {
     const btn = document.getElementById("resetProgress");
     if (!btn) return;
-    btn.addEventListener("click", () => {
-      if (!confirm("¿Reiniciar todas las respuestas guardadas en este navegador? Esta accion no se puede deshacer.")) return;
+    btn.addEventListener("click", async () => {
+      if (!(await window.portalConfirm("¿Reiniciar todas las respuestas guardadas en este navegador? Esta accion no se puede deshacer.", { title: "Reiniciar respuestas", confirmText: "Reiniciar" }))) return;
       state = {};
       try {
         localStorage.removeItem(STORAGE_KEY);
