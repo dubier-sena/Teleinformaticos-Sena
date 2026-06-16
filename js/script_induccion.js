@@ -477,7 +477,7 @@ function bindEvents() {
 
   document.querySelector("[data-print]").addEventListener("click", () => window.print());
   document.getElementById("resetProgress").addEventListener("click", async () => {
-    if (!window.confirm("Se borraran las respuestas guardadas localmente. Deseas continuar?")) return;
+    if (!(await window.portalConfirm("Se borraran las respuestas guardadas localmente. Deseas continuar?", { title: "Reiniciar progreso", confirmText: "Borrar" }))) return;
     window.clearGuideActivityChecks?.();
     window.clearGuideLayoutState?.();
     localStorage.removeItem(ACTIVE_STORAGE_KEY);

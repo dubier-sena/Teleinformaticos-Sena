@@ -145,7 +145,7 @@
     const ficha = getSessionFicha();
     const url = DRIVE_FOLDERS[ficha] || "";
     if (url) window.open(url, "_blank", "noopener,noreferrer");
-    else alert("Inicia sesion como aprendiz con ficha asignada para ver tu carpeta de entrega.");
+    else window.portalAlert("Inicia sesion como aprendiz con ficha asignada para ver tu carpeta de entrega.", { type: "warning" });
   }
 
   function mountDriveDelivery() {

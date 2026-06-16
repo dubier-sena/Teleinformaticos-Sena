@@ -1685,9 +1685,9 @@ function startWordSearchGame() {
   startWordSearchCountdown(variant);
 }
 
-function resetWordSearchGame() {
+async function resetWordSearchGame() {
   const current = getWordSearchState();
-  if ((current.startedAt || current.found.length) && !window.confirm("Se reiniciara la sopa de letras y el tiempo. Deseas continuar?")) {
+  if ((current.startedAt || current.found.length) && !(await window.portalConfirm("Se reiniciara la sopa de letras y el tiempo. Deseas continuar?", { title: "Reiniciar sopa de letras", confirmText: "Reiniciar" }))) {
     return;
   }
 
@@ -2578,10 +2578,10 @@ function startMatchingGame() {
   startMatchingGameCountdown(variant);
 }
 
-function resetMatchingGame() {
+async function resetMatchingGame() {
   const current = getMatchingGameState();
   const hasProgress = current.startedAt || current.correctCount || current.mistakes;
-  if (hasProgress && !window.confirm("Se reiniciara la Actividad 2 y el tiempo. Deseas continuar?")) {
+  if (hasProgress && !(await window.portalConfirm("Se reiniciara la Actividad 2 y el tiempo. Deseas continuar?", { title: "Reiniciar Actividad 2", confirmText: "Reiniciar" }))) {
     return;
   }
 
@@ -3279,8 +3279,9 @@ function getDriveFolderUrl() {
 }
 
 function showDriveSelectionAlert() {
-  window.alert(
-    "No se encontro la carpeta de Drive para esta ficha. Regresa al portal y verifica que el grupo seleccionado sea el correcto."
+  window.portalAlert(
+    "No se encontro la carpeta de Drive para esta ficha. Regresa al portal y verifica que el grupo seleccionado sea el correcto.",
+    { type: "warning" }
   );
 }
 
@@ -6091,8 +6092,9 @@ function bindEvents() {
   const resetProgress = document.getElementById("resetProgress");
   if (resetProgress) {
     resetProgress.addEventListener("click", async () => {
-      const confirmed = window.confirm(
-        "Se borraran las respuestas guardadas localmente. Deseas continuar?"
+      const confirmed = await window.portalConfirm(
+        "Se borraran las respuestas guardadas localmente. Deseas continuar?",
+        { title: "Reiniciar progreso", confirmText: "Borrar" }
       );
       if (!confirmed) {
         return;
