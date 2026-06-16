@@ -25,3 +25,6 @@ assets/materiales/guia5/VirtualBox-7.2.6a-172322-Win.exe
 assets/materiales/guia6/LibreOffice_26.2.1_Win_x86-64.msi
 assets/materiales/guia6/Win64CmapTools_v6.04_09-24-19.exe
 assets/materiales/induccion/Videos/SENA es Colombia.mp4
+
+# Lanzador local de preview (no desplegar)
+*.command
