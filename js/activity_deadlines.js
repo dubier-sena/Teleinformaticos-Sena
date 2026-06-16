@@ -443,7 +443,7 @@
     saveButton?.addEventListener("click", async function () {
       const dueAt = String(input?.value || "").trim();
       if (!dueAt) {
-        window.alert("Indica la fecha y hora de cierre.");
+        window.portalAlert("Indica la fecha y hora de cierre.", { type: "warning" });
         return;
       }
       const session = window.portalAuth?.getCurrentSession?.();
@@ -637,7 +637,7 @@
       return true;
     }
     if (config?.showAlert !== false) {
-      window.alert(`La fecha de entrega de esta actividad ya vencio (${formatDueAt(evaluation.dueAt)}).`);
+      window.portalAlert(`La fecha de entrega de esta actividad ya vencio (${formatDueAt(evaluation.dueAt)}).`, { type: "warning" });
     }
     return false;
   }

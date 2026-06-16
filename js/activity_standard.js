@@ -1098,7 +1098,7 @@
       if (dm && dm.canSubmit && !dm.canSubmit({ pageFile: stateCtx.getGuideDataFile(), activityId: id })) return;
       var empty = formFields.filter(function (k) { return !String(stateCtx.getState()[k] || "").trim(); });
       if (empty.length > 0) {
-        alert("Por favor responde todos los campos antes de guardar.");
+        window.portalAlert("Por favor responde todos los campos antes de guardar.", { type: "warning" });
         return;
       }
       stateCtx.getState()[lockKey] = true;

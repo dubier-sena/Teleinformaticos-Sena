@@ -1819,7 +1819,7 @@
   async function handleHabilitacionCloudSync(button) {
     const hab = window.adminHabilitacion;
     if (!hab || typeof hab.pullCloudStateForUsers !== "function") {
-      window.alert("El modulo de habilitacion no esta cargado.");
+      window.portalAlert("El modulo de habilitacion no esta cargado.", { type: "error" });
       return;
     }
     const host = byId("habilitacion-host");
@@ -1831,7 +1831,7 @@
       return true;
     });
     if (!users.length) {
-      window.alert("No hay aprendices en el filtro actual.");
+      window.portalAlert("No hay aprendices en el filtro actual.", { type: "warning" });
       return;
     }
     // Confirmacion con estimacion de costo de lecturas
@@ -1872,7 +1872,7 @@
     } catch (err) {
       console.error("[admin] cloud sync failed:", err);
       if (statusEl) statusEl.textContent = "Error: " + (err?.message || "error desconocido");
-      window.alert("No se pudo sincronizar: " + (err?.message || "error"));
+      window.portalAlert("No se pudo sincronizar: " + (err?.message || "error"), { type: "error" });
     } finally {
       button.disabled = false;
       button.innerHTML = originalLabel;

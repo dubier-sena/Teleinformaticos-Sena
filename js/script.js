@@ -909,8 +909,9 @@ function getDriveFolderUrl() {
 }
 
 function showDriveSelectionAlert() {
-  window.alert(
-    "No se encontro la carpeta de Drive para esta ficha. Regresa al portal y verifica que el grupo seleccionado sea el correcto."
+  window.portalAlert(
+    "No se encontro la carpeta de Drive para esta ficha. Regresa al portal y verifica que el grupo seleccionado sea el correcto.",
+    { type: "warning" }
   );
 }
 
@@ -1444,8 +1445,9 @@ function bindEvents() {
   const resetProgress = document.getElementById("resetProgress");
   if (resetProgress) {
     resetProgress.addEventListener("click", async () => {
-      const confirmed = window.confirm(
-        "Se borraran las respuestas guardadas localmente. Deseas continuar?"
+      const confirmed = await window.portalConfirm(
+        "Se borraran las respuestas guardadas localmente. Deseas continuar?",
+        { title: "Reiniciar progreso", confirmText: "Borrar" }
       );
       if (!confirmed) {
         return;
