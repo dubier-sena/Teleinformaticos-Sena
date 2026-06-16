@@ -192,6 +192,17 @@ body.app-shell--calendar {
   text-decoration: none;
 }
 
+/* Numero de dia clicable para marcar/quitar festivo (solo admin). */
+.cal-day--festivo-toggle {
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background var(--motion-fast);
+}
+.cal-day--festivo-toggle:hover {
+  background: rgba(180, 83, 9, 0.16);
+  box-shadow: 0 0 0 1px rgba(180, 83, 9, 0.35) inset;
+}
+
 #save-chip,
 .sync-chip {
   display: inline-flex;
