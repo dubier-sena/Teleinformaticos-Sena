@@ -64,7 +64,7 @@
   --text-strong: #102117;
   --text-body: #1e2f24;
   --text-muted: #5f7468;
-  --text-soft: #8aa093;
+  --text-soft: #627a6c; /* >=4.5:1 sobre blanco (WCAG AA); antes #8aa093 (~2.8:1) */
   --text-on-brand: #ffffff;
   --text-on-gold: #102117;
 

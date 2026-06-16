@@ -119,6 +119,12 @@ a {
   color: var(--brand-700, #0a5c31);
 }
 
+/* El foco por teclado debe distinguirse del hover (mismo fondo): anillo. */
+.admin-nav__item:focus-visible,
+.admin-sidebar__link:focus-visible {
+  box-shadow: var(--shadow-focus);
+}
+
 .admin-nav__item.is-active {
   border-color: var(--brand-200, #cdf0db);
   box-shadow: inset 3px 0 0 var(--brand-600, #007934);
@@ -300,7 +306,7 @@ a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 42px;
+  min-height: var(--hit-target-min, 44px);
   min-width: 112px;
   padding: 0 18px;
   border: 1px solid transparent;
@@ -321,6 +327,12 @@ a {
   outline: none;
   transform: translateY(-1px);
   box-shadow: 0 14px 26px rgba(0, 121, 52, 0.26);
+}
+
+/* Foco de teclado distinto del hover: anillo de foco sobre la elevacion. */
+.admin-button:focus-visible,
+.btn:focus-visible {
+  box-shadow: var(--shadow-focus), 0 14px 26px rgba(0, 121, 52, 0.26);
 }
 
 .admin-button--ghost,
