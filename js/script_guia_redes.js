@@ -2541,7 +2541,11 @@ window.guardarLab1Transferencia = async function () {
     return;
   }
 
-  const pendingEvidence = Object.keys(LAB1_EVIDENCE_SLOTS).filter((slotKey) => !state[getLab1EvidenceStateKey(slotKey, "url")]);
+  const pendingEvidence = Object.keys(LAB1_EVIDENCE_SLOTS).filter(
+    (slotKey) =>
+      !state[getLab1EvidenceStateKey(slotKey, "url")] &&
+      !state[getLab1EvidenceStateKey(slotKey, "image")]
+  );
   if (pendingEvidence.length > 0) {
     window.portalAlert("Debes subir los 4 pantallazos del laboratorio antes de guardar.", { type: "warning" });
     return;
@@ -2786,7 +2790,11 @@ window.guardarLab2Arbol = async function () {
     return;
   }
 
-  const pendingEvidence = Object.keys(LAB2_EVIDENCE_SLOTS).filter((slotKey) => !state[getLab2EvidenceStateKey(slotKey, "url")]);
+  const pendingEvidence = Object.keys(LAB2_EVIDENCE_SLOTS).filter(
+    (slotKey) =>
+      !state[getLab2EvidenceStateKey(slotKey, "url")] &&
+      !state[getLab2EvidenceStateKey(slotKey, "image")]
+  );
   if (pendingEvidence.length > 0) {
     window.portalAlert("Debes subir los 4 pantallazos del laboratorio antes de guardar.", { type: "warning" });
     return;
@@ -3043,7 +3051,9 @@ window.guardarLab3Hibrida = async function () {
   }
 
   const pendingEvidence = Object.keys(LAB3_EVIDENCE_SLOTS).filter(
-    (slotKey) => !state[getLab3EvidenceStateKey(slotKey, "url")]
+    (slotKey) =>
+      !state[getLab3EvidenceStateKey(slotKey, "url")] &&
+      !state[getLab3EvidenceStateKey(slotKey, "image")]
   );
   if (pendingEvidence.length > 0) {
     window.portalAlert("Debes subir los 5 pantallazos del laboratorio antes de guardar.", { type: "warning" });
