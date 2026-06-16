@@ -528,7 +528,16 @@
         if (typeof bridge.waitForAuthHydration === "function") {
           try { await bridge.waitForAuthHydration(4000); } catch (hydrationError) {}
         }
-        var idToken = await bridge.getIdToken();
+        // forceRefresh=true: los idToken de Firebase vencen a la hora. En un
+        // laboratorio el aprendiz puede llevar mas de una hora en la pagina,
+        // por lo que pedimos un token recien emitido antes de cada entrega
+        // para evitar el rechazo "sesion de seguridad expiro" del servidor.
+        var idToken = await bridge.getIdToken(true);
+        // Si la renovacion forzada falla (red intermitente en el laboratorio),
+        // usamos el token en cache: puede seguir vigente y permitir la entrega.
+        if (!idToken) {
+          idToken = await bridge.getIdToken();
+        }
         if (idToken) {
           finalPayload = Object.assign({}, payload, { idToken: idToken });
         }

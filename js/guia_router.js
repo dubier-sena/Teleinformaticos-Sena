@@ -48,7 +48,7 @@
       scripts: [
         "js/shared_shell.js?v=20260609_2",
         "js/project_integrations.js?v=20260526_2",
-        "js/shared_apps_script_delivery.js?v=20260601_2",
+        "js/shared_apps_script_delivery.js?v=20260616_1",
         "js/shared_drive_delivery.js?v=20260611_2",
         "data/calendario_2026_records.js?v=20260425_1",
         "data/calendario_2026_seed.js?v=20260410_1",
@@ -71,7 +71,7 @@
       scripts: [
         "js/shared_shell.js?v=20260609_2",
         "js/project_integrations.js?v=20260526_2",
-        "js/shared_apps_script_delivery.js?v=20260601_2",
+        "js/shared_apps_script_delivery.js?v=20260616_1",
         "js/shared_drive_delivery.js?v=20260611_2",
         "data/calendario_2026_records.js?v=20260425_1",
         "data/calendario_2026_seed.js?v=20260410_1",
@@ -94,7 +94,7 @@
       scripts: [
         "js/shared_shell.js?v=20260609_2",
         "js/project_integrations.js?v=20260526_2",
-        "js/shared_apps_script_delivery.js?v=20260601_2",
+        "js/shared_apps_script_delivery.js?v=20260616_1",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/guia3_quiz_bank.js?v=20260506_1",
         "js/activity_standard.js?v=20260611_18",
@@ -116,7 +116,7 @@
       scripts: [
         "js/shared_shell.js?v=20260609_2",
         "js/project_integrations.js?v=20260526_2",
-        "js/shared_apps_script_delivery.js?v=20260601_2",
+        "js/shared_apps_script_delivery.js?v=20260616_1",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/guia3_quiz_bank.js?v=20260506_1",
         "js/activity_standard.js?v=20260611_18",
@@ -138,7 +138,7 @@
       scripts: [
         "js/shared_shell.js?v=20260609_2",
         "js/project_integrations.js?v=20260526_2",
-        "js/shared_apps_script_delivery.js?v=20260601_2",
+        "js/shared_apps_script_delivery.js?v=20260616_1",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/activity_standard.js?v=20260611_18",
         "js/guide_declarations.js?v=20260611_18",
@@ -159,7 +159,7 @@
       scripts: [
         "js/shared_shell.js?v=20260609_2",
         "js/project_integrations.js?v=20260526_2",
-        "js/shared_apps_script_delivery.js?v=20260601_2",
+        "js/shared_apps_script_delivery.js?v=20260616_1",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/activity_standard.js?v=20260611_18",
         "js/guide_declarations.js?v=20260611_18",
@@ -180,7 +180,7 @@
       scripts: [
         "js/shared_shell.js?v=20260609_2",
         "js/project_integrations.js?v=20260526_2",
-        "js/shared_apps_script_delivery.js?v=20260601_2",
+        "js/shared_apps_script_delivery.js?v=20260616_1",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/guia6_quiz_bank.js?v=20260428_1",
         "js/activity_standard.js?v=20260611_18",
@@ -202,7 +202,7 @@
       scripts: [
         "js/shared_shell.js?v=20260609_2",
         "js/project_integrations.js?v=20260526_2",
-        "js/shared_apps_script_delivery.js?v=20260601_2",
+        "js/shared_apps_script_delivery.js?v=20260616_1",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/guia6_quiz_bank.js?v=20260428_1",
         "js/activity_standard.js?v=20260611_18",
@@ -224,7 +224,7 @@
       scripts: [
         "js/shared_shell.js?v=20260609_2",
         "js/project_integrations.js?v=20260526_2",
-        "js/shared_apps_script_delivery.js?v=20260601_2",
+        "js/shared_apps_script_delivery.js?v=20260616_1",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/activity_standard.js?v=20260611_18",
         "js/guide_declarations.js?v=20260611_18",
@@ -245,7 +245,7 @@
       scripts: [
         "js/shared_shell.js?v=20260609_2",
         "js/project_integrations.js?v=20260526_2",
-        "js/shared_apps_script_delivery.js?v=20260601_2",
+        "js/shared_apps_script_delivery.js?v=20260616_1",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/activity_standard.js?v=20260611_18",
         "js/guide_declarations.js?v=20260611_18",
@@ -266,7 +266,7 @@
       scripts: [
         "js/shared_shell.js?v=20260609_2",
         "js/project_integrations.js?v=20260526_2",
-        "js/shared_apps_script_delivery.js?v=20260601_2",
+        "js/shared_apps_script_delivery.js?v=20260616_1",
         "js/shared_drive_delivery.js?v=20260611_2",
         "data/calendario_2026_records.js?v=20260425_1",
         "data/calendario_2026_seed.js?v=20260410_1",
@@ -289,7 +289,7 @@
       scripts: [
         "js/shared_shell.js?v=20260609_2",
         "js/project_integrations.js?v=20260526_2",
-        "js/shared_apps_script_delivery.js?v=20260601_2",
+        "js/shared_apps_script_delivery.js?v=20260616_1",
         "js/shared_drive_delivery.js?v=20260611_2",
         "data/calendario_2026_records.js?v=20260425_1",
         "data/calendario_2026_seed.js?v=20260410_1",
@@ -312,7 +312,7 @@
       scripts: [
         "js/shared_shell.js?v=20260609_2",
         "js/project_integrations.js?v=20260526_2",
-        "js/shared_apps_script_delivery.js?v=20260601_2",
+        "js/shared_apps_script_delivery.js?v=20260616_1",
         "js/shared_drive_delivery.js?v=20260611_2",
         "data/calendario_2026_records.js?v=20260425_1",
         "data/calendario_2026_seed.js?v=20260410_1",
@@ -335,7 +335,7 @@
       scripts: [
         "js/shared_shell.js?v=20260609_2",
         "js/project_integrations.js?v=20260526_2",
-        "js/shared_apps_script_delivery.js?v=20260601_2",
+        "js/shared_apps_script_delivery.js?v=20260616_1",
         "js/shared_drive_delivery.js?v=20260611_2",
         "data/calendario_2026_records.js?v=20260425_1",
         "data/calendario_2026_seed.js?v=20260410_1",
@@ -358,7 +358,7 @@
       scripts: [
         "js/shared_shell.js?v=20260609_2",
         "js/project_integrations.js?v=20260526_2",
-        "js/shared_apps_script_delivery.js?v=20260601_2",
+        "js/shared_apps_script_delivery.js?v=20260616_1",
         "js/shared_drive_delivery.js?v=20260611_2",
         "data/calendario_2026_records.js?v=20260425_1",
         "data/calendario_2026_seed.js?v=20260410_1",
