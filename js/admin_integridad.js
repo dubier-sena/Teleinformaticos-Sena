@@ -120,7 +120,7 @@
 
   function exportCsv() {
     var rows = _rows;
-    if (!rows.length) { alert("No hay evidencia para exportar."); return; }
+    if (!rows.length) { window.portalAlert("No hay evidencia para exportar.", { type: "warning" }); return; }
     var blob = new Blob([toCsv(rows)], { type: "text/csv;charset=utf-8;" });
     var url = URL.createObjectURL(blob);
     var a = document.createElement("a");

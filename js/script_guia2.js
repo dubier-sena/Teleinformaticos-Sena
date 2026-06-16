@@ -3327,7 +3327,7 @@ function openDriveFolder() {
 function openExtensionesWordDelivery() {
   const delivery = window.sharedAppsScriptDelivery;
   if (!delivery || typeof delivery.openDeliveryModal !== "function") {
-    alert("No se encontro disponible el formulario seguro de entrega. Recarga la pagina e intenta de nuevo.");
+    window.portalAlert("No se encontro disponible el formulario seguro de entrega. Recarga la pagina e intenta de nuevo.", { type: "error" });
     return;
   }
 
@@ -3347,7 +3347,7 @@ window.openExtensionesWordDelivery = openExtensionesWordDelivery;
 function openSistemasWordDelivery() {
   const delivery = window.sharedAppsScriptDelivery;
   if (!delivery || typeof delivery.openDeliveryModal !== "function") {
-    alert("No se encontro disponible el formulario seguro de entrega. Recarga la pagina e intenta de nuevo.");
+    window.portalAlert("No se encontro disponible el formulario seguro de entrega. Recarga la pagina e intenta de nuevo.", { type: "error" });
     return;
   }
 
@@ -4052,7 +4052,7 @@ function getStoredDeliveryForTarget(target) {
 function openActivity10DriveDestination(target) {
   // Para el portafolio del equipo: requiere modalidad confirmada (solo/equipo).
   if (target.isTeamDelivery && !getEquipo341FromState()) {
-    alert('Antes de continuar, confirma tu modalidad (solo o equipo) en el panel "Descubre tu caso de la Actividad 10" del paso 1.');
+    window.portalAlert('Antes de continuar, confirma tu modalidad (solo o equipo) en el panel "Descubre tu caso de la Actividad 10" del paso 1.', { type: "warning" });
     return;
   }
   const stored = getStoredDeliveryForTarget(target);
@@ -4565,7 +4565,7 @@ function attachActivity10PanelHandlers(root) {
       if (cb.checked) {
         if (set.size >= equipo341WizardState.size) {
           cb.checked = false;
-          alert(`Solo puedes seleccionar ${equipo341WizardState.size} compañeros. Desmarca uno antes de agregar otro.`);
+          window.portalAlert(`Solo puedes seleccionar ${equipo341WizardState.size} compañeros. Desmarca uno antes de agregar otro.`, { type: "warning" });
           return;
         }
         set.add(key);
@@ -4584,8 +4584,8 @@ function attachActivity10PanelHandlers(root) {
 
   // Reset modalidad (en summary)
   root.querySelectorAll("[data-equipo341-reset]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      if (!confirm("¿Seguro que quieres cambiar la modalidad? Tu entrega previa seguira registrada, pero podras volver a configurar.")) return;
+    btn.addEventListener("click", async () => {
+      if (!(await window.portalConfirm("¿Seguro que quieres cambiar la modalidad? Tu entrega previa seguira registrada, pero podras volver a configurar.", { title: "Cambiar modalidad", confirmText: "Si, cambiar" }))) return;
       clearEquipo341FromState();
       equipo341WizardState = null;
       equipo341InitialFetchDone = false;
@@ -4611,11 +4611,11 @@ function confirmarEquipo341Wizard() {
   const selection = getGuideSelection();
   const ficha = String(selection.ficha || "").trim();
   if (!selfKey || !ficha) {
-    alert("No se pudo identificar tu sesion o ficha. Vuelve a iniciar sesion.");
+    window.portalAlert("No se pudo identificar tu sesion o ficha. Vuelve a iniciar sesion.", { type: "error" });
     return;
   }
   if (!equipo341WizardState || !equipo341WizardState.mode) {
-    alert("Selecciona si vas a trabajar solo o en grupo.");
+    window.portalAlert("Selecciona si vas a trabajar solo o en grupo.", { type: "warning" });
     return;
   }
 
@@ -4638,7 +4638,7 @@ function confirmarEquipo341Wizard() {
   const size = equipo341WizardState.size;
   const selectedKeys = equipo341WizardState.selectedKeys || [];
   if (!size || selectedKeys.length !== size) {
-    alert(`Selecciona exactamente ${size || "2 o 3"} compañeros antes de confirmar.`);
+    window.portalAlert(`Selecciona exactamente ${size || "2 o 3"} compañeros antes de confirmar.`, { type: "warning" });
     return;
   }
   const roster = getRosterForCurrentFicha();
@@ -5486,7 +5486,7 @@ function guardarExtensiones331() {
   }
   const empty = EXTENSION_ACTIVITY_STORES.filter((key) => !readStoreValue(key));
   if (empty.length > 0) {
-    alert("Por favor completa la tabla y los campos de analisis antes de guardar.");
+    window.portalAlert("Por favor completa la tabla y los campos de analisis antes de guardar.", { type: "warning" });
     return;
   }
 
@@ -5525,7 +5525,7 @@ function guardarSistemas332() {
   }
   const empty = SYSTEM_ACTIVITY_STORES.filter((key) => !readStoreValue(key));
   if (empty.length > 0) {
-    alert("Por favor completa la tabla y los campos de analisis antes de guardar.");
+    window.portalAlert("Por favor completa la tabla y los campos de analisis antes de guardar.", { type: "warning" });
     return;
   }
 
@@ -5565,15 +5565,16 @@ function guardarColaborativas334() {
   }
   const emptyTable = COLLABORATIVE_TOOLS_ACTIVITY_STORES.filter((key) => !readStoreValue(key));
   if (emptyTable.length > 0) {
-    alert("Por favor completa la tabla comparativa antes de guardar.");
+    window.portalAlert("Por favor completa la tabla comparativa antes de guardar.", { type: "warning" });
     return;
   }
   const emptyChecklist = DIGITAL_CHECKLIST_STORES.filter((key) => !readStoreValue(key));
   if (emptyChecklist.length > 0) {
-    alert(
+    window.portalAlert(
       "Antes de guardar, marca tu nivel en los 15 items de la lista de verificacion de competencias digitales. Faltan " +
         emptyChecklist.length +
-        " por marcar."
+        " por marcar.",
+      { type: "warning" }
     );
     const firstPending = document.querySelector(`[data-store="${emptyChecklist[0]}"]`);
     if (firstPending && typeof firstPending.scrollIntoView === "function") {
@@ -5624,7 +5625,7 @@ function guardarTransferReto341() {
   }
   const empty = TRANSFER_RETO_ACTIVITY_STORES.filter((key) => !readStoreValue(key));
   if (empty.length > 0) {
-    alert("Por favor responde las dos preguntas del reto antes de guardar.");
+    window.portalAlert("Por favor responde las dos preguntas del reto antes de guardar.", { type: "warning" });
     return;
   }
 
@@ -5667,7 +5668,7 @@ function guardarSoporte341Section(section) {
   }
   const empty = section.fields.filter((field) => !readStoreValue(field.key));
   if (empty.length > 0) {
-    alert(`${section.emptyMessage} Faltan ${empty.length} por responder.`);
+    window.portalAlert(`${section.emptyMessage} Faltan ${empty.length} por responder.`, { type: "warning" });
     const firstPending = document.querySelector(`[data-store="${empty[0].key}"]`);
     if (firstPending && typeof firstPending.scrollIntoView === "function") {
       firstPending.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -5745,7 +5746,7 @@ function guardarCiberseg335Section(section) {
   }
   const empty = section.fields.filter((f) => !readStoreValue(f.key));
   if (empty.length > 0) {
-    alert(`${section.emptyMessage} Faltan ${empty.length} por responder.`);
+    window.portalAlert(`${section.emptyMessage} Faltan ${empty.length} por responder.`, { type: "warning" });
     const firstPending = document.querySelector(`[data-store="${empty[0].key}"]`);
     if (firstPending && typeof firstPending.scrollIntoView === "function") {
       firstPending.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -5871,7 +5872,7 @@ function buildCibersegGuia335WordDocument(learnerName) {
 function exportCibersegGuia335ToWord() {
   const learnerName = getCurrentLearnerName();
   if (!learnerName) {
-    alert("Antes de exportar, inicie sesion para que su nombre aparezca en el documento.");
+    window.portalAlert("Antes de exportar, inicie sesion para que su nombre aparezca en el documento.", { type: "warning" });
     return;
   }
   const selection = getGuideSelection();
@@ -5953,7 +5954,7 @@ function buildSoporte341WordDocument(learnerName) {
 function exportSoporte341ToWord() {
   const learnerName = getCurrentLearnerName();
   if (!learnerName) {
-    alert("Antes de exportar, inicie sesion para que su nombre aparezca en el documento.");
+    window.portalAlert("Antes de exportar, inicie sesion para que su nombre aparezca en el documento.", { type: "warning" });
     return;
   }
   const selection = getGuideSelection();

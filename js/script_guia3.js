@@ -1147,7 +1147,7 @@ function renderEquipoGuia3Roster(activityId) {
       const checked = mount.querySelectorAll(`[data-equipo-guia3-activity="${activityId}"]:checked`).length;
       if (checked > 2) {
         cb.checked = false;
-        alert("La guia indica equipos de 3 integrantes. Solo puedes seleccionar 2 companeros. Desmarca uno antes de agregar otro.");
+        window.portalAlert("La guia indica equipos de 3 integrantes. Solo puedes seleccionar 2 companeros. Desmarca uno antes de agregar otro.", { type: "warning" });
       }
     });
   });
@@ -1164,7 +1164,7 @@ function confirmarEquipoGuia3(activityId) {
   const selection = getGuideSelection();
   const ficha = String(selection.ficha || "").trim();
   if (!selfKey || !ficha) {
-    alert("No se pudo identificar tu sesion o ficha. Vuelve a iniciar sesion.");
+    window.portalAlert("No se pudo identificar tu sesion o ficha. Vuelve a iniciar sesion.", { type: "error" });
     return;
   }
   const { roster: mount } = getEquipoGuia3MountElements(activityId);
@@ -1175,7 +1175,7 @@ function confirmarEquipoGuia3(activityId) {
     fullName: c.dataset.equipoGuia3Name,
   }));
   if (selected.length !== 2) {
-    alert("Selecciona exactamente 2 companeros (equipo de 3 incluyendote).");
+    window.portalAlert("Selecciona exactamente 2 companeros (equipo de 3 incluyendote).", { type: "warning" });
     return;
   }
   const allMembers = [{ usernameKey: selfKey, fullName: selfName || selfKey }, ...selected];
@@ -1214,16 +1214,16 @@ function confirmarEquipoGuia3(activityId) {
   renderDriveDeliveryPanel();
 }
 
-function trabajarSoloGuia3(activityId) {
+async function trabajarSoloGuia3(activityId) {
   const selfKey = getCurrentUsernameKey();
   const selfName = getCurrentLearnerName();
   const selection = getGuideSelection();
   const ficha = String(selection.ficha || "").trim();
   if (!selfKey || !ficha) {
-    alert("No se pudo identificar tu sesion o ficha. Vuelve a iniciar sesion.");
+    window.portalAlert("No se pudo identificar tu sesion o ficha. Vuelve a iniciar sesion.", { type: "error" });
     return;
   }
-  if (!confirm("Trabajar SOLO en esta actividad? Podras continuar sin companeros. Si luego consigues equipo, usa 'Cambiar de equipo'.")) return;
+  if (!(await window.portalConfirm("Trabajar SOLO en esta actividad? Podras continuar sin companeros. Si luego consigues equipo, usa 'Cambiar de equipo'.", { title: "Trabajar solo", confirmText: "Si, solo" }))) return;
   const allMembers = [{ usernameKey: selfKey, fullName: selfName || selfKey }];
   const memberKeys = allMembers.map((m) => m.usernameKey);
   const memberEmails = memberKeys.map((k) => k + EQUIPO_GUIA3_EMAIL_DOMAIN);
@@ -1272,9 +1272,9 @@ function cancelarEquipoGuia3Config(activityId) {
   }
 }
 
-function reconfigurarEquipoGuia3(activityId) {
+async function reconfigurarEquipoGuia3(activityId) {
   const label = EQUIPO_GUIA3_ACTIVITY_LABELS[activityId] || activityId;
-  if (!confirm(`Cambiar el equipo de la actividad ${label} borrara la configuracion actual de esa actividad. Las entregas previas quedan en la carpeta del equipo anterior. Continuar?`)) return;
+  if (!(await window.portalConfirm(`Cambiar el equipo de la actividad ${label} borrara la configuracion actual de esa actividad. Las entregas previas quedan en la carpeta del equipo anterior. Continuar?`, { title: "Cambiar equipo", confirmText: "Continuar" }))) return;
   clearEquipoGuia3FromState(activityId);
   equipoGuia3WizardActive.add(activityId);
   // Limpiar paneles de Drive obsoletos para que se regeneren con el nuevo equipo (o sin equipo).
@@ -1376,7 +1376,7 @@ function openGuia3DriveDestination(target, decl) {
   const activityId = target.deadlineActivityId;
   if (decl.teamRequirement && decl.teamRequirement.required && !getEquipoGuia3FromState(activityId)) {
     const label = EQUIPO_GUIA3_ACTIVITY_LABELS[activityId] || activityId;
-    alert(`Antes de subir, configura el equipo de trabajo dentro de la actividad ${label} usando el boton "Configurar equipo de trabajo".`);
+    window.portalAlert(`Antes de subir, configura el equipo de trabajo dentro de la actividad ${label} usando el boton "Configurar equipo de trabajo".`, { type: "warning" });
     return;
   }
   const stored = getStoredDeliveryForPanel(target);
@@ -2158,11 +2158,11 @@ function guardarTabla321() {
     return !h || !p || !a;
   });
   if (incomplete.length > 0) {
-    alert(`Falta completar ${incomplete.length} fila(s) de la tabla. Cada fila debe tener herramienta o proceso, para que sirve y aplicacion en una empresa local.`);
+    window.portalAlert(`Falta completar ${incomplete.length} fila(s) de la tabla. Cada fila debe tener herramienta o proceso, para que sirve y aplicacion en una empresa local.`, { type: "warning" });
     return;
   }
   if (!getEquipoGuia3FromState("tabla321")) {
-    alert('Antes de guardar la tabla, configura el equipo de trabajo de la actividad 3.2.1 usando el boton "Configurar equipo de trabajo".');
+    window.portalAlert('Antes de guardar la tabla, configura el equipo de trabajo de la actividad 3.2.1 usando el boton "Configurar equipo de trabajo".', { type: "warning" });
     return;
   }
   state["tabla321-locked"] = true;
@@ -2307,11 +2307,11 @@ function applyMapa322Lock() {
 function guardarMapa322() {
   const empty = MAPA_322_STORES.filter((k) => !String(state[k] || "").trim());
   if (empty.length > 0) {
-    alert(`Faltan ${empty.length} campo(s) por completar en la planeacion del mapa. Cada uno de los 6 campos es obligatorio.`);
+    window.portalAlert(`Faltan ${empty.length} campo(s) por completar en la planeacion del mapa. Cada uno de los 6 campos es obligatorio.`, { type: "warning" });
     return;
   }
   if (!getEquipoGuia3FromState("mapa322")) {
-    alert('Antes de guardar, configura el equipo de trabajo de la actividad 3.2.2 usando el boton "Configurar equipo de trabajo".');
+    window.portalAlert('Antes de guardar, configura el equipo de trabajo de la actividad 3.2.2 usando el boton "Configurar equipo de trabajo".', { type: "warning" });
     return;
   }
   state["mapa322-locked"] = true;
@@ -2643,12 +2643,12 @@ function guardarChecklist331() {
   });
   if (incomplete.length > 0) {
     const names = incomplete.map((t) => t.name).join(", ");
-    alert(`Falta completar ${incomplete.length} herramienta(s): ${names}. Cada tarjeta necesita version instalada, resultado seleccionado y captura confirmada.`);
+    window.portalAlert(`Falta completar ${incomplete.length} herramienta(s): ${names}. Cada tarjeta necesita version instalada, resultado seleccionado y captura confirmada.`, { type: "warning" });
     return;
   }
   const reflexion = String(state["checklist331_reflexion"] || "").trim();
   if (reflexion.length < 60) {
-    alert("La reflexion final debe tener al menos 60 caracteres (alrededor de 4 lineas). Anade un poco mas de detalle.");
+    window.portalAlert("La reflexion final debe tener al menos 60 caracteres (alrededor de 4 lineas). Anade un poco mas de detalle.", { type: "warning" });
     return;
   }
   state["checklist331-locked"] = true;
@@ -2817,7 +2817,7 @@ function applyBitacoraSocializacionLock() {
 function guardarBitacora311() {
   const empty = BITACORA_311_STORES.filter((k) => !String(state[k] || "").trim());
   if (empty.length > 0) {
-    alert("Por favor responde todas las preguntas antes de guardar.");
+    window.portalAlert("Por favor responde todas las preguntas antes de guardar.", { type: "warning" });
     return;
   }
   state["bitacora311-locked"] = true;
@@ -2828,7 +2828,7 @@ function guardarBitacora311() {
 function guardarSocializacion312() {
   const empty = SOCIALIZACION_312_STORES.filter((k) => !String(state[k] || "").trim());
   if (empty.length > 0) {
-    alert("Por favor completa los campos antes de guardar.");
+    window.portalAlert("Por favor completa los campos antes de guardar.", { type: "warning" });
     return;
   }
   state["socializacion312-locked"] = true;

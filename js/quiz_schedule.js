@@ -314,11 +314,11 @@
   function saveDate(entry, value) {
     var mgr = getMgr();
     if (!mgr || typeof mgr.savePolicy !== "function") {
-      window.alert("Sistema de fechas no disponible.");
+      window.portalAlert("Sistema de fechas no disponible.", { type: "error" });
       return;
     }
     if (!value) {
-      window.alert("Selecciona una fecha.");
+      window.portalAlert("Selecciona una fecha.", { type: "warning" });
       return;
     }
     var session = getSession();
@@ -326,11 +326,11 @@
     var iso = new Date(value + "T12:00:00-05:00").toISOString();
     Promise.resolve(mgr.savePolicy(entry.guideFile, entry.storageKey, iso, who))
       .then(function () {
-        window.alert("Fecha del quiz guardada: " + value);
+        window.portalAlert("Fecha del quiz guardada: " + value, { type: "success" });
         scheduleMount(true);
       })
       .catch(function () {
-        window.alert("No se pudo guardar la fecha del quiz.");
+        window.portalAlert("No se pudo guardar la fecha del quiz.", { type: "error" });
       });
   }
 
@@ -341,7 +341,7 @@
     var who = (session && session.user && session.user.usernameKey) || "admin";
     Promise.resolve(mgr.clearPolicy(entry.guideFile, entry.storageKey, who))
       .then(function () {
-        window.alert("Fecha del quiz quitada.");
+        window.portalAlert("Fecha del quiz quitada.", { type: "success" });
         scheduleMount(true);
       })
       .catch(function () {});
