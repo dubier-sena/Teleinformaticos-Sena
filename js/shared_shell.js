@@ -75,7 +75,7 @@
       '          Guías <span class="app-navbar__caret" aria-hidden="true">▾</span>',
       '        </button>',
       '        <div class="app-navbar__drop-panel" role="menu">',
-      '          <div class="app-navbar__drop-group" data-guide-group>',
+      '          <div class="app-navbar__drop-group" data-guide-group data-guide-group-key="kennedy-10">',
       '            <span class="app-navbar__drop-heading">J.F. Kennedy · Grado 10</span>',
       '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-10a-guia-01-induccion.html") + '" role="menuitem" data-guide-file="grupo-10a-guia-01-induccion.html">10A · Guía 1 — Inducción</a>',
       '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-10a-guia-02-herramientas-informaticas-digitales.html") + '" role="menuitem" data-guide-file="grupo-10a-guia-02-herramientas-informaticas-digitales.html">10A · Guía 2 — Herramientas</a>',
@@ -85,7 +85,7 @@
       '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-10b-guia-03-planificar-informacion.html") + '" role="menuitem" data-guide-file="grupo-10b-guia-03-planificar-informacion.html">10B · Guía 3 — Planificar</a>',
       '            <a class="app-navbar__drop-link" href="' + guideHref(p, "santa-barbara-guia-python.html") + '" role="menuitem" data-guide-file="santa-barbara-guia-python.html">10A/10B · Guía - Práctica de Python</a>',
       '          </div>',
-      '          <div class="app-navbar__drop-group" data-guide-group>',
+      '          <div class="app-navbar__drop-group" data-guide-group data-guide-group-key="sb-10">',
       '            <span class="app-navbar__drop-heading">Santa Bárbara · Grado 10</span>',
       '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-10a-guia-01-induccion.html") + '" role="menuitem" data-guide-file="grupo-10a-guia-01-induccion.html">10A · Guía 1 — Inducción</a>',
       '            <a class="app-navbar__drop-link" href="' + guideHref(p, "santa-barbara-10a-guia-02-redes-rap01.html") + '" role="menuitem" data-guide-file="santa-barbara-10a-guia-02-redes-rap01.html">10A · Guía 2 — Redes RAP01</a>',
@@ -95,7 +95,7 @@
       '            <a class="app-navbar__drop-link" href="' + guideHref(p, "santa-barbara-10b-guia-03-redes-rap02.html") + '" role="menuitem" data-guide-file="santa-barbara-10b-guia-03-redes-rap02.html">10B · Guía 3 — Redes RAP02</a>',
       '            <a class="app-navbar__drop-link" href="' + guideHref(p, "santa-barbara-guia-python.html") + '" role="menuitem" data-guide-file="santa-barbara-guia-python.html">10A/10B · Guía - Práctica de Python</a>',
       '          </div>',
-      '          <div class="app-navbar__drop-group" data-guide-group>',
+      '          <div class="app-navbar__drop-group" data-guide-group data-guide-group-key="sb-11">',
       '            <span class="app-navbar__drop-heading">Santa Bárbara · Grado 11</span>',
       '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-11a-guia-05-herramientas-informaticas-digitales.html") + '" role="menuitem" data-guide-file="grupo-11a-guia-05-herramientas-informaticas-digitales.html">11A · Guía 5 — Herramientas</a>',
       '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-11a-guia-06-planificar-informacion.html") + '" role="menuitem" data-guide-file="grupo-11a-guia-06-planificar-informacion.html">11A · Guía 6 — Implementar componentes</a>',
@@ -213,24 +213,38 @@
         el.style.display = "";
       });
     } else {
-      // Estudiante: mostrar solo las guías de su ficha
+      // Estudiante: mostrar únicamente el grupo (institución + grado) de su ficha
+      // y, dentro de él, solo las guías a las que tiene acceso. Las guías
+      // compartidas (p. ej. Práctica de Python) están listadas en los tres grupos
+      // del navbar; si solo filtráramos por archivo se mostrarían varias veces,
+      // incluido un encabezado de "Grado 11" que no corresponde al aprendiz.
       var studentGuides = [];
+      var groupKey = "";
       try {
-        studentGuides = auth.getGuidesForFicha(session.user && session.user.ficha) || [];
+        var ficha = session.user && session.user.ficha;
+        studentGuides = auth.getGuidesForFicha(ficha) || [];
+        var fichaInfo = typeof auth.getFichaInfo === "function" ? auth.getFichaInfo(ficha) : null;
+        if (fichaInfo) {
+          var instKey = /kennedy/i.test(fichaInfo.inst) ? "kennedy"
+            : /santa\s*b[aá]rbara/i.test(fichaInfo.inst) ? "sb" : "";
+          var gradeKey = (String(fichaInfo.grupo || "").match(/\d{1,2}/) || [""])[0];
+          if (instKey && gradeKey) groupKey = instKey + "-" + gradeKey;
+        }
       } catch (e) {}
 
-      document.querySelectorAll(".app-navbar__drop-link[data-guide-file]").forEach(function (link) {
-        var file = link.getAttribute("data-guide-file");
-        link.style.display = studentGuides.includes(file) ? "" : "none";
-      });
-
-      // Ocultar el encabezado del grupo si no tiene guías visibles
       document.querySelectorAll("[data-guide-group]").forEach(function (group) {
-        var visibleLinks = Array.from(
-          group.querySelectorAll(".app-navbar__drop-link[data-guide-file]")
-        ).filter(function (l) { return l.style.display !== "none"; });
+        // Si no se pudo determinar el grupo del aprendiz (ficha desconocida),
+        // se recurre al filtrado por archivo en todos los grupos.
+        var groupMatches = !groupKey || group.getAttribute("data-guide-group-key") === groupKey;
+        var visibleCount = 0;
+        group.querySelectorAll(".app-navbar__drop-link[data-guide-file]").forEach(function (link) {
+          var file = link.getAttribute("data-guide-file");
+          var show = groupMatches && studentGuides.includes(file);
+          link.style.display = show ? "" : "none";
+          if (show) visibleCount++;
+        });
         var heading = group.querySelector(".app-navbar__drop-heading");
-        if (heading) heading.style.display = visibleLinks.length ? "" : "none";
+        if (heading) heading.style.display = visibleCount ? "" : "none";
       });
     }
   }
