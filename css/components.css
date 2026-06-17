@@ -85,8 +85,8 @@
 
 .c-btn--danger {
   --c-btn-bg: var(--color-danger);
-  --c-btn-color: #fff;
-  --c-btn-hover-bg: #9d2e22;
+  --c-btn-color: var(--text-on-brand);
+  --c-btn-hover-bg: var(--color-danger-strong);
 }
 
 .c-btn--sm {
@@ -172,18 +172,18 @@
 }
 
 .c-alert--info {
-  background: #eaf3fb;
-  color: var(--color-info);
+  background: var(--color-info-soft);
+  color: var(--color-info-strong);
 }
 
 .c-alert--success {
-  background: var(--brand-100);
-  color: var(--brand-800);
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
 }
 
 .c-alert--warning {
-  background: var(--gold-light);
-  color: #6e5300;
+  background: var(--color-warning-soft);
+  color: var(--color-warning-strong);
 }
 
 .c-alert--danger {
@@ -200,17 +200,17 @@
   gap: var(--space-1);
   padding: 2px var(--space-3);
   border-radius: var(--radius-pill);
-  font: 600 var(--font-size-xs)/1.4 var(--font-body);
+  font: var(--weight-semibold) var(--font-size-xs)/1.4 var(--font-body);
   background: var(--brand-100);
   color: var(--brand-700);
   border: 1px solid var(--brand-200);
   text-transform: uppercase;
-  letter-spacing: 0.02em;
+  letter-spacing: var(--tracking-wide);
 }
 
 .c-badge--gold {
   background: var(--gold-light);
-  color: #6e5300;
+  color: var(--color-warning-strong);
   border-color: rgba(245, 183, 0, 0.5);
 }
 
@@ -261,7 +261,7 @@
   border-radius: var(--radius-sm);
   background: var(--surface-1);
   color: var(--text-strong);
-  font: 400 var(--font-size-base)/1.4 var(--font-body);
+  font: var(--weight-regular) var(--font-size-input)/var(--leading-snug) var(--font-body);
   transition: border-color var(--motion-fast), box-shadow var(--motion-fast);
 }
 
@@ -293,7 +293,7 @@
 .c-modal {
   position: fixed;
   inset: 0;
-  z-index: 1000;
+  z-index: var(--z-modal);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -331,8 +331,8 @@
 }
 
 .c-modal__close {
-  width: 36px;
-  height: 36px;
+  width: var(--hit-target-min);
+  height: var(--hit-target-min);
   display: inline-flex;
   align-items: center;
   justify-content: center;
