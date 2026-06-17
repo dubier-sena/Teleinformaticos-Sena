@@ -79,7 +79,14 @@
     "grupo-11b-guia-06-planificar-informacion.html": "11b_guia6.html",
     "grupo-11a-guia-07-planificar-informacion-ciberseguridad.html": "11a_guia7.html",
     "grupo-11b-guia-07-planificar-informacion-ciberseguridad.html": "11b_guia7.html",
-    // Redes (Santa Barbara) usa su propio nombre sin alias
+    // Redes (Santa Barbara) Guia 2 / RAP01: el script guarda en Firestore bajo el
+    // alias sb_{grupo}_redes.html (ver STORAGE_FILE_ALIASES_REDES en
+    // js/script_guia_redes.js). Sin estos aliases el pull buscaba el documento con
+    // el nombre crudo y no traia nada -> el grupo aparecia vacio en habilitacion.
+    "santa-barbara-10a-guia-02-redes-rap01.html": "sb_10a_redes.html",
+    "santa-barbara-10b-guia-02-redes-rap01.html": "sb_10b_redes.html",
+    // Redes Guia 3 / RAP02 (redes-rap02) NO usa alias: guarda con su propio nombre,
+    // asi que getCloudFileName devuelve el archivo tal cual y ya coincide.
   };
 
   function getCloudFileName(pageFile) {
