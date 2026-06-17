@@ -30,6 +30,7 @@ html.shell-ready [data-reveal].is-visible {
 body {
   margin: 0;
   font-family: var(--font-body);
+  line-height: var(--leading-normal);
   color: var(--text-strong);
   background:
     radial-gradient(circle at top right, rgba(15, 191, 100, 0.12), transparent 28%),
@@ -119,10 +120,10 @@ body.app-shell {
   color: var(--brand-700, #1b5e20);
 }
 .app-btn--outline:hover {
-  background: var(--brand-50, #e8f5e9);
+  background: var(--brand-100);
 }
 .app-btn--outline:disabled {
-  border-color: var(--border, #ddd);
+  border-color: var(--border-soft);
   color: var(--text-muted, #888);
   cursor: not-allowed;
   transform: none;

@@ -25,6 +25,30 @@
   --font-size-lg: 1.125rem;
   --font-size-xl: 1.375rem;
   --font-size-2xl: 1.75rem;
+  --font-size-3xl: 2.25rem; /* display / titulo de hero */
+  --font-size-4xl: 3rem;    /* hero grande de landing */
+
+  /* Tamano minimo para campos de formulario: >=16px evita el auto-zoom de iOS
+     al enfocar un input (regla readable-font-size / input-zoom). */
+  --font-size-input: var(--font-size-md);
+
+  /* Altura de linea (regla line-height: cuerpo 1.5-1.75). */
+  --leading-tight: 1.2;    /* botones, titulos compactos */
+  --leading-snug: 1.35;    /* subtitulos, labels, inputs */
+  --leading-normal: 1.55;  /* texto de lectura (cuerpo) */
+  --leading-relaxed: 1.7;  /* parrafos largos */
+
+  /* Peso tipografico (regla weight-hierarchy). */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* Tracking / espaciado entre letras. */
+  --tracking-tight: -0.01em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.02em;  /* badges y etiquetas en mayuscula */
+  --tracking-wider: 0.06em;
 
   /* ── Paleta institucional SENA ─────────────────────────────────────────── */
   --bg-canvas: #edf3ef;
@@ -53,12 +77,24 @@
   --gold-light: #fff0c0;
   --gold-strong: #c98d00;
 
-  /* Estados semanticos */
+  /* Estados semanticos. Cada estado tiene: color funcional, fondo suave y un
+     texto "strong" legible sobre ese fondo suave. Todos los pares texto/fondo
+     cumplen >=4.5:1 (reglas color-semantic / color-accessible-pairs). */
   --color-info: #1d5fa5;
+  --color-info-soft: #eaf3fb;
+  --color-info-strong: #14467a; /* texto sobre info-soft (~7:1) */
+
   --color-success: var(--brand-600);
+  --color-success-soft: var(--brand-100);
+  --color-success-strong: var(--brand-800);
+
   --color-warning: var(--accent-gold);
+  --color-warning-soft: var(--gold-light);
+  --color-warning-strong: #6e5300; /* texto sobre warning-soft */
+
   --color-danger: #c0382b;
   --color-danger-soft: #fde6e3;
+  --color-danger-strong: #8e2418; /* texto / hover sobre danger-soft */
 
   /* Texto */
   --text-strong: #102117;
@@ -107,4 +143,13 @@
 
   /* Tamano minimo de hit-target (WCAG 2.5.5 Target Size AAA = 44x44px) */
   --hit-target-min: 44px;
+
+  /* ── Capas (z-index) — regla z-index-management ────────────────────────── */
+  --z-base: 0;
+  --z-raised: 10;    /* tarjetas elevadas, chips flotantes */
+  --z-dropdown: 20;  /* menus desplegables del navbar */
+  --z-sticky: 40;    /* navbar fija, barras pegajosas */
+  --z-overlay: 100;  /* banners de estado, toasts bajos */
+  --z-modal: 1000;   /* modales y su scrim */
+  --z-toast: 1100;   /* notificaciones por encima de modales */
 }
