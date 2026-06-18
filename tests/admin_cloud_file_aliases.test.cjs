@@ -129,3 +129,62 @@ test("regresion: Redes Santa Barbara Guia 2 / RAP01 resuelve al doc con alias sb
   assert.strictEqual(adminResolve("santa-barbara-10a-guia-02-redes-rap01.html"), "sb_10a_redes.html");
   assert.strictEqual(adminResolve("santa-barbara-10b-guia-02-redes-rap01.html"), "sb_10b_redes.html");
 });
+
+// ── Cobertura ampliada a TODAS las copias del mapa ──────────────────────────
+// El alias pageFile->cloudFile esta duplicado en muchos modulos: firebase_db
+// (canonico), admin_habilitacion, admin_usuarios, guia_template, script.js,
+// script_guia2/3/5/6.js (directos) y activity_deadlines.js (INVERSO,
+// cloudFile->pageFile). Si cualquiera se desincroniza de la canonica, el
+// modulo afectado resuelve el documento equivocado (fue el bug de Redes:
+// el grupo aparecia vacio sin error). Este test recorre TODOS los js/ y exige
+// que ninguna copia contradiga la canonica, en sentido directo o inverso.
+function listJsFiles() {
+  return fs
+    .readdirSync(path.join(ROOT, "js"))
+    .filter((n) => n.endsWith(".js") && !n.endsWith(".min.js"))
+    .map((n) => "js/" + n);
+}
+
+// Extrae todos los pares literales "x.html": "y.html" (ignora ejemplos en
+// comentarios como "sb_{grupo}_redes.html" porque la llave rompe el patron).
+function extractHtmlAliasPairs(source) {
+  const re = /"([a-zA-Z0-9_.-]+\.html)"\s*:\s*"([a-zA-Z0-9_.-]+\.html)"/g;
+  const pairs = [];
+  let m;
+  while ((m = re.exec(source))) {
+    pairs.push([m[1], m[2]]);
+  }
+  return pairs;
+}
+
+test("ninguna copia del mapa de alias contradice la canonica de firebase_db", () => {
+  const offenders = [];
+  for (const rel of listJsFiles()) {
+    for (const [key, value] of extractHtmlAliasPairs(read(rel))) {
+      if (key in CANON_ALIASES) {
+        // Mapa directo (pageFile -> cloudFile): el cloud-file debe coincidir.
+        if (CANON_ALIASES[key] !== value) {
+          offenders.push(
+            `${rel}: directo "${key}" -> "${value}" pero canonico -> "${CANON_ALIASES[key]}"`
+          );
+        }
+      } else if (value in CANON_ALIASES) {
+        // Mapa inverso (cloudFile -> pageFile, p.ej. activity_deadlines.js):
+        // la clave (cloud-file) debe ser el cloud-file canonico del pageFile.
+        if (CANON_ALIASES[value] !== key) {
+          offenders.push(
+            `${rel}: inverso "${key}" <- "${value}" pero canonico del pageFile -> "${CANON_ALIASES[value]}"`
+          );
+        }
+      }
+      // else: alias extra (subpaginas de actividad o plantillas grado-XX) que
+      // no toca llaves canonicas; no se valida cobertura, solo no-contradiccion.
+    }
+  }
+  assert.deepStrictEqual(
+    offenders,
+    [],
+    "Copias del alias pageFile<->cloudFile desincronizadas con js/firebase_db.js:\n  " +
+      offenders.join("\n  ")
+  );
+});
