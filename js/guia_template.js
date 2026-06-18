@@ -986,7 +986,7 @@
             '<a class="nav-guide' +
             (isCurrent ? " current" : "") +
             '" href="' +
-            escapeHtml(file) +
+            escapeHtml(portalAuth.getGuideHref(file)) +
             '" data-current-file="' +
             escapeHtml(file) +
             '">' +
@@ -1162,7 +1162,16 @@
       if (selection.ficha) {
         params.set("ficha", selection.ficha);
       }
-      link.href = params.toString() ? file + "?" + params.toString() : file;
+      // Las guias se sirven SIEMPRE por el router guia.html?g=… El nombre de
+      // archivo plano (grupo-…html) NO existe en la raiz: enlazarlo directo da
+      // 404. Tanto guia.html (raiz) como pages/guias/*.html (con <base href="../../">)
+      // resuelven "guia.html?g=" relativo a la raiz, asi que no hace falta prefijo.
+      const base =
+        portalAuth && typeof portalAuth.getGuideHref === "function"
+          ? portalAuth.getGuideHref(file)
+          : "guia.html?g=" + encodeURIComponent(file);
+      const sep = base.indexOf("?") === -1 ? "?" : "&";
+      link.href = params.toString() ? base + sep + params.toString() : base;
     });
   }
 
