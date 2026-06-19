@@ -503,6 +503,381 @@
     });
   }
 
+  // ── Reintento automatico de la entrega (Capa 2) ──────────────────────────
+  // En un laboratorio con la sala entregando a la vez, la subida puede fallar por
+  // congestion o porque el token no estaba listo un instante. En vez de rendirse
+  // al primer intento, reintentamos con backoff + jitter. Los errores PERMANENTES
+  // (extension/tamano/datos/carpeta) NO se reintentan: fallarian igual.
+  function isPermanentDeliveryError(error) {
+    var msg = String((error && error.message) || "").toLowerCase();
+    return (
+      msg.indexOf("extension") >= 0 ||
+      msg.indexOf("tamano") >= 0 ||
+      msg.indexOf("tamaño") >= 0 ||
+      msg.indexOf("selecciona el archivo") >= 0 ||
+      msg.indexOf("faltan datos") >= 0 ||
+      msg.indexOf("carpeta") >= 0 ||
+      msg.indexOf("no esta configurada") >= 0 ||
+      msg.indexOf("no cumple la politica") >= 0
+    );
+  }
+
+  // Reintenta fn() ante errores transitorios con backoff exponencial + jitter.
+  // Recibe sus dependencias (sleep/rand) para ser testeable de forma determinista.
+  async function retryWithBackoff(fn, opts) {
+    opts = opts || {};
+    var maxAttempts = opts.maxAttempts || 4;
+    var maxDelay = opts.maxDelayMs || 15000;
+    var delay = opts.baseDelayMs || 3000;
+    var rand = opts.rand || Math.random;
+    var sleepFn =
+      opts.sleep ||
+      function (ms) {
+        return new Promise(function (resolve) { setTimeout(resolve, ms); });
+      };
+    var onRetry = opts.onRetry || function () {};
+    var isPermanent = opts.isPermanent || function () { return false; };
+
+    var lastError;
+    for (var attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        return await fn(attempt);
+      } catch (error) {
+        lastError = error;
+        if (isPermanent(error) || attempt >= maxAttempts) throw error;
+        var wait = delay + Math.floor(rand() * delay);
+        try { onRetry(attempt + 1, wait, error); } catch (_) {}
+        await sleepFn(wait);
+        delay = Math.min(delay * 2, maxDelay);
+      }
+    }
+    throw lastError;
+  }
+
+  // ── Cola durable de entregas (Capa 2b): IndexedDB + reintento en background ──
+  // Si la entrega no pasa en sesion (error transitorio), se guarda el payload
+  // completo en IndexedDB y se reintenta solo en cargas posteriores hasta
+  // entregarse: el aprendiz no pierde el archivo ni tiene que volver a subirlo.
+  var DELIVERY_QUEUE_DB = "sena_portal_delivery_queue";
+  var DELIVERY_QUEUE_STORE = "pending";
+  var deliveryQueueRunning = false;
+
+  function deliveryIdbAvailable() {
+    return typeof window !== "undefined" && !!window.indexedDB;
+  }
+
+  function deliveryIdbOpen() {
+    return new Promise(function (resolve, reject) {
+      if (!deliveryIdbAvailable()) { reject(new Error("no-indexeddb")); return; }
+      var req = window.indexedDB.open(DELIVERY_QUEUE_DB, 1);
+      req.onupgradeneeded = function () {
+        var db = req.result;
+        if (!db.objectStoreNames.contains(DELIVERY_QUEUE_STORE)) {
+          db.createObjectStore(DELIVERY_QUEUE_STORE, { keyPath: "key" });
+        }
+      };
+      req.onsuccess = function () { resolve(req.result); };
+      req.onerror = function () { reject(req.error || new Error("idb-open")); };
+    });
+  }
+
+  function deliveryIdbGetAll() {
+    return deliveryIdbOpen().then(function (db) {
+      return new Promise(function (resolve, reject) {
+        var req = db
+          .transaction(DELIVERY_QUEUE_STORE, "readonly")
+          .objectStore(DELIVERY_QUEUE_STORE)
+          .getAll();
+        req.onsuccess = function () { resolve(req.result || []); };
+        req.onerror = function () { reject(req.error); };
+      });
+    });
+  }
+
+  function deliveryIdbPut(entry) {
+    return deliveryIdbOpen().then(function (db) {
+      return new Promise(function (resolve, reject) {
+        var tx = db.transaction(DELIVERY_QUEUE_STORE, "readwrite");
+        tx.objectStore(DELIVERY_QUEUE_STORE).put(entry);
+        tx.oncomplete = function () { resolve(true); };
+        tx.onerror = function () { reject(tx.error); };
+      });
+    });
+  }
+
+  function deliveryIdbRemove(key) {
+    return deliveryIdbOpen().then(function (db) {
+      return new Promise(function (resolve, reject) {
+        var tx = db.transaction(DELIVERY_QUEUE_STORE, "readwrite");
+        tx.objectStore(DELIVERY_QUEUE_STORE).delete(key);
+        tx.oncomplete = function () { resolve(true); };
+        tx.onerror = function () { reject(tx.error); };
+      });
+    });
+  }
+
+  var deliveryIdbStorage = {
+    getAll: deliveryIdbGetAll,
+    put: deliveryIdbPut,
+    remove: deliveryIdbRemove,
+  };
+
+  // Una entrega pendiente por actividad/pagina (la ultima reemplaza a la previa).
+  function deliveryQueueKey(deliveryCtx) {
+    return (
+      (deliveryCtx.pageFile || "guia") +
+      "|" +
+      (deliveryCtx.panelKey || deliveryCtx.activityNumber || deliveryCtx.activityLabel || "act")
+    );
+  }
+
+  async function enqueueDelivery(payload, deliveryCtx) {
+    if (!deliveryIdbAvailable()) return false;
+    var entry = {
+      key: deliveryQueueKey(deliveryCtx),
+      payload: payload,
+      deliveryCtx: deliveryCtx,
+      createdAt: Date.now(),
+      attempts: 0,
+      status: "pending",
+    };
+    try {
+      await deliveryIdbStorage.put(entry);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function buildDeliveryRecord(dctx, response) {
+    response = response || {};
+    return {
+      guideLabel: dctx.guideLabel,
+      activityNumber: dctx.activityNumber || "",
+      activityTitle: dctx.activityTitle || "",
+      activityLabel: dctx.activityLabel || "Actividad",
+      panelKey: dctx.panelKey || "",
+      guiaNumero: dctx.guideNumber || "",
+      actividadNumero: dctx.activityNumber || "",
+      actividadTitulo: dctx.activityTitle || dctx.activityLabel || "",
+      shortName: dctx.shortName || "",
+      nombreAprendiz: dctx.fullName,
+      nombreArchivoOriginal: dctx.fileName || "",
+      originalFileName: dctx.fileName || "",
+      nombreArchivoEstandar: response.savedFileName || dctx.standardName || "",
+      pageFile: dctx.pageFile,
+      fullName: dctx.fullName,
+      ficha: dctx.ficha,
+      grupo: dctx.grupo,
+      institucion: dctx.institucion,
+      submittedAt: dctx.submittedAt,
+      fechaEntrega: dctx.submittedAt,
+      folderPath: response.folderPath || "",
+      savedFileName: response.savedFileName || dctx.standardName || dctx.fileName || "",
+      driveUrl: response.driveUrl || "",
+      enlaceDrive: response.driveUrl || "",
+      backupDriveUrl: response.backupDriveUrl || "",
+      respaldoDriveUrl: response.backupDriveUrl || "",
+      backupFolderPath: response.backupFolderPath || "",
+      backupSavedFileName: response.backupSavedFileName || "",
+      backupError: response.backupError || "",
+      status: "delivered",
+    };
+  }
+
+  // Finaliza una entrega exitosa: registra el record, marca la actividad y avisa
+  // a la guia. Con nodes (entrega en sesion) ademas actualiza el modal; sin nodes
+  // (reintento de la cola) finaliza headless. Reutilizado por ambos caminos.
+  function finalizeDelivery(dctx, response, nodes) {
+    response = response || {};
+    var record = buildDeliveryRecord(dctx, response);
+    if (nodes) {
+      if (response.folderPath && nodes.path) {
+        nodes.path.textContent =
+          response.folderPath + (response.savedFileName ? " / " + response.savedFileName : "");
+      }
+      setStatus(
+        nodes.status,
+        (response.message || "Entrega registrada correctamente en la carpeta correspondiente.") +
+          (response.folderPath ? " Ruta: " + response.folderPath + "." : "") +
+          (response.savedFileName ? " Archivo guardado como: " + response.savedFileName : ""),
+        "success"
+      );
+      if (response.driveUrl && nodes.resultLink) {
+        nodes.resultLink.href = response.driveUrl;
+        nodes.resultLink.hidden = false;
+      }
+    }
+    saveDeliveryRecord(dctx.context, record);
+    markGuideActivitySeenForRecord(record);
+    notifyDeliveryRegistered(record);
+    return record;
+  }
+
+  // Logica pura (recibe storage/upload/finalize/isPermanent) para probarse sin
+  // IndexedDB. Exito -> finaliza y quita; transitorio -> conserva e incrementa
+  // intentos; permanente / agotada / muy vieja -> descarta.
+  async function processDeliveryQueue(deps) {
+    var storage = deps.storage;
+    var upload = deps.upload;
+    var finalize = deps.finalize;
+    var isPermanent = deps.isPermanent || function () { return false; };
+    var maxAttempts = deps.maxAttempts || 25;
+    var maxAgeMs = deps.maxAgeMs || 7 * 24 * 60 * 60 * 1000;
+    var now = deps.now || Date.now;
+
+    var entries = await storage.getAll();
+    var result = { delivered: 0, kept: 0, dropped: 0 };
+    for (var i = 0; i < entries.length; i++) {
+      var entry = entries[i];
+      if (!entry || entry.status === "delivered") continue;
+      if (
+        (entry.attempts || 0) >= maxAttempts ||
+        (entry.createdAt && now() - entry.createdAt > maxAgeMs)
+      ) {
+        await storage.remove(entry.key);
+        result.dropped += 1;
+        continue;
+      }
+      try {
+        var response = await upload(entry.payload);
+        await finalize(entry, response);
+        await storage.remove(entry.key);
+        result.delivered += 1;
+      } catch (error) {
+        if (isPermanent(error)) {
+          await storage.remove(entry.key);
+          result.dropped += 1;
+          continue;
+        }
+        entry.attempts = (entry.attempts || 0) + 1;
+        entry.lastError = String((error && error.message) || "");
+        try { await storage.put(entry); } catch (_) {}
+        result.kept += 1;
+      }
+    }
+    return result;
+  }
+
+  async function runDeliveryQueue() {
+    if (deliveryQueueRunning || !deliveryIdbAvailable()) return;
+    deliveryQueueRunning = true;
+    try {
+      await processDeliveryQueue({
+        storage: deliveryIdbStorage,
+        upload: function (payload) { return uploadToAppsScript(payload); },
+        finalize: function (entry, response) {
+          return finalizeDelivery(entry.deliveryCtx, response, null);
+        },
+        isPermanent: isPermanentDeliveryError,
+      });
+    } catch (error) {
+      /* best-effort: se reintenta en la proxima pasada */
+    } finally {
+      deliveryQueueRunning = false;
+    }
+  }
+
+  // ── Respaldo manual a Drive (cuando la entrega automatica falla) ─────────────
+  // Abre la carpeta de la ficha y dice el nombre EXACTO del archivo, para que el
+  // aprendiz suba el archivo a mano. Nota: una subida manual NO queda registrada
+  // en el portal (el instructor la ve por la fecha en Drive).
+  function safEscape(value) {
+    return String(value == null ? "" : value).replace(/[&<>"]/g, function (ch) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch];
+    });
+  }
+
+  function getDriveFolderUrlForFicha(ficha) {
+    var integrations = getIntegrations() || {};
+    var map = integrations.fichaDriveFolders || {};
+    return map[String(ficha == null ? "" : ficha).trim()] || "";
+  }
+
+  // Respaldo inline (para el modal, que ya esta abierto). Rellena `container`.
+  function renderManualDriveFallback(container, opts) {
+    if (!container) return false;
+    opts = opts || {};
+    var folderUrl = getDriveFolderUrlForFicha(opts.ficha);
+    var name = opts.suggestedName || "";
+    var parts = [];
+    parts.push(
+      '<div class="saf-title">&#9888;&#65039; No se pudo entregar automaticamente. Sube tu archivo a mano como respaldo:</div>'
+    );
+    if (folderUrl) {
+      parts.push(
+        '<a class="saf-open" href="' +
+          safEscape(folderUrl) +
+          '" target="_blank" rel="noopener noreferrer">&#128194; Abrir carpeta de Drive de tu ficha</a>'
+      );
+    } else {
+      parts.push(
+        '<div class="saf-nofolder">No hay carpeta de Drive configurada para tu ficha. Pide el enlace a tu instructor.</div>'
+      );
+    }
+    if (name) {
+      parts.push(
+        '<div class="saf-name">Sube el archivo con este nombre exacto:<br>' +
+          '<code data-saf-name>' + safEscape(name) + "</code> " +
+          '<button type="button" class="saf-copy" data-saf-copy>Copiar nombre</button></div>'
+      );
+    }
+    parts.push(
+      '<div class="saf-hint">Tu instructor vera el archivo por la fecha en Drive. ' +
+        "(La entrega manual no marca la actividad como entregada en el portal.)</div>"
+    );
+    container.innerHTML = parts.join("");
+    container.hidden = false;
+    var copyBtn = container.querySelector("[data-saf-copy]");
+    if (copyBtn) {
+      copyBtn.addEventListener("click", function () {
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(name);
+            copyBtn.textContent = "Nombre copiado";
+          }
+        } catch (clipError) {
+          /* sin portapapeles: el aprendiz copia a mano */
+        }
+      });
+    }
+    return true;
+  }
+
+  // Respaldo por dialogo (para subidas personalizadas sin modal, p.ej. imagenes).
+  async function offerManualDriveFallback(opts) {
+    opts = opts || {};
+    var folderUrl = getDriveFolderUrlForFicha(opts.ficha);
+    var name = opts.suggestedName
+      ? "\n\nNombra tu archivo exactamente asi:\n" + opts.suggestedName
+      : "";
+    if (!folderUrl) {
+      if (typeof window.portalAlert === "function") {
+        window.portalAlert(
+          "No se pudo entregar. Pide a tu instructor el enlace de la carpeta de Drive para subir el archivo manualmente." +
+            name,
+          { type: "warning" }
+        );
+      }
+      return false;
+    }
+    var message =
+      (opts.message || "No se pudo entregar automaticamente.") +
+      " Puedes subir el archivo a mano a tu carpeta de Drive como respaldo." +
+      name;
+    var ok =
+      typeof window.portalConfirm === "function"
+        ? await window.portalConfirm(message, {
+            title: "Subir manualmente a Drive",
+            confirmText: "Abrir carpeta de Drive",
+          })
+        : true;
+    if (ok) {
+      try { window.open(folderUrl, "_blank", "noopener"); } catch (openError) {}
+    }
+    return ok;
+  }
+
   async function uploadToAppsScript(payload) {
     var integrations = getIntegrations();
     var endpoint = normalizeText(integrations.googleAppsScriptUrl);
@@ -640,6 +1015,12 @@
       ".shared-apps-script-status.is-error{background:#fef2f2;border-color:#fecaca;color:#b42318;}",
       ".shared-apps-script-status.is-warning{background:#fffbeb;border-color:#fde68a;color:#92400e;}",
       ".shared-apps-script-result{font-size:13px;font-weight:700;color:#145fcb;}",
+      ".shared-apps-script-fallback{margin-top:12px;padding:14px 16px;border-radius:14px;border:1px solid #fde68a;background:#fffbeb;color:#7c4a03;line-height:1.55;display:grid;gap:8px;font-size:14px;}",
+      ".shared-apps-script-fallback .saf-title{font-weight:800;}",
+      ".shared-apps-script-fallback .saf-open{display:inline-block;font-weight:800;color:#1d4ed8;text-decoration:underline;}",
+      ".shared-apps-script-fallback code{background:#fff;border:1px solid #fde68a;border-radius:8px;padding:3px 7px;font-weight:700;color:#7c2d12;word-break:break-all;}",
+      ".shared-apps-script-fallback .saf-copy{margin-left:8px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;padding:4px 10px;cursor:pointer;font:inherit;}",
+      ".shared-apps-script-fallback .saf-hint{font-size:12px;color:#92671a;}",
       "@media (max-width: 760px){.shared-apps-script-modal{padding:14px;align-items:flex-end;}.shared-apps-script-panel{max-height:90vh;border-radius:24px 24px 18px 18px;padding:18px;}.shared-apps-script-grid{grid-template-columns:1fr;}.shared-apps-script-actions{flex-direction:column;}.shared-apps-script-btn{width:100%;}}",
     ].join("");
     document.head.appendChild(style);
@@ -772,11 +1153,16 @@
     resultLink.rel = "noopener noreferrer";
     resultLink.setAttribute("data-shared-apps-result", "");
 
+    var fallback = createElement("div", "shared-apps-script-fallback");
+    fallback.setAttribute("data-shared-apps-fallback", "");
+    fallback.hidden = true;
+
     panel.appendChild(head);
     panel.appendChild(grid);
     panel.appendChild(status);
     panel.appendChild(actions);
     panel.appendChild(resultLink);
+    panel.appendChild(fallback);
     modal.appendChild(panel);
     document.body.appendChild(modal);
 
@@ -827,6 +1213,7 @@
       status: modal.querySelector("[data-shared-apps-status]"),
       submit: modal.querySelector("[data-shared-apps-submit]"),
       resultLink: modal.querySelector("[data-shared-apps-result]"),
+      fallback: modal.querySelector("[data-shared-apps-fallback]"),
     };
   }
 
@@ -980,6 +1367,7 @@
     }
 
     nodes.submit.setAttribute("disabled", "disabled");
+    if (nodes.fallback) { nodes.fallback.hidden = true; nodes.fallback.innerHTML = ""; }
     setStatus(nodes.status, "Subiendo archivo a la carpeta correspondiente de Drive...", "loading");
 
     try {
@@ -1014,69 +1402,77 @@
         submittedAt: new Date().toISOString(),
       };
 
-      var response = await uploadToAppsScript(payload);
-      if (response.folderPath && nodes.path) {
-        nodes.path.textContent =
-          response.folderPath +
-          (response.savedFileName ? " / " + response.savedFileName : "");
-      }
-      setStatus(
-        nodes.status,
-        (response.message || "Entrega registrada correctamente en la carpeta correspondiente.") +
-          (response.folderPath ? " Ruta: " + response.folderPath + "." : "") +
-          (response.savedFileName ? " Archivo guardado como: " + response.savedFileName : ""),
-        "success"
-      );
-
-      if (response.driveUrl) {
-        nodes.resultLink.href = response.driveUrl;
-        nodes.resultLink.hidden = false;
-      }
-
       var standardName = buildStandardFileName(fullName, currentContext, file.name, ficha);
-      var record = {
+      // Contexto serializable para finalizar la entrega (en sesion o headless
+      // desde la cola). Fija pageFile para que el registro se guarde con la llave
+      // de la pagina original aunque el reintento corra en otra pagina.
+      var deliveryCtx = {
+        context: Object.assign({}, currentContext, { pageFile: identity.pageFile }),
         guideLabel: currentContext.guideLabel,
         activityNumber: currentContext.activityNumber || "",
         activityTitle: currentContext.activityTitle || "",
         activityLabel: currentContext.activityLabel || "Actividad",
         panelKey: currentContext.panelKey || "",
-        guiaNumero: guideNumber,
-        actividadNumero: currentContext.activityNumber || "",
-        actividadTitulo: currentContext.activityTitle || currentContext.activityLabel || "",
+        guideNumber: guideNumber,
         shortName: shortName,
-        nombreAprendiz: fullName,
-        nombreArchivoOriginal: file.name || "",
-        originalFileName: file.name || "",
-        nombreArchivoEstandar: response.savedFileName || standardName || "",
-        pageFile: identity.pageFile,
         fullName: fullName,
         ficha: ficha,
+        fileName: file.name || "",
+        pageFile: identity.pageFile,
         grupo: identity.grupo,
         institucion: identity.institucion,
         submittedAt: payload.submittedAt,
-        fechaEntrega: payload.submittedAt,
-        folderPath: response.folderPath || "",
-        savedFileName: response.savedFileName || standardName || file.name || "",
-        driveUrl: response.driveUrl || "",
-        enlaceDrive: response.driveUrl || "",
-        backupDriveUrl: response.backupDriveUrl || "",
-        respaldoDriveUrl: response.backupDriveUrl || "",
-        backupFolderPath: response.backupFolderPath || "",
-        backupSavedFileName: response.backupSavedFileName || "",
-        backupError: response.backupError || "",
-        status: "delivered",
+        standardName: standardName,
       };
-      saveDeliveryRecord(currentContext, record);
-      markGuideActivitySeenForRecord(record);
-      notifyDeliveryRegistered(record);
-    } catch (error) {
-      setStatus(
-        nodes.status,
-        error && error.message
-          ? error.message
-          : "No fue posible completar la entrega segura.",
-        "error"
+
+      var response = await retryWithBackoff(
+        function () { return uploadToAppsScript(payload); },
+        {
+          isPermanent: isPermanentDeliveryError,
+          onRetry: function (nextAttempt) {
+            setStatus(
+              nodes.status,
+              "El servicio esta congestionado o tu sesion no estaba lista. " +
+                "Reintentando la entrega automaticamente (intento " + nextAttempt + ")... " +
+                "no cierres esta ventana.",
+              "loading"
+            );
+          },
+        }
       );
+      finalizeDelivery(deliveryCtx, response, nodes);
+    } catch (error) {
+      var canQueue =
+        !isPermanentDeliveryError(error) &&
+        typeof payload !== "undefined" &&
+        typeof deliveryCtx !== "undefined" &&
+        deliveryIdbAvailable();
+      if (canQueue) {
+        // Transitorio y agotados los reintentos en sesion -> a la cola durable.
+        try { await enqueueDelivery(payload, deliveryCtx); } catch (_) {}
+        setStatus(
+          nodes.status,
+          "No se pudo entregar ahora (servicio congestionado). Tu entrega quedo EN COLA y se " +
+            "enviara automaticamente cuando el servicio responda; no necesitas volver a subirla. " +
+            "Puedes seguir trabajando o cerrar esta ventana.",
+          "loading"
+        );
+      } else {
+        setStatus(
+          nodes.status,
+          error && error.message
+            ? error.message
+            : "No fue posible completar la entrega segura.",
+          "error"
+        );
+      }
+      // Respaldo manual (cualquier fallo): abrir carpeta de Drive + nombre exacto.
+      if (typeof deliveryCtx !== "undefined" && deliveryCtx) {
+        renderManualDriveFallback(nodes.fallback, {
+          ficha: ficha,
+          suggestedName: deliveryCtx.standardName,
+        });
+      }
     } finally {
       nodes.submit.removeAttribute("disabled");
     }
@@ -1110,6 +1506,13 @@
 
   document.addEventListener("DOMContentLoaded", function () {
     injectButtonsIntoExistingGroups(document);
+    if (deliveryIdbAvailable()) {
+      // Reintenta entregas en cola (Capa 2b): al cargar y luego periodicamente.
+      // uploadToAppsScript ya espera la hidratacion de la sesion/token.
+      setTimeout(runDeliveryQueue, 6000);
+      setInterval(runDeliveryQueue, 60000);
+      try { window.addEventListener("online", runDeliveryQueue); } catch (_) {}
+    }
   });
 
   window.sharedAppsScriptDelivery = {
@@ -1126,5 +1529,12 @@
     saveDeliveryRecord: saveDeliveryRecord,
     uploadToAppsScript: uploadToAppsScript,
     validateFile: validateFile,
+    getDriveFolderUrlForFicha: getDriveFolderUrlForFicha,
+    renderManualDriveFallback: renderManualDriveFallback,
+    offerManualDriveFallback: offerManualDriveFallback,
+    // Expuestos solo para pruebas unitarias (logica pura).
+    _retryWithBackoff: retryWithBackoff,
+    _isPermanentDeliveryError: isPermanentDeliveryError,
+    _processDeliveryQueue: processDeliveryQueue,
   };
 })();

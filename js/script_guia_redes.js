@@ -672,7 +672,14 @@ window.subirImagenBloqueA = async function (input) {
 
     if (label) { label.innerHTML = "&#128247; Cambiar imagen"; label.style.pointerEvents = ""; }
   } catch (err) {
-    window.portalAlert("Error al subir imagen: " + ((err && err.message) || "Intenta de nuevo."), { type: "error" });
+    try {
+      await window.sharedAppsScriptDelivery.offerManualDriveFallback({
+        ficha: (getDeliveryIdentityRedes() || {}).ficha,
+        message: "No se pudo subir la imagen automaticamente: " + ((err && err.message) || "intenta de nuevo") + ".",
+      });
+    } catch (_fbErr) {
+      window.portalAlert("Error al subir imagen: " + ((err && err.message) || "Intenta de nuevo."), { type: "error" });
+    }
     if (label) { label.innerHTML = originalLabel; label.style.pointerEvents = ""; }
   }
 };
@@ -794,7 +801,14 @@ window.subirImagenBloqueB = async function (input) {
 
     if (label) { label.innerHTML = "&#128247; Cambiar imagen"; label.style.pointerEvents = ""; }
   } catch (err) {
-    window.portalAlert("Error al subir imagen: " + ((err && err.message) || "Intenta de nuevo."), { type: "error" });
+    try {
+      await window.sharedAppsScriptDelivery.offerManualDriveFallback({
+        ficha: (getDeliveryIdentityRedes() || {}).ficha,
+        message: "No se pudo subir la imagen automaticamente: " + ((err && err.message) || "intenta de nuevo") + ".",
+      });
+    } catch (_fbErr) {
+      window.portalAlert("Error al subir imagen: " + ((err && err.message) || "Intenta de nuevo."), { type: "error" });
+    }
     if (label) { label.innerHTML = originalLabel; label.style.pointerEvents = ""; }
   }
 };
@@ -999,7 +1013,14 @@ window.subirImagenBloqueE = async function (input) {
 
     if (label) { label.innerHTML = "&#128247; Cambiar imagen"; label.style.pointerEvents = ""; }
   } catch (err) {
-    window.portalAlert("Error al subir imagen: " + ((err && err.message) || "Intenta de nuevo."), { type: "error" });
+    try {
+      await window.sharedAppsScriptDelivery.offerManualDriveFallback({
+        ficha: (getDeliveryIdentityRedes() || {}).ficha,
+        message: "No se pudo subir la imagen automaticamente: " + ((err && err.message) || "intenta de nuevo") + ".",
+      });
+    } catch (_fbErr) {
+      window.portalAlert("Error al subir imagen: " + ((err && err.message) || "Intenta de nuevo."), { type: "error" });
+    }
     if (label) { label.innerHTML = originalLabel; label.style.pointerEvents = ""; }
   }
 };
@@ -2302,7 +2323,14 @@ window.subirPantallazoTallerIPEj4 = async function (input) {
       uploadBtn.style.pointerEvents = "";
     }
   } catch (err) {
-    window.portalAlert("Error al subir el pantallazo: " + ((err && err.message) || "Intenta de nuevo."), { type: "error" });
+    try {
+      await window.sharedAppsScriptDelivery.offerManualDriveFallback({
+        ficha: (getDeliveryIdentityRedes() || {}).ficha,
+        message: "No se pudo subir el pantallazo automaticamente: " + ((err && err.message) || "intenta de nuevo") + ".",
+      });
+    } catch (_fbErr) {
+      window.portalAlert("Error al subir el pantallazo: " + ((err && err.message) || "Intenta de nuevo."), { type: "error" });
+    }
     if (uploadBtn) {
       uploadBtn.innerHTML = originalLabel;
       uploadBtn.style.pointerEvents = "";
@@ -2553,7 +2581,14 @@ window.subirPantallazoLab1 = async function (slotKey, input) {
     }
     if (input) input.value = "";
   } catch (err) {
-    window.portalAlert("Error al subir el pantallazo: " + ((err && err.message) || "Intenta de nuevo."), { type: "error" });
+    try {
+      await window.sharedAppsScriptDelivery.offerManualDriveFallback({
+        ficha: (getDeliveryIdentityRedes() || {}).ficha,
+        message: "No se pudo subir el pantallazo automaticamente: " + ((err && err.message) || "intenta de nuevo") + ".",
+      });
+    } catch (_fbErr) {
+      window.portalAlert("Error al subir el pantallazo: " + ((err && err.message) || "Intenta de nuevo."), { type: "error" });
+    }
     if (uploadBtn) {
       uploadBtn.innerHTML = originalLabel;
       uploadBtn.style.pointerEvents = "";
@@ -2802,7 +2837,14 @@ window.subirPantallazoLab2 = async function (slotKey, input) {
     }
     if (input) input.value = "";
   } catch (err) {
-    window.portalAlert("Error al subir el pantallazo: " + ((err && err.message) || "Intenta de nuevo."), { type: "error" });
+    try {
+      await window.sharedAppsScriptDelivery.offerManualDriveFallback({
+        ficha: (getDeliveryIdentityRedes() || {}).ficha,
+        message: "No se pudo subir el pantallazo automaticamente: " + ((err && err.message) || "intenta de nuevo") + ".",
+      });
+    } catch (_fbErr) {
+      window.portalAlert("Error al subir el pantallazo: " + ((err && err.message) || "Intenta de nuevo."), { type: "error" });
+    }
     if (uploadBtn) {
       uploadBtn.innerHTML = originalLabel;
       uploadBtn.style.pointerEvents = "";
@@ -3062,7 +3104,14 @@ window.subirPantallazoLab3 = async function (slotKey, input) {
     }
     if (input) input.value = "";
   } catch (err) {
-    window.portalAlert("Error al subir el pantallazo: " + ((err && err.message) || "Intenta de nuevo."), { type: "error" });
+    try {
+      await window.sharedAppsScriptDelivery.offerManualDriveFallback({
+        ficha: (getDeliveryIdentityRedes() || {}).ficha,
+        message: "No se pudo subir el pantallazo automaticamente: " + ((err && err.message) || "intenta de nuevo") + ".",
+      });
+    } catch (_fbErr) {
+      window.portalAlert("Error al subir el pantallazo: " + ((err && err.message) || "Intenta de nuevo."), { type: "error" });
+    }
     if (uploadBtn) {
       uploadBtn.innerHTML = originalLabel;
       uploadBtn.style.pointerEvents = "";
@@ -3229,7 +3278,14 @@ window.subirImagenBloqueIP3 = async function (input) {
     }
     if (label) { label.innerHTML = "&#128247; Cambiar imagen"; label.style.pointerEvents = ""; }
   } catch (err) {
-    window.portalAlert("Error al subir imagen: " + ((err && err.message) || "Intenta de nuevo."), { type: "error" });
+    try {
+      await window.sharedAppsScriptDelivery.offerManualDriveFallback({
+        ficha: (getDeliveryIdentityRedes() || {}).ficha,
+        message: "No se pudo subir la imagen automaticamente: " + ((err && err.message) || "intenta de nuevo") + ".",
+      });
+    } catch (_fbErr) {
+      window.portalAlert("Error al subir imagen: " + ((err && err.message) || "Intenta de nuevo."), { type: "error" });
+    }
     if (label) { label.innerHTML = originalLabel; label.style.pointerEvents = ""; }
   }
 };
@@ -3347,7 +3403,14 @@ window.subirImagenBloqueIP1 = async function (input) {
     }
     if (label) { label.innerHTML = "&#128247; Cambiar imagen"; label.style.pointerEvents = ""; }
   } catch (err) {
-    window.portalAlert("Error al subir imagen: " + ((err && err.message) || "Intenta de nuevo."), { type: "error" });
+    try {
+      await window.sharedAppsScriptDelivery.offerManualDriveFallback({
+        ficha: (getDeliveryIdentityRedes() || {}).ficha,
+        message: "No se pudo subir la imagen automaticamente: " + ((err && err.message) || "intenta de nuevo") + ".",
+      });
+    } catch (_fbErr) {
+      window.portalAlert("Error al subir imagen: " + ((err && err.message) || "Intenta de nuevo."), { type: "error" });
+    }
     if (label) { label.innerHTML = originalLabel; label.style.pointerEvents = ""; }
   }
 };
@@ -3467,7 +3530,14 @@ window.subirImagenSocial = async function (input) {
 
     if (label) { label.innerHTML = "&#128247; Cambiar imagen"; label.style.pointerEvents = ""; }
   } catch (err) {
-    window.portalAlert("Error al subir imagen: " + ((err && err.message) || "Intenta de nuevo."), { type: "error" });
+    try {
+      await window.sharedAppsScriptDelivery.offerManualDriveFallback({
+        ficha: (getDeliveryIdentityRedes() || {}).ficha,
+        message: "No se pudo subir la imagen automaticamente: " + ((err && err.message) || "intenta de nuevo") + ".",
+      });
+    } catch (_fbErr) {
+      window.portalAlert("Error al subir imagen: " + ((err && err.message) || "Intenta de nuevo."), { type: "error" });
+    }
     if (label) { label.innerHTML = originalLabel; label.style.pointerEvents = ""; }
   }
 };
