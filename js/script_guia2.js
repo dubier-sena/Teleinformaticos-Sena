@@ -2820,6 +2820,146 @@ function refreshMatchingGameTime() {
   }
 }
 
+// Paleta de las lineas conectoras (union en columna). Reutiliza los mismos
+// tonos saturados de la sopa de letras para mantener coherencia visual.
+const MATCHING_GAME_LINK_COLORS = [
+  "#0f766e",
+  "#2563eb",
+  "#7c3aed",
+  "#be123c",
+  "#b45309",
+  "#15803d",
+  "#0369a1",
+  "#a21caf",
+];
+
+// Posicion de maquetacion (offsetLeft/Top) relativa a un ancestro, ignorando
+// transform. Asi las lineas apuntan a la posicion final de la tarjeta aunque
+// la animacion de entrada (matchingGameCardIn) este en curso.
+function getMatchingOffsetBox(el, ancestor) {
+  let left = 0;
+  let top = 0;
+  let node = el;
+  while (node && node !== ancestor && node.offsetParent) {
+    left += node.offsetLeft;
+    top += node.offsetTop;
+    node = node.offsetParent;
+  }
+  return { left, top, width: el.offsetWidth, height: el.offsetHeight };
+}
+
+function getMatchingConnectorsSvg(play) {
+  let svg = play.querySelector(":scope > .matching-game-connectors");
+  if (!svg) {
+    svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("class", "matching-game-connectors");
+    svg.setAttribute("aria-hidden", "true");
+    svg.setAttribute("focusable", "false");
+    svg.setAttribute("preserveAspectRatio", "none");
+    play.appendChild(svg);
+  }
+  return svg;
+}
+
+// Recuerda que parejas ya animaron su trazado, para que la animacion de "dibujar
+// la linea" ocurra solo al formar la pareja y no en cada re-render (clic/resize).
+let matchingConnectorsDrawn = new Set();
+
+// Dibuja una linea curva por cada pareja resuelta, desde el borde derecho de la
+// herramienta hasta el borde izquierdo de su funcion. En layout apilado (movil)
+// se omite: alli la union ya se comunica con la tarjeta bloqueada y la opcion usada.
+function renderMatchingConnectors(gameState) {
+  const play = document.querySelector(
+    `[data-matching-game="${MATCHING_GAME_ACTIVITY_ID}"] .matching-game-play`
+  );
+  if (!play) {
+    return;
+  }
+
+  const svg = getMatchingConnectorsSvg(play);
+
+  const stacked =
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(max-width: 980px)").matches;
+  const matches = (gameState && gameState.matches) || {};
+  const matchedToolIds = Object.keys(matches).filter((id) => matches[id]);
+
+  if (stacked || !gameState.startedAt || !matchedToolIds.length) {
+    svg.innerHTML = "";
+    if (!matchedToolIds.length) {
+      matchingConnectorsDrawn.clear();
+    }
+    return;
+  }
+
+  const width = play.clientWidth;
+  const height = play.clientHeight;
+  svg.setAttribute("width", String(width));
+  svg.setAttribute("height", String(height));
+  svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+
+  const toolEls = new Map();
+  play
+    .querySelectorAll("[data-matching-tool]")
+    .forEach((el) => toolEls.set(el.dataset.matchingTool, el));
+  const optionEls = new Map();
+  play
+    .querySelectorAll("[data-matching-option]")
+    .forEach((el) => optionEls.set(el.dataset.matchingOption, el));
+
+  const indexById = new Map();
+  getMatchingGamePairs(gameState.variant).forEach((pair, index) =>
+    indexById.set(pair.id, index)
+  );
+
+  const reduceMotion =
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const markup = [];
+  matchedToolIds.forEach((toolId) => {
+    const optionId = matches[toolId];
+    const toolEl = toolEls.get(toolId);
+    const optionEl = optionEls.get(optionId);
+    if (!toolEl || !optionEl) {
+      return;
+    }
+
+    const toolBox = getMatchingOffsetBox(toolEl, play);
+    const optionBox = getMatchingOffsetBox(optionEl, play);
+    const x1 = toolBox.left + toolBox.width;
+    const y1 = toolBox.top + toolBox.height / 2;
+    const x2 = optionBox.left;
+    const y2 = optionBox.top + optionBox.height / 2;
+
+    const bend = Math.max(28, (x2 - x1) * 0.45);
+    const d = `M ${x1.toFixed(1)} ${y1.toFixed(1)} C ${(x1 + bend).toFixed(1)} ${y1.toFixed(
+      1
+    )}, ${(x2 - bend).toFixed(1)} ${y2.toFixed(1)}, ${x2.toFixed(1)} ${y2.toFixed(1)}`;
+    const color =
+      MATCHING_GAME_LINK_COLORS[
+        (indexById.get(toolId) || 0) % MATCHING_GAME_LINK_COLORS.length
+      ];
+    const len = Math.round(Math.hypot(x2 - x1, y2 - y1) + bend);
+    const isNew = !matchingConnectorsDrawn.has(toolId);
+    matchingConnectorsDrawn.add(toolId);
+    const drawClass = isNew && !reduceMotion ? " mg-draw" : "";
+
+    markup.push(`<path class="mg-link-glow" d="${d}" stroke="${color}"></path>`);
+    markup.push(
+      `<path class="mg-link${drawClass}" d="${d}" stroke="${color}" style="--mg-len:${len}"></path>`
+    );
+    markup.push(
+      `<circle class="mg-dot" cx="${x1.toFixed(1)}" cy="${y1.toFixed(1)}" r="4.5" fill="${color}"></circle>`
+    );
+    markup.push(
+      `<circle class="mg-dot" cx="${x2.toFixed(1)}" cy="${y2.toFixed(1)}" r="4.5" fill="${color}"></circle>`
+    );
+  });
+
+  svg.innerHTML = markup.join("");
+}
+
 function renderMatchingGame() {
   const container = document.querySelector(`[data-matching-game="${MATCHING_GAME_ACTIVITY_ID}"]`);
   if (!container) {
@@ -2836,6 +2976,7 @@ function renderMatchingGame() {
 
   renderMatchingGameBoard(gameState);
   renderMatchingGameOptions(gameState);
+  renderMatchingConnectors(gameState);
   renderMatchingGameLeaderboard(readMatchingGameLeaderboard());
   refreshMatchingGameTime();
 
@@ -3072,6 +3213,24 @@ function initializeMatchingGame() {
   });
   window.clearInterval(matchingGameTimer);
   matchingGameTimer = window.setInterval(refreshMatchingGameTime, 1000);
+
+  // Las lineas conectoras dependen de la posicion de las tarjetas: hay que
+  // recalcularlas cuando cambia el ancho disponible (resize, abrir/cerrar la
+  // barra lateral, rotar el dispositivo).
+  let connectorRedrawTimer = null;
+  const scheduleConnectorRedraw = () => {
+    window.clearTimeout(connectorRedrawTimer);
+    connectorRedrawTimer = window.setTimeout(() => {
+      renderMatchingConnectors(getMatchingGameState());
+    }, 120);
+  };
+  window.addEventListener("resize", scheduleConnectorRedraw);
+  const play = container.querySelector(".matching-game-play");
+  if (play && typeof ResizeObserver === "function") {
+    const observer = new ResizeObserver(scheduleConnectorRedraw);
+    observer.observe(play);
+  }
+
   loadMatchingGameLeaderboard();
 }
 
