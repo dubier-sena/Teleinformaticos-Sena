@@ -68,3 +68,9 @@ test("project_integrations define carpeta para las 6 fichas reales", () => {
     );
   });
 });
+
+test("project_integrations permite subir .py (guia de Python)", () => {
+  const win2 = runInSandbox("js/project_integrations.js", {});
+  const exts = (win2.PROJECT_INTEGRATIONS || {}).allowedUploadExtensions || [];
+  assert.ok(exts.indexOf(".py") >= 0, "falta .py en allowedUploadExtensions");
+});

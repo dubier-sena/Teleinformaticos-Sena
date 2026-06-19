@@ -25,6 +25,7 @@
         ".png",
         ".zip",
         ".pkt",
+        ".py",
       ],
       // Carpeta raiz de Drive por ficha (espejo de FICHA_ROOT_FOLDERS del Apps
       // Script). Se usa para el respaldo manual: si la entrega automatica falla,
