@@ -513,38 +513,47 @@
       );
     }
 
-    // Seguridad: adjunta el idToken de Firebase Auth para que el Apps Script
-    // verifique que quien entrega es un usuario autenticado del portal (mismo
-    // patron que drive_db.js / respaldo_firestore.gs). Si no hay token, se
-    // envia sin el y el servidor decide (rechaza si exige autenticacion).
-    var finalPayload = payload;
+    // Seguridad: el Apps Script exige un idToken de Firebase Auth para verificar
+    // que quien entrega es un usuario autenticado del portal. Aqui obtenemos el
+    // token (#2) y hacemos un pre-chequeo (#3) antes de enviar nada.
+    var idToken = null;
     try {
       var bridge = window.portalFirebaseAuth;
       if (bridge && typeof bridge.getIdToken === "function") {
         // Esperar a que la sesion de Firebase termine de hidratarse: al cambiar
         // de pagina (index -> guia) el SDK rehidrata la sesion persistida de
         // forma asincrona. Sin esta espera, getIdToken puede devolver null
-        // aunque el aprendiz si tenga sesion, y la entrega fallaria.
+        // aunque el aprendiz si tenga sesion.
         if (typeof bridge.waitForAuthHydration === "function") {
           try { await bridge.waitForAuthHydration(4000); } catch (hydrationError) {}
         }
-        // forceRefresh=true: los idToken de Firebase vencen a la hora. En un
-        // laboratorio el aprendiz puede llevar mas de una hora en la pagina,
-        // por lo que pedimos un token recien emitido antes de cada entrega
-        // para evitar el rechazo "sesion de seguridad expiro" del servidor.
-        var idToken = await bridge.getIdToken(true);
-        // Si la renovacion forzada falla (red intermitente en el laboratorio),
-        // usamos el token en cache: puede seguir vigente y permitir la entrega.
-        if (!idToken) {
-          idToken = await bridge.getIdToken();
-        }
-        if (idToken) {
-          finalPayload = Object.assign({}, payload, { idToken: idToken });
-        }
+        // #2 — Usar el token en cache (getIdToken(false)): el SDK de Firebase lo
+        // refresca automaticamente SOLO si esta vencido o por vencer (~5 min).
+        // Antes se forzaba un refresco en CADA entrega (getIdToken(true)), lo que
+        // multiplicaba las llamadas a Firebase Auth y agravaba el limite
+        // "auth/too-many-requests" cuando una sala completa entrega al mismo
+        // tiempo. El caso de >1 hora en la pagina sigue cubierto porque el SDK
+        // refresca al vencer, asi que no reaparece el rechazo "sesion expiro".
+        idToken = await bridge.getIdToken(false);
       }
     } catch (tokenError) {
-      // Sin token disponible: el servidor aplicara su politica de seguridad.
+      idToken = null;
     }
+
+    // #3 — Pre-chequeo: sin token el servidor rechazaria con "falta token de
+    // seguridad". Mejor no gastar el intento: avisamos claro y accionable. El
+    // boton de entrega se reactiva (finally del llamador), asi que el aprendiz
+    // puede reintentar tras esperar o volver a iniciar sesion.
+    if (!idToken) {
+      throw new Error(
+        "No se pudo verificar tu sesion de seguridad para la entrega. Suele pasar " +
+        "por congestion cuando muchos entregan al mismo tiempo. Tus respuestas estan " +
+        "guardadas: espera 1-2 minutos y reintenta, o cierra sesion y vuelve a entrar " +
+        "antes de subir el archivo."
+      );
+    }
+
+    var finalPayload = Object.assign({}, payload, { idToken: idToken });
 
     var response = await fetch(endpoint, {
       method: "POST",
