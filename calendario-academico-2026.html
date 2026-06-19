@@ -127,12 +127,15 @@ const FIREBASE_CALENDAR_DOC = 'calendario_2026_admin';
 const FIREBASE_REFRESH_MS = 7000;
 
 const FESTIVOS=new Set(['2026-03-23','2026-05-01','2026-05-18','2026-06-08','2026-06-15',
-  '2026-07-20','2026-08-07','2026-08-17','2026-10-12','2026-11-02','2026-11-16']);
+  '2026-06-29','2026-07-20','2026-08-07','2026-08-17','2026-10-12','2026-11-02','2026-11-16']);
 const RECESOS=new Set(['2026-03-30','2026-03-31','2026-04-01','2026-04-02','2026-04-03',
-  '2026-04-04','2026-04-05','2026-06-22','2026-06-23','2026-06-24','2026-06-25','2026-06-26',
-  '2026-06-27','2026-06-28','2026-06-29','2026-06-30','2026-07-01','2026-07-02','2026-07-03',
-  '2026-07-04','2026-07-05','2026-10-05','2026-10-06','2026-10-07','2026-10-08','2026-10-09',
+  '2026-04-04','2026-04-05','2026-06-27','2026-06-28','2026-07-04','2026-07-05',
+  '2026-10-05','2026-10-06','2026-10-07','2026-10-08','2026-10-09',
   '2026-10-10','2026-10-11']);
+// Dias habiles en que el instructor cumple horario en la SEDE SENA durante el
+// receso de las instituciones (22 jun - 3 jul 2026). El 29 de junio es festivo.
+const SEDE_SENA=new Set(['2026-06-22','2026-06-23','2026-06-24','2026-06-25','2026-06-26',
+  '2026-06-30','2026-07-01','2026-07-02','2026-07-03']);
 const SPECIAL={
   '2026-02-23':{tipo:'DESPLAZAMIENTO',label:'🚗 Desplazamiento',c:'#F9A825',bg:'#FFF8E1'},
   '2026-02-24':{tipo:'REUNIÓN RECTOR', label:'🤝 Reunión con Rector',c:'#AD1457',bg:'#FCE4EC'}
@@ -1169,6 +1172,9 @@ function buildCalMonth(m){
     } else if(isFest){
       bg='#FFFDE7';brd='#FCD34D';
       cell.appendChild(el('div','cal-note','<span style="color:#b45309">🎉 Festivo</span>'));
+    } else if(SEDE_SENA.has(s)){
+      bg='#EEF2FF';brd='#6366f1';brdW=2;
+      cell.appendChild(el('div','cal-note','<span style="font-size:11px;font-weight:900;color:#3730a3">🏢 SEDE SENA</span>'));
     } else if(isSp){
       const sp=SPECIAL[s];bg=sp.bg;brd=sp.c;brdW=2;
       const n=el('div','cal-note',`<span style="color:${sp.c};cursor:pointer">${sp.label}</span>`);
