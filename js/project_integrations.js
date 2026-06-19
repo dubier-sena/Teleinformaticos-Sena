@@ -26,6 +26,17 @@
         ".zip",
         ".pkt",
       ],
+      // Carpeta raiz de Drive por ficha (espejo de FICHA_ROOT_FOLDERS del Apps
+      // Script). Se usa para el respaldo manual: si la entrega automatica falla,
+      // el aprendiz abre su carpeta y sube el archivo a mano.
+      fichaDriveFolders: {
+        "3441939": "https://drive.google.com/drive/folders/1SLkk986REOKGEFaCyWV7rSeudj7lnUMs",
+        "3441942": "https://drive.google.com/drive/folders/1cv0DkFXhkMw22AddqIgC354DhUUHcQck",
+        "3441944": "https://drive.google.com/drive/folders/1fZ7atqeSym9ayQylRG47HqKm2xdBbFOf",
+        "3441950": "https://drive.google.com/drive/folders/1N49ulJRgbF7ySD3JDRJzFE5czCKFO1KM",
+        "3168850": "https://drive.google.com/drive/folders/1fBPzXHU0OHDmKa18Y6V2tnomLyYWgiLp",
+        "3168852": "https://drive.google.com/drive/folders/1p9HdGinK1me8PsbaLHYio_OC-idAmorR",
+      },
     },
     window.PROJECT_INTEGRATIONS || {}
   );

@@ -144,6 +144,91 @@
     return sdkReadyPromise;
   }
 
+  function sleep(ms) {
+    return new Promise(function (resolve) {
+      setTimeout(resolve, Math.max(0, Math.floor(Number(ms) || 0)));
+    });
+  }
+
+  // Estrategia de autenticacion del bridge (logica pura y testeable):
+  //  - SIGN-IN primero: el caso comun en clase (aprendiz que YA tiene cuenta) se
+  //    resuelve con UNA sola llamada a Auth, no dos. Reduce a la mitad la presion
+  //    sobre Firebase Auth cuando una sala entera inicia sesion a la vez.
+  //  - Fallback a CREAR si la cuenta no existe. Cubre tambien "email enumeration
+  //    protection": con ella activa, signIn de un usuario inexistente devuelve
+  //    invalid-credential; intentamos crear y, si la cuenta SI existia,
+  //    createUser devuelve email-already-in-use -> era password incorrecta real.
+  //  - BACKOFF + jitter ante "auth/too-many-requests" (o red caida): los inicios
+  //    de sesion simultaneos desde la IP del colegio se reparten en segundos y
+  //    todos entran, en vez de fallar en bloque (la causa del "falta token").
+  // Recibe sus dependencias (signIn/create/sleep/rand) para poder probarse sin
+  // tocar Firebase. Mantiene el mismo contrato de retorno {ok,uid,created,error}.
+  async function resolveSignInOrCreate(deps, email, password) {
+    var signIn = deps.signIn;
+    var create = deps.create;
+    var sleepFn = deps.sleep || function () { return Promise.resolve(); };
+    var rand = deps.rand || Math.random;
+    var maxAttempts = deps.maxAttempts || 5;
+    var maxDelay = deps.maxDelayMs || 8000;
+    var delay = deps.baseDelayMs || 800;
+
+    function isTransient(code) {
+      return code === "auth/too-many-requests" || code === "auth/network-request-failed";
+    }
+    function isMissingOrBadCredential(code) {
+      return (
+        code === "auth/user-not-found" ||
+        code === "auth/invalid-credential" ||
+        code === "auth/invalid-login-credentials" ||
+        code === "auth/wrong-password"
+      );
+    }
+    function backoff() {
+      var wait = delay + Math.floor(rand() * delay);
+      delay = Math.min(delay * 2, maxDelay);
+      return sleepFn(wait);
+    }
+
+    var lastError = "auth/unknown";
+    for (var attempt = 0; attempt < maxAttempts; attempt++) {
+      try {
+        var cred = await signIn(email, password);
+        return { ok: true, uid: cred && cred.user ? cred.user.uid : undefined };
+      } catch (signInError) {
+        var code = (signInError && signInError.code) || "auth/unknown";
+        lastError = code;
+
+        if (isTransient(code)) {
+          if (attempt < maxAttempts - 1) { await backoff(); continue; }
+          return { ok: false, error: code };
+        }
+
+        if (isMissingOrBadCredential(code)) {
+          try {
+            var newCred = await create(email, password);
+            return {
+              ok: true,
+              uid: newCred && newCred.user ? newCred.user.uid : undefined,
+              created: true,
+            };
+          } catch (createError) {
+            var createCode = (createError && createError.code) || "auth/unknown";
+            if (createCode === "auth/email-already-in-use") {
+              // La cuenta SI existe -> el fallo de sign-in fue password incorrecta.
+              return { ok: false, error: "auth/wrong-password", raw: signInError && signInError.message };
+            }
+            if (isTransient(createCode) && attempt < maxAttempts - 1) { await backoff(); continue; }
+            return { ok: false, error: createCode, raw: createError && createError.message };
+          }
+        }
+
+        // Error no recuperable (operation-not-allowed, config, etc.)
+        return { ok: false, error: code, raw: signInError && signInError.message };
+      }
+    }
+    return { ok: false, error: lastError };
+  }
+
   async function ensureSignedIn(usernameKey, password, version) {
     var ready = await ensureSDK();
     if (!ready) {
@@ -165,26 +250,17 @@
       try { await firebaseAuth.signOut(); } catch (_) {}
     }
 
-    // Estrategia "create-first" para soportar email enumeration protection:
-    // Firebase ya no devuelve user-not-found cuando el usuario no existe.
-    // Intentamos crear primero; si la cuenta ya existe, caemos a signIn.
-    try {
-      var newCred = await firebaseAuth.createUserWithEmailAndPassword(email, password);
-      return { ok: true, uid: newCred.user.uid, created: true };
-    } catch (createError) {
-      var createCode = (createError && createError.code) || "auth/unknown";
-      if (createCode === "auth/email-already-in-use") {
-        try {
-          var signInCred = await firebaseAuth.signInWithEmailAndPassword(email, password);
-          return { ok: true, uid: signInCred.user.uid };
-        } catch (signInError) {
-          var signInCode = (signInError && signInError.code) || "auth/unknown";
-          return { ok: false, error: signInCode, raw: signInError && signInError.message };
-        }
-      }
-      // Password muy corta (<6) u otros errores reales de creacion
-      return { ok: false, error: createCode, raw: createError && createError.message };
-    }
+    // Sign-in primero (1 llamada en el caso comun) + fallback a crear + backoff
+    // ante rate-limit. La logica vive en resolveSignInOrCreate (arriba).
+    return await resolveSignInOrCreate(
+      {
+        signIn: function (e, p) { return firebaseAuth.signInWithEmailAndPassword(e, p); },
+        create: function (e, p) { return firebaseAuth.createUserWithEmailAndPassword(e, p); },
+        sleep: sleep,
+      },
+      email,
+      password
+    );
   }
 
   async function signOut() {
@@ -276,5 +352,7 @@
     buildEmail: buildEmail,
     waitForAuthHydration: waitForAuthHydration,
     EMAIL_DOMAIN: EMAIL_DOMAIN,
+    // Expuesto solo para pruebas unitarias (logica pura, no toca Firebase).
+    _resolveSignInOrCreate: resolveSignInOrCreate,
   };
 })();
