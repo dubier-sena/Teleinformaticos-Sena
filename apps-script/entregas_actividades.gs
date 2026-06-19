@@ -41,6 +41,7 @@ const ALLOWED_EXTENSIONS = [
   ".png",
   ".zip",
   ".pkt",
+  ".py",
 ];
 
 function doPost(e) {
