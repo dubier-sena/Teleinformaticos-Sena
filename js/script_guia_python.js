@@ -208,6 +208,9 @@
     const lbl = document.getElementById("progressValue");
     if (bar) bar.style.width = pct + "%";
     if (lbl) lbl.textContent = pct + "%";
+    // Sincroniza el avance a la nube para que el panel admin lo vea aunque el
+    // aprendiz haya entregado desde otro equipo (sin esto el admin deriva mal el %).
+    portalAuth?.writeGuideProgress?.(PAGE_FILE, { completed: delivered, total, percent: pct });
 
     const check = document.querySelector('.nav-link[href="#reto"] .check');
     if (check) check.classList.toggle("done", delivered >= total);

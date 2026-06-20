@@ -636,6 +636,9 @@
     const lbl = document.getElementById("progressValue");
     if (bar) bar.style.width = pct + "%";
     if (lbl) lbl.textContent = pct + "%";
+    // Sincroniza el avance a la nube para que el panel admin lo vea aunque el
+    // aprendiz haya guardado desde otro equipo (sin esto el admin deriva mal el %).
+    portalAuth?.writeGuideProgress?.(PAGE_FILE, { completed: filled, total, percent: pct });
 
     // Marca check de cada categoria si todas sus actividades estan bloqueadas
     document.querySelectorAll(".nav-link .check").forEach((c) => c.classList.remove("done"));

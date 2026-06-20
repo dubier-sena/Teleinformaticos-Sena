@@ -1388,6 +1388,10 @@ function updateProgressRedes() {
   const val = document.getElementById("progressValue");
   if (bar) bar.style.width = pct + "%";
   if (val) val.textContent = pct + "%";
+  // Sincroniza el avance a la nube (sena_portal_progress) para que el panel admin
+  // lo lea aunque el aprendiz haya guardado desde otro equipo. Sin esto el admin
+  // no encuentra progreso y deriva un % incorrecto desde el guide_state.
+  _portalAuth?.writeGuideProgress?.(PAGE_FILE_REDES, { completed: filled, total, percent: pct });
 }
 
 // ---------------------------------------------------------------------------
