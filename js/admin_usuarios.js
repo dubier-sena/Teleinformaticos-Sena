@@ -823,6 +823,71 @@
     return { cloudFileName, stateKey, pageFile: fileName };
   }
 
+  // ── Hidratacion del guide_state de los aprendices al localStorage del admin ──
+  // La tabla "Respuestas" y el modulo "Entregas" leen con readStudentGuideState
+  // (localStorage del admin), vacio cuando el aprendiz guardo en otro equipo. Para
+  // mostrar datos cross-device SIN disparar N×M lecturas por render, bajamos el
+  // guide_state de cada aprendiz UNA vez por sesion (al abrir esos modulos) y lo
+  // cacheamos en localStorage. Reusa el mismo doc que lee "ver respuestas".
+  let guideStatesHydrated = false;
+
+  async function runWithConcurrency(items, limit, worker) {
+    const queue = items.slice();
+    const runners = [];
+    for (let i = 0; i < Math.max(1, limit); i++) {
+      runners.push((async () => {
+        while (queue.length) {
+          await worker(queue.shift());
+        }
+      })());
+    }
+    await Promise.all(runners);
+  }
+
+  async function ensureGuideStatesHydrated() {
+    if (guideStatesHydrated) return false;
+    const db = window._firebaseDb;
+    if (!db || typeof db.cloudGetGuideData !== "function" || typeof auth.getStudentStorageKey !== "function") {
+      guideStatesHydrated = true; // sin nube no hay nada que bajar; no reintentar cada render
+      return false;
+    }
+    const tasks = [];
+    (state.users || []).forEach((user) => {
+      if (!user || !user.usernameKey) return;
+      getGuidesForFicha(user.ficha).forEach((fileName) => {
+        const config = getGuideCloudConfig(fileName);
+        const stateKey = getGuideStateKey(fileName);
+        if (!config || !config.cloudFileName || !stateKey) return;
+        tasks.push({ usernameKey: user.usernameKey, fileName, cloudFileName: config.cloudFileName, stateKey });
+      });
+    });
+    let changed = false;
+    await runWithConcurrency(tasks, 6, async (task) => {
+      if (!task) return;
+      try {
+        const cloudSnapshot = await db.cloudGetGuideData(getStudentCloudScope(task.usernameKey), task.cloudFileName);
+        if (!cloudSnapshot) return;
+        const storageKey = auth.getStudentStorageKey(task.usernameKey, task.stateKey, { area: "guide-data" });
+        const localState = readJson(localStorage.getItem(storageKey), null);
+        const localMeta = readJson(localStorage.getItem(`${storageKey}__meta`), {});
+        // pickLatestSnapshot prefiere la nube solo si es >= que lo local (por updatedAt),
+        // asi no pisa una edicion local mas nueva del admin (p.ej. reabrir entrega).
+        const latest = pickLatestSnapshot(
+          cloudSnapshot,
+          localState ? { state: localState, updatedAt: localMeta?.updatedAt || "" } : null
+        );
+        if (!latest || !latest.state || typeof latest.state !== "object") return;
+        localStorage.setItem(storageKey, JSON.stringify(latest.state));
+        if (latest.updatedAt) {
+          localStorage.setItem(`${storageKey}__meta`, JSON.stringify({ updatedAt: latest.updatedAt, updatedBy: latest.updatedBy || "cloud" }));
+        }
+        changed = true;
+      } catch (_) { /* una guia que falle no debe romper la hidratacion del resto */ }
+    });
+    guideStatesHydrated = true;
+    return changed;
+  }
+
   async function patchGuideCloudState(usernameKey, fileName, patch) {
     const db = window._firebaseDb;
     const config = getGuideCloudConfig(fileName);
@@ -1600,6 +1665,7 @@
       window.location.replace("index.html");
       return;
     }
+    guideStatesHydrated = false; // datos frescos: re-hidratar al abrir Respuestas/Entregas
     const loader = typeof auth.fetchStudentsWithProgress === "function"
       ? auth.fetchStudentsWithProgress()
       : Promise.resolve(auth.getStudentsWithProgress());
@@ -1698,6 +1764,19 @@
     }
     if (moduleName === "configuracion") {
       renderAuditPanel();
+    }
+    // Respuestas/Entregas leen el localStorage del admin; al abrir el modulo
+    // bajamos UNA vez el guide_state de la nube y re-renderizamos para mostrar
+    // datos cross-device (aprendices que guardaron en otro equipo).
+    if (moduleName === "respuestas" || moduleName === "entregas") {
+      const rerender = moduleName === "respuestas" ? renderResponses : renderDeliveries;
+      setFeedback("Sincronizando datos de los aprendices desde la nube...", "info");
+      ensureGuideStatesHydrated()
+        .then((changed) => {
+          if (state.activeModule === moduleName && changed) rerender();
+          setFeedback("", "info");
+        })
+        .catch(() => setFeedback("", "info"));
     }
     if (tab === "auditoria") {
       renderAuditPanel();
