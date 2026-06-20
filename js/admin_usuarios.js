@@ -804,12 +804,13 @@
     return pickLatestSnapshot(cloudSnapshot, localSnapshot);
   }
 
-  // Resuelve cloudFileName + stateKey para CUALQUIER guia (no solo Guia 6), para
-  // que el unlock del admin se escriba en el MISMO documento que lee el aprendiz
-  // (scope student:{usernameKey} + el mismo cloudFileName/alias). Antes solo
-  // existia config para Guia 6, asi que habilitar actividades de otras guias no
-  // escribia nada a la nube y el aprendiz seguia viendolas bloqueadas.
-  function getGuideUnlockCloudConfig(fileName) {
+  // Resuelve cloudFileName + stateKey para CUALQUIER guia (no solo Guia 6). Lo
+  // usan el unlock del admin (escribir el MISMO doc que lee el aprendiz) y la
+  // vista de respuestas (leer ese doc desde la nube). Antes solo existia config
+  // para Guia 6: por eso el unlock de otras guias no escribia nada a la nube y la
+  // vista de respuestas solo miraba el localStorage del admin (vacio cuando el
+  // aprendiz guardo en otro equipo).
+  function getGuideCloudConfig(fileName) {
     const g6 = getGuide6ResponseConfig(fileName);
     if (g6) return g6;
     if (!fileName) return null;
@@ -824,7 +825,7 @@
 
   async function patchGuideCloudState(usernameKey, fileName, patch) {
     const db = window._firebaseDb;
-    const config = getGuideUnlockCloudConfig(fileName);
+    const config = getGuideCloudConfig(fileName);
     if (!usernameKey || !config || !db || typeof db.cloudGetGuideData !== "function" || typeof db.cloudSaveGuideData !== "function") {
       return false;
     }
@@ -2156,13 +2157,17 @@
     const user = getUser(usernameKey);
     if (!user) return;
     let summary = collectActivityResponses(user, fileName, activityId);
-    const config = getGuide6ResponseConfig(fileName);
+    // Lee las respuestas desde la nube para CUALQUIER guia (no solo Guia 6): el
+    // aprendiz suele guardar en otro equipo, asi que el localStorage del admin
+    // esta vacio. getGuideCloudConfig resuelve el cloudFileName de la guia y
+    // loadGuide6Responses (generico pese al nombre) trae el doc de Firestore.
+    const config = getGuideCloudConfig(fileName);
     if (config) {
       config.pageFile = fileName;
       openModal(
         "Respuestas por actividad",
         `${user.fullName} | Cargando...`,
-        '<p class="response-status">Consultando respuestas sincronizadas de Guia 6...</p>'
+        '<p class="response-status">Consultando respuestas sincronizadas del aprendiz...</p>'
       );
       const snapshot = await loadGuide6Responses(usernameKey, config);
       if (snapshot?.state) {
@@ -2170,7 +2175,8 @@
           updatedAt: snapshot.updatedAt,
           updatedBy: snapshot.updatedBy,
         });
-      } else {
+      } else if (!summary.answeredCount && !stateHasAnswers(summary.delivery)) {
+        // Ni la nube ni el localStorage del admin tienen datos: marcar sin-respuesta.
         summary = {
           ...summary,
           questions: [],
@@ -2185,7 +2191,7 @@
       "Respuestas por actividad",
       `${user.fullName} | ${summary.activityLabel}`,
       config && !summary.answeredCount && !stateHasAnswers(summary.delivery)
-        ? bodyHtml + '<p class="response-status">El aprendiz aun no tiene respuestas guardadas en la Guia 6 sincronizadas.</p>'
+        ? bodyHtml + '<p class="response-status">El aprendiz aun no tiene respuestas guardadas sincronizadas para esta actividad.</p>'
         : bodyHtml,
       exportData
     );

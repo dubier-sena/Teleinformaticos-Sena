@@ -28,5 +28,16 @@ test("admin response viewer for Guia 6 reads cloud quiz answers before showing e
   assert.match(adminScript, /readGuide6CloudSnapshot\(usernameKey,\s*config\)/);
   assert.match(adminScript, /readGuide6LocalSnapshot\(usernameKey,\s*config\)/);
   assert.match(adminScript, /pickLatestSnapshot\(cloudSnapshot,\s*localSnapshot\)/);
-  assert.match(adminScript, /aun no tiene respuestas guardadas en la Guia 6 sincronizadas/i);
+  assert.match(adminScript, /aun no tiene respuestas guardadas sincronizadas para esta actividad/i);
+});
+
+test("admin response viewer reads cloud answers for ANY guide, not only Guia 6", () => {
+  // openResponses debe resolver la config de nube con getGuideCloudConfig
+  // (generico) en vez de getGuide6ResponseConfig (solo 11a/11b). Asi el admin
+  // ve las respuestas que el aprendiz guardo en otro equipo para cualquier guia.
+  assert.match(adminScript, /async function openResponses\(usernameKey, fileName, activityId\)/);
+  assert.match(adminScript, /const config = getGuideCloudConfig\(fileName\);/);
+  // El resolver generico cubre Guia 6 y, si no, arma cloudFileName via el alias.
+  assert.match(adminScript, /function getGuideCloudConfig\(fileName\)\s*\{/);
+  assert.match(adminScript, /getCloudFileName/);
 });
