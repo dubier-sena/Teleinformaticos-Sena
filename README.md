@@ -16,7 +16,5 @@ datos privados de aprendices, sesiones, roles administrativos y acciones
 sensibles, la ruta recomendada es mantener GitHub Pages para las paginas y usar
 Firebase Auth/Functions o un backend pequeno como autoridad segura.
 
-Consulta:
-
-- `docs/firebase-runtime-setup.md`
-- `docs/firebase-seguridad-local.md`
+La documentacion tecnica interna y las notas de configuracion no se publican en
+el repositorio.

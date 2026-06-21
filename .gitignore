@@ -28,3 +28,7 @@ assets/materiales/induccion/Videos/SENA es Colombia.mp4
 
 # Lanzador local de preview (no desplegar)
 *.command
+
+# Documentacion interna que NO debe ser publica en el repo de GitHub
+DOCUMENTACION_PROYECTO.md
+tools/publicar_github_pages.md
