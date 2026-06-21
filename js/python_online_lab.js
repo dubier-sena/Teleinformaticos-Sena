@@ -219,6 +219,76 @@
     return messages;
   }
 
+  // Revision EN VIVO mientras el aprendiz escribe: detecta errores de ESTRUCTURA
+  // sin ejecutar, para subrayar la linea. Los errores de logica/ejecucion (variable
+  // no definida, sumar texto+numero, etc.) solo se conocen al Ejecutar, no aqui.
+  // Funcion pura: probada en tests/python_live_check.test.cjs.
+  function liveStructuralIssues(code) {
+    var raw = String(code == null ? "" : code).replace(/\r\n?/g, "\n");
+    var rows = raw.split("\n");
+    var errorLines = [];
+    var note = "";
+    function flag(n, message) {
+      if (errorLines.indexOf(n) < 0) errorLines.push(n);
+      if (!note) note = message;
+    }
+    rows.forEach(function (rawLine, i) {
+      var n = i + 1;
+      var text = rawLine.trim();
+      if (!text || text.charAt(0) === "#") return;
+      if (/\t/.test(rawLine)) flag(n, "Linea " + n + ": usa espacios, no tabulaciones.");
+      var indent = (rawLine.match(/^ */) || [""])[0].length;
+      if (indent % 4 !== 0) flag(n, "Linea " + n + ": la indentacion debe ir de 4 en 4 espacios.");
+      if (/^(if|elif|else|for|while)\b/.test(text) && text.indexOf(":") < 0) {
+        flag(n, "Linea " + n + ": falta el dos puntos (:) al final.");
+      }
+    });
+    if (!note) {
+      var pairs = [["(", ")"], ["[", "]"], ["{", "}"]];
+      for (var p = 0; p < pairs.length; p += 1) {
+        var opens = (raw.match(new RegExp("\\" + pairs[p][0], "g")) || []).length;
+        var closes = (raw.match(new RegExp("\\" + pairs[p][1], "g")) || []).length;
+        if (opens !== closes) { note = "Revisa los " + pairs[p][0] + pairs[p][1] + ": hay alguno sin cerrar."; break; }
+      }
+    }
+    return { lines: errorLines, note: note };
+  }
+
+  // ── Autocompletado contextual (estatico, sin IA) ───────────────────────────
+  // Detecta las variables que el aprendiz YA creo en su codigo, para sugerirlas.
+  function collectUserVariables(code) {
+    var names = [];
+    var seen = {};
+    function add(name) { if (name && !seen[name]) { seen[name] = true; names.push(name); } }
+    String(code == null ? "" : code).split("\n").forEach(function (line) {
+      var t = line.replace(/#.*$/, "");
+      var assign = t.match(/^\s*([A-Za-z_]\w*)\s*(?:[-+*/]?=)(?!=)/); // NAME = / NAME += (no ==)
+      if (assign) add(assign[1]);
+      var loop = t.match(/^\s*for\s+([A-Za-z_]\w*)\s+in\b/);           // for NAME in ...
+      if (loop) add(loop[1]);
+    });
+    return names;
+  }
+
+  // Sugerencias para el prefijo que escribe el aprendiz, por relevancia:
+  // sus variables, luego funciones soportadas y palabras clave del lenguaje.
+  function getCompletions(code, prefix, limit) {
+    var p = String(prefix == null ? "" : prefix);
+    if (!/^[A-Za-z_]/.test(p)) return [];
+    var lp = p.toLowerCase();
+    var max = limit || 8;
+    var groups = [collectUserVariables(code), PY_BUILTINS.split("|"), PY_KEYWORDS.split("|")];
+    var out = [];
+    var seen = {};
+    groups.forEach(function (group) {
+      group.forEach(function (name) {
+        if (out.length >= max || seen[name] || name === p) return;
+        if (name.toLowerCase().indexOf(lp) === 0) { seen[name] = true; out.push(name); }
+      });
+    });
+    return out;
+  }
+
   function sanitizeLabFileSegment(value) {
     return String(value == null ? "" : value)
       .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
@@ -249,9 +319,26 @@
     });
   }
 
+  // Comandos de control (keyword) y funciones (builtin) que colorea el editor.
+  var PY_KEYWORDS = "if|elif|else|and|or|not|True|False|None|return|import|from|class|def|for|while|in|is|break|continue|pass";
+  var PY_BUILTINS = "print|input|int|float|str|bool|len|round|type|range|sum|max|min|abs|sorted|list|dict|tuple|set|append";
+  var PY_KEYWORD_RE = new RegExp("^(?:" + PY_KEYWORDS + ")$");
+  var PY_BUILTIN_RE = new RegExp("^(?:" + PY_BUILTINS + ")$");
+
   function highlightPythonLine(line) {
     var parts = [];
-    var pattern = /(#.*$|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\b(?:if|elif|else|and|or|not|True|False|None|return|import|from|class|def|for|while|in|is)\b|\b(?:print|input|int|float|str|bool|len|round|type)\b|\b\d+(?:\.\d+)?\b)/g;
+    // Orden importa: comentario, texto, comando/funcion, numero y, al final,
+    // cualquier identificador restante = VARIABLE (nombre que crea el aprendiz).
+    var pattern = new RegExp(
+      "(#.*$" +
+      '|"(?:\\\\.|[^"\\\\])*"' +
+      "|'(?:\\\\.|[^'\\\\])*'" +
+      "|\\b(?:" + PY_KEYWORDS + ")\\b" +
+      "|\\b(?:" + PY_BUILTINS + ")\\b" +
+      "|\\b\\d+(?:\\.\\d+)?\\b" +
+      "|[A-Za-z_]\\w*)",
+      "g"
+    );
     var last = 0;
     var match;
     while ((match = pattern.exec(line))) {
@@ -261,8 +348,9 @@
       if (token.startsWith("#")) cls = "py-token pytok-comment";
       else if (token.startsWith('"') || token.startsWith("'")) cls = "py-token pytok-string";
       else if (/^\d/.test(token)) cls = "py-token pytok-number";
-      else if (/^(print|input|int|float|str|bool|len|round|type)$/.test(token)) cls = "py-token pytok-builtin";
-      else cls = "py-token pytok-keyword";
+      else if (PY_BUILTIN_RE.test(token)) cls = "py-token pytok-builtin";
+      else if (PY_KEYWORD_RE.test(token)) cls = "py-token pytok-keyword";
+      else cls = "py-token pytok-variable";
       parts.push('<span class="' + cls + '">' + escapeHtml(token) + '</span>');
       last = pattern.lastIndex;
     }
@@ -272,7 +360,88 @@
 
   function highlightPythonCode(code) {
     // Seguridad: el codigo se escapa antes de pintar tokens; nunca se inserta HTML crudo del aprendiz.
-    return String(code || "").split("\n").map(highlightPythonLine).join("\n") || " ";
+    // Cada linea va en su propio <span class="py-line"> para poder subrayar en vivo
+    // (clase pytok-errline) las lineas con error de estructura mientras el aprendiz escribe.
+    var html = String(code || "").split("\n").map(function (line) {
+      return '<span class="py-line">' + highlightPythonLine(line) + "</span>";
+    }).join("\n");
+    return html || " ";
+  }
+
+  // ── Ayuda al aprendiz: traduce el error a una explicacion + pista + ejemplo ──
+  // El worker ya da mensajes en espanol, pero crudos. Esto agrega, para cada
+  // tipo de error, QUE paso, COMO arreglarlo y un ejemplo corto. Es funcion pura
+  // (se prueba en tests/python_error_help.test.cjs) y se expone en PythonOnlineLab.
+  function extractErrorLine(message) {
+    var m = String(message == null ? "" : message).match(/l[ií]nea\s+(\d+)/i);
+    return m ? Number(m[1]) : 0;
+  }
+
+  function explainPythonError(rawMessage) {
+    var msg = String(rawMessage == null ? "" : rawMessage);
+    var lower = msg.toLowerCase();
+    var line = extractErrorLine(msg);
+    function help(title, fix, example) {
+      return { title: title, fix: fix || "", example: example || "", line: line };
+    }
+
+    if (lower.indexOf("nameerror") >= 0 || lower.indexOf("no esta definid") >= 0 || lower.indexOf("no está definid") >= 0) {
+      var varName = (msg.match(/variable '([^']+)'/) || [])[1];
+      return help(
+        varName ? "La variable '" + varName + "' no existe todavia." : "Usaste una variable que no existe todavia.",
+        "Crea la variable (asignale un valor) ANTES de usarla y revisa mayusculas/minusculas: 'Nombre' y 'nombre' son distintas.",
+        varName ? varName + ' = "valor"   # crea ' + varName + " antes de usarla" : 'nombre = "Ana"   # crea la variable antes'
+      );
+    }
+    if (lower.indexOf("int() no pudo convertir") >= 0) {
+      return help("Ese texto no se puede convertir a numero entero.", "int() solo convierte texto formado por digitos: sin letras ni decimales.", 'edad = int("16")   # bien   |   int("dieciseis") falla');
+    }
+    if (lower.indexOf("float() no pudo convertir") >= 0) {
+      return help("Ese texto no se puede convertir a numero decimal.", "float() necesita un numero; usa punto para los decimales.", 'nota = float("4.5")   # bien');
+    }
+    if (lower.indexOf("sumar texto con numero") >= 0) {
+      return help("Estas mezclando texto y numeros con el signo +.", "Convierte el numero a texto con str(), o suma numeros entre si.", 'print("Edad: " + str(edad))');
+    }
+    if (lower.indexOf("zerodivision") >= 0 || lower.indexOf("division entre cero") >= 0) {
+      return help("Division entre cero.", "No se puede dividir entre 0. Revisa el divisor antes de dividir.", "if divisor != 0:\n    print(total / divisor)");
+    }
+    if (lower.indexOf("indexerror") >= 0 || lower.indexOf("fuera de rango") >= 0) {
+      return help("Pediste una posicion que no existe en la lista.", "Las listas empiezan en 0: el primero es [0] y el ultimo es [len(lista) - 1].", "notas = [4.0, 3.5]\nprint(notas[0])   # primer elemento");
+    }
+    if (lower.indexOf("indentacion") >= 0 || lower.indexOf("indentación") >= 0 || lower.indexOf("bloque indentado") >= 0) {
+      return help("La indentacion (sangria) no es correcta.", "Usa 4 espacios para el codigo que va DENTRO de un if, for o while.", "for i in range(3):\n    print(i)   # 4 espacios adentro");
+    }
+    if (lower.indexOf("dos puntos") >= 0 || lower.indexOf("terminan con :") >= 0) {
+      return help("Falto el dos puntos (:).", "Las lineas con if, elif, else, for o while terminan en dos puntos.", 'if edad >= 18:\n    print("Mayor de edad")');
+    }
+    if (lower.indexOf("sin cerrar") >= 0) {
+      return help("Hay un parentesis, corchete o comilla sin cerrar.", 'Revisa que cada ( [ { y cada " tengan su pareja de cierre.', 'print("Hola")');
+    }
+    if (lower.indexOf("aun no estan disponibles") >= 0 || lower.indexOf("def y class") >= 0 || lower.indexOf("def, class") >= 0) {
+      return help("Esa instruccion aun no esta disponible en el laboratorio.", "El laboratorio practica variables, input(), print(), condicionales y ciclos. Para def/class/import descarga el .py y usalo en Python instalado.", "");
+    }
+    if (lower.indexOf("range()") >= 0) {
+      return help("Problema con range().", "range(inicio, fin, paso): el paso no puede ser 0 y el rango no puede ser enorme.", "for i in range(0, 5):\n    print(i)");
+    }
+    if (lower.indexOf("tardo demasiado") >= 0 || lower.indexOf("ciclo infinito") >= 0) {
+      return help("El programa no termino (posible ciclo infinito).", "Si usas while, asegurate de que la condicion llegue a ser falsa: algo debe cambiar dentro del ciclo.", "n = 0\nwhile n < 3:\n    print(n)\n    n = n + 1");
+    }
+    if (lower.indexOf("break y continue") >= 0) {
+      return help("Usaste break o continue fuera de un ciclo.", "break y continue solo se usan dentro de un for o un while.", "");
+    }
+    if (lower.indexOf("solo puedes recorrer") >= 0) {
+      return help("Estas recorriendo algo que no es lista, texto ni range.", "El for recorre listas, cadenas de texto o range(...).", 'for letra in "hola":\n    print(letra)');
+    }
+    if (lower.indexOf(".append()") >= 0) {
+      return help(".append() solo funciona sobre listas.", "Crea la lista con [] antes de usar .append().", "notas = []\nnotas.append(4.5)");
+    }
+    if (lower.indexOf("seguridad") >= 0) {
+      return help("El laboratorio bloqueo esa instruccion por seguridad.", "No necesitas archivos, internet ni el sistema para practicar lo basico: usa variables, input(), print(), if y ciclos.", "");
+    }
+    if (line) {
+      return help("Hay un error en la linea " + line + ".", "Lee el mensaje de arriba y compara esa linea con los ejemplos de la guia.", "");
+    }
+    return help("El programa tiene un error.", "Lee el mensaje de arriba con calma y compara tu codigo con los ejemplos de la guia.", "");
   }
 
   function mountPythonOnlineLab() {
@@ -288,6 +457,7 @@
     var consoleInputEl = lab.querySelector("[data-python-console-input]");
     var outputEl = lab.querySelector("[data-python-output]");
     var statusEl = lab.querySelector("[data-python-status]");
+    var liveStatusEl = lab.querySelector("[data-python-live-status]");
     if (!codeEl || !outputEl || !statusEl) return;
 
     function updateEditorView() {
@@ -305,12 +475,142 @@
       }
     }
 
+    // Subrayado en vivo de errores de estructura: las lineas <span class="py-line">
+    // del overlay reciben la clase pytok-errline mientras el aprendiz escribe (con
+    // un pequeno retardo). El visto bueno real sigue siendo al Ejecutar.
+    var liveTimer = null;
+    function markErrorLines(lineNumbers) {
+      if (!highlightEl) return;
+      var mark = {};
+      (lineNumbers || []).forEach(function (n) { mark[n] = true; });
+      var spans = highlightEl.querySelectorAll(".py-line");
+      for (var k = 0; k < spans.length; k += 1) {
+        spans[k].classList.toggle("pytok-errline", !!mark[k + 1]);
+      }
+    }
+    function runLiveCheck() {
+      liveTimer = null;
+      var issues = liveStructuralIssues(codeEl.value);
+      markErrorLines(issues.lines);
+      if (liveStatusEl) liveStatusEl.textContent = issues.note ? "⚠ " + issues.note : "";
+    }
+    function scheduleLiveCheck() {
+      if (liveTimer) clearTimeout(liveTimer);
+      liveTimer = setTimeout(runLiveCheck, 400);
+    }
+
+    // ---- Autocompletado contextual: dropdown junto al cursor -----------------
+    var acBox = null, acItems = [], acActive = 0, acCharW = 0;
+    function acEnsureBox() {
+      if (acBox) return acBox;
+      acBox = document.createElement("ul");
+      acBox.className = "python-lab__ac";
+      acBox.setAttribute("role", "listbox");
+      acBox.hidden = true;
+      document.body.appendChild(acBox);
+      acBox.addEventListener("mousedown", function (event) {
+        var li = event.target.closest("[data-ac-index]");
+        if (!li) return;
+        event.preventDefault(); // conserva el foco del editor
+        acActive = Number(li.getAttribute("data-ac-index")) || 0;
+        acAccept();
+      });
+      return acBox;
+    }
+    function acMeasureCharWidth() {
+      if (acCharW) return acCharW;
+      var cs = getComputedStyle(codeEl);
+      var span = document.createElement("span");
+      span.style.cssText = "position:absolute;visibility:hidden;white-space:pre;";
+      span.style.fontFamily = cs.fontFamily;
+      span.style.fontSize = cs.fontSize;
+      span.textContent = "00000000000000000000";
+      document.body.appendChild(span);
+      acCharW = (span.getBoundingClientRect().width / 20) || 8.4;
+      span.remove();
+      return acCharW;
+    }
+    function acCurrentWord() {
+      var pos = codeEl.selectionStart;
+      var value = codeEl.value;
+      var start = pos;
+      while (start > 0 && /[A-Za-z0-9_]/.test(value.charAt(start - 1))) start -= 1;
+      return { start: start, end: pos, prefix: value.slice(start, pos) };
+    }
+    function acIsOpen() { return !!(acBox && !acBox.hidden && acItems.length); }
+    function acClose() { if (acBox) acBox.hidden = true; acItems = []; }
+    function acPosition(info) {
+      var cs = getComputedStyle(codeEl);
+      var padL = parseFloat(cs.paddingLeft) || 0;
+      var padT = parseFloat(cs.paddingTop) || 0;
+      var lh = parseFloat(cs.lineHeight) || (parseFloat(cs.fontSize) * 1.5) || 21;
+      var rect = codeEl.getBoundingClientRect();
+      var before = codeEl.value.slice(0, info.start);
+      var lineIdx = before.split("\n").length - 1;
+      var col = info.start - (before.lastIndexOf("\n") + 1);
+      var chW = acMeasureCharWidth();
+      acBox.style.left = (rect.left + padL + col * chW - codeEl.scrollLeft) + "px";
+      acBox.style.top = (rect.top + padT + (lineIdx + 1) * lh - codeEl.scrollTop) + "px";
+    }
+    function acRenderActive() {
+      if (!acBox) return;
+      Array.prototype.forEach.call(acBox.children, function (li, i) {
+        li.classList.toggle("is-active", i === acActive);
+      });
+    }
+    function acOpen() {
+      var info = acCurrentWord();
+      var items = getCompletions(codeEl.value, info.prefix);
+      if (!items.length) { acClose(); return; }
+      var box = acEnsureBox();
+      acItems = items;
+      acActive = 0;
+      box.innerHTML = items.map(function (name, i) {
+        return '<li role="option" class="python-lab__ac-item' + (i === 0 ? " is-active" : "") +
+          '" data-ac-index="' + i + '">' + escapeHtml(name) + "</li>";
+      }).join("");
+      acPosition(info);
+      box.hidden = false;
+    }
+    function acMove(delta) {
+      if (!acItems.length) return;
+      acActive = (acActive + delta + acItems.length) % acItems.length;
+      acRenderActive();
+    }
+    function acAccept() {
+      var word = acItems[acActive];
+      if (!word) { acClose(); return; }
+      var info = acCurrentWord();
+      var v = codeEl.value;
+      codeEl.value = v.slice(0, info.start) + word + v.slice(info.end);
+      codeEl.selectionStart = codeEl.selectionEnd = info.start + word.length;
+      acClose();
+      updateEditorView();
+      scheduleLiveCheck();
+      codeEl.focus();
+    }
+    // Este keydown se registra ANTES que el de indentacion/ejecucion: cuando el
+    // dropdown esta abierto intercepta las teclas y corta la propagacion para que
+    // Tab/Enter completen en vez de indentar o ejecutar.
+    codeEl.addEventListener("keydown", function (event) {
+      if (!acIsOpen()) return;
+      if (event.key === "ArrowDown") { event.preventDefault(); event.stopImmediatePropagation(); acMove(1); }
+      else if (event.key === "ArrowUp") { event.preventDefault(); event.stopImmediatePropagation(); acMove(-1); }
+      else if (event.key === "Enter" || event.key === "Tab") { event.preventDefault(); event.stopImmediatePropagation(); acAccept(); }
+      else if (event.key === "Escape") { event.preventDefault(); event.stopImmediatePropagation(); acClose(); }
+    });
+    codeEl.addEventListener("input", acOpen);
+    codeEl.addEventListener("blur", function () { setTimeout(acClose, 120); });
+    codeEl.addEventListener("scroll", function () { if (acIsOpen()) acClose(); });
+    window.addEventListener("resize", acClose);
+
     codeEl.value = getSavedLabCode();
     try { localStorage.removeItem(STORAGE_KEY); } catch (_) {}
     updateEditorView();
     codeEl.addEventListener("input", function () {
       saveLabCode(codeEl.value);
       updateEditorView();
+      scheduleLiveCheck();
     });
     codeEl.addEventListener("scroll", updateEditorView);
 
@@ -415,6 +715,21 @@
       statusEl.textContent = status || "Listo.";
     }
 
+    // Pinta el bloque de AYUDA en la consola: que paso, como arreglarlo y un
+    // ejemplo. Convierte el error crudo del worker en una guia para el aprendiz.
+    function renderErrorHelp(raw) {
+      var help = explainPythonError(raw);
+      if (!help) return;
+      termLine("", null);
+      termLine("💡 Ayuda: " + help.title, "pyterm-help");
+      if (help.fix) termLine("   " + help.fix, "pyterm-help");
+      if (help.example) {
+        String(help.example).split("\n").forEach(function (l, i) {
+          termLine("   " + (i === 0 ? "Ejemplo:  " : "          ") + l, "pyterm-help-ex");
+        });
+      }
+    }
+
     function runWithConsoleInput(stdinText) {
       statusEl.textContent = "Ejecutando...";
       lab.classList.add("python-lab--running");
@@ -427,10 +742,12 @@
         })
         .catch(function (err) {
           termStop();
+          var raw = (err && err.message) || String(err);
           termLine("Traceback (entorno seguro del portal):", "pyterm-err");
-          termLine("  " + (err?.message || err), "pyterm-err");
+          termLine("  " + raw, "pyterm-err");
           termLine("[programa terminado - codigo 1]", "pyterm-exit");
-          statusEl.textContent = "Revisa el codigo.";
+          renderErrorHelp(raw);
+          statusEl.textContent = "Mira la ayuda de abajo.";
         });
     }
 
@@ -517,6 +834,11 @@
     isOnlinePracticeEnabled: isOnlinePracticeEnabled,
     executePythonInWorker: executePythonInWorker,
     validatePythonLabCode: validatePythonLabCode,
+    explainPythonError: explainPythonError,
+    highlightPythonCode: highlightPythonCode,
+    liveStructuralIssues: liveStructuralIssues,
+    collectUserVariables: collectUserVariables,
+    getCompletions: getCompletions,
     mount: mountPythonOnlineLab,
   };
 
