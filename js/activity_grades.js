@@ -93,6 +93,29 @@
     return auth.getStudentStorageKey(usernameKey, GRADES_STORAGE_KEY, { area: "app" });
   }
 
+  // ── Sincronizacion con Firestore (sena_portal_grades) ───────────────────────
+  // El admin escribe las notas (rule isAdmin); el aprendiz lee SOLO las suyas.
+  // Reemplaza el archivo semilla publico data/grades_*.js (PII de menores).
+  function gradesCloudDb() {
+    var db = window._firebaseDb;
+    return db && typeof db.cloudGetGrades === "function" ? db : null;
+  }
+  function fetchGradesFromCloud(usernameKey) {
+    var db = gradesCloudDb();
+    if (!db) return Promise.resolve(null);
+    return Promise.resolve(db.cloudGetGrades(usernameKey)).catch(function () { return null; });
+  }
+  function saveGradesToCloud(usernameKey, allGrades) {
+    var db = gradesCloudDb();
+    if (!db || typeof db.cloudSaveGrades !== "function") return;
+    // Fire-and-forget: lo invoca el admin; el rule isAdmin() lo autoriza.
+    Promise.resolve(db.cloudSaveGrades(usernameKey, allGrades)).catch(function () {});
+  }
+  function setAllStudentGrades(usernameKey, allGrades) {
+    var key = getGradesKey(usernameKey);
+    if (key) localStorage.setItem(key, JSON.stringify(allGrades || {}));
+  }
+
   function getStudentGrades(usernameKey, guideFamily) {
     var key = getGradesKey(usernameKey);
     if (!key) return {};
@@ -106,6 +129,7 @@
     var all = readJson(localStorage.getItem(key), {});
     all[guideFamily] = Object.assign({}, gradesObj);
     localStorage.setItem(key, JSON.stringify(all));
+    saveGradesToCloud(usernameKey, all);
   }
 
   function setStudentActivityGrade(usernameKey, guideFamily, activityId, grade) {
@@ -119,6 +143,7 @@
       all[guideFamily][activityId] = grade;
     }
     localStorage.setItem(key, JSON.stringify(all));
+    saveGradesToCloud(usernameKey, all);
   }
 
   function setStudentActivityObservation(usernameKey, guideFamily, activityId, obs) {
@@ -133,6 +158,7 @@
       all[guideFamily][obsKey] = String(obs).trim().slice(0, 500);
     }
     localStorage.setItem(key, JSON.stringify(all));
+    saveGradesToCloud(usernameKey, all);
   }
 
   function getStudentActivityObservation(usernameKey, guideFamily, activityId) {
@@ -150,44 +176,25 @@
     return getStudentGrades(session.usernameKey, guideFamily);
   }
 
-  // ── Búsqueda en datos semilla estáticos (fallback) ──────────────────────────
-  function lookupSeedGrades(guideFamily, session, seedData) {
-    if (!seedData) return null;
-    var ficha = String(session.ficha || "");
-    var fichaData = seedData[ficha];
-    if (!fichaData) return null;
-    var normalized = normalizeName(session.fullName);
-    var grades = fichaData[normalized];
-    if (grades) return grades;
-    // Partial match on first two words (apellidos)
-    var parts = normalized.split(" ");
-    var apellidos = parts.slice(0, 2).join(" ");
-    var matchKey = Object.keys(fichaData).find(function (k) {
-      return k === apellidos || k.startsWith(apellidos + " ");
-    });
-    return matchKey ? fichaData[matchKey] : null;
-  }
-
   // ── Renderizado de badges en la guía ────────────────────────────────────────
-  // options: {
-  //   guideFamily: string,
-  //   activities: [{ activityId, mountSelector, label }],
-  //   seedData: window.__GRADES_INDUCCION__ (opcional, fallback estático),
-  // }
-  function renderGradeBadges(options) {
+  // options: { guideFamily: string, activities: [{ activityId, mountSelector }] }
+  // Lee las notas del aprendiz desde Firestore (las escribe el admin) y las cachea
+  // en localStorage para reintentos/offline. Ya NO usa archivo semilla publico.
+  async function renderGradeBadges(options) {
     var opts = options || {};
     var guideFamily = String(opts.guideFamily || "");
     var activities = Array.isArray(opts.activities) ? opts.activities : [];
-    var seedData = opts.seedData || null;
 
     var auth = window.portalAuth;
     var session = auth && auth.getSession ? auth.getSession() : null;
     if (!session || session.role !== "student" || !session.usernameKey) return;
 
-    // Admin-set grades take priority; fall back to seed if none exist
-    var grades = getMyGrades(guideFamily);
-    if (!Object.keys(grades).length && seedData) {
-      grades = lookupSeedGrades(guideFamily, session, seedData) || {};
+    // Cache local primero; luego Firestore (fuente de verdad escrita por el admin).
+    var grades = getStudentGrades(session.usernameKey, guideFamily);
+    var cloud = await fetchGradesFromCloud(session.usernameKey);
+    if (cloud && typeof cloud === "object") {
+      setAllStudentGrades(session.usernameKey, cloud);
+      grades = cloud[guideFamily] || {};
     }
 
     activities.forEach(function (cfg) {

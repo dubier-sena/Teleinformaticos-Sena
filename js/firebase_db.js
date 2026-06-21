@@ -71,6 +71,7 @@
   var COL_TUTORING = "sena_portal_tutoring_bookings";
   var COL_GROUPS = "sena_portal_groups";
   var COL_USER_INDEX = "sena_portal_user_index";
+  var COL_GRADES = "sena_portal_grades";
   var CALENDAR_FALLBACK_PREFIX = "__calendar__:";
   var AVAILABILITY_DOC_ID = CALENDAR_FALLBACK_PREFIX + "calendario_2026_admin";
   var GUIDE_DATA_FALLBACK_PREFIX = "__guide_data__:";
@@ -1186,6 +1187,26 @@
   async function cloudGetProgress(usernameKey) {
     var doc = await fsGet(COL_PROGRESS, usernameKey);
     return doc || {};
+  }
+
+  // ── Notas / juicios de evaluacion ─────────────────────────────────────────
+  // El aprendiz lee su propio doc (rule owner); el admin lee/escribe cualquiera.
+  // Reemplaza el archivo semilla publico data/grades_*.js. Devuelve el mapa
+  // { guideFamily: { actId: "A"|"D" } } o {} si no hay.
+  async function cloudGetGrades(usernameKey) {
+    if (!usernameKey) return {};
+    var doc = await fsGet(COL_GRADES, usernameKey);
+    return doc && doc.grades && typeof doc.grades === "object" ? doc.grades : {};
+  }
+
+  // Solo el admin puede escribir (rule isAdmin()). Reemplaza el doc completo.
+  async function cloudSaveGrades(usernameKey, grades) {
+    if (!usernameKey) return false;
+    return fsPatch(COL_GRADES, usernameKey, {
+      usernameKey: usernameKey,
+      grades: grades && typeof grades === "object" ? grades : {},
+      updatedAt: new Date().toISOString(),
+    });
   }
 
   // Guarda el progreso de UNA guia sin borrar el de las demas (updateMask).
@@ -2378,6 +2399,8 @@
     cloudSaveCalendar: cloudSaveCalendar,
     cloudGetGuideData: cloudGetGuideData,
     cloudSaveGuideData: cloudSaveGuideData,
+    cloudGetGrades: cloudGetGrades,
+    cloudSaveGrades: cloudSaveGrades,
     mergeGuideDataSnapshotForSave: mergeGuideDataSnapshotForSave,
     cloudGetGuideUiState: cloudGetGuideUiState,
     cloudSaveGuideUiState: cloudSaveGuideUiState,
