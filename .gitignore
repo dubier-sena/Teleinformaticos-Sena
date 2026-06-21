@@ -32,3 +32,7 @@ assets/materiales/induccion/Videos/SENA es Colombia.mp4
 # Documentacion interna que NO debe ser publica en el repo de GitHub
 DOCUMENTACION_PROYECTO.md
 tools/publicar_github_pages.md
+
+# Notas de aprendices (PII): migradas a Firestore (sena_portal_grades).
+# Copia local conservada como respaldo; NUNCA debe volver al repo publico.
+data/grades_induccion.js

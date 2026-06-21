@@ -593,7 +593,8 @@ window.addEventListener("activity-deadlines-updated", installInduccionDeadlineCo
 
 // ── Notas de evaluación ──────────────────────────────────────────────────────
 // Delegado a activity_grades.js (cargado antes que este script).
-// grades_induccion.js provee datos semilla de respaldo (window.__GRADES_INDUCCION__).
+// Las notas las lee activity_grades.js desde Firestore (sena_portal_grades): el
+// admin las escribe, el aprendiz lee solo las suyas. Ya no hay archivo semilla.
 
 const INDUCCION_GRADE_ACTIVITIES = [
   { activityId: "arbol312",      mountSelector: "#arbol312DeadlineControls" },
@@ -606,7 +607,6 @@ function renderInduccionGradeBadges() {
   window.activityGradesManager?.renderGradeBadges({
     guideFamily: "guia-01-induccion",
     activities: INDUCCION_GRADE_ACTIVITIES,
-    seedData: window.__GRADES_INDUCCION__,
   });
 }
 
