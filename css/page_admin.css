@@ -798,6 +798,23 @@ progress::-moz-progress-bar {
   background: var(--admin-line);
 }
 
+/* Calificaciones: entrada manual (ficha + guia -> grilla de A/D por actividad) */
+.grades-manual__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 12px 0 16px;
+}
+.grades-manual__filters select {
+  min-width: 220px;
+}
+.grades-grid {
+  overflow-x: auto;
+}
+.grades-table .grade-select {
+  min-width: 132px;
+}
+
 .audit-log {
   display: grid;
   gap: 10px;

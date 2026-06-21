@@ -16,7 +16,7 @@
 <link rel="stylesheet" href="css/site_tokens.css?v=20260617_1">
 <link rel="stylesheet" href="css/components.css?v=20260617_1">
 <link rel="stylesheet" href="css/shared_shell.css?v=20260617_1">
-<link rel="stylesheet" href="css/page_admin.css?v=20260616_1">
+<link rel="stylesheet" href="css/page_admin.css?v=20260620_1">
 <script src="js/shared_utils.js?v=20260615_2"></script>
 <script src="js/portal_auth.js?v=20260611_3"></script>
 <script src="js/firebase-config.js?v=20260527_3"></script>
@@ -60,6 +60,7 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
         <button class="admin-nav__item" type="button" data-admin-module="respuestas">Respuestas</button>
         <button class="admin-nav__item" type="button" data-admin-module="entregas">Entregas</button>
         <button class="admin-nav__item" type="button" data-admin-module="habilitacion">Habilitar actividades</button>
+        <button class="admin-nav__item" type="button" data-admin-module="notas">Calificaciones</button>
         <button class="admin-nav__item" type="button" data-admin-module="reportes">Reportes</button>
         <button class="admin-nav__item" type="button" data-admin-module="configuracion">Configuracion</button>
         <button class="admin-nav__item" type="button" data-tab="auditoria" data-admin-module="configuracion">Auditoria</button>
@@ -272,6 +273,8 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
         <div id="habilitacion-host"></div>
       </section>
 
+      <section class="admin-module" id="module-notas" data-admin-panel="notas" hidden></section>
+
       <section class="admin-module" id="module-reportes" data-admin-panel="reportes" hidden>
         <div class="admin-grid admin-grid--two">
           <article class="admin-panel">
@@ -357,11 +360,9 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
   <script src="js/redes_quiz_bank.js?v=20260421_1"></script>
   <script src="js/redes_lock_sync.js?v=20260428_1"></script>
   <script src="js/redes_quiz_unlock.js?v=20260422_1"></script>
-  <script src="js/xlsx.full.min.js"></script>
   <script src="js/admin_confirmations.js?v=20260505_1"></script>
   <script src="js/admin_audit.js?v=20260615_1"></script>
   <script src="js/admin_deadlines.js?v=20260615_1"></script>
-  <script src="js/admin_grades.js?v=20260505_1"></script>
   <script src="js/admin_redes.js?v=20260615_1"></script>
   <script src="js/export_styles.js?v=20260517_1"></script>
   <script src="js/admin_export.js?v=20260615_1"></script>
@@ -369,6 +370,6 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
   <script src="js/admin_guide6.js?v=20260615_1"></script>
   <script src="js/admin_progress.js?v=20260615_1"></script>
   <script src="js/admin_habilitacion.js?v=20260617_1"></script>
-  <script src="js/admin_usuarios.js?v=20260619_2"></script>
+  <script src="js/admin_usuarios.js?v=20260620_1"></script>
 </body>
 </html>

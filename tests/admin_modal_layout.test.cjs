@@ -416,85 +416,42 @@ test("admin deadline changes require confirmation and audit entries", () => {
   );
 });
 
-test("admin grade changes require confirmation and audit entries", () => {
-  const gradeHandler = adminScript.match(
-    /async function handleGradeChange\(select\) \{[\s\S]*?\n  function patchGuideState/
-  );
-  assert.ok(gradeHandler, "handleGradeChange should be async and present");
-  assert.match(gradeHandler[0], /await confirmAdminAction/);
-  assert.match(gradeHandler[0], /select\.value = previousGrade/);
+test("modulo Notas: entrada manual de calificaciones (guarda al instante en Firestore)", () => {
+  const gradeHandler = adminScript.match(/function handleGradeChange\(select\) \{[\s\S]*?\n  \}/);
+  assert.ok(gradeHandler, "handleGradeChange debe existir");
+  assert.match(gradeHandler[0], /gradesManager\.setStudentActivityGrade\(usernameKey, guideFamily, activityId, nextGrade\)/);
   assert.match(gradeHandler[0], /recordAdminAuditAction\(\{[\s\S]*action: "grade-change"/);
-  assert.ok(
-    gradeHandler[0].indexOf("confirmAdminAction") < gradeHandler[0].indexOf("gradesManager.setStudentActivityGrade"),
-    "manual grade confirmation should happen before setStudentActivityGrade"
-  );
-
-  const importHandler = adminScript.match(
-    /async function readGradesFromExcelFile\(file\) \{[\s\S]*?\n  function renderUsers/
-  );
-  assert.ok(importHandler, "readGradesFromExcelFile and import flow should be present");
-  assert.match(adminScript, /const parsed = await readGradesFromExcelFile\(file\)/);
-  assert.match(adminScript, /await confirmAdminAction\([\s\S]*parsed\.students\.length/);
-  assert.match(adminScript, /const result = adminGrades\.applyParsedGrades\(parsed\.guideFamily, parsed\.students, allUsers, window\.activityGradesManager\)/);
-  assert.match(adminScript, /recordAdminAuditAction\(\{[\s\S]*action: "grades-import"/);
+  // UI: filtros ficha/guia + grilla con selects A/D, prellenada desde Firestore.
+  assert.match(adminScript, /function renderGrades\(\)/);
+  assert.match(adminScript, /async function renderGradesGrid\(\)/);
+  assert.match(adminScript, /id="grades-ficha-filter"/);
+  assert.match(adminScript, /id="grades-guide-filter"/);
+  assert.match(adminScript, /class="grade-select"/);
+  assert.match(adminScript, /db\.cloudGetGrades\(user\.usernameKey\)/);
+  assert.match(adminScript, /opt\("A", "Aprobado"\)/);
+  assert.match(adminScript, /opt\("D", "No aprobado"\)/);
 });
 
-test("admin grade Excel import validates file type and size before reading", () => {
-  assert.match(html, /js\/admin_grades\.js/);
-  assert.ok(
-    html.indexOf("js/admin_grades.js") < html.indexOf("js/admin_usuarios.js"),
-    "admin grades module should load before admin_usuarios.js"
+test("la importacion por Excel fue eliminada (notas se registran a mano)", () => {
+  assert.doesNotMatch(adminScript, /readGradesFromExcelFile/);
+  assert.doesNotMatch(adminScript, /grades-import-file/);
+  assert.doesNotMatch(adminScript, /applyParsedGrades/);
+  assert.doesNotMatch(adminScript, /action: "grades-import"/);
+  assert.doesNotMatch(html, /js\/admin_grades\.js/);
+  assert.doesNotMatch(html, /xlsx\.full\.min\.js/);
+  assert.equal(
+    fs.existsSync(path.join(root, "js/admin_grades.js")),
+    false,
+    "admin_grades.js debe estar eliminado"
   );
-  assert.match(gradesScript, /window\.adminGrades\s*=/);
-  assert.match(gradesScript, /const GRADES_IMPORT_MAX_BYTES = 10 \* 1024 \* 1024/);
-  assert.match(gradesScript, /function validateExcelFile\(file\)/);
-  assert.match(gradesScript, /function normalizeForMatch\(str\)/);
-  assert.match(gradesScript, /function parseWorkbook\(wb\)/);
-  assert.match(gradesScript, /function applyParsedGrades\(guideFamily, students, allUsers, gradesManager\)/);
-  assert.doesNotMatch(adminScript, /const GRADES_IMPORT_MAX_BYTES = 10 \* 1024 \* 1024/);
-  assert.doesNotMatch(adminScript, /function validateGradesExcelFile\(file\)/);
-  assert.doesNotMatch(adminScript, /function normalizeForMatch\(str\)/);
-  assert.doesNotMatch(adminScript, /const EXCEL_GUIDE_SIGNATURES = \[/);
-  assert.doesNotMatch(adminScript, /function parseGradesFromWorkbook\(wb\)/);
-  assert.doesNotMatch(adminScript, /function applyParsedGrades\(guideFamily, students, allUsers\)/);
-
-  const changeHandler = adminScript.match(
-    /fileInput\.addEventListener\("change", async \(e\) => \{[\s\S]*?\n      \}\);/
-  );
-  assert.ok(changeHandler, "grades file change handler should be present");
-  assert.match(changeHandler[0], /const validation = adminGrades\.validateExcelFile\(file\)/);
-  assert.ok(
-    changeHandler[0].indexOf("adminGrades.validateExcelFile") < changeHandler[0].indexOf("readGradesFromExcelFile"),
-    "file validation should happen before reading the workbook"
-  );
-  assert.match(adminScript, /adminGrades\.parseWorkbook\(wb\)/);
-  assert.match(adminScript, /adminGrades\.applyParsedGrades\(parsed\.guideFamily, parsed\.students, allUsers, window\.activityGradesManager\)/);
 });
 
-test("admin grade import panel uses stylesheet classes instead of inline styles", () => {
-  const gradesTab = adminScript.match(
-    /function renderGradesTab\(users\) \{[\s\S]*?\n  async function readGradesFromExcelFile/
-  );
-  assert.ok(gradesTab, "renderGradesTab should be present");
-
-  assert.match(gradesTab[0], /class="grades-import-box"/);
-  assert.match(gradesTab[0], /class="grades-import-title"/);
-  assert.match(gradesTab[0], /class="grades-import-copy"/);
-  assert.match(gradesTab[0], /class="grades-import-actions"/);
-  assert.match(gradesTab[0], /class="btn secondary grades-import-button"/);
-  assert.match(gradesTab[0], /class="grades-import-input"/);
-  assert.match(gradesTab[0], /class="grades-import-status"/);
-  assert.match(gradesTab[0], /class="grades-import-divider"/);
-  assert.doesNotMatch(gradesTab[0], /style="/);
-
-  assert.match(css, /\.grades-import-box/);
-  assert.match(css, /\.grades-import-title/);
-  assert.match(css, /\.grades-import-copy/);
-  assert.match(css, /\.grades-import-actions/);
-  assert.match(css, /\.grades-import-button/);
-  assert.match(css, /\.grades-import-input/);
-  assert.match(css, /\.grades-import-status/);
-  assert.match(css, /\.grades-import-divider/);
+test("el modulo Notas esta montado en el panel admin", () => {
+  assert.match(adminScript, /notas: "Calificaciones"/);
+  assert.match(adminScript, /renderGrades\(\);/); // se llama en renderAll
+  assert.match(html, /data-admin-module="notas"/);
+  assert.match(html, /id="module-notas" data-admin-panel="notas"/);
+  assert.match(css, /\.grades-manual__filters/);
 });
 
 test("admin redes unlock actions use shared confirmation and audit", () => {

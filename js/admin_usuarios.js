@@ -76,6 +76,7 @@
     respuestas: "Seguimiento de respuestas",
     entregas: "Seguimiento de entregas",
     habilitacion: "Habilitacion de actividades",
+    notas: "Calificaciones",
     reportes: "Reportes",
     configuracion: "Configuracion",
   };
@@ -1658,6 +1659,7 @@
     renderDeliveries();
     renderReports();
     renderSettings();
+    renderGrades();
   }
 
   async function loadUsers() {
@@ -2342,22 +2344,18 @@
     renderAll();
   }
 
-  async function handleGradeChange(select) {
+  function handleGradeChange(select) {
     const usernameKey = select.dataset.gradeUser || select.dataset.user || "";
     const guideFamily = select.dataset.gradeFamily || "";
     const activityId = select.dataset.gradeActivity || "";
-    const previousGrade = select.dataset.previousGrade || "";
     const nextGrade = select.value || "";
-    const confirmed = await confirmAdminAction(`Guardar calificacion ${nextGrade || "sin nota"}?`);
-    if (!confirmed) {
-      select.value = previousGrade;
-      return;
-    }
     const gradesManager = window.activityGradesManager;
+    if (!gradesManager || !usernameKey || !guideFamily || !activityId) return;
+    // Guardado instantaneo: localStorage + Firestore (sena_portal_grades, rule isAdmin).
     gradesManager.setStudentActivityGrade(usernameKey, guideFamily, activityId, nextGrade);
     select.dataset.previousGrade = nextGrade;
-    recordAdminAuditAction({ action: "grade-change", target: `${usernameKey}:${guideFamily}:${activityId}`, detail: nextGrade });
-    patchGuideState(usernameKey, guideFamily, { [`grade:${activityId}`]: nextGrade });
+    recordAdminAuditAction({ action: "grade-change", target: `${usernameKey}:${guideFamily}:${activityId}`, detail: nextGrade || "sin nota" });
+    setFeedback("Calificacion guardada.", "success");
   }
 
   function patchGuideState(usernameKey, guideFamily, patch) {
@@ -2368,29 +2366,87 @@
     return true;
   }
 
-  function renderGradesTab(users) {
-    const totalUsers = Array.isArray(users) ? users.length : 0;
-    return `
-      <section class="grades-import-box">
-        <h3 class="grades-import-title">Importar calificaciones</h3>
-        <p class="grades-import-copy">Carga un archivo Excel con los nombres de aprendices y calificaciones detectables.</p>
-        <div class="grades-import-actions">
-          <label class="btn secondary grades-import-button" for="grades-import-file">Seleccionar Excel</label>
-          <input class="grades-import-input" id="grades-import-file" type="file" accept=".xlsx,.xls">
-        </div>
-        <div class="grades-import-status" id="grades-import-status">${totalUsers} aprendices disponibles.</div>
-        <div class="grades-import-divider"></div>
-      </section>
+  // ── Calificaciones: entrada manual directa desde el panel ───────────────────
+  // El admin elige ficha + guia y marca Aprobado / No aprobado por actividad. Se
+  // guarda al instante en Firestore (sena_portal_grades); cada aprendiz ve solo
+  // la suya. Reemplaza la importacion por Excel.
+  function getGradeCatalog() {
+    return (window.activityGradesManager && window.activityGradesManager.GRADE_CATALOG) || {};
+  }
+
+  function gradeSelectMarkup(usernameKey, guideFamily, activityId, current) {
+    const cur = current || "";
+    function opt(value, label) {
+      return `<option value="${value}"${cur === value ? " selected" : ""}>${label}</option>`;
+    }
+    return `<select class="grade-select" data-grade-user="${escapeHtml(usernameKey)}" `
+      + `data-grade-family="${escapeHtml(guideFamily)}" data-grade-activity="${escapeHtml(activityId)}" `
+      + `data-previous-grade="${escapeHtml(cur)}" aria-label="Calificacion">`
+      + opt("", "&mdash;") + opt("A", "Aprobado") + opt("D", "No aprobado") + `</select>`;
+  }
+
+  function renderGrades() {
+    const host = byId("module-notas");
+    if (!host) return;
+    const catalog = getGradeCatalog();
+    const guideOptions = Object.keys(catalog).map((fam) =>
+      `<option value="${escapeHtml(fam)}">${escapeHtml(catalog[fam].label || fam)}</option>`
+    ).join("");
+    host.innerHTML = `
+      <div class="admin-section-head">
+        <h2>Calificaciones</h2>
+        <p class="admin-muted">Elige ficha y guia, y marca Aprobado / No aprobado por actividad. Se guarda al instante; cada aprendiz ve solo la suya.</p>
+      </div>
+      <div class="grades-manual__filters">
+        <select id="grades-ficha-filter">${getFichaOptions("", false)}</select>
+        <select id="grades-guide-filter"><option value="">Selecciona guia</option>${guideOptions}</select>
+      </div>
+      <div id="grades-grid" class="grades-grid"></div>
     `;
   }
 
-  async function readGradesFromExcelFile(file) {
-    if (!window.adminGrades || !window.XLSX) {
-      throw new Error("Modulo de calificaciones no disponible.");
+  async function renderGradesGrid() {
+    const grid = byId("grades-grid");
+    if (!grid) return;
+    const ficha = byId("grades-ficha-filter")?.value || "";
+    const guideFamily = byId("grades-guide-filter")?.value || "";
+    const catalog = getGradeCatalog();
+    if (!ficha || !guideFamily || !catalog[guideFamily]) {
+      grid.innerHTML = '<p class="admin-muted">Selecciona una ficha y una guia para ver los aprendices.</p>';
+      return;
     }
-    const buffer = await file.arrayBuffer();
-    const wb = window.XLSX.read(buffer, { type: "array" });
-    return window.adminGrades.parseWorkbook(wb);
+    const activities = catalog[guideFamily].activities || [];
+    const students = getUsersForFicha(ficha);
+    if (!students.length) {
+      grid.innerHTML = '<p class="admin-muted">No hay aprendices en esta ficha.</p>';
+      return;
+    }
+    grid.innerHTML = '<p class="response-status">Cargando calificaciones desde la nube...</p>';
+    // Trae las notas de cada aprendiz desde Firestore (en paralelo) para prellenar.
+    const db = window._firebaseDb;
+    const gradesByUser = {};
+    await Promise.all(students.map(async (user) => {
+      let g = {};
+      if (db && typeof db.cloudGetGrades === "function") {
+        try {
+          const all = await db.cloudGetGrades(user.usernameKey);
+          g = (all && all[guideFamily]) || {};
+        } catch (_) { /* sin nube: cae a cache local */ }
+      }
+      if (!Object.keys(g).length && window.activityGradesManager) {
+        g = window.activityGradesManager.getStudentGrades(user.usernameKey, guideFamily) || {};
+      }
+      gradesByUser[user.usernameKey] = g;
+    }));
+    const head = "<th>Aprendiz</th>" + activities.map((a) => `<th>${escapeHtml(a.label)}</th>`).join("");
+    const rows = students.map((user) => {
+      const g = gradesByUser[user.usernameKey] || {};
+      const cells = activities.map((a) =>
+        `<td>${gradeSelectMarkup(user.usernameKey, guideFamily, a.id, g[a.id])}</td>`
+      ).join("");
+      return `<tr><td>${escapeHtml(user.fullName)}</td>${cells}</tr>`;
+    }).join("");
+    grid.innerHTML = `<table class="admin-data-table grades-table"><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table>`;
   }
 
   function renderUsers() {
@@ -2691,27 +2747,16 @@
     byId("guide2-responses-export")?.addEventListener("click", () => {
       exportCurrentResponsesToWord();
     });
-    const fileInput = byId("grades-import-file");
-    if (fileInput) {
-      fileInput.addEventListener("change", async (e) => {
-      const file = e.target.files?.[0];
-      const adminGrades = window.adminGrades;
-      if (!adminGrades) return;
-      const validation = adminGrades.validateExcelFile(file);
-      if (!validation.ok) {
-        setFeedback(validation.message, "error");
+    // Modulo Notas: delegacion de eventos (filtros + selects de calificacion).
+    byId("module-notas")?.addEventListener("change", (event) => {
+      const target = event.target;
+      if (target && (target.id === "grades-ficha-filter" || target.id === "grades-guide-filter")) {
+        renderGradesGrid();
         return;
       }
-      const parsed = await readGradesFromExcelFile(file);
-      const confirmed = await confirmAdminAction(`Importar calificaciones para ${parsed.students.length} aprendices?`);
-      if (!confirmed) return;
-      const allUsers = state.users || [];
-      const result = adminGrades.applyParsedGrades(parsed.guideFamily, parsed.students, allUsers, window.activityGradesManager);
-      recordAdminAuditAction({ action: "grades-import", target: parsed.guideFamily, detail: `${result.saved} registros` });
-      setFeedback(`Calificaciones importadas: ${result.saved}.`, "success");
-      renderAll();
-      });
-    }
+      const sel = target && target.closest ? target.closest(".grade-select") : null;
+      if (sel) handleGradeChange(sel);
+    });
     document.addEventListener("submit", async (event) => {
       if (event.target?.id === "edit-learner-form") {
         event.preventDefault();
