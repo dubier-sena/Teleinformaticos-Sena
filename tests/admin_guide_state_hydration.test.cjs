@@ -33,11 +33,36 @@ test("se dispara al abrir Respuestas/Entregas y se re-renderiza", () => {
   assert.match(adminScript, /if \(state\.activeModule === moduleName && changed\) rerender\(\);/);
 });
 
-test("se re-hidrata con datos frescos en cada loadUsers", () => {
-  assert.match(adminScript, /guideStatesHydrated = false; \/\/ datos frescos/);
+test("la hidratacion es una vez por sesion; 'Actualizar datos' la repite", () => {
+  // Cambio (jun-2026): antes se reseteaba el flag en CADA loadUsers; ahora la
+  // hidratacion ocurre UNA vez por sesion (para poblar el dashboard de entregas
+  // sin N×M lecturas por cada accion del admin) y solo se repite al pulsar el
+  // boton "Actualizar datos" (refresh-users).
+  assert.match(adminScript, /guideStatesHydrated = false; loadUsers\(\)/);
+  assert.doesNotMatch(adminScript, /guideStatesHydrated = false; \/\/ datos frescos/);
 });
 
 test("la hidratacion limita la concurrencia para no saturar la cuota", () => {
   assert.match(adminScript, /async function runWithConcurrency\(items, limit, worker\)/);
   assert.match(adminScript, /runWithConcurrency\(tasks, 6,/);
+});
+
+test("dashboard: tarjeta 'Entregas recientes' al iniciar sesion (que aprendiz entrego)", () => {
+  const html = fs.readFileSync(
+    path.join(__dirname, "..", "panel-administrativo-usuarios.html"),
+    "utf8"
+  );
+  // UI en el dashboard: tarjeta + contenedor + boton "Ver todas" al modulo Entregas.
+  assert.match(html, /<h2>Entregas recientes<\/h2>/);
+  assert.match(html, /id="dashboard-deliveries"/);
+  assert.match(html, /data-jump-module="entregas">Ver todas/);
+  // Logica: render en el dashboard + orden recientes primero.
+  assert.match(adminScript, /function renderRecentDeliveries\(\)/);
+  assert.match(adminScript, /renderRecentDeliveries\(\);/);
+  assert.match(adminScript, /function getRecentDeliveries\(limit\)/);
+  assert.match(adminScript, /b\.submittedAt[\s\S]*localeCompare[\s\S]*a\.submittedAt/);
+  // Hidratacion UNA vez por sesion al cargar (no en cada loadUsers); el refresh la repite.
+  assert.match(adminScript, /ensureGuideStatesHydrated\(\)\.then\(\(changed\) => \{ if \(changed\) renderAll\(\); \}\)/);
+  assert.match(adminScript, /guideStatesHydrated = false; loadUsers\(\)/);
+  assert.doesNotMatch(adminScript, /guideStatesHydrated = false; \/\/ datos frescos/);
 });

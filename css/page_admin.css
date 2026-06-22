@@ -815,6 +815,24 @@ progress::-moz-progress-bar {
   min-width: 132px;
 }
 
+/* Dashboard: tarjeta "Entregas recientes" (qué aprendiz entregó al iniciar sesión) */
+.delivery-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--admin-line);
+}
+.delivery-line:last-child { border-bottom: 0; }
+.delivery-line__main { min-width: 0; }
+.delivery-line__when {
+  flex: none;
+  color: var(--muted, #5d6c74);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
 .audit-log {
   display: grid;
   gap: 10px;
