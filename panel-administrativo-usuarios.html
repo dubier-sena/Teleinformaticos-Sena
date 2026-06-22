@@ -16,7 +16,7 @@
 <link rel="stylesheet" href="css/site_tokens.css?v=20260617_1">
 <link rel="stylesheet" href="css/components.css?v=20260617_1">
 <link rel="stylesheet" href="css/shared_shell.css?v=20260617_1">
-<link rel="stylesheet" href="css/page_admin.css?v=20260620_1">
+<link rel="stylesheet" href="css/page_admin.css?v=20260621_1">
 <script src="js/shared_utils.js?v=20260615_2"></script>
 <script src="js/portal_auth.js?v=20260611_3"></script>
 <script src="js/firebase-config.js?v=20260527_3"></script>
@@ -112,6 +112,19 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
             </div>
           </article>
         </div>
+
+        <article class="admin-panel">
+          <div class="admin-panel__header">
+            <div>
+              <h2>Entregas recientes</h2>
+              <p>Trabajos que los aprendices han entregado, del mas reciente al mas antiguo.</p>
+            </div>
+            <div class="admin-row-actions">
+              <button class="admin-button admin-button--ghost" type="button" data-jump-module="entregas">Ver todas</button>
+            </div>
+          </div>
+          <div id="dashboard-deliveries"></div>
+        </article>
       </section>
 
       <section class="admin-module" id="module-aprendices" data-admin-panel="aprendices" hidden>
@@ -370,6 +383,6 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
   <script src="js/admin_guide6.js?v=20260615_1"></script>
   <script src="js/admin_progress.js?v=20260615_1"></script>
   <script src="js/admin_habilitacion.js?v=20260617_1"></script>
-  <script src="js/admin_usuarios.js?v=20260620_1"></script>
+  <script src="js/admin_usuarios.js?v=20260621_1"></script>
 </body>
 </html>

@@ -297,6 +297,54 @@
         <progress value="${row.average}" max="100">${row.average}%</progress>
       </div>
     `).join("") || '<p class="admin-empty">No hay fichas configuradas.</p>';
+    renderRecentDeliveries();
+  }
+
+  function formatRelativeOrDate(iso) {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "";
+    const now = new Date();
+    const sameDay = (a, b) =>
+      a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+    if (sameDay(d, now)) return "hoy";
+    const yest = new Date(now);
+    yest.setDate(now.getDate() - 1);
+    if (sameDay(d, yest)) return "ayer";
+    return formatDate(iso);
+  }
+
+  function getRecentDeliveries(limit) {
+    const rows = collectDeliveries();
+    rows.sort((a, b) => String(b.submittedAt || "").localeCompare(String(a.submittedAt || "")));
+    return rows.slice(0, limit || 8);
+  }
+
+  // Tarjeta "Entregas recientes" del dashboard: lo primero que ve el admin al
+  // iniciar sesion, para saber que aprendices han entregado trabajos. Los datos
+  // se bajan una vez por sesion (ensureGuideStatesHydrated en loadUsers).
+  function renderRecentDeliveries() {
+    const host = byId("dashboard-deliveries");
+    if (!host) return;
+    if (!guideStatesHydrated) {
+      host.innerHTML = '<p class="response-status">Cargando entregas recientes...</p>';
+      return;
+    }
+    const rows = getRecentDeliveries(8);
+    if (!rows.length) {
+      host.innerHTML = '<p class="admin-empty">Aun no hay entregas registradas. Apareceran aqui cuando los aprendices entreguen trabajos.</p>';
+      return;
+    }
+    host.innerHTML = rows.map((d) => {
+      const name = escapeHtml((d.user && d.user.fullName) || (d.user && d.user.usernameKey) || "Aprendiz");
+      const guide = escapeHtml(auth.getGuideTitle(d.fileName) || d.fileName || "");
+      const act = escapeHtml(d.activityId || "");
+      const when = escapeHtml(formatRelativeOrDate(d.submittedAt));
+      return `<div class="delivery-line">
+        <div class="delivery-line__main"><strong>${name}</strong><span class="admin-muted"> &middot; ${guide}${act ? " &middot; " + act : ""}</span></div>
+        <span class="delivery-line__when">${when}</span>
+      </div>`;
+    }).join("");
   }
 
   function getFilteredUsers() {
@@ -1667,7 +1715,6 @@
       window.location.replace("index.html");
       return;
     }
-    guideStatesHydrated = false; // datos frescos: re-hidratar al abrir Respuestas/Entregas
     const loader = typeof auth.fetchStudentsWithProgress === "function"
       ? auth.fetchStudentsWithProgress()
       : Promise.resolve(auth.getStudentsWithProgress());
@@ -1676,6 +1723,10 @@
       progress: progressForUser(user),
     }));
     renderAll();
+    // Al iniciar sesion (y al refrescar) baja UNA vez el guide_state de los
+    // aprendices para que el dashboard "Entregas recientes" + los modulos
+    // Respuestas/Entregas muestren datos cross-device; luego re-renderiza.
+    ensureGuideStatesHydrated().then((changed) => { if (changed) renderAll(); });
     if (!state.users.length) {
       setFeedback(
         "No hay aprendices cargados en este navegador. Inicia sesion admin real, configura Firebase o crea/importa aprendices para ver respuestas, entregas y reportes completos.",
@@ -2654,7 +2705,7 @@
     document.querySelectorAll("[data-jump-module]").forEach((button) => {
       button.addEventListener("click", () => setActiveModule(button.dataset.jumpModule));
     });
-    byId("refresh-users")?.addEventListener("click", () => loadUsers());
+    byId("refresh-users")?.addEventListener("click", () => { guideStatesHydrated = false; loadUsers(); });
     byId("btn-backfill-drive")?.addEventListener("click", () => runBackfillToDrive());
     byId("user-search")?.addEventListener("input", (event) => {
       state.filters.text = event.target.value;
