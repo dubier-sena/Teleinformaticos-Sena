@@ -17,7 +17,7 @@ test("módulo registrado y con render perezoso", () => {
 });
 
 test("HTML: pestaña de nav + panel + script del módulo", () => {
-  assert.match(html, /data-admin-module="mejoramiento">Planes de Mejoramiento</);
+  assert.match(html, /data-admin-module="mejoramiento">Mejoramiento</);
   assert.match(html, /id="module-mejoramiento" data-admin-panel="mejoramiento"/);
   assert.match(html, /improvement_plans\.js/);
 });
