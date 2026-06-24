@@ -419,7 +419,10 @@ test("admin deadline changes require confirmation and audit entries", () => {
 test("modulo Notas: entrada manual de calificaciones (guarda al instante en Firestore)", () => {
   const gradeHandler = adminScript.match(/function handleGradeChange\(select\) \{[\s\S]*?\n  \}/);
   assert.ok(gradeHandler, "handleGradeChange debe existir");
-  assert.match(gradeHandler[0], /gradesManager\.setStudentActivityGrade\(usernameKey, guideFamily, activityId, nextGrade\)/);
+  // Al aprobar se embebe la solucion del banco dentro de las notas del aprendiz (flujo seguro):
+  // solo se busca la solucion cuando la nota es "A", y se guarda nota + solucion en una escritura.
+  assert.match(gradeHandler[0], /nextGrade === "A" \? lookupBankSolution\(guideFamily, activityId\) : null/);
+  assert.match(gradeHandler[0], /gradesManager\.setStudentActivityGradeAndSolution\(usernameKey, guideFamily, activityId, nextGrade, solution\)/);
   assert.match(gradeHandler[0], /recordAdminAuditAction\(\{[\s\S]*action: "grade-change"/);
   // UI: filtros ficha/guia + grilla con selects A/D, prellenada desde Firestore.
   assert.match(adminScript, /function renderGrades\(\)/);
@@ -430,6 +433,10 @@ test("modulo Notas: entrada manual de calificaciones (guarda al instante en Fire
   assert.match(adminScript, /db\.cloudGetGrades\(user\.usernameKey\)/);
   assert.match(adminScript, /opt\("A", "Aprobado"\)/);
   assert.match(adminScript, /opt\("D", "No aprobado"\)/);
+  // Avance de evaluacion INSTANTANEO en la grilla: columna "Aprobadas" + recalculo al togglear.
+  assert.match(adminScript, /<th>Aprobadas<\/th>/);
+  assert.match(adminScript, /function approvalCellText\(approved, total\)/);
+  assert.match(gradeHandler[0], /refreshApprovalCell\(select\)/);
 });
 
 test("la importacion por Excel fue eliminada (notas se registran a mano)", () => {

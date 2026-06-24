@@ -72,6 +72,8 @@
   var COL_GROUPS = "sena_portal_groups";
   var COL_USER_INDEX = "sena_portal_user_index";
   var COL_GRADES = "sena_portal_grades";
+  var COL_GRADE_SOLUTIONS = "sena_portal_grade_solutions";
+  var COL_IMPROVEMENT_PLANS = "sena_portal_improvement_plans";
   var CALENDAR_FALLBACK_PREFIX = "__calendar__:";
   var AVAILABILITY_DOC_ID = CALENDAR_FALLBACK_PREFIX + "calendario_2026_admin";
   var GUIDE_DATA_FALLBACK_PREFIX = "__guide_data__:";
@@ -1205,6 +1207,39 @@
     return fsPatch(COL_GRADES, usernameKey, {
       usernameKey: usernameKey,
       grades: grades && typeof grades === "object" ? grades : {},
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
+  // ── Banco de respuestas modelo (SOLO admin lo lee/escribe, rule isAdmin) ──
+  // Doc unico "bank": { solutions: { guideFamily: { actId: { "<data-store>": "texto" } } } }.
+  // NO se carga en el cliente del aprendiz; el admin lo consulta para copiar la
+  // solucion puntual dentro de las notas del aprendiz al aprobar.
+  async function cloudGetGradeSolutions() {
+    var doc = await fsGet(COL_GRADE_SOLUTIONS, "bank");
+    return doc && doc.solutions && typeof doc.solutions === "object" ? doc.solutions : {};
+  }
+
+  async function cloudSaveGradeSolutions(solutions) {
+    return fsPatch(COL_GRADE_SOLUTIONS, "bank", {
+      solutions: solutions && typeof solutions === "object" ? solutions : {},
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
+  // ── Planes de mejoramiento (admin escribe; aprendiz lee solo el suyo) ─────
+  // Doc por aprendiz: { usernameKey, plans: [...], updatedAt }.
+  async function cloudGetImprovementPlans(usernameKey) {
+    if (!usernameKey) return [];
+    var doc = await fsGet(COL_IMPROVEMENT_PLANS, usernameKey);
+    return doc && Array.isArray(doc.plans) ? doc.plans : [];
+  }
+
+  async function cloudSaveImprovementPlans(usernameKey, plans) {
+    if (!usernameKey) return false;
+    return fsPatch(COL_IMPROVEMENT_PLANS, usernameKey, {
+      usernameKey: usernameKey,
+      plans: Array.isArray(plans) ? plans : [],
       updatedAt: new Date().toISOString(),
     });
   }
@@ -2401,6 +2436,10 @@
     cloudSaveGuideData: cloudSaveGuideData,
     cloudGetGrades: cloudGetGrades,
     cloudSaveGrades: cloudSaveGrades,
+    cloudGetGradeSolutions: cloudGetGradeSolutions,
+    cloudSaveGradeSolutions: cloudSaveGradeSolutions,
+    cloudGetImprovementPlans: cloudGetImprovementPlans,
+    cloudSaveImprovementPlans: cloudSaveImprovementPlans,
     mergeGuideDataSnapshotForSave: mergeGuideDataSnapshotForSave,
     cloudGetGuideUiState: cloudGetGuideUiState,
     cloudSaveGuideUiState: cloudSaveGuideUiState,

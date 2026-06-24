@@ -1615,6 +1615,20 @@
     updateActivityNavDone();
     notifyGuideProgressChanged();
     applyResponsiveSidebarState();
+
+    // Badges de calificación (Aprobado / No aprobado) que escribe el admin.
+    // Auto-detecta la familia por el nombre de archivo; no hace nada si la guía
+    // no está en el catálogo o si activity_grades.js no está cargado.
+    if (window.activityGradesManager && typeof window.activityGradesManager.autoRenderForFile === "function") {
+      window.activityGradesManager.autoRenderForFile(pageFile);
+    }
+
+    // Banners de Plan de Mejoramiento: el aprendiz ve claramente que actividades debe
+    // entregar como recuperacion (las que el instructor le asigno). No hace nada si no
+    // tiene planes o si improvement_plans.js no esta cargado.
+    if (window.improvementPlans && typeof window.improvementPlans.renderMyPlanBannersForFile === "function") {
+      window.improvementPlans.renderMyPlanBannersForFile(pageFile);
+    }
   }
 
   window.initGuiaTemplateShell = initGuiaTemplateShell;

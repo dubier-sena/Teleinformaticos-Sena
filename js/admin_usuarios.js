@@ -77,6 +77,7 @@
     entregas: "Seguimiento de entregas",
     habilitacion: "Habilitacion de actividades",
     notas: "Calificaciones",
+    mejoramiento: "Planes de Mejoramiento",
     reportes: "Reportes",
     configuracion: "Configuracion",
   };
@@ -1815,6 +1816,9 @@
     if (moduleName === "habilitacion") {
       renderHabilitacionPanel();
     }
+    if (moduleName === "mejoramiento") {
+      renderImprovementPlans();
+    }
     if (moduleName === "configuracion") {
       renderAuditPanel();
     }
@@ -2395,6 +2399,26 @@
     renderAll();
   }
 
+  // Banco de respuestas modelo (SOLO admin). Se lee una vez de Firestore y se cachea.
+  // El aprendiz nunca lo recibe; al aprobar se le copia solo SU solucion (dentro de notas).
+  let _gradeSolutionsBank = null;
+  async function ensureGradeSolutionsBank(force) {
+    if (_gradeSolutionsBank && !force) return _gradeSolutionsBank;
+    const db = window._firebaseDb;
+    if (db && typeof db.cloudGetGradeSolutions === "function") {
+      try { _gradeSolutionsBank = await db.cloudGetGradeSolutions(); }
+      catch (_) { _gradeSolutionsBank = _gradeSolutionsBank || {}; }
+    } else {
+      _gradeSolutionsBank = _gradeSolutionsBank || {};
+    }
+    return _gradeSolutionsBank;
+  }
+
+  function lookupBankSolution(guideFamily, activityId) {
+    const fam = (_gradeSolutionsBank || {})[guideFamily];
+    return (fam && fam[activityId]) || null;
+  }
+
   function handleGradeChange(select) {
     const usernameKey = select.dataset.gradeUser || select.dataset.user || "";
     const guideFamily = select.dataset.gradeFamily || "";
@@ -2402,11 +2426,39 @@
     const nextGrade = select.value || "";
     const gradesManager = window.activityGradesManager;
     if (!gradesManager || !usernameKey || !guideFamily || !activityId) return;
-    // Guardado instantaneo: localStorage + Firestore (sena_portal_grades, rule isAdmin).
-    gradesManager.setStudentActivityGrade(usernameKey, guideFamily, activityId, nextGrade);
+    // Al APROBAR (A) se embebe la solucion del banco dentro de las notas del aprendiz, en
+    // una sola escritura (rule isAdmin). El aprendiz solo lee su doc -> ve solo SU solucion.
+    const solution = nextGrade === "A" ? lookupBankSolution(guideFamily, activityId) : null;
+    gradesManager.setStudentActivityGradeAndSolution(usernameKey, guideFamily, activityId, nextGrade, solution);
     select.dataset.previousGrade = nextGrade;
+    refreshApprovalCell(select);   // avance de evaluacion instantaneo en la grilla
+
     recordAdminAuditAction({ action: "grade-change", target: `${usernameKey}:${guideFamily}:${activityId}`, detail: nextGrade || "sin nota" });
-    setFeedback("Calificacion guardada.", "success");
+    setFeedback("Calificacion guardada." + (nextGrade === "A" && solution ? " Solucion aplicada." : ""), "success");
+  }
+
+  // Importa el banco-semilla (grade_solutions_bank.json) a Firestore (solo admin).
+  async function handleGradeBankImport() {
+    const fileInput = byId("grades-bank-file");
+    const statusEl = byId("grades-bank-status");
+    const file = fileInput && fileInput.files && fileInput.files[0];
+    const setStatus = (msg) => { if (statusEl) statusEl.textContent = msg; };
+    if (!file) { setStatus("Elige el archivo grade_solutions_bank.json primero."); return; }
+    const db = window._firebaseDb;
+    if (!db || typeof db.cloudSaveGradeSolutions !== "function") { setStatus("Firestore no disponible."); return; }
+    try {
+      const text = await file.text();
+      const bank = JSON.parse(text);
+      if (!bank || typeof bank !== "object") throw new Error("formato invalido");
+      await db.cloudSaveGradeSolutions(bank);
+      await ensureGradeSolutionsBank(true);
+      const count = Object.values(bank).reduce((n, fam) =>
+        n + Object.values(fam || {}).reduce((m, act) => m + Object.keys(act || {}).length, 0), 0);
+      setStatus(`Banco guardado en la nube: ${count} respuestas.`);
+      recordAdminAuditAction({ action: "grade-bank-import", target: "bank", detail: String(count) });
+    } catch (e) {
+      setStatus("Error al importar: " + (e && e.message ? e.message : e));
+    }
   }
 
   function patchGuideState(usernameKey, guideFamily, patch) {
@@ -2423,6 +2475,22 @@
   // la suya. Reemplaza la importacion por Excel.
   function getGradeCatalog() {
     return (window.activityGradesManager && window.activityGradesManager.GRADE_CATALOG) || {};
+  }
+
+  // Avance de evaluacion (instantaneo) por aprendiz que se muestra en la grilla de notas.
+  function approvalCellText(approved, total) {
+    const pct = total ? Math.round((approved / total) * 100) : 0;
+    return `${approved}/${total} (${pct}%)`;
+  }
+
+  // Recalcula la celda "Aprobadas" de una fila al instante, contando las notas A actuales.
+  function refreshApprovalCell(select) {
+    const row = select.closest("tr[data-grade-row]");
+    if (!row) return;
+    const selects = row.querySelectorAll("select.grade-select");
+    const approved = Array.from(selects).filter((s) => s.value === "A").length;
+    const cell = row.querySelector(".grades-approved-cell");
+    if (cell) cell.textContent = approvalCellText(approved, selects.length);
   }
 
   function gradeSelectMarkup(usernameKey, guideFamily, activityId, current) {
@@ -2446,14 +2514,23 @@
     host.innerHTML = `
       <div class="admin-section-head">
         <h2>Calificaciones</h2>
-        <p class="admin-muted">Elige ficha y guia, y marca Aprobado / No aprobado por actividad. Se guarda al instante; cada aprendiz ve solo la suya.</p>
+        <p class="admin-muted">Elige ficha y guia, y marca Aprobado / No aprobado por actividad. Se guarda al instante; cada aprendiz ve solo la suya. Al aprobar una actividad vacia, se le copia la solucion del banco.</p>
       </div>
+      <details class="grades-bank-import">
+        <summary>Banco de respuestas (sincronizar a la nube)</summary>
+        <p class="admin-muted">Sube <code>grade_solutions_bank.json</code> para guardar el banco en Firestore (solo el admin lo puede leer). El aprendiz nunca ve el banco; al aprobar se le copia unicamente la respuesta de su actividad.</p>
+        <input type="file" id="grades-bank-file" accept=".json">
+        <button type="button" id="grades-bank-import-btn" class="btn secondary">Importar a la nube</button>
+        <span id="grades-bank-status" class="admin-muted"></span>
+      </details>
       <div class="grades-manual__filters">
         <select id="grades-ficha-filter">${getFichaOptions("", false)}</select>
         <select id="grades-guide-filter"><option value="">Selecciona guia</option>${guideOptions}</select>
       </div>
       <div id="grades-grid" class="grades-grid"></div>
     `;
+    ensureGradeSolutionsBank();   // precarga el banco para aplicar soluciones al aprobar
+    byId("grades-bank-import-btn")?.addEventListener("click", handleGradeBankImport);
   }
 
   async function renderGradesGrid() {
@@ -2489,15 +2566,270 @@
       }
       gradesByUser[user.usernameKey] = g;
     }));
-    const head = "<th>Aprendiz</th>" + activities.map((a) => `<th>${escapeHtml(a.label)}</th>`).join("");
+    const head = "<th>Aprendiz</th>" + activities.map((a) => `<th>${escapeHtml(a.label)}</th>`).join("") + "<th>Aprobadas</th>";
     const rows = students.map((user) => {
       const g = gradesByUser[user.usernameKey] || {};
       const cells = activities.map((a) =>
         `<td>${gradeSelectMarkup(user.usernameKey, guideFamily, a.id, g[a.id])}</td>`
       ).join("");
-      return `<tr><td>${escapeHtml(user.fullName)}</td>${cells}</tr>`;
+      const approved = activities.filter((a) => g[a.id] === "A").length;
+      return `<tr data-grade-row="${escapeHtml(user.usernameKey)}"><td>${escapeHtml(user.fullName)}</td>${cells}`
+        + `<td class="grades-approved-cell">${approvalCellText(approved, activities.length)}</td></tr>`;
     }).join("");
     grid.innerHTML = `<table class="admin-data-table grades-table"><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table>`;
+  }
+
+  // ── Planes de Mejoramiento (pestaña aparte) ─────────────────────────────────
+  let _plansByUser = {};   // { usernameKey: { user, plans } } de la ficha mostrada
+
+  function renderImprovementPlans() {
+    const host = byId("module-mejoramiento");
+    if (!host) return;
+    const catalog = getGradeCatalog();
+    const guideOptions = Object.keys(catalog).map((fam) =>
+      `<option value="${escapeHtml(fam)}">${escapeHtml(catalog[fam].label || fam)}</option>`).join("");
+    const defMotivo = (window.improvementPlans && window.improvementPlans.DEFAULT_MOTIVO) || "";
+    host.innerHTML = `
+      <div class="admin-section-head">
+        <h2>Planes de Mejoramiento</h2>
+        <p class="admin-muted">Asigna un trabajo de recuperacion a un aprendiz que no entrego a tiempo: re-habilita la actividad con un motivo y una fecha limite. Queda registrado como evidencia (exportable a Word).</p>
+      </div>
+      <details class="mejora-nuevo">
+        <summary>Asignar nuevo plan de mejoramiento</summary>
+        <div class="mejora-form">
+          <label>Ficha <select id="mejora-ficha">${getFichaOptions("", false)}</select></label>
+          <label>Aprendiz <select id="mejora-aprendiz"></select></label>
+          <label>Guia <select id="mejora-guia"><option value="">Selecciona</option>${guideOptions}</select></label>
+          <label>Actividad <select id="mejora-actividad"><option value="">Selecciona la guia primero</option></select></label>
+          <label>Actividad de recuperacion <small>(qué debe realizar; se prellena al elegir la actividad y la puedes ajustar)</small>
+            <textarea id="mejora-descripcion" rows="3" placeholder="Tarea de recuperacion basada en la actividad de la guia."></textarea></label>
+          <label>Motivo <textarea id="mejora-motivo" rows="2">${escapeHtml(defMotivo)}</textarea></label>
+          <label>Fecha limite del plan <small>(independiente de la fecha de entrega de la guia)</small> <input type="date" id="mejora-fecha"></label>
+          <button type="button" id="mejora-asignar" class="btn primary">Asignar plan</button>
+          <span id="mejora-status" class="admin-muted"></span>
+        </div>
+      </details>
+      <div class="mejora-filtros">
+        <select id="mejora-filtro-ficha">${getFichaOptions("", false)}</select>
+        <select id="mejora-filtro-estado">
+          <option value="">Todos los estados</option>
+          <option value="asignado">Asignado</option>
+          <option value="entregado">Entregado</option>
+          <option value="superado">Superado</option>
+          <option value="no_superado">No superado</option>
+          <option value="vencido">Vencido</option>
+        </select>
+      </div>
+      <div id="mejora-grid" class="mejora-grid"></div>
+    `;
+    populatePlanLearners();
+    byId("mejora-ficha")?.addEventListener("change", populatePlanLearners);
+    byId("mejora-guia")?.addEventListener("change", populatePlanActivities);
+    byId("mejora-actividad")?.addEventListener("change", fillPlanDescription);
+    byId("mejora-asignar")?.addEventListener("click", handleAssignPlan);
+    byId("mejora-filtro-ficha")?.addEventListener("change", renderPlansGrid);
+    byId("mejora-filtro-estado")?.addEventListener("change", renderPlansGrid);
+    byId("mejora-grid")?.addEventListener("click", handlePlanGridClick);
+    renderPlansGrid();
+  }
+
+  function populatePlanLearners() {
+    const ficha = byId("mejora-ficha")?.value || "";
+    const sel = byId("mejora-aprendiz");
+    if (!sel) return;
+    sel.innerHTML = getUsersForFicha(ficha)
+      .map((u) => `<option value="${escapeHtml(u.usernameKey)}">${escapeHtml(u.fullName)}</option>`).join("");
+  }
+
+  function populatePlanActivities() {
+    const fam = byId("mejora-guia")?.value || "";
+    const sel = byId("mejora-actividad");
+    if (!sel) return;
+    // Las actividades del plan deben ir ACORDE a las actividades planteadas en la guia:
+    // se listan las reales de la guia (ActivityStandard), no solo las evaluables.
+    let acts = [];
+    const AS = window.ActivityStandard;
+    const map = (window.activityGradesManager && window.activityGradesManager.GUIDE_FAMILY_BY_FILE) || {};
+    const file = Object.keys(map).find((f) => map[f] === fam);
+    if (file && AS && typeof AS.getActivitiesForGuide === "function") {
+      acts = (AS.getActivitiesForGuide(file) || []).map((a) => ({ id: a.id, label: a.label }));
+    }
+    if (!acts.length) {
+      acts = ((getGradeCatalog()[fam] && getGradeCatalog()[fam].activities) || []).map((a) => ({ id: a.id, label: a.label }));
+    }
+    sel.innerHTML = acts.length
+      ? acts.map((a) => `<option value="${escapeHtml(a.id)}" data-label="${escapeHtml(a.label)}">${escapeHtml(a.label)}</option>`).join("")
+      : '<option value="">(sin actividades)</option>';
+    fillPlanDescription();
+  }
+
+  // Pre-rellena la actividad de recuperacion. Funciona para TODAS las guias (actuales y
+  // futuras): usa el banco redactado si existe; si no, genera una tarea por defecto basada
+  // en la actividad. El instructor siempre la puede ajustar.
+  function fillPlanDescription() {
+    const fam = byId("mejora-guia")?.value || "";
+    const actSel = byId("mejora-actividad");
+    const activityId = actSel?.value || "";
+    const activityLabel = actSel?.selectedOptions?.[0]?.dataset.label || "";
+    const ta = byId("mejora-descripcion");
+    if (!ta) return;
+    const bank = (window.improvementActivitiesBank || {})[fam] || {};
+    ta.value = bank[activityId] || defaultRemedialTask(activityLabel);
+  }
+
+  // Tarea de recuperacion por defecto, derivada de la actividad (cubre guias futuras).
+  function defaultRemedialTask(label) {
+    const a = String(label || "").trim();
+    if (!a) return "";
+    return 'Vuelve a realizar la actividad "' + a + '": desarróllala nuevamente sobre el '
+      + "mismo caso y con el mismo programa de la guía, corrige lo que faltó y entrega la "
+      + "evidencia completa.";
+  }
+
+  function handleAssignPlan() {
+    const mgr = window.improvementPlans;
+    const usernameKey = byId("mejora-aprendiz")?.value || "";
+    const family = byId("mejora-guia")?.value || "";
+    const actSel = byId("mejora-actividad");
+    const activityId = actSel?.value || "";
+    const activityLabel = actSel?.selectedOptions?.[0]?.dataset.label || "";
+    const descripcion = byId("mejora-descripcion")?.value || "";
+    const motivo = byId("mejora-motivo")?.value || "";
+    const fechaLimite = byId("mejora-fecha")?.value || "";
+    const setStatus = (m) => { const el = byId("mejora-status"); if (el) el.textContent = m; };
+    if (!mgr || !usernameKey || !family || !activityId) { setStatus("Completa ficha, aprendiz, guia y actividad."); return; }
+    if (!fechaLimite) { setStatus("Indica la fecha limite."); return; }
+    const session = window.portalAuth?.getSession?.();
+    mgr.createPlan(usernameKey, { family, activityId, activityLabel, descripcion, motivo, fechaLimite, asignadoPor: (session && session.usernameKey) || "admin" });
+    recordAdminAuditAction({ action: "mejoramiento-asignar", target: `${usernameKey}:${family}:${activityId}`, detail: fechaLimite });
+    setStatus("Plan asignado.");
+    renderPlansGrid();
+  }
+
+  async function renderPlansGrid() {
+    const grid = byId("mejora-grid");
+    if (!grid) return;
+    const ficha = byId("mejora-filtro-ficha")?.value || "";
+    const estado = byId("mejora-filtro-estado")?.value || "";
+    const mgr = window.improvementPlans;
+    if (!ficha || !mgr) { grid.innerHTML = '<p class="admin-muted">Selecciona una ficha.</p>'; return; }
+    grid.innerHTML = '<p class="response-status">Cargando planes desde la nube...</p>';
+    const users = getUsersForFicha(ficha);
+    _plansByUser = {};
+    await Promise.all(users.map(async (u) => {
+      let plans = [];
+      try { plans = await mgr.syncStudentPlansFromCloud(u.usernameKey); }
+      catch (_) { plans = mgr.getStudentPlans(u.usernameKey); }
+      _plansByUser[u.usernameKey] = { user: u, plans: plans || [] };
+    }));
+    const now = Date.now();
+    const rows = [];
+    users.forEach((u) => {
+      (_plansByUser[u.usernameKey]?.plans || []).forEach((p) => {
+        const st = mgr.derivePlanStatus(p, now);
+        if (estado && st !== estado) return;
+        rows.push(planRowMarkup(u, p, st));
+      });
+    });
+    grid.innerHTML = rows.length
+      ? `<table class="admin-data-table mejora-table"><thead><tr><th>Aprendiz</th><th>Actividad</th><th>Motivo</th><th>Asignado</th><th>Fecha limite</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>${rows.join("")}</tbody></table>`
+      : '<p class="admin-muted">No hay planes para esta ficha/estado.</p>';
+  }
+
+  function planRowMarkup(user, plan, status) {
+    const label = (window.improvementPlans?.STATUS_LABELS || {})[status] || status;
+    return `<tr data-plan-id="${escapeHtml(plan.id)}" data-plan-user="${escapeHtml(user.usernameKey)}">
+      <td>${escapeHtml(user.fullName)}</td>
+      <td>${escapeHtml(plan.activityLabel || plan.activityId)}</td>
+      <td>${escapeHtml(plan.motivo)}</td>
+      <td>${escapeHtml(formatDate(plan.fechaAsignacion))}</td>
+      <td>${escapeHtml(plan.fechaLimite || "—")}</td>
+      <td><span class="mejora-estado mejora-estado--${escapeHtml(status)}">${escapeHtml(label)}</span></td>
+      <td>
+        <button type="button" class="btn small" data-plan-action="entregada">Entregada</button>
+        <button type="button" class="btn small" data-plan-action="superado">&#10003; Superado</button>
+        <button type="button" class="btn small" data-plan-action="nosuperado">&#10007; No superado</button>
+        <button type="button" class="btn small" data-plan-action="fecha">Cambiar fecha</button>
+        <button type="button" class="btn small" data-plan-action="word">Word</button>
+        <button type="button" class="btn small danger" data-plan-action="eliminar">Eliminar</button>
+      </td>
+    </tr>`;
+  }
+
+  function handlePlanGridClick(event) {
+    const btn = event.target.closest("[data-plan-action]");
+    if (!btn) return;
+    const row = btn.closest("tr[data-plan-id]");
+    if (!row) return;
+    const usernameKey = row.dataset.planUser;
+    const planId = row.dataset.planId;
+    const action = btn.dataset.planAction;
+    const mgr = window.improvementPlans;
+    const entry = _plansByUser[usernameKey];
+    const plan = entry && entry.plans.find((p) => p.id === planId);
+    if (!mgr || !plan) return;
+    if (action === "fecha") {
+      const nueva = window.prompt("Nueva fecha limite (AAAA-MM-DD):", plan.fechaLimite || "");
+      if (nueva == null) return;
+      mgr.updatePlanDeadline(usernameKey, planId, String(nueva).trim());
+      recordAdminAuditAction({ action: "mejoramiento-fecha", target: `${usernameKey}:${planId}`, detail: String(nueva).trim() });
+      renderPlansGrid();
+    } else if (action === "word") {
+      exportPlanWord(entry.user, plan);
+    } else if (action === "entregada") {
+      mgr.markPlanDelivered(usernameKey, planId);   // registra la fecha de entrega (Word)
+      recordAdminAuditAction({ action: "mejoramiento-entregada", target: `${usernameKey}:${planId}`, detail: plan.activityId });
+      renderPlansGrid();
+    } else if (action === "superado" || action === "nosuperado") {
+      mgr.setPlanResult(usernameKey, planId, action === "superado" ? "A" : "D");
+      recordAdminAuditAction({ action: "mejoramiento-resultado", target: `${usernameKey}:${planId}`, detail: action === "superado" ? "A" : "D" });
+      renderPlansGrid();
+    } else if (action === "eliminar") {
+      confirmAdminAction("Eliminar este plan de mejoramiento?").then((ok) => {
+        if (!ok) return;
+        mgr.deletePlan(usernameKey, planId);
+        recordAdminAuditAction({ action: "mejoramiento-eliminar", target: `${usernameKey}:${planId}`, detail: plan.activityId });
+        renderPlansGrid();
+      });
+    }
+  }
+
+  // Exporta el plan a Word con encabezado institucional SENA + Motivo y las dos fechas.
+  function exportPlanWord(user, plan) {
+    const AS = window.ActivityStandard;
+    if (!AS || typeof AS.buildWordDocument !== "function") { setFeedback("Export Word no disponible.", "error"); return; }
+    let meta = {};
+    try {
+      const map = (window.activityGradesManager && window.activityGradesManager.GUIDE_FAMILY_BY_FILE) || {};
+      const file = Object.keys(map).find((f) => map[f] === plan.family);
+      if (file && typeof AS.getConfigForGuide === "function") meta = AS.getConfigForGuide(file) || {};
+    } catch (_) {}
+    const catalog = getGradeCatalog();
+    const entregaTxt = plan.entrega && plan.entrega.entregadoEn ? formatDate(plan.entrega.entregadoEn) : "Pendiente";
+    const html = AS.buildWordDocument({
+      title: "Plan de Mejoramiento - " + (plan.activityLabel || plan.activityId),
+      learnerName: user.fullName || "",
+      ficha: user.ficha || "",
+      grupo: user.grupo || meta.grupo || "",
+      inst: user.institucion || user.inst || meta.inst || "",
+      fecha: formatDate(new Date().toISOString()),
+      program: meta.program || "",
+      competencia: meta.competencia || "",
+      resultado: meta.resultado || "",
+      guideTitle: meta.guideTitle || (catalog[plan.family] && catalog[plan.family].label) || "",
+      extraHeaderRows: [
+        { label: "Motivo del plan", value: plan.motivo || "" },
+        { label: "Fecha limite programada", value: plan.fechaLimite || "" },
+        { label: "Fecha de entrega", value: entregaTxt },
+      ],
+      sections: [
+        { label: "Actividad a recuperar", value: plan.activityLabel || plan.activityId },
+        { label: "Actividad de recuperacion (que debe realizar)", value: plan.descripcion || "" },
+        { label: "Motivo", value: plan.motivo || "" },
+      ],
+    });
+    AS.downloadWordDoc(html, "PlanMejoramiento_" + String(user.fullName || "Aprendiz").replace(/\s+/g, "") + ".doc");
+    recordAdminAuditAction({ action: "mejoramiento-word", target: `${user.usernameKey}:${plan.id}`, detail: plan.activityId });
   }
 
   function renderUsers() {

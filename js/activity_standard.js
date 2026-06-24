@@ -523,6 +523,10 @@
       '<tr><td class="label">Número de ficha</td><td>' + escWord(opts.ficha) + "</td></tr>",
       '<tr><td class="label">Grado</td><td>' + escWord(opts.grupo) + "</td></tr>",
       '<tr><td class="label">Institución</td><td>' + escWord(opts.inst) + "</td></tr>",
+      // Filas extra opcionales (p. ej. el Plan de Mejoramiento añade Motivo + fechas).
+      (Array.isArray(opts.extraHeaderRows) ? opts.extraHeaderRows.map(function (r) {
+        return '<tr><td class="label">' + escWord(r.label) + "</td><td>" + escWord(r.value) + "</td></tr>";
+      }).join("") : ""),
       "</table>",
     ].join("\n");
   }
