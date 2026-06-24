@@ -435,16 +435,16 @@ a {
   z-index: 30;
   height: auto;
   flex-direction: row;
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
   width: min(1280px, calc(100% - 32px));
   margin: 14px auto 0;
-  padding: 8px 10px;
+  padding: 8px 12px;
   border: 1px solid var(--admin-line);
-  border-radius: 999px;
+  border-radius: 18px;
   background: var(--admin-surface, #fff);
   box-shadow: var(--admin-shadow);
-  overflow-x: auto;
 }
 
 /* La marca se oculta: la barra superior global ya identifica el portal. */
