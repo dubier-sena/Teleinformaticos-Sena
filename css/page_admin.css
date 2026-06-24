@@ -1064,3 +1064,15 @@ progress::-moz-progress-bar {
     width: 100%;
   }
 }
+
+/* ── Planes de Mejoramiento ── */
+.mejora-form { display: grid; gap: 8px; max-width: 540px; margin-top: 8px; }
+.mejora-form label { display: flex; flex-direction: column; gap: 4px; font-weight: 600; font-size: 13px; }
+.mejora-filtros { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
+.mejora-estado { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+.mejora-estado--asignado { background: #e0f2fe; color: #075985; }
+.mejora-estado--entregado { background: #dcfce7; color: #166534; }
+.mejora-estado--superado { background: #bbf7d0; color: #14532d; }
+.mejora-estado--no_superado { background: #fee2e2; color: #991b1b; }
+.mejora-estado--vencido { background: #fef3c7; color: #92400e; }
+.mejora-table .btn.small { margin: 1px; }

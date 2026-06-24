@@ -4035,6 +4035,7 @@ body.sb-hidden .btn-sb-expand {
   background: #dcfce7;
   border-color: #86efac;
   color: #166534;
+  font-size: 14px;
 }
 .activity-grade-badge--desaprobado {
   background: #fee2e2;
@@ -4048,6 +4049,26 @@ body.sb-hidden .btn-sb-expand {
 }
 .grade-badge-icon { font-size: 15px; flex-shrink: 0; }
 .grade-badge-text strong { font-weight: 700; }
+
+/* ── Banner de Plan de Mejoramiento (lo ve el aprendiz en la actividad) ── */
+.plan-mejora-banner {
+  border: 2px solid #f59e0b;
+  background: #fffbeb;
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin: 8px 0;
+}
+.plan-mejora-banner__title { font-weight: 800; color: #92400e; margin-bottom: 4px; }
+.plan-mejora-banner__body { font-size: 14px; color: #78350f; line-height: 1.4; }
+.plan-mejora-banner__tarea { margin-top: 6px; font-weight: 600; }
+.plan-mejora-banner__motivo { margin-top: 4px; font-size: 13px; opacity: 0.85; }
+.plan-mejora-banner__fecha { margin-top: 4px; }
+.plan-mejora-banner__btn { margin-top: 10px; }
+.plan-mejora-banner__cerrado { margin-top: 8px; font-size: 13px; color: #991b1b; font-weight: 600; }
+.plan-mejora-banner--vencido { border-color: #ef4444; background: #fef2f2; }
+.plan-mejora-banner--vencido .plan-mejora-banner__title { color: #991b1b; }
+.plan-mejora-banner--superado { border-color: #22c55e; background: #f0fdf4; }
+.plan-mejora-banner--superado .plan-mejora-banner__title { color: #166534; }
 
 /* ── Bloques de codigo Python (guia practica de Python) ──────────────────── */
 .py-code {

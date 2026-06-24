@@ -603,11 +603,21 @@ const INDUCCION_GRADE_ACTIVITIES = [
   { activityId: "reglamento333", mountSelector: "#reglamento333GradeMount" },
 ];
 
-function renderInduccionGradeBadges() {
-  window.activityGradesManager?.renderGradeBadges({
+async function renderInduccionGradeBadges() {
+  const mgr = window.activityGradesManager;
+  if (!mgr) return;
+  await mgr.renderGradeBadges({
     guideFamily: "guia-01-induccion",
     activities: INDUCCION_GRADE_ACTIVITIES,
   });
+  // Rellena con el banco las actividades aprobadas que el aprendiz dejó vacías.
+  if (typeof mgr.applyApprovedSolutionsForFamily === "function") {
+    mgr.applyApprovedSolutionsForFamily("guia-01-induccion");
+  }
+  // Banners de Plan de Mejoramiento (si el instructor le asignó alguno en esta guía).
+  if (window.improvementPlans && typeof window.improvementPlans.renderMyPlanBannersForFile === "function") {
+    window.improvementPlans.renderMyPlanBannersForFile(window.location.pathname.split("/").pop() || "");
+  }
 }
 
 function updateProgress() {

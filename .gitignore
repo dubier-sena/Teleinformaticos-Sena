@@ -36,3 +36,7 @@ tools/publicar_github_pages.md
 # Notas de aprendices (PII): migradas a Firestore (sena_portal_grades).
 # Copia local conservada como respaldo; NUNCA debe volver al repo publico.
 data/grades_induccion.js
+
+# Banco de respuestas modelo (clave de respuestas). NUNCA debe ser publico.
+# Semilla que el admin importa a Firestore (sena_portal_grade_solutions, solo admin).
+grade_solutions_bank.json

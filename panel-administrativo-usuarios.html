@@ -16,22 +16,24 @@
 <link rel="stylesheet" href="css/site_tokens.css?v=20260617_1">
 <link rel="stylesheet" href="css/components.css?v=20260617_1">
 <link rel="stylesheet" href="css/shared_shell.css?v=20260617_1">
-<link rel="stylesheet" href="css/page_admin.css?v=20260621_1">
+<link rel="stylesheet" href="css/page_admin.css?v=20260624_1">
 <script src="js/shared_utils.js?v=20260615_2"></script>
 <script src="js/portal_auth.js?v=20260611_3"></script>
 <script src="js/firebase-config.js?v=20260527_3"></script>
 <script defer src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
 <script defer src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
 <script src="js/firebase_auth_bridge.js?v=20260618_1"></script>
-<script src="js/firebase_db.js?v=20260620_1"></script>
+<script src="js/firebase_db.js?v=20260624_1"></script>
 <script src="js/project_integrations.js?v=20260619_2"></script>
 <script src="js/drive_db.js?v=20260526_2"></script>
 <script defer src="js/firebase_status_banner.js?v=20260527_2"></script>
 <script defer src="js/save_status.js?v=20260516_1"></script>
-<script src="js/activity_standard.js?v=20260611_18"></script>
+<script src="js/activity_standard.js?v=20260624_1"></script>
 <script src="js/guide_declarations.js?v=20260611_18"></script>
 <script src="js/activity_deadlines.js?v=20260615_1"></script>
-<script src="js/activity_grades.js?v=20260620_1"></script>
+<script src="js/activity_grades.js?v=20260624_1"></script>
+<script src="js/improvement_plans.js?v=20260624_1"></script>
+<script src="js/improvement_activities_bank.js?v=20260624_1"></script>
 <script defer src="js/shared_shell.js?v=20260617_1"></script>
 <script>
 if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "index.html" })) {
@@ -61,6 +63,7 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
         <button class="admin-nav__item" type="button" data-admin-module="entregas">Entregas</button>
         <button class="admin-nav__item" type="button" data-admin-module="habilitacion">Habilitar actividades</button>
         <button class="admin-nav__item" type="button" data-admin-module="notas">Calificaciones</button>
+        <button class="admin-nav__item" type="button" data-admin-module="mejoramiento">Planes de Mejoramiento</button>
         <button class="admin-nav__item" type="button" data-admin-module="reportes">Reportes</button>
         <button class="admin-nav__item" type="button" data-admin-module="configuracion">Configuracion</button>
         <button class="admin-nav__item" type="button" data-tab="auditoria" data-admin-module="configuracion">Auditoria</button>
@@ -288,6 +291,8 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
 
       <section class="admin-module" id="module-notas" data-admin-panel="notas" hidden></section>
 
+      <section class="admin-module" id="module-mejoramiento" data-admin-panel="mejoramiento" hidden></section>
+
       <section class="admin-module" id="module-reportes" data-admin-panel="reportes" hidden>
         <div class="admin-grid admin-grid--two">
           <article class="admin-panel">
@@ -383,6 +388,6 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
   <script src="js/admin_guide6.js?v=20260615_1"></script>
   <script src="js/admin_progress.js?v=20260615_1"></script>
   <script src="js/admin_habilitacion.js?v=20260617_1"></script>
-  <script src="js/admin_usuarios.js?v=20260621_1"></script>
+  <script src="js/admin_usuarios.js?v=20260624_1"></script>
 </body>
 </html>

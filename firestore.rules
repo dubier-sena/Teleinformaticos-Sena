@@ -132,6 +132,29 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // ───── Banco de respuestas modelo (SOLO admin) ─────────────────────────
+    // El banco MAESTRO de soluciones por actividad NUNCA debe llegar al cliente
+    // del aprendiz. Solo el admin lo lee/escribe. Al APROBAR, el admin copia la
+    // solucion puntual dentro del doc de notas del aprendiz (sena_portal_grades),
+    // que el aprendiz si puede leer (solo la suya). Asi el aprendiz ve unicamente
+    // la respuesta de su propia actividad aprobada, jamas el banco completo.
+    // Doc unico "bank": { solutions: { guideFamily: { actId: { "<data-store>": "texto" } } }, updatedAt }
+    match /sena_portal_grade_solutions/{docId} {
+      allow read, write: if isAdmin();
+    }
+
+    // ───── Planes de mejoramiento (remediacion por aprendiz) ───────────────
+    // El instructor (admin) asigna un plan a un aprendiz que no entrego a tiempo:
+    // re-habilita la actividad con motivo + nueva fecha, y queda como evidencia.
+    // El admin escribe; el aprendiz LEE solo el suyo (mismo patron que las notas).
+    // Doc: { usernameKey, plans: [ { id, family, guideFile, activityId, motivo,
+    //   fechaAsignacion, fechaLimite, historialFechas, asignadoPor, estado,
+    //   entrega, resultado, resultadoEn } ], updatedAt }
+    match /sena_portal_improvement_plans/{usernameKey} {
+      allow read:  if isAdmin() || isOwnerByUsernameKey(usernameKey);
+      allow write: if isAdmin();
+    }
+
     // ───── Estado de guias (un doc por aprendiz x guia) ────────────────────
     // El doc debe contener un campo "usernameKey" para validar pertenencia.
     match /sena_portal_guide_state/{docId} {

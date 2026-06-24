@@ -50,9 +50,11 @@
     "guia-05-herramientas": {
       label: "Guía 5 — Herramientas (11°)",
       activities: [
-        { id: "guia5-311", label: "3.1.1 Bitácora de análisis" },
-        { id: "guia5-331", label: "3.3.1 Evidencias de herramientas" },
-        { id: "guia5-341", label: "3.4.1 Informe final integrador" },
+        // El DOM usa ids sin guion (guia5311…); el catálogo conserva el id con guion
+        // para no perder notas ya guardadas, y fija el mount explícito.
+        { id: "guia5-311", label: "3.1.1 Bitácora de análisis", mount: "#guia5311DeadlineControls" },
+        { id: "guia5-331", label: "3.3.1 Evidencias de herramientas", mount: "#guia5331DeadlineControls" },
+        { id: "guia5-341", label: "3.4.1 Informe final integrador", mount: "#guia5341DeadlineControls" },
       ],
     },
     "guia-06-planificar": {
@@ -146,6 +148,30 @@
     saveGradesToCloud(usernameKey, all);
   }
 
+  // Admin: fija la nota Y embebe (o limpia) la solucion modelo dentro del doc de notas
+  // del aprendiz, en UNA sola escritura. La solucion solo se embebe cuando la nota es "A".
+  // El aprendiz solo lee su propio doc, asi ve unicamente la solucion de SU actividad
+  // aprobada; el banco maestro nunca llega a su cliente.
+  function setStudentActivityGradeAndSolution(usernameKey, guideFamily, activityId, grade, solutionObj) {
+    var key = getGradesKey(usernameKey);
+    if (!key) return;
+    var all = readJson(localStorage.getItem(key), {});
+    if (!all[guideFamily]) all[guideFamily] = {};
+    var solKey = activityId + ":solution";
+    if (grade === "" || grade === null || grade === undefined) {
+      delete all[guideFamily][activityId];
+    } else {
+      all[guideFamily][activityId] = grade;
+    }
+    if (grade === "A" && solutionObj && typeof solutionObj === "object" && Object.keys(solutionObj).length) {
+      all[guideFamily][solKey] = solutionObj;
+    } else {
+      delete all[guideFamily][solKey];   // sin "A" => sin solucion embebida
+    }
+    localStorage.setItem(key, JSON.stringify(all));
+    saveGradesToCloud(usernameKey, all);
+  }
+
   function setStudentActivityObservation(usernameKey, guideFamily, activityId, obs) {
     var key = getGradesKey(usernameKey);
     if (!key) return;
@@ -171,9 +197,55 @@
   // ── Lectura para el aprendiz activo ─────────────────────────────────────────
   function getMyGrades(guideFamily) {
     var auth = window.portalAuth;
-    var session = auth && auth.getSession ? auth.getSession() : null;
+    var session = auth && auth.getCurrentSession ? auth.getCurrentSession() : null;
     if (!session || session.role !== "student" || !session.usernameKey) return {};
     return getStudentGrades(session.usernameKey, guideFamily);
+  }
+
+  // ── Punto de montaje del badge ──────────────────────────────────────────────
+  // Resuelve dónde colocar el badge probando convenciones de id hasta hallar un
+  // elemento existente. El badge se inserta como hermano ANTERIOR del contenedor,
+  // así queda visible aunque el contenedor (p. ej. un *Status) esté display:none.
+  function resolveGradeMount(activityId, explicitSelector) {
+    var selectors = [];
+    if (explicitSelector) selectors.push(explicitSelector);
+    selectors.push(
+      "#" + activityId + "GradeMount",
+      "#" + activityId + "DeadlineControls",
+      "#" + activityId + "DeliveryControls",
+      "#" + activityId + "Status",
+      '[data-act-grade="' + activityId + '"]'
+    );
+    for (var i = 0; i < selectors.length; i++) {
+      var el = null;
+      try { el = document.querySelector(selectors[i]); } catch (e) { el = null; }
+      if (el) return el;
+    }
+    return null;
+  }
+
+  // Construye el badge. Solo Aprobado (A) y No aprobado (D) — las únicas notas que
+  // registra el admin. Sin nota => devuelve null (no se muestra nada).
+  function buildGradeBadge(grade, activityId) {
+    var badgeClass, icon, html;
+    if (grade === "A") {
+      badgeClass = "activity-grade-badge activity-grade-badge--aprobado";
+      icon = "✅";
+      html = "<strong>¡Aprobado!</strong> Buen trabajo. 🎉";
+    } else if (grade === "D") {
+      badgeClass = "activity-grade-badge activity-grade-badge--desaprobado";
+      icon = "❌";
+      html = "<strong>No aprobado.</strong> Habla con tu instructor para reforzar esta actividad.";
+    } else {
+      return null;
+    }
+    var badge = document.createElement("div");
+    badge.className = badgeClass;
+    badge.setAttribute("data-grade-act", activityId);
+    badge.innerHTML =
+      '<span class="grade-badge-icon">' + icon + '</span>' +
+      '<span class="grade-badge-text">' + html + '</span>';
+    return badge;
   }
 
   // ── Renderizado de badges en la guía ────────────────────────────────────────
@@ -186,7 +258,7 @@
     var activities = Array.isArray(opts.activities) ? opts.activities : [];
 
     var auth = window.portalAuth;
-    var session = auth && auth.getSession ? auth.getSession() : null;
+    var session = auth && auth.getCurrentSession ? auth.getCurrentSession() : null;
     if (!session || session.role !== "student" || !session.usernameKey) return;
 
     // Cache local primero; luego Firestore (fuente de verdad escrita por el admin).
@@ -198,47 +270,105 @@
     }
 
     activities.forEach(function (cfg) {
-      var mountSelector = cfg.mountSelector;
-      if (!mountSelector) return;
-      var mount = document.querySelector(mountSelector);
-      if (!mount) return;
-      if (mount.querySelector(".activity-grade-badge")) return;
-
       var grade = grades[cfg.activityId];
-      var badgeClass, icon, text;
-      if (grade === "A") {
-        badgeClass = "activity-grade-badge activity-grade-badge--aprobado";
-        icon = "✅";
-        text = "Aprobado";
-      } else if (grade === "D") {
-        badgeClass = "activity-grade-badge activity-grade-badge--desaprobado";
-        icon = "❌";
-        text = "No aprobado";
-      } else if (grade === "P") {
-        badgeClass = "activity-grade-badge activity-grade-badge--pendiente";
-        icon = "⏳";
-        text = "Pendiente de evaluación";
-      } else {
-        badgeClass = "activity-grade-badge activity-grade-badge--sin-nota";
-        icon = "📋";
-        text = "Sin nota registrada";
-      }
+      // Solo notas reales (Aprobado / No aprobado). Sin nota => no se monta badge.
+      if (grade !== "A" && grade !== "D") return;
 
-      var badge = document.createElement("div");
-      badge.className = badgeClass;
-      badge.innerHTML =
-        '<span class="grade-badge-icon">' + icon + '</span>' +
-        '<span class="grade-badge-text"><strong>Nota:</strong> ' + text + '</span>';
-      mount.insertBefore(badge, mount.firstChild);
+      var mount = resolveGradeMount(cfg.activityId, cfg.mountSelector);
+      if (!mount || !mount.parentNode) return;
+
+      var parent = mount.parentNode;
+      // Evitar duplicados del mismo badge para esta actividad.
+      if (parent.querySelector('.activity-grade-badge[data-grade-act="' + cfg.activityId + '"]')) return;
+
+      var badge = buildGradeBadge(grade, cfg.activityId);
+      if (badge) parent.insertBefore(badge, mount);
     });
+  }
+
+  // ── Mapa archivo de guía → familia de calificaciones ────────────────────────
+  // Cada página de guía (cargada con guia_template.js) declara aquí su familia para
+  // que el badge se monte solo, sin tener que cablear cada guía a mano.
+  var GUIDE_FAMILY_BY_FILE = {
+    "grupo-10a-guia-01-induccion.html": "guia-01-induccion",
+    "grupo-10b-guia-01-induccion.html": "guia-01-induccion",
+    "grupo-10a-guia-02-herramientas-informaticas-digitales.html": "guia-02-herramientas",
+    "grupo-10b-guia-02-herramientas-informaticas-digitales.html": "guia-02-herramientas",
+    "grupo-11a-guia-05-herramientas-informaticas-digitales.html": "guia-05-herramientas",
+    "grupo-11b-guia-05-herramientas-informaticas-digitales.html": "guia-05-herramientas",
+    "grupo-11a-guia-06-planificar-informacion.html": "guia-06-planificar",
+    "grupo-11b-guia-06-planificar-informacion.html": "guia-06-planificar",
+    "santa-barbara-10a-guia-02-redes-rap01.html": "guia-redes-rap01",
+    "santa-barbara-10b-guia-02-redes-rap01.html": "guia-redes-rap01",
+    "santa-barbara-10a-guia-03-redes-rap02.html": "guia-redes-rap01",
+    "santa-barbara-10b-guia-03-redes-rap02.html": "guia-redes-rap01",
+  };
+
+  // ── Banco de respuestas: relleno de actividades aprobadas y vacías ──────────
+  // Cuando una actividad fue APROBADA (A) y el aprendiz dejó el/los campo(s) vacío(s),
+  // se rellenan con la solución que el admin EMBEBIÓ en las notas del aprendiz al aprobar
+  // ({actId}:solution dentro de sena_portal_grades). El banco maestro nunca llega al
+  // cliente: el aprendiz solo lee su propia nota, así ve únicamente SU solución.
+  // Si el aprendiz YA respondió, su respuesta se respeta (no se sobrescribe).
+  // El relleno dispara `input`/`change` para que la guía guarde y sincronice como siempre.
+  function applyApprovedSolutionsForFamily(family) {
+    var auth = window.portalAuth;
+    var session = auth && auth.getCurrentSession ? auth.getCurrentSession() : null;
+    if (!session || session.role !== "student" || !session.usernameKey) return false;
+
+    // Las soluciones llegan EMBEBIDAS en las notas del aprendiz ({actId}:solution), que el
+    // admin copia al aprobar. El banco maestro NUNCA se carga aqui: el aprendiz solo puede
+    // ver la respuesta de su propia actividad aprobada, jamas el banco completo.
+    var grades = getStudentGrades(session.usernameKey, family);
+    var filledAny = false;
+    Object.keys(grades).forEach(function (activityId) {
+      if (activityId.indexOf(":solution") !== -1) return;  // saltar las llaves de payload
+      if (grades[activityId] !== "A") return;              // solo actividades aprobadas
+      var fields = grades[activityId + ":solution"];
+      if (!fields || typeof fields !== "object") return;
+      Object.keys(fields).forEach(function (storeKey) {
+        var text = fields[storeKey];
+        if (text == null || String(text) === "") return;
+        var el = null;
+        try { el = document.querySelector('[data-store="' + String(storeKey).replace(/"/g, '\\"') + '"]'); }
+        catch (e) { el = null; }
+        if (!el) return;                               // campo no existe (p. ej. archivo o fila ausente)
+        var cur = (el.value != null ? String(el.value) : "").trim();
+        if (cur.length > 0) return;                    // respeta la respuesta del aprendiz
+        el.value = String(text);
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        el.dispatchEvent(new Event("change", { bubbles: true }));
+        filledAny = true;
+      });
+    });
+    return filledAny;
+  }
+
+  // Auto-render para guías basadas en guia_template.js. Lo invoca initGuiaTemplateShell
+  // después de inyectar el contenido. Resuelve el mount de cada actividad por convención,
+  // y rellena desde el banco las actividades aprobadas que quedaron vacías.
+  async function autoRenderForFile(pageFile) {
+    var family = GUIDE_FAMILY_BY_FILE[String(pageFile || "")];
+    if (!family) return;
+    var entry = GRADE_CATALOG[family];
+    if (!entry || !Array.isArray(entry.activities)) return;
+    var activities = entry.activities.map(function (a) {
+      return { activityId: a.id, mountSelector: a.mount || null };
+    });
+    await renderGradeBadges({ guideFamily: family, activities: activities });
+    applyApprovedSolutionsForFamily(family);
   }
 
   // ── API pública ──────────────────────────────────────────────────────────────
   window.activityGradesManager = {
     GRADE_CATALOG: GRADE_CATALOG,
+    GUIDE_FAMILY_BY_FILE: GUIDE_FAMILY_BY_FILE,
+    autoRenderForFile: autoRenderForFile,
+    applyApprovedSolutionsForFamily: applyApprovedSolutionsForFamily,
     getStudentGrades: getStudentGrades,
     setStudentGrades: setStudentGrades,
     setStudentActivityGrade: setStudentActivityGrade,
+    setStudentActivityGradeAndSolution: setStudentActivityGradeAndSolution,
     setStudentActivityObservation: setStudentActivityObservation,
     getStudentActivityObservation: getStudentActivityObservation,
     getMyGrades: getMyGrades,
