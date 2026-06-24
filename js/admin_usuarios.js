@@ -1807,6 +1807,12 @@
       const buttonTab = button.dataset.tab || "";
       button.classList.toggle("is-active", button.dataset.adminModule === moduleName && buttonTab === tab);
     });
+    // Menu "Mas": cerrarlo al elegir y resaltarlo si el modulo activo esta dentro.
+    const moreEl = byId("admin-nav-more");
+    if (moreEl) {
+      moreEl.classList.toggle("is-active", !!moreEl.querySelector(`[data-admin-module="${moduleName}"]`));
+      moreEl.open = false;
+    }
     document.querySelectorAll("[data-admin-panel]").forEach((panel) => {
       panel.hidden = panel.dataset.adminPanel !== moduleName;
       panel.classList.toggle("is-active", panel.dataset.adminPanel === moduleName);
