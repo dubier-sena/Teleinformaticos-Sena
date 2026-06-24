@@ -1,17 +1,21 @@
 :root {
-  --admin-bg: #f5f7f6;
+  --admin-bg: #eef2f0;
   --admin-surface: #ffffff;
-  --admin-surface-soft: #f8faf9;
-  --admin-line: #dce5df;
-  --admin-text: #17211b;
-  --admin-muted: #647067;
+  --admin-surface-soft: #f6f9f7;
+  --admin-line: #e3e9e5;
+  --admin-text: #16211b;
+  --admin-muted: #5c6a61;
   --admin-primary: var(--brand-700, #0a5c31);
   --admin-primary-2: var(--brand-600, #007934);
+  --admin-primary-soft: #e7f6ee;
   --admin-warn: #a33a24;
   --admin-danger: #b42318;
   --admin-info: #1f5f99;
-  --admin-radius: 14px;
-  --admin-shadow: 0 12px 30px rgba(7, 26, 18, 0.07);
+  --admin-radius: 16px;
+  --admin-radius-sm: 10px;
+  --admin-shadow: 0 1px 2px rgba(16, 40, 28, 0.05), 0 10px 28px rgba(16, 40, 28, 0.06);
+  --admin-shadow-sm: 0 1px 2px rgba(16, 40, 28, 0.06);
+  --admin-space: 8px;
 }
 
 * {
@@ -1068,6 +1072,120 @@ progress::-moz-progress-bar {
   .admin-form select {
     width: 100%;
   }
+}
+
+/* ═══════════════ Rediseño panel admin (2026) ═══════════════ */
+
+/* Barra superior */
+.admin-sidebar {
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid var(--admin-line);
+  border-radius: 16px;
+  box-shadow: var(--admin-shadow);
+}
+
+/* Items del nav: pill con estados claros */
+.admin-nav__item {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-weight: 600;
+  color: var(--admin-muted);
+  background: transparent;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.admin-nav__item:hover {
+  background: var(--admin-primary-soft);
+  color: var(--admin-primary);
+}
+.admin-nav__item.is-active,
+.admin-nav-more.is-active > .admin-nav-more__summary {
+  background: var(--admin-primary);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+/* Menú "Más" (details/summary nativo, sin JS para abrir) */
+.admin-nav-more { position: relative; flex: 0 0 auto; }
+.admin-nav-more__summary {
+  list-style: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+.admin-nav-more__summary::-webkit-details-marker { display: none; }
+.admin-nav-more__summary::after {
+  content: "";
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid currentColor;
+}
+.admin-nav-more[open] > .admin-nav-more__summary {
+  background: var(--admin-primary-soft);
+  color: var(--admin-primary);
+}
+.admin-nav-more__menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 230px;
+  padding: 8px;
+  border: 1px solid var(--admin-line);
+  border-radius: 14px;
+  background: var(--admin-surface);
+  box-shadow: var(--admin-shadow);
+}
+.admin-nav-more__menu .admin-nav__item {
+  width: 100%;
+  justify-content: flex-start;
+  text-align: left;
+}
+
+/* Tarjetas / paneles / KPIs */
+.admin-panel,
+.admin-card,
+.admin-kpi {
+  border: 1px solid var(--admin-line);
+  border-radius: var(--admin-radius);
+  background: var(--admin-surface);
+  box-shadow: var(--admin-shadow-sm);
+}
+
+/* Tablas */
+.admin-data-table {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--admin-line);
+}
+.admin-data-table thead th {
+  background: var(--admin-surface-soft);
+  color: var(--admin-muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.admin-data-table tbody tr:hover {
+  background: var(--admin-primary-soft);
+}
+
+/* Botones */
+.admin-button,
+.btn {
+  border-radius: 10px;
+  font-weight: 600;
 }
 
 /* ── Planes de Mejoramiento ── */
