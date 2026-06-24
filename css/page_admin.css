@@ -465,6 +465,8 @@ a {
   border-radius: 999px;
   white-space: nowrap;
   min-width: auto;
+  width: auto;          /* anula el width:100% de la barra vertical vieja (evita apilado) */
+  flex: 0 0 auto;       /* ancho de contenido: los items envuelven en horizontal */
 }
 
 .admin-nav__item.is-active {
