@@ -1188,6 +1188,119 @@ progress::-moz-progress-bar {
   font-weight: 600;
 }
 
+/* ═══════════ Rediseño v2: BARRA LATERAL vertical (sobrescribe lo anterior) ═══════════ */
+.admin-layout {
+  grid-template-columns: 248px minmax(0, 1fr);
+}
+
+.admin-sidebar {
+  position: sticky;
+  top: var(--navbar-height, 60px);
+  height: calc(100vh - var(--navbar-height, 60px));
+  width: auto;
+  margin: 0;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 14px;
+  padding: 18px 14px;
+  border: none;
+  border-right: 1px solid var(--admin-line);
+  border-radius: 0;
+  background: var(--admin-surface);
+  box-shadow: none;
+  overflow-y: auto;
+}
+
+/* Marca SENA visible arriba de la barra */
+.admin-brand {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 2px 8px 6px;
+}
+
+/* Nav vertical agrupado por seccion */
+.admin-nav {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  gap: 4px;
+}
+.admin-nav__group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 10px;
+}
+.admin-nav__group:first-child { margin-top: 0; }
+.admin-nav__label {
+  padding: 0 10px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--admin-muted);
+}
+.admin-nav__item {
+  width: 100%;
+  justify-content: flex-start;
+  text-align: left;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-weight: 600;
+  color: var(--admin-text);
+  background: transparent;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.admin-nav__item:hover {
+  background: var(--admin-primary-soft);
+  color: var(--admin-primary);
+}
+.admin-nav__item.is-active {
+  background: var(--admin-primary);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+/* Footer de la barra lateral */
+.admin-sidebar__footer {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  margin: 4px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--admin-line);
+}
+.admin-sidebar__link {
+  width: 100%;
+  text-align: left;
+  justify-content: flex-start;
+  color: var(--admin-muted);
+}
+
+/* Pantallas chicas: la barra lateral pasa a barra superior */
+@media (max-width: 920px) {
+  .admin-layout { grid-template-columns: 1fr; }
+  .admin-sidebar {
+    position: static;
+    height: auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    border-right: none;
+    border-bottom: 1px solid var(--admin-line);
+  }
+  .admin-nav { flex-direction: row; flex-wrap: wrap; flex: 1 1 100%; }
+  .admin-nav__group { flex-direction: row; flex-wrap: wrap; align-items: center; margin-top: 0; }
+  .admin-nav__label { display: none; }
+  .admin-nav__item { width: auto; }
+  .admin-sidebar__footer { flex-direction: row; border-top: none; padding-top: 0; }
+}
+
 /* ── Planes de Mejoramiento ── */
 .mejora-form { display: grid; gap: 8px; max-width: 540px; margin-top: 8px; }
 .mejora-form label { display: flex; flex-direction: column; gap: 4px; font-weight: 600; font-size: 13px; }
