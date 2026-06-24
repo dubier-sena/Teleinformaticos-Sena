@@ -455,6 +455,8 @@ a {
 .admin-nav {
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
+  flex: 1 1 100%;
   gap: 4px;
 }
 
@@ -475,8 +477,9 @@ a {
 .admin-sidebar__footer {
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
   gap: 8px;
-  margin: 0 0 0 auto;
+  margin: 0;
 }
 
 .admin-sidebar__link {
