@@ -1190,7 +1190,9 @@ progress::-moz-progress-bar {
 
 /* ═══════════ Rediseño v2: BARRA LATERAL vertical (sobrescribe lo anterior) ═══════════ */
 .admin-layout {
+  display: grid;   /* anula el display:block de la migracion horizontal (linea ~431) */
   grid-template-columns: 248px minmax(0, 1fr);
+  min-height: calc(100vh - var(--navbar-height, 60px));
 }
 
 .admin-sidebar {
