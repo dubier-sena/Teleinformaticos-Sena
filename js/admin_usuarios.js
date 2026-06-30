@@ -3034,6 +3034,155 @@
     renderAll();
   }
 
+  // ── Auditoria de nombres por listado oficial ──────────────────────────────
+  // Usa window.nameAudit (js/name_audit.js): empareja el listado pegado contra
+  // los aprendices de la ficha. Seguros = se actualizan en bloque; dudosos =
+  // esperan la confirmacion individual del administrador antes de tocar nada.
+  // Cada actualizacion pasa por auth.updateStudentAccount, que sincroniza el
+  // nombre completo a Firebase (syncStudentProfileToFirebase en firebase_db.js).
+  let nameAuditResult = null;
+  let nameAuditFicha = "";
+
+  function recomputeNameAudit() {
+    const audit = window.nameAudit;
+    const officialNames = audit.parseOfficialNames(byId("name-audit-input")?.value || "");
+    nameAuditResult = audit.matchOfficialNames(officialNames, getUsersForFicha(nameAuditFicha));
+    renderNameAudit();
+  }
+
+  function runNameAudit() {
+    const audit = window.nameAudit;
+    if (!audit || typeof audit.matchOfficialNames !== "function") {
+      setFeedback("El modulo de auditoria de nombres no esta disponible.", "error");
+      return;
+    }
+    const ficha = byId("name-audit-ficha")?.value || "";
+    if (!ficha) {
+      setFeedback("Selecciona una ficha para auditar.", "error");
+      return;
+    }
+    const officialNames = audit.parseOfficialNames(byId("name-audit-input")?.value || "");
+    if (officialNames.length === 0) {
+      setFeedback("Pega al menos un nombre del listado oficial.", "error");
+      return;
+    }
+    nameAuditFicha = ficha;
+    nameAuditResult = audit.matchOfficialNames(officialNames, getUsersForFicha(ficha));
+    setFeedback(`Listado analizado: ${officialNames.length} nombre(s).`, "info");
+    renderNameAudit();
+  }
+
+  function renderNameAudit() {
+    const host = byId("name-audit-results");
+    if (!host) return;
+    if (!nameAuditResult) { host.innerHTML = ""; return; }
+    const r = nameAuditResult;
+
+    const sureRows = r.sure.map((item) => `
+      <tr>
+        <td>${escapeHtml(item.user.fullName)}</td>
+        <td><strong>${escapeHtml(item.official)}</strong></td>
+        <td><span class="admin-muted">${escapeHtml(item.user.username || item.user.usernameKey)} / Ficha ${escapeHtml(item.user.ficha)}</span></td>
+      </tr>`).join("");
+
+    const uncertainRows = r.uncertain.map((item, idx) => {
+      const cand = item.candidates && item.candidates[0];
+      const action = cand
+        ? `<button class="admin-button admin-button--ghost" type="button" data-name-audit-apply="${idx}">Aplicar a ${escapeHtml(cand.fullName)}</button>`
+        : `<span class="admin-muted">Sin candidato claro. Edita manualmente desde la lista de aprendices.</span>`;
+      return `
+        <tr>
+          <td><strong>${escapeHtml(item.official)}</strong></td>
+          <td>${escapeHtml(item.reason)}${cand ? `<br><span class="admin-muted">Sugerido: ${escapeHtml(cand.fullName)}</span>` : ""}</td>
+          <td>${action}</td>
+        </tr>`;
+    }).join("");
+
+    const noChangeRows = r.noChange.map((item) => `
+      <tr><td>${escapeHtml(item.user.fullName)}</td><td><span class="admin-muted">Ya coincide con el listado</span></td></tr>`).join("");
+
+    const unmatchedRows = r.unmatchedStudents.map((u) => `
+      <tr><td>${escapeHtml(u.fullName)}</td><td><span class="admin-muted">${escapeHtml(u.username || u.usernameKey)} / Ficha ${escapeHtml(u.ficha)}</span></td></tr>`).join("");
+
+    host.innerHTML = `
+      <div class="admin-panel" style="margin-top:1rem">
+        <h3>Seguros para actualizar (${r.sure.length})</h3>
+        ${r.sure.length ? `
+          <div class="admin-table-wrap"><table class="admin-data-table">
+            <thead><tr><th>Nombre actual</th><th>Nombre oficial nuevo</th><th>Aprendiz</th></tr></thead>
+            <tbody>${sureRows}</tbody>
+          </table></div>
+          <button class="admin-button" type="button" id="name-audit-apply-sure">Aplicar todos los seguros (${r.sure.length})</button>
+        ` : '<p class="admin-muted">No hay coincidencias seguras.</p>'}
+      </div>
+      <div class="admin-panel" style="margin-top:1rem">
+        <h3>Dudosos: requieren tu confirmacion (${r.uncertain.length})</h3>
+        ${r.uncertain.length ? `
+          <p class="admin-muted">Estos no se tocan automaticamente. Revisa cada uno y pulsa "Aplicar" solo si estas de acuerdo.</p>
+          <div class="admin-table-wrap"><table class="admin-data-table">
+            <thead><tr><th>Nombre oficial</th><th>Motivo</th><th>Accion</th></tr></thead>
+            <tbody>${uncertainRows}</tbody>
+          </table></div>
+        ` : '<p class="admin-muted">No hay nombres dudosos.</p>'}
+      </div>
+      ${r.noChange.length ? `<div class="admin-panel" style="margin-top:1rem"><h3>Sin cambios (${r.noChange.length})</h3><div class="admin-table-wrap"><table class="admin-data-table"><tbody>${noChangeRows}</tbody></table></div></div>` : ""}
+      ${r.unmatchedStudents.length ? `<div class="admin-panel" style="margin-top:1rem"><h3>Aprendices sin emparejar (${r.unmatchedStudents.length})</h3><p class="admin-muted">Ningun nombre del listado coincide con estos aprendices. Revisa si faltan en el listado oficial o si su nombre actual esta muy distinto.</p><div class="admin-table-wrap"><table class="admin-data-table"><tbody>${unmatchedRows}</tbody></table></div></div>` : ""}
+    `;
+
+    byId("name-audit-apply-sure")?.addEventListener("click", applyNameAuditSure);
+    host.querySelectorAll("[data-name-audit-apply]").forEach((btn) => {
+      btn.addEventListener("click", () => applyNameAuditUncertain(Number(btn.dataset.nameAuditApply)));
+    });
+  }
+
+  async function applyOneAuditName(user, official) {
+    const result = await auth.updateStudentAccount(user.usernameKey, {
+      fullName: official,
+      username: user.username,
+      ficha: user.ficha,
+    });
+    if (result && result.ok) {
+      recordAdminAuditAction({ action: "name-audit-update", target: user.usernameKey, detail: official });
+    }
+    return result;
+  }
+
+  async function applyNameAuditSure() {
+    if (!nameAuditResult || !nameAuditResult.sure.length) return;
+    const total = nameAuditResult.sure.length;
+    const confirmed = await confirmAdminAction(`Actualizar ${total} nombre(s) seguros y subirlos a Firebase?`);
+    if (!confirmed) return;
+    window.portalSaveStatus?.saving("Actualizando nombres...");
+    let ok = 0; let fail = 0;
+    for (const item of nameAuditResult.sure.slice()) {
+      const res = await applyOneAuditName(item.user, item.official);
+      if (res && res.ok) ok++; else fail++;
+    }
+    window.portalSaveStatus?.saved(`${ok} actualizados`);
+    setFeedback(`Nombres actualizados: ${ok}.${fail ? ` Errores: ${fail}.` : ""}`, fail ? "error" : "success");
+    await loadUsers();
+    recomputeNameAudit();
+  }
+
+  async function applyNameAuditUncertain(idx) {
+    const item = nameAuditResult && nameAuditResult.uncertain[idx];
+    const cand = item && item.candidates && item.candidates[0];
+    if (!cand) return;
+    const confirmed = await confirmAdminAction(`Aplicar el nombre oficial "${item.official}" al aprendiz "${cand.fullName}"?`);
+    if (!confirmed) return;
+    window.portalSaveStatus?.saving("Actualizando nombre...");
+    const res = await applyOneAuditName(cand, item.official);
+    if (res && res.ok) {
+      window.portalSaveStatus?.saved("Nombre actualizado");
+      setFeedback(`Nombre actualizado: ${item.official}.`, "success");
+    } else {
+      window.portalSaveStatus?.error((res && res.message) || "Error al actualizar");
+      setFeedback((res && res.message) || "No fue posible actualizar el nombre.", "error");
+    }
+    await loadUsers();
+    recomputeNameAudit();
+  }
+
   function bindEvents() {
     document.querySelectorAll("[data-admin-module]").forEach((button) => {
       button.addEventListener("click", () =>
@@ -3044,6 +3193,7 @@
       button.addEventListener("click", () => setActiveModule(button.dataset.jumpModule));
     });
     byId("refresh-users")?.addEventListener("click", () => { guideStatesHydrated = false; loadUsers(); });
+    byId("name-audit-run")?.addEventListener("click", runNameAudit);
     byId("btn-backfill-drive")?.addEventListener("click", () => runBackfillToDrive());
     byId("user-search")?.addEventListener("input", (event) => {
       state.filters.text = event.target.value;
@@ -3237,6 +3387,8 @@
     byId("responses-learner-filter").innerHTML = '<option value="">Todos los aprendices</option>';
     byId("responses-activity-filter").innerHTML = '<option value="">Todas las actividades</option>';
     byId("deliveries-ficha-filter").innerHTML = getFichaOptions("", true);
+    const nameAuditFichaSel = byId("name-audit-ficha");
+    if (nameAuditFichaSel) nameAuditFichaSel.innerHTML = getFichaOptions("", false);
   }
 
   document.addEventListener("DOMContentLoaded", async () => {

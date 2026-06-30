@@ -171,6 +171,21 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
           <p class="admin-risk-note">Riesgo documentado: la autenticacion local usa hashes en localStorage. No se muestran contrasenas y la estructura queda preparada para migrar a Firebase Authentication.</p>
           <div class="admin-table-wrap" id="learners-table"></div>
         </div>
+
+        <div class="admin-panel" id="name-audit-panel">
+          <div class="admin-panel__header">
+            <div>
+              <h2>Auditar nombres por listado</h2>
+              <p>Pega el listado oficial (un nombre por linea, en cualquier orden de apellidos/nombres). El sistema empareja por palabras (ignora tildes, &ntilde; y mayusculas), actualiza solo los seguros y deja los dudosos esperando tu confirmacion.</p>
+            </div>
+          </div>
+          <div class="admin-toolbar">
+            <select id="name-audit-ficha" aria-label="Ficha a auditar"></select>
+            <button class="admin-button" type="button" id="name-audit-run">Analizar listado</button>
+          </div>
+          <textarea id="name-audit-input" rows="8" placeholder="[DATO REDACTADO]&#10;GOMEZ RUIZ MARIA FERNANDA&#10;..." style="width:100%;font-family:inherit;"></textarea>
+          <div id="name-audit-results"></div>
+        </div>
       </section>
 
       <section class="admin-module" id="module-fichas" data-admin-panel="fichas" hidden>
@@ -402,6 +417,7 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
   <script src="js/admin_guide6.js?v=20260615_1"></script>
   <script src="js/admin_progress.js?v=20260615_1"></script>
   <script src="js/admin_habilitacion.js?v=20260617_1"></script>
-  <script src="js/admin_usuarios.js?v=20260624_1"></script>
+  <script src="js/name_audit.js?v=20260630_1"></script>
+  <script src="js/admin_usuarios.js?v=20260630_1"></script>
 </body>
 </html>
