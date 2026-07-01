@@ -3135,12 +3135,29 @@
     });
   }
 
+  // updateStudentAccount guarda el nombre en localStorage de inmediato y LUEGO
+  // sincroniza a Firebase. Si la parte de nube se cuelga (sin sesion Firebase,
+  // SDK no cargado, offline), la promesa no resolveria nunca y el toast se
+  // quedaria girando en "Actualizando...". Cortamos con un timeout: el guardado
+  // local ya ocurrio, asi que tras el limite reportamos "guardado, sincronizando".
+  const NAME_AUDIT_CLOUD_TIMEOUT_MS = 12000;
+
   async function applyOneAuditName(user, official) {
-    const result = await auth.updateStudentAccount(user.usernameKey, {
+    const update = auth.updateStudentAccount(user.usernameKey, {
       fullName: official,
       username: user.username,
       ficha: user.ficha,
+      // Confirmado contra el listado oficial de la ficha -> marca el nombre como
+      // verificado (columna "Validacion" en verde) y sube el flag a Firebase.
+      validacionNombre: "oficial",
+      fuenteValidacion: "Listado oficial de la ficha",
     });
+    const result = await Promise.race([
+      Promise.resolve(update),
+      new Promise((resolve) =>
+        setTimeout(() => resolve({ ok: true, pendingSync: true }), NAME_AUDIT_CLOUD_TIMEOUT_MS)
+      ),
+    ]);
     if (result && result.ok) {
       recordAdminAuditAction({ action: "name-audit-update", target: user.usernameKey, detail: official });
     }
@@ -3153,13 +3170,14 @@
     const confirmed = await confirmAdminAction(`Actualizar ${total} nombre(s) seguros y subirlos a Firebase?`);
     if (!confirmed) return;
     window.portalSaveStatus?.saving("Actualizando nombres...");
-    let ok = 0; let fail = 0;
+    let ok = 0; let fail = 0; let pending = 0;
     for (const item of nameAuditResult.sure.slice()) {
       const res = await applyOneAuditName(item.user, item.official);
-      if (res && res.ok) ok++; else fail++;
+      if (res && res.ok) { ok++; if (res.pendingSync) pending++; } else fail++;
     }
     window.portalSaveStatus?.saved(`${ok} actualizados`);
-    setFeedback(`Nombres actualizados: ${ok}.${fail ? ` Errores: ${fail}.` : ""}`, fail ? "error" : "success");
+    const pendingMsg = pending ? ` ${pending} con sincronizacion a la nube pendiente (recarga para verificar).` : "";
+    setFeedback(`Nombres actualizados: ${ok}.${fail ? ` Errores: ${fail}.` : ""}${pendingMsg}`, fail ? "error" : "success");
     await loadUsers();
     recomputeNameAudit();
   }
@@ -3174,7 +3192,12 @@
     const res = await applyOneAuditName(cand, item.official);
     if (res && res.ok) {
       window.portalSaveStatus?.saved("Nombre actualizado");
-      setFeedback(`Nombre actualizado: ${item.official}.`, "success");
+      setFeedback(
+        res.pendingSync
+          ? `Nombre guardado: ${item.official}. La sincronizacion con la nube esta tardando; recarga el panel para verificar.`
+          : `Nombre actualizado: ${item.official}.`,
+        res.pendingSync ? "info" : "success"
+      );
     } else {
       window.portalSaveStatus?.error((res && res.message) || "Error al actualizar");
       setFeedback((res && res.message) || "No fue posible actualizar el nombre.", "error");
