@@ -1504,6 +1504,16 @@
       updatedAt: new Date().toISOString(),
     };
 
+    // Metadata opcional de validacion de nombre (auditoria por listado oficial).
+    // Solo se acepta el flag "oficial" para no permitir escritura de campos
+    // arbitrarios. Cuando el admin confirma un nombre contra el listado oficial,
+    // se marca como verificado (la columna "Validacion" del panel queda en verde).
+    if (normalizeText(data?.validacionNombre).toLowerCase() === "oficial") {
+      nextUser.validacionNombre = "oficial";
+      nextUser.fuenteValidacion = normalizeText(data?.fuenteValidacion) || "Listado oficial";
+      nextUser.validadoEn = new Date().toISOString();
+    }
+
     users[index] = nextUser;
     saveUsers(users);
 
