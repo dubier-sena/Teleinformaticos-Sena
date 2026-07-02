@@ -13,11 +13,15 @@
   var GRADE_CATALOG = {
     "guia-01-induccion": {
       label: "Guía 1 — Inducción",
+      // Debe coincidir con las actividades REALES de la guia (las mismas que aparecen
+      // en Respuestas): arbol312, sena331, programa332, plataformas334, portafolio342.
+      // Antes tenia "reglamento333" (que no existe en la guia) y le faltaban 3.3.4 y 3.4.2.
       activities: [
-        { id: "arbol312",      label: "3.1.2 Árbol de la Vida" },
-        { id: "sena331",       label: "3.3.1 Logo-Símbolos SENA" },
-        { id: "programa332",   label: "3.3.2 Cuestionario Diseño Curricular" },
-        { id: "reglamento333", label: "3.3.3 Reglamento del Aprendiz" },
+        { id: "arbol312",       label: "3.1.2 Árbol de la Vida" },
+        { id: "sena331",        label: "3.3.1 Análisis de Símbolos SENA" },
+        { id: "programa332",    label: "3.3.2 Cuestionario Diseño Curricular" },
+        { id: "plataformas334", label: "3.3.4 Taller de Plataformas Tecnológicas" },
+        { id: "portafolio342",  label: "3.4.2 Portafolio de Evidencias" },
       ],
     },
     "guia-02-herramientas": {
