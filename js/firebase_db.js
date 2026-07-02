@@ -1728,8 +1728,14 @@
     var key = String(usernameKey || "").trim().toLowerCase();
     if (!key || !fileName || !plainObject(fields)) return { ok: false, filled: 0 };
     var scopeKey = "student:" + key;
+    // El guide-data en la nube se guarda bajo el ALIAS canonico (p. ej.
+    // "10a_guia.html"), no bajo el nombre crudo del HTML. Hay que leer/escribir con
+    // el alias para que la hidratacion del panel y la derivacion del % lean el mismo
+    // doc. El PROGRESO en cambio se indexa por el nombre crudo (fileNameToKey), que
+    // es lo que usa la vista del panel; por eso ese se deja tal cual.
+    var cloudFileName = guideDataFileName(fileName);
 
-    var current = await cloudGetGuideData(scopeKey, fileName).catch(function () { return null; });
+    var current = await cloudGetGuideData(scopeKey, cloudFileName).catch(function () { return null; });
     var currentState = plainObject(current && current.state) ? current.state : {};
 
     var nextState = Object.assign({}, currentState);
@@ -1744,7 +1750,7 @@
     if (filled === 0) return { ok: true, filled: 0, state: currentState };
 
     var updatedAt = new Date().toISOString();
-    await cloudSaveGuideData(scopeKey, fileName, {
+    await cloudSaveGuideData(scopeKey, cloudFileName, {
       state: nextState,
       updatedAt: updatedAt,
       updatedBy: "admin-grade-fill",
