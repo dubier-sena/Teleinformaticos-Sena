@@ -47,7 +47,7 @@ test("la hidratacion limita la concurrencia para no saturar la cuota", () => {
   assert.match(adminScript, /runWithConcurrency\(tasks, 6,/);
 });
 
-test("dashboard: tarjeta 'Entregas recientes' al iniciar sesion (que aprendiz entrego)", () => {
+test("dashboard: tarjeta 'Entregas recientes' (render existe; se puebla bajo demanda)", () => {
   const html = fs.readFileSync(
     path.join(__dirname, "..", "panel-administrativo-usuarios.html"),
     "utf8"
@@ -61,8 +61,11 @@ test("dashboard: tarjeta 'Entregas recientes' al iniciar sesion (que aprendiz en
   assert.match(adminScript, /renderRecentDeliveries\(\);/);
   assert.match(adminScript, /function getRecentDeliveries\(limit\)/);
   assert.match(adminScript, /b\.submittedAt[\s\S]*localeCompare[\s\S]*a\.submittedAt/);
-  // Hidratacion UNA vez por sesion al cargar (no en cada loadUsers); el refresh la repite.
-  assert.match(adminScript, /ensureGuideStatesHydrated\(\)\.then\(\(changed\) => \{ if \(changed\) renderAll\(\); \}\)/);
+  // Optimizacion de cuota (jul-2026): loadUsers NO hidrata eager. Bajar el guide_state
+  // de todos los aprendices costaba cientos de lecturas en CADA carga del panel y
+  // acercaba la cuota diaria gratis al limite. La hidratacion ahora es BAJO DEMANDA
+  // (solo al abrir Respuestas/Entregas, ver setActiveModule). El dashboard de entregas
+  // se puebla desde cache / tras visitar Entregas una vez.
+  assert.doesNotMatch(adminScript, /ensureGuideStatesHydrated\(\)\.then\(\(changed\) => \{ if \(changed\) renderAll\(\); \}\)/);
   assert.match(adminScript, /guideStatesHydrated = false; loadUsers\(\)/);
-  assert.doesNotMatch(adminScript, /guideStatesHydrated = false; \/\/ datos frescos/);
 });
