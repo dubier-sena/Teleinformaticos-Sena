@@ -362,6 +362,21 @@
     return fetch(url, opts).finally(function () { window.clearTimeout(timer); });
   }
 
+  // Espera a que una promesa de sincronizacion a la nube termine, pero nunca mas
+  // de timeoutMs. RESUELVE (no rechaza) al vencer el limite: el llamador ya hizo
+  // el guardado local (fuente de verdad) y solo esta esperando el respaldo nube.
+  // Sin esto, una parte de nube colgada (sin sesion Firebase, offline, cooldown,
+  // driveDb sin timeout) dejaria el toast del panel girando para siempre.
+  var CLOUD_SYNC_UI_TIMEOUT_MS = 8000;
+  function boundCloudSync(promise, timeoutMs) {
+    var limit = timeoutMs || CLOUD_SYNC_UI_TIMEOUT_MS;
+    var safe = Promise.resolve(promise).catch(function () { return undefined; });
+    return Promise.race([
+      safe,
+      new Promise(function (resolve) { window.setTimeout(resolve, limit); }),
+    ]);
+  }
+
   function docUrl(collection, docId, extraParams) {
     var url = BASE_URL + "/" + collection;
     if (docId) url += "/" + encodeURIComponent(docId);
@@ -2122,13 +2137,40 @@
     }
 
     var result = await prev.updateStudentAccount.call(auth, usernameKey, data);
-    if (result && result.ok) {
-      var ok = await checkAvailability();
-      if (ok && result.user) {
-        try {
-          await syncStudentProfileToFirebase(result.previousUsernameKey || usernameKey, result.user);
-        } catch (e) { /* silencioso */ }
-      }
+    if (result && result.ok && result.user) {
+      // El guardado local ya ocurrio dentro de prev.updateStudentAccount y es la
+      // fuente de verdad. La sincronizacion a la nube se espera SOLO hasta un
+      // limite: si se cuelga (sin sesion Firebase, offline, cooldown), no dejamos
+      // el toast del panel girando para siempre; el respaldo se reintenta en la
+      // proxima carga.
+      var syncKey = result.previousUsernameKey || usernameKey;
+      await boundCloudSync(
+        checkAvailability().then(function (ok) {
+          if (ok) return syncStudentProfileToFirebase(syncKey, result.user);
+        })
+      );
+    }
+    return result;
+  };
+
+  // ── Activar / desactivar aprendiz ─────────────────────────────────────────────
+  // updateStudentStatus del portal es SINCRONO y solo escribia en localStorage,
+  // asi que el cambio de estado desaparecia al recargar (fetchStudentsWithProgress
+  // relee los usuarios desde Firebase). Aqui persistimos el estado a la nube en
+  // segundo plano (fire-and-forget) para que sobreviva a recargas y se vea en
+  // otros dispositivos. Se mantiene el retorno SINCRONO: el llamador del panel
+  // hace `const result = auth.updateStudentStatus(...)` sin await.
+  var prevUpdateStudentStatus = auth.updateStudentStatus;
+  auth.updateStudentStatus = function (usernameKey, active) {
+    if (typeof prevUpdateStudentStatus !== "function") {
+      return { ok: false, message: "El cambio de estado no esta disponible." };
+    }
+    var result = prevUpdateStudentStatus.call(auth, usernameKey, active);
+    if (result && result.ok && result.user) {
+      var syncUser = result.user;
+      checkAvailability().then(function (ok) {
+        if (ok) return cloudSaveUser(syncUser);
+      }).catch(function () { /* silencioso: se reintenta en la proxima carga */ });
     }
     return result;
   };
