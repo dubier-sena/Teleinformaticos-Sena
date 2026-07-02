@@ -103,6 +103,75 @@
     }
   }
 
+  // ── localStorage resiliente a cuota ─────────────────────────────────────────
+  // El navegador tiene un limite (~5MB). Una escritura que no cabe lanza
+  // QuotaExceededError. En el panel admin eso NO debe romper la accion en curso:
+  // la nube (Firestore) es la fuente de verdad de todo dato compartido.
+  function safeSetLocalAdmin(key, value) {
+    try { localStorage.setItem(key, value); return true; }
+    catch (e) { return false; }
+  }
+
+  // ── Cache de estados de guia de aprendices: MEMORIA, no localStorage ─────────
+  // El panel baja el guide-data de TODOS los aprendices de la ficha (respuestas,
+  // entregas, dashboard). Persistir eso en localStorage llenaba la cuota del
+  // navegador del admin (datos de decenas de aprendices) y hacia fallar las
+  // escrituras propias del admin (notas, auditoria, edicion de aprendiz) con
+  // "quota exceeded". Ahora se cachea EN MEMORIA durante la sesion; localStorage
+  // solo se usa como fallback best-effort para ediciones puntuales del admin.
+  const _guideDataMem = new Map(); // storageKey -> { state, meta }
+
+  function guideDataCacheSet(storageKey, state, meta) {
+    if (!storageKey) return;
+    _guideDataMem.set(storageKey, {
+      state: state && typeof state === "object" ? state : null,
+      meta: meta && typeof meta === "object" ? meta : {},
+    });
+  }
+
+  function readGuideDataState(storageKey) {
+    if (!storageKey) return null;
+    if (_guideDataMem.has(storageKey)) return _guideDataMem.get(storageKey).state;
+    return readJson(localStorage.getItem(storageKey), null);
+  }
+
+  function readGuideDataMeta(storageKey) {
+    if (!storageKey) return {};
+    if (_guideDataMem.has(storageKey)) return _guideDataMem.get(storageKey).meta || {};
+    return readJson(localStorage.getItem(`${storageKey}__meta`), {});
+  }
+
+  // Edicion puntual del admin sobre UN aprendiz (reabrir entrega / habilitar):
+  // actualiza la memoria y persiste best-effort (no rompe si localStorage esta lleno).
+  function writeGuideDataLocal(storageKey, state, meta) {
+    if (!storageKey) return;
+    guideDataCacheSet(storageKey, state, meta);
+    safeSetLocalAdmin(storageKey, JSON.stringify(state || {}));
+    if (meta) safeSetLocalAdmin(`${storageKey}__meta`, JSON.stringify(meta));
+  }
+
+  // Purga (una vez por carga) los estados de guia de aprendices que sesiones
+  // anteriores dejaron en localStorage. Son cache desechable: se re-hidratan a
+  // memoria desde la nube. Libera la cuota para las escrituras propias del admin.
+  // Solo corre en el panel admin, donde el usuario no es un aprendiz.
+  let _guideDataPurged = false;
+  function purgeStudentGuideDataFromLocal() {
+    if (_guideDataPurged) return 0;
+    _guideDataPurged = true;
+    let removed = 0;
+    try {
+      const toRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && /^sena_portal:student:.*:guide-data:/.test(k)) toRemove.push(k);
+      }
+      toRemove.forEach((k) => {
+        try { localStorage.removeItem(k); removed++; } catch (_) {}
+      });
+    } catch (_) { /* sin acceso a localStorage: no hay nada que purgar */ }
+    return removed;
+  }
+
   function normalizeText(value) {
     return String(value || "")
       .normalize("NFD")
@@ -785,14 +854,14 @@
     const stateKey = getGuideStateKey(fileName);
     if (!stateKey || typeof auth.getStudentStorageKey !== "function") return null;
     const storageKey = auth.getStudentStorageKey(usernameKey, stateKey, { area: "guide-data" });
-    return readJson(localStorage.getItem(storageKey), null);
+    return readGuideDataState(storageKey);
   }
 
   function readStudentGuideMeta(usernameKey, fileName) {
     const stateKey = getGuideStateKey(fileName);
     if (!stateKey || typeof auth.getStudentStorageKey !== "function") return {};
     const storageKey = auth.getStudentStorageKey(usernameKey, stateKey, { area: "guide-data" });
-    return readJson(localStorage.getItem(`${storageKey}__meta`), {});
+    return readGuideDataMeta(storageKey);
   }
 
   function getGuide6ResponseConfig(fileName) {
@@ -820,8 +889,8 @@
     const stateKey = config.stateKey || getGuideStateKey(fileName);
     if (!stateKey || typeof auth.getStudentStorageKey !== "function") return null;
     const storageKey = auth.getStudentStorageKey(usernameKey, stateKey, { area: "guide-data" });
-    const state = readJson(localStorage.getItem(storageKey), null);
-    const meta = readJson(localStorage.getItem(`${storageKey}__meta`), {});
+    const state = readGuideDataState(storageKey);
+    const meta = readGuideDataMeta(storageKey);
     if (!state || typeof state !== "object") return null;
     return {
       state,
@@ -902,6 +971,9 @@
 
   async function ensureGuideStatesHydrated() {
     if (guideStatesHydrated) return false;
+    // Recupera la cuota de localStorage que sesiones anteriores llenaron con el
+    // guide-data de aprendices (ahora se cachea en memoria, ver helpers arriba).
+    purgeStudentGuideDataFromLocal();
     const db = window._firebaseDb;
     if (!db || typeof db.cloudGetGuideData !== "function" || typeof auth.getStudentStorageKey !== "function") {
       guideStatesHydrated = true; // sin nube no hay nada que bajar; no reintentar cada render
@@ -924,8 +996,8 @@
         const cloudSnapshot = await db.cloudGetGuideData(getStudentCloudScope(task.usernameKey), task.cloudFileName);
         if (!cloudSnapshot) return;
         const storageKey = auth.getStudentStorageKey(task.usernameKey, task.stateKey, { area: "guide-data" });
-        const localState = readJson(localStorage.getItem(storageKey), null);
-        const localMeta = readJson(localStorage.getItem(`${storageKey}__meta`), {});
+        const localState = readGuideDataState(storageKey);
+        const localMeta = readGuideDataMeta(storageKey);
         // pickLatestSnapshot prefiere la nube solo si es >= que lo local (por updatedAt),
         // asi no pisa una edicion local mas nueva del admin (p.ej. reabrir entrega).
         const latest = pickLatestSnapshot(
@@ -933,10 +1005,10 @@
           localState ? { state: localState, updatedAt: localMeta?.updatedAt || "" } : null
         );
         if (!latest || !latest.state || typeof latest.state !== "object") return;
-        localStorage.setItem(storageKey, JSON.stringify(latest.state));
-        if (latest.updatedAt) {
-          localStorage.setItem(`${storageKey}__meta`, JSON.stringify({ updatedAt: latest.updatedAt, updatedBy: latest.updatedBy || "cloud" }));
-        }
+        // Cache EN MEMORIA (no localStorage): evita llenar la cuota del navegador.
+        guideDataCacheSet(storageKey, latest.state, latest.updatedAt
+          ? { updatedAt: latest.updatedAt, updatedBy: latest.updatedBy || "cloud" }
+          : {});
         changed = true;
       } catch (_) { /* una guia que falle no debe romper la hidratacion del resto */ }
     });
@@ -1488,7 +1560,7 @@
     }
 
     const storageKey = auth.getStudentStorageKey(usernameKey, stateKey, { area: "guide-data" });
-    const guideState = readJson(localStorage.getItem(storageKey), {});
+    const guideState = readGuideDataState(storageKey) || {};
     const deliveryKey = `${activityId}-delivery`;
     const lockKey = `${activityId}-locked`;
     const now = new Date().toISOString();
@@ -1501,13 +1573,12 @@
 
     guideState[lockKey] = false;
     guideState[deliveryKey] = deliveryRecord;
-    localStorage.setItem(storageKey, JSON.stringify(guideState));
-    localStorage.setItem(`${storageKey}__meta`, JSON.stringify({
+    writeGuideDataLocal(storageKey, guideState, {
       updatedAt: now,
       updatedBy: `admin-reopen:${adminLabel}`,
       reabierta: true,
       activityId,
-    }));
+    });
 
     if (newDueAt.trim()) {
       await deadlineManager.savePolicy(fileName, activityId, newDueAt.trim(), adminLabel);
@@ -2068,7 +2139,7 @@
       const storageKey = auth.getStudentStorageKey(usernameKey, stateKey, { area: "guide-data" });
       if (!storageKey) throw new Error("No se pudo derivar la clave de almacenamiento.");
 
-      const currentState = readJsonSafe(localStorage.getItem(storageKey), {});
+      const currentState = readGuideDataState(storageKey) || {};
       const nextState = Object.assign({}, currentState);
       lockKeys.forEach((key) => {
         if (/-locked$/.test(key)) delete nextState[key];
@@ -2076,7 +2147,7 @@
       nextState.reabierta = true;
       nextState.permiteEdicion = true;
       nextState.updatedAt = new Date().toISOString();
-      localStorage.setItem(storageKey, JSON.stringify(nextState));
+      writeGuideDataLocal(storageKey, nextState, { updatedAt: nextState.updatedAt, updatedBy: "admin-activity-unlock" });
       await patchGuideCloudState(usernameKey, guideFile, {
         state: lockKeys.reduce((acc, key) => {
           if (/-locked$/.test(key)) acc[key] = false;
@@ -2496,7 +2567,7 @@
     if (!usernameKey || !guideFamily || !patch || typeof patch !== "object") return false;
     const key = `admin_grade_patch_${usernameKey}_${guideFamily}`;
     const current = readJson(localStorage.getItem(key), {});
-    localStorage.setItem(key, JSON.stringify({ ...current, ...patch, updatedAt: new Date().toISOString() }));
+    safeSetLocalAdmin(key, JSON.stringify({ ...current, ...patch, updatedAt: new Date().toISOString() }));
     return true;
   }
 
