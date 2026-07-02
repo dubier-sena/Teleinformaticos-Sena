@@ -1788,23 +1788,56 @@
     renderGrades();
   }
 
-  async function loadUsers() {
+  // Cache de sesion de la lista de aprendices (con avance). fetchStudentsWithProgress
+  // lee MUCHO de Firestore (usuarios + progreso + guide-data de guias sin progreso).
+  // Recargar el panel decenas de veces (p. ej. depurando) quemaba la cuota diaria
+  // gratis. Con este cache, una RECARGA reutiliza la ultima lista (0 lecturas) durante
+  // el TTL; cualquier MUTACION (editar, calificar, desactivar, reiniciar) lo invalida,
+  // y "Actualizar datos" siempre baja fresco. Vive en sessionStorage (se limpia al
+  // cerrar la pestana), no en localStorage (que ya cuidamos de no llenar).
+  const USERS_CACHE_KEY = "sena_admin_users_progress_cache_v1";
+  const USERS_CACHE_TTL_MS = 4 * 60 * 1000;
+
+  function invalidateUsersCache() {
+    try { sessionStorage.removeItem(USERS_CACHE_KEY); } catch (_) { /* sin sessionStorage */ }
+  }
+
+  async function loadUsers(options = {}) {
     if (!hasAdminPanelAccess()) {
       window.location.replace("index.html");
       return;
     }
-    const loader = typeof auth.fetchStudentsWithProgress === "function"
-      ? auth.fetchStudentsWithProgress()
-      : Promise.resolve(auth.getStudentsWithProgress());
-    state.users = (await loader).map((user) => ({
+    let fetched = null;
+    // Solo se LEE el cache cuando se pide explicitamente (carga inicial / recarga).
+    // Las mutaciones llaman loadUsers() sin opciones -> siempre bajan fresco.
+    if (options.useCache) {
+      try {
+        const cached = JSON.parse(sessionStorage.getItem(USERS_CACHE_KEY) || "null");
+        if (cached && Array.isArray(cached.users) && (Date.now() - Number(cached.at)) < USERS_CACHE_TTL_MS) {
+          fetched = cached.users;
+        }
+      } catch (_) { /* cache corrupto: se ignora y se baja fresco */ }
+    }
+    if (!fetched) {
+      const loader = typeof auth.fetchStudentsWithProgress === "function"
+        ? auth.fetchStudentsWithProgress()
+        : Promise.resolve(auth.getStudentsWithProgress());
+      fetched = await loader;
+      try {
+        sessionStorage.setItem(USERS_CACHE_KEY, JSON.stringify({ at: Date.now(), users: fetched }));
+      } catch (_) { /* sessionStorage lleno: seguimos sin cachear */ }
+    }
+    state.users = fetched.map((user) => ({
       ...user,
       progress: progressForUser(user),
     }));
     renderAll();
-    // Al iniciar sesion (y al refrescar) baja UNA vez el guide_state de los
-    // aprendices para que el dashboard "Entregas recientes" + los modulos
-    // Respuestas/Entregas muestren datos cross-device; luego re-renderiza.
-    ensureGuideStatesHydrated().then((changed) => { if (changed) renderAll(); });
+    // NO se hidrata el guide_state de todos los aprendices aqui: eso disparaba
+    // cientos de lecturas a Firestore en CADA carga del panel (leer el estado de
+    // todas las guias de todos los aprendices) y acercaba la cuota diaria gratis
+    // al limite. La hidratacion pesada ahora es BAJO DEMANDA: solo corre al abrir
+    // Respuestas o Entregas (ver setActiveModule). El dashboard "Entregas recientes"
+    // muestra lo que ya este en cache; tras visitar Entregas una vez, se completa.
     if (!state.users.length) {
       setFeedback(
         "No hay aprendices cargados en este navegador. Inicia sesion admin real, configura Firebase o crea/importa aprendices para ver respuestas, entregas y reportes completos.",
@@ -2559,6 +2592,9 @@
       return;
     }
     select.dataset.previousGrade = nextGrade;
+    // Calificar cambia el avance del aprendiz en la nube: invalida el cache de la
+    // lista para que al recargar el panel se vea el % actualizado (no el cacheado).
+    invalidateUsersCache();
 
     recordAdminAuditAction({ action: "grade-change", target: `${usernameKey}:${guideFamily}:${activityId}`, detail: nextGrade || "sin nota" });
 
@@ -3558,6 +3594,8 @@
     if (deadlineManager?.ready) {
       await deadlineManager.ready().catch(() => null);
     }
-    await loadUsers();
+    // Carga inicial / recarga del panel: reutiliza el cache de sesion si esta fresco
+    // (0 lecturas a Firestore). Las mutaciones y "Actualizar datos" bajan fresco.
+    await loadUsers({ useCache: true });
   });
 })();
