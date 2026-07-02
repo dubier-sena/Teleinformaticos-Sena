@@ -151,7 +151,13 @@
 
   function recordAdminAuditAction(entry) {
     if (!window.adminAudit || typeof window.adminAudit.recordAction !== "function") return;
-    window.adminAudit.recordAction(entry);
+    // Auditoria best-effort: nunca debe interrumpir la accion admin (p. ej. si
+    // localStorage esta lleno y el registro lanza QuotaExceededError).
+    try {
+      window.adminAudit.recordAction(entry);
+    } catch (e) {
+      /* registro de auditoria omitido */
+    }
   }
 
   function recordAudit(entry) {
