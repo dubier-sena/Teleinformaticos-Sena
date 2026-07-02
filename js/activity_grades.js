@@ -89,6 +89,16 @@
     catch (e) { return fallback; }
   }
 
+  // localStorage se puede llenar (el panel admin hidrata datos de muchos aprendices
+  // + al aprobar se embebe la solucion del banco). Un fallo de cuota
+  // (QuotaExceededError) NO debe impedir el guardado: la nube (Firestore) es la
+  // fuente autoritativa que lee el aprendiz. Guardamos local best-effort y seguimos
+  // SIEMPRE con la sincronizacion a la nube.
+  function safeSetLocal(key, value) {
+    try { localStorage.setItem(key, value); return true; }
+    catch (e) { return false; }
+  }
+
   function getGradesKey(usernameKey) {
     var auth = window.portalAuth;
     if (!auth || !auth.getStudentStorageKey) return null;
@@ -115,7 +125,7 @@
   }
   function setAllStudentGrades(usernameKey, allGrades) {
     var key = getGradesKey(usernameKey);
-    if (key) localStorage.setItem(key, JSON.stringify(allGrades || {}));
+    if (key) safeSetLocal(key, JSON.stringify(allGrades || {}));
   }
 
   function getStudentGrades(usernameKey, guideFamily) {
@@ -130,7 +140,7 @@
     if (!key) return;
     var all = readJson(localStorage.getItem(key), {});
     all[guideFamily] = Object.assign({}, gradesObj);
-    localStorage.setItem(key, JSON.stringify(all));
+    safeSetLocal(key, JSON.stringify(all));
     saveGradesToCloud(usernameKey, all);
   }
 
@@ -144,7 +154,7 @@
     } else {
       all[guideFamily][activityId] = grade;
     }
-    localStorage.setItem(key, JSON.stringify(all));
+    safeSetLocal(key, JSON.stringify(all));
     saveGradesToCloud(usernameKey, all);
   }
 
@@ -168,7 +178,7 @@
     } else {
       delete all[guideFamily][solKey];   // sin "A" => sin solucion embebida
     }
-    localStorage.setItem(key, JSON.stringify(all));
+    safeSetLocal(key, JSON.stringify(all));
     saveGradesToCloud(usernameKey, all);
   }
 
@@ -183,7 +193,7 @@
     } else {
       all[guideFamily][obsKey] = String(obs).trim().slice(0, 500);
     }
-    localStorage.setItem(key, JSON.stringify(all));
+    safeSetLocal(key, JSON.stringify(all));
     saveGradesToCloud(usernameKey, all);
   }
 
