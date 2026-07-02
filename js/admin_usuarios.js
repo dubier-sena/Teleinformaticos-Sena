@@ -2431,16 +2431,35 @@
     const activityId = select.dataset.gradeActivity || "";
     const nextGrade = select.value || "";
     const gradesManager = window.activityGradesManager;
-    if (!gradesManager || !usernameKey || !guideFamily || !activityId) return;
+    // La celda "Aprobadas" refleja el estado visible de los selects: se recalcula
+    // SIEMPRE y de primero, para que el % avance aunque el guardado posterior falle.
+    refreshApprovalCell(select);
+    if (!gradesManager || !usernameKey || !guideFamily || !activityId) {
+      window.portalSaveStatus?.error("No se pudo guardar (faltan datos del aprendiz).");
+      setFeedback("No se pudo guardar la calificacion: faltan datos del aprendiz.", "error");
+      return;
+    }
     // Al APROBAR (A) se embebe la solucion del banco dentro de las notas del aprendiz, en
     // una sola escritura (rule isAdmin). El aprendiz solo lee su doc -> ve solo SU solucion.
     const solution = nextGrade === "A" ? lookupBankSolution(guideFamily, activityId) : null;
-    gradesManager.setStudentActivityGradeAndSolution(usernameKey, guideFamily, activityId, nextGrade, solution);
+    // Toast visible abajo-derecha: el #admin-feedback queda fuera de pantalla en esta
+    // vista, asi que el admin no veia ninguna confirmacion de guardado.
+    window.portalSaveStatus?.saving("Guardando calificacion...");
+    try {
+      gradesManager.setStudentActivityGradeAndSolution(usernameKey, guideFamily, activityId, nextGrade, solution);
+    } catch (err) {
+      window.portalSaveStatus?.error("Error al guardar la calificacion.");
+      setFeedback("Error al guardar la calificacion: " + (err && err.message ? err.message : err), "error");
+      return;
+    }
     select.dataset.previousGrade = nextGrade;
-    refreshApprovalCell(select);   // avance de evaluacion instantaneo en la grilla
 
     recordAdminAuditAction({ action: "grade-change", target: `${usernameKey}:${guideFamily}:${activityId}`, detail: nextGrade || "sin nota" });
-    setFeedback("Calificacion guardada." + (nextGrade === "A" && solution ? " Solucion aplicada." : ""), "success");
+    const msg = nextGrade
+      ? "Calificacion guardada." + (nextGrade === "A" && solution ? " Solucion aplicada." : "")
+      : "Calificacion borrada.";
+    window.portalSaveStatus?.saved(msg);
+    setFeedback(msg, "success");
   }
 
   // Importa el banco-semilla (grade_solutions_bank.json) a Firestore (solo admin).
