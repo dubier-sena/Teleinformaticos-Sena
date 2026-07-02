@@ -1717,6 +1717,57 @@
     );
   }
 
+  // Admin: al aprobar una actividad con solucion del banco, escribe las respuestas
+  // directamente en el estado del aprendiz en la nube (SOLO campos vacios) y actualiza
+  // su progreso, para que el avance y las respuestas se vean al instante al consultar
+  // desde el panel, sin que el aprendiz tenga que reabrir la guia (igual las vera al
+  // abrirla). Requiere sesion admin: las reglas de Firestore permiten a isAdmin()
+  // escribir el doc de cualquier aprendiz. `fields` = { "<data-store>": valor } (la
+  // solucion de UNA actividad). Respeta lo que el aprendiz ya haya respondido.
+  async function adminApplySolutionToGuide(usernameKey, fileName, fields) {
+    var key = String(usernameKey || "").trim().toLowerCase();
+    if (!key || !fileName || !plainObject(fields)) return { ok: false, filled: 0 };
+    var scopeKey = "student:" + key;
+
+    var current = await cloudGetGuideData(scopeKey, fileName).catch(function () { return null; });
+    var currentState = plainObject(current && current.state) ? current.state : {};
+
+    var nextState = Object.assign({}, currentState);
+    var filled = 0;
+    Object.keys(fields).forEach(function (k) {
+      var v = fields[k];
+      if (!hasMeaningfulGuideValue(v)) return;
+      if (hasMeaningfulGuideValue(currentState[k])) return; // respeta la respuesta del aprendiz
+      nextState[k] = v;
+      filled++;
+    });
+    if (filled === 0) return { ok: true, filled: 0, state: currentState };
+
+    var updatedAt = new Date().toISOString();
+    await cloudSaveGuideData(scopeKey, fileName, {
+      state: nextState,
+      updatedAt: updatedAt,
+      updatedBy: "admin-grade-fill",
+    });
+
+    // Actualiza el progreso para que el % suba aunque el aprendiz ya tuviera un doc de
+    // progreso en 0% (en cuyo caso la derivacion desde guide-data no se aplica). Se
+    // cuenta igual que deriveProgressFromGuideDataDoc para mantener consistencia.
+    var portal = window.portalAuth || {};
+    var config = portal.GUIDE_PROGRESS_CONFIG && portal.GUIDE_PROGRESS_CONFIG[fileName];
+    var total = Math.max(0, Number(config && config.total) || 0);
+    if (total > 0) {
+      var completed = Math.min(countMeaningfulGuideValues(nextState), total);
+      await cloudSaveProgressEntry(key, fileName, {
+        completed: completed,
+        total: total,
+        percent: Math.round((completed / total) * 100),
+        updatedAt: updatedAt,
+      }).catch(function () {});
+    }
+    return { ok: true, filled: filled, state: nextState };
+  }
+
   async function cloudGetGuideUiState(scopeKey, fileName) {
     if (!scopeKey || !fileName) return null;
     return readGuideStateDoc(GUIDE_UI_FALLBACK_PREFIX, scopeKey, fileName);
@@ -2476,6 +2527,7 @@
     cloudSaveCalendar: cloudSaveCalendar,
     cloudGetGuideData: cloudGetGuideData,
     cloudSaveGuideData: cloudSaveGuideData,
+    adminApplySolutionToGuide: adminApplySolutionToGuide,
     cloudGetGrades: cloudGetGrades,
     cloudSaveGrades: cloudSaveGrades,
     cloudGetGradeSolutions: cloudGetGradeSolutions,

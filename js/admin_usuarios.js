@@ -2502,7 +2502,36 @@
     return (fam && fam[activityId]) || null;
   }
 
-  function handleGradeChange(select) {
+  // Resuelve el archivo de guia (HTML) del aprendiz que pertenece a una familia de
+  // calificacion (p. ej. "guia-01-induccion"), segun su ficha. Usa el mapa
+  // archivo->familia expuesto por activityGradesManager.
+  function resolveStudentGuideFileForFamily(usernameKey, guideFamily) {
+    const famByFile = (window.activityGradesManager && window.activityGradesManager.GUIDE_FAMILY_BY_FILE) || {};
+    const user = getUser(usernameKey);
+    if (!user) return "";
+    return getGuidesForFicha(user.ficha).find((f) => famByFile[f] === guideFamily) || "";
+  }
+
+  // Al APROBAR con solucion del banco, escribe las respuestas en el estado del aprendiz
+  // en la nube (solo campos vacios) y actualiza su progreso, para que el avance y las
+  // respuestas se vean al instante al consultar sin que el aprendiz reabra la guia.
+  async function applyApprovedSolutionToStudentCloud(usernameKey, guideFamily, solution) {
+    const db = window._firebaseDb;
+    if (!db || typeof db.adminApplySolutionToGuide !== "function" || !solution) return;
+    const fileName = resolveStudentGuideFileForFamily(usernameKey, guideFamily);
+    if (!fileName) return;
+    const result = await db.adminApplySolutionToGuide(usernameKey, fileName, solution);
+    // Refresca el cache en memoria para que Respuestas/Ver del admin lo muestren sin recargar.
+    if (result && result.ok && result.state) {
+      const config = getGuideCloudConfig(fileName);
+      if (config && config.stateKey && typeof auth.getStudentStorageKey === "function") {
+        const storageKey = auth.getStudentStorageKey(usernameKey, config.stateKey, { area: "guide-data" });
+        guideDataCacheSet(storageKey, result.state, { updatedAt: new Date().toISOString(), updatedBy: "admin-grade-fill" });
+      }
+    }
+  }
+
+  async function handleGradeChange(select) {
     const usernameKey = select.dataset.gradeUser || select.dataset.user || "";
     const guideFamily = select.dataset.gradeFamily || "";
     const activityId = select.dataset.gradeActivity || "";
@@ -2532,8 +2561,17 @@
     select.dataset.previousGrade = nextGrade;
 
     recordAdminAuditAction({ action: "grade-change", target: `${usernameKey}:${guideFamily}:${activityId}`, detail: nextGrade || "sin nota" });
+
+    // Escribe las respuestas + avance en el estado del aprendiz en la nube (best-effort;
+    // si falla, el aprendiz igual las rellena al abrir la guia).
+    if (nextGrade === "A" && solution) {
+      try {
+        await applyApprovedSolutionToStudentCloud(usernameKey, guideFamily, solution);
+      } catch (e) { /* no critico */ }
+    }
+
     const msg = nextGrade
-      ? "Calificacion guardada." + (nextGrade === "A" && solution ? " Solucion aplicada." : "")
+      ? "Calificacion guardada." + (nextGrade === "A" && solution ? " Respuestas y avance aplicados." : "")
       : "Calificacion borrada.";
     window.portalSaveStatus?.saved(msg);
     setFeedback(msg, "success");
