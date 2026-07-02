@@ -19,7 +19,18 @@
   }
 
   function writeEntries(entries) {
-    localStorage.setItem(ADMIN_AUDIT_KEY, JSON.stringify(entries.slice(0, MAX_ENTRIES)));
+    // La auditoria es best-effort: si localStorage esta lleno (QuotaExceededError),
+    // NO debe romper la accion admin en curso (guardar nota, editar aprendiz, etc.).
+    // Se intenta con menos entradas y, si aun no cabe, se omite el registro.
+    try {
+      localStorage.setItem(ADMIN_AUDIT_KEY, JSON.stringify(entries.slice(0, MAX_ENTRIES)));
+    } catch (e) {
+      try {
+        localStorage.setItem(ADMIN_AUDIT_KEY, JSON.stringify(entries.slice(0, 20)));
+      } catch (e2) {
+        /* sin espacio: se omite el registro de auditoria */
+      }
+    }
   }
 
   function getActor() {
