@@ -979,6 +979,12 @@
       guideStatesHydrated = true; // sin nube no hay nada que bajar; no reintentar cada render
       return false;
     }
+    // Si el admin entra a Respuestas/Entregas ANTES de que loadUsers() termine
+    // (carrera con la carga inicial), state.users aun esta vacio: NO hay nada
+    // que hidratar todavia. Sin este check, la corrida vacia igual marcaba
+    // guideStatesHydrated=true para siempre y ya NUNCA se reintentaba en la
+    // sesion, aunque los aprendices se cargaran un instante despues.
+    if (!(state.users || []).length) return false;
     const tasks = [];
     (state.users || []).forEach((user) => {
       if (!user || !user.usernameKey) return;
