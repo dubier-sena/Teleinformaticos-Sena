@@ -2518,12 +2518,20 @@
   // Banco de respuestas modelo (SOLO admin). Se lee una vez de Firestore y se cachea.
   // El aprendiz nunca lo recibe; al aprobar se le copia solo SU solucion (dentro de notas).
   let _gradeSolutionsBank = null;
+  let _gradeSolutionsBankLoaded = false; // true SOLO si una lectura a Firestore tuvo exito
   async function ensureGradeSolutionsBank(force) {
-    if (_gradeSolutionsBank && !force) return _gradeSolutionsBank;
+    if (_gradeSolutionsBankLoaded && !force) return _gradeSolutionsBank;
     const db = window._firebaseDb;
     if (db && typeof db.cloudGetGradeSolutions === "function") {
-      try { _gradeSolutionsBank = await db.cloudGetGradeSolutions(); }
-      catch (_) { _gradeSolutionsBank = _gradeSolutionsBank || {}; }
+      try {
+        _gradeSolutionsBank = await db.cloudGetGradeSolutions();
+        _gradeSolutionsBankLoaded = true;
+      } catch (_) {
+        // Fallo transitorio (red, token aun no listo): NO se marca como cargado, para
+        // que el proximo intento (p. ej. al aprobar) reintente en vez de quedar vacio
+        // en silencio por el resto de la sesion.
+        _gradeSolutionsBank = _gradeSolutionsBank || {};
+      }
     } else {
       _gradeSolutionsBank = _gradeSolutionsBank || {};
     }
@@ -2550,9 +2558,9 @@
   // respuestas se vean al instante al consultar sin que el aprendiz reabra la guia.
   async function applyApprovedSolutionToStudentCloud(usernameKey, guideFamily, solution) {
     const db = window._firebaseDb;
-    if (!db || typeof db.adminApplySolutionToGuide !== "function" || !solution) return;
+    if (!db || typeof db.adminApplySolutionToGuide !== "function" || !solution) return { filled: 0 };
     const fileName = resolveStudentGuideFileForFamily(usernameKey, guideFamily);
-    if (!fileName) return;
+    if (!fileName) return { filled: 0 };
     const result = await db.adminApplySolutionToGuide(usernameKey, fileName, solution);
     // Refresca el cache en memoria para que Respuestas/Ver del admin lo muestren sin recargar.
     if (result && result.ok && result.state) {
@@ -2562,6 +2570,35 @@
         guideDataCacheSet(storageKey, result.state, { updatedAt: new Date().toISOString(), updatedBy: "admin-grade-fill" });
       }
     }
+    // Refresca state.users EN MEMORIA para que "Progreso individual" y el dashboard
+    // muestren el % nuevo sin esperar una recarga del panel (invalidateUsersCache solo
+    // ayuda en la PROXIMA carga, no repinta lo que ya esta en pantalla).
+    if (result && result.progress) {
+      const user = getUser(usernameKey);
+      if (user) {
+        if (!user.progress || !Array.isArray(user.progress.guides)) {
+          user.progress = { guides: [], completed: 0, total: 0, percent: 0 };
+        }
+        const guides = user.progress.guides;
+        const idx = guides.findIndex((g) => g.fileName === fileName);
+        const guideEntry = {
+          fileName,
+          title: auth.getGuideTitle(fileName),
+          completed: result.progress.completed,
+          total: result.progress.total,
+          percent: result.progress.percent,
+          updatedAt: result.progress.updatedAt,
+          source: "network",
+        };
+        if (idx === -1) guides.push(guideEntry); else guides[idx] = guideEntry;
+        const totalComp = guides.reduce((s, g) => s + (Number(g.completed) || 0), 0);
+        const totalItems = guides.reduce((s, g) => s + (Number(g.total) || 0), 0);
+        user.progress.completed = totalComp;
+        user.progress.total = totalItems;
+        user.progress.percent = totalItems ? Math.round((totalComp / totalItems) * 100) : 0;
+      }
+    }
+    return { filled: (result && result.filled) || 0 };
   }
 
   async function handleGradeChange(select) {
@@ -2580,6 +2617,9 @@
     }
     // Al APROBAR (A) se embebe la solucion del banco dentro de las notas del aprendiz, en
     // una sola escritura (rule isAdmin). El aprendiz solo lee su doc -> ve solo SU solucion.
+    // Se espera el banco (reintenta si una carga previa fallo, ver ensureGradeSolutionsBank)
+    // para no perder la solucion por una carrera con la carga inicial del modulo.
+    if (nextGrade === "A") await ensureGradeSolutionsBank();
     const solution = nextGrade === "A" ? lookupBankSolution(guideFamily, activityId) : null;
     // Toast visible abajo-derecha: el #admin-feedback queda fuera de pantalla en esta
     // vista, asi que el admin no veia ninguna confirmacion de guardado.
@@ -2599,15 +2639,19 @@
     recordAdminAuditAction({ action: "grade-change", target: `${usernameKey}:${guideFamily}:${activityId}`, detail: nextGrade || "sin nota" });
 
     // Escribe las respuestas + avance en el estado del aprendiz en la nube (best-effort;
-    // si falla, el aprendiz igual las rellena al abrir la guia).
+    // si falla, el aprendiz igual las rellena al abrir la guia). `filled` refleja lo que
+    // REALMENTE se escribio (0 si ya tenia respuestas, o si la escritura fallo) para que
+    // el mensaje de abajo no afirme un "aplicado" que no ocurrio.
+    let filled = 0;
     if (nextGrade === "A" && solution) {
       try {
-        await applyApprovedSolutionToStudentCloud(usernameKey, guideFamily, solution);
+        const applyResult = await applyApprovedSolutionToStudentCloud(usernameKey, guideFamily, solution);
+        filled = (applyResult && applyResult.filled) || 0;
       } catch (e) { /* no critico */ }
     }
 
     const msg = nextGrade
-      ? "Calificacion guardada." + (nextGrade === "A" && solution ? " Respuestas y avance aplicados." : "")
+      ? "Calificacion guardada." + (filled > 0 ? " Respuestas y avance aplicados." : "")
       : "Calificacion borrada.";
     window.portalSaveStatus?.saved(msg);
     setFeedback(msg, "success");

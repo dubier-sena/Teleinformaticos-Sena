@@ -1762,16 +1762,18 @@
     var portal = window.portalAuth || {};
     var config = portal.GUIDE_PROGRESS_CONFIG && portal.GUIDE_PROGRESS_CONFIG[fileName];
     var total = Math.max(0, Number(config && config.total) || 0);
+    var progress = null;
     if (total > 0) {
       var completed = Math.min(countMeaningfulGuideValues(nextState), total);
-      await cloudSaveProgressEntry(key, fileName, {
+      progress = {
         completed: completed,
         total: total,
         percent: Math.round((completed / total) * 100),
         updatedAt: updatedAt,
-      }).catch(function () {});
+      };
+      await cloudSaveProgressEntry(key, fileName, progress).catch(function () {});
     }
-    return { ok: true, filled: filled, state: nextState };
+    return { ok: true, filled: filled, state: nextState, progress: progress };
   }
 
   async function cloudGetGuideUiState(scopeKey, fileName) {
