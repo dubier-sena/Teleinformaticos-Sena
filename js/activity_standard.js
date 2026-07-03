@@ -314,8 +314,18 @@
     var hora = fmtTime(record.submittedAt);
     var viewUrl = toViewOnlyDriveUrl(record.driveUrl || "");
     var fileName = record.savedFileName || "—";
+    // Entrega registrada por el instructor (sin archivo real, ver
+    // adminMarkActivityDelivered en firebase_db.js): no hay savedFileName NI
+    // driveUrl. Mostrar "Archivo: —" / "Enlace no disponible" en ese caso
+    // confundia al aprendiz (parecia una entrega rota). Se omiten esas lineas
+    // y se explica que fue el instructor quien la registro asi.
+    var hasFile = Boolean(record.savedFileName || record.driveUrl);
     var reopened = record.status === "reabierta" || record.estado === "reabierta" || record.reabierta === true;
-    var title = reopened ? "Actividad reabierta por el instructor." : "Actividad entregada correctamente.";
+    var title = reopened
+      ? "Actividad reabierta por el instructor."
+      : hasFile
+        ? "Actividad entregada correctamente."
+        : "Actividad registrada como entregada.";
     var stateLabel = reopened ? "Reabierta" : "Entregada";
 
     var linkHtml = viewUrl
@@ -323,16 +333,26 @@
         ' class="act-std-delivery-link">Ver archivo entregado ↗</a>'
       : "(Enlace no disponible)";
 
+    var fileLinesHtml = hasFile
+      ? '    <li><strong>Archivo entregado:</strong> ' + escHtml(fileName) + '</li>\n' +
+        '    <li><strong>Enlace del archivo:</strong> ' + linkHtml + '</li>\n'
+      : "";
+
     var noticeHtml = reopened
       ? '<p class="act-std-delivery-notice">' +
         'La entrega anterior se conserva. Puedes continuar editando y realizar una nueva entrega si corresponde.' +
         '</p>'
-      : '<p class="act-std-delivery-notice">' +
-        'Esta actividad ya fue entregada el ' + escHtml(fecha) + ' a las ' + escHtml(hora) + '. ' +
-        'Puede consultar el archivo entregado en el enlace de arriba. ' +
-        'Para modificar o reemplazar la entrega, debe solicitar al instructor o administrador ' +
-        'que habilite nuevamente la actividad.' +
-        '</p>';
+      : hasFile
+        ? '<p class="act-std-delivery-notice">' +
+          'Esta actividad ya fue entregada el ' + escHtml(fecha) + ' a las ' + escHtml(hora) + '. ' +
+          'Puede consultar el archivo entregado en el enlace de arriba. ' +
+          'Para modificar o reemplazar la entrega, debe solicitar al instructor o administrador ' +
+          'que habilite nuevamente la actividad.' +
+          '</p>'
+        : '<p class="act-std-delivery-notice">' +
+          'Esta actividad fue registrada como entregada por el instructor el ' + escHtml(fecha) +
+          ', segun la fecha indicada. No hay un archivo asociado en el portal para esta actividad.' +
+          '</p>';
 
     mountEl.innerHTML = [
       '<div class="act-std-delivery-panel">',
@@ -341,8 +361,7 @@
       '    <li><strong>Estado:</strong> ' + escHtml(stateLabel) + '</li>',
       '    <li><strong>Fecha de entrega:</strong> ' + escHtml(fecha) + '</li>',
       '    <li><strong>Hora de entrega:</strong> ' + escHtml(hora) + '</li>',
-      '    <li><strong>Archivo entregado:</strong> ' + escHtml(fileName) + '</li>',
-      '    <li><strong>Enlace del archivo:</strong> ' + linkHtml + '</li>',
+      fileLinesHtml.replace(/\n$/, ""),
       '  </ul>',
       noticeHtml,
       '</div>',
