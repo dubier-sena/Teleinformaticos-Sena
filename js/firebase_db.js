@@ -1787,6 +1787,59 @@
     return { ok: true, filled: filled, state: nextState, progress: progress };
   }
 
+  // Admin: al aprobar una actividad de archivo/checkbox (sin campo de texto que
+  // el banco pueda rellenar) que el aprendiz entrego por un medio distinto al
+  // portal, registra la entrega con la fecha de HOY y una nota aclarando que
+  // fue el instructor quien la registro (no una subida real por Drive). No pisa
+  // una entrega real ya existente. Pedido explicito del usuario 2026-07-03.
+  async function adminMarkActivityDelivered(usernameKey, fileName, activityId) {
+    var key = String(usernameKey || "").trim().toLowerCase();
+    if (!key || !fileName || !activityId) return { ok: false, filled: 0 };
+    var scopeKey = "student:" + key;
+    var cloudFileName = guideDataFileName(fileName);
+
+    var current = await cloudGetGuideData(scopeKey, cloudFileName).catch(function () { return null; });
+    var currentState = plainObject(current && current.state) ? current.state : {};
+
+    var deliveryKey = activityId + "-delivery";
+    if (hasMeaningfulGuideValue(currentState[deliveryKey])) {
+      return { ok: true, filled: 0, state: currentState }; // ya tiene entrega real: no se pisa
+    }
+
+    var updatedAt = new Date().toISOString();
+    var nextState = Object.assign({}, currentState);
+    nextState[deliveryKey] = {
+      status: "delivered",
+      submittedAt: updatedAt,
+      note: "Entregado segun fecha indicada por el instructor.",
+      registeredBy: "admin-grade-approval",
+    };
+    nextState[activityId + "-locked"] = true;
+
+    var saved = await cloudSaveGuideData(scopeKey, cloudFileName, {
+      state: nextState,
+      updatedAt: updatedAt,
+      updatedBy: "admin-grade-fill",
+    });
+    if (!saved) return { ok: false, filled: 0, state: currentState };
+
+    var portal = window.portalAuth || {};
+    var config = portal.GUIDE_PROGRESS_CONFIG && portal.GUIDE_PROGRESS_CONFIG[fileName];
+    var total = Math.max(0, Number(config && config.total) || 0);
+    var progress = null;
+    if (total > 0) {
+      var completed = Math.min(countMeaningfulGuideValues(nextState), total);
+      progress = {
+        completed: completed,
+        total: total,
+        percent: Math.round((completed / total) * 100),
+        updatedAt: updatedAt,
+      };
+      await cloudSaveProgressEntry(key, fileName, progress).catch(function () {});
+    }
+    return { ok: true, filled: 1, state: nextState, progress: progress };
+  }
+
   async function cloudGetGuideUiState(scopeKey, fileName) {
     if (!scopeKey || !fileName) return null;
     return readGuideStateDoc(GUIDE_UI_FALLBACK_PREFIX, scopeKey, fileName);
@@ -2547,6 +2600,7 @@
     cloudGetGuideData: cloudGetGuideData,
     cloudSaveGuideData: cloudSaveGuideData,
     adminApplySolutionToGuide: adminApplySolutionToGuide,
+    adminMarkActivityDelivered: adminMarkActivityDelivered,
     cloudGetGrades: cloudGetGrades,
     cloudSaveGrades: cloudSaveGrades,
     cloudGetGradeSolutions: cloudGetGradeSolutions,

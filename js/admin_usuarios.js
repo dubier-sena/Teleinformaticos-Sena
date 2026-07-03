@@ -1270,6 +1270,7 @@
           <tr><th>Ultima actualizacion</th><td>${escapeHtml(formatDate(summary.fechaUltimaActualizacion))}</td></tr>
           <tr><th>Fecha de entrega</th><td>${escapeHtml(formatDate(summary.fechaEntrega))}</td></tr>
           <tr><th>Estado</th><td>${escapeHtml(summary.status)}</td></tr>
+          ${summary.delivery?.note ? `<tr><th>Nota</th><td>${escapeHtml(summary.delivery.note)}</td></tr>` : ""}
         </tbody>
       </table>
       <h3>Preguntas y respuestas</h3>
@@ -2577,13 +2578,11 @@
   // Al APROBAR con solucion del banco, escribe las respuestas en el estado del aprendiz
   // en la nube (solo campos vacios) y actualiza su progreso, para que el avance y las
   // respuestas se vean al instante al consultar sin que el aprendiz reabra la guia.
-  async function applyApprovedSolutionToStudentCloud(usernameKey, guideFamily, solution) {
-    const db = window._firebaseDb;
-    if (!db || typeof db.adminApplySolutionToGuide !== "function" || !solution) return { filled: 0 };
-    const fileName = resolveStudentGuideFileForFamily(usernameKey, guideFamily);
-    if (!fileName) return { filled: 0 };
-    const result = await db.adminApplySolutionToGuide(usernameKey, fileName, solution);
-    // Refresca el cache en memoria para que Respuestas/Ver del admin lo muestren sin recargar.
+  // Refresca el cache en memoria (Respuestas/Ver) y state.users (Progreso
+  // individual/dashboard) tras una escritura admin->aprendiz, sin esperar una
+  // recarga del panel. Compartido por el relleno de banco y el fallback de
+  // entrega manual (ambos devuelven {ok, state, progress} con la misma forma).
+  function applyGuideWriteSideEffects(usernameKey, fileName, result) {
     if (result && result.ok && result.state) {
       const config = getGuideCloudConfig(fileName);
       if (config && config.stateKey && typeof auth.getStudentStorageKey === "function") {
@@ -2591,9 +2590,6 @@
         guideDataCacheSet(storageKey, result.state, { updatedAt: new Date().toISOString(), updatedBy: "admin-grade-fill" });
       }
     }
-    // Refresca state.users EN MEMORIA para que "Progreso individual" y el dashboard
-    // muestren el % nuevo sin esperar una recarga del panel (invalidateUsersCache solo
-    // ayuda en la PROXIMA carga, no repinta lo que ya esta en pantalla).
     if (result && result.progress) {
       const user = getUser(usernameKey);
       if (user) {
@@ -2619,6 +2615,53 @@
         user.progress.percent = totalItems ? Math.round((totalComp / totalItems) * 100) : 0;
       }
     }
+  }
+
+  async function applyApprovedSolutionToStudentCloud(usernameKey, guideFamily, solution) {
+    const db = window._firebaseDb;
+    if (!db || typeof db.adminApplySolutionToGuide !== "function" || !solution) return { filled: 0 };
+    const fileName = resolveStudentGuideFileForFamily(usernameKey, guideFamily);
+    if (!fileName) return { filled: 0 };
+    const result = await db.adminApplySolutionToGuide(usernameKey, fileName, solution);
+    applyGuideWriteSideEffects(usernameKey, fileName, result);
+    return { filled: (result && result.filled) || 0 };
+  }
+
+  // Actividades registradas como "form" con fieldPrefixes en guide_declarations.js
+  // pero cuyos campos reales son CHECKBOXES (booleanos), no texto: el banco NUNCA
+  // podria rellenarlas (no hay texto que copiar en un checkbox) y tampoco son una
+  // entrega de archivo real. Se tratan igual que type:"file" (fallback de
+  // entrega). Lista curada a mano revisando el HTML/script real de la guia (no
+  // hay forma generica de saber el tipo de <input> desde el catalogo).
+  const CHECKBOX_ONLY_ACTIVITY_IDS = new Set([
+    "plataformas334", // grupo-10a/10b-guia-01-induccion: plataforma:{slug}:acceso/evidencia
+  ]);
+
+  // Actividades de archivo/checkbox (sin campo de texto que el banco pueda
+  // rellenar, p. ej. "Analisis de simbolos SENA" o "Portafolio de evidencias"):
+  // el aprendiz puede haberlas entregado por un medio distinto al portal. Al
+  // aprobar sin entrega real registrada, se marca como entregada con la fecha
+  // de hoy y una nota de que fue el instructor quien la registro asi. Pedido
+  // explicito del usuario 2026-07-03.
+  function activityNeedsDeliveryFallback(fileName, activityId) {
+    if (CHECKBOX_ONLY_ACTIVITY_IDS.has(activityId)) return true;
+    const config = window.ActivityStandard?.getConfigForGuide?.(fileName);
+    const act = config && Array.isArray(config.activities)
+      ? config.activities.find((a) => a.id === activityId)
+      : null;
+    if (!act) return false;
+    if (act.type === "file") return true;
+    const hasTrackableFields = (act.formFields && act.formFields.length) || (act.fieldPrefixes && act.fieldPrefixes.length);
+    return act.type === "form" && !hasTrackableFields;
+  }
+
+  async function applyDeliveryFallbackToStudentCloud(usernameKey, guideFamily, activityId) {
+    const db = window._firebaseDb;
+    if (!db || typeof db.adminMarkActivityDelivered !== "function") return { filled: 0 };
+    const fileName = resolveStudentGuideFileForFamily(usernameKey, guideFamily);
+    if (!fileName || !activityNeedsDeliveryFallback(fileName, activityId)) return { filled: 0 };
+    const result = await db.adminMarkActivityDelivered(usernameKey, fileName, activityId);
+    applyGuideWriteSideEffects(usernameKey, fileName, result);
     return { filled: (result && result.filled) || 0 };
   }
 
@@ -2664,15 +2707,25 @@
     // REALMENTE se escribio (0 si ya tenia respuestas, o si la escritura fallo) para que
     // el mensaje de abajo no afirme un "aplicado" que no ocurrio.
     let filled = 0;
+    let delivered = false;
     if (nextGrade === "A" && solution) {
       try {
         const applyResult = await applyApprovedSolutionToStudentCloud(usernameKey, guideFamily, solution);
         filled = (applyResult && applyResult.filled) || 0;
       } catch (e) { /* no critico */ }
     }
+    // Si no habia banco (o no rellenaba nada) y es una actividad de archivo/checkbox
+    // sin campo de texto, se registra como entregada (fecha de hoy + nota del
+    // instructor) en vez de dejarla en "sin-respuesta" para siempre.
+    if (nextGrade === "A" && filled === 0) {
+      try {
+        const deliverResult = await applyDeliveryFallbackToStudentCloud(usernameKey, guideFamily, activityId);
+        delivered = ((deliverResult && deliverResult.filled) || 0) > 0;
+      } catch (e) { /* no critico */ }
+    }
 
     const msg = nextGrade
-      ? "Calificacion guardada." + (filled > 0 ? " Respuestas y avance aplicados." : "")
+      ? "Calificacion guardada." + (filled > 0 ? " Respuestas y avance aplicados." : delivered ? " Entrega registrada." : "")
       : "Calificacion borrada.";
     window.portalSaveStatus?.saved(msg);
     setFeedback(msg, "success");
