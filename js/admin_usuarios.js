@@ -2653,6 +2653,31 @@
     return (window.activityGradesManager && window.activityGradesManager.GRADE_CATALOG) || {};
   }
 
+  // Familias de calificacion (guias) que en verdad pertenecen a una ficha, segun
+  // FICHA_MAP. Cada grupo tiene sus propias guias (ej. 10A no tiene guia-06); el
+  // desplegable de guia debe reflejar solo esas, no el catalogo completo.
+  function getGuideFamiliesForFicha(ficha) {
+    const famByFile = (window.activityGradesManager && window.activityGradesManager.GUIDE_FAMILY_BY_FILE) || {};
+    const files = ficha ? getGuidesForFicha(ficha) : [];
+    const families = [];
+    const seen = new Set();
+    files.forEach((file) => {
+      const fam = famByFile[file];
+      if (fam && !seen.has(fam)) { seen.add(fam); families.push(fam); }
+    });
+    return families;
+  }
+
+  function guideFilterOptionsMarkup(ficha, selected) {
+    if (!ficha) return '<option value="">Selecciona una ficha primero</option>';
+    const catalog = getGradeCatalog();
+    const families = getGuideFamiliesForFicha(ficha).filter((fam) => catalog[fam]);
+    if (!families.length) return '<option value="">Esta ficha no tiene guias con calificacion</option>';
+    return '<option value="">Selecciona guia</option>' + families.map((fam) =>
+      `<option value="${escapeHtml(fam)}"${fam === selected ? " selected" : ""}>${escapeHtml(catalog[fam].label || fam)}</option>`
+    ).join("");
+  }
+
   // Avance de evaluacion (instantaneo) por aprendiz que se muestra en la grilla de notas.
   function approvalCellText(approved, total) {
     const pct = total ? Math.round((approved / total) * 100) : 0;
@@ -2683,10 +2708,6 @@
   function renderGrades() {
     const host = byId("module-notas");
     if (!host) return;
-    const catalog = getGradeCatalog();
-    const guideOptions = Object.keys(catalog).map((fam) =>
-      `<option value="${escapeHtml(fam)}">${escapeHtml(catalog[fam].label || fam)}</option>`
-    ).join("");
     host.innerHTML = `
       <div class="admin-section-head">
         <h2>Calificaciones</h2>
@@ -2701,7 +2722,7 @@
       </details>
       <div class="grades-manual__filters">
         <select id="grades-ficha-filter">${getFichaOptions("", false)}</select>
-        <select id="grades-guide-filter"><option value="">Selecciona guia</option>${guideOptions}</select>
+        <select id="grades-guide-filter" disabled>${guideFilterOptionsMarkup("", "")}</select>
       </div>
       <div id="grades-grid" class="grades-grid"></div>
     `;
@@ -3482,7 +3503,18 @@
     // Modulo Notas: delegacion de eventos (filtros + selects de calificacion).
     byId("module-notas")?.addEventListener("change", (event) => {
       const target = event.target;
-      if (target && (target.id === "grades-ficha-filter" || target.id === "grades-guide-filter")) {
+      if (target && target.id === "grades-ficha-filter") {
+        // Cada ficha tiene sus propias guias (FICHA_MAP); el desplegable de guia se
+        // reconstruye para esa ficha en vez de mostrar el catalogo completo.
+        const guideSelect = byId("grades-guide-filter");
+        if (guideSelect) {
+          guideSelect.innerHTML = guideFilterOptionsMarkup(target.value, "");
+          guideSelect.disabled = !target.value;
+        }
+        renderGradesGrid();
+        return;
+      }
+      if (target && target.id === "grades-guide-filter") {
         renderGradesGrid();
         return;
       }
