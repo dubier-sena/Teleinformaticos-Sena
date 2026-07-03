@@ -10,12 +10,16 @@
 
   // ── Catálogo de actividades evaluadas por guía ──────────────────────────────
   // Agrega aquí nuevas guías a medida que se creen.
+  // Catalogo de calificacion: UNA columna por actividad NUMERADA (un "entregable")
+  // de cada guia. Debe coincidir con las actividades reales que ve el aprendiz
+  // (js/guide_declarations.js -> lo que muestra "Respuestas"). Cuando varias
+  // sub-actividades comparten numero (p. ej. las 5 partes de 3.3.5 en Guia 2, o
+  // reflexion+socializacion 3.1.1 en Redes), se colapsan en UN entregable usando el
+  // id de la primera. El test tests/grade_catalog_matches_declarations.test.cjs
+  // verifica esta correspondencia para que no se vuelva a desincronizar.
   var GRADE_CATALOG = {
     "guia-01-induccion": {
       label: "Guía 1 — Inducción",
-      // Debe coincidir con las actividades REALES de la guia (las mismas que aparecen
-      // en Respuestas): arbol312, sena331, programa332, plataformas334, portafolio342.
-      // Antes tenia "reglamento333" (que no existe en la guia) y le faltaban 3.3.4 y 3.4.2.
       activities: [
         { id: "arbol312",       label: "3.1.2 Árbol de la Vida" },
         { id: "sena331",        label: "3.3.1 Análisis de Símbolos SENA" },
@@ -25,52 +29,97 @@
       ],
     },
     "guia-02-herramientas": {
-      label: "Guía 2 — Herramientas Informáticas",
+      label: "Guía 2 — Operar herramientas informáticas y digitales",
       activities: [
-        { id: "extensiones331", label: "3.3.1 Extensiones y complementos" },
-        { id: "sistemas332",    label: "3.3.2 Sistemas operativos" },
+        { id: "analisis313",      label: "3.1.3 Bitácora de análisis" },
+        { id: "fichaCaso",        label: "3.2.1 Ficha de caso" },
+        { id: "matriz322",        label: "3.2.2 Matriz de Diagnóstico Digital" },
+        { id: "extensiones331",   label: "3.3.1 Extensiones de archivo" },
+        { id: "sistemas332",      label: "3.3.2 Requerimientos mínimos" },
+        { id: "suite333",         label: "3.3.3 Suite ofimática en acción" },
         { id: "colaborativas334", label: "3.3.4 Herramientas colaborativas" },
-        { id: "transferReto341", label: "3.4.1 Reto de transferencia" },
+        { id: "cibersegAmenazas335", label: "3.3.5 Ciberseguridad" },
+        { id: "transferReto341",  label: "3.4.1 Reto final" },
       ],
     },
-    "guia-redes-rap01": {
-      label: "Guía Redes — RAP 01",
+    "guia-03-planificar-10": {
+      label: "Guía 3 — Implementar componentes (grado 10)",
       activities: [
-        { id: "reflexion311",    label: "3.1.1 Reflexión inicial" },
-        { id: "socializacion311", label: "3.1.1 Socialización" },
-        { id: "bloqueA",         label: "Bloque A — Tipos de redes" },
-        { id: "bloqueB",         label: "Bloque B — Topologías" },
-        { id: "bloqueC",         label: "Bloque C — Medios de transmisión" },
-        { id: "bloqueD",         label: "Bloque D — Dispositivos" },
-        { id: "bloqueE",         label: "Bloque E — Modelo OSI/TCP-IP" },
-        { id: "ip1",             label: "Bloque IP 1" },
-        { id: "ip3",             label: "Bloque IP 3" },
-        { id: "lab1",            label: "Lab 1 — Topología estrella" },
-        { id: "lab2",            label: "Lab 2 — Topología árbol" },
-        { id: "lab3",            label: "Lab 3 — Red híbrida" },
-        { id: "social",          label: "Socialización final" },
+        { id: "bitacora311",     label: "3.1.1 Bitácora individual de análisis" },
+        { id: "socializacion312", label: "3.1.2 Socialización del análisis" },
+        { id: "tabla321",        label: "3.2.1 Tabla resumen" },
+        { id: "mapa322",         label: "3.2.2 Mapa conceptual" },
+        { id: "checklist331",    label: "3.3.1 Checklist de instalación" },
+        { id: "diagnostico332",  label: "3.3.2 Diagnóstico técnico" },
+        { id: "documento333",    label: "3.3.3 Documento técnico de gestión" },
+        { id: "presupuesto341",  label: "3.4.1 Presupuesto final" },
+        { id: "sustentacion342", label: "3.4.2 Presentación y sustentación oral" },
       ],
     },
     "guia-05-herramientas": {
-      label: "Guía 5 — Herramientas (11°)",
+      label: "Guía 5 — Operar herramientas (grado 11)",
       activities: [
         // El DOM usa ids sin guion (guia5311…); el catálogo conserva el id con guion
         // para no perder notas ya guardadas, y fija el mount explícito.
-        { id: "guia5-311", label: "3.1.1 Bitácora de análisis", mount: "#guia5311DeadlineControls" },
+        { id: "guia5-311", label: "3.1.1 Bitácora o análisis del caso", mount: "#guia5311DeadlineControls" },
         { id: "guia5-331", label: "3.3.1 Evidencias de herramientas", mount: "#guia5331DeadlineControls" },
         { id: "guia5-341", label: "3.4.1 Informe final integrador", mount: "#guia5341DeadlineControls" },
       ],
     },
     "guia-06-planificar": {
-      label: "Guía 6 — Implementar componentes de las herramientas tecnológicas",
+      label: "Guía 6 — Implementar componentes (grado 11)",
       activities: [
-        { id: "bitacora311",      label: "3.1.1 Bitácora estudio de caso" },
-        { id: "socializacion312", label: "3.1.2 Socialización" },
+        { id: "bitacora311",      label: "3.1.1 Bitácora individual de análisis" },
+        { id: "socializacion312", label: "3.1.2 Socialización del análisis" },
         { id: "tabla321",         label: "3.2.1 Tabla resumen" },
         { id: "mapa322",          label: "3.2.2 Mapa conceptual" },
-        { id: "checklist331",     label: "3.3.1 Checklist instalación" },
+        { id: "checklist331",     label: "3.3.1 Checklist de instalación" },
         { id: "diagnostico332",   label: "3.3.2 Diagnóstico técnico" },
-        { id: "presupuesto341",   label: "3.4.1 Presupuesto" },
+        { id: "presupuesto341",   label: "3.4.1 Presupuesto final" },
+      ],
+    },
+    "guia-07-ciberseguridad": {
+      label: "Guía 7 — Planificar información (ciberseguridad, grado 11)",
+      activities: [
+        { id: "caso311",        label: "3.1.1 Análisis del caso ElectroBoyacá" },
+        { id: "plenaria312",    label: "3.1.2 Socialización en plenaria" },
+        { id: "bloqueAB321",    label: "3.2.1 Estudio de contenidos (Bloques A y B)" },
+        { id: "mapa322",        label: "3.2.2 Mapa conceptual de ciberseguridad" },
+        { id: "diagnostico331", label: "3.3.1 Diagnóstico del estado de seguridad" },
+        { id: "hardening332",   label: "3.3.2 Controles de hardening" },
+        { id: "plan341",        label: "3.4.1 Plan de Ciberseguridad + Sustentación" },
+      ],
+    },
+    "guia-redes-rap01": {
+      label: "Redes RAP 01 — Definir parámetros de la red",
+      activities: [
+        { id: "reflexion311",  label: "3.1.1 Reflexión / Socialización" },
+        { id: "ip1",           label: "3.2.1 Bloque IP 1" },
+        { id: "ip3",           label: "3.2.3 Bloque IP 3" },
+        { id: "taller-ip-ej1", label: "3.3.1 Taller IP - Ejercicio 1" },
+        { id: "taller-ip-ej2", label: "3.3.2 Taller IP - Ejercicio 2" },
+        { id: "taller-ip-ej3", label: "3.3.3 Taller IP - Ejercicio 3" },
+        { id: "taller-ip-ej4", label: "3.3.4 Taller IP - Ejercicio 4" },
+        { id: "taller-ip-ej5", label: "3.3.5 Taller IP - Ejercicio 5" },
+        { id: "lab1",          label: "3.4.1 Laboratorio 1 - Topología estrella" },
+        { id: "lab2",          label: "3.4.2 Laboratorio 2 - Topología árbol" },
+        { id: "lab3",          label: "3.4.3 Laboratorio 3 - Red híbrida" },
+        { id: "social",        label: "3.5.1 Socialización final" },
+      ],
+    },
+    "guia-redes-rap02": {
+      label: "Redes RAP 02 — Comprobar la conectividad de la red",
+      activities: [
+        { id: "reflexion311",   label: "3.1.1 Reflexión inicial - Caso Ferretería" },
+        { id: "bloqueA321",     label: "3.2.1 Bloque A - Router, Switch y AP" },
+        { id: "bloqueB322",     label: "3.2.2 Bloque B - TCP/IP y modelo de capas" },
+        { id: "bloqueC323",     label: "3.2.3 Bloque C - DHCP, DNS y Firewall" },
+        { id: "bloqueD324",     label: "3.2.4 Bloque D - IP pública vs privada y NAT" },
+        { id: "entregaContexto325", label: "3.2.5 Entrega - Productos de contextualización" },
+        { id: "comandos331",    label: "3.3.1 Comandos de diagnóstico CLI" },
+        { id: "presentacion332", label: "3.3.2 Presentación técnica de averías" },
+        { id: "laboratorio341", label: "3.4.1 Laboratorio Packet Tracer - Red 2 plantas" },
+        { id: "caso342",        label: "3.4.2 Laboratorio integral - DHCP/DNS/AP/NAT" },
       ],
     },
   };
@@ -308,14 +357,18 @@
     "grupo-10b-guia-01-induccion.html": "guia-01-induccion",
     "grupo-10a-guia-02-herramientas-informaticas-digitales.html": "guia-02-herramientas",
     "grupo-10b-guia-02-herramientas-informaticas-digitales.html": "guia-02-herramientas",
+    "grupo-10a-guia-03-planificar-informacion.html": "guia-03-planificar-10",
+    "grupo-10b-guia-03-planificar-informacion.html": "guia-03-planificar-10",
     "grupo-11a-guia-05-herramientas-informaticas-digitales.html": "guia-05-herramientas",
     "grupo-11b-guia-05-herramientas-informaticas-digitales.html": "guia-05-herramientas",
     "grupo-11a-guia-06-planificar-informacion.html": "guia-06-planificar",
     "grupo-11b-guia-06-planificar-informacion.html": "guia-06-planificar",
+    "grupo-11a-guia-07-planificar-informacion-ciberseguridad.html": "guia-07-ciberseguridad",
+    "grupo-11b-guia-07-planificar-informacion-ciberseguridad.html": "guia-07-ciberseguridad",
     "santa-barbara-10a-guia-02-redes-rap01.html": "guia-redes-rap01",
     "santa-barbara-10b-guia-02-redes-rap01.html": "guia-redes-rap01",
-    "santa-barbara-10a-guia-03-redes-rap02.html": "guia-redes-rap01",
-    "santa-barbara-10b-guia-03-redes-rap02.html": "guia-redes-rap01",
+    "santa-barbara-10a-guia-03-redes-rap02.html": "guia-redes-rap02",
+    "santa-barbara-10b-guia-03-redes-rap02.html": "guia-redes-rap02",
   };
 
   // ── Banco de respuestas: relleno de actividades aprobadas y vacías ──────────
