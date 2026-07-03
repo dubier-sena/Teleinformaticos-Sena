@@ -1750,11 +1750,16 @@
     if (filled === 0) return { ok: true, filled: 0, state: currentState };
 
     var updatedAt = new Date().toISOString();
-    await cloudSaveGuideData(scopeKey, cloudFileName, {
+    var saved = await cloudSaveGuideData(scopeKey, cloudFileName, {
       state: nextState,
       updatedAt: updatedAt,
       updatedBy: "admin-grade-fill",
     });
+    // Si la escritura a Firestore/Drive fallo (cuota, red, permisos), NO reportar
+    // exito: antes `filled` se calculaba ANTES de guardar y se devolvia igual,
+    // asi que el panel mostraba "Respuestas y avance aplicados" aunque nada
+    // hubiera quedado guardado.
+    if (!saved) return { ok: false, filled: 0, state: currentState };
 
     // Actualiza el progreso para que el % suba aunque el aprendiz ya tuviera un doc de
     // progreso en 0% (en cuyo caso la derivacion desde guide-data no se aplica). Se
