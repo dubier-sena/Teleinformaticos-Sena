@@ -701,7 +701,7 @@
         var body = { fields: {} };
         body.fields[op.fieldName] = toFsValue(op.fieldValue);
         var res = await fetchWithTimeout(
-          docUrl(op.collection, op.docId, "updateMask.fieldPaths=" + encodeURIComponent(op.fieldName)),
+          docUrl(op.collection, op.docId, "updateMask.fieldPaths=" + encodeURIComponent(escapeFirestoreFieldPath(op.fieldName))),
           {
             method: "PATCH",
             headers: await authHeaders({ "Content-Type": "application/json" }),
@@ -931,7 +931,7 @@
       var body = { fields: {} };
       body.fields[fieldName] = toFsValue(fieldValue);
       var res = await fetchWithTimeout(
-        docUrl(collection, docId, "updateMask.fieldPaths=" + encodeURIComponent(fieldName)),
+        docUrl(collection, docId, "updateMask.fieldPaths=" + encodeURIComponent(escapeFirestoreFieldPath(fieldName))),
         {
           method:  "PATCH",
           headers: await authHeaders({ "Content-Type": "application/json" }),
@@ -1072,6 +1072,19 @@
   // (sin puntos ni caracteres especiales).
   function fileNameToKey(fileName) {
     return String(fileName || "").replace(/\./g, "_").replace(/[^a-z0-9_-]/gi, "_");
+  }
+
+  // Un "FieldPath" de Firestore (usado en updateMask.fieldPaths) solo acepta un
+  // segmento SIN comillas si son letras/digitos/guion_bajo (y no empieza por
+  // digito). fileNameToKey() deja guiones (-) para que los docIds sigan siendo
+  // legibles (ej. "grupo-10a-guia-01-induccion_html"), pero un guion en un
+  // fieldPath SIN escapar hace que Firestore responda 400 Bad Request. Por eso
+  // TODA escritura de progreso (via fsUpdateField) fallaba en silencio: el
+  // .catch(() => {}) del llamador tragaba el error y no quedaba ningun rastro.
+  function escapeFirestoreFieldPath(name) {
+    var raw = String(name || "");
+    if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(raw)) return raw;
+    return "`" + raw.replace(/\\/g, "\\\\").replace(/`/g, "\\`") + "`";
   }
 
   function guideDataFileName(fileName) {
