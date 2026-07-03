@@ -1009,7 +1009,12 @@
     await runWithConcurrency(tasks, 6, async (task) => {
       if (!task) return;
       try {
-        const cloudSnapshot = await db.cloudGetGuideData(getStudentCloudScope(task.usernameKey), task.cloudFileName);
+        // skipDriveOn404: en el barrido masivo, un 404 casi siempre es un miss
+        // real (aprendiz que no ha guardado esa guia); probar Drive (Apps
+        // Script, 10-25s bajo carga) en CADA miss de cientos de combinaciones
+        // aprendiz x guia convertia esto en varios minutos. El "Ver" puntual
+        // de una actividad SI sigue probando Drive (mas exhaustivo, un solo doc).
+        const cloudSnapshot = await db.cloudGetGuideData(getStudentCloudScope(task.usernameKey), task.cloudFileName, { skipDriveOn404: true });
         if (!cloudSnapshot) return;
         const storageKey = auth.getStudentStorageKey(task.usernameKey, task.stateKey, { area: "guide-data" });
         const localState = readGuideDataState(storageKey);
