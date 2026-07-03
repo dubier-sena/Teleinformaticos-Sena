@@ -221,10 +221,13 @@
     var all = readJson(localStorage.getItem(key), {});
     if (!all[guideFamily]) all[guideFamily] = {};
     var solKey = activityId + ":solution";
+    var gradedAtKey = activityId + ":gradedAt";
     if (grade === "" || grade === null || grade === undefined) {
       delete all[guideFamily][activityId];
+      delete all[guideFamily][gradedAtKey];
     } else {
       all[guideFamily][activityId] = grade;
+      all[guideFamily][gradedAtKey] = new Date().toISOString();
     }
     if (grade === "A" && solutionObj && typeof solutionObj === "object" && Object.keys(solutionObj).length) {
       all[guideFamily][solKey] = solutionObj;
@@ -287,18 +290,26 @@
     return null;
   }
 
+  function formatGradeDate(iso) {
+    var d = iso ? new Date(iso) : null;
+    if (!d || isNaN(d.getTime())) return "";
+    return d.toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric" });
+  }
+
   // Construye el badge. Solo Aprobado (A) y No aprobado (D) — las únicas notas que
   // registra el admin. Sin nota => devuelve null (no se muestra nada).
-  function buildGradeBadge(grade, activityId) {
+  function buildGradeBadge(grade, activityId, gradedAtIso) {
     var badgeClass, icon, html;
+    var fecha = formatGradeDate(gradedAtIso);
+    var fechaHtml = fecha ? '<br><span class="grade-badge-date">Calificado el ' + fecha + '</span>' : "";
     if (grade === "A") {
       badgeClass = "activity-grade-badge activity-grade-badge--aprobado";
       icon = "✅";
-      html = "<strong>¡Aprobado!</strong> Buen trabajo. 🎉";
+      html = "<strong>¡Aprobado!</strong> Buen trabajo. 🎉" + fechaHtml;
     } else if (grade === "D") {
       badgeClass = "activity-grade-badge activity-grade-badge--desaprobado";
       icon = "❌";
-      html = "<strong>No aprobado.</strong> Habla con tu instructor para reforzar esta actividad.";
+      html = "<strong>No aprobado.</strong> Habla con tu instructor para reforzar esta actividad." + fechaHtml;
     } else {
       return null;
     }
@@ -344,7 +355,7 @@
       // Evitar duplicados del mismo badge para esta actividad.
       if (parent.querySelector('.activity-grade-badge[data-grade-act="' + cfg.activityId + '"]')) return;
 
-      var badge = buildGradeBadge(grade, cfg.activityId);
+      var badge = buildGradeBadge(grade, cfg.activityId, grades[cfg.activityId + ":gradedAt"]);
       if (badge) parent.insertBefore(badge, mount);
     });
   }
