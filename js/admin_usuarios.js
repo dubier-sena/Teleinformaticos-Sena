@@ -834,17 +834,27 @@
   }
 
   function getGuideStateKey(fileName) {
-    const configured = window.ActivityStandard?.getStateKeyForGuide?.(fileName) ||
-      auth.GUIDE_PROGRESS_CONFIG?.[fileName]?.stateKey ||
-      "";
-    if (configured) return configured;
     const aliases = {
       "grupo-10a-guia-01-induccion.html": "guia_induccion_10a_guia_html",
       "grupo-10b-guia-01-induccion.html": "guia_induccion_10b_guia_html",
       "santa-barbara-10a-guia-02-redes-rap01.html": "sb_10a_redes.html",
       "santa-barbara-10b-guia-02-redes-rap01.html": "sb_10b_redes.html",
     };
+    // Los alias con clave COMPLETA ("guia_...") son la fuente de verdad real del
+    // localStorage de la guia (ver STORAGE_KEY en script_induccion.js). Tienen
+    // PRIORIDAD sobre ActivityStandard/GUIDE_PROGRESS_CONFIG: Induccion registra
+    // en guide_declarations.js un stateKey CORTO ("10a_guia", pensado para el
+    // prefijo de progreso "10a_guia:checks"), NO la clave completa del estado
+    // guardado. Si se prioriza ese valor corto, Respuestas y la hidratacion
+    // leen/escriben en una clave que el aprendiz nunca usa -> siempre en blanco
+    // aunque el aprendiz SI tenga respuestas guardadas (bug encontrado jul-3
+    // depurando en vivo: el boton "Ver" no se veia afectado porque lee directo
+    // de la nube por otra ruta que no pasa por esta funcion).
     if (aliases[fileName] && /^guia_/.test(aliases[fileName])) return aliases[fileName];
+    const configured = window.ActivityStandard?.getStateKeyForGuide?.(fileName) ||
+      auth.GUIDE_PROGRESS_CONFIG?.[fileName]?.stateKey ||
+      "";
+    if (configured) return configured;
     const storageFile = aliases[fileName] || fileName;
     if (!storageFile) return "";
     return "guia_interactiva_" + storageFile.replace(/[^a-z0-9]+/gi, "_").toLowerCase();
