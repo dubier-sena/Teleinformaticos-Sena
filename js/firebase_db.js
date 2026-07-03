@@ -823,7 +823,15 @@
 
   // GET un documento. Retorna objeto JS o null.
   // Si Firestore no esta disponible (sin sesion, cooldown, budget), enruta a Drive.
-  async function fsGet(collection, docId) {
+  // opts.skipDriveOn404: un 404 de Firestore significa simplemente "este doc no
+  // existe" (aprendiz que aun no guardo esta guia) -- NO que Firestore este caido.
+  // Probar Drive en ese caso es Apps Script (10-25s bajo carga); en un barrido
+  // masivo (ensureGuideStatesHydrated sobre cientos de combinaciones aprendiz x
+  // guia) eso multiplica minutos de espera para informacion que casi siempre es
+  // un miss real. Solo se salta el 404; los fallos de red/auth SI siguen
+  // intentando Drive (Firestore realmente inalcanzable).
+  async function fsGet(collection, docId, opts) {
+    var skipDriveOn404 = Boolean(opts && opts.skipDriveOn404);
     if (!(await canCallFirestore(collection))) {
       return await driveFallbackGet(collection, docId);
     }
@@ -836,6 +844,7 @@
       if (res.status === 404) {
         registerFirestoreOperation("read", 1);
         markFirestoreSuccess();
+        if (skipDriveOn404) return null;
         // Doc no existe en Firestore: probamos Drive por si lo tiene.
         var driveResult = await driveFallbackGet(collection, docId);
         return driveResult;
@@ -1482,31 +1491,15 @@
     return prefix + safeCloudKey(scopeKey) + ":" + fileNameToKey(fileName);
   }
 
-  async function readGuideStateDoc(prefix, scopeKey, fileName) {
+  async function readGuideStateDoc(prefix, scopeKey, fileName, opts) {
     var docId = guideStateDocId(prefix, scopeKey, fileName);
-    var fallbackDoc = await fsGet(COL_PROGRESS, docId);
+    // NOTA: fsGet YA prueba Drive por su cuenta ante un 404 o un fallo de auth
+    // (ver arriba), asi que un chequeo extra aqui era redundante (duplicaba la
+    // llamada a Apps Script hasta 2 veces mas por cada doc que no existe).
+    var fallbackDoc = await fsGet(COL_PROGRESS, docId, opts);
     if (fallbackDoc) return fallbackDoc;
-    var stateDoc = await fsGet(COL_GUIDE_STATE, docId);
+    var stateDoc = await fsGet(COL_GUIDE_STATE, docId, opts);
     if (stateDoc) return stateDoc;
-    // El ADMIN lee de Firestore (excepcion admin), pero los datos del aprendiz
-    // pueden estar SOLO en Drive (si el aprendiz guardo sin sesion Firestore, o
-    // con useDriveAsPrimary). Como respaldo, el admin tambien lee de Drive para
-    // no perder ninguna respuesta/entrega. Es lectura Drive via Apps Script:
-    // NO consume cuota de Firestore.
-    if (
-      isCurrentUserAdmin() &&
-      window.driveDb &&
-      typeof window.driveDb.get === "function" &&
-      typeof window.driveDb.isEnabled === "function" &&
-      window.driveDb.isEnabled()
-    ) {
-      try {
-        var driveProgressDoc = await window.driveDb.get(COL_PROGRESS, docId);
-        if (driveProgressDoc) return driveProgressDoc;
-        var driveStateDoc = await window.driveDb.get(COL_GUIDE_STATE, docId);
-        if (driveStateDoc) return driveStateDoc;
-      } catch (_) { /* best-effort */ }
-    }
     return null;
   }
 
@@ -1701,9 +1694,9 @@
     return fsPatch(COL_GUIDE_STATE, docId, payload);
   }
 
-  async function cloudGetGuideData(scopeKey, fileName) {
+  async function cloudGetGuideData(scopeKey, fileName, opts) {
     if (!scopeKey || !fileName) return null;
-    var doc = await readGuideStateDoc(GUIDE_DATA_FALLBACK_PREFIX, scopeKey, fileName);
+    var doc = await readGuideStateDoc(GUIDE_DATA_FALLBACK_PREFIX, scopeKey, fileName, opts);
     if (!doc) return null;
     return readSnapshotPayload(doc);
   }
