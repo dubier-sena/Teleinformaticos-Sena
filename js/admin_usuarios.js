@@ -3680,4 +3680,15 @@
     // (0 lecturas a Firestore). Las mutaciones y "Actualizar datos" bajan fresco.
     await loadUsers({ useCache: true });
   });
+
+  // DEBUG TEMPORAL: expone internals para diagnosticar en vivo por consola por
+  // que Respuestas/Progreso no reflejan datos que SI estan en la nube. Quitar
+  // una vez resuelto (ver fixes-jul3-panel-admin en memoria).
+  window.__adminDebug = {
+    getUsersCount: () => state.users.length,
+    getUser: (usernameKey) => getUser(usernameKey),
+    hydrate: () => ensureGuideStatesHydrated(),
+    readState: (usernameKey, fileName) => readStudentGuideState(usernameKey, fileName),
+    isHydrated: () => guideStatesHydrated,
+  };
 })();
