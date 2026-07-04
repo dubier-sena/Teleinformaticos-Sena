@@ -820,8 +820,42 @@ progress::-moz-progress-bar {
 .grades-grid {
   overflow-x: auto;
 }
+.grades-scroll-hint {
+  margin: 0 0 8px;
+  font-size: 0.85rem;
+  color: var(--admin-muted);
+}
 .grades-table .grade-select {
   min-width: 132px;
+}
+/* Guias con muchas actividades (Guia 2 tiene 9) desbordan la tabla y el admin
+   perdia de vista el nombre del aprendiz Y la columna "Aprobadas" (%) al
+   desplazarse. Se fijan la primera columna (Aprendiz) y la ultima (Aprobadas)
+   para que ambas queden siempre visibles durante el scroll horizontal. */
+.grades-table th:first-child,
+.grades-table td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--admin-surface);
+  box-shadow: 2px 0 4px rgba(16, 40, 28, 0.06);
+}
+.grades-table thead th:first-child {
+  background: var(--admin-surface-soft);
+  z-index: 2;
+}
+.grades-table th:last-child,
+.grades-table td:last-child {
+  position: sticky;
+  right: 0;
+  z-index: 1;
+  background: var(--admin-surface);
+  font-weight: 700;
+  box-shadow: -2px 0 4px rgba(16, 40, 28, 0.06);
+}
+.grades-table thead th:last-child {
+  background: var(--admin-surface-soft);
+  z-index: 2;
 }
 
 /* Dashboard: tarjeta "Entregas recientes" (qué aprendiz entregó al iniciar sesión) */
