@@ -2418,7 +2418,14 @@
         var guides  = auth.getGuidesForFicha(user.ficha || "").map(function (fileName) {
           var key   = fileNameToKey(fileName);
           var entry = progMap[key] || {};
-          var tot   = Math.max(0, Number(entry.total)     || 0);
+          // Si el aprendiz AUN no ha abierto/guardado esta guia, no hay entry.total
+          // (0). Sin este fallback, esa guia quedaba en "0/0" y NO restaba del %
+          // general (el denominador la ignoraba por completo) -> un aprendiz que
+          // termino UNA guia de 4 aparecia con 100% general. Se usa el total FIJO
+          // de GUIDE_PROGRESS_CONFIG como denominador real de esa guia.
+          var config = auth.GUIDE_PROGRESS_CONFIG && auth.GUIDE_PROGRESS_CONFIG[fileName];
+          var configTotal = Math.max(0, Number(config && config.total) || 0);
+          var tot   = Math.max(0, Number(entry.total) || 0) || configTotal;
           var comp  = Math.min(Math.max(0, Number(entry.completed) || 0), tot);
           var pct   = tot ? Math.round((comp / tot) * 100) : 0;
           return {
