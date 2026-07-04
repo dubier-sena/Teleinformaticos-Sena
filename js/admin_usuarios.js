@@ -3748,29 +3748,4 @@
     // (0 lecturas a Firestore). Las mutaciones y "Actualizar datos" bajan fresco.
     await loadUsers({ useCache: true });
   });
-
-  // DEBUG TEMPORAL: expone internals para diagnosticar en vivo por consola por
-  // que Respuestas/Progreso no reflejan datos que SI estan en la nube. Quitar
-  // una vez resuelto (ver fixes-jul3-panel-admin en memoria).
-  window.__adminDebug = {
-    getUsersCount: () => state.users.length,
-    getUser: (usernameKey) => getUser(usernameKey),
-    hydrate: () => ensureGuideStatesHydrated(),
-    readState: (usernameKey, fileName) => readStudentGuideState(usernameKey, fileName),
-    isHydrated: () => guideStatesHydrated,
-    // Hidrata UN solo aprendiz/guia (sin barrer los 148 usuarios): replica el
-    // cuerpo de una tarea de ensureGuideStatesHydrated para probar el
-    // mecanismo de cache sin esperar el barrido completo.
-    hydrateOne: async (usernameKey, fileName) => {
-      const db = window._firebaseDb;
-      const config = getGuideCloudConfig(fileName);
-      const stateKey = getGuideStateKey(fileName);
-      if (!db || !config || !stateKey) return { ok: false, reason: "config-missing" };
-      const cloudSnapshot = await db.cloudGetGuideData(getStudentCloudScope(usernameKey), config.cloudFileName);
-      if (!cloudSnapshot) return { ok: false, reason: "no-cloud-snapshot" };
-      const storageKey = auth.getStudentStorageKey(usernameKey, stateKey, { area: "guide-data" });
-      guideDataCacheSet(storageKey, cloudSnapshot.state, cloudSnapshot.updatedAt ? { updatedAt: cloudSnapshot.updatedAt, updatedBy: cloudSnapshot.updatedBy || "cloud" } : {});
-      return { ok: true, storageKey, stateKeys: Object.keys(cloudSnapshot.state || {}) };
-    },
-  };
 })();
