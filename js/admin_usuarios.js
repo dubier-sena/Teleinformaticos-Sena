@@ -2842,6 +2842,7 @@
         <select id="grades-ficha-filter">${getFichaOptions("", false)}</select>
         <select id="grades-guide-filter" disabled>${guideFilterOptionsMarkup("", "")}</select>
       </div>
+      <p class="grades-scroll-hint" id="grades-scroll-hint" hidden>&#8596; Esta guia tiene varias actividades: desliza la tabla horizontalmente para verlas todas. La columna "Aprendiz" y "Aprobadas" quedan siempre visibles.</p>
       <div id="grades-grid" class="grades-grid"></div>
     `;
     ensureGradeSolutionsBank();   // precarga el banco para aplicar soluciones al aprobar
@@ -2891,6 +2892,8 @@
       return `<tr data-grade-row="${escapeHtml(user.usernameKey)}"><td>${escapeHtml(user.fullName)}</td>${cells}`
         + `<td class="grades-approved-cell">${approvalCellText(approved, activities.length)}</td></tr>`;
     }).join("");
+    const scrollHintEl = byId("grades-scroll-hint");
+    if (scrollHintEl) scrollHintEl.hidden = activities.length <= 5;
     grid.innerHTML = `<table class="admin-data-table grades-table"><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table>`;
   }
 
