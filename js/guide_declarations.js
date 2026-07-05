@@ -71,6 +71,12 @@
     competencia: COMPETENCIA,
     resultado: RAP_HERRAMIENTAS,
     activities: [
+      // Actividades 1 y 2 (mision de arranque): juegos de puntaje (sopa de letras /
+      // relacionar herramienta-funcion), sin campo de texto que calificar -- se
+      // comparten el mismo numero para que Calificaciones las una en UNA sola
+      // columna (mismo patron que 3.3.5 Ciberseguridad, mas abajo).
+      { id: "sopaletras311",   number: "3.1.1", label: "Sopa de letras de conceptos basicos", shortName: "SopaLetras",      type: "form" },
+      { id: "relaciona311",    number: "3.1.1", label: "Relaciona la herramienta con su funcion", shortName: "Relaciona",   type: "form" },
       { id: "analisis313",     number: "3.1.3", label: "Bitacora de analisis",              shortName: "Bitacora",        type: "form" },
       { id: "matriz322",       number: "3.2.2", label: "Matriz de Diagnostico Digital",     shortName: "MatrizDigital",   type: "form" },
       { id: "fichaCaso",       number: "3.2.1", label: "Ficha de caso",                     shortName: "FichaCaso",       type: "form" },

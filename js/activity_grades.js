@@ -31,6 +31,7 @@
     "guia-02-herramientas": {
       label: "Guía 2 — Operar herramientas informáticas y digitales",
       activities: [
+        { id: "sopaletras311",    label: "3.1.1 Actividades de inicio (Sopa de letras y Relaciona herramienta-función)" },
         { id: "analisis313",      label: "3.1.3 Bitácora de análisis" },
         { id: "fichaCaso",        label: "3.2.1 Ficha de caso" },
         { id: "matriz322",        label: "3.2.2 Matriz de Diagnóstico Digital" },
