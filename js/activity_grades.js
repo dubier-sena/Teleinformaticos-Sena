@@ -123,6 +123,18 @@
         { id: "caso342",        label: "3.4.2 Laboratorio integral - DHCP/DNS/AP/NAT" },
       ],
     },
+    // Practica informal de Python (mini-retos con numeracion simple "1".."21A",
+    // no entregables RAP oficiales -- por eso se dejo fuera del catalogo en el
+    // commit d2dc6fa). El usuario pidio incluirla igual, como UNA sola columna
+    // combinada (misma logica que Sopa de letras/Ciberseguridad). Se usa
+    // "retoPython" (5.1, Reto integrador) por ser la UNICA actividad de Python
+    // con numeracion jerarquica real -- representa el cierre de la practica.
+    "guia-python": {
+      label: "Guía - Práctica de Python",
+      activities: [
+        { id: "retoPython", label: "Práctica de Python (retos + reto integrador)" },
+      ],
+    },
   };
 
   var GRADES_STORAGE_KEY = "grades";
@@ -381,6 +393,7 @@
     "santa-barbara-10b-guia-02-redes-rap01.html": "guia-redes-rap01",
     "santa-barbara-10a-guia-03-redes-rap02.html": "guia-redes-rap02",
     "santa-barbara-10b-guia-03-redes-rap02.html": "guia-redes-rap02",
+    "santa-barbara-guia-python.html": "guia-python",
   };
 
   // ── Banco de respuestas: relleno de actividades aprobadas y vacías ──────────
