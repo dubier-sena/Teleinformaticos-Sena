@@ -2561,8 +2561,11 @@ function toggleCheck(e, id, navId) {
 }
 
 function updateProgress() {
-  const total = document.querySelectorAll('.activity-check').length;
-  const done = document.querySelectorAll('.activity-check.checked').length;
+  // 3.1.1 (chk-311) es la dinamica de romper el hielo -- "Entrega en
+  // plataforma: no aplica, el instructor registra la participacion" (segun la
+  // propia guia). No es un entregable evaluable, no debe contar en el %.
+  const total = document.querySelectorAll('.activity-check:not(#chk-311)').length;
+  const done = document.querySelectorAll('.activity-check.checked:not(#chk-311)').length;
   const pct = Math.round((done / total) * 100);
   document.getElementById('progressBar').style.width = pct + '%';
   document.getElementById('progressValue').textContent = pct + '%';
