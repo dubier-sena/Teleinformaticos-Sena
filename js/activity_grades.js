@@ -24,6 +24,10 @@
         { id: "arbol312",       label: "3.1.2 Árbol de la Vida" },
         { id: "sena331",        label: "3.3.1 Análisis de Símbolos SENA" },
         { id: "programa332",    label: "3.3.2 Cuestionario Diseño Curricular" },
+        // Ya tenia su punto de anclaje listo en la guia (#reglamento333GradeMount)
+        // pero se quedo fuera del catalogo por descuido -- el admin no podia
+        // calificarla aunque la guia ya esperaba mostrar el badge.
+        { id: "reglamento333",  label: "3.3.3 Reglamento del Aprendiz", mount: "#reglamento333GradeMount" },
         { id: "plataformas334", label: "3.3.4 Taller de Plataformas Tecnológicas" },
         { id: "portafolio342",  label: "3.4.2 Portafolio de Evidencias" },
       ],
