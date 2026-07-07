@@ -1382,6 +1382,7 @@
                   <li>Anota las definiciones de los términos encontrados para incluirlas en tu portafolio.</li>
                 </ul>
               </div>
+              <div id="sopaletras321GradeMount" style="margin-top:8px"></div>
             </div>
           </div>
 
@@ -1884,9 +1885,13 @@
 
               <div style="margin-top:14px">
                 <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px">✍️ Redacte aquí su compromiso personal:</label>
-                <textarea class="tree-textarea" id="compromiso-text" style="min-height:120px" placeholder="Escribe tu compromiso como aprendiz SENA..." oninput="saveCompromiso()"></textarea>
+                <textarea class="tree-textarea" id="compromiso-text" data-store="compromiso:texto" style="min-height:120px" placeholder="Escribe tu compromiso como aprendiz SENA..." oninput="saveCompromiso()"></textarea>
                 <p style="font-size:12px;color:#5f7468;margin:4px 0 0">Sus respuestas se guardan automáticamente mientras escribe.</p>
               </div>
+              <div class="induccion-locked-note" id="compromiso341LockedNote" hidden>
+                🔒 Esta actividad ya fue calificada. Para modificar tu respuesta, pide a tu instructor que la habilite de nuevo.
+              </div>
+              <div id="compromiso341GradeMount" style="margin-top:8px"></div>
 
               <div class="info-box" id="portafolio342Delivery" data-induccion-delivery="portafolio342" style="margin-top:12px">
                 <div class="label">📋 Datos de la actividad</div>
@@ -2681,6 +2686,14 @@ async function bridgeInduccionStateSync() {
     'dc-ra-comp': 'curriculo:resultados-de-aprendizaje-por-competencia',
     'dc-tematica': 'curriculo:tematica-en-la-que-mas-desea-profundizar',
   });
+  // Compromiso: la llave vieja guarda el texto plano (no un objeto), no la
+  // funcion generica migrateLegacyInto (que espera JSON).
+  try {
+    const compromisoRaw = readPageStorage('compromiso');
+    if (compromisoRaw && (state['compromiso:texto'] == null || String(state['compromiso:texto']).trim() === '')) {
+      state['compromiso:texto'] = compromisoRaw;
+    }
+  } catch (e) { /* datos legados invalidos, se ignoran */ }
 
   // 2) Trae el estado real de la nube (si hay uno mas nuevo, o si local esta
   //    vacio, se aplica) -- sin usar applyCloudStateSnapshot (ver nota arriba).
@@ -2735,6 +2748,7 @@ async function bridgeInduccionStateSync() {
     var lockMap = {
       arbol312: { fields: ['tree-raices', 'tree-tronco', 'tree-frutos', 'tree-hojas', 'tree-parasito'], note: 'arbol312LockedNote' },
       programa332: { fields: ['dc-nombre', 'dc-codigo', 'dc-duracion', 'dc-campo', 'dc-productos', 'dc-num-comp', 'dc-num-ra', 'dc-comp-esp', 'dc-ra-comp', 'dc-tematica'], note: 'programa332LockedNote' },
+      compromiso341: { fields: ['compromiso-text'], note: 'compromiso341LockedNote' },
     };
     Object.keys(lockMap).forEach(function (actId) {
       if (grades[actId] !== 'A' && grades[actId] !== 'D') return;
