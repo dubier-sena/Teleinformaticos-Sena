@@ -596,11 +596,17 @@ window.addEventListener("activity-deadlines-updated", installInduccionDeadlineCo
 // Las notas las lee activity_grades.js desde Firestore (sena_portal_grades): el
 // admin las escribe, el aprendiz lee solo las suyas. Ya no hay archivo semilla.
 
+// Debe reflejar EXACTAMENTE el catalogo de "guia-01-induccion" en
+// activity_grades.js (GRADE_CATALOG) -- estaba desactualizada (le faltaban
+// plataformas334/portafolio342 e incluia un "reglamento333" que nunca existio
+// como actividad calificable), lo que dejaba esas dos sin badge cuando esta
+// funcion llegaba a correr antes que autoRenderForFile.
 const INDUCCION_GRADE_ACTIVITIES = [
-  { activityId: "arbol312",      mountSelector: "#arbol312DeadlineControls" },
-  { activityId: "sena331",       mountSelector: "#sena331DeadlineControls" },
-  { activityId: "programa332",   mountSelector: "#programa332DeadlineControls" },
-  { activityId: "reglamento333", mountSelector: "#reglamento333GradeMount" },
+  { activityId: "arbol312",       mountSelector: "#arbol312DeadlineControls" },
+  { activityId: "sena331",        mountSelector: "#sena331DeadlineControls" },
+  { activityId: "programa332",    mountSelector: "#programa332DeadlineControls" },
+  { activityId: "plataformas334", mountSelector: "#plataformas334DeadlineControls" },
+  { activityId: "portafolio342",  mountSelector: "#portafolio342DeadlineControls" },
 ];
 
 async function renderInduccionGradeBadges() {

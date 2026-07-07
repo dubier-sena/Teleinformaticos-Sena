@@ -1159,7 +1159,7 @@
                       <div class="tp-q">¿Qué fortalezas tiene para enfrentar este proceso formativo?</div>
                     </div>
                   </div>
-                  <textarea class="tree-textarea" id="tree-raices" placeholder="Escribe tus fortalezas aquí..." oninput="saveTreeData()"></textarea>
+                  <textarea class="tree-textarea" id="tree-raices" data-store="arbol:raices" placeholder="Escribe tus fortalezas aquí..." oninput="saveTreeData()"></textarea>
                 </div>
                 <div class="tree-part">
                   <div class="tree-part-header">
@@ -1169,7 +1169,7 @@
                       <div class="tp-q">¿Cuáles son sus principales soportes (familia, metas, vocación)?</div>
                     </div>
                   </div>
-                  <textarea class="tree-textarea" id="tree-tronco" placeholder="Escribe tus soportes aquí..." oninput="saveTreeData()"></textarea>
+                  <textarea class="tree-textarea" id="tree-tronco" data-store="arbol:tronco" placeholder="Escribe tus soportes aquí..." oninput="saveTreeData()"></textarea>
                 </div>
                 <div class="tree-part">
                   <div class="tree-part-header">
@@ -1179,7 +1179,7 @@
                       <div class="tp-q">¿Qué metas y propósitos pretende alcanzar con esta formación?</div>
                     </div>
                   </div>
-                  <textarea class="tree-textarea" id="tree-frutos" placeholder="Escribe tus metas aquí..." oninput="saveTreeData()"></textarea>
+                  <textarea class="tree-textarea" id="tree-frutos" data-store="arbol:frutos" placeholder="Escribe tus metas aquí..." oninput="saveTreeData()"></textarea>
                 </div>
                 <div class="tree-part">
                   <div class="tree-part-header">
@@ -1189,7 +1189,7 @@
                       <div class="tp-q">¿Qué conocimientos en tecnología e informática quiere lograr?</div>
                     </div>
                   </div>
-                  <textarea class="tree-textarea" id="tree-hojas" placeholder="Escribe los conocimientos que quieres adquirir..." oninput="saveTreeData()"></textarea>
+                  <textarea class="tree-textarea" id="tree-hojas" data-store="arbol:hojas" placeholder="Escribe los conocimientos que quieres adquirir..." oninput="saveTreeData()"></textarea>
                 </div>
                 <div class="tree-part">
                   <div class="tree-part-header">
@@ -1199,7 +1199,7 @@
                       <div class="tp-q">¿Qué debilidades o dificultades pueden afectar su formación?</div>
                     </div>
                   </div>
-                  <textarea class="tree-textarea" id="tree-parasito" placeholder="Escribe tus debilidades o dificultades..." oninput="saveTreeData()"></textarea>
+                  <textarea class="tree-textarea" id="tree-parasito" data-store="arbol:parasito" placeholder="Escribe tus debilidades o dificultades..." oninput="saveTreeData()"></textarea>
                 </div>
               </div>
               <div style="margin-top:14px">
@@ -1601,16 +1601,16 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr><td>Nombre del Programa</td><td><textarea class="table-input" id="dc-nombre" placeholder="Ingrese su respuesta..." oninput="saveCurricular()"></textarea></td></tr>
-                    <tr><td>Código y versión del Programa</td><td><textarea class="table-input" id="dc-codigo" placeholder="Ingrese su respuesta..." oninput="saveCurricular()"></textarea></td></tr>
-                    <tr><td>Duración total en horas</td><td><textarea class="table-input" id="dc-duracion" placeholder="Ingrese su respuesta..." oninput="saveCurricular()"></textarea></td></tr>
-                    <tr><td>Campo ocupacional del egresado</td><td><textarea class="table-input" id="dc-campo" placeholder="Ingrese su respuesta..." oninput="saveCurricular()"></textarea></td></tr>
-                    <tr><td>Productos del trabajo del egresado</td><td><textarea class="table-input" id="dc-productos" placeholder="Ingrese su respuesta..." oninput="saveCurricular()"></textarea></td></tr>
-                    <tr><td>Número de competencias del programa</td><td><textarea class="table-input" id="dc-num-comp" placeholder="Ingrese su respuesta..." oninput="saveCurricular()"></textarea></td></tr>
-                    <tr><td>Número de resultados de aprendizaje</td><td><textarea class="table-input" id="dc-num-ra" placeholder="Ingrese su respuesta..." oninput="saveCurricular()"></textarea></td></tr>
-                    <tr><td>Competencias específicas (cuáles son)</td><td><textarea class="table-input" id="dc-comp-esp" placeholder="Ingrese su respuesta..." oninput="saveCurricular()" style="min-height:72px"></textarea></td></tr>
-                    <tr><td>Resultados de aprendizaje por competencia</td><td><textarea class="table-input" id="dc-ra-comp" placeholder="Ingrese su respuesta..." oninput="saveCurricular()" style="min-height:72px"></textarea></td></tr>
-                    <tr><td>Temática en la que más desea profundizar</td><td><textarea class="table-input" id="dc-tematica" placeholder="Ingrese su respuesta..." oninput="saveCurricular()"></textarea></td></tr>
+                    <tr><td>Nombre del Programa</td><td><textarea class="table-input" id="dc-nombre" data-store="curriculo:nombre" placeholder="Ingrese su respuesta..." oninput="saveCurricular()"></textarea></td></tr>
+                    <tr><td>Código y versión del Programa</td><td><textarea class="table-input" id="dc-codigo" data-store="curriculo:codigo" placeholder="Ingrese su respuesta..." oninput="saveCurricular()"></textarea></td></tr>
+                    <tr><td>Duración total en horas</td><td><textarea class="table-input" id="dc-duracion" data-store="curriculo:duracion" placeholder="Ingrese su respuesta..." oninput="saveCurricular()"></textarea></td></tr>
+                    <tr><td>Campo ocupacional del egresado</td><td><textarea class="table-input" id="dc-campo" data-store="curriculo:campo" placeholder="Ingrese su respuesta..." oninput="saveCurricular()"></textarea></td></tr>
+                    <tr><td>Productos del trabajo del egresado</td><td><textarea class="table-input" id="dc-productos" data-store="curriculo:productos" placeholder="Ingrese su respuesta..." oninput="saveCurricular()"></textarea></td></tr>
+                    <tr><td>Número de competencias del programa</td><td><textarea class="table-input" id="dc-num-comp" data-store="curriculo:num-comp" placeholder="Ingrese su respuesta..." oninput="saveCurricular()"></textarea></td></tr>
+                    <tr><td>Número de resultados de aprendizaje</td><td><textarea class="table-input" id="dc-num-ra" data-store="curriculo:num-ra" placeholder="Ingrese su respuesta..." oninput="saveCurricular()"></textarea></td></tr>
+                    <tr><td>Competencias específicas (cuáles son)</td><td><textarea class="table-input" id="dc-comp-esp" data-store="curriculo:comp-esp" placeholder="Ingrese su respuesta..." oninput="saveCurricular()" style="min-height:72px"></textarea></td></tr>
+                    <tr><td>Resultados de aprendizaje por competencia</td><td><textarea class="table-input" id="dc-ra-comp" data-store="curriculo:ra-comp" placeholder="Ingrese su respuesta..." oninput="saveCurricular()" style="min-height:72px"></textarea></td></tr>
+                    <tr><td>Temática en la que más desea profundizar</td><td><textarea class="table-input" id="dc-tematica" data-store="curriculo:tematica" placeholder="Ingrese su respuesta..." oninput="saveCurricular()"></textarea></td></tr>
                   </tbody>
                 </table>
               </div>
