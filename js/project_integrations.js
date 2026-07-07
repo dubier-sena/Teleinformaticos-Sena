@@ -38,6 +38,19 @@
         "3168850": "https://drive.google.com/drive/folders/1fBPzXHU0OHDmKa18Y6V2tnomLyYWgiLp",
         "3168852": "https://drive.google.com/drive/folders/1p9HdGinK1me8PsbaLHYio_OC-idAmorR",
       },
+      // Link de SOLO LECTURA (vista) al archivo de Drive del acuerdo de Etapa
+      // Productiva de cada ficha (contiene cedula y datos de TODO el grupo, por
+      // eso NO vive en este repo publico). Compartir cada archivo unicamente con
+      // esa ficha/grupo, nunca con "cualquiera con el enlace". Pendiente de llenar
+      // con los links reales por ficha.
+      fichaAcuerdoExcelUrls: {
+        "3441939": "",
+        "3441942": "",
+        "3441944": "",
+        "3441950": "",
+        "3168850": "",
+        "3168852": "",
+      },
     },
     window.PROJECT_INTEGRATIONS || {}
   );
