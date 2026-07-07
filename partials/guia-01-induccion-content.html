@@ -312,6 +312,12 @@
     font-family: inherit; background: #fafafa; transition: border-color .2s;
   }
   .tree-textarea:focus { outline: none; border-color: var(--sena-green); background: #fff; }
+  .tree-textarea[readonly], .table-input[readonly] {
+    background: #eef1ef; color: #555; cursor: not-allowed;
+  }
+  .induccion-locked-note {
+    font-size: 12px; color: var(--text-muted); margin-top: 6px;
+  }
 
   /* ── Glosario ── */
   .glossary-search {
@@ -1202,6 +1208,9 @@
                   <textarea class="tree-textarea" id="tree-parasito" data-store="arbol:parasito" placeholder="Escribe tus debilidades o dificultades..." oninput="saveTreeData()"></textarea>
                 </div>
               </div>
+              <div class="induccion-locked-note" id="arbol312LockedNote" hidden>
+                🔒 Esta actividad ya fue calificada. Para modificar tus respuestas, pide a tu instructor que la habilite de nuevo.
+              </div>
               <div style="margin-top:14px">
                 <button class="btn-export-word" onclick="openExportModal()">
                   📄 Exportar respuestas a Word
@@ -1613,6 +1622,9 @@
                     <tr><td>Temática en la que más desea profundizar</td><td><textarea class="table-input" id="dc-tematica" data-store="curriculo:tematica-en-la-que-mas-desea-profundizar" placeholder="Ingrese su respuesta..." oninput="saveCurricular()"></textarea></td></tr>
                   </tbody>
                 </table>
+              </div>
+              <div class="induccion-locked-note" id="programa332LockedNote" hidden>
+                🔒 Esta actividad ya fue calificada. Para modificar tus respuestas, pide a tu instructor que la habilite de nuevo.
               </div>
 
               <div class="info-box" id="programa332Delivery" data-induccion-delivery="programa332" style="margin-top:12px">
@@ -2686,9 +2698,60 @@ async function bridgeInduccionStateSync() {
   pendingCloudStateSnapshot = buildCloudStateSnapshot();
   scheduleCloudStateSync();
 
+  // "Tu control de avance" (activity_standard.js) se auto-dibuja UNA sola vez
+  // muy temprano (su propio bucle de reintentos para en cuanto ve la tabla
+  // dibujada aunque sea con `state` vacio) -- lo forzamos a redibujarse ya
+  // con el `state` real (migrado/traido de la nube arriba).
+  function refreshAvancePanel() {
+    if (!window.ActivityStandard || typeof window.ActivityStandard.renderAvancePanel !== 'function') return;
+    if (!document.querySelector('[data-act-std-avance]')) return;
+    window.ActivityStandard.renderAvancePanel({
+      getGuideDataFile: function () { return GUIDE_DATA_FILE; },
+      getState: function () { return state; },
+    });
+  }
+  refreshAvancePanel();
+
+  // 3.1) Si el instructor ya califico (A o D) arbol312/programa332, bloquea
+  //    los campos para que el aprendiz no pueda seguir editando una respuesta
+  //    ya evaluada (mismo criterio que ActivityStandard: solo el admin puede
+  //    re-habilitar). Los demas campos de la guia no tienen nota, no aplica.
+  async function lockGradedInduccionFields() {
+    var authRef = window.portalAuth;
+    var session = authRef && authRef.getCurrentSession ? authRef.getCurrentSession() : null;
+    if (!session || session.role !== 'student' || !session.usernameKey) return;
+    // Se trae DIRECTO de la nube (no del cache local de activity_grades.js):
+    // renderGradeBadges/autoRenderForFile (guia_template.js) tambien esta
+    // llenando ese cache en paralelo de forma asincrona -- depender de el
+    // aqui podria perder la carrera y no bloquear en la primera carga.
+    var db = window._firebaseDb;
+    var grades = {};
+    if (db && typeof db.cloudGetGrades === 'function') {
+      try {
+        var cloud = await db.cloudGetGrades(session.usernameKey);
+        grades = (cloud && cloud['guia-01-induccion']) || {};
+      } catch (e) { /* sin nube: no se bloquea, se reintenta en la proxima carga */ }
+    }
+    var lockMap = {
+      arbol312: { fields: ['tree-raices', 'tree-tronco', 'tree-frutos', 'tree-hojas', 'tree-parasito'], note: 'arbol312LockedNote' },
+      programa332: { fields: ['dc-nombre', 'dc-codigo', 'dc-duracion', 'dc-campo', 'dc-productos', 'dc-num-comp', 'dc-num-ra', 'dc-comp-esp', 'dc-ra-comp', 'dc-tematica'], note: 'programa332LockedNote' },
+    };
+    Object.keys(lockMap).forEach(function (actId) {
+      if (grades[actId] !== 'A' && grades[actId] !== 'D') return;
+      lockMap[actId].fields.forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.readOnly = true;
+      });
+      var note = document.getElementById(lockMap[actId].note);
+      if (note) note.hidden = false;
+    });
+  }
+  lockGradedInduccionFields();
+
   // 4) De aqui en adelante, cualquier cambio en un campo data-store TAMBIEN
-  //    actualiza `state` y programa el guardado a la nube (independiente del
-  //    guardado local viejo que sigue haciendo saveTreeData/saveCurricular).
+  //    actualiza `state`, programa el guardado a la nube (independiente del
+  //    guardado local viejo que sigue haciendo saveTreeData/saveCurricular),
+  //    y refresca "Tu control de avance" para que se vea al instante.
   document.addEventListener('input', function (event) {
     const field = event.target.closest ? event.target.closest('[data-store]') : null;
     if (!field) return;
@@ -2696,6 +2759,7 @@ async function bridgeInduccionStateSync() {
     localStorage.setItem(ACTIVE_STORAGE_KEY, JSON.stringify(state));
     pendingCloudStateSnapshot = buildCloudStateSnapshot();
     scheduleCloudStateSync();
+    refreshAvancePanel();
   });
 }
 
