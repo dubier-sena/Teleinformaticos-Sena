@@ -60,6 +60,35 @@
     return session.role === "student" && Object.prototype.hasOwnProperty.call(fichas, String(session.user?.ficha || ""));
   }
 
+  // Grado 10 (Kennedy y SB) no tiene asesorias ni proyecto de Etapa Productiva
+  // este ano -- solo necesitan descargar/entregar los documentos base (acuerdo +
+  // ficha de inscripcion). Grado 11 (SB 11A/11B) si tiene el flujo completo.
+  function isGrade10Ficha(ficha) {
+    const fichas = (auth && auth.FICHA_MAP) || {};
+    const grupo = String((fichas[String(ficha || "")] || {}).grupo || "");
+    return grupo.indexOf("10") === 0;
+  }
+
+  function applyGrade10DocumentsOnlyView() {
+    ["student-project-summary", "student-project-delivery", "student-tutoring-dates", "student-project-reports"]
+      .forEach(function (id) {
+        const el = getById(id);
+        if (el) el.hidden = true;
+      });
+
+    const intro = getById("student-project-intro");
+    if (intro) {
+      intro.textContent =
+        "Descarga y entrega los documentos de tu Etapa Productiva. Las asesorias y el seguimiento del proyecto se habilitan en grado 11.";
+    }
+
+    setHeaderState(
+      "Documentos de Etapa Productiva",
+      "Descarga la Ficha de inscripcion y el Acuerdo, diligencialos y vuelve a subirlos.",
+      "Documentos"
+    );
+  }
+
   function getPreviewUsernameFromUrl() {
     try {
       const params = new URLSearchParams(window.location.search);
@@ -447,6 +476,10 @@
     const viewModel = buildStudentViewModel(snapshot, usernameKey, session);
     renderStudentProjectView(viewModel);
     renderSupportModules(snapshot, viewModel, session);
+
+    if (session.role === "student" && isGrade10Ficha(session.user?.ficha)) {
+      applyGrade10DocumentsOnlyView();
+    }
   }
 
   document.addEventListener("DOMContentLoaded", function () {
