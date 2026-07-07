@@ -104,9 +104,12 @@
   }
 
   function buildResourcesMarkup() {
-    const project = getMainProject(currentState.viewModel);
     const session = currentState.session;
-    const canUpload = isStudentUploader(session) && !!project;
+    // Los documentos base (ficha de inscripcion, acuerdo) se entregan ANTES de
+    // que exista un proyecto vinculado -- de hecho, el acuerdo es justamente lo
+    // que inicia ese proceso. No condicionar la entrega a tener un proyecto ya
+    // asignado (eso si aplica al "Avance del proyecto", ver renderProjectDelivery).
+    const canUpload = isStudentUploader(session);
     const ficha = session?.user?.ficha || "";
 
     return `
@@ -188,9 +191,12 @@
         const docId = btn.getAttribute("data-delivery-doc");
         const doc = PROJECT_DOCUMENTS.find(function (d) { return d.id === docId; });
         if (!doc) return;
-        const project = getMainProject(currentState.viewModel);
         const session = currentState.session;
-        if (!project || !session) return;
+        if (!session) return;
+        // Sin proyecto vinculado (caso normal en grado 10, que aun no tiene uno)
+        // se entrega igual; getMainProject devuelve null y openDocumentDeliveryModal
+        // ya usa la ficha/grupo de la sesion como respaldo.
+        const project = getMainProject(currentState.viewModel);
         openDocumentDeliveryModal(doc, project, session);
       });
     });
@@ -203,11 +209,11 @@
     sharedDelivery.openDeliveryModal({
       guideLabel: "Etapa Productiva",
       activityLabel: doc.deliveryLabel,
-      activityTitle: project.projectTitle || "Proyecto",
+      activityTitle: project?.projectTitle || "Proyecto",
       activityNumber: "",
-      projectId: project.id,
-      ficha: project.ficha || session?.user?.ficha || "",
-      grupo: project.grupo || session?.user?.grupo || "",
+      projectId: project?.id || "",
+      ficha: project?.ficha || session?.user?.ficha || "",
+      grupo: project?.grupo || session?.user?.grupo || "",
     });
   }
 
