@@ -6,6 +6,7 @@
   function getCurrentPageKey() {
     var path = window.location.pathname.toLowerCase();
     if (path.includes("calendario")) return "calendario";
+    if (path.includes("autorizacion-firma")) return "firma";
     if (path.includes("panel-administrativo")) return "panel";
     if (path.includes("etapa-productiva")) return "etapa";
     if (
@@ -121,6 +122,9 @@
       '          <a class="app-navbar__drop-link" href="' + p + 'etapa-productiva-estudiante.html" role="menuitem">Mi proyecto</a>',
       '        </div>',
       '      </div>',
+
+      // Autorizacion de uso de firma (cualquier sesion; no depende de ficha/guia)
+      '      <a class="app-navbar__link" href="' + p + 'pages/auxiliares/autorizacion-firma.html" data-nav-key="firma">Autorización de firma</a>',
 
       // Panel Admin (admin only)
       '      <a class="app-navbar__link app-navbar__admin-only" href="' + p + 'panel-administrativo-usuarios.html" data-nav-key="panel" style="display:none">Panel Admin</a>',

@@ -74,6 +74,7 @@
   var COL_GRADES = "sena_portal_grades";
   var COL_GRADE_SOLUTIONS = "sena_portal_grade_solutions";
   var COL_IMPROVEMENT_PLANS = "sena_portal_improvement_plans";
+  var COL_SIGNATURE_AUTH = "sena_portal_signature_auth";
   var CALENDAR_FALLBACK_PREFIX = "__calendar__:";
   var AVAILABILITY_DOC_ID = CALENDAR_FALLBACK_PREFIX + "calendario_2026_admin";
   var GUIDE_DATA_FALLBACK_PREFIX = "__guide_data__:";
@@ -1246,6 +1247,24 @@
       grades: grades && typeof grades === "object" ? grades : {},
       updatedAt: new Date().toISOString(),
     });
+  }
+
+  // ── Autorizacion de uso de firma (evidencia de consentimiento) ────────────
+  // El aprendiz sube una foto/escaneo de su firma (a Drive, via Apps Script) y
+  // este doc queda como REGISTRO de que ya autorizo. El aprendiz lee/crea/
+  // actualiza el suyo (rule isOwnerByUsernameKey) hasta que status=="delivered";
+  // desde ahi solo el admin puede volver a escribir (re-habilitar reenvio).
+  async function cloudGetSignatureAuth(usernameKey) {
+    if (!usernameKey) return null;
+    return fsGet(COL_SIGNATURE_AUTH, usernameKey);
+  }
+
+  async function cloudSaveSignatureAuth(usernameKey, data) {
+    if (!usernameKey) return false;
+    return fsPatch(COL_SIGNATURE_AUTH, usernameKey, Object.assign({}, data, {
+      usernameKey: usernameKey,
+      updatedAt: new Date().toISOString(),
+    }));
   }
 
   // ── Banco de respuestas modelo (SOLO admin lo lee/escribe, rule isAdmin) ──
@@ -2610,6 +2629,8 @@
     adminMarkActivityDelivered: adminMarkActivityDelivered,
     cloudGetGrades: cloudGetGrades,
     cloudSaveGrades: cloudSaveGrades,
+    cloudGetSignatureAuth: cloudGetSignatureAuth,
+    cloudSaveSignatureAuth: cloudSaveSignatureAuth,
     cloudGetGradeSolutions: cloudGetGradeSolutions,
     cloudSaveGradeSolutions: cloudSaveGradeSolutions,
     cloudGetImprovementPlans: cloudGetImprovementPlans,

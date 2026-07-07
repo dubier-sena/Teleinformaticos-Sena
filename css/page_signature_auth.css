@@ -1,0 +1,86 @@
+/* css/page_signature_auth.css — pagina "Autorizacion de uso de firma" */
+
+.sig-hero__inner {
+  padding: 40px 0 56px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.sig-hero__inner h1 {
+  margin: var(--space-2) 0 0;
+  font: var(--weight-bold) var(--font-size-2xl)/1.2 var(--font-display, var(--font-body));
+}
+
+.sig-hero__inner p {
+  margin: 0;
+  max-width: 640px;
+  opacity: 0.92;
+}
+
+.sig-main {
+  padding: 32px 0 56px;
+}
+
+.sig-card {
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.sig-card h2 {
+  margin: 0;
+  font-size: var(--font-size-lg);
+}
+
+.sig-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+}
+
+.sig-meta__row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--font-size-sm);
+}
+
+.sig-meta__key {
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.sig-confirmation {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.sig-confirmation dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+}
+
+.sig-confirmation dt {
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.sig-confirmation dd {
+  margin: 0;
+  font-weight: var(--weight-semibold);
+}
+
+.sig-status {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+}
