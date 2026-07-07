@@ -2,7 +2,6 @@
   const auth = window.portalAuth || null;
   const store = window.productiveStageStore || null;
   const projectDelivery = window.productiveStageProjectDelivery || null;
-  const ALLOWED_FICHAS = ["3168850", "3168852"];
 
   function getById(id) {
     return document.getElementById(id);
@@ -43,6 +42,11 @@
     return "student-status student-status--" + normalized;
   }
 
+  // Antes solo dejaba pasar a SB 11A/11B (unicas con proyecto de etapa productiva
+  // en ese momento). El acuerdo de seleccion de Etapa Productiva ahora aplica a
+  // las 6 fichas, asi que cualquier ficha real del portal puede entrar; las
+  // secciones de proyecto/avance/informes de un aprendiz sin proyecto vinculado
+  // ya muestran su estado vacio ("Cuando el instructor vincule tu nombre...").
   function isAllowedStudentSession(session) {
     if (!session) {
       return false;
@@ -52,7 +56,8 @@
       return true;
     }
 
-    return session.role === "student" && ALLOWED_FICHAS.includes(String(session.user?.ficha || ""));
+    const fichas = (auth && auth.FICHA_MAP) || {};
+    return session.role === "student" && Object.prototype.hasOwnProperty.call(fichas, String(session.user?.ficha || ""));
   }
 
   function getPreviewUsernameFromUrl() {
@@ -416,13 +421,13 @@
         renderTutoringDates();
         renderEmptyState(
           "Vista local — Sin sesion activa",
-          "Para ver tu proyecto inicia sesion desde el portal. Esta seccion solo esta disponible para aprendices de 11A y 11B.",
+          "Para ver tu proyecto inicia sesion desde el portal.",
           "Sin sesion"
         );
         return;
       }
       auth.setFlashMessage(
-        "Esta vista privada de etapa productiva solo esta disponible para los aprendices autorizados de 11A y 11B.",
+        "Esta vista privada de etapa productiva solo esta disponible para aprendices con sesion activa.",
         "warn"
       );
       window.location.replace("index.html");
