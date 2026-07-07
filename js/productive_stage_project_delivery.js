@@ -32,6 +32,20 @@
       href: "assets/materiales/etapa-productiva/2.1.%20Anexo%20financiero.xlsx",
       fileName: "2.1. Anexo financiero.xlsx",
     },
+    {
+      id: "acuerdo-etapa-productiva",
+      type: "Acuerdo del grupo",
+      title: "Acuerdo de seleccion de Etapa Productiva",
+      description:
+        "Formato con los datos ya diligenciados de tu grupo (ficha). Descargalo, revisa tu fila, firmalo y vuelve a subirlo.",
+      // El archivo VIVE en Drive (no en este repo publico): contiene cedula y
+      // datos de TODO el grupo, no solo del aprendiz que lo descarga. El link
+      // real por ficha se resuelve en tiempo de ejecucion via
+      // PROJECT_INTEGRATIONS.fichaAcuerdoExcelUrls (ver project_integrations.js).
+      hrefByFicha: true,
+      fileName: "Acuerdo Etapa Productiva.xlsx",
+      deliveryLabel: "Acuerdo de Etapa Productiva",
+    },
   ];
 
   let currentState = {
@@ -80,10 +94,20 @@
     return !!(session && session.role === "student" && session.user);
   }
 
+  // Documentos "hrefByFicha": el archivo real no vive en este repo (puede traer
+  // datos de todo el grupo, p. ej. el acuerdo con cedulas de los aprendices) sino
+  // en una carpeta/archivo de Drive con permisos acotados a esa ficha. El link se
+  // resuelve en tiempo de ejecucion desde PROJECT_INTEGRATIONS.fichaAcuerdoExcelUrls.
+  function resolveFichaHref(ficha) {
+    const urls = window.PROJECT_INTEGRATIONS && window.PROJECT_INTEGRATIONS.fichaAcuerdoExcelUrls;
+    return (urls && urls[String(ficha || "")]) || "";
+  }
+
   function buildResourcesMarkup() {
     const project = getMainProject(currentState.viewModel);
     const session = currentState.session;
     const canUpload = isStudentUploader(session) && !!project;
+    const ficha = session?.user?.ficha || "";
 
     return `
       <div class="student-project-downloads">
@@ -98,15 +122,20 @@
                >Entregar</button>`
             : "";
 
+          const resolvedHref = documentItem.hrefByFicha ? resolveFichaHref(ficha) : documentItem.href;
+          const downloadBtn = resolvedHref
+            ? `<a class="app-btn app-btn--primary" href="${escapeHtml(resolvedHref)}" target="_blank" rel="noopener noreferrer" ${documentItem.hrefByFicha ? "" : `download="${escapeHtml(documentItem.fileName)}"`}>
+                 Descargar
+               </a>`
+            : `<span class="student-project-download-card__unavailable">Aun no disponible para tu ficha. Consulta con tu instructor.</span>`;
+
           return `
             <article class="student-project-download-card">
               <span class="student-project-download-card__type">${escapeHtml(documentItem.type)}</span>
               <h4>${escapeHtml(documentItem.title)}</h4>
               <p>${escapeHtml(documentItem.description)}</p>
               <div class="student-project-download-card__actions">
-                <a class="app-btn app-btn--primary" href="${escapeHtml(documentItem.href)}" download="${escapeHtml(documentItem.fileName)}">
-                  Descargar
-                </a>
+                ${downloadBtn}
                 ${deliveryBtn}
               </div>
             </article>
