@@ -1601,16 +1601,16 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr><td>Nombre del Programa</td><td><textarea class="table-input" id="dc-nombre" data-store="curriculo:nombre" placeholder="Ingrese su respuesta..." oninput="saveCurricular()"></textarea></td></tr>
-                    <tr><td>Código y versión del Programa</td><td><textarea class="table-input" id="dc-codigo" data-store="curriculo:codigo" placeholder="Ingrese su respuesta..." oninput="saveCurricular()"></textarea></td></tr>
-                    <tr><td>Duración total en horas</td><td><textarea class="table-input" id="dc-duracion" data-store="curriculo:duracion" placeholder="Ingrese su respuesta..." oninput="saveCurricular()"></textarea></td></tr>
-                    <tr><td>Campo ocupacional del egresado</td><td><textarea class="table-input" id="dc-campo" data-store="curriculo:campo" placeholder="Ingrese su respuesta..." oninput="saveCurricular()"></textarea></td></tr>
-                    <tr><td>Productos del trabajo del egresado</td><td><textarea class="table-input" id="dc-productos" data-store="curriculo:productos" placeholder="Ingrese su respuesta..." oninput="saveCurricular()"></textarea></td></tr>
-                    <tr><td>Número de competencias del programa</td><td><textarea class="table-input" id="dc-num-comp" data-store="curriculo:num-comp" placeholder="Ingrese su respuesta..." oninput="saveCurricular()"></textarea></td></tr>
-                    <tr><td>Número de resultados de aprendizaje</td><td><textarea class="table-input" id="dc-num-ra" data-store="curriculo:num-ra" placeholder="Ingrese su respuesta..." oninput="saveCurricular()"></textarea></td></tr>
-                    <tr><td>Competencias específicas (cuáles son)</td><td><textarea class="table-input" id="dc-comp-esp" data-store="curriculo:comp-esp" placeholder="Ingrese su respuesta..." oninput="saveCurricular()" style="min-height:72px"></textarea></td></tr>
-                    <tr><td>Resultados de aprendizaje por competencia</td><td><textarea class="table-input" id="dc-ra-comp" data-store="curriculo:ra-comp" placeholder="Ingrese su respuesta..." oninput="saveCurricular()" style="min-height:72px"></textarea></td></tr>
-                    <tr><td>Temática en la que más desea profundizar</td><td><textarea class="table-input" id="dc-tematica" data-store="curriculo:tematica" placeholder="Ingrese su respuesta..." oninput="saveCurricular()"></textarea></td></tr>
+                    <tr><td>Nombre del Programa</td><td><textarea class="table-input" id="dc-nombre" data-store="curriculo:nombre-del-programa" placeholder="Ingrese su respuesta..." oninput="saveCurricular()"></textarea></td></tr>
+                    <tr><td>Código y versión del Programa</td><td><textarea class="table-input" id="dc-codigo" data-store="curriculo:codigo-y-version-del-programa" placeholder="Ingrese su respuesta..." oninput="saveCurricular()"></textarea></td></tr>
+                    <tr><td>Duración total en horas</td><td><textarea class="table-input" id="dc-duracion" data-store="curriculo:duracion-total-en-horas" placeholder="Ingrese su respuesta..." oninput="saveCurricular()"></textarea></td></tr>
+                    <tr><td>Campo ocupacional del egresado</td><td><textarea class="table-input" id="dc-campo" data-store="curriculo:campo-ocupacional-del-egresado" placeholder="Ingrese su respuesta..." oninput="saveCurricular()"></textarea></td></tr>
+                    <tr><td>Productos del trabajo del egresado</td><td><textarea class="table-input" id="dc-productos" data-store="curriculo:productos-del-trabajo-del-egresado" placeholder="Ingrese su respuesta..." oninput="saveCurricular()"></textarea></td></tr>
+                    <tr><td>Número de competencias del programa</td><td><textarea class="table-input" id="dc-num-comp" data-store="curriculo:numero-de-competencias-del-programa" placeholder="Ingrese su respuesta..." oninput="saveCurricular()"></textarea></td></tr>
+                    <tr><td>Número de resultados de aprendizaje</td><td><textarea class="table-input" id="dc-num-ra" data-store="curriculo:numero-de-resultados-de-aprendizaje" placeholder="Ingrese su respuesta..." oninput="saveCurricular()"></textarea></td></tr>
+                    <tr><td>Competencias específicas (cuáles son)</td><td><textarea class="table-input" id="dc-comp-esp" data-store="curriculo:competencias-especificas-cuales-son" placeholder="Ingrese su respuesta..." oninput="saveCurricular()" style="min-height:72px"></textarea></td></tr>
+                    <tr><td>Resultados de aprendizaje por competencia</td><td><textarea class="table-input" id="dc-ra-comp" data-store="curriculo:resultados-de-aprendizaje-por-competencia" placeholder="Ingrese su respuesta..." oninput="saveCurricular()" style="min-height:72px"></textarea></td></tr>
+                    <tr><td>Temática en la que más desea profundizar</td><td><textarea class="table-input" id="dc-tematica" data-store="curriculo:tematica-en-la-que-mas-desea-profundizar" placeholder="Ingrese su respuesta..." oninput="saveCurricular()"></textarea></td></tr>
                   </tbody>
                 </table>
               </div>
@@ -2618,6 +2618,87 @@ function saveAll() {
   setTimeout(() => { btn.textContent = 'Listo'; btn.classList.remove('saved'); }, 2000);
 }
 
+// ── Puente hacia la sincronizacion real (js/script_induccion.js) ───────────
+// Arbol de la Vida y Cuestionario Curricular guardaban SOLO en una llave de
+// localStorage aparte (arbol-vida/curricular, sin nube). Este puente los
+// conecta al `state`/sincronizacion real de script_induccion.js -- que se
+// carga ANTES que este script y comparte el mismo scope global de pagina
+// (scripts clasicos, no modulos) -- reutilizando sus variables/funciones de
+// bajo nivel (state, ACTIVE_STORAGE_KEY, buildCloudStateSnapshot,
+// scheduleCloudStateSync, hydrateFields, etc).
+// A PROPOSITO no se llaman saveState()/applyCloudStateSnapshot()/
+// updateProgress() de script_induccion.js: esas asumen contenedores
+// (#treePromptGrid, etc) y un progreso basado en [data-track] que esta guia
+// YA NO tiene (usa el markup estatico de abajo + casillas .activity-check) --
+// llamarlas rompe la pagina (getElementById null) o pisa la barra de progreso
+// real (la de casillas) con 0%.
+async function bridgeInduccionStateSync() {
+  if (typeof state === 'undefined' || typeof getCloudScopeKey !== 'function') return;
+  if (!getCloudScopeKey()) return;
+
+  // 1) Migra UNA vez lo que ya haya en las llaves viejas de localStorage hacia
+  //    `state` -- solo rellena huecos, nunca pisa un campo que `state` ya trae
+  //    (para no perder algo mas nuevo que ya haya llegado de la nube).
+  function migrateLegacyInto(oldKey, mapping) {
+    try {
+      const raw = readPageStorage(oldKey);
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      Object.keys(mapping).forEach(function (localField) {
+        const storeKey = mapping[localField];
+        if (state[storeKey] != null && String(state[storeKey]).trim() !== '') return;
+        const value = data[localField];
+        if (value == null || String(value).trim() === '') return;
+        state[storeKey] = value;
+      });
+    } catch (e) { /* datos legados invalidos, se ignoran */ }
+  }
+  migrateLegacyInto('arbol-vida', {
+    raices: 'arbol:raices', tronco: 'arbol:tronco', frutos: 'arbol:frutos',
+    hojas: 'arbol:hojas', parasito: 'arbol:parasito',
+  });
+  migrateLegacyInto('curricular', {
+    'dc-nombre': 'curriculo:nombre-del-programa',
+    'dc-codigo': 'curriculo:codigo-y-version-del-programa',
+    'dc-duracion': 'curriculo:duracion-total-en-horas',
+    'dc-campo': 'curriculo:campo-ocupacional-del-egresado',
+    'dc-productos': 'curriculo:productos-del-trabajo-del-egresado',
+    'dc-num-comp': 'curriculo:numero-de-competencias-del-programa',
+    'dc-num-ra': 'curriculo:numero-de-resultados-de-aprendizaje',
+    'dc-comp-esp': 'curriculo:competencias-especificas-cuales-son',
+    'dc-ra-comp': 'curriculo:resultados-de-aprendizaje-por-competencia',
+    'dc-tematica': 'curriculo:tematica-en-la-que-mas-desea-profundizar',
+  });
+
+  // 2) Trae el estado real de la nube (si hay uno mas nuevo, o si local esta
+  //    vacio, se aplica) -- sin usar applyCloudStateSnapshot (ver nota arriba).
+  try {
+    const remote = await loadCloudState(true);
+    const remoteState = remote && typeof remote.state === 'object' ? remote.state : null;
+    if (remoteState && (!hasMeaningfulState(state) || snapshotTime(remote) > localSnapshotTime())) {
+      state = Object.assign({}, state, remoteState);
+    }
+  } catch (e) { /* sin nube disponible: sigue con lo que haya local */ }
+
+  // 3) Refleja el `state` final en los campos visibles y guarda/programa nube.
+  hydrateFields();
+  localStorage.setItem(ACTIVE_STORAGE_KEY, JSON.stringify(state));
+  pendingCloudStateSnapshot = buildCloudStateSnapshot();
+  scheduleCloudStateSync();
+
+  // 4) De aqui en adelante, cualquier cambio en un campo data-store TAMBIEN
+  //    actualiza `state` y programa el guardado a la nube (independiente del
+  //    guardado local viejo que sigue haciendo saveTreeData/saveCurricular).
+  document.addEventListener('input', function (event) {
+    const field = event.target.closest ? event.target.closest('[data-store]') : null;
+    if (!field) return;
+    state[field.dataset.store] = field.type === 'checkbox' ? field.checked : field.value;
+    localStorage.setItem(ACTIVE_STORAGE_KEY, JSON.stringify(state));
+    pendingCloudStateSnapshot = buildCloudStateSnapshot();
+    scheduleCloudStateSync();
+  });
+}
+
 function loadAll() {
   // Tree
   try {
@@ -2705,6 +2786,7 @@ function initInduccion() {
     document.body.classList.add('sb-hidden');
   }
   loadAll();
+  bridgeInduccionStateSync();
   initSidebarFicha();
   syncGuideNavigation();
   document.getElementById('resetProgress').addEventListener('click', function () {
