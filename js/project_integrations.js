@@ -44,12 +44,12 @@
       // esa ficha/grupo, nunca con "cualquiera con el enlace". Pendiente de llenar
       // con los links reales por ficha.
       fichaAcuerdoExcelUrls: {
-        "3441939": "",
-        "3441942": "",
-        "3441944": "",
-        "3441950": "",
-        "3168850": "",
-        "3168852": "",
+        "3441939": "https://drive.google.com/file/d/1Gs67a5LUc0Alv1kqe3Yla3ryosCeBH0k/view?usp=sharing",
+        "3441942": "https://drive.google.com/file/d/17Ou96W5e5uWnvVvqAzPq2J1oc8qOYxyd/view?usp=sharing",
+        "3441944": "https://drive.google.com/file/d/1carTO0eulPdNLmoyUWpoBdzktDPRccTX/view?usp=sharing",
+        "3441950": "https://drive.google.com/file/d/1S1PKiIPDUwCmbZTuDtWzaWe78NXIXJr3/view?usp=sharing",
+        "3168850": "https://drive.google.com/file/d/11nEbEacehK3DmAbnQT2moAdsTR3I6t7P/view?usp=sharing",
+        "3168852": "https://drive.google.com/file/d/1AFGFI-buGhMeL41oSaYVDgaFFr1QTjLT/view?usp=sharing",
       },
     },
     window.PROJECT_INTEGRATIONS || {}
