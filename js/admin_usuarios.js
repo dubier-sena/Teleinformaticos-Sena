@@ -2874,6 +2874,14 @@
       if (db && typeof db.cloudGetGrades === "function") {
         try {
           const all = await db.cloudGetGrades(user.usernameKey);
+          // Sincroniza el cache local con el doc COMPLETO de la nube antes de leer la
+          // familia actual. Sin esto, un edit posterior (setStudentActivityGradeAndSolution)
+          // lee un cache local desactualizado/incompleto (p. ej. de otro equipo) y al
+          // guardar hace un reemplazo completo del doc en la nube, borrando notas de otras
+          // guias (o de esta misma) que nunca llegaron a este localStorage.
+          if (all && window.activityGradesManager && window.activityGradesManager.setAllStudentGrades) {
+            window.activityGradesManager.setAllStudentGrades(user.usernameKey, all);
+          }
           g = (all && all[guideFamily]) || {};
         } catch (_) { /* sin nube: cae a cache local */ }
       }

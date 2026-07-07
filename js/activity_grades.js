@@ -458,6 +458,7 @@
     autoRenderForFile: autoRenderForFile,
     applyApprovedSolutionsForFamily: applyApprovedSolutionsForFamily,
     getStudentGrades: getStudentGrades,
+    setAllStudentGrades: setAllStudentGrades,
     setStudentGrades: setStudentGrades,
     setStudentActivityGrade: setStudentActivityGrade,
     setStudentActivityGradeAndSolution: setStudentActivityGradeAndSolution,
