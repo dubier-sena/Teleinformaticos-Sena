@@ -38,18 +38,18 @@
         "3168850": "https://drive.google.com/drive/folders/1fBPzXHU0OHDmKa18Y6V2tnomLyYWgiLp",
         "3168852": "https://drive.google.com/drive/folders/1p9HdGinK1me8PsbaLHYio_OC-idAmorR",
       },
-      // Link de SOLO LECTURA (vista) al archivo de Drive del acuerdo de Etapa
-      // Productiva de cada ficha (contiene cedula y datos de TODO el grupo, por
-      // eso NO vive en este repo publico). Compartir cada archivo unicamente con
-      // esa ficha/grupo, nunca con "cualquiera con el enlace". Pendiente de llenar
-      // con los links reales por ficha.
+      // Link de DESCARGA DIRECTA (formato uc?export=download, no /view -- ese
+      // abre el visor de Drive en el navegador en vez de descargar) al archivo
+      // del acuerdo de Etapa Productiva de cada ficha (contiene cedula y datos
+      // de TODO el grupo, por eso NO vive en este repo publico). Compartido como
+      // "cualquiera con el enlace" (mismo nivel que fichaDriveFolders arriba).
       fichaAcuerdoExcelUrls: {
-        "3441939": "https://drive.google.com/file/d/1Gs67a5LUc0Alv1kqe3Yla3ryosCeBH0k/view?usp=sharing",
-        "3441942": "https://drive.google.com/file/d/17Ou96W5e5uWnvVvqAzPq2J1oc8qOYxyd/view?usp=sharing",
-        "3441944": "https://drive.google.com/file/d/1carTO0eulPdNLmoyUWpoBdzktDPRccTX/view?usp=sharing",
-        "3441950": "https://drive.google.com/file/d/1S1PKiIPDUwCmbZTuDtWzaWe78NXIXJr3/view?usp=sharing",
-        "3168850": "https://drive.google.com/file/d/11nEbEacehK3DmAbnQT2moAdsTR3I6t7P/view?usp=sharing",
-        "3168852": "https://drive.google.com/file/d/1AFGFI-buGhMeL41oSaYVDgaFFr1QTjLT/view?usp=sharing",
+        "3441939": "https://drive.google.com/uc?export=download&id=1Gs67a5LUc0Alv1kqe3Yla3ryosCeBH0k",
+        "3441942": "https://drive.google.com/uc?export=download&id=17Ou96W5e5uWnvVvqAzPq2J1oc8qOYxyd",
+        "3441944": "https://drive.google.com/uc?export=download&id=1carTO0eulPdNLmoyUWpoBdzktDPRccTX",
+        "3441950": "https://drive.google.com/uc?export=download&id=1S1PKiIPDUwCmbZTuDtWzaWe78NXIXJr3",
+        "3168850": "https://drive.google.com/uc?export=download&id=11nEbEacehK3DmAbnQT2moAdsTR3I6t7P",
+        "3168852": "https://drive.google.com/uc?export=download&id=1AFGFI-buGhMeL41oSaYVDgaFFr1QTjLT",
       },
     },
     window.PROJECT_INTEGRATIONS || {}
