@@ -2721,8 +2721,15 @@ async function bridgeInduccionStateSync() {
   function refreshAvancePanel() {
     if (!window.ActivityStandard || typeof window.ActivityStandard.renderAvancePanel !== 'function') return;
     if (!document.querySelector('[data-act-std-avance]')) return;
+    // OJO: ActivityStandard.registerGuide (guide_declarations.js) indexa por el
+    // nombre CRUDO del archivo (PAGE_FILE, ej. "grupo-10a-guia-01-induccion.html"),
+    // NO por el alias de almacenamiento (GUIDE_DATA_FILE, ej. "10a_guia.html").
+    // Usar GUIDE_DATA_FILE aqui hacia que getConfigForGuide no encontrara nada y
+    // se pisara la tabla ya dibujada con el mensaje "El control de avance se
+    // activa cuando cargan las actividades." (mismo getGuideDataFile que ya usa
+    // mountAvancePanelInduccion en script_induccion.js).
     window.ActivityStandard.renderAvancePanel({
-      getGuideDataFile: function () { return GUIDE_DATA_FILE; },
+      getGuideDataFile: function () { return PAGE_FILE; },
       getState: function () { return state; },
     });
   }
