@@ -22,6 +22,9 @@
         "Documento guia para estructurar el proyecto, objetivos, propuesta y desarrollo tecnico.",
       href: "assets/materiales/etapa-productiva/2.%20Formato%20Proyecto%20Productivo.docx",
       fileName: "2. Formato Proyecto Productivo.docx",
+      // Grado 10 no tiene proyecto de Etapa Productiva este ano (ver
+      // applyGrade10DocumentsOnlyView en productive_stage_student.js).
+      hideForGrade10: true,
     },
     {
       id: "anexo-financiero",
@@ -31,6 +34,7 @@
         "Archivo de apoyo para costos, presupuestos, ingresos estimados y sostenibilidad del proyecto.",
       href: "assets/materiales/etapa-productiva/2.1.%20Anexo%20financiero.xlsx",
       fileName: "2.1. Anexo financiero.xlsx",
+      hideForGrade10: true,
     },
     {
       id: "acuerdo-etapa-productiva",
@@ -94,6 +98,14 @@
     return !!(session && session.role === "student" && session.user);
   }
 
+  // Grado 10 (Kennedy y SB) no tiene proyecto de Etapa Productiva este ano --
+  // mismo criterio que isGrade10Ficha en productive_stage_student.js.
+  function isGrade10Ficha(ficha) {
+    const fichas = (auth && auth.FICHA_MAP) || {};
+    const grupo = String((fichas[String(ficha || "")] || {}).grupo || "");
+    return grupo.indexOf("10") === 0;
+  }
+
   // Documentos "hrefByFicha": el archivo real no vive en este repo (puede traer
   // datos de todo el grupo, p. ej. el acuerdo con cedulas de los aprendices) sino
   // en una carpeta/archivo de Drive con permisos acotados a esa ficha. El link se
@@ -111,10 +123,14 @@
     // asignado (eso si aplica al "Avance del proyecto", ver renderProjectDelivery).
     const canUpload = isStudentUploader(session);
     const ficha = session?.user?.ficha || "";
+    const grade10 = isGrade10Ficha(ficha);
+    const visibleDocuments = PROJECT_DOCUMENTS.filter(function (documentItem) {
+      return !(grade10 && documentItem.hideForGrade10);
+    });
 
     return `
       <div class="student-project-downloads">
-        ${PROJECT_DOCUMENTS.map(function (documentItem) {
+        ${visibleDocuments.map(function (documentItem) {
           const hasDelivery = !!documentItem.deliveryLabel;
           const deliveryBtn = hasDelivery
             ? `<button
