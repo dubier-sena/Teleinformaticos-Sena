@@ -62,6 +62,28 @@ test("induction partial can run inside guia.html without global name collisions"
   assert.match(bundle, /induccionPortalAuth/);
 });
 
+test("every guide route loads activity_grades.js before guia_template.js", () => {
+  // Regresion real (jul-8): activity_grades.js faltaba en TODAS las rutas, asi
+  // que los badges de Aprobado/No aprobado y las notas del admin nunca llegaban
+  // a renderizarse via guia.html?g=... (el unico entry point publico real) --
+  // fallaba en silencio, sin error visible, para cualquier guia/aprendiz.
+  const router = read(path.join("js", "guia_router.js"));
+  const routeBlocks = [...router.matchAll(/key:\s*"([^"]+)"[\s\S]*?scripts:\s*\[([\s\S]*?)\]/g)];
+
+  assert.ok(routeBlocks.length > 0, "deberia encontrar al menos una ruta con scripts[]");
+
+  routeBlocks.forEach(([, routeKey, scriptsBlock]) => {
+    const gradesIndex = scriptsBlock.indexOf("activity_grades.js");
+    const templateIndex = scriptsBlock.indexOf("guia_template.js");
+    assert.ok(gradesIndex !== -1, `ruta "${routeKey}" no carga activity_grades.js`);
+    assert.ok(templateIndex !== -1, `ruta "${routeKey}" no carga guia_template.js`);
+    assert.ok(
+      gradesIndex < templateIndex,
+      `ruta "${routeKey}" debe cargar activity_grades.js ANTES de guia_template.js`
+    );
+  });
+});
+
 test("shared shell can initialize after dynamic route scripts load", () => {
   const shell = read(path.join("js", "shared_shell.js"));
 
