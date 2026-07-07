@@ -252,6 +252,23 @@ service cloud.firestore {
       allow delete: if isAdmin() || isTutoringOwnerOfResource();
     }
 
+    // ───── Autorizacion de uso de firma (evidencia de consentimiento) ──────
+    // El aprendiz sube una foto/escaneo de su firma autografa para autorizar
+    // al instructor a usarla en documentacion institucional del SENA. El
+    // archivo va a Drive (Apps Script); este doc es solo el REGISTRO/control
+    // de quien ya autorizo. El aprendiz puede leer y crear/actualizar SU
+    // propio registro, pero una vez queda status=="delivered" (ya envio),
+    // solo el admin puede volver a escribir (re-habilitar para un reenvio).
+    // Doc: { usernameKey, fullName, ficha, institucion, submittedAt,
+    //   fileName, driveUrl, status: "delivered"|"", updatedAt }
+    match /sena_portal_signature_auth/{usernameKey} {
+      allow read: if isAdmin() || isOwnerByUsernameKey(usernameKey);
+      allow create: if isAdmin() || isOwnerByUsernameKey(usernameKey);
+      allow update: if isAdmin()
+        || (isOwnerByUsernameKey(usernameKey) && resource.data.status != "delivered");
+      allow delete: if isAdmin();
+    }
+
     // ───── Equipos de trabajo (grupos colaborativos) ───────────────────────
     // Cada doc representa un equipo de 3-4 aprendices que entrega una
     // actividad en conjunto (p. ej. portafolio Actividad 10 de Guia 2).

@@ -75,6 +75,7 @@
     fechas: "Fechas de entrega",
     respuestas: "Seguimiento de respuestas",
     entregas: "Seguimiento de entregas",
+    autorizaciones: "Autorizaciones de firma",
     habilitacion: "Habilitacion de actividades",
     notas: "Calificaciones",
     mejoramiento: "Planes de Mejoramiento",
@@ -1957,6 +1958,9 @@
     if (moduleName === "mejoramiento") {
       renderImprovementPlans();
     }
+    if (moduleName === "autorizaciones") {
+      renderSignatureAuth();
+    }
     if (moduleName === "configuracion") {
       renderAuditPanel();
     }
@@ -2905,6 +2909,97 @@
     grid.innerHTML = `<table class="admin-data-table grades-table"><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table>`;
   }
 
+  // ── Autorizaciones de firma (control de consentimiento) ─────────────────────
+  // El aprendiz sube una foto/escaneo de su firma desde una pagina propia
+  // (autorizacion-firma.html) para autorizar al instructor a usarla en
+  // documentacion institucional del SENA. Este panel solo LISTA quien ya la
+  // envio (Firestore sena_portal_signature_auth); el aprendiz nunca ve esta
+  // lista ni la de otros companeros, solo la confirmacion de su propio envio.
+  function formatSignatureDate(iso) {
+    const d = iso ? new Date(iso) : null;
+    if (!d || Number.isNaN(d.getTime())) return "";
+    return d.toLocaleString("es-CO", { year: "numeric", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" });
+  }
+
+  function renderSignatureAuth() {
+    const host = byId("module-autorizaciones");
+    if (!host) return;
+    host.innerHTML = `
+      <div class="admin-section-head">
+        <h2>Autorizaciones de firma</h2>
+        <p class="admin-muted">Control de que aprendices ya autorizaron el uso de su firma para documentacion del SENA. El aprendiz solo ve la confirmacion de su propio envio; esta lista es exclusiva del panel admin.</p>
+      </div>
+      <div class="grades-manual__filters">
+        <select id="firma-ficha-filter">${getFichaOptions("", false)}</select>
+      </div>
+      <div id="firma-grid" class="grades-grid"></div>
+    `;
+  }
+
+  async function renderSignatureAuthGrid() {
+    const grid = byId("firma-grid");
+    if (!grid) return;
+    const ficha = byId("firma-ficha-filter")?.value || "";
+    if (!ficha) {
+      grid.innerHTML = '<p class="admin-muted">Selecciona una ficha para ver los aprendices.</p>';
+      return;
+    }
+    const students = getUsersForFicha(ficha);
+    if (!students.length) {
+      grid.innerHTML = '<p class="admin-muted">No hay aprendices en esta ficha.</p>';
+      return;
+    }
+    grid.innerHTML = '<p class="response-status">Cargando autorizaciones desde la nube...</p>';
+    const db = window._firebaseDb;
+    const recordsByUser = {};
+    await Promise.all(students.map(async (user) => {
+      let rec = null;
+      if (db && typeof db.cloudGetSignatureAuth === "function") {
+        try { rec = await db.cloudGetSignatureAuth(user.usernameKey); } catch (_) { rec = null; }
+      }
+      recordsByUser[user.usernameKey] = rec;
+    }));
+    const rows = students.map((user) => {
+      const rec = recordsByUser[user.usernameKey];
+      const delivered = !!(rec && rec.status === "delivered");
+      const estado = delivered
+        ? '<span class="c-badge">Entregada</span>'
+        : '<span class="c-badge c-badge--neutral">Pendiente</span>';
+      const fecha = delivered ? escapeHtml(formatSignatureDate(rec.submittedAt)) : "&mdash;";
+      const archivo = delivered ? escapeHtml(rec.savedFileName || rec.fileName || "") : "&mdash;";
+      const enlace = delivered && rec.driveUrl
+        ? `<a href="${escapeHtml(rec.driveUrl)}" target="_blank" rel="noopener">Ver archivo</a>`
+        : "&mdash;";
+      const accion = delivered
+        ? `<button type="button" class="btn secondary firma-reenable-btn" data-firma-user="${escapeHtml(user.usernameKey)}">Re-habilitar</button>`
+        : "&mdash;";
+      return `<tr><td>${escapeHtml(user.fullName)}</td><td>${estado}</td><td>${fecha}</td><td>${archivo}</td><td>${enlace}</td><td>${accion}</td></tr>`;
+    }).join("");
+    grid.innerHTML = `<table class="admin-data-table grades-table">
+      <thead><tr><th>Aprendiz</th><th>Estado</th><th>Fecha de envio</th><th>Archivo</th><th>Enlace</th><th>Accion</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  }
+
+  // Re-habilita: limpia "status" en el doc EXISTENTE (fetch-then-write con lectura
+  // fresca, no cache local) para que el aprendiz pueda volver a subir su firma.
+  // Conserva el historial del envio anterior (fecha/archivo/enlace) como evidencia.
+  async function handleSignatureReenable(usernameKey) {
+    const db = window._firebaseDb;
+    if (!db || typeof db.cloudGetSignatureAuth !== "function" || typeof db.cloudSaveSignatureAuth !== "function") return;
+    window.portalSaveStatus?.saving("Re-habilitando autorizacion...");
+    try {
+      const current = (await db.cloudGetSignatureAuth(usernameKey)) || {};
+      await db.cloudSaveSignatureAuth(usernameKey, { ...current, status: "" });
+      recordAdminAuditAction({ action: "signature-auth-reenable", target: usernameKey, detail: "" });
+      window.portalSaveStatus?.saved("Autorizacion re-habilitada: el aprendiz ya puede volver a subirla.");
+      renderSignatureAuthGrid();
+    } catch (err) {
+      window.portalSaveStatus?.error("No se pudo re-habilitar la autorizacion.");
+      setFeedback("Error al re-habilitar la autorizacion: " + (err && err.message ? err.message : err), "error");
+    }
+  }
+
   // ── Planes de Mejoramiento (pestaña aparte) ─────────────────────────────────
   let _plansByUser = {};   // { usernameKey: { user, plans } } de la ficha mostrada
 
@@ -3649,6 +3744,16 @@
       }
       const sel = target && target.closest ? target.closest(".grade-select") : null;
       if (sel) handleGradeChange(sel);
+    });
+    // Modulo Autorizaciones de firma: filtro por ficha + boton re-habilitar.
+    byId("module-autorizaciones")?.addEventListener("change", (event) => {
+      if (event.target && event.target.id === "firma-ficha-filter") {
+        renderSignatureAuthGrid();
+      }
+    });
+    byId("module-autorizaciones")?.addEventListener("click", (event) => {
+      const btn = event.target && event.target.closest ? event.target.closest(".firma-reenable-btn") : null;
+      if (btn && btn.dataset.firmaUser) handleSignatureReenable(btn.dataset.firmaUser);
     });
     document.addEventListener("submit", async (event) => {
       if (event.target?.id === "edit-learner-form") {
