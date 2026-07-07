@@ -22,6 +22,9 @@
       label: "Guía 1 — Inducción",
       activities: [
         { id: "arbol312",       label: "3.1.2 Árbol de la Vida" },
+        // Mount agregado a proposito (juego de Sopa de Letras/Crucigrama, sin
+        // campo de texto que calificar via banco -- solo Aprobado/No aprobado).
+        { id: "sopaletras321",  label: "3.2.1 Sopa de Letras y Crucigrama SENA" },
         { id: "sena331",        label: "3.3.1 Análisis de Símbolos SENA" },
         { id: "programa332",    label: "3.3.2 Cuestionario Diseño Curricular" },
         // Ya tenia su punto de anclaje listo en la guia (#reglamento333GradeMount)
@@ -29,6 +32,7 @@
         // calificarla aunque la guia ya esperaba mostrar el badge.
         { id: "reglamento333",  label: "3.3.3 Reglamento del Aprendiz", mount: "#reglamento333GradeMount" },
         { id: "plataformas334", label: "3.3.4 Taller de Plataformas Tecnológicas" },
+        { id: "compromiso341",  label: "3.4.1 Mi Compromiso como Aprendiz" },
         { id: "portafolio342",  label: "3.4.2 Portafolio de Evidencias" },
       ],
     },

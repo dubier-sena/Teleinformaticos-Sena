@@ -51,6 +51,9 @@
     resultado: RAP_INDUCCION,
     activities: [
       { id: "arbol312",      number: "3.1.2", label: "El Arbol de la Vida",                 shortName: "ArbolVida",   type: "form", fieldPrefixes: ["arbol:"] },
+      // Juego (sopa de letras + crucigrama externo), sin campo de texto -- solo
+      // Aprobado/No aprobado por observacion/finalizacion del juego.
+      { id: "sopaletras321", number: "3.2.1", label: "Sopa de Letras y Crucigrama SENA",     shortName: "SopaLetras",   type: "form" },
       { id: "sena331",       number: "3.3.1", label: "Analisis de simbolos SENA",           shortName: "SimbolosSENA", type: "form" },
       { id: "programa332",   number: "3.3.2", label: "Cuestionario diseno curricular",      shortName: "Cuestionario", type: "form", fieldPrefixes: ["curriculo:"] },
       // Sin campo de texto ni entrega Drive en la guia (evidencias en papel,
@@ -58,6 +61,7 @@
       // (#reglamento333GradeMount) pero faltaba en el catalogo de Calificaciones.
       { id: "reglamento333", number: "3.3.3", label: "Reglamento del Aprendiz SENA",        shortName: "Reglamento",   type: "form" },
       { id: "plataformas334",number: "3.3.4", label: "Taller plataformas tecnologicas",     shortName: "Plataformas",  type: "form", fieldPrefixes: ["plataforma:"] },
+      { id: "compromiso341", number: "3.4.1", label: "Mi Compromiso como Aprendiz SENA",    shortName: "Compromiso",   type: "form", fieldPrefixes: ["compromiso:"] },
       { id: "portafolio342", number: "3.4.2", label: "Portafolio de evidencias",            shortName: "Portafolio",   type: "file" },
     ],
   });
