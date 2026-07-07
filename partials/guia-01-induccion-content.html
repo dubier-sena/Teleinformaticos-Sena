@@ -2725,42 +2725,93 @@ async function bridgeInduccionStateSync() {
   }
   refreshAvancePanel();
 
-  // 3.1) Si el instructor ya califico (A o D) arbol312/programa332, bloquea
-  //    los campos para que el aprendiz no pueda seguir editando una respuesta
-  //    ya evaluada (mismo criterio que ActivityStandard: solo el admin puede
-  //    re-habilitar). Los demas campos de la guia no tienen nota, no aplica.
-  async function lockGradedInduccionFields() {
+  // 3.1) Refleja en el `state` (y por lo tanto en "Tu control de avance") las
+  //    actividades que el instructor YA califico (A o D). Sin esto, cualquier
+  //    actividad sin campo de texto propio (juego, papel, checkbox) se queda
+  //    "Pendiente" para siempre en el panel de avance aunque el instructor ya
+  //    la haya evaluado -- la nota del instructor es la prueba de que se hizo.
+  //    Ademas, para arbol312/programa332/compromiso341 (que SI tienen campos
+  //    de texto reales), bloquea los campos para que el aprendiz no pueda
+  //    seguir editando una respuesta ya evaluada (solo el admin re-habilita).
+  async function reflectGradesInInduccionState() {
     var authRef = window.portalAuth;
     var session = authRef && authRef.getCurrentSession ? authRef.getCurrentSession() : null;
     if (!session || session.role !== 'student' || !session.usernameKey) return;
     // Se trae DIRECTO de la nube (no del cache local de activity_grades.js):
     // renderGradeBadges/autoRenderForFile (guia_template.js) tambien esta
     // llenando ese cache en paralelo de forma asincrona -- depender de el
-    // aqui podria perder la carrera y no bloquear en la primera carga.
+    // aqui podria perder la carrera y no reflejar nada en la primera carga.
     var db = window._firebaseDb;
     var grades = {};
     if (db && typeof db.cloudGetGrades === 'function') {
       try {
         var cloud = await db.cloudGetGrades(session.usernameKey);
         grades = (cloud && cloud['guia-01-induccion']) || {};
-      } catch (e) { /* sin nube: no se bloquea, se reintenta en la proxima carga */ }
+      } catch (e) { /* sin nube: se reintenta en la proxima carga */ }
     }
-    var lockMap = {
+    var fieldLockMap = {
       arbol312: { fields: ['tree-raices', 'tree-tronco', 'tree-frutos', 'tree-hojas', 'tree-parasito'], note: 'arbol312LockedNote' },
       programa332: { fields: ['dc-nombre', 'dc-codigo', 'dc-duracion', 'dc-campo', 'dc-productos', 'dc-num-comp', 'dc-num-ra', 'dc-comp-esp', 'dc-ra-comp', 'dc-tematica'], note: 'programa332LockedNote' },
       compromiso341: { fields: ['compromiso-text'], note: 'compromiso341LockedNote' },
     };
-    Object.keys(lockMap).forEach(function (actId) {
+    // El % de "Progreso" (arriba/lateral) es OTRA barra totalmente aparte, basada
+    // en las casillas .activity-check que el aprendiz marca a mano (toggleCheck) --
+    // nada que ver con `state`/data-store. Si el instructor ya califico, se marca
+    // la casilla tambien (el instructor ya confirmo que se hizo).
+    var checkboxMap = {
+      arbol312: ['chk-312'], sopaletras321: ['chk-321a', 'chk-321b'], sena331: ['chk-331'],
+      programa332: ['chk-332'], reglamento333: ['chk-333'], plataformas334: ['chk-334'],
+      compromiso341: ['chk-341'], portafolio342: ['chk-342'],
+    };
+    // Mismo orden/ids que GRADE_CATALOG["guia-01-induccion"] en activity_grades.js.
+    var allGradableIds = ['arbol312', 'sopaletras321', 'sena331', 'programa332', 'reglamento333', 'plataformas334', 'compromiso341', 'portafolio342'];
+    var changed = false;
+    var checksChanged = false;
+    allGradableIds.forEach(function (actId) {
       if (grades[actId] !== 'A' && grades[actId] !== 'D') return;
-      lockMap[actId].fields.forEach(function (id) {
+      if (actId === 'portafolio342') {
+        // Tipo "file" en guide_declarations: ActivityStandard.getActivityDeliveryInfo
+        // solo revisa "-delivery"/driveTarget para este tipo, no "-locked".
+        if (!state['portafolio342-delivery'] || state['portafolio342-delivery'].status !== 'delivered') {
+          state['portafolio342-delivery'] = {
+            status: 'delivered',
+            submittedAt: grades[actId + ':gradedAt'] || new Date().toISOString(),
+          };
+          changed = true;
+        }
+      } else if (state[actId + '-locked'] !== true) {
+        state[actId + '-locked'] = true;
+        changed = true;
+      }
+      (checkboxMap[actId] || []).forEach(function (chkId) {
+        var chk = document.getElementById(chkId);
+        if (chk && !chk.classList.contains('checked')) {
+          chk.classList.add('checked');
+          checksChanged = true;
+        }
+      });
+      var lockCfg = fieldLockMap[actId];
+      if (!lockCfg) return;
+      lockCfg.fields.forEach(function (id) {
         var el = document.getElementById(id);
         if (el) el.readOnly = true;
       });
-      var note = document.getElementById(lockMap[actId].note);
+      var note = document.getElementById(lockCfg.note);
       if (note) note.hidden = false;
     });
+    if (checksChanged && typeof saveProgress === 'function') {
+      saveProgress();
+      if (typeof updateProgress === 'function') updateProgress();
+      if (typeof updateNavDone === 'function') updateNavDone();
+    }
+    if (changed) {
+      localStorage.setItem(ACTIVE_STORAGE_KEY, JSON.stringify(state));
+      pendingCloudStateSnapshot = buildCloudStateSnapshot();
+      scheduleCloudStateSync();
+      refreshAvancePanel();
+    }
   }
-  lockGradedInduccionFields();
+  reflectGradesInInduccionState();
 
   // 4) De aqui en adelante, cualquier cambio en un campo data-store TAMBIEN
   //    actualiza `state`, programa el guardado a la nube (independiente del
