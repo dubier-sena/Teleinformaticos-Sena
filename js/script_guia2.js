@@ -879,6 +879,38 @@ function initGuia2() {
   updateProgress();
   setupScrollSpy();
   initializeCloudStateSync();
+  reflectGradesForGuia2();
+}
+
+// Cuando el admin califica una actividad que el aprendiz nunca "Guardo" (boton
+// propio de cada actividad), el {actId}-locked nunca se ponia: el campo seguia
+// editable y "Tu control de avance" la marcaba "Pendiente" para siempre aunque
+// ya estuviera calificada. Usa el mismo flag que ya revisan applyXLock() (para
+// que el campo tambien quede bloqueado visualmente) y ActivityStandard (para
+// que el panel de avance la cuente).
+function reflectGradesForGuia2() {
+  var mgr = window.activityGradesManager;
+  if (!mgr || typeof mgr.reflectGradesIntoGuideState !== "function") return;
+  mgr.reflectGradesIntoGuideState({
+    guideFamily: "guia-02-herramientas",
+    pageFile: PAGE_FILE,
+    getState: function () { return state; },
+    lockAppliers: {
+      extensiones331: applyExtensionesLock,
+      sistemas332: applySistemasLock,
+      colaborativas334: applyColaborativasLock,
+      transferReto341: applyTransferRetoLock,
+    },
+    onChanged: function () {
+      saveState();
+      if (window.ActivityStandard && typeof window.ActivityStandard.renderAvancePanel === "function" && document.querySelector("[data-act-std-avance]")) {
+        window.ActivityStandard.renderAvancePanel({
+          getGuideDataFile: function () { return PAGE_FILE; },
+          getState: function () { return state; },
+        });
+      }
+    },
+  });
 }
 
 window.initGuia2 = initGuia2;

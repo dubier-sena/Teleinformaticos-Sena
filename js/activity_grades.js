@@ -459,12 +459,90 @@
     applyApprovedSolutionsForFamily(family);
   }
 
+  // ── Reflejar la calificacion en el `state` propio de cada guia ──────────────
+  // Muchas guias (Induccion, Guia 2, Guia 3, Guia 6, Redes RAP01) NO usan
+  // ActivityStandard.mountActivities() -- tienen su PROPIO sistema de guardado
+  // (state + saveState + funciones applyXLock por actividad, ya escritas para
+  // bloquear cuando el APRENDIZ hace clic en "Guardar respuestas"). Pero si el
+  // ADMIN aprueba/reprueba una actividad que el aprendiz nunca guardo asi, ese
+  // "-locked" nunca se pone: el campo sigue editable y "Tu control de avance"
+  // (que revisa justamente ese flag) la marca "Pendiente" para siempre.
+  //
+  // Esta funcion es GENERICA y reusable desde cualquier guia: trae la nota real
+  // de Firestore, y para cada actividad calificada fija {actId}-locked (o
+  // {actId}-delivery si es tipo "file") en el `state` de la guia -- exactamente
+  // el mismo flag que ya usa el applyXLock() propio de esa actividad (si existe,
+  // se le pasa en `options.lockAppliers` y esta funcion lo invoca para que el
+  // campo tambien quede visualmente bloqueado, sin reescribir esa logica).
+  //
+  // options: {
+  //   guideFamily: string,          // familia en GRADE_CATALOG (ej. "guia-02-herramientas")
+  //   pageFile: string,             // PAGE_FILE real (el registrado en guide_declarations.js)
+  //   getState: () => object,       // devuelve el `state` actual de la guia
+  //   lockAppliers: { [activityId]: () => void },  // funciones applyXLock ya existentes en la guia
+  //   onChanged: () => void,        // se llama SOLO si algo cambio: debe guardar+sincronizar+refrescar avance
+  // }
+  async function reflectGradesIntoGuideState(options) {
+    var opts = options || {};
+    var guideFamily = String(opts.guideFamily || "");
+    var entry = GRADE_CATALOG[guideFamily];
+    if (!entry || !Array.isArray(entry.activities) || typeof opts.getState !== "function") return;
+
+    var auth = window.portalAuth;
+    var session = auth && auth.getCurrentSession ? auth.getCurrentSession() : null;
+    if (!session || session.role !== "student" || !session.usernameKey) return;
+
+    var db = window._firebaseDb;
+    if (!db || typeof db.cloudGetGrades !== "function") return;
+    var cloud;
+    try { cloud = await db.cloudGetGrades(session.usernameKey); }
+    catch (e) { return; }
+    var grades = (cloud && cloud[guideFamily]) || {};
+
+    var std = window.ActivityStandard;
+    var config = std && typeof std.getConfigForGuide === "function" ? std.getConfigForGuide(opts.pageFile) : null;
+    var typeById = {};
+    (config && Array.isArray(config.activities) ? config.activities : []).forEach(function (a) {
+      typeById[a.id] = a.type;
+    });
+
+    var state = opts.getState();
+    var lockAppliers = opts.lockAppliers || {};
+    var changed = false;
+
+    entry.activities.forEach(function (act) {
+      var grade = grades[act.id];
+      if (grade !== "A" && grade !== "D") return;
+      var type = typeById[act.id] || "form";
+      if (type === "file") {
+        if (!state[act.id + "-delivery"] || state[act.id + "-delivery"].status !== "delivered") {
+          state[act.id + "-delivery"] = {
+            status: "delivered",
+            submittedAt: grades[act.id + ":gradedAt"] || new Date().toISOString(),
+          };
+          changed = true;
+        }
+      } else if (state[act.id + "-locked"] !== true) {
+        state[act.id + "-locked"] = true;
+        changed = true;
+      }
+      if (typeof lockAppliers[act.id] === "function") {
+        try { lockAppliers[act.id](); } catch (e) { /* no critico */ }
+      }
+    });
+
+    if (changed && typeof opts.onChanged === "function") {
+      try { opts.onChanged(); } catch (e) { /* no critico */ }
+    }
+  }
+
   // ── API pública ──────────────────────────────────────────────────────────────
   window.activityGradesManager = {
     GRADE_CATALOG: GRADE_CATALOG,
     GUIDE_FAMILY_BY_FILE: GUIDE_FAMILY_BY_FILE,
     autoRenderForFile: autoRenderForFile,
     applyApprovedSolutionsForFamily: applyApprovedSolutionsForFamily,
+    reflectGradesIntoGuideState: reflectGradesIntoGuideState,
     getStudentGrades: getStudentGrades,
     setAllStudentGrades: setAllStudentGrades,
     setStudentGrades: setStudentGrades,

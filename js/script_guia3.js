@@ -375,6 +375,37 @@ function initGuia3() {
   updateProgress();
   setupScrollSpy();
   initializeCloudStateSync();
+  reflectGradesForGuia3();
+}
+
+// Ver reflectGradesForGuia2() en script_guia2.js para el porque de esto: el
+// admin puede calificar una actividad que el aprendiz nunca "Guardo" con su
+// propio boton, y sin esto {actId}-locked nunca se pone (campo sigue editable
+// y "Tu control de avance" la marca "Pendiente" para siempre).
+function reflectGradesForGuia3() {
+  var mgr = window.activityGradesManager;
+  if (!mgr || typeof mgr.reflectGradesIntoGuideState !== "function") return;
+  mgr.reflectGradesIntoGuideState({
+    guideFamily: "guia-03-planificar-10",
+    pageFile: PAGE_FILE,
+    getState: function () { return state; },
+    lockAppliers: {
+      bitacora311: applyBitacoraLock,
+      socializacion312: applyBitacoraSocializacionLock,
+      tabla321: applyTabla321Lock,
+      mapa322: applyMapa322Lock,
+      checklist331: applyChecklist331Lock,
+    },
+    onChanged: function () {
+      saveState();
+      if (window.ActivityStandard && typeof window.ActivityStandard.renderAvancePanel === "function" && document.querySelector("[data-act-std-avance]")) {
+        window.ActivityStandard.renderAvancePanel({
+          getGuideDataFile: function () { return PAGE_FILE; },
+          getState: function () { return state; },
+        });
+      }
+    },
+  });
 }
 
 window.initGuia3 = initGuia3;
