@@ -4631,3 +4631,4 @@ body.sb-hidden .btn-sb-expand {
 .avance-table tr:last-child td { border-bottom: 0; }
 .avance-table .estado--ok { color: #1b5e20; font-weight: 800; white-space: nowrap; }
 .avance-table .estado--pend { color: #8b959e; white-space: nowrap; }
+.avance-table .estado--mal { color: #a13029; font-weight: 800; white-space: nowrap; }

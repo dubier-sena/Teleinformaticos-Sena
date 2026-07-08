@@ -1235,10 +1235,27 @@
     });
   }
 
+  // Nota real del instructor (A/D), leida del cache local que ya llena
+  // activityGradesManager (activity_grades.js) al cargar la guia -- sincrona,
+  // no depende de esperar una llamada a Firestore aqui.
+  function _getStudentGradeForActivity(pageFile, activityId) {
+    var mgr = window.activityGradesManager;
+    if (!mgr || !mgr.GUIDE_FAMILY_BY_FILE || !mgr.getStudentGrades) return null;
+    var family = mgr.GUIDE_FAMILY_BY_FILE[String(pageFile || "")];
+    if (!family) return null;
+    var auth = window.portalAuth;
+    var session = auth && auth.getCurrentSession ? auth.getCurrentSession() : null;
+    if (!session || !session.usernameKey) return null;
+    var grades = mgr.getStudentGrades(session.usernameKey, family) || {};
+    var grade = grades[activityId];
+    return grade === "A" || grade === "D" ? grade : null;
+  }
+
   function renderAvancePanel(stateCtx) {
     var container = document.querySelector("[data-act-std-avance]");
     if (!container) return;
-    var config = getConfigForGuide(stateCtx.getGuideDataFile());
+    var pageFile = stateCtx.getGuideDataFile();
+    var config = getConfigForGuide(pageFile);
     var activities = (config && config.activities) || [];
     if (!activities.length) {
       container.innerHTML = '<p class="intro-text">El control de avance se activa cuando cargan las actividades.</p>';
@@ -1260,12 +1277,24 @@
       }
       var titulo = (act.number ? act.number + " - " : "") +
         ((act.driveTarget && act.driveTarget.activityTitle) || act.label || "Actividad");
-      var estado = info.kind === "delivered"
-        ? "&#9989; Entregada" + (fecha ? " &middot; " + fecha : "")
-        : info.kind === "saved"
-          ? "&#128190; Guardada"
-          : "&#9711; Pendiente";
-      var cls = info.kind === "pending" ? "estado--pend" : "estado--ok";
+      var grade = _getStudentGradeForActivity(pageFile, act.id);
+      var estado, cls;
+      if (grade === "A") {
+        estado = "&#9989; Aprobada";
+        cls = "estado--ok";
+      } else if (grade === "D") {
+        estado = "&#10060; Reprobada";
+        cls = "estado--mal";
+      } else if (info.kind === "delivered") {
+        estado = "&#9989; Entregada" + (fecha ? " &middot; " + fecha : "");
+        cls = "estado--ok";
+      } else if (info.kind === "saved") {
+        estado = "&#128190; Guardada";
+        cls = "estado--ok";
+      } else {
+        estado = "&#9711; Pendiente";
+        cls = "estado--pend";
+      }
       return "<tr><td>" + _escapeAvance(titulo) + '</td><td class="' + cls + '">' + estado + "</td></tr>";
     });
 
