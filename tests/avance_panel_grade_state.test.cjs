@@ -102,3 +102,30 @@ test("renderAvancePanel: sin nota cacheada -> se mantiene el comportamiento ante
   assert.match(container.innerHTML, /Pendiente/);
   assert.doesNotMatch(container.innerHTML, /Aprobada|Reprobada/);
 });
+
+test("renderAvancePanel: aliasIds -- la actividad alias muestra la nota de su actividad dueña", () => {
+  const { std, container } = loadActivityStandard({
+    portalAuth: studentSession("prueba.aprendiz"),
+    activityGradesManager: {
+      GUIDE_FAMILY_BY_FILE: { "guia.html": "familia-x" },
+      GRADE_CATALOG: {
+        "familia-x": { activities: [{ id: "sopaletras311", aliasIds: ["relaciona311"] }] },
+      },
+      getStudentGrades: () => ({ sopaletras311: "A" }), // relaciona311 NUNCA tiene su propia entrada
+    },
+  });
+
+  std.registerGuide({
+    files: ["guia.html"],
+    activities: [
+      { id: "sopaletras311", number: "1.1", label: "Sopa de letras", type: "form" },
+      { id: "relaciona311", number: "1.2", label: "Relaciona", type: "form" },
+    ],
+  });
+
+  const state = { "sopaletras311-locked": true, "relaciona311-locked": true };
+  std.renderAvancePanel({ getGuideDataFile: () => "guia.html", getState: () => state });
+
+  const approvedCount = (container.innerHTML.match(/Aprobada/g) || []).length;
+  assert.equal(approvedCount, 2, "tanto sopaletras311 como su alias relaciona311 deben mostrar Aprobada");
+});
