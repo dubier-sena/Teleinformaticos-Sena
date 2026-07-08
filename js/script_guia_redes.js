@@ -4463,6 +4463,46 @@ function initGuiaRedes() {
   bindEventsRedes();
   updateProgressRedes();
   initCloudSyncRedes();
+  reflectGradesForGuiaRedes();
+}
+
+// Ver reflectGradesForGuia2() en script_guia2.js para el porque de esto.
+// NOTA: reflexion311 (3.1.1) queda FUERA de lockAppliers a proposito -- esta
+// guia usa 2 llaves de estado distintas para esa actividad
+// ("reflexion-socializacion-locked" y "reflexion-311-locked"), ninguna
+// coincide con la convencion generica "{actId}-locked" que usa esta funcion,
+// asi que bloquear el campo requeriria logica especial que no se hizo aqui.
+// Su badge y su conteo en "Tu control de avance" si funcionan igual.
+function reflectGradesForGuiaRedes() {
+  var mgr = window.activityGradesManager;
+  if (!mgr || typeof mgr.reflectGradesIntoGuideState !== "function") return;
+  mgr.reflectGradesIntoGuideState({
+    guideFamily: "guia-redes-rap01",
+    pageFile: PAGE_FILE_REDES,
+    getState: function () { return state; },
+    lockAppliers: {
+      ip1: applyBloqueIP1Lock,
+      ip3: applyBloqueIP3Lock,
+      "taller-ip-ej1": applyTallerIPEj1Lock,
+      "taller-ip-ej2": applyTallerIPEj2Lock,
+      "taller-ip-ej3": applyTallerIPEj3Lock,
+      "taller-ip-ej4": applyTallerIPEj4Lock,
+      "taller-ip-ej5": applyTallerIPEj5Lock,
+      lab1: applyLab1Lock,
+      lab2: applyLab2Lock,
+      lab3: applyLab3Lock,
+      social: applySocialLock,
+    },
+    onChanged: function () {
+      saveStateRedes();
+      if (window.ActivityStandard && typeof window.ActivityStandard.renderAvancePanel === "function" && document.querySelector("[data-act-std-avance]")) {
+        window.ActivityStandard.renderAvancePanel({
+          getGuideDataFile: function () { return PAGE_FILE_REDES; },
+          getState: function () { return state; },
+        });
+      }
+    },
+  });
 }
 
 window.initGuiaRedes = initGuiaRedes;

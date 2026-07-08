@@ -456,6 +456,31 @@ function initGuia6() {
   updateProgress();
   setupScrollSpy();
   initializeCloudStateSync();
+  reflectGradesForGuia6();
+}
+
+// Ver reflectGradesForGuia2() en script_guia2.js para el porque de esto.
+function reflectGradesForGuia6() {
+  var mgr = window.activityGradesManager;
+  if (!mgr || typeof mgr.reflectGradesIntoGuideState !== "function") return;
+  mgr.reflectGradesIntoGuideState({
+    guideFamily: "guia-06-planificar",
+    pageFile: PAGE_FILE,
+    getState: function () { return state; },
+    lockAppliers: {
+      bitacora311: applyBitacoraLock,
+      socializacion312: applyBitacoraSocializacionLock,
+    },
+    onChanged: function () {
+      saveState();
+      if (window.ActivityStandard && typeof window.ActivityStandard.renderAvancePanel === "function" && document.querySelector("[data-act-std-avance]")) {
+        window.ActivityStandard.renderAvancePanel({
+          getGuideDataFile: function () { return PAGE_FILE; },
+          getState: function () { return state; },
+        });
+      }
+    },
+  });
 }
 
 window.initGuia6 = initGuia6;
