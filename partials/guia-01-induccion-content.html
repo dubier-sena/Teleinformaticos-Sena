@@ -2561,11 +2561,18 @@ function toggleCheck(e, id, navId) {
 }
 
 function updateProgress() {
+  // OJO: guia_template.js (compartido por todas las guias) tambien inyecta SU
+  // PROPIO boton generico ".activity-check" (sin id, "marcar seccion como
+  // vista") en cualquier .activity-header que no tenga ya uno -- por eso el
+  // selector se limita a [id^="chk-"], que son EXCLUSIVAMENTE las casillas
+  // propias de esta guia. Sin este filtro el total incluye ese boton extra
+  // (nunca se marca) y el % se queda atascado (ej. 9/10 = 90% en vez de 100%).
+  //
   // 3.1.1 (chk-311) es la dinamica de romper el hielo -- "Entrega en
   // plataforma: no aplica, el instructor registra la participacion" (segun la
   // propia guia). No es un entregable evaluable, no debe contar en el %.
-  const total = document.querySelectorAll('.activity-check:not(#chk-311)').length;
-  const done = document.querySelectorAll('.activity-check.checked:not(#chk-311)').length;
+  const total = document.querySelectorAll('.activity-check[id^="chk-"]:not(#chk-311)').length;
+  const done = document.querySelectorAll('.activity-check.checked[id^="chk-"]:not(#chk-311)').length;
   const pct = Math.round((done / total) * 100);
   document.getElementById('progressBar').style.width = pct + '%';
   document.getElementById('progressValue').textContent = pct + '%';
@@ -2621,7 +2628,7 @@ function saveCompromiso() {
 
 function saveProgress() {
   const checks = {};
-  document.querySelectorAll('.activity-check').forEach(el => {
+  document.querySelectorAll('.activity-check[id^="chk-"]').forEach(el => {
     checks[el.id] = el.classList.contains('checked');
   });
   localStorage.setItem(pageStorageKey('checks'), JSON.stringify(checks));

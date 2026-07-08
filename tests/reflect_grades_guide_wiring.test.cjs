@@ -124,3 +124,22 @@ test("induccion: bridgeInduccionStateSync usa PAGE_FILE (no GUIDE_DATA_FILE) en 
     "refreshAvancePanel debe usar PAGE_FILE (el nombre crudo registrado en guide_declarations.js), no GUIDE_DATA_FILE (el alias de almacenamiento)"
   );
 });
+
+test("induccion: updateProgress/saveProgress excluyen el boton generico .activity-check (sin id) que inyecta guia_template.js", () => {
+  const source = read("partials/guia-01-induccion-content.html");
+  const updateProgressBlock = source.match(/function updateProgress\s*\(\)\s*\{[\s\S]*?\n\}/);
+  assert.ok(updateProgressBlock, "no se encontro updateProgress en el partial de induccion");
+  assert.match(
+    updateProgressBlock[0],
+    /\.activity-check\[id\^="chk-"\]/,
+    "updateProgress debe filtrar por [id^=\"chk-\"] -- guia_template.js inyecta su PROPIO boton .activity-check (sin id) en cualquier .activity-header sin uno, y ese boton nunca se marca (queda contando de mas en el total, atascando el % por debajo de 100)"
+  );
+
+  const saveProgressBlock = source.match(/function saveProgress\s*\(\)\s*\{[\s\S]*?\n\}/);
+  assert.ok(saveProgressBlock, "no se encontro saveProgress en el partial de induccion");
+  assert.match(
+    saveProgressBlock[0],
+    /\.activity-check\[id\^="chk-"\]/,
+    "saveProgress tambien debe filtrar por [id^=\"chk-\"] para no guardar una entrada con llave vacia"
+  );
+});
