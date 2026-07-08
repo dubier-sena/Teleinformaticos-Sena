@@ -39,7 +39,12 @@
     "guia-02-herramientas": {
       label: "Guía 2 — Operar herramientas informáticas y digitales",
       activities: [
-        { id: "sopaletras311",    label: "3.1.1 Actividades de inicio (Sopa de letras y Relaciona herramienta-función)" },
+        // "relaciona311" es una actividad SEPARADA en la guia (3.1.2, su propia
+        // tarjeta), pero se califica junto con sopaletras311 en UNA sola columna
+        // (ambas son juegos de puntaje sin campo de texto). aliasIds hace que el
+        // badge tambien se monte en la tarjeta de relaciona311 (aliasMounts) y que
+        // "Tu control de avance" la marque hecha cuando se califica esta fila.
+        { id: "sopaletras311",    label: "3.1.1 Actividades de inicio (Sopa de letras y Relaciona herramienta-función)", aliasIds: ["relaciona311"], aliasMounts: ["#relaciona311GradeMount"] },
         { id: "analisis313",      label: "3.1.3 Bitácora de análisis" },
         { id: "fichaCaso",        label: "3.2.1 Ficha de caso" },
         { id: "matriz322",        label: "3.2.2 Matriz de Diagnóstico Digital" },
@@ -452,8 +457,15 @@
     if (!family) return;
     var entry = GRADE_CATALOG[family];
     if (!entry || !Array.isArray(entry.activities)) return;
-    var activities = entry.activities.map(function (a) {
-      return { activityId: a.id, mountSelector: a.mount || null };
+    var activities = [];
+    entry.activities.forEach(function (a) {
+      activities.push({ activityId: a.id, mountSelector: a.mount || null });
+      // Actividades "gemelas" que comparten la misma columna de nota (ver
+      // aliasIds/aliasMounts en la declaracion, ej. sopaletras311/relaciona311):
+      // el mismo badge se monta TAMBIEN en la tarjeta de cada alias.
+      (a.aliasMounts || []).forEach(function (sel) {
+        activities.push({ activityId: a.id, mountSelector: sel });
+      });
     });
     await renderGradeBadges({ guideFamily: family, activities: activities });
     applyApprovedSolutionsForFamily(family);
@@ -513,22 +525,29 @@
     entry.activities.forEach(function (act) {
       var grade = grades[act.id];
       if (grade !== "A" && grade !== "D") return;
-      var type = typeById[act.id] || "form";
-      if (type === "file") {
-        if (!state[act.id + "-delivery"] || state[act.id + "-delivery"].status !== "delivered") {
-          state[act.id + "-delivery"] = {
-            status: "delivered",
-            submittedAt: grades[act.id + ":gradedAt"] || new Date().toISOString(),
-          };
+      // Actividades "gemelas" (aliasIds): comparten esta misma nota/columna
+      // (ej. relaciona311 se califica junto con sopaletras311) -- tambien
+      // reciben su propio {id}-locked para que "Tu control de avance" las
+      // cuente como hechas, no solo la actividad "duena" de la nota.
+      var idsToFlag = [act.id].concat(Array.isArray(act.aliasIds) ? act.aliasIds : []);
+      idsToFlag.forEach(function (flagId) {
+        var type = typeById[flagId] || "form";
+        if (type === "file") {
+          if (!state[flagId + "-delivery"] || state[flagId + "-delivery"].status !== "delivered") {
+            state[flagId + "-delivery"] = {
+              status: "delivered",
+              submittedAt: grades[act.id + ":gradedAt"] || new Date().toISOString(),
+            };
+            changed = true;
+          }
+        } else if (state[flagId + "-locked"] !== true) {
+          state[flagId + "-locked"] = true;
           changed = true;
         }
-      } else if (state[act.id + "-locked"] !== true) {
-        state[act.id + "-locked"] = true;
-        changed = true;
-      }
-      if (typeof lockAppliers[act.id] === "function") {
-        try { lockAppliers[act.id](); } catch (e) { /* no critico */ }
-      }
+        if (typeof lockAppliers[flagId] === "function") {
+          try { lockAppliers[flagId](); } catch (e) { /* no critico */ }
+        }
+      });
     });
 
     if (changed && typeof opts.onChanged === "function") {

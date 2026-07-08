@@ -1248,7 +1248,18 @@
     if (!session || !session.usernameKey) return null;
     var grades = mgr.getStudentGrades(session.usernameKey, family) || {};
     var grade = grades[activityId];
-    return grade === "A" || grade === "D" ? grade : null;
+    if (grade === "A" || grade === "D") return grade;
+    // Puede ser un alias: comparte columna de nota con otra actividad "dueña"
+    // (ej. relaciona311 se califica junto con sopaletras311 -- ver aliasIds
+    // en GRADE_CATALOG). Se busca la actividad dueña y se usa SU nota.
+    var catalogEntry = mgr.GRADE_CATALOG && mgr.GRADE_CATALOG[family];
+    var ownerAct = catalogEntry && Array.isArray(catalogEntry.activities)
+      ? catalogEntry.activities.filter(function (a) {
+          return Array.isArray(a.aliasIds) && a.aliasIds.indexOf(activityId) !== -1;
+        })[0]
+      : null;
+    var ownerGrade = ownerAct ? grades[ownerAct.id] : null;
+    return ownerGrade === "A" || ownerGrade === "D" ? ownerGrade : null;
   }
 
   function renderAvancePanel(stateCtx) {

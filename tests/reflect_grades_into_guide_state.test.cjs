@@ -185,3 +185,29 @@ test("reflectGradesIntoGuideState: guideFamily inexistente en GRADE_CATALOG no r
 
   assert.deepEqual(state, {});
 });
+
+test("reflectGradesIntoGuideState: aliasIds -- calificar la actividad dueña TAMBIEN marca -locked en su alias", async () => {
+  const state = {};
+  let onChangedCalls = 0;
+
+  const mgr = loadManager({
+    portalAuth: studentSession("prueba.aprendiz"),
+    firebaseDb: {
+      cloudGetGrades: async () => ({ "guia-02-herramientas": { sopaletras311: "A" } }),
+    },
+    activityStandard: {
+      getConfigForGuide: () => ({ activities: [{ id: "sopaletras311", type: "form" }, { id: "relaciona311", type: "form" }] }),
+    },
+  });
+
+  await mgr.reflectGradesIntoGuideState({
+    guideFamily: "guia-02-herramientas",
+    pageFile: "grupo-10a-guia-02-herramientas-informaticas-digitales.html",
+    getState: () => state,
+    onChanged: () => { onChangedCalls += 1; },
+  });
+
+  assert.equal(state["sopaletras311-locked"], true);
+  assert.equal(state["relaciona311-locked"], true, "el alias declarado en aliasIds tambien debe quedar -locked");
+  assert.equal(onChangedCalls, 1);
+});
