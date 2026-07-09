@@ -247,6 +247,7 @@
 <script defer src="../../js/shared_drive_delivery.js?v=20260611_2"></script>
 <script defer src="../../js/export_styles.js?v=20260517_1"></script>
 <script defer src="../../js/script_guia2.js?v=20260708_1"></script>
+<script defer src="../../js/activity_grades.js?v=20260709_2"></script>
 <script defer src="../../js/activity4_admin_report.js?v=20260615_1"></script>
 </head>
 <body
@@ -715,6 +716,8 @@
             </div>
           </div>
 
+          <div id="diagnostico323GradeMount" style="margin-top:12px"></div>
+
           <!-- Botón guardar y finalizar -->
           <div class="activity4-submit-wrap">
             <button type="button" class="activity4-submit-btn" id="activity4SubmitBtn" onclick="guardarFormulario()">
@@ -823,6 +826,16 @@
       // Espera un tick extra para que script_guia2.js haya restaurado los valores
       setTimeout(function () { applyLock(fecha); }, 250);
     }
+
+    // Badge Aprobado/Reprobado (diagnostico323) + relleno del banco si esta
+    // aprobado y algun campo quedo vacio. Espera el mismo tick que arriba para
+    // que hydrateFields() ya haya restaurado las respuestas del aprendiz.
+    setTimeout(function () {
+      var mgr = window.activityGradesManager;
+      if (mgr && typeof mgr.autoRenderForFile === "function") {
+        mgr.autoRenderForFile(PAGE_FILE);
+      }
+    }, 250);
   });
 
   window.guardarFormulario = guardarFormulario;

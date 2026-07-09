@@ -88,6 +88,12 @@
       { id: "analisis313",     number: "3.1.3", label: "Bitacora de analisis",              shortName: "Bitacora",        type: "form" },
       { id: "matriz322",       number: "3.2.2", label: "Matriz de Diagnostico Digital",     shortName: "MatrizDigital",   type: "form" },
       { id: "fichaCaso",       number: "3.2.1", label: "Ficha de caso",                     shortName: "FichaCaso",       type: "form" },
+      // Cuestionario individual (10 preguntas, "contexto-*") de la Actividad 4 --
+      // pagina APARTE (grupo-10a/10b-guia-02-actividad-4-formulario.html), no usa
+      // ActivityStandard.mountActivities. Registrado aqui solo para que
+      // Calificaciones tenga su columna (numero propio "3.2.3" porque "3.2.1"
+      // ya lo usa fichaCaso, actividad DISTINTA dentro de la misma tarjeta).
+      { id: "diagnostico323",  number: "3.2.3", label: "Diagnostico individual del contexto digital", shortName: "DiagnosticoIndividual", type: "form" },
       { id: "extensiones331",  number: "3.3.1", label: "Extensiones de archivo",            shortName: "Extensiones",     type: "form" },
       { id: "sistemas332",     number: "3.3.2", label: "Requerimientos minimos",            shortName: "Requerimientos",  type: "form" },
       { id: "suite333",        number: "3.3.3", label: "Suite ofimatica en accion",         shortName: "Suite",           type: "form" },

@@ -227,6 +227,7 @@
 <script defer src="../../js/shared_shell.js?v=20260707_1"></script>
 <script defer src="../../js/export_styles.js?v=20260517_1"></script>
 <script defer src="../../js/script_guia2.js?v=20260708_1"></script>
+<script defer src="../../js/activity_grades.js?v=20260709_2"></script>
 </head>
 <body
   class="app-shell app-shell--guide matriz-page"
@@ -415,6 +416,8 @@
           </div>
         </div>
       </div>
+
+      <div id="matriz322GradeMount" style="margin-bottom:16px"></div>
 
       <!-- Panel de exportación y entrega -->
       <div class="export-panel">
@@ -758,6 +761,18 @@ document.addEventListener("DOMContentLoaded", function () {
     panelKey: "guia2-3-2-2",
   });
   if (record) renderMatrizDeliveryConfirmation(record);
+});
+
+// Badge Aprobado/Reprobado (matriz322) + relleno del banco si esta aprobado
+// y algun campo quedo vacio. Espera un tick para que script_guia2.js ya haya
+// restaurado (hydrateFields) las respuestas del equipo.
+window.addEventListener("load", function () {
+  setTimeout(function () {
+    var mgr = window.activityGradesManager;
+    if (mgr && typeof mgr.autoRenderForFile === "function") {
+      mgr.autoRenderForFile(PAGE_FILE);
+    }
+  }, 250);
 });
 </script>
 
