@@ -219,7 +219,7 @@
 </style>
 <script defer src="../js/shared_shell.js?v=20260709_1"></script>
 <script defer src="../js/export_styles.js?v=20260517_1"></script>
-<script defer src="../js/script_guia2.js?v=20260709_2"></script>
+<script defer src="../js/script_guia2.js?v=20260709_3"></script>
 </head>
 <body
   class="app-shell app-shell--guide matriz-page"
@@ -434,7 +434,7 @@ function descargarMatrizWord() {
 }
 
 /* ── Bloqueo de campos ─────────────────────────────────────────────────── */
-function lockMatriz(finalizedAt) {
+function lockMatriz(finalizedAt, reasonText) {
   document.querySelectorAll("textarea[data-store]").forEach(function(el) {
     el.disabled = true;
     el.style.background = "#f1f5f9";
@@ -444,12 +444,12 @@ function lockMatriz(finalizedAt) {
   var btn = document.getElementById("btn-guardar");
   if (btn) {
     btn.disabled = true;
-    btn.innerHTML = "\u2713 Actividad finalizada";
+    btn.innerHTML = "\u2713 Respuestas enviadas";
     btn.style.background = "#16a34a";
     btn.style.cursor = "default";
   }
   var savebar = document.querySelector(".save-bar");
-  if (savebar) {
+  if (savebar && !document.getElementById("matriz-lock-banner")) {
     var dateStr = "";
     if (finalizedAt) {
       try {
@@ -460,8 +460,9 @@ function lockMatriz(finalizedAt) {
       } catch(e) {}
     }
     var banner = document.createElement("div");
+    banner.id = "matriz-lock-banner";
     banner.style.cssText = "background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:13px 18px;margin-bottom:16px;font-size:.9rem;color:#15803d;font-weight:700;";
-    banner.textContent = "\uD83D\uDD12 Actividad 3.2.2 finalizada" + dateStr + ". Tus respuestas han sido enviadas y no pueden modificarse.";
+    banner.textContent = reasonText || ("\uD83D\uDD12 Actividad 3.2.2 finalizada" + dateStr + ". Tus respuestas han sido enviadas y no pueden modificarse.");
     savebar.parentNode.insertBefore(banner, savebar);
   }
 }

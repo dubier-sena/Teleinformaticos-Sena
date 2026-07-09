@@ -888,6 +888,17 @@ function initGuia2() {
 // ya estuviera calificada. Usa el mismo flag que ya revisan applyXLock() (para
 // que el campo tambien quede bloqueado visualmente) y ActivityStandard (para
 // que el panel de avance la cuente).
+// "matriz322" (Matriz de Diagnostico Digital) vive en su propia pagina
+// (grupo-10a/10b-guia-02-actividad-322-matriz.html), que define su PROPIA
+// funcion global lockMatriz() (bloqueo por auto-envio del aprendiz). Aqui solo
+// se llama si existe -- en la pagina principal de la guia (donde corre
+// reflectGradesForGuia2) window.lockMatriz no existe, asi que no hace nada.
+function applyMatriz322GradeLock() {
+  if (typeof window.lockMatriz === "function") {
+    window.lockMatriz(null, "🔒 Esta actividad ya fue calificada por el instructor. No puede modificarse.");
+  }
+}
+
 function reflectGradesForGuia2() {
   var mgr = window.activityGradesManager;
   if (!mgr || typeof mgr.reflectGradesIntoGuideState !== "function") return;
@@ -898,6 +909,7 @@ function reflectGradesForGuia2() {
     lockAppliers: {
       sopaletras311: renderWordSearchGame,
       relaciona311: renderMatchingGame,
+      matriz322: applyMatriz322GradeLock,
       extensiones331: applyExtensionesLock,
       sistemas332: applySistemasLock,
       colaborativas334: applyColaborativasLock,

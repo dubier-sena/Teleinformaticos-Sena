@@ -226,7 +226,7 @@
 </style>
 <script defer src="../../js/shared_shell.js?v=20260709_1"></script>
 <script defer src="../../js/export_styles.js?v=20260517_1"></script>
-<script defer src="../../js/script_guia2.js?v=20260709_2"></script>
+<script defer src="../../js/script_guia2.js?v=20260709_3"></script>
 <script defer src="../../js/activity_grades.js?v=20260709_3"></script>
 </head>
 <body
@@ -447,7 +447,7 @@ function descargarMatrizWord() {
 }
 
 /* ── Bloqueo de campos ─────────────────────────────────────────────────── */
-function lockMatriz(finalizedAt) {
+function lockMatriz(finalizedAt, reasonText) {
   document.querySelectorAll("textarea[data-store]").forEach(function(el) {
     el.disabled = true;
     el.style.background = "#f1f5f9";
@@ -475,7 +475,7 @@ function lockMatriz(finalizedAt) {
     var banner = document.createElement("div");
     banner.id = "matriz-lock-banner";
     banner.style.cssText = "background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:13px 18px;margin-bottom:16px;font-size:.9rem;color:#15803d;font-weight:700;";
-    banner.textContent = "\uD83D\uDD12 Actividad 3.2.2 finalizada" + dateStr + ". Tus respuestas han sido enviadas y no pueden modificarse.";
+    banner.textContent = reasonText || ("\uD83D\uDD12 Actividad 3.2.2 finalizada" + dateStr + ". Tus respuestas han sido enviadas y no pueden modificarse.");
     savebar.parentNode.insertBefore(banner, savebar);
   }
 }
@@ -765,15 +765,21 @@ document.addEventListener("DOMContentLoaded", function () {
 
 // Badge Aprobado/Reprobado (matriz322) + relleno del banco si esta aprobado
 // y algun campo quedo vacio. Espera un tick para que script_guia2.js ya haya
-// restaurado (hydrateFields) las respuestas del equipo.
+// restaurado (hydrateFields) las respuestas del equipo. Se repite cuando llega
+// un snapshot de la nube (evento "guia2-state-applied" de script_guia2.js):
+// si esa sincronizacion llega DESPUES del primer intento, hydrateFields()
+// puede pisar el relleno del banco -- repetir es seguro (solo llena campos
+// vacios) y evita que quede en blanco por una carrera de tiempos.
+function runMatriz322GradeAutoFill() {
+  var mgr = window.activityGradesManager;
+  if (mgr && typeof mgr.autoRenderForFile === "function") {
+    mgr.autoRenderForFile(PAGE_FILE);
+  }
+}
 window.addEventListener("load", function () {
-  setTimeout(function () {
-    var mgr = window.activityGradesManager;
-    if (mgr && typeof mgr.autoRenderForFile === "function") {
-      mgr.autoRenderForFile(PAGE_FILE);
-    }
-  }, 250);
+  setTimeout(runMatriz322GradeAutoFill, 250);
 });
+window.addEventListener("guia2-state-applied", runMatriz322GradeAutoFill);
 </script>
 
 </body>
