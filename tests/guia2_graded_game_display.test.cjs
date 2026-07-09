@@ -70,6 +70,7 @@ function loadScriptGuia2() {
     getStudentStorageKey: (usernameKey, key, opts) => `sena_portal:student:${usernameKey}:${(opts && opts.area) || "app"}:${key}`,
     getScopedStorageKey: (key, opts) => `sena_portal:student:prueba.aprendiz:${(opts && opts.area) || "app"}:${key}`,
     requireFileAccess: () => true,
+    getCurrentSelection: (defaults) => defaults || {},
   };
   ctx.window._firebaseDb = {};
   ctx.window.matchMedia = () => ({ matches: false });
@@ -81,6 +82,98 @@ function loadScriptGuia2() {
   vm.runInContext(fs.readFileSync(path.join(root, "js", "script_guia2.js"), "utf8"), ctx, { filename: "script_guia2.js" });
   return ctx;
 }
+
+// Simula el DOM REAL (escaso) de grupo-10a-guia-02-actividad-322-matriz.html:
+// a diferencia de loadScriptGuia2() (que devuelve un elemento falso para
+// CUALQUIER id/selector, ocultando bugs de "acceso a propiedad de null"),
+// aqui getElementById/querySelector devuelven null salvo los pocos ids que
+// EXISTEN de verdad en esa pagina. Sirve para detectar si initGuia2() revienta
+// a medio camino cuando corre fuera de la guia principal -- si revienta ANTES
+// de reflectGradesForGuia2() (la ultima linea de initGuia2), el bloqueo por
+// calificacion nunca se aplica, aunque autoRenderForFile (mecanismo aparte, en
+// el <script> propio de la pagina) si funcione.
+function loadScriptGuia2OnMatrixPage() {
+  const knownIds = new Set([
+    "btn-entregar-matriz", "btn-guardar", "drive-link-panel",
+    "field-322-finalizada", "field-322-finalizada-at",
+    "matriz322GradeMount", "save-status",
+  ]);
+  const elementsById = new Map();
+  function getOrCreateEl(id) {
+    if (!elementsById.has(id)) elementsById.set(id, makeEl());
+    return elementsById.get(id);
+  }
+  const localStorageStub = {
+    _data: {},
+    getItem(key) { return Object.prototype.hasOwnProperty.call(this._data, key) ? this._data[key] : null; },
+    setItem(key, value) { this._data[key] = String(value); },
+    removeItem(key) { delete this._data[key]; },
+  };
+  const documentStub = {
+    addEventListener() {},
+    removeEventListener() {},
+    getElementById: (id) => (knownIds.has(id) ? getOrCreateEl(id) : null),
+    querySelector: () => null,
+    querySelectorAll: () => [],
+    createElement: () => makeEl(),
+    createElementNS: () => makeEl(),
+    documentElement: makeEl(),
+    body: makeEl(),
+    visibilityState: "visible",
+  };
+  const ctx = {
+    console,
+    localStorage: localStorageStub,
+    document: documentStub,
+    navigator: { userAgent: "node" },
+    URL,
+    Date,
+    Math,
+    JSON,
+    setTimeout, clearTimeout,
+    // setInterval real dejaria un timer colgado (initializeCloudStateSync arma
+    // un poll periodico que nunca se limpia) y el proceso de node --test nunca
+    // terminaria de esperar. No-op: alcanza para esta prueba diagnostica.
+    setInterval: () => 0,
+    clearInterval: () => {},
+    requestAnimationFrame: (fn) => setTimeout(fn, 0),
+    IntersectionObserver: class { observe() {} unobserve() {} disconnect() {} },
+  };
+  ctx.window = ctx;
+  ctx.window.location = { href: "https://x/pages/auxiliares/grupo-10a-guia-02-actividad-322-matriz.html", pathname: "/pages/auxiliares/grupo-10a-guia-02-actividad-322-matriz.html", search: "" };
+  ctx.window.portalAuth = {
+    getCurrentSession: () => ({ role: "student", usernameKey: "prueba.aprendiz", user: { usernameKey: "prueba.aprendiz", fullName: "Aprendiz De Prueba" } }),
+    getStudentStorageKey: (usernameKey, key, opts) => `sena_portal:student:${usernameKey}:${(opts && opts.area) || "app"}:${key}`,
+    getScopedStorageKey: (key, opts) => `sena_portal:student:prueba.aprendiz:${(opts && opts.area) || "app"}:${key}`,
+    requireFileAccess: () => true,
+    getCurrentSelection: (defaults) => defaults || {},
+  };
+  ctx.window._firebaseDb = {};
+  ctx.window.matchMedia = () => ({ matches: false });
+  ctx.window.innerWidth = 1200;
+  ctx.window.addEventListener = () => {};
+  ctx.window.__RUNTIME_PAGE_FILE__ = "grupo-10a-guia-02-actividad-322-matriz.html";
+
+  vm.createContext(ctx);
+  vm.runInContext(fs.readFileSync(path.join(root, "js", "script_guia2.js"), "utf8"), ctx, { filename: "script_guia2.js" });
+  return ctx;
+}
+
+test("Guia 2: initGuia2 no debe reventar al correr en la pagina de la Matriz (DOM real, sin la mayoria de elementos de la guia principal)", () => {
+  const ctx = loadScriptGuia2OnMatrixPage();
+  let thrown = null;
+  try {
+    vm.runInContext("window.initGuia2()", ctx);
+  } catch (e) {
+    thrown = e;
+  }
+  assert.equal(
+    thrown,
+    null,
+    "si initGuia2() revienta a medio camino, reflectGradesForGuia2() (su ULTIMA linea) nunca corre, y el bloqueo por calificacion del instructor nunca se aplica en esta pagina" +
+      (thrown ? `\nError real: ${thrown.stack}` : "")
+  );
+});
 
 test("Guia 2: sopa de letras calificada sin jugar se exhibe totalmente resuelta, sin tocar el estado real", () => {
   const ctx = loadScriptGuia2();
@@ -220,4 +313,61 @@ test("Guia 2: calificar matriz322 dispara lockMatriz en la pagina de la matriz (
   `, ctx);
 
   assert.equal(calls.length, 1, "calificar matriz322 debe bloquear la pagina de la matriz");
+});
+
+// Carga SOLO el <script> propio de la pagina de la Matriz (no script_guia2.js)
+// en un sandbox minimo, para probar applyMatrizDeadlineLock()/isMatrizGradeLocked()
+// tal como existen en el archivo real -- reproduce el bug reportado: esa
+// pagina reaplica isLocked varias veces (al cargar, 1.5s despues, al
+// sincronizar con la nube) usando SOLO el campo de auto-envio del aprendiz:
+// sin isMatrizGradeLocked(), cada repeticion reactivaba los campos aunque el
+// instructor ya hubiera calificado (quedaban grises por lockMatriz() pero
+// editables, porque applyAvailability solo toca disabled/opacity/pointer-events).
+function loadMatrizPageInlineScript() {
+  const html = fs.readFileSync(
+    path.join(root, "pages", "auxiliares", "grupo-10a-guia-02-actividad-322-matriz.html"),
+    "utf8"
+  );
+  const scriptMatch = html.match(/<script>\n\/\* ── Descarga plantilla[\s\S]*?<\/script>/);
+  assert.ok(scriptMatch, "no se encontro el <script> principal de la pagina de la Matriz -- ¿cambio la estructura del archivo?");
+  const code = scriptMatch[0].replace(/^<script>/, "").replace(/<\/script>$/, "");
+
+  const ctx = {
+    console,
+    state: {},
+    document: {
+      getElementById: () => null,
+      querySelector: () => null,
+      addEventListener() {},
+    },
+    window: {},
+    localStorage: { getItem: () => null, setItem() {}, removeItem() {} },
+    Date,
+  };
+  ctx.window.addEventListener = () => {};
+  vm.createContext(ctx);
+  vm.runInContext(code, ctx, { filename: "matriz-322-inline.js" });
+  return ctx;
+}
+
+test("Guia 2 Matriz: applyMatrizDeadlineLock NO reactiva los campos si la actividad ya fue calificada", () => {
+  const ctx = loadMatrizPageInlineScript();
+  const availabilityCalls = [];
+  ctx.window.activityDeadlineManager = {
+    applyAvailability: (config) => { availabilityCalls.push(config.isLocked); },
+  };
+
+  // Sin nota: no deberia bloquear (comportamiento normal, sin cambios).
+  vm.runInContext("applyMatrizDeadlineLock()", ctx);
+  assert.equal(availabilityCalls[0], false, "sin calificar y sin auto-envio, no debe bloquear");
+
+  // El instructor califica -> reflectGradesForGuia2 (en script_guia2.js) pone
+  // esta bandera en el estado compartido de la guia.
+  vm.runInContext('state["matriz322-locked"] = true;', ctx);
+
+  // applyMatrizDeadlineLock se vuelve a llamar mas tarde (1.5s despues, o al
+  // sincronizar con la nube) -- ANTES del fix, esto pasaba isLocked:false
+  // (solo miraba el auto-envio) y reactivaba los campos.
+  vm.runInContext("applyMatrizDeadlineLock()", ctx);
+  assert.equal(availabilityCalls[1], true, "calificada por el instructor, las repeticiones NO deben reactivar los campos");
 });
