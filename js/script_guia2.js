@@ -1408,6 +1408,29 @@ function calculateWordSearchScore(foundCount, total, mistakes) {
   return Math.max(0, Math.min(WORD_SEARCH_MAX_SCORE, baseScore - penalty));
 }
 
+// Si el instructor califico "sopaletras311" (aprobada o no) y el aprendiz
+// nunca jugo, se muestra el tablero COMO SI estuviera resuelto -- todas las
+// palabras encontradas -- en vez de invitar a jugar. Es solo de exhibicion:
+// nunca se escribe en state[WORD_SEARCH_STATE_KEY] ni se publica en el
+// ranking, asi que si el instructor quita la nota, el juego real (sin jugar)
+// vuelve a aparecer tal cual estaba.
+function getWordSearchDisplayState(gameState) {
+  if (!state["sopaletras311-locked"] || gameState.startedAt) {
+    return gameState;
+  }
+  const puzzle = getWordSearchPuzzle(gameState.variant);
+  const words = puzzle.targets.map((target) => target.word);
+  return {
+    ...gameState,
+    found: words,
+    foundLabels: words.map((word) => puzzle.placements[word]?.label || word),
+    mistakes: 0,
+    score: calculateWordSearchScore(words.length, words.length, 0),
+    startedAt: "graded",
+    completedAt: "graded",
+  };
+}
+
 function getWordSearchElapsedMs(gameState) {
   if (!gameState?.startedAt) {
     return Math.max(0, Number(gameState?.elapsedMs) || 0);
@@ -1953,12 +1976,13 @@ function finishWordSearchSelection(button) {
   setWordSearchStatus(`Encontraste: ${match.label}. Sigue buscando.`);
 }
 
-function renderWordSearchBoard(gameState) {
+function renderWordSearchBoard(rawGameState) {
   const board = document.getElementById("wordSearchBoard");
   if (!board) {
     return;
   }
 
+  const gameState = getWordSearchDisplayState(rawGameState);
   const puzzle = getWordSearchPuzzle(gameState.variant);
   const foundCells = new Map();
   gameState.found.forEach((word) => {
@@ -1966,21 +1990,12 @@ function renderWordSearchBoard(gameState) {
     puzzle.placements[word]?.cells.forEach((cell) => foundCells.set(cellKey(cell), colorClass));
   });
 
-  const gradedLocked = Boolean(state["sopaletras311-locked"]);
-
   board.style.setProperty("--word-search-size", String(puzzle.size));
   board.classList.toggle("is-waiting", !gameState.startedAt);
   board.classList.toggle("is-countdown", Boolean(wordSearchCountdownTimer));
 
   if (!gameState.startedAt) {
-    board.innerHTML = gradedLocked
-      ? `
-        <div class="word-search-ready is-completed">
-          <strong>&#9989; Actividad solucionada</strong>
-          <span>Esta actividad ya fue calificada por el instructor.</span>
-        </div>
-      `
-      : wordSearchCountdownTimer
+    board.innerHTML = wordSearchCountdownTimer
       ? renderWordSearchCountdownOverlay()
       : `
         <div class="word-search-ready">
@@ -2012,12 +2027,13 @@ function renderWordSearchBoard(gameState) {
     .join("");
 }
 
-function renderWordSearchFound(gameState) {
+function renderWordSearchFound(rawGameState) {
   const foundBox = document.getElementById("wordSearchFound");
   if (!foundBox) {
     return;
   }
 
+  const gameState = getWordSearchDisplayState(rawGameState);
   if (!gameState.foundLabels.length) {
     foundBox.textContent = "Aun no hay palabras encontradas.";
     return;
@@ -2031,12 +2047,13 @@ function renderWordSearchFound(gameState) {
     .join("");
 }
 
-function renderWordSearchTargets(gameState) {
+function renderWordSearchTargets(rawGameState) {
   const targetBox = document.getElementById("wordSearchTargets");
   if (!targetBox) {
     return;
   }
 
+  const gameState = getWordSearchDisplayState(rawGameState);
   const foundWords = new Set(gameState.found);
   targetBox.innerHTML = getWordSearchPuzzle(gameState.variant).targets
     .map((target) => {
@@ -2085,12 +2102,13 @@ function renderWordSearchGame() {
   }
 
   const gameState = getWordSearchState();
-  const puzzle = getWordSearchPuzzle(gameState.variant);
   const startButton = document.getElementById("wordSearchStart");
   // Si el instructor ya califico esta actividad (sopaletras311-locked, ver
   // reflectGradesForGuia2) y el aprendiz nunca la jugo, se muestra como
   // solucionada en vez de invitar a jugar -- calificar ya congela la actividad.
   const gradedLocked = Boolean(state["sopaletras311-locked"]) && !gameState.startedAt;
+  const displayState = getWordSearchDisplayState(gameState);
+  const puzzle = getWordSearchPuzzle(displayState.variant);
 
   container.classList.toggle("is-counting-down", Boolean(wordSearchCountdownTimer));
   container.classList.toggle("is-running", Boolean(gameState.startedAt && !gameState.completedAt));
@@ -2103,9 +2121,9 @@ function renderWordSearchGame() {
   refreshWordSearchTime();
   setWordSearchFullscreen(wordSearchFullscreenActive);
 
-  updateWordSearchMetric("wordSearchScore", gameState.score);
-  updateWordSearchMetric("wordSearchCount", `${gameState.found.length} / ${puzzle.targets.length}`);
-  updateWordSearchMetric("wordSearchMistakes", gameState.mistakes);
+  updateWordSearchMetric("wordSearchScore", displayState.score);
+  updateWordSearchMetric("wordSearchCount", `${displayState.found.length} / ${puzzle.targets.length}`);
+  updateWordSearchMetric("wordSearchMistakes", displayState.mistakes);
 
   if (startButton) {
     startButton.disabled = Boolean(wordSearchCountdownTimer || (gameState.startedAt && !gameState.completedAt) || gradedLocked);
@@ -2464,6 +2482,28 @@ function getMatchingGameState() {
   };
 }
 
+// Analogo a getWordSearchDisplayState: si el instructor califico "relaciona311"
+// y el aprendiz nunca jugo, se muestra el tablero COMO SI todas las parejas
+// estuvieran relacionadas, en vez de invitar a jugar. Solo de exhibicion.
+function getMatchingGameDisplayState(gameState) {
+  if (!state["relaciona311-locked"] || gameState.startedAt) {
+    return gameState;
+  }
+  const pairs = getMatchingGamePairs(gameState.variant);
+  const matches = {};
+  pairs.forEach((pair) => { matches[pair.id] = pair.id; });
+  return {
+    ...gameState,
+    matches,
+    matchedPairs: getMatchingGameMatchedPairs(gameState.variant, matches),
+    correctCount: pairs.length,
+    mistakes: 0,
+    score: calculateMatchingGameScore(pairs.length, pairs.length, 0),
+    startedAt: "graded",
+    completedAt: "graded",
+  };
+}
+
 function getMatchingGameElapsedMs(gameState) {
   if (!gameState?.startedAt) {
     return Math.max(0, Number(gameState?.elapsedMs) || 0);
@@ -2776,26 +2816,19 @@ function selectMatchingAnswer(answerId) {
   setMatchingGameStatus(`Correcto: ${selectedPair.tool} se relaciona con "${selectedPair.answer}"`);
 }
 
-function renderMatchingGameBoard(gameState) {
+function renderMatchingGameBoard(rawGameState) {
   const board = document.getElementById("matchingGameBoard");
   if (!board) {
     return;
   }
 
+  const gameState = getMatchingGameDisplayState(rawGameState);
   const isCountingDown = isMatchingGameCountingDown();
-  const gradedLocked = Boolean(state["relaciona311-locked"]);
   board.classList.toggle("is-waiting", !gameState.startedAt);
   board.classList.toggle("is-countdown", isCountingDown);
 
   if (!gameState.startedAt) {
-    board.innerHTML = gradedLocked
-      ? `
-        <div class="matching-game-ready is-completed">
-          <strong>&#9989; Actividad solucionada</strong>
-          <span>Esta actividad ya fue calificada por el instructor.</span>
-        </div>
-      `
-      : isCountingDown
+    board.innerHTML = isCountingDown
       ? renderMatchingGameCountdownOverlay()
       : `
         <div class="matching-game-ready">
@@ -2827,12 +2860,13 @@ function renderMatchingGameBoard(gameState) {
     .join("");
 }
 
-function renderMatchingGameOptions(gameState) {
+function renderMatchingGameOptions(rawGameState) {
   const options = document.getElementById("matchingGameOptions");
   if (!options) {
     return;
   }
 
+  const gameState = getMatchingGameDisplayState(rawGameState);
   if (!gameState.startedAt) {
     options.innerHTML = '<p class="matching-game-placeholder">Las funciones aparecen despues de la cuenta regresiva.</p>';
     return;
@@ -2933,7 +2967,7 @@ let matchingConnectorsDrawn = new Set();
 // Dibuja una linea curva por cada pareja resuelta, desde el borde derecho de la
 // herramienta hasta el borde izquierdo de su funcion. En layout apilado (movil)
 // se omite: alli la union ya se comunica con la tarjeta bloqueada y la opcion usada.
-function renderMatchingConnectors(gameState) {
+function renderMatchingConnectors(rawGameState) {
   const play = document.querySelector(
     `[data-matching-game="${MATCHING_GAME_ACTIVITY_ID}"] .matching-game-play`
   );
@@ -2941,6 +2975,7 @@ function renderMatchingConnectors(gameState) {
     return;
   }
 
+  const gameState = getMatchingGameDisplayState(rawGameState);
   const svg = getMatchingConnectorsSvg(play);
 
   const stacked =
@@ -3038,6 +3073,7 @@ function renderMatchingGame() {
   // reflectGradesForGuia2) y el aprendiz nunca la jugo, se muestra como
   // solucionada en vez de invitar a jugar -- calificar ya congela la actividad.
   const gradedLocked = Boolean(state["relaciona311-locked"]) && !gameState.startedAt;
+  const displayState = getMatchingGameDisplayState(gameState);
 
   container.classList.toggle("is-counting-down", isCountingDown);
   container.classList.toggle("is-running", Boolean(gameState.startedAt && !gameState.completedAt));
@@ -3049,9 +3085,9 @@ function renderMatchingGame() {
   renderMatchingGameLeaderboard(readMatchingGameLeaderboard());
   refreshMatchingGameTime();
 
-  updateMatchingGameMetric("matchingGameScore", gameState.score);
-  updateMatchingGameMetric("matchingGameCorrect", `${gameState.correctCount} / ${gameState.totalPairs}`);
-  updateMatchingGameMetric("matchingGameMistakes", gameState.mistakes);
+  updateMatchingGameMetric("matchingGameScore", displayState.score);
+  updateMatchingGameMetric("matchingGameCorrect", `${displayState.correctCount} / ${displayState.totalPairs}`);
+  updateMatchingGameMetric("matchingGameMistakes", displayState.mistakes);
 
   if (startButton) {
     startButton.disabled = Boolean(isCountingDown || (gameState.startedAt && !gameState.completedAt) || gradedLocked);
