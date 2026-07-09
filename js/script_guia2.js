@@ -896,6 +896,8 @@ function reflectGradesForGuia2() {
     pageFile: PAGE_FILE,
     getState: function () { return state; },
     lockAppliers: {
+      sopaletras311: renderWordSearchGame,
+      relaciona311: renderMatchingGame,
       extensiones331: applyExtensionesLock,
       sistemas332: applySistemasLock,
       colaborativas334: applyColaborativasLock,
@@ -1682,6 +1684,10 @@ function finishWordSearchCountdown() {
 }
 
 function startWordSearchGame() {
+  if (state["sopaletras311-locked"]) {
+    setWordSearchStatus("Esta actividad ya fue calificada por el instructor. No se puede volver a jugar.");
+    return;
+  }
   const current = getWordSearchState();
   if (current.completedAt) {
     setWordSearchStatus("Actividad completada. Puedes reiniciar si deseas mejorar el tiempo.");
@@ -1960,12 +1966,21 @@ function renderWordSearchBoard(gameState) {
     puzzle.placements[word]?.cells.forEach((cell) => foundCells.set(cellKey(cell), colorClass));
   });
 
+  const gradedLocked = Boolean(state["sopaletras311-locked"]);
+
   board.style.setProperty("--word-search-size", String(puzzle.size));
   board.classList.toggle("is-waiting", !gameState.startedAt);
   board.classList.toggle("is-countdown", Boolean(wordSearchCountdownTimer));
 
   if (!gameState.startedAt) {
-    board.innerHTML = wordSearchCountdownTimer
+    board.innerHTML = gradedLocked
+      ? `
+        <div class="word-search-ready is-completed">
+          <strong>&#9989; Actividad solucionada</strong>
+          <span>Esta actividad ya fue calificada por el instructor.</span>
+        </div>
+      `
+      : wordSearchCountdownTimer
       ? renderWordSearchCountdownOverlay()
       : `
         <div class="word-search-ready">
@@ -2072,10 +2087,14 @@ function renderWordSearchGame() {
   const gameState = getWordSearchState();
   const puzzle = getWordSearchPuzzle(gameState.variant);
   const startButton = document.getElementById("wordSearchStart");
+  // Si el instructor ya califico esta actividad (sopaletras311-locked, ver
+  // reflectGradesForGuia2) y el aprendiz nunca la jugo, se muestra como
+  // solucionada en vez de invitar a jugar -- calificar ya congela la actividad.
+  const gradedLocked = Boolean(state["sopaletras311-locked"]) && !gameState.startedAt;
 
   container.classList.toggle("is-counting-down", Boolean(wordSearchCountdownTimer));
   container.classList.toggle("is-running", Boolean(gameState.startedAt && !gameState.completedAt));
-  container.classList.toggle("is-completed", Boolean(gameState.completedAt));
+  container.classList.toggle("is-completed", Boolean(gameState.completedAt) || gradedLocked);
 
   renderWordSearchBoard(gameState);
   renderWordSearchTargets(gameState);
@@ -2089,15 +2108,17 @@ function renderWordSearchGame() {
   updateWordSearchMetric("wordSearchMistakes", gameState.mistakes);
 
   if (startButton) {
-    startButton.disabled = Boolean(wordSearchCountdownTimer || (gameState.startedAt && !gameState.completedAt));
+    startButton.disabled = Boolean(wordSearchCountdownTimer || (gameState.startedAt && !gameState.completedAt) || gradedLocked);
     startButton.textContent =
       wordSearchCountdownTimer
         ? `Comienza en ${wordSearchCountdownValue}`
         : gameState.completedAt
         ? "Actividad completada"
-        : gameState.startedAt
-          ? "Actividad en curso"
-          : "Comenzar";
+        : gradedLocked
+          ? "Actividad ya calificada"
+          : gameState.startedAt
+            ? "Actividad en curso"
+            : "Comenzar";
   }
 }
 
@@ -2576,6 +2597,10 @@ function finishMatchingGameCountdown() {
 }
 
 function startMatchingGame() {
+  if (state["relaciona311-locked"]) {
+    setMatchingGameStatus("Esta actividad ya fue calificada por el instructor. No se puede volver a jugar.");
+    return;
+  }
   const current = getMatchingGameState();
   if (current.completedAt) {
     setMatchingGameStatus("Actividad completada. Puedes reiniciar si deseas mejorar el tiempo.");
@@ -2758,11 +2783,19 @@ function renderMatchingGameBoard(gameState) {
   }
 
   const isCountingDown = isMatchingGameCountingDown();
+  const gradedLocked = Boolean(state["relaciona311-locked"]);
   board.classList.toggle("is-waiting", !gameState.startedAt);
   board.classList.toggle("is-countdown", isCountingDown);
 
   if (!gameState.startedAt) {
-    board.innerHTML = isCountingDown
+    board.innerHTML = gradedLocked
+      ? `
+        <div class="matching-game-ready is-completed">
+          <strong>&#9989; Actividad solucionada</strong>
+          <span>Esta actividad ya fue calificada por el instructor.</span>
+        </div>
+      `
+      : isCountingDown
       ? renderMatchingGameCountdownOverlay()
       : `
         <div class="matching-game-ready">
@@ -3001,10 +3034,14 @@ function renderMatchingGame() {
   const gameState = getMatchingGameState();
   const startButton = document.getElementById("matchingGameStart");
   const isCountingDown = isMatchingGameCountingDown();
+  // Si el instructor ya califico esta actividad (relaciona311-locked, ver
+  // reflectGradesForGuia2) y el aprendiz nunca la jugo, se muestra como
+  // solucionada en vez de invitar a jugar -- calificar ya congela la actividad.
+  const gradedLocked = Boolean(state["relaciona311-locked"]) && !gameState.startedAt;
 
   container.classList.toggle("is-counting-down", isCountingDown);
   container.classList.toggle("is-running", Boolean(gameState.startedAt && !gameState.completedAt));
-  container.classList.toggle("is-completed", Boolean(gameState.completedAt));
+  container.classList.toggle("is-completed", Boolean(gameState.completedAt) || gradedLocked);
 
   renderMatchingGameBoard(gameState);
   renderMatchingGameOptions(gameState);
@@ -3017,15 +3054,17 @@ function renderMatchingGame() {
   updateMatchingGameMetric("matchingGameMistakes", gameState.mistakes);
 
   if (startButton) {
-    startButton.disabled = Boolean(isCountingDown || (gameState.startedAt && !gameState.completedAt));
+    startButton.disabled = Boolean(isCountingDown || (gameState.startedAt && !gameState.completedAt) || gradedLocked);
     startButton.textContent =
       isCountingDown
         ? `Comienza en ${matchingGameCountdownValue}`
         : gameState.completedAt
         ? "Actividad completada"
-        : gameState.startedAt
-          ? "Actividad en curso"
-          : "Comenzar";
+        : gradedLocked
+          ? "Actividad ya calificada"
+          : gameState.startedAt
+            ? "Actividad en curso"
+            : "Comenzar";
   }
 }
 
