@@ -150,6 +150,99 @@
     ],
   });
 
+  // ── Guia 4 — Taller Integrador (JFK 10A + 10B, solo grado 10) ──────────────
+  // Proyecto de cierre por equipos (3-4 aprendices) con un actor productivo real.
+  // Los 6 productos son documentos externos (Word/Excel); el listado del equipo
+  // va en la portada de cada documento, por eso ninguna actividad usa
+  // teamRequirement (igual que documento333/sustentacion342 arriba). En cambio,
+  // para el CONTROL INTERNO de entregas (pedido explicito del usuario), cada
+  // integrante del equipo debe entregar el mismo documento desde su PROPIA
+  // cuenta (no solo uno por el equipo) — asi cada aprendiz queda con su propio
+  // registro de entrega (fecha/archivo/link), sin depender de un mecanismo de
+  // equipo nuevo. Ver notas de cada driveTarget. Las fechas (distintas entre
+  // 10A y 10B) no se hardcodean: el admin las configura en el panel de Fechas
+  // limite si quiere bloqueo automatico.
+  register({
+    files: [
+      "grupo-10a-guia-04-taller-integrador.html",
+      "grupo-10b-guia-04-taller-integrador.html",
+    ],
+    guideNumber: "4",
+    guideTitle: "Guia 4 - Taller Integrador",
+    stateKey: "guia_interactiva_10a_guia4_html",
+    program: PROGRAM,
+    competencia: "Proyecto formativo integrador - Diagnostico, intervencion y evaluacion de un actor productivo real en alfabetizacion digital, soporte tecnico y ciberseguridad.",
+    resultado: "Taller Integrador - Trabajo en equipo con un actor productivo real de la zona de influencia del Centro de Formacion.",
+    activities: [
+      {
+        id: "diagnostico", number: "1", label: "Informe diagnostico de capacidades digitales y necesidades tecnologicas locales",
+        shortName: "InformeDiagnostico", type: "file",
+        driveTarget: {
+          panelKey: "taller-jfk-1",
+          deadlineActivityId: "diagnostico",
+          activityTitle: "Producto 1 - Informe diagnostico",
+          description: "Sube el informe diagnostico del actor productivo: caracterizacion, manejo ofimatico, riesgos de ciberseguridad y necesidades de mantenimiento.",
+          note: "Mismo documento para todo el equipo, pero cada integrante debe entregarlo desde su propia cuenta.",
+        },
+      },
+      {
+        id: "planAlfabetizacion", number: "2", label: "Plan de alfabetizacion digital, soporte tecnico y formacion en ciberseguridad",
+        shortName: "PlanIntervencion", type: "file",
+        driveTarget: {
+          panelKey: "taller-jfk-2",
+          deadlineActivityId: "planAlfabetizacion",
+          activityTitle: "Producto 2 - Plan de intervencion",
+          description: "Sube el plan de alfabetizacion digital, soporte tecnico y ciberseguridad, con cronograma y responsables.",
+          note: "Mismo documento para todo el equipo, pero cada integrante debe entregarlo desde su propia cuenta.",
+        },
+      },
+      {
+        id: "plantillaExcel", number: "3", label: "Plantilla en Excel personalizada segun la necesidad del cliente",
+        shortName: "PlantillaExcel", type: "file",
+        driveTarget: {
+          panelKey: "taller-jfk-3",
+          deadlineActivityId: "plantillaExcel",
+          activityTitle: "Producto 3 - Plantilla Excel personalizada",
+          description: "Sube el documento que describe la plantilla en Excel (y el archivo .xlsx si tu instructor lo pide).",
+          note: "Mismo documento para todo el equipo (adjunta el .xlsx si aplica), pero cada integrante debe entregarlo desde su propia cuenta.",
+        },
+      },
+      {
+        id: "bitacoraAsesorias", number: "4", label: "Bitacora de asesorias tecnicas, talleres digitales y practicas de ciberseguridad",
+        shortName: "Bitacora", type: "file",
+        driveTarget: {
+          panelKey: "taller-jfk-4",
+          deadlineActivityId: "bitacoraAsesorias",
+          activityTitle: "Producto 4 - Bitacora de asesorias",
+          description: "Sube la bitacora cronologica de las sesiones con el actor productivo, con evidencia fotografica o de firma.",
+          note: "Mismo documento para todo el equipo, pero cada integrante debe entregarlo desde su propia cuenta.",
+        },
+      },
+      {
+        id: "fichaEquipos", number: "5", label: "Ficha tecnica de equipos intervenidos",
+        shortName: "FichaTecnica", type: "file",
+        driveTarget: {
+          panelKey: "taller-jfk-5",
+          deadlineActivityId: "fichaEquipos",
+          activityTitle: "Producto 5 - Ficha tecnica de equipos",
+          description: "Sube la ficha tecnica de los equipos de computo revisados o intervenidos.",
+          note: "Mismo documento para todo el equipo (junto con el Producto 4), pero cada integrante debe entregarlo desde su propia cuenta.",
+        },
+      },
+      {
+        id: "informeImpacto", number: "6", label: "Informe de impacto, lecciones aprendidas y propuesta de continuidad comunitaria",
+        shortName: "InformeImpacto", type: "file",
+        driveTarget: {
+          panelKey: "taller-jfk-6",
+          deadlineActivityId: "informeImpacto",
+          activityTitle: "Producto 6 - Informe de impacto (entrega final)",
+          description: "Sube el informe final de impacto, lecciones aprendidas y propuesta de continuidad.",
+          note: "Entrega final: mismo documento para todo el equipo, pero cada integrante debe entregarlo desde su propia cuenta.",
+        },
+      },
+    ],
+  });
+
   // ── Guia 5 — Herramientas informaticas y digitales (11A + 11B) ─────────────
   register({
     files: [

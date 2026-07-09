@@ -1,0 +1,693 @@
+<button class="hamburger" onclick="toggleSidebar()" aria-label="Menú">&#9776;</button>
+<button class="btn-sb-expand" onclick="showSidebar()" title="Mostrar barra lateral">&#9776;</button>
+
+<div class="layout app-layout">
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="badge">SENA · FPI</div>
+      <h2>Guía 4 - Taller Integrador</h2>
+      <p>Sistemas Teleinformáticos</p>
+      <button class="btn-sb-collapse" onclick="hideSidebar()" title="Ocultar barra lateral">&#9664;</button>
+    </div>
+
+    <div class="sidebar-ficha" id="sb-ficha-ok" style="display:none">
+      <div class="sf-label">Tu grupo</div>
+      <div class="sf-inst" id="sb-inst"></div>
+      <div class="sf-meta" id="sb-grupo-meta"></div>
+      <div class="sf-badge" id="sb-badge"></div>
+    </div>
+    <div class="sidebar-noficha" id="sb-ficha-warn">
+      <a href="index.html">Inicio | Seleccionar grupo / ficha</a>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span>Progreso</span>
+        <span id="progressValue">0%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <p class="progress-note">El avance se guarda localmente en este navegador.</p>
+      <button type="button" class="reset-button" id="resetProgress">Reiniciar respuestas</button>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Información</div>
+      <a class="nav-link active" href="#identificacion" onclick="setActive(this)">
+        <span class="icon">&#128203;</span> Identificación
+      </a>
+      <a class="nav-link" href="#control-avance" onclick="setActive(this)">
+        <span class="icon">&#9989;</span> Control de avance
+      </a>
+      <a class="nav-link" href="#presentacion" onclick="setActive(this)">
+        <span class="icon">&#128075;</span> Presentación
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Productos del taller</div>
+      <a class="nav-link" href="#producto1" onclick="setActive(this)">
+        <span class="icon">1&#65039;&#8419;</span> Informe diagnóstico
+        <span class="check">&#10003;</span>
+      </a>
+      <a class="nav-link" href="#producto2" onclick="setActive(this)">
+        <span class="icon">2&#65039;&#8419;</span> Plan de intervención
+        <span class="check">&#10003;</span>
+      </a>
+      <a class="nav-link" href="#producto3" onclick="setActive(this)">
+        <span class="icon">3&#65039;&#8419;</span> Plantilla Excel
+        <span class="check">&#10003;</span>
+      </a>
+      <a class="nav-link" href="#producto4" onclick="setActive(this)">
+        <span class="icon">4&#65039;&#8419;</span> Bitácora de asesorías
+        <span class="check">&#10003;</span>
+      </a>
+      <a class="nav-link" href="#producto5" onclick="setActive(this)">
+        <span class="icon">5&#65039;&#8419;</span> Ficha técnica de equipos
+        <span class="check">&#10003;</span>
+      </a>
+      <a class="nav-link" href="#producto6" onclick="setActive(this)">
+        <span class="icon">6&#65039;&#8419;</span> Informe de impacto
+        <span class="check">&#10003;</span>
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Entrega</div>
+      <a class="nav-link" href="#requisitos" onclick="setActive(this)">
+        <span class="icon">&#128196;</span> Requisitos formales
+      </a>
+      <a class="nav-link" href="#fechas" onclick="setActive(this)">
+        <span class="icon">&#128197;</span> Fechas de entrega
+      </a>
+      <a class="nav-link" href="#evaluacion" onclick="setActive(this)">
+        <span class="icon">&#127919;</span> Evaluación
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Guía asignada</div>
+      <a class="nav-guide current" id="currentGuideNavLink" href="grupo-10a-guia-04-taller-integrador.html" data-current-file="grupo-10a-guia-04-taller-integrador.html">
+        <span class="g-icon">&#128215;</span>
+        <span class="g-info">
+          <span class="g-num">Guía 4</span>
+          <span class="g-name" id="currentGuideNavLabel">Taller Integrador | 10A</span>
+        </span>
+        <span class="g-tag actual">Actual</span>
+      </a>
+    </div>
+
+    <a class="nav-home-link" href="calendario-academico-2026.html">&#128197; <span>Calendario 2026</span></a>
+    <a class="nav-home-link" href="index.html">&#127968; <span>Volver al Inicio</span></a>
+  </nav>
+
+  <main class="main app-main">
+    <div class="topbar">
+      <div class="topbar-title">
+        <strong>Guía 4 - Taller Integrador</strong>
+      </div>
+      <div class="topbar-meta">
+        <span class="meta-item"><span>&#9201;</span><span>Todo el año lectivo</span></span>
+        <span class="meta-item"><span>&#128197;</span><span>2026</span></span>
+        <span class="meta-item"><span>&#127979;</span><span id="topbarCampus">Jhon F. Kennedy | 10A</span></span>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="hero" id="inicio">
+        <div class="tag">Guía 4 | Proyecto integrador de cierre</div>
+        <h1>Taller Integrador</h1>
+        <p>
+          Vas a poner en práctica todo lo aprendido en el programa: vas a diagnosticar,
+          asesorar y acompañar a un comerciante, emprendedor informal o actor productivo
+          real de tu zona en alfabetización digital, soporte técnico básico y
+          ciberseguridad, y vas a dejar evidencia escrita de todo el proceso.
+        </p>
+        <div class="hero-meta">
+          <div class="hero-meta-item">&#127963; SENA &mdash; Servicio Nacional de Aprendizaje</div>
+          <div class="hero-meta-item">&#128205; Institución Educativa John F. Kennedy &middot; Grupos 10°A y 10°B</div>
+          <div class="hero-meta-item">&#128101; Trabajo en equipos de 3 a 4 aprendices</div>
+          <div class="hero-meta-item">&#128196; Entrega escrita, sin sustentación oral</div>
+        </div>
+      </div>
+
+      <div id="control-avance" class="section-title">Tu control de avance</div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#e8f5e9">&#9989;</div>
+            <div><h3>&iquest;Qué llevas y qué te falta?</h3><p>Se actualiza solo con tus propias entregas a Drive</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div data-act-std-avance><p class="intro-text">Cargando tu avance...</p></div>
+          <div class="gnote gnote--recuerda"><div class="gnote__label">&#128161; Recuerda</div>
+            <p>Esta tabla es <strong>por cuenta</strong>: se marca <strong>Entregada</strong> cuando
+            <em>tú</em> subes el producto a Drive desde tu usuario, aunque el documento sea el mismo para
+            todo el equipo. Cada integrante debe entregarlo también desde su propia cuenta para que su
+            avance quede en Entregada.</p></div>
+        </div>
+      </div>
+
+      <div id="identificacion" class="section-title">Identificación del Taller</div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#e8f5e9">&#128203;</div>
+            <div>
+              <h3>Datos generales</h3>
+              <p>Información oficial del taller integrador</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="table-scroll">
+            <table class="data-table ident-table">
+              <tbody>
+                <tr><td>Denominación del Programa</td><td>Sistemas Teleinformáticos</td></tr>
+                <tr><td>Nombre del proyecto</td><td>Taller Integrador</td></tr>
+                <tr><td>Institución educativa</td><td>John F. Kennedy (JFK)</td></tr>
+                <tr><td>Grupos</td><td>10°A y 10°B</td></tr>
+                <tr><td>Modalidad de trabajo</td><td>Equipos de 3 a 4 aprendices, organizados dentro de cada grupo</td></tr>
+                <tr><td>Modalidad de entrega</td><td>Documento escrito por equipo al instructor, sin sustentación oral</td></tr>
+                <tr><td>Productos del proyecto</td><td>6 productos, en 5 cortes de entrega (ver "Fechas de entrega")</td></tr>
+                <tr><td>Duración</td><td>Todo el año lectivo 2026</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="presentacion" class="section-title">Presentación</div>
+      <p class="section-intro">📍 <strong>Empieza por aquí:</strong> conoce de qué trata el taller y qué se espera de tu equipo antes de escoger el actor productivo con el que van a trabajar.</p>
+      <div class="gnote gnote--ruta">
+        <div class="gnote__label">🧭 ¿Cómo trabajar este taller? Paso a paso</div>
+        <ol>
+          <li><strong>Conforma tu equipo</strong> de 3 a 4 aprendices dentro de tu grupo (10°A o 10°B).</li>
+          <li><strong>Selecciona un actor productivo real</strong>: un comerciante, emprendedor informal u otro actor de la zona de influencia del centro de formación.</li>
+          <li><strong>Desarrolla cada producto en equipo</strong>, en formato escrito y digital, con evidencia fotográfica y de firma de las asesorías realizadas.</li>
+          <li><strong>Entrega cada producto a Drive</strong>: <u>cada integrante del equipo</u> sube el mismo documento con el botón <em>Entregar a Drive</em>, desde su propia cuenta, dentro de la fecha de tu corte.</li>
+          <li><strong>Revisa "Tu control de avance"</strong> (arriba): te muestra qué productos ya entregaste tú y cuáles faltan.</li>
+        </ol>
+      </div>
+      <div class="gnote gnote--recuerda"><div class="gnote__label">💡 Recuerda</div>
+        <p>El documento de cada producto es <strong>un solo documento escrito por equipo</strong> (todos
+        responden lo mismo, no cada quien el suyo) — pero la <strong>entrega a Drive es individual</strong>:
+        cada integrante debe subir ese mismo documento desde su propia cuenta del portal, para que quede
+        registrada la participación de todo el equipo en el control interno del instructor. Si tu equipo
+        ya entregó un producto y necesita corregirlo, pídanle a su instructor que lo habilite de nuevo.</p></div>
+
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#e3f2fd">&#128075;</div>
+            <div>
+              <h3>Presentación inicial</h3>
+              <p>Contexto y sentido del taller</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <p class="intro-text">
+            Este taller busca que los aprendices del programa Técnico en Sistemas Teleinformáticos,
+            adscritos a la Institución Educativa John F. Kennedy, desarrollen competencias prácticas
+            mediante la ejecución de un proceso real de alfabetización digital, asesoría técnica y
+            ciberseguridad dirigido a comerciantes, emprendedores informales y demás actores
+            productivos de la zona de influencia del Centro de Formación.
+          </p>
+          <p class="intro-text">
+            A través del diagnóstico, la intervención y la evaluación de resultados, se busca
+            fortalecer la capacidad de los aprendices para operar herramientas informáticas, prestar
+            soporte técnico básico y orientar buenas prácticas de ciberseguridad en un contexto
+            productivo real.
+          </p>
+          <div class="info-box green" style="margin-top:14px">
+            <div class="label">Objetivo general</div>
+            <p>
+              Que los aprendices integren los conocimientos teóricos y prácticos del programa de
+              formación en un proyecto que evidencie su capacidad para diagnosticar necesidades
+              digitales, técnicas y de seguridad informática de un actor productivo, y para diseñar,
+              ejecutar y evaluar un plan de intervención en alfabetización digital, soporte técnico
+              básico y ciberseguridad.
+            </p>
+          </div>
+          <div class="quote">
+            "Poner el conocimiento al servicio de un actor productivo real es la mejor forma de
+            comprobar cuánto hemos aprendido."
+            <cite>Taller Integrador - Orientación de trabajo</cite>
+          </div>
+        </div>
+      </div>
+
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128101;</div>
+            <div>
+              <h3>Metodología</h3>
+              <p>Cómo se organiza el trabajo en equipo</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <ul class="note-list">
+            <li>Trabajo en equipos de 3 a 4 aprendices, organizados dentro de cada grupo (10°A y 10°B).</li>
+            <li>Selección de un actor productivo real (comerciante, emprendedor informal o institución de la zona de influencia) como caso de intervención.</li>
+            <li>Elaboración de los productos en formato escrito y digital, con evidencia fotográfica y de firma de las asesorías realizadas.</li>
+            <li>Entrega final de los productos en documento escrito al instructor, sin sustentación oral.</li>
+          </ul>
+          <div class="info-box blue" style="margin-top:14px">
+            <p><strong>Producto = trabajo de equipo, entrega individual.</strong> El documento de cada
+            producto es el mismo para todo el equipo, pero <strong>cada integrante debe entregarlo a Drive
+            desde su propia cuenta</strong> (mismo archivo, un clic por persona). Así el instructor puede
+            llevar el control interno de que todos entregaron, sin depender de que uno solo suba por todos.</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="producto1" class="section-title">Desarrollo de los productos del proyecto</div>
+      <p class="section-intro">📍 <strong>6 productos, 5 cortes de entrega:</strong> cada tarjeta de abajo es un producto distinto. Cuando tu equipo lo tenga listo, súbanlo con el botón <em>Entregar a Drive</em> de esa tarjeta.</p>
+
+      <div class="card open cat-producto1">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128202;</div>
+            <div>
+              <h3>Producto 1 &middot; Informe diagnóstico</h3>
+              <p>Corte 1 &middot; Capacidades digitales y necesidades tecnológicas locales</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">1</span>
+              <span class="activity-title">Informe diagnóstico de capacidades digitales y necesidades tecnológicas locales</span>
+              <span class="mission-chip">Corte 1</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text">Diagnostica al actor productivo que va a acompañar tu equipo durante todo el taller.</p>
+              <div class="info-box" style="margin-bottom:16px">
+                <div class="label">Debe incluir</div>
+                <ul class="note-list">
+                  <li>Caracterización del actor productivo o institución seleccionada (actividad económica, tamaño, contexto).</li>
+                  <li>Diagnóstico del manejo de herramientas ofimáticas básicas (Word, Excel y similares).</li>
+                  <li>Diagnóstico de hábitos y riesgos de ciberseguridad identificados.</li>
+                  <li>Identificación de necesidades de mantenimiento técnico de los equipos de cómputo.</li>
+                  <li>Conclusiones y priorización de las necesidades encontradas.</li>
+                </ul>
+              </div>
+              <div class="info-box blue">
+                <p>Este diagnóstico es la base de los productos 2 y 3: revísenlo bien antes de avanzar.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="producto2" class="card open cat-producto2" style="margin-top:20px;">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128221;</div>
+            <div>
+              <h3>Producto 2 &middot; Plan de intervención</h3>
+              <p>Corte 2 &middot; Alfabetización digital, soporte técnico y ciberseguridad</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">2</span>
+              <span class="activity-title">Plan de alfabetización digital, soporte técnico y formación en ciberseguridad</span>
+              <span class="mission-chip">Corte 2</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text">A partir del diagnóstico del Producto 1, diseñen el plan de intervención que van a ejecutar con el actor productivo.</p>
+              <div class="info-box" style="margin-bottom:16px">
+                <div class="label">Debe incluir</div>
+                <ul class="note-list">
+                  <li>Objetivos del plan de intervención, a partir del diagnóstico realizado.</li>
+                  <li>Actividades de capacitación en herramientas ofimáticas.</li>
+                  <li>Actividades de soporte técnico básico programadas para los equipos del actor productivo.</li>
+                  <li>Actividades de formación en buenas prácticas de ciberseguridad.</li>
+                  <li>Cronograma de intervención y responsables dentro del equipo de trabajo.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="producto3" class="card open cat-producto3" style="margin-top:20px;">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128202;</div>
+            <div>
+              <h3>Producto 3 &middot; Plantilla Excel personalizada</h3>
+              <p>Corte 3 &middot; Según la necesidad del cliente</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3</span>
+              <span class="activity-title">Plantilla en Excel personalizada según la necesidad del cliente</span>
+              <span class="mission-chip">Corte 3</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text">Construyan una herramienta en Excel que resuelva una necesidad real del actor productivo (registro de ingresos y egresos, inventario, u otra).</p>
+              <div class="info-box" style="margin-bottom:16px">
+                <div class="label">Debe incluir</div>
+                <ul class="note-list">
+                  <li>Diseño de la plantilla (registro de ingresos y egresos, inventario u otra necesidad identificada).</li>
+                  <li>Documentación de las fórmulas y funcionalidades incluidas.</li>
+                  <li>Manual breve de uso dirigido al actor productivo.</li>
+                  <li>Evidencia de entrega y capacitación en el uso de la plantilla.</li>
+                </ul>
+              </div>
+              <div class="info-box blue">
+                <p>Entreguen el documento que describe la plantilla (incluyendo capturas de pantalla). Si su
+                instructor pide también el archivo <code>.xlsx</code>, súbanlo junto con el documento en el
+                mismo envío a Drive.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p id="producto4" class="section-intro" style="margin-top:20px;">📍 <strong>Corte 4:</strong> los productos 4 y 5 se entregan juntos, en el mismo corte.</p>
+      <div class="card open cat-producto4">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128214;</div>
+            <div>
+              <h3>Producto 4 &middot; Bitácora de asesorías</h3>
+              <p>Corte 4 &middot; Asesorías técnicas, talleres digitales y prácticas de ciberseguridad</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">4</span>
+              <span class="activity-title">Bitácora de asesorías técnicas, talleres digitales y prácticas de ciberseguridad</span>
+              <span class="mission-chip">Corte 4</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text">Registren cada sesión de trabajo con el actor productivo, desde la primera visita hasta el cierre.</p>
+              <div class="info-box" style="margin-bottom:16px">
+                <div class="label">Debe incluir</div>
+                <ul class="note-list">
+                  <li>Registro cronológico de cada sesión realizada (fecha, actividad, participantes).</li>
+                  <li>Evidencias fotográficas o de firma de asistencia.</li>
+                  <li>Observaciones y dificultades encontradas durante la intervención.</li>
+                  <li>Recomendaciones entregadas en cada sesión.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="producto5" class="card open cat-producto5" style="margin-top:20px;">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128295;</div>
+            <div>
+              <h3>Producto 5 &middot; Ficha técnica de equipos</h3>
+              <p>Corte 4 &middot; Equipos de cómputo intervenidos</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">5</span>
+              <span class="activity-title">Ficha técnica de equipos intervenidos</span>
+              <span class="mission-chip">Corte 4</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text">Documenten técnicamente cada equipo de cómputo del actor productivo que hayan revisado o intervenido.</p>
+              <div class="info-box" style="margin-bottom:16px">
+                <div class="label">Debe incluir</div>
+                <ul class="note-list">
+                  <li>Datos del equipo intervenido (marca, referencia, características).</li>
+                  <li>Diagnóstico técnico inicial del equipo.</li>
+                  <li>Mantenimiento, ajuste o corrección realizada.</li>
+                  <li>Estado final del equipo y recomendaciones de uso para el propietario.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p id="producto6" class="section-intro" style="margin-top:20px;">📍 <strong>Corte 5, entrega final:</strong> este producto cierra el taller.</p>
+      <div class="card open cat-producto6">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#127942;</div>
+            <div>
+              <h3>Producto 6 &middot; Informe de impacto</h3>
+              <p>Corte 5 &middot; Lecciones aprendidas y propuesta de continuidad (entrega final)</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">6</span>
+              <span class="activity-title">Informe de impacto, lecciones aprendidas y propuesta de continuidad comunitaria</span>
+              <span class="mission-chip">Corte 5 · Entrega final</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text">Cierren el taller evaluando el impacto de todo el proceso con el actor productivo.</p>
+              <div class="info-box" style="margin-bottom:16px">
+                <div class="label">Debe incluir</div>
+                <ul class="note-list">
+                  <li>Resultados alcanzados frente a los objetivos planteados en el plan de intervención.</li>
+                  <li>Lecciones aprendidas por el equipo de aprendices durante el proceso.</li>
+                  <li>Retroalimentación o testimonio del actor productivo beneficiado.</li>
+                  <li>Propuesta de continuidad o seguimiento comunitario a la intervención realizada.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="requisitos" class="section-title">Requisitos formales de entrega</div>
+      <p class="section-intro">📍 <strong>Aplica a los 6 productos:</strong> cada producto debe presentarse de manera individual (por equipo de trabajo) y cumplir con esta misma estructura y formato.</p>
+
+      <div class="panel-grid">
+        <article class="checklist-card">
+          <h3>&#128196; Portada</h3>
+          <ul class="note-list">
+            <li>Nombre de la institución (SENA &ndash; Centro de Formación).</li>
+            <li>Programa de formación: Técnico en Sistemas Teleinformáticos.</li>
+            <li>Título del trabajo.</li>
+            <li>Institución educativa: John F. Kennedy (JFK), grupo (10°A o 10°B).</li>
+            <li>Nombre completo de los integrantes del equipo.</li>
+            <li>Nombre del instructor.</li>
+            <li>Lugar y fecha de entrega.</li>
+          </ul>
+        </article>
+        <article class="checklist-card">
+          <h3>&#128209; Tabla de contenido</h3>
+          <ul class="note-list">
+            <li>Índice organizado con numeración de páginas.</li>
+            <li>Uso de títulos y subtítulos jerarquizados.</li>
+          </ul>
+        </article>
+        <article class="checklist-card">
+          <h3>&#128075; Introducción</h3>
+          <ul class="note-list">
+            <li>Breve explicación del propósito del trabajo.</li>
+            <li>Contexto del actor productivo o institución intervenida.</li>
+            <li>Alcance y limitaciones del producto.</li>
+          </ul>
+        </article>
+        <article class="checklist-card">
+          <h3>&#128221; Desarrollo</h3>
+          <ul class="note-list">
+            <li>Exposición clara y ordenada de la información.</li>
+            <li>Uso de subtítulos para organizar ideas.</li>
+            <li>Ejemplos, cuadros, tablas, fotografías o diagramas que apoyen el análisis.</li>
+            <li>Aplicación de conceptos vistos en la formación.</li>
+          </ul>
+        </article>
+        <article class="checklist-card">
+          <h3>&#9989; Conclusiones</h3>
+          <ul class="note-list">
+            <li>Reflexiones finales sobre el aprendizaje obtenido.</li>
+            <li>Resultados alcanzados en relación con el objetivo del trabajo.</li>
+            <li>Posibles recomendaciones para el actor productivo o el proceso analizado.</li>
+          </ul>
+        </article>
+        <article class="checklist-card">
+          <h3>&#128279; Referencias bibliográficas</h3>
+          <ul class="note-list">
+            <li>Fuentes consultadas (manuales técnicos, artículos, páginas web, documentos institucionales).</li>
+            <li>Normas APA (última edición) o lineamientos institucionales.</li>
+          </ul>
+        </article>
+        <article class="checklist-card">
+          <h3>&#128193; Anexos (si aplica)</h3>
+          <ul class="note-list">
+            <li>Documentos, formatos, encuestas, fotografías, fichas técnicas o evidencias adicionales.</li>
+          </ul>
+        </article>
+        <article class="checklist-card">
+          <h3>&#128209; Formato del documento</h3>
+          <ul class="note-list">
+            <li>Letra Arial 12.</li>
+            <li>Interlineado 1.5.</li>
+            <li>Márgenes estándar (2.5 cm).</li>
+            <li>Numeración de páginas.</li>
+            <li>Justificación del texto.</li>
+          </ul>
+        </article>
+      </div>
+
+      <div id="fechas" class="section-title">Fechas de entrega por grupo</div>
+      <p class="section-intro">📍 <strong>Un corte por producto</strong> (los productos 4 y 5 comparten corte). Las fechas corresponden al último día de la sesión de clase disponible en cada corte.</p>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#fff3e0">&#128197;</div>
+            <div>
+              <h3>Calendario de cortes 2026</h3>
+              <p>Según el calendario de clases de cada grupo</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr><th>Corte &middot; Producto</th><th>Fecha límite &middot; <span data-grupo-label>tu grupo</span></th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Corte 1 &ndash; Producto 1: Informe diagnóstico</td><td data-fecha-10a="17-jul-2026" data-fecha-10b="16-jul-2026">17-jul-2026</td></tr>
+                <tr><td>Corte 2 &ndash; Producto 2: Plan de alfabetización, soporte y ciberseguridad</td><td data-fecha-10a="14-ago-2026" data-fecha-10b="13-ago-2026">14-ago-2026</td></tr>
+                <tr><td>Corte 3 &ndash; Producto 3: Plantilla Excel personalizada</td><td data-fecha-10a="30-sep-2026" data-fecha-10b="29-sep-2026">30-sep-2026</td></tr>
+                <tr><td>Corte 4 &ndash; Productos 4 y 5: Bitácora + Ficha técnica de equipos</td><td data-fecha-10a="30-oct-2026" data-fecha-10b="29-oct-2026">30-oct-2026</td></tr>
+                <tr><td>Corte 5 &ndash; Producto 6: Informe de impacto (entrega final)</td><td data-fecha-10a="13-nov-2026" data-fecha-10b="12-nov-2026">13-nov-2026</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="gnote gnote--recuerda" style="margin-top:14px"><div class="gnote__label">&#128161; Nota</div>
+            <p>Todo producto que no se alcance a entregar dentro de este calendario deberá completarse al
+            inicio del grado 11°. El instructor puede adelantar la asignación del producto en la sesión
+            anterior para dar tiempo de desarrollo, y puede habilitar de nuevo un producto ya entregado
+            si tu equipo necesita corregirlo.</p></div>
+        </div>
+      </div>
+
+      <div id="evaluacion" class="section-title">Evaluación</div>
+      <div class="card open cat-evaluacion">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#f3e5f5">&#127919;</div>
+            <div>
+              <h3>Criterios de evaluación</h3>
+              <p>Qué revisa el instructor en cada producto</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <ul class="note-list">
+            <li>Claridad y organización de los informes.</li>
+            <li>Pertinencia y aplicabilidad de las propuestas técnicas y de intervención.</li>
+            <li>Evidencia real de la intervención (fotografías, firmas, bitácoras, fichas técnicas).</li>
+            <li>Manejo técnico y dominio conceptual demostrado por el equipo.</li>
+            <li>Creatividad y calidad en la entrega final.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="gnote gnote--entrega"><div class="gnote__label">📦 Antes de entregar, revisa</div>
+        <ul>
+          <li>El documento cumple la portada, tabla de contenido, introducción, desarrollo, conclusiones, referencias y formato exigidos.</li>
+          <li>El archivo lleva el nombre completo de todos los integrantes del equipo en la portada.</li>
+          <li><strong>Cada integrante del equipo</strong> entró a su propia cuenta y subió el mismo documento con el botón <em>Entregar a Drive</em> de esa tarjeta, para que a todos les quede marcado como <strong>Entregada</strong> en su control de avance.</li>
+        </ul>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+(function () {
+  function buildGuideRouteHref(fileName) {
+    return "guia.html?g=" + encodeURIComponent(fileName);
+  }
+
+  var grupo = String((document.body && document.body.dataset && document.body.dataset.defaultGrupo) || "10A").toUpperCase();
+  var esGrupoB = grupo === "10B";
+
+  // Tabla de fechas: cada celda trae AMBAS fechas en data-*; aqui se deja
+  // visible solo la del grupo real del aprendiz (no se muestra la del otro grupo).
+  document.querySelectorAll("[data-fecha-10a]").forEach(function (cell) {
+    var fecha = esGrupoB ? cell.getAttribute("data-fecha-10b") : cell.getAttribute("data-fecha-10a");
+    if (fecha) cell.textContent = fecha;
+  });
+  document.querySelectorAll("[data-grupo-label]").forEach(function (span) {
+    span.textContent = "Grupo " + grupo;
+  });
+
+  var config = {
+    "10A": {
+      currentFile: "grupo-10a-guia-04-taller-integrador.html",
+      currentLabel: "Taller Integrador | 10A",
+      campus: "Jhon F. Kennedy | 10A"
+    },
+    "10B": {
+      currentFile: "grupo-10b-guia-04-taller-integrador.html",
+      currentLabel: "Taller Integrador | 10B",
+      campus: "Jhon F. Kennedy | 10B"
+    }
+  }[grupo] || null;
+
+  if (!config) {
+    return;
+  }
+
+  var currentGuideNavLink = document.getElementById("currentGuideNavLink");
+  var currentGuideNavLabel = document.getElementById("currentGuideNavLabel");
+  var topbarCampus = document.getElementById("topbarCampus");
+
+  if (currentGuideNavLink) {
+    currentGuideNavLink.href = buildGuideRouteHref(config.currentFile);
+    currentGuideNavLink.dataset.currentFile = config.currentFile;
+  }
+  if (currentGuideNavLabel) {
+    currentGuideNavLabel.textContent = config.currentLabel;
+  }
+  if (topbarCampus) {
+    topbarCampus.textContent = config.campus;
+  }
+})();
+</script>
