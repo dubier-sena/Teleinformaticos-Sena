@@ -247,7 +247,7 @@
 </style>
 <script defer src="../../js/shared_drive_delivery.js?v=20260611_2"></script>
 <script defer src="../../js/export_styles.js?v=20260517_1"></script>
-<script defer src="../../js/script_guia2.js?v=20260709_2"></script>
+<script defer src="../../js/script_guia2.js?v=20260709_3"></script>
 <script defer src="../../js/activity_grades.js?v=20260709_3"></script>
 <script defer src="../../js/activity4_admin_report.js?v=20260615_1"></script>
 <script defer src="../../js/activity_delivery.js?v=20260615_1"></script>
@@ -868,13 +868,21 @@
     // Badge Aprobado/Reprobado (diagnostico323) + relleno del banco si esta
     // aprobado y algun campo quedo vacio. Espera el mismo tick que arriba para
     // que hydrateFields() ya haya restaurado las respuestas del aprendiz.
-    setTimeout(function () {
-      var mgr = window.activityGradesManager;
-      if (mgr && typeof mgr.autoRenderForFile === "function") {
-        mgr.autoRenderForFile(PAGE_FILE);
-      }
-    }, 250);
+    setTimeout(runDiagnostico323GradeAutoFill, 250);
   });
+
+  // Se repite cuando llega un snapshot de la nube (evento "guia2-state-applied"
+  // de script_guia2.js): si esa sincronizacion llega DESPUES del primer
+  // intento, hydrateFields() puede pisar el relleno del banco -- repetir es
+  // seguro (solo llena campos vacios) y evita que quede en blanco por una
+  // carrera de tiempos.
+  function runDiagnostico323GradeAutoFill() {
+    var mgr = window.activityGradesManager;
+    if (mgr && typeof mgr.autoRenderForFile === "function") {
+      mgr.autoRenderForFile(PAGE_FILE);
+    }
+  }
+  window.addEventListener("guia2-state-applied", runDiagnostico323GradeAutoFill);
 
   window.guardarFormulario = guardarFormulario;
 })();

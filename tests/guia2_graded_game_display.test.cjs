@@ -175,3 +175,49 @@ test("Guia 2: sin calificar, la sopa de letras y Relaciona no se alteran (siguen
   assert.equal(result.wordSame, true, "sin nota, la sopa de letras no debe alterarse");
   assert.equal(result.matchSame, true, "sin nota, Relaciona no debe alterarse");
 });
+
+test("Guia 2: applyMatriz322GradeLock no revienta cuando window.lockMatriz no existe (pagina principal de la guia)", () => {
+  const ctx = loadScriptGuia2();
+  assert.doesNotThrow(() => {
+    vm.runInContext("applyMatriz322GradeLock()", ctx);
+  });
+});
+
+test("Guia 2: applyMatriz322GradeLock llama a window.lockMatriz con un mensaje propio (pagina de la matriz)", () => {
+  const ctx = loadScriptGuia2();
+  const calls = [];
+  ctx.window.lockMatriz = (finalizedAt, reasonText) => { calls.push({ finalizedAt, reasonText }); };
+  vm.runInContext("applyMatriz322GradeLock()", ctx);
+
+  assert.equal(calls.length, 1, "debe llamar a lockMatriz exactamente una vez");
+  assert.match(calls[0].reasonText, /calificada por el instructor/, "el mensaje debe explicar que fue el instructor quien la califico, no una auto-entrega");
+});
+
+test("Guia 2: calificar matriz322 dispara lockMatriz en la pagina de la matriz (integracion con reflectGradesIntoGuideState)", async () => {
+  // reflectGradesForGuia2() no espera su promesa interna (fire-and-forget, ver
+  // js/script_guia2.js), asi que aqui se invoca reflectGradesIntoGuideState
+  // directamente -- con las MISMAS opciones que arma reflectGradesForGuia2 --
+  // para poder esperar (await) el resultado real en la prueba.
+  const ctx = loadScriptGuia2();
+  vm.runInContext(fs.readFileSync(path.join(root, "js", "activity_grades.js"), "utf8"), ctx, { filename: "activity_grades.js" });
+  const calls = [];
+  ctx.window.lockMatriz = (finalizedAt, reasonText) => { calls.push({ finalizedAt, reasonText }); };
+  ctx.window.portalAuth.getCurrentSession = () => ({ role: "student", usernameKey: "prueba.aprendiz", user: { usernameKey: "prueba.aprendiz" } });
+  ctx.window._firebaseDb.cloudGetGrades = async () => ({
+    "guia-02-herramientas": { matriz322: "A", "matriz322:gradedAt": "2026-07-09T00:00:00.000Z" },
+  });
+  ctx.window.ActivityStandard = {
+    getConfigForGuide: () => ({ activities: [{ id: "matriz322", type: "form" }, { id: "fichaCaso", type: "form" }] }),
+  };
+
+  await vm.runInContext(`
+    window.activityGradesManager.reflectGradesIntoGuideState({
+      guideFamily: "guia-02-herramientas",
+      pageFile: PAGE_FILE,
+      getState: function () { return state; },
+      lockAppliers: { matriz322: applyMatriz322GradeLock },
+    })
+  `, ctx);
+
+  assert.equal(calls.length, 1, "calificar matriz322 debe bloquear la pagina de la matriz");
+});
