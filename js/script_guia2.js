@@ -899,6 +899,17 @@ function applyMatriz322GradeLock() {
   }
 }
 
+// "diagnostico323" (Formulario independiente de la Actividad 4) vive en su
+// propia pagina (grupo-10a/10b-guia-02-actividad-4-formulario.html), que
+// define su PROPIA funcion global applyLock() (bloqueo por auto-envio del
+// aprendiz). Mismo patron que applyMatriz322GradeLock: aqui solo se llama si
+// existe, en la pagina principal window.applyLock no existe.
+function applyDiagnostico323GradeLock() {
+  if (typeof window.applyLock === "function") {
+    window.applyLock("");
+  }
+}
+
 function reflectGradesForGuia2() {
   var mgr = window.activityGradesManager;
   if (!mgr || typeof mgr.reflectGradesIntoGuideState !== "function") return;
@@ -909,6 +920,7 @@ function reflectGradesForGuia2() {
     lockAppliers: {
       sopaletras311: renderWordSearchGame,
       relaciona311: renderMatchingGame,
+      diagnostico323: applyDiagnostico323GradeLock,
       matriz322: applyMatriz322GradeLock,
       extensiones331: applyExtensionesLock,
       sistemas332: applySistemasLock,

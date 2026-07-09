@@ -828,6 +828,19 @@ progress::-moz-progress-bar {
 .grades-table .grade-select {
   min-width: 132px;
 }
+.grade-cell {
+  display: grid;
+  gap: 4px;
+}
+.grade-reason-select {
+  min-width: 132px;
+  font-size: 0.78rem;
+  color: var(--admin-muted);
+  border-color: var(--color-danger-soft, #fde6e3);
+}
+.grade-reason-select[hidden] {
+  display: none;
+}
 /* Guias con muchas actividades (Guia 2 tiene 9) desbordan la tabla y el admin
    perdia de vista el nombre del aprendiz Y la columna "Aprobadas" (%) al
    desplazarse. Se fijan la primera columna (Aprendiz) y la ultima (Aprobadas)

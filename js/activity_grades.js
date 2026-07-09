@@ -332,9 +332,17 @@
     return d.toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric" });
   }
 
+  function escapeHtmlLocal(value) {
+    var u = window.portalUtils;
+    if (u && typeof u.escapeHtml === "function") return u.escapeHtml(value);
+    return String(value == null ? "" : value).replace(/[&<>"']/g, function (ch) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch];
+    });
+  }
+
   // Construye el badge. Solo Aprobado (A) y No aprobado (D) — las únicas notas que
   // registra el admin. Sin nota => devuelve null (no se muestra nada).
-  function buildGradeBadge(grade, activityId, gradedAtIso) {
+  function buildGradeBadge(grade, activityId, gradedAtIso, obs) {
     var badgeClass, icon, html;
     var fecha = formatGradeDate(gradedAtIso);
     var fechaHtml = fecha ? '<br><span class="grade-badge-date">Calificado el ' + fecha + '</span>' : "";
@@ -345,7 +353,10 @@
     } else if (grade === "D") {
       badgeClass = "activity-grade-badge activity-grade-badge--desaprobado";
       icon = "❌";
-      html = "<strong>No aprobado.</strong> Habla con tu instructor para reforzar esta actividad." + fechaHtml;
+      // Motivo que el instructor eligio/escribio al calificar (setStudentActivityObservation,
+      // panel Calificaciones). Opcional: sin motivo, el badge se ve igual que antes.
+      var obsHtml = obs ? '<br><span class="grade-badge-obs">' + escapeHtmlLocal(obs) + "</span>" : "";
+      html = "<strong>No aprobado.</strong> Habla con tu instructor para reforzar esta actividad." + obsHtml + fechaHtml;
     } else {
       return null;
     }
@@ -391,7 +402,7 @@
       // Evitar duplicados del mismo badge para esta actividad.
       if (parent.querySelector('.activity-grade-badge[data-grade-act="' + cfg.activityId + '"]')) return;
 
-      var badge = buildGradeBadge(grade, cfg.activityId, grades[cfg.activityId + ":gradedAt"]);
+      var badge = buildGradeBadge(grade, cfg.activityId, grades[cfg.activityId + ":gradedAt"], grades[cfg.activityId + ":obs"]);
       if (badge) parent.insertBefore(badge, mount);
     });
   }
@@ -408,6 +419,8 @@
     "grupo-10b-guia-02-actividad-4-formulario.html": "guia-02-herramientas",
     "grupo-10a-guia-02-actividad-322-matriz.html": "guia-02-herramientas",
     "grupo-10b-guia-02-actividad-322-matriz.html": "guia-02-herramientas",
+    "grupo-10a-guia-02-ficha-caso.html": "guia-02-herramientas",
+    "grupo-10b-guia-02-ficha-caso.html": "guia-02-herramientas",
     "grupo-10a-guia-03-planificar-informacion.html": "guia-03-planificar-10",
     "grupo-10b-guia-03-planificar-informacion.html": "guia-03-planificar-10",
     "grupo-11a-guia-05-herramientas-informaticas-digitales.html": "guia-05-herramientas",

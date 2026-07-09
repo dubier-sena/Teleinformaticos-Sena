@@ -414,6 +414,29 @@
 }
 .quick a:hover { background: var(--brand-100, #e9f8ef); border-color: var(--brand-400, #5acf8f); transform: translateY(-2px); }
 
+/* Avisos (firma sin enviar, proyecto, etc.) -- solo aparecen si hay algo
+   pendiente; [hidden] en el HTML los oculta por defecto. */
+.callouts { display: grid; gap: 0.6rem; margin-bottom: 1.4rem; }
+.callout {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--gold-line, #f3d98b);
+  border-radius: var(--pg-r);
+  background: var(--gold-light, #fff8e6);
+}
+.callout__icon { font-size: 1.1rem; flex: 0 0 auto; }
+.callout__text { flex: 1 1 auto; font-size: 0.88rem; font-weight: 600; color: #6e5300; }
+.callout__link {
+  flex: 0 0 auto;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--pg-brand-strong);
+  white-space: nowrap;
+}
+.callout__link:hover { text-decoration: underline; }
+
 /* Encabezado de sección */
 .sec-head { margin-bottom: 1rem; }
 .sec-head__k {
@@ -531,6 +554,49 @@
 .guide__deadline--open { background: #eaf3fb; color: var(--color-info, #1d5fa5); }
 .guide__deadline--soon { background: var(--gold-light, #fff0c0); color: #6e5300; }
 .guide__deadline--late { background: var(--color-danger-soft, #fde6e3); color: var(--color-danger, #c0382b); }
+
+/* Actividades pendientes dentro de la tarjeta de la guía */
+.guide__pending {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px dashed var(--pg-border-2);
+  border-radius: calc(var(--pg-r) - 4px);
+  background: var(--pg-soft);
+}
+.guide__pending-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--pg-muted);
+}
+.guide__pending-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.25rem;
+}
+.guide__pending-item {
+  font-size: 0.8rem;
+  color: var(--pg-text);
+  padding-left: 1.1rem;
+  position: relative;
+  line-height: 1.3;
+}
+.guide__pending-item::before {
+  content: "\2610";
+  position: absolute;
+  left: 0;
+  color: var(--pg-muted);
+}
+.guide__pending-item--more {
+  color: var(--pg-muted);
+  font-style: italic;
+}
+.guide__pending-item--more::before {
+  content: "";
+}
 .guide__btn {
   margin-top: 0.2rem;
   min-height: 46px;

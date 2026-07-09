@@ -36,7 +36,7 @@
 <link rel="stylesheet" href="../../css/interactive_help.css?v=20260519_1">
 <script defer src="../../js/interactive_help.js?v=20260519_1"></script>
 <link rel="stylesheet" href="../../css/shared_shell.css?v=20260617_1">
-<link rel="stylesheet" href="../../css/guia_template.css?v=20260708_1">
+<link rel="stylesheet" href="../../css/guia_template.css?v=20260709_1">
 <style>
   .activity4-form-page .app-main {
     width: min(1180px, calc(100% - 32px));
@@ -247,8 +247,8 @@
 </style>
 <script defer src="../../js/shared_drive_delivery.js?v=20260611_2"></script>
 <script defer src="../../js/export_styles.js?v=20260517_1"></script>
-<script defer src="../../js/script_guia2.js?v=20260709_3"></script>
-<script defer src="../../js/activity_grades.js?v=20260709_4"></script>
+<script defer src="../../js/script_guia2.js?v=20260709_4"></script>
+<script defer src="../../js/activity_grades.js?v=20260709_5"></script>
 <script defer src="../../js/activity4_admin_report.js?v=20260615_1"></script>
 <script defer src="../../js/activity_delivery.js?v=20260615_1"></script>
 </head>
@@ -885,6 +885,11 @@
   window.addEventListener("guia2-state-applied", runDiagnostico323GradeAutoFill);
 
   window.guardarFormulario = guardarFormulario;
+  // Expuesta para que script_guia2.js (reflectGradesForGuia2, en la pagina
+  // principal de la guia) pueda bloquear este formulario cuando el instructor
+  // califica diagnostico323 SIN que el aprendiz lo haya guardado el mismo
+  // (mismo patron que lockMatriz en la pagina de la Matriz).
+  window.applyLock = applyLock;
 })();
 </script>
 </html>

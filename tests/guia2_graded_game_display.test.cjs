@@ -371,3 +371,153 @@ test("Guia 2 Matriz: applyMatrizDeadlineLock NO reactiva los campos si la activi
   vm.runInContext("applyMatrizDeadlineLock()", ctx);
   assert.equal(availabilityCalls[1], true, "calificada por el instructor, las repeticiones NO deben reactivar los campos");
 });
+
+test("Guia 2: applyDiagnostico323GradeLock no revienta cuando window.applyLock no existe (pagina principal de la guia)", () => {
+  const ctx = loadScriptGuia2();
+  assert.doesNotThrow(() => {
+    vm.runInContext("applyDiagnostico323GradeLock()", ctx);
+  });
+});
+
+test("Guia 2: applyDiagnostico323GradeLock llama a window.applyLock (pagina del Formulario de la Actividad 4)", () => {
+  const ctx = loadScriptGuia2();
+  const calls = [];
+  ctx.window.applyLock = (fechaGuardado) => { calls.push(fechaGuardado); };
+  vm.runInContext("applyDiagnostico323GradeLock()", ctx);
+
+  assert.equal(calls.length, 1, "debe llamar a applyLock exactamente una vez");
+});
+
+test("Guia 2: calificar diagnostico323 dispara applyLock en la pagina del Formulario de la Actividad 4", async () => {
+  const ctx = loadScriptGuia2();
+  vm.runInContext(fs.readFileSync(path.join(root, "js", "activity_grades.js"), "utf8"), ctx, { filename: "activity_grades.js" });
+  const calls = [];
+  ctx.window.applyLock = (fechaGuardado) => { calls.push(fechaGuardado); };
+  ctx.window.portalAuth.getCurrentSession = () => ({ role: "student", usernameKey: "prueba.aprendiz", user: { usernameKey: "prueba.aprendiz" } });
+  ctx.window._firebaseDb.cloudGetGrades = async () => ({
+    "guia-02-herramientas": { diagnostico323: "A", "diagnostico323:gradedAt": "2026-07-09T00:00:00.000Z" },
+  });
+  ctx.window.ActivityStandard = {
+    getConfigForGuide: () => ({ activities: [{ id: "diagnostico323", type: "form" }] }),
+  };
+
+  await vm.runInContext(`
+    window.activityGradesManager.reflectGradesIntoGuideState({
+      guideFamily: "guia-02-herramientas",
+      pageFile: PAGE_FILE,
+      getState: function () { return state; },
+      lockAppliers: { diagnostico323: applyDiagnostico323GradeLock },
+    })
+  `, ctx);
+
+  assert.equal(calls.length, 1, "calificar diagnostico323 debe bloquear la pagina del Formulario de la Actividad 4");
+});
+
+// A diferencia de la Matriz y el Formulario de la Actividad 4, la pagina de
+// Ficha de caso NO carga script_guia2.js (tiene su propio almacenamiento en
+// localStorage/Firestore) -- por eso su bloqueo por calificacion no puede
+// pasar por reflectGradesForGuia2. Se prueba directamente contra el <script>
+// real de la pagina.
+// applyLock() y checkInstructorGradeLock() son funciones LOCALES al IIFE de
+// la pagina (no se exponen en window, a proposito -- solo revelarFicha/
+// exportarWord/guardarRespuestas lo estan, porque son las que usan los
+// onclick del HTML). Para poder invocar checkInstructorGradeLock() desde la
+// prueba, se inserta una exposicion extra SOLO en esta copia de prueba (no
+// se toca el archivo real) justo antes del cierre del IIFE.
+function loadFichaCasoInlineScript() {
+  const html = fs.readFileSync(
+    path.join(root, "pages", "auxiliares", "grupo-10a-guia-02-ficha-caso.html"),
+    "utf8"
+  );
+  const scriptMatch = html.match(/<script>\n\(function \(\) \{[\s\S]*?\n\}\)\(\);\n<\/script>/);
+  assert.ok(scriptMatch, "no se encontro el <script> principal de la pagina de Ficha de caso -- ¿cambio la estructura del archivo?");
+  let code = scriptMatch[0].replace(/^<script>/, "").replace(/<\/script>$/, "");
+  assert.match(code, /\n\}\)\(\);\s*$/, "no se pudo ubicar el cierre del IIFE para exponer checkInstructorGradeLock en la prueba");
+  code = code.replace(/\n\}\)\(\);\s*$/, "\n  window.checkInstructorGradeLock = checkInstructorGradeLock;\n})();");
+
+  const elementsById = new Map();
+  function getOrCreateEl(id) {
+    if (!elementsById.has(id)) elementsById.set(id, makeEl());
+    return elementsById.get(id);
+  }
+
+  const ctx = {
+    console,
+    document: {
+      getElementById: (id) => getOrCreateEl(id),
+      querySelector: () => makeEl(),
+      querySelectorAll: () => [],
+      addEventListener() {},
+      createElement: () => makeEl(),
+    },
+    window: {},
+    localStorage: { getItem: () => null, setItem() {}, removeItem() {} },
+    Date,
+    URL,
+  };
+  ctx.window.addEventListener = () => {};
+  vm.createContext(ctx);
+  vm.runInContext(code, ctx, { filename: "ficha-caso-inline.js" });
+  ctx.__submitBtn = getOrCreateEl("ficha-submit-btn");
+  return ctx;
+}
+
+test("Ficha de caso: checkInstructorGradeLock no revienta sin sesion ni activityGradesManager", () => {
+  const ctx = loadFichaCasoInlineScript();
+  assert.doesNotThrow(() => {
+    ctx.window.checkInstructorGradeLock();
+  });
+});
+
+test("Ficha de caso: checkInstructorGradeLock bloquea de inmediato si la nota ya esta en el cache local", () => {
+  const ctx = loadFichaCasoInlineScript();
+  ctx.window.portalAuth = {
+    getCurrentSession: () => ({ role: "student", usernameKey: "prueba.aprendiz" }),
+  };
+  ctx.window.activityGradesManager = {
+    getStudentGrades: () => ({ matriz322: "A" }),
+  };
+  ctx.window._firebaseDb = { cloudGetGrades: () => new Promise(() => {}) }; // nunca resuelve
+
+  ctx.window.checkInstructorGradeLock();
+
+  assert.equal(ctx.__submitBtn.disabled, true, "debe bloquear (boton deshabilitado) desde el cache local, sin esperar la red");
+});
+
+test("Ficha de caso: checkInstructorGradeLock confirma con la nube si no esta en el cache local", async () => {
+  const ctx = loadFichaCasoInlineScript();
+  ctx.window.portalAuth = {
+    getCurrentSession: () => ({ role: "student", usernameKey: "prueba.aprendiz" }),
+  };
+  ctx.window.activityGradesManager = {
+    getStudentGrades: () => ({}), // nada en cache todavia
+  };
+  ctx.window._firebaseDb = {
+    cloudGetGrades: async () => ({ "guia-02-herramientas": { matriz322: "D" } }),
+  };
+
+  await ctx.window.checkInstructorGradeLock();
+  await Promise.resolve();
+  await Promise.resolve();
+
+  assert.equal(ctx.__submitBtn.disabled, true, "debe bloquear tras confirmar con la nube que ya fue calificada (D)");
+});
+
+test("Ficha de caso: checkInstructorGradeLock NO bloquea si no hay nota (ni en cache ni en la nube)", async () => {
+  const ctx = loadFichaCasoInlineScript();
+  ctx.window.portalAuth = {
+    getCurrentSession: () => ({ role: "student", usernameKey: "prueba.aprendiz" }),
+  };
+  ctx.window.activityGradesManager = {
+    getStudentGrades: () => ({}),
+  };
+  ctx.window._firebaseDb = {
+    cloudGetGrades: async () => ({}),
+  };
+
+  await ctx.window.checkInstructorGradeLock();
+  await Promise.resolve();
+  await Promise.resolve();
+
+  assert.notEqual(ctx.__submitBtn.disabled, true, "sin calificar, no debe bloquear la ficha");
+});
