@@ -482,9 +482,21 @@ function lockMatriz(finalizedAt, reasonText) {
 
 var MATRIZ_ACTIVITY_ID = "matriz322";
 
+// El instructor puede calificar esta actividad SIN que el aprendiz la haya
+// finalizado (reflectGradesForGuia2 en script_guia2.js marca
+// state["matriz322-locked"]). applyMatrizDeadlineLock() se repite varias
+// veces (al cargar, 1.5s despues, y cada vez que sincroniza con la nube) y
+// SIEMPRE reescribe el atributo disabled segun isLocked -- si no se incluye
+// esta calificacion aca, cada repeticion reactiva los campos (quedan grises
+// por lockMatriz() pero editables, porque applyAvailability solo toca
+// disabled/opacity/pointer-events, no el color de fondo).
+function isMatrizGradeLocked() {
+  return typeof state !== "undefined" && !!(state && state[MATRIZ_ACTIVITY_ID + "-locked"]);
+}
+
 function applyMatrizDeadlineLock() {
   var field = document.getElementById("field-322-finalizada");
-  var locked = !!(field && (field.value === "true" || field.value === "1"));
+  var locked = !!(field && (field.value === "true" || field.value === "1")) || isMatrizGradeLocked();
   if (!window.activityDeadlineManager || typeof window.activityDeadlineManager.applyAvailability !== "function") {
     return;
   }
