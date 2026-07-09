@@ -106,6 +106,32 @@
     }
   }
 
+  // ── Hidratacion y binding del campo "equipo de trabajo" ────────────────────
+
+  function hydrateFields() {
+    document.querySelectorAll("[data-store]").forEach((el) => {
+      const key = el.getAttribute("data-store");
+      if (!key) return;
+      const value = state[key];
+      if (typeof value === "string" || typeof value === "number") {
+        if (el.tagName === "TEXTAREA" || el.tagName === "INPUT" || el.tagName === "SELECT") {
+          el.value = value;
+        }
+      }
+    });
+  }
+
+  function bindFieldEvents() {
+    document.addEventListener("input", (event) => {
+      const target = event.target;
+      if (!target?.matches?.("[data-store]")) return;
+      const key = target.getAttribute("data-store");
+      if (!key) return;
+      state[key] = target.value;
+      saveState();
+    });
+  }
+
   // ── stateCtx para ActivityStandard ────────────────────────────────────────
 
   function getGuideSelection() {
@@ -221,6 +247,8 @@
     if (tallerBooted) return;
     tallerBooted = true;
 
+    hydrateFields();
+    bindFieldEvents();
     bindReset();
 
     if (window.ActivityStandard?.mountActivities) {

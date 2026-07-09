@@ -43,6 +43,9 @@
       <a class="nav-link" href="#presentacion" onclick="setActive(this)">
         <span class="icon">&#128075;</span> Presentación
       </a>
+      <a class="nav-link" href="#equipo" onclick="setActive(this)">
+        <span class="icon">&#128101;</span> Tu equipo
+      </a>
     </div>
 
     <div class="nav-section">
@@ -266,6 +269,45 @@
             producto es el mismo para todo el equipo, pero <strong>cada integrante debe entregarlo a Drive
             desde su propia cuenta</strong> (mismo archivo, un clic por persona). Así el instructor puede
             llevar el control interno de que todos entregaron, sin depender de que uno solo suba por todos.</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="equipo" class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128101;</div>
+            <div>
+              <h3>Tu equipo de trabajo</h3>
+              <p>Antes de empezar, dinos con quién vas a trabajar</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">0</span>
+              <span class="activity-title">Conformación del equipo</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text">Escribe los nombres completos de <strong>todos</strong> los integrantes de tu
+              equipo, incluyéndote a ti mismo. Esto no reemplaza la portada de cada documento (ahí también deben ir
+              los nombres); es para que tu instructor tenga un registro rápido de qué equipo es cada quien.</p>
+              <label>
+                <span>Integrantes del equipo (nombres completos, uno por línea o separados por coma)</span>
+                <textarea rows="3" data-store="equipoTaller" data-track placeholder="Ej: Juan Perez, Maria Lopez, Carlos Gomez"></textarea>
+              </label>
+              <div class="act-btn-group">
+                <button type="button" id="btnGuardarEquipoTaller" class="btn-save-response" onclick="actStd_save_equipoTaller()">
+                  &#128190; Guardar equipo
+                </button>
+              </div>
+              <div id="statusEquipoTaller" class="activity-saved-notice" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                &#9989; Equipo guardado correctamente.
+              </div>
+            </div>
           </div>
         </div>
       </div>

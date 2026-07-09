@@ -179,6 +179,11 @@
     resultado: "Taller Integrador - Trabajo en equipo con un actor productivo real de la zona de influencia del Centro de Formacion.",
     activities: [
       {
+        id: "equipoTaller", number: "0", label: "Conformacion del equipo de trabajo",
+        shortName: "Equipo", type: "form", formFields: ["equipoTaller"],
+        buttonIds: { save: "btnGuardarEquipoTaller", status: "statusEquipoTaller" },
+      },
+      {
         id: "diagnostico", number: "1", label: "Informe diagnostico de capacidades digitales y necesidades tecnologicas locales",
         shortName: "InformeDiagnostico", type: "file",
         driveTarget: {
