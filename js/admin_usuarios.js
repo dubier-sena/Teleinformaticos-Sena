@@ -1010,12 +1010,16 @@
     await runWithConcurrency(tasks, 6, async (task) => {
       if (!task) return;
       try {
-        // skipDriveOn404: en el barrido masivo, un 404 casi siempre es un miss
-        // real (aprendiz que no ha guardado esa guia); probar Drive (Apps
-        // Script, 10-25s bajo carga) en CADA miss de cientos de combinaciones
-        // aprendiz x guia convertia esto en varios minutos. El "Ver" puntual
-        // de una actividad SI sigue probando Drive (mas exhaustivo, un solo doc).
-        const cloudSnapshot = await db.cloudGetGuideData(getStudentCloudScope(task.usernameKey), task.cloudFileName, { skipDriveOn404: true });
+        // NO se usa skipDriveOn404 aqui: verificado en vivo (jul-9) que un 404
+        // de Firestore NO es un miss real -- el guide-state de sena_portal_guide_state
+        // es una coleccion Drive-primaria para lecturas de aprendices (ver
+        // DRIVE_PRIMARY_COLLECTIONS en firebase_db.js), asi que Firestore
+        // frecuentemente esta vacio/desactualizado aunque el aprendiz SI haya
+        // guardado (confirmado: el boton "Ver" puntual, que si prueba Drive,
+        // mostraba la respuesta real mientras la tabla masiva marcaba
+        // "sin-respuesta" para las 3 fichas de caso). Se prefiere exactitud
+        // sobre velocidad -- este barrido es soporte de documentacion oficial.
+        const cloudSnapshot = await db.cloudGetGuideData(getStudentCloudScope(task.usernameKey), task.cloudFileName);
         if (!cloudSnapshot) return;
         const storageKey = auth.getStudentStorageKey(task.usernameKey, task.stateKey, { area: "guide-data" });
         const localState = readGuideDataState(storageKey);

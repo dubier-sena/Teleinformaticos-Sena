@@ -47,6 +47,11 @@
         { id: "sopaletras311",    label: "3.1.1 Actividades de inicio (Sopa de letras y Relaciona herramienta-función)", aliasIds: ["relaciona311"], aliasMounts: ["#relaciona311GradeMount"] },
         { id: "analisis313",      label: "3.1.3 Bitácora de análisis" },
         { id: "fichaCaso",        label: "3.2.1 Ficha de caso" },
+        // Cuestionario individual (10 preguntas, "contexto-*") de la Actividad 4 --
+        // pagina aparte (grupo-10a/10b-guia-02-actividad-4-formulario.html), NO usa
+        // guide_declarations.js/ActivityStandard (es standalone). mount vive en esa
+        // misma pagina.
+        { id: "diagnostico323",   label: "3.2.3 Diagnóstico inicial del contexto digital (formulario individual)" },
         { id: "matriz322",        label: "3.2.2 Matriz de Diagnóstico Digital" },
         { id: "extensiones331",   label: "3.3.1 Extensiones de archivo" },
         { id: "sistemas332",      label: "3.3.2 Requerimientos mínimos" },
@@ -394,6 +399,10 @@
     "grupo-10b-guia-01-induccion.html": "guia-01-induccion",
     "grupo-10a-guia-02-herramientas-informaticas-digitales.html": "guia-02-herramientas",
     "grupo-10b-guia-02-herramientas-informaticas-digitales.html": "guia-02-herramientas",
+    "grupo-10a-guia-02-actividad-4-formulario.html": "guia-02-herramientas",
+    "grupo-10b-guia-02-actividad-4-formulario.html": "guia-02-herramientas",
+    "grupo-10a-guia-02-actividad-322-matriz.html": "guia-02-herramientas",
+    "grupo-10b-guia-02-actividad-322-matriz.html": "guia-02-herramientas",
     "grupo-10a-guia-03-planificar-informacion.html": "guia-03-planificar-10",
     "grupo-10b-guia-03-planificar-informacion.html": "guia-03-planificar-10",
     "grupo-11a-guia-05-herramientas-informaticas-digitales.html": "guia-05-herramientas",
@@ -434,10 +443,27 @@
       Object.keys(fields).forEach(function (storeKey) {
         var text = fields[storeKey];
         if (text == null || String(text) === "") return;
-        var el = null;
-        try { el = document.querySelector('[data-store="' + String(storeKey).replace(/"/g, '\\"') + '"]'); }
-        catch (e) { el = null; }
-        if (!el) return;                               // campo no existe (p. ej. archivo o fila ausente)
+        var matches = [];
+        try { matches = document.querySelectorAll('[data-store="' + String(storeKey).replace(/"/g, '\\"') + '"]'); }
+        catch (e) { matches = []; }
+        if (!matches.length) return;                   // campo no existe (p. ej. archivo o fila ausente)
+
+        // Radios: varias opciones comparten el MISMO data-store (una por valor).
+        // Asignar .value no selecciona nada -- hay que encontrar la opcion cuyo
+        // value coincide con la solucion y marcarla .checked.
+        if (matches[0].type === "radio") {
+          var alreadyAnswered = Array.prototype.some.call(matches, function (r) { return r.checked; });
+          if (alreadyAnswered) return;                 // respeta la respuesta del aprendiz
+          var target = Array.prototype.filter.call(matches, function (r) { return r.value === String(text); })[0];
+          if (!target) return;
+          target.checked = true;
+          target.dispatchEvent(new Event("input", { bubbles: true }));
+          target.dispatchEvent(new Event("change", { bubbles: true }));
+          filledAny = true;
+          return;
+        }
+
+        var el = matches[0];
         var cur = (el.value != null ? String(el.value) : "").trim();
         if (cur.length > 0) return;                    // respeta la respuesta del aprendiz
         el.value = String(text);
