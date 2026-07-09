@@ -550,13 +550,6 @@
     var session = auth && auth.getCurrentSession ? auth.getCurrentSession() : null;
     if (!session || session.role !== "student" || !session.usernameKey) return;
 
-    var db = window._firebaseDb;
-    if (!db || typeof db.cloudGetGrades !== "function") return;
-    var cloud;
-    try { cloud = await db.cloudGetGrades(session.usernameKey); }
-    catch (e) { return; }
-    var grades = (cloud && cloud[guideFamily]) || {};
-
     var std = window.ActivityStandard;
     var config = std && typeof std.getConfigForGuide === "function" ? std.getConfigForGuide(opts.pageFile) : null;
     var typeById = {};
@@ -566,36 +559,57 @@
 
     var state = opts.getState();
     var lockAppliers = opts.lockAppliers || {};
-    var changed = false;
 
-    entry.activities.forEach(function (act) {
-      var grade = resolveGradeValue(grades, act);
-      if (grade !== "A" && grade !== "D") return;
-      // Actividades "gemelas" (aliasIds): comparten esta misma nota/columna
-      // (ej. relaciona311 se califica junto con sopaletras311) -- tambien
-      // reciben su propio {id}-locked para que "Tu control de avance" las
-      // cuente como hechas, no solo la actividad "duena" de la nota.
-      var idsToFlag = [act.id].concat(Array.isArray(act.aliasIds) ? act.aliasIds : []);
-      idsToFlag.forEach(function (flagId) {
-        var type = typeById[flagId] || "form";
-        if (type === "file") {
-          if (!state[flagId + "-delivery"] || state[flagId + "-delivery"].status !== "delivered") {
-            state[flagId + "-delivery"] = {
-              status: "delivered",
-              submittedAt: grades[act.id + ":gradedAt"] || new Date().toISOString(),
-            };
-            changed = true;
+    function applyGrades(grades) {
+      var changedHere = false;
+      entry.activities.forEach(function (act) {
+        var grade = resolveGradeValue(grades, act);
+        if (grade !== "A" && grade !== "D") return;
+        // Actividades "gemelas" (aliasIds): comparten esta misma nota/columna
+        // (ej. relaciona311 se califica junto con sopaletras311) -- tambien
+        // reciben su propio {id}-locked para que "Tu control de avance" las
+        // cuente como hechas, no solo la actividad "duena" de la nota.
+        var idsToFlag = [act.id].concat(Array.isArray(act.aliasIds) ? act.aliasIds : []);
+        idsToFlag.forEach(function (flagId) {
+          var type = typeById[flagId] || "form";
+          if (type === "file") {
+            if (!state[flagId + "-delivery"] || state[flagId + "-delivery"].status !== "delivered") {
+              state[flagId + "-delivery"] = {
+                status: "delivered",
+                submittedAt: grades[act.id + ":gradedAt"] || new Date().toISOString(),
+              };
+              changedHere = true;
+            }
+          } else if (state[flagId + "-locked"] !== true) {
+            state[flagId + "-locked"] = true;
+            changedHere = true;
           }
-        } else if (state[flagId + "-locked"] !== true) {
-          state[flagId + "-locked"] = true;
-          changed = true;
-        }
-        if (typeof lockAppliers[flagId] === "function") {
-          try { lockAppliers[flagId](); } catch (e) { /* no critico */ }
-        }
+          if (typeof lockAppliers[flagId] === "function") {
+            try { lockAppliers[flagId](); } catch (e) { /* no critico */ }
+          }
+        });
       });
-    });
+      return changedHere;
+    }
 
+    // Pase INMEDIATO con el cache local (si ya se califico en una visita
+    // anterior, getStudentGrades lo devuelve al instante, sin red). Sin esto,
+    // una actividad calificada quedaba editable durante la ventana entre
+    // "la pagina carga" y "termina de resolver cloudGetGrades" -- suficiente
+    // para que el aprendiz alcanzara a escribir antes de que se bloqueara.
+    var changedFromCache = applyGrades(getStudentGrades(session.usernameKey, guideFamily));
+    if (changedFromCache && typeof opts.onChanged === "function") {
+      try { opts.onChanged(); } catch (e) { /* no critico */ }
+    }
+
+    var db = window._firebaseDb;
+    if (!db || typeof db.cloudGetGrades !== "function") return;
+    var cloud;
+    try { cloud = await db.cloudGetGrades(session.usernameKey); }
+    catch (e) { return; }
+    var grades = (cloud && cloud[guideFamily]) || {};
+
+    var changed = applyGrades(grades);
     if (changed && typeof opts.onChanged === "function") {
       try { opts.onChanged(); } catch (e) { /* no critico */ }
     }

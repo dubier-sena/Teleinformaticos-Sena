@@ -211,3 +211,67 @@ test("reflectGradesIntoGuideState: aliasIds -- calificar la actividad dueña TAM
   assert.equal(state["relaciona311-locked"], true, "el alias declarado en aliasIds tambien debe quedar -locked");
   assert.equal(onChangedCalls, 1);
 });
+
+// Bug real reportado 2026-07-09: el aprendiz alcanzaba a escribir en un campo
+// ya calificado porque reflectGradesIntoGuideState SIEMPRE esperaba a
+// cloudGetGrades (una consulta nueva a Firestore) antes de bloquear, aunque
+// la nota YA estuviera en el cache local de una visita anterior (guardado por
+// renderGradeBadges/autoRenderForFile). Esta prueba simula una red que nunca
+// responde a tiempo -- si el bloqueo dependiera solo de la respuesta de red,
+// lockApplierCalls seguiria en 0 en el momento en que se revisa.
+test("reflectGradesIntoGuideState: usa el cache local para bloquear DE INMEDIATO, sin esperar la respuesta de red", async () => {
+  const state = {};
+  let lockApplierCalls = 0;
+  const gradesStorageKey = "sena_portal:student:prueba.aprendiz:app:grades";
+  const localStorageData = {};
+  localStorageData[gradesStorageKey] = JSON.stringify({
+    [FAKE_FAMILY]: { arbol312: "A" },
+  });
+
+  const ctx = {
+    window: {},
+    document: {
+      querySelector: () => null,
+      createElement: () => ({ setAttribute() {}, appendChild() {}, classList: { add() {} } }),
+    },
+    localStorage: {
+      getItem: (key) => (key in localStorageData ? localStorageData[key] : null),
+      setItem: (key, value) => { localStorageData[key] = String(value); },
+      removeItem: (key) => { delete localStorageData[key]; },
+    },
+    console,
+    URL,
+    Date,
+  };
+  ctx.window.location = { href: "https://x/" };
+  ctx.window.portalAuth = {
+    getCurrentSession: () => ({ role: "student", usernameKey: "prueba.aprendiz", user: { usernameKey: "prueba.aprendiz" } }),
+    getStudentStorageKey: (usernameKey, key, opts) => `sena_portal:student:${usernameKey}:${(opts && opts.area) || "app"}:${key}`,
+  };
+  // La "red" nunca resuelve dentro de esta prueba (promesa nunca satisfecha):
+  // si el bloqueo dependiera de esto, jamas se aplicaria a tiempo.
+  ctx.window._firebaseDb = { cloudGetGrades: () => new Promise(() => {}) };
+  ctx.window.ActivityStandard = {
+    getConfigForGuide: () => ({ activities: [{ id: "arbol312", type: "form" }] }),
+  };
+  vm.createContext(ctx);
+  vm.runInContext(fs.readFileSync(path.join(root, "js", "activity_grades.js"), "utf8"), ctx);
+  const mgr = ctx.window.activityGradesManager;
+
+  // No se espera (await) la promesa devuelta -- justamente para comprobar el
+  // estado ANTES de que una eventual respuesta de red pudiera llegar.
+  mgr.reflectGradesIntoGuideState({
+    guideFamily: FAKE_FAMILY,
+    pageFile: "grupo-10a-guia-01-induccion.html",
+    getState: () => state,
+    lockAppliers: { arbol312: () => { lockApplierCalls += 1; } },
+  });
+
+  // Deja correr solo las microtareas ya encoladas (el pase con el cache local
+  // es async pero no depende de temporizadores ni de la red).
+  await Promise.resolve();
+  await Promise.resolve();
+
+  assert.equal(state["arbol312-locked"], true, "el cache local debe bloquear la actividad sin esperar la red");
+  assert.equal(lockApplierCalls, 1, "el lockApplier debe llamarse desde el pase con el cache local");
+});
