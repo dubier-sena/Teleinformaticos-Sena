@@ -2976,7 +2976,7 @@
         : "&mdash;";
       const accion = delivered
         ? `<button type="button" class="btn secondary firma-reenable-btn" data-firma-user="${escapeHtml(user.usernameKey)}">Re-habilitar</button>`
-        : "&mdash;";
+        : `<button type="button" class="btn secondary firma-manual-btn" data-firma-user="${escapeHtml(user.usernameKey)}" data-firma-name="${escapeHtml(user.fullName)}">Registrar entrega manual</button>`;
       return `<tr><td>${escapeHtml(user.fullName)}</td><td>${estado}</td><td>${fecha}</td><td>${archivo}</td><td>${enlace}</td><td>${accion}</td></tr>`;
     }).join("");
     grid.innerHTML = `<table class="admin-data-table grades-table">
@@ -3001,6 +3001,50 @@
     } catch (err) {
       window.portalSaveStatus?.error("No se pudo re-habilitar la autorizacion.");
       setFeedback("Error al re-habilitar la autorizacion: " + (err && err.message ? err.message : err), "error");
+    }
+  }
+
+  // Registro manual: para cuando el aprendiz SI subio el archivo a Drive (el
+  // instructor lo confirma visualmente en la carpeta de la ficha) pero el
+  // registro de control en Firestore nunca se creo -- por ejemplo, si las
+  // reglas de Firestore para esta coleccion no estaban publicadas todavia en
+  // el momento del envio (caso real: 4 aprendices el 2026-07-07). El aprendiz
+  // NO necesita volver a subir nada; el admin solo pega el enlace del archivo
+  // que ya esta en Drive.
+  async function handleSignatureManualRegister(usernameKey, fullName) {
+    const db = window._firebaseDb;
+    if (!db || typeof db.cloudSaveSignatureAuth !== "function") return;
+    const driveUrl = window.prompt(
+      `Registrar entrega manual de "${fullName}".\n\nPega el enlace de Drive del archivo ya subido (clic derecho en el archivo → Obtener enlace):`,
+      ""
+    );
+    if (driveUrl === null) return; // cancelado
+    if (!driveUrl.trim()) {
+      window.portalSaveStatus?.error("Debes pegar un enlace de Drive valido.");
+      return;
+    }
+    const user = getUser(usernameKey);
+    window.portalSaveStatus?.saving("Registrando entrega manual...");
+    try {
+      const submittedAt = new Date().toISOString();
+      await db.cloudSaveSignatureAuth(usernameKey, {
+        usernameKey,
+        fullName: (user && user.fullName) || fullName || "",
+        ficha: (user && user.ficha) || "",
+        institucion: (user && user.inst) || "",
+        submittedAt,
+        fileName: "",
+        savedFileName: "Registrado por el instructor (ver enlace)",
+        driveUrl: driveUrl.trim(),
+        status: "delivered",
+        registeredBy: "admin-manual",
+      });
+      recordAdminAuditAction({ action: "signature-auth-manual-register", target: usernameKey, detail: driveUrl.trim() });
+      window.portalSaveStatus?.saved("Entrega registrada correctamente.");
+      renderSignatureAuthGrid();
+    } catch (err) {
+      window.portalSaveStatus?.error("No se pudo registrar la entrega manual.");
+      setFeedback("Error al registrar entrega manual de firma: " + (err && err.message ? err.message : err), "error");
     }
   }
 
@@ -3756,8 +3800,10 @@
       }
     });
     byId("module-autorizaciones")?.addEventListener("click", (event) => {
-      const btn = event.target && event.target.closest ? event.target.closest(".firma-reenable-btn") : null;
-      if (btn && btn.dataset.firmaUser) handleSignatureReenable(btn.dataset.firmaUser);
+      const reBtn = event.target && event.target.closest ? event.target.closest(".firma-reenable-btn") : null;
+      if (reBtn && reBtn.dataset.firmaUser) { handleSignatureReenable(reBtn.dataset.firmaUser); return; }
+      const manualBtn = event.target && event.target.closest ? event.target.closest(".firma-manual-btn") : null;
+      if (manualBtn && manualBtn.dataset.firmaUser) handleSignatureManualRegister(manualBtn.dataset.firmaUser, manualBtn.dataset.firmaName || "");
     });
     document.addEventListener("submit", async (event) => {
       if (event.target?.id === "edit-learner-form") {
