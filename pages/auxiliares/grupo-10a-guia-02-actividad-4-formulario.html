@@ -767,7 +767,13 @@
   }
 
   /* ── Guarda y bloquea al hacer clic ── */
-  function guardarFormulario() {
+  // OJO: si el aprendiz cierra el navegador justo despues de confirmar, una
+  // sincronizacion "dispara y olvida" (sin esperar) puede quedar a medias --
+  // la respuesta se guarda local pero nunca llega a la nube antes de cerrar.
+  // Por eso se ESPERA (await) a que termine la sincronizacion antes de
+  // mostrar el formulario como guardado; mientras tanto el boton avisa
+  // "Guardando..." para que el aprendiz no cierre de inmediato.
+  async function guardarFormulario() {
     if (localStorage.getItem(LOCK_KEY)) return; // ya fue guardado
 
     var confirmar = window.confirm(
@@ -776,17 +782,38 @@
     );
     if (!confirmar) return;
 
+    var submitBtn = document.getElementById("activity4SubmitBtn");
+    var originalText = submitBtn ? submitBtn.innerHTML : "";
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = "&#8987;&nbsp; Guardando en la nube... no cierres esta pagina";
+    }
+
+    var synced = true;
+    if (typeof window.guia2SyncNow === "function") {
+      try {
+        synced = await window.guia2SyncNow();
+      } catch (e) {
+        synced = false;
+      }
+    }
+
+    if (!synced) {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+      }
+      var msg = "No se pudo confirmar el guardado en la nube. Revisa tu conexion e intenta de nuevo.";
+      window.portalAlert ? window.portalAlert(msg, { type: "warning" }) : window.alert(msg);
+      return;
+    }
+
     var fecha = new Date().toLocaleString("es-CO", {
       day: "2-digit", month: "long", year: "numeric",
       hour: "2-digit", minute: "2-digit"
     });
     localStorage.setItem(LOCK_KEY, fecha);
     applyLock(fecha);
-
-    // Forzar guardado inmediato en Firestore (script_guia2.js sincroniza todos los data-store)
-    if (typeof window.guia2SyncNow === "function") {
-      window.guia2SyncNow();
-    }
   }
 
   /* ── Al cargar la página: restaura el bloqueo si ya fue guardado ── */

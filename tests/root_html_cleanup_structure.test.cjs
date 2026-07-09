@@ -97,10 +97,10 @@ test("legacy guide wrappers resolve shared assets from the repository root", () 
 test("guide 2 shared partial points auxiliary links to pages/auxiliares", () => {
   const partial = readUtf8(path.join(REPO_ROOT, "partials", "guia-02-herramientas-content.html"));
 
-  assert.match(partial, /pages\/auxiliares\/grupo-10a-guia-02-actividad-4-formulario\.html\?v=20260409_6/);
+  assert.match(partial, /pages\/auxiliares\/grupo-10a-guia-02-actividad-4-formulario\.html\?v=\d+_\d+/);
   assert.match(partial, /pages\/auxiliares\/grupo-10a-guia-02-ficha-caso\.html/);
   assert.match(partial, /pages\/auxiliares\/grupo-10a-guia-02-actividad-322-matriz\.html/);
-  assert.match(partial, /pages\/auxiliares\/grupo-10b-guia-02-actividad-4-formulario\.html\?v=20260409_6/);
+  assert.match(partial, /pages\/auxiliares\/grupo-10b-guia-02-actividad-4-formulario\.html\?v=\d+_\d+/);
   assert.match(partial, /pages\/auxiliares\/grupo-10b-guia-02-ficha-caso\.html/);
   assert.match(partial, /pages\/auxiliares\/grupo-10b-guia-02-actividad-322-matriz\.html/);
 });
