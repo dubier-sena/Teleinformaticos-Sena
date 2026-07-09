@@ -4050,6 +4050,7 @@ body.sb-hidden .btn-sb-expand {
 .grade-badge-icon { font-size: 15px; flex-shrink: 0; }
 .grade-badge-text strong { font-weight: 700; }
 .grade-badge-date { font-size: 12px; font-weight: 400; opacity: 0.85; }
+.grade-badge-obs { font-size: 13px; font-weight: 600; }
 
 /* ── Banner de Plan de Mejoramiento (lo ve el aprendiz en la actividad) ── */
 .plan-mejora-banner {

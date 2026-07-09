@@ -2704,6 +2704,22 @@
       return;
     }
     select.dataset.previousGrade = nextGrade;
+
+    // El selector de motivo solo tiene sentido junto a "No aprobado". Al
+    // salir de "D" (aprobado o sin nota) se oculta y se borra cualquier
+    // motivo guardado -- no tiene sentido conservar "no entrego a tiempo"
+    // sobre una actividad ya aprobada.
+    const reasonSelect = select.closest(".grade-cell")?.querySelector(".grade-reason-select");
+    if (reasonSelect) {
+      if (nextGrade === "D") {
+        reasonSelect.hidden = false;
+      } else {
+        reasonSelect.hidden = true;
+        reasonSelect.value = "";
+        try { gradesManager.setStudentActivityObservation(usernameKey, guideFamily, activityId, ""); } catch (e) { /* no critico */ }
+      }
+    }
+
     // Calificar cambia el avance del aprendiz en la nube: invalida el cache de la
     // lista para que al recargar el panel se vea el % actualizado (no el cacheado).
     invalidateUsersCache();
@@ -2737,6 +2753,40 @@
       : "Calificacion borrada.";
     window.portalSaveStatus?.saved(msg);
     setFeedback(msg, "success");
+  }
+
+  // Guarda el motivo elegido para una actividad "No aprobado". Los dos motivos
+  // predeterminados van directo; "Otro" pide el texto con un prompt nativo
+  // (mismo patron ya usado en otras partes del portal, p. ej. confirmaciones
+  // de entrega) para no armar un modal nuevo solo para esto.
+  async function handleGradeReasonChange(select) {
+    const usernameKey = select.dataset.gradeUser || "";
+    const guideFamily = select.dataset.gradeFamily || "";
+    const activityId = select.dataset.gradeActivity || "";
+    const gradesManager = window.activityGradesManager;
+    if (!gradesManager || !usernameKey || !guideFamily || !activityId) return;
+
+    const code = select.value || "";
+    let message = "";
+    if (code === "custom") {
+      const custom = window.prompt("Escribe el motivo (el aprendiz lo vera junto a su calificacion):", "");
+      if (custom == null) {
+        select.value = "";
+        return; // el instructor cancelo el prompt
+      }
+      message = custom.trim();
+    } else if (code) {
+      message = GRADE_REJECTION_REASONS[code] || "";
+    }
+
+    window.portalSaveStatus?.saving("Guardando motivo...");
+    try {
+      gradesManager.setStudentActivityObservation(usernameKey, guideFamily, activityId, message);
+      window.portalSaveStatus?.saved(message ? "Motivo guardado." : "Motivo borrado.");
+    } catch (err) {
+      window.portalSaveStatus?.error("Error al guardar el motivo.");
+      setFeedback("Error al guardar el motivo: " + (err && err.message ? err.message : err), "error");
+    }
   }
 
   // Importa el banco-semilla (grade_solutions_bank.json) a Firestore (solo admin).
@@ -2820,15 +2870,39 @@
     if (cell) cell.textContent = approvalCellText(approved, selects.length);
   }
 
-  function gradeSelectMarkup(usernameKey, guideFamily, activityId, current) {
+  // Motivos predeterminados al marcar "No aprobado" (pedido explicito del
+  // usuario 2026-07-09): evita que cada instructor escriba el motivo a mano
+  // cada vez. Se guarda con setStudentActivityObservation (activity_grades.js)
+  // -- ya existia esa funcion pero no estaba conectada a ninguna UI -- y el
+  // aprendiz lo ve junto al badge "No aprobado" (buildGradeBadge).
+  const GRADE_REJECTION_REASONS = {
+    "no-entrego-tiempo": "No entregó la actividad en los tiempos establecidos.",
+    "no-entrego-como-solicitado": "No entregó la actividad como se solicitó en la guía.",
+  };
+
+  function gradeSelectMarkup(usernameKey, guideFamily, activityId, current, currentObs) {
     const cur = current || "";
     function opt(value, label) {
       return `<option value="${value}"${cur === value ? " selected" : ""}>${label}</option>`;
     }
-    return `<select class="grade-select" data-grade-user="${escapeHtml(usernameKey)}" `
+    const reasonCode = Object.keys(GRADE_REJECTION_REASONS).find((code) => GRADE_REJECTION_REASONS[code] === currentObs)
+      || (currentObs ? "custom" : "");
+    function reasonOpt(value, label) {
+      return `<option value="${value}"${reasonCode === value ? " selected" : ""}>${label}</option>`;
+    }
+    const gradeSelect = `<select class="grade-select" data-grade-user="${escapeHtml(usernameKey)}" `
       + `data-grade-family="${escapeHtml(guideFamily)}" data-grade-activity="${escapeHtml(activityId)}" `
       + `data-previous-grade="${escapeHtml(cur)}" aria-label="Calificacion">`
       + opt("", "&mdash;") + opt("A", "Aprobado") + opt("D", "No aprobado") + `</select>`;
+    const reasonSelect = `<select class="grade-reason-select" data-grade-user="${escapeHtml(usernameKey)}" `
+      + `data-grade-family="${escapeHtml(guideFamily)}" data-grade-activity="${escapeHtml(activityId)}" `
+      + `aria-label="Motivo de no aprobado"${cur === "D" ? "" : " hidden"}>`
+      + reasonOpt("", "Motivo (opcional)")
+      + reasonOpt("no-entrego-tiempo", "No entregó a tiempo")
+      + reasonOpt("no-entrego-como-solicitado", "No entregó como se solicitó")
+      + reasonOpt("custom", "Otro (escribir)…")
+      + `</select>`;
+    return `<div class="grade-cell">${gradeSelect}${reasonSelect}</div>`;
   }
 
   function renderGrades() {
@@ -2907,7 +2981,7 @@
     const rows = students.map((user) => {
       const g = gradesByUser[user.usernameKey] || {};
       const cells = activities.map((a) =>
-        `<td>${gradeSelectMarkup(user.usernameKey, guideFamily, a.id, resolveGrade(g, a))}</td>`
+        `<td>${gradeSelectMarkup(user.usernameKey, guideFamily, a.id, resolveGrade(g, a), g[a.id + ":obs"])}</td>`
       ).join("");
       const approved = activities.filter((a) => resolveGrade(g, a) === "A").length;
       return `<tr data-grade-row="${escapeHtml(user.usernameKey)}"><td>${escapeHtml(user.fullName)}</td>${cells}`
@@ -3812,7 +3886,9 @@
         return;
       }
       const sel = target && target.closest ? target.closest(".grade-select") : null;
-      if (sel) handleGradeChange(sel);
+      if (sel) { handleGradeChange(sel); return; }
+      const reasonSel = target && target.closest ? target.closest(".grade-reason-select") : null;
+      if (reasonSel) handleGradeReasonChange(reasonSel);
     });
     // Modulo Autorizaciones de firma: filtro por ficha + boton re-habilitar.
     byId("module-autorizaciones")?.addEventListener("change", (event) => {

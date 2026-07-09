@@ -32,7 +32,7 @@
 <link rel="stylesheet" href="../../css/interactive_help.css?v=20260519_1">
 <script defer src="../../js/interactive_help.js?v=20260519_1"></script>
 <link rel="stylesheet" href="../../css/shared_shell.css?v=20260617_1">
-<link rel="stylesheet" href="../../css/guia_template.css?v=20260708_1">
+<link rel="stylesheet" href="../../css/guia_template.css?v=20260709_1">
 <style>
   .ficha-page .app-main {
     padding: 24px 0 64px;
@@ -240,6 +240,7 @@
   }
 </style>
 <script defer src="../../js/fichas_casos.js?v=20260414_1"></script>
+<script defer src="../../js/activity_grades.js?v=20260709_5"></script>
 </head>
 <body
   class="app-shell app-shell--guide ficha-page"
@@ -457,9 +458,39 @@
       tryRestoreFromCloud(f, idx);
     }
 
+    // Bloqueo por calificacion del instructor (matriz322/fichaCaso se
+    // califican juntas, ver aliasIds en activity_grades.js) -- independiente
+    // del auto-envio propio de esta pagina. Esta pagina no usa
+    // script_guia2.js (tiene su propio almacenamiento en
+    // localStorage/Firestore), asi que revisa la nota directamente.
+    checkInstructorGradeLock();
+
     // Mostrar ficha, ocultar cover
     document.getElementById("ficha-cover").style.display = "none";
     document.getElementById("ficha-content").style.display = "block";
+  }
+
+  function checkInstructorGradeLock() {
+    var mgr = window.activityGradesManager;
+    var auth = window.portalAuth;
+    var session = auth && auth.getCurrentSession ? auth.getCurrentSession() : null;
+    if (!mgr || !session || session.role !== "student" || !session.usernameKey) return;
+
+    // Cache local primero (instantaneo, sin esperar a la red).
+    var cached = mgr.getStudentGrades(session.usernameKey, "guia-02-herramientas") || {};
+    if (cached.matriz322 === "A" || cached.matriz322 === "D") {
+      applyLock("");
+      return;
+    }
+
+    // No estaba en cache: confirma con la nube (p. ej. si se califico desde
+    // otro dispositivo y este es el primer visto a la guia en este navegador).
+    var db = window._firebaseDb;
+    if (!db || typeof db.cloudGetGrades !== "function") return;
+    db.cloudGetGrades(session.usernameKey).then(function (all) {
+      var grade = all && all["guia-02-herramientas"] && all["guia-02-herramientas"].matriz322;
+      if (grade === "A" || grade === "D") applyLock("");
+    }).catch(function () {});
   }
 
   function renderRespuestas(ficha, fichaIdx) {

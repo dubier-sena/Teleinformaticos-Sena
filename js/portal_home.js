@@ -147,6 +147,70 @@
       .split(/\s+/)[0] || "aprendiz";
   }
 
+  // ── Actividades pendientes por guia (lee el estado local ya sincronizado;
+  //    NO hace lecturas a la nube → cero cuota Firestore, igual que el resto
+  //    de este archivo) ────────────────────────────────────────────────────
+  function guideState(file, usernameKey) {
+    var std = window.ActivityStandard;
+    var stateKey = std && typeof std.getStateKeyForGuide === "function" ? std.getStateKeyForGuide(file) : "";
+    if (!stateKey || typeof auth.getStudentStorageKey !== "function") return {};
+    var storageKey = auth.getStudentStorageKey(usernameKey, stateKey, { area: "guide-data" });
+    try {
+      var raw = localStorage.getItem(storageKey);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  // Devuelve las etiquetas de las actividades AUN pendientes de esta guia.
+  // Varias sub-actividades comparten "number" cuando son partes de una misma
+  // actividad visible (p. ej. las 5 partes de Ciberseguridad en Guia 2) --
+  // se cuenta una sola vez por number, igual que ya hace Calificaciones.
+  function pendingActivitiesFor(file, usernameKey) {
+    var std = window.ActivityStandard;
+    if (!std || typeof std.getConfigForGuide !== "function" || typeof std.getActivityDeliveryInfo !== "function") {
+      return [];
+    }
+    var config = std.getConfigForGuide(file);
+    var activities = config && Array.isArray(config.activities) ? config.activities : [];
+    if (!activities.length) return [];
+
+    var state = guideState(file, usernameKey);
+    var seenNumbers = {};
+    var pending = [];
+    activities.forEach(function (act) {
+      if (act.number) {
+        if (seenNumbers[act.number]) return;
+        seenNumbers[act.number] = true;
+      }
+      var info = std.getActivityDeliveryInfo(act, state);
+      if (info.kind === "pending") {
+        pending.push(act.label || act.shortName || act.id);
+      }
+    });
+    return pending;
+  }
+
+  function pendingListHtml(pending) {
+    if (!pending.length) return "";
+    var MAX_SHOWN = 5;
+    var shown = pending.slice(0, MAX_SHOWN);
+    var extra = pending.length - shown.length;
+    var items = shown.map(function (label) {
+      return '<li class="guide__pending-item">' + esc(label) + "</li>";
+    }).join("");
+    if (extra > 0) {
+      items += '<li class="guide__pending-item guide__pending-item--more">y ' + extra + " más…</li>";
+    }
+    return (
+      '<div class="guide__pending">' +
+      '<span class="guide__pending-label">📋 Pendiente en esta guía</span>' +
+      '<ul class="guide__pending-list">' + items + "</ul>" +
+      "</div>"
+    );
+  }
+
   // ── Vista aprendiz ────────────────────────────────────────────────────────
   function renderStudent(session) {
     var user = session.user || {};
@@ -201,6 +265,7 @@
         var title = typeof auth.getGuideTitle === "function" ? auth.getGuideTitle(file) : file;
         var href = typeof auth.getGuideHref === "function" ? auth.getGuideHref(file) : "guia.html?g=" + encodeURIComponent(file);
         var st = estadoFor(percent);
+        var pending = pendingActivitiesFor(file, key);
         return (
           '<article class="guide">' +
           '<div class="guide__top">' +
@@ -211,8 +276,107 @@
           '<div class="guide__pbar"><div class="guide__pfill" style="width:' + percent + '%"></div></div>' +
           '<div class="guide__pmeta"><span>Avance</span><span>' + percent + "%</span></div>" +
           deadlineBadge(file) +
+          pendingListHtml(pending) +
           '<a class="guide__btn' + (st.secondary ? " sec" : "") + '" href="' + esc(href) + '">' + st.cta + " →</a>" +
           "</article>"
+        );
+      })
+      .join("");
+
+    renderCallouts(user, files);
+  }
+
+  // ── Avisos arriba de "Mis guías" (firma sin enviar, actividades no
+  //    aprobadas, etc.) ─────────────────────────────────────────────────────
+  // A diferencia del resto de este archivo, la firma SI requiere una lectura
+  // a Firestore: sena_portal_signature_auth no tiene cache local propio (ver
+  // signature_authorization.js, que siempre llama cloudGetSignatureAuth).
+  // Es una excepcion deliberada y acotada -- UNA sola lectura por visita al
+  // home -- para poder avisar aunque el envio se haya hecho desde otro
+  // dispositivo. Se ejecuta despues del render principal (no bloquea las
+  // tarjetas de guias, que siguen siendo 100% locales).
+  async function isSignaturePending(usernameKey) {
+    var db = window._firebaseDb;
+    if (!db || typeof db.cloudGetSignatureAuth !== "function") return false;
+    try {
+      var record = await db.cloudGetSignatureAuth(usernameKey);
+      return !(record && record.status === "delivered");
+    } catch (e) {
+      return false; // si falla la lectura, mejor no mostrar un aviso incierto
+    }
+  }
+
+  // Actividades marcadas "No aprobado" (D) por el instructor, en cualquiera
+  // de las guias del aprendiz -- junto con el motivo, si el instructor eligio
+  // uno (ver GRADE_REJECTION_REASONS en admin_usuarios.js). Lee SOLO el cache
+  // local de activityGradesManager (mismo criterio que pendingActivitiesFor):
+  // si el aprendiz nunca visito esa guia en este dispositivo, su cache de
+  // notas sigue vacio y esa "D" no aparecera aqui hasta que la visite una vez.
+  function rejectedActivitiesFor(files, usernameKey) {
+    var mgr = window.activityGradesManager;
+    if (!mgr || typeof mgr.getStudentGrades !== "function" || !mgr.GUIDE_FAMILY_BY_FILE || !mgr.GRADE_CATALOG) {
+      return [];
+    }
+    var seenFamilies = {};
+    var rejected = [];
+    files.forEach(function (file) {
+      var family = mgr.GUIDE_FAMILY_BY_FILE[file];
+      if (!family || seenFamilies[family]) return;
+      seenFamilies[family] = true;
+
+      var catalogEntry = mgr.GRADE_CATALOG[family];
+      var activities = catalogEntry && Array.isArray(catalogEntry.activities) ? catalogEntry.activities : [];
+      if (!activities.length) return;
+
+      var grades = mgr.getStudentGrades(usernameKey, family) || {};
+      var href = typeof auth.getGuideHref === "function" ? auth.getGuideHref(file) : "guia.html?g=" + encodeURIComponent(file);
+      activities.forEach(function (act) {
+        if (grades[act.id] !== "D") return;
+        rejected.push({
+          text: (catalogEntry.label || family) + ": \"" + (act.label || act.id) + "\" no aprobada." +
+            (grades[act.id + ":obs"] ? " " + grades[act.id + ":obs"] : ""),
+          href: href,
+          cta: "Ver guía",
+        });
+      });
+    });
+    return rejected;
+  }
+
+  function calloutsBox() {
+    return byId("student-callouts");
+  }
+
+  async function renderCallouts(user, files) {
+    var box = calloutsBox();
+    if (!box) return;
+    var key = user.usernameKey || user.username;
+    var items = [];
+
+    if (await isSignaturePending(key)) {
+      items.push({
+        text: "Autorización de firma sin enviar.",
+        href: "pages/auxiliares/autorizacion-firma.html",
+        cta: "Enviar",
+      });
+    }
+
+    items = items.concat(rejectedActivitiesFor(files || [], key));
+
+    if (!items.length) {
+      box.hidden = true;
+      box.innerHTML = "";
+      return;
+    }
+    box.hidden = false;
+    box.innerHTML = items
+      .map(function (item) {
+        return (
+          '<div class="callout">' +
+          '<span class="callout__icon">⚠️</span>' +
+          '<span class="callout__text">' + esc(item.text) + "</span>" +
+          '<a class="callout__link" href="' + esc(item.href) + '">' + esc(item.cta) + " →</a>" +
+          "</div>"
         );
       })
       .join("");
