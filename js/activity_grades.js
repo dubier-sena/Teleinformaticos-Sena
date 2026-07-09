@@ -46,13 +46,18 @@
         // "Tu control de avance" la marque hecha cuando se califica esta fila.
         { id: "sopaletras311",    label: "3.1.1 Actividades de inicio (Sopa de letras y Relaciona herramienta-función)", aliasIds: ["relaciona311"], aliasMounts: ["#relaciona311GradeMount"] },
         { id: "analisis313",      label: "3.1.3 Bitácora de análisis" },
-        { id: "fichaCaso",        label: "3.2.1 Ficha de caso" },
+        // "fichaCaso" (Parte 2: el aprendiz solo LEE el caso que le tocó, 0 campos
+        // de texto en esa pagina) alimenta la Matriz (Parte 3, mismo trabajo en
+        // equipo) -- se califican juntas en UNA sola columna (aliasIds), igual
+        // patron que sopaletras311/relaciona311. "matriz322" queda como id
+        // primario porque ahi vive el contenido real (y su entrada del banco de
+        // respuestas en grade_solutions_bank.json).
+        { id: "matriz322",        label: "3.2.1 Ficha de caso + Matriz de Diagnóstico Digital", aliasIds: ["fichaCaso"], aliasMounts: ["#fichaCasoGradeMount"] },
         // Cuestionario individual (10 preguntas, "contexto-*") de la Actividad 4 --
         // pagina aparte (grupo-10a/10b-guia-02-actividad-4-formulario.html), NO usa
         // guide_declarations.js/ActivityStandard (es standalone). mount vive en esa
         // misma pagina.
         { id: "diagnostico323",   label: "3.2.3 Diagnóstico inicial del contexto digital (formulario individual)" },
-        { id: "matriz322",        label: "3.2.2 Matriz de Diagnóstico Digital" },
         { id: "extensiones331",   label: "3.3.1 Extensiones de archivo" },
         { id: "sistemas332",      label: "3.3.2 Requerimientos mínimos" },
         { id: "suite333",         label: "3.3.3 Suite ofimática en acción" },
@@ -520,6 +525,21 @@
   //   lockAppliers: { [activityId]: () => void },  // funciones applyXLock ya existentes en la guia
   //   onChanged: () => void,        // se llama SOLO si algo cambio: debe guardar+sincronizar+refrescar avance
   // }
+  // Nota efectiva de una actividad del catalogo: primero su propio id, y si no
+  // tiene, cae a cualquiera de sus aliasIds. Esto evita perder una nota real que
+  // haya quedado guardada bajo el id de un alias ANTES de que dos actividades se
+  // fusionaran en una sola columna (ej. matriz322/fichaCaso, fusionadas 2026-07-09).
+  function resolveGradeValue(grades, act) {
+    var direct = grades[act.id];
+    if (direct === "A" || direct === "D") return direct;
+    var aliasIds = Array.isArray(act.aliasIds) ? act.aliasIds : [];
+    for (var i = 0; i < aliasIds.length; i++) {
+      var aliasGrade = grades[aliasIds[i]];
+      if (aliasGrade === "A" || aliasGrade === "D") return aliasGrade;
+    }
+    return direct;
+  }
+
   async function reflectGradesIntoGuideState(options) {
     var opts = options || {};
     var guideFamily = String(opts.guideFamily || "");
@@ -549,7 +569,7 @@
     var changed = false;
 
     entry.activities.forEach(function (act) {
-      var grade = grades[act.id];
+      var grade = resolveGradeValue(grades, act);
       if (grade !== "A" && grade !== "D") return;
       // Actividades "gemelas" (aliasIds): comparten esta misma nota/columna
       // (ej. relaciona311 se califica junto con sopaletras311) -- tambien
@@ -588,6 +608,7 @@
     autoRenderForFile: autoRenderForFile,
     applyApprovedSolutionsForFamily: applyApprovedSolutionsForFamily,
     reflectGradesIntoGuideState: reflectGradesIntoGuideState,
+    resolveGradeValue: resolveGradeValue,
     getStudentGrades: getStudentGrades,
     setAllStudentGrades: setAllStudentGrades,
     setStudentGrades: setStudentGrades,

@@ -86,13 +86,18 @@
       { id: "sopaletras311",   number: "3.1.1", label: "Sopa de letras de conceptos basicos", shortName: "SopaLetras",      type: "form" },
       { id: "relaciona311",    number: "3.1.1", label: "Relaciona la herramienta con su funcion", shortName: "Relaciona",   type: "form" },
       { id: "analisis313",     number: "3.1.3", label: "Bitacora de analisis",              shortName: "Bitacora",        type: "form" },
-      { id: "matriz322",       number: "3.2.2", label: "Matriz de Diagnostico Digital",     shortName: "MatrizDigital",   type: "form" },
+      // matriz322 y fichaCaso son la Parte 3 y Parte 2 de la Actividad 4 (mismo
+      // trabajo en equipo: el aprendiz LEE el caso que le toco -- 0 campos de
+      // texto en esa pagina propia -- y con esa info completa la Matriz).
+      // Comparten numero "3.2.1" para que Calificaciones las una en UNA sola
+      // columna (mismo patron que sopaletras311/relaciona311 mas arriba).
+      { id: "matriz322",       number: "3.2.1", label: "Matriz de Diagnostico Digital",     shortName: "MatrizDigital",   type: "form" },
       { id: "fichaCaso",       number: "3.2.1", label: "Ficha de caso",                     shortName: "FichaCaso",       type: "form" },
       // Cuestionario individual (10 preguntas, "contexto-*") de la Actividad 4 --
       // pagina APARTE (grupo-10a/10b-guia-02-actividad-4-formulario.html), no usa
       // ActivityStandard.mountActivities. Registrado aqui solo para que
       // Calificaciones tenga su columna (numero propio "3.2.3" porque "3.2.1"
-      // ya lo usa fichaCaso, actividad DISTINTA dentro de la misma tarjeta).
+      // ya lo usan matriz322/fichaCaso, actividad DISTINTA dentro de la misma tarjeta).
       { id: "diagnostico323",  number: "3.2.3", label: "Diagnostico individual del contexto digital", shortName: "DiagnosticoIndividual", type: "form" },
       { id: "extensiones331",  number: "3.3.1", label: "Extensiones de archivo",            shortName: "Extensiones",     type: "form" },
       { id: "sistemas332",     number: "3.3.2", label: "Requerimientos minimos",            shortName: "Requerimientos",  type: "form" },
