@@ -2899,12 +2899,17 @@
       gradesByUser[user.usernameKey] = g;
     }));
     const head = "<th>Aprendiz</th>" + activities.map((a) => `<th>${escapeHtml(a.label)}</th>`).join("") + "<th>Aprobadas</th>";
+    // resolveGradeValue cae a aliasIds: una fila fusionada (ej. matriz322+fichaCaso)
+    // sigue mostrando una nota que haya quedado guardada bajo el id del alias
+    // antes de la fusion, en vez de aparecer vacia.
+    const resolveGrade = (window.activityGradesManager && window.activityGradesManager.resolveGradeValue)
+      || ((g, a) => g[a.id]);
     const rows = students.map((user) => {
       const g = gradesByUser[user.usernameKey] || {};
       const cells = activities.map((a) =>
-        `<td>${gradeSelectMarkup(user.usernameKey, guideFamily, a.id, g[a.id])}</td>`
+        `<td>${gradeSelectMarkup(user.usernameKey, guideFamily, a.id, resolveGrade(g, a))}</td>`
       ).join("");
-      const approved = activities.filter((a) => g[a.id] === "A").length;
+      const approved = activities.filter((a) => resolveGrade(g, a) === "A").length;
       return `<tr data-grade-row="${escapeHtml(user.usernameKey)}"><td>${escapeHtml(user.fullName)}</td>${cells}`
         + `<td class="grades-approved-cell">${approvalCellText(approved, activities.length)}</td></tr>`;
     }).join("");
