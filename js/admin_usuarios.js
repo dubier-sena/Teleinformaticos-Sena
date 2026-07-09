@@ -2935,15 +2935,31 @@
       </div>
       <div class="grades-manual__filters">
         <select id="firma-ficha-filter">${getFichaOptions("", false)}</select>
+        <a id="firma-drive-folder-link" class="btn secondary" href="#" target="_blank" rel="noopener" style="display:none">&#128193; Abrir carpeta de Drive de esta ficha</a>
       </div>
+      <p class="admin-muted" style="margin-top:-8px">Para "Registrar entrega manual": abre esta carpeta, busca el archivo del aprendiz, clic derecho &rarr; Obtener enlace, y pegalo cuando el panel lo pida.</p>
       <div id="firma-grid" class="grades-grid"></div>
     `;
+  }
+
+  function updateFirmaDriveFolderLink(ficha) {
+    const link = byId("firma-drive-folder-link");
+    if (!link) return;
+    const url = window.PROJECT_INTEGRATIONS?.fichaDriveFolders?.[ficha] || "";
+    if (url) {
+      link.href = url;
+      link.style.display = "";
+    } else {
+      link.href = "#";
+      link.style.display = "none";
+    }
   }
 
   async function renderSignatureAuthGrid() {
     const grid = byId("firma-grid");
     if (!grid) return;
     const ficha = byId("firma-ficha-filter")?.value || "";
+    updateFirmaDriveFolderLink(ficha);
     if (!ficha) {
       grid.innerHTML = '<p class="admin-muted">Selecciona una ficha para ver los aprendices.</p>';
       return;
