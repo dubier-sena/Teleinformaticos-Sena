@@ -1,4 +1,4 @@
-// script_taller_integrador.js — Guia 4: Taller Integrador (Sistemas Teleinformaticos)
+// script_taller_integrador.js — Taller Integrador (Sistemas Teleinformaticos)
 // Institucion Educativa John F. Kennedy, grupos 10A/10B. 6 productos type:"file"
 // (entrega a Drive por equipo) via ActivityStandard. Sin formularios ni wizard de
 // equipo: los integrantes del equipo van en la portada del documento entregado.
@@ -150,36 +150,6 @@
     );
   }
 
-  function ensureDriveQrModal() {
-    let modal = document.getElementById("drive-qr-modal");
-    if (modal) {
-      return modal;
-    }
-
-    modal = document.createElement("div");
-    modal.className = "modal-overlay";
-    modal.id = "drive-qr-modal";
-    modal.innerHTML = `
-      <div class="modal-box" style="text-align:center;max-width:320px;padding:28px 28px 24px">
-        <h3 id="drive-qr-title" style="font-size:16px;margin-bottom:4px">Abrir carpeta de Drive</h3>
-        <p style="font-size:12px;color:var(--text-muted);margin-bottom:0">Escanea este codigo QR desde el celular.</p>
-        <img id="drive-qr-img" class="qr-modal-img" src="" alt="Codigo QR de la carpeta de Drive">
-        <div class="qr-url-text" id="drive-qr-url"></div>
-        <button class="modal-btn-ok" type="button" style="width:100%" id="drive-qr-close">Cerrar</button>
-      </div>
-    `;
-
-    modal.addEventListener("click", function (event) {
-      if (event.target === modal) {
-        closeDriveFolderQR();
-      }
-    });
-
-    document.body.appendChild(modal);
-    document.getElementById("drive-qr-close")?.addEventListener("click", closeDriveFolderQR);
-    return modal;
-  }
-
   function openDriveFolder() {
     const url = getDriveFolderUrl();
     if (!url) {
@@ -190,38 +160,6 @@
     window.open(url, "_blank", "noopener,noreferrer");
   }
 
-  function showDriveFolderQR() {
-    const url = getDriveFolderUrl();
-    if (!url) {
-      showDriveSelectionAlert();
-      return;
-    }
-
-    const selection = getGuideSelection();
-    ensureDriveQrModal();
-    document.getElementById("drive-qr-title").textContent = selection.grupo
-      ? `Carpeta Drive - Grupo ${selection.grupo}`
-      : "Carpeta de entregas en Drive";
-    document.getElementById("drive-qr-url").textContent = url;
-    document.getElementById("drive-qr-img").src =
-      "https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=10&data=" +
-      encodeURIComponent(url);
-    document.getElementById("drive-qr-modal").classList.add("open");
-  }
-
-  function closeDriveFolderQR() {
-    const modal = document.getElementById("drive-qr-modal");
-    if (!modal) {
-      return;
-    }
-
-    modal.classList.remove("open");
-    const image = document.getElementById("drive-qr-img");
-    if (image) {
-      image.src = "";
-    }
-  }
-
   function mountDriveDelivery() {
     if (!window.sharedDriveDelivery?.appendDriveDeliveryPanels) return;
     if (!window.ActivityStandard?.buildDriveTargets) return;
@@ -230,7 +168,7 @@
     window.sharedDriveDelivery.appendDriveDeliveryPanels({
       targets,
       onDriveClick: openDriveFolder,
-      onQrClick: showDriveFolderQR,
+      hideQr: true,
     });
   }
 

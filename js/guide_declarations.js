@@ -150,7 +150,11 @@
     ],
   });
 
-  // ── Guia 4 — Taller Integrador (JFK 10A + 10B, solo grado 10) ──────────────
+  // ── Taller Integrador (JFK 10A + 10B, solo grado 10) — NO es una "guia" ────
+  // pedagogica mas (no lleva numero de guia visible para el aprendiz), es un
+  // proyecto de cierre aparte. guideNumber:"4" se deja solo como identificador
+  // interno para el nombre de archivo entregado (Guia_4_Actividad_N_...),
+  // convencion compartida con el resto de guias en activity_standard.js.
   // Proyecto de cierre por equipos (3-4 aprendices) con un actor productivo real.
   // Los 6 productos son documentos externos (Word/Excel); el listado del equipo
   // va en la portada de cada documento, por eso ninguna actividad usa
@@ -168,7 +172,7 @@
       "grupo-10b-guia-04-taller-integrador.html",
     ],
     guideNumber: "4",
-    guideTitle: "Guia 4 - Taller Integrador",
+    guideTitle: "Taller Integrador",
     stateKey: "guia_interactiva_10a_guia4_html",
     program: PROGRAM,
     competencia: "Proyecto formativo integrador - Diagnostico, intervencion y evaluacion de un actor productivo real en alfabetizacion digital, soporte tecnico y ciberseguridad.",

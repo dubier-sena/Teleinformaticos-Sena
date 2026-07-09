@@ -139,7 +139,7 @@
       key: "jfk-taller-10a",
       family: "taller-integrador-jfk",
       pageFile: "grupo-10a-guia-04-taller-integrador.html",
-      title: "Guia 4 - Taller Integrador | Grupo 10A",
+      title: "Taller Integrador | Grupo 10A",
       type: "page",
       scripts: [
         "js/shared_shell.js?v=20260609_2",
@@ -161,7 +161,7 @@
       key: "jfk-taller-10b",
       family: "taller-integrador-jfk",
       pageFile: "grupo-10b-guia-04-taller-integrador.html",
-      title: "Guia 4 - Taller Integrador | Grupo 10B",
+      title: "Taller Integrador | Grupo 10B",
       type: "page",
       scripts: [
         "js/shared_shell.js?v=20260609_2",
