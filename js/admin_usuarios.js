@@ -1138,8 +1138,19 @@
       socializacion312: ["socializacion_"],
       extensiones331: ["extension:", "extensions-"],
       sistemas332: ["system:", "systems-"],
-      colaborativas334: ["collab:"],
+      // "checklist:" = los 15 items de la Lista de verificacion de competencias
+      // digitales (digitalCompetencyChecklist en script_guia2.js), que se
+      // guardan junto con la tabla comparativa en la MISMA actividad 3.3.4.
+      colaborativas334: ["collab:", "checklist:"],
       transferReto341: ["transfer-reto-"],
+      // Actividad 9 (3.3.5 Ciberseguridad): 4 sub-secciones, cada una con su
+      // propio prefijo namespaced (ver CIBERSEG_335_SECTIONS en script_guia2.js).
+      // Sin estos alias, keyMatchesActivity() nunca las encontraba y el admin
+      // veia "Sin respuesta" en las 4, aunque el aprendiz si las hubiera guardado.
+      cibersegAmenazas335: ["ciberseg:amenazas:"],
+      cibersegGuia335: ["ciberseg:guia:"],
+      cibersegPhishing335: ["ciberseg:phishing:"],
+      cibersegChecklist335: ["ciberseg:checklist:"],
       reflexion311: ["reflexion_", "red-reflexion", "reflexion-redes"],
       ip1: ["ip1-", "ip1_"],
       ip3: ["ip3-", "ip3_"],
