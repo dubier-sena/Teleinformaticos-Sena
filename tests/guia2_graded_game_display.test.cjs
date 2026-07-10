@@ -379,13 +379,15 @@ test("Guia 2: applyDiagnostico323GradeLock no revienta cuando window.applyLock n
   });
 });
 
-test("Guia 2: applyDiagnostico323GradeLock llama a window.applyLock (pagina del Formulario de la Actividad 4)", () => {
+test("Guia 2: applyDiagnostico323GradeLock llama a window.applyLock con un motivo propio, no una fecha en blanco (pagina del Formulario de la Actividad 4)", () => {
   const ctx = loadScriptGuia2();
   const calls = [];
-  ctx.window.applyLock = (fechaGuardado) => { calls.push(fechaGuardado); };
+  ctx.window.applyLock = (fechaGuardado, reasonText) => { calls.push({ fechaGuardado, reasonText }); };
   vm.runInContext("applyDiagnostico323GradeLock()", ctx);
 
   assert.equal(calls.length, 1, "debe llamar a applyLock exactamente una vez");
+  assert.equal(calls[0].fechaGuardado, null, "no debe inventar una fecha -- antes pasaba '' y el Formulario mostraba 'registradas el .' en blanco (bug jul-10)");
+  assert.match(calls[0].reasonText, /calificada por el instructor/, "el mensaje debe explicar que fue el instructor quien la califico, no una auto-entrega");
 });
 
 test("Guia 2: calificar diagnostico323 dispara applyLock en la pagina del Formulario de la Actividad 4", async () => {
@@ -433,7 +435,10 @@ function loadFichaCasoInlineScript() {
   assert.ok(scriptMatch, "no se encontro el <script> principal de la pagina de Ficha de caso -- ¿cambio la estructura del archivo?");
   let code = scriptMatch[0].replace(/^<script>/, "").replace(/<\/script>$/, "");
   assert.match(code, /\n\}\)\(\);\s*$/, "no se pudo ubicar el cierre del IIFE para exponer checkInstructorGradeLock en la prueba");
-  code = code.replace(/\n\}\)\(\);\s*$/, "\n  window.checkInstructorGradeLock = checkInstructorGradeLock;\n})();");
+  code = code.replace(
+    /\n\}\)\(\);\s*$/,
+    "\n  window.checkInstructorGradeLock = checkInstructorGradeLock;\n  window.applyLock = applyLock;\n})();"
+  );
 
   const elementsById = new Map();
   function getOrCreateEl(id) {
@@ -459,6 +464,9 @@ function loadFichaCasoInlineScript() {
   vm.createContext(ctx);
   vm.runInContext(code, ctx, { filename: "ficha-caso-inline.js" });
   ctx.__submitBtn = getOrCreateEl("ficha-submit-btn");
+  ctx.__submittedTitle = getOrCreateEl("ficha-submitted-title");
+  ctx.__submittedDate = getOrCreateEl("ficha-submitted-date");
+  ctx.__submittedBody = getOrCreateEl("ficha-submitted-body");
   return ctx;
 }
 
@@ -520,4 +528,102 @@ test("Ficha de caso: checkInstructorGradeLock NO bloquea si no hay nota (ni en c
   await Promise.resolve();
 
   assert.notEqual(ctx.__submitBtn.disabled, true, "sin calificar, no debe bloquear la ficha");
+});
+
+// ── Regresion bug jul-10: matriz322/fichaCaso se califican JUNTAS (mismo
+// numero 3.2.1), pero el aprendiz puede no haber usado NUNCA esta pagina de
+// Ficha de caso (llena la Matriz, que es donde vive el trabajo real). Cuando
+// checkInstructorGradeLock bloqueaba por la nota, llamaba a applyLock("") --
+// el banner fijo "Registradas el [fecha]" quedaba con la fecha vacia
+// ("Registradas el ."), dando a entender que el aprendiz habia guardado algo
+// que en realidad nunca escribio aqui. Reportado por el usuario con captura
+// de pantalla real de una Ficha de caso en ese estado.
+test("Ficha de caso: bloqueo por calificacion muestra un motivo real, no 'Registradas el .' en blanco", () => {
+  const ctx = loadFichaCasoInlineScript();
+  ctx.window.portalAuth = {
+    getCurrentSession: () => ({ role: "student", usernameKey: "prueba.aprendiz" }),
+  };
+  ctx.window.activityGradesManager = {
+    getStudentGrades: () => ({ matriz322: "A" }),
+  };
+  ctx.window._firebaseDb = { cloudGetGrades: () => new Promise(() => {}) }; // nunca resuelve
+
+  ctx.window.checkInstructorGradeLock();
+
+  assert.equal(ctx.__submitBtn.disabled, true, "debe bloquear (boton deshabilitado)");
+  assert.ok(ctx.__submittedTitle.textContent, "debe mostrar un motivo -- no dejar el titulo vacio");
+  assert.notEqual(
+    ctx.__submittedTitle.textContent,
+    "Respuestas guardadas",
+    "no debe fingir que el aprendiz guardo respuestas que nunca escribio en esta pagina"
+  );
+  assert.equal(
+    ctx.__submittedDate.textContent,
+    "",
+    "no debe inventar una fecha -- antes quedaba 'Registradas el .' vacio y confuso"
+  );
+  assert.equal(
+    ctx.__submittedBody.style.display,
+    "none",
+    "debe ocultar la frase 'Registradas el ... Ya no es posible modificarlas' cuando no hay fecha real que mostrar"
+  );
+});
+
+test("Ficha de caso: una calificacion tardia NO borra una fecha de auto-envio real ya mostrada", () => {
+  const ctx = loadFichaCasoInlineScript();
+
+  // El aprendiz SI guardo sus propias respuestas en esta pagina (auto-envio
+  // real, con fecha) -- esto llega ANTES de que se confirme la calificacion.
+  ctx.window.applyLock("10 de julio de 2026, 09:00 a. m.");
+  assert.equal(ctx.__submittedDate.textContent, "10 de julio de 2026, 09:00 a. m.");
+
+  ctx.window.portalAuth = {
+    getCurrentSession: () => ({ role: "student", usernameKey: "prueba.aprendiz" }),
+  };
+  ctx.window.activityGradesManager = {
+    getStudentGrades: () => ({ matriz322: "A" }),
+  };
+  ctx.window._firebaseDb = { cloudGetGrades: () => new Promise(() => {}) };
+  ctx.window.checkInstructorGradeLock(); // la calificacion se confirma DESPUES
+
+  assert.equal(
+    ctx.__submittedDate.textContent,
+    "10 de julio de 2026, 09:00 a. m.",
+    "la fecha real de auto-envio no debe borrarse por una calificacion que llega despues"
+  );
+  assert.equal(
+    ctx.__submittedTitle.textContent,
+    "Respuestas guardadas",
+    "debe seguir mostrando el banner de auto-envio, no el motivo generico de calificacion"
+  );
+});
+
+test("Ficha de caso: si la calificacion llega primero, una fecha real de auto-envio posterior SI la reemplaza", () => {
+  const ctx = loadFichaCasoInlineScript();
+  ctx.window.portalAuth = {
+    getCurrentSession: () => ({ role: "student", usernameKey: "prueba.aprendiz" }),
+  };
+  ctx.window.activityGradesManager = {
+    getStudentGrades: () => ({ matriz322: "A" }),
+  };
+  ctx.window._firebaseDb = { cloudGetGrades: () => new Promise(() => {}) };
+  ctx.window.checkInstructorGradeLock(); // motivo generico primero (carrera local-cache vs nube)
+
+  assert.equal(ctx.__submittedBody.style.display, "none");
+
+  // Luego llega tryRestoreFromCloud con una entrega real (el aprendiz SI habia
+  // guardado, en otro dispositivo, y la nube tardo mas en confirmarlo).
+  ctx.window.applyLock("10 de julio de 2026, 09:00 a. m.");
+
+  assert.equal(
+    ctx.__submittedDate.textContent,
+    "10 de julio de 2026, 09:00 a. m.",
+    "la fecha real debe reemplazar el motivo generico en cuanto se confirma"
+  );
+  assert.equal(ctx.__submittedTitle.textContent, "Respuestas guardadas");
+  assert.equal(
+    ctx.__submittedBody.style.display,
+    "",
+    "debe volver a mostrar la frase de fecha real, ya no debe quedar oculta"
+  );
 });

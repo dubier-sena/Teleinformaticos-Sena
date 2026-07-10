@@ -239,7 +239,7 @@
     .ficha-meta-grid { grid-template-columns: 1fr; }
   }
 </style>
-<script defer src="../../js/fichas_casos.js?v=20260414_1"></script>
+<script defer src="../../js/fichas_casos.js?v=20260710_1"></script>
 <script defer src="../../js/activity_grades.js?v=20260709_5"></script>
 </head>
 <body
@@ -350,11 +350,13 @@
 
             <!-- Banner de confirmación -->
             <div class="ficha-submitted-banner" id="ficha-submitted-banner">
-              <span style="font-size:1.4rem;flex-shrink:0;">&#9989;</span>
+              <span style="font-size:1.4rem;flex-shrink:0;" id="ficha-submitted-icon">&#9989;</span>
               <div>
-                <strong>Respuestas guardadas</strong><br>
-                Registradas el <span id="ficha-submitted-date"></span>.
-                Ya no es posible modificarlas.
+                <strong id="ficha-submitted-title">Respuestas guardadas</strong><br>
+                <span id="ficha-submitted-body">
+                  Registradas el <span id="ficha-submitted-date"></span>.
+                  Ya no es posible modificarlas.
+                </span>
               </div>
             </div>
 
@@ -391,6 +393,7 @@
 (function () {
   const RESP_KEY = "guia2_ficha_caso_resp";
   const LOCK_KEY = "guia2_ficha_caso_submitted_10B";
+  const GRADE_LOCK_REASON = "🔒 Esta actividad ya fue calificada (junto con la Matriz de Diagnóstico Digital). No es necesario completarla.";
   let _fichaIdx = -1;
   let _ficha = null;
 
@@ -465,6 +468,15 @@
     // localStorage/Firestore), asi que revisa la nota directamente.
     checkInstructorGradeLock();
 
+    // Banco de respuestas: si ya fue aprobada (matriz322/fichaCaso comparten
+    // nota) y el aprendiz dejo alguna pregunta vacia, la rellena con la
+    // respuesta modelo del banco (claves "fichacaso-<caso>-<letra>" -- ver
+    // data-store en renderRespuestas). No sobrescribe respuestas que el
+    // aprendiz SI escribio.
+    if (window.activityGradesManager && typeof window.activityGradesManager.autoRenderForFile === "function") {
+      window.activityGradesManager.autoRenderForFile("grupo-10b-guia-02-ficha-caso.html");
+    }
+
     // Mostrar ficha, ocultar cover
     document.getElementById("ficha-cover").style.display = "none";
     document.getElementById("ficha-content").style.display = "block";
@@ -479,7 +491,7 @@
     // Cache local primero (instantaneo, sin esperar a la red).
     var cached = mgr.getStudentGrades(session.usernameKey, "guia-02-herramientas") || {};
     if (cached.matriz322 === "A" || cached.matriz322 === "D") {
-      applyLock("");
+      applyLock(null, GRADE_LOCK_REASON);
       return;
     }
 
@@ -489,7 +501,7 @@
     if (!db || typeof db.cloudGetGrades !== "function") return;
     db.cloudGetGrades(session.usernameKey).then(function (all) {
       var grade = all && all["guia-02-herramientas"] && all["guia-02-herramientas"].matriz322;
-      if (grade === "A" || grade === "D") applyLock("");
+      if (grade === "A" || grade === "D") applyLock(null, GRADE_LOCK_REASON);
     }).catch(function () {});
   }
 
@@ -518,6 +530,12 @@
       ta.rows = 4;
       ta.placeholder = "Escribe tu respuesta a la pregunta " + letras[i] + "\u2026";
       ta.value = savedVal;
+      // Permite que el banco de respuestas (activity_grades.js) rellene esta
+      // pregunta si el instructor aprueba la actividad (matriz322/fichaCaso
+      // comparten nota) y el aprendiz la dejo vacia. Una clave por caso
+      // asignado (tienda/cultivo/artesanias), porque el texto de la pregunta
+      // cambia segun la ficha.
+      if (ficha.slug) ta.setAttribute("data-store", "fichacaso-" + ficha.slug + "-" + letras[i].toLowerCase());
       ta.addEventListener("input", (function (key) {
         return function () { localStorage.setItem(key, ta.value); };
       })(savedKey));
@@ -643,8 +661,19 @@
       .catch(function () {});
   }
 
-  /* ── Aplica el bloqueo visual y funcional ── */
-  function applyLock(fecha) {
+  /* ── Aplica el bloqueo visual y funcional ──
+   * reasonText (opcional): motivo a mostrar cuando el bloqueo viene de una
+   * calificacion del instructor SIN que el aprendiz haya guardado sus propias
+   * respuestas aqui (ver checkInstructorGradeLock). Sin esto, el banner fijo
+   * "Registradas el [fecha]" quedaba con la fecha en blanco -- parecia que el
+   * aprendiz habia guardado algo cuando en realidad nunca lo hizo (bug
+   * reportado jul-10).
+   * Si YA se estaba mostrando una fecha real de auto-envio, esta no se
+   * reemplaza por el motivo generico (puede llegar una calificacion despues,
+   * por una carrera con la nube) -- y viceversa: si llega una fecha real
+   * despues de haber mostrado el motivo generico, esta SI la reemplaza.
+   */
+  function applyLock(fecha, reasonText) {
     // Deshabilitar todos los textareas de respuesta
     var container = document.getElementById("fc-respuestas-container");
     if (container) {
@@ -660,11 +689,23 @@
       btn.innerHTML = "&#10003;&nbsp; Respuestas ya guardadas";
     }
 
-    // Mostrar banner con fecha
+    // Mostrar banner
     var banner = document.getElementById("ficha-submitted-banner");
     var dateSpan = document.getElementById("ficha-submitted-date");
+    var icon = document.getElementById("ficha-submitted-icon");
+    var title = document.getElementById("ficha-submitted-title");
+    var body = document.getElementById("ficha-submitted-body");
     if (banner) banner.classList.add("is-visible");
-    if (dateSpan) dateSpan.textContent = fecha;
+    if (reasonText && !(dateSpan && dateSpan.textContent)) {
+      if (icon) icon.innerHTML = "&#128274;";
+      if (title) title.textContent = reasonText;
+      if (body) body.style.display = "none";
+    } else {
+      if (icon) icon.innerHTML = "&#9989;";
+      if (title) title.textContent = "Respuestas guardadas";
+      if (body) body.style.display = "";
+      if (dateSpan && fecha) dateSpan.textContent = fecha;
+    }
   }
 
   /* ── Guarda y bloquea al hacer clic ── */

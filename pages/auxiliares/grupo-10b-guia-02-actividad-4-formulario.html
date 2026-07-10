@@ -247,7 +247,7 @@
 </style>
 <script defer src="../../js/shared_drive_delivery.js?v=20260611_2"></script>
 <script defer src="../../js/export_styles.js?v=20260517_1"></script>
-<script defer src="../../js/script_guia2.js?v=20260709_4"></script>
+<script defer src="../../js/script_guia2.js?v=20260710_1"></script>
 <script defer src="../../js/activity_grades.js?v=20260709_5"></script>
 <script defer src="../../js/activity4_admin_report.js?v=20260615_1"></script>
 <script defer src="../../js/activity_delivery.js?v=20260615_1"></script>
@@ -745,11 +745,13 @@
 
           <!-- Banner: formulario ya guardado -->
           <div class="activity4-submitted-banner" id="activity4SubmittedBanner">
-            <span class="banner-icon">&#9989;</span>
+            <span class="banner-icon" id="activity4SubmittedIcon">&#9989;</span>
             <div>
-              <strong>Formulario guardado</strong><br>
-              Tus respuestas quedaron registradas el <span id="activity4SubmittedDate"></span>.
-              Ya no es posible modificarlas.
+              <strong id="activity4SubmittedTitle">Formulario guardado</strong><br>
+              <span id="activity4SubmittedBody">
+                Tus respuestas quedaron registradas el <span id="activity4SubmittedDate"></span>.
+                Ya no es posible modificarlas.
+              </span>
             </div>
           </div>
 
@@ -774,8 +776,20 @@
   "use strict";
   var LOCK_KEY = "actividad4_formulario_submitted_10B";
 
-  /* ── Aplica el bloqueo visual y funcional ── */
-  function applyLock(fechaGuardado) {
+  /* ── Aplica el bloqueo visual y funcional ──
+   * reasonText (opcional): motivo a mostrar cuando el bloqueo viene de una
+   * calificacion del instructor SIN que el aprendiz haya guardado el
+   * formulario (ver applyDiagnostico323GradeLock en script_guia2.js, que
+   * llama a este window.applyLock). Sin esto, el banner fijo "quedaron
+   * registradas el [fecha]" quedaba con la fecha en blanco -- parecia que el
+   * aprendiz habia guardado algo cuando en realidad nunca lo hizo (bug
+   * reportado jul-10, mismo patron que Ficha de Caso).
+   * Si YA se estaba mostrando una fecha real de auto-envio, esta no se
+   * reemplaza por el motivo generico (puede llegar una calificacion despues,
+   * por una carrera con la nube) -- y viceversa: si llega una fecha real
+   * despues de haber mostrado el motivo generico, esta SI la reemplaza.
+   */
+  function applyLock(fechaGuardado, reasonText) {
     // Deshabilitar todos los inputs dentro del cuestionario e identidad
     var areas = [
       document.getElementById("activity4Questionnaire"),
@@ -800,11 +814,23 @@
       submitBtn.innerHTML = "&#10003;&nbsp; Formulario ya guardado";
     }
 
-    // Mostrar banner de confirmación con fecha
+    // Mostrar banner de confirmación
     var banner = document.getElementById("activity4SubmittedBanner");
     var dateSpan = document.getElementById("activity4SubmittedDate");
+    var icon = document.getElementById("activity4SubmittedIcon");
+    var title = document.getElementById("activity4SubmittedTitle");
+    var body = document.getElementById("activity4SubmittedBody");
     if (banner) banner.classList.add("is-visible");
-    if (dateSpan) dateSpan.textContent = fechaGuardado;
+    if (reasonText && !(dateSpan && dateSpan.textContent)) {
+      if (icon) icon.innerHTML = "&#128274;";
+      if (title) title.textContent = reasonText;
+      if (body) body.style.display = "none";
+    } else {
+      if (icon) icon.innerHTML = "&#9989;";
+      if (title) title.textContent = "Formulario guardado";
+      if (body) body.style.display = "";
+      if (dateSpan && fechaGuardado) dateSpan.textContent = fechaGuardado;
+    }
   }
 
   /* ── Guarda y bloquea al hacer clic ── */
