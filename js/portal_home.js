@@ -150,9 +150,29 @@
   // ── Actividades pendientes por guia (lee el estado local ya sincronizado;
   //    NO hace lecturas a la nube → cero cuota Firestore, igual que el resto
   //    de este archivo) ────────────────────────────────────────────────────
+  // Induccion y Redes RAP01 (Santa Barbara) tienen un script propio/legacy que
+  // guarda el estado real bajo una clave de localStorage DISTINTA a la que
+  // ActivityStandard.getStateKeyForGuide() devuelve -- ese valor registrado es
+  // corto (p.ej. "10a_guia", pensado solo como prefijo de avance/catalogo, ver
+  // GUIDE_PROGRESS_CONFIG en portal_auth.js), no la clave completa donde el
+  // aprendiz realmente guarda (ver STORAGE_KEY en script_induccion.js /
+  // STORAGE_KEY_REDES en script_guia_redes.js). Mismo criterio que
+  // getGuideStateKey() en admin_usuarios.js (bug ya encontrado ahi jul-3);
+  // se repite aqui porque portal_home.js no carga ese script (exclusivo del
+  // panel admin). Sin este alias, guideState() siempre leia {} para estas
+  // guias -> el checklist de "Pendiente en esta guia" mostraba TODO como
+  // pendiente aunque el aprendiz ya hubiera guardado o el avance mostrara
+  // 100% (bug reportado jul-10).
+  var REAL_STATE_KEY_ALIASES = {
+    "grupo-10a-guia-01-induccion.html": "guia_induccion_10a_guia_html",
+    "grupo-10b-guia-01-induccion.html": "guia_induccion_10b_guia_html",
+    "santa-barbara-10a-guia-02-redes-rap01.html": "guia_interactiva_sb_10a_redes_html",
+    "santa-barbara-10b-guia-02-redes-rap01.html": "guia_interactiva_sb_10b_redes_html",
+  };
   function guideState(file, usernameKey) {
     var std = window.ActivityStandard;
-    var stateKey = std && typeof std.getStateKeyForGuide === "function" ? std.getStateKeyForGuide(file) : "";
+    var stateKey = REAL_STATE_KEY_ALIASES[file] ||
+      (std && typeof std.getStateKeyForGuide === "function" ? std.getStateKeyForGuide(file) : "");
     if (!stateKey || typeof auth.getStudentStorageKey !== "function") return {};
     var storageKey = auth.getStudentStorageKey(usernameKey, stateKey, { area: "guide-data" });
     try {
