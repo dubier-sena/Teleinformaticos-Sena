@@ -906,7 +906,7 @@ function applyMatriz322GradeLock() {
 // existe, en la pagina principal window.applyLock no existe.
 function applyDiagnostico323GradeLock() {
   if (typeof window.applyLock === "function") {
-    window.applyLock("");
+    window.applyLock(null, "🔒 Esta actividad ya fue calificada por el instructor. No puede modificarse.");
   }
 }
 

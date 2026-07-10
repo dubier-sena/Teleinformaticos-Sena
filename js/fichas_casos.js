@@ -11,6 +11,7 @@
   const FICHAS = [
     {
       id: 1,
+      slug: "tienda",
       titulo: "FICHA DE CASO N.° 01",
       nombre: "Tienda Don Ramiro",
       ubicacion: "Puerto Boyacá, Boyacá – Zona urbana del Magdalena Medio",
@@ -53,6 +54,7 @@
     },
     {
       id: 2,
+      slug: "cultivo",
       titulo: "FICHA DE CASO N.° 02",
       nombre: "Cultivo Familiar La Esperanza",
       ubicacion: "Otanche, Boyacá – Zona rural del Occidente de Boyacá",
@@ -96,6 +98,7 @@
     },
     {
       id: 3,
+      slug: "artesanias",
       titulo: "FICHA DE CASO N.° 03",
       nombre: "Artesanías Tejidos de Paz",
       ubicacion: "Pauna, Boyacá – Emprendimiento comunitario del Occidente de Boyacá",
