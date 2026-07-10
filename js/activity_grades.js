@@ -120,11 +120,15 @@
         { id: "reflexion311",  label: "3.1.1 Reflexión / Socialización" },
         { id: "ip1",           label: "3.2.1 Bloque IP 1" },
         { id: "ip3",           label: "3.2.3 Bloque IP 3" },
-        { id: "taller-ip-ej1", label: "3.3.1 Taller IP - Ejercicio 1" },
-        { id: "taller-ip-ej2", label: "3.3.2 Taller IP - Ejercicio 2" },
-        { id: "taller-ip-ej3", label: "3.3.3 Taller IP - Ejercicio 3" },
-        { id: "taller-ip-ej4", label: "3.3.4 Taller IP - Ejercicio 4" },
-        { id: "taller-ip-ej5", label: "3.3.5 Taller IP - Ejercicio 5" },
+        // El DOM usa ids sin guion (tallerIPEj1…, ver adminMount en
+        // script_guia_redes.js); el catalogo conserva el id con guion para no
+        // perder notas ya guardadas, y fija el mount explicito (mismo patron
+        // que guia5-311/331/341 en "guia-05-herramientas" mas abajo).
+        { id: "taller-ip-ej1", label: "3.3.1 Taller IP - Ejercicio 1", mount: "#tallerIPEj1DeadlineControls" },
+        { id: "taller-ip-ej2", label: "3.3.2 Taller IP - Ejercicio 2", mount: "#tallerIPEj2DeadlineControls" },
+        { id: "taller-ip-ej3", label: "3.3.3 Taller IP - Ejercicio 3", mount: "#tallerIPEj3DeadlineControls" },
+        { id: "taller-ip-ej4", label: "3.3.4 Taller IP - Ejercicio 4", mount: "#tallerIPEj4DeadlineControls" },
+        { id: "taller-ip-ej5", label: "3.3.5 Taller IP - Ejercicio 5", mount: "#tallerIPEj5DeadlineControls" },
         { id: "lab1",          label: "3.4.1 Laboratorio 1 - Topología estrella" },
         { id: "lab2",          label: "3.4.2 Laboratorio 2 - Topología árbol" },
         { id: "lab3",          label: "3.4.3 Laboratorio 3 - Red híbrida" },

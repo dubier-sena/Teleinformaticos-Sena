@@ -16,7 +16,7 @@ Acentos y emojis se preservan como bytes literales UTF-8 (no \\u escapes).
 
 Uso:
     python tools/regen_partial_bundles.py            # regenera los 3 con mojibake conocido
-    python tools/regen_partial_bundles.py --all      # regenera los 6 bundles (idempotente)
+    python tools/regen_partial_bundles.py --all      # regenera los 10 bundles (idempotente)
 """
 
 import json
@@ -31,6 +31,8 @@ ALL_PAIRS = [
     ("partials/guia-06-planificar-content.html",  "partials/guia-06-planificar-bundle.js"),
     ("partials/guia-07-planificar-ciberseguridad-content.html", "partials/guia-07-planificar-ciberseguridad-bundle.js"),
     ("partials/guia-redes-rap01-content.html",    "partials/guia-redes-rap01-bundle.js"),
+    ("partials/guia-redes-rap02-content.html",    "partials/guia-redes-rap02-bundle.js"),
+    ("partials/guia-python-content.html",         "partials/guia-python-bundle.js"),
     ("partials/taller-integrador-jfk-content.html", "partials/taller-integrador-jfk-bundle.js"),
 ]
 
