@@ -122,3 +122,71 @@ test("pendingActivitiesFor: guia desconocida o sin ActivityStandard -> devuelve 
     assert.equal(pending.length, 0);
   });
 });
+
+// ── Regresion bug jul-10: Induccion y Redes RAP01 usan un script propio/legacy
+// que guarda su estado real bajo una clave de localStorage DISTINTA a la que
+// ActivityStandard.getStateKeyForGuide() devuelve (ver REAL_STATE_KEY_ALIASES
+// en portal_home.js). Sin el alias, guideState() siempre leia {} para estas
+// guias -> el home mostraba TODAS las actividades como pendientes aunque el
+// avance ya estuviera en 100% (reportado por el usuario en un PC nuevo: el
+// avance subia al entrar/salir de la guia, pero "Pendiente en esta guia"
+// seguia listando las 8 actividades de Induccion sin cambio).
+const INDUCCION_FILE = "grupo-10a-guia-01-induccion.html";
+const INDUCCION_REAL_STATE_KEY = "guia_induccion_10a_guia_html";
+const REDES_FILE = "santa-barbara-10a-guia-02-redes-rap01.html";
+const REDES_REAL_STATE_KEY = "guia_interactiva_sb_10a_redes_html";
+
+test("pendingActivitiesFor: Induccion lee el estado real guardado por script_induccion.js (clave con alias), no el stateKey corto registrado", () => {
+  const storageKey = getStudentStorageKey(USERNAME_KEY, INDUCCION_REAL_STATE_KEY, { area: "guide-data" });
+  const state = {
+    "arbol:respuesta1": "Mis raices son...",
+    "curriculo:pregunta1": "Respuesta del cuestionario",
+    "plataforma:pregunta1": "Respuesta del taller",
+    "compromiso:texto": "Mi compromiso como aprendiz",
+    "portafolio342-delivery": { status: "delivered" },
+  };
+  const ctx = loadPortalHome({ [storageKey]: JSON.stringify(state) });
+
+  const pending = ctx.window.pendingActivitiesFor(INDUCCION_FILE, USERNAME_KEY);
+
+  assert.ok(!pending.some((label) => /arbol/i.test(label)), "El Arbol de la Vida ya tiene contenido (arbol:), no debe aparecer pendiente");
+  assert.ok(!pending.some((label) => /cuestionario/i.test(label)), "Cuestionario diseno curricular ya tiene contenido (curriculo:), no debe aparecer pendiente");
+  assert.ok(!pending.some((label) => /plataformas/i.test(label)), "Taller plataformas ya tiene contenido (plataforma:), no debe aparecer pendiente");
+  assert.ok(!pending.some((label) => /compromiso/i.test(label)), "Mi Compromiso ya tiene contenido (compromiso:), no debe aparecer pendiente");
+  assert.ok(!pending.some((label) => /portafolio/i.test(label)), "Portafolio de evidencias ya fue entregado a Drive, no debe aparecer pendiente");
+  // Actividades sin campo de texto ni entrega (juego/observacion): solo se
+  // resuelven cuando el instructor las califica (reflectGradesIntoGuideState
+  // pone "-locked"). Sin nota, siguen pendientes -- es el comportamiento
+  // esperado, no el bug reportado.
+  assert.ok(pending.some((label) => /sopa de letras/i.test(label)), "Sopa de Letras sin calificar sigue pendiente (no tiene campo ni entrega)");
+});
+
+test("pendingActivitiesFor: sin el alias, el estado de Induccion guardado bajo la clave real NO se encuentra (reproduce el bug reportado)", () => {
+  // Guarda el estado SOLO bajo el stateKey corto que ActivityStandard tiene
+  // registrado ("10a_guia", ver guide_declarations.js) -- la clave que
+  // guideState() usaba ANTES del fix. Debe seguir sin encontrar nada real
+  // (portal_home.js ya no confia en ese valor para estas dos guias), dejando
+  // claro que el fix depende del alias y no de una coincidencia accidental.
+  const wrongStorageKey = getStudentStorageKey(USERNAME_KEY, "10a_guia", { area: "guide-data" });
+  const state = { "arbol:respuesta1": "Mis raices son..." };
+  const ctx = loadPortalHome({ [wrongStorageKey]: JSON.stringify(state) });
+
+  const pending = ctx.window.pendingActivitiesFor(INDUCCION_FILE, USERNAME_KEY);
+
+  assert.ok(pending.some((label) => /arbol/i.test(label)), "el estado guardado bajo el stateKey corto no debe leerse: sigue pendiente");
+});
+
+test("pendingActivitiesFor: Redes RAP01 (Santa Barbara) lee el estado real guardado por script_guia_redes.js (clave con alias)", () => {
+  const storageKey = getStudentStorageKey(USERNAME_KEY, REDES_REAL_STATE_KEY, { area: "guide-data" });
+  const state = {
+    "reflexion311-locked": true,
+    "lab1-delivery": { status: "delivered" },
+  };
+  const ctx = loadPortalHome({ [storageKey]: JSON.stringify(state) });
+
+  const pending = ctx.window.pendingActivitiesFor(REDES_FILE, USERNAME_KEY);
+
+  assert.ok(!pending.some((label) => /reflexion individual/i.test(label)), "Reflexion individual ya esta guardada (-locked), no debe aparecer pendiente");
+  assert.ok(!pending.some((label) => /topologia estrella/i.test(label)), "Laboratorio 1 ya fue entregado a Drive, no debe aparecer pendiente");
+  assert.ok(pending.some((label) => /socializacion final/i.test(label)), "Socializacion final sigue sin guardar, debe seguir pendiente");
+});
