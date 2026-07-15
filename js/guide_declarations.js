@@ -495,6 +495,202 @@
     ],
   });
 
+  // ── Guia 4 — Planificar la informacion segun criterios de ciberseguridad ──
+  // (JFK 10A + 10B). Mismo RAP 03 que la Guia 7 de grado 11, pero con la guia
+  // de aprendizaje propia del proyecto "Alfabetizacion Digital, Asesoria
+  // Tecnica y Ciberseguridad" del CIAS Puerto Boyaca (56 h): caso ElectroBoyca
+  // en version Tunja/ransomware, actividad 3.3.3 de documentacion tecnica
+  // (documentos A-D) y Plan Integral de minimo 12 paginas. OJO: el Taller
+  // Integrador tambien usa guideNumber "4" como identificador interno de
+  // archivos entregados; los stateKey/panelKey de esta guia usan el sufijo
+  // "guia4ciber"/"guia4c" para no colisionar con el taller
+  // (guia_interactiva_10a_guia4_html / taller-jfk-*).
+  register({
+    files: [
+      "grupo-10a-guia-04-planificar-informacion-ciberseguridad.html",
+      "grupo-10b-guia-04-planificar-informacion-ciberseguridad.html",
+    ],
+    guideNumber: "4",
+    guideTitle: "Guia 4 - Planificar la informacion segun criterios de ciberseguridad",
+    stateKey: "guia_interactiva_10a_guia4ciber_html",
+    program: PROGRAM,
+    competencia: COMP_CIBERSEG,
+    resultado: RAP_CIBERSEGURIDAD,
+    activities: [
+      {
+        id: "caso311", number: "3.1.1", label: "Analisis del caso ElectroBoyca",
+        shortName: "CasoElectroBoyca", type: "form",
+        formFields: ["g4c_311_pregunta1", "g4c_311_pregunta2", "g4c_311_pregunta3", "g4c_311_pregunta4", "g4c_311_pregunta5"],
+        buttonIds: { save: "btnGuardarCaso311", status: "statusCaso311" },
+        wordExport: {
+          contextBox:
+            "Caso ElectroBoyca S.A.S. (Tunja): distribuidora de materiales electricos con 12 empleados atacada con ransomware (rescate de USD 2.500). Antivirus vencido, sin copias de seguridad, sin formacion del personal; cerro operaciones 3 semanas.",
+          sections: [
+            { label: "1. Que sabes de ataques como el de ElectroBoyca", storeKey: "g4c_311_pregunta1" },
+            { label: "2. Por que una empresa pequena puede ser victima", storeKey: "g4c_311_pregunta2" },
+            { label: "3. Que habrias recomendado ANTES del ataque", storeKey: "g4c_311_pregunta3" },
+            { label: "4. Informacion mas valiosa de una empresa y por que protegerla", storeKey: "g4c_311_pregunta4" },
+            { label: "5. Como has protegido tu informacion personal", storeKey: "g4c_311_pregunta5" },
+          ],
+        },
+      },
+      {
+        id: "plenaria312", number: "3.1.2", label: "Socializacion guiada en plenaria",
+        shortName: "Plenaria", type: "form",
+        formFields: ["g4c_312_compartida", "g4c_312_aporte", "g4c_312_tablero", "g4c_312_sintesis"],
+        buttonIds: { save: "btnGuardarPlenaria312", status: "statusPlenaria312" },
+        wordExport: {
+          contextBox: "Plenaria grupal moderada por el instructor sobre el caso ElectroBoyca y los saberes previos de ciberseguridad.",
+          sections: [
+            { label: "1. Respuesta que compartiste con el grupo", storeKey: "g4c_312_compartida" },
+            { label: "2. Idea de un companero que te aporto", storeKey: "g4c_312_aporte" },
+            { label: "3. Ideas clave registradas en el tablero", storeKey: "g4c_312_tablero" },
+            { label: "4. Sintesis personal de la plenaria", storeKey: "g4c_312_sintesis" },
+          ],
+        },
+      },
+      {
+        id: "bloques321", number: "3.2.1", label: "Estudio de los bloques tematicos A y B",
+        shortName: "BloquesAB", type: "form",
+        formFields: ["g4c_321_cia", "g4c_321_ataques", "g4c_321_normativa", "g4c_321_documentos", "g4c_321_activos", "g4c_321_dudas"],
+        buttonIds: { save: "btnGuardarBloques321", status: "statusBloques321" },
+        wordExport: {
+          contextBox:
+            "Estudio de los bloques tematicos: Bloque A (fundamentos, ataques, normativa, controles, hardening, copias) y Bloque B (documentos de seguridad, inventario de activos, protocolos, versionado).",
+          sections: [
+            { label: "1. Triada CIA con ejemplos en una MiPyme", storeKey: "g4c_321_cia" },
+            { label: "2. Tres tipos de ciberataque: como funcionan y como se previenen", storeKey: "g4c_321_ataques" },
+            { label: "3. Ley 1273 de 2009 e ISO 27001", storeKey: "g4c_321_normativa" },
+            { label: "4. Politica, procedimiento, instructivo y registro", storeKey: "g4c_321_documentos" },
+            { label: "5. Criticidad de activos y versionado de documentos", storeKey: "g4c_321_activos" },
+            { label: "6. Dudas para resolver antes del mapa conceptual", storeKey: "g4c_321_dudas" },
+          ],
+        },
+      },
+      {
+        id: "mapa322", number: "3.2.2", label: "Mapa conceptual integrador",
+        shortName: "MapaConceptual", type: "both",
+        formFields: ["g4c_322_central", "g4c_322_ramas", "g4c_322_enlaces", "g4c_322_conexion"],
+        buttonIds: { save: "btnGuardarMapa322", status: "statusMapa322" },
+        wordExport: {
+          contextBox:
+            "Mapa conceptual integrador en equipo: minimo 20 conceptos, conexion ataques -> controles -> documentacion, al menos una normativa (ISO 27001 o Ley 1273). Elaborado en CmapTools, MindMeister o Canva, exportado a PDF y sustentado en 10 minutos.",
+          sections: [
+            { label: "1. Concepto central elegido", storeKey: "g4c_322_central" },
+            { label: "2. Ramas principales (min. 4)", storeKey: "g4c_322_ramas" },
+            { label: "3. Palabras de enlace mas usadas", storeKey: "g4c_322_enlaces" },
+            { label: "4. Ejemplo de la conexion ataques -> controles -> documentacion", storeKey: "g4c_322_conexion" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "guia4c-3-2-2",
+          deadlineActivityId: "mapa322",
+          activityTitle: "Mapa conceptual integrador (MapaConceptual_RAP03_[Equipo]_v1.0.pdf)",
+          description: "Sube a Drive el mapa conceptual del equipo exportado a PDF (minimo 20 conceptos).",
+          note: "Nombre sugerido: MapaConceptual_RAP03_[Equipo]_v1.0.pdf",
+        },
+      },
+      {
+        id: "diagnostico331", number: "3.3.1", label: "Diagnostico del estado de seguridad del equipo",
+        shortName: "Diagnostico", type: "both",
+        formFields: ["g4c_331_estado", "g4c_331_hallazgos", "g4c_331_prioridades", "g4c_331_conclusion"],
+        buttonIds: { save: "btnGuardarDiagnostico331", status: "statusDiagnostico331" },
+        wordExport: {
+          contextBox:
+            "Diagnostico del estado de seguridad de un equipo Windows real con Windows Security, Belarc Advisor, secpol.msc, lusrmgr.msc y services.msc. Evidencia LC-01: tabla de diagnostico + capturas por categoria.",
+          sections: [
+            { label: "1. Estado general de seguridad del equipo", storeKey: "g4c_331_estado" },
+            { label: "2. Los 3 hallazgos mas criticos (con nivel de riesgo)", storeKey: "g4c_331_hallazgos" },
+            { label: "3. Controles que priorizarias y por que", storeKey: "g4c_331_prioridades" },
+            { label: "4. Conclusion tecnica (minimo 8 lineas)", storeKey: "g4c_331_conclusion" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "guia4c-3-3-1",
+          deadlineActivityId: "diagnostico331",
+          activityTitle: "Diagnostico de seguridad (Diagnostico_[TuNombre]_[Fecha])",
+          description: "Sube a Drive la Tabla de Diagnostico, las 6 capturas numeradas y el reporte HTML de Belarc Advisor (puede ser un ZIP de la carpeta).",
+          note: "Carpeta sugerida: Diagnostico_[TuNombre]_[Fecha]",
+        },
+      },
+      {
+        id: "hardening332", number: "3.3.2", label: "Implementacion de controles de hardening",
+        shortName: "Hardening", type: "both",
+        formFields: ["g4c_332_orden", "g4c_332_resumen", "g4c_332_errores", "g4c_332_conclusion"],
+        buttonIds: { save: "btnGuardarHardening332", status: "statusHardening332" },
+        wordExport: {
+          contextBox:
+            "Implementacion de los 7 controles de hardening de Windows priorizando por nivel de riesgo del diagnostico. Evidencia LC-02: capturas de configuracion + bitacora breve de cambios.",
+          sections: [
+            { label: "1. Orden de aplicacion de los 7 controles", storeKey: "g4c_332_orden" },
+            { label: "2. Resumen de cambios (antes / accion / despues)", storeKey: "g4c_332_resumen" },
+            { label: "3. Errores encontrados y solucion aplicada", storeKey: "g4c_332_errores" },
+            { label: "4. Conclusion comparativa (minimo 10 lineas)", storeKey: "g4c_332_conclusion" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "guia4c-3-3-2",
+          deadlineActivityId: "hardening332",
+          activityTitle: "Hardening del equipo (Hardening_[TuNombre]_[Fecha])",
+          description: "Sube a Drive la bitacora de cambios y las 7 capturas numeradas de los controles aplicados (puede ser un ZIP de la carpeta).",
+          note: "Carpeta sugerida: Hardening_[TuNombre]_[Fecha]",
+        },
+      },
+      {
+        id: "documentos333", number: "3.3.3", label: "Elaboracion de documentacion tecnica (documentos A-D)",
+        shortName: "DocumentosTecnicos", type: "both",
+        formFields: ["g4c_333_informe", "g4c_333_politica", "g4c_333_inventario", "g4c_333_protocolo"],
+        buttonIds: { save: "btnGuardarDocumentos333", status: "statusDocumentos333" },
+        wordExport: {
+          contextBox:
+            "Documentacion tecnica LC-03 con convencion NombreDocumento_FICHA_v1.0_AAAAMMDD: A) Informe de diagnostico (min. 4 pag.), B) Politica basica de seguridad para MiPyme (min. 3 pag.), C) Inventario de activos con valoracion de riesgos, D) Protocolo de copias de seguridad (min. 2 pag.). Carpetas: 01_Diagnostico / 02_Politica_Seguridad / 03_Inventario_Activos / 04_Protocolo_Backup / 05_Evidencias.",
+          sections: [
+            { label: "A. Informe de diagnostico: hallazgo principal y recomendacion", storeKey: "g4c_333_informe" },
+            { label: "B. Politica de seguridad: 3 controles incluidos", storeKey: "g4c_333_politica" },
+            { label: "C. Inventario: 3 activos mas criticos con criticidad y amenaza", storeKey: "g4c_333_inventario" },
+            { label: "D. Protocolo de backup: estrategia definida", storeKey: "g4c_333_protocolo" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "guia4c-3-3-3",
+          deadlineActivityId: "documentos333",
+          activityTitle: "Documentacion tecnica A-D (ZIP con las 5 carpetas)",
+          description: "Sube a Drive un ZIP con las carpetas 01_Diagnostico / 02_Politica_Seguridad / 03_Inventario_Activos / 04_Protocolo_Backup / 05_Evidencias y los 4 documentos con la convencion de nombres.",
+          note: "Nombre sugerido: Documentos_[TuNombre]_[Ficha].zip",
+        },
+      },
+      {
+        id: "plan341", number: "3.4.1", label: "Plan Integral de Ciberseguridad para MiPyme + Sustentacion oral",
+        shortName: "PlanCiberseguridad", type: "both",
+        formFields: [
+          "g4c_341_sec_resumen", "g4c_341_sec_diagnostico", "g4c_341_sec_controles", "g4c_341_sec_politica",
+          "g4c_341_sec_backup", "g4c_341_sec_inventario", "g4c_341_sec_recomendaciones",
+        ],
+        buttonIds: { save: "btnGuardarPlan341", status: "statusPlan341" },
+        wordExport: {
+          contextBox:
+            "Plan Integral de Ciberseguridad para ElectroBoyca S.A.S. (u otra MiPyme asignada): PDF de minimo 12 paginas (Arial 11, interlineado 1.15) integrando diagnostico, controles, politica, backup, inventario y recomendaciones, con sustentacion oral de 10-15 minutos (max. 10 diapositivas). Evidencia LC-04. Indice borrador previo a la redaccion.",
+          sections: [
+            { label: "1. Resumen ejecutivo", storeKey: "g4c_341_sec_resumen" },
+            { label: "2. Diagnostico (tabla resumen y grafico)", storeKey: "g4c_341_sec_diagnostico" },
+            { label: "3. Controles implementados (tabla SI/NO)", storeKey: "g4c_341_sec_controles" },
+            { label: "4. Politica de seguridad (documento B)", storeKey: "g4c_341_sec_politica" },
+            { label: "5. Estrategia de copias de seguridad (protocolo D + cronograma)", storeKey: "g4c_341_sec_backup" },
+            { label: "6. Inventario de activos con valoracion", storeKey: "g4c_341_sec_inventario" },
+            { label: "7. Recomendaciones adicionales (minimo 3 con justificacion)", storeKey: "g4c_341_sec_recomendaciones" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "guia4c-3-4-1",
+          deadlineActivityId: "plan341",
+          activityTitle: "Plan Integral de Ciberseguridad (PlanCiberseguridad_NombreAprendiz_FICHA_v1.0_FECHA.pdf)",
+          description: "Sube a Drive el Plan Integral en PDF (minimo 12 paginas, con los documentos del 3.3.3 integrados o adjuntos) y la presentacion de la sustentacion.",
+          note: "Nombre: PlanCiberseguridad_NombreAprendiz_FICHA_v1.0_FECHA.pdf",
+        },
+      },
+    ],
+  });
+
   // ── Guia 2 (Redes - Santa Barbara) (10A + 10B) ─────────────────────────────
   register({
     files: [

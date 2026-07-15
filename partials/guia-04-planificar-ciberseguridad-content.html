@@ -1,0 +1,1151 @@
+<button class="hamburger" onclick="toggleSidebar()" aria-label="Menú">&#9776;</button>
+<button class="btn-sb-expand" onclick="showSidebar()" title="Mostrar barra lateral">&#9776;</button>
+
+<div class="layout app-layout">
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="badge">SENA &middot; FPI</div>
+      <h2>Gu&iacute;a 4 - Planificar la informaci&oacute;n seg&uacute;n criterios de ciberseguridad</h2>
+      <p>Sistemas Teleinform&aacute;ticos</p>
+      <button class="btn-sb-collapse" onclick="hideSidebar()" title="Ocultar barra lateral">&#9664;</button>
+    </div>
+
+    <div class="sidebar-ficha" id="sb-ficha-ok" style="display:none">
+      <div class="sf-label">Tu grupo</div>
+      <div class="sf-inst" id="sb-inst"></div>
+      <div class="sf-meta" id="sb-grupo-meta"></div>
+      <div class="sf-badge" id="sb-badge"></div>
+    </div>
+    <div class="sidebar-noficha" id="sb-ficha-warn">
+      <a href="index.html">Inicio | Seleccionar grupo / ficha</a>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span>Progreso</span>
+        <span id="progressValue">0%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <p class="progress-note">El avance se guarda localmente en este navegador.</p>
+      <button type="button" class="reset-button" id="resetProgress">Reiniciar respuestas</button>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Informaci&oacute;n</div>
+      <a class="nav-link active" href="#identificacion" onclick="setActive(this)">
+        <span class="icon">&#128203;</span> Identificaci&oacute;n
+      </a>
+      <a class="nav-link" href="#presentacion" onclick="setActive(this)">
+        <span class="icon">&#128075;</span> Presentaci&oacute;n
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Actividades</div>
+      <a class="nav-link" href="#reflexion" onclick="setActive(this)">
+        <span class="icon">&#128172;</span> 3.1 Reflexi&oacute;n Inicial
+        <span class="check">&#10003;</span>
+      </a>
+      <a class="nav-link" href="#contexto" onclick="setActive(this)">
+        <span class="icon">&#128269;</span> 3.2 Contextualizaci&oacute;n
+        <span class="check">&#10003;</span>
+      </a>
+      <a class="nav-link" href="#apropiacion" onclick="setActive(this)">
+        <span class="icon">&#128218;</span> 3.3 Apropiaci&oacute;n
+        <span class="check">&#10003;</span>
+      </a>
+      <a class="nav-link" href="#transferencia" onclick="setActive(this)">
+        <span class="icon">&#128640;</span> 3.4 Transferencia
+        <span class="check">&#10003;</span>
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Recursos</div>
+      <a class="nav-link" href="#control-avance" onclick="setActive(this)"><span class="icon">&#9989;</span> Control de avance</a>
+      <a class="nav-link" href="#evidencias" onclick="setActive(this)">
+        <span class="icon">&#128202;</span> Evidencias
+      </a>
+      <a class="nav-link" href="#glosario" onclick="setActive(this)">
+        <span class="icon">&#128214;</span> Glosario
+      </a>
+      <a class="nav-link" href="#referencias" onclick="setActive(this)">
+        <span class="icon">&#128279;</span> Referencias
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Gu&iacute;a asignada</div>
+      <a class="nav-guide current" id="currentGuideNavLink" href="grupo-10a-guia-04-planificar-informacion-ciberseguridad.html" data-current-file="grupo-10a-guia-04-planificar-informacion-ciberseguridad.html">
+        <span class="g-icon">&#128215;</span>
+        <span class="g-info">
+          <span class="g-num">Gu&iacute;a 4</span>
+          <span class="g-name" id="currentGuideNavLabel">Planificar la informaci&oacute;n seg&uacute;n criterios de ciberseguridad | 10A</span>
+        </span>
+        <span class="g-tag actual">Actual</span>
+      </a>
+    </div>
+
+    <a class="nav-home-link" href="calendario-academico-2026.html">&#128197; <span>Calendario 2026</span></a>
+    <a class="nav-home-link" href="index.html">&#127968; <span>Volver al Inicio</span></a>
+  </nav>
+
+  <div class="main app-main">
+    <div class="topbar">
+      <div class="topbar-title">
+        <strong>Gu&iacute;a 4 - Planificar la informaci&oacute;n seg&uacute;n criterios de ciberseguridad</strong>
+      </div>
+      <div class="topbar-meta">
+        <span class="meta-item"><span>&#9201;</span><span>56 horas</span></span>
+        <span class="meta-item"><span>&#128197;</span><span>2026</span></span>
+        <span class="meta-item"><span>&#127979;</span><span id="topbarCampus">Kennedy | Grado 10</span></span>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="hero" id="inicio">
+        <div class="tag">Gu&iacute;a 4 | Fase: Planeaci&oacute;n</div>
+        <h1>Planificar la informaci&oacute;n seg&uacute;n criterios de ciberseguridad</h1>
+        <p>
+          En esta gu&iacute;a explorar&aacute;s uno de los desaf&iacute;os m&aacute;s cr&iacute;ticos del entorno tecnol&oacute;gico
+          actual: la ciberseguridad. Aprender&aacute;s a identificar amenazas y vulnerabilidades, aplicar
+          controles de seguridad basados en normativa vigente (ISO 27001, Ley 1273 de 2009),
+          implementar <em>hardening</em> en Windows y documentar todo con rigurosidad t&eacute;cnica,
+          al servicio de las MiPymes de la zona de influencia del CIAS Puerto Boyac&aacute;.
+        </p>
+        <div class="hero-meta">
+          <div class="hero-meta-item">&#127963; SENA &mdash; Servicio Nacional de Aprendizaje</div>
+          <div class="hero-meta-item">&#128205; Competencia: Operar herramientas inform&aacute;ticas y digitales</div>
+          <div class="hero-meta-item">&#9201; 56 horas</div>
+          <div class="hero-meta-item">&#127891; C&oacute;digo: 233108 &middot; V1</div>
+        </div>
+      </div>
+
+      <div id="control-avance" class="section-title">Tu control de avance</div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#e8f5e9">&#9989;</div>
+            <div><h3>&iquest;Qu&eacute; llevas y qu&eacute; te falta?</h3><p>Se actualiza solo con tus entregas y respuestas guardadas</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div data-act-std-avance><p class="intro-text">Cargando tu avance...</p></div>
+          <div class="gnote gnote--recuerda"><div class="gnote__label">&#128161; Recuerda</div>
+            <p>Esta tabla se marca sola: <strong>Entregada</strong> cuando subes la evidencia a Drive y
+            <strong>Guardada</strong> cuando guardas tus respuestas. Lo que siga en Pendiente es lo que te falta.</p></div>
+        </div>
+      </div>
+
+      <div id="identificacion" class="section-title">Identificaci&oacute;n de la Gu&iacute;a</div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#e8f5e9">&#128203;</div>
+            <div>
+              <h3>Datos del Programa de Formaci&oacute;n</h3>
+              <p>Informaci&oacute;n oficial del programa y la competencia</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="table-scroll">
+            <table class="data-table ident-table">
+              <tbody>
+                <tr><td>Denominaci&oacute;n del Programa</td><td>T&eacute;cnico en Sistemas Teleinform&aacute;ticos</td></tr>
+                <tr><td>C&oacute;digo del Programa</td><td>233108 &middot; V1</td></tr>
+                <tr><td>Nombre del Proyecto Formativo</td><td>Alfabetizaci&oacute;n Digital, Asesor&iacute;a T&eacute;cnica y Ciberseguridad para la Mejora de Actividades Productivas Locales en la zona de influencia del CIAS Puerto Boyac&aacute;.</td></tr>
+                <tr><td>Fase del Proyecto</td><td>Planeaci&oacute;n</td></tr>
+                <tr><td>Actividad del Proyecto</td><td>Planificar procesos de intervenci&oacute;n en alfabetizaci&oacute;n digital, asesor&iacute;a t&eacute;cnica y ciberseguridad.</td></tr>
+                <tr><td>Competencia</td><td>220501121 - Operar herramientas inform&aacute;ticas y digitales de acuerdo con protocolos y manuales t&eacute;cnicos.</td></tr>
+                <tr><td>Resultado de Aprendizaje</td><td>RAP 03 - Planificar la informaci&oacute;n seg&uacute;n criterios de ciberseguridad.</td></tr>
+                <tr><td>Duraci&oacute;n</td><td>56 horas</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="presentacion" class="section-title">Presentaci&oacute;n</div>
+      <p class="section-intro">📍 <strong>Empieza por aquí:</strong> conoce de qué trata la guía y qué vas a lograr. Léela completa antes de comenzar las actividades.</p>
+      <div class="gnote gnote--ruta">
+        <div class="gnote__label">🧭 ¿Cómo trabajar esta guía? Paso a paso</div>
+        <ol>
+          <li><strong>Lee la teoría</strong> de las secciones de contextualización antes de resolver las actividades.</li>
+          <li><strong>Resuelve cada actividad</strong> en orden. Escribe tus respuestas en los campos de la guía.</li>
+          <li><strong>Guarda tus respuestas</strong> con el botón de cada actividad. Tu avance queda guardado en este navegador.</li>
+          <li><strong>Entrega las evidencias</strong> que lo pidan con el botón <em>Entregar a Drive</em>. Quedan en la carpeta de tu ficha.</li>
+          <li><strong>Revisa "Tu control de avance"</strong> (arriba): te muestra qué llevas Entregado, Guardado y Pendiente.</li>
+        </ol>
+      </div>
+      <div class="gnote gnote--recuerda"><div class="gnote__label">💡 Recuerda</div>
+        <p>No tienes que terminar todo de una vez: puedes salir y volver, tu trabajo se guarda solo. Si una actividad
+        ya fue entregada y necesitas corregirla, pídele a tu instructor que la habilite de nuevo.</p></div>
+
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#e3f2fd">&#128075;</div>
+            <div>
+              <h3>Bienvenida a la Gu&iacute;a</h3>
+              <p>Conoce el contexto, el alcance y las metas de este recorrido formativo</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <p class="intro-text">
+            Cordial saludo, aprendiz. En esta gu&iacute;a explorar&aacute;s uno de los desaf&iacute;os m&aacute;s cr&iacute;ticos
+            del entorno tecnol&oacute;gico actual: la <strong>ciberseguridad</strong>. En un contexto donde las
+            MiPymes de Boyac&aacute; son cada vez m&aacute;s dependientes de la tecnolog&iacute;a, la protecci&oacute;n de su
+            informaci&oacute;n se convierte en una necesidad estrat&eacute;gica y no &uacute;nicamente t&eacute;cnica.
+          </p>
+          <p class="intro-text">
+            A trav&eacute;s de las actividades propuestas aprender&aacute;s a: identificar amenazas y
+            vulnerabilidades en sistemas inform&aacute;ticos, aplicar controles de seguridad basados en
+            normativa vigente (ISO 27001, Ley 1273 de 2009), implementar estrategias de
+            <em>hardening</em> en sistemas operativos Windows, y documentar todos estos procesos con
+            rigurosidad t&eacute;cnica y profesional.
+          </p>
+          <p class="intro-text">
+            La gu&iacute;a se centra en el RAP 03: planificar la seguridad de la informaci&oacute;n con criterios
+            t&eacute;cnicos y normativos. A partir del diagn&oacute;stico de seguridad, la implementaci&oacute;n de
+            controles, la elaboraci&oacute;n de pol&iacute;ticas y la gesti&oacute;n de copias de seguridad,
+            desarrollar&aacute;s competencias directamente aplicables en el soporte t&eacute;cnico a las MiPymes
+            de la zona de influencia del CIAS Puerto Boyac&aacute;.
+          </p>
+          <div class="info-box green" style="margin-top:14px">
+            <div class="label">&#128204; Lo que necesitas para esta gu&iacute;a</div>
+            <p>
+              Equipo con Windows 10/11 (o m&aacute;quina virtual), conexi&oacute;n a internet y las herramientas
+              de diagn&oacute;stico indicadas por el instructor (la mayor&iacute;a son gratuitas). Guarda tus
+              evidencias con nombres descriptivos. <strong>Las capturas de pantalla son tu respaldo:
+              sin evidencia, no hay evaluaci&oacute;n.</strong>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════ 3.1 REFLEXIÓN INICIAL ═══════════════════════╗ -->
+      <div id="reflexion" class="section-title">3.1 &middot; Actividades de Reflexi&oacute;n Inicial</div>
+      <p class="section-intro">📍 <strong>Fase de reflexión inicial:</strong> activa lo que ya sabes sobre el tema. Aquí no se evalúa el acierto, sino tu participación: responde con confianza, no hay respuestas malas.</p>
+      <div class="info-box blue" style="margin-bottom:16px">
+        <p>Explorar lo que ya sabes o intuyes sobre ciberseguridad a partir de un caso real.
+        No es necesario buscar informaci&oacute;n: escribe lo que sabes, intuyes o piensas. Todo el
+        tiempo de reflexi&oacute;n es trabajo directo con el instructor.</p>
+      </div>
+      <div class="card open cat-reflexion">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128172;</div>
+            <div>
+              <h3>Actividades de Reflexi&oacute;n Inicial</h3>
+              <p>2 actividades &middot; Duraci&oacute;n: 4 horas directas</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+
+          <!-- ───────── Actividad 3.1.1 ───────── -->
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.1.1</span>
+              <span class="activity-title">An&aacute;lisis del caso ElectroBoyc&aacute; S.A.S.</span>
+              <span class="mission-chip">Misi&oacute;n de arranque</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> reflexionar individualmente sobre un caso real de ataque inform&aacute;tico a una empresa peque&ntilde;a. Paso 1 de la reflexi&oacute;n (2 horas).</p>
+
+              <article class="story-card" style="margin-top:16px">
+                <h3>&#128187; Caso &mdash; &laquo;ElectroBoyc&aacute; S.A.S. bajo ataque de ransomware&raquo;</h3>
+                <p>ElectroBoyc&aacute; S.A.S. es una distribuidora de materiales el&eacute;ctricos en Tunja con
+                12 empleados. Un lunes llegaron a trabajar y encontraron todos los archivos cifrados
+                &mdash;facturas, contratos, base de datos de clientes&mdash; con un mensaje exigiendo
+                <strong>USD 2.500 en criptomonedas</strong>.</p>
+                <p>El antivirus estaba vencido, no hab&iacute;a copias de seguridad actualizadas y ning&uacute;n
+                empleado ten&iacute;a formaci&oacute;n en ciberseguridad. La empresa cerr&oacute; operaciones durante
+                <strong>3 semanas</strong>.</p>
+              </article>
+
+              <article class="notes-card" style="margin-top:16px;">
+                <h3>Reflexi&oacute;n individual escrita</h3>
+                <p class="intro-text" style="margin-top:0;font-size:.9rem">
+                  Responde con tus propias palabras. No hay respuestas correctas ni incorrectas:
+                  el objetivo es explorar lo que ya sabes o intuyes sobre ciberseguridad.
+                </p>
+                <label>
+                  <span>1. &iquest;Hab&iacute;as escuchado antes sobre ataques como el que sufri&oacute; ElectroBoyc&aacute;? &iquest;Qu&eacute; sabes sobre ellos?</span>
+                  <textarea rows="4" data-store="g4c_311_pregunta1" data-track placeholder="Escribe lo que sabes o has o&iacute;do sobre ransomware, virus o ataques inform&aacute;ticos: noticias, casos cercanos, videos..."></textarea>
+                </label>
+                <label>
+                  <span>2. &iquest;Por qu&eacute; crees que una empresa peque&ntilde;a puede ser v&iacute;ctima de un ciberataque si no es famosa ni grande?</span>
+                  <textarea rows="4" data-store="g4c_311_pregunta2" data-track placeholder="Piensa: &iquest;qu&eacute; buscan los atacantes? &iquest;Qu&eacute; tan protegida est&aacute; una empresa peque&ntilde;a comparada con un banco?"></textarea>
+                </label>
+                <label>
+                  <span>3. Si fueras el t&eacute;cnico de sistemas de ElectroBoyc&aacute;, &iquest;qu&eacute; habr&iacute;as recomendado ANTES del ataque?</span>
+                  <textarea rows="5" data-store="g4c_311_pregunta3" data-track placeholder="Lista medidas concretas: antivirus vigente, copias de seguridad, capacitaci&oacute;n del personal, contrase&ntilde;as..."></textarea>
+                </label>
+                <label>
+                  <span>4. &iquest;Qu&eacute; informaci&oacute;n de una empresa consideras m&aacute;s valiosa y por qu&eacute; deber&iacute;a protegerse?</span>
+                  <textarea rows="4" data-store="g4c_311_pregunta4" data-track placeholder="Ej.: facturas, contratos, datos de clientes, cuentas bancarias... explica por qu&eacute; su p&eacute;rdida hace tanto da&ntilde;o."></textarea>
+                </label>
+                <label>
+                  <span>5. &iquest;Has protegido alguna vez tu informaci&oacute;n personal en un dispositivo? &iquest;Qu&eacute; hiciste? &iquest;Fue suficiente?</span>
+                  <textarea rows="4" data-store="g4c_311_pregunta5" data-track placeholder="Ej.: contrase&ntilde;a o huella en el celular, copia de fotos, verificaci&oacute;n en dos pasos... &iquest;crees que basta?"></textarea>
+                </label>
+                <div id="caso311DeadlineControls" style="margin-top:16px"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarCaso311" class="btn-save-response" onclick="actStd_save_caso311()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_caso311()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusCaso311" class="activity-saved-notice" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+            </div>
+          </div>
+
+          <!-- ───────── Actividad 3.1.2 ───────── -->
+          <div class="activity mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.1.2</span>
+              <span class="activity-title">Socializaci&oacute;n guiada en plenaria</span>
+              <span class="mission-chip">Misi&oacute;n de arranque</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> compartir tus ideas con el grupo y escuchar las de tus compa&ntilde;eros. Paso 2 de la reflexi&oacute;n (2 horas).</p>
+
+              <article class="support-card">
+                <h3>&iquest;C&oacute;mo funciona la plenaria?</h3>
+                <ol style="padding-left:1.4rem;margin:0;line-height:1.7">
+                  <li>El instructor moderar&aacute; una conversaci&oacute;n abierta con el grupo. No se trata de exponer ni sustentar: comparte tus ideas y escucha las de tus compa&ntilde;eros.</li>
+                  <li>Cada aprendiz comparte brevemente (2-3 minutos) una respuesta de la actividad 3.1.1 que considere interesante o que le haya generado duda.</li>
+                  <li>El instructor registra en el tablero las ideas clave que surjan del grupo.</li>
+                  <li>El objetivo es identificar qu&eacute; sabe el grupo, qu&eacute; dudas existen y qu&eacute; expectativas tienen sobre la gu&iacute;a.</li>
+                </ol>
+              </article>
+
+              <article class="notes-card" style="margin-top:16px;">
+                <h3>Bit&aacute;cora de la plenaria</h3>
+                <label>
+                  <span>1. &iquest;Qu&eacute; respuesta tuya compartiste (o compartir&iacute;as) con el grupo y por qu&eacute; la elegiste?</span>
+                  <textarea rows="4" data-store="g4c_312_compartida" data-track placeholder="Escribe la idea que llevaste a la plenaria y qu&eacute; te llam&oacute; la atenci&oacute;n de ella."></textarea>
+                </label>
+                <label>
+                  <span>2. &iquest;Qu&eacute; idea de un compa&ntilde;ero te aport&oacute; algo nuevo o te hizo cambiar de opini&oacute;n?</span>
+                  <textarea rows="4" data-store="g4c_312_aporte" data-track placeholder="Anota la idea, qui&eacute;n la comparti&oacute; (opcional) y qu&eacute; te ense&ntilde;&oacute;."></textarea>
+                </label>
+                <label>
+                  <span>3. Ideas clave que el instructor registr&oacute; en el tablero (las que m&aacute;s te sirvieron)</span>
+                  <textarea rows="4" data-store="g4c_312_tablero" data-track placeholder="Lista 3 o m&aacute;s ideas clave del grupo: dudas comunes, conceptos nuevos, expectativas de la gu&iacute;a."></textarea>
+                </label>
+                <label>
+                  <span>4. S&iacute;ntesis personal (m&iacute;nimo 5 l&iacute;neas): &iquest;qu&eacute; cambi&oacute; en tu comprensi&oacute;n del caso despu&eacute;s de la plenaria?</span>
+                  <textarea rows="6" data-store="g4c_312_sintesis" data-track placeholder="Escribe qu&eacute; aprendiste al escuchar al grupo y qu&eacute; esperas aprender en esta gu&iacute;a."></textarea>
+                </label>
+                <div id="plenaria312DeadlineControls" style="margin-top:16px"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarPlenaria312" class="btn-save-response" onclick="actStd_save_plenaria312()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_plenaria312()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusPlenaria312" class="activity-saved-notice" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════ 3.2 CONTEXTUALIZACIÓN ═══════════════════════╗ -->
+      <div id="contexto" class="section-title">3.2 &middot; Contextualizaci&oacute;n e Identificaci&oacute;n de Conocimientos</div>
+      <p class="section-intro">📍 <strong>Fase de contextualización:</strong> aquí están los conceptos y la teoría que necesitas. Estúdialos con calma — son la base para resolver bien las actividades que siguen.</p>
+      <div class="info-box blue" style="margin-bottom:16px">
+        <p>Estudiar los bloques tem&aacute;ticos A y B y construir un mapa conceptual integrador al
+        finalizar. Esta base conceptual es la que usar&aacute;s en el diagn&oacute;stico, el <em>hardening</em>
+        y el Plan de Ciberseguridad.</p>
+      </div>
+      <div class="card open cat-contexto">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128269;</div>
+            <div>
+              <h3>Actividades de Contextualizaci&oacute;n</h3>
+              <p>2 actividades &middot; Estudio de bloques tem&aacute;ticos + mapa conceptual integrador</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+
+          <!-- ───────── Actividad 3.2.1 ───────── -->
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.2.1</span>
+              <span class="activity-title">Estudio de los bloques tem&aacute;ticos A y B</span>
+              <span class="mission-chip">Misi&oacute;n diagn&oacute;stica</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> estudiar los contenidos de ciberseguridad (Bloque A) y de documentaci&oacute;n t&eacute;cnica (Bloque B) que sustentan toda la gu&iacute;a.</p>
+
+              <div class="table-scroll" style="margin-top:16px">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th style="width:30%">Tema (Bloque A)</th>
+                      <th>Contenidos a estudiar</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>Fundamentos de ciberseguridad</td><td>Conceptos esenciales: amenaza, vulnerabilidad, riesgo, activo de informaci&oacute;n, incidente. Triada CIA: Confidencialidad, Integridad, Disponibilidad. Diferencia entre seguridad inform&aacute;tica y ciberseguridad.</td></tr>
+                    <tr><td>Tipos de ciberataques</td><td>Malware (virus, troyanos, ransomware, spyware). Ataques de red (phishing, man-in-the-middle, DoS/DDoS). Ingenier&iacute;a social. Casos reales en Colombia (CSIRT, INCIBE).</td></tr>
+                    <tr><td>Normativa y marco legal</td><td>ISO/IEC 27001: SGSI. Ley 1273 de 2009: delitos inform&aacute;ticos en Colombia. CONPES 3995: Pol&iacute;tica Nacional de Confianza y Seguridad Digital. Lineamientos MinTIC para MiPymes.</td></tr>
+                    <tr><td>Controles de seguridad</td><td>Tipos: preventivos, detectivos y correctivos. NIST Cybersecurity Framework: Identificar, Proteger, Detectar, Responder, Recuperar. Controles t&eacute;cnicos b&aacute;sicos para MiPymes.</td></tr>
+                    <tr><td>Hardening de Windows</td><td>Windows Defender: protecci&oacute;n en tiempo real + an&aacute;lisis programado. Firewall: reglas de entrada y salida. SmartScreen y control de aplicaciones. Pol&iacute;ticas de contrase&ntilde;as. Actualizaciones autom&aacute;ticas. BitLocker: cifrado de disco.</td></tr>
+                    <tr><td>Copias de seguridad</td><td>Tipos: completa, incremental, diferencial. Estrategia 3-2-1 (3 copias, 2 medios, 1 fuera del sitio). Herramientas: Historial de archivos Windows, Veeam Free, EaseUS Todo Backup. Verificaci&oacute;n de integridad.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="table-scroll" style="margin-top:12px">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th style="width:30%">Tema (Bloque B)</th>
+                      <th>Contenidos a estudiar</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>Tipos de documentos de seguridad</td><td>Pol&iacute;tica de seguridad: estructura y prop&oacute;sito. Procedimiento t&eacute;cnico: paso a paso de una actividad. Instructivo: gu&iacute;a operativa de una herramienta. Registro: evidencia de que algo se realiz&oacute;.</td></tr>
+                    <tr><td>Inventario de activos con enfoque de seguridad</td><td>Clasificaci&oacute;n: hardware, software, datos, personas. Valoraci&oacute;n: criterios de criticidad (Alto/Medio/Bajo). Tabla de inventario con campo de nivel de riesgo.</td></tr>
+                    <tr><td>Protocolos de gesti&oacute;n de la informaci&oacute;n</td><td>Protocolo de acceso a informaci&oacute;n sensible. Protocolo de eliminaci&oacute;n segura de datos. Protocolo b&aacute;sico de respuesta ante incidentes.</td></tr>
+                    <tr><td>Organizaci&oacute;n y versionado de documentos</td><td>Convenci&oacute;n de nombres para documentos de seguridad. Control de versiones: historial de cambios. Estructura de carpetas para documentaci&oacute;n. Herramientas con permisos restringidos: OneDrive, Google Drive.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="info-box green" style="margin-top:14px">
+                <div class="label">&#128218; Material de apoyo</div>
+                <p>Cisco Skills for All &mdash; <em>Introducci&oacute;n a la Ciberseguridad</em> (curso gratuito) e
+                INCIBE &mdash; <em>Gu&iacute;a de ciberseguridad para PYMEs</em>. Los enlaces est&aacute;n en la secci&oacute;n
+                de Referencias de esta gu&iacute;a.</p>
+              </div>
+
+              <article class="notes-card" style="margin-top:16px">
+                <h3>Registro de estudio del aprendiz</h3>
+                <label>
+                  <span>1. Del Bloque A: explica con tus palabras la Triada CIA y da un ejemplo de cada principio en una MiPyme</span>
+                  <textarea rows="5" data-store="g4c_321_cia" data-track placeholder="Confidencialidad, Integridad y Disponibilidad: qu&eacute; significa cada una y un ejemplo aplicado (ej.: solo el contador accede a n&oacute;mina)."></textarea>
+                </label>
+                <label>
+                  <span>2. Del Bloque A: elige 3 tipos de ciberataque y describe c&oacute;mo funcionan y c&oacute;mo se previenen</span>
+                  <textarea rows="6" data-store="g4c_321_ataques" data-track placeholder="Ej.: ransomware (cifra archivos, se previene con copias + antivirus), phishing (correo falso, se previene verificando remitente)..."></textarea>
+                </label>
+                <label>
+                  <span>3. Del Bloque A: &iquest;qu&eacute; protege la Ley 1273 de 2009 y qu&eacute; aporta la ISO 27001 a una empresa?</span>
+                  <textarea rows="5" data-store="g4c_321_normativa" data-track placeholder="Ley 1273: delitos inform&aacute;ticos en Colombia (acceso abusivo, da&ntilde;o inform&aacute;tico...). ISO 27001: modelo de gesti&oacute;n SGSI."></textarea>
+                </label>
+                <label>
+                  <span>4. Del Bloque B: &iquest;en qu&eacute; se diferencian una pol&iacute;tica, un procedimiento, un instructivo y un registro?</span>
+                  <textarea rows="5" data-store="g4c_321_documentos" data-track placeholder="Define cada tipo de documento con una frase y un ejemplo de ciberseguridad."></textarea>
+                </label>
+                <label>
+                  <span>5. Del Bloque B: &iquest;c&oacute;mo se valora la criticidad de un activo y c&oacute;mo se versiona un documento de seguridad?</span>
+                  <textarea rows="5" data-store="g4c_321_activos" data-track placeholder="Criticidad Alto/Medio/Bajo seg&uacute;n impacto. Versionado: NombreDocumento_FICHA_v1.0_AAAAMMDD e historial de cambios."></textarea>
+                </label>
+                <label>
+                  <span>6. Dudas que quedaron para resolver antes del mapa conceptual</span>
+                  <textarea rows="4" data-store="g4c_321_dudas" data-track placeholder="Anota preguntas concretas para aclarar con el instructor antes de construir el mapa."></textarea>
+                </label>
+                <div id="bloques321DeadlineControls" style="margin-top:16px"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarBloques321" class="btn-save-response" onclick="actStd_save_bloques321()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_bloques321()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusBloques321" class="activity-saved-notice" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+            </div>
+          </div>
+
+          <!-- ───────── Actividad 3.2.2 ───────── -->
+          <div class="activity mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.2.2</span>
+              <span class="activity-title">Mapa conceptual integrador</span>
+              <span class="mission-chip">Misi&oacute;n diagn&oacute;stica</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> construir en equipo un mapa conceptual digital que integre los conceptos de ciberseguridad y documentaci&oacute;n t&eacute;cnica de los Bloques A y B. Entregable: <code>MapaConceptual_RAP03_[Equipo]_v1.0.pdf</code>.</p>
+
+              <div class="equipo-guia4c-block" data-equipo-g4c-mount="mapa322" style="margin:12px 0 18px;padding:14px 16px;border:1px solid #cfe0d3;border-left:5px solid #0b6b35;border-radius:10px;background:linear-gradient(180deg,#f1f9f3,#ffffff)">
+                <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:10px">
+                  <div style="font-size:1.5rem;line-height:1">&#128101;</div>
+                  <div>
+                    <div style="font-weight:700;color:#0b6b35">Equipo para 3.2.2</div>
+                    <p class="intro-text" style="margin:2px 0 0;font-size:.88rem">El mapa conceptual se elabora en equipo de m&aacute;ximo 3 integrantes: t&uacute; y hasta 2 compa&ntilde;eros de tu ficha.</p>
+                  </div>
+                </div>
+                <div data-equipo-g4c-summary="mapa322"></div>
+                <div data-equipo-g4c-config="mapa322" style="display:none">
+                  <div style="margin:6px 0 6px;font-weight:600;font-size:.88rem;color:#1b5e20">Selecciona hasta 2 compa&ntilde;eros (tu nombre ya est&aacute; incluido):</div>
+                  <div data-equipo-g4c-roster="mapa322" style="display:flex;flex-direction:column;gap:6px;max-height:260px;overflow:auto;padding:8px 10px;border:1px solid #cfe0d3;border-radius:8px;background:#ffffff"></div>
+                  <div data-equipo-g4c-hint="mapa322" class="intro-text" style="margin:8px 0 0;font-size:.82rem;color:#4b5563">Cargando roster de la ficha&hellip;</div>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+                    <button type="button" onclick="confirmarEquipoGuia4C('mapa322')" class="btn-save-response">&#128101; Confirmar equipo de 3.2.2</button>
+                    <button type="button" onclick="cancelarEquipoGuia4CConfig('mapa322')" style="padding:8px 16px;border:1px solid #cfe0d3;background:#ffffff;color:#37474f;border-radius:6px;font-family:inherit;font-size:.88rem;cursor:pointer">Cancelar</button>
+                  </div>
+                </div>
+              </div>
+
+              <div style="background:#1b5e20;color:#fff;border-radius:8px 8px 0 0;padding:10px 16px;font-size:0.82rem;font-weight:700;letter-spacing:0.04em;display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:16px;margin-bottom:0">
+                <span>&#128203; REQUISITOS DEL MAPA CONCEPTUAL</span>
+              </div>
+              <div class="table-scroll" style="margin-top:0;border-radius:0 0 8px 8px;overflow:hidden;border:1px solid #c8e6c9;border-top:none">
+                <table class="data-table" style="margin:0">
+                  <tbody>
+                    <tr><td style="width:2.5rem;text-align:center;font-weight:700;background:#e8f5e9">A</td><td>M&iacute;nimo <strong>20 conceptos</strong> relacionados entre s&iacute; con conectores y palabras de enlace.</td></tr>
+                    <tr><td style="width:2.5rem;text-align:center;font-weight:700;background:#e8f5e9">B</td><td>Mostrar la conexi&oacute;n: tipos de ataques &rarr; controles de seguridad &rarr; documentaci&oacute;n requerida.</td></tr>
+                    <tr><td style="width:2.5rem;text-align:center;font-weight:700;background:#e8f5e9">C</td><td>Referenciar al menos una normativa (ISO 27001 o Ley 1273).</td></tr>
+                    <tr><td style="width:2.5rem;text-align:center;font-weight:700;background:#e8f5e9">D</td><td>Elaborarse en CmapTools, MindMeister o Canva y exportarse en PDF.</td></tr>
+                    <tr><td style="width:2.5rem;text-align:center;font-weight:700;background:#e8f5e9">E</td><td>Sustentarse oralmente en 10 minutos ante el instructor.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <article class="support-card" style="margin-top:16px">
+                <h3>Instrucciones</h3>
+                <ol style="padding-left:1.4rem;margin:0;line-height:1.7">
+                  <li>Con tu equipo, elijan la herramienta: CmapTools (cmap.ihmc.us), MindMeister (mindmeister.com) o Canva &gt; &laquo;mapa conceptual&raquo;.</li>
+                  <li>Antes de dise&ntilde;ar en digital, hagan a mano un borrador de 10 minutos: concepto central, ramas principales, jerarqu&iacute;a.</li>
+                  <li>Construyan el mapa integrando ciberseguridad y documentaci&oacute;n t&eacute;cnica: amenazas, controles, normativa y documentaci&oacute;n.</li>
+                  <li>Usen palabras de enlace claras: &laquo;genera&raquo;, &laquo;se mitiga con&raquo;, &laquo;requiere&raquo;, &laquo;se documenta en&raquo;, &laquo;protege contra&raquo;.</li>
+                  <li>Exporten a PDF. Nombre: <strong>MapaConceptual_RAP03_[Equipo]_v1.0.pdf</strong>.</li>
+                  <li>Sustenten oralmente en 10 minutos ante el instructor.</li>
+                </ol>
+              </article>
+
+              <article class="notes-card" style="margin-top:16px">
+                <h3>Registro del aprendiz</h3>
+                <label>
+                  <span>1. Concepto central elegido por el equipo</span>
+                  <textarea rows="2" data-store="g4c_322_central" data-track placeholder="Ej.: Ciberseguridad para una MiPyme."></textarea>
+                </label>
+                <label>
+                  <span>2. Ramas principales del mapa (m&iacute;nimo 4)</span>
+                  <textarea rows="4" data-store="g4c_322_ramas" data-track placeholder="Lista las ramas: ataques, controles, normativa, documentaci&oacute;n..."></textarea>
+                </label>
+                <label>
+                  <span>3. Palabras de enlace m&aacute;s usadas</span>
+                  <textarea rows="3" data-store="g4c_322_enlaces" data-track placeholder="Ej.: &laquo;se mitiga con&raquo;, &laquo;requiere&raquo;, &laquo;protege&raquo;..."></textarea>
+                </label>
+                <label>
+                  <span>4. &iquest;C&oacute;mo muestra tu mapa la conexi&oacute;n ataques &rarr; controles &rarr; documentaci&oacute;n? Da un ejemplo concreto</span>
+                  <textarea rows="4" data-store="g4c_322_conexion" data-track placeholder="Ej.: ransomware &rarr; copia de seguridad 3-2-1 &rarr; protocolo de backup documentado."></textarea>
+                </label>
+                <div id="mapa322DeadlineControls" style="margin-top:16px"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarMapa322" class="btn-save-response" onclick="actStd_save_mapa322()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_mapa322()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusMapa322" class="activity-saved-notice" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+
+              <div id="driveDeliveryPanel-mapa322" style="margin-top:16px"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════ 3.3 APROPIACIÓN ═══════════════════════╗ -->
+      <div id="apropiacion" class="section-title">3.3 &middot; Actividades de Apropiaci&oacute;n</div>
+      <p class="section-intro">📍 <strong>Fase de apropiación:</strong> pones en práctica lo aprendido. La mayoría de las evidencias que debes entregar salen de esta fase.</p>
+      <div class="info-box blue" style="margin-bottom:16px">
+        <p>Aplicar los conocimientos en un equipo de c&oacute;mputo real: diagnosticar su estado de
+        seguridad, implementar controles de <em>hardening</em> y elaborar la documentaci&oacute;n t&eacute;cnica
+        profesional que respalda el trabajo.</p>
+      </div>
+      <div class="card open cat-apropiacion">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128218;</div>
+            <div>
+              <h3>Actividades de Apropiaci&oacute;n</h3>
+              <p>3 actividades &middot; Diagn&oacute;stico + hardening + documentaci&oacute;n t&eacute;cnica</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+
+          <!-- ───────── Actividad 3.3.1 ───────── -->
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.3.1</span>
+              <span class="activity-title">Diagn&oacute;stico del estado de seguridad del equipo</span>
+              <span class="mission-chip">Misi&oacute;n t&eacute;cnica</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> realizar un an&aacute;lisis completo del estado de seguridad de tu equipo (f&iacute;sico o m&aacute;quina virtual Windows) y registrar todos los hallazgos en la Tabla de Diagn&oacute;stico suministrada por el instructor.</p>
+
+              <div style="background:#1b5e20;color:#fff;border-radius:8px 8px 0 0;padding:10px 16px;font-size:0.82rem;font-weight:700;letter-spacing:0.04em;display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:16px;margin-bottom:0">
+                <span>&#128203; EVIDENCIA &mdash; Tipo: Conocimiento + Desempe&ntilde;o</span>
+                <span style="opacity:0.5">|</span>
+                <span>Instrumento: Lista de Chequeo LC-01</span>
+              </div>
+              <div class="table-scroll" style="margin-top:0;border-radius:0 0 8px 8px;overflow:hidden;border:1px solid #c8e6c9;border-top:none">
+                <table class="data-table" style="margin:0">
+                  <thead>
+                    <tr>
+                      <th>&iquest;Qu&eacute; diagnosticar?</th>
+                      <th>Herramienta / Ruta</th>
+                      <th>Evidencia</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>1. Windows Defender: &iquest;activo? &iquest;actualizado? &iquest;an&aacute;lisis programado?</td><td>Windows Security &rarr; Protecci&oacute;n contra virus y amenazas</td><td>Captura del estado de protecci&oacute;n</td></tr>
+                    <tr><td>2. Firewall de Windows en los 3 perfiles (Dominio, Privado, P&uacute;blico)</td><td>Panel de control &rarr; Firewall de Windows</td><td>Captura de los 3 perfiles</td></tr>
+                    <tr><td>3. Actualizaciones del sistema: &iquest;al d&iacute;a? &iquest;cu&aacute;ntas pendientes?</td><td>Configuraci&oacute;n &rarr; Windows Update &rarr; Ver historial</td><td>Captura del historial</td></tr>
+                    <tr><td>4. Cuentas de usuario: &iquest;administrador con contrase&ntilde;a robusta? &iquest;cuentas innecesarias?</td><td><kbd>Win + R</kbd> &rarr; <code>lusrmgr.msc</code> &rarr; Usuarios</td><td>Captura de la lista de cuentas</td></tr>
+                    <tr><td>5. Software instalado: &iquest;sin licencia, desconocido o desactualizado?</td><td>Belarc Advisor (belarc.com) &mdash; reporte HTML</td><td>Reporte HTML + captura del resumen</td></tr>
+                    <tr><td>6. Copias de seguridad: &iquest;existe estrategia actual? &iquest;cu&aacute;ndo fue la &uacute;ltima copia?</td><td>Configuraci&oacute;n &rarr; Copia de seguridad</td><td>Captura del estado actual</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="info-box green" style="margin-top:14px">
+                <div class="label">&#128295; Herramientas de diagn&oacute;stico</div>
+                <p>Windows Security Center &middot; Belarc Advisor (gratuito, belarc.com) &middot; <code>secpol.msc</code> &middot; <code>lusrmgr.msc</code> &middot; <code>services.msc</code></p>
+              </div>
+
+              <article class="support-card" style="margin-top:16px">
+                <h3>Instrucciones (sin saltarte pasos)</h3>
+                <ol style="padding-left:1.4rem;margin:0;line-height:1.7">
+                  <li>Abre la Tabla de Diagn&oacute;stico suministrada por el instructor. Encabezado: nombre completo, ficha, equipo asignado, fecha.</li>
+                  <li>Descarga e instala Belarc Advisor (belarc.com). Ejec&uacute;talo y guarda el reporte HTML.</li>
+                  <li>Para cada uno de los 6 aspectos, sigue la ruta indicada, revisa el estado y registra los datos exactos.</li>
+                  <li>Toma captura de cada aspecto. N&oacute;mbralas en orden: <code>01_Defender.png</code>, <code>02_Firewall.png</code>, <code>03_Actualizaciones.png</code>, <code>04_Cuentas.png</code>, <code>05_Belarc.png</code>, <code>06_Backup.png</code>.</li>
+                  <li>Para cada hallazgo, asigna nivel de riesgo: <strong>ALTO</strong> (acci&oacute;n inmediata), <strong>MEDIO</strong> (atenci&oacute;n pr&oacute;xima), <strong>BAJO</strong> (mejora opcional). Justifica en observaciones.</li>
+                  <li>Organiza el reporte de Belarc y las 6 capturas en una carpeta: <code>Diagnostico_[TuNombre]_[Fecha]</code>.</li>
+                </ol>
+              </article>
+
+              <article class="notes-card" style="margin-top:16px">
+                <h3>Resumen del diagn&oacute;stico (registro del aprendiz)</h3>
+                <label>
+                  <span>1. Estado general de seguridad del equipo diagnosticado</span>
+                  <textarea rows="4" data-store="g4c_331_estado" data-track placeholder="Resume si el equipo est&aacute; bien protegido, parcialmente o vulnerable, con datos del diagn&oacute;stico."></textarea>
+                </label>
+                <label>
+                  <span>2. Los 3 hallazgos m&aacute;s cr&iacute;ticos (con nivel de riesgo)</span>
+                  <textarea rows="5" data-store="g4c_331_hallazgos" data-track placeholder="Ej.: Defender desactivado (ALTO), Firewall p&uacute;blico apagado (ALTO), 18 actualizaciones pendientes (MEDIO)."></textarea>
+                </label>
+                <label>
+                  <span>3. Controles que priorizar&iacute;as y por qu&eacute;</span>
+                  <textarea rows="5" data-store="g4c_331_prioridades" data-track placeholder="Lista los controles que aplicar&iacute;as primero y justifica seg&uacute;n el impacto en la informaci&oacute;n."></textarea>
+                </label>
+                <label>
+                  <span>4. Conclusi&oacute;n t&eacute;cnica (m&iacute;nimo 8 l&iacute;neas)</span>
+                  <textarea rows="8" data-store="g4c_331_conclusion" data-track placeholder="P&aacute;rrafo final con tu lectura t&eacute;cnica del estado del equipo."></textarea>
+                </label>
+                <div id="diagnostico331DeadlineControls" style="margin-top:16px"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarDiagnostico331" class="btn-save-response" onclick="actStd_save_diagnostico331()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_diagnostico331()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusDiagnostico331" class="activity-saved-notice" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+
+              <div id="driveDeliveryPanel-diagnostico331" style="margin-top:16px"></div>
+            </div>
+          </div>
+
+          <!-- ───────── Actividad 3.3.2 ───────── -->
+          <div class="activity mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.3.2</span>
+              <span class="activity-title">Implementaci&oacute;n de controles de hardening</span>
+              <span class="mission-chip">Misi&oacute;n t&eacute;cnica</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> con base en el diagn&oacute;stico, aplicar los 7 controles de seguridad y documentar cada acci&oacute;n con su evidencia.</p>
+
+              <div style="background:#1b5e20;color:#fff;border-radius:8px 8px 0 0;padding:10px 16px;font-size:0.82rem;font-weight:700;letter-spacing:0.04em;display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:16px;margin-bottom:0">
+                <span>&#128203; EVIDENCIA &mdash; Tipo: Desempe&ntilde;o</span>
+                <span style="opacity:0.5">|</span>
+                <span>Instrumento: Lista de Chequeo LC-02</span>
+              </div>
+              <div class="table-scroll" style="margin-top:0;border-radius:0 0 8px 8px;overflow:hidden;border:1px solid #c8e6c9;border-top:none">
+                <table class="data-table" style="margin:0">
+                  <thead>
+                    <tr>
+                      <th style="width:2rem;text-align:center">N.&deg;</th>
+                      <th>Control a implementar</th>
+                      <th>Ruta / Herramienta</th>
+                      <th>Evidencia</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td style="text-align:center;font-weight:700">1</td><td>Activar Windows Defender + an&aacute;lisis semanal programado</td><td>Windows Security &rarr; Protecci&oacute;n contra virus</td><td>Captura: config activa</td></tr>
+                    <tr><td style="text-align:center;font-weight:700">2</td><td>Configurar Firewall en 3 perfiles (Dominio, Privado, P&uacute;blico)</td><td>Panel de control &rarr; Firewall &rarr; Configuraci&oacute;n avanzada</td><td>Captura: estado perfiles</td></tr>
+                    <tr><td style="text-align:center;font-weight:700">3</td><td>Pol&iacute;tica de contrase&ntilde;as: m&iacute;nimo 8 caracteres, complejidad activada, caducidad 90 d&iacute;as</td><td><kbd>Win + R</kbd> &rarr; <code>secpol.msc</code> &rarr; Directiva de contrase&ntilde;as</td><td>Captura: directiva configurada</td></tr>
+                    <tr><td style="text-align:center;font-weight:700">4</td><td>Verificar y asegurar cuentas de usuario; deshabilitar cuentas innecesarias</td><td><kbd>Win + R</kbd> &rarr; <code>lusrmgr.msc</code> &rarr; Usuarios</td><td>Captura: lista usuarios</td></tr>
+                    <tr><td style="text-align:center;font-weight:700">5</td><td>Activar SmartScreen para apps y descargas</td><td>Configuraci&oacute;n &rarr; Seguridad de Windows &rarr; SmartScreen</td><td>Captura: SmartScreen activo</td></tr>
+                    <tr><td style="text-align:center;font-weight:700">6</td><td>Configurar actualizaciones autom&aacute;ticas de Windows</td><td>Configuraci&oacute;n &rarr; Windows Update &rarr; Opciones avanzadas</td><td>Captura: config actualiz.</td></tr>
+                    <tr><td style="text-align:center;font-weight:700">7</td><td>Implementar copia de seguridad de archivos cr&iacute;ticos</td><td>Historial de archivos Windows o EaseUS Todo Backup Free</td><td>Captura: copia exitosa</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="info-box green" style="margin-top:14px">
+                <div class="label">&#128204; Si un control no aplica</div>
+                <p>Si un control no puede aplicarse (ej.: <code>secpol.msc</code> no disponible en Windows Home), documenta el motivo t&eacute;cnico y describe c&oacute;mo se aplicar&iacute;a en un equipo con Windows Pro. Eso tambi&eacute;n demuestra competencia.</p>
+              </div>
+
+              <article class="support-card" style="margin-top:14px">
+                <h3>Instrucciones</h3>
+                <ol style="padding-left:1.4rem;margin:0;line-height:1.7">
+                  <li>Revisa tu Tabla de Diagn&oacute;stico (Act. 3.3.1). Empieza por los hallazgos <strong>ALTO</strong>, luego <strong>MEDIO</strong>.</li>
+                  <li>Para cada control: sigue la ruta, implementa el cambio y toma captura.</li>
+                  <li>En tu bit&aacute;cora de cambios registra: (a) estado antes, (b) acci&oacute;n, (c) estado despu&eacute;s, (d) observaciones.</li>
+                  <li>Si aparece un error, copia el mensaje, busca soluci&oacute;n en learn.microsoft.com y registra error + soluci&oacute;n.</li>
+                  <li>Nombra cada captura: <code>01_Defender_configurado.png</code>, <code>02_Firewall_3perfiles.png</code>, <code>03_Politica_contras.png</code>, <code>04_Cuentas_aseguradas.png</code>, <code>05_SmartScreen.png</code>, <code>06_Actualizaciones.png</code>, <code>07_Backup_exitoso.png</code>. Carpeta: <code>Hardening_[TuNombre]_[Fecha]</code>.</li>
+                </ol>
+              </article>
+
+              <div class="info-box" style="margin-top:14px">
+                <div class="label">&#128218; Material de apoyo</div>
+                <p>INCIBE &mdash; <em>Gu&iacute;a de hardening para empresas</em> (enlace en Referencias).</p>
+              </div>
+
+              <article class="notes-card" style="margin-top:16px">
+                <h3>Bit&aacute;cora de cambios (registro del aprendiz)</h3>
+                <label>
+                  <span>1. Orden en que aplicaste los 7 controles (seg&uacute;n riesgo)</span>
+                  <textarea rows="4" data-store="g4c_332_orden" data-track placeholder="Ej.: 1) Defender, 2) Firewall, 3) Backup, 4) Contrase&ntilde;as, ..."></textarea>
+                </label>
+                <label>
+                  <span>2. Resumen de cambios aplicados (estado antes / acci&oacute;n / estado despu&eacute;s)</span>
+                  <textarea rows="8" data-store="g4c_332_resumen" data-track placeholder="Para cada control, describe el cambio."></textarea>
+                </label>
+                <label>
+                  <span>3. Errores encontrados y soluci&oacute;n aplicada (si aplica)</span>
+                  <textarea rows="4" data-store="g4c_332_errores" data-track placeholder="Mensaje exacto + fuente consultada + soluci&oacute;n."></textarea>
+                </label>
+                <label>
+                  <span>4. Conclusi&oacute;n comparativa (m&iacute;nimo 10 l&iacute;neas)</span>
+                  <textarea rows="10" data-store="g4c_332_conclusion" data-track placeholder="&iquest;Cu&aacute;nto mejor&oacute; la postura de seguridad? &iquest;Qu&eacute; controles tuvieron mayor impacto?"></textarea>
+                </label>
+                <div id="hardening332DeadlineControls" style="margin-top:16px"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarHardening332" class="btn-save-response" onclick="actStd_save_hardening332()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_hardening332()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusHardening332" class="activity-saved-notice" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+
+              <div id="driveDeliveryPanel-hardening332" style="margin-top:16px"></div>
+            </div>
+          </div>
+
+          <!-- ───────── Actividad 3.3.3 ───────── -->
+          <div class="activity mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.3.3</span>
+              <span class="activity-title">Elaboraci&oacute;n de documentaci&oacute;n t&eacute;cnica (documentos A-D)</span>
+              <span class="mission-chip">Misi&oacute;n t&eacute;cnica</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> elaborar los 4 documentos t&eacute;cnicos profesionales que respaldan el trabajo de seguridad, aplicando la convenci&oacute;n de nombres y la estructura de carpetas.</p>
+
+              <div class="info-box green" style="margin-top:14px">
+                <div class="label">&#128278; Convenci&oacute;n de nombres (obligatoria)</div>
+                <p><code>NombreDocumento_FICHA_v1.0_AAAAMMDD</code><br>
+                Ejemplo: <code>PoliticaSeguridad_3441939_v1.0_20260315</code></p>
+              </div>
+
+              <div style="background:#1b5e20;color:#fff;border-radius:8px 8px 0 0;padding:10px 16px;font-size:0.82rem;font-weight:700;letter-spacing:0.04em;display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:16px;margin-bottom:0">
+                <span>&#128203; EVIDENCIA &mdash; Tipo: Producto</span>
+                <span style="opacity:0.5">|</span>
+                <span>Instrumento: Lista de Chequeo LC-03</span>
+              </div>
+              <div class="table-scroll" style="margin-top:0;border-radius:0 0 8px 8px;overflow:hidden;border:1px solid #c8e6c9;border-top:none">
+                <table class="data-table" style="margin:0">
+                  <thead>
+                    <tr>
+                      <th style="width:2rem;text-align:center">Doc.</th>
+                      <th>Documento</th>
+                      <th>Estructura m&iacute;nima</th>
+                      <th>Formato / Extensi&oacute;n</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td style="text-align:center;font-weight:700">A</td><td>Informe de diagn&oacute;stico de seguridad</td><td>Portada, resumen ejecutivo, hallazgos por categor&iacute;a (tabla), nivel de riesgo, conclusiones y recomendaciones. Capturas de pantalla incluidas.</td><td>Word/PDF &mdash; m&iacute;n. 4 p&aacute;ginas</td></tr>
+                    <tr><td style="text-align:center;font-weight:700">B</td><td>Pol&iacute;tica b&aacute;sica de seguridad inform&aacute;tica para MiPyme</td><td>Portada, objetivo, alcance, definiciones, responsabilidades, controles aplicables, sanciones, control de versiones.</td><td>Word/PDF &mdash; m&iacute;n. 3 p&aacute;ginas</td></tr>
+                    <tr><td style="text-align:center;font-weight:700">C</td><td>Inventario de activos con valoraci&oacute;n de riesgos</td><td>Tabla: ID, nombre, tipo (hardware/software/datos), propietario, criticidad (A/M/B), amenaza principal, control aplicado.</td><td>Excel o tabla en Word</td></tr>
+                    <tr><td style="text-align:center;font-weight:700">D</td><td>Protocolo de copias de seguridad</td><td>Objetivo, alcance, responsable, frecuencia, tipo de backup, medio de almacenamiento, verificaci&oacute;n, cronograma.</td><td>Word &mdash; m&iacute;n. 2 p&aacute;ginas</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="info-box" style="margin-top:14px">
+                <div class="label">&#128193; Estructura de carpetas (se eval&uacute;a en la r&uacute;brica)</div>
+                <p>Organiza los documentos en: <code>01_Diagnostico</code> / <code>02_Politica_Seguridad</code> / <code>03_Inventario_Activos</code> / <code>04_Protocolo_Backup</code> / <code>05_Evidencias</code>.</p>
+              </div>
+
+              <article class="notes-card" style="margin-top:16px">
+                <h3>Registro de la documentaci&oacute;n (antes de entregar)</h3>
+                <label>
+                  <span>A. Informe de diagn&oacute;stico: &iquest;cu&aacute;l fue el hallazgo principal y qu&eacute; recomendaci&oacute;n haces?</span>
+                  <textarea rows="4" data-store="g4c_333_informe" data-track placeholder="Resume el hallazgo m&aacute;s importante del informe y la recomendaci&oacute;n asociada."></textarea>
+                </label>
+                <label>
+                  <span>B. Pol&iacute;tica de seguridad: &iquest;qu&eacute; 3 controles incluiste y a qui&eacute;n aplican?</span>
+                  <textarea rows="4" data-store="g4c_333_politica" data-track placeholder="Ej.: contrase&ntilde;as robustas (todos los empleados), copias semanales (responsable de sistemas), no abrir adjuntos sospechosos."></textarea>
+                </label>
+                <label>
+                  <span>C. Inventario de activos: lista tus 3 activos m&aacute;s cr&iacute;ticos con su criticidad y amenaza principal</span>
+                  <textarea rows="4" data-store="g4c_333_inventario" data-track placeholder="Ej.: PC administrativa (A, ransomware), base de clientes (A, robo de datos), impresora (B, da&ntilde;o f&iacute;sico)."></textarea>
+                </label>
+                <label>
+                  <span>D. Protocolo de backup: &iquest;qu&eacute; estrategia definiste? (frecuencia, tipo, medios, verificaci&oacute;n)</span>
+                  <textarea rows="4" data-store="g4c_333_protocolo" data-track placeholder="Ej.: copia incremental diaria + completa semanal, disco externo + nube, verificaci&oacute;n mensual restaurando un archivo."></textarea>
+                </label>
+                <div id="documentos333DeadlineControls" style="margin-top:16px"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarDocumentos333" class="btn-save-response" onclick="actStd_save_documentos333()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_documentos333()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusDocumentos333" class="activity-saved-notice" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+
+              <div id="driveDeliveryPanel-documentos333" style="margin-top:16px"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════ 3.4 TRANSFERENCIA ═══════════════════════╗ -->
+      <div id="transferencia" class="section-title">3.4 &middot; Actividades de Transferencia del Conocimiento</div>
+      <p class="section-intro">📍 <strong>Fase de transferencia:</strong> aplicas todo lo aprendido a un caso real o a una actividad integradora. Suele ser la evidencia más importante de la guía.</p>
+      <div class="info-box blue" style="margin-bottom:16px">
+        <p>Integrar todo el trabajo de la gu&iacute;a en un Plan Integral de Ciberseguridad para
+        ElectroBoyc&aacute; S.A.S. (u otra MiPyme asignada por el instructor) y sustentarlo oralmente.</p>
+      </div>
+      <div class="card open cat-transferencia">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128640;</div>
+            <div>
+              <h3>Actividades de Transferencia</h3>
+              <p>1 actividad integradora &middot; Plan Integral + sustentaci&oacute;n oral</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+
+          <!-- ───────── Actividad 3.4.1 ───────── -->
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.4.1</span>
+              <span class="activity-title">Plan Integral de Ciberseguridad para MiPyme + Sustentaci&oacute;n oral</span>
+              <span class="mission-chip">Misi&oacute;n integradora</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> integrar diagn&oacute;stico, controles, documentaci&oacute;n y estrategia de copias en un Plan Integral formal, y sustentarlo ante el instructor.</p>
+
+              <article class="story-card" style="margin-top:16px">
+                <h3>&#127970; Escenario &mdash; ElectroBoyc&aacute; S.A.S., Tunja</h3>
+                <p>El mismo caso de la reflexi&oacute;n inicial. Tras el ataque de ransomware, la empresa te
+                contrata como t&eacute;cnico de sistemas para evaluar su situaci&oacute;n y elaborar un plan que
+                evite futuros incidentes. Tienes el diagn&oacute;stico (Act. 3.3.1), los controles
+                implementados (Act. 3.3.2) y la documentaci&oacute;n t&eacute;cnica (Act. 3.3.3). Ahora
+                consol&iacute;dalos en un Plan Integral y pres&eacute;ntalo a la gerencia.</p>
+              </article>
+
+              <div style="background:#1b5e20;color:#fff;border-radius:8px 8px 0 0;padding:10px 16px;font-size:0.82rem;font-weight:700;letter-spacing:0.04em;display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:16px;margin-bottom:0">
+                <span>&#128203; EVIDENCIA &mdash; Tipo: Producto + Sustentaci&oacute;n Oral</span>
+                <span style="opacity:0.5">|</span>
+                <span>Instrumento: Lista de Chequeo LC-04</span>
+              </div>
+              <div class="table-scroll" style="margin-top:0;border-radius:0 0 8px 8px;overflow:hidden;border:1px solid #c8e6c9;border-top:none">
+                <table class="data-table" style="margin:0">
+                  <thead>
+                    <tr>
+                      <th style="width:2rem;text-align:center">Sec.</th>
+                      <th>Secci&oacute;n del plan</th>
+                      <th>Contenido m&iacute;nimo requerido</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td style="text-align:center;font-weight:700">1</td><td>Resumen ejecutivo</td><td>Situaci&oacute;n actual, riesgos identificados, objetivos del plan. 1 p&aacute;gina.</td></tr>
+                    <tr><td style="text-align:center;font-weight:700">2</td><td>Diagn&oacute;stico</td><td>Resultados del 3.3.1 con tabla resumen y gr&aacute;fico de estado.</td></tr>
+                    <tr><td style="text-align:center;font-weight:700">3</td><td>Controles implementados</td><td>Tabla de los 7 controles con resultado (S&Iacute;/NO) y observaciones.</td></tr>
+                    <tr><td style="text-align:center;font-weight:700">4</td><td>Pol&iacute;tica de seguridad</td><td>Versi&oacute;n final del documento B (Act. 3.3.3).</td></tr>
+                    <tr><td style="text-align:center;font-weight:700">5</td><td>Estrategia de copias de seguridad</td><td>Protocolo D con cronograma de ejecuci&oacute;n.</td></tr>
+                    <tr><td style="text-align:center;font-weight:700">6</td><td>Inventario de activos</td><td>Tabla completa con valoraci&oacute;n de riesgos.</td></tr>
+                    <tr><td style="text-align:center;font-weight:700">7</td><td>Recomendaciones adicionales</td><td>M&iacute;nimo 3 mejoras a mediano plazo con justificaci&oacute;n t&eacute;cnica.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="info-box green" style="margin-top:14px">
+                <div class="label">&#128204; Formato del Plan</div>
+                <p>PDF &mdash; m&iacute;nimo <strong>12 p&aacute;ginas</strong> &mdash; Arial 11 &mdash; interlineado 1.15.
+                Los documentos del 3.3.3 van integrados o adjuntos.<br>
+                Nombre: <code>PlanCiberseguridad_NombreAprendiz_FICHA_v1.0_FECHA.pdf</code></p>
+              </div>
+
+              <article class="support-card" style="margin-top:16px">
+                <h3>Sustentaci&oacute;n oral del Plan de Ciberseguridad</h3>
+                <p class="intro-text" style="margin:0 0 8px">Prepara una presentaci&oacute;n de <strong>10 a 15 minutos</strong>. El instructor realizar&aacute; preguntas durante 5 minutos adicionales. M&aacute;ximo 10 diapositivas:</p>
+                <ol style="padding-left:1.4rem;margin:0;line-height:1.7">
+                  <li><strong>Diapositiva 1:</strong> Portada con nombre, ficha y fecha.</li>
+                  <li><strong>Diapositivas 2-3:</strong> Diagn&oacute;stico &mdash; hallazgos cr&iacute;ticos visualizados (gr&aacute;fico o tabla).</li>
+                  <li><strong>Diapositivas 4-5:</strong> Controles implementados &mdash; antes y despu&eacute;s.</li>
+                  <li><strong>Diapositiva 6:</strong> Pol&iacute;tica de seguridad &mdash; puntos clave para la MiPyme.</li>
+                  <li><strong>Diapositiva 7:</strong> Estrategia de backup &mdash; esquema visual de la estrategia 3-2-1.</li>
+                  <li><strong>Diapositiva 8:</strong> Recomendaciones a mediano plazo con justificaci&oacute;n.</li>
+                  <li><strong>Diapositiva 9:</strong> Lecciones aprendidas &mdash; reflexi&oacute;n personal.</li>
+                </ol>
+              </article>
+
+              <article class="notes-card" style="margin-top:16px">
+                <h3>&Iacute;ndice del Plan Integral (borrador previo a la redacci&oacute;n)</h3>
+                <label>
+                  <span>1. Resumen ejecutivo (qu&eacute; incluir&aacute;s en una frase)</span>
+                  <textarea rows="2" data-store="g4c_341_sec_resumen" data-track placeholder="Situaci&oacute;n actual, riesgos identificados, objetivos del plan."></textarea>
+                </label>
+                <label>
+                  <span>2. Diagn&oacute;stico (qu&eacute; incluir&aacute;s)</span>
+                  <textarea rows="2" data-store="g4c_341_sec_diagnostico" data-track placeholder="Tabla resumen y gr&aacute;fico de estado de la Act. 3.3.1."></textarea>
+                </label>
+                <label>
+                  <span>3. Controles implementados (qu&eacute; incluir&aacute;s)</span>
+                  <textarea rows="2" data-store="g4c_341_sec_controles" data-track placeholder="Tabla de los 7 controles con S&Iacute;/NO y observaciones."></textarea>
+                </label>
+                <label>
+                  <span>4. Pol&iacute;tica de seguridad (qu&eacute; incluir&aacute;s)</span>
+                  <textarea rows="2" data-store="g4c_341_sec_politica" data-track placeholder="Versi&oacute;n final del documento B con sus controles."></textarea>
+                </label>
+                <label>
+                  <span>5. Estrategia de copias de seguridad (qu&eacute; incluir&aacute;s)</span>
+                  <textarea rows="2" data-store="g4c_341_sec_backup" data-track placeholder="Protocolo D con cronograma de ejecuci&oacute;n y esquema 3-2-1."></textarea>
+                </label>
+                <label>
+                  <span>6. Inventario de activos (qu&eacute; incluir&aacute;s)</span>
+                  <textarea rows="2" data-store="g4c_341_sec_inventario" data-track placeholder="Tabla completa con valoraci&oacute;n de riesgos del documento C."></textarea>
+                </label>
+                <label>
+                  <span>7. Recomendaciones adicionales (m&iacute;nimo 3 con justificaci&oacute;n t&eacute;cnica)</span>
+                  <textarea rows="3" data-store="g4c_341_sec_recomendaciones" data-track placeholder="3 mejoras a mediano plazo: MFA, cifrado BitLocker, capacitaci&oacute;n anti-phishing..."></textarea>
+                </label>
+                <div id="plan341DeadlineControls" style="margin-top:16px"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarPlan341" class="btn-save-response" onclick="actStd_save_plan341()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_plan341()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusPlan341" class="activity-saved-notice" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+
+              <div id="driveDeliveryPanel-plan341" style="margin-top:16px"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════ EVIDENCIAS ═══════════════════════╗ -->
+      <div id="evidencias" class="section-title">Planteamiento de Evidencias para la Evaluaci&oacute;n</div>
+      <p class="section-intro">📍 <strong>Resumen de lo que debes entregar:</strong> usa esta sección como lista de chequeo final. Revisa que no te falte ninguna evidencia y cómo se evalúa cada una.</p>
+      <div class="gnote gnote--entrega"><div class="gnote__label">📦 Antes de entregar, revisa</div>
+        <ul>
+          <li>Respondiste todas las actividades que se piden como evidencia.</li>
+          <li>Tus archivos siguen la convenci&oacute;n de nombres con tu ficha y la fecha.</li>
+          <li>Subiste cada evidencia con el botón <em>Entregar a Drive</em> y la ves marcada como <strong>Entregada</strong> en tu control de avance.</li>
+        </ul></div>
+
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#e3f2fd">&#128202;</div>
+            <div>
+              <h3>Tabla de Evidencias del Proceso Formativo</h3>
+              <p>4 evidencias con listas de chequeo LC-01 a LC-04</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Actividad de Aprendizaje</th>
+                  <th>Evidencias</th>
+                  <th>Criterios de Evaluaci&oacute;n</th>
+                  <th>T&eacute;cnica e Instrumento</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>3.3.1 &mdash; Diagn&oacute;stico del estado de seguridad del equipo</td>
+                  <td>Tabla de diagn&oacute;stico completada + capturas de pantalla por categor&iacute;a.</td>
+                  <td>Aplica controles de seguridad seg&uacute;n normativa, necesidades y restricciones de acceso a la informaci&oacute;n (a partir del diagn&oacute;stico del estado de protecci&oacute;n).</td>
+                  <td>Valoraci&oacute;n de desempe&ntilde;o (revisi&oacute;n de evidencias y capturas). Lista de chequeo LC-01.</td>
+                </tr>
+                <tr>
+                  <td>3.3.2 &mdash; Implementaci&oacute;n de controles de hardening (7 controles)</td>
+                  <td>Evidencias de configuraci&oacute;n (capturas) + bit&aacute;cora breve de cambios.</td>
+                  <td>Aplica controles de seguridad seg&uacute;n normativa, necesidades y restricciones de acceso a la informaci&oacute;n.</td>
+                  <td>Observaci&oacute;n directa y verificaci&oacute;n pr&aacute;ctica en el equipo. Lista de chequeo LC-02.</td>
+                </tr>
+                <tr>
+                  <td>3.3.3 &mdash; Elaboraci&oacute;n de documentaci&oacute;n t&eacute;cnica (A-D)</td>
+                  <td>Informe de diagn&oacute;stico, pol&iacute;tica de seguridad, inventario de activos y protocolo de backup (seg&uacute;n estructura m&iacute;nima).</td>
+                  <td>Propone procesos de mejora en el manejo de la informaci&oacute;n con base en la normativa vigente y gestiona las copias de seguridad y recuperaci&oacute;n seg&uacute;n los lineamientos establecidos.</td>
+                  <td>Valoraci&oacute;n de producto. Lista de chequeo LC-03.</td>
+                </tr>
+                <tr>
+                  <td>Transferencia &mdash; Plan Integral de Ciberseguridad + sustentaci&oacute;n oral</td>
+                  <td>Plan integral en PDF (m&iacute;n. 12 p&aacute;ginas) + presentaci&oacute;n (10 diapositivas) y sustentaci&oacute;n.</td>
+                  <td>Aplica controles de seguridad, propone procesos de mejora y gestiona las copias de seguridad y recuperaci&oacute;n seg&uacute;n la normativa vigente y los lineamientos de la empresa.</td>
+                  <td>Valoraci&oacute;n de producto y sustentaci&oacute;n oral. Lista de chequeo LC-04.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════ GLOSARIO ═══════════════════════╗ -->
+      <div id="glosario" class="section-title">Glosario de T&eacute;rminos</div>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#fff3e0">&#128214;</div>
+            <div>
+              <h3>Conceptos clave de ciberseguridad</h3>
+              <p>19 t&eacute;rminos t&eacute;cnicos y normativos</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <dl class="glossary-list">
+            <dt>Activo de informaci&oacute;n</dt><dd>Cualquier dato, documento o recurso informacional (digital o f&iacute;sico) que tiene valor para la organizaci&oacute;n y debe protegerse.</dd>
+            <dt>Amenaza</dt><dd>Causa potencial de un incidente no deseado que puede resultar en da&ntilde;o a un sistema o activo de informaci&oacute;n.</dd>
+            <dt>An&aacute;lisis de riesgos</dt><dd>Proceso para identificar amenazas y vulnerabilidades, estimar su probabilidad/impacto y priorizar controles de mitigaci&oacute;n.</dd>
+            <dt>Backup (copia de seguridad)</dt><dd>Copia de datos o sistemas para recuperaci&oacute;n ante p&eacute;rdida, corrupci&oacute;n o incidente de seguridad; se recomienda automatizar y verificar.</dd>
+            <dt>BitLocker</dt><dd>Funcionalidad de Windows para cifrado de unidad que protege datos frente a acceso no autorizado en caso de p&eacute;rdida o robo del equipo.</dd>
+            <dt>Ciberseguridad</dt><dd>Conjunto de pr&aacute;cticas y controles para proteger sistemas, redes y datos ante riesgos y amenazas en el entorno digital.</dd>
+            <dt>Triada CIA</dt><dd>Principios de seguridad de la informaci&oacute;n: <strong>Confidencialidad, Integridad y Disponibilidad</strong>.</dd>
+            <dt>Control de seguridad</dt><dd>Medida preventiva, detectiva o correctiva destinada a reducir riesgos y mejorar la protecci&oacute;n de activos.</dd>
+            <dt>Firewall</dt><dd>Componente que filtra tr&aacute;fico de red seg&uacute;n reglas, permitiendo o bloqueando conexiones para reducir exposici&oacute;n a ataques.</dd>
+            <dt>Hardening (endurecimiento)</dt><dd>Proceso de configuraci&oacute;n segura de un sistema para reducir vulnerabilidades (actualizaciones, pol&iacute;ticas, desactivar servicios innecesarios, etc.).</dd>
+            <dt>Incidente de seguridad</dt><dd>Evento que compromete o amenaza la confidencialidad, integridad o disponibilidad de la informaci&oacute;n o de los sistemas.</dd>
+            <dt>Ingenier&iacute;a social</dt><dd>T&eacute;cnicas de manipulaci&oacute;n para inducir a personas a revelar informaci&oacute;n, ejecutar acciones o vulnerar controles.</dd>
+            <dt>Malware</dt><dd>Software malicioso dise&ntilde;ado para da&ntilde;ar, interrumpir u obtener acceso no autorizado a sistemas o datos.</dd>
+            <dt>Phishing</dt><dd>Modalidad de fraude que busca enga&ntilde;ar para obtener credenciales o informaci&oacute;n sensible mediante mensajes o sitios falsos.</dd>
+            <dt>Pol&iacute;tica de seguridad</dt><dd>Documento que define reglas, responsabilidades y controles m&iacute;nimos para proteger informaci&oacute;n y sistemas en una organizaci&oacute;n.</dd>
+            <dt>Ransomware</dt><dd>Tipo de malware que cifra archivos o bloquea sistemas y exige pago para recuperar el acceso.</dd>
+            <dt>SGSI</dt><dd>Sistema de Gesti&oacute;n de Seguridad de la Informaci&oacute;n; modelo de gesti&oacute;n para establecer, implementar, mantener y mejorar la seguridad de la informaci&oacute;n.</dd>
+            <dt>SmartScreen</dt><dd>Funci&oacute;n de Windows que ayuda a proteger contra descargas y aplicaciones potencialmente maliciosas.</dd>
+            <dt>Vulnerabilidad</dt><dd>Debilidad que puede ser explotada por una amenaza para afectar un activo o sistema.</dd>
+          </dl>
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════ REFERENCIAS ═══════════════════════╗ -->
+      <div id="referencias" class="section-title">Referentes Bibliogr&aacute;ficos</div>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#ede7f6">&#128279;</div>
+            <div>
+              <h3>Fuentes oficiales y normativas</h3>
+              <p>11 referencias t&eacute;cnicas y normativas para consulta</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <ol class="references-list" style="padding-left:1.4rem;line-height:1.8">
+            <li>ISO. (2022). <em>ISO/IEC 27001:2022 &mdash; Information security management systems &mdash; Requirements</em>. <a href="https://www.iso.org/standard/27001" target="_blank" rel="noopener">iso.org/standard/27001</a></li>
+            <li>NIST. (2024). <em>El Marco de Seguridad Cibern&eacute;tica (CSF) 2.0 del NIST</em>. NIST CSWP 29. <a href="https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.spa.pdf" target="_blank" rel="noopener">nvlpubs.nist.gov</a></li>
+            <li>DNP. (2020). <em>Documento CONPES 3995: Pol&iacute;tica Nacional de Confianza y Seguridad Digital</em>. <a href="https://colaboracion.dnp.gov.co/cdt/Conpes/Econ%C3%B3micos/3995.pdf" target="_blank" rel="noopener">colaboracion.dnp.gov.co</a></li>
+            <li>Congreso de Colombia. (2009). <em>Ley 1273 de 2009 &mdash; Delitos inform&aacute;ticos</em>. Diario Oficial No. 47.223. <a href="https://www.secretariasenado.gov.co/senado/basedoc/ley_1273_2009.html" target="_blank" rel="noopener">secretariasenado.gov.co</a></li>
+            <li>MinTIC. (2025). <em>Estrategia Nacional de Seguridad Digital de Colombia</em>. <a href="https://www.mintic.gov.co/portal/715/articles-403023_recurso_2.pdf" target="_blank" rel="noopener">mintic.gov.co</a></li>
+            <li>MinTIC. (2016). <em>Gu&iacute;a para la Gesti&oacute;n y Clasificaci&oacute;n de Activos de Informaci&oacute;n</em>. <a href="https://gobiernodigital.mintic.gov.co/692/articles-5482_G5_Gestion_Clasificacion.pdf" target="_blank" rel="noopener">gobiernodigital.mintic.gov.co</a></li>
+            <li>Microsoft. (2025). <em>Programar an&aacute;lisis peri&oacute;dicos con Microsoft Defender</em>. <a href="https://learn.microsoft.com/en-us/defender-endpoint/schedule-antivirus-scans" target="_blank" rel="noopener">learn.microsoft.com</a></li>
+            <li>Veeam. (2025). <em>Veeam Agent for Microsoft Windows &mdash; Backup</em>. <a href="https://helpcenter.veeam.com/docs/agentforwindows/userguide/backup.html" target="_blank" rel="noopener">helpcenter.veeam.com</a></li>
+            <li>INCIBE. <em>Pol&iacute;ticas de seguridad para la pyme</em>. <a href="https://www.incibe.es/empresas/herramientas/politicas" target="_blank" rel="noopener">incibe.es/empresas/herramientas/politicas</a></li>
+            <li>Cisco Skills for All. <em>Introducci&oacute;n a Ciberseguridad</em>. <a href="https://skillsforall.examscisco.com/producto/introduccion-a-ciberseguridad/" target="_blank" rel="noopener">skillsforall.examscisco.com</a></li>
+            <li>Belarc. <em>Belarc Advisor &mdash; Inventario de sistema</em>. <a href="https://www.belarc.com/products/belarc-advisor" target="_blank" rel="noopener">belarc.com/products/belarc-advisor</a></li>
+          </ol>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

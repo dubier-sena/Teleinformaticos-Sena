@@ -45,6 +45,7 @@ const FAMILY_TO_FILES = {
     "pages/auxiliares/grupo-10a-guia-02-ficha-caso.html",
   ],
   "guia-03-planificar-10": ["partials/guia-03-planificar-content.html"],
+  "guia-04-ciberseguridad": ["partials/guia-04-planificar-ciberseguridad-content.html"],
   "guia-05-herramientas": ["partials/guia-05-herramientas-content.html"],
   "guia-06-planificar": ["partials/guia-06-planificar-content.html"],
   "guia-07-ciberseguridad": ["partials/guia-07-planificar-ciberseguridad-content.html"],
