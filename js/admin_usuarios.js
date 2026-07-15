@@ -2861,8 +2861,12 @@
         const solution = bankLookup(family, actId);
         if (!solution || typeof solution !== "object" || !Object.keys(solution).length) return;
         const current = grades[actId + ":solution"];
-        if (current && JSON.stringify(current) === JSON.stringify(solution)) return;
-        updates.push({ family: family, activityId: actId, solution: solution });
+        // needsEmbed=false NO se descarta: la escritura de los campos en la guia
+        // del aprendiz (applyApprovedSolutionToStudentCloud) pudo fallar en una
+        // pasada anterior dejando "solucion embebida pero guia vacia" (caso real
+        // jul-15, Actividad 10). Es idempotente, asi que se reintenta siempre.
+        const needsEmbed = !(current && JSON.stringify(current) === JSON.stringify(solution));
+        updates.push({ family: family, activityId: actId, solution: solution, needsEmbed: needsEmbed });
       });
     });
     return updates;
@@ -2901,16 +2905,26 @@
         const updates = computeSolutionResyncUpdates(all, lookupBankSolution);
         if (!updates.length) continue;
         learners += 1;
+        const fieldsByFamily = {};
         for (const up of updates) {
           try {
-            const ok = gradesManager.embedStudentActivitySolution(user.usernameKey, up.family, up.activityId, up.solution);
-            if (!ok) continue;
-            embedded += 1;
-            const applied = await applyApprovedSolutionToStudentCloud(user.usernameKey, up.family, up.solution);
+            if (up.needsEmbed) {
+              const ok = gradesManager.embedStudentActivitySolution(user.usernameKey, up.family, up.activityId, up.solution);
+              if (ok) embedded += 1;
+            }
+            fieldsByFamily[up.family] = Object.assign(fieldsByFamily[up.family] || {}, up.solution);
+          } catch (_) { failures++; }
+        }
+        // Una sola escritura de campos por guia: fusiona las soluciones de todas
+        // las actividades "A" de la familia; en la nube solo se llenan los campos
+        // que el aprendiz tenga vacios (y si no hay nada que llenar, no escribe).
+        for (const family of Object.keys(fieldsByFamily)) {
+          try {
+            const applied = await applyApprovedSolutionToStudentCloud(user.usernameKey, family, fieldsByFamily[family]);
             fieldsFilled += (applied && applied.filled) || 0;
           } catch (_) { failures++; }
         }
-        setStatus(`... ${embedded} soluciones re-embebidas (${learners} aprendices revisados con cambios)`);
+        setStatus(`... ${embedded} soluciones re-embebidas, ${fieldsFilled} campos escritos (${learners} aprendices con actividades aprobadas)`);
       }
       setStatus(
         `Listo: ${embedded} soluciones re-embebidas en ${learners} aprendices; ` +
