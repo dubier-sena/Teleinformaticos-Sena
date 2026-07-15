@@ -168,6 +168,20 @@
       pageKey: "11b_guia7",
       stateKey: "guia_interactiva_11b_guia7_html",
     },
+    "santa-barbara-10a-guia-02-redes-rap01.html": {
+      mode: "state-with-activity",
+      total: 13,
+      activityTotal: 0,
+      pageKey: "sb_10a_redes_html",
+      stateKey: "guia_interactiva_sb_10a_redes_html",
+    },
+    "santa-barbara-10b-guia-02-redes-rap01.html": {
+      mode: "state-with-activity",
+      total: 13,
+      activityTotal: 0,
+      pageKey: "sb_10b_redes_html",
+      stateKey: "guia_interactiva_sb_10b_redes_html",
+    },
     "santa-barbara-10a-guia-03-redes-rap02.html": {
       mode: "state-with-activity",
       total: 34,
