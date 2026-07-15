@@ -998,6 +998,12 @@ progress::-moz-progress-bar {
   gap: 12px;
 }
 
+.firma-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .answer-value {
   white-space: pre-wrap;
 }
