@@ -10,7 +10,7 @@
 
   const GUIDE2_SYSTEM_ACTIVITY_KEYS = ["sistemas332-locked"];
   const GUIDE2_COLLABORATIVE_ACTIVITY_KEYS = ["colaborativas334-locked"];
-  const GUIDE2_TRANSFER_RETO_KEYS = ["transfer-reto-locked"];
+  const GUIDE2_TRANSFER_RETO_KEYS = ["transfer-reto-locked", "transferReto341-locked"];
   const GUIDE2_EXTENSION_ACTIVITY_KEYS = ["extensiones331-locked"];
   const GUIDE6_RESPONSE_CONFIGS = {
     "grupo-11a-guia-06-planificar-informacion.html": {
@@ -838,11 +838,14 @@
     const aliases = {
       "grupo-10a-guia-01-induccion.html": "guia_induccion_10a_guia_html",
       "grupo-10b-guia-01-induccion.html": "guia_induccion_10b_guia_html",
-      "santa-barbara-10a-guia-02-redes-rap01.html": "sb_10a_redes.html",
-      "santa-barbara-10b-guia-02-redes-rap01.html": "sb_10b_redes.html",
+      "santa-barbara-10a-guia-02-redes-rap01.html": "guia_interactiva_sb_10a_redes_html",
+      "santa-barbara-10b-guia-02-redes-rap01.html": "guia_interactiva_sb_10b_redes_html",
     };
     // Los alias con clave COMPLETA ("guia_...") son la fuente de verdad real del
-    // localStorage de la guia (ver STORAGE_KEY en script_induccion.js). Tienen
+    // localStorage de la guia (ver STORAGE_KEY en script_induccion.js y
+    // LEGACY_STORAGE_KEY_REDES en script_guia_redes.js: Redes RAP01 guarda bajo
+    // su archivo-alias sb_10{a,b}_redes.html, no bajo el stateKey registrado en
+    // guide_declarations.js, que ademas es el mismo para 10A y 10B). Tienen
     // PRIORIDAD sobre ActivityStandard/GUIDE_PROGRESS_CONFIG: Induccion registra
     // en guide_declarations.js un stateKey CORTO ("10a_guia", pensado para el
     // prefijo de progreso "10a_guia:checks"), NO la clave completa del estado

@@ -109,7 +109,9 @@
       { id: "cibersegPhishing335",  number: "3.3.5", label: "Ciberseguridad - Phishing",     shortName: "CiberPhishing",   type: "form" },
       { id: "cibersegChecklist335", number: "3.3.5", label: "Ciberseguridad - Checklist",    shortName: "CiberChecklist",  type: "form" },
       { id: "ciberseguridad335",    number: "3.3.5", label: "Ciberseguridad - Entrega Drive",shortName: "CiberDoc",        type: "file" },
-      { id: "transferReto341", number: "3.4.1", label: "Reto final",                        shortName: "RetoFinal",       type: "form" },
+      // El boton Guardar historico de la guia bloquea el reto con la llave suelta
+      // "transfer-reto-locked"; declararla para que home/avance/habilitacion la vean.
+      { id: "transferReto341", number: "3.4.1", label: "Reto final",                        shortName: "RetoFinal",       type: "form", legacyLockKeys: ["transfer-reto-locked"] },
     ],
   });
 
