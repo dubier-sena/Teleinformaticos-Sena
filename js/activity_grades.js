@@ -80,6 +80,19 @@
         { id: "sustentacion342", label: "3.4.2 Presentación y sustentación oral" },
       ],
     },
+    "guia-04-ciberseguridad": {
+      label: "Guía 4 — Planificar información (ciberseguridad, grado 10)",
+      activities: [
+        { id: "caso311",        label: "3.1.1 Análisis del caso ElectroBoycá" },
+        { id: "plenaria312",    label: "3.1.2 Socialización guiada en plenaria" },
+        { id: "bloques321",     label: "3.2.1 Estudio de los bloques temáticos A y B" },
+        { id: "mapa322",        label: "3.2.2 Mapa conceptual integrador" },
+        { id: "diagnostico331", label: "3.3.1 Diagnóstico del estado de seguridad" },
+        { id: "hardening332",   label: "3.3.2 Controles de hardening" },
+        { id: "documentos333",  label: "3.3.3 Documentación técnica (A-D)" },
+        { id: "plan341",        label: "3.4.1 Plan Integral de Ciberseguridad + Sustentación" },
+      ],
+    },
     "guia-05-herramientas": {
       label: "Guía 5 — Operar herramientas (grado 11)",
       activities: [
@@ -427,6 +440,8 @@
     "grupo-10b-guia-02-ficha-caso.html": "guia-02-herramientas",
     "grupo-10a-guia-03-planificar-informacion.html": "guia-03-planificar-10",
     "grupo-10b-guia-03-planificar-informacion.html": "guia-03-planificar-10",
+    "grupo-10a-guia-04-planificar-informacion-ciberseguridad.html": "guia-04-ciberseguridad",
+    "grupo-10b-guia-04-planificar-informacion-ciberseguridad.html": "guia-04-ciberseguridad",
     "grupo-11a-guia-05-herramientas-informaticas-digitales.html": "guia-05-herramientas",
     "grupo-11b-guia-05-herramientas-informaticas-digitales.html": "guia-05-herramientas",
     "grupo-11a-guia-06-planificar-informacion.html": "guia-06-planificar",

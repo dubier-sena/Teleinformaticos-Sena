@@ -75,6 +75,8 @@
     "grupo-10b-guia-03-planificar-informacion.html": "10b_guia3.html",
     "grupo-10a-guia-04-taller-integrador.html": "10a_guia4.html",
     "grupo-10b-guia-04-taller-integrador.html": "10b_guia4.html",
+    "grupo-10a-guia-04-planificar-informacion-ciberseguridad.html": "10a_guia4ciber.html",
+    "grupo-10b-guia-04-planificar-informacion-ciberseguridad.html": "10b_guia4ciber.html",
     "grupo-11a-guia-05-herramientas-informaticas-digitales.html": "11a_guia.html",
     "grupo-11b-guia-05-herramientas-informaticas-digitales.html": "11b_guia.html",
     "grupo-11a-guia-06-planificar-informacion.html": "11a_guia6.html",

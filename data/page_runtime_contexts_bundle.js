@@ -71,6 +71,24 @@ window.__PAGE_RUNTIME_CONTEXTS__ = {
     "ficha": "3441942",
     "boot": "initTallerIntegrador"
   },
+  "jfk-guia4ciber-10a": {
+    "family": "guia-04-planificar-ciberseguridad",
+    "pageFile": "grupo-10a-guia-04-planificar-informacion-ciberseguridad.html",
+    "partialPath": "partials/guia-04-planificar-ciberseguridad-content.html",
+    "inst": "Institucion Educativa Jhon F. Kennedy",
+    "grupo": "10A",
+    "ficha": "3441939",
+    "boot": "initGuia4Ciber"
+  },
+  "jfk-guia4ciber-10b": {
+    "family": "guia-04-planificar-ciberseguridad",
+    "pageFile": "grupo-10b-guia-04-planificar-informacion-ciberseguridad.html",
+    "partialPath": "partials/guia-04-planificar-ciberseguridad-content.html",
+    "inst": "Institucion Educativa Jhon F. Kennedy",
+    "grupo": "10B",
+    "ficha": "3441942",
+    "boot": "initGuia4Ciber"
+  },
   "sb-guia5-11a": {
     "family": "guia-05-herramientas",
     "pageFile": "grupo-11a-guia-05-herramientas-informaticas-digitales.html",
@@ -125,5 +143,4 @@ window.__PAGE_RUNTIME_CONTEXTS__ = {
     "ficha": "3168852",
     "boot": "initGuia7"
   }
-}
-;
+};
