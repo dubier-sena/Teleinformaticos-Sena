@@ -153,6 +153,78 @@ test("embedStudentActivitySolution: NO embebe si la nota no es A", () => {
   assert.equal(Object.prototype.hasOwnProperty.call(grades, "transferReto341:solution"), false);
 });
 
+// ── Actividad 9 (Ciberseguridad 3.3.5): una nota, 4 sub-secciones ───────────
+// Reporte real (jul-15, mismo dia): el usuario recalifico la Actividad 9 y las
+// respuestas seguian vacias. La columna guarda la nota bajo cibersegAmenazas335,
+// pero el banco indexa por sub-actividad: sin aliasIds en el catalogo y sin
+// combinarlos en lookupBankSolution, solo viajaban los 2 campos de "amenazas".
+
+function extractLookupBankSolution() {
+  const script = read(path.join("js", "admin_usuarios.js"));
+  const fnMatch = script.match(/function lookupBankSolution\(guideFamily, activityId\) \{[\s\S]*?\n  \}/);
+  assert.ok(fnMatch, "no se encontro lookupBankSolution en admin_usuarios.js");
+  return new Function("_gradeSolutionsBank", "getGradeCatalog", "return (" + fnMatch[0] + ");");
+}
+
+test("catalogo: la columna de la Actividad 9 declara como alias sus 4 sub-actividades", () => {
+  const { ctx } = loadActivityGrades();
+  const acts = ctx.window.activityGradesManager.GRADE_CATALOG[FAMILY].activities;
+  const ciber = acts.find((a) => a.id === "cibersegAmenazas335");
+  assert.ok(ciber, "cibersegAmenazas335 debe seguir siendo la columna de la Actividad 9");
+  assert.deepEqual(
+    Array.from(ciber.aliasIds || []),
+    ["cibersegGuia335", "cibersegPhishing335", "cibersegChecklist335", "ciberseguridad335"]
+  );
+});
+
+test("lookupBankSolution combina el banco del id dueño con el de sus aliasIds", () => {
+  const bankStub = {
+    [FAMILY]: {
+      cibersegAmenazas335: { "ciberseg:amenazas:listado": "modelo amenazas" },
+      cibersegPhishing335: { "ciberseg:phishing:senales": "modelo phishing" },
+      cibersegChecklist335: { "ciberseg:checklist:antivirus": "cumple" },
+    },
+  };
+  const catalogStub = () => ({
+    [FAMILY]: {
+      activities: [
+        { id: "cibersegAmenazas335", aliasIds: ["cibersegGuia335", "cibersegPhishing335", "cibersegChecklist335", "ciberseguridad335"] },
+        { id: "extensiones331" },
+      ],
+    },
+  });
+  const lookup = extractLookupBankSolution()(bankStub, catalogStub);
+
+  const combined = lookup(FAMILY, "cibersegAmenazas335");
+  assert.equal(combined["ciberseg:amenazas:listado"], "modelo amenazas");
+  assert.equal(combined["ciberseg:phishing:senales"], "modelo phishing", "debe incluir el banco de los aliasIds");
+  assert.equal(combined["ciberseg:checklist:antivirus"], "cumple");
+  // Alias sin entrada en el banco (cibersegGuia335, ciberseguridad335) no rompen nada.
+  assert.equal(Object.keys(combined).length, 3);
+
+  // Una actividad sin aliasIds sigue igual que antes.
+  assert.equal(lookup(FAMILY, "extensiones331"), null, "sin entrada en el banco -> null");
+});
+
+test("relleno e2e: con la solucion COMBINADA embebida bajo cibersegAmenazas335 se llenan las sub-secciones", () => {
+  const { ctx, registerField } = loadActivityGrades();
+  const phishing = registerField("ciberseg:phishing:senales", "");
+  const checklist = registerField("ciberseg:checklist:antivirus", "");
+  const mgr = ctx.window.activityGradesManager;
+
+  mgr.setStudentGrades(USERNAME_KEY, FAMILY, {
+    cibersegAmenazas335: "A",
+    "cibersegAmenazas335:solution": {
+      "ciberseg:phishing:senales": "remitente extrano y enlaces acortados",
+      "ciberseg:checklist:antivirus": "cumple",
+    },
+  });
+
+  assert.equal(mgr.applyApprovedSolutionsForFamily(FAMILY), true);
+  assert.equal(phishing.value, "remitente extrano y enlaces acortados");
+  assert.equal(checklist.value, "cumple");
+});
+
 test("cableado del panel: boton de re-sincronizacion conectado al flujo correcto", () => {
   const admin = read(path.join("js", "admin_usuarios.js"));
   assert.match(admin, /id="grades-resync-btn"/);

@@ -925,6 +925,13 @@ function reflectGradesForGuia2() {
       extensiones331: applyExtensionesLock,
       sistemas332: applySistemasLock,
       colaborativas334: applyColaborativasLock,
+      // La nota de la Actividad 9 (cibersegAmenazas335) cubre las 4 sub-secciones
+      // (aliasIds en GRADE_CATALOG); el applier global re-aplica todas, asi los
+      // campos quedan bloqueados visualmente al calificar sin recargar.
+      cibersegAmenazas335: applyCiberseg335Lock,
+      cibersegGuia335: applyCiberseg335Lock,
+      cibersegPhishing335: applyCiberseg335Lock,
+      cibersegChecklist335: applyCiberseg335Lock,
       transferReto341: applyTransferRetoLock,
     },
     onChanged: function () {
