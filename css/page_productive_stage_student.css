@@ -340,6 +340,13 @@
   min-height: 46px;
 }
 
+.student-project-download-card__delivered {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--brand-700);
+}
+
 .student-project-download-card__unavailable {
   font-size: 0.85rem;
   color: var(--text-muted);

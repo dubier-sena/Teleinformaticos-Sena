@@ -21,9 +21,20 @@ function makeEl() {
 
 const GUIDE2_FILE = "grupo-10a-guia-02-herramientas-informaticas-digitales.html";
 
-function loadPortalHome() {
+function loadPortalHome(opts) {
   const calloutsBox = makeEl();
   const localStorageData = {};
+  // Etapa Productiva (jul-15): los documentos base sin entregar generan su
+  // propio aviso. Aqui se siembran como entregados por defecto para que los
+  // tests de firma / "No aprobado" sigan probando SOLO su caso; el aviso de
+  // documentos se prueba aparte con keepProductiveDocsPending.
+  if (!(opts && opts.keepProductiveDocsPending)) {
+    ["etapa_doc_ficha_inscripcion", "etapa_doc_acuerdo_etapa_productiva"].forEach((segment) => {
+      localStorageData[
+        `sena_portal:student:prueba.aprendiz:guide-data:etapa-productiva-estudiante:delivery:${segment}`
+      ] = JSON.stringify({ status: "delivered" });
+    });
+  }
   const ctx = {
     console,
     localStorage: {
@@ -99,6 +110,19 @@ test("renderCallouts: si cloudGetSignatureAuth revienta -> no muestra un aviso i
     await ctx.window.renderCallouts({ usernameKey: "prueba.aprendiz" }, []);
   });
   assert.equal(ctx.__calloutsBox.hidden, true, "si la lectura falla, mejor no mostrar un aviso que podria ser incorrecto");
+});
+
+test("renderCallouts: documentos base de Etapa Productiva sin entregar -> aviso con enlace", async () => {
+  const ctx = loadPortalHome({ keepProductiveDocsPending: true });
+  ctx.window._firebaseDb.cloudGetSignatureAuth = async () => ({ status: "delivered" });
+
+  await ctx.window.renderCallouts({ usernameKey: "prueba.aprendiz" }, []);
+
+  assert.equal(ctx.__calloutsBox.hidden, false, "con documentos base sin registrar, debe mostrar el aviso");
+  assert.match(ctx.__calloutsBox.innerHTML, /Etapa Productiva/);
+  assert.match(ctx.__calloutsBox.innerHTML, /Ficha de inscripción/);
+  assert.match(ctx.__calloutsBox.innerHTML, /Acuerdo de Etapa Productiva/);
+  assert.match(ctx.__calloutsBox.innerHTML, /etapa-productiva-estudiante\.html/);
 });
 
 // ── "No aprobado" en el home (pedido explicito del usuario 2026-07-09,

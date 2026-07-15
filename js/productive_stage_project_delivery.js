@@ -115,6 +115,23 @@
     return (urls && urls[String(ficha || "")]) || "";
   }
 
+  // Registro local de la entrega de un documento base (solo consta en el
+  // navegador donde se entregó). Lee la clave nueva (panelKey estable) y la
+  // histórica (derivada del deliveryLabel, entregas previas a jul-2026).
+  function getDocumentDeliveryRecord(doc) {
+    if (!doc.deliveryLabel || !sharedDelivery || typeof sharedDelivery.loadDeliveryRecord !== "function") {
+      return null;
+    }
+    const candidates = ["etapa-doc-" + doc.id, doc.deliveryLabel];
+    for (let i = 0; i < candidates.length; i++) {
+      const record = sharedDelivery.loadDeliveryRecord({ panelKey: candidates[i] });
+      if (record && record.status === "delivered") {
+        return record;
+      }
+    }
+    return null;
+  }
+
   function buildResourcesMarkup() {
     const session = currentState.session;
     // Los documentos base (ficha de inscripcion, acuerdo) se entregan ANTES de
@@ -141,6 +158,10 @@
                >Entregar</button>`
             : "";
 
+          const record = hasDelivery ? getDocumentDeliveryRecord(documentItem) : null;
+          const deliveredNote = record
+            ? `<p class="student-project-download-card__delivered">&#9989; Entregado el ${escapeHtml(formatDate(record.submittedAt || record.fechaEntrega || record.uploadedAt))}${record.savedFileName ? ` &mdash; ${escapeHtml(record.savedFileName)}` : ""}</p>`
+            : "";
           const resolvedHref = documentItem.hrefByFicha ? resolveFichaHref(ficha) : documentItem.href;
           const downloadBtn = resolvedHref
             ? `<a class="app-btn app-btn--primary" href="${escapeHtml(resolvedHref)}" target="_blank" rel="noopener noreferrer" ${documentItem.hrefByFicha ? "" : `download="${escapeHtml(documentItem.fileName)}"`}>
@@ -157,6 +178,7 @@
                 ${downloadBtn}
                 ${deliveryBtn}
               </div>
+              ${deliveredNote}
             </article>
           `;
         }).join("")}
@@ -227,6 +249,10 @@
       activityLabel: doc.deliveryLabel,
       activityTitle: project?.projectTitle || "Proyecto",
       activityNumber: "",
+      // Clave estable del registro local de la entrega (getDeliveryStorageKey).
+      // Las entregas anteriores a jul-2026 se guardaron sin panelKey (la clave
+      // se derivaba del activityLabel); getDocumentDeliveryRecord lee ambas.
+      panelKey: "etapa-doc-" + doc.id,
       projectId: project?.id || "",
       ficha: project?.ficha || session?.user?.ficha || "",
       grupo: project?.grupo || session?.user?.grupo || "",
@@ -317,6 +343,12 @@
     renderProjectResources();
     renderProjectDelivery();
   }
+
+  // Al completarse una entrega (evento del modulo de entregas), la card del
+  // documento se re-pinta para mostrar "Entregado" sin recargar la pagina.
+  document.addEventListener("guide-delivery-registered", function () {
+    renderProjectResources();
+  });
 
   window.productiveStageProjectDelivery = {
     render: render,
