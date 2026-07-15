@@ -2584,7 +2584,24 @@
 
   function lookupBankSolution(guideFamily, activityId) {
     const fam = (_gradeSolutionsBank || {})[guideFamily];
-    return (fam && fam[activityId]) || null;
+    if (!fam) return null;
+    // Una columna con aliasIds califica tambien sus actividades gemelas: la
+    // solucion embebida combina el banco del id dueño y el de cada alias (ej.
+    // cibersegAmenazas335 lleva tambien guia/phishing/checklist). Sin esto, al
+    // aprobar la Actividad 9 solo viajaban los 2 campos de "amenazas".
+    const act = (((getGradeCatalog()[guideFamily] || {}).activities) || [])
+      .find((a) => a.id === activityId);
+    const ids = [activityId].concat((act && act.aliasIds) || []);
+    const combined = {};
+    let found = false;
+    ids.forEach((id) => {
+      const entry = fam[id];
+      if (entry && typeof entry === "object" && Object.keys(entry).length) {
+        found = true;
+        Object.assign(combined, entry);
+      }
+    });
+    return found ? combined : null;
   }
 
   // Resuelve el archivo de guia (HTML) del aprendiz que pertenece a una familia de

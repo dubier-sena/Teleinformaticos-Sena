@@ -62,7 +62,14 @@
         { id: "sistemas332",      label: "3.3.2 Requerimientos mínimos" },
         { id: "suite333",         label: "3.3.3 Suite ofimática en acción" },
         { id: "colaborativas334", label: "3.3.4 Herramientas colaborativas" },
-        { id: "cibersegAmenazas335", label: "3.3.5 Ciberseguridad" },
+        // La Actividad 9 (3.3.5) se califica en UNA columna: la nota vive bajo
+        // cibersegAmenazas335 pero cubre las 4 sub-secciones + la entrega Drive
+        // (mismo patron que matriz322/fichaCaso). Sin estos aliasIds, al aprobar
+        // solo se embebia el banco de "amenazas" (2 campos): guia/phishing/
+        // checklist quedaban "calificadas pero vacias", sin bloquear y sin badge.
+        { id: "cibersegAmenazas335", label: "3.3.5 Ciberseguridad",
+          aliasIds: ["cibersegGuia335", "cibersegPhishing335", "cibersegChecklist335", "ciberseguridad335"],
+          aliasMounts: ["#cibersegGuia335DeadlineControls", "#cibersegPhishing335DeadlineControls", "#cibersegChecklist335DeadlineControls"] },
         { id: "transferReto341",  label: "3.4.1 Reto final" },
       ],
     },
