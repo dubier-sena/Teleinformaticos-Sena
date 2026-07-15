@@ -1998,6 +1998,15 @@
           writeProgressMeta(usernameKey, fileName, entry);
         }
       });
+
+      // El home (portal_home.js) se pinta ANTES de que esta restauracion
+      // termine (corre ~500ms despues de cargar): sin este aviso, en un equipo
+      // nuevo el aprendiz veia "0% / todo pendiente" hasta recargar.
+      try {
+        document.dispatchEvent(new CustomEvent("portal-student-restored", {
+          detail: { usernameKey: usernameKey },
+        }));
+      } catch (e2) { /* sin DOM (tests): ignorar */ }
     } catch (e) { /* silencioso */ }
   }
 
@@ -2637,6 +2646,7 @@
     cloudSaveCalendar: cloudSaveCalendar,
     cloudGetGuideData: cloudGetGuideData,
     cloudSaveGuideData: cloudSaveGuideData,
+    guideDataFileName: guideDataFileName,
     adminApplySolutionToGuide: adminApplySolutionToGuide,
     adminMarkActivityDelivered: adminMarkActivityDelivered,
     cloudGetGrades: cloudGetGrades,
