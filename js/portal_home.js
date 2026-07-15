@@ -363,6 +363,51 @@
     return rejected;
   }
 
+  // ── Etapa Productiva: documentos base (ficha de inscripción y acuerdo) ────
+  // La entrega de estos documentos queda registrada SOLO en el localStorage del
+  // navegador donde se hizo (shared_apps_script_delivery.js, clave
+  // "etapa-productiva-estudiante:delivery:{segment}"). Igual que el resto del
+  // home, el aviso es 100% local: una entrega hecha desde otro equipo no consta
+  // aquí — por eso el CTA es "Revisar" y no exige volver a entregar.
+  // Cada documento lleva dos segments: el panelKey estable actual
+  // ("etapa-doc-{id}" saneado) y la clave histórica derivada del deliveryLabel
+  // (entregas previas a jul-2026). La sincronía con
+  // productive_stage_project_delivery.js la verifica
+  // tests/productive_stage_docs_callout.test.cjs.
+  var PRODUCTIVE_BASE_DOCS = [
+    {
+      label: "Ficha de inscripción",
+      segments: ["etapa_doc_ficha_inscripcion", "Ficha_de_Inscripcion"],
+    },
+    {
+      label: "Acuerdo de Etapa Productiva",
+      segments: ["etapa_doc_acuerdo_etapa_productiva", "Acuerdo_de_Etapa_Productiva"],
+    },
+  ];
+
+  function productiveDocDeliveredLocally(usernameKey, doc) {
+    if (typeof auth.getStudentStorageKey !== "function") return true;
+    return doc.segments.some(function (segment) {
+      var key = auth.getStudentStorageKey(
+        usernameKey,
+        "etapa-productiva-estudiante:delivery:" + segment,
+        { area: "guide-data" }
+      );
+      try {
+        var record = JSON.parse(localStorage.getItem(key) || "null");
+        return !!(record && record.status === "delivered");
+      } catch (e) {
+        return false;
+      }
+    });
+  }
+
+  function pendingProductiveDocsFor(usernameKey) {
+    return PRODUCTIVE_BASE_DOCS.filter(function (doc) {
+      return !productiveDocDeliveredLocally(usernameKey, doc);
+    });
+  }
+
   function calloutsBox() {
     return byId("student-callouts");
   }
@@ -380,6 +425,14 @@
         cta: "Enviar",
       });
     }
+
+    pendingProductiveDocsFor(key).forEach(function (doc) {
+      items.push({
+        text: 'Etapa Productiva: falta entregar "' + doc.label + '".',
+        href: "etapa-productiva-estudiante.html",
+        cta: "Revisar",
+      });
+    });
 
     items = items.concat(rejectedActivitiesFor(files || [], key));
 
