@@ -3193,12 +3193,18 @@
     ctx.font = "700 34px Arial, sans-serif";
     ctx.fillText(user.fullName || rec.fullName || "Aprendiz", 64, 230);
 
+    const isManualRecord = rec.registeredBy === "admin-manual"
+      || /registrado por el instructor/i.test(String(rec.savedFileName || ""));
+    const evidenceLabel = isManualRecord
+      ? "Evidencia de firma del aprendiz (registro manual por contingencia)"
+      : (rec.savedFileName || rec.fileName || "");
+
     const details = [
       ["Ficha", user.ficha || rec.ficha || ""],
       ["Institucion", user.inst || user.institucion || rec.institucion || ""],
       ["Usuario", user.username || usernameKey],
       ["Fecha de envio", formatSignatureDate(rec.submittedAt) || ""],
-      ["Archivo", rec.savedFileName || rec.fileName || ""],
+      ["Evidencia", evidenceLabel],
     ];
 
     ctx.font = "700 22px Arial, sans-serif";
@@ -3224,7 +3230,7 @@
     ctx.font = "500 23px Arial, sans-serif";
     drawSignatureCertificateText(
       ctx,
-      "El estudiante subio su evidencia de firma y autorizo al instructor a usarla en documentacion institucional del SENA, segun el registro guardado en el portal.",
+      "El aprendiz autorizo al instructor a usar su firma en documentacion institucional del SENA. La evidencia de esa autorizacion queda soportada por el archivo enlazado y el registro guardado en el portal.",
       96,
       676,
       1190,
@@ -3308,7 +3314,11 @@
         ? '<span class="c-badge">Entregada</span>'
         : '<span class="c-badge c-badge--neutral">Pendiente</span>';
       const fecha = delivered ? escapeHtml(formatSignatureDate(rec.submittedAt)) : "&mdash;";
-      const archivo = delivered ? escapeHtml(rec.savedFileName || rec.fileName || "") : "&mdash;";
+      const archivo = delivered ? escapeHtml(
+        (/registrado por el instructor/i.test(String(rec.savedFileName || "")) || rec.registeredBy === "admin-manual")
+          ? "Evidencia de firma del aprendiz (registro manual por contingencia)"
+          : (rec.savedFileName || rec.fileName || "")
+      ) : "&mdash;";
       const enlace = delivered && rec.driveUrl
         ? `<a href="${escapeHtml(rec.driveUrl)}" target="_blank" rel="noopener">Ver archivo</a>`
         : "&mdash;";
@@ -3372,7 +3382,7 @@
         institucion: (user && user.inst) || "",
         submittedAt,
         fileName: "",
-        savedFileName: "Registrado por el instructor (ver enlace)",
+        savedFileName: "Evidencia de firma del aprendiz (registro manual por contingencia)",
         driveUrl: driveUrl.trim(),
         status: "delivered",
         registeredBy: "admin-manual",
