@@ -183,6 +183,53 @@
     }
   }
 
+  // ── Hidratación de equipo nuevo (navegador sin datos locales) ─────────────
+  // El estado de cada guia solo se copiaba a localStorage al ABRIR esa guia:
+  // en un PC nuevo o ventana privada el home mostraba "0% / todo pendiente"
+  // hasta entrar a los modulos uno por uno. Esto baja UNA vez el estado de las
+  // guias SIN copia local (mismo doc, scope y alias que usa la propia guia) y
+  // lo deja bajo la clave local real. En visitas normales (con copia local)
+  // sigue siendo 0 lecturas. El % oficial llega aparte: firebase_db restaura
+  // el progreso al cargar y dispara "portal-student-restored" (re-render).
+  var hydrateTriedFiles = {};
+  async function hydrateMissingGuideStates(user, files) {
+    var db = window._firebaseDb;
+    var std = window.ActivityStandard;
+    if (!db || typeof db.cloudGetGuideData !== "function") return false;
+    if (typeof auth.getStudentStorageKey !== "function") return false;
+    if (typeof db.shouldDeferCloudReads === "function" && db.shouldDeferCloudReads()) return false;
+    var usernameKey = user.usernameKey || user.username;
+    if (!usernameKey) return false;
+    var scope = "student:" + usernameKey;
+    var changed = false;
+    await Promise.all((files || []).map(async function (file) {
+      if (hydrateTriedFiles[file]) return;
+      hydrateTriedFiles[file] = true;
+      var stateKey = REAL_STATE_KEY_ALIASES[file] ||
+        (std && typeof std.getStateKeyForGuide === "function" ? std.getStateKeyForGuide(file) : "");
+      if (!stateKey) return;
+      var storageKey = auth.getStudentStorageKey(usernameKey, stateKey, { area: "guide-data" });
+      try { if (localStorage.getItem(storageKey)) return; } catch (e) { return; }
+      var cloudFile = typeof db.guideDataFileName === "function" ? db.guideDataFileName(file) : file;
+      var snapshot = null;
+      try { snapshot = await db.cloudGetGuideData(scope, cloudFile); } catch (e) { return; }
+      var state = snapshot && typeof snapshot.state === "object" && snapshot.state
+        ? snapshot.state
+        : (snapshot && typeof snapshot.data === "object" && snapshot.data ? snapshot.data : null);
+      if (!state || !Object.keys(state).length) return;
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(state));
+        // El __meta con updatedAt preserva el LWW de la guia al abrirla luego.
+        localStorage.setItem(storageKey + "__meta", JSON.stringify({
+          updatedAt: (snapshot && snapshot.updatedAt) || state.updatedAt || new Date().toISOString(),
+          updatedBy: "home-hydrate",
+        }));
+        changed = true;
+      } catch (e) { /* almacenamiento lleno: la guia hidratara al abrirse */ }
+    }));
+    return changed;
+  }
+
   // Devuelve las etiquetas de las actividades AUN pendientes de esta guia.
   // Varias sub-actividades comparten "number" cuando son partes de una misma
   // actividad visible (p. ej. las 5 partes de Ciberseguridad en Guia 2) --
@@ -304,7 +351,23 @@
       .join("");
 
     renderCallouts(user, files);
+
+    // Equipo nuevo: baja los estados de guia que falten y re-pinta una vez.
+    // hydrateTriedFiles evita lecturas repetidas (y el re-render en bucle).
+    hydrateMissingGuideStates(user, files).then(function (changed) {
+      if (changed) renderStudent(session);
+    }).catch(function () {});
   }
+
+  // El restore de "cambio de equipo" (usuario + % de progreso) corre ~500ms
+  // despues de cargar la pagina (firebase_db.js): cuando termina, el home ya
+  // se pinto con los datos vacios. Re-render con los metas ya restaurados.
+  document.addEventListener("portal-student-restored", function () {
+    var session = typeof auth.getCurrentSession === "function" ? auth.getCurrentSession() : null;
+    if (session && session.role === "student" && byId("student-guides")) {
+      renderStudent(session);
+    }
+  });
 
   // ── Avisos arriba de "Mis guías" (firma sin enviar, actividades no
   //    aprobadas, etc.) ─────────────────────────────────────────────────────
