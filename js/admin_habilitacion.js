@@ -205,9 +205,11 @@
 
         activities.forEach((activity) => {
           if (!Array.isArray(activity.keys) || activity.keys.length === 0) return;
-          const lockKey = activity.keys.find((k) => /-locked$/.test(k));
-          if (!lockKey) return;
-          if (state[lockKey] !== true) return;
+          // Una actividad puede tener varias llaves -locked (canonica + legacy,
+          // ej. transferReto341 o quiz312): basta que cualquiera este activa.
+          const lockKeys = activity.keys.filter((k) => /-locked$/.test(k));
+          if (lockKeys.length === 0) return;
+          if (!lockKeys.some((k) => state[k] === true)) return;
 
           // También chequear deadline-lock
           let deadlineLocked = false;

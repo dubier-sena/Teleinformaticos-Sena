@@ -94,6 +94,9 @@
       var keys = isFileOnly
         ? [act.id + "-delivery", act.id + "-locked"]
         : (act.formFields || []).concat([act.id + "-locked"]);
+      if (Array.isArray(act.legacyLockKeys) && act.legacyLockKeys.length) {
+        keys = keys.concat(act.legacyLockKeys);
+      }
       return {
         id: act.id,
         label: "Actividad " + act.number + " - " + act.label,
@@ -1201,7 +1204,7 @@
         return { kind: "delivered", when: record.submittedAt || record.fechaEntrega || "" };
       }
     }
-    if (state && state[act.id + "-locked"] === true && (act.type === "form" || act.type === "both")) {
+    if (state && (act.type === "form" || act.type === "both") && _anyLockKeySet(state, act)) {
       return { kind: "saved", when: "" };
     }
     // Guias que NO usan el bloqueo por actividad (campos libres generados en
@@ -1214,6 +1217,15 @@
       }
     }
     return { kind: "pending", when: "" };
+  }
+
+  // Ademas de la llave canonica {actId}-locked, una actividad puede declarar
+  // llaves de bloqueo legacy (act.legacyLockKeys) que su guia escribia antes de
+  // entrar al catalogo (ej. transferReto341 -> "transfer-reto-locked" en Guia 2).
+  function _anyLockKeySet(state, act) {
+    if (state[act.id + "-locked"] === true) return true;
+    var legacy = Array.isArray(act.legacyLockKeys) ? act.legacyLockKeys : [];
+    return legacy.some(function (key) { return state[key] === true; });
   }
 
   function _hasContent(value) {

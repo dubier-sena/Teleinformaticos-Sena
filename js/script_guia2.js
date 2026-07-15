@@ -5888,7 +5888,9 @@ function guardarColaborativas334() {
 window.guardarColaborativas334 = guardarColaborativas334;
 
 function applyTransferRetoLock() {
-  const locked = Boolean(state["transfer-reto-locked"]);
+  // Llave legacy del boton Guardar + llave canonica del catalogo (la escribe
+  // reflectGradesIntoGuideState al calificar): cualquiera de las dos bloquea.
+  const locked = Boolean(state["transfer-reto-locked"] || state["transferReto341-locked"]);
   applyOptionalDeadlineGate("transferReto341", {
     isLocked: locked,
     fieldSelector: TRANSFER_RETO_ACTIVITY_STORES.map((key) => `[data-store="${key}"]`).join(","),
@@ -5924,6 +5926,7 @@ function guardarTransferReto341() {
     state[key] = readStoreValue(key);
   });
   state["transfer-reto-locked"] = true;
+  state["transferReto341-locked"] = true;
   saveState();
   applyTransferRetoLock();
 }
