@@ -68,6 +68,9 @@
       <a class="nav-link" href="#evidencias" onclick="setActive(this)">
         <span class="icon">&#128202;</span> Evidencias
       </a>
+      <a class="nav-link" href="#materiales" onclick="setActive(this)">
+        <span class="icon">&#128230;</span> Material de apoyo
+      </a>
       <a class="nav-link" href="#glosario" onclick="setActive(this)">
         <span class="icon">&#128214;</span> Glosario
       </a>
@@ -1074,6 +1077,65 @@
                 </tr>
               </tbody>
             </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════ MATERIAL DE APOYO ═══════════════════════╗ -->
+      <div id="materiales" class="section-title">Material de Apoyo</div>
+      <p class="section-intro">📍 <strong>Documentos para descargar:</strong> aquí está la normativa y las guías oficiales que necesitas para estudiar, elaborar los documentos técnicos y sustentar el Plan con fuentes reales.</p>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#e8f5e9">&#128230;</div>
+            <div>
+              <h3>Documentos oficiales de consulta</h3>
+              <p>13 documentos en PDF &middot; normativa, marcos de referencia y gu&iacute;as t&eacute;cnicas</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="gnote gnote--recuerda"><div class="gnote__label">&#128161; C&oacute;mo usar este material</div>
+            <p>No tienes que leerlo todo: la columna <strong>&laquo;&Uacute;salo en&raquo;</strong> te dice en qu&eacute;
+            actividad te sirve cada documento. Estos PDF tambi&eacute;n son fuentes v&aacute;lidas para la
+            bibliograf&iacute;a del Plan Integral (Act. 3.4.1).</p></div>
+
+          <div class="table-scroll" style="margin-top:14px">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Documento</th>
+                  <th style="width:24%">&Uacute;salo en</th>
+                  <th style="width:110px">Descarga</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>NIST CSF 2.0 (en espa&ntilde;ol)</strong> &mdash; Marco de Ciberseguridad: Identificar, Proteger, Detectar, Responder, Recuperar.</td><td>3.2.1 &middot; 3.4.1</td><td><a href="assets/materiales/guia4ciber/NIST_CSF_2_0_es.pdf" target="_blank" rel="noopener">Abrir PDF</a></td></tr>
+                <tr><td><strong>CONPES 3995 (2020)</strong> &mdash; Pol&iacute;tica Nacional de Confianza y Seguridad Digital de Colombia.</td><td>3.2.1</td><td><a href="assets/materiales/guia4ciber/CONPES_3995_2020.pdf" target="_blank" rel="noopener">Abrir PDF</a></td></tr>
+                <tr><td><strong>Estrategia Nacional de Seguridad Digital 2025-2027</strong> (MinTIC) &mdash; contexto de pa&iacute;s para la ciberseguridad.</td><td>3.2.1</td><td><a href="assets/materiales/guia4ciber/Estrategia_Nacional_Seguridad_Digital_Colombia_2025_2027.pdf" target="_blank" rel="noopener">Abrir PDF</a></td></tr>
+                <tr><td><strong>INCIBE &mdash; Protecci&oacute;n de la informaci&oacute;n</strong> &mdash; gu&iacute;a pr&aacute;ctica de ciberseguridad para empresas peque&ntilde;as.</td><td>3.2.1 &middot; 3.3.3 (doc. B)</td><td><a href="assets/materiales/guia4ciber/INCIBE_Proteccion_de_la_informacion_mirror.pdf" target="_blank" rel="noopener">Abrir PDF</a></td></tr>
+                <tr><td><strong>INCIBE &mdash; Copias de seguridad y borrado seguro: 12 consejos</strong>.</td><td>3.3.2 (control 7) &middot; 3.3.3 (doc. D)</td><td><a href="assets/materiales/guia4ciber/12_consejos_copias_borrado_seguro.pdf" target="_blank" rel="noopener">Abrir PDF</a></td></tr>
+                <tr><td><strong>MinTIC &mdash; Gesti&oacute;n y Clasificaci&oacute;n de Activos de Informaci&oacute;n (2016)</strong> &mdash; c&oacute;mo inventariar y clasificar activos.</td><td>3.3.3 (doc. C)</td><td><a href="assets/materiales/guia4ciber/MinTIC_Guia_Gestion_Clasificacion_Activos_2016.pdf" target="_blank" rel="noopener">Abrir PDF</a></td></tr>
+                <tr><td><strong>MinTIC &mdash; Lineamientos de Inventario y Clasificaci&oacute;n de Activos (2025)</strong> &mdash; versi&oacute;n actualizada de los lineamientos.</td><td>3.3.3 (doc. C)</td><td><a href="assets/materiales/guia4ciber/MinTIC_Lineamientos_Inventario_Clasificacion_Activos_2025.pdf" target="_blank" rel="noopener">Abrir PDF</a></td></tr>
+                <tr><td><strong>MinTIC G7 &mdash; Gu&iacute;a de Gesti&oacute;n de Riesgos</strong> &mdash; c&oacute;mo valorar probabilidad, impacto y criticidad.</td><td>3.3.3 (doc. C) &middot; 3.4.1</td><td><a href="assets/materiales/guia4ciber/MinTIC_Guia_Gestion_Riesgos_G7.pdf" target="_blank" rel="noopener">Abrir PDF</a></td></tr>
+                <tr><td><strong>MinTIC &mdash; Lineamientos del Modelo de Gesti&oacute;n de Riesgos de Seguridad (2025)</strong>.</td><td>3.4.1</td><td><a href="assets/materiales/guia4ciber/MinTIC_Lineamientos_Modelo_Gestion_Riesgo_SI_2025.pdf" target="_blank" rel="noopener">Abrir PDF</a></td></tr>
+                <tr><td><strong>MinTIC G21 &mdash; Gesti&oacute;n y Clasificaci&oacute;n de Incidentes de Seguridad</strong> &mdash; base del protocolo de respuesta ante incidentes.</td><td>3.2.1 &middot; 3.4.1</td><td><a href="assets/materiales/guia4ciber/MinTIC_Guia_Gestion_Clasificacion_Incidentes_G21.pdf" target="_blank" rel="noopener">Abrir PDF</a></td></tr>
+                <tr><td><strong>MinTIC G9 &mdash; Indicadores de Gesti&oacute;n de Seguridad</strong> &mdash; c&oacute;mo medir que los controles funcionan.</td><td>3.4.1 (recomendaciones)</td><td><a href="assets/materiales/guia4ciber/MinTIC_Guia_Indicadores_Gestion_Seguridad_G9.pdf" target="_blank" rel="noopener">Abrir PDF</a></td></tr>
+                <tr><td><strong>MinTIC G12 &mdash; Seguridad en la Nube</strong> &mdash; criterios para usar la nube como medio de copia (estrategia 3-2-1).</td><td>3.3.3 (doc. D) &middot; 3.4.1</td><td><a href="assets/materiales/guia4ciber/MinTIC_Guia_Seguridad_en_la_Nube_G12.pdf" target="_blank" rel="noopener">Abrir PDF</a></td></tr>
+                <tr><td><strong>MinTIC &mdash; Modelo de Seguridad y Privacidad de la Informaci&oacute;n (MSPI)</strong> &mdash; modelo de referencia para la pol&iacute;tica de seguridad.</td><td>3.3.3 (doc. B) &middot; 3.4.1</td><td><a href="assets/materiales/guia4ciber/MinTIC_Modelo_Seguridad_Privacidad_Informacion_MSPI.pdf" target="_blank" rel="noopener">Abrir PDF</a></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="info-box green" style="margin-top:16px">
+            <div class="label">&#128295; Herramientas para el diagn&oacute;stico y el backup</div>
+            <p>Desc&aacute;rgalas siempre de la fuente oficial (buena pr&aacute;ctica de ciberseguridad):
+            <a href="https://www.belarc.com/products/belarc-advisor" target="_blank" rel="noopener"><strong>Belarc Advisor</strong></a>
+            para el diagn&oacute;stico (Act. 3.3.1) y
+            <a href="https://www.easeus.com/backup-software/tb-free.html" target="_blank" rel="noopener"><strong>EaseUS Todo Backup Free</strong></a>
+            o el Historial de archivos de Windows para la copia de seguridad (Act. 3.3.2, control 7).
+            Si el internet del aula falla, el instructor tiene los instaladores listos para compartir.</p>
           </div>
         </div>
       </div>
