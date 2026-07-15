@@ -173,6 +173,28 @@ test("Guia 4 ciber: router y contexts apuntan al script, bundle y boot correctos
   assert.ok(ctxBundle.includes("jfk-guia4ciber-10a") && ctxBundle.includes("jfk-guia4ciber-10b"), "regenera data/page_runtime_contexts_bundle.js desde el JSON");
 });
 
+test("Guia 4 ciber: todo el material de apoyo enlazado existe en assets/materiales/guia4ciber (y viceversa)", () => {
+  const MATERIALS_DIR = "assets/materiales/guia4ciber";
+  const linked = Array.from(
+    partialHtml.matchAll(/href="(assets\/materiales\/guia4ciber\/[^"]+)"/g),
+    (m) => m[1]
+  );
+  assert.ok(linked.length >= 13, `el partial deberia enlazar al menos 13 PDF del material (hay ${linked.length})`);
+  linked.forEach((rel) => {
+    assert.ok(fs.existsSync(path.join(ROOT, rel)), `enlace roto: ${rel} no existe en el repo`);
+  });
+  const onDisk = fs.readdirSync(path.join(ROOT, MATERIALS_DIR)).filter((f) => f.toLowerCase().endsWith(".pdf"));
+  const linkedNames = new Set(linked.map((rel) => rel.split("/").pop()));
+  onDisk.forEach((f) => {
+    assert.ok(linkedNames.has(f), `el PDF ${f} esta en ${MATERIALS_DIR} pero la guia no lo enlaza`);
+  });
+  // Los instaladores .exe NO van al repo publico: se enlaza la fuente oficial.
+  const exes = fs.readdirSync(path.join(ROOT, MATERIALS_DIR)).filter((f) => f.toLowerCase().endsWith(".exe"));
+  assert.deepEqual(exes, [], "no debe haber ejecutables dentro de assets/materiales/guia4ciber");
+  assert.match(partialHtml, /belarc\.com/, "falta el enlace oficial de Belarc Advisor");
+  assert.match(partialHtml, /easeus\.com/, "falta el enlace oficial de EaseUS Todo Backup");
+});
+
 test("Guia 4 ciber: selector de equipo del script y del partial usan las mismas actividades", () => {
   const m = scriptSrc.match(/EQUIPO_G4C_ACTIVITY_IDS = \[([\s\S]*?)\]/);
   assert.ok(m, "no se encontro EQUIPO_G4C_ACTIVITY_IDS");
