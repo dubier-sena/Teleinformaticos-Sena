@@ -21,7 +21,9 @@ test("panel de autorizaciones permite descargar constancia PNG por aprendiz entr
   assert.match(script, /Estado: AUTORIZADO Y ENTREGADO/);
   assert.match(script, /El aprendiz autorizo al instructor a usar su firma/);
   assert.match(script, /Evidencia de firma del aprendiz \(registro manual por contingencia\)/);
+  assert.match(script, /<th>Evidencia<\/th>/);
   assert.match(script, /downloadSignatureAuthCertificate\(certBtn\.dataset\.firmaUser\)/);
   assert.doesNotMatch(script, /Registrado por el instructor/);
+  assert.doesNotMatch(script, /El estudiante subio su evidencia de firma y autorizo/);
   assert.match(css, /\.firma-actions/);
 });
