@@ -15,10 +15,11 @@
 // se deja fuera del banco a proposito: inventar un nombre de negocio que no
 // coincida con el caso real del aprendiz seria incorrecto.
 //
-// El checklist de competencias digitales (colaborativas334 / "checklist:*")
-// es una AUTOEVALUACION honesta del aprendiz, no una pregunta con respuesta
-// correcta -- decision explicita del usuario de NO agregarle banco, para que
-// no se rellene con una autoevaluacion falsa.
+// El checklist de competencias digitales (colaborativas334 / "checklist:*"):
+// primero se dejo SIN banco (jul-14, autoevaluacion honesta), pero el usuario
+// REVIRTIO esa decision el jul-15 al validar en vivo: una cuenta calificada
+// mostraba la lista de 15 items en blanco. Ahora el banco rellena los 15 con
+// "domino" (nivel maximo) para que la actividad aprobada se vea completa.
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
@@ -129,11 +130,52 @@ test("cibersegGuia335 NO incluye 'ciberseg:guia:actor' (evita inventar un nombre
   assert.equal(Object.prototype.hasOwnProperty.call(entry, "ciberseg:guia:actor"), false);
 });
 
-test("colaborativas334 sigue SIN banco para el checklist de competencias digitales (autoevaluacion, no pregunta con respuesta correcta)", () => {
+test("colaborativas334 rellena los 15 items del checklist de competencias digitales con un nivel valido (pedido jul-15)", () => {
   const bank = loadBank();
   const entry = bank[FAMILY].colaborativas334 || {};
-  const hasChecklistKey = Object.keys(entry).some((key) => key.startsWith("checklist:"));
-  assert.equal(hasChecklistKey, false, "colaborativas334 no deberia tener llaves 'checklist:*' -- es una autoevaluacion honesta del aprendiz");
+  // Ids reales de digitalCompetencyChecklist en script_guia2.js.
+  const script = fs.readFileSync(path.join(root, "js", "script_guia2.js"), "utf8");
+  const listMatch = script.match(/const digitalCompetencyChecklist = \[[\s\S]*?\n\];/);
+  assert.ok(listMatch, "no se encontro digitalCompetencyChecklist en script_guia2.js");
+  const ids = [...listMatch[0].matchAll(/id: "([^"]+)"/g)].map((m) => m[1]);
+  assert.equal(ids.length, 15, "el checklist de competencias digitales deberia tener 15 items");
+
+  // Valores validos del <select> (DIGITAL_CHECKLIST_LEVELS + los que cuenta
+  // updateDigitalChecklistSummary): un valor fuera de esta lista dejaria el
+  // select sin seleccion y la fila seguiria "pendiente".
+  const validLevels = new Set(["domino", "reforzar", "nopracticado"]);
+  ids.forEach((id) => {
+    const value = entry["checklist:" + id];
+    assert.ok(
+      typeof value === "string" && value.trim().length > 0,
+      `falta la respuesta modelo 'checklist:${id}' en colaborativas334`
+    );
+    assert.ok(validLevels.has(value), `valor invalido '${value}' para 'checklist:${id}' (debe ser domino/reforzar/nopracticado)`);
+  });
+});
+
+test("applyApprovedSolutionsForFamily rellena los selects vacios del checklist de competencias y respeta los ya respondidos", () => {
+  const bank = loadBank();
+  const solution = bank[FAMILY].colaborativas334;
+
+  const { ctx, registerField } = loadActivityGrades();
+  const empty = registerField("checklist:doc-word", "");
+  const answered = registerField("checklist:excel-formulas", "reforzar");
+
+  ctx.solutionForTest = solution;
+  vm.runInContext(
+    `window.activityGradesManager.setStudentGrades("${USERNAME_KEY}", "${FAMILY}", {
+      colaborativas334: "A",
+      "colaborativas334:solution": solutionForTest,
+    })`,
+    ctx
+  );
+
+  const filled = vm.runInContext(`window.activityGradesManager.applyApprovedSolutionsForFamily("${FAMILY}")`, ctx);
+
+  assert.equal(filled, true, "debe reportar que relleno algo");
+  assert.equal(empty.value, "domino", "el item vacio debe quedar en 'domino'");
+  assert.equal(answered.value, "reforzar", "la autoevaluacion que el aprendiz SI hizo se respeta");
 });
 
 test("applyApprovedSolutionsForFamily rellena de principio a fin los campos vacios de cibersegAmenazas335 con el contenido REAL del banco", () => {
