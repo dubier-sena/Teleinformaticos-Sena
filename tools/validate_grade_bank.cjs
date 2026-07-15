@@ -45,6 +45,15 @@ const DYNAMIC = {
     { script: "js/script_guia2.js", arr: "extensions",         keys: (id) => [`extension:${id}:program`, `extension:${id}:description`] },
     { script: "js/script_guia2.js", arr: "systems",            keys: (id) => ["processor","ram","disk","source"].map((s) => `system:${id}:${s}`) },
     { script: "js/script_guia2.js", arr: "collaborativeTools", keys: (id) => ["function","advantage","limit","license"].map((s) => `collab:${id}:${s}`) },
+    { script: "js/script_guia2.js", arr: "digitalCompetencyChecklist",    keys: (id) => [`checklist:${id}`] },
+    { script: "js/script_guia2.js", arr: "CIBERSEG_335_CHECKLIST_ITEMS",  keys: (id) => [`ciberseg:checklist:${id}`] },
+    // Ciberseguridad 3.3.5: las demas sub-secciones declaran sus campos como
+    // objetos { key: "ciberseg:..." } dentro del script (no como data-store literal).
+    { script: "js/script_guia2.js", literal: /key:\s*"(ciberseg:[^"]+)"/g },
+    // Ficha de caso (nota compartida con matriz322): la pagina auxiliar genera
+    // data-store "fichacaso-{slug}-{a..d}" con los slugs de js/fichas_casos.js.
+    { script: "js/fichas_casos.js", literal: /slug:\s*"([^"]+)"/g,
+      keys: (slug) => ["a","b","c","d"].map((l) => `fichacaso-${slug}-${l}`) },
   ],
   "guia-06-planificar": [
     { script: "js/script_guia6.js", arr: "installationTools",  keys: (id) => ["inst_source","inst_version","inst_verify","inst_done","inst_notes"].map((p) => `${p}_${id}`) },
@@ -55,7 +64,13 @@ const DYNAMIC = {
 
 // Partials (fuente de los campos estáticos) por familia.
 const PARTIALS = {
-  "guia-02-herramientas": ["partials/guia-02-herramientas-content.html"],
+  "guia-02-herramientas": [
+    "partials/guia-02-herramientas-content.html",
+    // Actividades que viven en paginas auxiliares (10a y 10b comparten data-store):
+    "pages/auxiliares/grupo-10a-guia-02-actividad-322-matriz.html",
+    "pages/auxiliares/grupo-10a-guia-02-ficha-caso.html",
+    "pages/auxiliares/grupo-10a-guia-02-actividad-4-formulario.html",
+  ],
   "guia-05-herramientas": ["partials/guia-05-herramientas-content.html"],
   "guia-06-planificar":   ["partials/guia-06-planificar-content.html"],
   "guia-redes-rap01":     ["partials/guia-redes-rap01-content.html", "partials/guia-redes-rap02-content.html"],
@@ -67,6 +82,12 @@ function currentKeys(family) {
   (PARTIALS[family] || []).forEach((p) => literalStores(read(p)).forEach((k) => set.add(k)));
   (DYNAMIC[family] || []).forEach((gen) => {
     const script = read(gen.script);
+    if (gen.literal) {
+      [...script.matchAll(gen.literal)].forEach((m) => {
+        (gen.keys ? gen.keys(m[1]) : [m[1]]).forEach((k) => set.add(k));
+      });
+      return;
+    }
     arrayIds(script, gen.arr).forEach((id) => gen.keys(id).forEach((k) => set.add(k)));
   });
   return set;
