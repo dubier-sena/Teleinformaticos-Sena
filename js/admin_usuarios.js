@@ -3133,6 +3133,118 @@
     return d.toLocaleString("es-CO", { year: "numeric", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" });
   }
 
+  let _signatureAuthRecordsByUser = {};
+
+  function sanitizeSignatureFilePart(value) {
+    return String(value || "aprendiz")
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9_-]+/g, "_")
+      .replace(/^_+|_+$/g, "")
+      .slice(0, 80) || "aprendiz";
+  }
+
+  function drawSignatureCertificateText(ctx, text, x, y, maxWidth, lineHeight) {
+    const words = String(text || "").split(/\s+/).filter(Boolean);
+    let line = "";
+    let currentY = y;
+    words.forEach((word) => {
+      const testLine = line ? line + " " + word : word;
+      if (ctx.measureText(testLine).width > maxWidth && line) {
+        ctx.fillText(line, x, currentY);
+        line = word;
+        currentY += lineHeight;
+      } else {
+        line = testLine;
+      }
+    });
+    if (line) ctx.fillText(line, x, currentY);
+    return currentY + lineHeight;
+  }
+
+  function downloadSignatureAuthCertificate(usernameKey) {
+    const item = _signatureAuthRecordsByUser[usernameKey];
+    if (!item || !item.record || item.record.status !== "delivered") {
+      window.portalSaveStatus?.error("No hay una autorizacion entregada para generar la imagen.");
+      return;
+    }
+
+    const user = item.user || {};
+    const rec = item.record || {};
+    const canvas = document.createElement("canvas");
+    canvas.width = 1400;
+    canvas.height = 900;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.fillStyle = "#f8fafc";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#0f5132";
+    ctx.fillRect(0, 0, canvas.width, 150);
+    ctx.fillStyle = "#39a935";
+    ctx.fillRect(0, 150, canvas.width, 10);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "700 42px Arial, sans-serif";
+    ctx.fillText("Constancia de autorizacion de firma", 64, 74);
+    ctx.font = "500 24px Arial, sans-serif";
+    ctx.fillText("SENA - Sistemas Teleinformaticos", 64, 116);
+
+    ctx.fillStyle = "#0f172a";
+    ctx.font = "700 34px Arial, sans-serif";
+    ctx.fillText(user.fullName || rec.fullName || "Aprendiz", 64, 230);
+
+    const details = [
+      ["Ficha", user.ficha || rec.ficha || ""],
+      ["Institucion", user.inst || user.institucion || rec.institucion || ""],
+      ["Usuario", user.username || usernameKey],
+      ["Fecha de envio", formatSignatureDate(rec.submittedAt) || ""],
+      ["Archivo", rec.savedFileName || rec.fileName || ""],
+    ];
+
+    ctx.font = "700 22px Arial, sans-serif";
+    let y = 286;
+    details.forEach(([label, value]) => {
+      ctx.fillStyle = "#475569";
+      ctx.fillText(label + ":", 64, y);
+      ctx.fillStyle = "#0f172a";
+      ctx.font = "600 22px Arial, sans-serif";
+      drawSignatureCertificateText(ctx, value || "-", 250, y, 1030, 28);
+      ctx.font = "700 22px Arial, sans-serif";
+      y += 54;
+    });
+
+    ctx.fillStyle = "#dcfce7";
+    ctx.fillRect(64, 582, 1272, 150);
+    ctx.strokeStyle = "#86efac";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(64, 582, 1272, 150);
+    ctx.fillStyle = "#14532d";
+    ctx.font = "700 28px Arial, sans-serif";
+    ctx.fillText("Estado: AUTORIZADO Y ENTREGADO", 96, 632);
+    ctx.font = "500 23px Arial, sans-serif";
+    drawSignatureCertificateText(
+      ctx,
+      "El estudiante subio su evidencia de firma y autorizo al instructor a usarla en documentacion institucional del SENA, segun el registro guardado en el portal.",
+      96,
+      676,
+      1190,
+      32
+    );
+
+    ctx.fillStyle = "#334155";
+    ctx.font = "500 20px Arial, sans-serif";
+    drawSignatureCertificateText(ctx, "Enlace de verificacion Drive: " + (rec.driveUrl || "No disponible"), 64, 790, 1270, 28);
+    ctx.fillStyle = "#64748b";
+    ctx.font = "500 18px Arial, sans-serif";
+    ctx.fillText("Generado desde el panel administrativo el " + formatSignatureDate(new Date().toISOString()), 64, 850);
+
+    const link = document.createElement("a");
+    link.download = "Constancia_Firma_" + sanitizeSignatureFilePart(user.fullName || rec.fullName || usernameKey) + ".png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+    window.portalSaveStatus?.saved("Constancia de firma descargada.");
+  }
+
   function renderSignatureAuth() {
     const host = byId("module-autorizaciones");
     if (!host) return;
@@ -3187,8 +3299,10 @@
       }
       recordsByUser[user.usernameKey] = rec;
     }));
+    _signatureAuthRecordsByUser = {};
     const rows = students.map((user) => {
       const rec = recordsByUser[user.usernameKey];
+      _signatureAuthRecordsByUser[user.usernameKey] = { user, record: rec };
       const delivered = !!(rec && rec.status === "delivered");
       const estado = delivered
         ? '<span class="c-badge">Entregada</span>'
@@ -3199,7 +3313,7 @@
         ? `<a href="${escapeHtml(rec.driveUrl)}" target="_blank" rel="noopener">Ver archivo</a>`
         : "&mdash;";
       const accion = delivered
-        ? `<button type="button" class="btn secondary firma-reenable-btn" data-firma-user="${escapeHtml(user.usernameKey)}">Re-habilitar</button>`
+        ? `<div class="firma-actions"><button type="button" class="btn secondary firma-certificate-btn" data-firma-user="${escapeHtml(user.usernameKey)}">Descargar constancia</button><button type="button" class="btn secondary firma-reenable-btn" data-firma-user="${escapeHtml(user.usernameKey)}">Re-habilitar</button></div>`
         : `<button type="button" class="btn secondary firma-manual-btn" data-firma-user="${escapeHtml(user.usernameKey)}" data-firma-name="${escapeHtml(user.fullName)}">Registrar entrega manual</button>`;
       return `<tr><td>${escapeHtml(user.fullName)}</td><td>${estado}</td><td>${fecha}</td><td>${archivo}</td><td>${enlace}</td><td>${accion}</td></tr>`;
     }).join("");
@@ -4019,13 +4133,15 @@
       const reasonSel = target && target.closest ? target.closest(".grade-reason-select") : null;
       if (reasonSel) handleGradeReasonChange(reasonSel);
     });
-    // Modulo Autorizaciones de firma: filtro por ficha + boton re-habilitar.
+    // Modulo Autorizaciones de firma: filtro, constancia y acciones admin.
     byId("module-autorizaciones")?.addEventListener("change", (event) => {
       if (event.target && event.target.id === "firma-ficha-filter") {
         renderSignatureAuthGrid();
       }
     });
     byId("module-autorizaciones")?.addEventListener("click", (event) => {
+      const certBtn = event.target && event.target.closest ? event.target.closest(".firma-certificate-btn") : null;
+      if (certBtn && certBtn.dataset.firmaUser) { downloadSignatureAuthCertificate(certBtn.dataset.firmaUser); return; }
       const reBtn = event.target && event.target.closest ? event.target.closest(".firma-reenable-btn") : null;
       if (reBtn && reBtn.dataset.firmaUser) { handleSignatureReenable(reBtn.dataset.firmaUser); return; }
       const manualBtn = event.target && event.target.closest ? event.target.closest(".firma-manual-btn") : null;
