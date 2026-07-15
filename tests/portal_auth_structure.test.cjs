@@ -155,3 +155,24 @@ test("portal auth preserves the academic identity fields for real auth migration
   assert.equal(registration.user.grado, "10");
   assert.equal(registration.user.grupo, "10A");
 });
+
+test("all guides enabled for fichas are fully publishable", () => {
+  const { auth } = loadPortalAuth();
+  const guideFiles = new Set();
+
+  Object.values(auth.FICHA_MAP).forEach((ficha) => {
+    (ficha.guias || []).forEach((fileName) => guideFiles.add(fileName));
+  });
+
+  for (const fileName of guideFiles) {
+    assert.ok(
+      fs.existsSync(path.join(REPO_ROOT, "pages", "guias", fileName)),
+      `${fileName} is enabled in FICHA_MAP but has no wrapper in pages/guias`
+    );
+    assert.ok(auth.GUIDE_TITLES[fileName], `${fileName} is enabled in FICHA_MAP but has no title`);
+    assert.ok(
+      auth.GUIDE_PROGRESS_CONFIG[fileName],
+      `${fileName} is enabled in FICHA_MAP but has no progress config`
+    );
+  }
+});
