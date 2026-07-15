@@ -3328,7 +3328,7 @@
       return `<tr><td>${escapeHtml(user.fullName)}</td><td>${estado}</td><td>${fecha}</td><td>${archivo}</td><td>${enlace}</td><td>${accion}</td></tr>`;
     }).join("");
     grid.innerHTML = `<table class="admin-data-table grades-table">
-      <thead><tr><th>Aprendiz</th><th>Estado</th><th>Fecha de envio</th><th>Archivo</th><th>Enlace</th><th>Accion</th></tr></thead>
+      <thead><tr><th>Aprendiz</th><th>Estado</th><th>Fecha de envio</th><th>Evidencia</th><th>Enlace</th><th>Accion</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
   }
