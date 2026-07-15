@@ -2827,6 +2827,85 @@
     }
   }
 
+  // Actualizaciones necesarias para que las notas "A" YA guardadas de un aprendiz
+  // queden con la solucion ACTUAL del banco embebida: faltante si se califico antes
+  // de importar el banco a Firestore, desactualizada si el banco crecio despues
+  // (ej. checklist de competencias digitales, jul-15). Recorre las llaves de la
+  // NOTA (no el catalogo), igual que applyApprovedSolutionsForFamily las lee, asi
+  // cubre tambien notas guardadas bajo un aliasId (ej. fichaCaso). Pura: sin red
+  // ni DOM, para poder probarla.
+  function computeSolutionResyncUpdates(allGrades, bankLookup) {
+    const updates = [];
+    Object.keys(allGrades || {}).forEach((family) => {
+      const grades = allGrades[family] || {};
+      Object.keys(grades).forEach((actId) => {
+        if (actId.indexOf(":") !== -1) return;          // saltar :solution/:gradedAt/:obs
+        if (grades[actId] !== "A") return;              // solo aprobadas
+        const solution = bankLookup(family, actId);
+        if (!solution || typeof solution !== "object" || !Object.keys(solution).length) return;
+        const current = grades[actId + ":solution"];
+        if (current && JSON.stringify(current) === JSON.stringify(solution)) return;
+        updates.push({ family: family, activityId: actId, solution: solution });
+      });
+    });
+    return updates;
+  }
+
+  async function handleSolutionResync() {
+    const statusEl = byId("grades-resync-status");
+    const setStatus = (msg) => { if (statusEl) statusEl.textContent = msg; };
+    const db = window._firebaseDb;
+    const gradesManager = window.activityGradesManager;
+    if (!db || typeof db.cloudGetGrades !== "function" || !gradesManager ||
+        typeof gradesManager.embedStudentActivitySolution !== "function") {
+      setStatus("Firestore o el modulo de notas no estan disponibles.");
+      return;
+    }
+    const confirmed = await confirmAdminAction(
+      "Re-sincronizar soluciones: a cada actividad YA APROBADA cuya solucion embebida falte o " +
+      "este desactualizada se le copiara la respuesta modelo del banco actual. No cambia " +
+      "ninguna nota ni su fecha. ¿Continuar?"
+    );
+    if (!confirmed) return;
+    const btn = byId("grades-resync-btn");
+    if (btn) btn.disabled = true;
+    try {
+      await ensureGradeSolutionsBank(true);
+      const students = state.users.filter((user) => String(user.ficha || "").trim());
+      setStatus(`Revisando ${students.length} aprendices...`);
+      let learners = 0, embedded = 0, fieldsFilled = 0, failures = 0;
+      for (const user of students) {
+        let all = null;
+        try { all = await db.cloudGetGrades(user.usernameKey); } catch (_) { failures++; continue; }
+        if (!all || typeof all !== "object") continue;
+        // Sincroniza el cache local ANTES de re-guardar: saveGradesToCloud reemplaza
+        // el doc completo (mismo cuidado que renderGradesGrid).
+        gradesManager.setAllStudentGrades?.(user.usernameKey, all);
+        const updates = computeSolutionResyncUpdates(all, lookupBankSolution);
+        if (!updates.length) continue;
+        learners += 1;
+        for (const up of updates) {
+          try {
+            const ok = gradesManager.embedStudentActivitySolution(user.usernameKey, up.family, up.activityId, up.solution);
+            if (!ok) continue;
+            embedded += 1;
+            const applied = await applyApprovedSolutionToStudentCloud(user.usernameKey, up.family, up.solution);
+            fieldsFilled += (applied && applied.filled) || 0;
+          } catch (_) { failures++; }
+        }
+        setStatus(`... ${embedded} soluciones re-embebidas (${learners} aprendices revisados con cambios)`);
+      }
+      setStatus(
+        `Listo: ${embedded} soluciones re-embebidas en ${learners} aprendices; ` +
+        `${fieldsFilled} campos escritos en sus guias.` +
+        (failures ? ` ${failures} errores (vuelve a intentarlo mas tarde).` : "")
+      );
+      recordAdminAuditAction({ action: "grade-solutions-resync", target: "all", detail: `${embedded} soluciones / ${learners} aprendices` });
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  }
+
   function patchGuideState(usernameKey, guideFamily, patch) {
     if (!usernameKey || !guideFamily || !patch || typeof patch !== "object") return false;
     const key = `admin_grade_patch_${usernameKey}_${guideFamily}`;
@@ -2933,6 +3012,10 @@
         <input type="file" id="grades-bank-file" accept=".json">
         <button type="button" id="grades-bank-import-btn" class="btn secondary">Importar a la nube</button>
         <span id="grades-bank-status" class="admin-muted"></span>
+        <hr>
+        <p class="admin-muted">Las actividades aprobadas ANTES de importar el banco (o antes de una ampliacion del banco) quedaron sin la solucion embebida: se ven "calificadas pero vacias". Este boton copia la solucion actual a todas esas notas "A", de todos los aprendices, sin cambiar notas ni fechas.</p>
+        <button type="button" id="grades-resync-btn" class="btn secondary">Re-sincronizar soluciones de actividades aprobadas</button>
+        <span id="grades-resync-status" class="admin-muted"></span>
       </details>
       <div class="grades-manual__filters">
         <select id="grades-ficha-filter">${getFichaOptions("", false)}</select>
@@ -2943,6 +3026,7 @@
     `;
     ensureGradeSolutionsBank();   // precarga el banco para aplicar soluciones al aprobar
     byId("grades-bank-import-btn")?.addEventListener("click", handleGradeBankImport);
+    byId("grades-resync-btn")?.addEventListener("click", handleSolutionResync);
   }
 
   async function renderGradesGrid() {

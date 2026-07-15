@@ -291,6 +291,24 @@
     saveGradesToCloud(usernameKey, all);
   }
 
+  // Admin (re-sincronizacion): embebe la solucion modelo en una nota "A" YA
+  // existente SIN tocar la nota ni su fecha de calificacion (gradedAt). Para
+  // notas puestas antes de importar el banco a Firestore, o cuya solucion
+  // embebida quedo vieja porque el banco crecio despues (ej. el checklist de
+  // competencias digitales agregado el jul-15).
+  function embedStudentActivitySolution(usernameKey, guideFamily, activityId, solutionObj) {
+    var key = getGradesKey(usernameKey);
+    if (!key) return false;
+    var all = readJson(localStorage.getItem(key), {});
+    var fam = all[guideFamily];
+    if (!fam || fam[activityId] !== "A") return false;
+    if (!solutionObj || typeof solutionObj !== "object" || !Object.keys(solutionObj).length) return false;
+    fam[activityId + ":solution"] = solutionObj;
+    safeSetLocal(key, JSON.stringify(all));
+    saveGradesToCloud(usernameKey, all);
+    return true;
+  }
+
   function setStudentActivityObservation(usernameKey, guideFamily, activityId, obs) {
     var key = getGradesKey(usernameKey);
     if (!key) return;
@@ -660,6 +678,7 @@
     setStudentGrades: setStudentGrades,
     setStudentActivityGrade: setStudentActivityGrade,
     setStudentActivityGradeAndSolution: setStudentActivityGradeAndSolution,
+    embedStudentActivitySolution: embedStudentActivitySolution,
     setStudentActivityObservation: setStudentActivityObservation,
     getStudentActivityObservation: getStudentActivityObservation,
     getMyGrades: getMyGrades,
