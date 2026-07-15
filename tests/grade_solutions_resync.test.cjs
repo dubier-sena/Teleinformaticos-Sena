@@ -41,13 +41,14 @@ test("computeSolutionResyncUpdates: detecta notas A sin solucion o con solucion 
 
   const updates = compute({
     [FAMILY]: {
-      // A sin solucion embebida (el caso de la Actividad 10 del usuario) -> update.
+      // A sin solucion embebida (el caso de la Actividad 10 del usuario) -> re-embeber.
       transferReto341: "A",
       "transferReto341:gradedAt": "2026-07-01T00:00:00.000Z",
-      // A con solucion VIEJA (el banco crecio despues, caso del checklist) -> update.
+      // A con solucion VIEJA (el banco crecio despues, caso del checklist) -> re-embeber.
       colaborativas334: "A",
       "colaborativas334:solution": { "collab:canva:function": "x" },
-      // A con la solucion ACTUAL ya embebida -> nada (idempotente).
+      // A con la solucion ACTUAL ya embebida -> NO re-embeber, pero SI se devuelve:
+      // la escritura de campos en la guia pudo fallar antes y debe reintentarse.
       extensiones331: "A",
       "extensiones331:solution": { "extension:xlsx:program": "Excel" },
       // No aprobada -> nunca se rellena.
@@ -58,8 +59,13 @@ test("computeSolutionResyncUpdates: detecta notas A sin solucion o con solucion 
   }, bankLookup);
 
   const ids = updates.map((u) => u.activityId).sort();
-  assert.deepEqual(ids, ["colaborativas334", "transferReto341"]);
+  assert.deepEqual(ids, ["colaborativas334", "extensiones331", "transferReto341"]);
   updates.forEach((u) => assert.equal(u.family, FAMILY));
+  const byId = {};
+  updates.forEach((u) => { byId[u.activityId] = u; });
+  assert.equal(byId.transferReto341.needsEmbed, true, "sin solucion embebida -> re-embeber");
+  assert.equal(byId.colaborativas334.needsEmbed, true, "solucion vieja -> re-embeber");
+  assert.equal(byId.extensiones331.needsEmbed, false, "solucion identica -> solo reintentar campos");
 });
 
 test("computeSolutionResyncUpdates: una nota A guardada bajo un aliasId con banco propio tambien se re-embebe", () => {
@@ -68,6 +74,7 @@ test("computeSolutionResyncUpdates: una nota A guardada bajo un aliasId con banc
   const updates = compute({ [FAMILY]: { fichaCaso: "A" } }, bankLookup);
   assert.equal(updates.length, 1);
   assert.equal(updates[0].activityId, "fichaCaso");
+  assert.equal(updates[0].needsEmbed, true);
 });
 
 // ── embedStudentActivitySolution: contra el codigo REAL de activity_grades.js ──
@@ -233,8 +240,12 @@ test("cableado del panel: boton de re-sincronizacion conectado al flujo correcto
   assert.ok(handler, "no se encontro handleSolutionResync");
   assert.match(handler[0], /ensureGradeSolutionsBank\(true\)/);
   assert.match(handler[0], /computeSolutionResyncUpdates\(all, lookupBankSolution\)/);
-  assert.match(handler[0], /embedStudentActivitySolution\(user\.usernameKey, up\.family, up\.activityId, up\.solution\)/);
-  assert.match(handler[0], /applyApprovedSolutionToStudentCloud\(user\.usernameKey, up\.family, up\.solution\)/);
+  // Re-embebe SOLO cuando hace falta...
+  assert.match(handler[0], /if \(up\.needsEmbed\) \{\s*const ok = gradesManager\.embedStudentActivitySolution\(user\.usernameKey, up\.family, up\.activityId, up\.solution\)/);
+  // ...pero la escritura de campos en la guia se reintenta SIEMPRE, agrupada
+  // por familia (una lectura+escritura por guia, no por actividad).
+  assert.match(handler[0], /fieldsByFamily\[up\.family\] = Object\.assign\(fieldsByFamily\[up\.family\] \|\| \{\}, up\.solution\)/);
+  assert.match(handler[0], /applyApprovedSolutionToStudentCloud\(user\.usernameKey, family, fieldsByFamily\[family\]\)/);
   // El cache local se sincroniza con el doc COMPLETO antes de re-guardar
   // (saveGradesToCloud reemplaza el doc entero; sin esto se pierden notas).
   assert.match(handler[0], /setAllStudentGrades\?\.\(user\.usernameKey, all\)/);
