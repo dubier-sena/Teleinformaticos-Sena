@@ -74,13 +74,42 @@ test("every guide route loads activity_grades.js before guia_template.js", () =>
 
   routeBlocks.forEach(([, routeKey, scriptsBlock]) => {
     const gradesIndex = scriptsBlock.indexOf("activity_grades.js");
+    const plansIndex = scriptsBlock.indexOf("improvement_plans.js");
     const templateIndex = scriptsBlock.indexOf("guia_template.js");
     assert.ok(gradesIndex !== -1, `ruta "${routeKey}" no carga activity_grades.js`);
+    assert.ok(plansIndex !== -1, `ruta "${routeKey}" no carga improvement_plans.js`);
     assert.ok(templateIndex !== -1, `ruta "${routeKey}" no carga guia_template.js`);
     assert.ok(
       gradesIndex < templateIndex,
       `ruta "${routeKey}" debe cargar activity_grades.js ANTES de guia_template.js`
     );
+  });
+});
+
+test("every direct guide shell loads activity_grades.js and improvement_plans.js", () => {
+  // Regresion real (jul-15): 7 shells directos en pages/guias/ (guia 3 de 10A/10B,
+  // taller integrador 10A/10B, guia 7 de 11A/11B, guia Python) no cargaban ninguno
+  // de los dos scripts, asi que un aprendiz que entrara directo al shell (marcador
+  // o enlace guardado, sin pasar por guia.html?g=...) no veia badges de nota ni el
+  // banner de plan de mejoramiento.
+  const shellsDir = path.join(REPO_ROOT, "pages", "guias");
+  const shells = fs.readdirSync(shellsDir).filter((name) => name.endsWith(".html"));
+
+  assert.ok(shells.length > 0, "deberia haber shells en pages/guias/");
+
+  shells.forEach((fileName) => {
+    const html = fs.readFileSync(path.join(shellsDir, fileName), "utf8");
+    const gradesIndex = html.indexOf("activity_grades.js");
+    const plansIndex = html.indexOf("improvement_plans.js");
+    const templateIndex = html.indexOf("guia_template.js");
+    assert.ok(gradesIndex !== -1, `shell "${fileName}" no carga activity_grades.js`);
+    assert.ok(plansIndex !== -1, `shell "${fileName}" no carga improvement_plans.js`);
+    if (templateIndex !== -1) {
+      assert.ok(
+        gradesIndex < templateIndex,
+        `shell "${fileName}" debe cargar activity_grades.js ANTES de guia_template.js`
+      );
+    }
   });
 });
 
