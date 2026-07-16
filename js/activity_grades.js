@@ -170,16 +170,38 @@
         { id: "caso342",        label: "3.4.2 Laboratorio integral - DHCP/DNS/AP/NAT" },
       ],
     },
-    // Practica informal de Python (mini-retos con numeracion simple "1".."21A",
-    // no entregables RAP oficiales -- por eso se dejo fuera del catalogo en el
-    // commit d2dc6fa). El usuario pidio incluirla igual, como UNA sola columna
-    // combinada (misma logica que Sopa de letras/Ciberseguridad). Se usa
-    // "retoPython" (5.1, Reto integrador) por ser la UNICA actividad de Python
-    // con numeracion jerarquica real -- representa el cierre de la practica.
+    // Practica de Python: originalmente era UNA sola columna combinada
+    // ("retoPython"), pero el usuario pidio calificar cada entrega por separado
+    // (2026-07-16): 10 retos + 10 adicionales + reto integrador, igual que los
+    // paneles de entrega de la guia. Los ids coinciden con guide_declarations.js.
+    // "retoPython" conserva su id: las notas ya guardadas con la columna
+    // combinada quedan sobre el Reto integrador, no se pierden.
+    // Los mounts de badge resuelven al contenedor [data-act-std-delivery="id"]
+    // del partial (ultimo fallback de resolveGradeMount).
     "guia-python": {
       label: "Guía - Práctica de Python",
       activities: [
-        { id: "retoPython", label: "Práctica de Python (retos + reto integrador)" },
+        { id: "retoEj1",  label: "Reto 1 - Registro básico del aprendiz" },
+        { id: "retoEj2",  label: "Reto 2 - Edad y condicional simple" },
+        { id: "retoEj3",  label: "Reto 3 - Nota final con if y else" },
+        { id: "retoEj4",  label: "Reto 4 - Promedio, asistencia y if-elif-else" },
+        { id: "retoEj5",  label: "Reto 5 - Control de entrega de actividad" },
+        { id: "retoEj6",  label: "Reto 6 - Lista de actividades entregadas" },
+        { id: "retoEj7",  label: "Reto 7 - Diccionario, conjunto y match-case" },
+        { id: "retoEj8",  label: "Reto 8 - POO 1: Clase Estudiante" },
+        { id: "retoEj9",  label: "Reto 9 - POO 2: Clase EntregaActividad" },
+        { id: "retoEj10", label: "Reto 10 - POO 3: Clase Ficha con aprendices" },
+        { id: "adicionalEj1",  label: "Adicional 1 - Datos del instructor" },
+        { id: "adicionalEj2",  label: "Adicional 2 - Nota aprobatoria" },
+        { id: "adicionalEj3",  label: "Adicional 3 - Promedio de dos calificaciones" },
+        { id: "adicionalEj4",  label: "Adicional 4 - Actividades y asistencia" },
+        { id: "adicionalEj5",  label: "Adicional 5 - Asistencia a laboratorio" },
+        { id: "adicionalEj6",  label: "Adicional 6 - Equipos del salón" },
+        { id: "adicionalEj7",  label: "Adicional 7 - Computador del aula con menú" },
+        { id: "adicionalEj8",  label: "Adicional 8 - Clase Computador" },
+        { id: "adicionalEj9",  label: "Adicional 9 - Clase Asistencia" },
+        { id: "adicionalEj10", label: "Adicional 10 - Clase Aula con equipos" },
+        { id: "retoPython", label: "5.1 Reto integrador - Seguimiento académico" },
       ],
     },
   };
@@ -358,7 +380,11 @@
       "#" + activityId + "DeadlineControls",
       "#" + activityId + "DeliveryControls",
       "#" + activityId + "Status",
-      '[data-act-grade="' + activityId + '"]'
+      '[data-act-grade="' + activityId + '"]',
+      // Ultimo recurso: el contenedor de confirmacion de entrega que
+      // activity_standard.js pone en cada actividad de tipo "file" (unica
+      // ancla estatica que tienen, p. ej. los retos de la guia de Python).
+      '[data-act-std-delivery="' + activityId + '"]'
     );
     for (var i = 0; i < selectors.length; i++) {
       var el = null;

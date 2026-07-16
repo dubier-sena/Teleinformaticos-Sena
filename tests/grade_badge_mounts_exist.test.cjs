@@ -57,7 +57,9 @@ const FAMILY_TO_FILES = {
 function conventionSelectorsFor(id, explicitMount) {
   const sels = [];
   if (explicitMount) sels.push(explicitMount);
-  sels.push(`#${id}GradeMount`, `#${id}DeadlineControls`, `#${id}DeliveryControls`, `#${id}Status`, `[data-act-grade="${id}"]`);
+  // Mismo orden que resolveGradeMount(); data-act-std-delivery es el ultimo
+  // fallback (contenedor de confirmacion de entrega de actividades "file").
+  sels.push(`#${id}GradeMount`, `#${id}DeadlineControls`, `#${id}DeliveryControls`, `#${id}Status`, `[data-act-grade="${id}"]`, `[data-act-std-delivery="${id}"]`);
   return sels;
 }
 
