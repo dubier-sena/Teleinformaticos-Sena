@@ -39,6 +39,11 @@ function loadGradeModule() {
   return mgr;
 }
 
+// Familias donde TODAS las actividades declaradas son columnas de calificacion,
+// aunque usen numeracion simple ("1".."10", "1A".."10A"): son entregas a Drive
+// reales, una por reto (pedido del usuario 2026-07-16 para la guia de Python).
+const ALL_ACTIVITIES_FAMILIES = new Set(["guia-python"]);
+
 // Un numero es de "entregable" si es jerarquico estandar (3.2.5). Se excluyen
 // helpers como "3.2.x" (boton Exportar a Word), que no son entregables calificables.
 function isDeliverableNumber(num) {
@@ -46,11 +51,12 @@ function isDeliverableNumber(num) {
 }
 
 // Entregables esperados de un archivo de guia: UNO por numero, id de la primera sub-actividad.
-function expectedEntregables(guide) {
+function expectedEntregables(guide, family) {
   const seen = new Set();
   const out = [];
+  const allDeliverable = ALL_ACTIVITIES_FAMILIES.has(family);
   (guide.activities || []).forEach((a) => {
-    if (!isDeliverableNumber(a.number)) return;
+    if (!allDeliverable && !isDeliverableNumber(a.number)) return;
     if (seen.has(a.number)) return;
     seen.add(a.number);
     out.push({ number: a.number, id: a.id });
@@ -77,7 +83,7 @@ test("Calificaciones: cada familia mapea a una guia real y tiene una columna por
     const guide = decls[file];
     assert.ok(guide, `el archivo ${file} de la familia ${family} debe estar declarado en guide_declarations`);
 
-    const expected = expectedEntregables(guide);
+    const expected = expectedEntregables(guide, family);
     const got = catalog[family].activities.map((a) => a.id);
 
     // Mismo numero de entregables (uno por numero).
