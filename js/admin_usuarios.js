@@ -1022,7 +1022,17 @@
         // mostraba la respuesta real mientras la tabla masiva marcaba
         // "sin-respuesta" para las 3 fichas de caso). Se prefiere exactitud
         // sobre velocidad -- este barrido es soporte de documentacion oficial.
-        const cloudSnapshot = await db.cloudGetGuideData(getStudentCloudScope(task.usernameKey), task.cloudFileName);
+        // EXCEPCION: si la recuperacion Drive→Firestore ya corrio en este
+        // navegador (boton "Recuperar datos de Drive" / backfillFromDrive),
+        // Firestore vuelve a ser fuente completa y un 404 SI es un miss real:
+        // se salta el viaje a Drive (10-25s por doc bajo carga) y el barrido
+        // pasa de minutos a segundos.
+        const promotionDone = typeof db.isDrivePromotionDone === "function" && db.isDrivePromotionDone();
+        const cloudSnapshot = await db.cloudGetGuideData(
+          getStudentCloudScope(task.usernameKey),
+          task.cloudFileName,
+          promotionDone ? { skipDriveOn404: true } : undefined
+        );
         if (!cloudSnapshot) return;
         const storageKey = auth.getStudentStorageKey(task.usernameKey, task.stateKey, { area: "guide-data" });
         const localState = readGuideDataState(storageKey);
@@ -1945,6 +1955,65 @@
       if (btn) {
         btn.disabled = false;
         btn.textContent = "Migrar datos a Drive";
+      }
+    }
+  }
+
+  // ── Recuperacion Drive → Firestore ──────────────────────────────────────
+  // Boton del panel Configuracion. Promueve los docs de aprendices que quedaron
+  // SOLO en Drive (periodo de reglas rechazando docIds compuestos) a Firestore.
+  let promoteRunning = false;
+  async function runPromoteFromDrive() {
+    if (promoteRunning) return;
+    const btn = byId("btn-promote-drive");
+    const status = byId("promote-status");
+    const fb = window._firebaseDb;
+
+    function show(message, color) {
+      if (!status) return;
+      status.style.display = "block";
+      status.style.color = color || "var(--admin-text, #102117)";
+      status.textContent = message;
+    }
+
+    if (!fb || typeof fb.backfillFromDrive !== "function") {
+      show("El modulo de recuperacion no esta disponible. Recarga la pagina (Ctrl+Shift+R).", "#b91c1c");
+      return;
+    }
+
+    promoteRunning = true;
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "Recuperando...";
+    }
+    show("Recorriendo aprendices y guias. Esto puede tardar varios minutos. No cierres esta pestana.", "#1f7a8c");
+
+    try {
+      const report = await fb.backfillFromDrive({
+        users: state.users,
+        onProgress: (p) => show(
+          "Revisando " + p.done + " de " + p.total + " documentos (" + p.promoted + " promovidos, " + p.errors + " errores)...",
+          "#1f7a8c"
+        ),
+      });
+      if (report && report.ok) {
+        show(
+          "Recuperacion completada: " + report.promoted + " promovidos a Firestore, " +
+          report.skipped + " ya estaban al dia, " + report.missing + " sin datos en Drive" +
+          (report.errors ? ", " + report.errors + " errores (vuelve a ejecutar)" : "") + ".",
+          report.errors ? "#b45309" : "#15803d"
+        );
+        invalidateUsersCache();
+      } else {
+        show("No se pudo recuperar: " + ((report && report.message) || "error desconocido") + ".", "#b91c1c");
+      }
+    } catch (error) {
+      show("Error durante la recuperacion: " + ((error && error.message) || error) + ".", "#b91c1c");
+    } finally {
+      promoteRunning = false;
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "Recuperar datos de Drive";
       }
     }
   }
@@ -4029,6 +4098,7 @@
     byId("refresh-users")?.addEventListener("click", () => { guideStatesHydrated = false; loadUsers(); });
     byId("name-audit-run")?.addEventListener("click", runNameAudit);
     byId("btn-backfill-drive")?.addEventListener("click", () => runBackfillToDrive());
+    byId("btn-promote-drive")?.addEventListener("click", () => runPromoteFromDrive());
     byId("user-search")?.addEventListener("input", (event) => {
       state.filters.text = event.target.value;
       renderLearners();

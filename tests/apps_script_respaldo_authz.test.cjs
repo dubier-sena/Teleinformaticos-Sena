@@ -13,7 +13,7 @@ const gs = fs.readFileSync(
 // Exponer las funciones puras. Los cuerpos que usan DriveApp/PropertiesService
 // no se ejecutan al solo definirse, asi que no hace falta stub.
 const api = new Function(
-  gs + "\nreturn { authorizeRequest, usernameKeyFromEmail, docIdHasKeySegment };"
+  gs + "\nreturn { authorizeRequest, usernameKeyFromEmail, docIdHasKeySegment, splitVersionedEmail };"
 )();
 const { authorizeRequest } = api;
 
@@ -90,4 +90,56 @@ test("user_index: propiedad por uid del token", () => {
 
 test("sin email valido en token -> denegado", () => {
   assert.strictEqual(authz({ action: "get", collection: "sena_portal_progress", docId: "juan", email: "" }).ok, false);
+});
+
+// ── Emails versionados (reset de password: "{key}.vN@sena-portal.local") ──────
+
+test("splitVersionedEmail separa base y version", () => {
+  assert.deepStrictEqual(api.splitVersionedEmail("juan@sena-portal.local"), { base: "juan", version: 1 });
+  assert.deepStrictEqual(api.splitVersionedEmail("juan.v2@sena-portal.local"), { base: "juan", version: 2 });
+  assert.deepStrictEqual(api.splitVersionedEmail("maria.perez.v10@sena-portal.local"), { base: "maria.perez", version: 10 });
+});
+
+test("aprendiz reseteado (v2 ATESTADA) accede a sus propios docs", () => {
+  const r = authz({
+    action: "set",
+    collection: "sena_portal_progress",
+    docId: "__guide_data__:student:juan:grupo-10a-guia-01_html",
+    email: as("juan.v2"),
+    attestedVersion: 2,
+  });
+  assert.strictEqual(r.ok, true, "v2 atestada debe autorizar la clave base");
+});
+
+test("email versionado SIN atestacion (o con otra version) -> denegado", () => {
+  // Sin atestacion: nadie confirmo que 'juan' este en v2 -> podria ser un
+  // suplantador que creo la cuenta juan.v2 por su lado.
+  assert.strictEqual(
+    authz({ action: "get", collection: "sena_portal_progress", docId: "juan", email: as("juan.v2"), attestedVersion: 0 }).ok,
+    false
+  );
+  assert.strictEqual(
+    authz({ action: "get", collection: "sena_portal_progress", docId: "juan", email: as("juan.v3"), attestedVersion: 2 }).ok,
+    false
+  );
+});
+
+test("aprendiz reseteado atestado NO gana acceso a docs ajenos", () => {
+  assert.strictEqual(
+    authz({ action: "get", collection: "sena_portal_progress", docId: "maria", email: as("juan.v2"), attestedVersion: 2 }).ok,
+    false
+  );
+});
+
+test("admin con email versionado atestado sigue siendo admin", () => {
+  const r = authz({ action: "list", collection: "sena_portal_users", email: as("dubier.v2"), attestedVersion: 2 });
+  assert.strictEqual(r.ok, true);
+  assert.strictEqual(r.admin, true);
+});
+
+test("email v1 sin sufijo no exige atestacion (comportamiento previo intacto)", () => {
+  assert.strictEqual(
+    authz({ action: "get", collection: "sena_portal_progress", docId: "juan", email: as("juan") }).ok,
+    true
+  );
 });

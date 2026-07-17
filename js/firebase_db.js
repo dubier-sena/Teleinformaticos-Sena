@@ -754,11 +754,16 @@
     }, FIRESTORE_PROMOTE_FLUSH_DEBOUNCE_MS);
   }
 
-  // Solo promover Drive→Firestore si NO estamos en modo Drive permanente para
-  // esta coleccion. En force-drive, Drive es el destino final (no un fallback
-  // temporal), asi que no tiene sentido devolver esos datos a Firestore.
+  // SIEMPRE registrar la promocion Drive→Firestore. En el patron "replica de
+  // lectura" (useDriveAsPrimary con ruteo por coleccion), las ESCRITURAS deben
+  // llegar a Firestore porque es la UNICA fuente que lee el panel admin. La
+  // version anterior exceptuaba las colecciones de datos en force-drive
+  // ("Drive es el destino final"), lo que contradecia ese patron: cualquier
+  // guardado que caia a Drive (cooldown, red, 403) quedaba INVISIBLE para el
+  // admin de forma permanente. Ver tests/firebase_db_admin_reads.test.cjs.
   function shouldRecordPromotion(collection) {
-    return !(isForceDriveEnabled() && isDriveDataCollection(collection));
+    void collection;
+    return true;
   }
 
   async function driveFallbackGet(collection, docId) {
@@ -965,38 +970,62 @@
     }
   }
 
-  // Lista todos los documentos de una coleccion (hasta 300).
+  // Lista todos los documentos de una coleccion, siguiendo nextPageToken.
+  // ANTES solo pedia UNA pagina (pageSize=300, sin paginar): Firestore puede
+  // devolver MENOS docs que pageSize aunque haya mas (limite de tamano de
+  // respuesta), asi que el panel admin "perdia" aprendices silenciosamente.
   async function fsList(collection) {
     if (!(await canCallFirestore(collection))) {
       return await driveFallbackList(collection);
     }
     try {
-      var url = BASE_URL + "/" + collection + "?key=" + FIREBASE_API_KEY + "&pageSize=300";
-      var res = await fetchWithTimeout(
-        url,
-        { method: "GET", cache: "no-store", headers: await authHeaders() },
-        API_TIMEOUT_MS
-      );
-      if (!res.ok) {
-        if (isAuthRejection(res.status)) {
-          markFirestoreRejection();
-          return await driveFallbackList(collection);
+      var allDocs = [];
+      var pageToken = "";
+      do {
+        var url = BASE_URL + "/" + collection + "?key=" + FIREBASE_API_KEY + "&pageSize=300";
+        if (pageToken) url += "&pageToken=" + encodeURIComponent(pageToken);
+        var res = await fetchWithTimeout(
+          url,
+          { method: "GET", cache: "no-store", headers: await authHeaders() },
+          API_TIMEOUT_MS
+        );
+        if (!res.ok) {
+          if (isAuthRejection(res.status)) {
+            markFirestoreRejection();
+            return await driveFallbackList(collection);
+          }
+          // Error a mitad de paginado: devolver lo acumulado es mejor que [].
+          return allDocs;
         }
-        return [];
-      }
-      var payload = await res.json();
-      var docs = (payload.documents || []).map(fromFsDoc).filter(Boolean);
-      registerFirestoreOperation("read", Math.max(1, docs.length));
+        var payload = await res.json();
+        var docs = (payload.documents || []).map(fromFsDoc).filter(Boolean);
+        registerFirestoreOperation("read", Math.max(1, docs.length));
+        allDocs = allDocs.concat(docs);
+        pageToken = payload.nextPageToken || "";
+      } while (pageToken && allDocs.length < 5000);
       markFirestoreSuccess();
-      return docs;
+      return allDocs;
     } catch (e) {
       return await driveFallbackList(collection);
     }
   }
 
   // BatchGet: obtiene multiples documentos en una sola solicitud.
+  // Se trocea en lotes de 100: el barrido del panel admin puede pedir cientos
+  // de docs (aprendices x guias) y una sola peticion gigante puede fallar por
+  // tamano de respuesta — y el error se convertia en [] silencioso (secciones
+  // vacias en el panel). Con lotes, un fallo afecta solo a su lote.
+  var BATCH_GET_CHUNK_SIZE = 100;
   async function fsBatchGet(collection, docIds) {
     if (!docIds || docIds.length === 0) return [];
+    if (docIds.length > BATCH_GET_CHUNK_SIZE) {
+      var all = [];
+      for (var chunkStart = 0; chunkStart < docIds.length; chunkStart += BATCH_GET_CHUNK_SIZE) {
+        var part = await fsBatchGet(collection, docIds.slice(chunkStart, chunkStart + BATCH_GET_CHUNK_SIZE));
+        all = all.concat(part);
+      }
+      return all;
+    }
     if (!(await canCallFirestore(collection))) {
       return await driveFallbackBatchGet(collection, docIds);
     }
@@ -2181,6 +2210,43 @@
   // sintetico nuevo en el proximo login y Firebase Auth aceptara la
   // password nueva como si fuera una cuenta nueva. La cuenta Auth vieja
   // queda huerfana pero no afecta cuotas en Spark (50K MAU gratis).
+  // Pre-crea la cuenta Auth del email versionado "{key}.v{N}@sena-portal.local"
+  // con la password nueva, via REST (identitytoolkit accounts:signUp). NO usa el
+  // SDK para no tocar la sesion actual del admin. Dos razones:
+  //   1. El aprendiz puede entrar desde cualquier equipo INMEDIATAMENTE (antes
+  //      la cuenta solo se creaba en su proximo login exitoso).
+  //   2. Seguridad: las reglas ahora aceptan el email versionado atestado en
+  //      user_meta (isOwnerByVersionedEmail). Crear la cuenta EN el momento del
+  //      reset cierra la ventana en la que un tercero podria registrar ese
+  //      email versionado antes que el aprendiz.
+  async function precreateVersionedAuthAccount(usernameKey, version, password) {
+    try {
+      if (!FIREBASE_API_KEY || !usernameKey || Number(version) <= 1 || !password) return false;
+      var bridge = window.portalFirebaseAuth;
+      var email = bridge && typeof bridge.buildEmail === "function"
+        ? bridge.buildEmail(usernameKey, version)
+        : String(usernameKey) + ".v" + Number(version) + "@sena-portal.local";
+      var res = await fetchWithTimeout(
+        "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=" + encodeURIComponent(FIREBASE_API_KEY),
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: email, password: password, returnSecureToken: false }),
+        },
+        API_TIMEOUT_MS
+      );
+      if (res.ok) return true;
+      var body = await res.json().catch(function () { return {}; });
+      var code = (body && body.error && body.error.message) || res.status;
+      console.warn(
+        "[firebase_db] No se pudo pre-crear la cuenta Auth versionada " + email +
+        " (" + code + "). El aprendiz aun puede entrar: el bridge creara la cuenta " +
+        "en su proximo login. Si EMAIL_EXISTS persiste, vuelve a resetear la password."
+      );
+      return false;
+    } catch (_) { return false; }
+  }
+
   auth.updateStudentPassword = async function (usernameKey, newPassword) {
     var result = await prev.updateStudentPassword.call(auth, usernameKey, newPassword);
     if (result && result.ok) {
@@ -2200,6 +2266,10 @@
           var profileVersion = Number(cloudUser.authEmailVersion) || 1;
           var currentVersion = Math.max(metaVersion, profileVersion);
           var nextVersion = currentVersion + 1;
+
+          // Crear la cuenta Auth versionada ANTES de publicar la version en
+          // user_meta (asi nadie puede adelantarse a reclamar ese email).
+          await precreateVersionedAuthAccount(usernameKey, nextVersion, newPassword);
 
           // Touch del doc de perfil (updatedAt + nueva version) y sync del
           // hash a la coleccion paralela con rules estrictas.
@@ -2638,10 +2708,117 @@
     return report;
   }
 
+  // ── Promocion masiva Drive → Firestore (sanador one-shot, solo admin) ───────
+  // Durante el periodo en que las reglas rechazaban los docIds compuestos (403),
+  // TODAS las respuestas de guia de los aprendices quedaron SOLO en Drive.
+  // Esta funcion recorre el roster (aprendices x guias), lee cada doc de Drive
+  // y lo escribe en Firestore si alli falta o esta mas viejo (compara updatedAt).
+  // Con eso el camino rapido del panel (fsBatchGet) vuelve a ver todo y el
+  // barrido de Respuestas puede saltarse Drive en los 404 reales.
+  var DRIVE_PROMOTED_FLAG_KEY = "sena_portal_drive_promoted_v1";
+
+  function markDrivePromotionDone() {
+    try { window.localStorage.setItem(DRIVE_PROMOTED_FLAG_KEY, new Date().toISOString()); } catch (_) {}
+  }
+
+  function isDrivePromotionDone() {
+    try { return Boolean(window.localStorage.getItem(DRIVE_PROMOTED_FLAG_KEY)); } catch (_) { return false; }
+  }
+
+  async function firestoreGetDirect(collection, docId) {
+    try {
+      var res = await fetchWithTimeout(
+        docUrl(collection, docId),
+        { method: "GET", cache: "no-store", headers: await authHeaders() },
+        API_TIMEOUT_MS
+      );
+      if (!res.ok) return null;
+      registerFirestoreOperation("read", 1);
+      return fromFsDoc(await res.json());
+    } catch (_) { return null; }
+  }
+
+  async function backfillFromDrive(options) {
+    var opts = options || {};
+    var onProgress = typeof opts.onProgress === "function" ? opts.onProgress : null;
+    if (!isDriveFallbackEnabled()) {
+      return { ok: false, message: "Drive no configurado (falta respaldoFirestoreUrl)." };
+    }
+    var portal = window.portalAuth || {};
+    if (typeof portal.getGuidesForFicha !== "function") {
+      return { ok: false, message: "portalAuth no disponible: abre esta funcion desde el panel admin." };
+    }
+    var users = Array.isArray(opts.users) && opts.users.length
+      ? opts.users
+      : await cloudListUsers();
+    if (!users.length) return { ok: false, message: "No hay aprendices para promover." };
+
+    // Construir la lista exacta de docIds que puede tener cada aprendiz:
+    // su doc simple de progreso + un doc compuesto de guide-data por guia.
+    var tasks = [];
+    users.forEach(function (user) {
+      var key = user && user.usernameKey;
+      if (!key) return;
+      tasks.push({ collection: COL_PROGRESS, docId: key });
+      portal.getGuidesForFicha(user.ficha || "").forEach(function (fileName) {
+        tasks.push({
+          collection: COL_PROGRESS,
+          docId: guideStateDocId(GUIDE_DATA_FALLBACK_PREFIX, "student:" + key, guideDataFileName(fileName)),
+        });
+      });
+    });
+
+    var report = { ok: true, total: tasks.length, promoted: 0, skipped: 0, missing: 0, errors: 0 };
+    var index = 0;
+    var CONCURRENCY = 6;
+
+    async function worker() {
+      while (index < tasks.length) {
+        var task = tasks[index];
+        index += 1;
+        try {
+          var driveDoc = await driveFallbackGet(task.collection, task.docId);
+          if (!driveDoc) { report.missing += 1; }
+          else {
+            var clean = Object.assign({}, driveDoc);
+            delete clean._docId;
+            delete clean._docName;
+            var current = await firestoreGetDirect(task.collection, task.docId);
+            var driveAt = String(driveDoc.updatedAt || "");
+            var fsAt = String((current && current.updatedAt) || "");
+            if (current && fsAt && driveAt && fsAt >= driveAt) {
+              report.skipped += 1; // Firestore ya esta igual o mas nuevo
+            } else {
+              var promoted = await tryFirestorePromote({ type: "set", collection: task.collection, docId: task.docId, data: clean });
+              if (promoted) report.promoted += 1; else report.errors += 1;
+            }
+          }
+        } catch (_) { report.errors += 1; }
+        if (onProgress) onProgress({ done: index, total: tasks.length, promoted: report.promoted, errors: report.errors });
+      }
+    }
+
+    var workers = [];
+    for (var w = 0; w < CONCURRENCY; w++) workers.push(worker());
+    await Promise.all(workers);
+
+    if (report.errors === 0) markDrivePromotionDone();
+    console.info(
+      "[backfillFromDrive] Total " + report.total + " · promovidos " + report.promoted +
+      " · ya al dia " + report.skipped + " · sin datos " + report.missing + " · errores " + report.errors
+    );
+    return report;
+  }
+
   // API de depuracion (solo disponible en consola del navegador)
   window._firebaseDb = {
     checkAvailability: checkAvailability,
     backfillToDrive:   backfillToDrive,
+    backfillFromDrive: backfillFromDrive,
+    isDrivePromotionDone: isDrivePromotionDone,
+    fsList:            fsList,
+    fsBatchGet:        fsBatchGet,
+    _precreateVersionedAuthAccount: precreateVersionedAuthAccount,
     cloudGetCalendar:  cloudGetCalendar,
     cloudSaveCalendar: cloudSaveCalendar,
     cloudGetGuideData: cloudGetGuideData,

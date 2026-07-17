@@ -17,7 +17,11 @@ test("existe la hidratacion perezosa del guide_state al localStorage del admin",
   assert.match(adminScript, /let guideStatesHydrated = false;/);
   assert.match(adminScript, /async function ensureGuideStatesHydrated\(\)/);
   // Reusa el mismo doc de nube que "ver respuestas" y la llave de almacenamiento del aprendiz.
-  assert.match(adminScript, /db\.cloudGetGuideData\(getStudentCloudScope\(task\.usernameKey\)/);
+  // (la llamada es multilinea desde jul-17: agrega la opcion skipDriveOn404
+  // cuando la recuperacion Drive→Firestore ya corrio en este navegador)
+  assert.match(adminScript, /db\.cloudGetGuideData\(\s*getStudentCloudScope\(task\.usernameKey\)/);
+  assert.match(adminScript, /skipDriveOn404: true/);
+  assert.match(adminScript, /isDrivePromotionDone/);
   assert.match(adminScript, /auth\.getStudentStorageKey\(task\.usernameKey, task\.stateKey, \{ area: "guide-data" \}\)/);
   assert.match(adminScript, /getGuideCloudConfig\(fileName\)/);
 });

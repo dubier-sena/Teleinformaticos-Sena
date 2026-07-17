@@ -25,7 +25,7 @@
 <script defer src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
 <script defer src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
 <script src="js/firebase_auth_bridge.js?v=20260618_1"></script>
-<script src="js/firebase_db.js?v=20260715_1"></script>
+<script src="js/firebase_db.js?v=20260717_1"></script>
 <script src="js/project_integrations.js?v=20260707_4"></script>
 <script src="js/drive_db.js?v=20260526_2"></script>
 <script defer src="js/firebase_status_banner.js?v=20260527_2"></script>
@@ -380,6 +380,20 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
         <div class="admin-panel" style="margin-top:1.5rem;">
           <div class="admin-panel__header">
             <div>
+              <h2>Recuperar datos de Drive a Firestore</h2>
+              <p>Promueve las respuestas y el progreso que quedaron guardados solo en el respaldo de Drive (periodo en que Firestore rechazaba los guardados de los aprendices) hacia Firestore, que es lo que lee este panel. Respeta lo mas reciente: si Firestore ya tiene una version igual o mas nueva, no la toca. Ejecutalo UNA vez despues de desplegar las reglas nuevas.</p>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:0.75rem;">
+            <button type="button" id="btn-promote-drive" class="admin-button" style="align-self:flex-start;">
+              Recuperar datos de Drive
+            </button>
+            <div id="promote-status" role="status" aria-live="polite" style="display:none;font:500 14px/1.5 'Inter','Segoe UI',sans-serif;"></div>
+          </div>
+        </div>
+        <div class="admin-panel" style="margin-top:1.5rem;">
+          <div class="admin-panel__header">
+            <div>
               <h2>Auditoria local</h2>
               <p>Historial de acciones administrativas realizadas en este navegador (creacion/desactivacion de aprendices, habilitacion de actividades, cambios de password, etc.).</p>
             </div>
@@ -422,6 +436,6 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
   <script src="js/admin_progress.js?v=20260615_1"></script>
   <script src="js/admin_habilitacion.js?v=20260715_1"></script>
   <script src="js/name_audit.js?v=20260630_1"></script>
-  <script src="js/admin_usuarios.js?v=20260715_7"></script>
+  <script src="js/admin_usuarios.js?v=20260717_1"></script>
 </body>
 </html>
