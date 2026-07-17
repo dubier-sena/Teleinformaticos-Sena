@@ -7,7 +7,7 @@
   var STORAGE_KEY = portalAuth
     ? portalAuth.getScopedStorageKey(BASE_STORAGE_KEY, { area: "guide-data" })
     : BASE_STORAGE_KEY;
-  var WORKER_URL = "js/python_lab_worker.js?v=20260611_13";
+  var WORKER_URL = "js/python_lab_worker.js?v=20260716_1";
   var EXECUTION_TIMEOUT_MS = 4000;
 
   var PYTHON_LAB_DEFAULT_CODE = "";
@@ -199,8 +199,8 @@
     if (!text.trim()) messages.push("Escribe codigo Python antes de validar.");
     if (/\t/.test(text)) messages.push("Usa espacios en lugar de tabulaciones para indentar.");
     if (!/\bprint\s*\(/.test(text)) messages.push("Agrega al menos un print() para ver resultados en consola.");
-    if (/^(?:\s*)(def|class)\b/m.test(text)) {
-      messages.push("El laboratorio ejecuta variables, input(), print(), condicionales y ciclos for/while. def y class aun no: descarga el .py para trabajarlos en Python instalado.");
+    if (/^(?:\s*)(import|from|try|with)\b/m.test(text)) {
+      messages.push("El laboratorio no ejecuta import, try ni with. Para usar librerias descarga el .py y trabajalo en Python instalado.");
     }
     [["(", ")"], ["[", "]"], ["{", "}"]].forEach(function (pair) {
       var open = pair[0];
@@ -212,8 +212,8 @@
     parsePyLines(text).forEach(function (line) {
       if (!line.text || line.text.startsWith("#")) return;
       if (line.indent % 4 !== 0) messages.push("Linea " + line.line + ": usa indentacion de 4 espacios.");
-      if (/^(if|elif|else)\b/.test(line.text) && !line.text.endsWith(":")) {
-        messages.push("Linea " + line.line + ": las condicionales terminan con dos puntos (:).");
+      if (/^(if|elif|else|for|while|def|class)\b/.test(line.text) && !line.text.endsWith(":")) {
+        messages.push("Linea " + line.line + ": las lineas de bloque (if, for, while, def, class) terminan con dos puntos (:).");
       }
     });
     return messages;
@@ -239,7 +239,7 @@
       if (/\t/.test(rawLine)) flag(n, "Linea " + n + ": usa espacios, no tabulaciones.");
       var indent = (rawLine.match(/^ */) || [""])[0].length;
       if (indent % 4 !== 0) flag(n, "Linea " + n + ": la indentacion debe ir de 4 en 4 espacios.");
-      if (/^(if|elif|else|for|while)\b/.test(text) && text.indexOf(":") < 0) {
+      if (/^(if|elif|else|for|while|def|class)\b/.test(text) && text.indexOf(":") < 0) {
         flag(n, "Linea " + n + ": falta el dos puntos (:) al final.");
       }
     });
@@ -320,7 +320,7 @@
   }
 
   // Comandos de control (keyword) y funciones (builtin) que colorea el editor.
-  var PY_KEYWORDS = "if|elif|else|and|or|not|True|False|None|return|import|from|class|def|for|while|in|is|break|continue|pass";
+  var PY_KEYWORDS = "if|elif|else|and|or|not|True|False|None|return|import|from|class|def|for|while|in|is|break|continue|pass|match|case|self";
   var PY_BUILTINS = "print|input|int|float|str|bool|len|round|type|range|sum|max|min|abs|sorted|list|dict|tuple|set|append";
   var PY_KEYWORD_RE = new RegExp("^(?:" + PY_KEYWORDS + ")$");
   var PY_BUILTIN_RE = new RegExp("^(?:" + PY_BUILTINS + ")$");
@@ -418,7 +418,58 @@
       return help("Hay un parentesis, corchete o comilla sin cerrar.", 'Revisa que cada ( [ { y cada " tengan su pareja de cierre.', 'print("Hola")');
     }
     if (lower.indexOf("aun no estan disponibles") >= 0 || lower.indexOf("def y class") >= 0 || lower.indexOf("def, class") >= 0) {
-      return help("Esa instruccion aun no esta disponible en el laboratorio.", "El laboratorio practica variables, input(), print(), condicionales y ciclos. Para def/class/import descarga el .py y usalo en Python instalado.", "");
+      return help("Esa instruccion aun no esta disponible en el laboratorio.", "El laboratorio ejecuta variables, condicionales, ciclos, funciones (def), clases, listas, diccionarios, tuplas, conjuntos y match-case. Para import/try/with descarga el .py y usalo en Python instalado.", "");
+    }
+    if (lower.indexOf("keyerror") >= 0) {
+      var keyName = (msg.match(/la llave ('[^']+'|"[^"]+")/) || [])[1];
+      return help(
+        keyName ? "La llave " + keyName + " no existe en el diccionario." : "Esa llave no existe en el diccionario.",
+        "Revisa que la llave este escrita exactamente igual (mayusculas y tildes cuentan) o agregala antes de usarla.",
+        'aprendiz = {"nombre": "Ana"}\nprint(aprendiz["nombre"])'
+      );
+    }
+    if (lower.indexOf("attributeerror") >= 0 || lower.indexOf("no tiene el atributo") >= 0 || lower.indexOf("no tiene el metodo") >= 0) {
+      return help(
+        "El objeto no tiene ese atributo o metodo.",
+        "Revisa el nombre (mayusculas/minusculas) y que __init__ cree el atributo con self.nombre = valor.",
+        "class Persona:\n    def __init__(self, nombre):\n        self.nombre = nombre"
+      );
+    }
+    if (lower.indexOf("esperaba maximo") >= 0 || lower.indexOf("falta el argumento") >= 0 || lower.indexOf("recibio dos valores") >= 0) {
+      return help(
+        "La llamada no coincide con los parametros de la funcion o clase.",
+        "Cuenta los datos que envias: deben ser los mismos que pide def (recuerda que self no se envia, Python lo agrega solo).",
+        'class Punto:\n    def __init__(self, x, y):\n        self.x = x\n        self.y = y\np = Punto(1, 2)'
+      );
+    }
+    if (lower.indexOf("primer parametro del metodo") >= 0) {
+      return help(
+        "A un metodo de la clase le falta self.",
+        "Dentro de una clase, todo def debe empezar con self como primer parametro.",
+        "class Equipo:\n    def mostrar(self):\n        print(\"hola\")"
+      );
+    }
+    if (lower.indexOf("f-strings") >= 0 || lower.indexOf("f-string") >= 0) {
+      return help(
+        'Los f-strings (f"...") no estan disponibles en el laboratorio.',
+        "Muestra los valores separando con comas en print(), o une con + y str().",
+        'print("Nota:", nota)   # en vez de print(f"Nota: {nota}")'
+      );
+    }
+    if (lower.indexOf("inmutables") >= 0) {
+      return help("Las tuplas no se pueden modificar.", "Una tupla es fija. Si necesitas cambiar valores, usa una lista [].", "dias = [\"lunes\", \"martes\"]\ndias[0] = \"miercoles\"   # las listas si se pueden cambiar");
+    }
+    if (lower.indexOf("herencia") >= 0) {
+      return help("La herencia entre clases no esta disponible en el laboratorio.", "Define la clase sin parentesis: class Estudiante: en vez de class Estudiante(Persona):", "class Estudiante:\n    def __init__(self, nombre):\n        self.nombre = nombre");
+    }
+    if (lower.indexOf("llamadas anidadas") >= 0) {
+      return help("Hay demasiadas llamadas anidadas (posible recursion infinita).", "Si una funcion se llama a si misma, asegurate de que tenga un caso donde se detiene (return sin volver a llamarse).", "def cuenta(n):\n    if n <= 0:\n        return 0\n    return cuenta(n - 1)");
+    }
+    if (lower.indexOf("return solo puede usarse") >= 0) {
+      return help("Usaste return fuera de una funcion.", "return solo va dentro de un def. Para mostrar un valor en el programa principal usa print().", "def doble(n):\n    return n * 2\nprint(doble(4))");
+    }
+    if (lower.indexOf("dentro de match solo van") >= 0 || lower.indexOf("el case necesita") >= 0) {
+      return help("La estructura del match-case no es correcta.", "Dentro de match van lineas case valor: indentadas con 4 espacios, y el codigo de cada case con 8.", 'match opcion:\n    case 1:\n        print("uno")\n    case _:\n        print("otra")');
     }
     if (lower.indexOf("range()") >= 0) {
       return help("Problema con range().", "range(inicio, fin, paso): el paso no puede ser 0 y el rango no puede ser enorme.", "for i in range(0, 5):\n    print(i)");
