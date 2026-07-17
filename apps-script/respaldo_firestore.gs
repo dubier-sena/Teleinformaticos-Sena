@@ -442,11 +442,22 @@ function isSharedReadDoc(collection, docId) {
   return false;
 }
 
+// Replica del safeCloudKey del cliente (firebase_db.js): en los docIds
+// compuestos, todo caracter fuera de [a-z0-9:_-] se convierte en "_". Un
+// aprendiz con punto en su usuario (eimy.alvarez) aparece en sus docIds como
+// "eimy_alvarez", asi que la propiedad se verifica con AMBAS formas.
+function sanitizeKeyLikeClient(key) {
+  return String(key || "").replace(/[^a-z0-9:_-]/gi, "_");
+}
+
 function actorOwnsDoc(collection, docId, actorKey, uid) {
   if (collection === "sena_portal_user_index") {
     return String(docId || "").trim().toLowerCase() === String(uid || "").trim().toLowerCase();
   }
-  return docIdHasKeySegment(docId, actorKey);
+  if (docIdHasKeySegment(docId, actorKey)) return true;
+  var sanitized = sanitizeKeyLikeClient(actorKey);
+  if (sanitized !== actorKey && docIdHasKeySegment(docId, sanitized)) return true;
+  return false;
 }
 
 // Decision PURA de autorizacion (sin Drive/Properties) para poder probarla.

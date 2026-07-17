@@ -45,9 +45,23 @@ service cloud.firestore {
     // jamas autorizaba al aprendiz (403 en TODOS sus guardados de respuestas;
     // solo el fallback a Drive los atrapaba y el admin, que lee Firestore,
     // no los veia). El dueno real es el segmento [2] del docId.
+    //
+    // OJO: el cliente SANEA el usernameKey al construir el docId (safeCloudKey
+    // en firebase_db.js: todo lo que no sea [a-z0-9:_-] se vuelve "_"). Para
+    // usuarios con punto (eimy.alvarez) el segmento queda "eimy_alvarez", asi
+    // que ademas de la comparacion exacta se acepta la comparacion con el
+    // email SANEADO igual. Riesgo aceptado y documentado: un usuario llamado
+    // "eimy_alvarez" (con guion bajo real) colisionaria con "eimy.alvarez";
+    // los nombres de usuario los aprueba el admin, que debe evitar ese caso.
+    function sanitizedTokenKey() {
+      return request.auth.token.email.split('@')[0].replace('[^a-z0-9_-]', '_');
+    }
     function isOwnerOfComposedStudentDoc(docId) {
       return docId.matches('^__guide_(data|ui)__:student:[^:]+:.+$')
-        && isOwnerByUsernameKey(docId.split(':')[2]);
+        && (
+          isOwnerByUsernameKey(docId.split(':')[2])
+          || (signedIn() && docId.split(':')[2] == sanitizedTokenKey())
+        );
     }
 
     function isAdmin() {

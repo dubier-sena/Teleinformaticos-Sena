@@ -137,6 +137,21 @@ test("admin con email versionado atestado sigue siendo admin", () => {
   assert.strictEqual(r.admin, true);
 });
 
+test("usuario con punto accede a su docId compuesto SANEADO (eimy.alvarez -> eimy_alvarez)", () => {
+  const r = authz({
+    action: "set",
+    collection: "sena_portal_progress",
+    docId: "__guide_data__:student:eimy_alvarez:grupo-10b-guia-01_html",
+    email: as("eimy.alvarez"),
+  });
+  assert.strictEqual(r.ok, true, "el segmento saneado debe reconocerse como propio");
+  // y sigue sin poder tocar docs de otros
+  assert.strictEqual(
+    authz({ action: "set", collection: "sena_portal_progress", docId: "__guide_data__:student:maria:g1", email: as("eimy.alvarez") }).ok,
+    false
+  );
+});
+
 test("email v1 sin sufijo no exige atestacion (comportamiento previo intacto)", () => {
   assert.strictEqual(
     authz({ action: "get", collection: "sena_portal_progress", docId: "juan", email: as("juan") }).ok,
