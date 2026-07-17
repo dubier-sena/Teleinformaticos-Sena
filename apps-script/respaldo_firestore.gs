@@ -439,6 +439,14 @@ function isSharedReadDoc(collection, docId) {
   if (collection === "sena_portal_calendar") return true;
   // El calendario academico tambien se respalda dentro de progress.
   if (collection === "sena_portal_progress" && String(docId || "").indexOf("__calendar__:") === 0) return true;
+  // Fechas de entrega (activity_deadlines.js): doc unico que escribe SOLO el
+  // admin pero que TODOS los aprendices leen para saber si una actividad esta
+  // cerrada (o si el admin quito/movio la fecha). Vive en progress con
+  // fallback en guide_state (ver saveGuideStateDoc en firebase_db.js).
+  if (
+    (collection === "sena_portal_progress" || collection === "sena_portal_guide_state") &&
+    String(docId || "") === "__guide_data__:admin:activity-deadlines:__activity_deadlines_v1"
+  ) return true;
   return false;
 }
 

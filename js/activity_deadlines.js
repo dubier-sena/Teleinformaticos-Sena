@@ -279,7 +279,16 @@
     }
 
     try {
-      const snapshot = await window._firebaseDb.cloudGetGuideData(CLOUD_SCOPE_KEY, CLOUD_FILE_NAME);
+      // firestoreFirst: este doc lo escribe el admin en Firestore de forma
+      // sincrona; leerlo ahi (y no en la replica Drive) garantiza que el
+      // aprendiz vea al instante una fecha nueva, movida o ELIMINADA. Es UNA
+      // lectura por carga de guia: volumen minimo para la cuota.
+      // skipDriveOn404: si el doc no existe, no hay fechas — no tiene sentido
+      // pegarle a Apps Script (10-25 s bajo carga) por un miss real.
+      const snapshot = await window._firebaseDb.cloudGetGuideData(CLOUD_SCOPE_KEY, CLOUD_FILE_NAME, {
+        firestoreFirst: true,
+        skipDriveOn404: true,
+      });
       return cloneSnapshot(snapshot);
     } catch (error) {
       return null;

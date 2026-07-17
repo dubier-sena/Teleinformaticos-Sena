@@ -6,7 +6,7 @@ const vm = require("node:vm");
 
 const REPO_ROOT = path.join(__dirname, "..");
 
-function loadDeadlineManager() {
+function loadDeadlineManager(prepare) {
   const script = fs.readFileSync(path.join(REPO_ROOT, "js", "activity_deadlines.js"), "utf8");
   const documentOverride = { current: null };
   const sandbox = {
@@ -43,6 +43,9 @@ function loadDeadlineManager() {
     Date,
   };
   sandbox.localStorage = sandbox.window.localStorage;
+  if (typeof prepare === "function") {
+    prepare(sandbox);
+  }
   vm.runInNewContext(script, sandbox);
   sandbox.window.activityDeadlineManager.__testDocument = documentOverride;
   return sandbox.window.activityDeadlineManager;
@@ -201,4 +204,67 @@ test("admin and guide scripts wire the optional deadline controls", () => {
   assert.match(deadlineScript, /Guardar fecha/);
   assert.match(sharedDrive, /delivery-deadline-admin-slot/);
   assert.match(sharedDrive, /deadlineActivityId/);
+});
+
+// ── Bug jul-17: fecha eliminada por el admin no desbloqueaba al aprendiz ──────
+// El aprendiz guardaba en localStorage una copia del snapshot de fechas; al
+// eliminar el admin la fecha, la lectura de nube del aprendiz devolvia null
+// (403 en reglas + denegacion del Apps Script) y la copia local vieja ganaba
+// para siempre: la guia quedaba "Entrega cerrada" sin fecha vigente.
+
+test("fecha eliminada por el admin en la nube gana a la copia local vieja", async () => {
+  const staleLocal = {
+    policies: {
+      "grupo-10a-guia-02-herramientas-informaticas-digitales.html": {
+        extensiones331: {
+          dueAt: "2026-07-01T13:00:00.000Z",
+          updatedAt: "2026-07-01T12:00:00.000Z",
+          updatedBy: "admin",
+        },
+      },
+    },
+    updatedAt: "2026-07-01T12:00:00.000Z",
+    updatedBy: "admin",
+  };
+  let seenOpts = null;
+  const manager = loadDeadlineManager((sandbox) => {
+    sandbox.window.localStorage.setItem(
+      "sena_portal_admin_activity_deadlines_v1",
+      JSON.stringify(staleLocal)
+    );
+    sandbox.window._firebaseDb = {
+      cloudGetGuideData(scopeKey, fileName, opts) {
+        seenOpts = opts || null;
+        // El admin ya elimino la fecha: snapshot MAS NUEVO con policies vacias.
+        return Promise.resolve({
+          policies: {},
+          updatedAt: "2026-07-17T12:00:00.000Z",
+          updatedBy: "admin",
+        });
+      },
+    };
+  });
+  await manager.ready();
+
+  assert.equal(seenOpts?.firestoreFirst, true, "debe leer Firestore directo, no la replica Drive");
+  assert.equal(seenOpts?.skipDriveOn404, true, "un miss real no debe pegarle a Apps Script");
+  assert.equal(
+    manager.getPolicy("grupo-10a-guia-02-herramientas-informaticas-digitales.html", "extensiones331"),
+    null,
+    "la eliminacion (updatedAt mas nuevo) debe reemplazar la copia local vieja"
+  );
+});
+
+test("contrato con firebase_db.js: fsGet honra firestoreFirst y el docId compartido es el esperado", () => {
+  const db = fs.readFileSync(path.join(REPO_ROOT, "js", "firebase_db.js"), "utf8");
+  // fsGet debe pasar opts al ruteo para que firestoreFirst pueda saltarse Drive.
+  assert.match(db, /canCallFirestore\(collection, false, opts\)/);
+  assert.match(db, /opts && opts\.firestoreFirst/);
+  // El docId que autorizan firestore.rules y el Apps Script debe coincidir con
+  // el que construye guideStateDocId: prefijo + safeCloudKey(scope) + ":" + fileNameToKey(file).
+  const SHARED_DOC_ID = "__guide_data__:admin:activity-deadlines:__activity_deadlines_v1";
+  const rules = fs.readFileSync(path.join(REPO_ROOT, "firestore.rules"), "utf8");
+  const gs = fs.readFileSync(path.join(REPO_ROOT, "apps-script", "respaldo_firestore.gs"), "utf8");
+  assert.ok(rules.includes(SHARED_DOC_ID), "firestore.rules debe autorizar el doc compartido de fechas");
+  assert.ok(gs.includes(SHARED_DOC_ID), "respaldo_firestore.gs debe autorizar el doc compartido de fechas");
 });

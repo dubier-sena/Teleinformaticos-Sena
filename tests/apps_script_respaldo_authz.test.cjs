@@ -158,3 +158,13 @@ test("email v1 sin sufijo no exige atestacion (comportamiento previo intacto)", 
     true
   );
 });
+
+test("fechas de entrega: lectura compartida, escritura solo admin", () => {
+  const DL = "__guide_data__:admin:activity-deadlines:__activity_deadlines_v1";
+  for (const collection of ["sena_portal_progress", "sena_portal_guide_state"]) {
+    assert.strictEqual(authz({ action: "get", collection, docId: DL, email: as("juan") }).ok, true, "aprendiz debe LEER las fechas en " + collection);
+    assert.strictEqual(authz({ action: "set", collection, docId: DL, email: as("juan") }).ok, false, "aprendiz NO debe escribir las fechas");
+    assert.strictEqual(authz({ action: "delete", collection, docId: DL, email: as("juan") }).ok, false);
+    assert.strictEqual(authz({ action: "set", collection, docId: DL, email: as("dubier"), uid: "adminuid" }).ok, true, "el admin si escribe las fechas");
+  }
+});

@@ -548,9 +548,17 @@
   //     la cuota). El admin lee de Firestore (excepcion admin, batched/completo).
   //   - Cuenta/auth siempre en Firestore (bajo volumen).
   //   - Cooldown (bloqueo real) manda TODO a Drive (failover de emergencia).
-  async function canCallFirestore(collection, isWrite) {
+  async function canCallFirestore(collection, isWrite, opts) {
     if (!isConfigured) return false;
-    if (!isWrite && isForceDriveEnabled() && isDriveDataCollection(collection)) return false;
+    // opts.firestoreFirst: lecturas puntuales de docs COMPARTIDOS de bajo
+    // volumen (hoy: el doc de fechas de entrega) van a Firestore aunque el
+    // ruteo Drive-primario este activo. El admin escribe fechas en Firestore
+    // de forma sincrona, asi que leer ahi garantiza que el aprendiz vea el
+    // cambio (fecha nueva, movida o ELIMINADA) al instante, sin depender de
+    // que la replica de Drive este al dia. Drive queda como failover (cooldown,
+    // red caida) por los caminos normales de fsGet.
+    var bypassDriveRouting = Boolean(opts && opts.firestoreFirst);
+    if (!isWrite && !bypassDriveRouting && isForceDriveEnabled() && isDriveDataCollection(collection)) return false;
     // Cooldown (bloqueo real de Firestore): aplica a TODO —
     // si Firestore esta caido de verdad, hasta las cuentas caen a Drive.
     if (isFirestoreInCooldown()) return false;
@@ -838,7 +846,7 @@
   // intentando Drive (Firestore realmente inalcanzable).
   async function fsGet(collection, docId, opts) {
     var skipDriveOn404 = Boolean(opts && opts.skipDriveOn404);
-    if (!(await canCallFirestore(collection))) {
+    if (!(await canCallFirestore(collection, false, opts))) {
       return await driveFallbackGet(collection, docId);
     }
     try {
