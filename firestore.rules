@@ -70,6 +70,16 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/sena_portal_roles/$(request.auth.uid)).data.role == "admin";
     }
 
+    // Doc COMPARTIDO de fechas de entrega (activity_deadlines.js). Lo escribe
+    // SOLO el admin, pero TODOS los aprendices deben poder LEERLO para saber
+    // si una actividad esta cerrada — y sobre todo para enterarse cuando el
+    // admin elimina o mueve la fecha. Sin esta lectura, la copia cacheada en
+    // localStorage del aprendiz (con la fecha vieja) gana para siempre y la
+    // guia queda bloqueada aunque el admin haya quitado la fecha.
+    function isSharedDeadlinesDoc(docId) {
+      return docId == "__guide_data__:admin:activity-deadlines:__activity_deadlines_v1";
+    }
+
     // Lista documental de correos administradores permitidos para auditoria.
     // La autoridad real sigue siendo sena_portal_roles/{uid}; conservar este
     // helper evita que el contrato de seguridad pierda la referencia explicita.
@@ -167,6 +177,9 @@ service cloud.firestore {
     // guideStateDocId en firebase_db.js). El caso (b) se autoriza por el
     // segmento del docId con isOwnerOfComposedStudentDoc.
     match /sena_portal_progress/{usernameKey} {
+      // Fechas de entrega: lectura compartida (escritura sigue solo-admin,
+      // porque este docId nunca coincide con la propiedad del aprendiz).
+      allow get: if signedIn() && isSharedDeadlinesDoc(usernameKey);
       allow read, write: if isAdmin()
         || isOwnerByUsernameKey(usernameKey)
         || isOwnerOfComposedStudentDoc(usernameKey);
@@ -209,6 +222,9 @@ service cloud.firestore {
     // ───── Estado de guias (un doc por aprendiz x guia) ────────────────────
     // El doc debe contener un campo "usernameKey" para validar pertenencia.
     match /sena_portal_guide_state/{docId} {
+      // Fallback del doc compartido de fechas (saveGuideStateDoc cae aqui si
+      // el PATCH a progress fallo): misma lectura compartida que en progress.
+      allow get: if signedIn() && isSharedDeadlinesDoc(docId);
       allow read: if isAdmin()
         || (signedIn() && resource.data.usernameKey != null
             && isOwnerByUsernameKey(resource.data.usernameKey));

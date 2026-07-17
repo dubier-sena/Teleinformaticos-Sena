@@ -61,3 +61,20 @@ test("invariantes de seguridad intactas", () => {
   const guideState = rules.split("match /sena_portal_guide_state/")[1] || "";
   assert.match(guideState.slice(0, 400), /resource\.data\.usernameKey/);
 });
+
+test("doc compartido de fechas de entrega: lectura para cualquier sesion, sin abrir escritura", () => {
+  assert.match(rules, /function isSharedDeadlinesDoc\(/, "falta el helper isSharedDeadlinesDoc");
+  assert.match(rules, /__guide_data__:admin:activity-deadlines:__activity_deadlines_v1/);
+  const progressBlock = (rules.split("match /sena_portal_progress/")[1] || "").slice(0, 700);
+  assert.match(
+    progressBlock,
+    /allow get: if signedIn\(\) && isSharedDeadlinesDoc\(usernameKey\)/,
+    "progress debe permitir GET compartido del doc de fechas"
+  );
+  const guideStateBlock = (rules.split("match /sena_portal_guide_state/")[1] || "").slice(0, 700);
+  assert.match(
+    guideStateBlock,
+    /allow get: if signedIn\(\) && isSharedDeadlinesDoc\(docId\)/,
+    "guide_state (fallback del doc de fechas) debe permitir el mismo GET compartido"
+  );
+});
