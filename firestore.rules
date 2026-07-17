@@ -15,9 +15,39 @@ service cloud.firestore {
       return usernameKey + "@sena-portal.local";
     }
 
+    // Email versionado: cuando el admin resetea la password de un aprendiz,
+    // el bridge crea una cuenta Auth nueva con email "{key}.v{N}@sena-portal.local"
+    // (ver buildEmail en firebase_auth_bridge.js). La version N valida es la
+    // ATESTADA por el admin en sena_portal_user_meta/{key}.authEmailVersion
+    // (solo admin/dueno escriben ese doc). Sin este OR, un aprendiz reseteado
+    // perdia TODA la propiedad de sus documentos (403 en cada lectura/escritura).
+    function isOwnerByVersionedEmail(usernameKey) {
+      return exists(/databases/$(database)/documents/sena_portal_user_meta/$(usernameKey))
+        && request.auth.token.email == (
+          usernameKey + ".v"
+          + string(get(/databases/$(database)/documents/sena_portal_user_meta/$(usernameKey)).data.authEmailVersion)
+          + "@sena-portal.local"
+        );
+    }
+
     function isOwnerByUsernameKey(usernameKey) {
       return signedIn()
-        && request.auth.token.email == emailForUsername(usernameKey);
+        && (
+          request.auth.token.email == emailForUsername(usernameKey)
+          || isOwnerByVersionedEmail(usernameKey)
+        );
+    }
+
+    // Documentos de guia con docId COMPUESTO en sena_portal_progress:
+    //   "__guide_data__:student:{usernameKey}:{archivo}" (respuestas de guia)
+    //   "__guide_ui__:student:{usernameKey}:{archivo}"   (estado de UI)
+    // El docId completo NO es el usernameKey, asi que isOwnerByUsernameKey(docId)
+    // jamas autorizaba al aprendiz (403 en TODOS sus guardados de respuestas;
+    // solo el fallback a Drive los atrapaba y el admin, que lee Firestore,
+    // no los veia). El dueno real es el segmento [2] del docId.
+    function isOwnerOfComposedStudentDoc(docId) {
+      return docId.matches('^__guide_(data|ui)__:student:[^:]+:.+$')
+        && isOwnerByUsernameKey(docId.split(':')[2]);
     }
 
     function isAdmin() {
@@ -117,8 +147,15 @@ service cloud.firestore {
     }
 
     // ───── Progreso por aprendiz ───────────────────────────────────────────
+    // {usernameKey} puede ser: (a) la clave simple del aprendiz (doc de % de
+    // progreso), o (b) un docId COMPUESTO "__guide_data__/__guide_ui__:student:
+    // {key}:{archivo}" donde guarda sus respuestas/estado de guia (ver
+    // guideStateDocId en firebase_db.js). El caso (b) se autoriza por el
+    // segmento del docId con isOwnerOfComposedStudentDoc.
     match /sena_portal_progress/{usernameKey} {
-      allow read, write: if isAdmin() || isOwnerByUsernameKey(usernameKey);
+      allow read, write: if isAdmin()
+        || isOwnerByUsernameKey(usernameKey)
+        || isOwnerOfComposedStudentDoc(usernameKey);
     }
 
     // ───── Notas / juicios de evaluacion por aprendiz ──────────────────────

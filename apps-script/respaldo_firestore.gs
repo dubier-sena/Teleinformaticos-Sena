@@ -67,7 +67,10 @@ function doPost(e) {
     }
 
     // Autorizacion por propiedad/rol (cierra IDOR C1). El admin (por email)
-    // accede a todo; el aprendiz solo a SUS documentos.
+    // accede a todo; el aprendiz solo a SUS documentos. Si el email viene
+    // versionado (.vN, cuenta re-creada tras reset de password), se consulta
+    // la version atestada en user_meta para confiar en la clave base.
+    var actorParts = splitVersionedEmail(userInfo.email);
     var authz = authorizeRequest({
       action: action,
       collection: payload.collection,
@@ -75,6 +78,7 @@ function doPost(e) {
       email: userInfo.email,
       uid: userInfo.uid,
       adminEmails: getAdminEmails(),
+      attestedVersion: actorParts.version > 1 ? getAttestedAuthVersion(actorParts.base) : 1,
     });
     if (!authz.ok) {
       return jsonResponse({ ok: false, message: authz.message || "No autorizado." });
@@ -359,6 +363,53 @@ function usernameKeyFromEmail(email) {
   return String(email || "").trim().toLowerCase().replace(/@.*$/, "");
 }
 
+// Separa un email sintetico posiblemente VERSIONADO "{key}.v{N}@dominio" en su
+// clave base y su version. Cuando el admin resetea la password de un aprendiz,
+// el portal crea una cuenta Auth nueva con sufijo ".v{N}" (ver buildEmail en
+// firebase_auth_bridge.js); sin esta separacion, el actor "pepito.v2" nunca
+// coincidia con el segmento "pepito" de sus docIds y el aprendiz reseteado
+// quedaba sin acceso a sus propios documentos tambien en Drive.
+function splitVersionedEmail(email) {
+  var local = usernameKeyFromEmail(email);
+  var m = local.match(/^(.+)\.v(\d+)$/);
+  if (m && m[1]) return { base: m[1], version: Number(m[2]) };
+  return { base: local, version: 1 };
+}
+
+function getFirebaseProjectId() {
+  return getScriptProperty("FIREBASE_PROJECT_ID");
+}
+
+// Version de email ATESTADA por el admin en sena_portal_user_meta/{key}.
+// Las Firestore Rules permiten GET publico de esa coleccion (solo expone el
+// numero de version, sin PII), asi que basta el API key. Se cachea 10 min:
+// tras un reset, un aprendiz re-reseteado puede tardar hasta 10 min en ser
+// aceptado con la version nueva (transitorio aceptable).
+function getAttestedAuthVersion(usernameKey) {
+  try {
+    var projectId = getFirebaseProjectId();
+    var apiKey = getFirebaseApiKey();
+    if (!projectId || !apiKey || !usernameKey) return 0;
+    var cache = CacheService.getScriptCache();
+    var cacheKey = "authv_" + usernameKey;
+    var cached = cache.get(cacheKey);
+    if (cached) return Number(cached) || 0;
+    var url =
+      "https://firestore.googleapis.com/v1/projects/" + encodeURIComponent(projectId) +
+      "/databases/(default)/documents/sena_portal_user_meta/" + encodeURIComponent(usernameKey) +
+      "?key=" + encodeURIComponent(apiKey);
+    var response = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+    if (response.getResponseCode() !== 200) return 0;
+    var body = JSON.parse(response.getContentText() || "{}");
+    var field = body && body.fields && body.fields.authEmailVersion;
+    var version = field ? Number(field.integerValue || field.doubleValue || 0) : 0;
+    if (version > 0) cache.put(cacheKey, String(version), 600);
+    return version;
+  } catch (_) {
+    return 0;
+  }
+}
+
 function escapeRegExpLiteral(s) {
   return String(s).replace(/[.*+?^${}()|[\]\\-]/g, "\\$&");
 }
@@ -408,10 +459,28 @@ function authorizeRequest(opts) {
   var email = String(opts.email || "").trim().toLowerCase();
   var uid = String(opts.uid || "");
   var adminEmails = opts.adminEmails || [];
+  // Version atestada en sena_portal_user_meta (la obtiene el caller impuro,
+  // getAttestedAuthVersion). 0/undefined = sin atestacion disponible.
+  var attestedVersion = Number(opts.attestedVersion || 0);
 
   if (email && adminEmails.indexOf(email) !== -1) return { ok: true, admin: true };
 
-  var actorKey = usernameKeyFromEmail(email);
+  var actor = splitVersionedEmail(email);
+
+  // Email versionado: SOLO se confia en la clave base si la version del email
+  // coincide con la atestada por el admin. Sin esta comprobacion, cualquiera
+  // podria crear una cuenta Auth "victima.v2@..." y suplantar a la victima.
+  if (actor.version > 1) {
+    if (actor.version !== attestedVersion) {
+      return { ok: false, message: "Version de cuenta no atestada. Pide al instructor resetear tu password de nuevo." };
+    }
+    // Admin con email versionado (reset de su propia password).
+    if (adminEmails.indexOf(actor.base + "@sena-portal.local") !== -1) {
+      return { ok: true, admin: true };
+    }
+  }
+
+  var actorKey = actor.base;
   if (!actorKey) return { ok: false, message: "Sin identidad valida en el token." };
 
   if (action === "list") {
