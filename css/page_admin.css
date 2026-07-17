@@ -405,19 +405,21 @@ a {
    SIMPLIFICACIÓN DEL PANEL — ocultar secciones no necesarias.
    Reversible: borra este bloque para volver a mostrarlas. Oculta el ítem del
    menú (data-admin-module) y la sección (#module-…) de: Fichas, Guías,
-   Actividades, Reportes, Configuración y Auditoría.
+   Actividades, Reportes y Auditoría.
+   CONFIGURACIÓN se volvió a mostrar (jul-17): ahí viven los botones de
+   mantenimiento "Migrar datos a Drive" y "Recuperar datos de Drive"
+   (backfillFromDrive), necesarios para operar la réplica Drive↔Firestore.
    ════════════════════════════════════════════════════════════════════════ */
 [data-admin-module="fichas"],
 [data-admin-module="guias"],
 [data-admin-module="actividades"],
 [data-admin-module="reportes"],
-[data-admin-module="configuracion"],
 [data-admin-module="auditoria"],
+[data-admin-module="configuracion"][data-tab="auditoria"],
 #module-fichas,
 #module-guias,
 #module-actividades,
 #module-reportes,
-#module-configuracion,
 #module-auditoria {
   display: none !important;
 }

@@ -44,6 +44,13 @@ test("emails versionados (.vN) se aceptan SOLO atestados por user_meta", () => {
   assert.match(ownerFn.slice(0, 300), /isOwnerByVersionedEmail\(usernameKey\)/);
 });
 
+test("usuarios con punto: el docId compuesto acepta el email SANEADO", () => {
+  assert.match(rules, /function sanitizedTokenKey\(/, "falta sanitizedTokenKey");
+  assert.match(rules, /replace\('\[\^a-z0-9_-\]', '_'\)/, "la sanitizacion debe replicar safeCloudKey del cliente");
+  const composedFn = rules.split("function isOwnerOfComposedStudentDoc(")[1] || "";
+  assert.match(composedFn.slice(0, 400), /sanitizedTokenKey\(\)/);
+});
+
 test("invariantes de seguridad intactas", () => {
   // Cierre total por defecto.
   assert.match(rules, /match \/\{document=\*\*\}[\s\S]{0,80}allow read, write: if false/);
