@@ -1712,6 +1712,8 @@
 
 window.portalAuth = {
     ADMIN_PROFILE: getAdminProfile(),
+    hashSecret,
+    verifySecret,
     GUIDE_TITLES,
     GUIDE_PROGRESS_CONFIG,
     FICHA_MAP,
@@ -2313,170 +2315,9 @@ window.portalAuth = {
     return sharedStorePromise;
   }
 
-  function rightRotate(value, amount) {
-    return (value >>> amount) | (value << (32 - amount));
-  }
-
-  function sha256Fallback(value) {
-    let normalized = String(value || "");
-    normalized = unescape(encodeURIComponent(normalized));
-    const mathPow = Math.pow;
-    const maxWord = mathPow(2, 32);
-    const words = [];
-    const bitLength = normalized.length * 8;
-    let result = "";
-    let hashSeed = sha256Fallback.hashCache;
-    let k = sha256Fallback.kCache;
-
-    if (!hashSeed || !k) {
-      hashSeed = [];
-      k = [];
-      const isComposite = {};
-      let candidate = 2;
-
-      while (k.length < 64) {
-        if (!isComposite[candidate]) {
-          for (let multiple = candidate * candidate; multiple < 312; multiple += candidate) {
-            isComposite[multiple] = true;
-          }
-
-          hashSeed.push((mathPow(candidate, 0.5) * maxWord) | 0);
-          k.push((mathPow(candidate, 1 / 3) * maxWord) | 0);
-        }
-
-        candidate += 1;
-      }
-
-      sha256Fallback.hashCache = hashSeed.slice();
-      sha256Fallback.kCache = k;
-    }
-
-    const hash = hashSeed.slice();
-
-    normalized += "\x80";
-    while ((normalized.length % 64) !== 56) {
-      normalized += "\x00";
-    }
-
-    for (let index = 0; index < normalized.length; index += 1) {
-      const code = normalized.charCodeAt(index);
-      words[index >> 2] |= code << ((3 - (index % 4)) * 8);
-    }
-
-    words[words.length] = (bitLength / maxWord) | 0;
-    words[words.length] = bitLength;
-
-    for (let offset = 0; offset < words.length; ) {
-      const schedule = words.slice(offset, (offset += 16));
-      const workingHash = hash.slice(0, 8);
-
-      for (let round = 0; round < 64; round += 1) {
-        const word15 = schedule[round - 15];
-        const word2 = schedule[round - 2];
-
-        if (round >= 16) {
-          const sigma0 =
-            rightRotate(word15, 7) ^
-            rightRotate(word15, 18) ^
-            (word15 >>> 3);
-          const sigma1 =
-            rightRotate(word2, 17) ^
-            rightRotate(word2, 19) ^
-            (word2 >>> 10);
-
-          schedule[round] =
-            (schedule[round - 16] + sigma0 + schedule[round - 7] + sigma1) | 0;
-        }
-
-        const temp1 =
-          workingHash[7] +
-          (rightRotate(workingHash[4], 6) ^
-            rightRotate(workingHash[4], 11) ^
-            rightRotate(workingHash[4], 25)) +
-          ((workingHash[4] & workingHash[5]) ^
-            (~workingHash[4] & workingHash[6])) +
-          k[round] +
-          (schedule[round] | 0);
-        const temp2 =
-          (rightRotate(workingHash[0], 2) ^
-            rightRotate(workingHash[0], 13) ^
-            rightRotate(workingHash[0], 22)) +
-          ((workingHash[0] & workingHash[1]) ^
-            (workingHash[0] & workingHash[2]) ^
-            (workingHash[1] & workingHash[2]));
-
-        workingHash.unshift((temp1 + temp2) | 0);
-        workingHash[4] = (workingHash[4] + temp1) | 0;
-        workingHash.pop();
-      }
-
-      for (let index = 0; index < 8; index += 1) {
-        hash[index] = (hash[index] + workingHash[index]) | 0;
-      }
-    }
-
-    for (let index = 0; index < 8; index += 1) {
-      for (let shift = 3; shift >= 0; shift -= 1) {
-        const byte = (hash[index] >> (shift * 8)) & 255;
-        result += byte.toString(16).padStart(2, "0");
-      }
-    }
-
-    return result;
-  }
-
-  async function hashSecret(secret) {
-    const value = normalizeText(secret);
-    if (!value) {
-      return "";
-    }
-
-    if (window.crypto && window.crypto.subtle && window.TextEncoder) {
-      const buffer = new TextEncoder().encode(value);
-      const digest = await window.crypto.subtle.digest("SHA-256", buffer);
-      return Array.from(new Uint8Array(digest))
-        .map((chunk) => chunk.toString(16).padStart(2, "0"))
-        .join("");
-    }
-
-    return sha256Fallback(value);
-  }
+  // hashSecret canonico: definido en la primera IIFE y expuesto en window.portalAuth.
+  const hashSecret = auth.hashSecret;
   const NETWORK_SYNC_KEY = `${STORAGE_PREFIX}_network_sync_v2`;
-
-  async function verifySecret(secret, storedHash) {
-    const value = normalizeText(secret);
-    const normalizedStoredHash = normalizeText(storedHash);
-    if (!value || !normalizedStoredHash) {
-      return {
-        ok: false,
-        hash: "",
-        migrated: false,
-      };
-    }
-
-    const computedHash = await hashSecret(value);
-    if (normalizedStoredHash === computedHash) {
-      return {
-        ok: true,
-        hash: computedHash,
-        migrated: false,
-      };
-    }
-
-    if (normalizedStoredHash === `plain:${value}`) {
-      return {
-        ok: true,
-        hash: computedHash,
-        migrated: true,
-      };
-    }
-
-    return {
-      ok: false,
-      hash: computedHash,
-      migrated: false,
-    };
-  }
 
   async function normalizeStoredPasswordHash(passwordHash) {
     const cleanHash = normalizeText(passwordHash);
@@ -3288,7 +3129,6 @@ window.portalAuth = {
   auth.getStorageContext = getStorageContext;
   auth.getSharedStoreStatus = getSharedStoreStatus;
   auth.migrateLocalDataIfNeeded = migrateLocalDataIfNeeded;
-  auth.hashSecret = hashSecret;
 
   if (isHttpContext()) {
     window.setTimeout(() => {
@@ -3437,6 +3277,39 @@ window.portalAuth = {
       "auth/invalid-usernameKey":      "Ingresa tu nombre de usuario.",
     };
     return map[code] || null;
+  }
+
+  // ── Estado de sincronizacion nube del ADMIN ─────────────────────────────
+  // El gate de pre-fetch de firebase_db.js bloquea las peticiones a Firestore
+  // cuando no hay sesion Firebase, asi que el banner (que escucha respuestas
+  // 401/403) nunca se entera y el panel admin queda sin sync EN SILENCIO
+  // (incidente del 02-jun-2026). Este flag + el chequeo al cargar paginas
+  // admin hacen el estado visible y ofrecen recuperacion autoservicio.
+  const ADMIN_CLOUD_SYNC_KEY = "sena_portal_admin_cloud_sync_v1";
+  let adminPasswordForRecovery = "";
+
+  function writeAdminCloudSyncState(state) {
+    try {
+      localStorage.setItem(ADMIN_CLOUD_SYNC_KEY, JSON.stringify(state));
+    } catch (_) {}
+  }
+
+  function readAdminCloudSyncState() {
+    try {
+      return JSON.parse(localStorage.getItem(ADMIN_CLOUD_SYNC_KEY) || "null");
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function buildAdminNoSyncMessage(errorCode) {
+    const detail = mapBridgeErrorToMessage(errorCode);
+    return (
+      "Sesion admin SIN sincronizacion a la nube: los cambios NO llegan a los aprendices. " +
+      (detail ? detail + " " : "") +
+      "Cierra sesion y vuelve a entrar con tu contrasena. Si persiste, ejecuta en la consola: " +
+      'await portalAuth.recoverAdminCloudAccess("contrasena-anterior")'
+    );
   }
 
   async function ensureAdminRoleDoc(uid, fullName) {
@@ -3744,8 +3617,25 @@ window.portalAuth = {
           "[portal_auth] Firebase Auth no logueo al admin (modo offline-only):",
           fb.error
         );
+        // La contrasena recien validada localmente se retiene SOLO en memoria
+        // (nunca en storage) para que recoverAdminCloudAccess pueda usarla como
+        // contrasena nueva sin volver a pedirla.
+        adminPasswordForRecovery = password;
+        writeAdminCloudSyncState({
+          status: "broken",
+          error: fb.error || "",
+          at: new Date().toISOString(),
+        });
+        try {
+          window.portalSyncBanner?.warn(buildAdminNoSyncMessage(fb.error));
+        } catch (_) {}
+        try {
+          auth.setFlashMessage?.(buildAdminNoSyncMessage(fb.error), "warn");
+        } catch (_) {}
         return result;
       }
+      adminPasswordForRecovery = "";
+      writeAdminCloudSyncState({ status: "ok", at: new Date().toISOString() });
       console.info(
         "[portal_auth] Firebase Auth ok para admin " + profile.usernameKey +
         (fb.created ? " (cuenta creada)" : "")
@@ -3760,6 +3650,125 @@ window.portalAuth = {
       return result;
     };
   }
+
+  // ── Recuperacion autoservicio de la sesion Firebase del admin ──────────
+  // Escenario: la cuenta Auth "dubier@sena-portal.local" guarda una contrasena
+  // ANTERIOR (p. ej. tras endurecer la clave en el codigo) y el sign-in del
+  // bridge falla con wrong-password en cada login. Antes la unica salida era
+  // borrar la cuenta a mano en Firebase Console. Esta funcion entra a Firebase
+  // con la contrasena anterior y la actualiza a la actual, conservando la
+  // cuenta y su doc role (mismo uid).
+  // NOTA: NO se usa el bump de authEmailVersion (mecanismo de reset de
+  // aprendices) para el admin: el bootstrap de sena_portal_roles en
+  // firestore.rules solo acepta el email exacto v1, y aceptar emails admin
+  // versionados sin atestacion abriria escalada de privilegios (cualquiera
+  // puede crear cuentas Auth con la API key publica).
+  // Uso en consola (con sesion admin, justo despues de un login local):
+  //   await portalAuth.recoverAdminCloudAccess("contrasena-anterior")
+  // Fuera de ese contexto, pasar tambien la contrasena actual:
+  //   await portalAuth.recoverAdminCloudAccess("anterior", "actual")
+  auth.recoverAdminCloudAccess = async function recoverAdminCloudAccess(
+    oldPassword,
+    currentPassword
+  ) {
+    if (!auth.isAdminSession || !auth.isAdminSession()) {
+      return { ok: false, message: "Inicia sesion como administrador primero." };
+    }
+    if (!bridgeEnabled()) {
+      return { ok: false, message: "La sincronizacion con la nube esta desactivada." };
+    }
+    const b = getBridge();
+    const profile = auth.ADMIN_PROFILE || { usernameKey: "dubier", fullName: "" };
+    const oldPwd = String(oldPassword || "");
+    const newPwd = String(currentPassword || adminPasswordForRecovery || "");
+    if (!oldPwd || !newPwd) {
+      return {
+        ok: false,
+        message:
+          "Se necesita la contrasena anterior (y la actual como segundo argumento si no acabas de iniciar sesion).",
+      };
+    }
+    // Validar la contrasena actual contra el hash local ANTES de escribirla en
+    // Firebase: si fuera incorrecta, la nube quedaria otra vez desalineada.
+    if (typeof prevLoginAdmin === "function") {
+      const check = await prevLoginAdmin.call(auth, newPwd);
+      if (!check || !check.ok) {
+        return { ok: false, message: "La contrasena actual no coincide con la del portal." };
+      }
+    }
+    const changed = await b.changePassword(profile.usernameKey, oldPwd, newPwd);
+    if (!changed.ok) {
+      return {
+        ok: false,
+        error: changed.error,
+        message:
+          mapBridgeErrorToMessage(changed.error) ||
+          "No se pudo actualizar la contrasena en la nube (" + (changed.error || "error") + ").",
+      };
+    }
+    const fb = await signInBridge(profile.usernameKey, newPwd);
+    if (!fb.ok) {
+      return {
+        ok: false,
+        error: fb.error,
+        message: "La contrasena se actualizo pero el ingreso fallo (" + (fb.error || "error") + "). Reintenta cerrando sesion.",
+      };
+    }
+    try {
+      await ensureAdminRoleDoc(fb.uid, profile.fullName);
+    } catch (_) {}
+    adminPasswordForRecovery = "";
+    writeAdminCloudSyncState({ status: "ok", at: new Date().toISOString() });
+    try {
+      window.portalSyncBanner?.hide();
+    } catch (_) {}
+    return { ok: true, message: "Sincronizacion con la nube restablecida." };
+  };
+
+  // ── Aviso al cargar paginas admin sin token Firebase ───────────────────
+  // Complementa al banner reactivo: aqui se detecta proactivamente la sesion
+  // admin que quedo sin token (el gate de firebase_db.js suprime los fetch,
+  // asi que ningun 401 lo delataria). Se excluye index.html por la misma
+  // carrera del bootstrap descrita en scheduleAdminServerConfirm.
+  (function scheduleAdminCloudSyncCheck() {
+    if (auth.__adminCloudSyncCheckScheduled) return;
+    auth.__adminCloudSyncCheckScheduled = true;
+    const page = (String(window.location.pathname || "").split("/").pop() || "").toLowerCase();
+    if (page === "" || page === "index.html") return;
+    const run = async function () {
+      if (!auth.isAdminSession || !auth.isAdminSession()) return;
+      if (!bridgeEnabled()) return;
+      const b = getBridge();
+      if (!b) return;
+      try {
+        await b.waitForAuthHydration(3000);
+      } catch (_) {}
+      let token = null;
+      try {
+        token = await b.getIdToken();
+      } catch (_) {}
+      if (token) {
+        writeAdminCloudSyncState({ status: "ok", at: new Date().toISOString() });
+        return;
+      }
+      const prev = readAdminCloudSyncState();
+      const errorCode = prev && prev.status === "broken" ? prev.error : "";
+      try {
+        window.portalSyncBanner?.warn(buildAdminNoSyncMessage(errorCode));
+      } catch (_) {}
+    };
+    if (document.readyState === "loading") {
+      document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+          run().catch(function () {});
+        },
+        { once: true }
+      );
+    } else {
+      run().catch(function () {});
+    }
+  })();
 
   // ── S3: confirmacion server-side del rol admin (defensa en profundidad) ──
   // El gate cliente (requireAdminAccess / isAdminSession) confia en el campo
