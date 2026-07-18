@@ -201,6 +201,23 @@
     }
   });
 
+  // ── API publica minima ──────────────────────────────────────────────────────
+  // Permite a otros modulos mostrar el banner directamente cuando detectan un
+  // estado que el hook de fetch no puede ver: el gate de pre-fetch de
+  // firebase_db.js bloquea las peticiones cuando no hay sesion Firebase, asi
+  // que sin token no hay fetch, no hay 401 y este banner nunca se enteraria
+  // (causa del "admin sin sync en silencio" del 02-jun-2026).
+  window.portalSyncBanner = {
+    warn: function (message, status) {
+      setBannerMessage(String(message || ""));
+      emitStatus(status || "no-auth", String(message || ""));
+    },
+    hide: function () {
+      hideBanner();
+      emitStatus("online", "");
+    },
+  };
+
   // Estado inicial: si el navegador esta offline al cargar, mostrar de inmediato.
   if (!navigator.onLine) {
     // Permitir que el body exista antes de inyectar el banner.
