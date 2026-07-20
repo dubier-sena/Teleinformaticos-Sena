@@ -71,6 +71,24 @@ window.__PAGE_RUNTIME_CONTEXTS__ = {
     "ficha": "3441942",
     "boot": "initTallerIntegrador"
   },
+  "sb-taller-10a": {
+    "family": "taller-integrador-sb",
+    "pageFile": "santa-barbara-10a-guia-04-taller-integrador.html",
+    "partialPath": "partials/taller-integrador-sb-content.html",
+    "inst": "Institucion Educativa Santa Barbara",
+    "grupo": "10A",
+    "ficha": "3441944",
+    "boot": "initTallerIntegrador"
+  },
+  "sb-taller-10b": {
+    "family": "taller-integrador-sb",
+    "pageFile": "santa-barbara-10b-guia-04-taller-integrador.html",
+    "partialPath": "partials/taller-integrador-sb-content.html",
+    "inst": "Institucion Educativa Santa Barbara",
+    "grupo": "10B",
+    "ficha": "3441950",
+    "boot": "initTallerIntegrador"
+  },
   "jfk-guia4ciber-10a": {
     "family": "guia-04-planificar-ciberseguridad",
     "pageFile": "grupo-10a-guia-04-planificar-informacion-ciberseguridad.html",

@@ -1,7 +1,10 @@
 // script_taller_integrador.js — Taller Integrador (Sistemas Teleinformaticos)
-// Institucion Educativa John F. Kennedy, grupos 10A/10B. 6 productos type:"file"
-// (entrega a Drive por equipo) via ActivityStandard. Sin formularios ni wizard de
-// equipo: los integrantes del equipo van en la portada del documento entregado.
+// Compartido por dos instituciones (John F. Kennedy y Santa Barbara), grupos
+// 10A/10B de cada una. 6 productos type:"file" (entrega a Drive por equipo)
+// via ActivityStandard. Sin formularios ni wizard de equipo: los integrantes
+// del equipo van en la portada del documento entregado. El PAGE_FILE (via
+// STORAGE_FILE_ALIASES) determina tanto el storage local/nube como el registro
+// de guide_declarations.js que aplica (cada institucion tiene el suyo).
 (function () {
   "use strict";
 
@@ -11,6 +14,8 @@
   const STORAGE_FILE_ALIASES = {
     "grupo-10a-guia-04-taller-integrador.html": "10a_guia4.html",
     "grupo-10b-guia-04-taller-integrador.html": "10b_guia4.html",
+    "santa-barbara-10a-guia-04-taller-integrador.html": "sb_10a_guia4.html",
+    "santa-barbara-10b-guia-04-taller-integrador.html": "sb_10b_guia4.html",
   };
   const GUIDE_DATA_FILE = STORAGE_FILE_ALIASES[PAGE_FILE] || PAGE_FILE;
   const PAGE_KEY = GUIDE_DATA_FILE.replace(/[^a-z0-9]+/g, "_") || "guia4";

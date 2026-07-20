@@ -91,6 +91,8 @@
     "santa-barbara-10b-guia-02-redes-rap01.html": "sb_10b_redes.html",
     // Redes Guia 3 / RAP02 (redes-rap02) NO usa alias: guarda con su propio nombre,
     // asi que getCloudFileName devuelve el archivo tal cual y ya coincide.
+    "santa-barbara-10a-guia-04-taller-integrador.html": "sb_10a_guia4.html",
+    "santa-barbara-10b-guia-04-taller-integrador.html": "sb_10b_guia4.html",
   };
 
   function getCloudFileName(pageFile) {

@@ -1154,6 +1154,8 @@
       "grupo-11b-guia-07-planificar-informacion-ciberseguridad.html": "11b_guia7.html",
       "santa-barbara-10a-guia-02-redes-rap01.html": "sb_10a_redes.html",
       "santa-barbara-10b-guia-02-redes-rap01.html": "sb_10b_redes.html",
+      "santa-barbara-10a-guia-04-taller-integrador.html": "sb_10a_guia4.html",
+      "santa-barbara-10b-guia-04-taller-integrador.html": "sb_10b_guia4.html",
     };
     return aliases[fileName] || fileName;
   }
@@ -1415,6 +1417,10 @@
       "10b_guia4ciber.html",
       "grupo-10a-guia-04-planificar-informacion-ciberseguridad.html",
       "grupo-10b-guia-04-planificar-informacion-ciberseguridad.html",
+      "sb_10a_guia4.html",
+      "sb_10b_guia4.html",
+      "santa-barbara-10a-guia-04-taller-integrador.html",
+      "santa-barbara-10b-guia-04-taller-integrador.html",
     ];
   }
 
