@@ -35,6 +35,7 @@ ALL_PAIRS = [
     ("partials/guia-redes-rap02-content.html",    "partials/guia-redes-rap02-bundle.js"),
     ("partials/guia-python-content.html",         "partials/guia-python-bundle.js"),
     ("partials/taller-integrador-jfk-content.html", "partials/taller-integrador-jfk-bundle.js"),
+    ("partials/taller-integrador-sb-content.html", "partials/taller-integrador-sb-bundle.js"),
 ]
 
 BROKEN_PAIRS = [
