@@ -52,6 +52,8 @@ const FAMILY_TO_FILES = {
   "guia-redes-rap01": ["partials/guia-redes-rap01-content.html"],
   "guia-redes-rap02": ["partials/guia-redes-rap02-content.html"],
   "guia-python": ["partials/guia-python-content.html"],
+  "taller-integrador-jfk": ["partials/taller-integrador-jfk-content.html"],
+  "taller-integrador-sb": ["partials/taller-integrador-sb-content.html"],
 };
 
 function conventionSelectorsFor(id, explicitMount) {

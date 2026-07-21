@@ -204,6 +204,30 @@
         { id: "retoPython", label: "5.1 Reto integrador - Seguimiento académico" },
       ],
     },
+    "taller-integrador-jfk": {
+      label: "Taller Integrador (John F. Kennedy)",
+      activities: [
+        { id: "equipoTaller", label: "0 - Conformación del equipo de trabajo" },
+        { id: "diagnostico", label: "Producto 1 - Informe diagnóstico" },
+        { id: "planAlfabetizacion", label: "Producto 2 - Plan de intervención" },
+        { id: "plantillaExcel", label: "Producto 3 - Plantilla Excel personalizada" },
+        { id: "bitacoraAsesorias", label: "Producto 4 - Bitácora de asesorías" },
+        { id: "fichaEquipos", label: "Producto 5 - Ficha técnica de equipos" },
+        { id: "informeImpacto", label: "Producto 6 - Informe de impacto (entrega final)" },
+      ],
+    },
+    "taller-integrador-sb": {
+      label: "Taller Integrador (Santa Bárbara)",
+      activities: [
+        { id: "equipoTaller", label: "0 - Conformación del equipo de trabajo" },
+        { id: "diagnostico", label: "Producto 1 - Informe diagnóstico" },
+        { id: "planAlfabetizacion", label: "Producto 2 - Plan de intervención" },
+        { id: "plantillaExcel", label: "Producto 3 - Plantilla Excel personalizada" },
+        { id: "bitacoraAsesorias", label: "Producto 4 - Bitácora de asesorías" },
+        { id: "fichaEquipos", label: "Producto 5 - Ficha técnica de equipos" },
+        { id: "informeImpacto", label: "Producto 6 - Informe de impacto (entrega final)" },
+      ],
+    },
   };
 
   var GRADES_STORAGE_KEY = "grades";
@@ -504,6 +528,10 @@
     "santa-barbara-10a-guia-03-redes-rap02.html": "guia-redes-rap02",
     "santa-barbara-10b-guia-03-redes-rap02.html": "guia-redes-rap02",
     "santa-barbara-guia-python.html": "guia-python",
+    "grupo-10a-guia-04-taller-integrador.html": "taller-integrador-jfk",
+    "grupo-10b-guia-04-taller-integrador.html": "taller-integrador-jfk",
+    "santa-barbara-10a-guia-04-taller-integrador.html": "taller-integrador-sb",
+    "santa-barbara-10b-guia-04-taller-integrador.html": "taller-integrador-sb",
   };
 
   // ── Banco de respuestas: relleno de actividades aprobadas y vacías ──────────
