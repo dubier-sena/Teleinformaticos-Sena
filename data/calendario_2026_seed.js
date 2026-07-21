@@ -1418,17 +1418,6 @@
                                                       "act":  null,
                                                       "grado":  "10A"
                                                   },
-    "2026-07-21|I.E. Santa Bárbara|10B":  {
-                                              "estado":  "Activa",
-                                              "obs":  "",
-                                              "act":  null
-                                          },
-    "2026-07-21|I.E. Santa Bárbara|10B|franja2":  {
-                                                      "estado":  "Activa",
-                                                      "obs":  "",
-                                                      "act":  null,
-                                                      "grado":  "10A"
-                                                  },
     "2026-07-22|I.E. Santa Bárbara|10A":  {
                                               "estado":  "Activa",
                                               "obs":  "",
