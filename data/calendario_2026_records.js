@@ -1300,16 +1300,29 @@
         "finde":  false
     },
     {
+        "id":  "2026-07-21|I.E. Santa Bárbara|10A",
+        "fecha":  "2026-07-21",
+        "mes":  "Julio",
+        "dia":  "Martes",
+        "colegio":  "I.E. Santa Bárbara",
+        "grado":  "10A",
+        "horario":  "7:00am–9:55am\n2:15pm–4:15pm",
+        "tipo":  "CLASE",
+        "defE":  "Activa",
+        "defO":  "Horario de lunes recuperado: el 20-jul (lunes) fue festivo (Día de la Independencia).",
+        "finde":  false
+    },
+    {
         "id":  "2026-07-21|I.E. Santa Bárbara|10B",
         "fecha":  "2026-07-21",
         "mes":  "Julio",
         "dia":  "Martes",
         "colegio":  "I.E. Santa Bárbara",
         "grado":  "10B",
-        "horario":  "7:00am–9:55am\n2:15pm–4:15pm",
+        "horario":  "12:05pm–1:55pm",
         "tipo":  "CLASE",
         "defE":  "Activa",
-        "defO":  "",
+        "defO":  "Horario de lunes recuperado: el 20-jul (lunes) fue festivo (Día de la Independencia).",
         "finde":  false
     },
     {
