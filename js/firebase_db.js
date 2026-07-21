@@ -2080,27 +2080,37 @@
   auth.registerStudent = async function (data) {
     var result = await prev.registerStudent.call(auth, data);
     if (result && result.ok) {
-      // Obtener usuario del resultado o de la sesion actual (por si el PS1 server
-      // o el servidor de red lo procesa y no viene directamente en result.user)
-      checkAvailability().then(async function (ok) {
-        if (!ok) {
-          console.warn("[firebase_db] Firebase no disponible al registrar. Se reintentara en la proxima carga.");
-          return;
-        }
+      // Se espera (await) el guardado en Firebase antes de devolver el resultado:
+      // el caller (index_auth.js) recarga la pagina justo despues de que esta
+      // promesa resuelve, y un reload cancela cualquier fetch pendiente. Sin este
+      // await, el registro quedaba solo en localStorage y nunca llegaba a
+      // sena_portal_users, por lo que el aprendiz no aparecia en el panel admin.
+      //
+      // No se usa checkAvailability() como gate previo: es una sonda de red
+      // aparte y si falla (timeout puntual) se abandonaba el guardado sin
+      // pasar por la cola de reintento. cloudSaveUser -> fsPatch ya maneja
+      // cuota/cooldown/red caida y cae a Drive con auto-promocion a Firestore
+      // en la siguiente escritura exitosa (ver FIRESTORE_PROMOTE_KEY).
+      try {
         var user = (result.user && result.user.usernameKey) ? result.user : null;
         if (!user && auth.getCurrentSession) {
           var s = auth.getCurrentSession();
           user = s && s.user && s.user.usernameKey ? s.user : null;
         }
-        if (!user) return;
-        var saved = await cloudSaveUser(user).catch(function (e) {
-          console.warn("[firebase_db] Error guardando usuario en Firebase:", e && e.message);
-          return false;
-        });
-        if (saved) {
-          console.info("[firebase_db] Usuario guardado en Firebase: " + user.username);
+        if (user) {
+          var saved = await cloudSaveUser(user).catch(function (e) {
+            console.warn("[firebase_db] Error guardando usuario en Firebase:", e && e.message);
+            return false;
+          });
+          if (saved) {
+            console.info("[firebase_db] Usuario guardado en Firebase: " + user.username);
+          } else {
+            console.warn("[firebase_db] No se pudo guardar el usuario al registrar (quedara en cola de reintento si cayo a Drive).");
+          }
         }
-      });
+      } catch (e) {
+        console.warn("[firebase_db] Error inesperado sincronizando registro:", e && e.message);
+      }
     }
     return result;
   };
