@@ -709,6 +709,7 @@
     // "la pagina carga" y "termina de resolver cloudGetGrades" -- suficiente
     // para que el aprendiz alcanzara a escribir antes de que se bloqueara.
     var changedFromCache = applyGrades(getStudentGrades(session.usernameKey, guideFamily));
+    applyApprovedSolutionsForFamily(guideFamily);
     if (changedFromCache && typeof opts.onChanged === "function") {
       try { opts.onChanged(); } catch (e) { /* no critico */ }
     }
@@ -720,7 +721,14 @@
     catch (e) { return; }
     var grades = (cloud && cloud[guideFamily]) || {};
 
+    // Refresca el cache local con lo recien traido de la nube (igual que hace
+    // renderGradeBadges) -- sin esto, applyApprovedSolutionsForFamily seguiria
+    // leyendo el cache viejo y nunca veria las soluciones ":solution" que el
+    // admin acaba de embeber al calificar desde otro equipo.
+    if (cloud && typeof cloud === "object") setAllStudentGrades(session.usernameKey, cloud);
+
     var changed = applyGrades(grades);
+    applyApprovedSolutionsForFamily(guideFamily);
     if (changed && typeof opts.onChanged === "function") {
       try { opts.onChanged(); } catch (e) { /* no critico */ }
     }
