@@ -3121,12 +3121,24 @@
         <select id="grades-ficha-filter">${getFichaOptions("", false)}</select>
         <select id="grades-guide-filter" disabled>${guideFilterOptionsMarkup("", "")}</select>
       </div>
+      <details class="grades-bank-import">
+        <summary>Calificar en bloque con Excel</summary>
+        <p class="admin-muted">Elige ficha y guia arriba, descarga el Excel con el listado de aprendices activos y una columna por actividad, califica escribiendo <strong>A</strong> (Aprobado) o <strong>D</strong> (No aprobado) en las celdas, y sube el archivo de vuelta. Las celdas que dejes en blanco no tocan la calificacion que ya exista. No edites la columna "Usuario" ni los encabezados: se usan para identificar al aprendiz y la actividad.</p>
+        <button type="button" id="grades-excel-download-btn" class="btn secondary">Descargar Excel</button>
+        <span id="grades-excel-download-status" class="admin-muted"></span>
+        <hr>
+        <input type="file" id="grades-excel-file" accept=".xlsx,.xls">
+        <button type="button" id="grades-excel-upload-btn" class="btn secondary">Subir Excel calificado</button>
+        <span id="grades-excel-upload-status" class="admin-muted"></span>
+      </details>
       <p class="grades-scroll-hint" id="grades-scroll-hint" hidden>&#8596; Esta guia tiene varias actividades: desliza la tabla horizontalmente para verlas todas. La columna "Aprendiz" y "Aprobadas" quedan siempre visibles.</p>
       <div id="grades-grid" class="grades-grid"></div>
     `;
     ensureGradeSolutionsBank();   // precarga el banco para aplicar soluciones al aprobar
     byId("grades-bank-import-btn")?.addEventListener("click", handleGradeBankImport);
     byId("grades-resync-btn")?.addEventListener("click", handleSolutionResync);
+    byId("grades-excel-download-btn")?.addEventListener("click", handleGradesExcelDownload);
+    byId("grades-excel-upload-btn")?.addEventListener("click", handleGradesExcelUpload);
   }
 
   async function renderGradesGrid() {
@@ -3188,6 +3200,211 @@
     const scrollHintEl = byId("grades-scroll-hint");
     if (scrollHintEl) scrollHintEl.hidden = activities.length <= 5;
     grid.innerHTML = `<table class="admin-data-table grades-table"><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table>`;
+  }
+
+  // ── Calificar en bloque con Excel ────────────────────────────────────────────
+  // Descarga/sube el mismo par (ficha, guia) que la grilla manual de arriba, y
+  // escribe con las MISMAS funciones que usa handleGradeChange (setStudentGrades
+  // + embebido de solucion del banco + fallback de entrega) para que una nota
+  // puesta por Excel se comporte identico a una puesta a mano, actividad por
+  // actividad. La columna "Usuario" (usernameKey) es la llave de emparejamiento
+  // -- nunca por nombre -- para evitar el tipo de ambiguedad que tuvo el import
+  // por Excel anterior (removido 2026-06-20).
+
+  function currentGradesFichaAndFamily() {
+    const ficha = byId("grades-ficha-filter")?.value || "";
+    const guideFamily = byId("grades-guide-filter")?.value || "";
+    return { ficha, guideFamily };
+  }
+
+  async function handleGradesExcelDownload() {
+    const statusEl = byId("grades-excel-download-status");
+    const setStatus = (msg) => { if (statusEl) statusEl.textContent = msg; };
+    if (typeof window.XLSX === "undefined") { setStatus("La libreria de Excel no cargo."); return; }
+    const { ficha, guideFamily } = currentGradesFichaAndFamily();
+    const catalog = getGradeCatalog();
+    const entry = catalog[guideFamily];
+    if (!ficha || !guideFamily || !entry) { setStatus("Elige ficha y guia arriba primero."); return; }
+    const activities = entry.activities || [];
+    const students = getUsersForFicha(ficha).filter((u) => !isInactive(u));
+    if (!students.length) { setStatus("No hay aprendices activos en esta ficha."); return; }
+    setStatus("Generando Excel...");
+    const db = window._firebaseDb;
+    const resolveGrade = (window.activityGradesManager && window.activityGradesManager.resolveGradeValue) || ((g, a) => g[a.id]);
+    const gradesByUser = {};
+    await Promise.all(students.map(async (user) => {
+      let g = {};
+      if (db && typeof db.cloudGetGrades === "function") {
+        try {
+          const all = await db.cloudGetGrades(user.usernameKey);
+          g = (all && all[guideFamily]) || {};
+        } catch (_) { /* cae a cache local */ }
+      }
+      if (!Object.keys(g).length && window.activityGradesManager) {
+        g = window.activityGradesManager.getStudentGrades(user.usernameKey, guideFamily) || {};
+      }
+      gradesByUser[user.usernameKey] = g;
+    }));
+    const header = ["Usuario", "Nombre completo", ...activities.map((a) => a.label)];
+    const rows = [header];
+    students.forEach((user) => {
+      const g = gradesByUser[user.usernameKey] || {};
+      const row = [user.usernameKey, user.fullName, ...activities.map((a) => resolveGrade(g, a) || "")];
+      rows.push(row);
+    });
+    const ws = window.XLSX.utils.aoa_to_sheet(rows);
+    ws["!cols"] = [{ wch: 22 }, { wch: 28 }, ...activities.map(() => ({ wch: 16 }))];
+    const wb = window.XLSX.utils.book_new();
+    window.XLSX.utils.book_append_sheet(wb, ws, "Calificaciones");
+    const safeName = (entry.label || guideFamily).replace(/[^a-zA-Z0-9]+/g, "_").slice(0, 40);
+    window.XLSX.writeFile(wb, `Calificaciones_${ficha}_${safeName}.xlsx`);
+    setStatus(`Descargado: ${students.length} aprendices, ${activities.length} actividades.`);
+  }
+
+  async function handleGradesExcelUpload() {
+    const statusEl = byId("grades-excel-upload-status");
+    const setStatus = (msg) => { if (statusEl) statusEl.textContent = msg; };
+    if (typeof window.XLSX === "undefined") { setStatus("La libreria de Excel no cargo."); return; }
+    const fileInput = byId("grades-excel-file");
+    const file = fileInput && fileInput.files && fileInput.files[0];
+    if (!file) { setStatus("Elige el archivo Excel calificado primero."); return; }
+    const { ficha, guideFamily } = currentGradesFichaAndFamily();
+    const catalog = getGradeCatalog();
+    const entry = catalog[guideFamily];
+    if (!ficha || !guideFamily || !entry) { setStatus("Elige ficha y guia arriba primero (las mismas del Excel)."); return; }
+    const activities = entry.activities || [];
+
+    let rows;
+    try {
+      const buf = await file.arrayBuffer();
+      const wb = window.XLSX.read(buf, { type: "array" });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      rows = window.XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+    } catch (e) {
+      setStatus("No se pudo leer el Excel: " + (e && e.message ? e.message : e));
+      return;
+    }
+    if (!rows || rows.length < 2) { setStatus("El Excel esta vacio."); return; }
+
+    const header = rows[0].map((h) => String(h == null ? "" : h).trim());
+    const usuarioIdx = header.indexOf("Usuario");
+    if (usuarioIdx === -1) {
+      setStatus('No se encontro la columna "Usuario". No cambies los encabezados del Excel descargado.');
+      return;
+    }
+    const labelToId = {};
+    activities.forEach((a) => { labelToId[String(a.label).trim().toLowerCase()] = a.id; });
+    const colToActivityId = {};
+    header.forEach((h, idx) => {
+      const id = labelToId[h.toLowerCase()];
+      if (id) colToActivityId[idx] = id;
+    });
+    if (!Object.keys(colToActivityId).length) {
+      setStatus("No se reconocio ninguna columna de actividad de esta guia. No cambies los encabezados del Excel descargado.");
+      return;
+    }
+
+    const activeStudents = getUsersForFicha(ficha).filter((u) => !isInactive(u));
+    const studentsByKey = {};
+    activeStudents.forEach((u) => { studentsByKey[u.usernameKey] = u; });
+
+    const parsedRows = [];
+    const unmatched = [];
+    const invalidCells = [];
+    for (let r = 1; r < rows.length; r++) {
+      const row = rows[r] || [];
+      const usernameKey = String(row[usuarioIdx] == null ? "" : row[usuarioIdx]).trim().toLowerCase();
+      if (!usernameKey) continue;
+      if (!studentsByKey[usernameKey]) { unmatched.push(usernameKey); continue; }
+      const grades = {};
+      Object.keys(colToActivityId).forEach((idxStr) => {
+        const idx = Number(idxStr);
+        const actId = colToActivityId[idx];
+        const raw = String(row[idx] == null ? "" : row[idx]).trim().toUpperCase();
+        if (!raw) return; // celda vacia: no se toca
+        if (raw === "A" || raw === "D") { grades[actId] = raw; return; }
+        invalidCells.push(`${usernameKey}/${actId}="${raw}"`);
+      });
+      if (Object.keys(grades).length) parsedRows.push({ usernameKey, grades });
+    }
+
+    if (!parsedRows.length) {
+      setStatus("No hay calificaciones validas (A/D) para aplicar."
+        + (unmatched.length ? ` ${unmatched.length} filas sin coincidencia.` : "")
+        + (invalidCells.length ? ` ${invalidCells.length} celdas con valor invalido (solo se acepta A o D).` : ""));
+      return;
+    }
+
+    const totalCells = parsedRows.reduce((n, r) => n + Object.keys(r.grades).length, 0);
+    const confirmed = await confirmAdminAction(
+      `Se van a actualizar ${totalCells} calificaciones de ${parsedRows.length} aprendices con lo escrito en el Excel. `
+      + "Las celdas vacias no se tocan y no cambia ninguna calificacion que no este en el archivo. ¿Continuar?"
+    );
+    if (!confirmed) return;
+
+    const gradesManager = window.activityGradesManager;
+    const db = window._firebaseDb;
+    if (!gradesManager || !db) { setStatus("El modulo de notas o Firestore no estan disponibles."); return; }
+    const btn = byId("grades-excel-upload-btn");
+    if (btn) btn.disabled = true;
+    setStatus(`Aplicando calificaciones a ${parsedRows.length} aprendices...`);
+    await ensureGradeSolutionsBank();
+
+    let studentsUpdated = 0, fieldsFilled = 0, failures = 0;
+    try {
+      for (const { usernameKey, grades } of parsedRows) {
+        try {
+          const all = await db.cloudGetGrades(usernameKey);
+          // Sincroniza el cache local con el doc COMPLETO ANTES de escribir: setStudentGrades
+          // reemplaza la familia completa a partir del cache local, y sin este paso un cache
+          // desactualizado (de otro equipo) borraria notas de otras guias al guardar (mismo
+          // cuidado que renderGradesGrid y handleSolutionResync).
+          if (all && gradesManager.setAllStudentGrades) gradesManager.setAllStudentGrades(usernameKey, all);
+          const familyGrades = Object.assign({}, (all && all[guideFamily]) || {});
+          const solutionsToApply = {};
+          Object.keys(grades).forEach((actId) => {
+            const grade = grades[actId];
+            familyGrades[actId] = grade;
+            familyGrades[actId + ":gradedAt"] = new Date().toISOString();
+            if (grade === "A") {
+              const solution = lookupBankSolution(guideFamily, actId);
+              if (solution) {
+                familyGrades[actId + ":solution"] = solution;
+                Object.assign(solutionsToApply, solution);
+              }
+            }
+          });
+          gradesManager.setStudentGrades(usernameKey, guideFamily, familyGrades);
+          if (Object.keys(solutionsToApply).length) {
+            try {
+              const applied = await applyApprovedSolutionToStudentCloud(usernameKey, guideFamily, solutionsToApply);
+              fieldsFilled += (applied && applied.filled) || 0;
+            } catch (_) { /* no critico */ }
+          }
+          // Actividades aprobadas sin solucion de banco (archivo/checkbox): igual que al
+          // calificar a mano, se registran como entregadas por el instructor.
+          for (const actId of Object.keys(grades)) {
+            if (grades[actId] !== "A" || (solutionsToApply && Object.keys(solutionsToApply).length && familyGrades[actId + ":solution"])) continue;
+            try { await applyDeliveryFallbackToStudentCloud(usernameKey, guideFamily, actId); } catch (_) { /* no critico */ }
+          }
+          recordAdminAuditAction({ action: "grade-excel-import", target: `${usernameKey}:${guideFamily}`, detail: Object.keys(grades).join(",") });
+          studentsUpdated += 1;
+        } catch (_) { failures += 1; }
+        setStatus(`... ${studentsUpdated}/${parsedRows.length} aprendices aplicados`);
+      }
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+
+    invalidateUsersCache();
+    setStatus(
+      `Listo: ${studentsUpdated} aprendices actualizados (${totalCells} calificaciones), ${fieldsFilled} campos de respuesta rellenados.`
+      + (unmatched.length ? ` ${unmatched.length} filas sin coincidencia (revisa la columna Usuario).` : "")
+      + (invalidCells.length ? ` ${invalidCells.length} celdas ignoradas por valor invalido.` : "")
+      + (failures ? ` ${failures} errores.` : "")
+    );
+    if (fileInput) fileInput.value = "";
+    renderGradesGrid();
   }
 
   // ── Autorizaciones de firma (control de consentimiento) ─────────────────────
