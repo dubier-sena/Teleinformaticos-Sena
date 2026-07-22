@@ -478,6 +478,11 @@ test("calificar en bloque con Excel (2026-07-22): descarga/sube por Usuario, no 
   assert.match(uploadFn[0], /lookupBankSolution\(guideFamily, actId\)/);
   assert.match(uploadFn[0], /applyApprovedSolutionToStudentCloud\(usernameKey, guideFamily, solutionsToApply\)/);
   assert.match(uploadFn[0], /await confirmAdminAction\(/);
+  // Bug real (2026-07-22): la descarga agrega "Instrucciones" y "Leyenda" ANTES
+  // de "Calificaciones", asi que wb.SheetNames[0] ya no es la hoja de datos.
+  // La subida debe elegir la hoja por NOMBRE, no por posicion.
+  assert.match(uploadFn[0], /wb\.SheetNames\.includes\("Calificaciones"\)/);
+  assert.doesNotMatch(uploadFn[0], /wb\.Sheets\[wb\.SheetNames\[0\]\]/);
   assert.match(uploadFn[0], /invalidateUsersCache\(\)/);
 });
 

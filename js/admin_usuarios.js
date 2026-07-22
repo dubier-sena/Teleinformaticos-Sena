@@ -3322,7 +3322,15 @@
     try {
       const buf = await file.arrayBuffer();
       const wb = window.XLSX.read(buf, { type: "array" });
-      const ws = wb.Sheets[wb.SheetNames[0]];
+      // La hoja de datos se llama "Calificaciones" (handleGradesExcelDownload
+      // agrega "Instrucciones" y "Leyenda" ANTES de esa, asi que la hoja en
+      // la posicion 0 ya no es la de datos). Si no se encuentra por nombre
+      // -- archivo de otra fuente, hoja renombrada -- cae a la ultima hoja
+      // del libro en vez de fallar directo.
+      const sheetName = wb.SheetNames.includes("Calificaciones")
+        ? "Calificaciones"
+        : wb.SheetNames[wb.SheetNames.length - 1];
+      const ws = wb.Sheets[sheetName];
       rows = window.XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
     } catch (e) {
       setStatus("No se pudo leer el Excel: " + (e && e.message ? e.message : e));
