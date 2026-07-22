@@ -439,18 +439,46 @@ test("modulo Notas: entrada manual de calificaciones (guarda al instante en Fire
   assert.match(gradeHandler[0], /refreshApprovalCell\(select\)/);
 });
 
-test("la importacion por Excel fue eliminada (notas se registran a mano)", () => {
+test("las notas se registran a mano en la grilla (import por Excel viejo no vuelve)", () => {
+  // El import por Excel de admin_grades.js (removido 2026-06-20) emparejaba por
+  // NOMBRE y quedo eliminado por ambiguo; no debe reaparecer bajo esos nombres.
   assert.doesNotMatch(adminScript, /readGradesFromExcelFile/);
-  assert.doesNotMatch(adminScript, /grades-import-file/);
   assert.doesNotMatch(adminScript, /applyParsedGrades/);
-  assert.doesNotMatch(adminScript, /action: "grades-import"/);
   assert.doesNotMatch(html, /js\/admin_grades\.js/);
-  assert.doesNotMatch(html, /xlsx\.full\.min\.js/);
   assert.equal(
     fs.existsSync(path.join(root, "js/admin_grades.js")),
     false,
-    "admin_grades.js debe estar eliminado"
+    "admin_grades.js debe seguir eliminado"
   );
+});
+
+test("calificar en bloque con Excel (2026-07-22): descarga/sube por Usuario, no por nombre", () => {
+  // La libreria SheetJS SI debe estar cargada para este flujo nuevo.
+  assert.match(html, /js\/xlsx\.full\.min\.js/);
+  assert.match(adminScript, /async function handleGradesExcelDownload\(\)/);
+  assert.match(adminScript, /async function handleGradesExcelUpload\(\)/);
+  assert.match(adminScript, /id="grades-excel-download-btn"/);
+  assert.match(adminScript, /id="grades-excel-file"/);
+  assert.match(adminScript, /id="grades-excel-upload-btn"/);
+  const uploadFn = adminScript.match(/async function handleGradesExcelUpload\(\)[\s\S]*?\n  \}/);
+  assert.ok(uploadFn, "handleGradesExcelUpload debe existir");
+  // Empareja por la columna "Usuario" (usernameKey), nunca por nombre -- evita
+  // la ambiguedad que causo eliminar el import anterior.
+  assert.match(uploadFn[0], /header\.indexOf\("Usuario"\)/);
+  assert.match(uploadFn[0], /usernameKey = String\(row\[usuarioIdx\]/);
+  // Celda vacia = no se toca (no borra notas existentes que no vengan en el Excel).
+  assert.match(uploadFn[0], /if \(!raw\) return; \/\/ celda vacia: no se toca/);
+  // Solo A/D validos; el resto se reporta como invalido en vez de guardarse.
+  assert.match(uploadFn[0], /raw === "A" \|\| raw === "D"/);
+  // Reutiliza el mismo mecanismo que calificar a mano: setStudentGrades (no
+  // setStudentActivityGrade en loop, para 1 escritura por aprendiz en vez de
+  // 1 por celda) + solucion del banco al aprobar + confirmacion antes de aplicar.
+  assert.match(uploadFn[0], /gradesManager\.setAllStudentGrades\(usernameKey, all\)/);
+  assert.match(uploadFn[0], /gradesManager\.setStudentGrades\(usernameKey, guideFamily, familyGrades\)/);
+  assert.match(uploadFn[0], /lookupBankSolution\(guideFamily, actId\)/);
+  assert.match(uploadFn[0], /applyApprovedSolutionToStudentCloud\(usernameKey, guideFamily, solutionsToApply\)/);
+  assert.match(uploadFn[0], /await confirmAdminAction\(/);
+  assert.match(uploadFn[0], /invalidateUsersCache\(\)/);
 });
 
 test("el modulo Notas esta montado en el panel admin", () => {
