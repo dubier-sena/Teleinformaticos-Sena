@@ -4446,7 +4446,7 @@ window.cerrarTeoriaPanel = function () {
 // ---------------------------------------------------------------------------
 // Init
 // ---------------------------------------------------------------------------
-function initGuiaRedes() {
+async function initGuiaRedes() {
   if (redesBooted) {
     updateProgressRedes();
     return;
@@ -4462,17 +4462,18 @@ function initGuiaRedes() {
   hydrateFieldsRedes();
   bindEventsRedes();
   updateProgressRedes();
-  initCloudSyncRedes();
+  // Se espera a que termine la restauracion inicial desde la nube ANTES de
+  // reflejar las notas del admin: initCloudSyncRedes() trata el estado remoto
+  // como autoritativo para los "-locked" (para que un desbloqueo del admin
+  // se respete), y si corriera en paralelo con reflectGradesForGuiaRedes(),
+  // una restauracion con el doc todavia vacio podia borrar un candado recien
+  // puesto por una nota "A" antes de que llegara a guardarse. Con este orden,
+  // el candado por calificacion queda siempre como la ultima palabra.
+  await initCloudSyncRedes();
   reflectGradesForGuiaRedes();
 }
 
 // Ver reflectGradesForGuia2() en script_guia2.js para el porque de esto.
-// NOTA: reflexion311 (3.1.1) queda FUERA de lockAppliers a proposito -- esta
-// guia usa 2 llaves de estado distintas para esa actividad
-// ("reflexion-socializacion-locked" y "reflexion-311-locked"), ninguna
-// coincide con la convencion generica "{actId}-locked" que usa esta funcion,
-// asi que bloquear el campo requeriria logica especial que no se hizo aqui.
-// Su badge y su conteo en "Tu control de avance" si funcionan igual.
 function reflectGradesForGuiaRedes() {
   var mgr = window.activityGradesManager;
   if (!mgr || typeof mgr.reflectGradesIntoGuideState !== "function") return;
@@ -4481,6 +4482,26 @@ function reflectGradesForGuiaRedes() {
     pageFile: PAGE_FILE_REDES,
     getState: function () { return state; },
     lockAppliers: {
+      // reflexion311 (3.1.1) usa 2 llaves de estado propias
+      // ("reflexion-311-locked" y "reflexion-socializacion-locked") que no
+      // coinciden con la convencion generica "{actId}-locked" que usa
+      // reflectGradesIntoGuideState -- por eso necesita este applier a medida
+      // en vez de una funcion applyXLock existente.
+      reflexion311: function () {
+        // reflectGradesIntoGuideState solo llama a onChanged() (que persiste
+        // el state) cuando cambia el flag GENERICO "{id}-locked" -- no sabe
+        // nada de estas 2 llaves propias. Sin guardar aqui explicitamente,
+        // el candado quedaba solo en memoria: la siguiente restauracion desde
+        // la nube (con el doc todavia vacio) lo volvia a borrar en cada carga.
+        var wasLocked =
+          state["reflexion-311-locked"] === true &&
+          state["reflexion-socializacion-locked"] === true;
+        state["reflexion-311-locked"] = true;
+        state["reflexion-socializacion-locked"] = true;
+        applyReflexionLock();
+        applyReflexionSocializacionLock();
+        if (!wasLocked) saveStateRedes();
+      },
       ip1: applyBloqueIP1Lock,
       ip3: applyBloqueIP3Lock,
       "taller-ip-ej1": applyTallerIPEj1Lock,
