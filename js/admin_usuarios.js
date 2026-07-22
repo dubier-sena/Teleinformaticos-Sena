@@ -3245,20 +3245,50 @@
       }
       gradesByUser[user.usernameKey] = g;
     }));
-    const header = ["Usuario", "Nombre completo", ...activities.map((a) => a.label)];
+    // Nombre completo primero (lo que el instructor reconoce a simple vista);
+    // Usuario queda visible pero en segundo lugar -- sigue siendo la llave real
+    // de emparejamiento al subir, sin importar el orden de las columnas.
+    const sortedStudents = students.slice().sort((a, b) =>
+      String(a.fullName || "").localeCompare(String(b.fullName || ""), "es"));
+    const header = ["Nombre completo", "Usuario", "% Aprobado", ...activities.map((a) => a.label)];
     const rows = [header];
-    students.forEach((user) => {
+    sortedStudents.forEach((user) => {
       const g = gradesByUser[user.usernameKey] || {};
-      const row = [user.usernameKey, user.fullName, ...activities.map((a) => resolveGrade(g, a) || "")];
-      rows.push(row);
+      const values = activities.map((a) => resolveGrade(g, a) || "");
+      const approved = values.filter((v) => v === "A").length;
+      const pct = activities.length ? Math.round((approved / activities.length) * 100) : 0;
+      rows.push([user.fullName, user.usernameKey, `${pct}%`, ...values]);
     });
     const ws = window.XLSX.utils.aoa_to_sheet(rows);
-    ws["!cols"] = [{ wch: 22 }, { wch: 28 }, ...activities.map(() => ({ wch: 16 }))];
+    ws["!cols"] = [{ wch: 30 }, { wch: 20 }, { wch: 12 }, ...activities.map(() => ({ wch: 16 }))];
+    ws["!autofilter"] = { ref: window.XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: rows.length - 1, c: header.length - 1 } }) };
+
+    // Hoja de instrucciones aparte para no ensuciar la hoja de datos (la libreria
+    // Excel de este proyecto es la version gratuita: no soporta negrita, colores
+    // ni congelar paneles al escribir, asi que la organizacion se hace con
+    // estructura -- hojas separadas, autofiltro, columnas ordenadas -- en vez
+    // de formato visual).
+    const instructions = window.XLSX.utils.aoa_to_sheet([
+      [`Calificar en bloque -- ${entry.label || guideFamily} -- Ficha ${ficha}`],
+      [""],
+      ["Como usar este archivo:"],
+      ["1. En la hoja \"Calificaciones\", escribe A (Aprobado) o D (No aprobado) en las celdas de cada actividad."],
+      ["2. Deja en blanco las celdas que no quieras cambiar: la calificacion que ya exista no se toca."],
+      ["3. No edites la columna \"Usuario\" ni los encabezados de las actividades: se usan para identificar al aprendiz y la actividad al subir el archivo."],
+      ["4. La columna \"% Aprobado\" es solo informativa (se recalcula sola en el portal); no hace falta editarla."],
+      ["5. Guarda el archivo y subelo en el panel admin: Calificaciones > Calificar en bloque con Excel > Subir Excel calificado."],
+      [""],
+      [`Generado: ${new Date().toLocaleString("es-CO")}`],
+      [`Aprendices activos: ${sortedStudents.length}    Actividades: ${activities.length}`],
+    ]);
+    instructions["!cols"] = [{ wch: 100 }];
+
     const wb = window.XLSX.utils.book_new();
+    window.XLSX.utils.book_append_sheet(wb, instructions, "Instrucciones");
     window.XLSX.utils.book_append_sheet(wb, ws, "Calificaciones");
     const safeName = (entry.label || guideFamily).replace(/[^a-zA-Z0-9]+/g, "_").slice(0, 40);
     window.XLSX.writeFile(wb, `Calificaciones_${ficha}_${safeName}.xlsx`);
-    setStatus(`Descargado: ${students.length} aprendices, ${activities.length} actividades.`);
+    setStatus(`Descargado: ${sortedStudents.length} aprendices, ${activities.length} actividades.`);
   }
 
   async function handleGradesExcelUpload() {
