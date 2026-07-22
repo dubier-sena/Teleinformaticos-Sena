@@ -332,6 +332,14 @@ function formatGradeSelection(option){
 
 function calculateRecordHorario(record,selection){
   if(record.tipo!=='CLASE')return record.horario||'';
+  // Un registro ya dividido en franjas (slotCount>1, ver expandRecords) representa
+  // UN bloque horario fijo del dia (p.ej. "2:15pm-4:15pm"), no el dia completo.
+  // Reasignar el grado de esa franja cambia QUIEN asiste, no A QUE HORA es: si aqui
+  // se recalculara por SBH[grado][weekday] se devolveria el horario COMPLETO del
+  // dia (las 3 franjas concatenadas), pisando la franja individual con las demas.
+  // Bug real detectado 2026-07-22: al guardar el modal de una franja reasignada,
+  // el horario quedaba con las 3 franjas del dia en vez de solo la suya.
+  if(record.slotCount>1)return record.horario||'';
   const selected=typeof selection==='object'&&selection?selection:parseGradeSelection(selection,record);
   const selectedGrade=selected.grado||getG(record);
   const selectedColegio=selected.colegio||getC(record);

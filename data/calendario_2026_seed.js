@@ -1436,9 +1436,8 @@
                                           },
     "2026-07-23|I.E. Santa Bárbara|10B|franja3":  {
                                                       "estado":  "Activa",
-                                                      "obs":  "",
-                                                      "act":  null,
-                                                      "grado":  "10A"
+                                                      "obs":  "Clase conjunta con 10A",
+                                                      "act":  null
                                                   },
     "2026-08-18|I.E. Santa Bárbara|10B":  {
                                               "estado":  "Activa",
