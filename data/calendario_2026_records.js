@@ -1352,6 +1352,19 @@
         "finde":  false
     },
     {
+        "id":  "2026-07-23|I.E. Santa Bárbara|10A",
+        "fecha":  "2026-07-23",
+        "mes":  "Julio",
+        "dia":  "Jueves",
+        "colegio":  "I.E. Santa Bárbara",
+        "grado":  "10A",
+        "horario":  "2:15pm–4:15pm",
+        "tipo":  "CLASE",
+        "defE":  "Activa",
+        "defO":  "Clase conjunta con 10B",
+        "finde":  false
+    },
+    {
         "id":  "2026-07-24|I.E. Santa Bárbara|10A",
         "fecha":  "2026-07-24",
         "mes":  "Julio",
