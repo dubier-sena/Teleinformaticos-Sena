@@ -3250,7 +3250,13 @@
     // de emparejamiento al subir, sin importar el orden de las columnas.
     const sortedStudents = students.slice().sort((a, b) =>
       String(a.fullName || "").localeCompare(String(b.fullName || ""), "es"));
-    const header = ["Nombre completo", "Usuario", "% Aprobado", ...activities.map((a) => a.label)];
+    // Encabezado = id corto de la actividad (max ~19 caracteres en todo el
+    // catalogo), no la etiqueta completa (algunas pasan de 40-50 caracteres,
+    // ej. "Producto 6 - Informe de impacto (entrega final)"): con la etiqueta
+    // completa la columna queda angosta y el texto se corta, o hay que hacer
+    // columnas tan anchas que la tabla deja de caber en pantalla y es facil
+    // perderse calificando. La hoja "Leyenda" trae el id -> descripcion.
+    const header = ["Nombre completo", "Usuario", "% Aprobado", ...activities.map((a) => a.id)];
     const rows = [header];
     sortedStudents.forEach((user) => {
       const g = gradesByUser[user.usernameKey] || {};
@@ -3260,14 +3266,14 @@
       rows.push([user.fullName, user.usernameKey, `${pct}%`, ...values]);
     });
     const ws = window.XLSX.utils.aoa_to_sheet(rows);
-    ws["!cols"] = [{ wch: 30 }, { wch: 20 }, { wch: 12 }, ...activities.map(() => ({ wch: 16 }))];
+    ws["!cols"] = [{ wch: 30 }, { wch: 20 }, { wch: 12 }, ...activities.map(() => ({ wch: 15 }))];
     ws["!autofilter"] = { ref: window.XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: rows.length - 1, c: header.length - 1 } }) };
 
-    // Hoja de instrucciones aparte para no ensuciar la hoja de datos (la libreria
-    // Excel de este proyecto es la version gratuita: no soporta negrita, colores
-    // ni congelar paneles al escribir, asi que la organizacion se hace con
-    // estructura -- hojas separadas, autofiltro, columnas ordenadas -- en vez
-    // de formato visual).
+    // Hoja de instrucciones + leyenda aparte, para no ensuciar la hoja de datos
+    // (la libreria Excel de este proyecto es la version gratuita: no soporta
+    // negrita, colores ni congelar paneles al escribir, asi que la organizacion
+    // se hace con estructura -- hojas separadas, autofiltro, columnas cortas y
+    // ordenadas -- en vez de formato visual).
     const instructions = window.XLSX.utils.aoa_to_sheet([
       [`Calificar en bloque -- ${entry.label || guideFamily} -- Ficha ${ficha}`],
       [""],
@@ -3275,16 +3281,24 @@
       ["1. En la hoja \"Calificaciones\", escribe A (Aprobado) o D (No aprobado) en las celdas de cada actividad."],
       ["2. Deja en blanco las celdas que no quieras cambiar: la calificacion que ya exista no se toca."],
       ["3. No edites la columna \"Usuario\" ni los encabezados de las actividades: se usan para identificar al aprendiz y la actividad al subir el archivo."],
-      ["4. La columna \"% Aprobado\" es solo informativa (se recalcula sola en el portal); no hace falta editarla."],
-      ["5. Guarda el archivo y subelo en el panel admin: Calificaciones > Calificar en bloque con Excel > Subir Excel calificado."],
+      ["4. Los encabezados de actividad son un codigo corto, no el nombre completo (para que la tabla no quede tan ancha). Revisa la hoja \"Leyenda\" para ver a que actividad corresponde cada codigo."],
+      ["5. La columna \"% Aprobado\" es solo informativa (se recalcula sola en el portal); no hace falta editarla."],
+      ["6. Guarda el archivo y subelo en el panel admin: Calificaciones > Calificar en bloque con Excel > Subir Excel calificado."],
       [""],
       [`Generado: ${new Date().toLocaleString("es-CO")}`],
       [`Aprendices activos: ${sortedStudents.length}    Actividades: ${activities.length}`],
     ]);
     instructions["!cols"] = [{ wch: 100 }];
 
+    const legendRows = [["Codigo (encabezado en Calificaciones)", "Actividad completa"]];
+    activities.forEach((a) => legendRows.push([a.id, a.label]));
+    const legend = window.XLSX.utils.aoa_to_sheet(legendRows);
+    legend["!cols"] = [{ wch: 22 }, { wch: 60 }];
+    legend["!autofilter"] = { ref: window.XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: legendRows.length - 1, c: 1 } }) };
+
     const wb = window.XLSX.utils.book_new();
     window.XLSX.utils.book_append_sheet(wb, instructions, "Instrucciones");
+    window.XLSX.utils.book_append_sheet(wb, legend, "Leyenda");
     window.XLSX.utils.book_append_sheet(wb, ws, "Calificaciones");
     const safeName = (entry.label || guideFamily).replace(/[^a-zA-Z0-9]+/g, "_").slice(0, 40);
     window.XLSX.writeFile(wb, `Calificaciones_${ficha}_${safeName}.xlsx`);
@@ -3322,11 +3336,17 @@
       setStatus('No se encontro la columna "Usuario". No cambies los encabezados del Excel descargado.');
       return;
     }
-    const labelToId = {};
-    activities.forEach((a) => { labelToId[String(a.label).trim().toLowerCase()] = a.id; });
+    // El encabezado exportado es el id corto de la actividad (ver
+    // handleGradesExcelDownload); tambien se acepta la etiqueta completa por
+    // si el archivo se descargo con una version anterior de este flujo.
+    const headerToId = {};
+    activities.forEach((a) => {
+      headerToId[String(a.id).trim().toLowerCase()] = a.id;
+      headerToId[String(a.label).trim().toLowerCase()] = a.id;
+    });
     const colToActivityId = {};
     header.forEach((h, idx) => {
-      const id = labelToId[h.toLowerCase()];
+      const id = headerToId[h.toLowerCase()];
       if (id) colToActivityId[idx] = id;
     });
     if (!Object.keys(colToActivityId).length) {
