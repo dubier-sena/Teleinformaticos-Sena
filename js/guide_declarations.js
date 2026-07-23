@@ -800,7 +800,13 @@
     resultado: RAP_REDES,
     activities: [
       { id: "reflexion311",     number: "3.1.1", label: "Reflexion individual",     shortName: "Reflexion",     type: "form" },
-      { id: "socializacion311", number: "3.1.1", label: "Socializacion",            shortName: "Socializacion", type: "form" },
+      // El applier a medida de reflexion311 (ver script_guia_redes.js) bloquea
+      // esta actividad bajo la llave "reflexion-socializacion-locked", NO bajo
+      // "socializacion311-locked" (la convencion generica {id}-locked). Sin
+      // legacyLockKeys, el panel "Tus actividades de esta guia" (activity_standard.js)
+      // la mostraba "Pendiente" para siempre aunque el contenido ya estuviera
+      // guardado y bloqueado. Detectado 2026-07-23.
+      { id: "socializacion311", number: "3.1.1", label: "Socializacion",            shortName: "Socializacion", type: "form", legacyLockKeys: ["reflexion-socializacion-locked"] },
       // "Exploracion Visual por Bloques Tematicos" (Actividad 3.2.1 en el export
       // Word): 5 bloques independientes, cada uno con su propio boton Guardar/
       // lock (guardarBloqueA..E en script_guia_redes.js). Numeracion 3.2.1.1..5
@@ -810,14 +816,40 @@
       { id: "bloqueC", number: "3.2.1.3", label: "Bloque C - Medios de transmision",          shortName: "BloqueC", type: "form" },
       { id: "bloqueD", number: "3.2.1.4", label: "Bloque D - Dispositivos de interconexion",  shortName: "BloqueD", type: "form" },
       { id: "bloqueE", number: "3.2.1.5", label: "Bloque E - Modelo OSI y TCP/IP",            shortName: "BloqueE", type: "form" },
-      { id: "ip1",              number: "3.2.1", label: "Bloque IP 1",              shortName: "BloqueIP1",     type: "form" },
-      { id: "ip2",              number: "3.2.2", label: "Bloque IP 2 - Clases de IP", shortName: "BloqueIP2",   type: "form" },
-      { id: "ip3",              number: "3.2.3", label: "Bloque IP 3",              shortName: "BloqueIP3",     type: "form" },
-      { id: "taller-ip-ej1",    number: "3.3.1", label: "Taller IP - Ejercicio 1",  shortName: "TallerIP1",     type: "form" },
-      { id: "taller-ip-ej2",    number: "3.3.2", label: "Taller IP - Ejercicio 2",  shortName: "TallerIP2",     type: "form" },
-      { id: "taller-ip-ej3",    number: "3.3.3", label: "Taller IP - Ejercicio 3",  shortName: "TallerIP3",     type: "form" },
-      { id: "taller-ip-ej4",    number: "3.3.4", label: "Taller IP - Ejercicio 4",  shortName: "TallerIP4",     type: "form" },
-      { id: "taller-ip-ej5",    number: "3.3.5", label: "Taller IP - Ejercicio 5",  shortName: "TallerIP5",     type: "form" },
+      // Entrega de solo archivo (mapa mental en PNG/PDF, sin campos de texto).
+      // Antes era un boton de sharedAppsScriptDelivery.openDeliveryModal suelto
+      // (sin panelKey) sin ningun rastro en el catalogo ni en el state: no se
+      // podia calificar ni mostraba confirmacion de entrega. Se agrego panelKey
+      // "mapaMental322" al boton + candado/confirmacion propios en
+      // script_guia_redes.js (applyMapaMental322Lock). Agregado 2026-07-23.
+      { id: "mapaMental322", number: "3.2.2", label: "Mapa mental integrador de fundamentos de redes", shortName: "MapaMental", type: "file" },
+      // Quiz autocalificado (numero real "3.2.1.H", no numerico -> se usa
+      // "3.2.1.6" para el conteo de entregables). Al aprobar sin intento real
+      // se copia un intento completo desde el banco (ver activity_grades.js).
+      { id: "quiz-redes-321h", number: "3.2.1.6", label: "Quiz individual de fundamentos de redes", shortName: "QuizFundamentos", type: "form" },
+      // Numeros reales confirmados por el propio HTML (activity-num badges),
+      // js/redes_quiz_bank.js (topic:"3.3.1/2/3") y los exports Word con
+      // activityNumber propio (script_guia_redes.js): ip1=3.3.1, ip2=3.3.2,
+      // ip3=3.3.3. Las etiquetas anteriores (3.2.1/3.2.2/3.2.3) eran
+      // incorrectas (no visibles para el aprendiz, pero rompian el conteo de
+      // "Tus actividades de esta guia" al no coincidir con nada real, y mi
+      // primer intento de agregar ip2 con "3.2.2" chocaba ademas con el
+      // numero real de "Mapa mental integrador de fundamentos de redes",
+      // que no esta en este catalogo). Taller IP - Ejercicios 1-5 son 5
+      // columnas calificables por separado (igual que bloqueA-E) pero
+      // comparten el numero real "3.3.4" (un solo badge en el HTML para
+      // los 5 ejercicios) -- se subnumeran 3.3.4.1..5, mismo patron que
+      // 3.2.1.1..5 para bloqueA-E. Corregido 2026-07-23.
+      { id: "ip1",              number: "3.3.1", label: "Bloque IP 1",              shortName: "BloqueIP1",     type: "form" },
+      { id: "ip2",              number: "3.3.2", label: "Bloque IP 2 - Clases de IP", shortName: "BloqueIP2",   type: "form" },
+      { id: "ip3",              number: "3.3.3", label: "Bloque IP 3",              shortName: "BloqueIP3",     type: "form" },
+      { id: "taller-ip-ej1",    number: "3.3.4.1", label: "Taller IP - Ejercicio 1",  shortName: "TallerIP1",     type: "form" },
+      { id: "taller-ip-ej2",    number: "3.3.4.2", label: "Taller IP - Ejercicio 2",  shortName: "TallerIP2",     type: "form" },
+      { id: "taller-ip-ej3",    number: "3.3.4.3", label: "Taller IP - Ejercicio 3",  shortName: "TallerIP3",     type: "form" },
+      { id: "taller-ip-ej4",    number: "3.3.4.4", label: "Taller IP - Ejercicio 4",  shortName: "TallerIP4",     type: "form" },
+      { id: "taller-ip-ej5",    number: "3.3.4.5", label: "Taller IP - Ejercicio 5",  shortName: "TallerIP5",     type: "form" },
+      // Quiz autocalificado (numero real "3.3.H", no numerico -> se usa "3.3.9").
+      { id: "quiz-redes-33h",   number: "3.3.9", label: "Quiz individual de parametros de red", shortName: "QuizIP", type: "form" },
       { id: "lab1",             number: "3.4.1", label: "Laboratorio 1 - Topologia estrella", shortName: "LabEstrella", type: "file" },
       { id: "lab2",             number: "3.4.2", label: "Laboratorio 2 - Topologia arbol",    shortName: "LabArbol",    type: "file" },
       { id: "lab3",             number: "3.4.3", label: "Laboratorio 3 - Red hibrida",        shortName: "LabHibrida",  type: "file" },

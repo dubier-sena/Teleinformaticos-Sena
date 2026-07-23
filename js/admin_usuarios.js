@@ -2763,6 +2763,23 @@
     return act.type === "form" && !hasTrackableFields;
   }
 
+  // Algunas actividades type:"file" (p.ej. los laboratorios de Redes: lab1/2/3)
+  // tienen ADEMAS campos de texto con solucion propia en el banco (la reflexion
+  // del laboratorio) separados de la evidencia fotografica obligatoria ("Subir
+  // pantallazo" por item). Rellenar el texto NO cubre esa evidencia -- sin este
+  // chequeo, el fallback de entrega (que es lo que marca "-locked" y hace que
+  // los botones de pantallazo muestren "Evidencia cargada") se saltaba siempre
+  // que el banco lograba rellenar algo, dejando los botones de evidencia como
+  // si nunca se hubiera aprobado la actividad. Pedido explicito del usuario
+  // 2026-07-23.
+  function isDeclaredFileType(fileName, activityId) {
+    const config = window.ActivityStandard?.getConfigForGuide?.(fileName);
+    const act = config && Array.isArray(config.activities)
+      ? config.activities.find((a) => a.id === activityId)
+      : null;
+    return Boolean(act && act.type === "file");
+  }
+
   async function applyDeliveryFallbackToStudentCloud(usernameKey, guideFamily, activityId) {
     const db = window._firebaseDb;
     if (!db || typeof db.adminMarkActivityDelivered !== "function") return { filled: 0 };
@@ -2840,8 +2857,12 @@
     }
     // Si no habia banco (o no rellenaba nada) y es una actividad de archivo/checkbox
     // sin campo de texto, se registra como entregada (fecha de hoy + nota del
-    // instructor) en vez de dejarla en "sin-respuesta" para siempre.
-    if (nextGrade === "A" && filled === 0) {
+    // instructor) en vez de dejarla en "sin-respuesta" para siempre. Para
+    // actividades type:"file" con solucion de texto PROPIA (laboratorios: la
+    // reflexion no cubre la evidencia fotografica obligatoria) se intenta
+    // siempre, no solo cuando no se relleno nada.
+    const fileNameForFallback = resolveStudentGuideFileForFamily(usernameKey, guideFamily);
+    if (nextGrade === "A" && (filled === 0 || isDeclaredFileType(fileNameForFallback, activityId))) {
       try {
         const deliverResult = await applyDeliveryFallbackToStudentCloud(usernameKey, guideFamily, activityId);
         delivered = ((deliverResult && deliverResult.filled) || 0) > 0;
@@ -3440,9 +3461,15 @@
             } catch (_) { /* no critico */ }
           }
           // Actividades aprobadas sin solucion de banco (archivo/checkbox): igual que al
-          // calificar a mano, se registran como entregadas por el instructor.
+          // calificar a mano, se registran como entregadas por el instructor. Las
+          // type:"file" con solucion de texto propia (laboratorios) tambien lo
+          // intentan siempre -- la reflexion no cubre la evidencia fotografica
+          // obligatoria por separado (ver isDeclaredFileType).
+          const fileNameForFallback = resolveStudentGuideFileForFamily(usernameKey, guideFamily);
           for (const actId of Object.keys(grades)) {
-            if (grades[actId] !== "A" || (solutionsToApply && Object.keys(solutionsToApply).length && familyGrades[actId + ":solution"])) continue;
+            if (grades[actId] !== "A") continue;
+            const hasOwnSolution = Boolean(familyGrades[actId + ":solution"]);
+            if (hasOwnSolution && !isDeclaredFileType(fileNameForFallback, actId)) continue;
             try { await applyDeliveryFallbackToStudentCloud(usernameKey, guideFamily, actId); } catch (_) { /* no critico */ }
           }
           recordAdminAuditAction({ action: "grade-excel-import", target: `${usernameKey}:${guideFamily}`, detail: Object.keys(grades).join(",") });
