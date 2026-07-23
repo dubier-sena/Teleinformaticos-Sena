@@ -801,6 +801,15 @@
     activities: [
       { id: "reflexion311",     number: "3.1.1", label: "Reflexion individual",     shortName: "Reflexion",     type: "form" },
       { id: "socializacion311", number: "3.1.1", label: "Socializacion",            shortName: "Socializacion", type: "form" },
+      // "Exploracion Visual por Bloques Tematicos" (Actividad 3.2.1 en el export
+      // Word): 5 bloques independientes, cada uno con su propio boton Guardar/
+      // lock (guardarBloqueA..E en script_guia_redes.js). Numeracion 3.2.1.1..5
+      // para no chocar con el "3.2.1" ya usado (de forma inconsistente) por ip1.
+      { id: "bloqueA", number: "3.2.1.1", label: "Bloque A - Tipos de redes: LAN, MAN y WAN", shortName: "BloqueA", type: "form" },
+      { id: "bloqueB", number: "3.2.1.2", label: "Bloque B - Topologias de red",              shortName: "BloqueB", type: "form" },
+      { id: "bloqueC", number: "3.2.1.3", label: "Bloque C - Medios de transmision",          shortName: "BloqueC", type: "form" },
+      { id: "bloqueD", number: "3.2.1.4", label: "Bloque D - Dispositivos de interconexion",  shortName: "BloqueD", type: "form" },
+      { id: "bloqueE", number: "3.2.1.5", label: "Bloque E - Modelo OSI y TCP/IP",            shortName: "BloqueE", type: "form" },
       { id: "ip1",              number: "3.2.1", label: "Bloque IP 1",              shortName: "BloqueIP1",     type: "form" },
       { id: "ip3",              number: "3.2.3", label: "Bloque IP 3",              shortName: "BloqueIP3",     type: "form" },
       { id: "taller-ip-ej1",    number: "3.3.1", label: "Taller IP - Ejercicio 1",  shortName: "TallerIP1",     type: "form" },

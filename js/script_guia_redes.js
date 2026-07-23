@@ -4502,6 +4502,11 @@ function reflectGradesForGuiaRedes() {
         applyReflexionSocializacionLock();
         if (!wasLocked) saveStateRedes();
       },
+      bloqueA: applyBloqueALock,
+      bloqueB: applyBloqueBLock,
+      bloqueC: applyBloqueCLock,
+      bloqueD: applyBloqueDLock,
+      bloqueE: applyBloqueELock,
       ip1: applyBloqueIP1Lock,
       ip3: applyBloqueIP3Lock,
       "taller-ip-ej1": applyTallerIPEj1Lock,
