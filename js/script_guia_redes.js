@@ -4508,6 +4508,7 @@ function reflectGradesForGuiaRedes() {
       bloqueD: applyBloqueDLock,
       bloqueE: applyBloqueELock,
       ip1: applyBloqueIP1Lock,
+      ip2: applyBloqueIP2Lock,
       ip3: applyBloqueIP3Lock,
       "taller-ip-ej1": applyTallerIPEj1Lock,
       "taller-ip-ej2": applyTallerIPEj2Lock,

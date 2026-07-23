@@ -150,6 +150,10 @@
         { id: "bloqueD",       label: "3.2.1.D Dispositivos de interconexión" },
         { id: "bloqueE",       label: "3.2.1.E Modelo OSI y TCP/IP" },
         { id: "ip1",           label: "3.2.1 Bloque IP 1" },
+        // Mismo hueco que bloqueA-E: applyBloqueIP2Lock ya existia en
+        // script_guia_redes.js pero nunca estuvo en el catalogo ni en el banco
+        // de respuestas. Detectado 2026-07-22 (segunda ronda).
+        { id: "ip2",           label: "3.2.2 Bloque IP 2 - Clases de IP" },
         { id: "ip3",           label: "3.2.3 Bloque IP 3" },
         // El DOM usa ids sin guion (tallerIPEj1…, ver adminMount en
         // script_guia_redes.js); el catalogo conserva el id con guion para no

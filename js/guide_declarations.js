@@ -811,6 +811,7 @@
       { id: "bloqueD", number: "3.2.1.4", label: "Bloque D - Dispositivos de interconexion",  shortName: "BloqueD", type: "form" },
       { id: "bloqueE", number: "3.2.1.5", label: "Bloque E - Modelo OSI y TCP/IP",            shortName: "BloqueE", type: "form" },
       { id: "ip1",              number: "3.2.1", label: "Bloque IP 1",              shortName: "BloqueIP1",     type: "form" },
+      { id: "ip2",              number: "3.2.2", label: "Bloque IP 2 - Clases de IP", shortName: "BloqueIP2",   type: "form" },
       { id: "ip3",              number: "3.2.3", label: "Bloque IP 3",              shortName: "BloqueIP3",     type: "form" },
       { id: "taller-ip-ej1",    number: "3.3.1", label: "Taller IP - Ejercicio 1",  shortName: "TallerIP1",     type: "form" },
       { id: "taller-ip-ej2",    number: "3.3.2", label: "Taller IP - Ejercicio 2",  shortName: "TallerIP2",     type: "form" },
