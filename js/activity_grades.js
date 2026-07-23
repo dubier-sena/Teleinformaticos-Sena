@@ -138,6 +138,17 @@
       label: "Redes RAP 01 — Definir parámetros de la red",
       activities: [
         { id: "reflexion311",  label: "3.1.1 Reflexión / Socialización" },
+        // "Exploracion Visual por Bloques Tematicos" (actividad 3.2.1 en el
+        // export Word, ver script_guia_redes.js linea ~1296): 5 bloques
+        // independientes (cada uno con su propio boton Guardar/lock). Faltaban
+        // por completo del catalogo -- no habia forma de calificarlos desde el
+        // panel admin, por lo que nunca llegaban al 100% aunque el banco de
+        // respuestas para estos 5 ya existia completo. Detectado 2026-07-22.
+        { id: "bloqueA",       label: "3.2.1.A Tipos de redes: LAN, MAN y WAN" },
+        { id: "bloqueB",       label: "3.2.1.B Topologías de red" },
+        { id: "bloqueC",       label: "3.2.1.C Medios de transmisión" },
+        { id: "bloqueD",       label: "3.2.1.D Dispositivos de interconexión" },
+        { id: "bloqueE",       label: "3.2.1.E Modelo OSI y TCP/IP" },
         { id: "ip1",           label: "3.2.1 Bloque IP 1" },
         { id: "ip3",           label: "3.2.3 Bloque IP 3" },
         // El DOM usa ids sin guion (tallerIPEj1…, ver adminMount en
