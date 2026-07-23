@@ -71,6 +71,12 @@
           aliasIds: ["cibersegGuia335", "cibersegPhishing335", "cibersegChecklist335", "ciberseguridad335"],
           aliasMounts: ["#cibersegGuia335DeadlineControls", "#cibersegPhishing335DeadlineControls", "#cibersegChecklist335DeadlineControls"] },
         { id: "transferReto341",  label: "3.4.1 Reto final" },
+        // Quiz autocalificado "ACTIVIDAD 11" (script_redes_quiz.js, storage key
+        // propio "quiz-guia2-342"): igual que los quiz de Redes RAP01, nunca
+        // estuvo en el catalogo -- no habia forma de aprobarlo desde el panel
+        // admin. Detectado 2026-07-23 al auditar si el mismo hueco de Redes
+        // RAP01 tambien afectaba a Kennedy.
+        { id: "quiz-guia2-342",   label: "3.4.2 Quiz individual de herramientas informáticas y digitales" },
       ],
     },
     "guia-03-planificar-10": {
@@ -78,7 +84,15 @@
       activities: [
         { id: "bitacora311",     label: "3.1.1 Bitácora individual de análisis" },
         { id: "socializacion312", label: "3.1.2 Socialización del análisis" },
+        // Quiz autocalificado embebido en la tarjeta 3.1.2. El HTML no tenia ni
+        // siquiera el enlace para presentarlo (bug de acceso aparte, corregido
+        // junto con esto) -- nunca estuvo en el catalogo. Detectado 2026-07-23.
+        { id: "quiz-guia3-312",  label: "3.1.2.1 Quiz individual de herramientas" },
         { id: "tabla321",        label: "3.2.1 Tabla resumen" },
+        // Quiz de la actividad 3.2.1, SOLO existe para el grupo 10B (10A no
+        // tiene esta pagina/contenido -- asimetria intencional de la guia, no
+        // es un bug). Detectado 2026-07-23.
+        { id: "quiz-guia3-321",  label: "3.2.1.1 Quiz de contenidos temáticos (solo 10B)" },
         { id: "mapa322",         label: "3.2.2 Mapa conceptual" },
         { id: "checklist331",    label: "3.3.1 Checklist de instalación" },
         { id: "diagnostico332",  label: "3.3.2 Diagnóstico técnico" },
@@ -115,6 +129,10 @@
       activities: [
         { id: "bitacora311",      label: "3.1.1 Bitácora individual de análisis" },
         { id: "socializacion312", label: "3.1.2 Socialización del análisis" },
+        // Quiz autocalificado embebido dentro de la tarjeta 3.1.2 (mismo hueco
+        // que los demas quiz del portal: nunca estuvo en el catalogo).
+        // Detectado 2026-07-23.
+        { id: "quiz-guia6-312",   label: "3.1.2.1 Quiz individual de herramientas" },
         { id: "tabla321",         label: "3.2.1 Tabla resumen" },
         { id: "mapa322",          label: "3.2.2 Mapa conceptual" },
         { id: "checklist331",     label: "3.3.1 Checklist de instalación" },
@@ -203,6 +221,12 @@
         { id: "presentacion332", label: "3.3.2 Presentación técnica de averías" },
         { id: "laboratorio341", label: "3.4.1 Laboratorio Packet Tracer - Red 2 plantas" },
         { id: "caso342",        label: "3.4.2 Laboratorio integral - DHCP/DNS/AP/NAT" },
+        // Quiz autocalificado de cierre ("Quiz de conectividad"), sin numero
+        // propio en la guia (seccion aparte al final). Mismo hueco que los
+        // demas quiz del portal: nunca estuvo en el catalogo. El boton de
+        // acceso SI funciona (usa data/guide_contexts_bundle.js). Detectado
+        // 2026-07-23.
+        { id: "quiz-redes-321h-rap02", label: "3.5.1 Quiz de conectividad" },
       ],
     },
     // Practica de Python: originalmente era UNA sola columna combinada
