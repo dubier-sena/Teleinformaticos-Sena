@@ -112,6 +112,9 @@
       // El boton Guardar historico de la guia bloquea el reto con la llave suelta
       // "transfer-reto-locked"; declararla para que home/avance/habilitacion la vean.
       { id: "transferReto341", number: "3.4.1", label: "Reto final",                        shortName: "RetoFinal",       type: "form", legacyLockKeys: ["transfer-reto-locked"] },
+      // Mismo hueco que los quiz de Redes RAP01: nunca estuvo en el catalogo.
+      // Detectado 2026-07-23.
+      { id: "quiz-guia2-342",  number: "3.4.2", label: "Quiz individual de herramientas informaticas y digitales", shortName: "QuizHerramientas", type: "form" },
     ],
   });
 
@@ -134,10 +137,15 @@
         id: "socializacion312", number: "3.1.2", label: "Socializacion del analisis", shortName: "Socializacion", type: "form",
         teamRequirement: { required: true, allowSolo: false, min: 3, max: 3, scope: "activity" },
       },
+      // Quiz embebido en 3.1.2. El HTML no tenia el enlace de acceso (bug
+      // aparte, corregido junto con esto). Detectado 2026-07-23.
+      { id: "quiz-guia3-312", number: "3.1.2.1", label: "Quiz individual de herramientas", shortName: "QuizHerramientas", type: "form" },
       {
         id: "tabla321", number: "3.2.1", label: "Tabla resumen", shortName: "TablaResumen", type: "form",
         teamRequirement: { required: true, allowSolo: false, min: 3, max: 3, scope: "activity" },
       },
+      // Quiz embebido en 3.2.1, SOLO 10B (asimetria intencional de la guia).
+      { id: "quiz-guia3-321", number: "3.2.1.1", label: "Quiz de contenidos tematicos (solo 10B)", shortName: "QuizContenidos", type: "form" },
       {
         id: "mapa322", number: "3.2.2", label: "Mapa conceptual", shortName: "MapaConceptual", type: "form",
         teamRequirement: { required: true, allowSolo: false, min: 3, max: 3, scope: "activity" },
@@ -392,6 +400,8 @@
         id: "socializacion312", number: "3.1.2", label: "Socializacion del analisis", shortName: "Socializacion", type: "form",
         teamRequirement: { required: true, allowSolo: false, min: 3, max: 3, scope: "guide" },
       },
+      // Quiz autocalificado embebido en la tarjeta 3.1.2. Detectado 2026-07-23.
+      { id: "quiz-guia6-312", number: "3.1.2.1", label: "Quiz individual de herramientas", shortName: "QuizHerramientas", type: "form" },
       {
         id: "tabla321", number: "3.2.1", label: "Tabla resumen", shortName: "TablaResumen", type: "form",
         teamRequirement: { required: true, allowSolo: false, min: 3, max: 3, scope: "guide" },
@@ -1041,6 +1051,10 @@
           allowedExtensions: [".pkt", ".pdf", ".zip"],
         },
       },
+      // Quiz autocalificado de cierre, sin numero propio en la guia (seccion
+      // aparte al final, "Quiz de conectividad"). Mismo hueco que los demas
+      // quiz del portal: nunca estuvo en el catalogo. Detectado 2026-07-23.
+      { id: "quiz-redes-321h-rap02", number: "3.5.1", label: "Quiz de conectividad", shortName: "QuizConectividad", type: "form" },
     ],
   });
 
