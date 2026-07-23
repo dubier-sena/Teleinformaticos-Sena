@@ -149,21 +149,41 @@
         { id: "bloqueC",       label: "3.2.1.C Medios de transmisión" },
         { id: "bloqueD",       label: "3.2.1.D Dispositivos de interconexión" },
         { id: "bloqueE",       label: "3.2.1.E Modelo OSI y TCP/IP" },
-        { id: "ip1",           label: "3.2.1 Bloque IP 1" },
+        // Entrega de solo archivo (sin texto que el banco pueda rellenar): al
+        // aprobar sin entrega real, el flujo de calificacion la marca como
+        // "entregada por el instructor" igual que los laboratorios. Agregado
+        // 2026-07-23 (ver nota completa en guide_declarations.js).
+        { id: "mapaMental322", label: "3.2.2 Mapa mental integrador de fundamentos de redes" },
+        // Quiz autocalificado (10 preguntas, ver script_redes_quiz.js): la nota
+        // real la pone el propio motor del quiz cuando el aprendiz lo presenta,
+        // pero al aprobar sin intento real (pedido explicito del usuario
+        // 2026-07-23) se copia un intento completo (variante A, 100/100) al
+        // "banco", con el mismo formato exacto que escribe el motor del quiz
+        // en state["quiz-redes-321h"] (version/variante/respuestas/resultados/
+        // locked). Ver grade_solutions_bank.json.
+        { id: "quiz-redes-321h", label: "3.2.1.H Quiz individual de fundamentos de redes" },
+        // Numeros reales 3.3.1/3.3.2/3.3.3 (ver nota completa en
+        // guide_declarations.js) -- las etiquetas "3.2.x" anteriores eran
+        // incorrectas. Corregido 2026-07-23.
+        { id: "ip1",           label: "3.3.1 Bloque IP 1" },
         // Mismo hueco que bloqueA-E: applyBloqueIP2Lock ya existia en
         // script_guia_redes.js pero nunca estuvo en el catalogo ni en el banco
         // de respuestas. Detectado 2026-07-22 (segunda ronda).
-        { id: "ip2",           label: "3.2.2 Bloque IP 2 - Clases de IP" },
-        { id: "ip3",           label: "3.2.3 Bloque IP 3" },
+        { id: "ip2",           label: "3.3.2 Bloque IP 2 - Clases de IP" },
+        { id: "ip3",           label: "3.3.3 Bloque IP 3" },
+        // Mismo mecanismo que el quiz de fundamentos, para el quiz de IP.
+        { id: "quiz-redes-33h", label: "3.3.H Quiz individual de parámetros de red" },
         // El DOM usa ids sin guion (tallerIPEj1…, ver adminMount en
         // script_guia_redes.js); el catalogo conserva el id con guion para no
         // perder notas ya guardadas, y fija el mount explicito (mismo patron
-        // que guia5-311/331/341 en "guia-05-herramientas" mas abajo).
-        { id: "taller-ip-ej1", label: "3.3.1 Taller IP - Ejercicio 1", mount: "#tallerIPEj1DeadlineControls" },
-        { id: "taller-ip-ej2", label: "3.3.2 Taller IP - Ejercicio 2", mount: "#tallerIPEj2DeadlineControls" },
-        { id: "taller-ip-ej3", label: "3.3.3 Taller IP - Ejercicio 3", mount: "#tallerIPEj3DeadlineControls" },
-        { id: "taller-ip-ej4", label: "3.3.4 Taller IP - Ejercicio 4", mount: "#tallerIPEj4DeadlineControls" },
-        { id: "taller-ip-ej5", label: "3.3.5 Taller IP - Ejercicio 5", mount: "#tallerIPEj5DeadlineControls" },
+        // que guia5-311/331/341 en "guia-05-herramientas" mas abajo). Numeros
+        // reales 3.3.4.1..5 (un solo badge "3.3.4" en el HTML para los 5
+        // ejercicios, igual que bloqueA-E bajo "3.2.1").
+        { id: "taller-ip-ej1", label: "3.3.4.1 Taller IP - Ejercicio 1", mount: "#tallerIPEj1DeadlineControls" },
+        { id: "taller-ip-ej2", label: "3.3.4.2 Taller IP - Ejercicio 2", mount: "#tallerIPEj2DeadlineControls" },
+        { id: "taller-ip-ej3", label: "3.3.4.3 Taller IP - Ejercicio 3", mount: "#tallerIPEj3DeadlineControls" },
+        { id: "taller-ip-ej4", label: "3.3.4.4 Taller IP - Ejercicio 4", mount: "#tallerIPEj4DeadlineControls" },
+        { id: "taller-ip-ej5", label: "3.3.4.5 Taller IP - Ejercicio 5", mount: "#tallerIPEj5DeadlineControls" },
         { id: "lab1",          label: "3.4.1 Laboratorio 1 - Topología estrella" },
         { id: "lab2",          label: "3.4.2 Laboratorio 2 - Topología árbol" },
         { id: "lab3",          label: "3.4.3 Laboratorio 3 - Red híbrida" },

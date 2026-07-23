@@ -542,6 +542,7 @@ function hydrateFieldsRedes() {
   applyBloqueCLock();
   applyBloqueDLock();
   applyBloqueELock();
+  applyMapaMental322Lock();
   applySocialLock();
   applyBloqueIP1Lock();
   applyBloqueIP2Lock();
@@ -1538,6 +1539,7 @@ function applyAllLocksRedes() {
   applyBloqueCLock();
   applyBloqueDLock();
   applyBloqueELock();
+  applyMapaMental322Lock();
   applySocialLock();
   applyBloqueIP1Lock();
   applyBloqueIP2Lock();
@@ -2398,6 +2400,18 @@ window.guardarTallerIPEj5 = async function () {
   applyTallerIPEj5Lock();
 };
 
+// El flag generico "{labId}-locked" puede perderse si dos calificaciones de
+// admin se guardan muy seguidas (mergeGuideState borra "-locked" ausentes del
+// ultimo guardado cuando isAdminOverride=true -- ver firebase_db.js). El flag
+// "{labId}-delivery" NO tiene ese problema (el merge lo preserva siempre), asi
+// que se usa como respaldo para decidir si el laboratorio (y su evidencia
+// fotografica obligatoria) debe verse bloqueado/entregado. Agregado 2026-07-23.
+function isLabLocked(labId) {
+  if (state[labId + "-locked"] === true) return true;
+  const delivery = state[labId + "-delivery"];
+  return Boolean(delivery && delivery.status === "delivered");
+}
+
 const LAB1_ANALYSIS_KEYS = ["lab1-ping1", "lab1-ping2", "lab1-broadcast", "lab1-ipconfig"];
 
 const LAB1_EVIDENCE_SLOTS = {
@@ -2455,7 +2469,7 @@ function refreshLab1EvidenceSlot(slotKey) {
   const driveUrl = state[getLab1EvidenceStateKey(slotKey, "url")];
   const localBase64 = state[getLab1EvidenceStateKey(slotKey, "image")];
   const fileName = state[getLab1EvidenceStateKey(slotKey, "name")] || `${slot.title}.png`;
-  const locked = Boolean(state["lab1-locked"]);
+  const locked = isLabLocked("lab1");
   const preview = document.getElementById(slot.previewId);
   const img = document.getElementById(slot.imageId);
   const name = document.getElementById(slot.nameId);
@@ -2499,7 +2513,7 @@ function restoreLab1EvidenceUploads() {
 }
 
 function applyLab1Lock() {
-  const locked = Boolean(state["lab1-locked"]);
+  const locked = isLabLocked("lab1");
   document.querySelectorAll("[data-store^='lab1-']").forEach((el) => {
     el.disabled = locked;
     el.style.opacity = locked ? "0.75" : "";
@@ -2711,7 +2725,7 @@ function refreshLab2EvidenceSlot(slotKey) {
   const driveUrl = state[getLab2EvidenceStateKey(slotKey, "url")];
   const localBase64 = state[getLab2EvidenceStateKey(slotKey, "image")];
   const fileName = state[getLab2EvidenceStateKey(slotKey, "name")] || `${slot.title}.png`;
-  const locked = Boolean(state["lab2-locked"]);
+  const locked = isLabLocked("lab2");
   const preview = document.getElementById(slot.previewId);
   const img = document.getElementById(slot.imageId);
   const name = document.getElementById(slot.nameId);
@@ -2755,7 +2769,7 @@ function restoreLab2EvidenceUploads() {
 }
 
 function applyLab2Lock() {
-  const locked = Boolean(state["lab2-locked"]);
+  const locked = isLabLocked("lab2");
   document.querySelectorAll("[data-store^='lab2-']").forEach((el) => {
     el.disabled = locked;
     el.style.opacity = locked ? "0.75" : "";
@@ -2978,7 +2992,7 @@ function refreshLab3EvidenceSlot(slotKey) {
   const driveUrl = state[getLab3EvidenceStateKey(slotKey, "url")];
   const localBase64 = state[getLab3EvidenceStateKey(slotKey, "image")];
   const fileName = state[getLab3EvidenceStateKey(slotKey, "name")] || `${slot.title}.png`;
-  const locked = Boolean(state["lab3-locked"]);
+  const locked = isLabLocked("lab3");
   const preview = document.getElementById(slot.previewId);
   const img = document.getElementById(slot.imageId);
   const name = document.getElementById(slot.nameId);
@@ -3022,7 +3036,7 @@ function restoreLab3EvidenceUploads() {
 }
 
 function applyLab3Lock() {
-  const locked = Boolean(state["lab3-locked"]);
+  const locked = isLabLocked("lab3");
   document.querySelectorAll("[data-store^='lab3-']").forEach((el) => {
     el.disabled = locked;
     el.style.opacity = locked ? "0.75" : "";
@@ -3545,6 +3559,51 @@ window.subirImagenSocial = async function (input) {
     if (label) { label.innerHTML = originalLabel; label.style.pointerEvents = ""; }
   }
 };
+
+// ── Mapa mental integrador (3.2.2) ──────────────────────────────────────────
+// Actividad de solo entrega a Drive (sin campos de texto): antes era un boton
+// de sharedAppsScriptDelivery.openDeliveryModal suelto, sin panelKey y sin
+// ningun rastro en el state -- no se podia calificar desde el panel admin ni
+// mostraba confirmacion de entrega al aprendiz. Se agrega panelKey para que
+// la entrega real quede registrada, y este candado/confirmacion (mismo patron
+// que los bloques A-E) para reflejar tanto la entrega real del aprendiz como
+// la aprobacion del instructor. Agregado 2026-07-23.
+function applyMapaMental322Lock() {
+  const delivery = state["mapaMental322-delivery"];
+  const delivered = Boolean(delivery && delivery.status === "delivered");
+  const locked = delivered || Boolean(state["mapaMental322-locked"]);
+  const btn = document.getElementById("btnMapaMentalDrive");
+  if (btn) {
+    btn.disabled = locked;
+    btn.style.opacity = locked ? "0.6" : "";
+    btn.style.pointerEvents = locked ? "none" : "";
+  }
+  const status = document.getElementById("mapaMental322Status");
+  if (!status) return;
+  if (!delivered) {
+    status.style.display = "none";
+    status.innerHTML = "";
+    return;
+  }
+  let fecha = "", hora = "";
+  if (delivery.submittedAt) {
+    try {
+      const d = new Date(delivery.submittedAt);
+      fecha = d.toLocaleDateString("es-CO", { day: "2-digit", month: "long", year: "numeric" });
+      hora = d.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" });
+    } catch (_) {}
+  }
+  const parts = ["&#9989; Actividad entregada correctamente."];
+  if (fecha) parts.push(`Fecha: ${escapeHtml(fecha)}${hora ? " a las " + escapeHtml(hora) : ""}.`);
+  if (delivery.savedFileName) parts.push(`Archivo: ${escapeHtml(delivery.savedFileName)}.`);
+  if (delivery.driveUrl) {
+    parts.push(
+      `<a href="${escapeHtml(delivery.driveUrl)}" target="_blank" rel="noopener" style="color:#1e40af;font-weight:600">&#128194; Ver archivo entregado</a>`
+    );
+  }
+  status.innerHTML = parts.join(" ");
+  status.style.display = "block";
+}
 
 window.guardarSocializacion = async function () {
   const empty = SOCIAL_KEYS.filter((k) => !String(state[k] || "").trim());
@@ -4507,6 +4566,7 @@ function reflectGradesForGuiaRedes() {
       bloqueC: applyBloqueCLock,
       bloqueD: applyBloqueDLock,
       bloqueE: applyBloqueELock,
+      mapaMental322: applyMapaMental322Lock,
       ip1: applyBloqueIP1Lock,
       ip2: applyBloqueIP2Lock,
       ip3: applyBloqueIP3Lock,
@@ -4553,9 +4613,29 @@ document.addEventListener("guide-delivery-registered", (e) => {
       const match = getDeliverableActivitiesRedes().find(
         (a) => a && a.number != null && String(a.number) === num
       );
-      if (match && state[match.id + "-delivered"] !== true) {
-        state[match.id + "-delivered"] = true;
-        saveStateRedes();
+      if (match) {
+        let changed = false;
+        if (state[match.id + "-delivered"] !== true) {
+          state[match.id + "-delivered"] = true;
+          changed = true;
+        }
+        // Ademas del flag booleano (usado solo para el % de esta pagina),
+        // guardamos el registro completo (fecha, archivo, enlace) bajo la
+        // convencion generica "{id}-delivery" -- es lo que lee tanto el panel
+        // "Tus actividades de esta guia" (activity_standard.js) como la
+        // confirmacion inline de la propia actividad (ver applyMapaMental322Lock).
+        if (detail.status === "delivered" && (!state[match.id + "-delivery"] || state[match.id + "-delivery"].status !== "delivered")) {
+          state[match.id + "-delivery"] = {
+            status: "delivered",
+            submittedAt: detail.submittedAt || new Date().toISOString(),
+            driveUrl: detail.driveUrl || "",
+            savedFileName: detail.savedFileName || "",
+          };
+          state[match.id + "-locked"] = true;
+          changed = true;
+        }
+        if (changed) saveStateRedes();
+        if (match.id === "mapaMental322") applyMapaMental322Lock();
       }
     }
   } catch (_) {}
