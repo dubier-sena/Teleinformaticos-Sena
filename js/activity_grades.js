@@ -155,7 +155,14 @@
     "guia-redes-rap01": {
       label: "Redes RAP 01 — Definir parámetros de la red",
       activities: [
-        { id: "reflexion311",  label: "3.1.1 Reflexión / Socialización" },
+        // aliasIds: la nota de reflexion311 tambien cubre socializacion311 (el
+        // applier a medida ya bloquea ambas juntas, ver script_guia_redes.js).
+        // Sin este alias, "Tus actividades de esta guia" mostraba Socializacion
+        // como "Guardada" en vez de "Aprobada" -- _getStudentGradeForActivity
+        // no encontraba nota propia para "socializacion311" y el legacyLockKeys
+        // que ya tenia (agregado antes) solo resuelve el candado, no la nota.
+        // Detectado 2026-07-23.
+        { id: "reflexion311",  label: "3.1.1 Reflexión / Socialización", aliasIds: ["socializacion311"] },
         // "Exploracion Visual por Bloques Tematicos" (actividad 3.2.1 en el
         // export Word, ver script_guia_redes.js linea ~1296): 5 bloques
         // independientes (cada uno con su propio boton Guardar/lock). Faltaban
