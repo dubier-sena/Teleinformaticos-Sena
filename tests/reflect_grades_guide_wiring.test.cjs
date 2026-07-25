@@ -65,6 +65,16 @@ const CASES = [
       "applyLab1Lock", "applyLab2Lock", "applyLab3Lock", "applySocialLock",
     ],
   },
+  {
+    // Guia 5 nunca tuvo reflectGradesForGuiaX (a diferencia de 2/3/6/redes):
+    // calificar una actividad vacia desde el admin no marcaba "-locked", asi
+    // que "Tu control de avance" seguia contando Pendiente. Fix 2026-07-24.
+    file: "js/script.js",
+    mountFnPattern: /\(function mountAvancePanelGuia5\(\)[\s\S]*?\}\)\(\);/,
+    reflectFnName: "reflectGradesForGuia5",
+    expectedFamily: "guia-05-herramientas",
+    expectedLockAppliers: [],
+  },
 ];
 
 CASES.forEach((testCase) => {

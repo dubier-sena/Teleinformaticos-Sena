@@ -359,11 +359,70 @@
     if (!db) return Promise.resolve(null);
     return Promise.resolve(db.cloudGetGrades(usernameKey)).catch(function () { return null; });
   }
-  function saveGradesToCloud(usernameKey, allGrades) {
+  // cloudSaveGrades hace un PATCH que REEMPLAZA el doc de notas completo (no
+  // un merge granular por actividad). Si el admin califica varias actividades
+  // seguidas del mismo aprendiz, cada clic disparaba su propia escritura
+  // fire-and-forget; la red no garantiza el orden de llegada, asi que una
+  // escritura mas vieja (con menos notas) podia aterrizar DESPUES de una mas
+  // nueva y pisarla -- perdiendo notas ya guardadas. Detectado 2026-07-24:
+  // calificar las 4 actividades de Guia 5 seguidas dejaba solo 2 guardadas.
+  // Se agrupan (debounce) por aprendiz en una sola escritura final con el
+  // snapshot local mas reciente (siempre completo, igual que el
+  // scheduleCloudSync/flushCloudSync que ya usan las guias del lado aprendiz).
+  var GRADES_CLOUD_SYNC_DELAY_MS = 900;
+  var gradesCloudSyncTimers = {};
+  var gradesCloudSyncPending = {};
+  var gradesCloudSyncInFlight = {};
+  // setTimeout/clearTimeout no existen en el sandbox minimo de vm.createContext
+  // que usan varios tests de este archivo (sin browser real): sin este
+  // fallback, saveGradesToCloud reventaba ahi con "setTimeout is not defined".
+  var scheduleTimeout = typeof setTimeout === "function"
+    ? setTimeout
+    : function (fn) { fn(); return 0; };
+  var cancelTimeout = typeof clearTimeout === "function" ? clearTimeout : function () {};
+
+  function flushGradesCloudSync(usernameKey) {
+    if (gradesCloudSyncTimers[usernameKey]) {
+      cancelTimeout(gradesCloudSyncTimers[usernameKey]);
+      gradesCloudSyncTimers[usernameKey] = null;
+    }
+    var payload = gradesCloudSyncPending[usernameKey];
+    if (!payload) return;
     var db = gradesCloudDb();
     if (!db || typeof db.cloudSaveGrades !== "function") return;
-    // Fire-and-forget: lo invoca el admin; el rule isAdmin() lo autoriza.
-    Promise.resolve(db.cloudSaveGrades(usernameKey, allGrades)).catch(function () {});
+    if (gradesCloudSyncInFlight[usernameKey]) return; // ya hay una escritura en curso; se reintenta al terminar
+    delete gradesCloudSyncPending[usernameKey];
+    gradesCloudSyncInFlight[usernameKey] = true;
+    Promise.resolve(db.cloudSaveGrades(usernameKey, payload))
+      .catch(function () {})
+      .then(function () {
+        gradesCloudSyncInFlight[usernameKey] = false;
+        // Llegaron mas cambios mientras esta escritura estaba en vuelo: sincroniza de nuevo.
+        if (gradesCloudSyncPending[usernameKey]) flushGradesCloudSync(usernameKey);
+      });
+  }
+
+  function flushAllPendingGradesCloudSync() {
+    Object.keys(gradesCloudSyncPending).forEach(flushGradesCloudSync);
+  }
+
+  if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
+    window.addEventListener("pagehide", flushAllPendingGradesCloudSync);
+    window.addEventListener("beforeunload", flushAllPendingGradesCloudSync);
+  }
+  if (typeof document !== "undefined" && typeof document.addEventListener === "function") {
+    document.addEventListener("visibilitychange", function () {
+      if (document.hidden) flushAllPendingGradesCloudSync();
+    });
+  }
+
+  function saveGradesToCloud(usernameKey, allGrades) {
+    if (!usernameKey) return;
+    gradesCloudSyncPending[usernameKey] = allGrades;
+    if (gradesCloudSyncTimers[usernameKey]) cancelTimeout(gradesCloudSyncTimers[usernameKey]);
+    gradesCloudSyncTimers[usernameKey] = scheduleTimeout(function () {
+      flushGradesCloudSync(usernameKey);
+    }, GRADES_CLOUD_SYNC_DELAY_MS);
   }
   function setAllStudentGrades(usernameKey, allGrades) {
     var key = getGradesKey(usernameKey);

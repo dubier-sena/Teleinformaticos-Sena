@@ -427,6 +427,35 @@ function initGuia5() {
   updateProgress();
   setupScrollSpy();
   initializeCloudStateSync();
+  reflectGradesForGuia5();
+}
+
+// Guia 5 nunca llamaba a reflectGradesIntoGuideState (a diferencia de Guia
+// 2/3/6/Redes RAP01, ver activity_grades.js): si el admin aprobaba una
+// actividad que el aprendiz nunca guardo el mismo, el flag "{id}-locked"
+// nunca se ponia, asi que "Tu control de avance" seguia contando esa
+// actividad como Pendiente (aunque la fila mostrara "Aprobada") y el % no
+// subia. Detectado 2026-07-24 al calificar una cuenta de prueba sin
+// respuestas reales. Ver reflectGradesForGuia6() en script_guia6.js para el
+// mismo patron.
+function reflectGradesForGuia5() {
+  var mgr = window.activityGradesManager;
+  if (!mgr || typeof mgr.reflectGradesIntoGuideState !== "function") return;
+  mgr.reflectGradesIntoGuideState({
+    guideFamily: "guia-05-herramientas",
+    pageFile: PAGE_FILE,
+    getState: function () { return state; },
+    onChanged: function () {
+      saveState();
+      updateProgress();
+      if (window.ActivityStandard && typeof window.ActivityStandard.renderAvancePanel === "function" && document.querySelector("[data-act-std-avance]")) {
+        window.ActivityStandard.renderAvancePanel({
+          getGuideDataFile: function () { return PAGE_FILE; },
+          getState: function () { return state; },
+        });
+      }
+    },
+  });
 }
 
 window.initGuia5 = initGuia5;
