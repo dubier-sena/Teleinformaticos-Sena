@@ -1805,6 +1805,33 @@
     );
   }
 
+  // Cola por documento (scopeKey+cloudFileName) para las escrituras admin de
+  // guide_state (adminApplySolutionToGuide / adminMarkActivityDelivered). Cada
+  // una hace su propio ciclo leer-modificar-escribir (varios round-trips:
+  // cloudGetGuideData, la re-lectura interna de cloudSaveGuideData y el fsPatch
+  // final, que en Firestore REST sin updateMask es un REEMPLAZO COMPLETO del
+  // documento). Si el instructor califica varias actividades de la MISMA guia
+  // seguidas (el flujo normal al calificar una guia completa), esos ciclos se
+  // solapan: cada uno lee un snapshot desactualizado y el ultimo PATCH en
+  // llegar al servidor gana por completo, borrando lo que las demas ya habian
+  // escrito -- el merge por timestamp (mergeGuideDataSnapshotForSave) no
+  // alcanza a protegerlo porque solo compara contra lo que EL MISMO leyo, no
+  // contra escrituras concurrentes de otras actividades. Serializar por
+  // documento (una escritura admin espera a que termine la anterior del MISMO
+  // aprendiz+archivo antes de leer) elimina la carrera sin tocar el merge por
+  // timestamp existente (que sigue protegiendo contra ediciones reales del
+  // aprendiz desde otro dispositivo). Detectado 2026-07-25 calificando varias
+  // actividades seguidas de una guia para un aprendiz: solo la ultima quedaba
+  // guardada.
+  var guideStateAdminWriteQueues = {};
+  function withGuideStateAdminQueue(scopeKey, cloudFileName, task) {
+    var queueKey = scopeKey + "|" + cloudFileName;
+    var previous = guideStateAdminWriteQueues[queueKey] || Promise.resolve();
+    var next = previous.catch(function () {}).then(task);
+    guideStateAdminWriteQueues[queueKey] = next;
+    return next;
+  }
+
   // Admin: al aprobar una actividad con solucion del banco, escribe las respuestas
   // directamente en el estado del aprendiz en la nube (SOLO campos vacios) y actualiza
   // su progreso, para que el avance y las respuestas se vean al instante al consultar
@@ -1815,6 +1842,15 @@
   async function adminApplySolutionToGuide(usernameKey, fileName, fields) {
     var key = String(usernameKey || "").trim().toLowerCase();
     if (!key || !fileName || !plainObject(fields)) return { ok: false, filled: 0 };
+    var scopeKey = "student:" + key;
+    var cloudFileNameForQueue = guideDataFileName(fileName);
+    return withGuideStateAdminQueue(scopeKey, cloudFileNameForQueue, function () {
+      return adminApplySolutionToGuideImpl(usernameKey, fileName, fields);
+    });
+  }
+
+  async function adminApplySolutionToGuideImpl(usernameKey, fileName, fields) {
+    var key = String(usernameKey || "").trim().toLowerCase();
     var scopeKey = "student:" + key;
     // El guide-data en la nube se guarda bajo el ALIAS canonico (p. ej.
     // "10a_guia.html"), no bajo el nombre crudo del HTML. Hay que leer/escribir con
@@ -1877,6 +1913,15 @@
   async function adminMarkActivityDelivered(usernameKey, fileName, activityId) {
     var key = String(usernameKey || "").trim().toLowerCase();
     if (!key || !fileName || !activityId) return { ok: false, filled: 0 };
+    var scopeKey = "student:" + key;
+    var cloudFileNameForQueue = guideDataFileName(fileName);
+    return withGuideStateAdminQueue(scopeKey, cloudFileNameForQueue, function () {
+      return adminMarkActivityDeliveredImpl(usernameKey, fileName, activityId);
+    });
+  }
+
+  async function adminMarkActivityDeliveredImpl(usernameKey, fileName, activityId) {
+    var key = String(usernameKey || "").trim().toLowerCase();
     var scopeKey = "student:" + key;
     var cloudFileName = guideDataFileName(fileName);
 
