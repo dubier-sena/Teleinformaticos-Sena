@@ -51,6 +51,25 @@ test("runtime loaders and guide scripts honor the routed guide file", () => {
   assert.match(read(path.join("js", "script_guia_redes.js")), /__RUNTIME_PAGE_FILE__/);
 });
 
+test("guia 5 router routes load script_guia5.js (controles de fecha limite y bloqueo por calificacion)", () => {
+  // Regresion real (2026-07-24): guia_router.js nunca cargaba script_guia5.js
+  // en las rutas "11a-guia-5"/"11b-guia-5" (a diferencia del shell directo en
+  // pages/guias/, que si lo carga). Entrando por guia.html?g=... (el entry
+  // point publico real) instalGuia5DeadlineControls() nunca corria: sin
+  // deadline notices, y sin el fix de isLocked que deshabilita los campos
+  // cuando el admin califica una actividad.
+  const router = read(path.join("js", "guia_router.js"));
+  const routeBlocks = [...router.matchAll(/"(11[ab]-guia-5)":\s*\{[\s\S]*?scripts:\s*\[([\s\S]*?)\]/g)];
+  assert.equal(routeBlocks.length, 2, "deberia encontrar las rutas 11a-guia-5 y 11b-guia-5");
+  routeBlocks.forEach(([, routeKey, scriptsBlock]) => {
+    assert.match(
+      scriptsBlock,
+      /js\/script_guia5\.js/,
+      `ruta "${routeKey}" no carga js/script_guia5.js`
+    );
+  });
+});
+
 test("induction partial can run inside guia.html without global name collisions", () => {
   const partial = read(path.join("partials", "guia-01-induccion-content.html"));
   const bundle = read(path.join("partials", "guia-01-induccion-bundle.js"));
