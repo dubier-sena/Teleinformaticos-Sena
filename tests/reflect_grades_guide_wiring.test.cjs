@@ -153,3 +153,25 @@ test("induccion: updateProgress/saveProgress excluyen el boton generico .activit
     "saveProgress tambien debe filtrar por [id^=\"chk-\"] para no guardar una entrada con llave vacia"
   );
 });
+
+// Mismo bug que Induccion (arriba), encontrado 2026-07-25 calificando Guia 5 y
+// Guia 6 para QA: el aprendiz de pruebas tenia el 100% de los campos reales
+// completos y las 4/8 actividades aprobadas, pero el "Progreso" del sidebar se
+// quedaba en 95%/46% porque .activity-check (el boton generico "marcar como
+// vista" que inyecta guia_template.js, SIN id) seguia contando en el total sin
+// que nada lo marque nunca. Las guias mas nuevas (7, 8) ya no lo cuentan.
+[
+  { file: "js/script.js", label: "Guia 5" },
+  { file: "js/script_guia6.js", label: "Guia 6" },
+].forEach(({ file, label }) => {
+  test(`${label} (${file}): updateProgress no cuenta el boton generico .activity-check`, () => {
+    const source = read(file);
+    const updateProgressBlock = source.match(/function updateProgress\s*\(\)\s*\{[\s\S]*?\n\}/);
+    assert.ok(updateProgressBlock, `no se encontro updateProgress en ${file}`);
+    assert.doesNotMatch(
+      updateProgressBlock[0],
+      /activityChecks\.length/,
+      `${file}: updateProgress no debe sumar activityChecks.length al total (bloquea el 100% aunque todo este respondido/aprobado)`
+    );
+  });
+});
