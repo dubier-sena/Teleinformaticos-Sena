@@ -1,10 +1,12 @@
 // script_taller_integrador.js — Taller Integrador (Sistemas Teleinformaticos)
-// Compartido por dos instituciones (John F. Kennedy y Santa Barbara), grupos
-// 10A/10B de cada una. 6 productos type:"file" (entrega a Drive por equipo)
-// via ActivityStandard. Sin formularios ni wizard de equipo: los integrantes
-// del equipo van en la portada del documento entregado. El PAGE_FILE (via
-// STORAGE_FILE_ALIASES) determina tanto el storage local/nube como el registro
-// de guide_declarations.js que aplica (cada institucion tiene el suyo).
+// Compartido por tres variantes: John F. Kennedy grado 10 (10A/10B, 6 productos),
+// Santa Barbara grado 10 (10A/10B, 6 productos) y Santa Barbara grado 11
+// (11A/11B, 4 productos, ultimo ano de contrato del grupo). Productos type:"file"
+// (entrega a Drive por equipo) via ActivityStandard. Sin formularios ni wizard
+// de equipo: los integrantes del equipo van en la portada del documento
+// entregado. El PAGE_FILE (via STORAGE_FILE_ALIASES) determina el storage
+// local/nube, el registro de guide_declarations.js que aplica y la lista de
+// productos (ACTIVITY_IDS_BY_FILE) de esa variante.
 (function () {
   "use strict";
 
@@ -16,9 +18,24 @@
     "grupo-10b-guia-04-taller-integrador.html": "10b_guia4.html",
     "santa-barbara-10a-guia-04-taller-integrador.html": "sb_10a_guia4.html",
     "santa-barbara-10b-guia-04-taller-integrador.html": "sb_10b_guia4.html",
+    "grupo-11a-guia-09-taller-integrador.html": "11a_guia9.html",
+    "grupo-11b-guia-09-taller-integrador.html": "11b_guia9.html",
   };
   const GUIDE_DATA_FILE = STORAGE_FILE_ALIASES[PAGE_FILE] || PAGE_FILE;
   const PAGE_KEY = GUIDE_DATA_FILE.replace(/[^a-z0-9]+/g, "_") || "guia4";
+
+  // Cada variante del taller (JFK/SB grado 10 con 6 productos, SB grado 11 con
+  // 4 productos) declara su propia lista de actividades aqui, indexada por el
+  // GUIDE_DATA_FILE (ya resuelto via alias arriba). El resto del script es
+  // identico para todas las variantes.
+  const ACTIVITY_IDS_BY_FILE = {
+    "10a_guia4.html": ["diagnostico", "planAlfabetizacion", "plantillaExcel", "bitacoraAsesorias", "fichaEquipos", "informeImpacto"],
+    "10b_guia4.html": ["diagnostico", "planAlfabetizacion", "plantillaExcel", "bitacoraAsesorias", "fichaEquipos", "informeImpacto"],
+    "sb_10a_guia4.html": ["diagnostico", "planAlfabetizacion", "plantillaExcel", "bitacoraAsesorias", "fichaEquipos", "informeImpacto"],
+    "sb_10b_guia4.html": ["diagnostico", "planAlfabetizacion", "plantillaExcel", "bitacoraAsesorias", "fichaEquipos", "informeImpacto"],
+    "11a_guia9.html": ["informeInfraestructura", "planMejora", "informeEjecucion", "reporteCumplimiento"],
+    "11b_guia9.html": ["informeInfraestructura", "planMejora", "informeEjecucion", "reporteCumplimiento"],
+  };
 
   const portalAuth = window.portalAuth || null;
   const LEGACY_STORAGE_KEY = `guia_interactiva_${PAGE_KEY}`;
@@ -29,16 +46,9 @@
   const SCOPED_STORAGE_ENABLED = STORAGE_KEY !== LEGACY_STORAGE_KEY;
   const CLOUD_SYNC_DELAY_MS = 1200;
 
-  // Debe coincidir con los `id` de las 6 actividades registradas en
-  // guide_declarations.js para esta guia.
-  const ACTIVITY_IDS = [
-    "diagnostico",
-    "planAlfabetizacion",
-    "plantillaExcel",
-    "bitacoraAsesorias",
-    "fichaEquipos",
-    "informeImpacto",
-  ];
+  // Debe coincidir con los `id` de las actividades tipo "file" (productos)
+  // registradas en guide_declarations.js para esta variante del taller.
+  const ACTIVITY_IDS = ACTIVITY_IDS_BY_FILE[GUIDE_DATA_FILE] || [];
 
   // ── Estado ────────────────────────────────────────────────────────────────
 

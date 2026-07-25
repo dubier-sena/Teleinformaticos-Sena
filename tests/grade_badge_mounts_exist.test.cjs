@@ -55,6 +55,7 @@ const FAMILY_TO_FILES = {
   "guia-python": ["partials/guia-python-content.html"],
   "taller-integrador-jfk": ["partials/taller-integrador-jfk-content.html"],
   "taller-integrador-sb": ["partials/taller-integrador-sb-content.html"],
+  "taller-integrador-sb11": ["partials/taller-integrador-sb11-content.html"],
 };
 
 function conventionSelectorsFor(id, explicitMount) {

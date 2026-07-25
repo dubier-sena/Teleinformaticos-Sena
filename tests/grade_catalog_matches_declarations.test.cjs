@@ -42,7 +42,7 @@ function loadGradeModule() {
 // Familias donde TODAS las actividades declaradas son columnas de calificacion,
 // aunque usen numeracion simple ("1".."10", "1A".."10A"): son entregas a Drive
 // reales, una por reto (pedido del usuario 2026-07-16 para la guia de Python).
-const ALL_ACTIVITIES_FAMILIES = new Set(["guia-python", "taller-integrador-jfk", "taller-integrador-sb"]);
+const ALL_ACTIVITIES_FAMILIES = new Set(["guia-python", "taller-integrador-jfk", "taller-integrador-sb", "taller-integrador-sb11"]);
 
 // Un numero es de "entregable" si es jerarquico estandar (3.2.5). Se excluyen
 // helpers como "3.2.x" (boton Exportar a Word), que no son entregables calificables.

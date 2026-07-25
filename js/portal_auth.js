@@ -57,6 +57,8 @@
       "Guía - Práctica de Python | Santa Bárbara",
     "santa-barbara-10a-guia-04-taller-integrador.html": "Taller Integrador | Grupo 10A",
     "santa-barbara-10b-guia-04-taller-integrador.html": "Taller Integrador | Grupo 10B",
+    "grupo-11a-guia-09-taller-integrador.html": "Taller Integrador | Grupo 11A",
+    "grupo-11b-guia-09-taller-integrador.html": "Taller Integrador | Grupo 11B",
   };
 
   const GUIDE_PROGRESS_CONFIG = {
@@ -237,6 +239,20 @@
       pageKey: "sb_10b_guia4",
       stateKey: "guia_interactiva_sb_10b_guia4_html",
     },
+    "grupo-11a-guia-09-taller-integrador.html": {
+      mode: "state-with-activity",
+      total: 4,
+      activityTotal: 4,
+      pageKey: "11a_guia9",
+      stateKey: "guia_interactiva_11a_guia9_html",
+    },
+    "grupo-11b-guia-09-taller-integrador.html": {
+      mode: "state-with-activity",
+      total: 4,
+      activityTotal: 4,
+      pageKey: "11b_guia9",
+      stateKey: "guia_interactiva_11b_guia9_html",
+    },
   };
 
   const FICHA_MAP = {
@@ -288,6 +304,7 @@
         "grupo-11a-guia-07-planificar-informacion-ciberseguridad.html",
         "grupo-11a-guia-08-documentar-gestion-informacion.html",
         "santa-barbara-guia-python.html",
+        "grupo-11a-guia-09-taller-integrador.html",
       ],
     },
     "3168852": {
@@ -300,6 +317,7 @@
         "grupo-11b-guia-07-planificar-informacion-ciberseguridad.html",
         "grupo-11b-guia-08-documentar-gestion-informacion.html",
         "santa-barbara-guia-python.html",
+        "grupo-11b-guia-09-taller-integrador.html",
       ],
     },
   };

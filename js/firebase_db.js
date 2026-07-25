@@ -1156,6 +1156,8 @@
       "santa-barbara-10b-guia-02-redes-rap01.html": "sb_10b_redes.html",
       "santa-barbara-10a-guia-04-taller-integrador.html": "sb_10a_guia4.html",
       "santa-barbara-10b-guia-04-taller-integrador.html": "sb_10b_guia4.html",
+      "grupo-11a-guia-09-taller-integrador.html": "11a_guia9.html",
+      "grupo-11b-guia-09-taller-integrador.html": "11b_guia9.html",
     };
     return aliases[fileName] || fileName;
   }
@@ -1421,6 +1423,12 @@
       "sb_10b_guia4.html",
       "santa-barbara-10a-guia-04-taller-integrador.html",
       "santa-barbara-10b-guia-04-taller-integrador.html",
+      "grupo-11a-guia-08-documentar-gestion-informacion.html",
+      "grupo-11b-guia-08-documentar-gestion-informacion.html",
+      "11a_guia9.html",
+      "11b_guia9.html",
+      "grupo-11a-guia-09-taller-integrador.html",
+      "grupo-11b-guia-09-taller-integrador.html",
     ];
   }
 
