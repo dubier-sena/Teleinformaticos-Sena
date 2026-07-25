@@ -160,5 +160,23 @@ window.__PAGE_RUNTIME_CONTEXTS__ = {
     "grupo": "11B",
     "ficha": "3168852",
     "boot": "initGuia7"
+  },
+  "sb-guia8-11a": {
+    "family": "guia-08-documentar-gestion",
+    "pageFile": "grupo-11a-guia-08-documentar-gestion-informacion.html",
+    "partialPath": "partials/guia-08-documentar-gestion-content.html",
+    "inst": "Institucion Educativa Santa Barbara",
+    "grupo": "11A",
+    "ficha": "3168850",
+    "boot": "initGuia8"
+  },
+  "sb-guia8-11b": {
+    "family": "guia-08-documentar-gestion",
+    "pageFile": "grupo-11b-guia-08-documentar-gestion-informacion.html",
+    "partialPath": "partials/guia-08-documentar-gestion-content.html",
+    "inst": "Institucion Educativa Santa Barbara",
+    "grupo": "11B",
+    "ficha": "3168852",
+    "boot": "initGuia8"
   }
 };

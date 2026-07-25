@@ -49,6 +49,7 @@ const FAMILY_TO_FILES = {
   "guia-05-herramientas": ["partials/guia-05-herramientas-content.html"],
   "guia-06-planificar": ["partials/guia-06-planificar-content.html"],
   "guia-07-ciberseguridad": ["partials/guia-07-planificar-ciberseguridad-content.html"],
+  "guia-08-documentar-gestion": ["partials/guia-08-documentar-gestion-content.html"],
   "guia-redes-rap01": ["partials/guia-redes-rap01-content.html"],
   "guia-redes-rap02": ["partials/guia-redes-rap02-content.html"],
   "guia-python": ["partials/guia-python-content.html"],

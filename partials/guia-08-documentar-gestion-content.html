@@ -1,0 +1,1097 @@
+<button class="hamburger" onclick="toggleSidebar()" aria-label="Menú">&#9776;</button>
+<button class="btn-sb-expand" onclick="showSidebar()" title="Mostrar barra lateral">&#9776;</button>
+
+<div class="layout app-layout">
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="badge">SENA &middot; FPI</div>
+      <h2>Gu&iacute;a 8 - Documentar la gesti&oacute;n de la informaci&oacute;n</h2>
+      <p>Sistemas Teleinform&aacute;ticos</p>
+      <button class="btn-sb-collapse" onclick="hideSidebar()" title="Ocultar barra lateral">&#9664;</button>
+    </div>
+
+    <div class="sidebar-ficha" id="sb-ficha-ok" style="display:none">
+      <div class="sf-label">Tu grupo</div>
+      <div class="sf-inst" id="sb-inst"></div>
+      <div class="sf-meta" id="sb-grupo-meta"></div>
+      <div class="sf-badge" id="sb-badge"></div>
+    </div>
+    <div class="sidebar-noficha" id="sb-ficha-warn">
+      <a href="index.html">Inicio | Seleccionar grupo / ficha</a>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span>Progreso</span>
+        <span id="progressValue">0%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <p class="progress-note">El avance se guarda localmente en este navegador.</p>
+      <button type="button" class="reset-button" id="resetProgress">Reiniciar respuestas</button>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Informaci&oacute;n</div>
+      <a class="nav-link active" href="#identificacion" onclick="setActive(this)">
+        <span class="icon">&#128203;</span> Identificaci&oacute;n
+      </a>
+      <a class="nav-link" href="#presentacion" onclick="setActive(this)">
+        <span class="icon">&#128075;</span> Presentaci&oacute;n
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Actividades</div>
+      <a class="nav-link" href="#reflexion" onclick="setActive(this)">
+        <span class="icon">&#128172;</span> 4.1 Reflexi&oacute;n Inicial
+        <span class="check">&#10003;</span>
+      </a>
+      <a class="nav-link" href="#contexto" onclick="setActive(this)">
+        <span class="icon">&#128269;</span> 4.2 Contextualizaci&oacute;n
+        <span class="check">&#10003;</span>
+      </a>
+      <a class="nav-link" href="#apropiacion" onclick="setActive(this)">
+        <span class="icon">&#128218;</span> 4.3 Apropiaci&oacute;n
+        <span class="check">&#10003;</span>
+      </a>
+      <a class="nav-link" href="#transferencia" onclick="setActive(this)">
+        <span class="icon">&#128640;</span> 4.4 Transferencia
+        <span class="check">&#10003;</span>
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Recursos</div>
+      <a class="nav-link" href="#control-avance" onclick="setActive(this)"><span class="icon">&#9989;</span> Control de avance</a>
+      <a class="nav-link" href="#evidencias" onclick="setActive(this)">
+        <span class="icon">&#128202;</span> Evidencias
+      </a>
+      <a class="nav-link" href="#glosario" onclick="setActive(this)">
+        <span class="icon">&#128214;</span> Glosario
+      </a>
+      <a class="nav-link" href="#referencias" onclick="setActive(this)">
+        <span class="icon">&#128279;</span> Referencias
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Gu&iacute;a asignada</div>
+      <a class="nav-guide current" id="currentGuideNavLink" href="grupo-11a-guia-08-documentar-gestion-informacion.html" data-current-file="grupo-11a-guia-08-documentar-gestion-informacion.html">
+        <span class="g-icon">&#128215;</span>
+        <span class="g-info">
+          <span class="g-num">Gu&iacute;a 8</span>
+          <span class="g-name" id="currentGuideNavLabel">Documentar la gesti&oacute;n de la informaci&oacute;n | 11A</span>
+        </span>
+        <span class="g-tag actual">Actual</span>
+      </a>
+    </div>
+
+    <a class="nav-home-link" href="calendario-academico-2026.html">&#128197; <span>Calendario 2026</span></a>
+    <a class="nav-home-link" href="index.html">&#127968; <span>Volver al Inicio</span></a>
+  </nav>
+
+  <div class="main app-main">
+    <div class="topbar">
+      <div class="topbar-title">
+        <strong>Gu&iacute;a 8 - Documentar la gesti&oacute;n de la informaci&oacute;n</strong>
+      </div>
+      <div class="topbar-meta">
+        <span class="meta-item"><span>&#9201;</span><span>40 horas</span></span>
+        <span class="meta-item"><span>&#128197;</span><span>2026</span></span>
+        <span class="meta-item"><span>&#127979;</span><span id="topbarCampus">Santa B&aacute;rbara | 11A</span></span>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="hero" id="inicio">
+        <div class="tag">Gu&iacute;a 8 | Fase: Evaluaci&oacute;n</div>
+        <h1>Documentar la gesti&oacute;n de la informaci&oacute;n de acuerdo a protocolos establecidos</h1>
+        <p>
+          En esta gu&iacute;a aprender&aacute;s a documentar la gesti&oacute;n de la informaci&oacute;n aplicando
+          protocolos establecidos &mdash; fichas t&eacute;cnicas, hojas de vida de equipos, inventarios,
+          registros de procedimientos y de copias de seguridad, informes t&eacute;cnicos, convenciones de
+          nombres y control de versiones &mdash; para que cualquier persona pueda retomar el trabajo
+          donde t&uacute; lo dejaste.
+        </p>
+        <div class="hero-meta">
+          <div class="hero-meta-item">&#127963; SENA &mdash; Servicio Nacional de Aprendizaje</div>
+          <div class="hero-meta-item">&#128205; Competencia: Operar herramientas inform&aacute;ticas y digitales</div>
+          <div class="hero-meta-item">&#9201; 40 horas</div>
+          <div class="hero-meta-item">&#127891; C&oacute;digo: 233108 &middot; V1</div>
+        </div>
+      </div>
+
+      <div id="control-avance" class="section-title">Tu control de avance</div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#e8f5e9">&#9989;</div>
+            <div><h3>&iquest;Qu&eacute; llevas y qu&eacute; te falta?</h3><p>Se actualiza solo con tus entregas y respuestas guardadas</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div data-act-std-avance><p class="intro-text">Cargando tu avance...</p></div>
+          <div class="gnote gnote--recuerda"><div class="gnote__label">&#128161; Recuerda</div>
+            <p>Esta tabla se marca sola: <strong>Entregada</strong> cuando subes la evidencia a Drive y
+            <strong>Guardada</strong> cuando guardas tus respuestas. Lo que siga en Pendiente es lo que te falta.</p></div>
+        </div>
+      </div>
+
+      <div id="identificacion" class="section-title">Identificaci&oacute;n de la Gu&iacute;a</div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#e8f5e9">&#128203;</div>
+            <div>
+              <h3>Datos del Programa de Formaci&oacute;n</h3>
+              <p>Informaci&oacute;n oficial del programa y la competencia</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="table-scroll">
+            <table class="data-table ident-table">
+              <tbody>
+                <tr><td>Denominaci&oacute;n del Programa</td><td>T&eacute;cnico en Sistemas Teleinform&aacute;ticos</td></tr>
+                <tr><td>C&oacute;digo del Programa</td><td>233108 &middot; V1</td></tr>
+                <tr><td>Nombre del Proyecto Formativo</td><td>Fortalecimiento de los servicios Teleinform&aacute;ticos de equipos y redes en las MiPymes de la regi&oacute;n de Boyac&aacute;.</td></tr>
+                <tr><td>Fase del Proyecto</td><td>Evaluaci&oacute;n</td></tr>
+                <tr><td>Actividad del Proyecto</td><td>Validar los procedimientos realizados en los sistemas Teleinform&aacute;ticos.</td></tr>
+                <tr><td>Competencia</td><td>220501121 - Operar herramientas inform&aacute;ticas y digitales de acuerdo con protocolos y manuales t&eacute;cnicos.</td></tr>
+                <tr><td>Resultado de Aprendizaje</td><td>RAP 04 - Documentar la gesti&oacute;n de la informaci&oacute;n de acuerdo a protocolos establecidos.</td></tr>
+                <tr><td>Duraci&oacute;n</td><td>40 horas</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="presentacion" class="section-title">Presentaci&oacute;n</div>
+      <p class="section-intro">📍 <strong>Empieza por aquí:</strong> conoce de qué trata la guía y qué vas a lograr. Léela completa antes de comenzar las actividades.</p>
+      <div class="gnote gnote--ruta">
+        <div class="gnote__label">🧭 ¿Cómo trabajar esta guía? Paso a paso</div>
+        <ol>
+          <li><strong>Lee la teoría</strong> de las secciones de contextualización antes de resolver las actividades.</li>
+          <li><strong>Resuelve cada actividad</strong> en orden. Escribe tus respuestas en los campos de la guía.</li>
+          <li><strong>Guarda tus respuestas</strong> con el botón de cada actividad. Tu avance queda guardado en este navegador.</li>
+          <li><strong>Entrega las evidencias</strong> que lo pidan con el botón <em>Entregar a Drive</em>. Quedan en la carpeta de tu ficha.</li>
+          <li><strong>Revisa "Tu control de avance"</strong> (arriba): te muestra qué llevas Entregado, Guardado y Pendiente.</li>
+        </ol>
+      </div>
+      <div class="gnote gnote--recuerda"><div class="gnote__label">💡 Recuerda</div>
+        <p>No tienes que terminar todo de una vez: puedes salir y volver, tu trabajo se guarda solo. Si una actividad
+        ya fue entregada y necesitas corregirla, pídele a tu instructor que la habilite de nuevo.</p></div>
+
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#e3f2fd">&#128075;</div>
+            <div>
+              <h3>Bienvenida a la Gu&iacute;a</h3>
+              <p>Conoce el contexto, el alcance y las metas de este recorrido formativo</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <p class="intro-text">
+            &iexcl;Bienvenido, aprendiz! Las ferreter&iacute;as, droguer&iacute;as, cooperativas agropecuarias y
+            oficinas del Magdalena Medio y el Occidente de Boyac&aacute; dependen cada d&iacute;a m&aacute;s de sus
+            computadores, pero casi ninguna sabe con exactitud qu&eacute; equipos tiene, qu&eacute; software
+            est&aacute; licenciado, cu&aacute;ndo se hizo el &uacute;ltimo mantenimiento o d&oacute;nde est&aacute;n las copias de
+            seguridad. Cuando el t&eacute;cnico se va, esa informaci&oacute;n se va con &eacute;l.
+          </p>
+          <p class="intro-text">
+            Ah&iacute; radica la importancia de esta gu&iacute;a: aprender&aacute;s a documentar la gesti&oacute;n de la
+            informaci&oacute;n aplicando protocolos establecidos &mdash; fichas t&eacute;cnicas, hojas de vida de
+            equipos, inventarios, registros de procedimientos y de copias de seguridad, informes
+            t&eacute;cnicos, convenciones de nombres y control de versiones &mdash; para que cualquier
+            persona pueda retomar el trabajo donde t&uacute; lo dejaste. En el mundo laboral, el t&eacute;cnico
+            que documenta bien es el que genera confianza: su trabajo es verificable, trazable y auditable.
+          </p>
+          <p class="intro-text">
+            En esta gu&iacute;a seguir&aacute;s un camino claro: comenzar&aacute;s reflexionando sobre el caso real de
+            una MiPyme que perdi&oacute; toda su memoria t&eacute;cnica; luego estudiar&aacute;s los tipos documentales
+            y los protocolos de organizaci&oacute;n de la informaci&oacute;n y construir&aacute;s un mapa conceptual;
+            en la etapa pr&aacute;ctica elaborar&aacute;s el portafolio documental completo de un equipo de c&oacute;mputo
+            real del laboratorio y organizar&aacute;s sus archivos con estructura de carpetas, convenci&oacute;n de
+            nombres y control de versiones; y finalmente consolidar&aacute;s todo en un Documento T&eacute;cnico de
+            Gesti&oacute;n de la Informaci&oacute;n para una MiPyme de tu regi&oacute;n, que sustentar&aacute;s oralmente
+            ante el instructor.
+          </p>
+          <div class="info-box green" style="margin-top:14px">
+            <div class="label">&#128204; Lo que necesitas para esta gu&iacute;a</div>
+            <p>
+              Computador con suite ofim&aacute;tica (LibreOffice o Microsoft Office), acceso a internet,
+              la plantilla de Registro de Gesti&oacute;n de Informaci&oacute;n suministrada por el instructor y
+              una herramienta de capturas de pantalla. Guarda tus evidencias con nombres descriptivos
+              desde el primer d&iacute;a: en esta gu&iacute;a, la organizaci&oacute;n de tus archivos tambi&eacute;n se eval&uacute;a.
+              <strong>Sin evidencia, no hay evaluaci&oacute;n.</strong>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════ 4.1 REFLEXIÓN INICIAL ═══════════════════════╗ -->
+      <div id="reflexion" class="section-title">4.1 &middot; Actividades de Reflexi&oacute;n Inicial</div>
+      <p class="section-intro">📍 <strong>Fase de reflexión inicial:</strong> activa lo que ya sabes sobre el tema. Aquí no se evalúa el acierto, sino tu participación: responde con confianza, no hay respuestas malas.</p>
+      <div class="info-box blue" style="margin-bottom:16px">
+        <p>Activar lo que ya sabes sobre documentaci&oacute;n t&eacute;cnica, reconocer el costo de no documentar
+        y preparar el terreno conceptual para el estudio de los tipos documentales. Todo el tiempo de
+        reflexi&oacute;n es trabajo directo con el instructor.</p>
+      </div>
+      <div class="card open cat-reflexion">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128172;</div>
+            <div>
+              <h3>Actividades de Reflexi&oacute;n Inicial</h3>
+              <p>2 actividades &middot; Duraci&oacute;n: 3 horas directas</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+
+          <!-- ───────── Actividad 4.1.1 ───────── -->
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">4.1.1</span>
+              <span class="activity-title">An&aacute;lisis del caso Agropecuaria La Esperanza</span>
+              <span class="mission-chip">Misi&oacute;n de arranque</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> reflexionar individualmente sobre el costo de no documentar la gesti&oacute;n t&eacute;cnica de una empresa.</p>
+
+              <article class="story-card" style="margin-top:16px">
+                <h3>&#128187; Caso &mdash; Agropecuaria La Esperanza, Chiquinquir&aacute; (Occidente de Boyac&aacute;)</h3>
+                <p>Esta comercializadora de insumos agropecuarios tiene cinco computadores, una impresora
+                de facturaci&oacute;n y un disco externo. Su t&eacute;cnico de sistemas renunci&oacute; la semana pasada y
+                no dej&oacute; ning&uacute;n documento: nadie sabe qu&eacute; software tiene licencia, cu&aacute;ndo se hizo el
+                &uacute;ltimo mantenimiento, cu&aacute;l es la contrase&ntilde;a del usuario administrador ni d&oacute;nde
+                quedaron las copias de seguridad de la facturaci&oacute;n.</p>
+                <p>Hoy la impresora dej&oacute; de funcionar y el archivo de cartera no abre. La gerente te
+                contrata como nuevo t&eacute;cnico y te pide una sola cosa: <em>&laquo;que esto no nos vuelva a pasar&raquo;</em>.</p>
+              </article>
+
+              <article class="notes-card" style="margin-top:16px;">
+                <h3>Bit&aacute;cora individual de an&aacute;lisis</h3>
+                <p class="intro-text" style="margin-top:0;font-size:.9rem">
+                  Responde individualmente en tu cuaderno o en LibreOffice Writer, con tus propias palabras.
+                </p>
+                <label>
+                  <span>1. &iquest;Qu&eacute; informaci&oacute;n sobre los equipos y el software crees que debi&oacute; dejar documentada el t&eacute;cnico anterior? Lista al menos 5 datos concretos.</span>
+                  <textarea rows="5" data-store="g8_411_datos" data-track placeholder="Ej.: inventario de equipos, licencias de software, contrase&ntilde;as de administrador, registro de mantenimientos, ubicaci&oacute;n de copias de seguridad."></textarea>
+                </label>
+                <label>
+                  <span>2. &iquest;Qu&eacute; consecuencias est&aacute; sufriendo hoy la empresa por no tener esa documentaci&oacute;n? Identifica m&iacute;nimo 3.</span>
+                  <textarea rows="4" data-store="g8_411_consecuencias" data-track placeholder="Ej.: no puede reparar la impresora, no accede al archivo de cartera, no sabe si el software es legal, pierde tiempo y dinero."></textarea>
+                </label>
+                <label>
+                  <span>3. &iquest;Alguna vez has perdido informaci&oacute;n o tiempo por no saber d&oacute;nde qued&oacute; un archivo o c&oacute;mo se hizo algo? Describe brevemente la situaci&oacute;n.</span>
+                  <textarea rows="4" data-store="g8_411_experiencia" data-track placeholder="Describe una experiencia propia o cercana relacionada con la falta de documentaci&oacute;n u organizaci&oacute;n."></textarea>
+                </label>
+                <label>
+                  <span>4. Si fueras el nuevo t&eacute;cnico, &iquest;qu&eacute; documento elaborar&iacute;as primero y por qu&eacute;?</span>
+                  <textarea rows="4" data-store="g8_411_documento" data-track placeholder="Ej.: inventario de equipos y software, porque sin saber qu&eacute; hay no se puede planear nada m&aacute;s."></textarea>
+                </label>
+                <div id="caso411DeadlineControls" style="margin-top:16px"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarCaso411" class="btn-save-response" onclick="actStd_save_caso411()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_caso411()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusCaso411" class="activity-saved-notice" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+
+              <div class="info-box green" style="margin-top:14px">
+                <div class="label">&#128483; Cierre con Mentimeter</div>
+                <p>Cuando el instructor abra Mentimeter (mentimeter.com) en pantalla, ingresa el c&oacute;digo y agrega en la nube de palabras el documento t&eacute;cnico que consideras m&aacute;s importante para la empresa.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- ───────── Actividad 4.1.2 ───────── -->
+          <div class="activity mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">4.1.2</span>
+              <span class="activity-title">Socializaci&oacute;n en plenaria</span>
+              <span class="mission-chip">Misi&oacute;n de arranque</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> consolidar en grupo las conclusiones del caso y compartirlas con el grupo general antes de pasar al estudio te&oacute;rico. Duraci&oacute;n: 2 horas directas.</p>
+
+              <article class="support-card">
+                <h3>Instrucciones</h3>
+                <ol style="padding-left:1.4rem;margin:0;line-height:1.7">
+                  <li>En grupos de tres personas, comparte tus respuestas de la actividad 4.1.1 durante 10 minutos. Identifiquen los puntos en com&uacute;n y las diferencias.</li>
+                  <li>Cada grupo presenta al grupo general en m&aacute;ximo 3 minutos: &iquest;cu&aacute;l es el documento m&aacute;s urgente para Agropecuaria La Esperanza y qu&eacute; informaci&oacute;n debe contener?</li>
+                  <li>El instructor registra en el tablero los tipos documentales que surgen (ficha t&eacute;cnica, inventario, hoja de vida, registro de Backup, informes). Si el grupo usa Padlet (padlet.com), agrega una tarjeta con el documento que elaborar&iacute;as primero.</li>
+                </ol>
+              </article>
+
+              <article class="notes-card" style="margin-top:16px;">
+                <h3>Bit&aacute;cora de socializaci&oacute;n</h3>
+                <label>
+                  <span>1. Puntos en com&uacute;n y diferencias con los otros dos integrantes de tu grupo</span>
+                  <textarea rows="4" data-store="g8_412_comunes" data-track placeholder="Resume en qu&eacute; coincidieron y en qu&eacute; no, al comparar sus respuestas de 4.1.1."></textarea>
+                </label>
+                <label>
+                  <span>2. Documento m&aacute;s urgente para Agropecuaria La Esperanza y qu&eacute; informaci&oacute;n debe contener</span>
+                  <textarea rows="4" data-store="g8_412_documento_urgente" data-track placeholder="Indica el documento y los datos m&iacute;nimos que deber&iacute;a incluir."></textarea>
+                </label>
+                <label>
+                  <span>3. &iquest;Qu&eacute; cambi&oacute; en tu comprensi&oacute;n del caso despu&eacute;s de escuchar al grupo? &iquest;Qu&eacute; preguntas tienes para resolver durante la gu&iacute;a? (m&iacute;nimo 5 l&iacute;neas)</span>
+                  <textarea rows="6" data-store="g8_412_reflexion" data-track placeholder="Escribe qu&eacute; aprendiste al escuchar a los dem&aacute;s grupos y qu&eacute; dudas te quedan."></textarea>
+                </label>
+                <div id="plenaria412DeadlineControls" style="margin-top:16px"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarPlenaria412" class="btn-save-response" onclick="actStd_save_plenaria412()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_plenaria412()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusPlenaria412" class="activity-saved-notice" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════ 4.2 CONTEXTUALIZACIÓN ═══════════════════════╗ -->
+      <div id="contexto" class="section-title">4.2 &middot; Contextualizaci&oacute;n e Identificaci&oacute;n de Conocimientos</div>
+      <p class="section-intro">📍 <strong>Fase de contextualización:</strong> aquí están los conceptos y la teoría que necesitas. Estúdialos con calma — son la base para resolver bien las actividades que siguen.</p>
+      <div class="info-box blue" style="margin-bottom:16px">
+        <p>Construir la base conceptual para documentar la gesti&oacute;n de la informaci&oacute;n seg&uacute;n
+        protocolos. El estudio tem&aacute;tico requiere 2 horas de trabajo independiente previas a la clase.</p>
+      </div>
+      <div class="card open cat-contexto">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128269;</div>
+            <div>
+              <h3>Actividades de Contextualizaci&oacute;n</h3>
+              <p>2 actividades &middot; Duraci&oacute;n: 8 horas (6 directas + 2 independientes)</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+
+          <!-- ───────── Actividad 4.2.1 ───────── -->
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">4.2.1</span>
+              <span class="activity-title">Estudio de contenidos de gesti&oacute;n documental (Bloques A y B)</span>
+              <span class="mission-chip">Misi&oacute;n diagn&oacute;stica</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> estudiar en equipo de 3 los 9 temas conceptuales y consolidar una tabla resumen exportada a PDF: <code>BloqueAB_RAP04_[TuNombre]_v1.0.pdf</code>.</p>
+
+              <div class="info-box" style="margin-top:14px">
+                <div class="label">&#9200; Trabajo independiente (2 horas, ANTES de la sesi&oacute;n)</div>
+                <p>Estudia los temas del Bloque A usando la gu&iacute;a de MinTIC y los m&oacute;dulos de documentaci&oacute;n de IT Essentials (netacad.com). Toma apuntes en tu bit&aacute;cora. Llega a clase con los conceptos b&aacute;sicos revisados: ficha t&eacute;cnica, hoja de vida y registro de copias de seguridad.</p>
+              </div>
+
+              <div class="table-scroll" style="margin-top:16px">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th style="width:30%">Tema (Bloque A &mdash; Tipos documentales del soporte t&eacute;cnico)</th>
+                      <th>&iquest;Qu&eacute; debes aprender?</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>Gesti&oacute;n de la informaci&oacute;n</td><td>Concepto, t&eacute;cnicas y procedimientos de documentaci&oacute;n, tipos documentales, formatos de almacenamiento y procesos t&eacute;cnicos en la administraci&oacute;n de informaci&oacute;n.</td></tr>
+                    <tr><td>Ficha t&eacute;cnica de equipos</td><td>Qu&eacute; datos contiene (marca, modelo, serial, procesador, RAM, disco, sistema operativo, licenciamiento) y para qu&eacute; sirve en el soporte t&eacute;cnico.</td></tr>
+                    <tr><td>Hoja de vida del equipo</td><td>Registro hist&oacute;rico de mantenimientos, instalaciones, fallas y cambios de componentes: estructura y forma de actualizarla.</td></tr>
+                    <tr><td>Listas de chequeo y fichas de seguridad</td><td>Prop&oacute;sito, estructura (&iacute;tem, cumple s&iacute;/no, observaciones) y uso para verificar procedimientos t&eacute;cnicos.</td></tr>
+                    <tr><td>Registro de copias de seguridad</td><td>Qu&eacute; documentar de un Backup: tipo (completa, incremental, diferencial), frecuencia, medio de almacenamiento y verificaci&oacute;n de restauraci&oacute;n.</td></tr>
+                    <tr><td>Informes t&eacute;cnicos</td><td>Estructura b&aacute;sica (introducci&oacute;n, desarrollo, evidencias, conclusiones), redacci&oacute;n clara y soporte con capturas de pantalla.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="table-scroll" style="margin-top:12px">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th style="width:30%">Tema (Bloque B &mdash; Protocolos de organizaci&oacute;n y trazabilidad)</th>
+                      <th>&iquest;Qu&eacute; debes aprender?</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>Convenci&oacute;n de nombres de archivos</td><td>Reglas para nombrar archivos de forma est&aacute;ndar: <code>[TipoDocumento]_[Equipo]_[Fecha]_[Versi&oacute;n]</code>. Por qu&eacute; evita p&eacute;rdidas y confusiones.</td></tr>
+                    <tr><td>Control de versiones (versionado)</td><td>Numeraci&oacute;n v1.0, v1.1, v2.0; tabla de control de cambios (fecha, autor, modificaci&oacute;n) y su papel en la trazabilidad.</td></tr>
+                    <tr><td>Estructura de carpetas y actualizaci&oacute;n documental</td><td>Organizaci&oacute;n jer&aacute;rquica por tipo documental, respaldo en la nube y buenas pr&aacute;cticas para mantener la documentaci&oacute;n al d&iacute;a como proceso de mejora.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <article class="support-card" style="margin-top:16px">
+                <h3>Ruta de trabajo</h3>
+                <ol style="padding-left:1.4rem;margin:0;line-height:1.7">
+                  <li>Forma un equipo de 3 personas. Distribuyan los 9 temas (6 del Bloque A + 3 del Bloque B): m&iacute;nimo 3 temas por integrante.</li>
+                  <li>Durante la primera hora de clase, cada integrante explica brevemente sus temas al equipo (5 minutos por tema). Mientras escuchas, completa los apuntes de los temas que no estudiaste.</li>
+                  <li>Abre Google Sheets o LibreOffice Calc y creen en equipo una tabla con 3 columnas: &laquo;Documento / Protocolo&raquo;, &laquo;&iquest;Para qu&eacute; sirve?&raquo;, &laquo;Ejemplo aplicado en una MiPyme de Boyac&aacute;&raquo;. Completen una fila por cada tema estudiado.</li>
+                  <li>El instructor realizar&aacute; una plenaria de cierre donde cada equipo comparte su fila m&aacute;s importante. Ajusta tu tabla con los aportes del grupo.</li>
+                  <li>Exporta la tabla a PDF. Nombre del archivo: <strong>BloqueAB_RAP04_[TuNombre]_v1.0.pdf</strong>. Comparte el PDF con el instructor.</li>
+                </ol>
+              </article>
+
+              <article class="notes-card" style="margin-top:16px">
+                <h3>Registro guiado del aprendiz</h3>
+                <label>
+                  <span>1. Reparto del equipo: temas y responsable de cada uno</span>
+                  <textarea rows="4" data-store="g8_421_reparto" data-track placeholder="Ej.: Ana: gesti&oacute;n de la informaci&oacute;n, ficha t&eacute;cnica, hoja de vida. Luis: listas de chequeo, backup, informes. Yo: nombres, versiones, carpetas."></textarea>
+                </label>
+                <label>
+                  <span>2. Temas que estudiaste t&uacute; (de los 9 distribuidos en tu equipo)</span>
+                  <textarea rows="3" data-store="g8_421_temas" data-track placeholder="Lista los temas que te tocaron y la fuente principal que revisaste."></textarea>
+                </label>
+                <label>
+                  <span>3. Documento / Protocolo de tu fila</span>
+                  <textarea rows="2" data-store="g8_421_documento" data-track placeholder="Ej.: Registro de copias de seguridad."></textarea>
+                </label>
+                <label>
+                  <span>4. &iquest;Para qu&eacute; sirve?</span>
+                  <textarea rows="3" data-store="g8_421_paraque" data-track placeholder="Explica el concepto con tus palabras, sin copiar y pegar definiciones."></textarea>
+                </label>
+                <label>
+                  <span>5. Ejemplo aplicado a una MiPyme de Boyac&aacute;</span>
+                  <textarea rows="4" data-store="g8_421_ejemplo" data-track placeholder="Ej.: una droguer&iacute;a documenta el tipo, frecuencia y medio de sus copias de facturaci&oacute;n."></textarea>
+                </label>
+                <label>
+                  <span>6. Aporte que agregaste despu&eacute;s de la plenaria de cierre</span>
+                  <textarea rows="4" data-store="g8_421_aporte" data-track placeholder="Escribe qu&eacute; mejoraste en tu fila despu&eacute;s de escuchar a otros equipos."></textarea>
+                </label>
+                <label>
+                  <span>7. Dudas que quedaron para resolver antes del mapa conceptual</span>
+                  <textarea rows="4" data-store="g8_421_dudas" data-track placeholder="Anota preguntas concretas para aclarar antes de construir el mapa conceptual."></textarea>
+                </label>
+                <div id="bloqueAB421DeadlineControls" style="margin-top:16px"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarBloqueAB421" class="btn-save-response" onclick="actStd_save_bloqueAB421()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_bloqueAB421()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusBloqueAB421" class="activity-saved-notice" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+
+              <div id="driveDeliveryPanel-bloqueAB421" style="margin-top:16px"></div>
+            </div>
+          </div>
+
+          <!-- ───────── Actividad 4.2.2 ───────── -->
+          <div class="activity mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">4.2.2</span>
+              <span class="activity-title">Mapa conceptual del sistema documental</span>
+              <span class="mission-chip">Misi&oacute;n diagn&oacute;stica</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> construir en equipo un mapa conceptual que integre el sistema documental estudiado. Entregable: <code>MapaConceptual_RAP04_[Equipo]_v1.0.pdf</code>.</p>
+
+              <article class="support-card">
+                <h3>Datos de la actividad</h3>
+                <ul class="note-list">
+                  <li>&#9201; Duraci&oacute;n: 2 horas directas.</li>
+                  <li>&#127979; Ambiente: laboratorio con acceso a internet, o papel y marcadores.</li>
+                  <li>&#127919; Estrategia: pensamiento visual colaborativo.</li>
+                  <li>&#128190; Herramientas TIC: CmapTools (cmap.ihmc.us), Canva (canva.com), MindMeister (mindmeister.com).</li>
+                </ul>
+              </article>
+
+              <div style="background:#1b5e20;color:#fff;border-radius:8px 8px 0 0;padding:10px 16px;font-size:0.82rem;font-weight:700;letter-spacing:0.04em;display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:16px;margin-bottom:0">
+                <span>&#128203; EVIDENCIA &mdash; Tipo: Evidencia de Conocimiento</span>
+                <span style="opacity:0.5">|</span>
+                <span>Instrumento: Lista de Chequeo IE-01</span>
+              </div>
+              <div class="table-scroll" style="margin-top:0;border-radius:0 0 8px 8px;overflow:hidden;border:1px solid #c8e6c9;border-top:none">
+                <table class="data-table" style="margin:0">
+                  <tbody>
+                    <tr><td style="width:2.5rem;text-align:center;font-weight:700;background:#e8f5e9">A</td><td>M&iacute;nimo <strong>15 conceptos</strong> conectados con palabras de enlace descriptivas (no solo l&iacute;neas).</td></tr>
+                    <tr><td style="width:2.5rem;text-align:center;font-weight:700;background:#e8f5e9">B</td><td>La relaci&oacute;n l&oacute;gica: activo inform&aacute;tico &rarr; ficha t&eacute;cnica &rarr; hoja de vida &rarr; registros (procedimientos y Backup) &rarr; informe t&eacute;cnico &rarr; mejora documental.</td></tr>
+                    <tr><td style="width:2.5rem;text-align:center;font-weight:700;background:#e8f5e9">C</td><td>Los 5 tipos documentales del Bloque A (ficha t&eacute;cnica, hoja de vida, lista de chequeo, registro de copias de seguridad e informe t&eacute;cnico) con su funci&oacute;n.</td></tr>
+                    <tr><td style="width:2.5rem;text-align:center;font-weight:700;background:#e8f5e9">D</td><td>Al menos un protocolo de organizaci&oacute;n (convenci&oacute;n de nombres o control de versiones) explicado con un ejemplo.</td></tr>
+                    <tr><td style="width:2.5rem;text-align:center;font-weight:700;background:#e8f5e9">E</td><td>Una aplicaci&oacute;n concreta en una MiPyme del Magdalena Medio u Occidente de Boyac&aacute;.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <article class="support-card" style="margin-top:16px">
+                <h3>Instrucciones</h3>
+                <ol style="padding-left:1.4rem;margin:0;line-height:1.7">
+                  <li>Con tu equipo, elijan la herramienta: CmapTools (gratuito sin internet), Canva &gt; &laquo;mapa conceptual&raquo;, o MindMeister. Sin internet, papel y marcadores.</li>
+                  <li>Antes de dise&ntilde;ar en digital, hagan a mano un borrador de 10 minutos: concepto central, ramas principales, jerarqu&iacute;a. El instructor revisa el borrador.</li>
+                  <li>Construyan el mapa incluyendo los 5 elementos A-E. Usen palabras de enlace claras: &laquo;se registra en&raquo;, &laquo;se actualiza con&raquo;, &laquo;se nombra seg&uacute;n&raquo;, &laquo;genera&raquo;, &laquo;se respalda en&raquo;.</li>
+                  <li>Revisen claridad: colores distintos por categor&iacute;a, texto m&iacute;nimo 12pt, jerarqu&iacute;a visible.</li>
+                  <li>Exporten a PDF. Nombre: <strong>MapaConceptual_RAP04_[Equipo]_v1.0.pdf</strong>.</li>
+                  <li>Presenten oralmente en 5 minutos por equipo.</li>
+                </ol>
+              </article>
+
+              <article class="notes-card" style="margin-top:16px">
+                <h3>Registro del aprendiz</h3>
+                <label>
+                  <span>1. Concepto central elegido por el equipo</span>
+                  <textarea rows="2" data-store="g8_422_central" data-track placeholder="Ej.: Sistema documental de una MiPyme."></textarea>
+                </label>
+                <label>
+                  <span>2. Relaci&oacute;n l&oacute;gica del mapa: activo &rarr; ficha t&eacute;cnica &rarr; hoja de vida &rarr; registros &rarr; informe &rarr; mejora</span>
+                  <textarea rows="4" data-store="g8_422_relacion" data-track placeholder="Describe c&oacute;mo conectaron estos 6 elementos en el mapa."></textarea>
+                </label>
+                <label>
+                  <span>3. Protocolo de organizaci&oacute;n explicado con un ejemplo (convenci&oacute;n de nombres o control de versiones)</span>
+                  <textarea rows="4" data-store="g8_422_protocolo" data-track placeholder="Ej.: FichaTecnica_Equipo07_2026-06-15_v1.0.pdf."></textarea>
+                </label>
+                <label>
+                  <span>4. Aplicaci&oacute;n concreta en una MiPyme del Magdalena Medio u Occidente de Boyac&aacute;</span>
+                  <textarea rows="4" data-store="g8_422_aplicacion" data-track placeholder="Ej.: una cooperativa agropecuaria documenta sus 8 equipos con fichas t&eacute;cnicas y respaldo en la nube."></textarea>
+                </label>
+                <div id="mapa422DeadlineControls" style="margin-top:16px"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarMapa422" class="btn-save-response" onclick="actStd_save_mapa422()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_mapa422()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusMapa422" class="activity-saved-notice" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+
+              <div id="driveDeliveryPanel-mapa422" style="margin-top:16px"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════ 4.3 APROPIACIÓN ═══════════════════════╗ -->
+      <div id="apropiacion" class="section-title">4.3 &middot; Actividades de Apropiaci&oacute;n del Conocimiento</div>
+      <p class="section-intro">📍 <strong>Fase de apropiación:</strong> pones en práctica lo aprendido. La mayoría de las evidencias que debes entregar salen de esta fase.</p>
+      <div class="info-box blue" style="margin-bottom:16px">
+        <p>Aplicar los protocolos de documentaci&oacute;n en un equipo de c&oacute;mputo real del laboratorio.
+        Elaborar&aacute;s el portafolio documental completo del equipo y lo organizar&aacute;s digitalmente con
+        estructura de carpetas, convenci&oacute;n de nombres y control de versiones, documentando todo con
+        capturas de pantalla.</p>
+      </div>
+      <div class="card open cat-apropiacion">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128218;</div>
+            <div>
+              <h3>Actividades de Apropiaci&oacute;n</h3>
+              <p>2 actividades &middot; Duraci&oacute;n: 21 horas (17 directas + 4 independientes)</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+
+          <!-- ───────── Actividad 4.3.1 ───────── -->
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">4.3.1</span>
+              <span class="activity-title">Construcci&oacute;n del portafolio documental del equipo asignado</span>
+              <span class="mission-chip">Misi&oacute;n t&eacute;cnica</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> elaborar los 6 documentos del portafolio de un equipo de c&oacute;mputo real del laboratorio, usando la plantilla del instructor.</p>
+
+              <div style="background:#1b5e20;color:#fff;border-radius:8px 8px 0 0;padding:10px 16px;font-size:0.82rem;font-weight:700;letter-spacing:0.04em;display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:16px;margin-bottom:0">
+                <span>&#128203; EVIDENCIA &mdash; Tipo: Desempe&ntilde;o</span>
+                <span style="opacity:0.5">|</span>
+                <span>Instrumento: Lista de Chequeo IE-02</span>
+              </div>
+              <div class="table-scroll" style="margin-top:0;border-radius:0 0 8px 8px;overflow:hidden;border:1px solid #c8e6c9;border-top:none">
+                <table class="data-table" style="margin:0">
+                  <thead>
+                    <tr>
+                      <th style="width:2rem;text-align:center">N.&deg;</th>
+                      <th>Documento</th>
+                      <th>Contenido m&iacute;nimo</th>
+                      <th>Soporte / Evidencia</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td style="text-align:center;font-weight:700">1</td><td>Ficha t&eacute;cnica del equipo</td><td>Marca, modelo, serial, procesador, RAM, disco, sistema operativo y licenciamiento.</td><td>Captura de <code>msinfo32</code> (<kbd>Win + R</kbd> &rarr; <code>msinfo32</code>).</td></tr>
+                    <tr><td style="text-align:center;font-weight:700">2</td><td>Hoja de vida del equipo</td><td>Historial: estado actual, mantenimientos e instalaciones conocidas.</td><td>Tabla con fecha, procedimiento, responsable y resultado.</td></tr>
+                    <tr><td style="text-align:center;font-weight:700">3</td><td>Inventario de software</td><td>Nombre, versi&oacute;n, tipo de licencia y fecha de instalaci&oacute;n de cada programa.</td><td>Captura de Programas y caracter&iacute;sticas; reporte de Belarc Advisor si est&aacute; disponible.</td></tr>
+                    <tr><td style="text-align:center;font-weight:700">4</td><td>Registro de copias de seguridad</td><td>Tipo de Backup, frecuencia, medio de almacenamiento, fecha de la &uacute;ltima copia y verificaci&oacute;n.</td><td>Captura del estado de copias (Configuraci&oacute;n &rarr; Copia de seguridad).</td></tr>
+                    <tr><td style="text-align:center;font-weight:700">5</td><td>Lista de chequeo de operatividad</td><td>M&iacute;nimo 10 &iacute;tems verificables (enciende, red, antivirus activo, ofim&aacute;tica funcional, etc.) con cumple S&Iacute;/NO.</td><td>Lista diligenciada con observaciones.</td></tr>
+                    <tr><td style="text-align:center;font-weight:700">6</td><td>Registro de procedimientos</td><td>Qu&eacute; se hizo durante la pr&aacute;ctica, cu&aacute;ndo, qui&eacute;n lo hizo y con qu&eacute; resultado.</td><td>Registro diligenciado en la plantilla del instructor.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <article class="support-card" style="margin-top:16px">
+                <h3>Instrucciones &mdash; sigue este orden sin saltarte pasos</h3>
+                <ol style="padding-left:1.4rem;margin:0;line-height:1.7">
+                  <li>Abre la plantilla de Registro de Gesti&oacute;n de Informaci&oacute;n suministrada por el instructor. Ll&eacute;nala completa: nombre, ficha, equipo asignado y fecha.</li>
+                  <li>Ejecuta <code>msinfo32</code> (<kbd>Win + R</kbd>) y registra los datos de la ficha t&eacute;cnica (documento 1). Toma la captura de soporte.</li>
+                  <li>Revisa Panel de control &rarr; Programas y caracter&iacute;sticas y construye el inventario de software (documento 3). Si el laboratorio lo permite, genera el reporte con Belarc Advisor (belarc.com).</li>
+                  <li>Diligencia la hoja de vida (documento 2), el registro de copias de seguridad (documento 4) y el registro de procedimientos (documento 6) con la informaci&oacute;n real del equipo. Si un dato no existe (ej.: no hay Backup configurado), registra la ausencia tambi&eacute;n &mdash; documentar la ausencia tambi&eacute;n es documentar.</li>
+                  <li>Elabora y aplica la lista de chequeo de operatividad (documento 5) verificando cada &iacute;tem directamente en el equipo.</li>
+                  <li>Toma capturas de soporte de cada documento y n&oacute;mbralas en orden: <code>01_FichaTecnica.png</code>, <code>02_HojaVida.png</code>, <code>03_Inventario.png</code>, <code>04_Backup.png</code>, <code>05_Chequeo.png</code>, <code>06_Procedimientos.png</code>.</li>
+                </ol>
+              </article>
+
+              <div class="info-box" style="margin-top:14px">
+                <div class="label">&#9200; Trabajo independiente (2 horas, DESPU&Eacute;S de la sesi&oacute;n)</div>
+                <p>Completa y pule los 6 documentos del portafolio. Verifica que cada uno tenga fecha, responsable y soporte. Escribe en tu bit&aacute;cora un p&aacute;rrafo (m&iacute;nimo 8 l&iacute;neas): &iquest;qu&eacute; informaci&oacute;n del equipo no exist&iacute;a o estaba incompleta y c&oacute;mo la resolviste? Esta conclusi&oacute;n se eval&uacute;a.</p>
+              </div>
+
+              <article class="notes-card" style="margin-top:16px">
+                <h3>Resumen del portafolio (registro del aprendiz)</h3>
+                <label>
+                  <span>1. Ficha t&eacute;cnica del equipo &mdash; resumen de los datos registrados</span>
+                  <textarea rows="4" data-store="g8_431_ficha_tecnica" data-track placeholder="Marca, modelo, serial, procesador, RAM, disco, sistema operativo y licenciamiento del equipo asignado."></textarea>
+                </label>
+                <label>
+                  <span>2. Hoja de vida del equipo &mdash; resumen del historial encontrado</span>
+                  <textarea rows="4" data-store="g8_431_hoja_vida" data-track placeholder="Estado actual, mantenimientos e instalaciones conocidas."></textarea>
+                </label>
+                <label>
+                  <span>3. Inventario de software &mdash; resumen del software instalado</span>
+                  <textarea rows="4" data-store="g8_431_inventario" data-track placeholder="Programas principales, versi&oacute;n y tipo de licencia encontrados."></textarea>
+                </label>
+                <label>
+                  <span>4. Registro de copias de seguridad &mdash; estado encontrado</span>
+                  <textarea rows="4" data-store="g8_431_backup" data-track placeholder="Tipo de Backup, frecuencia, medio de almacenamiento y verificaci&oacute;n (o su ausencia)."></textarea>
+                </label>
+                <label>
+                  <span>5. Lista de chequeo de operatividad &mdash; resultado general</span>
+                  <textarea rows="4" data-store="g8_431_chequeo" data-track placeholder="Cu&aacute;ntos &iacute;tems cumplieron y cu&aacute;les quedaron pendientes, con observaciones."></textarea>
+                </label>
+                <label>
+                  <span>6. Registro de procedimientos &mdash; qu&eacute; se hizo, cu&aacute;ndo y con qu&eacute; resultado</span>
+                  <textarea rows="4" data-store="g8_431_procedimientos" data-track placeholder="Resume los procedimientos realizados durante la pr&aacute;ctica."></textarea>
+                </label>
+                <label>
+                  <span>7. Conclusi&oacute;n t&eacute;cnica (m&iacute;nimo 8 l&iacute;neas): &iquest;qu&eacute; informaci&oacute;n no exist&iacute;a o estaba incompleta y c&oacute;mo la resolviste?</span>
+                  <textarea rows="8" data-store="g8_431_conclusion" data-track placeholder="Escribe tu conclusi&oacute;n t&eacute;cnica del trabajo independiente."></textarea>
+                </label>
+                <div id="portafolio431DeadlineControls" style="margin-top:16px"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarPortafolio431" class="btn-save-response" onclick="actStd_save_portafolio431()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_portafolio431()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusPortafolio431" class="activity-saved-notice" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+
+              <div id="driveDeliveryPanel-portafolio431" style="margin-top:16px"></div>
+            </div>
+          </div>
+
+          <!-- ───────── Actividad 4.3.2 ───────── -->
+          <div class="activity mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">4.3.2</span>
+              <span class="activity-title">Organizaci&oacute;n digital: carpetas, convenci&oacute;n de nombres y control de versiones</span>
+              <span class="mission-chip">Misi&oacute;n t&eacute;cnica</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> aplicar el protocolo de organizaci&oacute;n digital al portafolio construido en la actividad 4.3.1.</p>
+
+              <div style="background:#1b5e20;color:#fff;border-radius:8px 8px 0 0;padding:10px 16px;font-size:0.82rem;font-weight:700;letter-spacing:0.04em;display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:16px;margin-bottom:0">
+                <span>&#128203; EVIDENCIA &mdash; Tipo: Desempe&ntilde;o</span>
+                <span style="opacity:0.5">|</span>
+                <span>Instrumento: Lista de Chequeo IE-02</span>
+              </div>
+              <div class="table-scroll" style="margin-top:0;border-radius:0 0 8px 8px;overflow:hidden;border:1px solid #c8e6c9;border-top:none">
+                <table class="data-table" style="margin:0">
+                  <thead>
+                    <tr>
+                      <th style="width:2rem;text-align:center">N.&deg;</th>
+                      <th>Elemento del protocolo</th>
+                      <th>C&oacute;mo se verifica</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td style="text-align:center;font-weight:700">1</td><td>Estructura de carpetas por tipo documental: <code>01_Fichas_Tecnicas</code>, <code>02_Hojas_de_Vida</code>, <code>03_Inventarios</code>, <code>04_Backups</code>, <code>05_Registros</code>, <code>06_Informes</code>, <code>07_Evidencias</code>.</td><td>Captura del &aacute;rbol con el comando <code>tree /f</code> en CMD.</td></tr>
+                    <tr><td style="text-align:center;font-weight:700">2</td><td>Convenci&oacute;n de nombres aplicada a TODOS los archivos: <code>[TipoDocumento]_[Equipo]_[Fecha AAAA-MM-DD]_v1.0</code>.</td><td>Captura de cada carpeta mostrando los archivos renombrados.</td></tr>
+                    <tr><td style="text-align:center;font-weight:700">3</td><td>Tabla de control de versiones: archivo, versi&oacute;n, fecha, autor y descripci&oacute;n del cambio.</td><td>Tabla diligenciada (incluye al menos un cambio real v1.0 &rarr; v1.1).</td></tr>
+                    <tr><td style="text-align:center;font-weight:700">4</td><td>Respaldo de la carpeta completa en la nube (Google Drive o OneDrive).</td><td>Captura de la carpeta sincronizada en la nube con fecha visible.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <article class="support-card" style="margin-top:16px">
+                <h3>Instrucciones &mdash; sigue este orden sin saltarte pasos</h3>
+                <ol style="padding-left:1.4rem;margin:0;line-height:1.7">
+                  <li>Crea la estructura de carpetas indicada y mueve a cada carpeta los documentos y capturas de la Act. 4.3.1.</li>
+                  <li>Renombra todos los archivos aplicando la convenci&oacute;n. Ejemplo: <code>FichaTecnica_Equipo07_2026-06-15_v1.0.pdf</code>. Ning&uacute;n archivo puede quedar con nombres como &laquo;documento1&raquo; o &laquo;sin t&iacute;tulo&raquo;.</li>
+                  <li>Crea la tabla de control de versiones. Realiza una correcci&oacute;n real a uno de tus documentos, gu&aacute;rdalo como v1.1 y registra el cambio en la tabla.</li>
+                  <li>Abre CMD, ub&iacute;cate en la carpeta ra&iacute;z del portafolio y ejecuta <code>tree /f</code>. Toma captura del &aacute;rbol completo.</li>
+                  <li>Sube la carpeta completa a Google Drive o OneDrive y toma captura de la sincronizaci&oacute;n.</li>
+                  <li>Intercambia tu portafolio con un compa&ntilde;ero: cada uno verifica la organizaci&oacute;n del otro y deja dos sugerencias de mejora por escrito. Aplica las que correspondan.</li>
+                </ol>
+              </article>
+
+              <div class="info-box" style="margin-top:14px">
+                <div class="label">&#9200; Trabajo independiente (2 horas, DESPU&Eacute;S de la sesi&oacute;n)</div>
+                <p>Redacta el &laquo;Protocolo de nombres y versiones&raquo; de tu portafolio (m&aacute;ximo 1 p&aacute;gina): reglas que aplicaste, ejemplos de nombres correctos e incorrectos y c&oacute;mo se registran los cambios de versi&oacute;n. Gu&aacute;rdalo como <code>Protocolo_Nombres_[TuNombre]_v1.0.pdf</code>. Este documento se eval&uacute;a.</p>
+              </div>
+
+              <article class="notes-card" style="margin-top:16px">
+                <h3>Registro de la organizaci&oacute;n digital (registro del aprendiz)</h3>
+                <label>
+                  <span>1. Estructura de carpetas aplicada (las 7 carpetas por tipo documental)</span>
+                  <textarea rows="4" data-store="g8_432_estructura" data-track placeholder="Confirma las 7 carpetas creadas y qu&eacute; documentos quedaron en cada una."></textarea>
+                </label>
+                <label>
+                  <span>2. Convenci&oacute;n de nombres aplicada: 2 ejemplos correctos y 1 incorrecto (con la correcci&oacute;n)</span>
+                  <textarea rows="4" data-store="g8_432_convencion" data-track placeholder="Ej. correcto: FichaTecnica_Equipo07_2026-06-15_v1.0.pdf. Ej. incorrecto: documento1.pdf &rarr; corregido a..."></textarea>
+                </label>
+                <label>
+                  <span>3. Tabla de control de versiones: describe el cambio real que registraste (v1.0 &rarr; v1.1)</span>
+                  <textarea rows="4" data-store="g8_432_versiones" data-track placeholder="Archivo, versi&oacute;n anterior, versi&oacute;n nueva, fecha, autor y descripci&oacute;n del cambio."></textarea>
+                </label>
+                <label>
+                  <span>4. Protocolo de nombres y versiones redactado (resumen del documento de m&aacute;ximo 1 p&aacute;gina)</span>
+                  <textarea rows="6" data-store="g8_432_protocolo" data-track placeholder="Reglas que aplicaste, ejemplos correctos/incorrectos y c&oacute;mo se registran los cambios de versi&oacute;n."></textarea>
+                </label>
+                <div id="organizacion432DeadlineControls" style="margin-top:16px"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarOrganizacion432" class="btn-save-response" onclick="actStd_save_organizacion432()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_organizacion432()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusOrganizacion432" class="activity-saved-notice" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+
+              <div id="driveDeliveryPanel-organizacion432" style="margin-top:16px"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════ 4.4 TRANSFERENCIA ═══════════════════════╗ -->
+      <div id="transferencia" class="section-title">4.4 &middot; Actividades de Transferencia del Conocimiento</div>
+      <p class="section-intro">📍 <strong>Fase de transferencia:</strong> aplicas todo lo aprendido a un caso real o a una actividad integradora. Suele ser la evidencia más importante de la guía.</p>
+      <div class="info-box blue" style="margin-bottom:16px">
+        <p>Integrar todo lo aprendido en un producto t&eacute;cnico real para una MiPyme de Boyac&aacute;. La
+        mayor parte de la redacci&oacute;n del documento es trabajo independiente; la clase se usa para
+        orientar la estructura y para la sustentaci&oacute;n oral.</p>
+      </div>
+      <div class="card open cat-transferencia">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128640;</div>
+            <div>
+              <h3>Actividades de Transferencia</h3>
+              <p>1 actividad &middot; Duraci&oacute;n: 8 horas (4 directas + 4 independientes)</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+
+          <!-- ───────── Actividad 4.4.1 ───────── -->
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">4.4.1</span>
+              <span class="activity-title">Documento T&eacute;cnico de Gesti&oacute;n de la Informaci&oacute;n + Sustentaci&oacute;n oral</span>
+              <span class="mission-chip">Misi&oacute;n integradora</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> consolidar el portafolio documental y el protocolo de organizaci&oacute;n en un Documento T&eacute;cnico formal, listo para la gerencia, y sustentarlo oralmente. Producto + Sustentaci&oacute;n (IE-03).</p>
+
+              <article class="support-card">
+                <h3>Datos de la actividad</h3>
+                <ul class="note-list">
+                  <li>&#9201; Duraci&oacute;n: 8 horas (1 directa orientaci&oacute;n + 4 independientes redacci&oacute;n + 3 directas sustentaci&oacute;n).</li>
+                  <li>&#127979; Ambiente: laboratorio con internet y videobeam.</li>
+                  <li>&#127919; Estrategia: aprendizaje basado en producto + heteroevaluaci&oacute;n oral.</li>
+                  <li>&#128190; Herramientas TIC: LibreOffice Writer / Word, Calc / Sheets, Canva o Google Slides, PDF24 (pdf24.org).</li>
+                </ul>
+              </article>
+
+              <article class="story-card" style="margin-top:16px">
+                <h3>&#127970; Escenario &mdash; Agropecuaria La Esperanza, Chiquinquir&aacute;</h3>
+                <p>El mismo caso de la reflexi&oacute;n inicial: la gerente aprob&oacute; tu contrataci&oacute;n y te pide
+                implementar el sistema documental de la empresa para que &laquo;esto no vuelva a pasar&raquo;.
+                Tienes el portafolio documental que construiste (Act. 4.3.1) y el protocolo de organizaci&oacute;n
+                que aplicaste (Act. 4.3.2). Ahora debes consolidarlos en un Documento T&eacute;cnico de Gesti&oacute;n
+                de la Informaci&oacute;n, listo para entregar a la gerencia y para que cualquier t&eacute;cnico futuro
+                pueda continuar el trabajo.</p>
+              </article>
+
+              <div style="background:#1b5e20;color:#fff;border-radius:8px 8px 0 0;padding:10px 16px;font-size:0.82rem;font-weight:700;letter-spacing:0.04em;display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:16px;margin-bottom:0">
+                <span>&#128203; EVIDENCIA &mdash; Tipo: Producto + Sustentaci&oacute;n Oral</span>
+                <span style="opacity:0.5">|</span>
+                <span>Instrumento: Lista de Chequeo IE-03</span>
+              </div>
+              <div class="table-scroll" style="margin-top:0;border-radius:0 0 8px 8px;overflow:hidden;border:1px solid #c8e6c9;border-top:none">
+                <table class="data-table" style="margin:0">
+                  <thead>
+                    <tr>
+                      <th style="width:2rem;text-align:center">Sec.</th>
+                      <th>Secci&oacute;n del documento</th>
+                      <th>Contenido m&iacute;nimo requerido</th>
+                      <th>Extensi&oacute;n</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td style="text-align:center;font-weight:700">A</td><td>Introducci&oacute;n y contexto</td><td>Presentaci&oacute;n de la empresa, situaci&oacute;n encontrada (caso) y objetivo del sistema documental.</td><td>1 p&aacute;gina</td></tr>
+                    <tr><td style="text-align:center;font-weight:700">B</td><td>Inventario de activos inform&aacute;ticos</td><td>Tabla de equipos y software con ID, nombre, tipo, responsable y estado (con base en la Act. 4.3.1).</td><td>1-2 p&aacute;ginas</td></tr>
+                    <tr><td style="text-align:center;font-weight:700">C</td><td>Fichas t&eacute;cnicas y hoja de vida</td><td>Ficha t&eacute;cnica y hoja de vida del equipo documentado, presentadas como modelo replicable.</td><td>2 p&aacute;ginas</td></tr>
+                    <tr><td style="text-align:center;font-weight:700">D</td><td>Registros de procedimientos y de copias de seguridad</td><td>Registros diligenciados y explicaci&oacute;n de c&oacute;mo deben mantenerse actualizados.</td><td>1-2 p&aacute;ginas</td></tr>
+                    <tr><td style="text-align:center;font-weight:700">E</td><td>Protocolo de organizaci&oacute;n de la informaci&oacute;n</td><td>Estructura de carpetas, convenci&oacute;n de nombres y control de versiones, con captura del &aacute;rbol (<code>tree /f</code>) y del respaldo en la nube.</td><td>1 p&aacute;gina</td></tr>
+                    <tr><td style="text-align:center;font-weight:700">F</td><td>Conclusiones y recomendaciones de mejora</td><td>M&iacute;nimo 3 recomendaciones para mantener la documentaci&oacute;n al d&iacute;a, con justificaci&oacute;n t&eacute;cnica.</td><td>1 p&aacute;gina</td></tr>
+                    <tr><td style="text-align:center;font-weight:700">G</td><td>Bibliograf&iacute;a</td><td>M&iacute;nimo 5 fuentes: gu&iacute;as institucionales, documentaci&oacute;n oficial y normas. Formato APA o IEEE.</td><td>1 p&aacute;gina</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <article class="support-card" style="margin-top:16px">
+                <h3>Distribuci&oacute;n de las 8 horas</h3>
+                <ul class="note-list">
+                  <li><strong>1 hora directa (Sesi&oacute;n 1):</strong> el instructor orienta la estructura del documento, revisa el borrador del &iacute;ndice de cada aprendiz y resuelve dudas antes de la redacci&oacute;n.</li>
+                  <li><strong>4 horas independientes:</strong> redacci&oacute;n completa del documento seg&uacute;n las secciones A-G.</li>
+                  <li><strong>3 horas directas (Sesi&oacute;n 2):</strong> sustentaci&oacute;n oral de 8 a 12 minutos por aprendiz + preguntas del instructor.</li>
+                </ul>
+              </article>
+
+              <article class="support-card" style="margin-top:16px">
+                <h3>Instrucciones &mdash; sesi&oacute;n directa 1</h3>
+                <ol style="padding-left:1.4rem;margin:0;line-height:1.7">
+                  <li>Relee el escenario de Agropecuaria La Esperanza y revisa tu portafolio de las actividades 4.3.1 y 4.3.2. Identifica qu&eacute; documento o evidencia usar&aacute;s en cada secci&oacute;n A-G.</li>
+                  <li>Escribe el &iacute;ndice del documento con los t&iacute;tulos A-G y una frase que resuma qu&eacute; incluir&aacute;s en cada una. El instructor revisa tu &iacute;ndice antes de que termine la clase.</li>
+                </ol>
+              </article>
+
+              <article class="support-card" style="margin-top:16px">
+                <h3>Instrucciones &mdash; trabajo independiente (redacci&oacute;n)</h3>
+                <ol style="padding-left:1.4rem;margin:0;line-height:1.7">
+                  <li>Redacta el documento en LibreOffice Writer o Word usando el &iacute;ndice aprobado en clase. Incorpora las tablas, registros y capturas de las actividades 4.3.1 y 4.3.2 como evidencias.</li>
+                  <li>Aplica al propio documento los protocolos que ense&ntilde;as en &eacute;l: n&oacute;mbralo con la convenci&oacute;n y reg&iacute;stralo en tu tabla de control de versiones.</li>
+                  <li>Revisa que el documento tenga m&iacute;nimo 8 p&aacute;ginas, incluya todas las secciones A-G y est&eacute; libre de errores de ortograf&iacute;a antes de exportar.</li>
+                  <li>Exporta a PDF. Nombre del archivo: <strong>DocTecnico_GestionInfo_[TuNombre]_v1.0.pdf</strong>.</li>
+                </ol>
+              </article>
+
+              <article class="support-card" style="margin-top:16px">
+                <h3>Instrucciones &mdash; sesi&oacute;n directa 2 (sustentaci&oacute;n)</h3>
+                <ol style="padding-left:1.4rem;margin:0;line-height:1.7">
+                  <li>Prepara una presentaci&oacute;n de m&aacute;ximo 8 diapositivas en Canva o Google Slides: (1) Portada, (2) Contexto del caso, (3-4) Portafolio documental elaborado, (5) Protocolo de organizaci&oacute;n aplicado, (6-7) Recomendaciones, (8) Lecciones aprendidas.</li>
+                  <li>Sustenta tu documento ante el instructor en 8 a 12 minutos, explicando las decisiones que tomaste y c&oacute;mo el sistema documental garantiza la trazabilidad. El instructor har&aacute; preguntas t&eacute;cnicas sobre tus registros, la convenci&oacute;n de nombres y el control de versiones.</li>
+                </ol>
+              </article>
+
+              <article class="notes-card" style="margin-top:16px">
+                <h3>&Iacute;ndice del Documento T&eacute;cnico (borrador previo a la redacci&oacute;n)</h3>
+                <label>
+                  <span>A. Introducci&oacute;n y contexto (qu&eacute; incluir&aacute;s en una frase)</span>
+                  <textarea rows="2" data-store="g8_441_sec_a" data-track placeholder="Presentaci&oacute;n de Agropecuaria La Esperanza, situaci&oacute;n encontrada y objetivo del sistema documental."></textarea>
+                </label>
+                <label>
+                  <span>B. Inventario de activos inform&aacute;ticos (qu&eacute; incluir&aacute;s)</span>
+                  <textarea rows="2" data-store="g8_441_sec_b" data-track placeholder="Tabla de equipos y software con ID, nombre, tipo, responsable y estado."></textarea>
+                </label>
+                <label>
+                  <span>C. Fichas t&eacute;cnicas y hoja de vida (qu&eacute; incluir&aacute;s)</span>
+                  <textarea rows="2" data-store="g8_441_sec_c" data-track placeholder="Ficha t&eacute;cnica y hoja de vida del equipo documentado en la Act. 4.3.1."></textarea>
+                </label>
+                <label>
+                  <span>D. Registros de procedimientos y de copias de seguridad (qu&eacute; incluir&aacute;s)</span>
+                  <textarea rows="2" data-store="g8_441_sec_d" data-track placeholder="Registros diligenciados y c&oacute;mo se mantienen actualizados."></textarea>
+                </label>
+                <label>
+                  <span>E. Protocolo de organizaci&oacute;n de la informaci&oacute;n (qu&eacute; incluir&aacute;s)</span>
+                  <textarea rows="2" data-store="g8_441_sec_e" data-track placeholder="Estructura de carpetas, convenci&oacute;n de nombres, control de versiones, capturas del &aacute;rbol y de la nube."></textarea>
+                </label>
+                <label>
+                  <span>F. Conclusiones y recomendaciones (m&iacute;nimo 3, con justificaci&oacute;n t&eacute;cnica)</span>
+                  <textarea rows="3" data-store="g8_441_sec_f" data-track placeholder="3 recomendaciones para mantener la documentaci&oacute;n al d&iacute;a."></textarea>
+                </label>
+                <label>
+                  <span>G. Bibliograf&iacute;a (5 fuentes m&iacute;nimo, APA o IEEE)</span>
+                  <textarea rows="4" data-store="g8_441_sec_g" data-track placeholder="Lista tus 5 fuentes con formato APA o IEEE."></textarea>
+                </label>
+                <div id="documento441DeadlineControls" style="margin-top:16px"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarDocumento441" class="btn-save-response" onclick="actStd_save_documento441()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_documento441()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusDocumento441" class="activity-saved-notice" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+
+              <div id="driveDeliveryPanel-documento441" style="margin-top:16px"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════ EVIDENCIAS ═══════════════════════╗ -->
+      <div id="evidencias" class="section-title">Planteamiento de Evidencias para la Evaluaci&oacute;n</div>
+      <p class="section-intro">📍 <strong>Resumen de lo que debes entregar:</strong> usa esta sección como lista de chequeo final. Revisa que no te falte ninguna evidencia y cómo se evalúa cada una.</p>
+      <div class="gnote gnote--entrega"><div class="gnote__label">📦 Antes de entregar, revisa</div>
+        <ul>
+          <li>Respondiste todas las actividades que se piden como evidencia.</li>
+          <li>Tus archivos tienen tu nombre y número de ficha.</li>
+          <li>Subiste cada evidencia con el botón <em>Entregar a Drive</em> y la ves marcada como <strong>Entregada</strong> en tu control de avance.</li>
+        </ul></div>
+
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#e3f2fd">&#128202;</div>
+            <div>
+              <h3>Tabla de Evidencias del Proceso Formativo</h3>
+              <p>3 evidencias: conocimiento, desempe&ntilde;o y producto</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Actividad de Aprendizaje</th>
+                  <th>Evidencias</th>
+                  <th>Criterios</th>
+                  <th>Instrumento</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>4.2.2 &mdash; Mapa conceptual del sistema documental</td>
+                  <td><strong>CONOCIMIENTO:</strong> mapa conceptual en PDF (m&iacute;n. 15 conceptos), los 5 tipos documentales, la relaci&oacute;n l&oacute;gica del sistema documental, un protocolo de organizaci&oacute;n y una aplicaci&oacute;n en MiPyme regional. Presentaci&oacute;n oral de 5 minutos.</td>
+                  <td>Mantiene la documentaci&oacute;n seg&uacute;n manual t&eacute;cnico.</td>
+                  <td>Lista de Chequeo IE-01</td>
+                </tr>
+                <tr>
+                  <td>4.3.1 + 4.3.2 &mdash; Portafolio documental del equipo y protocolo de organizaci&oacute;n digital</td>
+                  <td><strong>DESEMPE&Ntilde;O:</strong> portafolio con los 6 documentos diligenciados con capturas de soporte; estructura de carpetas con convenci&oacute;n de nombres; tabla de control de versiones con un cambio real; captura del &aacute;rbol (<code>tree /f</code>) y del respaldo en la nube; protocolo de nombres y versiones en PDF; conclusiones en bit&aacute;cora.</td>
+                  <td>Mantiene la documentaci&oacute;n seg&uacute;n manual t&eacute;cnico.</td>
+                  <td>Lista de Chequeo IE-02</td>
+                </tr>
+                <tr>
+                  <td>4.4.1 &mdash; Documento T&eacute;cnico de Gesti&oacute;n de la Informaci&oacute;n + sustentaci&oacute;n oral</td>
+                  <td><strong>PRODUCTO:</strong> &iacute;ndice aprobado en clase; Documento T&eacute;cnico en PDF (m&iacute;nimo 8 p&aacute;ginas, secciones A-G) con inventario de activos, fichas t&eacute;cnicas, hojas de vida, registros, protocolo de organizaci&oacute;n con evidencias y recomendaciones de mejora; presentaci&oacute;n de m&aacute;ximo 8 diapositivas; sustentaci&oacute;n oral de 8 a 12 minutos con respuesta a preguntas t&eacute;cnicas.</td>
+                  <td>Mantiene la documentaci&oacute;n seg&uacute;n manual t&eacute;cnico.</td>
+                  <td>Lista de Chequeo IE-03</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════ GLOSARIO ═══════════════════════╗ -->
+      <div id="glosario" class="section-title">Glosario de T&eacute;rminos</div>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#fff3e0">&#128214;</div>
+            <div>
+              <h3>Conceptos clave de gesti&oacute;n documental</h3>
+              <p>15 t&eacute;rminos t&eacute;cnicos</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <dl class="glossary-list">
+            <dt>Activo de informaci&oacute;n</dt><dd>Cualquier dato, software, equipo o proceso que tiene valor para la organizaci&oacute;n y que debe ser protegido, registrado y gestionado.</dd>
+            <dt>Convenci&oacute;n de nombres</dt><dd>Reglas est&aacute;ndar para nombrar archivos y carpetas de manera coherente, permitiendo identificar f&aacute;cilmente el contenido, la versi&oacute;n y la fecha de cada documento.</dd>
+            <dt>Copia de seguridad (Backup)</dt><dd>Copia de datos o sistemas para recuperaci&oacute;n ante p&eacute;rdida, corrupci&oacute;n o incidente; su registro documenta tipo, frecuencia, medio y verificaci&oacute;n.</dd>
+            <dt>Documentaci&oacute;n t&eacute;cnica</dt><dd>Conjunto de registros escritos (fichas t&eacute;cnicas, hojas de vida, informes, manuales, listas de chequeo) que describen las caracter&iacute;sticas, procedimientos y estado de los equipos y sistemas.</dd>
+            <dt>Ficha de seguridad</dt><dd>Documento que registra las condiciones y controles de seguridad asociados a un activo, procedimiento o producto.</dd>
+            <dt>Ficha t&eacute;cnica</dt><dd>Documento que describe las caracter&iacute;sticas t&eacute;cnicas de un equipo o software: marca, modelo, n&uacute;mero de serie, configuraci&oacute;n, fechas de instalaci&oacute;n y mantenimiento.</dd>
+            <dt>Formato de almacenamiento</dt><dd>Tipo de archivo o medio en el que se conserva la informaci&oacute;n documental (PDF, hoja de c&aacute;lculo, documento de texto, repositorio en la nube).</dd>
+            <dt>Gesti&oacute;n de la informaci&oacute;n</dt><dd>Conjunto de procesos que garantizan la recolecci&oacute;n, organizaci&oacute;n, almacenamiento, recuperaci&oacute;n y protecci&oacute;n de la informaci&oacute;n dentro de una organizaci&oacute;n.</dd>
+            <dt>Hoja de vida del equipo</dt><dd>Registro hist&oacute;rico de un equipo de c&oacute;mputo: mantenimientos, instalaciones, fallas, cambios de componentes y responsables.</dd>
+            <dt>Informe t&eacute;cnico</dt><dd>Documento que presenta de forma estructurada el desarrollo, las evidencias y las conclusiones de un procedimiento t&eacute;cnico.</dd>
+            <dt>Inventario tecnol&oacute;gico</dt><dd>Registro actualizado de todos los activos de hardware y software de una organizaci&oacute;n, incluyendo caracter&iacute;sticas, ubicaci&oacute;n, estado y responsable.</dd>
+            <dt>Lista de chequeo</dt><dd>Documento estructurado que permite verificar paso a paso si un procedimiento fue ejecutado correctamente, marcando cada &iacute;tem como cumplido o no cumplido.</dd>
+            <dt>Proceso de mejora</dt><dd>Acci&oacute;n documentada orientada a corregir o perfeccionar el tratamiento de la informaci&oacute;n o los procedimientos t&eacute;cnicos de la organizaci&oacute;n.</dd>
+            <dt>Protocolo</dt><dd>Conjunto de reglas o procedimientos establecidos que deben seguirse para realizar una tarea de manera estandarizada y verificable.</dd>
+            <dt>Registro de procedimientos</dt><dd>Documento donde se consigna qu&eacute; se hizo, cu&aacute;ndo, qui&eacute;n lo hizo y con qu&eacute; resultado, garantizando la trazabilidad del trabajo t&eacute;cnico.</dd>
+            <dt>Trazabilidad</dt><dd>Capacidad de reconstruir el historial de un equipo, archivo o procedimiento a partir de los registros documentales.</dd>
+            <dt>Versionado (control de versiones)</dt><dd>Sistema para controlar y registrar los cambios realizados a un documento, identificando cada versi&oacute;n (v1.0, v1.1, v2.0) para mantener el historial de modificaciones.</dd>
+          </dl>
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════ REFERENCIAS ═══════════════════════╗ -->
+      <div id="referencias" class="section-title">Referentes Bibliogr&aacute;ficos</div>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#ede7f6">&#128279;</div>
+            <div>
+              <h3>Fuentes oficiales y normativas</h3>
+              <p>8 referencias t&eacute;cnicas y normativas para consulta</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <ol class="references-list" style="padding-left:1.4rem;line-height:1.8">
+            <li>Ministerio de Tecnolog&iacute;as de la Informaci&oacute;n y las Comunicaciones &mdash; MinTIC. (2016). <em>Gu&iacute;a para la Gesti&oacute;n y Clasificaci&oacute;n de Activos de Informaci&oacute;n</em>. <a href="https://gobiernodigital.mintic.gov.co/692/articles-5482_G5_Gestion_Clasificacion.pdf" target="_blank" rel="noopener">gobiernodigital.mintic.gov.co</a></li>
+            <li>Servicio Nacional de Aprendizaje &mdash; SENA. <em>Biblioteca Virtual SENA</em>. <a href="https://biblioteca.sena.edu.co" target="_blank" rel="noopener">biblioteca.sena.edu.co</a></li>
+            <li>Cisco Networking Academy. <em>IT Essentials: PC Hardware and Software (v8.0)</em> &mdash; m&oacute;dulos de documentaci&oacute;n y procedimientos. <a href="https://www.netacad.com" target="_blank" rel="noopener">netacad.com</a></li>
+            <li>Microsoft. <em>Documentaci&oacute;n t&eacute;cnica de Windows</em> &mdash; Microsoft Learn. <a href="https://learn.microsoft.com" target="_blank" rel="noopener">learn.microsoft.com</a></li>
+            <li>LibreOffice. <em>Documentaci&oacute;n oficial de LibreOffice</em>. <a href="https://documentation.libreoffice.org/es/" target="_blank" rel="noopener">documentation.libreoffice.org/es</a></li>
+            <li>Google. <em>Centro de ayuda de Google Drive</em>. <a href="https://support.google.com/drive" target="_blank" rel="noopener">support.google.com/drive</a></li>
+            <li>Instituto Colombiano de Normas T&eacute;cnicas y Certificaci&oacute;n &mdash; ICONTEC. (2013). <em>NTC-ISO/IEC 27001: Sistemas de gesti&oacute;n de la seguridad de la informaci&oacute;n</em> (control documental y de registros). Bogot&aacute;: ICONTEC.</li>
+            <li>IEEE. <em>IEEE Editorial Style Manual</em> (gu&iacute;a de estilo para documentos e informes t&eacute;cnicos). <a href="https://www.ieee.org" target="_blank" rel="noopener">ieee.org</a></li>
+          </ol>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

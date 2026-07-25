@@ -153,6 +153,42 @@ const EXPECTED_CONTEXTS = {
     ficha: "3168852",
     boot: "initGuia7",
   },
+  "sb-guia8-11a": {
+    family: "guia-08-documentar-gestion",
+    pageFile: "grupo-11a-guia-08-documentar-gestion-informacion.html",
+    partialPath: "partials/guia-08-documentar-gestion-content.html",
+    inst: "Institucion Educativa Santa Barbara",
+    grupo: "11A",
+    ficha: "3168850",
+    boot: "initGuia8",
+  },
+  "sb-guia8-11b": {
+    family: "guia-08-documentar-gestion",
+    pageFile: "grupo-11b-guia-08-documentar-gestion-informacion.html",
+    partialPath: "partials/guia-08-documentar-gestion-content.html",
+    inst: "Institucion Educativa Santa Barbara",
+    grupo: "11B",
+    ficha: "3168852",
+    boot: "initGuia8",
+  },
+  "sb-taller-10a": {
+    family: "taller-integrador-sb",
+    pageFile: "santa-barbara-10a-guia-04-taller-integrador.html",
+    partialPath: "partials/taller-integrador-sb-content.html",
+    inst: "Institucion Educativa Santa Barbara",
+    grupo: "10A",
+    ficha: "3441944",
+    boot: "initTallerIntegrador",
+  },
+  "sb-taller-10b": {
+    family: "taller-integrador-sb",
+    pageFile: "santa-barbara-10b-guia-04-taller-integrador.html",
+    partialPath: "partials/taller-integrador-sb-content.html",
+    inst: "Institucion Educativa Santa Barbara",
+    grupo: "10B",
+    ficha: "3441950",
+    boot: "initTallerIntegrador",
+  },
 };
 
 const SHARED_HTML = '<section class="runtime-fragment"><button id="runtimeButton"></button></section>';
