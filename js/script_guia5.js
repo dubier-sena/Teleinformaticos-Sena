@@ -10,12 +10,19 @@
 
   function installGuia5DeadlineControls() {
     if (!window.activityDeadlineManager?.applyAvailability) return;
+    // `state` viene de js/script.js (cargado antes en el mismo scope global de
+    // la pagina). Sin pasar isLocked, applyAvailability nunca deshabilitaba
+    // los campos al calificar (a diferencia de Guia 2/3/6/Redes, que SI leen
+    // state["{id}-locked"] aqui) -- el aprendiz podia seguir editando una
+    // actividad ya aprobada. Detectado 2026-07-24.
+    const currentState = typeof state !== "undefined" ? state : {};
 
     // 3.1.1 — Bitácora de análisis del caso
     window.activityDeadlineManager.applyAvailability({
       pageFile: GUIDE_DATA_FILE,
       activityId: "guia5-311",
       fieldSelector: "[data-store^='bitacora-']",
+      isLocked: Boolean(currentState["guia5-311-locked"]),
       adminMount: { mountSelector: "#guia5311DeadlineControls" },
       noticeMount: { mountSelector: "#guia5311DeadlineControls" },
     });
@@ -24,6 +31,8 @@
     window.activityDeadlineManager.applyAvailability({
       pageFile: GUIDE_DATA_FILE,
       activityId: "guia5-331",
+      fieldSelector: "#extensionTable [data-store], #systemTable [data-store]",
+      isLocked: Boolean(currentState["guia5-331-locked"]),
       adminMount: { mountSelector: "#guia5331DeadlineControls" },
       noticeMount: { mountSelector: "#guia5331DeadlineControls" },
     });
@@ -32,6 +41,7 @@
     window.activityDeadlineManager.applyAvailability({
       pageFile: GUIDE_DATA_FILE,
       activityId: "guia5-341",
+      isLocked: Boolean(currentState["guia5-341-locked"]),
       adminMount: { mountSelector: "#guia5341DeadlineControls" },
       noticeMount: { mountSelector: "#guia5341DeadlineControls" },
     });

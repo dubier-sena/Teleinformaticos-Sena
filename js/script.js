@@ -454,6 +454,12 @@ function reflectGradesForGuia5() {
           getState: function () { return state; },
         });
       }
+      // Reaplica installGuia5DeadlineControls (escucha este evento) para que
+      // los campos queden deshabilitados DE INMEDIATO si el aprendiz tiene la
+      // guia abierta cuando el admin califica, sin esperar a recargar.
+      if (typeof window.dispatchEvent === "function") {
+        window.dispatchEvent(new Event("activity-deadlines-updated"));
+      }
     },
   });
 }
