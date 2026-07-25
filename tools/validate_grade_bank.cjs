@@ -60,6 +60,11 @@ const DYNAMIC = {
     { script: "js/script_guia6.js", arr: "diagnosticSections", keys: (id) => ["diag_result","diag_action"].map((p) => `${p}_${id}`) },
     { script: "js/script_guia6.js", arr: "budgetItems",        keys: (id) => ["budget_license","budget_price","budget_qty","budget_why"].map((p) => `${p}_${id}`) },
   ],
+  "guia-05-herramientas": [
+    { script: "js/script.js", arr: "matchingTools", keys: (id) => [`matching:${id}`] },
+    { script: "js/script.js", arr: "extensions",    keys: (id) => [`extension:${id}:program`, `extension:${id}:description`] },
+    { script: "js/script.js", arr: "systems",       keys: (id) => ["processor","ram","disk","source"].map((s) => `system:${id}:${s}`) },
+  ],
 };
 
 // Partials (fuente de los campos estáticos) por familia.
@@ -74,6 +79,9 @@ const PARTIALS = {
   "guia-05-herramientas": ["partials/guia-05-herramientas-content.html"],
   "guia-06-planificar":   ["partials/guia-06-planificar-content.html"],
   "guia-redes-rap01":     ["partials/guia-redes-rap01-content.html", "partials/guia-redes-rap02-content.html"],
+  "guia-07-ciberseguridad":       ["partials/guia-07-planificar-ciberseguridad-content.html"],
+  "guia-08-documentar-gestion":   ["partials/guia-08-documentar-gestion-content.html"],
+  "taller-integrador-sb11":       ["partials/taller-integrador-sb11-content.html"],
 };
 
 // Conjunto de campos data-store ACTUALES de una familia (estáticos + dinámicos).
