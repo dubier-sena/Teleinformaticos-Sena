@@ -311,6 +311,16 @@
         { id: "informeImpacto", label: "Producto 6 - Informe de impacto (entrega final)" },
       ],
     },
+    "taller-integrador-sb11": {
+      label: "Taller Integrador (Santa Bárbara - Grado 11)",
+      activities: [
+        { id: "equipoTaller", label: "0 - Conformación del equipo de trabajo" },
+        { id: "informeInfraestructura", label: "Producto 1 - Informe del estado de la infraestructura" },
+        { id: "planMejora", label: "Producto 2 - Plan de mejora" },
+        { id: "informeEjecucion", label: "Producto 3 - Informe de ejecución" },
+        { id: "reporteCumplimiento", label: "Producto 4 - Reporte de cumplimiento (entrega final)" },
+      ],
+    },
   };
 
   var GRADES_STORAGE_KEY = "grades";
@@ -676,6 +686,8 @@
     "grupo-10b-guia-04-taller-integrador.html": "taller-integrador-jfk",
     "santa-barbara-10a-guia-04-taller-integrador.html": "taller-integrador-sb",
     "santa-barbara-10b-guia-04-taller-integrador.html": "taller-integrador-sb",
+    "grupo-11a-guia-09-taller-integrador.html": "taller-integrador-sb11",
+    "grupo-11b-guia-09-taller-integrador.html": "taller-integrador-sb11",
   };
 
   // ── Banco de respuestas: relleno de actividades aprobadas y vacías ──────────

@@ -1,0 +1,683 @@
+<button class="hamburger" onclick="toggleSidebar()" aria-label="Menú">&#9776;</button>
+<button class="btn-sb-expand" onclick="showSidebar()" title="Mostrar barra lateral">&#9776;</button>
+
+<div class="layout app-layout">
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="badge">SENA · FPI</div>
+      <h2>Taller Integrador</h2>
+      <p>Sistemas Teleinformáticos</p>
+      <button class="btn-sb-collapse" onclick="hideSidebar()" title="Ocultar barra lateral">&#9664;</button>
+    </div>
+
+    <div class="sidebar-ficha" id="sb-ficha-ok" style="display:none">
+      <div class="sf-label">Tu grupo</div>
+      <div class="sf-inst" id="sb-inst"></div>
+      <div class="sf-meta" id="sb-grupo-meta"></div>
+      <div class="sf-badge" id="sb-badge"></div>
+    </div>
+    <div class="sidebar-noficha" id="sb-ficha-warn">
+      <a href="index.html">Inicio | Seleccionar grupo / ficha</a>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span>Progreso</span>
+        <span id="progressValue">0%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <p class="progress-note">El avance se guarda localmente en este navegador.</p>
+      <button type="button" class="reset-button" id="resetProgress">Reiniciar respuestas</button>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Información</div>
+      <a class="nav-link active" href="#identificacion" onclick="setActive(this)">
+        <span class="icon">&#128203;</span> Identificación
+      </a>
+      <a class="nav-link" href="#control-avance" onclick="setActive(this)">
+        <span class="icon">&#9989;</span> Control de avance
+      </a>
+      <a class="nav-link" href="#presentacion" onclick="setActive(this)">
+        <span class="icon">&#128075;</span> Presentación
+      </a>
+      <a class="nav-link" href="#equipo" onclick="setActive(this)">
+        <span class="icon">&#128101;</span> Tu equipo
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Productos del taller</div>
+      <a class="nav-link" href="#producto1" onclick="setActive(this)">
+        <span class="icon">1&#65039;&#8419;</span> Informe de infraestructura
+        <span class="check">&#10003;</span>
+      </a>
+      <a class="nav-link" href="#producto2" onclick="setActive(this)">
+        <span class="icon">2&#65039;&#8419;</span> Plan de mejora
+        <span class="check">&#10003;</span>
+      </a>
+      <a class="nav-link" href="#producto3" onclick="setActive(this)">
+        <span class="icon">3&#65039;&#8419;</span> Informe de ejecución
+        <span class="check">&#10003;</span>
+      </a>
+      <a class="nav-link" href="#producto4" onclick="setActive(this)">
+        <span class="icon">4&#65039;&#8419;</span> Reporte de cumplimiento
+        <span class="check">&#10003;</span>
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Entrega</div>
+      <a class="nav-link" href="#requisitos" onclick="setActive(this)">
+        <span class="icon">&#128196;</span> Requisitos formales
+      </a>
+      <a class="nav-link" href="#fechas" onclick="setActive(this)">
+        <span class="icon">&#128197;</span> Fechas de entrega
+      </a>
+      <a class="nav-link" href="#evaluacion" onclick="setActive(this)">
+        <span class="icon">&#127919;</span> Evaluación
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Taller asignado</div>
+      <a class="nav-guide current" id="currentGuideNavLink" href="grupo-11a-guia-09-taller-integrador.html" data-current-file="grupo-11a-guia-09-taller-integrador.html">
+        <span class="g-icon">&#128215;</span>
+        <span class="g-info">
+          <span class="g-num">Taller</span>
+          <span class="g-name" id="currentGuideNavLabel">Taller Integrador | 11A</span>
+        </span>
+        <span class="g-tag actual">Actual</span>
+      </a>
+    </div>
+
+    <a class="nav-home-link" href="calendario-academico-2026.html">&#128197; <span>Calendario 2026</span></a>
+    <a class="nav-home-link" href="index.html">&#127968; <span>Volver al Inicio</span></a>
+  </nav>
+
+  <main class="main app-main">
+    <div class="topbar">
+      <div class="topbar-title">
+        <strong>Taller Integrador</strong>
+      </div>
+      <div class="topbar-meta">
+        <span class="meta-item"><span>&#9201;</span><span>Todo el año lectivo</span></span>
+        <span class="meta-item"><span>&#128197;</span><span>2026</span></span>
+        <span class="meta-item"><span>&#127979;</span><span id="topbarCampus">Santa Bárbara | 11A</span></span>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="hero" id="inicio">
+        <div class="tag">Proyecto integrador de cierre</div>
+        <h1>Taller Integrador</h1>
+        <p>
+          Vas a poner en práctica todo lo aprendido en el programa: vas a diagnosticar,
+          planear, ejecutar y validar el mantenimiento de equipos de cómputo y redes de datos
+          de una micro, pequeña o mediana empresa (MiPyme) real de la región de Boyacá, y vas a
+          dejar evidencia escrita de todo el proceso.
+        </p>
+        <div class="hero-meta">
+          <div class="hero-meta-item">&#127963; SENA &mdash; Servicio Nacional de Aprendizaje</div>
+          <div class="hero-meta-item">&#128205; Institución Educativa Santa Bárbara &middot; Grupos 11°A y 11°B</div>
+          <div class="hero-meta-item">&#128101; Trabajo en equipos de 3 a 4 aprendices</div>
+          <div class="hero-meta-item">&#128196; Entrega escrita, sin sustentación oral</div>
+        </div>
+      </div>
+
+      <div class="gnote gnote--recuerda" style="margin-top:16px">
+        <div class="gnote__label">&#9888; Último año de este grupo</div>
+        <p>Este es el <strong>último año de contrato</strong> de los grupos 11°A y 11°B (finaliza el
+        30 de noviembre de 2026). A diferencia de otros talleres, aquí <strong>no hay grado 12° al que
+        trasladar pendientes</strong>: el Producto 4 (entrega final) debe quedar cerrado dentro del
+        Corte 4, sin excepción.</p>
+      </div>
+
+      <div id="control-avance" class="section-title">Tu control de avance</div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#e8f5e9">&#9989;</div>
+            <div><h3>&iquest;Qué llevas y qué te falta?</h3><p>Se actualiza solo con tus propias entregas a Drive</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div data-act-std-avance><p class="intro-text">Cargando tu avance...</p></div>
+          <div class="gnote gnote--recuerda"><div class="gnote__label">&#128161; Recuerda</div>
+            <p>Esta tabla es <strong>por cuenta</strong>: se marca <strong>Entregada</strong> cuando
+            <em>tú</em> subes el producto a Drive desde tu usuario, aunque el documento sea el mismo para
+            todo el equipo. Cada integrante debe entregarlo también desde su propia cuenta para que su
+            avance quede en Entregada.</p></div>
+        </div>
+      </div>
+
+      <div id="identificacion" class="section-title">Identificación del Taller</div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#e8f5e9">&#128203;</div>
+            <div>
+              <h3>Datos generales</h3>
+              <p>Información oficial del taller integrador</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="table-scroll">
+            <table class="data-table ident-table">
+              <tbody>
+                <tr><td>Denominación del Programa</td><td>Sistemas Teleinformáticos</td></tr>
+                <tr><td>Nombre del proyecto</td><td>Taller Integrador</td></tr>
+                <tr><td>Institución educativa</td><td>Santa Bárbara (SB)</td></tr>
+                <tr><td>Grupos</td><td>11°A y 11°B</td></tr>
+                <tr><td>Dirigido a</td><td>Micro, pequeñas y medianas empresas (MiPymes) de la región de Boyacá</td></tr>
+                <tr><td>Modalidad de trabajo</td><td>Equipos de 3 a 4 aprendices, organizados dentro de cada grupo</td></tr>
+                <tr><td>Modalidad de entrega</td><td>Documento escrito por equipo al instructor, sin sustentación oral</td></tr>
+                <tr><td>Productos del proyecto</td><td>4 productos, en 4 cortes de entrega (ver "Fechas de entrega")</td></tr>
+                <tr><td>Duración</td><td>Todo el año lectivo 2026 (último año de contrato del grupo, cierra el 30 de noviembre)</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="presentacion" class="section-title">Presentación</div>
+      <p class="section-intro">📍 <strong>Empieza por aquí:</strong> conoce de qué trata el taller y qué se espera de tu equipo antes de escoger la MiPyme con la que van a trabajar.</p>
+      <div class="gnote gnote--ruta">
+        <div class="gnote__label">🧭 ¿Cómo trabajar este taller? Paso a paso</div>
+        <ol>
+          <li><strong>Conforma tu equipo</strong> de 3 a 4 aprendices dentro de tu grupo (11°A o 11°B).</li>
+          <li><strong>Selecciona una MiPyme real</strong> de la región de Boyacá como caso de intervención.</li>
+          <li><strong>Desarrolla cada producto en equipo</strong>, en formato escrito y digital, con evidencia
+          fotográfica y fichas técnicas de las intervenciones realizadas.</li>
+          <li><strong>Entrega cada producto a Drive</strong>: <u>cada integrante del equipo</u> sube el mismo
+          documento con el botón <em>Entregar a Drive</em>, desde su propia cuenta, dentro de la fecha de tu
+          corte.</li>
+          <li><strong>Revisa "Tu control de avance"</strong> (arriba): te muestra qué productos ya entregaste tú
+          y cuáles faltan.</li>
+        </ol>
+      </div>
+      <div class="gnote gnote--recuerda"><div class="gnote__label">💡 Recuerda</div>
+        <p>El documento de cada producto es <strong>un solo documento escrito por equipo</strong> (todos
+        responden lo mismo, no cada quien el suyo) — pero la <strong>entrega a Drive es individual</strong>:
+        cada integrante debe subir ese mismo documento desde su propia cuenta del portal, para que quede
+        registrada la participación de todo el equipo en el control interno del instructor. Si tu equipo
+        ya entregó un producto y necesita corregirlo, pídanle a su instructor que lo habilite de nuevo.</p></div>
+
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#e3f2fd">&#128075;</div>
+            <div>
+              <h3>Presentación inicial</h3>
+              <p>Contexto y sentido del taller</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <p class="intro-text">
+            Este taller busca que los aprendices de grado 11° del programa Técnico en Sistemas
+            Teleinformáticos, adscritos a la Institución Educativa Santa Bárbara, desarrollen competencias
+            en diagnóstico, planeación, ejecución y validación del mantenimiento de equipos de cómputo y
+            redes de datos, dirigido a micro, pequeñas y medianas empresas (MiPymes) de la región de
+            Boyacá.
+          </p>
+          <p class="intro-text">
+            La mayoría de estas empresas cuenta con infraestructura de equipos y redes, pero recurre
+            principalmente al mantenimiento correctivo en lugar del preventivo, lo que genera sobrecostos,
+            baja disponibilidad de equipos y riesgos en el manejo de la información. Los aprendices
+            intervienen esta problemática real aplicando los conocimientos técnicos adquiridos en el
+            programa de formación.
+          </p>
+          <div class="info-box green" style="margin-top:14px">
+            <div class="label">Objetivo general</div>
+            <p>
+              Fortalecer los servicios teleinformáticos de equipos y redes de datos en las MiPymes de la
+              región de Boyacá, mediante el diagnóstico del estado de la infraestructura, el diseño de un
+              plan de mejora, la ejecución del mantenimiento y la validación de los procedimientos
+              realizados.
+            </p>
+          </div>
+          <div class="quote">
+            "Poner el conocimiento al servicio de una empresa real es la mejor forma de comprobar cuánto
+            hemos aprendido."
+            <cite>Taller Integrador - Orientación de trabajo</cite>
+          </div>
+        </div>
+      </div>
+
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128101;</div>
+            <div>
+              <h3>Metodología</h3>
+              <p>Cómo se organiza el trabajo en equipo</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <ul class="note-list">
+            <li>Trabajo en equipos de 3 a 4 aprendices, organizados dentro de cada grupo (11°A y 11°B).</li>
+            <li>Selección de una MiPyme real de la región de Boyacá como caso de intervención.</li>
+            <li>Elaboración de los productos en formato escrito y digital, con evidencia fotográfica y
+            fichas técnicas de las intervenciones realizadas.</li>
+            <li>Entrega final de los productos en documento escrito al instructor, sin sustentación oral.</li>
+          </ul>
+          <div class="info-box blue" style="margin-top:14px">
+            <p><strong>Producto = trabajo de equipo, entrega individual.</strong> El documento de cada
+            producto es el mismo para todo el equipo, pero <strong>cada integrante debe entregarlo a Drive
+            desde su propia cuenta</strong> (mismo archivo, un clic por persona). Así el instructor puede
+            llevar el control interno de que todos entregaron, sin depender de que uno solo suba por todos.</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="equipo" class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128101;</div>
+            <div>
+              <h3>Tu equipo de trabajo</h3>
+              <p>Antes de empezar, dinos con quién vas a trabajar</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">0</span>
+              <span class="activity-title">Conformación del equipo</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text">Escribe los nombres completos de <strong>todos</strong> los integrantes de tu
+              equipo, incluyéndote a ti mismo. Esto no reemplaza la portada de cada documento (ahí también deben ir
+              los nombres); es para que tu instructor tenga un registro rápido de qué equipo es cada quien.</p>
+              <label>
+                <span>Integrantes del equipo (nombres completos, uno por línea o separados por coma)</span>
+                <textarea rows="3" data-store="equipoTaller" data-track placeholder="Ej: Juan Perez, Maria Lopez, Carlos Gomez"></textarea>
+              </label>
+              <div class="act-btn-group">
+                <button type="button" id="btnGuardarEquipoTaller" class="btn-save-response" onclick="actStd_save_equipoTaller()">
+                  &#128190; Guardar equipo
+                </button>
+              </div>
+              <div id="statusEquipoTaller" class="activity-saved-notice" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                &#9989; Equipo guardado correctamente.
+              </div>
+              <div data-act-grade="equipoTaller"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="producto1" class="section-title">Desarrollo de los productos del proyecto</div>
+      <p class="section-intro">📍 <strong>4 productos, 4 cortes de entrega:</strong> cada tarjeta de abajo es un producto distinto. Cuando tu equipo lo tenga listo, súbanlo con el botón <em>Entregar a Drive</em> de esa tarjeta.</p>
+
+      <div class="card open cat-producto1">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128202;</div>
+            <div>
+              <h3>Producto 1 &middot; Informe del estado de la infraestructura</h3>
+              <p>Corte 1 &middot; Infraestructura, equipos, redes y herramientas</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">1</span>
+              <span class="activity-title">Informe del estado de la infraestructura, equipos, redes y herramientas</span>
+              <span class="mission-chip">Corte 1</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text">Diagnostica el estado actual de la MiPyme que va a acompañar tu equipo durante todo el taller.</p>
+              <div class="info-box" style="margin-bottom:16px">
+                <div class="label">Debe incluir</div>
+                <ul class="note-list">
+                  <li>Diagnóstico de la infraestructura de red y equipos informáticos de la MiPyme seleccionada.</li>
+                  <li>Verificación de la conectividad de la red de acuerdo con la normativa de telecomunicaciones.</li>
+                  <li>Registro de solicitudes o requerimientos de servicio técnico presentados por la empresa.</li>
+                  <li>Inventario de herramientas y recursos tecnológicos disponibles.</li>
+                  <li>Conclusiones sobre el estado actual y las necesidades de mantenimiento identificadas.</li>
+                </ul>
+              </div>
+              <div class="info-box blue">
+                <p>Este diagnóstico es la base del Plan de mejora (Producto 2): revísenlo bien antes de avanzar.</p>
+              </div>
+              <div data-act-std-delivery="informeInfraestructura"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="producto2" class="card open cat-producto2" style="margin-top:20px;">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128221;</div>
+            <div>
+              <h3>Producto 2 &middot; Plan de mejora</h3>
+              <p>Corte 2 &middot; Mantenimiento preventivo y correctivo</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">2</span>
+              <span class="activity-title">Plan de mejora</span>
+              <span class="mission-chip">Corte 2</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text">A partir del diagnóstico del Producto 1, diseñen el plan de mejora que van a ejecutar en la MiPyme.</p>
+              <div class="info-box" style="margin-bottom:16px">
+                <div class="label">Debe incluir</div>
+                <ul class="note-list">
+                  <li>Definición de los parámetros y recursos de red requeridos, según normativa de telecomunicaciones.</li>
+                  <li>Plan de mantenimiento preventivo y correctivo para los equipos de cómputo y redes de datos.</li>
+                  <li>Cronograma de actividades y responsables dentro del equipo de trabajo.</li>
+                  <li>Herramientas de control propuestas para el seguimiento del plan.</li>
+                </ul>
+              </div>
+              <div data-act-std-delivery="planMejora"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="producto3" class="card open cat-producto3" style="margin-top:20px;">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128295;</div>
+            <div>
+              <h3>Producto 3 &middot; Informe de ejecución</h3>
+              <p>Corte 3 &middot; Mantenimiento físico y lógico realizado</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3</span>
+              <span class="activity-title">Informe de ejecución</span>
+              <span class="mission-chip">Corte 3</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text">Registren la ejecución del plan de mejora en la MiPyme. Este producto cubre el trabajo
+              realizado durante las sesiones de septiembre y octubre, ya que la fase de ejecución es la más extensa
+              del proyecto.</p>
+              <div class="info-box" style="margin-bottom:16px">
+                <div class="label">Debe incluir</div>
+                <ul class="note-list">
+                  <li>Registro del mantenimiento físico y lógico realizado en los equipos de cómputo.</li>
+                  <li>Evidencia de la implementación de componentes de red (cableado estructurado, puntos de red,
+                  dispositivos inalámbricos, según aplique).</li>
+                  <li>Verificación de la operación del sistema computacional después del mantenimiento.</li>
+                  <li>Observaciones y dificultades encontradas durante la ejecución.</li>
+                </ul>
+              </div>
+              <div data-act-std-delivery="informeEjecucion"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p id="producto4" class="section-intro" style="margin-top:20px;">📍 <strong>Corte 4, entrega final:</strong> este producto cierra el taller. Recuerda que este grupo no tiene grado 12° al que trasladar pendientes.</p>
+      <div class="card open cat-producto4">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#127942;</div>
+            <div>
+              <h3>Producto 4 &middot; Reporte de cumplimiento</h3>
+              <p>Corte 4 &middot; Validación del plan de mejora (entrega final)</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">4</span>
+              <span class="activity-title">Reporte de cumplimiento</span>
+              <span class="mission-chip">Corte 4 · Entrega final</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text">Cierren el taller validando lo ejecutado frente al plan de mejora propuesto.</p>
+              <div class="info-box" style="margin-bottom:16px">
+                <div class="label">Debe incluir</div>
+                <ul class="note-list">
+                  <li>Validación de los procedimientos realizados frente al plan de mejora propuesto.</li>
+                  <li>Documentación de las acciones realizadas en la red, según la normativa técnica.</li>
+                  <li>Resultados alcanzados frente a los objetivos del proyecto.</li>
+                  <li>Recomendaciones para la MiPyme y lecciones aprendidas por el equipo.</li>
+                </ul>
+              </div>
+              <div data-act-std-delivery="reporteCumplimiento"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="requisitos" class="section-title">Requisitos formales de entrega</div>
+      <p class="section-intro">📍 <strong>Aplica a los 4 productos:</strong> cada producto debe presentarse de manera individual (por equipo de trabajo) y cumplir con esta misma estructura y formato.</p>
+      <div class="gnote gnote--ruta">
+        <div class="gnote__label">🧭 Así se arma el documento, en este orden</div>
+        <p>Cada uno de los 4 productos es <strong>un solo documento</strong> (no cuatro documentos separados),
+        con las partes 1 a 6 de abajo <strong>en ese orden, una detrás de la otra</strong>. Los anexos (si
+        aplican) van al final, después de las referencias. El formato (letra, márgenes, interlineado) no es
+        una parte más: son las reglas que debes aplicar a <strong>todo</strong> el documento, de la portada
+        a la última página.</p>
+      </div>
+
+      <div class="panel-grid-single">
+        <article class="checklist-card">
+          <h3>1&#65039;&#8419; &#128196; Portada</h3>
+          <ul class="note-list">
+            <li>Nombre de la institución (SENA &ndash; Centro de Formación).</li>
+            <li>Programa de formación: Técnico en Sistemas Teleinformáticos.</li>
+            <li>Título del trabajo.</li>
+            <li>Institución educativa: Santa Bárbara (SB), grado 11° (grupo 11°A o 11°B).</li>
+            <li>Nombre completo de los integrantes del equipo.</li>
+            <li>Nombre del instructor.</li>
+            <li>Lugar y fecha de entrega.</li>
+          </ul>
+        </article>
+        <article class="checklist-card">
+          <h3>2&#65039;&#8419; &#128209; Tabla de contenido</h3>
+          <ul class="note-list">
+            <li>Índice organizado con numeración de páginas.</li>
+            <li>Uso de títulos y subtítulos jerarquizados.</li>
+          </ul>
+        </article>
+        <article class="checklist-card">
+          <h3>3&#65039;&#8419; &#128075; Introducción</h3>
+          <ul class="note-list">
+            <li>Breve explicación del propósito del trabajo.</li>
+            <li>Contexto de la MiPyme intervenida.</li>
+            <li>Alcance y limitaciones del producto.</li>
+          </ul>
+        </article>
+        <article class="checklist-card">
+          <h3>4&#65039;&#8419; &#128221; Desarrollo</h3>
+          <ul class="note-list">
+            <li>Exposición clara y ordenada de la información.</li>
+            <li>Uso de subtítulos para organizar ideas.</li>
+            <li>Ejemplos, cuadros, tablas, fotografías o diagramas que apoyen el análisis.</li>
+            <li>Aplicación de conceptos vistos en la formación.</li>
+          </ul>
+        </article>
+        <article class="checklist-card">
+          <h3>5&#65039;&#8419; &#9989; Conclusiones</h3>
+          <ul class="note-list">
+            <li>Reflexiones finales sobre el aprendizaje obtenido.</li>
+            <li>Resultados alcanzados en relación con el objetivo del trabajo.</li>
+            <li>Posibles recomendaciones para la MiPyme o el proceso analizado.</li>
+          </ul>
+        </article>
+        <article class="checklist-card">
+          <h3>6&#65039;&#8419; &#128279; Referencias bibliográficas</h3>
+          <ul class="note-list">
+            <li>Fuentes consultadas (manuales técnicos, normativa de telecomunicaciones, documentos institucionales).</li>
+            <li>Normas APA (última edición) o lineamientos institucionales.</li>
+          </ul>
+        </article>
+        <article class="checklist-card">
+          <h3>&#128193; Anexos <span style="font-weight:400">&mdash; opcional, va al final</span></h3>
+          <ul class="note-list">
+            <li>Documentos, formatos, fichas técnicas, fotografías o evidencias adicionales.</li>
+          </ul>
+        </article>
+      </div>
+
+      <div class="info-box blue" style="margin-top:16px">
+        <div class="label">&#128207; Formato para TODO el documento (de la portada a la última página)</div>
+        <p>Esto no es una parte más de la lista de arriba: son las reglas de presentación que debes usar en
+        <strong>todo</strong> el documento, desde la portada hasta el final.</p>
+        <ul class="note-list">
+          <li>Letra Arial 12.</li>
+          <li>Interlineado 1.5.</li>
+          <li>Márgenes estándar (2.5 cm).</li>
+          <li>Numeración de páginas.</li>
+          <li>Justificación del texto.</li>
+        </ul>
+      </div>
+
+      <div id="fechas" class="section-title">Fechas de entrega por grupo</div>
+      <p class="section-intro">📍 <strong>Un corte por producto.</strong> Las fechas corresponden al último día de la sesión de clase disponible en cada corte, según el calendario real de clases de 11°A y 11°B.</p>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#fff3e0">&#128197;</div>
+            <div>
+              <h3>Calendario de cortes 2026</h3>
+              <p>Según el calendario de clases de cada grupo</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr><th>Corte &middot; Producto</th><th>Fecha límite &middot; <span data-grupo-label>tu grupo</span></th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Corte 1 &ndash; Producto 1: Informe del estado de la infraestructura, equipos, redes y herramientas</td><td data-fecha-11a="31-jul-2026" data-fecha-11b="30-jul-2026">31-jul-2026</td></tr>
+                <tr><td>Corte 2 &ndash; Producto 2: Plan de mejora</td><td data-fecha-11a="28-ago-2026" data-fecha-11b="27-ago-2026">28-ago-2026</td></tr>
+                <tr><td>Corte 3 &ndash; Producto 3: Informe de ejecución</td><td data-fecha-11a="23-oct-2026" data-fecha-11b="22-oct-2026">23-oct-2026</td></tr>
+                <tr><td>Corte 4 &ndash; Producto 4: Reporte de cumplimiento (entrega final)</td><td data-fecha-11a="27-nov-2026" data-fecha-11b="26-nov-2026">27-nov-2026</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="gnote gnote--recuerda" style="margin-top:14px"><div class="gnote__label">&#9888; Nota</div>
+            <p>Este es el último año de contrato de estos grupos (finaliza el 30 de noviembre de 2026), por
+            lo que el Producto 4 debe quedar cerrado en ese corte: <strong>no hay grado 12° al cual
+            trasladar pendientes</strong>. El instructor puede adelantar la asignación del producto en la
+            sesión anterior para dar tiempo de desarrollo, y puede habilitar de nuevo un producto ya
+            entregado si tu equipo necesita corregirlo.</p></div>
+        </div>
+      </div>
+
+      <div id="evaluacion" class="section-title">Evaluación</div>
+      <div class="card open cat-evaluacion">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#f3e5f5">&#127919;</div>
+            <div>
+              <h3>Criterios de evaluación</h3>
+              <p>Qué revisa el instructor en cada producto</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <ul class="note-list">
+            <li>Claridad y organización de los informes.</li>
+            <li>Rigor técnico en el diagnóstico y en el mantenimiento realizado.</li>
+            <li>Evidencia real de la intervención (fotografías, fichas técnicas, registros de mantenimiento).</li>
+            <li>Cumplimiento del plan de mejora propuesto.</li>
+            <li>Calidad de la entrega final.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="gnote gnote--entrega"><div class="gnote__label">📦 Antes de entregar, revisa</div>
+        <ul>
+          <li>El documento cumple la portada, tabla de contenido, introducción, desarrollo, conclusiones, referencias y formato exigidos.</li>
+          <li>El archivo lleva el nombre completo de todos los integrantes del equipo en la portada.</li>
+          <li><strong>Cada integrante del equipo</strong> entró a su propia cuenta y subió el mismo documento con el botón <em>Entregar a Drive</em> de esa tarjeta, para que a todos les quede marcado como <strong>Entregada</strong> en su control de avance.</li>
+        </ul>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+(function () {
+  function buildGuideRouteHref(fileName) {
+    return "guia.html?g=" + encodeURIComponent(fileName);
+  }
+
+  var grupo = String((document.body && document.body.dataset && document.body.dataset.defaultGrupo) || "11A").toUpperCase();
+  var esGrupoB = grupo === "11B";
+
+  // Tabla de fechas: cada celda trae AMBAS fechas en data-*; aqui se deja
+  // visible solo la del grupo real del aprendiz (no se muestra la del otro grupo).
+  document.querySelectorAll("[data-fecha-11a]").forEach(function (cell) {
+    var fecha = esGrupoB ? cell.getAttribute("data-fecha-11b") : cell.getAttribute("data-fecha-11a");
+    if (fecha) cell.textContent = fecha;
+  });
+  document.querySelectorAll("[data-grupo-label]").forEach(function (span) {
+    span.textContent = "Grupo " + grupo;
+  });
+
+  var config = {
+    "11A": {
+      currentFile: "grupo-11a-guia-09-taller-integrador.html",
+      currentLabel: "Taller Integrador | 11A",
+      campus: "Santa Bárbara | 11A"
+    },
+    "11B": {
+      currentFile: "grupo-11b-guia-09-taller-integrador.html",
+      currentLabel: "Taller Integrador | 11B",
+      campus: "Santa Bárbara | 11B"
+    }
+  }[grupo] || null;
+
+  if (!config) {
+    return;
+  }
+
+  var currentGuideNavLink = document.getElementById("currentGuideNavLink");
+  var currentGuideNavLabel = document.getElementById("currentGuideNavLabel");
+  var topbarCampus = document.getElementById("topbarCampus");
+
+  if (currentGuideNavLink) {
+    currentGuideNavLink.href = buildGuideRouteHref(config.currentFile);
+    currentGuideNavLink.dataset.currentFile = config.currentFile;
+  }
+  if (currentGuideNavLabel) {
+    currentGuideNavLabel.textContent = config.currentLabel;
+  }
+  if (topbarCampus) {
+    topbarCampus.textContent = config.campus;
+  }
+})();
+</script>

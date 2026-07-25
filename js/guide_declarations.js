@@ -360,6 +360,79 @@
     ],
   });
 
+  // ── Taller Integrador (Santa Barbara 11A + 11B, solo grado 11) ─────────────
+  // Proyecto de cierre, distinto del Taller Integrador de grado 10 (mismo
+  // js/script_taller_integrador.js, generalizado por GUIDE_DATA_FILE): 4
+  // productos (no 6), un solo corte por producto, dirigido a una MiPyme real
+  // de Boyaca. Es el ULTIMO ano de contrato de estos grupos (cierra 30-nov):
+  // no hay grado 12 al que trasladar pendientes del Producto 4. Igual que el
+  // taller de grado 10, ninguna actividad usa teamRequirement (el equipo va
+  // en la portada del documento), pero cada integrante entrega el mismo
+  // documento desde su PROPIA cuenta para el control interno del instructor.
+  register({
+    files: [
+      "grupo-11a-guia-09-taller-integrador.html",
+      "grupo-11b-guia-09-taller-integrador.html",
+    ],
+    guideNumber: "9",
+    guideTitle: "Taller Integrador",
+    stateKey: "guia_interactiva_11a_guia9_html",
+    program: PROGRAM,
+    competencia: "Proyecto formativo integrador - Diagnostico, planeacion, ejecucion y validacion del mantenimiento de equipos de computo y redes de datos en una MiPyme real de la region de Boyaca.",
+    resultado: "Taller Integrador - Trabajo en equipo con una MiPyme real de la region de Boyaca (ultimo ano de contrato del grupo, cierra el 30 de noviembre).",
+    activities: [
+      {
+        id: "equipoTaller", number: "0", label: "Conformacion del equipo de trabajo",
+        shortName: "Equipo", type: "form", formFields: ["equipoTaller"],
+        buttonIds: { save: "btnGuardarEquipoTaller", status: "statusEquipoTaller" },
+      },
+      {
+        id: "informeInfraestructura", number: "1", label: "Informe del estado de la infraestructura, equipos, redes y herramientas",
+        shortName: "InformeInfraestructura", type: "file",
+        driveTarget: {
+          panelKey: "taller-sb11-1",
+          deadlineActivityId: "informeInfraestructura",
+          activityTitle: "Producto 1 - Informe del estado de la infraestructura",
+          description: "Sube el informe del estado de la infraestructura, equipos, redes y herramientas de la MiPyme seleccionada.",
+          note: "Mismo documento para todo el equipo, pero cada integrante debe entregarlo desde su propia cuenta.",
+        },
+      },
+      {
+        id: "planMejora", number: "2", label: "Plan de mejora",
+        shortName: "PlanMejora", type: "file",
+        driveTarget: {
+          panelKey: "taller-sb11-2",
+          deadlineActivityId: "planMejora",
+          activityTitle: "Producto 2 - Plan de mejora",
+          description: "Sube el plan de mejora: parametros y recursos de red, mantenimiento preventivo/correctivo, cronograma y herramientas de control.",
+          note: "Mismo documento para todo el equipo, pero cada integrante debe entregarlo desde su propia cuenta.",
+        },
+      },
+      {
+        id: "informeEjecucion", number: "3", label: "Informe de ejecucion",
+        shortName: "InformeEjecucion", type: "file",
+        driveTarget: {
+          panelKey: "taller-sb11-3",
+          deadlineActivityId: "informeEjecucion",
+          activityTitle: "Producto 3 - Informe de ejecucion",
+          description: "Sube el informe de ejecucion del mantenimiento fisico y logico realizado en la MiPyme (cubre las sesiones de septiembre y octubre).",
+          note: "Mismo documento para todo el equipo, pero cada integrante debe entregarlo desde su propia cuenta.",
+        },
+      },
+      {
+        id: "reporteCumplimiento", number: "4", label: "Reporte de cumplimiento (entrega final)",
+        shortName: "ReporteCumplimiento", type: "file",
+        driveTarget: {
+          panelKey: "taller-sb11-4",
+          deadlineActivityId: "reporteCumplimiento",
+          activityTitle: "Producto 4 - Reporte de cumplimiento (entrega final)",
+          description: "Sube el reporte de cumplimiento: validacion frente al plan de mejora, resultados y lecciones aprendidas.",
+          note: "Entrega final: mismo documento para todo el equipo, pero cada integrante debe entregarlo desde su propia cuenta. No hay grado 12 al cual trasladar pendientes.",
+        },
+      },
+    ],
+  });
+
   // ── Guia 5 — Herramientas informaticas y digitales (11A + 11B) ─────────────
   register({
     files: [

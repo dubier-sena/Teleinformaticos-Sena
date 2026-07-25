@@ -93,6 +93,8 @@
     // asi que getCloudFileName devuelve el archivo tal cual y ya coincide.
     "santa-barbara-10a-guia-04-taller-integrador.html": "sb_10a_guia4.html",
     "santa-barbara-10b-guia-04-taller-integrador.html": "sb_10b_guia4.html",
+    "grupo-11a-guia-09-taller-integrador.html": "11a_guia9.html",
+    "grupo-11b-guia-09-taller-integrador.html": "11b_guia9.html",
   };
 
   function getCloudFileName(pageFile) {

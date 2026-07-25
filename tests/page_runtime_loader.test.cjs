@@ -189,6 +189,24 @@ const EXPECTED_CONTEXTS = {
     ficha: "3441950",
     boot: "initTallerIntegrador",
   },
+  "sb-guia9-11a": {
+    family: "taller-integrador-sb11",
+    pageFile: "grupo-11a-guia-09-taller-integrador.html",
+    partialPath: "partials/taller-integrador-sb11-content.html",
+    inst: "Institucion Educativa Santa Barbara",
+    grupo: "11A",
+    ficha: "3168850",
+    boot: "initTallerIntegrador",
+  },
+  "sb-guia9-11b": {
+    family: "taller-integrador-sb11",
+    pageFile: "grupo-11b-guia-09-taller-integrador.html",
+    partialPath: "partials/taller-integrador-sb11-content.html",
+    inst: "Institucion Educativa Santa Barbara",
+    grupo: "11B",
+    ficha: "3168852",
+    boot: "initTallerIntegrador",
+  },
 };
 
 const SHARED_HTML = '<section class="runtime-fragment"><button id="runtimeButton"></button></section>';
