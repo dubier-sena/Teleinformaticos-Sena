@@ -175,3 +175,68 @@ test("induccion: updateProgress/saveProgress excluyen el boton generico .activit
     );
   });
 });
+
+// Guia 7 y Guia 8 usan SOLO ActivityStandard.mountActivities() (sin lockAppliers
+// propios como Guia 6) -- mountFormActivity() ya escucha "activity-deadlines-updated"
+// para reaplicar applyLock() por su cuenta, asi que su reflectGradesForGuiaN NO
+// necesita lockAppliers: basta con que exista, se llame desde el init, use la
+// familia correcta y dispare ese evento en onChanged. Sin esto, el admin podia
+// calificar con el banco de respuestas y el campo seguia editable para el
+// aprendiz aunque la actividad apareciera "Aprobada" (reportado por el usuario
+// 2026-07-25 en Guia 7; mismo hueco confirmado en Guia 8 y en "equipoTaller"
+// del Taller Integrador, su unica actividad type:"form").
+[
+  { file: "js/script_guia7.js", reflectFnName: "reflectGradesForGuia7", initFnName: "initGuia7", expectedFamily: "guia-07-ciberseguridad" },
+  { file: "js/script_guia8.js", reflectFnName: "reflectGradesForGuia8", initFnName: "initGuia8", expectedFamily: "guia-08-documentar-gestion" },
+].forEach(({ file, reflectFnName, initFnName, expectedFamily }) => {
+  test(`${reflectFnName} (${file}): existe, se llama desde ${initFnName}, usa la familia correcta y refresca el bloqueo via evento`, () => {
+    const source = read(file);
+    const initBlock = source.match(new RegExp(`function ${initFnName}\\s*\\([^)]*\\)\\s*\\{[\\s\\S]*?\\n  \\}`));
+    assert.ok(initBlock, `no se encontro ${initFnName} en ${file}`);
+    assert.match(
+      initBlock[0],
+      new RegExp(`${reflectFnName}\\(\\)`),
+      `${initFnName} debe llamar ${reflectFnName}() (si no, el campo nunca se bloquea al calificar sin que el aprendiz haya guardado el mismo)`
+    );
+
+    const reflectBlock = extractReflectFnBlock(source, reflectFnName);
+    assert.match(
+      reflectBlock,
+      /reflectGradesIntoGuideState/,
+      `${reflectFnName} debe llamar activityGradesManager.reflectGradesIntoGuideState`
+    );
+    assert.ok(
+      reflectBlock.includes(`guideFamily: "${expectedFamily}"`),
+      `${reflectFnName} debe usar guideFamily "${expectedFamily}"`
+    );
+    assert.match(
+      reflectBlock,
+      /dispatchEvent\(new Event\("activity-deadlines-updated"\)\)/,
+      `${reflectFnName} debe disparar "activity-deadlines-updated" en onChanged para que mountFormActivity() reaplique el bloqueo sin recargar la pagina`
+    );
+  });
+});
+
+test('reflectGradesForTaller (js/script_taller_integrador.js): existe, se llama desde initTallerIntegrador y resuelve la familia por PAGE_FILE', () => {
+  const source = read("js/script_taller_integrador.js");
+  const initBlock = source.match(/function initTallerIntegrador\s*\([^)]*\)\s*\{[\s\S]*?\n  \}/);
+  assert.ok(initBlock, "no se encontro initTallerIntegrador");
+  assert.match(
+    initBlock[0],
+    /reflectGradesForTaller\(\)/,
+    "initTallerIntegrador debe llamar reflectGradesForTaller() (si no, 'equipoTaller' -- el unico producto type:\"form\" del taller -- nunca se bloquea al calificarlo sin que el aprendiz lo haya guardado el mismo)"
+  );
+
+  const reflectBlock = extractReflectFnBlock(source, "reflectGradesForTaller");
+  assert.match(reflectBlock, /reflectGradesIntoGuideState/);
+  assert.match(
+    reflectBlock,
+    /GUIDE_FAMILY_BY_FILE/,
+    "reflectGradesForTaller debe resolver la familia via GUIDE_FAMILY_BY_FILE[PAGE_FILE] (el script sirve 3 variantes: JFK/SB grado 10, SB grado 11)"
+  );
+  assert.match(
+    reflectBlock,
+    /dispatchEvent\(new Event\("activity-deadlines-updated"\)\)/,
+    "reflectGradesForTaller debe disparar 'activity-deadlines-updated' en onChanged"
+  );
+});

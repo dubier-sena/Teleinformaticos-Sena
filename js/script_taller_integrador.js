@@ -271,6 +271,40 @@
     }
     mountDriveDelivery();
     updateProgress();
+    reflectGradesForTaller();
+  }
+
+  // El taller nunca llamaba a reflectGradesIntoGuideState: si el admin
+  // aprobaba "equipoTaller" (el unico producto type:"form" del taller, los
+  // demas son type:"file" y se bloquean via el fallback de entrega del
+  // admin) con el banco de respuestas, el flag "equipoTaller-locked" nunca se
+  // ponia y el campo seguia editable aunque la actividad ya estuviera
+  // Aprobada. Mismo bug que Guia 5/7/8. La familia se resuelve por PAGE_FILE
+  // porque este mismo script sirve las 3 variantes del taller (JFK/SB grado
+  // 10, SB grado 11), cada una con su propia familia en GRADE_CATALOG.
+  function reflectGradesForTaller() {
+    var mgr = window.activityGradesManager;
+    if (!mgr || typeof mgr.reflectGradesIntoGuideState !== "function") return;
+    var guideFamily = (mgr.GUIDE_FAMILY_BY_FILE || {})[PAGE_FILE];
+    if (!guideFamily) return;
+    mgr.reflectGradesIntoGuideState({
+      guideFamily: guideFamily,
+      pageFile: PAGE_FILE,
+      getState: function () { return state; },
+      onChanged: function () {
+        saveState();
+        updateProgress();
+        if (window.ActivityStandard && typeof window.ActivityStandard.renderAvancePanel === "function" && document.querySelector("[data-act-std-avance]")) {
+          window.ActivityStandard.renderAvancePanel({
+            getGuideDataFile: function () { return PAGE_FILE; },
+            getState: function () { return state; },
+          });
+        }
+        if (typeof window.dispatchEvent === "function") {
+          window.dispatchEvent(new Event("activity-deadlines-updated"));
+        }
+      },
+    });
   }
 
   window.initTallerIntegrador = initTallerIntegrador;
