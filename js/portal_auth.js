@@ -41,6 +41,10 @@
       "Guía 7 - Planificar la información según criterios de ciberseguridad | Grupo 11A",
     "grupo-11b-guia-07-planificar-informacion-ciberseguridad.html":
       "Guía 7 - Planificar la información según criterios de ciberseguridad | Grupo 11B",
+    "grupo-11a-guia-08-documentar-gestion-informacion.html":
+      "Guía 8 - Documentar la gestión de la información | Grupo 11A",
+    "grupo-11b-guia-08-documentar-gestion-informacion.html":
+      "Guía 8 - Documentar la gestión de la información | Grupo 11B",
     "santa-barbara-10a-guia-02-redes-rap01.html":
       "Guía 2 - Definir los parámetros y recursos de la red de acuerdo con normativa de telecomunicaciones | Grupo 10A",
     "santa-barbara-10b-guia-02-redes-rap01.html":
@@ -170,6 +174,20 @@
       pageKey: "11b_guia7",
       stateKey: "guia_interactiva_11b_guia7_html",
     },
+    "grupo-11a-guia-08-documentar-gestion-informacion.html": {
+      mode: "state-with-activity",
+      total: 100,
+      activityTotal: 7,
+      pageKey: "11a_guia8",
+      stateKey: "guia_interactiva_11a_guia8_html",
+    },
+    "grupo-11b-guia-08-documentar-gestion-informacion.html": {
+      mode: "state-with-activity",
+      total: 100,
+      activityTotal: 7,
+      pageKey: "11b_guia8",
+      stateKey: "guia_interactiva_11b_guia8_html",
+    },
     "santa-barbara-10a-guia-02-redes-rap01.html": {
       mode: "state-with-activity",
       total: 13,
@@ -268,6 +286,7 @@
         "grupo-11a-guia-05-herramientas-informaticas-digitales.html",
         "grupo-11a-guia-06-planificar-informacion.html",
         "grupo-11a-guia-07-planificar-informacion-ciberseguridad.html",
+        "grupo-11a-guia-08-documentar-gestion-informacion.html",
         "santa-barbara-guia-python.html",
       ],
     },
@@ -279,6 +298,7 @@
         "grupo-11b-guia-05-herramientas-informaticas-digitales.html",
         "grupo-11b-guia-06-planificar-informacion.html",
         "grupo-11b-guia-07-planificar-informacion-ciberseguridad.html",
+        "grupo-11b-guia-08-documentar-gestion-informacion.html",
         "santa-barbara-guia-python.html",
       ],
     },

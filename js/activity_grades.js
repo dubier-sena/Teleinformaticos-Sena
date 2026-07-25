@@ -120,6 +120,11 @@
         // El DOM usa ids sin guion (guia5311…); el catálogo conserva el id con guion
         // para no perder notas ya guardadas, y fija el mount explícito.
         { id: "guia5-311", label: "3.1.1 Bitácora o análisis del caso", mount: "#guia5311DeadlineControls" },
+        // Juego Educaplay (sopa de letras + relaciona nombre y concepto), sin
+        // deadline mount propio -- usa el GradeMount dedicado del badge.
+        // Faltaba del catalogo: por eso "Tus actividades de esta guia" solo
+        // mostraba 3 en vez de 4. Detectado 2026-07-24.
+        { id: "guia5-321", label: "3.2.1 Reconocimiento de conceptos y herramientas", mount: "#guia5321GradeMount" },
         { id: "guia5-331", label: "3.3.1 Evidencias de herramientas", mount: "#guia5331DeadlineControls" },
         { id: "guia5-341", label: "3.4.1 Informe final integrador", mount: "#guia5341DeadlineControls" },
       ],
@@ -150,6 +155,18 @@
         { id: "diagnostico331", label: "3.3.1 Diagnóstico del estado de seguridad" },
         { id: "hardening332",   label: "3.3.2 Controles de hardening" },
         { id: "plan341",        label: "3.4.1 Plan de Ciberseguridad + Sustentación" },
+      ],
+    },
+    "guia-08-documentar-gestion": {
+      label: "Guía 8 — Documentar la gestión de la información (grado 11)",
+      activities: [
+        { id: "caso411",          label: "4.1.1 Análisis del caso Agropecuaria La Esperanza" },
+        { id: "plenaria412",      label: "4.1.2 Socialización en plenaria" },
+        { id: "bloqueAB421",      label: "4.2.1 Estudio de contenidos (Bloques A y B)" },
+        { id: "mapa422",          label: "4.2.2 Mapa conceptual del sistema documental" },
+        { id: "portafolio431",    label: "4.3.1 Portafolio documental del equipo" },
+        { id: "organizacion432",  label: "4.3.2 Organización digital y control de versiones" },
+        { id: "documento441",     label: "4.4.1 Documento Técnico + Sustentación" },
       ],
     },
     "guia-redes-rap01": {
@@ -589,6 +606,8 @@
     "grupo-11b-guia-06-planificar-informacion.html": "guia-06-planificar",
     "grupo-11a-guia-07-planificar-informacion-ciberseguridad.html": "guia-07-ciberseguridad",
     "grupo-11b-guia-07-planificar-informacion-ciberseguridad.html": "guia-07-ciberseguridad",
+    "grupo-11a-guia-08-documentar-gestion-informacion.html": "guia-08-documentar-gestion",
+    "grupo-11b-guia-08-documentar-gestion-informacion.html": "guia-08-documentar-gestion",
     "santa-barbara-10a-guia-02-redes-rap01.html": "guia-redes-rap01",
     "santa-barbara-10b-guia-02-redes-rap01.html": "guia-redes-rap01",
     "santa-barbara-10a-guia-03-redes-rap02.html": "guia-redes-rap02",

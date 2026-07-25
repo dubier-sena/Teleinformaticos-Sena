@@ -374,6 +374,13 @@
     resultado: RAP_HERRAMIENTAS,
     activities: [
       { id: "guia5-311", number: "3.1.1", label: "Bitacora o analisis del caso", shortName: "Bitacora",   type: "form", fieldPrefixes: ["bitacora:", "reflexion:"] },
+      // Juego (Educaplay: sopa de letras + relaciona nombre y concepto), sin
+      // campo de texto -- solo Aprobado/No aprobado por observacion (mismo
+      // patron que sopaletras321 en Guia 1). Faltaba por completo del
+      // catalogo de guide_declarations y de Calificaciones -- por eso en
+      // "Tus actividades de esta guia" solo aparecian 3 en vez de 4.
+      // Detectado 2026-07-24.
+      { id: "guia5-321", number: "3.2.1", label: "Reconocimiento de conceptos y herramientas", shortName: "Reconocimiento", type: "form" },
       { id: "guia5-331", number: "3.3.1", label: "Evidencias de herramientas",   shortName: "Evidencias", type: "form", fieldPrefixes: ["extension:", "system:", "matching:"] },
       { id: "guia5-341", number: "3.4.1", label: "Informe final integrador",     shortName: "InformeFinal", type: "file" },
     ],
@@ -595,6 +602,183 @@
           activityTitle: "Plan de Ciberseguridad (PlanCiberseguridad_[TuNombre].pdf)",
           description: "Sube a Drive el Plan de Ciberseguridad en PDF (minimo 8 paginas, secciones A-G) y la presentacion para la sustentacion oral.",
           note: "Nombre sugerido: PlanCiberseguridad_[TuNombre].pdf",
+        },
+      },
+    ],
+  });
+
+  // ── Guia 8 — Documentar la gestion de la informacion (11A + 11B) ────────
+  var RAP_DOCUMENTAR_GESTION = "RAP 04 - Documentar la gestion de la informacion de acuerdo a protocolos establecidos.";
+  register({
+    files: [
+      "grupo-11a-guia-08-documentar-gestion-informacion.html",
+      "grupo-11b-guia-08-documentar-gestion-informacion.html",
+    ],
+    guideNumber: "8",
+    guideTitle: "Guia 8 - Documentar la gestion de la informacion (Grado 11)",
+    stateKey: "guia_interactiva_11a_guia8_html",
+    program: PROGRAM,
+    competencia: COMP_CIBERSEG,
+    resultado: RAP_DOCUMENTAR_GESTION,
+    activities: [
+      {
+        id: "caso411", number: "4.1.1", label: "Analisis del caso Agropecuaria La Esperanza",
+        shortName: "CasoAgropecuaria", type: "form",
+        formFields: ["g8_411_datos", "g8_411_consecuencias", "g8_411_experiencia", "g8_411_documento"],
+        buttonIds: { save: "btnGuardarCaso411", status: "statusCaso411" },
+        wordExport: {
+          contextBox:
+            "Caso Agropecuaria La Esperanza (Chiquinquira): el tecnico anterior no dejo ningun documento y la empresa no puede resolver una falla de impresora ni el archivo de cartera.",
+          sections: [
+            { label: "1. Informacion que debio documentar el tecnico anterior (min. 5 datos)", storeKey: "g8_411_datos" },
+            { label: "2. Consecuencias que sufre hoy la empresa (min. 3)", storeKey: "g8_411_consecuencias" },
+            { label: "3. Experiencia propia de perdida de informacion o tiempo", storeKey: "g8_411_experiencia" },
+            { label: "4. Documento que elaborarias primero y por que", storeKey: "g8_411_documento" },
+          ],
+        },
+      },
+      {
+        id: "plenaria412", number: "4.1.2", label: "Socializacion en plenaria",
+        shortName: "Plenaria", type: "form",
+        formFields: ["g8_412_comunes", "g8_412_documento_urgente", "g8_412_reflexion"],
+        buttonIds: { save: "btnGuardarPlenaria412", status: "statusPlenaria412" },
+        wordExport: {
+          contextBox: "Plenaria grupal sobre el caso Agropecuaria La Esperanza y los tipos documentales que surgieron en el tablero.",
+          sections: [
+            { label: "1. Puntos en comun y diferencias del grupo de 3", storeKey: "g8_412_comunes" },
+            { label: "2. Documento mas urgente y que debe contener", storeKey: "g8_412_documento_urgente" },
+            { label: "3. Que cambio en tu comprension del caso y preguntas pendientes", storeKey: "g8_412_reflexion" },
+          ],
+        },
+      },
+      {
+        id: "bloqueAB421", number: "4.2.1", label: "Estudio de contenidos (Bloques A y B) - Tabla resumen",
+        shortName: "BloqueAB", type: "both",
+        formFields: ["g8_421_reparto", "g8_421_temas", "g8_421_documento", "g8_421_paraque", "g8_421_ejemplo", "g8_421_aporte", "g8_421_dudas"],
+        buttonIds: { save: "btnGuardarBloqueAB421", status: "statusBloqueAB421" },
+        wordExport: {
+          contextBox:
+            "Estudio en equipo de los 9 temas conceptuales de gestion documental (Bloques A y B). Entregable de equipo: tabla resumen PDF.",
+          sections: [
+            { label: "1. Reparto de temas del equipo", storeKey: "g8_421_reparto" },
+            { label: "2. Temas que estudiaste", storeKey: "g8_421_temas" },
+            { label: "3. Documento / Protocolo de tu fila", storeKey: "g8_421_documento" },
+            { label: "4. Para que sirve", storeKey: "g8_421_paraque" },
+            { label: "5. Ejemplo aplicado a una MiPyme de Boyaca", storeKey: "g8_421_ejemplo" },
+            { label: "6. Aporte agregado despues de la plenaria de cierre", storeKey: "g8_421_aporte" },
+            { label: "7. Dudas pendientes para el mapa conceptual", storeKey: "g8_421_dudas" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "guia8-4-2-1",
+          deadlineActivityId: "bloqueAB421",
+          activityTitle: "Tabla resumen de los Bloques A y B (BloqueAB_RAP04_[TuNombre]_v1.0.pdf)",
+          description: "Sube a Drive la tabla resumen en PDF construida por el equipo (3 columnas: Documento/Protocolo, Para que sirve, Ejemplo en una MiPyme).",
+          note: "Nombre sugerido: BloqueAB_RAP04_[TuNombre]_v1.0.pdf",
+        },
+      },
+      {
+        id: "mapa422", number: "4.2.2", label: "Mapa conceptual del sistema documental",
+        shortName: "MapaConceptual", type: "both",
+        formFields: ["g8_422_central", "g8_422_relacion", "g8_422_protocolo", "g8_422_aplicacion"],
+        buttonIds: { save: "btnGuardarMapa422", status: "statusMapa422" },
+        wordExport: {
+          contextBox:
+            "Mapa conceptual del sistema documental RAP 04: minimo 15 conceptos, relacion activo->ficha tecnica->hoja de vida->registros->informe->mejora, 5 tipos documentales, un protocolo de organizacion y una aplicacion en MiPyme. Evidencia de Conocimiento (IE-01).",
+          sections: [
+            { label: "1. Concepto central elegido", storeKey: "g8_422_central" },
+            { label: "2. Relacion logica del mapa (activo -> ficha -> hoja de vida -> registros -> informe -> mejora)", storeKey: "g8_422_relacion" },
+            { label: "3. Protocolo de organizacion explicado con un ejemplo", storeKey: "g8_422_protocolo" },
+            { label: "4. Aplicacion concreta en una MiPyme regional", storeKey: "g8_422_aplicacion" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "guia8-4-2-2",
+          deadlineActivityId: "mapa422",
+          activityTitle: "Mapa conceptual RAP 04 (MapaConceptual_RAP04_[Equipo]_v1.0.pdf)",
+          description: "Sube a Drive el mapa conceptual exportado a PDF y la evidencia de la presentacion oral del equipo.",
+          note: "Nombre sugerido: MapaConceptual_RAP04_[Equipo]_v1.0.pdf",
+        },
+      },
+      {
+        id: "portafolio431", number: "4.3.1", label: "Construccion del portafolio documental del equipo asignado",
+        shortName: "Portafolio", type: "both",
+        formFields: [
+          "g8_431_ficha_tecnica", "g8_431_hoja_vida", "g8_431_inventario",
+          "g8_431_backup", "g8_431_chequeo", "g8_431_procedimientos", "g8_431_conclusion",
+        ],
+        buttonIds: { save: "btnGuardarPortafolio431", status: "statusPortafolio431" },
+        wordExport: {
+          contextBox:
+            "Portafolio documental de un equipo real del laboratorio: ficha tecnica, hoja de vida, inventario de software, registro de copias de seguridad, lista de chequeo de operatividad y registro de procedimientos. Evidencia de Desempeno (IE-02).",
+          sections: [
+            { label: "1. Ficha tecnica del equipo", storeKey: "g8_431_ficha_tecnica" },
+            { label: "2. Hoja de vida del equipo", storeKey: "g8_431_hoja_vida" },
+            { label: "3. Inventario de software", storeKey: "g8_431_inventario" },
+            { label: "4. Registro de copias de seguridad", storeKey: "g8_431_backup" },
+            { label: "5. Lista de chequeo de operatividad", storeKey: "g8_431_chequeo" },
+            { label: "6. Registro de procedimientos", storeKey: "g8_431_procedimientos" },
+            { label: "7. Conclusion tecnica (trabajo independiente, minimo 8 lineas)", storeKey: "g8_431_conclusion" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "guia8-4-3-1",
+          deadlineActivityId: "portafolio431",
+          activityTitle: "Portafolio documental del equipo (6 documentos + capturas numeradas)",
+          description: "Sube a Drive los 6 documentos del portafolio diligenciados y las capturas de soporte numeradas (01_FichaTecnica.png ... 06_Procedimientos.png).",
+          note: "Carpeta sugerida: Portafolio_[TuNombre]_[Fecha]",
+        },
+      },
+      {
+        id: "organizacion432", number: "4.3.2", label: "Organizacion digital: carpetas, convencion de nombres y control de versiones",
+        shortName: "OrganizacionDigital", type: "both",
+        formFields: ["g8_432_estructura", "g8_432_convencion", "g8_432_versiones", "g8_432_protocolo"],
+        buttonIds: { save: "btnGuardarOrganizacion432", status: "statusOrganizacion432" },
+        wordExport: {
+          contextBox:
+            "Organizacion digital del portafolio de la Act. 4.3.1: estructura de carpetas por tipo documental, convencion de nombres, tabla de control de versiones y respaldo en la nube. Evidencia de Desempeno (IE-02).",
+          sections: [
+            { label: "1. Estructura de carpetas aplicada (7 carpetas por tipo documental)", storeKey: "g8_432_estructura" },
+            { label: "2. Convencion de nombres aplicada (ejemplos correctos e incorrectos)", storeKey: "g8_432_convencion" },
+            { label: "3. Tabla de control de versiones (cambio real v1.0 -> v1.1)", storeKey: "g8_432_versiones" },
+            { label: "4. Protocolo de nombres y versiones (trabajo independiente, max. 1 pagina)", storeKey: "g8_432_protocolo" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "guia8-4-3-2",
+          deadlineActivityId: "organizacion432",
+          activityTitle: "Organizacion digital (carpetas renombradas + arbol tree /f + respaldo en la nube)",
+          description: "Sube a Drive la captura del arbol de carpetas (tree /f), la captura de la sincronizacion en la nube y el Protocolo_Nombres_[TuNombre]_v1.0.pdf.",
+          note: "Nombre sugerido: Protocolo_Nombres_[TuNombre]_v1.0.pdf",
+        },
+      },
+      {
+        id: "documento441", number: "4.4.1", label: "Documento Tecnico de Gestion de la Informacion + Sustentacion oral",
+        shortName: "DocumentoTecnico", type: "both",
+        formFields: [
+          "g8_441_sec_a", "g8_441_sec_b", "g8_441_sec_c", "g8_441_sec_d",
+          "g8_441_sec_e", "g8_441_sec_f", "g8_441_sec_g",
+        ],
+        buttonIds: { save: "btnGuardarDocumento441", status: "statusDocumento441" },
+        wordExport: {
+          contextBox:
+            "Documento Tecnico de Gestion de la Informacion para Agropecuaria La Esperanza, integrando el portafolio (4.3.1) y el protocolo de organizacion (4.3.2). Producto + Sustentacion oral (IE-03). Indice borrador previo a la redaccion.",
+          sections: [
+            { label: "A. Introduccion y contexto", storeKey: "g8_441_sec_a" },
+            { label: "B. Inventario de activos informaticos", storeKey: "g8_441_sec_b" },
+            { label: "C. Fichas tecnicas y hoja de vida", storeKey: "g8_441_sec_c" },
+            { label: "D. Registros de procedimientos y de copias de seguridad", storeKey: "g8_441_sec_d" },
+            { label: "E. Protocolo de organizacion de la informacion", storeKey: "g8_441_sec_e" },
+            { label: "F. Conclusiones y recomendaciones de mejora (minimo 3 con justificacion)", storeKey: "g8_441_sec_f" },
+            { label: "G. Bibliografia (minimo 5 fuentes, APA o IEEE)", storeKey: "g8_441_sec_g" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "guia8-4-4-1",
+          deadlineActivityId: "documento441",
+          activityTitle: "Documento Tecnico de Gestion de la Informacion (DocTecnico_GestionInfo_[TuNombre]_v1.0.pdf)",
+          description: "Sube a Drive el Documento Tecnico en PDF (minimo 8 paginas, secciones A-G) y la presentacion para la sustentacion oral.",
+          note: "Nombre sugerido: DocTecnico_GestionInfo_[TuNombre]_v1.0.pdf",
         },
       },
     ],
