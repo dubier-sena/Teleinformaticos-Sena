@@ -1934,7 +1934,6 @@ function updateBudgetSummary() {
 
 function updateProgress() {
   const trackedFields = Array.from(document.querySelectorAll("[data-track]"));
-  const activityChecks = Array.from(document.querySelectorAll(".activity-check"));
   const completedFields = trackedFields.filter((field) => {
     if (field.type === "checkbox") {
       return field.checked;
@@ -1944,12 +1943,16 @@ function updateProgress() {
     }
     return field.value.trim().length > 0;
   }).length;
-  const completedChecks = activityChecks.filter((button) =>
-    button.classList.contains("checked")
-  ).length;
 
-  const total = trackedFields.length + activityChecks.length;
-  const completed = completedFields + completedChecks;
+  // NOTA: ".activity-check" (boton generico "marcar como vista" que inyecta
+  // guia_template.js, ver initActivityChecks()) NO cuenta para el progreso.
+  // Es un marcador manual de lectura, independiente de si la actividad esta
+  // realmente respondida/aprobada -- contarlo hacia el total impedia llegar
+  // a 100% aunque TODOS los campos reales estuvieran completos y la actividad
+  // aprobada (detectado 2026-07-25 calificando Guia 6 para QA). Las guias mas
+  // nuevas (7, 8) ya no incluyen este boton en su calculo de progreso.
+  const total = trackedFields.length;
+  const completed = completedFields;
   const rawPercent = total ? Math.round((completed / total) * 100) : 0;
   const percent = completed > 0 && rawPercent === 0 ? 1 : rawPercent;
   const label = `${percent}%`;
