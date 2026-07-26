@@ -578,6 +578,42 @@
     renderEquipoG4CBlock();
 
     updateProgress();
+    reflectGradesForGuia4Ciber();
+  }
+
+  // Guia 4-Ciber nunca llamaba a reflectGradesIntoGuideState (mismo bug que
+  // Guia 5/7/8/Taller en grado 11, ver reflectGradesForGuia5() en js/script.js):
+  // si el admin aprobaba una actividad con el banco de respuestas (el aprendiz
+  // nunca la guardo el mismo), el flag "{id}-locked" nunca se ponia, asi que
+  // ActivityStandard.mountActivities() seguia mostrando los campos editables
+  // aunque la actividad ya estuviera Aprobada. Detectado 2026-07-25 en QA
+  // reportado por el usuario en Guia 7 (grado 11) y confirmado en el resto de
+  // guias que solo usan ActivityStandard.mountActivities() sin lockAppliers.
+  function reflectGradesForGuia4Ciber() {
+    var mgr = window.activityGradesManager;
+    if (!mgr || typeof mgr.reflectGradesIntoGuideState !== "function") return;
+    mgr.reflectGradesIntoGuideState({
+      guideFamily: "guia-04-ciberseguridad",
+      pageFile: PAGE_FILE,
+      getState: function () { return state; },
+      onChanged: function () {
+        saveState();
+        updateProgress();
+        if (window.ActivityStandard && typeof window.ActivityStandard.renderAvancePanel === "function" && document.querySelector("[data-act-std-avance]")) {
+          window.ActivityStandard.renderAvancePanel({
+            getGuideDataFile: function () { return PAGE_FILE; },
+            getState: function () { return state; },
+          });
+        }
+        // mountFormActivity() (activity_standard.js) escucha este evento y
+        // vuelve a aplicar applyLock()/applyDeadlineGate() por actividad --
+        // asi los campos quedan deshabilitados DE INMEDIATO si el aprendiz
+        // tiene la guia abierta cuando el admin califica, sin re-montar nada.
+        if (typeof window.dispatchEvent === "function") {
+          window.dispatchEvent(new Event("activity-deadlines-updated"));
+        }
+      },
+    });
   }
 
   window.initGuia4Ciber = initGuia4Ciber;
