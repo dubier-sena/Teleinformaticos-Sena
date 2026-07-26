@@ -215,8 +215,20 @@
 
   // ── Progreso ──────────────────────────────────────────────────────────────
 
+  // Un producto (tipo "file") cuenta como hecho por "-locked" (entrega real del
+  // equipo, ver _persistDeliveryToState en activity_standard.js, que fija
+  // ambos) O por "-delivery" (entrega sintetizada por reflectGradesIntoGuideState
+  // cuando el admin aprueba desde el banco sin subida real -- ese camino NUNCA
+  // fija "-locked"). Sin este respaldo, "Progreso" se quedaba atascado aunque
+  // "Tus actividades de esta guia" ya mostrara todo Aprobada/Entregado.
+  function isProductDone(id) {
+    if (state[`${id}-locked`]) return true;
+    const delivery = state[`${id}-delivery`];
+    return Boolean(delivery && delivery.status === "delivered");
+  }
+
   function updateProgress() {
-    const completed = ACTIVITY_IDS.filter((id) => Boolean(state[`${id}-locked`])).length;
+    const completed = ACTIVITY_IDS.filter(isProductDone).length;
     const total = ACTIVITY_IDS.length;
     const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
     const bar = document.getElementById("progressBar");
@@ -229,7 +241,7 @@
 
     document.querySelectorAll(".nav-link .check").forEach((c) => c.classList.remove("done"));
     ACTIVITY_IDS.forEach((id, index) => {
-      if (!state[`${id}-locked`]) return;
+      if (!isProductDone(id)) return;
       const check = document.querySelector(`.nav-link[href="#producto${index + 1}"] .check`);
       if (check) check.classList.add("done");
     });
