@@ -1908,7 +1908,6 @@ function updateBudgetSummary() {
 
 function updateProgress() {
   const trackedFields = Array.from(document.querySelectorAll("[data-track]"));
-  const activityChecks = Array.from(document.querySelectorAll(".activity-check"));
   const completedFields = trackedFields.filter((field) => {
     if (field.type === "checkbox") {
       return field.checked;
@@ -1918,12 +1917,12 @@ function updateProgress() {
     }
     return field.value.trim().length > 0;
   }).length;
-  const completedChecks = activityChecks.filter((button) =>
-    button.classList.contains("checked")
-  ).length;
 
-  const total = trackedFields.length + activityChecks.length;
-  const completed = completedFields + completedChecks;
+  // No se cuenta ".activity-check" (boton generico inyectado por guia_template.js):
+  // nunca se marca automaticamente al calificar desde el banco, e inflaba el
+  // denominador dejando el % atascado aunque las respuestas estuvieran completas.
+  const total = trackedFields.length;
+  const completed = completedFields;
   const rawPercent = total ? Math.round((completed / total) * 100) : 0;
   const percent = completed > 0 && rawPercent === 0 ? 1 : rawPercent;
   const label = `${percent}%`;

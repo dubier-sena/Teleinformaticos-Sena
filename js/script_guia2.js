@@ -6445,7 +6445,6 @@ function verifyMatching() {
 function updateProgress() {
   const trackedFields = Array.from(document.querySelectorAll("[data-track]"));
   const trackedButtons = Array.from(document.querySelectorAll("[data-track-button]"));
-  const activityChecks = Array.from(document.querySelectorAll(".activity-check"));
   const wordSearchGames = Array.from(document.querySelectorAll("[data-word-search]"));
   const matchingGames = Array.from(document.querySelectorAll("[data-matching-game]"));
   const radioStoreKeys = new Set(
@@ -6469,9 +6468,6 @@ function updateProgress() {
   const completedButtons = trackedButtons.filter(
     (button) => button.dataset.trackButton === "true"
   ).length;
-  const completedChecks = activityChecks.filter((button) =>
-    button.classList.contains("checked")
-  ).length;
   const completedWordSearchGames = wordSearchGames.filter(() => {
     const gameState = getWordSearchState();
     return Boolean(gameState.completedAt);
@@ -6481,18 +6477,19 @@ function updateProgress() {
     return Boolean(gameState.completedAt);
   }).length;
 
+  // No se cuenta ".activity-check" (boton generico inyectado por guia_template.js):
+  // nunca se marca automaticamente al calificar desde el banco, e inflaba el
+  // denominador dejando el % atascado aunque las respuestas estuvieran completas.
   const total =
     trackedFields.filter((field) => field.type !== "radio").length +
     radioStoreKeys.size +
     trackedButtons.length +
-    activityChecks.length +
     wordSearchGames.length +
     matchingGames.length;
   const completed =
     completedNonRadioFields +
     completedRadioGroups +
     completedButtons +
-    completedChecks +
     completedWordSearchGames +
     completedMatchingGames;
   const rawPercent = total ? Math.round((completed / total) * 100) : 0;
