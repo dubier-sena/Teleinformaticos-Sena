@@ -840,6 +840,11 @@
       "grupo-10b-guia-01-induccion.html": "guia_induccion_10b_guia_html",
       "santa-barbara-10a-guia-02-redes-rap01.html": "guia_interactiva_sb_10a_redes_html",
       "santa-barbara-10b-guia-02-redes-rap01.html": "guia_interactiva_sb_10b_redes_html",
+      "grupo-11b-guia-05-herramientas-informaticas-digitales.html": "guia_interactiva_11b_guia_html",
+      "grupo-11b-guia-06-planificar-informacion.html": "guia_interactiva_11b_guia6_html",
+      "grupo-11b-guia-07-planificar-informacion-ciberseguridad.html": "guia_interactiva_11b_guia7_html",
+      "grupo-11b-guia-08-documentar-gestion-informacion.html": "guia_interactiva_11b_guia8_html",
+      "grupo-11b-guia-09-taller-integrador.html": "guia_interactiva_11b_guia9_html",
     };
     // Los alias con clave COMPLETA ("guia_...") son la fuente de verdad real del
     // localStorage de la guia (ver STORAGE_KEY en script_induccion.js y
