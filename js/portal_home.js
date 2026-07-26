@@ -163,10 +163,24 @@
   // guias -> el checklist de "Pendiente en esta guia" mostraba TODO como
   // pendiente aunque el aprendiz ya hubiera guardado o el avance mostrara
   // 100% (bug reportado jul-10).
+  // Guias 5/6/7/8 y Taller Integrador de grado 11 (Santa Barbara) registran
+  // 11A y 11B en un solo register({files:[...], stateKey:"...11a_guia..."}) --
+  // el stateKey declarado es UN solo literal con "11a", asi que
+  // getStateKeyForGuide() devuelve ese mismo valor tambien para el archivo
+  // 11B (la clave real de 11B tiene "11b" en vez de "11a"). Mismo sintoma que
+  // el caso Induccion/RAP01 de arriba, aunque aqui la causa es otra: no hay
+  // script propio, es que el stateKey de la declaracion no varia por archivo.
+  // Detectado 2026-07-26 en QA de grado 11 SB (10B mostraba 100% en la guia
+  // pero "Pendiente en esta guia" seguia listando todo en el home).
   var REAL_STATE_KEY_ALIASES = {
     "grupo-10a-guia-01-induccion.html": "guia_induccion_10a_guia_html",
     "grupo-10b-guia-01-induccion.html": "guia_induccion_10b_guia_html",
     "santa-barbara-10a-guia-02-redes-rap01.html": "guia_interactiva_sb_10a_redes_html",
+    "grupo-11b-guia-05-herramientas-informaticas-digitales.html": "guia_interactiva_11b_guia_html",
+    "grupo-11b-guia-06-planificar-informacion.html": "guia_interactiva_11b_guia6_html",
+    "grupo-11b-guia-07-planificar-informacion-ciberseguridad.html": "guia_interactiva_11b_guia7_html",
+    "grupo-11b-guia-08-documentar-gestion-informacion.html": "guia_interactiva_11b_guia8_html",
+    "grupo-11b-guia-09-taller-integrador.html": "guia_interactiva_11b_guia9_html",
     "santa-barbara-10b-guia-02-redes-rap01.html": "guia_interactiva_sb_10b_redes_html",
   };
   function guideState(file, usernameKey) {
