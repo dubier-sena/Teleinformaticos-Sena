@@ -1370,9 +1370,13 @@ function updateProgressRedes() {
   const tracked = Array.from(document.querySelectorAll("[data-track]")).filter(
     (field) => !field.closest("[data-ignore-progress='true']")
   );
-  const checks = Array.from(document.querySelectorAll(".activity-check"));
+  // No se cuenta ".activity-check" (boton generico inyectado por guia_template.js):
+  // ademas de no marcarse automaticamente al calificar desde el banco, es un <button>
+  // sin propiedad ".checked" nativa (el estado real vive en la clase "checked"), asi
+  // que "filledChecks" siempre daba 0 e inflaba el denominador dejando el % atascado
+  // aunque las respuestas y actividades estuvieran completas.
   const deliverables = getDeliverableActivitiesRedes();
-  const total = tracked.length + checks.length + deliverables.length;
+  const total = tracked.length + deliverables.length;
   if (total === 0) return;
 
   const filledTracked = tracked.filter((f) => {
@@ -1380,9 +1384,8 @@ function updateProgressRedes() {
     return String(f.value || "").trim().length > 0;
   }).length;
 
-  const filledChecks = checks.filter((c) => c.checked).length;
   const filledDeliverables = deliverables.filter(isDeliverableDoneRedes).length;
-  const filled = filledTracked + filledChecks + filledDeliverables;
+  const filled = filledTracked + filledDeliverables;
   const pct = Math.round((filled / total) * 100);
 
   const bar = document.getElementById("progressBar");
