@@ -188,6 +188,7 @@ test("induccion: updateProgress/saveProgress excluyen el boton generico .activit
 [
   { file: "js/script_guia7.js", reflectFnName: "reflectGradesForGuia7", initFnName: "initGuia7", expectedFamily: "guia-07-ciberseguridad" },
   { file: "js/script_guia8.js", reflectFnName: "reflectGradesForGuia8", initFnName: "initGuia8", expectedFamily: "guia-08-documentar-gestion" },
+  { file: "js/script_guia4_ciberseguridad.js", reflectFnName: "reflectGradesForGuia4Ciber", initFnName: "initGuia4Ciber", expectedFamily: "guia-04-ciberseguridad" },
 ].forEach(({ file, reflectFnName, initFnName, expectedFamily }) => {
   test(`${reflectFnName} (${file}): existe, se llama desde ${initFnName}, usa la familia correcta y refresca el bloqueo via evento`, () => {
     const source = read(file);

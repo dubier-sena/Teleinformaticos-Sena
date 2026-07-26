@@ -82,9 +82,9 @@ const PARTIALS = {
   "guia-07-ciberseguridad":       ["partials/guia-07-planificar-ciberseguridad-content.html"],
   "guia-08-documentar-gestion":   ["partials/guia-08-documentar-gestion-content.html"],
   "taller-integrador-sb11":       ["partials/taller-integrador-sb11-content.html"],
-  "guia-03-planificar-10":            ["partials/guia-03-planificar-content.html"],
-  "guia-04-planificar-ciberseguridad": ["partials/guia-04-planificar-ciberseguridad-content.html"],
-  "taller-integrador-jfk":            ["partials/taller-integrador-jfk-content.html"],
+  "guia-03-planificar-10":     ["partials/guia-03-planificar-content.html"],
+  "guia-04-ciberseguridad":    ["partials/guia-04-planificar-ciberseguridad-content.html"],
+  "taller-integrador-jfk":     ["partials/taller-integrador-jfk-content.html"],
 };
 
 // Conjunto de campos data-store ACTUALES de una familia (estáticos + dinámicos).
