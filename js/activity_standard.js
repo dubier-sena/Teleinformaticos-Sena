@@ -505,6 +505,18 @@
     // Restaurar al cargar la página (ya entregada en sesión anterior)
     _restoreDeliveryFromState(activityDef, stateCtx);
 
+    // Si el admin aprueba la actividad DESPUES de este montaje inicial (banco de
+    // respuestas, sin que el aprendiz suba nada) via reflectGradesIntoGuideState,
+    // el "-delivery" sintetico llega tarde: el panel de confirmacion quedaba
+    // vacio hasta el proximo recargo de pagina. reflectGradesIntoGuideState ya
+    // dispara "activity-deadlines-updated" (lo escucha mountFormActivity para
+    // re-bloquear campos) -- se reusa el mismo evento aqui para reintentar la
+    // restauracion de la confirmacion de entrega. Detectado 2026-07-26 en QA de
+    // Taller Integrador SB 10B.
+    window.addEventListener("activity-deadlines-updated", function () {
+      _restoreDeliveryFromState(activityDef, stateCtx);
+    });
+
     // Escuchar nuevas entregas en esta sesión
     document.addEventListener("guide-delivery-registered", function (event) {
       var record = event.detail || {};
