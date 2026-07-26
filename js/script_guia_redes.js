@@ -3692,7 +3692,15 @@ function canSubmitRedesActivity(activityId) {
       original.apply(this, arguments);
       const config = uiConfigs[activityId];
       if (!config) return;
-      applyRedesOptionalDeadlineGate(activityId, { ...config, isLocked: Boolean(state[config.lockKey]) });
+      // El flag "{lockKey}" puede perderse si dos calificaciones de admin se
+      // guardan muy seguidas (ver isLabLocked arriba); "{activityId}-delivery"
+      // no tiene ese problema. Sin este respaldo, el candado de fecha limite
+      // volvia a habilitar campos ya entregados/calificados (isLocked=false)
+      // justo despues de que la funcion original los bloqueaba.
+      const delivery = state[activityId + "-delivery"];
+      const isLocked =
+        Boolean(state[config.lockKey]) || Boolean(delivery && delivery.status === "delivered");
+      applyRedesOptionalDeadlineGate(activityId, { ...config, isLocked });
     };
   }
 
