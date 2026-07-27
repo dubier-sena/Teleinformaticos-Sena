@@ -375,6 +375,7 @@
       </div>
     `).join("") || '<p class="admin-empty">No hay fichas configuradas.</p>';
     renderRecentDeliveries();
+    maybeAutoHydrateDashboard();
   }
 
   function formatRelativeOrDate(iso) {
@@ -988,6 +989,38 @@
     await Promise.all(runners);
   }
 
+  // Tarjeta "Entregas recientes" del dashboard: debe auto-hidratarse al iniciar
+  // sesion (para que el admin vea alertas frescas sin entrar antes a Respuestas
+  // o Entregas), pero sin repetir el barrido pesado (N aprendices x M guias)
+  // cada vez que se abre/recarga el panel -- eso fue justo lo que ae86612 evito.
+  // Se guarda la marca de tiempo en localStorage (sobrevive recargas) y se
+  // limita a una vez cada 30 minutos por navegador.
+  const DASHBOARD_HYDRATE_THROTTLE_KEY = "sena_admin_dashboard_hydrate_last_v1";
+  const DASHBOARD_HYDRATE_THROTTLE_MS = 30 * 60 * 1000;
+
+  function markDashboardHydrateNow() {
+    try { localStorage.setItem(DASHBOARD_HYDRATE_THROTTLE_KEY, String(Date.now())); } catch (_) { /* sin localStorage */ }
+  }
+
+  function isDashboardHydrateThrottled() {
+    try {
+      const last = Number(localStorage.getItem(DASHBOARD_HYDRATE_THROTTLE_KEY)) || 0;
+      return (Date.now() - last) < DASHBOARD_HYDRATE_THROTTLE_MS;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function maybeAutoHydrateDashboard() {
+    if (state.activeModule !== "dashboard") return;
+    if (guideStatesHydrated || isDashboardHydrateThrottled()) return;
+    ensureGuideStatesHydrated()
+      .then((changed) => {
+        if (state.activeModule === "dashboard" && changed) renderRecentDeliveries();
+      })
+      .catch(() => {});
+  }
+
   async function ensureGuideStatesHydrated() {
     if (guideStatesHydrated) return false;
     // Recupera la cuota de localStorage que sesiones anteriores llenaron con el
@@ -996,6 +1029,7 @@
     const db = window._firebaseDb;
     if (!db || typeof db.cloudGetGuideData !== "function" || typeof auth.getStudentStorageKey !== "function") {
       guideStatesHydrated = true; // sin nube no hay nada que bajar; no reintentar cada render
+      markDashboardHydrateNow();
       return false;
     }
     // Si el admin entra a Respuestas/Entregas ANTES de que loadUsers() termine
@@ -1057,6 +1091,7 @@
       } catch (_) { /* una guia que falle no debe romper la hidratacion del resto */ }
     });
     guideStatesHydrated = true;
+    markDashboardHydrateNow();
     return changed;
   }
 
@@ -1888,12 +1923,11 @@
       progress: progressForUser(user),
     }));
     renderAll();
-    // NO se hidrata el guide_state de todos los aprendices aqui: eso disparaba
-    // cientos de lecturas a Firestore en CADA carga del panel (leer el estado de
-    // todas las guias de todos los aprendices) y acercaba la cuota diaria gratis
-    // al limite. La hidratacion pesada ahora es BAJO DEMANDA: solo corre al abrir
-    // Respuestas o Entregas (ver setActiveModule). El dashboard "Entregas recientes"
-    // muestra lo que ya este en cache; tras visitar Entregas una vez, se completa.
+    // La hidratacion pesada del guide_state (N aprendices x M guias) no se
+    // repite en cada carga del panel para no acercar la cuota diaria gratis al
+    // limite: al abrir Respuestas/Entregas corre bajo demanda (ver setActiveModule),
+    // y para la tarjeta "Entregas recientes" del dashboard corre sola pero
+    // limitada a una vez cada 30 min por navegador (ver maybeAutoHydrateDashboard).
     if (!state.users.length) {
       setFeedback(
         "No hay aprendices cargados en este navegador. Inicia sesion admin real, configura Firebase o crea/importa aprendices para ver respuestas, entregas y reportes completos.",
@@ -4402,7 +4436,11 @@
     document.querySelectorAll("[data-jump-module]").forEach((button) => {
       button.addEventListener("click", () => setActiveModule(button.dataset.jumpModule));
     });
-    byId("refresh-users")?.addEventListener("click", () => { guideStatesHydrated = false; loadUsers(); });
+    byId("refresh-users")?.addEventListener("click", () => {
+      guideStatesHydrated = false;
+      try { localStorage.removeItem(DASHBOARD_HYDRATE_THROTTLE_KEY); } catch (_) { /* sin localStorage */ }
+      loadUsers();
+    });
     byId("name-audit-run")?.addEventListener("click", runNameAudit);
     byId("btn-backfill-drive")?.addEventListener("click", () => runBackfillToDrive());
     byId("btn-promote-drive")?.addEventListener("click", () => runPromoteFromDrive());
