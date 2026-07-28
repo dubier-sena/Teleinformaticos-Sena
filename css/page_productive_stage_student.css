@@ -277,8 +277,161 @@
 
 .student-project-downloads {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 14px;
+}
+
+.student-document-workflow {
+  display: grid;
+  gap: 24px;
+}
+
+.student-document-overview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(210px, 260px);
+  gap: 20px;
+  align-items: center;
+  padding: 20px;
+  border: 1px solid #cfe5d7;
+  border-radius: var(--radius-md);
+  background: #f5faf7;
+}
+
+.student-document-overview__eyebrow {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--brand-700);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.student-document-overview h4 {
+  margin: 0 0 8px;
+  color: var(--text-strong);
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+}
+
+.student-document-overview p {
+  max-width: 720px;
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.65;
+}
+
+.student-document-progress {
+  padding: 16px;
+  border: 1px solid #bcdcc8;
+  border-radius: var(--radius-sm);
+  background: #fff;
+}
+
+.student-document-progress__value {
+  color: var(--text-strong);
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.student-document-progress__value span,
+.student-document-progress > span {
+  color: var(--text-muted);
+}
+
+.student-document-progress > span {
+  display: block;
+  margin-top: 5px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.student-document-progress__track {
+  height: 8px;
+  margin-top: 12px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e2ebe6;
+}
+
+.student-document-progress__track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--brand-600);
+}
+
+.student-document-help {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.student-document-help li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 10px 12px;
+  border: 1px solid #e0ebe4;
+  border-radius: var(--radius-sm);
+  background: #fff;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.student-document-help li > span,
+.student-document-group__step {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: var(--brand-700);
+  color: #fff;
+  font-weight: 800;
+}
+
+.student-document-help strong {
+  color: var(--text-strong);
+}
+
+.student-document-group {
+  display: grid;
+  gap: 14px;
+  padding-top: 22px;
+  border-top: 1px solid #dfe9e3;
+}
+
+.student-document-group__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.student-document-group__header h4 {
+  margin: 0 0 4px;
+  color: var(--text-strong);
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+}
+
+.student-document-group__header p {
+  max-width: 780px;
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.student-document-group--logs .student-project-downloads {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .student-project-download-card,
@@ -293,6 +446,19 @@
   padding: 16px;
   display: grid;
   gap: 10px;
+  align-content: start;
+}
+
+.student-project-download-card__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.student-project-download-card__heading > div {
+  display: grid;
+  gap: 8px;
 }
 
 .student-project-download-card__type {
@@ -340,6 +506,41 @@
   min-height: 46px;
 }
 
+.student-project-download-card__actions {
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+.student-document-status {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.student-document-status--done {
+  border-color: #a9d8b9;
+  background: #e7f7ed;
+  color: #0f6b3c;
+}
+
+.student-document-status--pending {
+  border-color: #efd38a;
+  background: #fff7df;
+  color: #7a4f00;
+}
+
+.student-document-status--reference {
+  border-color: #cbd5e1;
+  background: #f1f5f9;
+  color: #475569;
+}
+
 .student-project-download-card__delivered {
   margin: 0;
   font-size: 0.85rem;
@@ -369,6 +570,44 @@
   background: var(--color-danger-soft);
   color: var(--color-danger-strong);
   border-color: var(--color-danger);
+}
+
+@media (max-width: 760px) {
+  .student-document-overview {
+    grid-template-columns: 1fr;
+  }
+
+  .student-document-help,
+  .student-document-group--logs .student-project-downloads {
+    grid-template-columns: 1fr;
+  }
+
+  .student-project-downloads {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .student-document-overview {
+    padding: 16px;
+  }
+
+  .student-project-download-card__heading {
+    display: grid;
+  }
+
+  .student-document-status {
+    width: fit-content;
+  }
+
+  .student-project-download-card__actions {
+    display: grid;
+  }
+
+  .student-project-download-card__actions .app-btn {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 .student-project-delivery-card,

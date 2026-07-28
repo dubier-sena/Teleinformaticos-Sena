@@ -243,58 +243,175 @@
     const visibleDocuments = PROJECT_DOCUMENTS.filter(function (documentItem) {
       return !(grade10 && documentItem.hideForGrade10);
     });
+    const documentContexts = visibleDocuments.map(function (documentItem) {
+      return {
+        item: documentItem,
+        record: documentItem.deliveryLabel ? getDocumentDeliveryRecord(documentItem) : null,
+      };
+    });
+    const deliverableContexts = documentContexts.filter(function (context) {
+      return !!context.item.deliveryLabel;
+    });
+    const deliveredCount = deliverableContexts.filter(function (context) {
+      return !!context.record;
+    }).length;
+    const progressPercent = deliverableContexts.length
+      ? Math.round((deliveredCount / deliverableContexts.length) * 100)
+      : 0;
 
-    return `
-      <div class="student-project-downloads">
-        ${visibleDocuments.map(function (documentItem) {
-          const hasDelivery = !!documentItem.deliveryLabel;
-          const deliveryBtn = hasDelivery
-            ? `<button
-                 class="app-btn app-btn--outline"
-                 type="button"
-                 data-delivery-doc="${escapeHtml(documentItem.id)}"
-                 ${canUpload ? "" : "disabled"}
-               >Entregar</button>`
-            : "";
+    function buildDocumentCard(context) {
+      const documentItem = context.item;
+      const record = context.record;
+      const hasDelivery = !!documentItem.deliveryLabel;
+      const deliveryBtn = hasDelivery
+        ? `<button
+             class="app-btn app-btn--outline"
+             type="button"
+             data-delivery-doc="${escapeHtml(documentItem.id)}"
+             ${canUpload ? "" : "disabled"}
+           >${record ? "Volver a entregar" : "Entregar archivo"}</button>`
+        : "";
+      const statusBadge = hasDelivery
+        ? record
+          ? '<span class="student-document-status student-document-status--done">Entregado</span>'
+          : '<span class="student-document-status student-document-status--pending">Pendiente</span>'
+        : '<span class="student-document-status student-document-status--reference">Solo consulta</span>';
+      const deliveredNote = record
+        ? `<p class="student-project-download-card__delivered">Entregado el ${escapeHtml(formatDate(record.submittedAt || record.fechaEntrega || record.uploadedAt))}${record.savedFileName ? ` &mdash; ${escapeHtml(record.savedFileName)}` : ""}</p>`
+        : "";
+      const deadlineNote = !record && documentItem.deadline
+        ? isPastDeadline(documentItem.deadline)
+          ? `<p class="student-project-download-card__deadline student-project-download-card__deadline--overdue"><strong>Fecha limite vencida:</strong> ${escapeHtml(formatDeadlineDate(documentItem.deadline))}. Sin esta entrega, la Etapa Productiva NO se considera realizada y no podras graduarte.</p>`
+          : `<p class="student-project-download-card__deadline"><strong>Fecha limite de entrega:</strong> ${escapeHtml(formatDeadlineDate(documentItem.deadline))}. Es obligatoria para culminar la Etapa Productiva y graduarte.</p>`
+        : "";
+      const resolvedHref = documentItem.hrefByFicha ? resolveFichaHref(ficha) : documentItem.href;
+      const downloadBtn = documentItem.noDownload
+        ? ""
+        : resolvedHref
+          ? `<a class="app-btn app-btn--primary" href="${escapeHtml(resolvedHref)}" target="_blank" rel="noopener noreferrer" ${documentItem.hrefByFicha ? "" : `download="${escapeHtml(documentItem.fileName)}"`}>
+             Descargar formato
+           </a>`
+          : `<span class="student-project-download-card__unavailable">El archivo aun no esta disponible para tu ficha. Consulta con tu instructor.</span>`;
 
-          const record = hasDelivery ? getDocumentDeliveryRecord(documentItem) : null;
-          const deliveredNote = record
-            ? `<p class="student-project-download-card__delivered">&#9989; Entregado el ${escapeHtml(formatDate(record.submittedAt || record.fechaEntrega || record.uploadedAt))}${record.savedFileName ? ` &mdash; ${escapeHtml(record.savedFileName)}` : ""}</p>`
-            : "";
-          // El aviso de fecha limite solo tiene sentido mientras no se haya
-          // entregado (una vez entregada, deliveredNote ya confirma el cumplimiento).
-          const deadlineNote = !record && documentItem.deadline
-            ? isPastDeadline(documentItem.deadline)
-              ? `<p class="student-project-download-card__deadline student-project-download-card__deadline--overdue">&#9888;&#65039; Fecha limite vencida: ${escapeHtml(formatDeadlineDate(documentItem.deadline))}. Sin esta entrega, la Etapa Productiva NO se considera realizada y no podras graduarte.</p>`
-              : `<p class="student-project-download-card__deadline">&#128197; Fecha limite de entrega: ${escapeHtml(formatDeadlineDate(documentItem.deadline))}. Es obligatoria para culminar la Etapa Productiva y graduarte.</p>`
-            : "";
-          const resolvedHref = documentItem.hrefByFicha ? resolveFichaHref(ficha) : documentItem.href;
-          // noDownload: documentos que son solo evidencia a subir (p. ej. el
-          // pantallazo de Sofia Plus), sin plantilla que descargar -- no mostrar
-          // el aviso "Aun no disponible", ese es para documentos que SI deberian
-          // tener un archivo pero aun no se resolvio (caso hrefByFicha sin URL).
-          const downloadBtn = documentItem.noDownload
-            ? ""
-            : resolvedHref
-              ? `<a class="app-btn app-btn--primary" href="${escapeHtml(resolvedHref)}" target="_blank" rel="noopener noreferrer" ${documentItem.hrefByFicha ? "" : `download="${escapeHtml(documentItem.fileName)}"`}>
-                 Descargar
-               </a>`
-              : `<span class="student-project-download-card__unavailable">Aun no disponible para tu ficha. Consulta con tu instructor.</span>`;
-
-          return `
-            <article class="student-project-download-card">
+      return `
+        <article class="student-project-download-card">
+          <div class="student-project-download-card__heading">
+            <div>
               <span class="student-project-download-card__type">${escapeHtml(documentItem.type)}</span>
               <h4>${escapeHtml(documentItem.title)}</h4>
-              <p>${escapeHtml(documentItem.description)}</p>
-              <div class="student-project-download-card__actions">
-                ${downloadBtn}
-                ${deliveryBtn}
-              </div>
-              ${deadlineNote}
-              ${deliveredNote}
-            </article>
-          `;
-        }).join("")}
+            </div>
+            ${statusBadge}
+          </div>
+          <p>${escapeHtml(documentItem.description)}</p>
+          ${deadlineNote}
+          ${deliveredNote}
+          <div class="student-project-download-card__actions">
+            ${downloadBtn}
+            ${deliveryBtn}
+          </div>
+        </article>
+      `;
+    }
+
+    function buildDocumentGroup(options) {
+      if (!options.contexts.length) {
+        return "";
+      }
+      return `
+        <section class="student-document-group student-document-group--${escapeHtml(options.modifier)}" aria-labelledby="${escapeHtml(options.id)}">
+          <div class="student-document-group__header">
+            <span class="student-document-group__step" aria-hidden="true">${escapeHtml(options.step)}</span>
+            <div>
+              <h4 id="${escapeHtml(options.id)}">${escapeHtml(options.title)}</h4>
+              <p>${escapeHtml(options.description)}</p>
+            </div>
+          </div>
+          <div class="student-project-downloads">
+            ${options.contexts.map(buildDocumentCard).join("")}
+          </div>
+        </section>
+      `;
+    }
+
+    const initialContexts = documentContexts.filter(function (context) {
+      return ["ficha-inscripcion", "acuerdo-etapa-productiva"].indexOf(context.item.id) >= 0;
+    });
+    const projectContexts = documentContexts.filter(function (context) {
+      return ["formato-proyecto", "anexo-financiero"].indexOf(context.item.id) >= 0;
+    });
+    const referenceContexts = documentContexts.filter(function (context) {
+      return context.item.id === "diseno-curricular";
+    });
+    const sofiaContexts = documentContexts.filter(function (context) {
+      return context.item.id === "sofia-plus";
+    });
+    const logContexts = documentContexts.filter(function (context) {
+      return context.item.id.indexOf("bitacora-") === 0;
+    });
+
+    return `
+      <div class="student-document-workflow">
+        <div class="student-document-overview">
+          <div class="student-document-overview__copy">
+            <span class="student-document-overview__eyebrow">Ruta de documentos</span>
+            <h4>Completa cada bloque en orden</h4>
+            <p>Descarga el formato, diligencialo con calma y usa el boton <strong>Entregar archivo</strong>. Los documentos marcados como <strong>Solo consulta</strong> sirven de apoyo y no se suben.</p>
+          </div>
+          <div class="student-document-progress" role="status" aria-label="${deliveredCount} de ${deliverableContexts.length} entregas completadas">
+            <div class="student-document-progress__value">${deliveredCount}<span> / ${deliverableContexts.length}</span></div>
+            <span>entregas completadas</span>
+            <div class="student-document-progress__track" aria-hidden="true">
+              <span style="width:${progressPercent}%"></span>
+            </div>
+          </div>
+        </div>
+
+        <ol class="student-document-help" aria-label="Como entregar un documento">
+          <li><span>1</span><strong>Descarga</strong> el formato indicado.</li>
+          <li><span>2</span><strong>Diligencia</strong> y guarda el archivo.</li>
+          <li><span>3</span><strong>Entrega</strong> el archivo desde esta pagina.</li>
+        </ol>
+
+        ${buildDocumentGroup({
+          id: "documentos-iniciales",
+          step: "1",
+          title: "Documentos iniciales obligatorios",
+          description: "Empieza por estos documentos. Permiten registrar y formalizar tu Etapa Productiva.",
+          modifier: "initial",
+          contexts: initialContexts,
+        })}
+        ${buildDocumentGroup({
+          id: "plantillas-proyecto",
+          step: "2",
+          title: "Plantillas para desarrollar el proyecto",
+          description: "Usa estas plantillas como base para estructurar el proyecto y sus costos. No se entregan desde este bloque.",
+          modifier: "project",
+          contexts: projectContexts,
+        })}
+        ${buildDocumentGroup({
+          id: "evidencia-sofia",
+          step: "3",
+          title: "Evidencia de actualizacion en Sofia Plus",
+          description: "Sube una sola captura donde se vea que tu informacion de Etapa Productiva ya esta actualizada.",
+          modifier: "evidence",
+          contexts: sofiaContexts,
+        })}
+        ${buildDocumentGroup({
+          id: "bitacoras-seguimiento",
+          step: "4",
+          title: "Bitacoras de seguimiento",
+          description: "Son seis entregas independientes. Reutiliza el mismo formato GFPI-F-147 y respeta la fecha indicada en cada tarjeta.",
+          modifier: "logs",
+          contexts: logContexts,
+        })}
+        ${buildDocumentGroup({
+          id: "documentos-consulta",
+          step: "5",
+          title: "Documento de consulta",
+          description: "Consultalo cuando necesites identificar las competencias del programa que debes registrar en las bitacoras.",
+          modifier: "reference",
+          contexts: referenceContexts,
+        })}
       </div>
     `;
   }

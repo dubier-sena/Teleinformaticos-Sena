@@ -218,3 +218,27 @@ test("la tarjeta de pantallazo Sofia Plus no muestra 'Aun no disponible' (noDown
     assert.match(card, /Fecha limite de entrega/);
   }
 });
+
+test("los documentos se presentan como una ruta guiada con progreso y bloques comprensibles", () => {
+  const html = renderFor("3168850");
+  assert.match(html, /Ruta de documentos/);
+  assert.match(html, /entregas completadas/);
+  assert.match(html, /Descarga<\/strong> el formato indicado/);
+  assert.match(html, /Diligencia<\/strong> y guarda el archivo/);
+  assert.match(html, /Entrega<\/strong> el archivo desde esta pagina/);
+  assert.match(html, /Documentos iniciales obligatorios/);
+  assert.match(html, /Plantillas para desarrollar el proyecto/);
+  assert.match(html, /Evidencia de actualizacion en Sofia Plus/);
+  assert.match(html, /Bitacoras de seguimiento/);
+  assert.match(html, /Documento de consulta/);
+  assert.match(html, /Solo consulta/);
+});
+
+test("grado 10 recibe una ruta corta sin bloques que no le aplican", () => {
+  const html = renderFor("3441939");
+  assert.match(html, /Documentos iniciales obligatorios/);
+  assert.doesNotMatch(html, /Plantillas para desarrollar el proyecto/);
+  assert.doesNotMatch(html, /Evidencia de actualizacion en Sofia Plus/);
+  assert.doesNotMatch(html, /Bitacoras de seguimiento/);
+  assert.doesNotMatch(html, /Documento de consulta/);
+});
