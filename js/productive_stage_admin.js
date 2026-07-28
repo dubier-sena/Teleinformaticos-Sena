@@ -8,7 +8,7 @@
   const store = window.productiveStageStore || null;
   const DOCUMENT_CATALOG = [
     { id: "ficha-inscripcion", title: "Ficha de inscripcion", deliveryLabel: "Ficha de Inscripcion", hideForGrade10: false },
-    { id: "acuerdo", title: "Acuerdo de Etapa Productiva", deliveryLabel: "Acuerdo de Etapa Productiva", hideForGrade10: false },
+    { id: "acuerdo-etapa-productiva", title: "Acuerdo de Etapa Productiva", deliveryLabel: "Acuerdo de Etapa Productiva", hideForGrade10: false },
     { id: "sofia-plus", title: "Pantallazo Sofia Plus", deliveryLabel: "Pantallazo Sofia Plus", hideForGrade10: true },
     { id: "bitacora-1", title: "Bitacora N° 1", deliveryLabel: "Bitacora 1", hideForGrade10: true },
     { id: "bitacora-2", title: "Bitacora N° 2", deliveryLabel: "Bitacora 2", hideForGrade10: true },
