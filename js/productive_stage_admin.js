@@ -5,6 +5,18 @@
   }
 
   const sharedDelivery = window.sharedAppsScriptDelivery || null;
+  const store = window.productiveStageStore || null;
+  const DOCUMENT_CATALOG = [
+    { id: "ficha-inscripcion", title: "Ficha de inscripcion", deliveryLabel: "Ficha de Inscripcion", hideForGrade10: false },
+    { id: "acuerdo", title: "Acuerdo de Etapa Productiva", deliveryLabel: "Acuerdo de Etapa Productiva", hideForGrade10: false },
+    { id: "sofia-plus", title: "Pantallazo Sofia Plus", deliveryLabel: "Pantallazo Sofia Plus", hideForGrade10: true },
+    { id: "bitacora-1", title: "Bitacora N° 1", deliveryLabel: "Bitacora 1", hideForGrade10: true },
+    { id: "bitacora-2", title: "Bitacora N° 2", deliveryLabel: "Bitacora 2", hideForGrade10: true },
+    { id: "bitacora-3", title: "Bitacora N° 3", deliveryLabel: "Bitacora 3", hideForGrade10: true },
+    { id: "bitacora-4", title: "Bitacora N° 4", deliveryLabel: "Bitacora 4", hideForGrade10: true },
+    { id: "bitacora-5", title: "Bitacora N° 5", deliveryLabel: "Bitacora 5", hideForGrade10: true },
+    { id: "bitacora-6", title: "Bitacora N° 6", deliveryLabel: "Bitacora 6", hideForGrade10: true },
+  ];
 
   let allUsers = [];
   let productiveStageSnapshot =
@@ -19,6 +31,7 @@
           updatedAt: "",
         };
   let currentDetailProjectId = "";
+  let currentManualDocumentDelivery = null;
 
   function getById(id) {
     return document.getElementById(id);
@@ -76,6 +89,248 @@
     const copy = getById("productive-stage-storage-copy");
     if (copy) {
       copy.textContent = message;
+    }
+  }
+
+  function isGrade10User(user) {
+    const fichaInfo = auth.getFichaInfo && auth.getFichaInfo(user && user.ficha);
+    const group = String((user && user.grupo) || (fichaInfo && fichaInfo.grupo) || "").trim();
+    return group.indexOf("10") === 0;
+  }
+
+  function getDocumentCatalogForUser(user) {
+    return DOCUMENT_CATALOG.filter(function (item) {
+      return !(item.hideForGrade10 && isGrade10User(user));
+    });
+  }
+
+  function getDocumentDeliveryIndex() {
+    return store && typeof store.getDocumentDeliveriesByUsername === "function"
+      ? store.getDocumentDeliveriesByUsername(productiveStageSnapshot)
+      : {};
+  }
+
+  function setDocumentDeliveryControlFeedback(message, type) {
+    const box = getById("document-delivery-control-feedback");
+    if (!box) return;
+    box.className = "admin-feedback" + (message ? " " + (type || "success") : "");
+    box.textContent = message || "";
+  }
+
+  function getDocumentDeliveryRows() {
+    const query = String(getById("document-delivery-control-query")?.value || "").trim().toLowerCase();
+    const onlyPending = !!getById("document-delivery-control-only-pending")?.checked;
+    const deliveryIndex = getDocumentDeliveryIndex();
+
+    return allUsers
+      .filter(function (user) {
+        return String(user && user.role || "student") === "student";
+      })
+      .map(function (user) {
+        const usernameKey = String(user.usernameKey || user.username || "").trim().toLowerCase();
+        const catalog = getDocumentCatalogForUser(user);
+        const delivered = deliveryIndex[usernameKey] || {};
+        const pendingCount = catalog.filter(function (item) { return !delivered[item.id]; }).length;
+        return {
+          user: user,
+          usernameKey: usernameKey,
+          catalog: catalog,
+          delivered: delivered,
+          pendingCount: pendingCount,
+        };
+      })
+      .filter(function (row) {
+        if (onlyPending && row.pendingCount === 0) return false;
+        if (!query) return true;
+        return [
+          row.user.fullName,
+          row.user.username,
+          row.usernameKey,
+          row.user.ficha,
+          row.user.grupo,
+        ].join(" ").toLowerCase().includes(query);
+      })
+      .sort(function (left, right) {
+        return String(left.user.fullName || left.usernameKey).localeCompare(
+          String(right.user.fullName || right.usernameKey),
+          "es"
+        );
+      });
+  }
+
+  function buildDocumentDeliveryCell(row, documentItem) {
+    const record = row.delivered[documentItem.id];
+    if (record) {
+      return (
+        '<div class="document-delivery-status document-delivery-status--done">' +
+          '<span>&#10003; Entregado</span>' +
+          '<small>' + escapeHtml(formatDate(record.submittedAt)) + "</small>" +
+          (record.driveUrl
+            ? '<a href="' + escapeHtml(record.driveUrl) + '" target="_blank" rel="noopener noreferrer">Abrir Drive</a>'
+            : "") +
+          '<button type="button" class="document-delivery-manual-link" data-register-document-delivery="' +
+            escapeHtml(row.usernameKey) + '" data-document-id="' + escapeHtml(documentItem.id) +
+            '">Actualizar</button>' +
+        "</div>"
+      );
+    }
+
+    return (
+      '<div class="document-delivery-status document-delivery-status--pending">' +
+        "<span>Pendiente</span>" +
+        '<button type="button" class="document-delivery-manual-link" data-register-document-delivery="' +
+          escapeHtml(row.usernameKey) + '" data-document-id="' + escapeHtml(documentItem.id) +
+          '">Registrar</button>' +
+      "</div>"
+    );
+  }
+
+  function renderDocumentDeliveryControl() {
+    const container = getById("document-delivery-control-table");
+    if (!container) return;
+    if (!allUsers.length) {
+      container.innerHTML = '<div class="productive-stage-empty">No hay aprendices disponibles para construir el control de entregas.</div>';
+      return;
+    }
+
+    const rows = getDocumentDeliveryRows();
+    if (!rows.length) {
+      container.innerHTML = '<div class="productive-stage-empty">No hay aprendices que coincidan con los filtros actuales.</div>';
+      return;
+    }
+
+    const visibleDocuments = DOCUMENT_CATALOG;
+    container.innerHTML =
+      '<table class="document-delivery-table"><thead><tr>' +
+        "<th>Aprendiz</th>" +
+        visibleDocuments.map(function (item) {
+          return "<th>" + escapeHtml(item.title) + "</th>";
+        }).join("") +
+        "<th>Resumen</th>" +
+      "</tr></thead><tbody>" +
+      rows.map(function (row) {
+        const fichaInfo = auth.getFichaInfo && auth.getFichaInfo(row.user.ficha);
+        const applicableIds = row.catalog.map(function (item) { return item.id; });
+        return (
+          "<tr>" +
+            '<th scope="row"><strong>' + escapeHtml(row.user.fullName || row.usernameKey) + "</strong>" +
+              "<small>Ficha " + escapeHtml(row.user.ficha || "Sin ficha") +
+              (fichaInfo && fichaInfo.grupo ? " · " + escapeHtml(fichaInfo.grupo) : "") +
+              "</small></th>" +
+            visibleDocuments.map(function (item) {
+              return applicableIds.indexOf(item.id) === -1
+                ? '<td><span class="document-delivery-na">No aplica</span></td>'
+                : "<td>" + buildDocumentDeliveryCell(row, item) + "</td>";
+            }).join("") +
+            '<td><strong class="' + (row.pendingCount ? "document-delivery-count--pending" : "document-delivery-count--done") + '">' +
+              (row.pendingCount ? row.pendingCount + " pendiente(s)" : "Completo") +
+            "</strong></td>" +
+          "</tr>"
+        );
+      }).join("") +
+      "</tbody></table>";
+  }
+
+  function setManualDocumentDeliveryFeedback(message, type) {
+    const box = getById("document-delivery-manual-feedback");
+    if (!box) return;
+    box.className = "admin-feedback" + (message ? " " + (type || "success") : "");
+    box.textContent = message || "";
+  }
+
+  function closeDocumentDeliveryManualModal() {
+    const modal = getById("document-delivery-manual-modal");
+    if (!modal || modal.hidden) return;
+    modal.hidden = true;
+    currentManualDocumentDelivery = null;
+    document.body.classList.remove("modal-open");
+  }
+
+  function openDocumentDeliveryManualModal(usernameKey, documentId) {
+    const user = allUsers.find(function (item) {
+      return String(item.usernameKey || item.username || "").trim().toLowerCase() === usernameKey;
+    });
+    const documentItem = DOCUMENT_CATALOG.find(function (item) { return item.id === documentId; });
+    const modal = getById("document-delivery-manual-modal");
+    if (!user || !documentItem || !modal || getDocumentCatalogForUser(user).every(function (item) { return item.id !== documentId; })) {
+      setDocumentDeliveryControlFeedback("No fue posible identificar el aprendiz o el documento seleccionado.", "error");
+      return;
+    }
+
+    currentManualDocumentDelivery = { user: user, usernameKey: usernameKey, documentItem: documentItem };
+    const existing = (getDocumentDeliveryIndex()[usernameKey] || {})[documentId];
+    getById("document-delivery-manual-context").textContent =
+      (user.fullName || usernameKey) + " · " + documentItem.title + " · Ficha " + (user.ficha || "Sin ficha");
+    getById("document-delivery-manual-url").value = existing && existing.driveUrl || "";
+    setManualDocumentDeliveryFeedback("", "");
+    modal.hidden = false;
+    document.body.classList.add("modal-open");
+    getById("document-delivery-manual-url").focus();
+  }
+
+  function isValidDriveUrl(value) {
+    try {
+      const parsed = new URL(value);
+      return parsed.protocol === "https:" &&
+        (parsed.hostname === "drive.google.com" || parsed.hostname.endsWith(".drive.google.com"));
+    } catch (error) {
+      return false;
+    }
+  }
+
+  async function handleManualDocumentDeliverySubmit() {
+    if (!currentManualDocumentDelivery || !store) {
+      setManualDocumentDeliveryFeedback("No fue posible preparar el registro.", "error");
+      return;
+    }
+    const urlInput = getById("document-delivery-manual-url");
+    const submitButton = getById("document-delivery-manual-submit");
+    const driveUrl = String(urlInput && urlInput.value || "").trim();
+    if (!isValidDriveUrl(driveUrl)) {
+      setManualDocumentDeliveryFeedback("Ingresa un enlace valido de Google Drive que comience por https://drive.google.com/.", "error");
+      return;
+    }
+
+    const context = currentManualDocumentDelivery;
+    const fichaInfo = auth.getFichaInfo && auth.getFichaInfo(context.user.ficha);
+    submitButton.disabled = true;
+    setManualDocumentDeliveryFeedback("Guardando entrega...", "success");
+    try {
+      const submittedAt = new Date().toISOString();
+      const nextSnapshot = store.appendDocumentDeliveryToSnapshot(productiveStageSnapshot, {
+        usernameKey: context.usernameKey,
+        docId: context.documentItem.id,
+        docLabel: context.documentItem.deliveryLabel,
+        fullName: context.user.fullName || "",
+        ficha: context.user.ficha || "",
+        grupo: context.user.grupo || (fichaInfo && fichaInfo.grupo) || "",
+        institucion: context.user.institucion || (fichaInfo && fichaInfo.inst) || "",
+        submittedAt: submittedAt,
+        savedFileName: "Registro manual",
+        driveUrl: driveUrl,
+        registeredManually: true,
+      });
+      const saveResult = await store.saveSnapshot(nextSnapshot);
+      if (!saveResult || !saveResult.ok) {
+        setManualDocumentDeliveryFeedback("No fue posible guardar la entrega. Intenta nuevamente.", "error");
+        return;
+      }
+      productiveStageSnapshot = nextSnapshot;
+      renderDocumentDeliveryControl();
+      closeDocumentDeliveryManualModal();
+      setDocumentDeliveryControlFeedback(
+        saveResult.savedCloud
+          ? "Entrega registrada y sincronizada correctamente."
+          : "Entrega registrada localmente. Revisa la conexion para sincronizarla con los demas equipos.",
+        saveResult.savedCloud ? "success" : "error"
+      );
+    } catch (error) {
+      setManualDocumentDeliveryFeedback(
+        error && error.message ? error.message : "No fue posible guardar la entrega.",
+        "error"
+      );
+    } finally {
+      submitButton.disabled = false;
     }
   }
 
@@ -817,6 +1072,7 @@
         reports: [],
         imports: [],
         deliveries: [],
+        documentDeliveries: [],
         studentIndex: {},
         lastImportSummary: null,
         updatedAt: "",
@@ -827,17 +1083,20 @@
 
     productiveStageSnapshot = await window.productiveStageStore.loadSnapshot();
     renderProductiveStageSection();
+    renderDocumentDeliveryControl();
   }
 
   async function loadUsersForMatching() {
     try {
       allUsers = await auth.fetchStudentsWithProgress();
+      renderDocumentDeliveryControl();
       setStorageContext(
         "Este modulo esta usando el almacenamiento compartido del portal para vincular aprendices e informes."
       );
       setProductiveStageFeedback("", "success");
     } catch (error) {
       allUsers = auth.getStudentsWithProgress();
+      renderDocumentDeliveryControl();
       setStorageContext(
         "No fue posible leer el almacenamiento compartido. Se usara la copia local disponible en este navegador."
       );
@@ -931,10 +1190,29 @@
       });
     });
 
+    getById("document-delivery-control-query")?.addEventListener("input", renderDocumentDeliveryControl);
+    getById("document-delivery-control-only-pending")?.addEventListener("change", renderDocumentDeliveryControl);
+    getById("document-delivery-manual-submit")?.addEventListener("click", handleManualDocumentDeliverySubmit);
+
     document.addEventListener("click", function (event) {
       const closeButton = event.target.closest("[data-close-productive-stage-modal]");
       if (closeButton) {
         closeProductiveStageDetailModal();
+        return;
+      }
+
+      const closeDocumentButton = event.target.closest("[data-close-document-delivery-modal]");
+      if (closeDocumentButton) {
+        closeDocumentDeliveryManualModal();
+        return;
+      }
+
+      const manualButton = event.target.closest("[data-register-document-delivery]");
+      if (manualButton) {
+        openDocumentDeliveryManualModal(
+          manualButton.getAttribute("data-register-document-delivery") || "",
+          manualButton.getAttribute("data-document-id") || ""
+        );
         return;
       }
 
@@ -946,6 +1224,7 @@
 
     document.addEventListener("keydown", function (event) {
       if (event.key === "Escape") {
+        closeDocumentDeliveryManualModal();
         closeProductiveStageDetailModal();
       }
     });

@@ -50,7 +50,78 @@
       fileName: "Acuerdo Etapa Productiva.xlsx",
       deliveryLabel: "Acuerdo de Etapa Productiva",
     },
+    {
+      id: "diseno-curricular",
+      type: "Documento de referencia",
+      title: "Diseno Curricular del programa",
+      description:
+        "Competencias y resultados de aprendizaje del programa Sistemas Teleinformaticos. Usalo como referencia para diligenciar el campo \"Competencias del programa de formacion aplicadas\" de cada bitacora.",
+      href: "assets/materiales/etapa-productiva/Diseno%20Curricular%20Sistemas%20Teleinformaticos.pdf",
+      fileName: "Diseno Curricular Sistemas Teleinformaticos.pdf",
+      // Solo grado 11 (SB 11A/11B) ejecuta etapa productiva este ano.
+      hideForGrade10: true,
+    },
   ];
+
+  // Bitacora de seguimiento (GFPI-F-147, hoja "Formato Bitacora Art. Media" --
+  // aplica porque los aprendices de grado 11 son de articulacion con la media).
+  // El SENA exige minimo 1 y maximo 2 entregas al mes durante la ejecucion; el
+  // acuerdo local con el instructor de seguimiento es de 6 bitacoras para el
+  // periodo de etapa productiva de este grupo. Un solo formato reutilizable,
+  // con 6 cupos de entrega independientes (uno por bitacora).
+  const BITACORA_HREF =
+    "assets/materiales/etapa-productiva/GFPI-F-147%20Formato%20Bitacora%20Seguimiento%20Etapa%20Productiva.xlsx";
+  const BITACORA_FILENAME = "GFPI-F-147 Formato Bitacora Seguimiento Etapa Productiva.xlsx";
+  const BITACORA_COUNT = 6;
+
+  // Fechas limite acordadas con el instructor de seguimiento (2026), alineadas
+  // a las jornadas de asesoria SB 11A/11B del calendario academico (ultimo dia
+  // de cada bloque mensual visible: sin bloque en junio, y se omite septiembre
+  // para llegar a exactamente 6 entregas). Formato YYYY-MM-DD, fin de dia
+  // America/Bogota (ver isPastDeadline). Sin la entrega correspondiente la
+  // Etapa Productiva NO se considera realizada (bloquea la graduacion) -- ver
+  // el aviso en buildResourcesMarkup.
+  const BITACORA_DEADLINES = [
+    "2026-03-27",
+    "2026-04-30",
+    "2026-05-29",
+    "2026-07-31",
+    "2026-08-28",
+    "2026-10-23",
+  ];
+
+  // Evidencia adicional exigida por la coordinacion academica: pantallazo de
+  // que la informacion de la Etapa Productiva quedo actualizada en Sofia Plus.
+  // Se entrega UNA sola vez para todo el periodo (no una por bitacora). Sin
+  // plantilla que descargar (noDownload: true -- ver buildResourcesMarkup) y
+  // ligada a la fecha limite de la primera bitacora: para ese momento ya
+  // deberia existir el registro en Sofia Plus.
+  PROJECT_DOCUMENTS.push({
+    id: "sofia-plus",
+    type: "Evidencia Sofia Plus",
+    title: "Pantallazo Sofia Plus",
+    description:
+      "Captura de pantalla que muestre la informacion de tu Etapa Productiva ya actualizada en Sofia Plus. Se entrega UNA sola vez (no por cada bitacora); es obligatoria y queda como soporte en tu expediente.",
+    noDownload: true,
+    hideForGrade10: true,
+    deliveryLabel: "Pantallazo Sofia Plus",
+    deadline: BITACORA_DEADLINES[0],
+  });
+
+  for (let i = 1; i <= BITACORA_COUNT; i++) {
+    PROJECT_DOCUMENTS.push({
+      id: "bitacora-" + i,
+      type: "Bitacora de seguimiento",
+      title: "Bitacora N° " + i,
+      description:
+        "Formato GFPI-F-147 (hoja \"Formato Bitacora Art. Media\"). Descargalo, diligencia el periodo, actividades y firmas, y entregalo.",
+      href: BITACORA_HREF,
+      fileName: BITACORA_FILENAME,
+      hideForGrade10: true,
+      deliveryLabel: "Bitacora " + i,
+      deadline: BITACORA_DEADLINES[i - 1],
+    });
+  }
 
   let currentState = {
     snapshot: null,
@@ -87,6 +158,34 @@
       hour: "2-digit",
       minute: "2-digit",
     });
+  }
+
+  // Colombia no tiene horario de verano -- UTC-5 es siempre correcto.
+  function formatDeadlineDate(value) {
+    if (!value) {
+      return "";
+    }
+    const date = new Date(value + "T23:59:00-05:00");
+    if (Number.isNaN(date.getTime())) {
+      return "";
+    }
+    return date.toLocaleDateString("es-CO", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      timeZone: "America/Bogota",
+    });
+  }
+
+  function isPastDeadline(value) {
+    if (!value) {
+      return false;
+    }
+    const deadline = new Date(value + "T23:59:00-05:00");
+    if (Number.isNaN(deadline.getTime())) {
+      return false;
+    }
+    return Date.now() > deadline.getTime();
   }
 
   function getMainProject(viewModel) {
@@ -162,12 +261,25 @@
           const deliveredNote = record
             ? `<p class="student-project-download-card__delivered">&#9989; Entregado el ${escapeHtml(formatDate(record.submittedAt || record.fechaEntrega || record.uploadedAt))}${record.savedFileName ? ` &mdash; ${escapeHtml(record.savedFileName)}` : ""}</p>`
             : "";
+          // El aviso de fecha limite solo tiene sentido mientras no se haya
+          // entregado (una vez entregada, deliveredNote ya confirma el cumplimiento).
+          const deadlineNote = !record && documentItem.deadline
+            ? isPastDeadline(documentItem.deadline)
+              ? `<p class="student-project-download-card__deadline student-project-download-card__deadline--overdue">&#9888;&#65039; Fecha limite vencida: ${escapeHtml(formatDeadlineDate(documentItem.deadline))}. Sin esta entrega, la Etapa Productiva NO se considera realizada y no podras graduarte.</p>`
+              : `<p class="student-project-download-card__deadline">&#128197; Fecha limite de entrega: ${escapeHtml(formatDeadlineDate(documentItem.deadline))}. Es obligatoria para culminar la Etapa Productiva y graduarte.</p>`
+            : "";
           const resolvedHref = documentItem.hrefByFicha ? resolveFichaHref(ficha) : documentItem.href;
-          const downloadBtn = resolvedHref
-            ? `<a class="app-btn app-btn--primary" href="${escapeHtml(resolvedHref)}" target="_blank" rel="noopener noreferrer" ${documentItem.hrefByFicha ? "" : `download="${escapeHtml(documentItem.fileName)}"`}>
+          // noDownload: documentos que son solo evidencia a subir (p. ej. el
+          // pantallazo de Sofia Plus), sin plantilla que descargar -- no mostrar
+          // el aviso "Aun no disponible", ese es para documentos que SI deberian
+          // tener un archivo pero aun no se resolvio (caso hrefByFicha sin URL).
+          const downloadBtn = documentItem.noDownload
+            ? ""
+            : resolvedHref
+              ? `<a class="app-btn app-btn--primary" href="${escapeHtml(resolvedHref)}" target="_blank" rel="noopener noreferrer" ${documentItem.hrefByFicha ? "" : `download="${escapeHtml(documentItem.fileName)}"`}>
                  Descargar
                </a>`
-            : `<span class="student-project-download-card__unavailable">Aun no disponible para tu ficha. Consulta con tu instructor.</span>`;
+              : `<span class="student-project-download-card__unavailable">Aun no disponible para tu ficha. Consulta con tu instructor.</span>`;
 
           return `
             <article class="student-project-download-card">
@@ -178,6 +290,7 @@
                 ${downloadBtn}
                 ${deliveryBtn}
               </div>
+              ${deadlineNote}
               ${deliveredNote}
             </article>
           `;
@@ -344,15 +457,76 @@
     renderProjectDelivery();
   }
 
+  // El registro de entrega de shared_apps_script_delivery.js solo vive en el
+  // localStorage del navegador donde se entrego (ver getDocumentDeliveryRecord).
+  // Para que el admin pueda llevar control de entregas desde otro equipo, esta
+  // funcion replica el registro al snapshot compartido de productiveStageStore
+  // (el mismo mecanismo cloud que ya usa "Avance del proyecto"). Best-effort:
+  // si falla, la entrega ya quedo en Drive y en el localStorage local -- no se
+  // bloquea ni se le muestra error al aprendiz por esto.
+  async function syncDocumentDeliveryToCloud(record) {
+    if (!store || typeof store.loadSnapshot !== "function" || !record || !record.panelKey) {
+      return;
+    }
+    if (record.panelKey.indexOf("etapa-doc-") !== 0) {
+      return;
+    }
+    const docId = record.panelKey.slice("etapa-doc-".length);
+    const session = currentState.session;
+    const usernameKey = String(session?.user?.usernameKey || "").trim().toLowerCase();
+    if (!usernameKey || session?.role !== "student") {
+      return;
+    }
+
+    try {
+      const snapshot = await store.loadSnapshot();
+      const next = store.appendDocumentDeliveryToSnapshot(snapshot, {
+        usernameKey: usernameKey,
+        docId: docId,
+        docLabel: record.activityLabel || docId,
+        fullName: record.fullName || session?.user?.fullName || "",
+        ficha: record.ficha || session?.user?.ficha || "",
+        grupo: record.grupo || session?.user?.grupo || "",
+        institucion: record.institucion || "",
+        submittedAt: record.submittedAt || new Date().toISOString(),
+        savedFileName: record.savedFileName || "",
+        driveUrl: record.driveUrl || "",
+      });
+      await store.saveSnapshot(next);
+    } catch (error) {
+      // Silencioso: la entrega real (Drive + registro local) ya se completo.
+    }
+  }
+
   // Al completarse una entrega (evento del modulo de entregas), la card del
-  // documento se re-pinta para mostrar "Entregado" sin recargar la pagina.
-  document.addEventListener("guide-delivery-registered", function () {
+  // documento se re-pinta para mostrar "Entregado" sin recargar la pagina, y
+  // se replica el registro al panel de control del admin.
+  document.addEventListener("guide-delivery-registered", function (event) {
     renderProjectResources();
+    syncDocumentDeliveryToCloud(event && event.detail);
   });
+
+  // Catalogo de documentos entregables (id/label/deadline), reutilizado por el
+  // panel admin (productive_stage_admin.js) como unica fuente de verdad -- evita
+  // duplicar aqui y alla la lista de 9 documentos y que se desincronicen.
+  function getDocumentCatalog() {
+    return PROJECT_DOCUMENTS.filter(function (documentItem) {
+      return !!documentItem.deliveryLabel;
+    }).map(function (documentItem) {
+      return {
+        id: documentItem.id,
+        title: documentItem.title,
+        deliveryLabel: documentItem.deliveryLabel,
+        hideForGrade10: !!documentItem.hideForGrade10,
+        deadline: documentItem.deadline || "",
+      };
+    });
+  }
 
   window.productiveStageProjectDelivery = {
     render: render,
     renderProjectResources: renderProjectResources,
     openProjectDeliveryModal: openProjectDeliveryModal,
+    getDocumentCatalog: getDocumentCatalog,
   };
 })();
