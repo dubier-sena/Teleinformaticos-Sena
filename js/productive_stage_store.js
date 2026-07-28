@@ -56,6 +56,12 @@
       reports: [],
       imports: [],
       deliveries: [],
+      // Entregas de "documentos base" de Etapa Productiva (ficha de inscripcion,
+      // acuerdo, pantallazo Sofia Plus, bitacoras GFPI-F-147...). A diferencia de
+      // `deliveries` (avance del proyecto, keyed por projectId) estas no siempre
+      // tienen un proyecto vinculado -- se identifican por usernameKey + docId.
+      // Ver appendDocumentDeliveryToSnapshot / getDocumentDeliveriesByUsername.
+      documentDeliveries: [],
       studentIndex: {},
       lastImportSummary: null,
     };
@@ -177,6 +183,7 @@
     const nextReports = Array.isArray(base.reports) ? base.reports.slice() : [];
     const nextImports = Array.isArray(base.imports) ? base.imports.slice() : [];
     const nextDeliveries = Array.isArray(base.deliveries) ? base.deliveries.slice() : [];
+    const nextDocumentDeliveries = Array.isArray(base.documentDeliveries) ? base.documentDeliveries.slice() : [];
 
     (importResult.projects || []).forEach(function (project) {
       const index = nextProjects.findIndex(function (item) {
@@ -216,6 +223,7 @@
       reports: nextReports,
       imports: nextImports,
       deliveries: nextDeliveries,
+      documentDeliveries: nextDocumentDeliveries,
       studentIndex: buildStudentIndex(nextProjects),
       lastImportSummary: {
         importBatchId: importResult.importBatchId,
@@ -265,6 +273,80 @@
     });
   }
 
+  // Entrega de un "documento base" de Etapa Productiva (ficha de inscripcion,
+  // acuerdo, pantallazo Sofia Plus, bitacora GFPI-F-147...). Se identifica por
+  // usernameKey + docId (no por projectId -- estos documentos se entregan antes
+  // de que exista, o sin que exista, un proyecto vinculado). Idempotente: una
+  // segunda entrega del mismo doc actualiza el registro en vez de duplicarlo.
+  function appendDocumentDeliveryToSnapshot(previousSnapshot, deliveryRecord) {
+    const base = Object.assign(createEmptySnapshot(), previousSnapshot || {});
+    const nextDocumentDeliveries = Array.isArray(base.documentDeliveries)
+      ? base.documentDeliveries.slice()
+      : [];
+    const normalizedRecord = Object.assign(
+      {
+        usernameKey: "",
+        docId: "",
+        docLabel: "",
+        fullName: "",
+        ficha: "",
+        grupo: "",
+        institucion: "",
+        submittedAt: new Date().toISOString(),
+        savedFileName: "",
+        driveUrl: "",
+      },
+      deliveryRecord || {}
+    );
+    normalizedRecord.usernameKey = String(normalizedRecord.usernameKey || "").trim().toLowerCase();
+    normalizedRecord.docId = String(normalizedRecord.docId || "").trim();
+
+    if (!normalizedRecord.usernameKey || !normalizedRecord.docId) {
+      return base;
+    }
+
+    const recordKey = normalizedRecord.usernameKey + "::" + normalizedRecord.docId;
+    const index = nextDocumentDeliveries.findIndex(function (item) {
+      return String(item && item.usernameKey || "").trim().toLowerCase() +
+        "::" +
+        String(item && item.docId || "").trim() === recordKey;
+    });
+
+    if (index >= 0) {
+      nextDocumentDeliveries[index] = Object.assign({}, nextDocumentDeliveries[index], normalizedRecord);
+    } else {
+      nextDocumentDeliveries.push(normalizedRecord);
+    }
+
+    return Object.assign({}, base, {
+      schemaVersion: 2,
+      updatedAt: normalizedRecord.submittedAt || base.updatedAt,
+      documentDeliveries: nextDocumentDeliveries,
+    });
+  }
+
+  // Agrupa las entregas de documentos base por aprendiz: { [usernameKey]: { [docId]: record } }.
+  // Uso tipico del panel admin: cruzar contra el roster + catalogo de documentos
+  // para saber que falta por cada aprendiz.
+  function getDocumentDeliveriesByUsername(snapshot) {
+    const normalizedSnapshot = Object.assign(createEmptySnapshot(), snapshot || {});
+    const byUsername = {};
+    (Array.isArray(normalizedSnapshot.documentDeliveries) ? normalizedSnapshot.documentDeliveries : []).forEach(
+      function (record) {
+        const usernameKey = String((record && record.usernameKey) || "").trim().toLowerCase();
+        const docId = record && record.docId;
+        if (!usernameKey || !docId) {
+          return;
+        }
+        if (!byUsername[usernameKey]) {
+          byUsername[usernameKey] = {};
+        }
+        byUsername[usernameKey][docId] = record;
+      }
+    );
+    return byUsername;
+  }
+
   async function loadSnapshot() {
     const localSnapshot = readLocalSnapshot();
     const cloudSnapshot = await readCloudSnapshot();
@@ -301,5 +383,7 @@
     getProjectReports: getProjectReports,
     getProjectDeliveries: getProjectDeliveries,
     appendProjectDeliveryToSnapshot: appendProjectDeliveryToSnapshot,
+    appendDocumentDeliveryToSnapshot: appendDocumentDeliveryToSnapshot,
+    getDocumentDeliveriesByUsername: getDocumentDeliveriesByUsername,
   };
 });
