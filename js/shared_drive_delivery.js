@@ -328,6 +328,18 @@
         config.activityContext || {}
       );
       activityContext.panelKey = config.panelKey || activityContext.panelKey || "";
+      // Propaga el id y número REALES del target (pueden diferir del número del
+      // .activity contenedor cuando una misma actividad numerada tiene varios
+      // targets de entrega, p.ej. Reto + Ejercicio adicional en Guia Python).
+      // Sin esto, resolveGuideStandardContext() en shared_apps_script_delivery.js
+      // no puede distinguirlos y ambos terminan con el mismo nombre de archivo.
+      activityContext.deadlineActivityId = config.deadlineActivityId || activityContext.deadlineActivityId || "";
+      if (config.activityNumber) {
+        activityContext.activityNumber = config.activityNumber;
+      }
+      if (activityContext.activityTitle) {
+        activityContext.activityLabel = activityContext.activityTitle;
+      }
       activityContext.pageFile =
         window.__RUNTIME_PAGE_FILE__ ||
         window.location.pathname.split("/").pop() ||
