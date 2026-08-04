@@ -29,6 +29,10 @@
       "Guía 4 - Planificar la información según criterios de ciberseguridad | Grupo 10A",
     "grupo-10b-guia-04-planificar-informacion-ciberseguridad.html":
       "Guía 4 - Planificar la información según criterios de ciberseguridad | Grupo 10B",
+    "grupo-10a-guia-05-documentar-gestion-informacion.html":
+      "Guía 5 - Documentar la gestión de la información | Grupo 10A",
+    "grupo-10b-guia-05-documentar-gestion-informacion.html":
+      "Guía 5 - Documentar la gestión de la información | Grupo 10B",
     "grupo-11a-guia-05-herramientas-informaticas-digitales.html":
       "Guía 5 - Operar herramientas informáticas y digitales | Grupo 11A",
     "grupo-11a-guia-06-planificar-informacion.html":
@@ -133,6 +137,20 @@
       activityTotal: 8,
       pageKey: "10b_guia4ciber",
       stateKey: "guia_interactiva_10b_guia4ciber_html",
+    },
+    "grupo-10a-guia-05-documentar-gestion-informacion.html": {
+      mode: "state-with-activity",
+      total: 100,
+      activityTotal: 7,
+      pageKey: "10a_guia5doc",
+      stateKey: "guia_interactiva_10a_guia5doc_html",
+    },
+    "grupo-10b-guia-05-documentar-gestion-informacion.html": {
+      mode: "state-with-activity",
+      total: 100,
+      activityTotal: 7,
+      pageKey: "10b_guia5doc",
+      stateKey: "guia_interactiva_10b_guia5doc_html",
     },
     "grupo-11a-guia-05-herramientas-informaticas-digitales.html": {
       mode: "state-with-activity",
@@ -265,6 +283,7 @@
         "grupo-10a-guia-02-herramientas-informaticas-digitales.html",
         "grupo-10a-guia-03-planificar-informacion.html",
         "grupo-10a-guia-04-planificar-informacion-ciberseguridad.html",
+        "grupo-10a-guia-05-documentar-gestion-informacion.html",
         "grupo-10a-guia-04-taller-integrador.html",
         "santa-barbara-guia-python.html",
       ],
@@ -278,6 +297,7 @@
         "grupo-10b-guia-02-herramientas-informaticas-digitales.html",
         "grupo-10b-guia-03-planificar-informacion.html",
         "grupo-10b-guia-04-planificar-informacion-ciberseguridad.html",
+        "grupo-10b-guia-05-documentar-gestion-informacion.html",
         "grupo-10b-guia-04-taller-integrador.html",
         "santa-barbara-guia-python.html",
       ],

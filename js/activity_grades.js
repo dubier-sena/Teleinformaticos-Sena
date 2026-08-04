@@ -157,6 +157,18 @@
         { id: "plan341",        label: "3.4.1 Plan de Ciberseguridad + Sustentación" },
       ],
     },
+    "guia-05-documentar-gestion": {
+      label: "Guía 5 — Documentar la gestión de la información (grado 10, Kennedy)",
+      activities: [
+        { id: "caso411",          label: "4.1.1 Análisis del caso Agropecuaria La Esperanza" },
+        { id: "plenaria412",      label: "4.1.2 Socialización en plenaria" },
+        { id: "bloqueAB421",      label: "4.2.1 Estudio de contenidos (Bloques A y B)" },
+        { id: "mapa422",          label: "4.2.2 Mapa conceptual del sistema documental" },
+        { id: "portafolio431",    label: "4.3.1 Portafolio documental del equipo" },
+        { id: "organizacion432",  label: "4.3.2 Organización digital y control de versiones" },
+        { id: "documento441",     label: "4.4.1 Documento Técnico + Sustentación" },
+      ],
+    },
     "guia-08-documentar-gestion": {
       label: "Guía 8 — Documentar la gestión de la información (grado 11)",
       activities: [
@@ -669,6 +681,8 @@
     "grupo-10b-guia-03-planificar-informacion.html": "guia-03-planificar-10",
     "grupo-10a-guia-04-planificar-informacion-ciberseguridad.html": "guia-04-ciberseguridad",
     "grupo-10b-guia-04-planificar-informacion-ciberseguridad.html": "guia-04-ciberseguridad",
+    "grupo-10a-guia-05-documentar-gestion-informacion.html": "guia-05-documentar-gestion",
+    "grupo-10b-guia-05-documentar-gestion-informacion.html": "guia-05-documentar-gestion",
     "grupo-11a-guia-05-herramientas-informaticas-digitales.html": "guia-05-herramientas",
     "grupo-11b-guia-05-herramientas-informaticas-digitales.html": "guia-05-herramientas",
     "grupo-11a-guia-06-planificar-informacion.html": "guia-06-planificar",
