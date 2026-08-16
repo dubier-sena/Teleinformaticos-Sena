@@ -41,6 +41,24 @@ window.__GUIDE_RUNTIME_CONTEXTS__ = {
     "cloudFileName": "sb_10b_guia3_redes.html",
     "quizRedesUrl": "pages/auxiliares/santa-barbara-10b-guia-03-redes-rap02-quiz.html"
   },
+  "sb-redes-rap03-10a": {
+    "template": "guia-redes-rap03",
+    "partialPath": "partials/guia-redes-rap03-content.html",
+    "pageFile": "santa-barbara-10a-guia-04-redes-rap03.html",
+    "inst": "Institucion Educativa Santa Barbara",
+    "grupo": "10A",
+    "ficha": "3441944",
+    "cloudFileName": "sb_10a_guia4_redes_rap03.html"
+  },
+  "sb-redes-rap03-10b": {
+    "template": "guia-redes-rap03",
+    "partialPath": "partials/guia-redes-rap03-content.html",
+    "pageFile": "santa-barbara-10b-guia-04-redes-rap03.html",
+    "inst": "Institucion Educativa Santa Barbara",
+    "grupo": "10B",
+    "ficha": "3441950",
+    "cloudFileName": "sb_10b_guia4_redes_rap03.html"
+  },
   "sb-python": {
     "template": "guia-python",
     "partialPath": "partials/guia-python-content.html",

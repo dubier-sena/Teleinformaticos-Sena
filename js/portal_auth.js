@@ -57,6 +57,10 @@
       "Guía 3 - Comprobar la conectividad de la red, de acuerdo con normativa de telecomunicaciones y orden de trabajo | Grupo 10A",
     "santa-barbara-10b-guia-03-redes-rap02.html":
       "Guía 3 - Comprobar la conectividad de la red, de acuerdo con normativa de telecomunicaciones y orden de trabajo | Grupo 10B",
+    "santa-barbara-10a-guia-04-redes-rap03.html":
+      "Guía 4 - Documentar las acciones realizadas en la red, de acuerdo con la normativa | Grupo 10A",
+    "santa-barbara-10b-guia-04-redes-rap03.html":
+      "Guía 4 - Documentar las acciones realizadas en la red, de acuerdo con la normativa | Grupo 10B",
     "santa-barbara-guia-python.html":
       "Guía - Práctica de Python | Santa Bárbara",
     "santa-barbara-10a-guia-04-taller-integrador.html": "Taller Integrador | Grupo 10A",
@@ -236,6 +240,20 @@
       pageKey: "sb_10b_guia3_redes",
       stateKey: "guia_interactiva_santa_barbara_10b_guia_03_redes_rap02_html",
     },
+    "santa-barbara-10a-guia-04-redes-rap03.html": {
+      mode: "state-with-activity",
+      total: 66,
+      activityTotal: 11,
+      pageKey: "sb_10a_guia4_redes_rap03",
+      stateKey: "guia_interactiva_santa_barbara_10a_guia_04_redes_rap03_html",
+    },
+    "santa-barbara-10b-guia-04-redes-rap03.html": {
+      mode: "state-with-activity",
+      total: 66,
+      activityTotal: 11,
+      pageKey: "sb_10b_guia4_redes_rap03",
+      stateKey: "guia_interactiva_santa_barbara_10b_guia_04_redes_rap03_html",
+    },
     "santa-barbara-guia-python.html": {
       mode: "state-with-activity",
       total: 20,
@@ -306,13 +324,13 @@
       inst: "Institucion Educativa Santa Barbara",
       grupo: "10A",
       optionalModules: { pythonOnlinePractice: true },
-      guias: ["grupo-10a-guia-01-induccion.html", "santa-barbara-10a-guia-02-redes-rap01.html", "santa-barbara-10a-guia-03-redes-rap02.html", "santa-barbara-guia-python.html", "santa-barbara-10a-guia-04-taller-integrador.html"],
+      guias: ["grupo-10a-guia-01-induccion.html", "santa-barbara-10a-guia-02-redes-rap01.html", "santa-barbara-10a-guia-03-redes-rap02.html", "santa-barbara-10a-guia-04-redes-rap03.html", "santa-barbara-guia-python.html", "santa-barbara-10a-guia-04-taller-integrador.html"],
     },
     "3441950": {
       inst: "Institucion Educativa Santa Barbara",
       grupo: "10B",
       optionalModules: { pythonOnlinePractice: true },
-      guias: ["grupo-10b-guia-01-induccion.html", "santa-barbara-10b-guia-02-redes-rap01.html", "santa-barbara-10b-guia-03-redes-rap02.html", "santa-barbara-guia-python.html", "santa-barbara-10b-guia-04-taller-integrador.html"],
+      guias: ["grupo-10b-guia-01-induccion.html", "santa-barbara-10b-guia-02-redes-rap01.html", "santa-barbara-10b-guia-03-redes-rap02.html", "santa-barbara-10b-guia-04-redes-rap03.html", "santa-barbara-guia-python.html", "santa-barbara-10b-guia-04-taller-integrador.html"],
     },
     "3168850": {
       inst: "Institucion Educativa Santa Barbara",

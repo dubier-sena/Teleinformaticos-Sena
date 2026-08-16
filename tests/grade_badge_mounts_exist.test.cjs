@@ -53,6 +53,7 @@ const FAMILY_TO_FILES = {
   "guia-08-documentar-gestion": ["partials/guia-08-documentar-gestion-content.html"],
   "guia-redes-rap01": ["partials/guia-redes-rap01-content.html"],
   "guia-redes-rap02": ["partials/guia-redes-rap02-content.html"],
+  "guia-redes-rap03": ["partials/guia-redes-rap03-content.html"],
   "guia-python": ["partials/guia-python-content.html"],
   "taller-integrador-jfk": ["partials/taller-integrador-jfk-content.html"],
   "taller-integrador-sb": ["partials/taller-integrador-sb-content.html"],

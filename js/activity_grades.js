@@ -265,6 +265,22 @@
         { id: "quiz-redes-321h-rap02", label: "3.5.1 Quiz de conectividad" },
       ],
     },
+    "guia-redes-rap03": {
+      label: "Redes RAP 03 — Documentar las acciones realizadas en la red",
+      activities: [
+        { id: "reflexion311",        label: "3.1.1 Reflexión inicial - Caso consultorio médico" },
+        { id: "bloqueA321",          label: "3.2.1 Bloque A - Estándares TIA-568/606/ISO 11801" },
+        { id: "bloqueB322",          label: "3.2.2 Bloque B - Herramientas de verificación" },
+        { id: "bloqueC323",          label: "3.2.3 Bloque C - Parámetros de certificación" },
+        { id: "bloqueD324",          label: "3.2.4 Bloque D - Estructura de informe técnico" },
+        { id: "entregaContexto",     label: "3.2.5 Entrega - Productos de contextualización" },
+        { id: "demoHerramientas331", label: "3.3.1 Demostración práctica de herramientas" },
+        { id: "plantilla1Inventario", label: "3.3.2.1 Plantilla 1 - Inventario de dispositivos" },
+        { id: "plantilla2IP",        label: "3.3.2.2 Plantilla 2 - Direccionamiento IP" },
+        { id: "plantilla3Pruebas",   label: "3.3.2.3 Plantilla 3 - Pruebas de conectividad" },
+        { id: "informeTecnico",      label: "3.4.1 Informe técnico completo de la red" },
+      ],
+    },
     // Practica de Python: originalmente era UNA sola columna combinada
     // ("retoPython"), pero el usuario pidio calificar cada entrega por separado
     // (2026-07-16): 10 retos + 10 adicionales + reto integrador, igual que los
@@ -695,6 +711,8 @@
     "santa-barbara-10b-guia-02-redes-rap01.html": "guia-redes-rap01",
     "santa-barbara-10a-guia-03-redes-rap02.html": "guia-redes-rap02",
     "santa-barbara-10b-guia-03-redes-rap02.html": "guia-redes-rap02",
+    "santa-barbara-10a-guia-04-redes-rap03.html": "guia-redes-rap03",
+    "santa-barbara-10b-guia-04-redes-rap03.html": "guia-redes-rap03",
     "santa-barbara-guia-python.html": "guia-python",
     "grupo-10a-guia-04-taller-integrador.html": "taller-integrador-jfk",
     "grupo-10b-guia-04-taller-integrador.html": "taller-integrador-jfk",

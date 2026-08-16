@@ -1497,6 +1497,235 @@
     ],
   });
 
+  // ── Guia 4 (Redes RAP03 - Documentar acciones red - Santa Barbara) (10A + 10B) ──
+  register({
+    files: [
+      "santa-barbara-10a-guia-04-redes-rap03.html",
+      "santa-barbara-10b-guia-04-redes-rap03.html",
+    ],
+    guideNumber: "4",
+    guideTitle: "Guia 4 - Documentar las acciones realizadas en la red (RAP 03)",
+    stateKey: "guia_interactiva_santa_barbara_10a_guia_04_redes_rap03_html",
+    program: PROGRAM,
+    competencia: "280102129 - Evaluar red de acuerdo con procedimientos de telecomunicaciones y normativa tecnica.",
+    resultado: "RAP 03 - Documentar las acciones realizadas en la red de acuerdo con la normativa.",
+    activities: [
+      {
+        id: "reflexion311", number: "3.1.1", label: "Reflexion inicial - Caso consultorio medico Tunja",
+        shortName: "Reflexion", type: "form",
+        formFields: ["g5r_311_p1", "g5r_311_p2", "g5r_311_p3", "g5r_311_p4", "g5r_311_p5"],
+        buttonIds: { save: "btnGuardarReflexion311", status: "statusReflexion311" },
+        wordExport: {
+          contextBox: "Caso: el tecnico Juan instalo la red de un consultorio medico en Tunja (8 PC, 2 switches, 1 router, impresora de red) sin dejar documentacion. Tres meses despues, el nuevo tecnico no pudo resolver una falla sencilla por falta de registros.",
+          sections: [
+            { label: "1. Documentos que deberia haber dejado Juan (minimo 4)", storeKey: "g5r_311_p1" },
+            { label: "2. Informacion especifica a registrar de cada dispositivo", storeKey: "g5r_311_p2" },
+            { label: "3. Experiencia propia con falta de documentacion", storeKey: "g5r_311_p3" },
+            { label: "4. Diferencia entre un tecnico que documenta y uno que no, desde el cliente", storeKey: "g5r_311_p4" },
+            { label: "5. Formato o plantilla de documentacion tecnica conocido", storeKey: "g5r_311_p5" },
+          ],
+        },
+      },
+      {
+        id: "bloqueA321", number: "3.2.1", label: "Bloque A - Estandares de documentacion: TIA-568, TIA-606 e ISO/IEC 11801",
+        shortName: "BloqueA", type: "form",
+        formFields: ["g5r_321_q1", "g5r_321_q2", "g5r_321_q3"],
+        buttonIds: { save: "btnGuardarBloqueA321", status: "statusBloqueA321" },
+        wordExport: {
+          contextBox: "Bloque A: estandares TIA-568, TIA-606 e ISO/IEC 11801 que regulan la documentacion de redes.",
+          sections: [
+            { label: "1. Que establece la norma TIA-568 sobre el cableado estructurado", storeKey: "g5r_321_q1" },
+            { label: "2. Que es la norma TIA-606 y para que sirve en la documentacion", storeKey: "g5r_321_q2" },
+            { label: "3. Elementos minimos a documentar segun estos estandares", storeKey: "g5r_321_q3" },
+          ],
+        },
+      },
+      {
+        id: "bloqueB322", number: "3.2.2", label: "Bloque B - Herramientas de verificacion y certificacion de cableado",
+        shortName: "BloqueB", type: "form",
+        formFields: ["g5r_322_q1", "g5r_322_q2", "g5r_322_q3"],
+        buttonIds: { save: "btnGuardarBloqueB322", status: "statusBloqueB322" },
+        wordExport: {
+          contextBox: "Bloque B: tester de cable vs. certificador de cableado (p. ej. Fluke DTX-1800).",
+          sections: [
+            { label: "1. Diferencia entre tester de cable y certificador de cableado", storeKey: "g5r_322_q1" },
+            { label: "2. Parametros que mide un certificador y no un tester simple", storeKey: "g5r_322_q2" },
+            { label: "3. Resultado que genera el certificador y como se documenta", storeKey: "g5r_322_q3" },
+          ],
+        },
+      },
+      {
+        id: "bloqueC323", number: "3.2.3", label: "Bloque C - Parametros de certificacion de cableado",
+        shortName: "BloqueC", type: "form",
+        formFields: ["g5r_323_q1", "g5r_323_q2", "g5r_323_q3"],
+        buttonIds: { save: "btnGuardarBloqueC323", status: "statusBloqueC323" },
+        wordExport: {
+          contextBox: "Bloque C: parametros de certificacion (atenuacion, NEXT, BER, longitud de cable).",
+          sections: [
+            { label: "1. Que es la atenuacion (perdida de insercion) y como afecta la red", storeKey: "g5r_323_q1" },
+            { label: "2. Que significa un test BER aprobado y su implicacion documental", storeKey: "g5r_323_q2" },
+            { label: "3. Por que registrar la longitud del cable en el informe tecnico", storeKey: "g5r_323_q3" },
+          ],
+        },
+      },
+      {
+        id: "bloqueD324", number: "3.2.4", label: "Bloque D - Estructura de un informe tecnico de red",
+        shortName: "BloqueD", type: "form",
+        formFields: ["g5r_324_q1", "g5r_324_q2", "g5r_324_q3"],
+        buttonIds: { save: "btnGuardarBloqueD324", status: "statusBloqueD324" },
+        wordExport: {
+          contextBox: "Bloque D: estructura de un informe tecnico de red segun norma ICONTEC NTC 1486.",
+          sections: [
+            { label: "1. Diferencia entre informe tecnico e informe ejecutivo", storeKey: "g5r_324_q1" },
+            { label: "2. Secciones obligatorias de un informe tecnico de instalacion de red", storeKey: "g5r_324_q2" },
+            { label: "3. Evidencias graficas que debe incluir un informe tecnico de red", storeKey: "g5r_324_q3" },
+          ],
+        },
+      },
+      {
+        // Exportacion consolidada de los 4 bloques A-D — solo Word, sin save ni Drive.
+        // Mismo truco que exportBloques321a324 en la Guia 3 (script_guia_redes_rap02).
+        id: "exportBloques321a324", number: "3.2.x", label: "Exportar bloques A-D a Word",
+        shortName: "BloquesFinal", type: "form",
+        formFields: [],
+        buttonIds: { save: "_btnExportConsolidado_noexiste", status: "_statusExportConsolidado_noexiste" },
+        wordExport: {
+          contextBox: "Contextualizacion — estandares TIA-568/606/ISO 11801, herramientas de verificacion y certificacion, parametros de certificacion y estructura de un informe tecnico de red.",
+          sections: [
+            { label: "BLOQUE A — Estandares de documentacion: TIA-568, TIA-606 e ISO/IEC 11801", storeKey: "" },
+            { label: "A1. Que establece la norma TIA-568 sobre el cableado estructurado", storeKey: "g5r_321_q1" },
+            { label: "A2. Que es la norma TIA-606 y para que sirve en la documentacion", storeKey: "g5r_321_q2" },
+            { label: "A3. Elementos minimos a documentar segun estos estandares", storeKey: "g5r_321_q3" },
+            { label: "BLOQUE B — Herramientas de verificacion y certificacion de cableado", storeKey: "" },
+            { label: "B1. Diferencia entre tester de cable y certificador de cableado", storeKey: "g5r_322_q1" },
+            { label: "B2. Parametros que mide un certificador y no un tester simple", storeKey: "g5r_322_q2" },
+            { label: "B3. Resultado que genera el certificador y como se documenta", storeKey: "g5r_322_q3" },
+            { label: "BLOQUE C — Parametros de certificacion de cableado", storeKey: "" },
+            { label: "C1. Que es la atenuacion (perdida de insercion) y como afecta la red", storeKey: "g5r_323_q1" },
+            { label: "C2. Que significa un test BER aprobado y su implicacion documental", storeKey: "g5r_323_q2" },
+            { label: "C3. Por que registrar la longitud del cable en el informe tecnico", storeKey: "g5r_323_q3" },
+            { label: "BLOQUE D — Estructura de un informe tecnico de red", storeKey: "" },
+            { label: "D1. Diferencia entre informe tecnico e informe ejecutivo", storeKey: "g5r_324_q1" },
+            { label: "D2. Secciones obligatorias de un informe tecnico de instalacion de red", storeKey: "g5r_324_q2" },
+            { label: "D3. Evidencias graficas que debe incluir un informe tecnico de red", storeKey: "g5r_324_q3" },
+          ],
+        },
+      },
+      {
+        id: "entregaContexto", number: "3.2.5", label: "Entrega - Productos de contextualizacion (PDF)",
+        shortName: "Contextualizacion", type: "file",
+        driveTarget: {
+          panelKey: "g5redes-3-2-5", deadlineActivityId: "entregaContexto",
+          activityTitle: "Contextualizacion de documentacion (PDF con los 4 productos)",
+          description: "Sube a Drive un solo PDF con los 4 productos: tabla comparativa de estandares, cuadro de herramientas, tabla de parametros e indice comentado.",
+          note: "Nombre sugerido: Contextualizacion_Documentacion_NombreAprendiz_FICHA.pdf",
+        },
+      },
+      {
+        id: "demoHerramientas331", number: "3.3.1", label: "Demostracion practica de herramientas de cableado",
+        shortName: "DemoHerramientas", type: "form",
+        formFields: ["g5r_331_punchdown", "g5r_331_crimpadora", "g5r_331_tester", "g5r_331_certificador"],
+        buttonIds: { save: "btnGuardarDemoHerramientas331", status: "statusDemoHerramientas331" },
+        wordExport: {
+          contextBox: "Demostracion practica: Punch Down, crimpadora RJ-45, tester de cable y certificador de redes.",
+          sections: [
+            { label: "Punch Down — resultado y anotaciones", storeKey: "g5r_331_punchdown" },
+            { label: "Crimpadora RJ-45 — resultado y anotaciones", storeKey: "g5r_331_crimpadora" },
+            { label: "Tester de cable — resultado y anotaciones", storeKey: "g5r_331_tester" },
+            { label: "Certificador de redes — resultado y anotaciones", storeKey: "g5r_331_certificador" },
+          ],
+        },
+      },
+      {
+        id: "plantilla1Inventario", number: "3.3.2.1", label: "Plantilla 1 - Inventario de dispositivos de red",
+        shortName: "Plantilla1Inventario", type: "form",
+        formFields: [
+          "g5r_p1_r1", "g5r_p1_r2", "g5r_p1_r3", "g5r_p1_r4", "g5r_p1_r5", "g5r_p1_r6",
+          "g5r_p1_r7", "g5r_p1_r8", "g5r_p1_r9", "g5r_p1_r10", "g5r_p1_r11", "g5r_p1_r12",
+        ],
+        buttonIds: { save: "btnGuardarPlantilla1Inventario", status: "statusPlantilla1Inventario" },
+        wordExport: {
+          contextBox: "Plantilla 1 — Inventario de dispositivos de red de OccidenteServicios Ltda. (12 dispositivos: R1, S1, S2, PC0-PC7).",
+          sections: [
+            { label: "R1 — Gi0/0/0 (Router, enlace Planta 1)", storeKey: "g5r_p1_r1" },
+            { label: "R1 — Gi0/0/1 (Router, enlace Planta 2)", storeKey: "g5r_p1_r2" },
+            { label: "S1 — VLAN 1 (Switch Planta 1)", storeKey: "g5r_p1_r3" },
+            { label: "S2 — VLAN 1 (Switch Planta 2)", storeKey: "g5r_p1_r4" },
+            { label: "PC0 — Contabilidad (Planta 1)", storeKey: "g5r_p1_r5" },
+            { label: "PC1 — Gerencia (Planta 1)", storeKey: "g5r_p1_r6" },
+            { label: "PC2 — Recepcion (Planta 1)", storeKey: "g5r_p1_r7" },
+            { label: "PC3 — Soporte (Planta 1)", storeKey: "g5r_p1_r8" },
+            { label: "PC4 — Bodega (Planta 2)", storeKey: "g5r_p1_r9" },
+            { label: "PC5 — Despacho (Planta 2)", storeKey: "g5r_p1_r10" },
+            { label: "PC6 — Calidad (Planta 2)", storeKey: "g5r_p1_r11" },
+            { label: "PC7 — Sistemas (Planta 2)", storeKey: "g5r_p1_r12" },
+          ],
+        },
+      },
+      {
+        id: "plantilla2IP", number: "3.3.2.2", label: "Plantilla 2 - Tabla de direccionamiento IP",
+        shortName: "Plantilla2IP", type: "form",
+        formFields: [
+          "g5r_p2_r1", "g5r_p2_r2", "g5r_p2_r3", "g5r_p2_r4", "g5r_p2_r5", "g5r_p2_r6",
+          "g5r_p2_r7", "g5r_p2_r8", "g5r_p2_r9", "g5r_p2_r10", "g5r_p2_r11", "g5r_p2_r12",
+        ],
+        buttonIds: { save: "btnGuardarPlantilla2IP", status: "statusPlantilla2IP" },
+        wordExport: {
+          contextBox: "Plantilla 2 — Tabla de direccionamiento IP de OccidenteServicios Ltda. (192.168.1.0/24 Planta 1, 192.168.2.0/24 Planta 2).",
+          sections: [
+            { label: "R1 — Gi0/0/0", storeKey: "g5r_p2_r1" },
+            { label: "R1 — Gi0/0/1", storeKey: "g5r_p2_r2" },
+            { label: "S1 — VLAN 1", storeKey: "g5r_p2_r3" },
+            { label: "S2 — VLAN 1", storeKey: "g5r_p2_r4" },
+            { label: "PC0 — Contabilidad", storeKey: "g5r_p2_r5" },
+            { label: "PC1 — Gerencia", storeKey: "g5r_p2_r6" },
+            { label: "PC2 — Recepcion", storeKey: "g5r_p2_r7" },
+            { label: "PC3 — Soporte", storeKey: "g5r_p2_r8" },
+            { label: "PC4 — Bodega", storeKey: "g5r_p2_r9" },
+            { label: "PC5 — Despacho", storeKey: "g5r_p2_r10" },
+            { label: "PC6 — Calidad", storeKey: "g5r_p2_r11" },
+            { label: "PC7 — Sistemas", storeKey: "g5r_p2_r12" },
+          ],
+        },
+      },
+      {
+        id: "plantilla3Pruebas", number: "3.3.2.3", label: "Plantilla 3 - Registro de pruebas de conectividad",
+        shortName: "Plantilla3Pruebas", type: "form",
+        formFields: [
+          "g5r_p3_r1", "g5r_p3_r2", "g5r_p3_r3", "g5r_p3_r4", "g5r_p3_r5",
+          "g5r_p3_r6", "g5r_p3_r7", "g5r_p3_r8", "g5r_p3_r9", "g5r_p3_r10",
+        ],
+        buttonIds: { save: "btnGuardarPlantilla3Pruebas", status: "statusPlantilla3Pruebas" },
+        wordExport: {
+          contextBox: "Plantilla 3 — Registro de las 10 pruebas de conectividad de la red de OccidenteServicios Ltda. (mismas pruebas de la Guia 3).",
+          sections: [
+            { label: "1. PC0: ping 192.168.1.1 (Gateway Planta 1)", storeKey: "g5r_p3_r1" },
+            { label: "2. PC2: ping 192.168.1.13 (comunicacion PCs Planta 1)", storeKey: "g5r_p3_r2" },
+            { label: "3. PC4: ping 192.168.2.1 (Gateway Planta 2)", storeKey: "g5r_p3_r3" },
+            { label: "4. PC6: ping 192.168.2.13 (comunicacion PCs Planta 2)", storeKey: "g5r_p3_r4" },
+            { label: "5. PC0: ping 192.168.2.10 (enrutamiento Planta 1 a Planta 2)", storeKey: "g5r_p3_r5" },
+            { label: "6. PC7: ping 192.168.1.11 (enrutamiento inverso Planta 2 a Planta 1)", storeKey: "g5r_p3_r6" },
+            { label: "7. PC3: ping 192.168.1.2 (gestion del switch S1)", storeKey: "g5r_p3_r7" },
+            { label: "8. PC5: ping 192.168.2.2 (gestion del switch S2)", storeKey: "g5r_p3_r8" },
+            { label: "9. PC0: tracert 192.168.2.13 (ruta entre plantas)", storeKey: "g5r_p3_r9" },
+            { label: "10. PC4: telnet 192.168.1.1 (acceso administrativo remoto)", storeKey: "g5r_p3_r10" },
+          ],
+        },
+      },
+      {
+        id: "informeTecnico", number: "3.4.1", label: "Informe tecnico completo de la red",
+        shortName: "InformeTecnico", type: "file",
+        driveTarget: {
+          panelKey: "g5redes-3-4-1", deadlineActivityId: "informeTecnico",
+          activityTitle: "Informe tecnico completo de la red (OccidenteServicios Ltda.)",
+          description: "Sube a Drive el informe tecnico completo en PDF (minimo 8 paginas, 10 secciones, con topologia exportada de Packet Tracer y las 3 plantillas incluidas).",
+          note: "Nombre sugerido: InformeTecnico_OccidenteServicios_NombreAprendiz_FICHA.pdf",
+          allowedExtensions: [".pdf"],
+        },
+      },
+    ],
+  });
+
   // ── Guia practica de Python (todos los grupos, 10 retos + 1 entrega final) ─
   register({
     files: ["santa-barbara-guia-python.html"],
