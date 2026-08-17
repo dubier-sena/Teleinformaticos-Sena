@@ -12,6 +12,7 @@ const EXPECTED_ROOT_HTML = [
   "etapa-productiva-estudiante.html",
   "guia.html",
   "index.html",
+  "laboratorio-virtual-hardware.html",
   "panel-administrativo-usuarios.html",
   "panel-evidencias-integridad.html",
   "practica-python.html",

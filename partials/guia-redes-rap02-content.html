@@ -206,8 +206,24 @@
               <span class="activity-toggle">&#9662;</span>
             </div>
             <div class="activity-body">
-              <p class="intro-text" style="margin-top:0">Responde con tus propias palabras. No busques
+              <p class="intro-text" style="margin-top:0"><strong>Propósito:</strong> activar lo que ya sabes sobre diagnóstico de redes a partir del caso de Don Misael. Producto: reflexión individual de 5 preguntas + notas de la plenaria. Responde con tus propias palabras. No busques
               información: escribe lo que ya sabes o intuyes a partir de la Guía 2.</p>
+
+              <div class="ihelp-trigger">
+              <button type="button" class="ihelp-btn" data-ihelp-target="ihelp-g3-1">
+                <span class="ihelp-btn__icon" aria-hidden="true">&#128218;</span>
+                <span class="ihelp-btn__text">
+                  <span class="ihelp-btn__kicker">MATERIAL DE APOYO INTERACTIVO</span>
+                  <span class="ihelp-btn__title">Cómo piensa un técnico al diagnosticar</span>
+                </span>
+                <span class="ihelp-btn__arrow" aria-hidden="true">&rarr;</span>
+              </button>
+              <template id="ihelp-g3-1" data-ihelp-title="Cómo piensa un técnico al diagnosticar">
+                <p>Diagnosticar no es adivinar: es ir <strong>de lo general a lo específico</strong>, revisando en orden: (1) &iquest;el equipo tiene red local? (2) &iquest;la red local llega al router? (3) &iquest;el router sale a internet? (4) &iquest;el servicio puntual (impresora, cámara, DNS) responde?</p>
+                <div class="ihelp-panel__example">Para Don Misael: si dos PC se ven entre sí en la LAN pero no tienen internet, el problema NO está en la LAN &mdash;eso ya funciona&mdash;, está entre el router y el proveedor de internet, o en la configuración puntual de esos dos equipos.</div>
+              </template>
+            </div>
+
               <article class="notes-card">
                 <label><span>1. ¿Por qué crees que el computador de caja no puede imprimir si la red local funciona entre los demás equipos?</span>
                   <textarea rows="4" data-store="g3r_311_p1" data-track placeholder="Piensa en la impresora, su IP, el cable o el servicio de impresión."></textarea></label>
@@ -258,6 +274,27 @@
               <span class="activity-num">3.2.1</span><span class="activity-title">Bloque A — Router, Switch y Access Point</span><span class="activity-toggle">&#9662;</span>
             </div>
             <div class="activity-body">
+              <p class="intro-text" style="margin-top:0"><strong>Propósito:</strong> distinguir qué hace cada dispositivo activo de la red (router, switch, access point) para saber a cuál mirar primero ante una falla. Producto: diagrama de red etiquetado de la ferretería.</p>
+
+              <div class="ihelp-trigger">
+              <button type="button" class="ihelp-btn" data-ihelp-target="ihelp-g3-2">
+                <span class="ihelp-btn__icon" aria-hidden="true">&#128218;</span>
+                <span class="ihelp-btn__text">
+                  <span class="ihelp-btn__kicker">MATERIAL DE APOYO INTERACTIVO</span>
+                  <span class="ihelp-btn__title">Router, switch y access point en lenguaje sencillo</span>
+                </span>
+                <span class="ihelp-btn__arrow" aria-hidden="true">&rarr;</span>
+              </button>
+              <template id="ihelp-g3-2" data-ihelp-title="Router, switch y access point en lenguaje sencillo">
+                <ul>
+                  <li><strong>Switch:</strong> conecta los equipos entre sí dentro de la misma red local (LAN). Si dos PC no se ven entre sí, revisa el switch y los cables.</li>
+                  <li><strong>Router:</strong> conecta tu red local con otra red (normalmente internet). Si la LAN funciona pero no hay internet, revisa el router.</li>
+                  <li><strong>Access Point (AP):</strong> convierte una red cableada en Wi-Fi. Si el problema es solo con los dispositivos inalámbricos, revisa el AP.</li>
+                </ul>
+                <div class="ihelp-panel__example">Para Don Misael: el switch conecta los 5 PC entre sí; el router (integrado con el módem del ISP) les da salida a internet. Si la cámara IP inalámbrica falla pero los PC cableados están bien, sospecha primero del AP, no del router.</div>
+              </template>
+            </div>
+
               <div class="info-box green" style="margin-bottom:16px">
                 <div class="label">&#127909; Video de referencia</div>
                 <p><strong>Router vs Switch vs Access Point &mdash; &iquest;cu&aacute;l hace qu&eacute;?</strong></p>
@@ -295,6 +332,28 @@
               <span class="activity-num">3.2.2</span><span class="activity-title">Bloque B — Protocolo TCP/IP y modelo de capas</span><span class="activity-toggle">&#9662;</span>
             </div>
             <div class="activity-body">
+              <p class="intro-text" style="margin-top:0"><strong>Propósito:</strong> ubicar en qué capa del modelo TCP/IP ocurre cada falla, para no perder tiempo revisando la capa equivocada. Producto: tabla comparativa de las 4 capas.</p>
+
+              <div class="ihelp-trigger">
+              <button type="button" class="ihelp-btn" data-ihelp-target="ihelp-g3-3">
+                <span class="ihelp-btn__icon" aria-hidden="true">&#128218;</span>
+                <span class="ihelp-btn__text">
+                  <span class="ihelp-btn__kicker">MATERIAL DE APOYO INTERACTIVO</span>
+                  <span class="ihelp-btn__title">Las 4 capas de TCP/IP, sin enredarse</span>
+                </span>
+                <span class="ihelp-btn__arrow" aria-hidden="true">&rarr;</span>
+              </button>
+              <template id="ihelp-g3-3" data-ihelp-title="Las 4 capas de TCP/IP, sin enredarse">
+                <ul>
+                  <li><strong>Acceso a la red:</strong> el cable, el Wi-Fi, la tarjeta de red. Si falla, el equipo ni siquiera "ve" la red.</li>
+                  <li><strong>Internet:</strong> las direcciones IP y el enrutamiento (protocolo IP, y dentro de ella ICMP, el que usa <code>ping</code>).</li>
+                  <li><strong>Transporte:</strong> TCP (confiable, para páginas web y correo) y UDP (rápido pero sin garantías, para video y voz).</li>
+                  <li><strong>Aplicación:</strong> el programa que usas: navegador, cliente de correo, la app del punto de venta.</li>
+                </ul>
+                <div class="ihelp-panel__example">Para Don Misael: cuando haces <code>ping</code> a un equipo, estás probando la capa de Internet. Si responde, esa capa funciona y el problema probablemente está más arriba (Transporte o Aplicación), no en el cable.</div>
+              </template>
+            </div>
+
               <div class="info-box green" style="margin-bottom:16px">
                 <div class="label">&#127909; Video de referencia</div>
                 <p><strong>TCP/IP explicado visualmente &mdash; las 4 capas del modelo</strong></p>
@@ -331,6 +390,27 @@
               <span class="activity-num">3.2.3</span><span class="activity-title">Bloque C — Servicios de red: DHCP, DNS y Firewall</span><span class="activity-toggle">&#9662;</span>
             </div>
             <div class="activity-body">
+              <p class="intro-text" style="margin-top:0"><strong>Propósito:</strong> reconocer qué servicio hace que la red "funcione sola" (DHCP asigna IP, DNS resuelve nombres, Firewall filtra tráfico) y cómo se nota cuando cada uno falla. Producto: análisis de los 3 servicios con síntomas de falla.</p>
+
+              <div class="ihelp-trigger">
+              <button type="button" class="ihelp-btn" data-ihelp-target="ihelp-g3-4">
+                <span class="ihelp-btn__icon" aria-hidden="true">&#128218;</span>
+                <span class="ihelp-btn__text">
+                  <span class="ihelp-btn__kicker">MATERIAL DE APOYO INTERACTIVO</span>
+                  <span class="ihelp-btn__title">DHCP, DNS y Firewall: quién hace qué</span>
+                </span>
+                <span class="ihelp-btn__arrow" aria-hidden="true">&rarr;</span>
+              </button>
+              <template id="ihelp-g3-4" data-ihelp-title="DHCP, DNS y Firewall: quién hace qué">
+                <ul>
+                  <li><strong>DHCP:</strong> le asigna automáticamente IP, máscara, gateway y DNS a cada equipo que se conecta. Si falla, el equipo se queda sin IP válida (aparece una IP tipo <code>169.254.x.x</code>).</li>
+                  <li><strong>DNS:</strong> traduce nombres (<code>google.com</code>) a direcciones IP. Si falla, puedes hacer ping a una IP pero no abrir páginas por nombre.</li>
+                  <li><strong>Firewall:</strong> filtra el tráfico según reglas. Si está mal configurado, puede bloquear un servicio que sí debería funcionar.</li>
+                </ul>
+                <div class="ihelp-panel__example">Para Don Misael: la cámara IP "desapareció" porque el router le renovó la IP por DHCP y quedó distinta a la que el software de vigilancia tenía guardada &mdash;no es que la cámara se dañó.</div>
+              </template>
+            </div>
+
               <div class="info-box green" style="margin-bottom:16px">
                 <div class="label">&#127909; Videos de referencia</div>
                 <div style="display:flex;gap:8px;margin:10px 0 12px">
@@ -393,6 +473,24 @@
               <span class="activity-num">3.2.4</span><span class="activity-title">Bloque D — IPs públicas vs. privadas y NAT</span><span class="activity-toggle">&#9662;</span>
             </div>
             <div class="activity-body">
+              <p class="intro-text" style="margin-top:0"><strong>Propósito:</strong> entender por qué varios equipos con IP privada pueden salir a internet compartiendo una sola IP pública, y qué papel juega el NAT en ese proceso. Producto: esquema NAT etiquetado.</p>
+
+              <div class="ihelp-trigger">
+              <button type="button" class="ihelp-btn" data-ihelp-target="ihelp-g3-5">
+                <span class="ihelp-btn__icon" aria-hidden="true">&#128218;</span>
+                <span class="ihelp-btn__text">
+                  <span class="ihelp-btn__kicker">MATERIAL DE APOYO INTERACTIVO</span>
+                  <span class="ihelp-btn__title">IP privada, IP pública y NAT</span>
+                </span>
+                <span class="ihelp-btn__arrow" aria-hidden="true">&rarr;</span>
+              </button>
+              <template id="ihelp-g3-5" data-ihelp-title="IP privada, IP pública y NAT">
+                <p>Las IP <strong>privadas</strong> (como <code>192.168.x.x</code>) solo sirven dentro de tu propia LAN; no se pueden usar directamente en internet. La IP <strong>pública</strong> es la que el ISP le asigna al router y es la que se ve desde internet.</p>
+                <p><strong>NAT</strong> (Network Address Translation) es la traducción que hace el router: cambia la IP privada de cada equipo por su única IP pública cuando el tráfico sale a internet, y hace el cambio inverso cuando la respuesta regresa.</p>
+                <div class="ihelp-panel__example">Para Don Misael: sus 5 PC tienen IPs privadas distintas (192.168.1.10 al .14), pero para cualquier sitio web de internet todos "parecen" el mismo visitante, porque salen con la única IP pública del router.</div>
+              </template>
+            </div>
+
               <div class="info-box green" style="margin-bottom:16px">
                 <div class="label">&#127909; Video de referencia</div>
                 <p><strong>IP p&uacute;blica vs IP privada &mdash; diferencia y NAT explicado</strong></p>
@@ -466,7 +564,30 @@
               <span class="activity-num">3.3.1</span><span class="activity-title">Comandos de diagnóstico CLI — exploración y práctica</span><span class="activity-toggle">&#9662;</span>
             </div>
             <div class="activity-body">
-              <p class="intro-text" style="margin-top:0">Los comandos son la herramienta principal de un t&eacute;cnico de redes.
+              <p class="intro-text" style="margin-top:0"><strong>Propósito:</strong> aprender a leer la respuesta de cada comando, no solo a ejecutarlo, para ubicar en qué punto exacto se corta la conexión. Producto: registro de resultados de los 8 comandos.</p>
+
+              <div class="ihelp-trigger">
+              <button type="button" class="ihelp-btn" data-ihelp-target="ihelp-g3-6">
+                <span class="ihelp-btn__icon" aria-hidden="true">&#128218;</span>
+                <span class="ihelp-btn__text">
+                  <span class="ihelp-btn__kicker">MATERIAL DE APOYO INTERACTIVO</span>
+                  <span class="ihelp-btn__title">El orden importa: de adentro hacia afuera</span>
+                </span>
+                <span class="ihelp-btn__arrow" aria-hidden="true">&rarr;</span>
+              </button>
+              <template id="ihelp-g3-6" data-ihelp-title="El orden importa: de adentro hacia afuera">
+                <p>Estos comandos no son una lista suelta: siguen un orden lógico, de lo más cercano a tu equipo a lo más lejano.</p>
+                <ul>
+                  <li><code>ping 127.0.0.1</code> falla &rarr; el problema es tu propia tarjeta de red.</li>
+                  <li><code>ping [gateway]</code> falla &rarr; el problema está en la LAN (cable, switch, IP mal configurada).</li>
+                  <li><code>ping 8.8.8.8</code> falla (pero el gateway responde) &rarr; el problema es del router o del proveedor de internet.</li>
+                  <li><code>ping google.com</code> falla (pero <code>ping 8.8.8.8</code> funciona) &rarr; el problema es del DNS, no de la conexión.</li>
+                </ul>
+                <div class="ihelp-panel__example">Para Don Misael: si el punto de venta hace ping al gateway sin problema pero no llega a 8.8.8.8, ya sabes que la LAN está bien y el problema es del router o del internet contratado &mdash;no pierdas tiempo revisando cables.</div>
+              </template>
+            </div>
+
+              <p class="intro-text">Los comandos son la herramienta principal de un t&eacute;cnico de redes.
               Ejecuta cada comando en CMD (<kbd style="background:#222;color:#fff;padding:2px 7px;border-radius:4px;font-size:.85em">Windows + R</kbd> &rarr; escribe <kbd style="background:#222;color:#fff;padding:2px 7px;border-radius:4px;font-size:.85em">cmd</kbd> &rarr; Enter), toma captura y registra el resultado.</p>
 
               <div style="display:flex;flex-direction:column;gap:10px;margin:14px 0">
@@ -616,12 +737,28 @@
               <span class="activity-num">3.3.2</span><span class="activity-title">Procedimiento de diagnóstico de averías — presentación técnica</span><span class="activity-toggle">&#9662;</span>
             </div>
             <div class="activity-body">
-              <p class="intro-text" style="margin-top:0">Un técnico profesional no prueba comandos al azar: sigue un método.
+              <p class="intro-text" style="margin-top:0"><strong>Propósito:</strong> aplicar un método profesional de 7 pasos en vez de "probar cosas al azar" cuando algo falla. Producto: presentación de mínimo 15 diapositivas con los 5 escenarios resueltos.
+              Un técnico profesional no prueba comandos al azar: sigue un método.
               Elabora una presentación (PowerPoint, Canva o Google Slides, <strong>mínimo 15 diapositivas</strong>) aplicando el procedimiento estructurado.</p>
               <div class="info-box"><div class="label">&#128221; Procedimiento de resolución de averías</div>
                 <p>1) Identificar el problema · 2) Establecer teoría de causa probable · 3) Comprobar la teoría ·
                 4) Establecer plan de acción · 5) Implementar la solución (o escalar) · 6) Verificar el funcionamiento completo · 7) Documentar.</p>
               </div>
+
+              <div class="ihelp-trigger">
+              <button type="button" class="ihelp-btn" data-ihelp-target="ihelp-g3-7">
+                <span class="ihelp-btn__icon" aria-hidden="true">&#128218;</span>
+                <span class="ihelp-btn__text">
+                  <span class="ihelp-btn__kicker">MATERIAL DE APOYO INTERACTIVO</span>
+                  <span class="ihelp-btn__title">El método de 7 pasos aplicado a un caso</span>
+                </span>
+                <span class="ihelp-btn__arrow" aria-hidden="true">&rarr;</span>
+              </button>
+              <template id="ihelp-g3-7" data-ihelp-title="El método de 7 pasos aplicado a un caso">
+                <p>Cada paso responde una pregunta concreta. No se salta ninguno, aunque creas saber la causa desde el principio.</p>
+                <div class="ihelp-panel__example">Para el escenario 5 (DHCP no asigna IPs, todos muestran 169.254.x.x): (1) el problema es que ningún equipo tiene IP válida &middot; (2) teoría probable: el servicio DHCP del router está caído o sin rango disponible &middot; (3) comprobar entrando a la configuración del router &middot; (4) plan: reiniciar el servicio DHCP o ampliar el rango &middot; (5) aplicar el cambio &middot; (6) verificar con <code>ipconfig /renew</code> en un PC &middot; (7) documentar qué pasó y cómo se corrigió.</div>
+              </template>
+            </div>
               <div class="table-scroll">
                 <table class="data-table">
                   <thead><tr><th>#</th><th>Escenario de falla</th><th>Contexto en MiPyme</th></tr></thead>
@@ -664,6 +801,22 @@
             <strong>El objetivo no es solo configurar: es comprobar que la red funciona</strong> usando las herramientas de
             diagn&oacute;stico. Herramientas: 2 &times; Switch 2960 (12 puertos), Router 4321.</p>
           </article>
+
+          <div class="ihelp-trigger">
+          <button type="button" class="ihelp-btn" data-ihelp-target="ihelp-g3-8">
+            <span class="ihelp-btn__icon" aria-hidden="true">&#128218;</span>
+            <span class="ihelp-btn__text">
+              <span class="ihelp-btn__kicker">MATERIAL DE APOYO INTERACTIVO</span>
+              <span class="ihelp-btn__title">Qué vas a construir y por qué</span>
+            </span>
+            <span class="ihelp-btn__arrow" aria-hidden="true">&rarr;</span>
+          </button>
+          <template id="ihelp-g3-8" data-ihelp-title="Qué vas a construir y por qué">
+            <p>Vas a construir <strong>dos redes locales separadas</strong> (una por planta) que solo pueden hablar entre sí <strong>a través del router</strong> &mdash;esa es la razón por la que R1 tiene dos interfaces, una con IP de cada planta.</p>
+            <p>Cada dispositivo necesita 3 datos para funcionar en la red: su propia <strong>IP</strong>, la <strong>máscara</strong> (qué tan grande es su red) y el <strong>gateway</strong> (a quién le pregunta cuando el destino no está en su misma red). Si un PC de la Planta 1 quiere hablar con uno de la Planta 2, le pasa el paquete a su gateway (el router), y el router lo enruta.</p>
+            <div class="ihelp-panel__example">Por eso la "Verificación mínima" del paso 6 primero prueba que cada PC alcanza <em>su propio</em> gateway antes de probar nada entre plantas: si el PC ni siquiera llega a su gateway, ningún ping entre plantas va a funcionar.</div>
+          </template>
+        </div>
 
           <div class="table-scroll" style="margin-top:14px">
             <table class="data-table">
@@ -854,6 +1007,8 @@ telnet 192.168.1.1             ! acceso remoto al router</pre>
                 de construir y verificar toda esta red en Cisco Packet Tracer.</p>
               </article>
 
+              <p class="intro-text"><strong>Propósito:</strong> integrar en una sola red los 4 servicios que estudiaste en 3.2 (dispositivos activos, TCP/IP, DHCP/DNS, NAT) y comprobar con comandos que cada uno funciona. Producto: archivo .pkt + PDF con 10 pruebas comentadas.</p>
+
               <div class="table-scroll" style="margin-top:14px">
                 <table class="data-table">
                   <thead><tr><th>Dispositivo</th><th>Interfaz</th><th>Direcci&oacute;n IP</th><th>M&aacute;scara</th><th>Gateway</th><th>Rol</th></tr></thead>
@@ -1039,6 +1194,21 @@ show ip nat statistics</pre>
 
               </div>
 
+              <div class="ihelp-trigger">
+              <button type="button" class="ihelp-btn" data-ihelp-target="ihelp-g3-9">
+                <span class="ihelp-btn__icon" aria-hidden="true">&#128218;</span>
+                <span class="ihelp-btn__text">
+                  <span class="ihelp-btn__kicker">MATERIAL DE APOYO INTERACTIVO</span>
+                  <span class="ihelp-btn__title">Por qué las oficinas tienen IP fija y las visitas no</span>
+                </span>
+                <span class="ihelp-btn__arrow" aria-hidden="true">&rarr;</span>
+              </button>
+              <template id="ihelp-g3-9" data-ihelp-title="Por qué las oficinas tienen IP fija y las visitas no">
+                <p>Los PC de oficina necesitan la <strong>misma IP siempre</strong> (para poder ubicarlos, compartir archivos, imprimir). Las laptops de visitantes cambian todo el tiempo y nadie las va a administrar una por una: por eso reciben IP <strong>automática por DHCP</strong>, en un rango aparte (.100&ndash;.150) para no chocar con las IPs fijas.</p>
+                <div class="ihelp-panel__example">Si <code>ip dhcp excluded-address</code> no excluyera el rango .1&ndash;.99, el router podría entregarle por accidente a una laptop visitante la misma IP que ya tiene un PC de oficina, y ambos dejarían de funcionar en red (conflicto de IP).</div>
+              </template>
+            </div>
+
               <div class="info-box" style="margin-top:10px">
                 <div class="label">&#127968; Parte 2 — DHCP en el router (Bloque C)</div>
                 <p style="font-size:.88rem">Configura un pool DHCP en R1 para los dispositivos inal&aacute;mbricos:</p>
@@ -1049,6 +1219,21 @@ show ip nat statistics</pre>
 ip dhcp excluded-address 192.168.20.1 192.168.20.99</pre>
                 <p style="font-size:.85rem;margin-top:6px">Verifica con <code>show ip dhcp binding</code> que la Laptop recibi&oacute; IP del rango .100–.150.</p>
               </div>
+
+              <div class="ihelp-trigger">
+              <button type="button" class="ihelp-btn" data-ihelp-target="ihelp-g3-10">
+                <span class="ihelp-btn__icon" aria-hidden="true">&#128218;</span>
+                <span class="ihelp-btn__text">
+                  <span class="ihelp-btn__kicker">MATERIAL DE APOYO INTERACTIVO</span>
+                  <span class="ihelp-btn__title">Para qué sirve un DNS interno propio</span>
+                </span>
+                <span class="ihelp-btn__arrow" aria-hidden="true">&rarr;</span>
+              </button>
+              <template id="ihelp-g3-10" data-ihelp-title="Para qué sirve un DNS interno propio">
+                <p>Sin DNS interno, cada empleado tendría que memorizar la IP de cada servidor de la cooperativa. Con el registro <code>cooperativa.local &rarr; 192.168.20.10</code>, cualquiera puede escribir el nombre en vez de la IP &mdash;igual que <code>google.com</code> en internet, pero solo válido dentro de la red local.</p>
+                <div class="ihelp-panel__example">Si <code>nslookup cooperativa.local</code> no devuelve la IP correcta, el problema NO es de conectividad (la red puede estar perfecta): es que el registro DNS está mal escrito o el servicio DNS está apagado en el servidor.</div>
+              </template>
+            </div>
 
               <div class="info-box" style="margin-top:10px">
                 <div class="label">&#127758; Parte 3 — DNS interno (Bloque C)</div>
@@ -1064,6 +1249,21 @@ ip dhcp excluded-address 192.168.20.1 192.168.20.99</pre>
                 </div>
                 <p style="font-size:.85rem;margin-top:8px">Verifica desde PC-Admin1 con el comando <code>nslookup cooperativa.local</code> — debe devolver <code>192.168.20.10</code>.</p>
               </div>
+
+              <div class="ihelp-trigger">
+              <button type="button" class="ihelp-btn" data-ihelp-target="ihelp-g3-11">
+                <span class="ihelp-btn__icon" aria-hidden="true">&#128218;</span>
+                <span class="ihelp-btn__text">
+                  <span class="ihelp-btn__kicker">MATERIAL DE APOYO INTERACTIVO</span>
+                  <span class="ihelp-btn__title">NAT: quién es "inside" y quién es "outside"</span>
+                </span>
+                <span class="ihelp-btn__arrow" aria-hidden="true">&rarr;</span>
+              </button>
+              <template id="ihelp-g3-11" data-ihelp-title="NAT: quién es &quot;inside&quot; y quién es &quot;outside&quot;">
+                <p>NAT necesita saber por cuál interfaz entra el tráfico de tu LAN (<code>ip nat inside</code>) y por cuál sale hacia internet (<code>ip nat outside</code>). La <code>access-list</code> le dice qué IPs privadas tiene permiso de traducir.</p>
+                <div class="ihelp-panel__example">Si olvidas marcar una interfaz como <code>inside</code> u <code>outside</code>, el router no traduce nada aunque el resto de la configuración esté perfecta: los PC de la cooperativa se quedarían sin salida a internet aun teniendo IP, gateway y DNS correctos.</div>
+              </template>
+            </div>
 
               <div class="info-box" style="margin-top:10px">
                 <div class="label">&#127757; Parte 4 — NAT overload (PAT) hacia internet (Bloque D)</div>

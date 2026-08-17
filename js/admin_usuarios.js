@@ -79,6 +79,7 @@
     habilitacion: "Habilitacion de actividades",
     notas: "Calificaciones",
     mejoramiento: "Planes de Mejoramiento",
+    laboratorio: "Laboratorio Virtual de Hardware",
     reportes: "Reportes",
     configuracion: "Configuracion",
   };
@@ -2090,6 +2091,9 @@
     if (moduleName === "configuracion") {
       renderAuditPanel();
     }
+    if (moduleName === "laboratorio") {
+      renderHardwareLabPanel();
+    }
     // Respuestas/Entregas leen el localStorage del admin; al abrir el modulo
     // bajamos UNA vez el guide_state de la nube y re-renderizamos para mostrar
     // datos cross-device (aprendices que guardaron en otro equipo).
@@ -2109,6 +2113,26 @@
         byId("audit-container")?.scrollIntoView({ block: "start", behavior: "smooth" });
       });
     }
+  }
+
+  // ── Laboratorio Virtual de Hardware (item 37) ─────────────────────────────
+  // Modulo aislado en su propio archivo (js/admin_hardware_lab.js), igual
+  // patron que adminHabilitacion: este hook solo monta el host y le pasa
+  // datos + dependencias, sin logica propia aqui (minimiza el riesgo de
+  // tocar este archivo tan grande).
+  function renderHardwareLabPanel() {
+    const host = byId("hwlab-admin-host");
+    if (!host) return;
+    const mod = window.adminHardwareLab;
+    if (!mod || typeof mod.mount !== "function") {
+      host.innerHTML = '<p class="activities-empty">Modulo adminHardwareLab no disponible.</p>';
+      return;
+    }
+    mod.mount(host, {
+      auth,
+      db: window._firebaseDb,
+      users: state.users || [],
+    });
   }
 
   function renderAuditPanel() {

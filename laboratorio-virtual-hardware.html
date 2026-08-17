@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta
+  http-equiv="Content-Security-Policy"
+  content="default-src 'self' blob: data:; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' blob: https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https:; media-src 'self' blob: data: https:; frame-src 'self' https://es.educaplay.com;"
+>
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Laboratorio Virtual de Hardware | Portal SENA</title>
+<meta
+  name="description"
+  content="Practica ensamble, desensamble, diagnostico y reparacion de computadores de forma interactiva."
+>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/site_tokens.css?v=20260617_1">
+<link rel="stylesheet" href="css/components.css?v=20260617_1">
+<link rel="stylesheet" href="css/shared_shell.css?v=20260617_1">
+<link rel="stylesheet" href="css/page_hardware_lab.css?v=20260816_2">
+<script src="js/shared_utils.js?v=20260615_2"></script>
+<script src="js/global_error_handler.js?v=20260710_1"></script>
+<script src="js/portal_auth.js?v=20260816_1"></script>
+<script>
+(function () {
+  // Gate propio (no una guia). TEMPORAL: mientras se revisa el modulo, solo
+  // el admin puede entrar (pedido explicito del usuario 2026-08-16) --
+  // ningun aprendiz debe verlo todavia, aunque su ficha ya tenga
+  // optionalModules.hardwareLab en FICHA_MAP (portal_auth.js). Ese flag por
+  // ficha se deja intacto para cuando se reactive el acceso de aprendices:
+  // en ese momento, cambiar la condicion de abajo de vuelta a
+  // "session.role === 'student' && ...optionalModules.hardwareLab".
+  // Mismo criterio de bypass local que requireFileAccess/requireAdminAccess
+  // (shouldBypassAccessGuardsForLocalPreview en portal_auth.js), para poder
+  // previsualizar con file:// o localhost.
+  var auth = window.portalAuth;
+  var proto = String(window.location.protocol || "").toLowerCase();
+  var host = String(window.location.hostname || "").toLowerCase();
+  var isLocalPreview =
+    proto === "file:" || host === "localhost" || host === "127.0.0.1" || host === "::1";
+  if (isLocalPreview) return;
+
+  var session = auth && typeof auth.getCurrentSession === "function" ? auth.getCurrentSession() : null;
+  var allowed = !!(session && session.role === "admin");
+  if (!allowed) {
+    if (auth && typeof auth.setFlashMessage === "function") {
+      auth.setFlashMessage("El Laboratorio Virtual de Hardware todavia no esta disponible para aprendices.", "warn");
+    }
+    window.location.replace("index.html");
+    document.documentElement.innerHTML = "";
+    throw new Error("Acceso no autorizado al Laboratorio Virtual de Hardware.");
+  }
+})();
+</script>
+<script src="js/firebase-config.js?v=20260527_3"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script src="js/firebase_auth_bridge.js?v=20260618_1"></script>
+<script src="js/firebase_db.js?v=20260725_2"></script>
+<script src="js/drive_db.js?v=20260526_2"></script>
+<script defer src="js/firebase_status_banner.js?v=20260718_1"></script>
+<script defer src="js/save_status.js?v=20260516_1"></script>
+<script defer src="js/shared_shell.js?v=20260816_3"></script>
+<script defer src="js/hardware_lab_tools.js?v=20260816_1"></script>
+<script defer src="js/hardware_lab_data_desktop.js?v=20260816_2"></script>
+<script defer src="js/hardware_lab_data_laptop.js?v=20260816_1"></script>
+<script defer src="js/hardware_lab_engine.js?v=20260816_2"></script>
+<script defer src="js/hardware_lab_storage.js?v=20260816_1"></script>
+<script defer src="js/hardware_lab_ui.js?v=20260816_2"></script>
+<script defer src="js/hardware_lab_learn_ui.js?v=20260816_1"></script>
+<script defer src="js/hardware_lab_diagnosis_engine.js?v=20260816_1"></script>
+<script defer src="js/hardware_lab_diagnosis_cases.js?v=20260816_1"></script>
+<script defer src="js/hardware_lab_diagnosis_ui.js?v=20260816_1"></script>
+<script defer src="js/hardware_lab_bootstrap.js?v=20260816_2"></script>
+</head>
+<body class="app-shell app-shell--portal">
+  <main class="app-main" id="hwlab-shell" style="max-width:var(--container-max);margin:0 auto;padding:var(--space-6) var(--space-4)">
+
+    <section class="hwlab-hero" data-reveal>
+      <p class="hwlab-hero__kicker">Laboratorio Virtual de Hardware</p>
+      <h1>Simulador de ensamble, desensamble, diagnostico y reparacion</h1>
+      <p>Practica de forma visual e interactiva los procedimientos reales de un tecnico en Sistemas Teleinformaticos: identifica componentes, usa la herramienta correcta, respeta las dependencias fisicas y comprueba el resultado.</p>
+    </section>
+
+    <!-- ═══════════ MENU: equipo -> tipo de practica ═══════════ -->
+    <section id="hwlab-menu" class="hwlab-menu">
+      <div class="hwlab-menu__group">
+        <h2>1. Elige el equipo</h2>
+        <div class="hwlab-menu__grid" id="hwlab-equipment-grid"></div>
+      </div>
+      <div class="hwlab-menu__group" id="hwlab-practice-group" hidden>
+        <h2>2. Elige el tipo de practica</h2>
+        <div class="hwlab-menu__grid" id="hwlab-practice-grid"></div>
+      </div>
+      <div class="hwlab-menu__group" id="hwlab-direction-group" hidden>
+        <h2>3. ¿Desensamblar o ensamblar?</h2>
+        <div class="hwlab-menu__grid" id="hwlab-direction-grid"></div>
+      </div>
+    </section>
+
+    <!-- ═══════════ APRENDER COMPONENTES ═══════════ -->
+    <section id="hwlab-learn" class="hwlab" hidden>
+      <button type="button" class="c-btn c-btn--ghost c-btn--sm" id="hwlab-learn-back" style="align-self:flex-start">&larr; Volver al menu</button>
+      <div class="hwlab__body">
+        <aside class="hwlab__instructions" style="grid-column:1/2">
+          <h3>Explora cada pieza</h3>
+          <p class="hwlab-tray__empty">Selecciona cualquier pieza para ver su ficha tecnica completa.</p>
+        </aside>
+        <div class="hwlab__stage" id="hwlab-learn-grid" style="display:block"></div>
+        <aside class="hwlab__side" id="hwlab-learn-detail"></aside>
+      </div>
+    </section>
+
+    <!-- ═══════════ PRACTICA DE ENSAMBLE/DESENSAMBLE EN CURSO ═══════════ -->
+    <section id="hwlab-runtime" class="hwlab" hidden>
+      <button type="button" class="c-btn c-btn--ghost c-btn--sm" id="hwlab-back-to-menu" style="align-self:flex-start">&larr; Volver al menu</button>
+
+      <div class="hwlab__topbar">
+        <div id="hwlab-mode-title"></div>
+        <div class="hwlab__stats">
+          <span>&#9201; <span id="hwlab-timer">00:00</span></span>
+          <span>&#128203; Paso <span id="hwlab-step">1</span>/<span id="hwlab-total">1</span></span>
+          <span>&#10060; Errores: <span id="hwlab-errors">0</span></span>
+        </div>
+        <div class="hwlab__actions">
+          <span id="hwlab-hint-wrap"></span>
+          <button type="button" class="c-btn c-btn--sm c-btn--secondary" data-hwlab-restart>&#128260; Reiniciar</button>
+        </div>
+      </div>
+
+      <div class="hwlab__body">
+        <aside class="hwlab__instructions">
+          <h3 id="hwlab-step-title"></h3>
+          <ol id="hwlab-step-list"></ol>
+          <div id="hwlab-safety-confirm"></div>
+          <div class="hwlab-feedback" id="hwlab-feedback" hidden></div>
+          <div id="hwlab-selected-part" hidden></div>
+        </aside>
+
+        <div class="hwlab__stage" id="hwlab-case"></div>
+
+        <aside class="hwlab__side">
+          <div>
+            <h4>Herramientas</h4>
+            <div class="hwlab__tool-grid" id="hwlab-tools"></div>
+          </div>
+          <div>
+            <h4>Piezas retiradas</h4>
+            <div class="hwlab__tray-grid" id="hwlab-tray"></div>
+          </div>
+        </aside>
+      </div>
+
+      <div id="hwlab-result" hidden></div>
+    </section>
+
+    <!-- ═══════════ DIAGNOSTICO Y REPARACION: selector de casos ═══════════ -->
+    <section id="hwlab-diag-menu" class="hwlab-menu" hidden>
+      <button type="button" class="c-btn c-btn--ghost c-btn--sm" id="hwlab-diag-menu-back" style="align-self:flex-start;margin-bottom:var(--space-4)">&larr; Volver al menu</button>
+      <div class="hwlab-menu__group">
+        <h2>Elige un caso</h2>
+        <p class="hwlab-tray__empty">Los casos se desbloquean en orden: aprueba uno (70/100 o mas) para abrir el siguiente.</p>
+      </div>
+      <div id="hwlab-diag-grid"></div>
+    </section>
+
+    <!-- ═══════════ DIAGNOSTICO Y REPARACION: caso en curso ═══════════ -->
+    <section id="hwlab-diag-runtime" class="hwlab" hidden>
+      <button type="button" class="c-btn c-btn--ghost c-btn--sm" id="hwlab-diag-back-to-cases" style="align-self:flex-start">&larr; Volver a los casos</button>
+
+      <div class="hwlab__topbar">
+        <div id="hwlab-diag-title"></div>
+        <div class="hwlab__stats">
+          <span>&#9201; <span id="hwlab-diag-timer">00:00</span></span>
+          <span>&#10060; Errores: <span id="hwlab-diag-errors">0</span></span>
+        </div>
+        <div class="hwlab__actions">
+          <span id="hwlab-diag-hint-wrap"></span>
+          <button type="button" class="c-btn c-btn--sm c-btn--secondary" data-hwlab-diag-restart>&#128260; Reiniciar</button>
+        </div>
+      </div>
+
+      <div class="hwlab__body">
+        <aside class="hwlab__instructions">
+          <h3>&#129517; Sintoma reportado</h3>
+          <p id="hwlab-diag-symptom"></p>
+          <div id="hwlab-diag-power-on-wrap"></div>
+          <div class="hwlab-feedback" id="hwlab-diag-feedback" hidden></div>
+          <div id="hwlab-diag-selected-part" hidden></div>
+        </aside>
+
+        <div>
+          <div class="hwlab__stage" id="hwlab-diag-case"></div>
+          <div class="hwlab__tray-grid" id="hwlab-diag-external" style="margin-top:var(--space-3)"></div>
+        </div>
+
+        <aside class="hwlab__side">
+          <div>
+            <h4>Herramientas</h4>
+            <div class="hwlab__tool-grid" id="hwlab-diag-tools"></div>
+          </div>
+          <div>
+            <h4>Piezas retiradas / desconectadas</h4>
+            <div class="hwlab__tray-grid" id="hwlab-diag-tray"></div>
+          </div>
+        </aside>
+      </div>
+
+      <div id="hwlab-diag-result" hidden></div>
+    </section>
+
+  </main>
+</body>
+</html>

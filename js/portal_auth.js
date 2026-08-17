@@ -295,7 +295,7 @@
     "3441939": {
       inst: "Institucion Educativa Jhon F. Kennedy",
       grupo: "10A",
-      optionalModules: { pythonOnlinePractice: true },
+      optionalModules: { pythonOnlinePractice: true, hardwareLab: true },
       guias: [
         "grupo-10a-guia-01-induccion.html",
         "grupo-10a-guia-02-herramientas-informaticas-digitales.html",
@@ -309,7 +309,7 @@
     "3441942": {
       inst: "Institucion Educativa Jhon F. Kennedy",
       grupo: "10B",
-      optionalModules: { pythonOnlinePractice: true },
+      optionalModules: { pythonOnlinePractice: true, hardwareLab: true },
       guias: [
         "grupo-10b-guia-01-induccion.html",
         "grupo-10b-guia-02-herramientas-informaticas-digitales.html",
@@ -323,13 +323,13 @@
     "3441944": {
       inst: "Institucion Educativa Santa Barbara",
       grupo: "10A",
-      optionalModules: { pythonOnlinePractice: true },
+      optionalModules: { pythonOnlinePractice: true, hardwareLab: true },
       guias: ["grupo-10a-guia-01-induccion.html", "santa-barbara-10a-guia-02-redes-rap01.html", "santa-barbara-10a-guia-03-redes-rap02.html", "santa-barbara-10a-guia-04-redes-rap03.html", "santa-barbara-guia-python.html", "santa-barbara-10a-guia-04-taller-integrador.html"],
     },
     "3441950": {
       inst: "Institucion Educativa Santa Barbara",
       grupo: "10B",
-      optionalModules: { pythonOnlinePractice: true },
+      optionalModules: { pythonOnlinePractice: true, hardwareLab: true },
       guias: ["grupo-10b-guia-01-induccion.html", "santa-barbara-10b-guia-02-redes-rap01.html", "santa-barbara-10b-guia-03-redes-rap02.html", "santa-barbara-10b-guia-04-redes-rap03.html", "santa-barbara-guia-python.html", "santa-barbara-10b-guia-04-taller-integrador.html"],
     },
     "3168850": {

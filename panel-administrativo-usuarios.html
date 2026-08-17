@@ -20,7 +20,7 @@
 <link rel="stylesheet" href="css/page_admin.css?v=20260717_1">
 <script src="js/shared_utils.js?v=20260615_2"></script>
 <script src="js/global_error_handler.js?v=20260710_1"></script>
-<script src="js/portal_auth.js?v=20260815_1"></script>
+<script src="js/portal_auth.js?v=20260816_1"></script>
 <script src="js/firebase-config.js?v=20260527_3"></script>
 <script defer src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
 <script defer src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
@@ -36,7 +36,7 @@
 <script src="js/activity_grades.js?v=20260815_1"></script>
 <script src="js/improvement_plans.js?v=20260624_1"></script>
 <script src="js/improvement_activities_bank.js?v=20260715_1"></script>
-<script defer src="js/shared_shell.js?v=20260815_1"></script>
+<script defer src="js/shared_shell.js?v=20260816_3"></script>
 <script>
 if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "index.html" })) {
   document.documentElement.innerHTML = "";
@@ -75,6 +75,7 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
           <span class="admin-nav__label">Seguimiento</span>
           <button class="admin-nav__item" type="button" data-admin-module="respuestas">Respuestas</button>
           <button class="admin-nav__item" type="button" data-admin-module="entregas">Entregas</button>
+          <button class="admin-nav__item" type="button" data-admin-module="laboratorio">Laboratorio Virtual</button>
           <button class="admin-nav__item" type="button" data-admin-module="autorizaciones">Autorizaciones de firma</button>
           <button class="admin-nav__item" type="button" data-admin-module="fechas">Fechas de entrega</button>
           <button class="admin-nav__item" type="button" data-admin-module="reportes">Reportes</button>
@@ -324,6 +325,11 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
       <section class="admin-module" id="module-notas" data-admin-panel="notas" hidden></section>
 
       <section class="admin-module" id="module-mejoramiento" data-admin-panel="mejoramiento" hidden></section>
+
+      <section class="admin-module" id="module-laboratorio" data-admin-panel="laboratorio" hidden>
+        <div id="hwlab-admin-host"></div>
+      </section>
+
       <section class="admin-module" id="module-autorizaciones" data-admin-panel="autorizaciones" hidden></section>
 
       <section class="admin-module" id="module-reportes" data-admin-panel="reportes" hidden>
@@ -437,6 +443,8 @@ if (!window.portalAuth || !window.portalAuth.requireAdminAccess({ redirectUrl: "
   <script src="js/admin_habilitacion.js?v=20260725_1"></script>
   <script src="js/name_audit.js?v=20260630_1"></script>
   <script src="js/xlsx.full.min.js?v=20260722_1"></script>
-  <script src="js/admin_usuarios.js?v=20260727_1"></script>
+  <script src="js/hardware_lab_diagnosis_cases.js?v=20260816_1"></script>
+  <script src="js/admin_hardware_lab.js?v=20260816_1"></script>
+  <script src="js/admin_usuarios.js?v=20260816_1"></script>
 </body>
 </html>

@@ -321,6 +321,10 @@
       if (PRODUCTIVE_FICHAS.indexOf(String(user.ficha)) !== -1) {
         links.push('<a href="etapa-productiva-estudiante.html">💼 Mi proyecto y retroalimentación</a>');
       }
+      // Laboratorio Virtual de Hardware: TEMPORALMENTE solo admin (pedido
+      // 2026-08-16), por eso NO se ofrece aqui como acceso rapido del
+      // aprendiz aunque su ficha ya tenga optionalModules.hardwareLab. La
+      // pagina en si redirige a cualquier sesion que no sea admin.
       quick.innerHTML = links.join("");
     }
 
