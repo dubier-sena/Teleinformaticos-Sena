@@ -11,15 +11,15 @@
 <title>Laboratorio Virtual de Hardware | Portal SENA</title>
 <meta
   name="description"
-  content="Practica ensamble, desensamble, diagnostico y reparacion de computadores de forma interactiva."
+  content="Laboratorio 3D interactivo: ensambla, desensambla, diagnostica y repara computadores de escritorio y portatiles."
 >
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/site_tokens.css?v=20260617_1">
 <link rel="stylesheet" href="css/components.css?v=20260617_1">
 <link rel="stylesheet" href="css/shared_shell.css?v=20260617_1">
-<link rel="stylesheet" href="css/page_hardware_lab.css?v=20260816_2">
+<link rel="stylesheet" href="css/page_hardware_lab.css?v=20260818_2">
 <script src="js/shared_utils.js?v=20260615_2"></script>
 <script src="js/global_error_handler.js?v=20260710_1"></script>
 <script src="js/portal_auth.js?v=20260816_1"></script>
@@ -63,154 +63,147 @@
 <script defer src="js/firebase_status_banner.js?v=20260718_1"></script>
 <script defer src="js/save_status.js?v=20260516_1"></script>
 <script defer src="js/shared_shell.js?v=20260816_3"></script>
+<!-- Motor de datos/logica pura (sin DOM, con tests dedicados) -- intacto. -->
 <script defer src="js/hardware_lab_tools.js?v=20260816_1"></script>
 <script defer src="js/hardware_lab_data_desktop.js?v=20260816_2"></script>
 <script defer src="js/hardware_lab_data_laptop.js?v=20260816_1"></script>
 <script defer src="js/hardware_lab_engine.js?v=20260816_2"></script>
 <script defer src="js/hardware_lab_storage.js?v=20260816_1"></script>
-<script defer src="js/hardware_lab_ui.js?v=20260816_2"></script>
-<script defer src="js/hardware_lab_learn_ui.js?v=20260816_1"></script>
 <script defer src="js/hardware_lab_diagnosis_engine.js?v=20260816_1"></script>
 <script defer src="js/hardware_lab_diagnosis_cases.js?v=20260816_1"></script>
-<script defer src="js/hardware_lab_diagnosis_ui.js?v=20260816_1"></script>
-<script defer src="js/hardware_lab_bootstrap.js?v=20260816_2"></script>
+<!-- Laboratorio 3D (WebGL real, ver CLAUDE.md / js/hardware_lab_3d_*.js). ES modules: -->
+<!-- se cargan y ordenan solos via import, este es el unico punto de entrada. -->
+<script type="module" src="js/hardware_lab_3d_bootstrap.js?v=20260818_1"></script>
 </head>
-<body class="app-shell app-shell--portal">
-  <main class="app-main" id="hwlab-shell" style="max-width:var(--container-max);margin:0 auto;padding:var(--space-6) var(--space-4)">
+<body class="app-shell app-shell--portal hwlab-body">
+  <main class="app-main hwlab-main" id="hwlab-shell">
 
-    <section class="hwlab-hero" data-reveal>
-      <p class="hwlab-hero__kicker">Laboratorio Virtual de Hardware</p>
-      <h1>Simulador de ensamble, desensamble, diagnostico y reparacion</h1>
-      <p>Practica de forma visual e interactiva los procedimientos reales de un tecnico en Sistemas Teleinformaticos: identifica componentes, usa la herramienta correcta, respeta las dependencias fisicas y comprueba el resultado.</p>
+    <!-- ═══════════ PORTADA + SELECTOR: equipo -> practica -> direccion ═══════ -->
+    <section id="hwlab-intro" class="hwlab-intro" data-reveal>
+      <div class="hwlab-intro__hero">
+        <p class="hwlab-kicker">Laboratorio Virtual de Hardware</p>
+        <h1>Simulador 3D de ensamble, desensamble, diagnóstico y reparación</h1>
+        <p class="hwlab-intro__lead">Entra a un taller técnico tridimensional: gira el equipo, usa la herramienta correcta, retira y vuelve a instalar cada componente y comprueba el resultado, igual que un técnico en Sistemas Teleinformáticos.</p>
+      </div>
+
+      <div class="hwlab-steps">
+        <div class="hwlab-step-group">
+          <h2><span class="hwlab-step-num">1</span> Elige el equipo</h2>
+          <div class="hwlab-card-grid" id="hwlab-equipment-grid"></div>
+        </div>
+
+        <div class="hwlab-step-group" id="hwlab-practice-group" hidden>
+          <h2><span class="hwlab-step-num">2</span> Elige el tipo de práctica</h2>
+          <div class="hwlab-card-grid" id="hwlab-practice-grid"></div>
+        </div>
+
+        <div class="hwlab-step-group" id="hwlab-direction-group" hidden>
+          <h2><span class="hwlab-step-num">3</span> ¿Desensamblar o ensamblar?</h2>
+          <div class="hwlab-card-grid" id="hwlab-direction-grid"></div>
+        </div>
+
+        <div class="hwlab-step-group" id="hwlab-diag-case-group" hidden>
+          <h2><span class="hwlab-step-num">3</span> Elige un caso de diagnóstico</h2>
+          <p class="hwlab-muted">Los casos se desbloquean en orden: aprueba uno (70/100 o más) para abrir el siguiente.</p>
+          <div class="hwlab-card-grid hwlab-card-grid--cases" id="hwlab-diag-case-grid"></div>
+        </div>
+      </div>
     </section>
 
-    <!-- ═══════════ MENU: equipo -> tipo de practica ═══════════ -->
-    <section id="hwlab-menu" class="hwlab-menu">
-      <div class="hwlab-menu__group">
-        <h2>1. Elige el equipo</h2>
-        <div class="hwlab-menu__grid" id="hwlab-equipment-grid"></div>
-      </div>
-      <div class="hwlab-menu__group" id="hwlab-practice-group" hidden>
-        <h2>2. Elige el tipo de practica</h2>
-        <div class="hwlab-menu__grid" id="hwlab-practice-grid"></div>
-      </div>
-      <div class="hwlab-menu__group" id="hwlab-direction-group" hidden>
-        <h2>3. ¿Desensamblar o ensamblar?</h2>
-        <div class="hwlab-menu__grid" id="hwlab-direction-grid"></div>
-      </div>
-    </section>
+    <!-- ═══════════ LABORATORIO 3D (escena compartida por todos los modos) ═══ -->
+    <section id="hwlab-stage" class="hwlab-stage" hidden>
 
-    <!-- ═══════════ APRENDER COMPONENTES ═══════════ -->
-    <section id="hwlab-learn" class="hwlab" hidden>
-      <button type="button" class="c-btn c-btn--ghost c-btn--sm" id="hwlab-learn-back" style="align-self:flex-start">&larr; Volver al menu</button>
-      <div class="hwlab__body">
-        <aside class="hwlab__instructions" style="grid-column:1/2">
-          <h3>Explora cada pieza</h3>
-          <p class="hwlab-tray__empty">Selecciona cualquier pieza para ver su ficha tecnica completa.</p>
+      <header class="hwlab-hud hwlab-hud--top">
+        <div class="hwlab-hud-top__left">
+          <button type="button" class="hwlab-icon-btn" id="hwlab-back-to-intro" aria-label="Volver al menú" title="Volver al menú">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          </button>
+          <div class="hwlab-mode-info">
+            <p class="hwlab-mode-info__title" id="hwlab-mode-title">&nbsp;</p>
+            <p class="hwlab-mode-info__subtitle" id="hwlab-mode-subtitle"></p>
+          </div>
+        </div>
+        <div class="hwlab-hud-top__stats" id="hwlab-stats-bar">
+          <span class="hwlab-stat" id="hwlab-stat-timer"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><span id="hwlab-timer">00:00</span></span>
+          <span class="hwlab-stat" id="hwlab-stat-step"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Paso <span id="hwlab-step">1</span>/<span id="hwlab-total">1</span></span>
+          <span class="hwlab-stat hwlab-stat--danger" id="hwlab-stat-errors"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg><span id="hwlab-errors">0</span></span>
+        </div>
+        <div class="hwlab-hud-top__actions">
+          <button type="button" class="hwlab-icon-btn" id="hwlab-hint-btn" title="Pedir una pista">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a6 6 0 00-4 10.5c.6.6 1 1.4 1 2.5h6c0-1.1.4-1.9 1-2.5A6 6 0 0012 2z"/></svg>
+            <span id="hwlab-hint-count"></span>
+          </button>
+          <button type="button" class="hwlab-icon-btn" id="hwlab-sound-btn" title="Silenciar sonido" aria-pressed="false"></button>
+          <button type="button" class="hwlab-icon-btn" id="hwlab-fullscreen-btn" title="Pantalla completa"></button>
+          <button type="button" class="c-btn c-btn--sm c-btn--secondary" id="hwlab-restart-btn">Reiniciar</button>
+        </div>
+      </header>
+
+      <div class="hwlab-hud-body">
+        <aside class="hwlab-hud hwlab-hud--left">
+          <div class="hwlab-panel">
+            <h3>Vistas de cámara</h3>
+            <div class="hwlab-view-grid" id="hwlab-view-buttons"></div>
+          </div>
+          <div class="hwlab-panel" id="hwlab-tools-panel">
+            <h3>Herramientas</h3>
+            <p class="hwlab-tool-active" id="hwlab-tool-active-label">Ninguna seleccionada</p>
+            <div class="hwlab-tool-grid" id="hwlab-tool-grid"></div>
+          </div>
+          <div class="hwlab-panel">
+            <button type="button" class="c-btn c-btn--secondary c-btn--sm c-btn--block" id="hwlab-explode-btn">Vista explotada</button>
+          </div>
         </aside>
-        <div class="hwlab__stage" id="hwlab-learn-grid" style="display:block"></div>
-        <aside class="hwlab__side" id="hwlab-learn-detail"></aside>
-      </div>
-    </section>
 
-    <!-- ═══════════ PRACTICA DE ENSAMBLE/DESENSAMBLE EN CURSO ═══════════ -->
-    <section id="hwlab-runtime" class="hwlab" hidden>
-      <button type="button" class="c-btn c-btn--ghost c-btn--sm" id="hwlab-back-to-menu" style="align-self:flex-start">&larr; Volver al menu</button>
-
-      <div class="hwlab__topbar">
-        <div id="hwlab-mode-title"></div>
-        <div class="hwlab__stats">
-          <span>&#9201; <span id="hwlab-timer">00:00</span></span>
-          <span>&#128203; Paso <span id="hwlab-step">1</span>/<span id="hwlab-total">1</span></span>
-          <span>&#10060; Errores: <span id="hwlab-errors">0</span></span>
-        </div>
-        <div class="hwlab__actions">
-          <span id="hwlab-hint-wrap"></span>
-          <button type="button" class="c-btn c-btn--sm c-btn--secondary" data-hwlab-restart>&#128260; Reiniciar</button>
-        </div>
-      </div>
-
-      <div class="hwlab__body">
-        <aside class="hwlab__instructions">
-          <h3 id="hwlab-step-title"></h3>
-          <ol id="hwlab-step-list"></ol>
-          <div id="hwlab-safety-confirm"></div>
+        <div class="hwlab-canvas-wrap">
+          <canvas id="hwlab-canvas" aria-label="Escena 3D del laboratorio de hardware"></canvas>
+          <div class="hwlab-canvas-fallback" id="hwlab-canvas-fallback" hidden>
+            <p><strong>Tu navegador no puede mostrar la escena 3D (WebGL no disponible).</strong></p>
+            <p>Prueba con una versión reciente de Chrome, Edge o Firefox, o activa la aceleración por hardware del navegador.</p>
+          </div>
+          <div class="hwlab-tooltip" id="hwlab-tooltip" hidden></div>
           <div class="hwlab-feedback" id="hwlab-feedback" hidden></div>
-          <div id="hwlab-selected-part" hidden></div>
-        </aside>
-
-        <div class="hwlab__stage" id="hwlab-case"></div>
-
-        <aside class="hwlab__side">
-          <div>
-            <h4>Herramientas</h4>
-            <div class="hwlab__tool-grid" id="hwlab-tools"></div>
-          </div>
-          <div>
-            <h4>Piezas retiradas</h4>
-            <div class="hwlab__tray-grid" id="hwlab-tray"></div>
-          </div>
-        </aside>
-      </div>
-
-      <div id="hwlab-result" hidden></div>
-    </section>
-
-    <!-- ═══════════ DIAGNOSTICO Y REPARACION: selector de casos ═══════════ -->
-    <section id="hwlab-diag-menu" class="hwlab-menu" hidden>
-      <button type="button" class="c-btn c-btn--ghost c-btn--sm" id="hwlab-diag-menu-back" style="align-self:flex-start;margin-bottom:var(--space-4)">&larr; Volver al menu</button>
-      <div class="hwlab-menu__group">
-        <h2>Elige un caso</h2>
-        <p class="hwlab-tray__empty">Los casos se desbloquean en orden: aprueba uno (70/100 o mas) para abrir el siguiente.</p>
-      </div>
-      <div id="hwlab-diag-grid"></div>
-    </section>
-
-    <!-- ═══════════ DIAGNOSTICO Y REPARACION: caso en curso ═══════════ -->
-    <section id="hwlab-diag-runtime" class="hwlab" hidden>
-      <button type="button" class="c-btn c-btn--ghost c-btn--sm" id="hwlab-diag-back-to-cases" style="align-self:flex-start">&larr; Volver a los casos</button>
-
-      <div class="hwlab__topbar">
-        <div id="hwlab-diag-title"></div>
-        <div class="hwlab__stats">
-          <span>&#9201; <span id="hwlab-diag-timer">00:00</span></span>
-          <span>&#10060; Errores: <span id="hwlab-diag-errors">0</span></span>
-        </div>
-        <div class="hwlab__actions">
-          <span id="hwlab-diag-hint-wrap"></span>
-          <button type="button" class="c-btn c-btn--sm c-btn--secondary" data-hwlab-diag-restart>&#128260; Reiniciar</button>
-        </div>
-      </div>
-
-      <div class="hwlab__body">
-        <aside class="hwlab__instructions">
-          <h3>&#129517; Sintoma reportado</h3>
-          <p id="hwlab-diag-symptom"></p>
-          <div id="hwlab-diag-power-on-wrap"></div>
-          <div class="hwlab-feedback" id="hwlab-diag-feedback" hidden></div>
-          <div id="hwlab-diag-selected-part" hidden></div>
-        </aside>
-
-        <div>
-          <div class="hwlab__stage" id="hwlab-diag-case"></div>
-          <div class="hwlab__tray-grid" id="hwlab-diag-external" style="margin-top:var(--space-3)"></div>
         </div>
 
-        <aside class="hwlab__side">
-          <div>
-            <h4>Herramientas</h4>
-            <div class="hwlab__tool-grid" id="hwlab-diag-tools"></div>
-          </div>
-          <div>
-            <h4>Piezas retiradas / desconectadas</h4>
-            <div class="hwlab__tray-grid" id="hwlab-diag-tray"></div>
-          </div>
+        <aside class="hwlab-hud hwlab-hud--right" id="hwlab-info-panel">
+          <!-- contenido intercambiado por hardware_lab_3d_controller.js segun el modo -->
         </aside>
       </div>
 
-      <div id="hwlab-diag-result" hidden></div>
+      <footer class="hwlab-hud hwlab-hud--bottom">
+        <h4>Historial de acciones</h4>
+        <ol class="hwlab-action-log" id="hwlab-action-log"></ol>
+      </footer>
     </section>
 
   </main>
+
+  <!-- ═══════════ FICHA TECNICA de un componente (item 7) ═══════════════════ -->
+  <div class="c-modal" id="hwlab-part-modal" hidden>
+    <div class="c-modal__card hwlab-part-modal__card" role="dialog" aria-modal="true" aria-labelledby="hwlab-part-modal-title">
+      <div class="c-modal__header">
+        <h2 class="c-modal__title" id="hwlab-part-modal-title">Componente</h2>
+        <button type="button" class="c-modal__close" id="hwlab-part-modal-close" aria-label="Cerrar">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div id="hwlab-part-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════ RESULTADO de la practica (rubrica de 4 categorias) ════════ -->
+  <div class="c-modal" id="hwlab-result-modal" hidden>
+    <div class="c-modal__card hwlab-result-modal__card" role="dialog" aria-modal="true" aria-labelledby="hwlab-result-modal-title">
+      <div class="c-modal__header">
+        <h2 class="c-modal__title" id="hwlab-result-modal-title">Resultado de la práctica</h2>
+      </div>
+      <div id="hwlab-result-modal-body"></div>
+      <div class="c-modal__footer">
+        <button type="button" class="c-btn c-btn--secondary" id="hwlab-result-retry">Repetir</button>
+        <button type="button" class="c-btn c-btn--primary" id="hwlab-result-menu">Volver al menú</button>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>

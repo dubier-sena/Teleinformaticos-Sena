@@ -45,6 +45,24 @@
       icon: "\u{1F58C}️",
       description: "Limpia polvo de disipadores y ventiladores sin generar estatica.",
     },
+    "compressed-air": {
+      id: "compressed-air",
+      name: "Aire comprimido",
+      icon: "\u{1F4A8}",
+      description: "Sopla el polvo acumulado en disipadores, ventiladores y ranuras.",
+    },
+    "thermal-paste": {
+      id: "thermal-paste",
+      name: "Pasta termica",
+      icon: "\u{1FAA5}",
+      description: "Mejora el contacto termico entre el procesador y el disipador al reinstalarlo.",
+    },
+    "isopropyl-alcohol": {
+      id: "isopropyl-alcohol",
+      name: "Alcohol isopropilico",
+      icon: "\u{1F9EA}",
+      description: "Limpia residuos de pasta termica vieja antes de aplicar pasta nueva.",
+    },
     hands: {
       id: "hands",
       name: "Manos (sin herramienta)",
