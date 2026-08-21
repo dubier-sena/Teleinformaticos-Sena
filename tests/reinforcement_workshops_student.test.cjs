@@ -123,3 +123,49 @@ test("regresión: los campos de documento (intro/conclusiones/referencias) expli
   assert.match(js, /function readOnlyDocFieldsMarkup\(/);
   assert.match(js, /intro-text.*arman la portada/);
 });
+
+test("feedback del usuario: 'Tu documento final' va DESPUÉS de las actividades (no antes, cuando el aprendiz aún no ha hecho nada)", () => {
+  const js = read("js/reinforcement_workshops_student.js");
+  const editable = js.match(/function renderEditableWorkshop\([\s\S]*?\n  \}/)[0];
+  assert.ok(
+    editable.indexOf("activitiesHtml +") < editable.indexOf("docFieldsHtml +"),
+    "en renderEditableWorkshop, activitiesHtml debe ir antes que docFieldsHtml"
+  );
+  const readOnly = js.match(/function renderReadOnlyWorkshop\([\s\S]*?\n  \}/)[0];
+  assert.ok(
+    readOnly.indexOf("actsHtml +") < readOnly.indexOf("docsHtml +"),
+    "en renderReadOnlyWorkshop, actsHtml debe ir antes que docsHtml"
+  );
+});
+
+test("feedback del usuario: cada actividad con documentos reales necesarios (Reglamento, Diseño Curricular, manuales) los enlaza, para que el aprendiz no se pierda", () => {
+  const js = read("js/reinforcement_workshops_student.js");
+  assert.match(js, /function recursosMarkup\(/);
+  assert.match(js, /recursosMarkup\(act\)/);
+  assert.match(js, /class="support-card" style="margin-top:12px"><h3>📎 Recursos que necesitas<\/h3>/);
+  // El termino 3 de la Actividad 1 pide el glosario de la Guia de Induccion --
+  // ese enlace se arma dinamicamente segun la ficha del aprendiz, no es un
+  // recurso estatico del catalogo.
+  assert.match(js, /function getInductionGuideHref\(/);
+  assert.match(js, /getGuidesForFicha/);
+  assert.match(js, /#glosario/);
+
+  const catalog = read("js/reinforcement_workshops_catalog.js");
+  // Los recursos deben ser archivos reales que YA existen en el repo (no
+  // enlaces inventados) -- Reglamento, Diseño Curricular y manuales que la
+  // Guia de Induccion real ya usa.
+  assert.match(catalog, /Acuerdo_009_2024_Reglamento_Aprendiz_SENA\.pdf/);
+  assert.match(catalog, /Diseno_Curricular_Sistemas_Teleinformaticos\.pdf/);
+  assert.match(catalog, /Manual_Formacion_Virtual_SOFIA\.pdf/);
+  const fs = require("fs");
+  const path = require("path");
+  ["Acuerdo_009_2024_Reglamento_Aprendiz_SENA.pdf",
+   "Proyecto_Acuerdo_Reglamento_Aprendiz_Anexos.pdf",
+   "Diseno_Curricular_Sistemas_Teleinformaticos.pdf",
+   "Manual_Formacion_Virtual_SOFIA.pdf",
+   "T1_Analisis_Logo_Simbolos_SENA.docx",
+   "T2_Uso_Plataformas_Portafolio.docx"].forEach((name) => {
+    const full = path.join(__dirname, "..", "assets", "materiales", "induccion", name);
+    assert.ok(fs.existsSync(full), "debe existir el archivo real: " + name);
+  });
+});

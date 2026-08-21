@@ -56,6 +56,20 @@
     return auth && typeof auth.getCurrentSession === "function" ? auth.getCurrentSession() : null;
   }
 
+  // Enlace al glosario de la Guia de Induccion real del aprendiz (varia por
+  // ficha/grupo -- grupo-10a-guia-01-induccion.html, grupo-10b-..., etc.).
+  // Se calcula en tiempo de render, no se guarda en el catalogo (que es
+  // agnostico de ficha), reusando la API ya publica de portalAuth.
+  function getInductionGuideHref(session) {
+    var auth = window.portalAuth;
+    var ficha = session && session.user && session.user.ficha;
+    if (!auth || !ficha || typeof auth.getGuidesForFicha !== "function") return null;
+    var guias = auth.getGuidesForFicha(ficha) || [];
+    var file = guias.filter(function (f) { return /induccion/i.test(f); })[0];
+    if (!file || typeof auth.getGuideHref !== "function") return null;
+    return auth.getGuideHref(file) + "#glosario";
+  }
+
   function fillMeta(session) {
     var user = session && session.user;
     var nameEl = document.getElementById("taller-meta-name");
@@ -179,6 +193,23 @@
       : "";
   }
 
+  // Documentos reales que el aprendiz necesita consultar para esta actividad
+  // (Reglamento del Aprendiz, Diseño Curricular, manuales, etc. -- los mismos
+  // que usa la Guia de Induccion real, ver catalogEntry.recursos). Sin esto
+  // el aprendiz tenia que adivinar o salir a buscarlos por su cuenta.
+  function recursosMarkup(act) {
+    var items = (act.recursos || []).slice();
+    if (act.linkToInductionGlossary) {
+      var href = getInductionGuideHref(getSession());
+      if (href) items.push({ label: "Glosario de la Guía de Inducción", url: href });
+    }
+    if (!items.length) return "";
+    var lis = items.map(function (r) {
+      return '<li><a href="' + escapeHtml(r.url) + '" target="_blank" rel="noopener">📄 ' + escapeHtml(r.label) + "</a></li>";
+    }).join("");
+    return '<article class="support-card" style="margin-top:12px"><h3>📎 Recursos que necesitas</h3><ul class="reference-list">' + lis + "</ul></article>";
+  }
+
   // Mismo look que una actividad real de guia: .activity.mission-card ->
   // .activity-header (numero + titulo) -> .activity-body con .intro-text
   // (proposito), .support-card (instrucciones numeradas) y .notes-card
@@ -205,6 +236,7 @@
         '<div class="activity-body">' +
           objetivoMarkup(act) +
           instruccionesMarkup(act) +
+          recursosMarkup(act) +
           '<article class="notes-card" style="margin-top:16px">' +
             "<h3>Tus respuestas</h3>" +
             activityFieldsMarkup(workshop, act.fields, _respuestasByWorkshop[workshop.id], false) +
@@ -322,8 +354,8 @@
       (workshop.fileUrl
         ? '<p><a class="c-btn c-btn--secondary" href="' + escapeHtml(workshop.fileUrl) + '" target="_blank" rel="noopener">📄 Ver instrucciones completas (PDF)</a></p>'
         : "") +
-      docFieldsHtml +
       activitiesHtml +
+      docFieldsHtml +
       '<div class="taller-export"><button type="button" class="c-btn c-btn--primary" data-taller-export="' + escapeHtml(workshop.id) + '">📘 Exportar taller completo a Word</button></div>' +
       "</div>";
 
@@ -402,6 +434,7 @@
         '<div class="activity-body">' +
           objetivoMarkup(act) +
           instruccionesMarkup(act) +
+          recursosMarkup(act) +
           '<article class="notes-card" style="margin-top:16px">' +
             "<h3>Tus respuestas</h3>" +
             readOnlyFieldsMarkup(workshop, act.fields, respuestas) +
@@ -438,8 +471,8 @@
         ? '<p><a class="c-btn c-btn--secondary" href="' + escapeHtml(workshop.fileUrl) + '" target="_blank" rel="noopener">📄 Ver instrucciones completas (PDF)</a></p>'
         : "") +
       cerradoMsg +
-      docsHtml +
       actsHtml +
+      docsHtml +
       "</div>"
     );
   }
