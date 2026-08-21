@@ -407,6 +407,24 @@
     }
   }
 
+  // Talleres de Refuerzo (ver js/reinforcement_workshops.js): documento de
+  // refuerzo asignado por el instructor, NO ligado a una actividad real de
+  // una guia -- por eso se avisa aqui (como la firma) en vez de en una guia
+  // puntual. Misma excepcion deliberada y acotada que isSignaturePending: UNA
+  // lectura a Firestore por visita al home, fail-soft si no hay lectura.
+  async function hasPendingReinforcementWorkshops(usernameKey) {
+    var db = window._firebaseDb;
+    if (!db || typeof db.cloudGetReinforcementWorkshops !== "function") return false;
+    try {
+      var workshops = await db.cloudGetReinforcementWorkshops(usernameKey);
+      return Array.isArray(workshops) && workshops.some(function (w) {
+        return w && w.resultado !== "A" && w.resultado !== "D";
+      });
+    } catch (e) {
+      return false; // si falla la lectura, mejor no mostrar un aviso incierto
+    }
+  }
+
   // Actividades marcadas "No aprobado" (D) por el instructor, en cualquiera
   // de las guias del aprendiz -- junto con el motivo, si el instructor eligio
   // uno (ver GRADE_REJECTION_REASONS en admin_usuarios.js). Lee SOLO el cache
@@ -504,6 +522,14 @@
         text: "Autorización de firma sin enviar.",
         href: "pages/auxiliares/autorizacion-firma.html",
         cta: "Enviar",
+      });
+    }
+
+    if (await hasPendingReinforcementWorkshops(key)) {
+      items.push({
+        text: "Tienes un Taller de Refuerzo asignado.",
+        href: "pages/auxiliares/talleres-refuerzo.html",
+        cta: "Ver",
       });
     }
 

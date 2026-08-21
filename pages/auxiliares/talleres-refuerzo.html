@@ -9,15 +9,15 @@
   content="default-src 'self' blob: data:; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' blob: https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https:; media-src 'self' blob: data: https:; frame-src 'self' https://es.educaplay.com;"
 >
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<title>Mi calendario de clases | Sistemas Teleinformaticos</title>
-<meta name="description" content="Listado de proximas clases para el aprendiz, filtrado por su ficha o grupo.">
+<title>Talleres de Refuerzo | Sistemas Teleinformaticos</title>
+<meta name="description" content="El aprendiz descarga y entrega los talleres de refuerzo asignados por el instructor.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/site_tokens.css?v=20260617_1">
 <link rel="stylesheet" href="css/components.css?v=20260617_1">
 <link rel="stylesheet" href="css/shared_shell.css?v=20260617_1">
-<link rel="stylesheet" href="css/page_student_calendar.css?v=20260520_2">
+<link rel="stylesheet" href="css/page_reinforcement_workshops.css?v=20260821_1">
 <script src="js/shared_utils.js?v=20260615_2"></script>
 <script src="js/global_error_handler.js?v=20260710_1"></script>
 <script src="js/portal_auth.js?v=20260816_1"></script>
@@ -30,12 +30,14 @@
 <script src="js/drive_db.js?v=20260526_2"></script>
 <script defer src="js/firebase_status_banner.js?v=20260718_1"></script>
 <script defer src="js/save_status.js?v=20260516_1"></script>
+<script defer src="js/shared_apps_script_delivery.js?v=20260615_1"></script>
+<script src="js/reinforcement_workshops.js?v=20260821_1"></script>
 <script defer src="js/shared_shell.js?v=20260816_3"></script>
-<script src="data/calendario_2026_records.js?v=20260722_1"></script>
-<script defer src="js/student_calendar.js?v=20260615_1"></script>
+<script defer src="js/reinforcement_workshops_student.js?v=20260821_1"></script>
 <script>
 (function () {
-  // Gate: cualquier sesion autenticada (aprendiz o admin).
+  // Gate: cualquier sesion autenticada (aprendiz o admin), igual que la
+  // autorizacion de firma. No depende de ninguna ficha/guia puntual.
   function isFileProtocol() {
     return /^file:$/i.test(String(window.location.protocol || ""));
   }
@@ -49,46 +51,26 @@
 })();
 </script>
 </head>
-<body class="app-shell app-shell--student-calendar">
-  <header class="app-hero student-cal-hero">
-    <div class="app-hero__inner student-cal-hero__inner">
-      <div class="student-cal-hero__copy" data-reveal>
-        <div class="student-badge">Mi calendario</div>
-        <h1>Pr&oacute;ximas clases</h1>
-        <p>Aqu&iacute; ves &uacute;nicamente las clases programadas para tu grupo, desde hoy en adelante.</p>
-      </div>
-      <div class="student-cal-hero__meta" id="sc-meta" data-reveal>
-        <div class="meta-row"><span class="meta-key">Aprendiz</span><span class="meta-val" id="sc-meta-name">&mdash;</span></div>
-        <div class="meta-row"><span class="meta-key">Instituci&oacute;n</span><span class="meta-val" id="sc-meta-inst">&mdash;</span></div>
-        <div class="meta-row"><span class="meta-key">Grupo</span><span class="meta-val" id="sc-meta-grupo">&mdash;</span></div>
-        <div class="meta-row"><span class="meta-key">Ficha</span><span class="meta-val" id="sc-meta-ficha">&mdash;</span></div>
-      </div>
+<body class="app-shell">
+  <header class="app-hero">
+    <div class="app-hero__inner taller-hero__inner">
+      <div class="c-badge c-badge--gold">Refuerzo</div>
+      <h1>Talleres de Refuerzo</h1>
+      <p>Aqu&iacute; encuentras los talleres de refuerzo que tu instructor te asign&oacute;: descarga el documento, desarr&oacute;llalo con tus propias palabras y entr&eacute;galo antes de la fecha l&iacute;mite.</p>
     </div>
   </header>
 
-  <svg class="wave" viewBox="0 0 1440 40" preserveAspectRatio="none" height="40" aria-hidden="true">
-    <path fill="currentColor" d="M0,20 C360,40 1080,0 1440,20 L1440,40 L0,40 Z"></path>
-  </svg>
+  <main class="app-main taller-main">
+    <section class="app-card taller-card-shell" data-reveal>
+      <div class="taller-meta" id="taller-meta">
+        <div class="taller-meta__row"><span class="taller-meta__key">Aprendiz</span><span id="taller-meta-name">&mdash;</span></div>
+        <div class="taller-meta__row"><span class="taller-meta__key">Institucion</span><span id="taller-meta-inst">&mdash;</span></div>
+        <div class="taller-meta__row"><span class="taller-meta__key">Ficha</span><span id="taller-meta-ficha">&mdash;</span></div>
+      </div>
 
-  <main class="app-main student-cal-main">
-    <section class="app-card student-cal-card" data-reveal>
-      <div class="student-cal-card__head">
-        <div>
-          <h2>Listado de pr&oacute;ximas clases</h2>
-          <p class="student-cal-card__sub">Se muestran solo las clases de tu grupo desde hoy.</p>
-        </div>
-        <div class="student-cal-card__actions">
-          <span class="student-cal-card__status" id="sc-status"></span>
-          <button class="c-btn c-btn--ghost" type="button" id="sc-reload">Actualizar</button>
-          <a class="c-btn c-btn--ghost" href="index.html">Volver al portal</a>
-        </div>
+      <div id="taller-content" class="taller-list">
+        <p class="taller-status">Cargando tus talleres de refuerzo...</p>
       </div>
-      <div id="sc-list" class="student-cal-list" aria-live="polite">
-        <div class="msg msg--info"><h3>Cargando&hellip;</h3><p>Consultando el calendario.</p></div>
-      </div>
-      <p class="student-cal-footnote">
-        &iquest;Tu calendario muestra datos incorrectos? Consulta con tu instructor.
-      </p>
     </section>
   </main>
 

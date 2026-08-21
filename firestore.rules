@@ -219,6 +219,19 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // ───── Talleres de refuerzo (documento de refuerzo asignado por el
+    // instructor a uno o varios aprendices, NO ligado a una actividad real de
+    // una guia) ──────────────────────────────────────────────────────────────
+    // El admin escribe; el aprendiz LEE solo el suyo (mismo patron que los
+    // planes de mejoramiento y las notas).
+    // Doc: { usernameKey, workshops: [ { id, workshopKey, title, fileUrl,
+    //   motivo, fechaAsignacion, fechaLimite, historialFechas, asignadoPor,
+    //   estado, entrega, resultado, resultadoEn } ], updatedAt }
+    match /sena_portal_reinforcement_workshops/{usernameKey} {
+      allow read:  if isAdmin() || isOwnerByUsernameKey(usernameKey);
+      allow write: if isAdmin();
+    }
+
     // ───── Estado de guias (un doc por aprendiz x guia) ────────────────────
     // El doc debe contener un campo "usernameKey" para validar pertenencia.
     match /sena_portal_guide_state/{docId} {

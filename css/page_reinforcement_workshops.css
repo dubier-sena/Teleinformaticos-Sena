@@ -1,0 +1,160 @@
+/* css/page_reinforcement_workshops.css — pagina "Talleres de Refuerzo" */
+
+.taller-hero__inner {
+  padding: 40px 0 56px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.taller-hero__inner h1 {
+  margin: var(--space-2) 0 0;
+  font: var(--weight-bold) var(--font-size-2xl)/1.2 var(--font-display, var(--font-body));
+}
+
+.taller-hero__inner p {
+  margin: 0;
+  max-width: 640px;
+  opacity: 0.92;
+}
+
+.taller-main {
+  padding: 32px 0 56px;
+}
+
+.taller-card-shell {
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.taller-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+}
+
+.taller-meta__row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--font-size-sm);
+}
+
+.taller-meta__key {
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.taller-status {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+}
+
+.taller-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.taller-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+}
+
+.taller-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.taller-card__head h3 {
+  margin: 0;
+  font-size: var(--font-size-lg);
+}
+
+.taller-card__motivo {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+}
+
+.taller-card__meta {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--space-1) var(--space-4);
+  margin: 0;
+  font-size: var(--font-size-sm);
+}
+
+.taller-card__meta dt {
+  color: var(--text-muted);
+}
+
+.taller-card__meta dd {
+  margin: 0;
+  font-weight: var(--weight-semibold);
+}
+
+.taller-card__actions {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-top: var(--space-1);
+}
+
+.taller-card__cerrado {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-danger-strong);
+  font-weight: var(--weight-semibold);
+}
+
+.taller-estado {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--space-3);
+  border-radius: var(--radius-pill);
+  font: var(--weight-semibold) var(--font-size-xs)/1.4 var(--font-body);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  white-space: nowrap;
+}
+
+.taller-estado--asignado {
+  background: var(--color-info-soft);
+  color: var(--color-info-strong);
+}
+
+.taller-estado--entregado {
+  background: var(--surface-2);
+  color: var(--text-muted);
+}
+
+.taller-estado--superado {
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+.taller-estado--no_superado {
+  background: var(--color-danger-soft);
+  color: var(--color-danger-strong);
+}
+
+.taller-estado--vencido {
+  background: var(--color-warning-soft);
+  color: var(--color-warning-strong);
+}

@@ -79,6 +79,7 @@
     habilitacion: "Habilitacion de actividades",
     notas: "Calificaciones",
     mejoramiento: "Planes de Mejoramiento",
+    talleres: "Talleres de Refuerzo",
     laboratorio: "Laboratorio Virtual de Hardware",
     reportes: "Reportes",
     configuracion: "Configuracion",
@@ -2085,6 +2086,9 @@
     if (moduleName === "mejoramiento") {
       renderImprovementPlans();
     }
+    if (moduleName === "talleres") {
+      renderReinforcementWorkshops();
+    }
     if (moduleName === "autorizaciones") {
       renderSignatureAuth();
     }
@@ -4081,6 +4085,232 @@
     });
     AS.downloadWordDoc(html, "PlanMejoramiento_" + String(user.fullName || "Aprendiz").replace(/\s+/g, "") + ".doc");
     recordAdminAuditAction({ action: "mejoramiento-word", target: `${user.usernameKey}:${plan.id}`, detail: plan.activityId });
+  }
+
+  // ── Talleres de Refuerzo (pestaña aparte) ───────────────────────────────────
+  // A diferencia de Planes de Mejoramiento, un taller de refuerzo NO reabre
+  // ninguna actividad real de una guia -- es un documento autocontenido (PDF ya
+  // elaborado) que se asigna completo. Por eso no hay selector de "Actividad" ni
+  // banner dentro de la guia: el aprendiz lo ve y lo entrega desde su propia
+  // pagina (pages/auxiliares/talleres-refuerzo.html).
+  let _workshopsByUser = {};   // { usernameKey: { user, workshops } } de la ficha mostrada
+
+  function renderReinforcementWorkshops() {
+    const host = byId("module-talleres");
+    if (!host) return;
+    const catalog = window.reinforcementWorkshopsCatalog || {};
+    const workshopOptions = Object.keys(catalog).map((key) =>
+      `<option value="${escapeHtml(key)}">${escapeHtml(catalog[key].title || key)}</option>`).join("");
+    host.innerHTML = `
+      <div class="admin-section-head">
+        <h2>Talleres de Refuerzo</h2>
+        <p class="admin-muted">Asigna un taller de refuerzo (documento ya elaborado, con sus propias actividades) a uno o varios aprendices. El aprendiz lo ve, lo descarga y lo entrega desde su propia pagina de "Talleres de Refuerzo" (aviso en su Inicio).</p>
+      </div>
+      <details class="taller-nuevo">
+        <summary>Asignar nuevo taller</summary>
+        <div class="taller-form">
+          <label>Ficha <select id="taller-ficha">${getFichaOptions("", false)}</select></label>
+          <label>Taller <select id="taller-taller"><option value="">Selecciona</option>${workshopOptions}</select></label>
+          <div class="taller-roster">
+            <div class="taller-roster__toolbar">
+              <label><input type="checkbox" id="taller-roster-todos"> Seleccionar todos</label>
+              <span id="taller-roster-contador" class="admin-muted">0 seleccionados</span>
+            </div>
+            <div class="taller-roster__list" id="taller-roster-list"></div>
+          </div>
+          <label>Observación <small>(opcional)</small>
+            <textarea id="taller-motivo" rows="2" placeholder="Ej. refuerzo preventivo, apoyo adicional, etc. (no obligatorio)"></textarea></label>
+          <label>Fecha límite <input type="date" id="taller-fecha"></label>
+          <button type="button" id="taller-asignar" class="btn primary">Asignar taller</button>
+          <span id="taller-status" class="admin-muted"></span>
+        </div>
+      </details>
+      <div class="taller-filtros">
+        <select id="taller-filtro-ficha">${getFichaOptions("", false)}</select>
+        <select id="taller-filtro-estado">
+          <option value="">Todos los estados</option>
+          <option value="asignado">Asignado</option>
+          <option value="entregado">Entregado</option>
+          <option value="superado">Superado</option>
+          <option value="no_superado">No superado</option>
+          <option value="vencido">Vencido</option>
+        </select>
+      </div>
+      <div id="taller-grid" class="taller-grid"></div>
+    `;
+    populateWorkshopRoster();
+    byId("taller-ficha")?.addEventListener("change", populateWorkshopRoster);
+    byId("taller-taller")?.addEventListener("change", prefillWorkshopDeadline);
+    byId("taller-roster-todos")?.addEventListener("change", toggleWorkshopRosterAll);
+    byId("taller-roster-list")?.addEventListener("change", updateWorkshopRosterCounter);
+    byId("taller-asignar")?.addEventListener("click", handleAssignWorkshop);
+    byId("taller-filtro-ficha")?.addEventListener("change", renderWorkshopsGrid);
+    byId("taller-filtro-estado")?.addEventListener("change", renderWorkshopsGrid);
+    byId("taller-grid")?.addEventListener("click", handleWorkshopGridClick);
+    renderWorkshopsGrid();
+  }
+
+  function populateWorkshopRoster() {
+    const ficha = byId("taller-ficha")?.value || "";
+    const list = byId("taller-roster-list");
+    if (!list) return;
+    const users = getUsersForFicha(ficha);
+    list.innerHTML = users.length
+      ? users.map((u) => `
+          <label class="taller-roster__item">
+            <input type="checkbox" value="${escapeHtml(u.usernameKey)}">
+            <span>${escapeHtml(u.fullName)}</span>
+          </label>`).join("")
+      : '<p class="admin-muted">No hay aprendices en esta ficha.</p>';
+    const selectAll = byId("taller-roster-todos");
+    if (selectAll) selectAll.checked = false;
+    updateWorkshopRosterCounter();
+  }
+
+  function toggleWorkshopRosterAll() {
+    const checked = byId("taller-roster-todos")?.checked;
+    byId("taller-roster-list")?.querySelectorAll('input[type="checkbox"]').forEach((cb) => { cb.checked = !!checked; });
+    updateWorkshopRosterCounter();
+  }
+
+  function updateWorkshopRosterCounter() {
+    const n = getSelectedWorkshopLearners().length;
+    const el = byId("taller-roster-contador");
+    if (el) el.textContent = `${n} seleccionado${n === 1 ? "" : "s"}`;
+  }
+
+  function getSelectedWorkshopLearners() {
+    const list = byId("taller-roster-list");
+    if (!list) return [];
+    return Array.from(list.querySelectorAll('input[type="checkbox"]:checked')).map((cb) => cb.value);
+  }
+
+  // Al elegir el taller, prellena la fecha limite con hoy + defaultDays del
+  // catalogo (solo si el admin aun no la toco a mano).
+  function prefillWorkshopDeadline() {
+    const key = byId("taller-taller")?.value || "";
+    const entry = (window.reinforcementWorkshopsCatalog || {})[key];
+    const fechaEl = byId("taller-fecha");
+    if (!entry || !fechaEl || fechaEl.value) return;
+    const dias = Number(entry.defaultDays) || 15;
+    const fecha = new Date(Date.now() + dias * 86400000);
+    fechaEl.value = fecha.toISOString().slice(0, 10);
+  }
+
+  function handleAssignWorkshop() {
+    const mgr = window.reinforcementWorkshops;
+    const catalog = window.reinforcementWorkshopsCatalog || {};
+    const workshopKey = byId("taller-taller")?.value || "";
+    const entry = catalog[workshopKey];
+    const usernameKeys = getSelectedWorkshopLearners();
+    const motivo = byId("taller-motivo")?.value || "";
+    const fechaLimite = byId("taller-fecha")?.value || "";
+    const setStatus = (m) => { const el = byId("taller-status"); if (el) el.textContent = m; };
+    if (!mgr || !entry || !usernameKeys.length) { setStatus("Selecciona un taller y al menos un aprendiz."); return; }
+    if (!fechaLimite) { setStatus("Indica la fecha limite."); return; }
+    const session = auth.getCurrentSession();
+    const asignadoPor = (session && session.usernameKey) || "admin";
+    // Guard anti-duplicados: con varios aprendices marcados a la vez, un doble
+    // clic en "Asignar" no debe crear registros repetidos para quien ya tenga
+    // un taller de este tipo sin cerrar.
+    let asignados = 0;
+    let yaActivos = 0;
+    usernameKeys.forEach((usernameKey) => {
+      const existentes = mgr.getStudentWorkshops(usernameKey);
+      const yaTiene = existentes.some((w) => w.workshopKey === workshopKey && w.resultado !== "A" && w.resultado !== "D");
+      if (yaTiene) { yaActivos += 1; return; }
+      mgr.createWorkshop(usernameKey, {
+        workshopKey, title: entry.title, fileUrl: entry.fileUrl, motivo, fechaLimite, asignadoPor,
+      });
+      asignados += 1;
+    });
+    recordAdminAuditAction({ action: "taller-asignar", target: workshopKey, detail: `${asignados} aprendices` });
+    setStatus(`Asignado a ${asignados}.` + (yaActivos ? ` ${yaActivos} ya tenian un taller activo de este tipo.` : ""));
+    renderWorkshopsGrid();
+  }
+
+  async function renderWorkshopsGrid() {
+    const grid = byId("taller-grid");
+    if (!grid) return;
+    const ficha = byId("taller-filtro-ficha")?.value || "";
+    const estado = byId("taller-filtro-estado")?.value || "";
+    const mgr = window.reinforcementWorkshops;
+    if (!ficha || !mgr) { grid.innerHTML = '<p class="admin-muted">Selecciona una ficha.</p>'; return; }
+    grid.innerHTML = '<p class="response-status">Cargando talleres desde la nube...</p>';
+    const users = getUsersForFicha(ficha);
+    _workshopsByUser = {};
+    await Promise.all(users.map(async (u) => {
+      let workshops = [];
+      try { workshops = await mgr.syncStudentWorkshopsFromCloud(u.usernameKey); }
+      catch (_) { workshops = mgr.getStudentWorkshops(u.usernameKey); }
+      _workshopsByUser[u.usernameKey] = { user: u, workshops: workshops || [] };
+    }));
+    const now = Date.now();
+    const rows = [];
+    users.forEach((u) => {
+      (_workshopsByUser[u.usernameKey]?.workshops || []).forEach((w) => {
+        const st = mgr.deriveWorkshopStatus(w, now);
+        if (estado && st !== estado) return;
+        rows.push(workshopRowMarkup(u, w, st));
+      });
+    });
+    grid.innerHTML = rows.length
+      ? `<table class="admin-data-table taller-table"><thead><tr><th>Aprendiz</th><th>Taller</th><th>Asignado</th><th>Fecha limite</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>${rows.join("")}</tbody></table>`
+      : '<p class="admin-muted">No hay talleres para esta ficha/estado.</p>';
+  }
+
+  function workshopRowMarkup(user, workshop, status) {
+    const label = (window.reinforcementWorkshops?.WORKSHOP_STATUS_LABELS || {})[status] || status;
+    return `<tr data-workshop-id="${escapeHtml(workshop.id)}" data-workshop-user="${escapeHtml(user.usernameKey)}">
+      <td>${escapeHtml(user.fullName)}</td>
+      <td>${escapeHtml(workshop.title || workshop.workshopKey)}</td>
+      <td>${escapeHtml(formatDate(workshop.fechaAsignacion))}</td>
+      <td>${escapeHtml(workshop.fechaLimite || "—")}</td>
+      <td><span class="taller-estado taller-estado--${escapeHtml(status)}">${escapeHtml(label)}</span></td>
+      <td>
+        <button type="button" class="btn small" data-workshop-action="entregada">Entregada</button>
+        <button type="button" class="btn small" data-workshop-action="superado">&#10003; Superado</button>
+        <button type="button" class="btn small" data-workshop-action="nosuperado">&#10007; No superado</button>
+        <button type="button" class="btn small" data-workshop-action="fecha">Cambiar fecha</button>
+        <button type="button" class="btn small danger" data-workshop-action="eliminar">Eliminar</button>
+      </td>
+    </tr>`;
+  }
+
+  function handleWorkshopGridClick(event) {
+    const btn = event.target.closest("[data-workshop-action]");
+    if (!btn) return;
+    const row = btn.closest("tr[data-workshop-id]");
+    if (!row) return;
+    const usernameKey = row.dataset.workshopUser;
+    const workshopId = row.dataset.workshopId;
+    const action = btn.dataset.workshopAction;
+    const mgr = window.reinforcementWorkshops;
+    const entry = _workshopsByUser[usernameKey];
+    const workshop = entry && entry.workshops.find((w) => w.id === workshopId);
+    if (!mgr || !workshop) return;
+    if (action === "fecha") {
+      const nueva = window.prompt("Nueva fecha limite (AAAA-MM-DD):", workshop.fechaLimite || "");
+      if (nueva == null) return;
+      mgr.updateWorkshopDeadline(usernameKey, workshopId, String(nueva).trim());
+      recordAdminAuditAction({ action: "taller-fecha", target: `${usernameKey}:${workshopId}`, detail: String(nueva).trim() });
+      renderWorkshopsGrid();
+    } else if (action === "entregada") {
+      mgr.markWorkshopDelivered(usernameKey, workshopId);
+      recordAdminAuditAction({ action: "taller-entregada", target: `${usernameKey}:${workshopId}`, detail: workshop.workshopKey });
+      renderWorkshopsGrid();
+    } else if (action === "superado" || action === "nosuperado") {
+      mgr.setWorkshopResult(usernameKey, workshopId, action === "superado" ? "A" : "D");
+      recordAdminAuditAction({ action: "taller-resultado", target: `${usernameKey}:${workshopId}`, detail: action === "superado" ? "A" : "D" });
+      renderWorkshopsGrid();
+    } else if (action === "eliminar") {
+      confirmAdminAction("Eliminar este taller de refuerzo?").then((ok) => {
+        if (!ok) return;
+        mgr.deleteWorkshop(usernameKey, workshopId);
+        recordAdminAuditAction({ action: "taller-eliminar", target: `${usernameKey}:${workshopId}`, detail: workshop.workshopKey });
+        renderWorkshopsGrid();
+      });
+    }
   }
 
   function renderUsers() {

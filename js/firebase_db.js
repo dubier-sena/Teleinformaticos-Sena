@@ -74,6 +74,7 @@
   var COL_GRADES = "sena_portal_grades";
   var COL_GRADE_SOLUTIONS = "sena_portal_grade_solutions";
   var COL_IMPROVEMENT_PLANS = "sena_portal_improvement_plans";
+  var COL_REINFORCEMENT_WORKSHOPS = "sena_portal_reinforcement_workshops";
   var COL_SIGNATURE_AUTH = "sena_portal_signature_auth";
   var CALENDAR_FALLBACK_PREFIX = "__calendar__:";
   var AVAILABILITY_DOC_ID = CALENDAR_FALLBACK_PREFIX + "calendario_2026_admin";
@@ -1341,6 +1342,23 @@
     return fsPatch(COL_IMPROVEMENT_PLANS, usernameKey, {
       usernameKey: usernameKey,
       plans: Array.isArray(plans) ? plans : [],
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
+  // ── Talleres de refuerzo (admin escribe; aprendiz lee solo el suyo) ───────
+  // Doc por aprendiz: { usernameKey, workshops: [...], updatedAt }.
+  async function cloudGetReinforcementWorkshops(usernameKey) {
+    if (!usernameKey) return [];
+    var doc = await fsGet(COL_REINFORCEMENT_WORKSHOPS, usernameKey);
+    return doc && Array.isArray(doc.workshops) ? doc.workshops : [];
+  }
+
+  async function cloudSaveReinforcementWorkshops(usernameKey, workshops) {
+    if (!usernameKey) return false;
+    return fsPatch(COL_REINFORCEMENT_WORKSHOPS, usernameKey, {
+      usernameKey: usernameKey,
+      workshops: Array.isArray(workshops) ? workshops : [],
       updatedAt: new Date().toISOString(),
     });
   }
@@ -2911,6 +2929,8 @@
     cloudSaveGradeSolutions: cloudSaveGradeSolutions,
     cloudGetImprovementPlans: cloudGetImprovementPlans,
     cloudSaveImprovementPlans: cloudSaveImprovementPlans,
+    cloudGetReinforcementWorkshops: cloudGetReinforcementWorkshops,
+    cloudSaveReinforcementWorkshops: cloudSaveReinforcementWorkshops,
     mergeGuideDataSnapshotForSave: mergeGuideDataSnapshotForSave,
     cloudGetGuideUiState: cloudGetGuideUiState,
     cloudSaveGuideUiState: cloudSaveGuideUiState,

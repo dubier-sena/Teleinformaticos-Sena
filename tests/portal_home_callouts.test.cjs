@@ -169,3 +169,48 @@ test("renderCallouts: sin ninguna 'D' -> no aparece nada por ese lado (aunque la
 
   assert.equal(ctx.__calloutsBox.hidden, true, "solo A (Aprobado), no debe mostrar ningun aviso de 'no aprobada'");
 });
+
+// ── Talleres de Refuerzo (aviso en el Home -> pagina auxiliar dedicada) ───────
+test("renderCallouts: sin cloudGetReinforcementWorkshops -> caja oculta (no revienta)", async () => {
+  const ctx = loadPortalHome();
+  // window._firebaseDb = {} (sin cloudGetReinforcementWorkshops): debe devolver
+  // false en vez de reventar, igual que isSignaturePending.
+  await ctx.window.renderCallouts({ usernameKey: "prueba.aprendiz" }, []);
+
+  assert.equal(ctx.__calloutsBox.hidden, true);
+});
+
+test("renderCallouts: talleres solo cerrados (superado/no superado) -> caja oculta", async () => {
+  const ctx = loadPortalHome();
+  ctx.window._firebaseDb.cloudGetReinforcementWorkshops = async () => ([
+    { id: "t1", workshopKey: "guia-01-induccion", resultado: "A" },
+    { id: "t2", workshopKey: "guia-01-induccion", resultado: "D" },
+  ]);
+
+  await ctx.window.renderCallouts({ usernameKey: "prueba.aprendiz" }, []);
+
+  assert.equal(ctx.__calloutsBox.hidden, true, "sin ningun taller abierto, no debe mostrar el aviso");
+});
+
+test("renderCallouts: un taller sin cerrar (asignado o vencido) -> muestra el aviso con enlace a la pagina de talleres", async () => {
+  const ctx = loadPortalHome();
+  ctx.window._firebaseDb.cloudGetReinforcementWorkshops = async () => ([
+    { id: "t1", workshopKey: "guia-01-induccion", resultado: "" },
+  ]);
+
+  await ctx.window.renderCallouts({ usernameKey: "prueba.aprendiz" }, []);
+
+  assert.equal(ctx.__calloutsBox.hidden, false, "con un taller sin cerrar, debe mostrar el aviso");
+  assert.match(ctx.__calloutsBox.innerHTML, /Taller de Refuerzo/);
+  assert.match(ctx.__calloutsBox.innerHTML, /talleres-refuerzo\.html/);
+});
+
+test("renderCallouts: si cloudGetReinforcementWorkshops revienta -> no muestra un aviso incierto (no revienta la pagina)", async () => {
+  const ctx = loadPortalHome();
+  ctx.window._firebaseDb.cloudGetReinforcementWorkshops = async () => { throw new Error("Firestore no disponible"); };
+
+  await assert.doesNotReject(async () => {
+    await ctx.window.renderCallouts({ usernameKey: "prueba.aprendiz" }, []);
+  });
+  assert.equal(ctx.__calloutsBox.hidden, true, "si la lectura falla, mejor no mostrar un aviso que podria ser incorrecto");
+});
