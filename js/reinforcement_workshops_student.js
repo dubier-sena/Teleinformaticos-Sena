@@ -111,35 +111,80 @@
     };
   }
 
-  // ── Markup de un campo de "documento" (intro/conclusiones/referencias):
-  //    autoguardado, sin boton ni bloqueo propio. ───────────────────────────
-  function docFieldMarkup(workshop, field, respuestas) {
-    var key = safeId(workshop.id) + "__" + field.key;
-    var value = respuestas[key] || "";
+  // ── Markup de un campo de texto: mismo patron exacto que usan las guias
+  //    reales (label > span + textarea, ver .notes-card label en
+  //    css/guia_template.css) para que se vea y se comporte igual. ─────────
+  function fieldMarkup(key, label, placeholder, value, dataAttr, disabled) {
     return (
-      '<label class="taller-field">' +
-      '<span class="taller-field__label">' + escapeHtml(field.label) + "</span>" +
-      '<textarea class="c-textarea" rows="3" data-doc-field="' + escapeHtml(key) + '" placeholder="' +
-      escapeHtml(field.placeholder || "") + '">' + escapeHtml(value) + "</textarea>" +
+      "<label>" +
+      "<span>" + escapeHtml(label) + "</span>" +
+      '<textarea rows="3" ' + dataAttr + '="' + escapeHtml(key) + '" placeholder="' +
+      escapeHtml(placeholder || "") + '"' + (disabled ? " disabled" : "") + ">" +
+      escapeHtml(value) + "</textarea>" +
       "</label>"
     );
+  }
+
+  // Campo de "documento" (intro/conclusiones/referencias): autoguardado, sin
+  // boton ni bloqueo propio.
+  function docFieldMarkup(workshop, field, respuestas) {
+    var key = safeId(workshop.id) + "__" + field.key;
+    return fieldMarkup(key, field.label, field.placeholder, respuestas[key] || "", "data-doc-field", false);
   }
 
   function activityFieldsMarkup(workshop, fields, respuestas, disabled) {
     return fields.map(function (f) {
       var key = safeId(workshop.id) + "__" + f.key;
-      var value = respuestas[key] || "";
-      return (
-        '<label class="taller-field">' +
-        '<span class="taller-field__label">' + escapeHtml(f.label) + "</span>" +
-        '<textarea class="c-textarea" rows="3" data-store="' + escapeHtml(key) + '" placeholder="' +
-        escapeHtml(f.placeholder || "") + '"' + (disabled ? " disabled" : "") + ">" +
-        escapeHtml(value) + "</textarea>" +
-        "</label>"
-      );
+      return fieldMarkup(key, f.label, f.placeholder, respuestas[key] || "", "data-store", disabled);
     }).join("");
   }
 
+  // Seccion de "documento final" (intro/conclusiones/referencias): mismo
+  // envoltorio .notes-card que una actividad real (hereda el estilo de
+  // label/span/textarea), con una explicacion de para que sirven estos
+  // campos -- mismo feedback del usuario que motivo el resto del rediseno
+  // ("el aprendiz no sabe que es cada actividad").
+  function docFieldsSectionMarkup(workshop, catalogEntry, respuestas) {
+    var fieldsHtml = (catalogEntry.docFields || []).map(function (f) {
+      return docFieldMarkup(workshop, f, respuestas);
+    }).join("");
+    if (!fieldsHtml) return "";
+    return (
+      '<article class="notes-card taller-docfields">' +
+        "<h3>Tu documento final</h3>" +
+        '<p class="intro-text">Estos campos arman la portada de tu documento final en Word: cuenta brevemente el proposito de tu trabajo, que aprendiste y que fuentes usaste. Se guardan automaticamente mientras escribes y puedes ajustarlos hasta la fecha limite.</p>' +
+        fieldsHtml +
+      "</article>"
+    );
+  }
+
+  function readOnlyDocFieldsMarkup(workshop, catalogEntry, respuestas) {
+    var fieldsHtml = (catalogEntry.docFields || []).map(function (f) {
+      var v = respuestas[safeId(workshop.id) + "__" + f.key];
+      return v ? '<p><strong>' + escapeHtml(f.label) + ":</strong> " + escapeHtml(v) + "</p>" : "";
+    }).join("");
+    if (!fieldsHtml) return "";
+    return '<article class="notes-card taller-docfields"><h3>Documento final</h3>' + fieldsHtml + "</article>";
+  }
+
+  function instruccionesMarkup(act) {
+    var items = (act.instrucciones || []).map(function (i) { return "<li>" + escapeHtml(i) + "</li>"; }).join("");
+    if (!items) return "";
+    return '<article class="support-card"><h3>Instrucciones</h3><ol>' + items + "</ol></article>";
+  }
+
+  function objetivoMarkup(act) {
+    return act.objetivo
+      ? '<p class="intro-text"><strong>Propósito:</strong> ' + escapeHtml(act.objetivo) + "</p>"
+      : "";
+  }
+
+  // Mismo look que una actividad real de guia: .activity.mission-card ->
+  // .activity-header (numero + titulo) -> .activity-body con .intro-text
+  // (proposito), .support-card (instrucciones numeradas) y .notes-card
+  // (campos de respuesta + botones). Se renderiza siempre "open" (sin
+  // plegado/despliegue): el taller solo tiene 6 actividades, no hace falta
+  // la complejidad de toggleActivity() que usan las guias largas.
   function activityCardMarkup(workshop, act) {
     var effectiveId = safeId(workshop.id) + "__" + act.id;
     var AS = window.ActivityStandard;
@@ -152,12 +197,22 @@
       ? AS.renderFileButton(effectiveId, { description: act.driveTarget.description, note: act.driveTarget.note })
       : "";
     return (
-      '<article class="taller-activity" id="wrap_' + escapeHtml(effectiveId) + '">' +
-      "<h3>Actividad " + escapeHtml(act.number) + " — " + escapeHtml(act.label) + "</h3>" +
-      activityFieldsMarkup(workshop, act.fields, _respuestasByWorkshop[workshop.id], false) +
-      buttonsHtml +
-      driveHtml +
-      "</article>"
+      '<div class="activity open mission-card" id="wrap_' + escapeHtml(effectiveId) + '">' +
+        '<div class="activity-header">' +
+          '<span class="activity-num">Actividad ' + escapeHtml(act.number) + "</span>" +
+          '<span class="activity-title">' + escapeHtml(act.label) + "</span>" +
+        "</div>" +
+        '<div class="activity-body">' +
+          objetivoMarkup(act) +
+          instruccionesMarkup(act) +
+          '<article class="notes-card" style="margin-top:16px">' +
+            "<h3>Tus respuestas</h3>" +
+            activityFieldsMarkup(workshop, act.fields, _respuestasByWorkshop[workshop.id], false) +
+            buttonsHtml +
+          "</article>" +
+          driveHtml +
+        "</div>" +
+      "</div>"
     );
   }
 
@@ -251,9 +306,7 @@
   function renderEditableWorkshop(usernameKey, workshop, catalogEntry) {
     var AS = window.ActivityStandard;
     var fecha = workshop.fechaLimite ? formatFecha(workshop.fechaLimite) : "—";
-    var docFieldsHtml = (catalogEntry.docFields || []).map(function (f) {
-      return docFieldMarkup(workshop, f, _respuestasByWorkshop[workshop.id]);
-    }).join("");
+    var docFieldsHtml = docFieldsSectionMarkup(workshop, catalogEntry, _respuestasByWorkshop[workshop.id]);
     var activitiesHtml = (catalogEntry.activities || []).map(function (act) {
       return activityCardMarkup(workshop, act);
     }).join("");
@@ -269,7 +322,7 @@
       (workshop.fileUrl
         ? '<p><a class="c-btn c-btn--secondary" href="' + escapeHtml(workshop.fileUrl) + '" target="_blank" rel="noopener">📄 Ver instrucciones completas (PDF)</a></p>'
         : "") +
-      '<section class="taller-docfields">' + docFieldsHtml + "</section>" +
+      docFieldsHtml +
       activitiesHtml +
       '<div class="taller-export"><button type="button" class="c-btn c-btn--primary" data-taller-export="' + escapeHtml(workshop.id) + '">📘 Exportar taller completo a Word</button></div>' +
       "</div>";
@@ -328,23 +381,46 @@
   }
 
   // ── Tarjeta de solo lectura (entregado/vencido/superado/no_superado) ─────
+  //    Misma estructura visual que la editable (.activity.mission-card con
+  //    objetivo + instrucciones), solo que las respuestas se muestran como
+  //    texto plano en vez de textarea -- para que el aprendiz siga viendo el
+  //    contexto de cada actividad al revisar un taller ya cerrado.
+  function readOnlyFieldsMarkup(workshop, fields, respuestas) {
+    return fields.map(function (f) {
+      var v = respuestas[safeId(workshop.id) + "__" + f.key];
+      return '<p><strong>' + escapeHtml(f.label) + ":</strong> " + (v ? escapeHtml(v) : "<em>(sin respuesta)</em>") + "</p>";
+    }).join("");
+  }
+
+  function readOnlyActivityMarkup(workshop, act, respuestas) {
+    return (
+      '<div class="activity open mission-card">' +
+        '<div class="activity-header">' +
+          '<span class="activity-num">Actividad ' + escapeHtml(act.number) + "</span>" +
+          '<span class="activity-title">' + escapeHtml(act.label) + "</span>" +
+        "</div>" +
+        '<div class="activity-body">' +
+          objetivoMarkup(act) +
+          instruccionesMarkup(act) +
+          '<article class="notes-card" style="margin-top:16px">' +
+            "<h3>Tus respuestas</h3>" +
+            readOnlyFieldsMarkup(workshop, act.fields, respuestas) +
+          "</article>" +
+        "</div>" +
+      "</div>"
+    );
+  }
+
   function renderReadOnlyWorkshop(usernameKey, workshop, catalogEntry, status) {
     var mgr = window.reinforcementWorkshops;
     var label = mgr.WORKSHOP_STATUS_LABELS[status] || status;
     var respuestas = mgr.getWorkshopAnswers(usernameKey, workshop.id);
     var fecha = workshop.fechaLimite ? formatFecha(workshop.fechaLimite) : "—";
 
-    var docsHtml = (catalogEntry.docFields || []).map(function (f) {
-      var v = respuestas[safeId(workshop.id) + "__" + f.key];
-      return v ? '<p><strong>' + escapeHtml(f.label) + ":</strong> " + escapeHtml(v) + "</p>" : "";
-    }).join("");
+    var docsHtml = readOnlyDocFieldsMarkup(workshop, catalogEntry, respuestas);
 
     var actsHtml = (catalogEntry.activities || []).map(function (act) {
-      var fieldsHtml = act.fields.map(function (f) {
-        var v = respuestas[safeId(workshop.id) + "__" + f.key];
-        return '<p><strong>' + escapeHtml(f.label) + ":</strong> " + (v ? escapeHtml(v) : "<em>(sin respuesta)</em>") + "</p>";
-      }).join("");
-      return '<article class="taller-activity taller-activity--readonly"><h3>Actividad ' + escapeHtml(act.number) + " — " + escapeHtml(act.label) + "</h3>" + fieldsHtml + "</article>";
+      return readOnlyActivityMarkup(workshop, act, respuestas);
     }).join("");
 
     var cerradoMsg = status === "vencido"

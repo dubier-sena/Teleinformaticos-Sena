@@ -101,3 +101,25 @@ test("el guardado de respuestas hace debounce a la nube (1.2s, mismo criterio qu
   assert.match(js, /CLOUD_SAVE_DEBOUNCE_MS = 1200/);
   assert.match(js, /function scheduleCloudSave\(/);
 });
+
+test("regresión: cada actividad se ve como una actividad real de guía (objetivo + instrucciones + .mission-card), no solo un textarea suelto", () => {
+  const js = read("js/reinforcement_workshops_student.js");
+  // Editable (activityCardMarkup) y solo-lectura (readOnlyActivityMarkup)
+  // deben compartir la misma estructura visual real de guía.
+  assert.match(js, /function activityCardMarkup\(/);
+  assert.match(js, /function readOnlyActivityMarkup\(/);
+  assert.match(js, /class="activity open mission-card"/);
+  assert.match(js, /function objetivoMarkup\(/);
+  assert.match(js, /function instruccionesMarkup\(/);
+  assert.match(js, /class="support-card"><h3>Instrucciones<\/h3>/);
+  // La pagina debe cargar guia_template.css para heredar esas clases reales.
+  const html = read("pages/auxiliares/talleres-refuerzo.html");
+  assert.match(html, /guia_template\.css/);
+});
+
+test("regresión: los campos de documento (intro/conclusiones/referencias) explican para qué sirven, no solo un textarea sin contexto", () => {
+  const js = read("js/reinforcement_workshops_student.js");
+  assert.match(js, /function docFieldsSectionMarkup\(/);
+  assert.match(js, /function readOnlyDocFieldsMarkup\(/);
+  assert.match(js, /intro-text.*arman la portada/);
+});

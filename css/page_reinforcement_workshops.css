@@ -159,134 +159,28 @@
   color: var(--color-warning-strong);
 }
 
-/* ── Campos y actividades (el taller se desarrolla en linea, como una guia) ── */
-
-.taller-card__motivo {
-  margin: 0;
-  font-size: var(--font-size-sm);
-  color: var(--text-muted);
-}
+/* ── Campos y actividades (el taller se desarrolla en linea, como una guia) ──
+   Las actividades reusan las clases reales de guia (.activity, .mission-card,
+   .notes-card, .support-card, .intro-text, .btn-save-response, etc.) de
+   css/guia_template.css, cargado en esta pagina -- aqui solo queda lo propio
+   del taller que esa hoja no cubre. */
 
 .taller-docfields {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  margin: var(--space-2) 0 var(--space-4);
-  padding: var(--space-4);
-  background: var(--surface-2);
-  border-radius: var(--radius-sm);
+  margin-top: 16px;
 }
 
-.taller-field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.taller-field__label {
-  font: 600 var(--font-size-sm)/1.3 var(--font-body);
-  color: var(--text-strong);
-}
-
-.taller-activity {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-4);
-  margin-bottom: var(--space-4);
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius-md);
-}
-
-.taller-activity h3 {
-  margin: 0;
-  font-size: var(--font-size-base);
-  color: var(--color-success-strong);
-}
-
-.taller-activity--readonly p {
-  margin: 0 0 var(--space-2);
-  font-size: var(--font-size-sm);
-  line-height: 1.6;
+/* AS.renderFormButtons() (usado por cada actividad, ver activity_standard.js)
+   solo pone inline display/margin-top/color en este div -- a diferencia de
+   las guias reales, que escriben el fondo/padding/borde a mano en su propio
+   HTML. Sin esta regla el aviso de "guardado" quedaria sin fondo ni borde. */
+.activity-saved-notice {
+  padding: 10px 14px;
+  background: #e8f5e9;
+  border-left: 4px solid #2e7d32;
+  border-radius: 6px;
+  font-size: 0.88rem;
 }
 
 .taller-export {
-  margin-top: var(--space-2);
-}
-
-/* Botones estandar de actividad (mismo look que las guias reales, ver
-   css/guia_template.css .btn-save-response/.btn-export-word -- se copian
-   aqui en vez de cargar toda esa hoja de estilos, que trae mucho mas de lo
-   que esta pagina necesita). */
-.act-btn-group {
-  display: flex;
-  gap: var(--space-3);
-  flex-wrap: wrap;
-}
-
-.btn-save-response,
-.btn-drive,
-.btn-qr {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 180px;
-  min-height: var(--hit-target-min);
-  box-sizing: border-box;
-  padding: 10px 20px;
-  font: 600 14px/1.35 var(--font-body);
-  border-radius: var(--radius-sm);
-  border: none;
-  cursor: pointer;
-  text-align: left;
-  transition: filter 0.15s ease, transform 0.15s ease;
-}
-
-.btn-save-response {
-  background: linear-gradient(135deg, #1b5e20, #2e7d32);
-  color: #fff;
-}
-
-.btn-drive,
-.btn-qr {
-  background: linear-gradient(135deg, #1d4ed8, #2563eb);
-  color: #fff;
-}
-
-.btn-save-response:hover,
-.btn-drive:hover {
-  filter: brightness(1.08);
-  transform: translateY(-1px);
-}
-
-.btn-save-response:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-  filter: none;
-}
-
-.activity-saved-notice {
-  margin-top: var(--space-2);
-  padding: var(--space-3);
-  background: var(--color-success-soft);
-  color: var(--color-success-strong);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-sm);
-  font-weight: var(--weight-semibold);
-}
-
-.drive-action-group {
-  margin-top: var(--space-2);
-}
-
-.drive-delivery-desc {
-  margin: 0 0 var(--space-1);
-  font-size: var(--font-size-sm);
-}
-
-.drive-delivery-note {
-  margin: 0 0 var(--space-2);
-  font-size: var(--font-size-xs);
-  color: var(--text-muted);
+  margin-top: var(--space-4);
 }
