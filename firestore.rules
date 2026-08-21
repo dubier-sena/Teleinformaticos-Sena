@@ -232,6 +232,19 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // ───── Respuestas de talleres de refuerzo (el aprendiz SI escribe) ─────
+    // Separado a proposito del doc de arriba: ese guarda datos AUTORITATIVOS
+    // (fechaLimite, estado, resultado) que solo el admin puede escribir -- si
+    // el aprendiz pudiera escribir el mismo doc, podria forjar su propio
+    // "Superado" y enganar al admin (no solo a si mismo, ver Trust model en
+    // CLAUDE.md). Aqui SOLO viven las respuestas de texto de las actividades,
+    // sin ningun campo de calificacion, por eso el aprendiz si puede escribir
+    // la suya (mismo patron que sena_portal_progress).
+    // Doc: { usernameKey, answers: { [workshopId]: {...respuestas} }, updatedAt }
+    match /sena_portal_reinforcement_answers/{usernameKey} {
+      allow read, write: if isAdmin() || isOwnerByUsernameKey(usernameKey);
+    }
+
     // ───── Estado de guias (un doc por aprendiz x guia) ────────────────────
     // El doc debe contener un campo "usernameKey" para validar pertenencia.
     match /sena_portal_guide_state/{docId} {

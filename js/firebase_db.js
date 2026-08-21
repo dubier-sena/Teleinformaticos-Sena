@@ -75,6 +75,7 @@
   var COL_GRADE_SOLUTIONS = "sena_portal_grade_solutions";
   var COL_IMPROVEMENT_PLANS = "sena_portal_improvement_plans";
   var COL_REINFORCEMENT_WORKSHOPS = "sena_portal_reinforcement_workshops";
+  var COL_REINFORCEMENT_ANSWERS = "sena_portal_reinforcement_answers";
   var COL_SIGNATURE_AUTH = "sena_portal_signature_auth";
   var CALENDAR_FALLBACK_PREFIX = "__calendar__:";
   var AVAILABILITY_DOC_ID = CALENDAR_FALLBACK_PREFIX + "calendario_2026_admin";
@@ -1359,6 +1360,25 @@
     return fsPatch(COL_REINFORCEMENT_WORKSHOPS, usernameKey, {
       usernameKey: usernameKey,
       workshops: Array.isArray(workshops) ? workshops : [],
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
+  // ── Respuestas de talleres de refuerzo (el aprendiz escribe la suya) ──────
+  // Doc por aprendiz: { usernameKey, answers: { [workshopId]: {...} }, updatedAt }.
+  // Separado de cloudGetReinforcementWorkshops a proposito: ese doc guarda
+  // datos autoritativos (solo-admin-escribe); este solo respuestas de texto.
+  async function cloudGetReinforcementAnswers(usernameKey) {
+    if (!usernameKey) return {};
+    var doc = await fsGet(COL_REINFORCEMENT_ANSWERS, usernameKey);
+    return doc && doc.answers && typeof doc.answers === "object" ? doc.answers : {};
+  }
+
+  async function cloudSaveReinforcementAnswers(usernameKey, answers) {
+    if (!usernameKey) return false;
+    return fsPatch(COL_REINFORCEMENT_ANSWERS, usernameKey, {
+      usernameKey: usernameKey,
+      answers: answers && typeof answers === "object" ? answers : {},
       updatedAt: new Date().toISOString(),
     });
   }
@@ -2931,6 +2951,8 @@
     cloudSaveImprovementPlans: cloudSaveImprovementPlans,
     cloudGetReinforcementWorkshops: cloudGetReinforcementWorkshops,
     cloudSaveReinforcementWorkshops: cloudSaveReinforcementWorkshops,
+    cloudGetReinforcementAnswers: cloudGetReinforcementAnswers,
+    cloudSaveReinforcementAnswers: cloudSaveReinforcementAnswers,
     mergeGuideDataSnapshotForSave: mergeGuideDataSnapshotForSave,
     cloudGetGuideUiState: cloudGetGuideUiState,
     cloudSaveGuideUiState: cloudSaveGuideUiState,

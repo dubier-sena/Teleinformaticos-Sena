@@ -4268,6 +4268,7 @@
       <td>${escapeHtml(workshop.fechaLimite || "—")}</td>
       <td><span class="taller-estado taller-estado--${escapeHtml(status)}">${escapeHtml(label)}</span></td>
       <td>
+        <button type="button" class="btn small" data-workshop-action="respuestas">Ver respuestas</button>
         <button type="button" class="btn small" data-workshop-action="entregada">Entregada</button>
         <button type="button" class="btn small" data-workshop-action="superado">&#10003; Superado</button>
         <button type="button" class="btn small" data-workshop-action="nosuperado">&#10007; No superado</button>
@@ -4275,6 +4276,45 @@
         <button type="button" class="btn small danger" data-workshop-action="eliminar">Eliminar</button>
       </td>
     </tr>`;
+  }
+
+  // El aprendiz llena el taller EN LINEA (ver reinforcement_workshops_student.js):
+  // sus respuestas viven en sena_portal_reinforcement_answers (coleccion
+  // separada de la asignacion), con llaves saneadas (guiones -> guion_bajo,
+  // ver safeId en reinforcement_workshops_student.js -- se replica aqui la
+  // misma sanitizacion, pura y determinista, para poder leerlas).
+  function tallerSafeId(value) {
+    return String(value).replace(/[^a-zA-Z0-9_]/g, "_");
+  }
+
+  async function showWorkshopAnswers(usernameKey, user, workshop) {
+    const mgr = window.reinforcementWorkshops;
+    const catalog = window.reinforcementWorkshopsCatalog || {};
+    const catalogEntry = catalog[workshop.workshopKey];
+    if (!mgr || !catalogEntry) return;
+
+    openModal(`Respuestas — ${workshop.title || workshop.workshopKey}`, user.fullName, '<p class="admin-muted">Cargando respuestas desde la nube...</p>');
+
+    let respuestas = {};
+    try {
+      const all = await mgr.syncStudentAnswersFromCloud(usernameKey);
+      respuestas = (all && all[workshop.id]) || {};
+    } catch (_) { respuestas = {}; }
+
+    const prefix = tallerSafeId(workshop.id) + "__";
+    const rows = [];
+    (catalogEntry.docFields || []).forEach((f) => {
+      const v = respuestas[prefix + f.key];
+      rows.push(`<p><strong>${escapeHtml(f.label)}:</strong> ${v ? escapeHtml(v) : "<em>(sin respuesta)</em>"}</p>`);
+    });
+    (catalogEntry.activities || []).forEach((act) => {
+      rows.push(`<h4>Actividad ${escapeHtml(act.number)} — ${escapeHtml(act.label)}</h4>`);
+      (act.fields || []).forEach((f) => {
+        const v = respuestas[prefix + f.key];
+        rows.push(`<p><strong>${escapeHtml(f.label)}:</strong> ${v ? escapeHtml(v) : "<em>(sin respuesta)</em>"}</p>`);
+      });
+    });
+    openModal(`Respuestas — ${workshop.title || workshop.workshopKey}`, user.fullName, rows.join("") || '<p class="admin-muted">El aprendiz aun no ha guardado ninguna respuesta.</p>');
   }
 
   function handleWorkshopGridClick(event) {
@@ -4289,7 +4329,9 @@
     const entry = _workshopsByUser[usernameKey];
     const workshop = entry && entry.workshops.find((w) => w.id === workshopId);
     if (!mgr || !workshop) return;
-    if (action === "fecha") {
+    if (action === "respuestas") {
+      showWorkshopAnswers(usernameKey, entry.user, workshop);
+    } else if (action === "fecha") {
       const nueva = window.prompt("Nueva fecha limite (AAAA-MM-DD):", workshop.fechaLimite || "");
       if (nueva == null) return;
       mgr.updateWorkshopDeadline(usernameKey, workshopId, String(nueva).trim());

@@ -55,6 +55,17 @@ test("cambiar fecha, marcar entregada, calificar y eliminar usan el módulo rein
   assert.match(fn[0], /mgr\.deleteWorkshop\(usernameKey, workshopId\)/);
 });
 
+test("el admin puede ver las respuestas que el aprendiz guardó en línea (el taller ya no es un archivo único a revisar por Drive)", () => {
+  assert.match(admin, /data-workshop-action="respuestas"/);
+  assert.match(admin, /function showWorkshopAnswers\(usernameKey, user, workshop\)/);
+  const fn = admin.match(/async function showWorkshopAnswers\([\s\S]*?\n  \}/);
+  assert.ok(fn, "showWorkshopAnswers debe existir");
+  assert.match(fn[0], /mgr\.syncStudentAnswersFromCloud\(usernameKey\)/);
+  assert.match(fn[0], /openModal\(/);
+  const click = admin.match(/function handleWorkshopGridClick\(event\) \{[\s\S]*?\n  \}/);
+  assert.match(click[0], /showWorkshopAnswers\(usernameKey, entry\.user, workshop\)/);
+});
+
 test("sin botón de exportar a Word (decisión deliberada: el PDF del taller ya es el artefacto formal)", () => {
   assert.ok(!admin.includes('data-workshop-action="word"'), "no debe existir un botón de exportar a Word para el taller");
   assert.ok(!admin.includes("function exportWorkshopWord"), "no debe existir una función de exportar a Word para el taller");

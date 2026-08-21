@@ -171,6 +171,72 @@
     return getStudentWorkshops(usernameKey);
   }
 
+  // ── Respuestas (coleccion separada, el aprendiz SI escribe la suya) ──────────
+  // sena_portal_reinforcement_answers/{usernameKey}: { answers: { [workshopId]:
+  // {...respuestas} } }. Separado de sena_portal_reinforcement_workshops a
+  // proposito -- ese doc guarda datos autoritativos (fechaLimite, estado,
+  // resultado) que solo el admin puede escribir; aqui solo texto del aprendiz.
+  var ANSWERS_STORAGE_KEY = "reinforcement_answers";
+
+  function getAnswersKey(usernameKey) {
+    var auth = window.portalAuth;
+    if (!auth || !auth.getStudentStorageKey) return null;
+    return auth.getStudentStorageKey(usernameKey, ANSWERS_STORAGE_KEY, { area: "guide-data" });
+  }
+
+  function answersCloudDb() {
+    var db = window._firebaseDb;
+    return db && typeof db.cloudGetReinforcementAnswers === "function" ? db : null;
+  }
+
+  function getStudentAnswers(usernameKey) {
+    var key = getAnswersKey(usernameKey);
+    if (!key) return {};
+    var obj = readJson(localStorage.getItem(key), {});
+    return obj && typeof obj === "object" ? obj : {};
+  }
+
+  function setStudentAnswers(usernameKey, answers) {
+    var key = getAnswersKey(usernameKey);
+    if (!key) return;
+    var obj = answers && typeof answers === "object" ? answers : {};
+    localStorage.setItem(key, JSON.stringify(obj));
+    var db = answersCloudDb();
+    if (db && typeof db.cloudSaveReinforcementAnswers === "function") {
+      Promise.resolve(db.cloudSaveReinforcementAnswers(usernameKey, obj)).catch(function () {});
+    }
+  }
+
+  // Respuestas de UN taller (por su id de asignacion).
+  function getWorkshopAnswers(usernameKey, workshopId) {
+    var all = getStudentAnswers(usernameKey);
+    return (all[workshopId] && typeof all[workshopId] === "object") ? all[workshopId] : {};
+  }
+
+  // Lo invoca el ESTUDIANTE al guardar/tipear (rule isOwnerByUsernameKey lo
+  // autoriza en sena_portal_reinforcement_answers).
+  function saveWorkshopAnswers(usernameKey, workshopId, respuestas) {
+    var all = getStudentAnswers(usernameKey);
+    all[workshopId] = respuestas && typeof respuestas === "object" ? respuestas : {};
+    setStudentAnswers(usernameKey, all);
+    return all[workshopId];
+  }
+
+  // Trae del cloud y cachea local (lo usa el aprendiz al abrir su pagina, y el
+  // admin al revisar respuestas).
+  async function syncStudentAnswersFromCloud(usernameKey) {
+    var db = answersCloudDb();
+    if (!db) return getStudentAnswers(usernameKey);
+    var cloud = null;
+    try { cloud = await db.cloudGetReinforcementAnswers(usernameKey); } catch (e) { cloud = null; }
+    if (cloud && typeof cloud === "object") {
+      var key = getAnswersKey(usernameKey);
+      if (key) localStorage.setItem(key, JSON.stringify(cloud));
+      return cloud;
+    }
+    return getStudentAnswers(usernameKey);
+  }
+
   // ── Lectura para el aprendiz activo ──────────────────────────────────────────
   function getMyWorkshops() {
     var auth = window.portalAuth;
@@ -218,6 +284,11 @@
       syncStudentWorkshopsFromCloud: syncStudentWorkshopsFromCloud,
       getMyWorkshops: getMyWorkshops,
       deliverWorkshopToDrive: deliverWorkshopToDrive,
+      getStudentAnswers: getStudentAnswers,
+      setStudentAnswers: setStudentAnswers,
+      getWorkshopAnswers: getWorkshopAnswers,
+      saveWorkshopAnswers: saveWorkshopAnswers,
+      syncStudentAnswersFromCloud: syncStudentAnswersFromCloud,
     };
   }
 
