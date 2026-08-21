@@ -23,8 +23,8 @@ const ICONS = {
 };
 
 const EQUIPMENT_OPTIONS = [
-  { id: "desktop", icon: ICONS.desktop, title: "PC de escritorio", desc: "Gabinete, fuente, tarjeta madre, procesador, RAM, SSD, GPU y cableado principal." },
-  { id: "laptop", icon: ICONS.laptop, title: "Computador portatil", desc: "Bateria, refrigeracion, teclado, touchpad, pantalla y componentes propios del portatil." },
+  { id: "desktop", icon: ICONS.desktop, title: "PC de escritorio", desc: "Gabinete, fuente, tarjeta madre, procesador, RAM, SSD, GPU y cableado principal.", available: true },
+  { id: "laptop", icon: ICONS.laptop, title: "Computador portatil", desc: "Bateria, refrigeracion, teclado, touchpad, pantalla y componentes propios del portatil.", available: true },
 ];
 
 function practiceOptionsFor(equipmentId) {

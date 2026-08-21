@@ -113,7 +113,7 @@ export function buildDesktopSidePanel(dims) {
   window_.position.set(wall * 0.3, dims.height * 0.05, 0);
   panel.add(window_);
   setShadow(panel);
-  return panel;
+  return { group: panel };
 }
 
 /**
@@ -263,7 +263,7 @@ export function buildLaptopBottomCover(dims) {
   const panel = box(dims.width * 0.97, 0.0025, dims.depth * 0.97, "aluminum");
   panel.name = "laptop-bottom-cover";
   setShadow(panel);
-  return panel;
+  return { group: panel };
 }
 
 /** Pantalla/tapa del portatil, articulada en el eje de la bisagra. */
@@ -292,7 +292,7 @@ export function buildLaptopLid(opts = {}) {
   group.add(bezelGlow);
 
   setShadow(group);
-  return group;
+  return { group };
 }
 
 /** Bateria interna del portatil. */
