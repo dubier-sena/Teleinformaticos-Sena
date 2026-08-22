@@ -166,7 +166,7 @@ function createHarness({
     runtimeWindow.__GUIDE_RUNTIME_CONTEXTS__ = bundledContexts;
   }
   if (bundledPartials) {
-    runtimeWindow.__GUIDE_RUNTIME_PARTIALS__ = bundledPartials;
+    runtimeWindow.__PAGE_RUNTIME_PARTIALS__ = bundledPartials;
   }
 
   async function fetchStub(url) {

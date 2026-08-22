@@ -23,7 +23,7 @@
   }
 
   async function fetchText(url) {
-    const bundledPartials = window.__GUIDE_RUNTIME_PARTIALS__ || {};
+    const bundledPartials = window.__PAGE_RUNTIME_PARTIALS__ || {};
     if (Object.prototype.hasOwnProperty.call(bundledPartials, url)) {
       return bundledPartials[url];
     }

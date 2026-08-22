@@ -581,7 +581,7 @@
         "js/script_guia_redes.js?v=20260726_2",
         "data/guide_contexts_bundle.js?v=20260815_1",
         "partials/guia-redes-rap01-bundle.js?v=20260611_19",
-        "js/guide_runtime_loader.js?v=20260605_1",
+        "js/guide_runtime_loader.js?v=20260821_1",
       ],
     },
     "10b-guia-2-redes": {
@@ -606,7 +606,7 @@
         "js/script_guia_redes.js?v=20260726_2",
         "data/guide_contexts_bundle.js?v=20260815_1",
         "partials/guia-redes-rap01-bundle.js?v=20260611_19",
-        "js/guide_runtime_loader.js?v=20260605_1",
+        "js/guide_runtime_loader.js?v=20260821_1",
       ],
     },
     "10a-guia-3-redes": {
@@ -631,7 +631,7 @@
         "js/script_guia_redes_rap02.js?v=20260726_1",
         "data/guide_contexts_bundle.js?v=20260815_1",
         "partials/guia-redes-rap02-bundle.js?v=20260710_1",
-        "js/guide_runtime_loader.js?v=20260605_1",
+        "js/guide_runtime_loader.js?v=20260821_1",
       ],
     },
     "10a-guia-4-redes-rap03": {
@@ -656,7 +656,7 @@
         "js/script_guia_redes_rap03.js?v=20260815_1",
         "data/guide_contexts_bundle.js?v=20260815_1",
         "partials/guia-redes-rap03-bundle.js?v=20260815_1",
-        "js/guide_runtime_loader.js?v=20260605_1",
+        "js/guide_runtime_loader.js?v=20260821_1",
       ],
     },
     "10b-guia-4-redes-rap03": {
@@ -681,7 +681,7 @@
         "js/script_guia_redes_rap03.js?v=20260815_1",
         "data/guide_contexts_bundle.js?v=20260815_1",
         "partials/guia-redes-rap03-bundle.js?v=20260815_1",
-        "js/guide_runtime_loader.js?v=20260605_1",
+        "js/guide_runtime_loader.js?v=20260821_1",
       ],
     },
     "10b-guia-3-redes": {
@@ -706,7 +706,7 @@
         "js/script_guia_redes_rap02.js?v=20260726_1",
         "data/guide_contexts_bundle.js?v=20260815_1",
         "partials/guia-redes-rap02-bundle.js?v=20260710_1",
-        "js/guide_runtime_loader.js?v=20260605_1",
+        "js/guide_runtime_loader.js?v=20260821_1",
       ],
     },
     "sb-python": {
@@ -730,7 +730,7 @@
         "js/script_guia_python.js?v=20260619_1",
         "data/guide_contexts_bundle.js?v=20260815_1",
         "partials/guia-python-bundle.js?v=20260710_1",
-        "js/guide_runtime_loader.js?v=20260605_1",
+        "js/guide_runtime_loader.js?v=20260821_1",
       ],
     },
   };
