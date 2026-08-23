@@ -341,13 +341,17 @@
         '    <li><strong>Enlace del archivo:</strong> ' + linkHtml + '</li>\n'
       : "";
 
+    var manualVerifiedNote = record.method === "manual-verified"
+      ? " (verificada tras subirla manualmente a Drive)"
+      : "";
+
     var noticeHtml = reopened
       ? '<p class="act-std-delivery-notice">' +
         'La entrega anterior se conserva. Puedes continuar editando y realizar una nueva entrega si corresponde.' +
         '</p>'
       : hasFile
         ? '<p class="act-std-delivery-notice">' +
-          'Esta actividad ya fue entregada el ' + escHtml(fecha) + ' a las ' + escHtml(hora) + '. ' +
+          'Esta actividad ya fue entregada el ' + escHtml(fecha) + ' a las ' + escHtml(hora) + escHtml(manualVerifiedNote) + '. ' +
           'Puede consultar el archivo entregado en el enlace de arriba. ' +
           'Para modificar o reemplazar la entrega, debe solicitar al instructor o administrador ' +
           'que habilite nuevamente la actividad.' +
@@ -456,6 +460,17 @@
       backupError:    record.backupError || "",
       status:         "delivered",
       estado:         "entregada",
+      // Auditoria 2026-08-22, Fase 9/10: momento del intento (clic del
+      // aprendiz), de la subida (respuesta del cliente) y confirmado por el
+      // servidor/Drive (mas confiable). "method" distingue una entrega
+      // automatica de una manual verificada con el boton "Ya subi el
+      // archivo" (Fase 10). Todos opcionales: registros viejos simplemente no
+      // los traen, sin romper nada (Fase 12).
+      attemptedAt:    record.attemptedAt || record.submittedAt || "",
+      uploadedAt:     record.uploadedAt || record.submittedAt || "",
+      confirmedAt:    record.confirmedAt || record.submittedAt || "",
+      method:         record.method || "automatic",
+      fileId:         record.fileId || "",
       fechaEntregaOriginal: previousRecord.fechaEntregaOriginal || previousRecord.submittedAt || record.submittedAt || "",
       historialEntregas: history,
       historialReaperturas: Array.isArray(previousRecord.historialReaperturas)
@@ -1472,5 +1487,8 @@
     // Helpers HTML
     renderFormButtons: renderFormButtons,
     renderFileButton: renderFileButton,
+
+    // Expuesto solo para pruebas unitarias (logica pura del historial de entregas).
+    _persistDeliveryToState: _persistDeliveryToState,
   });
 })();

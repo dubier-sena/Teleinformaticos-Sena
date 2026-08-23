@@ -41,6 +41,24 @@
     document.body.dataset.defaultFicha = context.ficha || "";
   }
 
+  // Auditoria/cierre de riesgos 2026-08-22 (Riesgo 3): mismo fix que
+  // js/page_runtime_loader.js -- ver su comentario. Los partials fuente
+  // traen enlaces internos entre guias como archivo crudo, que no existe
+  // servido asi en produccion (guia.html?g=... es el unico punto de entrada
+  // real). Se reescribe aqui, una sola vez tras inyectar el HTML.
+  function rewireGuideLinks(container) {
+    if (!container || typeof container.querySelectorAll !== "function") return;
+    var auth = window.portalAuth;
+    if (!auth || typeof auth.getGuideHref !== "function") return;
+    var links = container.querySelectorAll("a[href]");
+    Array.prototype.forEach.call(links, function (link) {
+      var href = link.getAttribute("href") || "";
+      var match = href.match(/^((?:grupo|santa-barbara)-[a-z0-9._-]+\.html)(#.*)?$/i);
+      if (!match) return;
+      link.setAttribute("href", auth.getGuideHref(match[1]) + (match[2] || ""));
+    });
+  }
+
   function setContextLinks(context) {
     const quizRedesLink = document.getElementById("quizRedesActionLink");
     const quizIpLink = document.getElementById("quizIPActionLink");
@@ -87,6 +105,7 @@
     window.__GUIDE_RUNTIME_CONTEXT__ = context;
     setContextDatasets(context);
     setContextLinks(context);
+    rewireGuideLinks(root);
 
     if (typeof window.initGuiaTemplateShell === "function") {
       window.initGuiaTemplateShell();

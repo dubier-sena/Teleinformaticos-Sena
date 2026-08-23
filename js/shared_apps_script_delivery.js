@@ -633,10 +633,19 @@
 
   async function enqueueDelivery(payload, deliveryCtx) {
     if (!deliveryIdbAvailable()) return false;
+    var identity = getCurrentIdentity();
     var entry = {
       key: deliveryQueueKey(deliveryCtx),
       payload: payload,
       deliveryCtx: deliveryCtx,
+      // Seguridad (cierre de riesgos 2026-08-22, "computador compartido"):
+      // runDeliveryQueue corre en CADA carga de pagina sin distinguir de
+      // quien es la cola. Sin este campo, si esta entrega quedara pendiente
+      // y despues OTRO aprendiz iniciara sesion en el MISMO equipo, se
+      // reintentaria la subida con la sesion nueva -- el archivo de uno
+      // terminaria registrado como entrega de otro. Ver el chequeo en
+      // processDeliveryQueue.
+      ownerUsernameKey: (identity.session && identity.session.user && identity.session.user.usernameKey) || "",
       createdAt: Date.now(),
       attempts: 0,
       status: "pending",
@@ -649,8 +658,19 @@
     }
   }
 
+  // Auditoria 2026-08-22, Fase 9: separa el momento del INTENTO (clic del
+  // aprendiz, dctx.submittedAt -- se fija una sola vez y viaja intacto a
+  // traves de reintentos/cola durable) del momento en que Drive CONFIRMO la
+  // creacion del archivo (response.confirmedAt, viene del Apps Script;
+  // getDateCreated() del archivo real). Si el Apps Script desplegado todavia
+  // no manda confirmedAt (version vieja, pendiente de redeploy), se usa
+  // uploadedAt (cuando ESTE cliente recibio la respuesta exitosa) como mejor
+  // alternativa disponible -- nunca se deja de tener una fecha.
   function buildDeliveryRecord(dctx, response) {
     response = response || {};
+    var attemptedAt = dctx.submittedAt || new Date().toISOString();
+    var uploadedAt = dctx.uploadedAt || new Date().toISOString();
+    var confirmedAt = response.confirmedAt || uploadedAt;
     return {
       guideLabel: dctx.guideLabel,
       activityNumber: dctx.activityNumber || "",
@@ -670,8 +690,17 @@
       ficha: dctx.ficha,
       grupo: dctx.grupo,
       institucion: dctx.institucion,
-      submittedAt: dctx.submittedAt,
-      fechaEntrega: dctx.submittedAt,
+      // Compat (Fase 12): submittedAt/fechaEntrega son los campos que ya leen
+      // paneles/exportaciones existentes como "la" fecha de entrega -- ahora
+      // apuntan a la mejor fecha disponible (confirmada > subida > intento)
+      // en vez de solo el reloj del navegador al momento del clic.
+      submittedAt: confirmedAt,
+      fechaEntrega: confirmedAt,
+      attemptedAt: attemptedAt,
+      uploadedAt: uploadedAt,
+      confirmedAt: confirmedAt,
+      method: dctx.method || "automatic",
+      fileId: response.fileId || "",
       folderPath: response.folderPath || "",
       savedFileName: response.savedFileName || dctx.standardName || dctx.fileName || "",
       driveUrl: response.driveUrl || "",
@@ -690,6 +719,7 @@
   // (reintento de la cola) finaliza headless. Reutilizado por ambos caminos.
   function finalizeDelivery(dctx, response, nodes) {
     response = response || {};
+    dctx = Object.assign({}, dctx, { uploadedAt: dctx.uploadedAt || new Date().toISOString() });
     var record = buildDeliveryRecord(dctx, response);
     if (nodes) {
       if (response.folderPath && nodes.path) {
@@ -725,9 +755,17 @@
     var maxAttempts = deps.maxAttempts || 25;
     var maxAgeMs = deps.maxAgeMs || 7 * 24 * 60 * 60 * 1000;
     var now = deps.now || Date.now;
+    // Seguridad (computador compartido): identidad de la sesion ACTUAL. Si
+    // una entrada tiene un dueno registrado (ownerUsernameKey) que no
+    // coincide, se deja pendiente SIN intentar -- nunca se sube con la
+    // identidad de otro aprendiz. Entradas viejas sin ownerUsernameKey
+    // (guardadas antes de este cambio) no tienen esa info: se reintentan
+    // igual que siempre (compatibilidad; el riesgo ya existia antes de este
+    // fix y desaparece solo cuando esas entradas se agoten/entreguen).
+    var currentUsernameKey = deps.currentUsernameKey || function () { return ""; };
 
     var entries = await storage.getAll();
-    var result = { delivered: 0, kept: 0, dropped: 0 };
+    var result = { delivered: 0, kept: 0, dropped: 0, skippedOtherSession: 0 };
     for (var i = 0; i < entries.length; i++) {
       var entry = entries[i];
       if (!entry || entry.status === "delivered") continue;
@@ -737,6 +775,10 @@
       ) {
         await storage.remove(entry.key);
         result.dropped += 1;
+        continue;
+      }
+      if (entry.ownerUsernameKey && entry.ownerUsernameKey !== currentUsernameKey()) {
+        result.skippedOtherSession += 1;
         continue;
       }
       try {
@@ -770,6 +812,10 @@
           return finalizeDelivery(entry.deliveryCtx, response, null);
         },
         isPermanent: isPermanentDeliveryError,
+        currentUsernameKey: function () {
+          var identity = getCurrentIdentity();
+          return (identity.session && identity.session.user && identity.session.user.usernameKey) || "";
+        },
       });
     } catch (error) {
       /* best-effort: se reintenta en la proxima pasada */
@@ -795,6 +841,19 @@
   }
 
   // Respaldo inline (para el modal, que ya esta abierto). Rellena `container`.
+  //
+  // Fase 8 (auditoria 2026-08-22): antes este bloque aparecia SIEMPRE junto al
+  // mensaje de "quedo en cola" dando la impresion de que dos cosas ya habian
+  // pasado a la vez. Ahora el titulo distingue explicitamente: la entrega
+  // AUTOMATICA no se completo (punto), y presenta las dos opciones que
+  // siguen como alternativas separadas, nunca como hechos consumados.
+  //
+  // Fase 10: si se pasa `verifyPayload`, se ofrece el boton "Ya subi el
+  // archivo -- verificar entrega", que consulta al Apps Script (accion
+  // "verify") si el archivo ya aparece en la carpeta correcta. Solo si lo
+  // encuentra se llama a `opts.onVerified(response)`; si no, se avisa
+  // claramente que todavia no se pudo confirmar -- nunca se marca como
+  // entregada sin que el servidor lo confirme.
   function renderManualDriveFallback(container, opts) {
     if (!container) return false;
     opts = opts || {};
@@ -802,7 +861,18 @@
     var name = opts.suggestedName || "";
     var parts = [];
     parts.push(
-      '<div class="saf-title">&#9888;&#65039; No se pudo entregar automaticamente. Sube tu archivo a mano como respaldo:</div>'
+      '<div class="saf-title">&#9888;&#65039; La entrega automatica no pudo completarse.</div>'
+    );
+    if (opts.queued) {
+      parts.push(
+        '<p class="saf-option-label"><strong>Opcion 1 -- Reintentar automaticamente:</strong> ' +
+          'ya quedo guardada en tu equipo y el portal seguira intentando enviarla solo, incluso si cierras esta ventana. ' +
+          'No tienes que hacer nada para esto.</p>'
+      );
+    }
+    parts.push(
+      '<p class="saf-option-label"><strong>Opcion ' + (opts.queued ? "2" : "1") +
+        ' -- Subir tu mismo ahora, sin esperar:</strong></p>'
     );
     if (folderUrl) {
       parts.push(
@@ -822,9 +892,21 @@
           '<button type="button" class="saf-copy" data-saf-copy>Copiar nombre</button></div>'
       );
     }
+    if (opts.verifyPayload) {
+      parts.push(
+        '<div class="saf-verify">' +
+          '<button type="button" class="btn secondary saf-verify-btn" data-saf-verify>' +
+          '&#128269; Ya subi el archivo -- verificar entrega</button>' +
+          '<span class="saf-verify-status" data-saf-verify-status></span>' +
+          '</div>'
+      );
+    }
     parts.push(
-      '<div class="saf-hint">Tu instructor vera el archivo por la fecha en Drive. ' +
-        "(La entrega manual no marca la actividad como entregada en el portal.)</div>"
+      '<div class="saf-hint">Si usas la opcion manual, tu instructor vera el archivo por la fecha en Drive ' +
+        (opts.verifyPayload
+          ? "hasta que uses el boton de verificar (arriba) para que el portal registre la entrega."
+          : "; la entrega manual no queda registrada como entregada en el portal.") +
+        '</div>'
     );
     container.innerHTML = parts.join("");
     container.hidden = false;
@@ -838,6 +920,33 @@
           }
         } catch (clipError) {
           /* sin portapapeles: el aprendiz copia a mano */
+        }
+      });
+    }
+    var verifyBtn = container.querySelector("[data-saf-verify]");
+    var verifyStatus = container.querySelector("[data-saf-verify-status]");
+    if (verifyBtn && opts.verifyPayload) {
+      verifyBtn.addEventListener("click", async function () {
+        verifyBtn.setAttribute("disabled", "disabled");
+        if (verifyStatus) verifyStatus.textContent = " Verificando en Drive...";
+        try {
+          var result = await verifyManualDelivery(opts.verifyPayload);
+          if (result && result.found) {
+            if (verifyStatus) verifyStatus.textContent = " ✅ Encontrada y registrada.";
+            if (typeof opts.onVerified === "function") opts.onVerified(result);
+          } else {
+            if (verifyStatus) {
+              verifyStatus.textContent =
+                " Todavia no la encontramos. Confirma que ya terminaste de subirla con el nombre sugerido, " +
+                "espera unos segundos y vuelve a intentar.";
+            }
+          }
+        } catch (verifyError) {
+          if (verifyStatus) {
+            verifyStatus.textContent = " " + (verifyError && verifyError.message ? verifyError.message : "No se pudo verificar.");
+          }
+        } finally {
+          verifyBtn.removeAttribute("disabled");
         }
       });
     }
@@ -878,19 +987,10 @@
     return ok;
   }
 
-  async function uploadToAppsScript(payload) {
-    var integrations = getIntegrations();
-    var endpoint = normalizeText(integrations.googleAppsScriptUrl);
-
-    if (!isValidAppsScriptUrl(endpoint)) {
-      throw new Error(
-        "La URL del Google Apps Script aun no esta configurada o no cumple la politica segura del proyecto."
-      );
-    }
-
-    // Seguridad: el Apps Script exige un idToken de Firebase Auth para verificar
-    // que quien entrega es un usuario autenticado del portal. Aqui obtenemos el
-    // token (#2) y hacemos un pre-chequeo (#3) antes de enviar nada.
+  // Extraido de uploadToAppsScript (antes duplicado) para que
+  // verifyManualDelivery use exactamente la misma obtencion de token con
+  // pre-chequeo (Fase 10, auditoria 2026-08-22).
+  async function getDeliveryIdToken() {
     var idToken = null;
     try {
       var bridge = window.portalFirebaseAuth;
@@ -902,7 +1002,7 @@
         if (typeof bridge.waitForAuthHydration === "function") {
           try { await bridge.waitForAuthHydration(4000); } catch (hydrationError) {}
         }
-        // #2 — Usar el token en cache (getIdToken(false)): el SDK de Firebase lo
+        // Usar el token en cache (getIdToken(false)): el SDK de Firebase lo
         // refresca automaticamente SOLO si esta vencido o por vencer (~5 min).
         // Antes se forzaba un refresco en CADA entrega (getIdToken(true)), lo que
         // multiplicaba las llamadas a Firebase Auth y agravaba el limite
@@ -914,11 +1014,26 @@
     } catch (tokenError) {
       idToken = null;
     }
+    return idToken;
+  }
 
-    // #3 — Pre-chequeo: sin token el servidor rechazaria con "falta token de
-    // seguridad". Mejor no gastar el intento: avisamos claro y accionable. El
-    // boton de entrega se reactiva (finally del llamador), asi que el aprendiz
-    // puede reintentar tras esperar o volver a iniciar sesion.
+  async function uploadToAppsScript(payload) {
+    var integrations = getIntegrations();
+    var endpoint = normalizeText(integrations.googleAppsScriptUrl);
+
+    if (!isValidAppsScriptUrl(endpoint)) {
+      throw new Error(
+        "La URL del Google Apps Script aun no esta configurada o no cumple la politica segura del proyecto."
+      );
+    }
+
+    // Seguridad: el Apps Script exige un idToken de Firebase Auth para verificar
+    // que quien entrega es un usuario autenticado del portal. Pre-chequeo: sin
+    // token el servidor rechazaria con "falta token de seguridad". Mejor no
+    // gastar el intento: avisamos claro y accionable. El boton de entrega se
+    // reactiva (finally del llamador), asi que el aprendiz puede reintentar
+    // tras esperar o volver a iniciar sesion.
+    var idToken = await getDeliveryIdToken();
     if (!idToken) {
       throw new Error(
         "No se pudo verificar tu sesion de seguridad para la entrega. Suele pasar " +
@@ -951,6 +1066,33 @@
     }
 
     return data;
+  }
+
+  // Fase 10 (auditoria 2026-08-22): consulta al Apps Script si YA existe en
+  // Drive un archivo que coincida con esta ficha+aprendiz+guia+actividad, sin
+  // subir nada. Usada por el boton "Ya subi el archivo -- verificar entrega"
+  // que se ofrece junto al respaldo manual. Nunca marca una entrega como
+  // registrada sin que el servidor confirme el archivo real.
+  async function verifyManualDelivery(payload) {
+    var integrations = getIntegrations();
+    var endpoint = normalizeText(integrations.googleAppsScriptUrl);
+    if (!isValidAppsScriptUrl(endpoint)) {
+      throw new Error("La URL del Google Apps Script aun no esta configurada.");
+    }
+    var idToken = await getDeliveryIdToken();
+    if (!idToken) {
+      throw new Error("No se pudo verificar tu sesion. Cierra sesion y vuelve a entrar, luego intenta de nuevo.");
+    }
+    var response = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify(Object.assign({}, payload, { action: "verify", idToken: idToken })),
+    });
+    var data = await response.json().catch(function () { return {}; });
+    if (!response.ok || data.ok === false) {
+      throw new Error(data && data.message ? data.message : "No fue posible verificar la entrega en este momento.");
+    }
+    return data; // { ok:true, found:true|false, ... }
   }
 
   function buildDestinationPreview(identity, context, fileName) {
@@ -1466,11 +1608,26 @@
           "error"
         );
       }
-      // Respaldo manual (cualquier fallo): abrir carpeta de Drive + nombre exacto.
+      // Respaldo manual (cualquier fallo): abrir carpeta de Drive + nombre exacto,
+      // y ofrecer verificar la entrega manual sin volver a subir nada (Fase 10).
       if (typeof deliveryCtx !== "undefined" && deliveryCtx) {
         renderManualDriveFallback(nodes.fallback, {
           ficha: ficha,
           suggestedName: deliveryCtx.standardName,
+          queued: canQueue,
+          verifyPayload: {
+            ficha: deliveryCtx.ficha,
+            fullName: deliveryCtx.fullName,
+            guideLabel: deliveryCtx.guideLabel,
+            activityLabel: deliveryCtx.activityLabel,
+            activityNumber: deliveryCtx.activityNumber,
+            guideNumber: deliveryCtx.guideNumber,
+            shortName: deliveryCtx.shortName,
+          },
+          onVerified: function (result) {
+            var verifiedCtx = Object.assign({}, deliveryCtx, { method: "manual-verified" });
+            finalizeDelivery(verifiedCtx, result, nodes);
+          },
         });
       }
     } finally {
@@ -1532,9 +1689,14 @@
     getDriveFolderUrlForFicha: getDriveFolderUrlForFicha,
     renderManualDriveFallback: renderManualDriveFallback,
     offerManualDriveFallback: offerManualDriveFallback,
+    verifyManualDelivery: verifyManualDelivery,
     // Expuestos solo para pruebas unitarias (logica pura).
     _retryWithBackoff: retryWithBackoff,
     _isPermanentDeliveryError: isPermanentDeliveryError,
     _processDeliveryQueue: processDeliveryQueue,
+    _buildDeliveryRecord: buildDeliveryRecord,
+    _finalizeDelivery: finalizeDelivery,
+    _getCurrentIdentity: getCurrentIdentity,
+    _enqueueDelivery: enqueueDelivery,
   };
 })();

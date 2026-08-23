@@ -18,79 +18,40 @@
   const STORAGE_KEY = portalAuth
     ? portalAuth.getScopedStorageKey(LEGACY_STORAGE_KEY, { area: "guide-data" })
     : LEGACY_STORAGE_KEY;
-  const STORAGE_META_KEY = `${STORAGE_KEY}__meta`;
-  const SCOPED_STORAGE_ENABLED = STORAGE_KEY !== LEGACY_STORAGE_KEY;
-  const CLOUD_SYNC_DELAY_MS = 1200;
 
   // ── Estado ────────────────────────────────────────────────────────────────
+  // Carga/guardado/hidratacion desde la nube/reintento centralizados en
+  // js/guide_cloud_sync.js (antes cada guion los reimplementaba por su cuenta;
+  // 8 de ellas, incluida esta, nunca leian de la nube al cargar -- auditoria
+  // 2026-08-22).
 
-  let state = loadState();
-  let cloudStateSyncTimer = null;
+  let state = window.GuideCloudSync
+    ? window.GuideCloudSync.loadLocal(STORAGE_KEY, LEGACY_STORAGE_KEY)
+    : {};
   let guia8Booted = false;
-
-  function loadState() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) return JSON.parse(raw) || {};
-      if (SCOPED_STORAGE_ENABLED) {
-        const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
-        if (legacy) {
-          const parsed = JSON.parse(legacy) || {};
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
-          return parsed;
-        }
-      }
-      return {};
-    } catch {
-      return {};
-    }
-  }
-
-  function saveState() {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      localStorage.setItem(STORAGE_META_KEY, JSON.stringify({
-        updatedAt: new Date().toISOString(),
-        updatedBy: getActor(),
-      }));
-    } catch {}
-    scheduleCloudSync();
-    updateProgress();
-  }
 
   function getActor() {
     const session = portalAuth?.getCurrentSession?.();
     return session?.user?.fullName || session?.user?.username || "Aprendiz";
   }
 
-  function getCloudScopeKey() {
-    const session = portalAuth?.getCurrentSession?.();
-    if (!session) return "";
-    if (session.role === "admin") return `admin:${session.usernameKey || "admin"}`;
-    if (session.role === "student") return `student:${session.user?.usernameKey || ""}`;
-    return "";
-  }
+  const cloudStore = window.GuideCloudSync?.createStore({
+    storageKey: STORAGE_KEY,
+    legacyStorageKey: LEGACY_STORAGE_KEY,
+    guideDataFile: GUIDE_DATA_FILE,
+    getState: () => state,
+    setState: (next) => { state = next; },
+    getActor: getActor,
+    periodicRefreshMs: 300000,
+    onHydrated: () => { hydrateFields(); updateProgress(); },
+  });
 
-  function scheduleCloudSync() {
-    if (cloudStateSyncTimer) clearTimeout(cloudStateSyncTimer);
-    cloudStateSyncTimer = setTimeout(flushCloudSync, CLOUD_SYNC_DELAY_MS);
-  }
-
-  async function flushCloudSync() {
-    cloudStateSyncTimer = null;
-    const scopeKey = getCloudScopeKey();
-    if (!scopeKey || !window._firebaseDb?.cloudSaveGuideData) return;
+  function saveState() {
     try {
-      await window._firebaseDb.cloudSaveGuideData(scopeKey, GUIDE_DATA_FILE, {
-        scopeKey,
-        fileName: GUIDE_DATA_FILE,
-        updatedAt: new Date().toISOString(),
-        updatedBy: getActor(),
-        state: { ...state },
-      });
-    } catch (err) {
-      console.warn("[guia8] cloud sync failed", err);
-    }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch {}
+    cloudStore?.notifyChanged();
+    updateProgress();
   }
 
   // ── Hidratacion y binding de formularios ──────────────────────────────────
@@ -231,11 +192,11 @@
       state = {};
       try {
         localStorage.removeItem(STORAGE_KEY);
-        localStorage.removeItem(STORAGE_META_KEY);
+        localStorage.removeItem(`${STORAGE_KEY}__meta`);
       } catch {}
       hydrateFields();
       updateProgress();
-      scheduleCloudSync();
+      cloudStore?.notifyChanged();
       // Resetear lock visual de los botones
       document.querySelectorAll("[data-store]").forEach((el) => {
         el.disabled = false;
@@ -263,6 +224,7 @@
 
     updateProgress();
     reflectGradesForGuia8();
+    cloudStore?.hydrate();
   }
 
   // Guia 8 nunca llamaba a reflectGradesIntoGuideState (mismo bug que Guia 5 y

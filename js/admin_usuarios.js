@@ -1321,6 +1321,53 @@
     };
   }
 
+  // Auditoria 2026-08-22, Fase 11: una reentrega nunca borra la anterior (el
+  // dato ya se conservaba en delivery.historialEntregas desde antes de esta
+  // sesion, ver activity_standard.js._persistDeliveryToState), pero el panel
+  // admin nunca lo mostraba -- el instructor no tenia forma de consultarlo.
+  function buildDeliveryHistorySection(delivery) {
+    const history = Array.isArray(delivery?.historialEntregas) ? delivery.historialEntregas : [];
+    if (!history.length) return "";
+    // Orden cronologico: la mas vieja primero ("Entrega 1"), terminando justo
+    // antes de la actual (que ya se muestra arriba como "Fecha de entrega").
+    const rows = history.map((item, index) => {
+      const fecha = formatDate(item?.submittedAt || item?.confirmedAt || "");
+      const hora = item?.submittedAt || item?.confirmedAt ? formatTime(item.submittedAt || item.confirmedAt) : "";
+      const archivo = item?.savedFileName || "(sin archivo)";
+      const link = item?.driveUrl
+        ? `<a href="${escapeHtml(item.driveUrl)}" target="_blank" rel="noopener noreferrer">Ver archivo ↗</a>`
+        : "—";
+      const metodo = item?.method === "manual-verified" ? "Manual verificada" : "Automatica";
+      return `
+        <tr>
+          <td>Entrega ${index + 1}</td>
+          <td>${escapeHtml(fecha)}${hora ? " — " + escapeHtml(hora) : ""}</td>
+          <td>${escapeHtml(archivo)}</td>
+          <td>${escapeHtml(metodo)}</td>
+          <td>${link}</td>
+        </tr>
+      `;
+    }).join("");
+    return `
+      <h3>Historial de entregas (${history.length} anterior${history.length === 1 ? "" : "es"})</h3>
+      <p class="admin-muted">La entrega actual se muestra arriba. Estas son las versiones anteriores: ninguna se borro al reemplazarla.</p>
+      <table class="admin-data-table">
+        <thead><tr><th>#</th><th>Fecha</th><th>Archivo</th><th>Metodo</th><th>Enlace</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+  }
+
+  function formatTime(iso) {
+    const d = iso ? new Date(iso) : null;
+    if (!d || Number.isNaN(d.getTime())) return "";
+    try {
+      return d.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit", timeZone: "America/Bogota" });
+    } catch (_) {
+      return d.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" });
+    }
+  }
+
   function buildResponsesView(summary) {
     const rows = summary.questions.map((item) => `
       <tr>
@@ -1344,6 +1391,7 @@
           ${summary.delivery?.note ? `<tr><th>Nota</th><td>${escapeHtml(summary.delivery.note)}</td></tr>` : ""}
         </tbody>
       </table>
+      ${buildDeliveryHistorySection(summary.delivery)}
       <h3>Preguntas y respuestas</h3>
       <table class="admin-data-table">
         <thead><tr><th>Pregunta / campo</th><th>Respuesta</th></tr></thead>

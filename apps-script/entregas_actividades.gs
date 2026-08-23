@@ -77,6 +77,46 @@ function doPost(e) {
       });
     }
 
+    // ───── Seguridad (cierre de auditoria 2026-08-22): ficha/fullName no ────
+    // se toman nunca "de confianza" del payload del cliente. Un idToken valido
+    // solo prueba que quien llama es UN aprendiz autenticado, no que la ficha
+    // o el nombre que puso en el payload sean los suyos: sin este paso, un
+    // aprendiz podia editar esos campos en devtools y usar "verify" (o incluso
+    // "upload") contra la carpeta de OTRO aprendiz. Se resuelve el perfil real
+    // leyendo sena_portal_users/{usernameKey} en Firestore, autenticado con el
+    // MISMO idToken ya verificado arriba (igual que hace el cliente en
+    // firebase_db.js: Authorization Bearer, sin necesidad de tocar
+    // firestore.rules -- esa coleccion ya permite "get" a cualquier sesion
+    // valida, ver comentario en firestore.rules linea ~124). Si el perfil no
+    // se puede leer (Firestore caido, doc inexistente), se usa el valor del
+    // cliente como respaldo, igual que antes de este cambio -- no se bloquea
+    // una entrega real por una falla de infraestructura ajena al aprendiz.
+    const verifiedProfile = fetchVerifiedProfile(idToken, auth.email);
+    if (verifiedProfile && verifiedProfile.ficha) {
+      payload.ficha = verifiedProfile.ficha;
+    }
+    if (verifiedProfile && verifiedProfile.fullName) {
+      payload.fullName = verifiedProfile.fullName;
+    }
+
+    // Dispatch por accion (mismo patron ya usado en respaldo_firestore.gs).
+    // Sin `action` (o accion desconocida) se asume "upload": compatibilidad
+    // con el cliente actualmente desplegado, que todavia no envia `action`.
+    const action = String(payload.action || "upload").toLowerCase();
+    if (action === "verify") {
+      return handleVerifyDelivery(payload);
+    }
+    return handleUploadDelivery(payload);
+  } catch (error) {
+    return jsonResponse({
+      ok: false,
+      message: error && error.message ? error.message : "Error no controlado en el Apps Script.",
+    });
+  }
+}
+
+function handleUploadDelivery(payload) {
+  try {
     const ficha = String(payload.ficha || "").trim();
     const fullName = sanitizeLabel(payload.fullName, "Aprendiz");
     const activityLabel = sanitizeLabel(payload.activityLabel, "Actividad");
@@ -152,6 +192,13 @@ function doPost(e) {
       driveUrl: uploaded.getUrl(),
       folderPath: destination.folderPath,
       savedFileName: finalFileName,
+      // Fecha CONFIRMADA por Drive (creacion real del archivo), no el reloj
+      // del navegador del aprendiz. Auditoria 2026-08-22, Fase 9: separa
+      // "cuando el aprendiz intento entregar" de "cuando Drive confirmo que
+      // el archivo existe" -- si la entrega tardo varios reintentos (cola
+      // durable en segundo plano), estas dos fechas pueden diferir.
+      confirmedAt: uploaded.getDateCreated().toISOString(),
+      fileId: uploaded.getId(),
       backupDriveUrl: backupInfo.url,
       backupFolderPath: backupInfo.folderPath,
       backupSavedFileName: backupInfo.fileName,
@@ -163,6 +210,112 @@ function doPost(e) {
       message: error && error.message ? error.message : "Error no controlado en el Apps Script.",
     });
   }
+}
+
+// ── Verificacion de entrega manual (Fase 10, auditoria 2026-08-22) ──────────
+// El aprendiz que subio el archivo el mismo directamente a Drive (porque la
+// subida automatica fallo) puede pedirle al portal "ya subi el archivo,
+// verificar entrega". Esta accion NUNCA sube nada: solo lista la carpeta
+// exacta de ficha/guia/actividad que le corresponde a ESE aprendiz y busca un
+// archivo cuyo nombre coincida con el nombre estandar esperado (ignorando la
+// extension, para tolerar que el aprendiz haya guardado en un formato
+// distinto al sugerido). No asume que "cualquier archivo de la carpeta"
+// sirve: solo cuenta un nombre que coincide con ficha+aprendiz+guia+actividad.
+function handleVerifyDelivery(payload) {
+  try {
+    const ficha = String(payload.ficha || "").trim();
+    const fullName = sanitizeLabel(payload.fullName, "Aprendiz");
+    const activityLabel = sanitizeLabel(payload.activityLabel, "Actividad");
+
+    if (!ficha || !fullName || !activityLabel) {
+      return jsonResponse({ ok: false, message: "Faltan datos para verificar la entrega." });
+    }
+
+    const rootFolderId = FICHA_ROOT_FOLDERS[ficha];
+    if (!rootFolderId || rootFolderId.indexOf("PEGAR_FOLDER_ID_") === 0) {
+      return jsonResponse({ ok: false, message: "La ficha no tiene carpeta base configurada en el Apps Script." });
+    }
+
+    const rootFolder = DriveApp.getFolderById(rootFolderId);
+    const destination = resolveTargetFolder(rootFolder, ficha, payload);
+    const expectedStem = buildDeliveryFileNameStem(fullName, ficha, activityLabel, payload);
+
+    const files = destination.folder.getFiles();
+    let bestMatch = null;
+    while (files.hasNext()) {
+      const file = files.next();
+      const name = file.getName();
+      // Coincidencia exacta del nombre (sin extension) o que empiece EXACTO
+      // igual seguido SOLO de: otra extension (el aprendiz cambio el
+      // formato al guardar) o el sufijo "(1)"/"(2)" que Drive agrega solo
+      // cuando ya existe un archivo con ese nombre en la misma carpeta (otra
+      // reentrega manual). NO se acepta cualquier texto pegado despues del
+      // stem: un nombre como "..._Ana_Torresborrador.pdf" tecnicamente
+      // "empieza igual" como texto plano pero NO es una variante tolerable
+      // de este archivo -- confirmado con un test que antes de este cambio
+      // SI calzaba por error (ver tests/entregas_actividades_verify_matching.test.cjs).
+      const nameStem = name.replace(/\.[a-z0-9]+$/i, "");
+      const remainder = name.slice(expectedStem.length);
+      const isTolerableVariant = name.indexOf(expectedStem) === 0 && /^(\.[a-z0-9]+|\s*\(\d+\)(\.[a-z0-9]+)?)$/i.test(remainder);
+      if (nameStem === expectedStem || isTolerableVariant) {
+        // Si hay mas de una coincidencia (reentregas manuales previas), toma
+        // la mas reciente por fecha de creacion.
+        if (!bestMatch || file.getDateCreated().getTime() > bestMatch.getDateCreated().getTime()) {
+          bestMatch = file;
+        }
+      }
+    }
+
+    if (!bestMatch) {
+      return jsonResponse({
+        ok: true,
+        found: false,
+        message:
+          "Todavia no encontramos tu archivo en la carpeta de Drive de esta actividad. " +
+          "Verifica que lo hayas subido con el nombre sugerido y a la carpeta correcta, y vuelve a intentar en unos segundos.",
+        folderPath: destination.folderPath,
+        expectedName: expectedStem,
+      });
+    }
+
+    return jsonResponse({
+      ok: true,
+      found: true,
+      message: "Entrega manual verificada: encontramos tu archivo en Drive.",
+      driveUrl: bestMatch.getUrl(),
+      savedFileName: bestMatch.getName(),
+      folderPath: destination.folderPath,
+      confirmedAt: bestMatch.getDateCreated().toISOString(),
+      fileId: bestMatch.getId(),
+    });
+  } catch (error) {
+    return jsonResponse({
+      ok: false,
+      message: error && error.message ? error.message : "Error no controlado al verificar la entrega.",
+    });
+  }
+}
+
+// Igual que buildDeliveryFileName, pero SIN extension: para verificar una
+// entrega manual no sabemos (ni nos importa) en que formato la guardo el
+// aprendiz.
+function buildDeliveryFileNameStem(fullName, ficha, activityLabel, payload) {
+  const guideNumber = sanitizeFileSegment(payload.guideNumber, "");
+  const activityNumber = sanitizeFileSegment(String(payload.activityNumber || "").replace(/\./g, ""), "");
+  if (guideNumber && activityNumber) {
+    const shortName = sanitizeFileSegment(payload.shortName || payload.activityTitle || activityLabel, "Actividad");
+    const fichaLabel = sanitizeFileSegment(ficha, "SIN_FICHA");
+    const learnerFull = normalizeLearnerLabel(fullName, "full");
+    return `Guia_${guideNumber}_Actividad_${activityNumber}_${shortName}_${fichaLabel}_${learnerFull}`;
+  }
+  const prefix = sanitizeFileSegment(payload.fileNamePrefix, "");
+  const learnerLabel = normalizeLearnerLabel(fullName, payload.learnerNameMode);
+  if (prefix) {
+    const fichaLabel = sanitizeFileSegment(ficha, "SIN_FICHA");
+    return `${prefix}_${learnerLabel}_${fichaLabel}`;
+  }
+  const activitySegment = normalizeActivitySegment(activityLabel);
+  return `${learnerLabel}_${activitySegment}`;
 }
 
 function sanitizeLabel(value, fallback) {
@@ -398,6 +551,65 @@ function verifyFirebaseIdToken(idToken) {
   } catch (err) {
     Logger.log("verifyFirebaseIdToken exception: " + err);
     return { ok: false, reason: "exception", detail: String(err).slice(0, 400) };
+  }
+}
+
+// Mismo project id publico que js/firebase-config.js (PORTAL_FIREBASE_CONFIG.projectId).
+// No es un secreto: la seguridad real la da la verificacion del idToken + las
+// Firestore Rules, igual que con la apiKey publica (ver Security Notes en CLAUDE.md).
+const FIRESTORE_PROJECT_ID = "sena-portal";
+
+// Deriva el usernameKey del email sintetico "{key}@sena-portal.local" o
+// versionado "{key}.v{N}@sena-portal.local" (tras un reset de password admin
+// via updateStudentPassword). Misma logica que splitVersionedEmail en
+// respaldo_firestore.gs, simplificada aqui porque solo necesitamos la base.
+function usernameKeyFromEmail(email) {
+  var local = String(email || "").trim().toLowerCase().replace(/@.*$/, "");
+  var m = local.match(/^(.+)\.v(\d+)$/);
+  return m && m[1] ? m[1] : local;
+}
+
+// Lee sena_portal_users/{usernameKey} en Firestore usando el idToken YA
+// verificado por verifyFirebaseIdToken como credencial (Authorization Bearer,
+// igual que firebase_db.js). La regla de esa coleccion es "allow get: if
+// signedIn()" (ver firestore.rules), asi que esto siempre funciona para un
+// aprendiz real con sesion valida -- devuelve null solo si Firestore no
+// responde 200 o el doc no tiene los campos esperados, y el llamador decide
+// como degradar. Cache corta (10 min): ficha/fullName casi nunca cambian y
+// evita gastar cuota de UrlFetchApp en cada entrega/verificacion.
+function fetchVerifiedProfile(idToken, email) {
+  try {
+    var usernameKey = usernameKeyFromEmail(email);
+    if (!usernameKey) return null;
+
+    var cache = CacheService.getScriptCache();
+    var cacheKey = "profile_" + usernameKey;
+    var cached = cache.get(cacheKey);
+    if (cached) {
+      try { return JSON.parse(cached); } catch (_) {}
+    }
+
+    var url =
+      "https://firestore.googleapis.com/v1/projects/" + FIRESTORE_PROJECT_ID +
+      "/databases/(default)/documents/sena_portal_users/" + encodeURIComponent(usernameKey);
+    var response = UrlFetchApp.fetch(url, {
+      headers: { Authorization: "Bearer " + idToken },
+      muteHttpExceptions: true,
+    });
+    if (response.getResponseCode() !== 200) return null;
+
+    var body = JSON.parse(response.getContentText() || "{}");
+    var fields = body.fields || {};
+    var ficha = fields.ficha && typeof fields.ficha.stringValue === "string" ? fields.ficha.stringValue : "";
+    var fullName = fields.fullName && typeof fields.fullName.stringValue === "string" ? fields.fullName.stringValue : "";
+    var result = { usernameKey: usernameKey, ficha: ficha, fullName: fullName };
+    if (ficha || fullName) {
+      cache.put(cacheKey, JSON.stringify(result), 600); // 10 min
+    }
+    return result;
+  } catch (err) {
+    Logger.log("fetchVerifiedProfile exception: " + err);
+    return null;
   }
 }
 

@@ -32,9 +32,16 @@
   var failureStreak = 0;
   var lastStatus = null;
 
-  // Los banners de diagnostico (offline, no-auth, drive-fallback, etc.) solo
-  // se muestran al admin. Los aprendices no se benefician de mensajes tecnicos
-  // de infraestructura y podrian confundirse.
+  // Los banners de diagnostico tecnico (offline, no-auth, drive-fallback,
+  // etc.) usaban texto pensado para el admin. Los aprendices SI necesitan
+  // saber cuando su sesion de Firebase dejo de sincronizar -- de lo contrario
+  // pueden pasar sesiones enteras escribiendo respuestas que solo quedan en
+  // este navegador, creyendo que todo esta guardado en la nube (auditoria
+  // 2026-08-22, Fase 6: watchdog de Firebase para el aprendiz, espejo del que
+  // ya existia solo para el admin). Por eso el banner ahora SI se muestra
+  // para aprendices, pero con un mensaje mas simple y tranquilizador --
+  // "tus respuestas siguen guardandose en este equipo" -- en vez de la jerga
+  // tecnica ("Firestore", "token", etc.) que solo el admin necesita.
   function isAdmin() {
     try {
       var auth = window.portalAuth;
@@ -43,6 +50,21 @@
       }
     } catch (_) {}
     return false;
+  }
+
+  // Mensaje para aprendices: nunca bloquea, siempre deja claro que su trabajo
+  // sigue a salvo localmente y que se sincronizara solo.
+  function studentMessageFor(status) {
+    switch (status) {
+      case "offline":
+        return "Sin conexion a Internet. Tus respuestas se siguen guardando en este equipo y se sincronizaran automaticamente cuando vuelvas a estar en linea.";
+      case "no-auth":
+        return "Tu sesion con la nube se desconecto. Tus respuestas se siguen guardando en este equipo; cierra sesion y vuelve a entrar cuando puedas para sincronizarlas.";
+      case "rejected":
+        return "No se pudo conectar con la nube en este momento. Tus respuestas se siguen guardando en este equipo y se sincronizaran automaticamente en cuanto se restablezca la conexion.";
+      default:
+        return "";
+    }
   }
 
   function ensureBanner() {
@@ -72,11 +94,15 @@
     return el;
   }
 
-  function setBannerMessage(message) {
-    if (!isAdmin()) return; // aprendices no ven banners de diagnostico
+  // `studentMessage` es opcional: si se omite y quien mira la pagina NO es
+  // admin, no se muestra nada (mismo comportamiento de antes para estados sin
+  // texto pensado para aprendices, ej. estados internos futuros).
+  function setBannerMessage(message, studentMessage) {
+    var admin = isAdmin();
+    if (!admin && !studentMessage) return;
     var el = ensureBanner();
     if (!el) return;
-    el.textContent = message;
+    el.textContent = admin ? message : studentMessage;
     // Forzar reflow para que la animacion arranque
     el.style.display = "block";
     void el.offsetHeight;
@@ -125,7 +151,7 @@
       status = "rejected";
       message = "No se pudo conectar con la nube. Tu trabajo se guarda localmente.";
     }
-    setBannerMessage(message);
+    setBannerMessage(message, studentMessageFor(status));
     emitStatus(status, message);
   }
 

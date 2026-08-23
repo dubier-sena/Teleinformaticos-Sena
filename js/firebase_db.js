@@ -346,6 +346,7 @@
     var result = {
       _docId: String(doc.name || "").split("/").pop(),
       _docName: doc.name || "",
+      _updateTime: doc.updateTime || "",
     };
     Object.keys(doc.fields).forEach(function (k) {
       result[k] = fromFsValue(doc.fields[k]);
@@ -573,6 +574,17 @@
 
   function isAuthRejection(status) {
     return status === 401 || status === 403;
+  }
+
+  // Estados HTTP transitorios: el servicio esta ocupado/caido momentaneamente,
+  // no es un rechazo de auth ni un rechazo permanente (400 = documento mal
+  // formado, no se arregla reintentando). Antes solo 401/403 y las excepciones
+  // de red (fetch que lanza) activaban el respaldo a Drive; un 500/503 de
+  // Firestore o un 429 de cuota hacian que fsPatch devolviera `false` sin mas
+  // -- perdida silenciosa de sincronizacion (auditoria 2026-08-22, Fase 7).
+  function isTransientHttpStatus(status) {
+    return status === 408 || status === 429 || status === 500 ||
+      status === 502 || status === 503 || status === 504;
   }
 
   // ── Respaldo pasivo a Drive via Apps Script ─────────────────────────────────
@@ -870,6 +882,12 @@
           markFirestoreRejection();
           return await driveFallbackGet(collection, docId);
         }
+        if (isTransientHttpStatus(res.status)) {
+          if (typeof console !== "undefined" && console.warn) {
+            console.warn("[firebase_db] fsGet: Firestore respondio " + res.status + " (transitorio), usando respaldo Drive.", collection, docId);
+          }
+          return await driveFallbackGet(collection, docId);
+        }
         return null;
       }
       var payload = await res.json();
@@ -881,17 +899,47 @@
     }
   }
 
-  // PATCH (upsert completo) de un documento.
-  async function fsPatch(collection, docId, data) {
+  // Firestore REST devuelve FAILED_PRECONDITION (o ABORTED) cuando un PATCH
+  // lleva `currentDocument.updateTime` y el documento fue escrito por OTRO
+  // proceso desde que lo leimos -- exactamente la señal que necesitamos para
+  // distinguir "conflicto real, hay que releer y reintentar" de "fallo de
+  // red/permiso, cae a Drive" (ver cloudSaveGuideDataImpl). Se lee el cuerpo
+  // en vez de confiar solo en el codigo HTTP porque 400/409 tambien pueden
+  // significar otra cosa (esto solo se evalua cuando el llamador PIDIO la
+  // precondicion, asi que nunca cambia el comportamiento de nadie mas).
+  async function isFirestorePreconditionConflict(res) {
+    try {
+      var body = await res.json();
+      var status = body && body.error && body.error.status;
+      return status === "FAILED_PRECONDITION" || status === "ABORTED";
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // PATCH (upsert completo) de un documento. `opts.expectedUpdateTime`
+  // (opcional, solo lo usa cloudSaveGuideDataImpl) agrega la precondicion
+  // optimista de Firestore: si el documento cambio desde que lo leimos, esta
+  // llamada devuelve el string "conflict" en vez de true/false para que el
+  // llamador releа y reintente su merge, en lugar de pisar a ciegas lo que el
+  // otro proceso acaba de guardar. Sin ese campo, el comportamiento es
+  // IDENTICO al de antes (ningun otro llamador de fsPatch pasa opts).
+  async function fsPatch(collection, docId, data, opts) {
     if (shouldBlockCloudWrites()) {
       return await driveFallbackSet(collection, docId, data);
     }
     if (!(await canCallFirestore(collection, true))) {
       return await driveFallbackSet(collection, docId, data);
     }
+    var expectedUpdateTime = opts && opts.expectedUpdateTime;
     try {
+      var url = docUrl(
+        collection,
+        docId,
+        expectedUpdateTime ? ("currentDocument.updateTime=" + encodeURIComponent(expectedUpdateTime)) : null
+      );
       var res = await fetchWithTimeout(
-        docUrl(collection, docId),
+        url,
         {
           method:  "PATCH",
           headers: await authHeaders({ "Content-Type": "application/json" }),
@@ -905,8 +953,17 @@
         backupWriteToDrive(collection, docId, data);
         return true;
       }
+      if (expectedUpdateTime && (res.status === 400 || res.status === 409) && (await isFirestorePreconditionConflict(res))) {
+        return "conflict";
+      }
       if (isAuthRejection(res.status)) {
         markFirestoreRejection();
+        return await driveFallbackSet(collection, docId, data);
+      }
+      if (isTransientHttpStatus(res.status)) {
+        if (typeof console !== "undefined" && console.warn) {
+          console.warn("[firebase_db] fsPatch: Firestore respondio " + res.status + " (transitorio), usando respaldo Drive.", collection, docId);
+        }
         return await driveFallbackSet(collection, docId, data);
       }
       return false;
@@ -936,6 +993,9 @@
       }
       if (isAuthRejection(res.status)) {
         markFirestoreRejection();
+        return await driveFallbackDelete(collection, docId);
+      }
+      if (isTransientHttpStatus(res.status)) {
         return await driveFallbackDelete(collection, docId);
       }
       return false;
@@ -972,6 +1032,9 @@
       }
       if (isAuthRejection(res.status)) {
         markFirestoreRejection();
+        return await driveFallbackUpdateField(collection, docId, fieldName, fieldValue);
+      }
+      if (isTransientHttpStatus(res.status)) {
         return await driveFallbackUpdateField(collection, docId, fieldName, fieldValue);
       }
       return false;
@@ -1786,13 +1849,19 @@
     return merged;
   }
 
-  async function saveGuideStateDoc(prefix, kind, scopeKey, fileName, payload) {
+  async function saveGuideStateDoc(prefix, kind, scopeKey, fileName, payload, expectedUpdateTime) {
     var docId = guideStateDocId(prefix, scopeKey, fileName);
     var progressPayload = Object.assign({
       _usernameKey: docId,
       _kind: kind,
     }, payload);
-    var fallbackSaved = await fsPatch(COL_PROGRESS, docId, progressPayload);
+    var fallbackSaved = await fsPatch(
+      COL_PROGRESS,
+      docId,
+      progressPayload,
+      expectedUpdateTime ? { expectedUpdateTime: expectedUpdateTime } : null
+    );
+    if (fallbackSaved === "conflict") return "conflict";
     // Entrega CONFIABLE a Drive cuando escribe el ADMIN (fechas de entrega,
     // desbloqueos, reaperturas). Los aprendices LEEN de Drive (useDriveAsPrimary),
     // pero el admin escribe en Firestore; el respaldo a Drive normal es
@@ -1811,6 +1880,11 @@
       } catch (_) { /* best-effort: si falla, queda el respaldo fire-and-forget */ }
     }
     if (fallbackSaved) return true;
+    // Sin precondicion aqui: COL_GUIDE_STATE es un documento distinto (aunque
+    // comparta docId) del que leimos para obtener expectedUpdateTime, asi que
+    // esa precondicion no le pertenece. Este camino ya era best-effort/legado
+    // antes de este cambio (solo se alcanza si COL_PROGRESS fallo por algo que
+    // no fue un conflicto de version).
     return fsPatch(COL_GUIDE_STATE, docId, payload);
   }
 
@@ -1821,52 +1895,204 @@
     return readSnapshotPayload(doc);
   }
 
+  // Lee-combina-escribe SERIALIZADO por documento (scopeKey+fileName): antes,
+  // dos llamadas concurrentes a esta funcion para el MISMO doc (dos pestañas,
+  // el aprendiz y una escritura del admin, o dos guardados casi simultaneos
+  // en la misma pestaña) podian leer el mismo "existing" desactualizado y la
+  // que terminara de escribir despues borraba por completo lo que la otra
+  // ya habia guardado (fsPatch reemplaza el documento entero). Reutiliza la
+  // MISMA cola que ya protegia las escrituras del admin desde 2026-07-25
+  // (antes "withGuideStateAdminQueue", mismo bug, ver auditoria 2026-08-22
+  // Fase 5) — ahora sirve a cualquier llamador, admin o aprendiz, con la
+  // MISMA llave de documento.
   async function cloudSaveGuideData(scopeKey, fileName, snapshot) {
     if (!scopeKey || !fileName) return false;
-    var existing = readSnapshotPayload(await readGuideStateDoc(GUIDE_DATA_FALLBACK_PREFIX, scopeKey, fileName));
-    var safeSnapshot = existing
-      ? mergeGuideDataSnapshotForSave(existing, snapshot || {})
-      : (snapshot || {});
-    var updatedAt = (safeSnapshot && safeSnapshot.updatedAt) || new Date().toISOString();
+    return withGuideStateWriteQueue(scopeKey, fileName, function () {
+      return cloudSaveGuideDataImpl(scopeKey, fileName, snapshot);
+    });
+  }
+
+  // withGuideStateWriteQueue (ver mas abajo) solo serializa escrituras DENTRO
+  // del mismo proceso: dos DISPOSITIVOS reales (dos navegadores distintos)
+  // tienen cada uno su propia cola en memoria, asi que si ambos leen el
+  // mismo documento casi al mismo tiempo y luego escriben campos DISTINTOS,
+  // cada uno mezcla su cambio sobre una copia que nunca vio el cambio del
+  // otro -- el que termina de escribir despues reemplaza el documento
+  // completo y borra en silencio lo que el otro ya habia guardado (confirmado
+  // reproducible en tests/guide_cloud_sync_multi_device.test.cjs, Caso A2,
+  // auditoria/cierre de riesgos 2026-08-22). La cola no puede arreglar esto
+  // (no hay forma de coordinar procesos que no se conocen entre si), asi que
+  // se usa la precondicion optimista nativa de Firestore
+  // (currentDocument.updateTime, ver fsPatch/isFirestorePreconditionConflict):
+  // si el documento cambio desde que lo leimos, la escritura se rechaza sola
+  // (en vez de pisar a ciegas) y aqui simplemente se relee y se reintenta --
+  // la relectura YA incluye el cambio del otro dispositivo, asi que el nuevo
+  // merge no lo pierde.
+  async function cloudSaveGuideDataImpl(scopeKey, fileName, snapshot) {
+    var maxAttempts = 4;
+    for (var attempt = 1; attempt <= maxAttempts; attempt++) {
+      var existingDoc = await readGuideStateDoc(GUIDE_DATA_FALLBACK_PREFIX, scopeKey, fileName);
+      var existing = readSnapshotPayload(existingDoc);
+      var safeSnapshot = existing
+        ? mergeGuideDataSnapshotForSave(existing, snapshot || {})
+        : (snapshot || {});
+      var updatedAt = (safeSnapshot && safeSnapshot.updatedAt) || new Date().toISOString();
+      var payload = {
+        scopeKey: scopeKey,
+        fileName: fileName,
+        updatedAt: updatedAt,
+        snapshotJson: JSON.stringify(safeSnapshot || {}),
+      };
+      var expectedUpdateTime = existingDoc && existingDoc._updateTime ? existingDoc._updateTime : null;
+      var result = await saveGuideStateDoc(
+        GUIDE_DATA_FALLBACK_PREFIX,
+        "guide-data",
+        scopeKey,
+        fileName,
+        payload,
+        expectedUpdateTime
+      );
+      if (result !== "conflict") return result;
+      if (attempt < maxAttempts) {
+        await new Promise(function (resolve) {
+          window.setTimeout(resolve, 30 + Math.floor(Math.random() * 70));
+        });
+      }
+    }
+    // Contencion inusual (varios dispositivos escribiendo el mismo documento
+    // en el mismo instante, una y otra vez): se cede por esta vuelta. No se
+    // pierde nada -- el reintento normal con backoff de guide_cloud_sync.js
+    // (o el proximo guardado) lo resuelve en cuanto la contencion baje.
+    return false;
+  }
+
+  // Guardado directo de UN solo intento (sin la lectura previa de "existing"):
+  // pensado para el flush de "voy a cerrar la pestaña ya mismo" (pagehide),
+  // donde encadenar una lectura + una escritura es demasiado lento para que
+  // el navegador lo deje terminar. Sacrifica el merge fino a nivel de campo
+  // por esta escritura puntual (podria pisar un cambio de OTRA pestaña que
+  // llegue en el mismo instante), pero nunca pierde el cambio de ESTA pestaña:
+  // si esa rara colision ocurre, la proxima vez que cualquiera de las dos
+  // pestañas hidrate/reintente, el merge normal (mergeGuideDataSnapshotForSave)
+  // se auto-corrige porque cada una sigue teniendo su propio cambio a salvo en
+  // su localStorage. `keepalive:true` deja que el navegador complete la
+  // peticion aunque el documento ya se haya descargado (limite ~64KB).
+  async function cloudSaveGuideDataKeepalive(scopeKey, fileName, snapshot) {
+    if (!scopeKey || !fileName || !isConfigured) return false;
+    var bridge = window.portalFirebaseAuth;
+    if (!bridge || typeof bridge.getIdToken !== "function") return false;
+    var token;
+    try {
+      // false = no forzar refresh: en el instante de pagehide/visibilitychange
+      // el token cacheado (si no esta vencido) resuelve casi al instante; uno
+      // vencido intentaria refrescar por red, que puede no alcanzar a
+      // completarse — mejor omitir este intento puntual y dejar que la cola de
+      // reintento normal (siguiente carga) lo resuelva.
+      token = await bridge.getIdToken(false);
+    } catch (e) { token = null; }
+    if (!token) return false;
+
+    var docId = guideStateDocId(GUIDE_DATA_FALLBACK_PREFIX, scopeKey, fileName);
+    var updatedAt = (snapshot && snapshot.updatedAt) || new Date().toISOString();
     var payload = {
+      _usernameKey: docId,
+      _kind: "guide-data",
       scopeKey: scopeKey,
       fileName: fileName,
       updatedAt: updatedAt,
-      snapshotJson: JSON.stringify(safeSnapshot || {}),
+      snapshotJson: JSON.stringify(snapshot || {}),
     };
-    return saveGuideStateDoc(
-      GUIDE_DATA_FALLBACK_PREFIX,
-      "guide-data",
-      scopeKey,
-      fileName,
-      payload
-    );
+    try {
+      fetch(docUrl(COL_PROGRESS, docId), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+        body: JSON.stringify(toFsDoc(payload)),
+        keepalive: true,
+      }).catch(function () {});
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 
-  // Cola por documento (scopeKey+cloudFileName) para las escrituras admin de
-  // guide_state (adminApplySolutionToGuide / adminMarkActivityDelivered). Cada
-  // una hace su propio ciclo leer-modificar-escribir (varios round-trips:
-  // cloudGetGuideData, la re-lectura interna de cloudSaveGuideData y el fsPatch
-  // final, que en Firestore REST sin updateMask es un REEMPLAZO COMPLETO del
-  // documento). Si el instructor califica varias actividades de la MISMA guia
-  // seguidas (el flujo normal al calificar una guia completa), esos ciclos se
-  // solapan: cada uno lee un snapshot desactualizado y el ultimo PATCH en
-  // llegar al servidor gana por completo, borrando lo que las demas ya habian
-  // escrito -- el merge por timestamp (mergeGuideDataSnapshotForSave) no
-  // alcanza a protegerlo porque solo compara contra lo que EL MISMO leyo, no
-  // contra escrituras concurrentes de otras actividades. Serializar por
-  // documento (una escritura admin espera a que termine la anterior del MISMO
-  // aprendiz+archivo antes de leer) elimina la carrera sin tocar el merge por
-  // timestamp existente (que sigue protegiendo contra ediciones reales del
-  // aprendiz desde otro dispositivo). Detectado 2026-07-25 calificando varias
-  // actividades seguidas de una guia para un aprendiz: solo la ultima quedaba
-  // guardada.
-  var guideStateAdminWriteQueues = {};
-  function withGuideStateAdminQueue(scopeKey, cloudFileName, task) {
+  // Resuelve, al CARGAR una guia, cual version usar entre la copia local
+  // (localStorage) y la de la nube: nunca reemplaza una respuesta remota
+  // valida por una local vacia o mas vieja (auditoria 2026-08-22, Fase 1).
+  // Reutiliza el MISMO merge por campo que ya protege el guardado
+  // (mergeGuideState/mergeGuideValue) en vez de duplicar la logica de
+  // "cual gana": aqui simplemente se decide el snapshot BASE segun el
+  // timestamp y se combina con el otro para no perder campos sueltos.
+  function resolveGuideHydration(localSnapshot, remoteSnapshot) {
+    var local = plainObject(localSnapshot) ? localSnapshot : {};
+    var remote = plainObject(remoteSnapshot) ? remoteSnapshot : null;
+    if (!remote) return { state: snapshotState(local), updatedAt: local.updatedAt || "", source: "local" };
+
+    var localTs = snapshotTimestamp(local);
+    var remoteTs = snapshotTimestamp(remote);
+    var remoteIsNewer = !Number.isFinite(localTs) || (Number.isFinite(remoteTs) && remoteTs > localTs);
+
+    // mergeGuideState(previous, incoming) hace que "incoming" GANE cuando
+    // ambos lados tienen valor (y "previous" solo sobrevive si incoming esta
+    // vacio) -- por eso el snapshot MAS NUEVO va como "incoming" (gana el
+    // conflicto real de un mismo campo) y el MAS VIEJO como "previous" (solo
+    // rellena huecos que el mas nuevo ni toca).
+    var newer = remoteIsNewer ? remote : local;
+    var older = remoteIsNewer ? local : remote;
+    var merged = mergeGuideState(snapshotState(older), snapshotState(newer), false);
+    return {
+      state: merged,
+      updatedAt: (remoteIsNewer ? remote.updatedAt : local.updatedAt) || new Date().toISOString(),
+      source: remoteIsNewer ? "remote" : "local",
+    };
+  }
+
+  // Cola por documento (scopeKey+cloudFileName) para TODA escritura de
+  // guide_state/guide-data, sin importar si la origina el admin o el propio
+  // aprendiz. Cada escritura hace su propio ciclo leer-modificar-escribir
+  // (varios round-trips: cloudGetGuideData, la re-lectura interna de
+  // cloudSaveGuideData y el fsPatch final, que en Firestore REST sin
+  // updateMask es un REEMPLAZO COMPLETO del documento). Si dos escrituras del
+  // MISMO documento se solapan (el instructor califica varias actividades
+  // seguidas, o el propio aprendiz dispara dos guardados casi simultaneos
+  // desde la misma pestaña), cada una lee un snapshot desactualizado y la
+  // ultima en llegar al servidor gana por completo, borrando lo que la otra ya
+  // habia escrito -- el merge por timestamp (mergeGuideDataSnapshotForSave) no
+  // alcanza a protegerlo porque solo compara contra lo que ELLA MISMA leyo, no
+  // contra escrituras concurrentes de otro origen. Serializar por documento
+  // (una escritura espera a que termine la anterior del MISMO aprendiz+archivo
+  // antes de leer) elimina esa carrera sin tocar el merge por timestamp
+  // existente (que sigue protegiendo ediciones reales llegadas desde OTRA
+  // pestaña/dispositivo, ver resolveGuideHydration). Originalmente solo cubria
+  // al admin (detectado 2026-07-25 calificando varias actividades seguidas);
+  // generalizada 2026-08-22 (auditoria, Fase 5) porque el mismo bug aplicaba
+  // igual a cloudSaveGuideData sin importar quien la llame.
+  var guideStateWriteQueues = {};
+  // Llaves para las que YA estamos ejecutando una tarea encolada ahora mismo.
+  // Necesario porque adminApplySolutionToGuide/adminMarkActivityDelivered
+  // encolan su *Impl COMPLETO (para que su propia lectura inicial tambien
+  // quede serializada, ver mas abajo), y ese *Impl llama a su vez a
+  // cloudSaveGuideData, que TAMBIEN encola con la MISMA llave. Sin este
+  // marcador, la segunda llamada se encolaria detras de la primera -- pero la
+  // primera nunca terminaria de resolverse porque esta esperando a que la
+  // segunda (que ella misma disparo) resuelva primero: deadlock. Si la llave
+  // ya esta "activa" (ya estamos dentro de su turno en la cola), se ejecuta
+  // directamente: la serializacion de fondo ya esta garantizada por la tarea
+  // exterior.
+  var guideStateQueueActiveKeys = {};
+  function withGuideStateWriteQueue(scopeKey, cloudFileName, task) {
     var queueKey = scopeKey + "|" + cloudFileName;
-    var previous = guideStateAdminWriteQueues[queueKey] || Promise.resolve();
-    var next = previous.catch(function () {}).then(task);
-    guideStateAdminWriteQueues[queueKey] = next;
+    if (guideStateQueueActiveKeys[queueKey]) {
+      return Promise.resolve().then(task);
+    }
+    var previous = guideStateWriteQueues[queueKey] || Promise.resolve();
+    var next = previous.catch(function () {}).then(function () {
+      guideStateQueueActiveKeys[queueKey] = true;
+      return Promise.resolve(task()).then(
+        function (result) { guideStateQueueActiveKeys[queueKey] = false; return result; },
+        function (err) { guideStateQueueActiveKeys[queueKey] = false; throw err; }
+      );
+    });
+    guideStateWriteQueues[queueKey] = next;
     return next;
   }
 
@@ -1882,7 +2108,13 @@
     if (!key || !fileName || !plainObject(fields)) return { ok: false, filled: 0 };
     var scopeKey = "student:" + key;
     var cloudFileNameForQueue = guideDataFileName(fileName);
-    return withGuideStateAdminQueue(scopeKey, cloudFileNameForQueue, function () {
+    // Se encola el *Impl COMPLETO (no solo el guardado final): su propia
+    // lectura inicial de cloudGetGuideData tambien debe esperar a que
+    // terminen las escrituras previas de este mismo documento, o el
+    // "nextState" que calcule quedaria basado en una foto vieja (ver el
+    // comentario de withGuideStateWriteQueue sobre el marcador de reentrancia,
+    // que evita que esto produzca un deadlock).
+    return withGuideStateWriteQueue(scopeKey, cloudFileNameForQueue, function () {
       return adminApplySolutionToGuideImpl(usernameKey, fileName, fields);
     });
   }
@@ -1953,7 +2185,7 @@
     if (!key || !fileName || !activityId) return { ok: false, filled: 0 };
     var scopeKey = "student:" + key;
     var cloudFileNameForQueue = guideDataFileName(fileName);
-    return withGuideStateAdminQueue(scopeKey, cloudFileNameForQueue, function () {
+    return withGuideStateWriteQueue(scopeKey, cloudFileNameForQueue, function () {
       return adminMarkActivityDeliveredImpl(usernameKey, fileName, activityId);
     });
   }
@@ -2954,6 +3186,9 @@
     cloudGetReinforcementAnswers: cloudGetReinforcementAnswers,
     cloudSaveReinforcementAnswers: cloudSaveReinforcementAnswers,
     mergeGuideDataSnapshotForSave: mergeGuideDataSnapshotForSave,
+    resolveGuideHydration: resolveGuideHydration,
+    mergeGuideState: mergeGuideState,
+    cloudSaveGuideDataKeepalive: cloudSaveGuideDataKeepalive,
     cloudGetGuideUiState: cloudGetGuideUiState,
     cloudSaveGuideUiState: cloudSaveGuideUiState,
     cloudListTutoringBookings:        cloudListTutoringBookings,

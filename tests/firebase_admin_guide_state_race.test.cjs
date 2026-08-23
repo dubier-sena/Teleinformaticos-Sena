@@ -11,10 +11,14 @@
 // actividades ya habian escrito. En produccion esto se vio como: calificar 8
 // actividades de Guia 6 en pocos segundos dejo solo 1 guardada.
 //
-// El fix serializa las escrituras admin por documento (scopeKey+archivo) con
-// una cola de promesas (withGuideStateAdminQueue), sin tocar el merge por
+// El fix serializa las escrituras por documento (scopeKey+archivo) con una
+// cola de promesas (withGuideStateWriteQueue), sin tocar el merge por
 // timestamp existente (que sigue protegiendo ediciones reales del aprendiz
-// desde otro dispositivo).
+// desde otro dispositivo). Generalizada 2026-08-22 para vivir DENTRO de
+// cloudSaveGuideData (antes solo envolvia las llamadas admin desde afuera):
+// asi protege por igual escrituras de admin y del propio aprendiz sobre el
+// mismo documento, sin arriesgar el deadlock de encolar dos veces la misma
+// llave (ver tests/guide_cloud_sync_store.test.cjs).
 
 const { test } = require("node:test");
 const assert = require("node:assert");

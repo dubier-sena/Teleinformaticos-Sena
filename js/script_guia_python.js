@@ -15,8 +15,6 @@
   const STORAGE_KEY = portalAuth
     ? portalAuth.getScopedStorageKey(LEGACY_STORAGE_KEY, { area: "guide-data" })
     : LEGACY_STORAGE_KEY;
-  const STORAGE_META_KEY = `${STORAGE_KEY}__meta`;
-  const CLOUD_SYNC_DELAY_MS = 1200;
 
   // Carpetas Drive por ficha (las 4 fichas de Santa Barbara que comparten la guia).
   const DRIVE_FOLDERS = {
@@ -28,64 +26,41 @@
     "3168852": "https://drive.google.com/drive/folders/1p9HdGinK1me8PsbaLHYio_OC-idAmorR?usp=drive_link",
   };
 
-  let state = loadState();
-  let cloudStateSyncTimer = null;
+  // Carga/guardado/hidratacion desde la nube/reintento centralizados en
+  // js/guide_cloud_sync.js (antes cada guion los reimplementaba por su cuenta;
+  // 8 de ellas, incluida esta, nunca leian de la nube al cargar -- auditoria
+  // 2026-08-22).
+  let state = window.GuideCloudSync
+    ? window.GuideCloudSync.loadLocal(STORAGE_KEY, LEGACY_STORAGE_KEY)
+    : {};
   let booted = false;
-
-  function loadState() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) || {} : {};
-    } catch {
-      return {};
-    }
-  }
 
   function getActor() {
     const session = portalAuth?.getCurrentSession?.();
     return session?.user?.fullName || session?.user?.username || "Aprendiz";
   }
 
+  const cloudStore = window.GuideCloudSync?.createStore({
+    storageKey: STORAGE_KEY,
+    legacyStorageKey: LEGACY_STORAGE_KEY,
+    guideDataFile: GUIDE_DATA_FILE,
+    getState: () => state,
+    setState: (next) => { state = next; },
+    getActor: getActor,
+    periodicRefreshMs: 300000,
+    // Esta guia no tiene campos [data-store] que hidratar (los retos son
+    // entrega de archivo, no texto -- ver guide_declarations.js): si la nube
+    // trae candados/entregas que este equipo no tenia, alcanza con volver a
+    // pintar el progreso y el resumen de entregas.
+    onHydrated: () => { updateProgress(); renderDeliverySummary(); },
+  });
+
   function saveState() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      localStorage.setItem(STORAGE_META_KEY, JSON.stringify({
-        updatedAt: new Date().toISOString(),
-        updatedBy: getActor(),
-      }));
     } catch {}
-    scheduleCloudSync();
+    cloudStore?.notifyChanged();
     updateProgress();
-  }
-
-  function getCloudScopeKey() {
-    const session = portalAuth?.getCurrentSession?.();
-    if (!session) return "";
-    if (session.role === "admin") return `admin:${session.usernameKey || "admin"}`;
-    if (session.role === "student") return `student:${session.user?.usernameKey || ""}`;
-    return "";
-  }
-
-  function scheduleCloudSync() {
-    if (cloudStateSyncTimer) clearTimeout(cloudStateSyncTimer);
-    cloudStateSyncTimer = setTimeout(flushCloudSync, CLOUD_SYNC_DELAY_MS);
-  }
-
-  async function flushCloudSync() {
-    cloudStateSyncTimer = null;
-    const scopeKey = getCloudScopeKey();
-    if (!scopeKey || !window._firebaseDb?.cloudSaveGuideData) return;
-    try {
-      await window._firebaseDb.cloudSaveGuideData(scopeKey, GUIDE_DATA_FILE, {
-        scopeKey,
-        fileName: GUIDE_DATA_FILE,
-        updatedAt: new Date().toISOString(),
-        updatedBy: getActor(),
-        state: { ...state },
-      });
-    } catch (err) {
-      console.warn("[guia-python] cloud sync failed", err);
-    }
   }
 
   // ── Contexto para ActivityStandard ────────────────────────────────────────
@@ -489,6 +464,7 @@
     initFnDemos();
     updateProgress();
     renderDeliverySummary();
+    cloudStore?.hydrate();
   }
 
   window.__GUIDE_INIT__ = initGuiaPython;

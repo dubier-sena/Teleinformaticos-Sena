@@ -76,6 +76,29 @@
     document.body.dataset.defaultFicha = context.ficha || "";
   }
 
+  // Auditoria/cierre de riesgos 2026-08-22 (Riesgo 3): los partials fuente
+  // (partials/*-content.html) traen enlaces internos entre guias escritos
+  // como archivo crudo (ej. href="grupo-10a-guia-02-...html"), porque ese
+  // archivo NUNCA se sirve asi en produccion (guia.html?g=... es el UNICO
+  // punto de entrada real, ver CLAUDE.md). No es un bypass del router -- el
+  // archivo crudo no existe fuera de pages/guias/ (solo preview local), asi
+  // que hoy simplemente da 404 -- pero es un enlace roto real para el
+  // aprendiz. Se reescribe aqui, una sola vez tras inyectar el HTML, en vez
+  // de corregir cada partial a mano (mismo helper que ya usa el resto del
+  // portal para construir la URL correcta).
+  function rewireGuideLinks(container) {
+    if (!container || typeof container.querySelectorAll !== "function") return;
+    var auth = window.portalAuth;
+    if (!auth || typeof auth.getGuideHref !== "function") return;
+    var links = container.querySelectorAll("a[href]");
+    Array.prototype.forEach.call(links, function (link) {
+      var href = link.getAttribute("href") || "";
+      var match = href.match(/^((?:grupo|santa-barbara)-[a-z0-9._-]+\.html)(#.*)?$/i);
+      if (!match) return;
+      link.setAttribute("href", auth.getGuideHref(match[1]) + (match[2] || ""));
+    });
+  }
+
   function executeInlinePartialScripts(container) {
     function runInlineScript(code) {
       if (!code) {
@@ -163,6 +186,7 @@
     root.innerHTML = html;
     window.__PAGE_RUNTIME_CONTEXT__ = context;
     setContextDatasets(context);
+    rewireGuideLinks(root);
     executeInlinePartialScripts(root);
 
     if (typeof window.initGuiaTemplateShell === "function") {

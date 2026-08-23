@@ -1000,6 +1000,12 @@ function saveState() {
   });
   updateProgress();
   pendingCloudStateSnapshot = buildCloudStateSnapshot();
+  // El guardado local YA ocurrio (arriba); esto solo refleja que la
+  // sincronizacion con la nube todavia esta pendiente -- nunca se muestra
+  // "Guardado" aqui, solo cuando syncCloudState() confirme el exito real
+  // (auditoria 2026-08-22, Fase 2: antes esta guia -- como todas -- no
+  // mostraba ningun estado real de sincronizacion).
+  window.portalSaveStatus?.saving?.("Guardando...");
   scheduleCloudStateSync();
 }
 
@@ -1140,6 +1146,12 @@ function scheduleCloudStateRetry() {
     return;
   }
 
+  if (typeof navigator !== "undefined" && navigator.onLine === false) {
+    window.portalSaveStatus?.offline?.("Sin conexion. Guardado localmente.");
+  } else {
+    window.portalSaveStatus?.pendingSync?.("No se pudo sincronizar todavia. Guardado localmente; se reintentara automaticamente.");
+  }
+
   window.clearTimeout(cloudStateRetryTimer);
   cloudStateRetryTimer = window.setTimeout(() => {
     syncCloudState(true);
@@ -1149,6 +1161,7 @@ function scheduleCloudStateRetry() {
 async function syncCloudState(force) {
   const scopeKey = getCloudScopeKey();
   if (!scopeKey || !window._firebaseDb || typeof window._firebaseDb.cloudSaveGuideData !== "function") {
+    if (pendingCloudStateSnapshot) window.portalSaveStatus?.pendingSync?.("Guardado localmente. Pendiente de sincronizar.");
     return false;
   }
 
@@ -1168,6 +1181,7 @@ async function syncCloudState(force) {
       updatedAt: snapshot.updatedAt,
       updatedBy: snapshot.updatedBy,
     });
+    window.portalSaveStatus?.saved?.("Guardado.");
     return true;
   } catch {
     scheduleCloudStateRetry();

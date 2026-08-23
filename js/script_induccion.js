@@ -152,6 +152,7 @@ function saveState() {
   });
   updateProgress();
   pendingCloudStateSnapshot = buildCloudStateSnapshot();
+  window.portalSaveStatus?.saving?.("Guardando...");
   scheduleCloudStateSync();
 }
 
@@ -284,6 +285,12 @@ function scheduleCloudStateRetry() {
     return;
   }
 
+  if (typeof navigator !== "undefined" && navigator.onLine === false) {
+    window.portalSaveStatus?.offline?.("Sin conexion. Guardado localmente.");
+  } else {
+    window.portalSaveStatus?.pendingSync?.("No se pudo sincronizar todavia. Guardado localmente; se reintentara automaticamente.");
+  }
+
   window.clearTimeout(cloudStateRetryTimer);
   cloudStateRetryTimer = window.setTimeout(() => {
     syncCloudState(true);
@@ -293,6 +300,7 @@ function scheduleCloudStateRetry() {
 async function syncCloudState(force) {
   const scopeKey = getCloudScopeKey();
   if (!scopeKey || !window._firebaseDb || typeof window._firebaseDb.cloudSaveGuideData !== "function") {
+    if (pendingCloudStateSnapshot) window.portalSaveStatus?.pendingSync?.("Guardado localmente. Pendiente de sincronizar.");
     return false;
   }
 
@@ -312,6 +320,7 @@ async function syncCloudState(force) {
       updatedAt: snapshot.updatedAt,
       updatedBy: snapshot.updatedBy,
     });
+    window.portalSaveStatus?.saved?.("Guardado.");
     return true;
   } catch {
     scheduleCloudStateRetry();

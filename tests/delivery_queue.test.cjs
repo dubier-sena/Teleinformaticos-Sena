@@ -16,20 +16,36 @@ const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
 
-function loadDelivery() {
+function loadDelivery(sessionUser) {
   const code = fs.readFileSync(
     path.join(__dirname, "..", "js", "shared_apps_script_delivery.js"),
     "utf8"
   );
+  const windowObj = {
+    location: { pathname: "/guia.html" },
+    portalAuth: {
+      getCurrentSession: () =>
+        sessionUser
+          ? { role: "student", user: { usernameKey: sessionUser, fullName: sessionUser, ficha: "3441939" } }
+          : null,
+      getCurrentSelection: (defaults) => defaults,
+    },
+  };
   const sandbox = {
-    window: {},
-    document: { addEventListener() {}, querySelectorAll() { return []; } },
+    window: windowObj,
+    document: {
+      addEventListener() {},
+      querySelectorAll() { return []; },
+      body: { dataset: {} },
+    },
     console: { warn() {}, error() {}, info() {}, log() {} },
     setTimeout,
     clearTimeout,
     setInterval,
     clearInterval,
   };
+  windowObj.window = windowObj;
+  windowObj.document = sandbox.document;
   vm.createContext(sandbox);
   vm.runInContext(code, sandbox);
   return sandbox.window.sharedAppsScriptDelivery;
@@ -139,6 +155,71 @@ test("entrada muy vieja: descarta sin intentar subir", async () => {
   });
   assert.strictEqual(res.dropped, 1);
   assert.strictEqual(uploads, 0);
+});
+
+// ── Riesgo 4 (cierre 2026-08-22, "computador compartido") ──────────────────
+// runDeliveryQueue corre en CADA carga de pagina sin distinguir de quien es
+// la cola. Antes de este fix, si el aprendiz A dejaba una entrega pendiente
+// (fallo transitorio) y el aprendiz B iniciaba sesion despues en el MISMO
+// equipo, el siguiente reintento la subiria usando la sesion de B -- el
+// archivo de A terminaria registrado como entrega de B. Estas pruebas
+// confirman que una entrada con dueno registrado que YA NO coincide con la
+// sesion activa se deja pendiente sin intentar subir.
+
+test("computador compartido: entrada de OTRO aprendiz (ownerUsernameKey distinto a la sesion actual) NO se sube, queda pendiente", async () => {
+  const storage = makeStorage([pending("k1", { ownerUsernameKey: "ana" })]);
+  let uploads = 0;
+  const res = await process({
+    storage,
+    upload: () => { uploads += 1; return Promise.resolve({ ok: true }); },
+    finalize: () => {},
+    isPermanent: () => false,
+    currentUsernameKey: () => "carlos", // otro aprendiz inicio sesion despues
+  });
+  assert.strictEqual(uploads, 0, "jamas debe subir el archivo de otro aprendiz con la sesion actual");
+  assert.strictEqual(res.skippedOtherSession, 1);
+  assert.strictEqual(res.delivered, 0);
+  assert.strictEqual(storage.data.length, 1, "la entrada debe seguir en la cola, intacta, para cuando el dueno real vuelva");
+  assert.strictEqual(storage.data[0].attempts, 0, "no cuenta como intento fallido: ni siquiera se intento");
+});
+
+test("computador compartido: entrada del MISMO aprendiz que sigue con sesion activa SI se sube normalmente", async () => {
+  const storage = makeStorage([pending("k1", { ownerUsernameKey: "ana" })]);
+  let uploads = 0;
+  const res = await process({
+    storage,
+    upload: () => { uploads += 1; return Promise.resolve({ ok: true }); },
+    finalize: () => {},
+    isPermanent: () => false,
+    currentUsernameKey: () => "ana",
+  });
+  assert.strictEqual(uploads, 1);
+  assert.strictEqual(res.delivered, 1);
+  assert.strictEqual(storage.data.length, 0);
+});
+
+test("computador compartido: entrada VIEJA sin ownerUsernameKey (guardada antes de este fix) se reintenta igual que siempre", async () => {
+  const storage = makeStorage([pending("k1")]); // sin ownerUsernameKey, como antes de este cambio
+  let uploads = 0;
+  const res = await process({
+    storage,
+    upload: () => { uploads += 1; return Promise.resolve({ ok: true }); },
+    finalize: () => {},
+    isPermanent: () => false,
+    currentUsernameKey: () => "cualquiera",
+  });
+  assert.strictEqual(uploads, 1, "compatibilidad: sin dueno registrado, se reintenta como antes");
+  assert.strictEqual(res.delivered, 1);
+});
+
+test("getCurrentIdentity expone el usernameKey de la sesion activa (lo que enqueueDelivery guarda como ownerUsernameKey)", () => {
+  const withSession = loadDelivery("ana");
+  const identityWithSession = withSession._getCurrentIdentity();
+  assert.equal(identityWithSession.fullName, "ana");
+
+  const withoutSession = loadDelivery();
+  const identityWithoutSession = withoutSession._getCurrentIdentity();
+  assert.equal(identityWithoutSession.session, null);
 });
 
 test("entradas ya entregadas se ignoran", async () => {

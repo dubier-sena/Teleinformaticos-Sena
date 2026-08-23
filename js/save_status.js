@@ -156,6 +156,20 @@
         border: "#f5b700",
       });
     },
+    // Guardado localmente con exito, pero AUN no confirmado por la nube (el
+    // intento de sincronizar sigue en curso o se reintentara). Distinto de
+    // offline(): aqui puede haber conexion perfectamente buena, el problema
+    // es la sesion de Firebase o un fallo puntual de Firestore. Mismo estilo
+    // visual (ambar, no bloquea), pero `data-state` propio para que la UI/los
+    // tests puedan distinguirlo (auditoria 2026-08-22, Fase 2).
+    pendingSync: function (message) {
+      show(message || "Guardado localmente. Pendiente de sincronizar.", dot("#c98d00"), {
+        state: "pending-sync",
+        background: "#fff0c0",
+        color: "#6e5300",
+        border: "#f5b700",
+      });
+    },
     hide: hide,
   };
 })();
