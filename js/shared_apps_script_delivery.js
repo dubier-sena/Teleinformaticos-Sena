@@ -1095,6 +1095,59 @@
     return data; // { ok:true, found:true|false, ... }
   }
 
+  // ── Descarga segura de documentos sensibles (Fase 2, auditoria profunda) ────
+  // Para documentos que antes se referenciaban por URL publica de Drive
+  // incrustada en el cliente (p.ej. el acuerdo de Etapa Productiva, que trae
+  // cedula y datos de TODO el grupo): el cliente no conoce ningun ID de
+  // Drive, solo pide una "accion" al Apps Script (entregas_actividades.gs),
+  // que resuelve el archivo real a partir de la ficha VERIFICADA del propio
+  // idToken y devuelve los bytes -- nunca un link.
+  async function fetchSecureDocument(action) {
+    var integrations = getIntegrations();
+    var endpoint = normalizeText(integrations.googleAppsScriptUrl);
+    if (!isValidAppsScriptUrl(endpoint)) {
+      throw new Error("La URL del Google Apps Script aun no esta configurada.");
+    }
+    var idToken = await getDeliveryIdToken();
+    if (!idToken) {
+      throw new Error("No se pudo verificar tu sesion. Cierra sesion y vuelve a entrar, luego intenta de nuevo.");
+    }
+    var response = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify({ action: action, idToken: idToken }),
+    });
+    var data = await response.json().catch(function () { return {}; });
+    if (!response.ok || data.ok === false) {
+      throw new Error(data && data.message ? data.message : "No fue posible obtener el documento en este momento.");
+    }
+    return data; // { ok:true, fileBase64, mimeType, fileName }
+  }
+
+  function triggerBase64Download(base64, mimeType, fileName) {
+    var byteChars = atob(String(base64 || ""));
+    var byteNumbers = new Array(byteChars.length);
+    for (var i = 0; i < byteChars.length; i++) {
+      byteNumbers[i] = byteChars.charCodeAt(i);
+    }
+    var blob = new Blob([new Uint8Array(byteNumbers)], { type: mimeType || "application/octet-stream" });
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement("a");
+    link.href = url;
+    link.download = fileName || "documento";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
+  async function downloadSecureDocument(action, opts) {
+    opts = opts || {};
+    var data = await fetchSecureDocument(action);
+    triggerBase64Download(data.fileBase64, data.mimeType, data.fileName || opts.fallbackFileName);
+    return data;
+  }
+
   function buildDestinationPreview(identity, context, fileName) {
     return (
       buildDestinationFolderPreview(identity, context) +
@@ -1690,6 +1743,7 @@
     renderManualDriveFallback: renderManualDriveFallback,
     offerManualDriveFallback: offerManualDriveFallback,
     verifyManualDelivery: verifyManualDelivery,
+    downloadSecureDocument: downloadSecureDocument,
     // Expuestos solo para pruebas unitarias (logica pura).
     _retryWithBackoff: retryWithBackoff,
     _isPermanentDeliveryError: isPermanentDeliveryError,

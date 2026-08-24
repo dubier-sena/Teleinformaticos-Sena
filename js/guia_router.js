@@ -53,7 +53,6 @@
       type: "page",
       scripts: [
         "js/shared_shell.js?v=20260815_1",
-        "js/project_integrations.js?v=20260707_4",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "data/calendario_2026_records.js?v=20260722_1",
@@ -61,6 +60,7 @@
         "js/activity_standard.js?v=20260822_1",
         "js/guide_declarations.js?v=20260815_1",
         "js/guide_cloud_sync.js?v=20260822_1",
+        "js/word_search_generator.js?v=20260824_1",
         "js/script_guia2.js?v=20260822_1",
         "js/activity_grades.js?v=20260815_1",
         "js/improvement_plans.js?v=20260624_1",
@@ -79,7 +79,6 @@
       type: "page",
       scripts: [
         "js/shared_shell.js?v=20260815_1",
-        "js/project_integrations.js?v=20260707_4",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "data/calendario_2026_records.js?v=20260722_1",
@@ -87,6 +86,7 @@
         "js/activity_standard.js?v=20260822_1",
         "js/guide_declarations.js?v=20260815_1",
         "js/guide_cloud_sync.js?v=20260822_1",
+        "js/word_search_generator.js?v=20260824_1",
         "js/script_guia2.js?v=20260822_1",
         "js/activity_grades.js?v=20260815_1",
         "js/improvement_plans.js?v=20260624_1",
@@ -105,7 +105,6 @@
       type: "page",
       scripts: [
         "js/shared_shell.js?v=20260815_1",
-        "js/project_integrations.js?v=20260707_4",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/guia3_quiz_bank.js?v=20260506_1",
@@ -130,7 +129,6 @@
       type: "page",
       scripts: [
         "js/shared_shell.js?v=20260815_1",
-        "js/project_integrations.js?v=20260707_4",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/guia3_quiz_bank.js?v=20260506_1",
@@ -155,7 +153,6 @@
       type: "page",
       scripts: [
         "js/shared_shell.js?v=20260815_1",
-        "js/project_integrations.js?v=20260707_4",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/activity_standard.js?v=20260822_1",
@@ -179,7 +176,6 @@
       type: "page",
       scripts: [
         "js/shared_shell.js?v=20260815_1",
-        "js/project_integrations.js?v=20260707_4",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/activity_standard.js?v=20260822_1",
@@ -203,7 +199,6 @@
       type: "page",
       scripts: [
         "js/shared_shell.js?v=20260815_1",
-        "js/project_integrations.js?v=20260707_4",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/activity_standard.js?v=20260822_1",
@@ -227,7 +222,6 @@
       type: "page",
       scripts: [
         "js/shared_shell.js?v=20260815_1",
-        "js/project_integrations.js?v=20260707_4",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/activity_standard.js?v=20260822_1",
@@ -251,7 +245,6 @@
       type: "page",
       scripts: [
         "js/shared_shell.js?v=20260815_1",
-        "js/project_integrations.js?v=20260707_4",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/activity_standard.js?v=20260822_1",
@@ -275,7 +268,6 @@
       type: "page",
       scripts: [
         "js/shared_shell.js?v=20260815_1",
-        "js/project_integrations.js?v=20260707_4",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/activity_standard.js?v=20260822_1",
@@ -299,7 +291,6 @@
       type: "page",
       scripts: [
         "js/shared_shell.js?v=20260815_1",
-        "js/project_integrations.js?v=20260707_4",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260728_1",
         "js/activity_standard.js?v=20260822_1",
@@ -323,7 +314,6 @@
       type: "page",
       scripts: [
         "js/shared_shell.js?v=20260815_1",
-        "js/project_integrations.js?v=20260707_4",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260728_1",
         "js/activity_standard.js?v=20260822_1",
@@ -347,7 +337,6 @@
       type: "page",
       scripts: [
         "js/shared_shell.js?v=20260815_1",
-        "js/project_integrations.js?v=20260707_4",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/activity_standard.js?v=20260822_1",
@@ -372,7 +361,6 @@
       type: "page",
       scripts: [
         "js/shared_shell.js?v=20260815_1",
-        "js/project_integrations.js?v=20260707_4",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/activity_standard.js?v=20260822_1",
@@ -397,7 +385,6 @@
       type: "page",
       scripts: [
         "js/shared_shell.js?v=20260815_1",
-        "js/project_integrations.js?v=20260707_4",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/guia6_quiz_bank.js?v=20260428_1",
@@ -422,7 +409,6 @@
       type: "page",
       scripts: [
         "js/shared_shell.js?v=20260815_1",
-        "js/project_integrations.js?v=20260707_4",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/guia6_quiz_bank.js?v=20260428_1",
@@ -447,7 +433,6 @@
       type: "page",
       scripts: [
         "js/shared_shell.js?v=20260815_1",
-        "js/project_integrations.js?v=20260707_4",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/activity_standard.js?v=20260822_1",
@@ -471,7 +456,6 @@
       type: "page",
       scripts: [
         "js/shared_shell.js?v=20260815_1",
-        "js/project_integrations.js?v=20260707_4",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/activity_standard.js?v=20260822_1",
@@ -495,7 +479,6 @@
       type: "page",
       scripts: [
         "js/shared_shell.js?v=20260815_1",
-        "js/project_integrations.js?v=20260707_4",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/activity_standard.js?v=20260822_1",
@@ -519,7 +502,6 @@
       type: "page",
       scripts: [
         "js/shared_shell.js?v=20260815_1",
-        "js/project_integrations.js?v=20260707_4",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/activity_standard.js?v=20260822_1",
@@ -543,7 +525,6 @@
       type: "page",
       scripts: [
         "js/shared_shell.js?v=20260815_1",
-        "js/project_integrations.js?v=20260707_4",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/activity_standard.js?v=20260822_1",
@@ -567,7 +548,6 @@
       type: "page",
       scripts: [
         "js/shared_shell.js?v=20260815_1",
-        "js/project_integrations.js?v=20260707_4",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/activity_standard.js?v=20260822_1",
@@ -591,7 +571,6 @@
       type: "guide",
       scripts: [
         "js/shared_shell.js?v=20260815_1",
-        "js/project_integrations.js?v=20260707_4",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "data/calendario_2026_records.js?v=20260722_1",
@@ -603,6 +582,7 @@
         "js/activity_standard.js?v=20260822_1",
         "js/guide_declarations.js?v=20260815_1",
         "js/guide_cloud_sync.js?v=20260822_1",
+        "js/export_styles.js?v=20260517_1",
         "js/script_guia_redes.js?v=20260726_2",
         "data/guide_contexts_bundle.js?v=20260815_1",
         "partials/guia-redes-rap01-bundle.js?v=20260611_19",
@@ -617,7 +597,6 @@
       type: "guide",
       scripts: [
         "js/shared_shell.js?v=20260815_1",
-        "js/project_integrations.js?v=20260707_4",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "data/calendario_2026_records.js?v=20260722_1",
@@ -629,6 +608,7 @@
         "js/activity_standard.js?v=20260822_1",
         "js/guide_declarations.js?v=20260815_1",
         "js/guide_cloud_sync.js?v=20260822_1",
+        "js/export_styles.js?v=20260517_1",
         "js/script_guia_redes.js?v=20260726_2",
         "data/guide_contexts_bundle.js?v=20260815_1",
         "partials/guia-redes-rap01-bundle.js?v=20260611_19",
@@ -643,7 +623,6 @@
       type: "guide",
       scripts: [
         "js/shared_shell.js?v=20260815_1",
-        "js/project_integrations.js?v=20260707_4",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "data/calendario_2026_records.js?v=20260722_1",
@@ -669,7 +648,6 @@
       type: "guide",
       scripts: [
         "js/shared_shell.js?v=20260815_1",
-        "js/project_integrations.js?v=20260707_4",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260728_1",
         "data/calendario_2026_records.js?v=20260722_1",
@@ -695,7 +673,6 @@
       type: "guide",
       scripts: [
         "js/shared_shell.js?v=20260815_1",
-        "js/project_integrations.js?v=20260707_4",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260728_1",
         "data/calendario_2026_records.js?v=20260722_1",
@@ -721,7 +698,6 @@
       type: "guide",
       scripts: [
         "js/shared_shell.js?v=20260815_1",
-        "js/project_integrations.js?v=20260707_4",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "data/calendario_2026_records.js?v=20260722_1",
@@ -747,7 +723,6 @@
       type: "guide",
       scripts: [
         "js/shared_shell.js?v=20260815_1",
-        "js/project_integrations.js?v=20260707_4",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "data/calendario_2026_records.js?v=20260722_1",

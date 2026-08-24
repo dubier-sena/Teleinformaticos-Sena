@@ -24,7 +24,10 @@ test("rewritten admin panel exposes the requested module shell", () => {
     "configuracion",
   ];
 
-  assert.match(html, /requireAdminAccess\(\{ redirectUrl: "index\.html" \}\)/);
+  // Fase 13 (CSP): el gate inline se extrajo a js/access_guard_admin.js
+  // (compartido con calendario-academico-2026.html y etapa-productiva-admin.html).
+  assert.match(html, /<script src="js\/access_guard_admin\.js\?v=[^"]+"><\/script>/);
+  assert.match(read("js/access_guard_admin.js"), /requireAdminAccess\(\{ redirectUrl: "index\.html" \}\)/);
   assert.match(html, /class="admin-layout"/);
   modules.forEach((moduleName) => {
     assert.match(html, new RegExp(`data-admin-module="${moduleName}"`));

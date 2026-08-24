@@ -12,6 +12,12 @@
  *        ADMIN_BACKUP_FOLDER_ID → (opcional) ID alternativo de carpeta Drive
  *            para respaldos. Si no se define, se usa el ID hardcodeado en
  *            el script (1TTl7KclP_GXEcIdq7tIwpK4T7PXyIO-r).
+ *        REGISTRATION_CODE_SECRET → (Fase 6, OBLIGATORIO para que el
+ *            registro con codigo de invitacion funcione) cualquier cadena
+ *            larga aleatoria, generada UNA vez y jamas commiteada. Sin esto,
+ *            verifyRegistrationCode/setRegistrationCode responden error.
+ *        ADMIN_EMAILS → (opcional, csv) solo si el admin no es
+ *            dubier@sena-portal.local; usado por setRegistrationCode.
  *   2. Deploy -> Manage deployments -> edita el deployment Web App existente
  *      y publica una nueva version (Execute as: Me / Access: Anyone).
  *   3. Orden seguro: primero publica el cliente (git push), luego redeploy aqui.
@@ -26,6 +32,22 @@ const FICHA_ROOT_FOLDERS = {
   "3441950": "1N49ulJRgbF7ySD3JDRJzFE5czCKFO1KM",
   "3168850": "1fBPzXHU0OHDmKa18Y6V2tnomLyYWgiLp",
   "3168852": "1p9HdGinK1me8PsbaLHYio_OC-idAmorR",
+};
+// Fase 2 (auditoria profunda, 2026-08-23): IDs de los acuerdos de Etapa
+// Productiva por ficha (contienen cedula y datos de TODO el grupo). Antes
+// vivian como URL publica "cualquiera con el enlace" incrustada en
+// project_integrations.js (repo publico) -- cualquiera en internet podia
+// descargarlos sin ser aprendiz. Ahora el ID nunca sale del servidor: el
+// cliente solo recibe los bytes del archivo (accion "agreement" abajo), y
+// SOLO para la ficha verificada del propio idToken. Si cambias un archivo,
+// actualiza el ID aqui; no hace falta tocar el cliente.
+const FICHA_AGREEMENT_FILE_IDS = {
+  "3441939": "1Gs67a5LUc0Alv1kqe3Yla3ryosCeBH0k",
+  "3441942": "17Ou96W5e5uWnvVvqAzPq2J1oc8qOYxyd",
+  "3441944": "1carTO0eulPdNLmoyUWpoBdzktDPRccTX",
+  "3441950": "1S1PKiIPDUwCmbZTuDtWzaWe78NXIXJr3",
+  "3168850": "11nEbEacehK3DmAbnQT2moAdsTR3I6t7P",
+  "3168852": "1AFGFI-buGhMeL41oSaYVDgaFFr1QTjLT",
 };
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 const ALLOWED_EXTENSIONS = [
@@ -47,6 +69,23 @@ const ALLOWED_EXTENSIONS = [
 function doPost(e) {
   try {
     const payload = JSON.parse(e.postData.contents || "{}");
+
+    // ───── Fase 6 (auditoria profunda, cierre de hallazgo de seguridad) ────
+    // Verificar un codigo de invitacion de ficha corre ANTES de exigir
+    // idToken: ocurre durante el REGISTRO, cuando el aprendiz todavia no
+    // tiene ninguna sesion. No toca Drive ni datos de ningun aprendiz. El
+    // hallazgo que esto cierra: el diseno anterior guardaba el codigo en
+    // Firestore con lectura publica (sena_portal_ficha_codes, "allow get:
+    // if true") para poder leerlo antes del login -- eso significaba que
+    // CUALQUIERA que conociera una ficha podia leer el codigo real por
+    // Firestore REST sin sesion alguna. Ahora el codigo NUNCA viaja al
+    // cliente en ninguna direccion: se compara un hash server-side (ver
+    // handleVerifyRegistrationCode) y el servidor responde unicamente
+    // valido/no-valido.
+    const earlyAction = String(payload.action || "").toLowerCase();
+    if (earlyAction === "verifyregistrationcode") {
+      return handleVerifyRegistrationCode(payload);
+    }
 
     // ───── Seguridad: solo usuarios autenticados del portal ────────────────
     // El cliente (shared_apps_script_delivery.js) adjunta el idToken de
@@ -77,27 +116,57 @@ function doPost(e) {
       });
     }
 
-    // ───── Seguridad (cierre de auditoria 2026-08-22): ficha/fullName no ────
-    // se toman nunca "de confianza" del payload del cliente. Un idToken valido
-    // solo prueba que quien llama es UN aprendiz autenticado, no que la ficha
-    // o el nombre que puso en el payload sean los suyos: sin este paso, un
-    // aprendiz podia editar esos campos en devtools y usar "verify" (o incluso
-    // "upload") contra la carpeta de OTRO aprendiz. Se resuelve el perfil real
-    // leyendo sena_portal_users/{usernameKey} en Firestore, autenticado con el
-    // MISMO idToken ya verificado arriba (igual que hace el cliente en
-    // firebase_db.js: Authorization Bearer, sin necesidad de tocar
-    // firestore.rules -- esa coleccion ya permite "get" a cualquier sesion
-    // valida, ver comentario en firestore.rules linea ~124). Si el perfil no
-    // se puede leer (Firestore caido, doc inexistente), se usa el valor del
-    // cliente como respaldo, igual que antes de este cambio -- no se bloquea
-    // una entrega real por una falla de infraestructura ajena al aprendiz.
+    // ───── Fase 6: configurar/regenerar el codigo de una ficha exige ser ───
+    // admin -- verificado aqui mismo, server-side, contra auth.email (ya
+    // verificado arriba por Identity Toolkit). Modificar localStorage o
+    // alterar el payload del cliente no cambia auth.email en absoluto, asi
+    // que no hay forma de que un aprendiz se autorice a si mismo por esta
+    // via. El codigo en texto plano jamas se persiste (ver
+    // handleSetRegistrationCode): solo se guarda su hash.
+    if (String(payload.action || "").toLowerCase() === "setregistrationcode") {
+      return handleSetRegistrationCode(payload, auth);
+    }
+
+    // ───── Seguridad (cierre de auditoria 2026-08-22, endurecido en la ─────
+    // auditoria profunda posterior -- Fase 1): ficha/fullName no se toman
+    // NUNCA "de confianza" del payload del cliente. Un idToken valido solo
+    // prueba que quien llama es UN aprendiz autenticado, no que la ficha o
+    // el nombre que puso en el payload sean los suyos. Se resuelve el
+    // perfil real leyendo sena_portal_users/{usernameKey} en Firestore,
+    // autenticado con el MISMO idToken ya verificado arriba (igual que hace
+    // el cliente en firebase_db.js: Authorization Bearer). La regla de esa
+    // coleccion permite "get" al propio dueno o al admin (Fase 7, ver
+    // firestore.rules linea ~124); usernameKey aqui SIEMPRE se deriva del
+    // mismo auth.email ya verificado arriba, asi que este GET es siempre
+    // sobre el propio perfil del llamador y sigue funcionando sin cambios.
+    //
+    // FAIL-CLOSED (antes era fail-open): si el perfil no se puede leer o
+    // llega incompleto (Firestore caido, doc inexistente, o con ficha/
+    // fullName vacios), la operacion se RECHAZA con un error transitorio en
+    // vez de usar el valor del payload como respaldo. La version anterior
+    // degradaba a los datos del cliente "para no bloquear una entrega real
+    // por una falla ajena al aprendiz" -- pero eso reabria exactamente el
+    // hueco que este mismo bloque cierra: bastaba una caida de Firestore (o
+    // cualquier fallo transitorio de fetchVerifiedProfile) para que ficha/
+    // fullName manipulados en devtools volvieran a decidir la carpeta
+    // destino. El cliente (shared_apps_script_delivery.js) ya trata
+    // cualquier mensaje que no contenga las palabras clave de error
+    // permanente (ver isPermanentDeliveryError) como transitorio: lo
+    // reintenta con backoff y, si se agotan los intentos en sesion, lo deja
+    // en la cola durable (IndexedDB) para reintentar en cargas posteriores
+    // -- el archivo nunca se pierde, solo queda pendiente.
     const verifiedProfile = fetchVerifiedProfile(idToken, auth.email);
-    if (verifiedProfile && verifiedProfile.ficha) {
-      payload.ficha = verifiedProfile.ficha;
+    if (!verifiedProfile || !verifiedProfile.ficha || !verifiedProfile.fullName) {
+      return jsonResponse({
+        ok: false,
+        transient: true,
+        diag: "profile-unverified",
+        message:
+          "No fue posible verificar tu perfil en este momento. La entrega se conservara pendiente y se reintentara automaticamente.",
+      });
     }
-    if (verifiedProfile && verifiedProfile.fullName) {
-      payload.fullName = verifiedProfile.fullName;
-    }
+    payload.ficha = verifiedProfile.ficha;
+    payload.fullName = verifiedProfile.fullName;
 
     // Dispatch por accion (mismo patron ya usado en respaldo_firestore.gs).
     // Sin `action` (o accion desconocida) se asume "upload": compatibilidad
@@ -105,6 +174,11 @@ function doPost(e) {
     const action = String(payload.action || "upload").toLowerCase();
     if (action === "verify") {
       return handleVerifyDelivery(payload);
+    }
+    if (action === "agreement") {
+      // Fase 2: ni siquiera lee payload.ficha -- el destino sale UNICAMENTE
+      // del perfil ya verificado arriba, nunca de lo que reclame el cliente.
+      return handleFetchAgreementDocument(verifiedProfile.ficha);
     }
     return handleUploadDelivery(payload);
   } catch (error) {
@@ -294,6 +368,142 @@ function handleVerifyDelivery(payload) {
       message: error && error.message ? error.message : "Error no controlado al verificar la entrega.",
     });
   }
+}
+
+// Fase 2 (auditoria profunda): sirve el acuerdo de Etapa Productiva de la
+// ficha YA VERIFICADA del aprendiz -- este handler ni siquiera recibe el
+// payload del cliente, solo la ficha resuelta en doPost. El archivo nunca se
+// referencia por URL publica en el cliente: aqui se lee el blob real de
+// Drive (el script tiene acceso directo como su propietario/editor, sin
+// depender de que el archivo este compartido "cualquiera con el enlace") y
+// se devuelve en base64 solo a quien ya demostro ser un aprendiz real de esa
+// ficha.
+function handleFetchAgreementDocument(ficha) {
+  try {
+    const fileId = FICHA_AGREEMENT_FILE_IDS[String(ficha || "")];
+    if (!fileId) {
+      return jsonResponse({
+        ok: false,
+        message: "Tu ficha no tiene un acuerdo de Etapa Productiva disponible. Consulta con tu instructor.",
+      });
+    }
+    const file = DriveApp.getFileById(fileId);
+    const blob = file.getBlob();
+    return jsonResponse({
+      ok: true,
+      fileBase64: Utilities.base64Encode(blob.getBytes()),
+      mimeType: blob.getContentType() || "application/octet-stream",
+      fileName: file.getName(),
+    });
+  } catch (error) {
+    return jsonResponse({
+      ok: false,
+      message: "No fue posible obtener el acuerdo en este momento. Intenta de nuevo en unos segundos.",
+    });
+  }
+}
+
+// ── Fase 6 (auditoria profunda, cierre de hallazgo): codigo de invitacion ──
+// por ficha, requerido en el registro para que conocer una ficha valida no
+// sea suficiente. Almacenamiento: PropertiesService (Script Properties),
+// NUNCA Firestore -- no existe ningun endpoint publico que exponga Script
+// Properties (ni REST, ni SDK, ni consola, ni fallback de Drive), a
+// diferencia del diseno anterior (sena_portal_ficha_codes con lectura
+// publica) que SI dejaba leer el codigo real a cualquiera que conociera la
+// ficha. Se guarda solo un hash SHA-256(ficha + ":" + codigo + ":" +
+// REGISTRATION_CODE_SECRET); el secreto vive UNICAMENTE en la Script
+// Property REGISTRATION_CODE_SECRET de este despliegue -- nunca en git ni
+// en JS publico. Requisito de despliegue adicional: configurar
+// REGISTRATION_CODE_SECRET (cualquier cadena larga aleatoria) y, si el
+// admin no es dubier@sena-portal.local, tambien ADMIN_EMAILS (csv).
+function registrationCodePropertyKey(ficha) {
+  return "FICHA_CODE_HASH_" + String(ficha || "").trim();
+}
+
+function getAdminEmailsForEntregas() {
+  var raw = getScriptProperty("ADMIN_EMAILS");
+  var list = raw ? raw.split(",") : ["dubier@sena-portal.local"];
+  return list.map(function (s) { return String(s).trim().toLowerCase(); }).filter(function (s) { return !!s; });
+}
+
+function computeRegistrationCodeHash(ficha, code, secret) {
+  var raw = String(ficha || "").trim() + ":" + String(code || "").trim() + ":" + secret;
+  var digestBytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, raw, Utilities.Charset.UTF_8);
+  return digestBytes.map(function (b) {
+    var v = (b < 0 ? b + 256 : b).toString(16);
+    return v.length === 1 ? "0" + v : v;
+  }).join("");
+}
+
+// Rate limit BASICO por ficha (nunca bloqueo permanente): CacheService
+// expira solo a los 5 minutos, asi que un aprendiz legitimo que se
+// equivoca varias veces nunca queda bloqueado -- solo se le agrega un
+// retraso corto (tope 3s) que encarece un intento de fuerza bruta.
+function applyRegistrationCodeRateLimit(ficha) {
+  try {
+    var cache = CacheService.getScriptCache();
+    var key = "regcode_attempts_" + String(ficha || "").trim();
+    var count = Number(cache.get(key) || 0) + 1;
+    cache.put(key, String(count), 300);
+    if (count > 5) {
+      Utilities.sleep(Math.min(3000, (count - 5) * 500));
+    }
+  } catch (rateLimitError) {
+    // El rate limit nunca debe impedir que la verificacion real corra.
+  }
+}
+
+// Respuesta SIEMPRE generica ante codigo invalido (Fase 6): nunca distingue
+// "ficha sin codigo configurado" de "codigo incorrecto" de "ficha
+// inexistente" -- toda esa informacion ayudaria a alguien a enumerar
+// fichas/estado sin conocer el codigo real. `ok:false` (distinto de
+// `ok:true, valid:false`) se reserva para cuando el chequeo NO pudo
+// ejecutarse de verdad (falta configurar el secreto del lado servidor) --
+// el cliente trata eso como "reintenta", nunca como "tu codigo esta mal".
+function handleVerifyRegistrationCode(payload) {
+  var ficha = String(payload.ficha || "").trim();
+  var code = String(payload.code || "").trim();
+  applyRegistrationCodeRateLimit(ficha);
+  try {
+    var secret = getScriptProperty("REGISTRATION_CODE_SECRET");
+    if (!secret) {
+      return jsonResponse({ ok: false, message: "No fue posible verificar el codigo de registro en este momento." });
+    }
+    if (!ficha || !code) {
+      return jsonResponse({ ok: true, valid: false });
+    }
+    var expectedHash = getScriptProperty(registrationCodePropertyKey(ficha));
+    var actualHash = computeRegistrationCodeHash(ficha, code, secret);
+    var valid = !!expectedHash && expectedHash === actualHash;
+    return jsonResponse({ ok: true, valid: valid });
+  } catch (error) {
+    return jsonResponse({ ok: false, message: "No fue posible verificar el codigo de registro en este momento." });
+  }
+}
+
+// Solo admin (verificado server-side contra auth.email, ver doPost) puede
+// crear/regenerar el codigo de una ficha. El codigo en texto plano llega
+// UNA vez en este payload y nunca se persiste en ningun lado -- ni aqui, ni
+// en logs, ni en Firestore: solo su hash queda en Script Properties. Por
+// eso el admin no puede "recuperar" un codigo ya guardado, solo
+// regenerarlo (mismo flujo, un codigo nuevo reemplaza el hash anterior).
+function handleSetRegistrationCode(payload, auth) {
+  var adminEmails = getAdminEmailsForEntregas();
+  if (adminEmails.indexOf(String(auth.email || "").toLowerCase()) === -1) {
+    return jsonResponse({ ok: false, message: "No autorizado." });
+  }
+  var ficha = String(payload.ficha || "").trim();
+  var code = String(payload.code || "").trim();
+  if (!ficha || !code) {
+    return jsonResponse({ ok: false, message: "Faltan datos (ficha y codigo)." });
+  }
+  var secret = getScriptProperty("REGISTRATION_CODE_SECRET");
+  if (!secret) {
+    return jsonResponse({ ok: false, message: "El servidor no tiene configurado REGISTRATION_CODE_SECRET." });
+  }
+  var hash = computeRegistrationCodeHash(ficha, code, secret);
+  PropertiesService.getScriptProperties().setProperty(registrationCodePropertyKey(ficha), hash);
+  return jsonResponse({ ok: true });
 }
 
 // Igual que buildDeliveryFileName, pero SIN extension: para verificar una

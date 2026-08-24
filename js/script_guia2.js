@@ -1252,33 +1252,14 @@ function slugify(value) {
     .toLowerCase();
 }
 
-function normalizeWordSearchText(value) {
-  return String(value ?? "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-zA-Z0-9]/g, "")
-    .toUpperCase();
-}
-
-function hashString(value) {
-  let hash = 2166136261;
-  String(value || "").split("").forEach((char) => {
-    hash ^= char.charCodeAt(0);
-    hash = Math.imul(hash, 16777619);
-  });
-  return hash >>> 0;
-}
-
-function createSeededRandom(seed) {
-  let value = seed >>> 0;
-  return () => {
-    value += 0x6d2b79f5;
-    let next = value;
-    next = Math.imul(next ^ (next >>> 15), next | 1);
-    next ^= next + Math.imul(next ^ (next >>> 7), next | 61);
-    return ((next ^ (next >>> 14)) >>> 0) / 4294967296;
-  };
-}
+// Fase 14 (mantenibilidad): normalizeWordSearchText/hashString/
+// createSeededRandom y el algoritmo de colocacion viven ahora en
+// js/word_search_generator.js (mismo codigo, sin cambios de comportamiento
+// -- misma semilla, mismo resultado). Se conservan estos 3 nombres locales
+// como alias para no tocar el resto de este archivo.
+const normalizeWordSearchText = window.wordSearchGenerator.normalizeWordSearchText;
+const hashString = window.wordSearchGenerator.hashString;
+const createSeededRandom = window.wordSearchGenerator.createSeededRandom;
 
 function getWordSearchTargets() {
   return wordList
@@ -1305,83 +1286,18 @@ function pickWordSearchVariant() {
 function buildWordSearchPuzzle(variant) {
   const variantId = normalizeWordSearchVariant(variant);
   const size = WORD_SEARCH_GRID_SIZE;
-  const grid = Array.from({ length: size }, () => Array(size).fill(""));
-  const placements = {};
   const targets = getWordSearchTargets();
-  const directions = [
-    [0, 1],
-    [1, 0],
-    [1, 1],
-    [-1, 1],
-    [0, -1],
-    [-1, 0],
-    [-1, -1],
-    [1, -1],
-  ];
   const random = createSeededRandom(
     hashString(`${WORD_SEARCH_ACTIVITY_ID}:variant-${variantId}:${wordList.join("|")}`)
   );
 
-  const canPlace = (word, row, col, rowStep, colStep) => {
-    for (let index = 0; index < word.length; index += 1) {
-      const nextRow = row + rowStep * index;
-      const nextCol = col + colStep * index;
-      if (nextRow < 0 || nextRow >= size || nextCol < 0 || nextCol >= size) {
-        return false;
-      }
-      if (grid[nextRow][nextCol] && grid[nextRow][nextCol] !== word[index]) {
-        return false;
-      }
-    }
-    return true;
-  };
-
-  const place = (target, row, col, rowStep, colStep) => {
-    placements[target.word] = {
-      label: target.label,
-      cells: [],
-    };
-    for (let index = 0; index < target.word.length; index += 1) {
-      const nextRow = row + rowStep * index;
-      const nextCol = col + colStep * index;
-      grid[nextRow][nextCol] = target.word[index];
-      placements[target.word].cells.push({ row: nextRow, col: nextCol });
-    }
-  };
-
-  targets.forEach((target) => {
-    let placed = false;
-
-    for (let attempt = 0; attempt < 2000 && !placed; attempt += 1) {
-      const [rowStep, colStep] = directions[Math.floor(random() * directions.length)];
-      const row = Math.floor(random() * size);
-      const col = Math.floor(random() * size);
-      if (canPlace(target.word, row, col, rowStep, colStep)) {
-        place(target, row, col, rowStep, colStep);
-        placed = true;
-      }
-    }
-
-    for (let row = 0; row < size && !placed; row += 1) {
-      for (let col = 0; col < size && !placed; col += 1) {
-        for (let index = 0; index < directions.length && !placed; index += 1) {
-          const [rowStep, colStep] = directions[index];
-          if (canPlace(target.word, row, col, rowStep, colStep)) {
-            place(target, row, col, rowStep, colStep);
-            placed = true;
-          }
-        }
-      }
-    }
-  });
-
-  for (let row = 0; row < size; row += 1) {
-    for (let col = 0; col < size; col += 1) {
-      if (!grid[row][col]) {
-        grid[row][col] = WORD_SEARCH_ALPHABET[Math.floor(random() * WORD_SEARCH_ALPHABET.length)];
-      }
-    }
-  }
+  // Fase 14 (mantenibilidad): el algoritmo de colocacion (intentos
+  // aleatorios + barrido exhaustivo de respaldo) vive en
+  // js/word_search_generator.js -- mismo codigo, misma semilla, mismo
+  // resultado que antes.
+  const { grid, placements } = window.wordSearchGenerator.buildWordSearchGrid(
+    targets, size, random, WORD_SEARCH_ALPHABET
+  );
 
   return {
     variant: variantId,

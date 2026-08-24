@@ -3547,7 +3547,7 @@ window.portalAuth = {
           const dbApi = window._firebaseDb;
           const fichaVal = (result && result.user && result.user.ficha) || "";
           if (dbApi && typeof dbApi.cloudSaveUserIndex === "function" && fichaVal) {
-            dbApi.cloudSaveUserIndex(fichaVal);
+            dbApi.cloudSaveUserIndex(fichaVal, normalizedKey);
           }
         } catch (_) { /* indice es best-effort */ }
       }
@@ -3608,7 +3608,7 @@ window.portalAuth = {
       const dbApi = window._firebaseDb;
       const fichaVal = (cloudUser && cloudUser.ficha) || "";
       if (dbApi && typeof dbApi.cloudSaveUserIndex === "function" && fichaVal) {
-        dbApi.cloudSaveUserIndex(fichaVal);
+        dbApi.cloudSaveUserIndex(fichaVal, normalizedKey);
       }
     } catch (_) { /* indice es best-effort */ }
 
@@ -3625,6 +3625,36 @@ window.portalAuth = {
   const prevRegisterStudent = auth.registerStudent;
   if (typeof prevRegisterStudent === "function") {
     auth.registerStudent = async function registerStudentWithFirebaseBridge(data) {
+      // Fase 6 (auditoria profunda): conocer una ficha valida ya NO es
+      // suficiente para crear una cuenta -- se exige ademas el codigo de
+      // invitacion de esa ficha (lo entrega el instructor, ver panel admin y
+      // sena_portal_ficha_codes). Se verifica ANTES de crear nada, ni local
+      // ni en la nube -- fail-closed: si el codigo no se puede verificar
+      // (sin conexion, Firestore inalcanzable), el registro se rechaza en
+      // vez de crear una cuenta local "a medias" que luego no podria
+      // autenticarse contra Firebase de todas formas. Si el bridge no esta
+      // habilitado (preview local sin Firebase configurado), se omite: no
+      // hay como verificar nada y romperia el preview del mantenedor.
+      if (bridgeEnabled()) {
+        const ficha = String((data && data.ficha) || "").trim();
+        // Ficha inexistente: se rechaza aqui mismo con el mensaje claro ya
+        // usado por el validador base, sin gastar una llamada de red para
+        // verificar un codigo que de todas formas no aplicaria a ninguna
+        // ficha real.
+        if (!ficha || !auth.getFichaInfo(ficha)) {
+          return {
+            ok: false,
+            message: "La ficha no existe en el portal. Verifica el numero e intenta de nuevo.",
+          };
+        }
+        const enteredCode = String((data && data.code) || "").trim();
+        const dbApi = window._firebaseDb;
+        if (dbApi && typeof dbApi.verifyRegistrationCode === "function") {
+          const decision = await dbApi.verifyRegistrationCode(ficha, enteredCode);
+          if (!decision.ok) return decision;
+        }
+      }
+
       const result = await prevRegisterStudent.call(auth, data);
       if (!result || !result.ok) return result;
       if (!bridgeEnabled()) return result;
@@ -3654,7 +3684,7 @@ window.portalAuth = {
         const dbApi = window._firebaseDb;
         const fichaVal = (result.user && result.user.ficha) || "";
         if (dbApi && typeof dbApi.cloudSaveUserIndex === "function" && fichaVal) {
-          dbApi.cloudSaveUserIndex(fichaVal);
+          dbApi.cloudSaveUserIndex(fichaVal, normalizedKey);
         }
       } catch (_) { /* indice best-effort */ }
       return result;

@@ -62,14 +62,48 @@ test("calendario: lectura compartida, escritura solo admin", () => {
   assert.strictEqual(authz({ action: "set", collection: "sena_portal_progress", docId: "__calendar__:academico-2026", email: as("juan") }).ok, false);
 });
 
-test("list: admin-only en colecciones sensibles, compartido en el resto", () => {
+test("list: admin-only en colecciones sensibles", () => {
   assert.strictEqual(authz({ action: "list", collection: "sena_portal_users", email: as("juan") }).ok, false);
   assert.strictEqual(authz({ action: "list", collection: "sena_portal_user_auth", email: as("juan") }).ok, false);
   assert.strictEqual(authz({ action: "list", collection: "sena_portal_progress", email: as("juan") }).ok, false);
   assert.strictEqual(authz({ action: "list", collection: "sena_portal_guide_state", email: as("juan") }).ok, false);
-  // compartidas (los aprendices ven citas/grupos de su contexto)
-  assert.strictEqual(authz({ action: "list", collection: "sena_portal_tutoring_bookings", email: as("juan") }).ok, true);
-  assert.strictEqual(authz({ action: "list", collection: "sena_portal_groups", email: as("juan") }).ok, true);
+});
+
+// Fase 7 (auditoria profunda): antes estas dos eran "compartidas" (cualquier
+// aprendiz podia listar), pero action:"list" vuelca hasta 300 documentos
+// COMPLETOS sin filtro -- tutoring_bookings expone nombre completo/tema/
+// horario de TODAS las fichas, groups expone memberEmails de TODOS los
+// equipos. El aprendiz SI ve sus citas/grupos propios via "get"/"updatefield"
+// por docId conocido (ya probado en otros tests de este archivo) o via
+// Firestore directo con filtro de ficha (sena_portal_groups ya filtraba por
+// membresia en las reglas; sena_portal_tutoring_bookings se corrigio aparte,
+// ver requesterFicha() en firestore.rules) -- pero el volcado sin filtro de
+// esta accion queda restringido al admin.
+test("Fase 7 -- tutoring_bookings y groups: list es admin-only (fuga de datos entre fichas/equipos cerrada)", () => {
+  assert.strictEqual(authz({ action: "list", collection: "sena_portal_tutoring_bookings", email: as("juan") }).ok, false);
+  assert.strictEqual(authz({ action: "list", collection: "sena_portal_groups", email: as("juan") }).ok, false);
+  assert.strictEqual(authz({ action: "list", collection: "sena_portal_tutoring_bookings", email: as("dubier") }).ok, true);
+  assert.strictEqual(authz({ action: "list", collection: "sena_portal_groups", email: as("dubier") }).ok, true);
+});
+
+// Fase 8 (auditoria profunda): "integrity_evidence" guarda nombre completo,
+// ficha e institucion de CADA aprendiz junto a sus senales de integridad.
+// Antes de este fix NO estaba en LIST_ADMIN_ONLY_COLLECTIONS: cualquier
+// aprendiz autenticado podia listar hasta 300 documentos con esos datos de
+// TODOS los demas aprendices (p.ej. window.driveDb.list("integrity_evidence")
+// desde la consola del navegador) -- una fuga de privacidad real entre
+// companeros, no solo falta de aviso.
+test("Fase 8 -- integrity_evidence: list es admin-only (fuga de privacidad entre companeros cerrada)", () => {
+  assert.strictEqual(
+    authz({ action: "list", collection: "integrity_evidence", email: as("juan") }).ok,
+    false,
+    "un aprendiz NUNCA debe poder listar las senales de integridad de otros aprendices"
+  );
+  assert.strictEqual(
+    authz({ action: "list", collection: "integrity_evidence", email: as("dubier") }).ok,
+    true,
+    "el admin si debe poder listarlas"
+  );
 });
 
 test("grupos: miembros si, ajenos no", () => {
@@ -156,6 +190,91 @@ test("email v1 sin sufijo no exige atestacion (comportamiento previo intacto)", 
   assert.strictEqual(
     authz({ action: "get", collection: "sena_portal_progress", docId: "juan", email: as("juan") }).ok,
     true
+  );
+});
+
+// ───── Fase 5 (auditoria profunda): cierre del fallback Drive por UID ──────
+// El respaldo de Drive (este script) tenia la MISMA ambiguedad que las
+// reglas de Firestore antes del fix: actorOwnsDoc solo comparaba
+// username exacto/saneado, sin usar el uid verificado del actor para nada
+// (salvo el caso especial de user_index). Estas pruebas demuestran que, con
+// el esquema nuevo por UID, Firestore arriba y el fallback de Drive abajo
+// aplican el MISMO modelo de identidad -- sin colision, incluso con
+// Firestore caido.
+
+test("Fase 5 -- eimy_alvarez y eimy.alvarez (UIDs reales distintos): aislamiento COMPLETO en el fallback de Drive", () => {
+  const UID_UNDERSCORE = "uid-real-underscore";
+  const UID_DOT = "uid-real-dot";
+  const fileKey = "grupo10a_guia1_html";
+  const docIdOfUnderscore = `__guide_data__:uid:${UID_UNDERSCORE}:${fileKey}`;
+  const docIdOfDot = `__guide_data__:uid:${UID_DOT}:${fileKey}`;
+
+  // Usuario A (eimy_alvarez) sobre SU propio doc UID: PASA.
+  ["get", "set"].forEach((action) => {
+    assert.strictEqual(
+      authz({ action, collection: "sena_portal_progress", docId: docIdOfUnderscore, email: as("eimy_alvarez"), uid: UID_UNDERSCORE }).ok,
+      true,
+      `A debe poder ${action} su propio doc UID`
+    );
+  });
+  // Usuario B (eimy.alvarez) sobre el doc UID de A: FALLA.
+  ["get", "set"].forEach((action) => {
+    assert.strictEqual(
+      authz({ action, collection: "sena_portal_progress", docId: docIdOfUnderscore, email: as("eimy.alvarez"), uid: UID_DOT }).ok,
+      false,
+      `B NO debe poder ${action} el doc UID de A`
+    );
+  });
+
+  // Invertido: B sobre SU propio doc UID: PASA. A sobre el de B: FALLA.
+  ["get", "set"].forEach((action) => {
+    assert.strictEqual(
+      authz({ action, collection: "sena_portal_progress", docId: docIdOfDot, email: as("eimy.alvarez"), uid: UID_DOT }).ok,
+      true,
+      `B debe poder ${action} su propio doc UID`
+    );
+    assert.strictEqual(
+      authz({ action, collection: "sena_portal_progress", docId: docIdOfDot, email: as("eimy_alvarez"), uid: UID_UNDERSCORE }).ok,
+      false,
+      `A NO debe poder ${action} el doc UID de B`
+    );
+  });
+});
+
+test("Fase 5 -- documento LEGADO sigue accesible por su dueno legitimo (compatibilidad temporal)", () => {
+  const legacyDocId = "__guide_data__:student:eimy_alvarez:grupo10a_guia1_html";
+  assert.strictEqual(
+    authz({ action: "get", collection: "sena_portal_progress", docId: legacyDocId, email: as("eimy_alvarez"), uid: "cualquier-uid-no-importa-aqui" }).ok,
+    true,
+    "el dueno legitimo de un doc legado real debe seguir accediendo (via username, el uid no interviene en este esquema)"
+  );
+});
+
+test("Fase 5 -- una colision de USERNAME nunca da acceso a un doc del esquema UID", () => {
+  // "eimy.alvarez" sanea al mismo segmento que el docId LEGADO de
+  // "eimy_alvarez" (riesgo aceptado y documentado para el esquema viejo).
+  // Confirma que esa MISMA colision de username no se filtra al esquema
+  // nuevo: solo el uid exacto autoriza un doc UID.
+  const uidDocIdDeEimyAlvarezReal = "__guide_data__:uid:uid-de-eimy-alvarez-real:grupo10a_guia1_html";
+  assert.strictEqual(
+    authz({
+      action: "get",
+      collection: "sena_portal_progress",
+      docId: uidDocIdDeEimyAlvarezReal,
+      email: as("eimy.alvarez"),
+      uid: "uid-de-eimy-punto-alvarez-real",
+    }).ok,
+    false,
+    "la colision de username no debe alcanzar el esquema UID -- solo el uid exacto autoriza"
+  );
+});
+
+test("Fase 5 -- un doc UID es EXCLUYENTE: nunca cae al camino legado aunque el username aparezca como substring del docId", () => {
+  const docId = "__guide_data__:uid:contiene-a-juan-por-coincidencia:archivo";
+  assert.strictEqual(
+    authz({ action: "get", collection: "sena_portal_progress", docId, email: as("juan"), uid: "uid-de-juan-real" }).ok,
+    false,
+    "sin el uid EXACTO, debe denegarse aunque el username del actor aparezca dentro del docId"
   );
 });
 

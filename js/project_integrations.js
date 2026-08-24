@@ -38,19 +38,15 @@
         "3168850": "https://drive.google.com/drive/folders/1fBPzXHU0OHDmKa18Y6V2tnomLyYWgiLp",
         "3168852": "https://drive.google.com/drive/folders/1p9HdGinK1me8PsbaLHYio_OC-idAmorR",
       },
-      // Link de DESCARGA DIRECTA (formato uc?export=download, no /view -- ese
-      // abre el visor de Drive en el navegador en vez de descargar) al archivo
-      // del acuerdo de Etapa Productiva de cada ficha (contiene cedula y datos
-      // de TODO el grupo, por eso NO vive en este repo publico). Compartido como
-      // "cualquiera con el enlace" (mismo nivel que fichaDriveFolders arriba).
-      fichaAcuerdoExcelUrls: {
-        "3441939": "https://drive.google.com/uc?export=download&id=1Gs67a5LUc0Alv1kqe3Yla3ryosCeBH0k",
-        "3441942": "https://drive.google.com/uc?export=download&id=17Ou96W5e5uWnvVvqAzPq2J1oc8qOYxyd",
-        "3441944": "https://drive.google.com/uc?export=download&id=1carTO0eulPdNLmoyUWpoBdzktDPRccTX",
-        "3441950": "https://drive.google.com/uc?export=download&id=1S1PKiIPDUwCmbZTuDtWzaWe78NXIXJr3",
-        "3168850": "https://drive.google.com/uc?export=download&id=11nEbEacehK3DmAbnQT2moAdsTR3I6t7P",
-        "3168852": "https://drive.google.com/uc?export=download&id=1AFGFI-buGhMeL41oSaYVDgaFFr1QTjLT",
-      },
+      // Fase 2 (auditoria profunda, 2026-08-23): el acuerdo de Etapa Productiva
+      // (contiene cedula y datos de TODO el grupo) YA NO se referencia aqui por
+      // ID/URL de Drive. Antes viajaba en texto plano en este archivo publico y
+      // el archivo en Drive estaba compartido "cualquiera con el enlace" --
+      // cualquiera en internet podia descargarlo sin ser aprendiz. Ahora se pide
+      // al Apps Script (entregas_actividades.gs, action "agreement"), que
+      // resuelve el archivo SOLO para la ficha verificada del propio idToken
+      // (ver sharedAppsScriptDelivery.downloadSecureDocument). Los IDs viven
+      // unicamente en el servidor.
     },
     window.PROJECT_INTEGRATIONS || {}
   );

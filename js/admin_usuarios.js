@@ -8,6 +8,25 @@
 
   if (!auth) return;
 
+  // Fase 12 (rendimiento): xlsx.full.min.js pesa ~930 KB (la libreria de
+  // Excel mas grande de todo el panel) y antes se cargaba de entrada en
+  // CADA visita al panel admin, la use o no esa sesion -- se pide bajo
+  // demanda, solo cuando el admin de verdad exporta o sube un Excel de
+  // calificaciones (handleGradesExcelDownload/Upload, unicos consumidores).
+  let _xlsxLoadPromise = null;
+  function ensureXlsxLoaded() {
+    if (window.XLSX) return Promise.resolve(true);
+    if (_xlsxLoadPromise) return _xlsxLoadPromise;
+    _xlsxLoadPromise = new Promise((resolve) => {
+      const el = document.createElement("script");
+      el.src = "js/xlsx.full.min.js?v=20260722_1";
+      el.onload = () => resolve(true);
+      el.onerror = () => resolve(false);
+      document.head.appendChild(el);
+    });
+    return _xlsxLoadPromise;
+  }
+
   const GUIDE2_SYSTEM_ACTIVITY_KEYS = ["sistemas332-locked"];
   const GUIDE2_COLLABORATIVE_ACTIVITY_KEYS = ["colaborativas334-locked"];
   const GUIDE2_TRANSFER_RETO_KEYS = ["transfer-reto-locked", "transferReto341-locked"];
@@ -503,15 +522,79 @@
         <td>${(row.info.guias || []).length}</td>
         <td><progress value="${row.average}" max="100">${row.average}%</progress> ${row.average}%</td>
         <td><span class="admin-status admin-status--active">Activa</span></td>
+        <td class="admin-row-actions">
+          <button class="admin-button admin-button--ghost" type="button" data-generate-ficha-code="${escapeHtml(row.ficha)}">Generar codigo nuevo</button>
+          <div class="admin-muted" data-ficha-code-status="${escapeHtml(row.ficha)}"></div>
+        </td>
       </tr>
     `).join("");
     byId("fichas-table").innerHTML = `
       <table class="admin-data-table">
-        <thead><tr><th>Ficha</th><th>Grupo</th><th>Aprendices</th><th>Guias</th><th>Progreso</th><th>Estado</th></tr></thead>
+        <thead><tr><th>Ficha</th><th>Grupo</th><th>Aprendices</th><th>Guias</th><th>Progreso</th><th>Estado</th><th>Codigo de invitacion</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
       <p class="admin-risk-note">Contrato local activo: las fichas se leen desde FICHA_MAP para conservar rutas y accesos. La gestion de altas, bajas o cambios queda centralizada en ese mapa.</p>
+      <p class="admin-risk-note">Fase 6 (auditoria profunda): conocer la ficha ya no basta para registrarse -- el aprendiz tambien necesita este codigo. El servidor solo guarda un hash: NO existe forma de volver a ver un codigo ya generado, solo de reemplazarlo por uno nuevo. Copialo apenas se genere y entregaselo tu mismo a los aprendices autorizados de esa ficha; regenerarlo invalida el anterior de inmediato.</p>
     `;
+    wireFichaCodeButtons();
+  }
+
+  // Genera un codigo aleatorio en el propio navegador del admin (alfabeto
+  // sin caracteres ambiguos: sin 0/O, 1/I/L). Nunca se deriva de nada
+  // predecible ni se envia a ningun lado hasta que el admin confirma.
+  function generateRandomFichaCode() {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    const bytes = new Uint8Array(8);
+    (window.crypto || {}).getRandomValues
+      ? window.crypto.getRandomValues(bytes)
+      : bytes.forEach((_, i) => { bytes[i] = Math.floor(Math.random() * 256); });
+    let code = "";
+    for (let i = 0; i < bytes.length; i++) code += chars[bytes[i] % chars.length];
+    return code;
+  }
+
+  // Fase 6 (auditoria profunda): "Generar" reemplaza el codigo anterior de
+  // inmediato (el servidor solo guarda el hash del ultimo) -- se pide
+  // confirmacion porque invalida cualquier codigo ya entregado a los
+  // aprendices de esa ficha. El codigo en texto plano SOLO existe en este
+  // navegador, en este momento: se muestra una vez con una advertencia
+  // clara y no queda ningun rastro recuperable despues.
+  function wireFichaCodeButtons() {
+    document.querySelectorAll("[data-generate-ficha-code]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const ficha = btn.getAttribute("data-generate-ficha-code");
+        const statusEl = document.querySelector('[data-ficha-code-status="' + ficha + '"]');
+        const proceed = await confirmAdminAction(
+          "Esto genera un codigo NUEVO para la ficha " + ficha + " y deja de aceptar el anterior de inmediato. ¿Continuar?"
+        );
+        if (!proceed) return;
+
+        const db = window._firebaseDb;
+        if (!db || typeof db.setRegistrationCode !== "function") {
+          if (statusEl) statusEl.textContent = "La integracion con Apps Script no esta disponible.";
+          return;
+        }
+        const code = generateRandomFichaCode();
+        btn.setAttribute("disabled", "disabled");
+        if (statusEl) statusEl.textContent = "Generando...";
+        try {
+          const result = await db.setRegistrationCode(ficha, code);
+          if (result && result.ok) {
+            if (statusEl) {
+              statusEl.innerHTML =
+                '<strong>Codigo nuevo (copialo ahora, no se volvera a mostrar):</strong> ' +
+                '<code>' + escapeHtml(code) + '</code>';
+            }
+          } else {
+            if (statusEl) statusEl.textContent = (result && result.message) || "No se pudo guardar el codigo. Intenta de nuevo.";
+          }
+        } catch (_) {
+          if (statusEl) statusEl.textContent = "No se pudo guardar el codigo. Intenta de nuevo.";
+        } finally {
+          btn.removeAttribute("disabled");
+        }
+      });
+    });
   }
 
   function renderGuides() {
@@ -3356,7 +3439,7 @@
   async function handleGradesExcelDownload() {
     const statusEl = byId("grades-excel-download-status");
     const setStatus = (msg) => { if (statusEl) statusEl.textContent = msg; };
-    if (typeof window.XLSX === "undefined") { setStatus("La libreria de Excel no cargo."); return; }
+    if (!(await ensureXlsxLoaded())) { setStatus("La libreria de Excel no cargo."); return; }
     const { ficha, guideFamily } = currentGradesFichaAndFamily();
     const catalog = getGradeCatalog();
     const entry = catalog[guideFamily];
@@ -3386,21 +3469,18 @@
     // de emparejamiento al subir, sin importar el orden de las columnas.
     const sortedStudents = students.slice().sort((a, b) =>
       String(a.fullName || "").localeCompare(String(b.fullName || ""), "es"));
-    // Encabezado = id corto de la actividad (max ~19 caracteres en todo el
-    // catalogo), no la etiqueta completa (algunas pasan de 40-50 caracteres,
-    // ej. "Producto 6 - Informe de impacto (entrega final)"): con la etiqueta
-    // completa la columna queda angosta y el texto se corta, o hay que hacer
-    // columnas tan anchas que la tabla deja de caber en pantalla y es facil
-    // perderse calificando. La hoja "Leyenda" trae el id -> descripcion.
-    const header = ["Nombre completo", "Usuario", "% Aprobado", ...activities.map((a) => a.id)];
-    const rows = [header];
-    sortedStudents.forEach((user) => {
-      const g = gradesByUser[user.usernameKey] || {};
-      const values = activities.map((a) => resolveGrade(g, a) || "");
-      const approved = values.filter((v) => v === "A").length;
-      const pct = activities.length ? Math.round((approved / activities.length) * 100) : 0;
-      rows.push([user.fullName, user.usernameKey, `${pct}%`, ...values]);
-    });
+
+    // Fase 14: la construccion de filas/hojas es logica PURA, vive en
+    // js/admin_grades_excel_transform.js (mismo codigo, sin cambios) para
+    // poder probarla sin mockear XLSX ni el DOM. Encabezado = id corto de la
+    // actividad (max ~19 caracteres en todo el catalogo), no la etiqueta
+    // completa (algunas pasan de 40-50 caracteres, ej. "Producto 6 - Informe
+    // de impacto (entrega final)"): con la etiqueta completa la columna queda
+    // angosta y el texto se corta, o hay que hacer columnas tan anchas que la
+    // tabla deja de caber en pantalla y es facil perderse calificando. La
+    // hoja "Leyenda" trae el id -> descripcion.
+    const transform = window.adminGradesExcelTransform;
+    const { header, rows } = transform.buildGradesMainSheetRows(sortedStudents, activities, gradesByUser, resolveGrade);
     const ws = window.XLSX.utils.aoa_to_sheet(rows);
     ws["!cols"] = [{ wch: 30 }, { wch: 20 }, { wch: 12 }, ...activities.map(() => ({ wch: 15 }))];
     ws["!autofilter"] = { ref: window.XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: rows.length - 1, c: header.length - 1 } }) };
@@ -3410,24 +3490,13 @@
     // negrita, colores ni congelar paneles al escribir, asi que la organizacion
     // se hace con estructura -- hojas separadas, autofiltro, columnas cortas y
     // ordenadas -- en vez de formato visual).
-    const instructions = window.XLSX.utils.aoa_to_sheet([
-      [`Calificar en bloque -- ${entry.label || guideFamily} -- Ficha ${ficha}`],
-      [""],
-      ["Como usar este archivo:"],
-      ["1. En la hoja \"Calificaciones\", escribe A (Aprobado) o D (No aprobado) en las celdas de cada actividad."],
-      ["2. Deja en blanco las celdas que no quieras cambiar: la calificacion que ya exista no se toca."],
-      ["3. No edites la columna \"Usuario\" ni los encabezados de las actividades: se usan para identificar al aprendiz y la actividad al subir el archivo."],
-      ["4. Los encabezados de actividad son un codigo corto, no el nombre completo (para que la tabla no quede tan ancha). Revisa la hoja \"Leyenda\" para ver a que actividad corresponde cada codigo."],
-      ["5. La columna \"% Aprobado\" es solo informativa (se recalcula sola en el portal); no hace falta editarla."],
-      ["6. Guarda el archivo y subelo en el panel admin: Calificaciones > Calificar en bloque con Excel > Subir Excel calificado."],
-      [""],
-      [`Generado: ${new Date().toLocaleString("es-CO")}`],
-      [`Aprendices activos: ${sortedStudents.length}    Actividades: ${activities.length}`],
-    ]);
+    const instructionsRows = transform.buildGradesInstructionsRows(
+      entry, guideFamily, ficha, sortedStudents.length, activities.length, new Date().toLocaleString("es-CO")
+    );
+    const instructions = window.XLSX.utils.aoa_to_sheet(instructionsRows);
     instructions["!cols"] = [{ wch: 100 }];
 
-    const legendRows = [["Codigo (encabezado en Calificaciones)", "Actividad completa"]];
-    activities.forEach((a) => legendRows.push([a.id, a.label]));
+    const legendRows = transform.buildGradesLegendRows(activities);
     const legend = window.XLSX.utils.aoa_to_sheet(legendRows);
     legend["!cols"] = [{ wch: 22 }, { wch: 60 }];
     legend["!autofilter"] = { ref: window.XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: legendRows.length - 1, c: 1 } }) };
@@ -3436,15 +3505,14 @@
     window.XLSX.utils.book_append_sheet(wb, instructions, "Instrucciones");
     window.XLSX.utils.book_append_sheet(wb, legend, "Leyenda");
     window.XLSX.utils.book_append_sheet(wb, ws, "Calificaciones");
-    const safeName = (entry.label || guideFamily).replace(/[^a-zA-Z0-9]+/g, "_").slice(0, 40);
-    window.XLSX.writeFile(wb, `Calificaciones_${ficha}_${safeName}.xlsx`);
+    window.XLSX.writeFile(wb, transform.buildGradesExportFileName(entry, guideFamily, ficha));
     setStatus(`Descargado: ${sortedStudents.length} aprendices, ${activities.length} actividades.`);
   }
 
   async function handleGradesExcelUpload() {
     const statusEl = byId("grades-excel-upload-status");
     const setStatus = (msg) => { if (statusEl) statusEl.textContent = msg; };
-    if (typeof window.XLSX === "undefined") { setStatus("La libreria de Excel no cargo."); return; }
+    if (!(await ensureXlsxLoaded())) { setStatus("La libreria de Excel no cargo."); return; }
     const fileInput = byId("grades-excel-file");
     const file = fileInput && fileInput.files && fileInput.files[0];
     if (!file) { setStatus("Elige el archivo Excel calificado primero."); return; }
@@ -3474,27 +3542,18 @@
     }
     if (!rows || rows.length < 2) { setStatus("El Excel esta vacio."); return; }
 
+    // Fase 14: el mapeo de encabezado y la validacion fila-a-fila son logica
+    // PURA, viven en js/admin_grades_excel_transform.js (mismo codigo, sin
+    // cambios) para poder probarlas sin mockear XLSX ni el DOM.
+    const transform = window.adminGradesExcelTransform;
     const header = rows[0].map((h) => String(h == null ? "" : h).trim());
-    const usuarioIdx = header.indexOf("Usuario");
-    if (usuarioIdx === -1) {
-      setStatus('No se encontro la columna "Usuario". No cambies los encabezados del Excel descargado.');
-      return;
-    }
-    // El encabezado exportado es el id corto de la actividad (ver
-    // handleGradesExcelDownload); tambien se acepta la etiqueta completa por
-    // si el archivo se descargo con una version anterior de este flujo.
-    const headerToId = {};
-    activities.forEach((a) => {
-      headerToId[String(a.id).trim().toLowerCase()] = a.id;
-      headerToId[String(a.label).trim().toLowerCase()] = a.id;
-    });
-    const colToActivityId = {};
-    header.forEach((h, idx) => {
-      const id = headerToId[h.toLowerCase()];
-      if (id) colToActivityId[idx] = id;
-    });
-    if (!Object.keys(colToActivityId).length) {
-      setStatus("No se reconocio ninguna columna de actividad de esta guia. No cambies los encabezados del Excel descargado.");
+    const headerMap = transform.mapGradesExcelHeader(header, activities);
+    if (!headerMap.ok) {
+      setStatus(
+        headerMap.reason === "no-usuario-column"
+          ? 'No se encontro la columna "Usuario". No cambies los encabezados del Excel descargado.'
+          : "No se reconocio ninguna columna de actividad de esta guia. No cambies los encabezados del Excel descargado."
+      );
       return;
     }
 
@@ -3502,25 +3561,9 @@
     const studentsByKey = {};
     activeStudents.forEach((u) => { studentsByKey[u.usernameKey] = u; });
 
-    const parsedRows = [];
-    const unmatched = [];
-    const invalidCells = [];
-    for (let r = 1; r < rows.length; r++) {
-      const row = rows[r] || [];
-      const usernameKey = String(row[usuarioIdx] == null ? "" : row[usuarioIdx]).trim().toLowerCase();
-      if (!usernameKey) continue;
-      if (!studentsByKey[usernameKey]) { unmatched.push(usernameKey); continue; }
-      const grades = {};
-      Object.keys(colToActivityId).forEach((idxStr) => {
-        const idx = Number(idxStr);
-        const actId = colToActivityId[idx];
-        const raw = String(row[idx] == null ? "" : row[idx]).trim().toUpperCase();
-        if (!raw) return; // celda vacia: no se toca
-        if (raw === "A" || raw === "D") { grades[actId] = raw; return; }
-        invalidCells.push(`${usernameKey}/${actId}="${raw}"`);
-      });
-      if (Object.keys(grades).length) parsedRows.push({ usernameKey, grades });
-    }
+    const { parsedRows, unmatched, invalidCells } = transform.parseGradesExcelRows(
+      rows, headerMap.usuarioIdx, headerMap.colToActivityId, studentsByKey
+    );
 
     if (!parsedRows.length) {
       setStatus("No hay calificaciones validas (A/D) para aplicar."

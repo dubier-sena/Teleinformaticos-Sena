@@ -20,6 +20,46 @@
 
   var PRODUCTIVE_FICHAS = ["3168850", "3168852"];
 
+  // ── Fase 12 (rendimiento): modulos que SOLO usa renderStudent() (avance de
+  //    guias, calificaciones, Etapa Productiva, resumen remoto) -- invitado y
+  //    admin nunca llaman renderStudent(), asi que no tiene sentido bajarlos
+  //    de entrada. Se piden en cuanto se sabe que la sesion es de un
+  //    aprendiz, en paralelo pero preservando el orden de ejecucion
+  //    (async=false, igual que "defer" estatico) porque guide_declarations.js
+  //    registra guias en ActivityStandard apenas carga y necesita que
+  //    activity_standard.js ya haya corrido.
+  var STUDENT_ONLY_SCRIPTS = [
+    "js/activity_standard.js?v=20260822_1",
+    "js/guide_declarations.js?v=20260815_1",
+    "js/activity_grades.js?v=20260815_1",
+    "js/productive_stage_store.js?v=20260823_1",
+    "js/student_summary.js?v=20260823_2",
+  ];
+  var _studentModulesPromise = null;
+  function ensureStudentModulesLoaded() {
+    if (_studentModulesPromise) {
+      return _studentModulesPromise;
+    }
+    if (window.ActivityStandard && window.activityGradesManager && window.productiveStageStore && window.studentSummary) {
+      _studentModulesPromise = Promise.resolve();
+      return _studentModulesPromise;
+    }
+    _studentModulesPromise = Promise.all(STUDENT_ONLY_SCRIPTS.map(function (src) {
+      return new Promise(function (resolve) {
+        var el = document.createElement("script");
+        el.src = src;
+        el.async = false;
+        el.onload = resolve;
+        // Si UNO falla, no bloquea a los demas: renderStudent() ya maneja la
+        // ausencia de estos globales de forma defensiva (mismo criterio que
+        // hoy, cuando alguno tardaba en llegar por ser <script defer>).
+        el.onerror = resolve;
+        document.head.appendChild(el);
+      });
+    }));
+    return _studentModulesPromise;
+  }
+
   function byId(id) {
     return document.getElementById(id);
   }
@@ -383,7 +423,7 @@
   document.addEventListener("portal-student-restored", function () {
     var session = typeof auth.getCurrentSession === "function" ? auth.getCurrentSession() : null;
     if (session && session.role === "student" && byId("student-guides")) {
-      renderStudent(session);
+      ensureStudentModulesLoaded().then(function () { renderStudent(session); });
     }
   });
 
@@ -511,13 +551,111 @@
     return byId("student-callouts");
   }
 
+  // Busca la guia (archivo) de una familia de calificaciones, para poder
+  // enlazar un aviso "no aprobada" que viene del resumen remoto (que solo
+  // guarda la family, no el archivo -- ver GUIDE_FAMILY_BY_FILE en
+  // activity_grades.js, misma fuente que ya usa rejectedActivitiesFor).
+  function fileForFamily(family, files) {
+    var mgr = window.activityGradesManager;
+    if (!mgr || !mgr.GUIDE_FAMILY_BY_FILE) return null;
+    return (files || []).find(function (file) {
+      return mgr.GUIDE_FAMILY_BY_FILE[file] === family;
+    }) || null;
+  }
+
+  function rejectedItemsFromSummary(rejected, files) {
+    return (rejected || []).map(function (entry) {
+      var file = fileForFamily(entry.family, files);
+      var href = file && typeof auth.getGuideHref === "function"
+        ? auth.getGuideHref(file)
+        : "guia.html";
+      return {
+        text: entry.activityLabel + " no aprobada." + (entry.reason ? " " + entry.reason : ""),
+        href: href,
+        cta: "Ver guía",
+      };
+    });
+  }
+
+  function fmtRelativeTime(iso) {
+    var t = iso ? Date.parse(iso) : NaN;
+    if (!isFinite(t)) return "";
+    var diffMin = Math.round((Date.now() - t) / 60000);
+    if (diffMin < 1) return "hace un momento";
+    if (diffMin < 60) return "hace " + diffMin + " min";
+    var diffHr = Math.round(diffMin / 60);
+    if (diffHr < 24) return "hace " + diffHr + " h";
+    return "hace " + Math.round(diffHr / 24) + " d";
+  }
+
+  // Cuenta escrituras de ESTE aprendiz que quedaron pendientes de promocion a
+  // Firestore (cola de la Fase 10, ver readPendingPromotions en
+  // firebase_db.js) -- ya existia para el respaldo Drive, aqui se reutiliza
+  // como señal de "hay cambios sin sincronizar" sin crear un mecanismo nuevo.
+  function pendingLocalWritesCount(usernameKey, uid) {
+    var dbApi = window._firebaseDb;
+    if (!dbApi || typeof dbApi.readPendingPromotions !== "function") return 0;
+    var list;
+    try { list = dbApi.readPendingPromotions(); } catch (e) { return 0; }
+    if (!Array.isArray(list)) return 0;
+    return list.filter(function (op) {
+      var docId = String((op && op.docId) || "");
+      return (!!usernameKey && docId.indexOf(usernameKey) !== -1) ||
+        (!!uid && docId.indexOf(uid) !== -1);
+    }).length;
+  }
+
+  function renderSyncStatus(summaryResult, usernameKey) {
+    var el = byId("sync-status");
+    if (!el) return;
+    var bridge = window.portalFirebaseAuth;
+    var uid = bridge && typeof bridge.currentUid === "function" ? (bridge.currentUid() || null) : null;
+
+    if (pendingLocalWritesCount(usernameKey, uid) > 0) {
+      el.textContent = "🟡 Hay cambios pendientes de sincronizar en este equipo.";
+      el.className = "sync-status sync-status--pending";
+      return;
+    }
+    var summary = summaryResult && summaryResult.summary;
+    if (!summary) {
+      el.textContent = "";
+      el.className = "sync-status";
+      return;
+    }
+    if (summaryResult.stale) {
+      el.textContent = "🕒 Última sincronización: " + (fmtRelativeTime(summary.updatedAt) || "hace un momento") + ".";
+      el.className = "sync-status sync-status--stale";
+      return;
+    }
+    el.textContent = "🟢 Todo sincronizado.";
+    el.className = "sync-status sync-status--ok";
+  }
+
+  // El resumen remoto (js/student_summary.js) cubre firma, talleres de
+  // refuerzo, documentos base de Etapa Productiva y actividades "no
+  // aprobada" con UNA sola lectura (en vez de 2 lecturas fijas + dos avisos
+  // que solo eran correctos si este equipo ya tenia cache local). Si el
+  // modulo no cargo o el computo fallo por completo, se cae exactamente al
+  // comportamiento anterior (100% local/ad-hoc) para no dejar el Home sin
+  // avisos ni bloquear el render por un resumen que nunca llega.
   async function renderCallouts(user, files) {
     var box = calloutsBox();
     if (!box) return;
     var key = user.usernameKey || user.username;
     var items = [];
 
-    if (await isSignaturePending(key)) {
+    var summaryResult = null;
+    if (window.studentSummary && typeof window.studentSummary.loadForHome === "function") {
+      try {
+        summaryResult = await window.studentSummary.loadForHome({ user: user });
+      } catch (e) {
+        summaryResult = null;
+      }
+    }
+    var summary = summaryResult && summaryResult.summary;
+
+    var signaturePending = summary ? !!summary.signaturePending : await isSignaturePending(key);
+    if (signaturePending) {
       items.push({
         text: "Autorización de firma sin enviar.",
         href: "pages/auxiliares/autorizacion-firma.html",
@@ -525,7 +663,10 @@
       });
     }
 
-    if (await hasPendingReinforcementWorkshops(key)) {
+    var reinforcementPending = summary
+      ? (summary.reinforcementPendingCount || 0) > 0
+      : await hasPendingReinforcementWorkshops(key);
+    if (reinforcementPending) {
       items.push({
         text: "Tienes un Taller de Refuerzo asignado.",
         href: "pages/auxiliares/talleres-refuerzo.html",
@@ -533,15 +674,24 @@
       });
     }
 
-    pendingProductiveDocsFor(key).forEach(function (doc) {
+    var productiveLabels = summary && Array.isArray(summary.productiveDocsPending)
+      ? summary.productiveDocsPending
+      : pendingProductiveDocsFor(key).map(function (doc) { return doc.label; });
+    productiveLabels.forEach(function (label) {
       items.push({
-        text: 'Etapa Productiva: falta entregar "' + doc.label + '".',
+        text: 'Etapa Productiva: falta entregar "' + label + '".',
         href: "etapa-productiva-estudiante.html",
         cta: "Revisar",
       });
     });
 
-    items = items.concat(rejectedActivitiesFor(files || [], key));
+    items = items.concat(
+      summary && Array.isArray(summary.rejectedActivities)
+        ? rejectedItemsFromSummary(summary.rejectedActivities, files || [])
+        : rejectedActivitiesFor(files || [], key)
+    );
+
+    renderSyncStatus(summaryResult, key);
 
     if (!items.length) {
       box.hidden = true;
@@ -562,6 +712,18 @@
       .join("");
   }
 
+  // Cuando el resumen se refresca en segundo plano (porque estaba viejo) y
+  // trae datos distintos, se vuelve a pintar el bloque de avisos -- igual
+  // que ya hace "portal-student-restored" para las tarjetas de guia.
+  document.addEventListener("student-summary-updated", function () {
+    var session = typeof auth.getCurrentSession === "function" ? auth.getCurrentSession() : null;
+    if (session && session.role === "student" && calloutsBox()) {
+      var user = session.user || {};
+      var files = (typeof auth.getGuidesForFicha === "function" ? auth.getGuidesForFicha(user.ficha) : []) || [];
+      renderCallouts(user, files);
+    }
+  });
+
   // ── Render principal según sesión ─────────────────────────────────────────
   function render() {
     var session = typeof auth.getCurrentSession === "function" ? auth.getCurrentSession() : null;
@@ -576,7 +738,7 @@
       return;
     }
     showView("home-student");
-    renderStudent(session);
+    ensureStudentModulesLoaded().then(function () { renderStudent(session); });
   }
 
   // ── Handlers de formularios ───────────────────────────────────────────────
@@ -604,6 +766,7 @@
       fullName: byId("reg-name") ? byId("reg-name").value : "",
       username: byId("reg-user") ? byId("reg-user").value : "",
       ficha: byId("reg-ficha") ? byId("reg-ficha").value : "",
+      code: byId("reg-code") ? byId("reg-code").value : "",
       password: byId("reg-pass") ? byId("reg-pass").value : "",
     });
     if (!result.ok) {

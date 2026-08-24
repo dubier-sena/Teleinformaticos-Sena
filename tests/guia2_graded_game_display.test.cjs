@@ -79,6 +79,12 @@ function loadScriptGuia2() {
   ctx.window.__RUNTIME_PAGE_FILE__ = "grupo-10a-guia-02-herramientas-informaticas-digitales.html";
 
   vm.createContext(ctx);
+  // Fase 14: script_guia2.js ahora requiere window.wordSearchGenerator cargado antes.
+  vm.runInContext(
+    fs.readFileSync(path.join(root, "js", "word_search_generator.js"), "utf8"),
+    ctx,
+    { filename: "word_search_generator.js" }
+  );
   vm.runInContext(fs.readFileSync(path.join(root, "js", "script_guia2.js"), "utf8"), ctx, { filename: "script_guia2.js" });
   return ctx;
 }
@@ -155,6 +161,12 @@ function loadScriptGuia2OnMatrixPage() {
   ctx.window.__RUNTIME_PAGE_FILE__ = "grupo-10a-guia-02-actividad-322-matriz.html";
 
   vm.createContext(ctx);
+  // Fase 14: script_guia2.js ahora requiere window.wordSearchGenerator cargado antes.
+  vm.runInContext(
+    fs.readFileSync(path.join(root, "js", "word_search_generator.js"), "utf8"),
+    ctx,
+    { filename: "word_search_generator.js" }
+  );
   vm.runInContext(fs.readFileSync(path.join(root, "js", "script_guia2.js"), "utf8"), ctx, { filename: "script_guia2.js" });
   return ctx;
 }

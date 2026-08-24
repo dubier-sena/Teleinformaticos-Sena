@@ -118,6 +118,8 @@ function loadFirebaseDbInstance(fetchImpl) {
   };
   windowObj.fetch = sandbox.fetch;
   vm.createContext(sandbox);
+  // Fase 14: firebase_db.js ahora requiere window.guideMergeUtils cargado antes.
+  vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "js", "guide_merge_utils.js"), "utf8"), sandbox);
   vm.runInContext(code, sandbox);
   return windowObj._firebaseDb;
 }

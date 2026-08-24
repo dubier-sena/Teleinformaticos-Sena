@@ -437,6 +437,13 @@
 }
 .callout__link:hover { text-decoration: underline; }
 
+/* Estado de sincronización (Fase 11): texto discreto, vacío = no se muestra
+   nada (evita un renglón en blanco mientras se calcula por primera vez). */
+.sync-status { margin: -0.4rem 0 1rem; font-size: 0.8rem; font-weight: 600; color: var(--ink-500, #6b7280); }
+.sync-status:empty { display: none; }
+.sync-status--pending { color: #92650a; }
+.sync-status--ok { color: var(--brand-600, #1f9d55); }
+
 /* Encabezado de sección */
 .sec-head { margin-bottom: 1rem; }
 .sec-head__k {

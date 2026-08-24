@@ -77,6 +77,7 @@
   var COL_REINFORCEMENT_WORKSHOPS = "sena_portal_reinforcement_workshops";
   var COL_REINFORCEMENT_ANSWERS = "sena_portal_reinforcement_answers";
   var COL_SIGNATURE_AUTH = "sena_portal_signature_auth";
+  var COL_STUDENT_SUMMARY = "sena_portal_student_summary";
   var CALENDAR_FALLBACK_PREFIX = "__calendar__:";
   var AVAILABILITY_DOC_ID = CALENDAR_FALLBACK_PREFIX + "calendario_2026_admin";
   var GUIDE_DATA_FALLBACK_PREFIX = "__guide_data__:";
@@ -705,12 +706,50 @@
     if (!isConfigured) return false;
     try {
       if (op.type === "set") {
+        var dataToPromote = op.data;
+        // Fase 10 (auditoria profunda): promover a ciegas el `data`
+        // capturado en el momento de la caida de Firestore reemplazaria por
+        // COMPLETO cualquier campo que OTRO dispositivo ya haya promovido
+        // mientras tanto -- dos dispositivos, cada uno con su propia cola
+        // pendiente en su propio localStorage, pueden promover el MISMO
+        // docId en cualquier orden (uno mientras el otro sigue pendiente,
+        // o ambos casi al mismo tiempo al recuperar conexion). Para
+        // snapshots de guia (con snapshotJson) se relee el estado ACTUAL de
+        // Firestore justo antes de promover y se combina con el mismo merge
+        // por timestamp/campo que ya protege el guardado online normal
+        // (mergeGuideDataSnapshotForSave) -- asi, sin importar el orden de
+        // promocion entre dispositivos, ningun campo del otro se pierde.
+        if (op.data && typeof op.data.snapshotJson === "string") {
+          try {
+            var currentRes = await fetchWithTimeout(
+              docUrl(op.collection, op.docId),
+              { method: "GET", headers: await authHeaders() },
+              API_TIMEOUT_MS
+            );
+            if (currentRes.ok) {
+              var currentDoc = fromFsDoc(await currentRes.json());
+              if (currentDoc && typeof currentDoc.snapshotJson === "string") {
+                var existingSnapshot = JSON.parse(currentDoc.snapshotJson);
+                var incomingSnapshot = JSON.parse(op.data.snapshotJson);
+                var mergedSnapshot = mergeGuideDataSnapshotForSave(existingSnapshot, incomingSnapshot);
+                dataToPromote = Object.assign({}, op.data, {
+                  snapshotJson: JSON.stringify(mergedSnapshot),
+                  updatedAt: mergedSnapshot.updatedAt || op.data.updatedAt,
+                });
+              }
+            }
+          } catch (mergeError) {
+            // JSON corrupto o fallo de lectura: se promueve el data original
+            // tal cual -- mejor promover algo que nada, y el proximo ciclo
+            // de sincronizacion normal ya corrige por timestamp.
+          }
+        }
         var res = await fetchWithTimeout(
           docUrl(op.collection, op.docId),
           {
             method: "PATCH",
             headers: await authHeaders({ "Content-Type": "application/json" }),
-            body: JSON.stringify(toFsDoc(op.data)),
+            body: JSON.stringify(toFsDoc(dataToPromote)),
           },
           API_TIMEOUT_MS
         );
@@ -1287,9 +1326,19 @@
   // Escribe el indice uid -> ficha (sena_portal_user_index/{uid}) que las
   // reglas usan para verificar la ficha del solicitante en la regla list de
   // sena_portal_users. Se llama en cada login exitoso (ver portal_auth.js).
-  async function cloudSaveUserIndex(ficha) {
+  async function cloudSaveUserIndex(ficha, usernameKey) {
     var uid = getBridgeCurrentUid();
     if (!uid || !ficha) return false;
+    if (usernameKey) {
+      // Fase 5 (auditoria profunda): estampa el UID en el propio perfil
+      // (sena_portal_users) para poder resolver mas tarde el uid de ESTE
+      // aprendiz a partir de su usernameKey -- necesario cuando el admin
+      // guarda/lee en su nombre desde otro navegador donde su sesion de
+      // Firebase no esta activa (ver resolveUidForScope). Update de un solo
+      // campo (fsUpdateField) para no pisar el resto del perfil. Best-effort:
+      // si falla, el proximo login lo reintenta.
+      fsUpdateField(COL_USERS, usernameKey, "uid", uid).catch(function () {});
+    }
     return fsPatch(COL_USER_INDEX, uid, {
       ficha:     String(ficha),
       updatedAt: new Date().toISOString(),
@@ -1373,6 +1422,26 @@
     if (!usernameKey) return false;
     return fsPatch(COL_SIGNATURE_AUTH, usernameKey, Object.assign({}, data, {
       usernameKey: usernameKey,
+      updatedAt: new Date().toISOString(),
+    }));
+  }
+
+  // ── Resumen remoto del aprendiz (Fase 11 - Home cross-device) ─────────────
+  // Doc por UID (no usernameKey, ver Fase 5): { uid, usernameKey, ficha,
+  // updatedAt, ...campos derivados }. Lo calcula y escribe el propio navegador
+  // del aprendiz (js/student_summary.js) a partir de datos que ya puede leer;
+  // nunca es fuente de verdad (ver comentario en firestore.rules). uid es
+  // obligatorio: sin el no hay bajo que clave guardar ni forma de cumplir la
+  // regla request.resource.data.uid == uid.
+  async function cloudGetStudentSummary(uid) {
+    if (!uid) return null;
+    return fsGet(COL_STUDENT_SUMMARY, uid);
+  }
+
+  async function cloudSaveStudentSummary(uid, summary) {
+    if (!uid) return false;
+    return fsPatch(COL_STUDENT_SUMMARY, uid, Object.assign({}, summary, {
+      uid: uid,
       updatedAt: new Date().toISOString(),
     }));
   }
@@ -1674,8 +1743,53 @@
     return prefix + safeCloudKey(scopeKey) + ":" + fileNameToKey(fileName);
   }
 
-  async function readGuideStateDoc(prefix, scopeKey, fileName, opts) {
-    var docId = guideStateDocId(prefix, scopeKey, fileName);
+  // ── Fase 5 (auditoria profunda): identidad por UID en vez de usernameKey ───
+  // sena_portal_progress usa docIds compuestos donde el segmento de dueno es
+  // el usernameKey SANEADO (safeCloudKey). Dos aprendices reales distintos
+  // pueden sanear al mismo valor (p.ej. "eimy_alvarez" y "eimy.alvarez"), y la
+  // regla de Firestore acepta AMBOS como dueños del mismo docId -- una
+  // colision real, no solo teorica (ver firestore.rules, isOwnerOfComposedStudentDoc).
+  // La migracion usa el UID de Firebase (unico por cuenta, nunca se sanea)
+  // como nuevo segmento de dueno: "__guide_data__:uid:{uid}:{archivo}".
+  // Progresiva y no destructiva: se sigue LEYENDO el doc legado (y
+  // combinandolo por timestamp/campo con el nuevo si ambos existen), pero
+  // las escrituras NUEVAS van solo al doc por UID.
+
+  // Extrae el usernameKey de un scopeKey "student:{usernameKey}" (unico
+  // formato usado en todo el repo para este parametro).
+  function scopeUsernameKey(scopeKey) {
+    return String(scopeKey || "").replace(/^student:/, "");
+  }
+
+  function currentSessionUsernameKey() {
+    var auth = window.portalAuth;
+    var session = auth && typeof auth.getCurrentSession === "function" ? auth.getCurrentSession() : null;
+    return (session && session.user && session.user.usernameKey) || "";
+  }
+
+  // Resuelve el UID de Firebase del aprendiz DUEÑO del scope -- no
+  // necesariamente el de la sesion actual: el admin puede guardar en nombre
+  // de OTRO aprendiz (ver patchGuideCloudState en admin_usuarios.js). Camino
+  // rapido (sin red): si el scope es el de la propia sesion, se usa el uid ya
+  // disponible en el SDK de Firebase Auth. Camino lento: se lee el campo
+  // `uid` que el propio aprendiz deja en su perfil (sena_portal_users) en
+  // cada login (ver cloudSaveUserIndex). Si el aprendiz aun no inicio sesion
+  // desde que existe ese campo, no hay uid que resolver -- el llamador debe
+  // seguir usando el esquema legado para ese caso (transicion, no un error).
+  async function resolveUidForScope(scopeKey) {
+    var usernameKey = scopeUsernameKey(scopeKey);
+    if (!usernameKey) return "";
+    var uid = getBridgeCurrentUid();
+    if (uid && currentSessionUsernameKey() === usernameKey) return uid;
+    try {
+      var profile = await cloudGetUser(usernameKey);
+      return (profile && profile.uid) || "";
+    } catch (e) {
+      return "";
+    }
+  }
+
+  async function readGuideStateDocByDocId(docId, opts) {
     // NOTA: fsGet YA prueba Drive por su cuenta ante un 404 o un fallo de auth
     // (ver arriba), asi que un chequeo extra aqui era redundante (duplicaba la
     // llamada a Apps Script hasta 2 veces mas por cada doc que no existe).
@@ -1686,173 +1800,88 @@
     return null;
   }
 
-  function readSnapshotPayload(doc) {
-    if (!doc || typeof doc !== "object") return null;
-    if (typeof doc.snapshotJson === "string") {
-      try { return JSON.parse(doc.snapshotJson); } catch (e) {}
+  // Combina el doc LEGADO (por usernameKey saneado) y el doc NUEVO (por UID)
+  // mientras dura la transicion. Ninguno de los dos es "lo que se esta
+  // guardando" -- son dos lecturas remotas ya existentes -- asi que se
+  // combinan con el MISMO merge por timestamp/campo que ya protege el
+  // guardado normal (mergeGuideDataSnapshotForSave): el mas viejo entra como
+  // "existing" (solo rellena huecos) y el mas nuevo como "incoming" (gana un
+  // conflicto de campo real). Un doc UID vacio/parcial (recien creado) nunca
+  // esconde respuestas validas del legado, y viceversa. El _updateTime del
+  // resultado SIEMPRE es el del doc UID (el destino real de la proxima
+  // escritura) -- usar el del legado aqui compararia la precondicion optimista
+  // contra el documento equivocado y el guardado fallaria como falso conflicto.
+  function mergeLegacyAndUidGuideStateDocs(legacyDoc, uidDoc) {
+    if (!legacyDoc) return uidDoc;
+    if (!uidDoc) {
+      // No existe doc UID todavia: el contenido sale del legado, pero SIN
+      // _updateTime -- el proximo guardado sera una creacion nueva del doc
+      // UID, no un PATCH con una precondicion que no le pertenece.
+      return Object.assign({}, legacyDoc, { _updateTime: undefined });
     }
-    return doc;
-  }
-
-  function plainObject(value) {
-    return value && typeof value === "object" && !Array.isArray(value);
-  }
-
-  function snapshotState(snapshot) {
-    if (plainObject(snapshot && snapshot.state)) return snapshot.state;
-    if (plainObject(snapshot && snapshot.data)) return snapshot.data;
-    return {};
-  }
-
-  function hasMeaningfulGuideValue(value) {
-    if (value == null) return false;
-    if (typeof value === "string") return value.trim().length > 0;
-    if (typeof value === "number") return !isNaN(value);
-    if (typeof value === "boolean") return value === true;
-    if (Array.isArray(value)) return value.length > 0;
-    if (plainObject(value)) return Object.keys(value).length > 0;
-    return true;
-  }
-
-  function countMeaningfulGuideValues(record) {
-    if (!plainObject(record)) return 0;
-    return Object.keys(record).filter(function (key) {
-      return hasMeaningfulGuideValue(record[key]);
-    }).length;
-  }
-
-  function deriveProgressFromGuideDataDoc(fileName, doc) {
-    var snapshot = readSnapshotPayload(doc);
-    var state = snapshotState(snapshot);
-    var completedFromState = countMeaningfulGuideValues(state);
-    if (completedFromState <= 0) return null;
-
-    var auth = window.portalAuth || {};
-    var config = auth.GUIDE_PROGRESS_CONFIG && auth.GUIDE_PROGRESS_CONFIG[fileName];
-    var total = Math.max(0, Number(config && config.total) || 0);
-    if (total <= 0) {
-      total = completedFromState;
-    }
-    var completed = Math.min(completedFromState, total);
-    return {
-      completed: completed,
-      total: total,
-      percent: total ? Math.round((completed / total) * 100) : 0,
-      updatedAt: (snapshot && snapshot.updatedAt) || (doc && doc.updatedAt) || "",
-      source: "guide-data",
-    };
-  }
-
-  function mergeGuideValue(previous, incoming) {
-    if (plainObject(previous) && plainObject(incoming)) {
-      var nested = Object.assign({}, previous);
-      Object.keys(incoming).forEach(function (key) {
-        nested[key] = mergeGuideValue(previous[key], incoming[key]);
-      });
-      return nested;
-    }
-
-    if (!hasMeaningfulGuideValue(incoming) && hasMeaningfulGuideValue(previous)) {
-      return previous;
-    }
-
-    return incoming;
-  }
-
-  function mergeGuideState(previousState, incomingState, allowMissingLockRemoval) {
-    var previous = plainObject(previousState) ? previousState : {};
-    var incoming = plainObject(incomingState) ? incomingState : {};
-    var next = Object.assign({}, previous);
-
-    if (allowMissingLockRemoval) {
-      Object.keys(previous).forEach(function (key) {
-        if (/-locked$/.test(key) && !Object.prototype.hasOwnProperty.call(incoming, key)) {
-          delete next[key];
-        }
-      });
-    }
-
-    Object.keys(incoming).forEach(function (key) {
-      if (/-locked$/.test(key)) {
-        if (incoming[key]) next[key] = true;
-        else delete next[key];
-        return;
-      }
-      next[key] = mergeGuideValue(previous[key], incoming[key]);
+    var legacySnapshot = readSnapshotPayload(legacyDoc) || {};
+    var uidSnapshot = readSnapshotPayload(uidDoc) || {};
+    var legacyTs = snapshotTimestamp(legacySnapshot);
+    var uidTs = snapshotTimestamp(uidSnapshot);
+    var uidIsNewer = !Number.isFinite(legacyTs) || (Number.isFinite(uidTs) && uidTs >= legacyTs);
+    var older = uidIsNewer ? legacySnapshot : uidSnapshot;
+    var newer = uidIsNewer ? uidSnapshot : legacySnapshot;
+    var mergedSnapshot = mergeGuideDataSnapshotForSave(older, newer);
+    return Object.assign({}, uidDoc, {
+      snapshotJson: JSON.stringify(mergedSnapshot),
+      updatedAt: mergedSnapshot.updatedAt || uidDoc.updatedAt,
     });
-
-    return next;
   }
 
-  // Lee un timestamp ISO 8601 del snapshot. Devuelve epoch ms o NaN.
-  function snapshotTimestamp(snapshot) {
-    if (!plainObject(snapshot)) return NaN;
-    var candidates = [
-      snapshot.updatedAt,
-      snapshot.lastModified,
-      snapshot.savedAt,
-      snapshot.timestamp,
-    ];
-    for (var i = 0; i < candidates.length; i++) {
-      var parsed = Date.parse(candidates[i] || "");
-      if (Number.isFinite(parsed)) return parsed;
-    }
-    return NaN;
+  async function readGuideStateDoc(prefix, scopeKey, fileName, opts) {
+    var legacyDocId = guideStateDocId(prefix, scopeKey, fileName);
+    var legacyDoc = await readGuideStateDocByDocId(legacyDocId, opts);
+    var uid = await resolveUidForScope(scopeKey);
+    if (!uid) return legacyDoc;
+    var uidDocId = guideStateDocId(prefix, "uid:" + uid, fileName);
+    var uidDoc = await readGuideStateDocByDocId(uidDocId, opts);
+    return mergeLegacyAndUidGuideStateDocs(legacyDoc, uidDoc);
   }
 
-  function mergeGuideDataSnapshotForSave(existingSnapshot, incomingSnapshot) {
-    var existing = plainObject(existingSnapshot) ? existingSnapshot : {};
-    var incoming = plainObject(incomingSnapshot) ? incomingSnapshot : {};
-    var updatedBy = String(incoming.updatedBy || "").toLowerCase();
-    var isAdminOverride = Boolean(
-      incoming.reabierta ||
-      incoming.permiteEdicion ||
-      /admin|unlock|habilit|reabiert/.test(updatedBy)
-    );
-
-    // Resolución de conflictos por timestamp (LWW = Last Write Wins).
-    // Si el doc remoto es más nuevo y el incoming no es una acción admin
-    // explícita, preservamos el remoto para no sobreescribir cambios hechos
-    // en otro equipo entre el load y el save. Tolerancia de 1s para jitter
-    // de relojes mal sincronizados.
-    var existingTs = snapshotTimestamp(existing);
-    var incomingTs = snapshotTimestamp(incoming);
-    if (
-      !isAdminOverride &&
-      Number.isFinite(existingTs) &&
-      Number.isFinite(incomingTs) &&
-      existingTs > incomingTs + 1000
-    ) {
-      if (typeof console !== "undefined" && console.warn) {
-        console.warn(
-          "[firebase_db] Conflicto de sincronizacion: el doc remoto es mas nuevo (" +
-          new Date(existingTs).toISOString() + ") que el incoming (" +
-          new Date(incomingTs).toISOString() + "). Se preserva el remoto."
-        );
-      }
-      return existing;
-    }
-
-    var mergedState = mergeGuideState(snapshotState(existing), snapshotState(incoming), isAdminOverride);
-    var merged = Object.assign({}, existing, incoming);
-
-    if (Object.prototype.hasOwnProperty.call(incoming, "data") || Object.prototype.hasOwnProperty.call(existing, "data")) {
-      merged.data = mergedState;
-    }
-    if (Object.prototype.hasOwnProperty.call(incoming, "state") || Object.prototype.hasOwnProperty.call(existing, "state")) {
-      merged.state = mergedState;
-    }
-    if (!Object.prototype.hasOwnProperty.call(merged, "state") && !Object.prototype.hasOwnProperty.call(merged, "data")) {
-      merged.state = mergedState;
-    }
-
-    return merged;
-  }
+  // Fase 14 (mantenibilidad): estas utilidades de fusion/lectura de snapshot
+  // vivian aqui mismo; ahora estan en js/guide_merge_utils.js (mismo codigo,
+  // sin cambios de comportamiento) para poder probarlas aisladas sin mocks de
+  // Firestore/Drive. Se alias-ean con los MISMOS nombres locales para que
+  // absolutamente ninguna de las lecturas de mas abajo en este archivo tenga
+  // que cambiar.
+  var _guideMergeUtils = window.guideMergeUtils;
+  var readSnapshotPayload = _guideMergeUtils.readSnapshotPayload;
+  var plainObject = _guideMergeUtils.plainObject;
+  var snapshotState = _guideMergeUtils.snapshotState;
+  var hasMeaningfulGuideValue = _guideMergeUtils.hasMeaningfulGuideValue;
+  var countMeaningfulGuideValues = _guideMergeUtils.countMeaningfulGuideValues;
+  var deriveProgressFromGuideDataDoc = _guideMergeUtils.deriveProgressFromGuideDataDoc;
+  var mergeGuideValue = _guideMergeUtils.mergeGuideValue;
+  var mergeGuideState = _guideMergeUtils.mergeGuideState;
+  var snapshotTimestamp = _guideMergeUtils.snapshotTimestamp;
+  var mergeGuideDataSnapshotForSave = _guideMergeUtils.mergeGuideDataSnapshotForSave;
 
   async function saveGuideStateDoc(prefix, kind, scopeKey, fileName, payload, expectedUpdateTime) {
-    var docId = guideStateDocId(prefix, scopeKey, fileName);
+    // Fase 5: las escrituras NUEVAS van UNICAMENTE al doc por UID (nunca al
+    // legado por usernameKey saneado, que puede colisionar entre dos
+    // aprendices reales). Si el uid todavia no se puede resolver (el
+    // aprendiz no ha iniciado sesion desde que existe este campo), se sigue
+    // usando el docId legado -- transicion, no perdida de datos: el proximo
+    // login del aprendiz estampa su uid y el siguiente guardado ya usa el
+    // doc nuevo.
+    var uid = await resolveUidForScope(scopeKey);
+    var docId = uid
+      ? guideStateDocId(prefix, "uid:" + uid, fileName)
+      : guideStateDocId(prefix, scopeKey, fileName);
+    // usernameKey (ademas de _usernameKey, que ya existia): cierra el bug de
+    // sena_portal_guide_state confirmado en la auditoria profunda -- la
+    // regla de esa coleccion exige un campo `usernameKey` para autorizar al
+    // dueno por ese camino, y el codigo nunca lo escribia (solo
+    // `_usernameKey`). Ver firestore.rules (guideStateOwnerKey) para la
+    // compatibilidad con docs antiguos que solo tengan `_usernameKey`.
     var progressPayload = Object.assign({
       _usernameKey: docId,
+      usernameKey: docId,
       _kind: kind,
     }, payload);
     var fallbackSaved = await fsPatch(
@@ -1884,8 +1913,10 @@
     // comparta docId) del que leimos para obtener expectedUpdateTime, asi que
     // esa precondicion no le pertenece. Este camino ya era best-effort/legado
     // antes de este cambio (solo se alcanza si COL_PROGRESS fallo por algo que
-    // no fue un conflicto de version).
-    return fsPatch(COL_GUIDE_STATE, docId, payload);
+    // no fue un conflicto de version). Usa progressPayload (con usernameKey)
+    // en vez del payload crudo -- antes faltaba el campo que la regla exige,
+    // asi que esta escritura SIEMPRE terminaba 403 -> respaldo Drive.
+    return fsPatch(COL_GUIDE_STATE, docId, progressPayload);
   }
 
   async function cloudGetGuideData(scopeKey, fileName, opts) {
@@ -1992,10 +2023,18 @@
     } catch (e) { token = null; }
     if (!token) return false;
 
-    var docId = guideStateDocId(GUIDE_DATA_FALLBACK_PREFIX, scopeKey, fileName);
+    // Fase 5: mismo esquema por UID que el guardado normal, via el uid ya
+    // disponible en el SDK (sin red extra -- este camino es para pagehide,
+    // no puede esperar un fetch adicional para resolverlo). Si aun no hay
+    // uid (transicion), sigue en el docId legado.
+    var uid = getBridgeCurrentUid();
+    var docId = uid
+      ? guideStateDocId(GUIDE_DATA_FALLBACK_PREFIX, "uid:" + uid, fileName)
+      : guideStateDocId(GUIDE_DATA_FALLBACK_PREFIX, scopeKey, fileName);
     var updatedAt = (snapshot && snapshot.updatedAt) || new Date().toISOString();
     var payload = {
       _usernameKey: docId,
+      usernameKey: docId,
       _kind: "guide-data",
       scopeKey: scopeKey,
       fileName: fileName,
@@ -2694,6 +2733,83 @@
     });
   }
 
+  // ── Codigo de invitacion por ficha (Fase 6) ─────────────────────────────────
+  // Objetivo: conocer una ficha valida ya NO debe ser suficiente para
+  // registrarse. CORREGIDO (revision de seguridad posterior al cierre
+  // inicial de Fase 6): la primera version guardaba el codigo en Firestore
+  // con lectura PUBLICA (sena_portal_ficha_codes, "allow get: if true") para
+  // poder leerlo antes del login -- eso dejaba que CUALQUIERA que conociera
+  // una ficha leyera el codigo real por Firestore REST sin sesion. El
+  // codigo NUNCA fue secreto con ese diseno.
+  //
+  // Ahora ninguna de las dos funciones toca Firestore: ambas llaman al Apps
+  // Script existente (entregas_actividades.gs, acciones
+  // "verifyRegistrationCode"/"setRegistrationCode"), que compara/guarda un
+  // HASH server-side (Script Properties, con un secreto que solo existe
+  // ahi). El cliente nunca recibe el codigo ni un hash reutilizable -- solo
+  // valido/no-valido.
+  function getAppsScriptUrl() {
+    var pi = window.PROJECT_INTEGRATIONS;
+    var url = pi && typeof pi.googleAppsScriptUrl === "string" ? pi.googleAppsScriptUrl : "";
+    return url.trim();
+  }
+
+  // Sin idToken (ocurre ANTES del login). Devuelve {ok, message} listo para
+  // que registerStudentWithFirebaseBridge lo retorne tal cual si ok=false.
+  // ok=false cubre TANTO "codigo incorrecto" como "no se pudo verificar" --
+  // fail-closed en ambos casos, el registro nunca continua sin un ok=true
+  // explicito del servidor.
+  async function verifyRegistrationCode(ficha, code) {
+    var endpoint = getAppsScriptUrl();
+    if (!endpoint) {
+      return { ok: false, message: "No fue posible verificar el codigo de registro en este momento. Intentalo nuevamente." };
+    }
+    try {
+      var res = await fetchWithTimeout(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({ action: "verifyRegistrationCode", ficha: String(ficha || ""), code: String(code || "") }),
+      }, API_TIMEOUT_MS);
+      var data = await res.json().catch(function () { return {}; });
+      if (!res.ok || data.ok === false) {
+        return { ok: false, message: (data && data.message) || "No fue posible verificar el codigo de registro en este momento. Intentalo nuevamente." };
+      }
+      if (data.valid === true) return { ok: true };
+      return { ok: false, message: "Codigo de registro no valido." };
+    } catch (e) {
+      return { ok: false, message: "No fue posible verificar el codigo de registro en este momento. Intentalo nuevamente." };
+    }
+  }
+
+  // Admin-only (verificado server-side en Apps Script contra el idToken, no
+  // contra nada que el cliente declare). El codigo en texto plano viaja UNA
+  // sola vez, recien generado en el propio navegador del admin -- no se
+  // guarda en ningun lado del lado cliente ni server, solo su hash.
+  async function setRegistrationCode(ficha, code) {
+    var endpoint = getAppsScriptUrl();
+    if (!endpoint) return { ok: false, message: "Integracion con Apps Script no configurada." };
+    var idToken = null;
+    try {
+      var bridge = window.portalFirebaseAuth;
+      if (bridge && typeof bridge.getIdToken === "function") idToken = await bridge.getIdToken(false);
+    } catch (e) { idToken = null; }
+    if (!idToken) return { ok: false, message: "Sesion administrativa no disponible. Vuelve a iniciar sesion." };
+    try {
+      var res = await fetchWithTimeout(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({ action: "setRegistrationCode", idToken: idToken, ficha: String(ficha || ""), code: String(code || "") }),
+      }, API_TIMEOUT_MS);
+      var data = await res.json().catch(function () { return {}; });
+      if (!res.ok || data.ok !== true) {
+        return { ok: false, message: (data && data.message) || "No se pudo guardar el codigo." };
+      }
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, message: "No se pudo guardar el codigo." };
+    }
+  }
+
   auth.updateStudentFicha = async function (usernameKey, newFicha) {
     if (typeof prev.updateStudentFicha !== "function") {
       return { ok: false, message: "La edicion de ficha no esta disponible." };
@@ -3177,6 +3293,8 @@
     cloudSaveGrades: cloudSaveGrades,
     cloudGetSignatureAuth: cloudGetSignatureAuth,
     cloudSaveSignatureAuth: cloudSaveSignatureAuth,
+    cloudGetStudentSummary: cloudGetStudentSummary,
+    cloudSaveStudentSummary: cloudSaveStudentSummary,
     cloudGetGradeSolutions: cloudGetGradeSolutions,
     cloudSaveGradeSolutions: cloudSaveGradeSolutions,
     cloudGetImprovementPlans: cloudGetImprovementPlans,
@@ -3188,6 +3306,16 @@
     mergeGuideDataSnapshotForSave: mergeGuideDataSnapshotForSave,
     resolveGuideHydration: resolveGuideHydration,
     mergeGuideState: mergeGuideState,
+    cloudGetUser: cloudGetUser,
+    cloudSaveUser: cloudSaveUser,
+    // Fase 5 (migracion a UID): expuestos para pruebas unitarias directas.
+    resolveUidForScope: resolveUidForScope,
+    mergeLegacyAndUidGuideStateDocs: mergeLegacyAndUidGuideStateDocs,
+    // Fase 5 (cierre promocion Drive -> Firestore): expuestos para probar
+    // que la promocion nunca reconstruye el propietario desde username.
+    tryFirestorePromote: tryFirestorePromote,
+    flushPendingPromotions: flushPendingPromotions,
+    readPendingPromotions: readPendingPromotions,
     cloudSaveGuideDataKeepalive: cloudSaveGuideDataKeepalive,
     cloudGetGuideUiState: cloudGetGuideUiState,
     cloudSaveGuideUiState: cloudSaveGuideUiState,
@@ -3205,6 +3333,8 @@
     cloudSaveUserIndex:       cloudSaveUserIndex,
     cloudGetAuthVersion:      cloudGetAuthVersion,
     cloudSaveAuthVersion:     cloudSaveAuthVersion,
+    verifyRegistrationCode:   verifyRegistrationCode,
+    setRegistrationCode:      setRegistrationCode,
     shouldDeferCloudReads: shouldDeferCloudReads,
     shouldSkipGuideUiCloudSave: shouldSkipGuideUiCloudSave,
     getBudgetStatus:    getFirestoreBudgetStatus,

@@ -43,10 +43,15 @@
       description:
         "Formato con los datos ya diligenciados de tu grupo (ficha). Descargalo, revisa tu fila, firmalo y vuelve a subirlo.",
       // El archivo VIVE en Drive (no en este repo publico): contiene cedula y
-      // datos de TODO el grupo, no solo del aprendiz que lo descarga. El link
-      // real por ficha se resuelve en tiempo de ejecucion via
-      // PROJECT_INTEGRATIONS.fichaAcuerdoExcelUrls (ver project_integrations.js).
-      hrefByFicha: true,
+      // datos de TODO el grupo, no solo del aprendiz que lo descarga. Fase 2
+      // (auditoria profunda, 2026-08-23): antes el ID de Drive viajaba en
+      // texto plano en PROJECT_INTEGRATIONS.fichaAcuerdoExcelUrls (repo
+      // publico) y el archivo estaba compartido "cualquiera con el enlace" --
+      // cualquiera en internet podia descargarlo sin ser aprendiz. Ahora ni
+      // el ID ni ningun link existen en el cliente: "secureAction" pide el
+      // archivo al Apps Script (entregas_actividades.gs, action "agreement"),
+      // que lo resuelve SOLO para la ficha verificada del propio idToken.
+      secureAction: "agreement",
       fileName: "Acuerdo Etapa Productiva.xlsx",
       deliveryLabel: "Acuerdo de Etapa Productiva",
     },
@@ -205,15 +210,6 @@
     return grupo.indexOf("10") === 0;
   }
 
-  // Documentos "hrefByFicha": el archivo real no vive en este repo (puede traer
-  // datos de todo el grupo, p. ej. el acuerdo con cedulas de los aprendices) sino
-  // en una carpeta/archivo de Drive con permisos acotados a esa ficha. El link se
-  // resuelve en tiempo de ejecucion desde PROJECT_INTEGRATIONS.fichaAcuerdoExcelUrls.
-  function resolveFichaHref(ficha) {
-    const urls = window.PROJECT_INTEGRATIONS && window.PROJECT_INTEGRATIONS.fichaAcuerdoExcelUrls;
-    return (urls && urls[String(ficha || "")]) || "";
-  }
-
   // Registro local de la entrega de un documento base (solo consta en el
   // navegador donde se entregó). Lee la clave nueva (panelKey estable) y la
   // histórica (derivada del deliveryLabel, entregas previas a jul-2026).
@@ -284,14 +280,18 @@
           ? `<p class="student-project-download-card__deadline student-project-download-card__deadline--overdue"><strong>Fecha limite vencida:</strong> ${escapeHtml(formatDeadlineDate(documentItem.deadline))}. Sin esta entrega, la Etapa Productiva NO se considera realizada y no podras graduarte.</p>`
           : `<p class="student-project-download-card__deadline"><strong>Fecha limite de entrega:</strong> ${escapeHtml(formatDeadlineDate(documentItem.deadline))}. Es obligatoria para culminar la Etapa Productiva y graduarte.</p>`
         : "";
-      const resolvedHref = documentItem.hrefByFicha ? resolveFichaHref(ficha) : documentItem.href;
       const downloadBtn = documentItem.noDownload
         ? ""
-        : resolvedHref
-          ? `<a class="app-btn app-btn--primary" href="${escapeHtml(resolvedHref)}" target="_blank" rel="noopener noreferrer" ${documentItem.hrefByFicha ? "" : `download="${escapeHtml(documentItem.fileName)}"`}>
-             Descargar formato
-           </a>`
-          : `<span class="student-project-download-card__unavailable">El archivo aun no esta disponible para tu ficha. Consulta con tu instructor.</span>`;
+        : documentItem.secureAction
+          ? `<button class="app-btn app-btn--primary" type="button" data-secure-doc="${escapeHtml(documentItem.id)}">
+               Descargar formato
+             </button>
+             <span class="student-project-download-card__secure-status" data-secure-doc-status="${escapeHtml(documentItem.id)}"></span>`
+          : documentItem.href
+            ? `<a class="app-btn app-btn--primary" href="${escapeHtml(documentItem.href)}" target="_blank" rel="noopener noreferrer" download="${escapeHtml(documentItem.fileName)}">
+               Descargar formato
+             </a>`
+            : `<span class="student-project-download-card__unavailable">El archivo aun no esta disponible para tu ficha. Consulta con tu instructor.</span>`;
 
       return `
         <article class="student-project-download-card">
@@ -468,6 +468,40 @@
         openDocumentDeliveryModal(doc, project, session);
       });
     });
+
+    // Wire up secure downloads (Fase 2): el Apps Script resuelve el archivo
+    // por la ficha VERIFICADA del idToken, el boton no necesita (ni puede)
+    // pasarle ningun ID de Drive.
+    body.querySelectorAll("[data-secure-doc]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        const docId = btn.getAttribute("data-secure-doc");
+        const doc = PROJECT_DOCUMENTS.find(function (d) { return d.id === docId; });
+        if (!doc || !doc.secureAction) return;
+        handleSecureDocumentDownload(doc, btn);
+      });
+    });
+  }
+
+  function handleSecureDocumentDownload(doc, btn) {
+    if (!sharedDelivery || typeof sharedDelivery.downloadSecureDocument !== "function") {
+      return;
+    }
+    const statusEl = btn.parentElement?.querySelector('[data-secure-doc-status="' + doc.id + '"]');
+    const originalText = btn.textContent;
+    btn.setAttribute("disabled", "disabled");
+    btn.textContent = "Obteniendo...";
+    if (statusEl) statusEl.textContent = "";
+    sharedDelivery
+      .downloadSecureDocument(doc.secureAction, { fallbackFileName: doc.fileName })
+      .catch(function (error) {
+        if (statusEl) {
+          statusEl.textContent = error && error.message ? error.message : "No fue posible obtener el documento.";
+        }
+      })
+      .finally(function () {
+        btn.removeAttribute("disabled");
+        btn.textContent = originalText;
+      });
   }
 
   function openDocumentDeliveryModal(doc, project, session) {

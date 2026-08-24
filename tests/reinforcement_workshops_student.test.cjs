@@ -12,7 +12,13 @@ const read = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8");
 test("la página auxiliar existe con el gate correcto (aprendiz o admin) y CSP sin dominios nuevos", () => {
   const html = read("pages/auxiliares/talleres-refuerzo.html");
   assert.match(html, /<base href="\.\.\/\.\.\/">/);
-  assert.match(html, /session\.role !== "student" && session\.role !== "admin"/);
+  // Fase 13 (CSP): el gate inline se extrajo a js/access_guard_authenticated.js
+  // (compartido con autorizacion-firma.html y calendario-aprendiz.html) --
+  // se verifica que la pagina lo referencie Y que el archivo compartido
+  // conserve la misma logica (aprendiz o admin).
+  assert.match(html, /<script src="js\/access_guard_authenticated\.js\?v=[^"]+"><\/script>/);
+  const guard = read("js/access_guard_authenticated.js");
+  assert.match(guard, /session\.role !== "student" && session\.role !== "admin"/);
   // Misma CSP que autorizacion-firma.html -- ningun dominio externo nuevo.
   const firma = read("pages/auxiliares/autorizacion-firma.html");
   const cspOf = (html_) => (html_.match(/http-equiv="Content-Security-Policy"\s+content="([^"]+)"/) || [])[1];

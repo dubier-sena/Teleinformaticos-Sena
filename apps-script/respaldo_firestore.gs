@@ -118,6 +118,57 @@ function handleSet(payload, userInfo) {
 
   const collectionFolder = ensureCollectionFolder(validation.collection);
   const fileName = validation.safeDocId + ".json";
+  const existingIt = collectionFolder.getFilesByName(fileName);
+
+  if (existingIt.hasNext()) {
+    const file = existingIt.next();
+    var dataToWrite = payload.data;
+    // Fase 10 (auditoria profunda): antes esto era un reemplazo COMPLETO y
+    // ciego del archivo. Si dos dispositivos caian a este respaldo casi al
+    // mismo tiempo (cada uno fusiono su guardado SOLO contra lo que EL
+    // leyo, sin ver el cambio del otro), el segundo en escribir aqui
+    // borraba en silencio el campo que el primero ya habia guardado.
+    // Para snapshots de guia (con snapshotJson: progress/guide_state
+    // compuestos), se relee el contenido ACTUAL del archivo y se combina
+    // con el mismo merge por timestamp/campo que ya protege el guardado
+    // online normal (mergeGuideDataSnapshotForSave en firebase_db.js;
+    // puerto exacto abajo) antes de sobrescribir. Otras colecciones sin
+    // snapshotJson mantienen el comportamiento anterior (reemplazo directo).
+    try {
+      const existingParsed = JSON.parse(file.getBlob().getDataAsString());
+      const existingData = existingParsed && existingParsed.data;
+      if (
+        existingData && typeof existingData.snapshotJson === "string" &&
+        payload.data && typeof payload.data.snapshotJson === "string"
+      ) {
+        const existingSnapshot = JSON.parse(existingData.snapshotJson);
+        const incomingSnapshot = JSON.parse(payload.data.snapshotJson);
+        const mergedSnapshot = gsMergeGuideDataSnapshotForSave(existingSnapshot, incomingSnapshot);
+        dataToWrite = Object.assign({}, payload.data, {
+          snapshotJson: JSON.stringify(mergedSnapshot),
+          updatedAt: mergedSnapshot.updatedAt || payload.data.updatedAt,
+        });
+      }
+    } catch (mergeError) {
+      // JSON corrupto o forma inesperada: se sigue con el data original tal
+      // cual llego -- mejor guardar algo que fallar la entrega completa.
+    }
+
+    const jsonContent = JSON.stringify(
+      {
+        collection: validation.collection,
+        docId: validation.docId,
+        data: dataToWrite,
+        savedAt: new Date().toISOString(),
+        savedBy: userInfo.email || userInfo.uid || "",
+      },
+      null,
+      2
+    );
+    file.setContent(jsonContent);
+    return jsonResponse({ ok: true, action: "updated", fileId: file.getId() });
+  }
+
   const jsonContent = JSON.stringify(
     {
       collection: validation.collection,
@@ -129,16 +180,119 @@ function handleSet(payload, userInfo) {
     null,
     2
   );
-
-  const existingIt = collectionFolder.getFilesByName(fileName);
-  if (existingIt.hasNext()) {
-    const file = existingIt.next();
-    file.setContent(jsonContent);
-    return jsonResponse({ ok: true, action: "updated", fileId: file.getId() });
-  }
   const blob = Utilities.newBlob(jsonContent, "application/json", fileName);
   const created = collectionFolder.createFile(blob);
   return jsonResponse({ ok: true, action: "created", fileId: created.getId() });
+}
+
+// ── Merge de snapshots de guia (Fase 10, auditoria profunda) ────────────────
+// Puerto EXACTO de mergeGuideDataSnapshotForSave/mergeGuideState/
+// mergeGuideValue de js/firebase_db.js: misma logica en ambos lados para que
+// el resultado de un merge sea identico entre el guardado online normal y el
+// respaldo/promocion via Drive. Apps Script no puede importar el archivo del
+// cliente, de ahi el puerto (prefijo gs* para no chocar con nada mas de este
+// script).
+function gsPlainObject(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function gsHasMeaningfulGuideValue(value) {
+  if (value === null || value === undefined) return false;
+  if (typeof value === "string") return value.trim().length > 0;
+  if (typeof value === "number") return !isNaN(value);
+  if (typeof value === "boolean") return value === true;
+  if (Array.isArray(value)) return value.length > 0;
+  if (gsPlainObject(value)) return Object.keys(value).length > 0;
+  return true;
+}
+
+function gsMergeGuideValue(previous, incoming) {
+  if (gsPlainObject(previous) && gsPlainObject(incoming)) {
+    var nested = {};
+    Object.keys(previous).forEach(function (k) { nested[k] = previous[k]; });
+    Object.keys(incoming).forEach(function (key) {
+      nested[key] = gsMergeGuideValue(previous[key], incoming[key]);
+    });
+    return nested;
+  }
+  if (!gsHasMeaningfulGuideValue(incoming) && gsHasMeaningfulGuideValue(previous)) {
+    return previous;
+  }
+  return incoming;
+}
+
+function gsMergeGuideState(previousState, incomingState, allowMissingLockRemoval) {
+  var previous = gsPlainObject(previousState) ? previousState : {};
+  var incoming = gsPlainObject(incomingState) ? incomingState : {};
+  var next = {};
+  Object.keys(previous).forEach(function (k) { next[k] = previous[k]; });
+
+  if (allowMissingLockRemoval) {
+    Object.keys(previous).forEach(function (key) {
+      if (/-locked$/.test(key) && !Object.prototype.hasOwnProperty.call(incoming, key)) {
+        delete next[key];
+      }
+    });
+  }
+
+  Object.keys(incoming).forEach(function (key) {
+    if (/-locked$/.test(key)) {
+      if (incoming[key]) next[key] = true;
+      else delete next[key];
+      return;
+    }
+    next[key] = gsMergeGuideValue(previous[key], incoming[key]);
+  });
+
+  return next;
+}
+
+function gsSnapshotState(snapshot) {
+  if (gsPlainObject(snapshot) && gsPlainObject(snapshot.state)) return snapshot.state;
+  if (gsPlainObject(snapshot) && gsPlainObject(snapshot.data)) return snapshot.data;
+  return {};
+}
+
+function gsSnapshotTimestamp(snapshot) {
+  if (!gsPlainObject(snapshot)) return NaN;
+  var candidates = [snapshot.updatedAt, snapshot.lastModified, snapshot.savedAt, snapshot.timestamp];
+  for (var i = 0; i < candidates.length; i++) {
+    var parsed = Date.parse(candidates[i] || "");
+    if (!isNaN(parsed)) return parsed;
+  }
+  return NaN;
+}
+
+function gsMergeGuideDataSnapshotForSave(existingSnapshot, incomingSnapshot) {
+  var existing = gsPlainObject(existingSnapshot) ? existingSnapshot : {};
+  var incoming = gsPlainObject(incomingSnapshot) ? incomingSnapshot : {};
+  var updatedBy = String(incoming.updatedBy || "").toLowerCase();
+  var isAdminOverride = Boolean(
+    incoming.reabierta || incoming.permiteEdicion || /admin|unlock|habilit|reabiert/.test(updatedBy)
+  );
+
+  var existingTs = gsSnapshotTimestamp(existing);
+  var incomingTs = gsSnapshotTimestamp(incoming);
+  if (!isAdminOverride && !isNaN(existingTs) && !isNaN(incomingTs) && existingTs > incomingTs + 1000) {
+    return existing;
+  }
+
+  var mergedState = gsMergeGuideState(gsSnapshotState(existing), gsSnapshotState(incoming), isAdminOverride);
+  var merged = {};
+  Object.keys(existing).forEach(function (k) { merged[k] = existing[k]; });
+  Object.keys(incoming).forEach(function (k) { merged[k] = incoming[k]; });
+
+  if (Object.prototype.hasOwnProperty.call(incoming, "data") || Object.prototype.hasOwnProperty.call(existing, "data")) {
+    merged.data = mergedState;
+  }
+  if (Object.prototype.hasOwnProperty.call(incoming, "state") || Object.prototype.hasOwnProperty.call(existing, "state")) {
+    merged.state = mergedState;
+  }
+  if (!Object.prototype.hasOwnProperty.call(merged, "state") && !Object.prototype.hasOwnProperty.call(merged, "data")) {
+    merged.state = mergedState;
+  }
+
+  return merged;
 }
 
 function handleGet(payload) {
@@ -426,13 +580,35 @@ function docIdHasKeySegment(docId, key) {
 
 // `list` vuelca hasta 300 docs: en colecciones con datos privados/sensibles
 // (incluye hashes en user_auth) solo lo permite el admin.
+//
+// "integrity_evidence" (auditoria profunda, Fase 8) agregada aqui: guarda
+// nombre completo, ficha e institucion de CADA aprendiz junto a sus senales
+// de integridad (pegados, tiempo fuera de pestana, etc.). Antes de este
+// cambio NO estaba en esta lista, asi que cualquier aprendiz autenticado
+// podia ejecutar action:"list" sobre ella (p.ej. window.driveDb.list(...)
+// desde la consola) y recibir hasta 300 documentos con esos datos de TODOS
+// los demas aprendices -- una fuga de privacidad entre companeros, no solo
+// falta de aviso. Ver tests/apps_script_respaldo_authz.test.cjs.
+// "sena_portal_tutoring_bookings" y "sena_portal_groups" agregadas (auditoria
+// profunda, Fase 7): igual que integrity_evidence, cualquier aprendiz
+// autenticado podia ejecutar action:"list" sobre ellas (p.ej.
+// window.driveDb.list(...) desde la consola) y recibir hasta 300 documentos
+// de TODAS las fichas/equipos -- nombre completo, ficha, tema y horario en
+// tutoring_bookings; lista completa de memberEmails en groups. El lado
+// Firestore de sena_portal_groups YA filtraba por membresia
+// (isGroupMemberOfResource); el de tutoring_bookings se corrigio aparte (ver
+// requesterFicha() en firestore.rules). Este mapa es la unica proteccion del
+// lado Drive para ambas.
 var LIST_ADMIN_ONLY_COLLECTIONS = {
   "sena_portal_users": true,
   "sena_portal_user_auth": true,
   "sena_portal_user_meta": true,
   "sena_portal_user_index": true,
   "sena_portal_progress": true,
-  "sena_portal_guide_state": true
+  "sena_portal_guide_state": true,
+  "integrity_evidence": true,
+  "sena_portal_tutoring_bookings": true,
+  "sena_portal_groups": true
 };
 
 function isSharedReadDoc(collection, docId) {
@@ -451,16 +627,52 @@ function isSharedReadDoc(collection, docId) {
 }
 
 // Replica del safeCloudKey del cliente (firebase_db.js): en los docIds
-// compuestos, todo caracter fuera de [a-z0-9:_-] se convierte en "_". Un
-// aprendiz con punto en su usuario (eimy.alvarez) aparece en sus docIds como
-// "eimy_alvarez", asi que la propiedad se verifica con AMBAS formas.
+// compuestos LEGADOS, todo caracter fuera de [a-z0-9:_-] se convierte en
+// "_". Un aprendiz con punto en su usuario (eimy.alvarez) aparece en sus
+// docIds legados como "eimy_alvarez", asi que la propiedad se verifica con
+// AMBAS formas -- riesgo CONFIRMADO (auditoria profunda, Fase 5): un
+// aprendiz real "eimy_alvarez" (guion bajo real) colisiona con "eimy.alvarez"
+// por este camino. Se conserva SOLO para los docIds del esquema LEGADO
+// ("student:..."), nunca para el esquema nuevo por UID (ver
+// composedUidDocSegment/isOwnerOfComposedUidDoc abajo, que se revisa PRIMERO
+// y de forma EXCLUYENTE).
 function sanitizeKeyLikeClient(key) {
   return String(key || "").replace(/[^a-z0-9:_-]/gi, "_");
+}
+
+// Fase 5 (auditoria profunda, cierre del fallback Drive): extrae el
+// segmento UID de un docId con el esquema NUEVO
+// ("__guide_data__:uid:{uid}:{archivo}" / "__guide_ui__:uid:{uid}:{archivo}").
+// Replica exacta del matcher usado en firestore.rules
+// (isOwnerOfComposedUidDoc) para que Firestore arriba y el respaldo de Drive
+// abajo apliquen el MISMO modelo de identidad. Devuelve null si el docId no
+// es de este esquema (para no confundir "no es un doc UID" con "uid vacio").
+function composedUidDocSegment(docId) {
+  var m = String(docId || "").match(/^__guide_(?:data|ui)__:uid:([^:]+):.+$/);
+  return m ? m[1] : null;
+}
+
+// Propiedad para el esquema NUEVO: igualdad EXACTA contra el uid verificado
+// del actor (Identity Toolkit, ver doPost -> verifyFirebaseIdToken). Sin
+// saneo, sin derivarlo del username, sin equivalencias -- el UID de Firebase
+// nunca colisiona entre cuentas reales, a diferencia del username saneado.
+function isOwnerOfComposedUidDoc(docId, uid) {
+  var segment = composedUidDocSegment(docId);
+  return segment !== null && !!uid && segment === uid;
 }
 
 function actorOwnsDoc(collection, docId, actorKey, uid) {
   if (collection === "sena_portal_user_index") {
     return String(docId || "").trim().toLowerCase() === String(uid || "").trim().toLowerCase();
+  }
+  // Fase 5: si el docId es del esquema nuevo por UID, su propiedad se decide
+  // UNICA y EXCLUSIVAMENTE por esta via -- JAMAS cae al camino legado por
+  // username (ni exacto ni saneado) aunque el uid no coincida. Mezclar
+  // ambos caminos para un mismo docId reabriria exactamente la ambiguedad
+  // que este esquema reemplaza.
+  var uidSegment = composedUidDocSegment(docId);
+  if (uidSegment !== null) {
+    return isOwnerOfComposedUidDoc(docId, uid);
   }
   if (docIdHasKeySegment(docId, actorKey)) return true;
   var sanitized = sanitizeKeyLikeClient(actorKey);

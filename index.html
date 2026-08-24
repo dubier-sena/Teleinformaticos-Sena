@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta
   http-equiv="Content-Security-Policy"
-  content="default-src 'self' blob: data:; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' blob: https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https:; media-src 'self' blob: data: https:; frame-src 'self' https://es.educaplay.com;"
+  content="default-src 'self' blob: data:; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' blob: https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://script.google.com https://script.googleusercontent.com https://cdn.jsdelivr.net; media-src 'self' blob: data: https:; frame-src 'self' https://es.educaplay.com;"
 >
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>Portal de Gu&iacute;as | Sistemas Teleinform&aacute;ticos | SENA</title>
@@ -16,7 +16,7 @@
 <link rel="stylesheet" href="css/site_tokens.css?v=20260617_1">
 <link rel="stylesheet" href="css/components.css?v=20260617_1">
 <link rel="stylesheet" href="css/shared_shell.css?v=20260617_1">
-<link rel="stylesheet" href="css/page_portal.css?v=20260709_1">
+<link rel="stylesheet" href="css/page_portal.css?v=20260823_1">
 <script src="js/shared_utils.js?v=20260615_2"></script>
 <script src="js/global_error_handler.js?v=20260710_1"></script>
 <script defer src="js/portal_auth.js?v=20260816_1"></script>
@@ -24,15 +24,20 @@
 <script defer src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
 <script defer src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
 <script src="js/firebase_auth_bridge.js?v=20260618_1"></script>
-<script defer src="js/firebase_db.js?v=20260822_2"></script>
-<script defer src="js/project_integrations.js?v=20260707_4"></script>
+<script defer src="js/guide_merge_utils.js?v=20260823_1"></script>
+<script defer src="js/firebase_db.js?v=20260823_1"></script>
+<script defer src="js/project_integrations.js?v=20260823_1"></script>
 <script defer src="js/drive_db.js?v=20260526_2"></script>
 <script defer src="js/firebase_status_banner.js?v=20260822_1"></script>
 <script defer src="js/save_status.js?v=20260822_1"></script>
-<script defer src="js/activity_standard.js?v=20260822_1"></script>
-<script defer src="js/guide_declarations.js?v=20260815_1"></script>
-<script defer src="js/activity_grades.js?v=20260815_1"></script>
-<script defer src="js/portal_home.js?v=20260816_2"></script>
+<!-- Fase 12 (rendimiento): activity_standard/guide_declarations/activity_grades/
+     productive_stage_store/student_summary ya NO tienen etiqueta estatica
+     aqui -- portal_home.js los pide dinamicamente SOLO cuando la sesion es
+     de un aprendiz (ver ensureStudentModulesLoaded). Invitado y admin nunca
+     ejecutan renderStudent(), asi que antes bajaban ~280 KB de JS de guias
+     que jamas se usaban en su pantalla (medido: 19 scripts / 686 KB en el
+     login, identico a un aprendiz ya autenticado). -->
+<script defer src="js/portal_home.js?v=20260823_2"></script>
 <script defer src="js/shared_shell.js?v=20260816_3"></script>
 </head>
 <body class="app-shell app-shell--portal portal-redesign">
@@ -96,11 +101,13 @@
             <input class="auth-input" id="reg-user" type="text" maxlength="30" autocomplete="username" spellcheck="false" placeholder="nombre.apellido">
             <label for="reg-ficha">N&uacute;mero de ficha</label>
             <input class="auth-input" id="reg-ficha" type="text" maxlength="10" inputmode="numeric" placeholder="3441939">
+            <label for="reg-code">C&oacute;digo de invitaci&oacute;n de tu ficha</label>
+            <input class="auth-input" id="reg-code" type="text" maxlength="20" autocomplete="off" placeholder="Pide este c&oacute;digo a tu instructor">
             <label for="reg-pass">Contrase&ntilde;a</label>
             <input class="auth-input" id="reg-pass" type="password" minlength="6" maxlength="60" autocomplete="new-password" placeholder="M&iacute;nimo 6 caracteres">
             <button class="auth-submit" type="submit">Crear usuario</button>
           </form>
-          <p class="auth-hint">Tu <b>ficha</b> define tu grado y tus gu&iacute;as. Solo la escribes una vez, al registrarte.</p>
+          <p class="auth-hint">Tu <b>ficha</b> define tu grado y tus gu&iacute;as. Solo la escribes una vez, al registrarte. El <b>c&oacute;digo de invitaci&oacute;n</b> lo entrega tu instructor y confirma que perteneces a esa ficha.</p>
           <div class="auth-feedback" id="register-feedback"></div>
         </div>
 
@@ -127,6 +134,8 @@
       </div>
       <button class="welcome__logout" type="button" data-logout>Cerrar sesi&oacute;n</button>
     </div>
+
+    <p class="sync-status" id="sync-status" aria-live="polite"></p>
 
     <div class="quick" id="student-quick"></div>
 

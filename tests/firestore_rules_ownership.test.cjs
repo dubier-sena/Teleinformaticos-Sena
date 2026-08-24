@@ -57,9 +57,103 @@ test("invariantes de seguridad intactas", () => {
   // El banco de soluciones sigue siendo solo-admin.
   const solutions = rules.split("match /sena_portal_grade_solutions/")[1] || "";
   assert.match(solutions.slice(0, 200), /allow read, write: if isAdmin\(\)/);
-  // guide_state sigue validando pertenencia por campo usernameKey.
+  // guide_state sigue validando pertenencia (Fase 5: ahora por docId
+  // compuesto -- student/uid -- con el campo usernameKey/_usernameKey como
+  // camino de compatibilidad adicional, ver isOwnerOfGuideStateDoc).
   const guideState = rules.split("match /sena_portal_guide_state/")[1] || "";
-  assert.match(guideState.slice(0, 400), /resource\.data\.usernameKey/);
+  assert.match(guideState.slice(0, 400), /isOwnerOfGuideStateDoc\(/);
+});
+
+test("Fase 7 (auditoria profunda) -- sena_portal_users: get puntual restringido al dueno o admin", () => {
+  // Antes: `allow get: if signedIn();` dejaba leer el perfil COMPLETO
+  // (nombre + ficha) de CUALQUIER otro aprendiz con solo conocer su
+  // usernameKey (visible en URLs/REST), sin pasar por "list" (que si esta
+  // acotado a la misma ficha). Verificado que ningun uso real (cloudGetUser
+  // en firebase_db.js) necesitaba leer el perfil de un companero antes de
+  // aplicar este cambio.
+  const usersBlock = (rules.split("match /sena_portal_users/")[1] || "").slice(0, 1600);
+  assert.match(
+    usersBlock,
+    /allow get: if isOwnerByUsernameKey\(usernameKey\) \|\| isAdmin\(\)/,
+    "get debe exigir ser el propio dueno o admin"
+  );
+  assert.doesNotMatch(
+    usersBlock,
+    /allow get: if signedIn\(\);/,
+    "no debe quedar la version antigua (cualquier sesion autenticada leia el perfil de cualquier otro aprendiz)"
+  );
+  // La lectura en lote (list) sigue acotada a la misma ficha: invariante que
+  // este cambio de Fase 7 no debe tocar.
+  assert.match(
+    usersBlock,
+    /allow list: if isAdmin\(\)\s*\n\s*\|\| \(signedIn\(\) && resource\.data\.ficha == requesterFicha\(\)\)/,
+    "list debe seguir acotada a la ficha del solicitante"
+  );
+});
+
+// ───── Fase 5 (auditoria profunda): migracion a UID en sena_portal_progress ─
+
+test("isOwnerOfComposedUidDoc existe y usa request.auth.uid directamente (no usernameKey)", () => {
+  assert.match(rules, /function isOwnerOfComposedUidDoc\(/, "falta el helper isOwnerOfComposedUidDoc");
+  const fnBody = rules.split("function isOwnerOfComposedUidDoc(")[1] || "";
+  assert.match(
+    fnBody.slice(0, 300),
+    /__guide_\(data\|ui\)__:uid:/,
+    "el matcher debe cubrir el esquema __guide_data__:uid: / __guide_ui__:uid:"
+  );
+  assert.match(
+    fnBody.slice(0, 300),
+    /docId\.split\(':'\)\[2\]\s*==\s*request\.auth\.uid/,
+    "la propiedad debe compararse directamente contra request.auth.uid, sin pasar por usernameKey"
+  );
+});
+
+test("sena_portal_progress: la autorizacion por UID se agrega, la legada NO se retira (aditivo)", () => {
+  const progressBlock = (rules.split("match /sena_portal_progress/")[1] || "").slice(0, 500);
+  assert.match(progressBlock, /isOwnerByUsernameKey\(usernameKey\)/, "el camino legado por usernameKey exacto debe seguir presente");
+  assert.match(progressBlock, /isOwnerOfComposedStudentDoc\(usernameKey\)/, "el camino legado por docId compuesto (student) debe seguir presente");
+  assert.match(progressBlock, /isOwnerOfComposedUidDoc\(usernameKey\)/, "debe agregarse el camino nuevo por UID");
+});
+
+test("sena_portal_guide_state: acepta usernameKey O _usernameKey (compatibilidad con docs antiguos)", () => {
+  assert.match(rules, /function guideStateOwnerKey\(/, "falta el helper guideStateOwnerKey");
+  const fnBody = rules.split("function guideStateOwnerKey(")[1] || "";
+  assert.match(fnBody.slice(0, 200), /data\.usernameKey\s*!=\s*null\s*\?\s*data\.usernameKey\s*:\s*data\._usernameKey/);
+});
+
+test("sena_portal_guide_state: create/read/update usan isOwnerOfGuideStateDoc con docId compuesto (student Y uid) mas fallback por campo", () => {
+  assert.match(rules, /function isOwnerOfGuideStateDoc\(/, "falta el helper isOwnerOfGuideStateDoc");
+  const fnBody = rules.split("function isOwnerOfGuideStateDoc(")[1] || "";
+  const body = fnBody.slice(0, 400);
+  assert.match(body, /isOwnerOfComposedStudentDoc\(docId\)/);
+  assert.match(body, /isOwnerOfComposedUidDoc\(docId\)/);
+  assert.match(body, /guideStateOwnerKey\(data\)/);
+
+  const guideStateBlock = (rules.split("match /sena_portal_guide_state/")[1] || "").slice(0, 700);
+  assert.match(guideStateBlock, /allow create: if isAdmin\(\)\s*\n\s*\|\| \(signedIn\(\) && isOwnerOfGuideStateDoc\(docId, request\.resource\.data\)\)/);
+  assert.match(guideStateBlock, /allow read: if isAdmin\(\)\s*\n\s*\|\| \(signedIn\(\) && isOwnerOfGuideStateDoc\(docId, resource\.data\)\)/);
+});
+
+// ───── sanitizedTokenKey(): PENDIENTE DE CONFIRMACION (auditoria profunda) ──
+// No se modifico la funcion (instruccion explicita del usuario: sin emulador
+// de Firestore disponible en este entorno, no hay como confirmar el
+// comportamiento real de .replace() con un patron pasado como string). Este
+// test.todo es el recordatorio permanente en la suite -- ver el comentario
+// "PENDIENTE DE CONFIRMACION" junto a sanitizedTokenKey() en firestore.rules
+// para la estrategia de validacion concreta (Firebase Console Rules
+// Playground, sin instalar nada).
+test.todo(
+  "PENDIENTE DE CONFIRMACION: sanitizedTokenKey() puede no reemplazar TODAS las coincidencias " +
+  "(o ninguna, si .replace() trata el patron como substring literal) -- validar con Firebase " +
+  "Console > Firestore > Rules > Playground: get sobre " +
+  "sena_portal_progress/__guide_data__:student:ana_maria_lopez:archivo con " +
+  "auth.token.email=ana.maria.lopez@sena-portal.local. Si el resultado es Deny, corregir la funcion."
+);
+
+test("Fase 7 (auditoria profunda) -- sena_portal_tutoring_bookings: read acotado a dueno o misma ficha, nunca cualquier ficha", () => {
+  const block = (rules.split("match /sena_portal_tutoring_bookings/")[1] || "").slice(0, 3500);
+  assert.doesNotMatch(block, /allow read: if signedIn\(\);/, "no debe quedar la version antigua (cualquier sesion leia cualquier reserva)");
+  assert.match(block, /allow read: if isAdmin\(\)\s*\n\s*\|\| isTutoringOwnerOfResource\(\)\s*\n\s*\|\| \(signedIn\(\) && resource\.data\.ficha == requesterFicha\(\)\)/);
 });
 
 test("doc compartido de fechas de entrega: lectura para cualquier sesion, sin abrir escritura", () => {

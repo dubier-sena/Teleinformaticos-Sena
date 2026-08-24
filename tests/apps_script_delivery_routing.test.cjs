@@ -141,6 +141,11 @@ test("el panel administrativo conserva la barrera de acceso admin", () => {
     path.join(__dirname, "..", "panel-administrativo-usuarios.html"),
     "utf8"
   );
-
-  assert.match(panel, /portalAuth\.requireAdminAccess\(\{\s*redirectUrl:\s*"index\.html"\s*\}\)/);
+  // Fase 13 (CSP): el gate inline se extrajo a js/access_guard_admin.js.
+  assert.match(panel, /<script src="js\/access_guard_admin\.js\?v=[^"]+"><\/script>/);
+  const guard = fs.readFileSync(
+    path.join(__dirname, "..", "js", "access_guard_admin.js"),
+    "utf8"
+  );
+  assert.match(guard, /portalAuth\.requireAdminAccess\(\{\s*redirectUrl:\s*"index\.html"\s*\}\)/);
 });

@@ -22,6 +22,12 @@ function loadFirebaseDbForTest() {
     console,
   };
   const context = vm.createContext({ window, console, setTimeout: window.setTimeout, clearTimeout: window.clearTimeout });
+  // Fase 14: firebase_db.js ahora requiere window.guideMergeUtils cargado antes.
+  vm.runInContext(
+    fs.readFileSync(path.join(__dirname, "..", "js", "guide_merge_utils.js"), "utf8"),
+    context,
+    { filename: "guide_merge_utils.js" }
+  );
   vm.runInContext(source, context, { filename: "firebase_db.js" });
   return context.window._firebaseDb;
 }

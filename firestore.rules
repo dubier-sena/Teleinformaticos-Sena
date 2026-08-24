@@ -50,9 +50,34 @@ service cloud.firestore {
     // en firebase_db.js: todo lo que no sea [a-z0-9:_-] se vuelve "_"). Para
     // usuarios con punto (eimy.alvarez) el segmento queda "eimy_alvarez", asi
     // que ademas de la comparacion exacta se acepta la comparacion con el
-    // email SANEADO igual. Riesgo aceptado y documentado: un usuario llamado
-    // "eimy_alvarez" (con guion bajo real) colisionaria con "eimy.alvarez";
-    // los nombres de usuario los aprueba el admin, que debe evitar ese caso.
+    // email SANEADO igual. Riesgo CONFIRMADO (auditoria profunda): un usuario
+    // llamado "eimy_alvarez" (con guion bajo real) colisiona de verdad con
+    // "eimy.alvarez" -- ambos quedan autorizados sobre el MISMO docId. La
+    // migracion a isOwnerOfComposedUidDoc (abajo) es la solucion real: los
+    // docs NUEVOS usan el UID de Firebase (nunca ambiguo) en vez de este
+    // segmento saneado. Esta funcion se conserva SOLO para leer/escribir los
+    // docs LEGADOS ya existentes durante la transicion (ver
+    // mergeLegacyAndUidGuideStateDocs en firebase_db.js) -- no se le agrega
+    // logica nueva.
+    //
+    // PENDIENTE DE CONFIRMACION (auditoria profunda, no modificar sin
+    // verificar primero): el patron '[^a-z0-9_-]' se pasa aqui como STRING a
+    // .replace(), no como literal de regex -- sin acceso a un emulador de
+    // Firestore en este entorno no se pudo confirmar si el motor de reglas
+    // (1) lo trata como regex y reemplaza TODAS las coincidencias (como el
+    // safeCloudKey del cliente, correcto), (2) lo trata como regex pero solo
+    // reemplaza la PRIMERA coincidencia (un usuario con 2+ caracteres
+    // especiales, p.ej. "ana.maria.lopez", quedaria bloqueado de su propio
+    // docId compuesto), o (3) lo trata como substring LITERAL (nunca haria
+    // match, el saneado seria un no-op). Estrategia de validacion concreta
+    // (Firebase Console -> Firestore -> Rules -> Playground, sin instalar
+    // nada): simular un `get` sobre
+    // sena_portal_progress/__guide_data__:student:ana_maria_lopez:archivo
+    // con auth.token.email = "ana.maria.lopez@sena-portal.local". Si el
+    // resultado es "Deny", el caso (2) o (3) es real y hay que corregir esta
+    // funcion; si es "Allow", queda descartado. Ver tambien
+    // tests/firestore_rules_ownership.test.cjs (test.todo) para el recordatorio
+    // permanente en la suite.
     function sanitizedTokenKey() {
       return request.auth.token.email.split('@')[0].replace('[^a-z0-9_-]', '_');
     }
@@ -62,6 +87,18 @@ service cloud.firestore {
           isOwnerByUsernameKey(docId.split(':')[2])
           || (signedIn() && docId.split(':')[2] == sanitizedTokenKey())
         );
+    }
+
+    // Fase 5 (auditoria profunda): esquema NUEVO de propiedad para
+    // sena_portal_progress, keyed por UID de Firebase en vez de usernameKey
+    // saneado. request.auth.uid nunca se sanea ni se deriva de texto libre,
+    // asi que dos cuentas reales JAMAS pueden compartir el mismo docId por
+    // este camino -- a diferencia de isOwnerOfComposedStudentDoc arriba.
+    // Aditivo: no reemplaza la funcion anterior, solo se agrega con OR en las
+    // reglas de sena_portal_progress y sena_portal_guide_state.
+    function isOwnerOfComposedUidDoc(docId) {
+      return docId.matches('^__guide_(data|ui)__:uid:[^:]+:.+$')
+        && signedIn() && docId.split(':')[2] == request.auth.uid;
     }
 
     function isAdmin() {
@@ -121,9 +158,16 @@ service cloud.firestore {
     // companeros de la misma ficha (p. ej. Actividad 10 de Guia 2).
     // Escritura: solo admin o el propio aprendiz.
     match /sena_portal_users/{usernameKey} {
-      // get (un doc puntual): cualquier sesion autenticada. Lo usa el fallback
-      // de login y la verificacion de perfil del aprendiz.
-      allow get: if signedIn();
+      // get (un doc puntual, Fase 7 -- auditoria profunda): antes cualquier
+      // sesion autenticada podia leer el perfil COMPLETO (nombre + ficha) de
+      // CUALQUIER otro aprendiz con solo conocer su usernameKey -- visible en
+      // URLs/REST, sin pasar por "list" (que ya esta acotado a la misma
+      // ficha, ver abajo). Los unicos usos reales de un GET puntual
+      // (cloudGetUser en firebase_db.js: restaurar sesion en equipo nuevo,
+      // fallback de login, reset de password) son siempre sobre EL PROPIO
+      // usuario o iniciados por el admin; ninguno necesita el perfil de un
+      // companero. Minimo privilegio: solo el dueno o el admin.
+      allow get: if isOwnerByUsernameKey(usernameKey) || isAdmin();
       // list (query): admin ve todo; el aprendiz SOLO puede consultar SU ficha.
       // La consulta DEBE incluir where('ficha','==', suFicha) — sino,
       // resource.data.ficha != requesterFicha() para algun doc y la regla niega.
@@ -162,12 +206,51 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // ───── Codigo de invitacion por ficha (Fase 6) -- NO vive en Firestore ──
+    // Version anterior de esta regla: `allow get: if true` sobre una
+    // coleccion sena_portal_ficha_codes -- lectura PUBLICA, sin sesion.
+    // Hallazgo real (auditoria profunda, revision posterior): eso significaba
+    // que CUALQUIERA que conociera una ficha podia leer el codigo REAL por
+    // Firestore REST sin autenticarse -- el codigo nunca fue secreto. No
+    // existe una forma de que este mismo esquema (Firestore + lectura previa
+    // al login) sea seguro sin exponer el valor a comparar. Corregido
+    // migrando la verificacion completa a Apps Script (entregas_actividades.gs,
+    // acciones "verifyRegistrationCode"/"setRegistrationCode"): el codigo se
+    // compara server-side contra un hash en Script Properties y el cliente
+    // NUNCA recibe ni el codigo ni un hash reutilizable, solo valido/no-valido.
+    // Sin match aqui, esta coleccion cae al cierre total del final de este
+    // archivo (`allow read, write: if false`) -- ademas, nada en el cliente
+    // ya la referencia.
+
     // ───── Indice uid -> ficha (para regla list de sena_portal_users) ──────
     // Solo el propio aprendiz (autenticado en Firebase Auth) o el admin
     // pueden leer/escribir su indice. El doc expone solo { ficha, updatedAt }.
     // El cliente lo escribe en cada login exitoso (ver portal_auth.js).
     match /sena_portal_user_index/{uid} {
       allow read, write: if signedIn() && (request.auth.uid == uid || isAdmin());
+    }
+
+    // ───── Resumen remoto del aprendiz (Fase 11 - Home cross-device) ───────
+    // Documento DERIVADO y liviano, calculado por el propio navegador del
+    // aprendiz a partir de datos que el ya puede leer legitimamente (notas,
+    // talleres de refuerzo, firma, documentos base de Etapa Productiva,
+    // progreso local de guias). NUNCA es la fuente de verdad de nada: las
+    // respuestas siguen en sena_portal_guide_state, las notas oficiales en
+    // sena_portal_grades, las entregas en Drive. Mismo modelo de confianza que
+    // ya describe CLAUDE.md para datos client-owned (ver "Trust model"): si un
+    // aprendiz alterara su propio resumen, solo confundiria su propio Home, sin
+    // afectar ningun dato autoritativo ni a otro aprendiz.
+    // Clave = uid de Firebase (no usernameKey), como toda coleccion nueva desde
+    // la Fase 5. request.auth.uid == uid es ademas lo que impide que un
+    // aprendiz pueda LISTAR el resumen de otro: una consulta `list` sin filtro
+    // no puede probarse valida para todo el set (excepto admin), exactamente
+    // igual que ya protege sena_portal_user_index arriba.
+    match /sena_portal_student_summary/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow create, update: if signedIn()
+        && (request.auth.uid == uid || isAdmin())
+        && request.resource.data.uid == uid;
+      allow delete: if isAdmin();
     }
 
     // ───── Progreso por aprendiz ───────────────────────────────────────────
@@ -182,7 +265,8 @@ service cloud.firestore {
       allow get: if signedIn() && isSharedDeadlinesDoc(usernameKey);
       allow read, write: if isAdmin()
         || isOwnerByUsernameKey(usernameKey)
-        || isOwnerOfComposedStudentDoc(usernameKey);
+        || isOwnerOfComposedStudentDoc(usernameKey)
+        || isOwnerOfComposedUidDoc(usernameKey);
     }
 
     // ───── Notas / juicios de evaluacion por aprendiz ──────────────────────
@@ -246,24 +330,48 @@ service cloud.firestore {
     }
 
     // ───── Estado de guias (un doc por aprendiz x guia) ────────────────────
-    // El doc debe contener un campo "usernameKey" para validar pertenencia.
+    // Fallback de sena_portal_progress (saveGuideStateDoc en firebase_db.js
+    // cae aqui SOLO si el PATCH a progress fallo por algo que no fue un
+    // conflicto de version). Usa el MISMO docId compuesto que progress
+    // (__guide_data__/__guide_ui__:student|uid:...), nunca un usernameKey
+    // simple -- por eso la propiedad se verifica igual que en progress, por
+    // el segmento del docId, y NO por un campo del documento.
+    //
+    // Corregido (auditoria profunda): la version anterior de esta regla
+    // exigia un campo `usernameKey` EN EL DOCUMENTO para autorizar al dueno,
+    // pero el codigo SIEMPRE escribia `_usernameKey` (con guion bajo) --
+    // ademas, aunque el nombre hubiera coincidido, el VALOR que se escribia
+    // ahi era el docId COMPUESTO completo, no un usernameKey suelto, asi que
+    // isOwnerByUsernameKey tampoco lo habria reconocido jamas. Resultado
+    // confirmado: la creacion de este fallback SIEMPRE devolvia 403 para un
+    // aprendiz (nunca para el admin, que entra por isAdmin()), y fsPatch
+    // (firebase_db.js) trata un 403 como "auth rejection" -> lo redirige en
+    // silencio al respaldo de Drive (ver isAuthRejection/driveFallbackSet).
+    // O sea: si, este desajuste SI forzaba caida a Drive para esta escritura
+    // puntual -- confirmado leyendo el flujo completo, no solo el nombre del
+    // campo. guideStateOwnerKey() se conserva como camino de compatibilidad
+    // adicional para cualquier doc antiguo real que exista con un usernameKey
+    // suelto (con o sin guion bajo) en vez de un docId compuesto.
+    function guideStateOwnerKey(data) {
+      return data.usernameKey != null ? data.usernameKey : data._usernameKey;
+    }
+    function isOwnerOfGuideStateDoc(docId, data) {
+      return isOwnerOfComposedStudentDoc(docId)
+        || isOwnerOfComposedUidDoc(docId)
+        || (guideStateOwnerKey(data) != null && isOwnerByUsernameKey(guideStateOwnerKey(data)));
+    }
     match /sena_portal_guide_state/{docId} {
-      // Fallback del doc compartido de fechas (saveGuideStateDoc cae aqui si
-      // el PATCH a progress fallo): misma lectura compartida que en progress.
+      // Fallback del doc compartido de fechas: misma lectura compartida que en progress.
       allow get: if signedIn() && isSharedDeadlinesDoc(docId);
       allow read: if isAdmin()
-        || (signedIn() && resource.data.usernameKey != null
-            && isOwnerByUsernameKey(resource.data.usernameKey));
+        || (signedIn() && isOwnerOfGuideStateDoc(docId, resource.data));
       allow create: if isAdmin()
-        || (signedIn() && request.resource.data.usernameKey != null
-            && isOwnerByUsernameKey(request.resource.data.usernameKey));
+        || (signedIn() && isOwnerOfGuideStateDoc(docId, request.resource.data));
       allow update: if isAdmin()
         || (
           signedIn()
-          && resource.data.usernameKey != null
-          && request.resource.data.usernameKey != null
-          && isOwnerByUsernameKey(resource.data.usernameKey)
-          && isOwnerByUsernameKey(request.resource.data.usernameKey)
+          && isOwnerOfGuideStateDoc(docId, resource.data)
+          && isOwnerOfGuideStateDoc(docId, request.resource.data)
         );
       allow delete: if isAdmin();
     }
@@ -335,7 +443,17 @@ service cloud.firestore {
               && request.resource.data.topic.size() <= 120));
       }
 
-      allow read: if signedIn();
+      // Corregido (auditoria profunda, Fase 7): antes "if signedIn()" dejaba
+      // leer la reserva de CUALQUIER aprendiz de CUALQUIER ficha (nombre
+      // completo, tema, horario) con solo tener sesion. El aprendiz SI
+      // necesita ver las reservas de su PROPIA ficha (para saber que horarios
+      // ya estan ocupados al agendar, ver cloudListTutoringBookingsForDate en
+      // firebase_db.js) -- por eso no se restringe a "solo la propia", sino a
+      // "misma ficha minima" (mismo patron que requesterFicha() ya usado en
+      // sena_portal_users). Nunca una ficha ajena.
+      allow read: if isAdmin()
+        || isTutoringOwnerOfResource()
+        || (signedIn() && resource.data.ficha == requesterFicha());
       allow create: if isValidTutoringBooking()
         && (isAdmin() || isTutoringOwnerOfRequest());
       allow update: if isAdmin()

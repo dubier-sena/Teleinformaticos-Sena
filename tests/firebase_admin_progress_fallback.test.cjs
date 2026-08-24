@@ -11,11 +11,14 @@ function read(filePath) {
 
 test("firebase admin progress maps batchGet docs by document id and falls back to guide snapshots", () => {
   const source = read(path.join("js", "firebase_db.js"));
+  // Fase 14: deriveProgressFromGuideDataDoc se movio a guide_merge_utils.js
+  // (misma logica, sin cambios) -- firebase_db.js solo la LLAMA ahora.
+  const mergeUtils = read(path.join("js", "guide_merge_utils.js"));
 
   assert.match(source, /_docId:\s*String\(doc\.name/);
   assert.match(source, /progressDocs\.forEach\(function \(doc\)/);
   assert.match(source, /progressByUser\[doc\._docId\]\s*=\s*doc/);
-  assert.match(source, /function deriveProgressFromGuideDataDoc\(fileName,\s*doc\)/);
+  assert.match(mergeUtils, /function deriveProgressFromGuideDataDoc\(fileName,\s*doc\)/);
   assert.match(source, /guideDataDocs\.forEach\(function \(doc\)/);
   assert.match(source, /progressByUser\[item\.usernameKey\]\[item\.progressKey\]\s*=\s*derived/);
 });

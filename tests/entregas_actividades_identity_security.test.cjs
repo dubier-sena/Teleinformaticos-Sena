@@ -51,9 +51,22 @@ function makeFakeFolder() {
   };
 }
 
+function makeFakeAgreementFile() {
+  return {
+    getBlob: function () {
+      return {
+        getBytes: function () { return Buffer.from("fake-agreement-bytes"); },
+        getContentType: function () { return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"; },
+      };
+    },
+    getName: function () { return "Acuerdo Etapa Productiva.xlsx"; },
+  };
+}
+
 // urlFetchScript: { identityEmail, profileStatus, profileFicha, profileFullName }
 function makeSandbox(urlFetchScript) {
   const driveCalls = [];
+  const fileCalls = [];
   const sandbox = {
     console,
     Logger: { log: function () {} },
@@ -77,6 +90,7 @@ function makeSandbox(urlFetchScript) {
     },
     Utilities: {
       base64Decode: function (b64) { return Buffer.from(String(b64 || ""), "base64"); },
+      base64Encode: function (bytes) { return Buffer.from(bytes).toString("base64"); },
       newBlob: function (bytes, mime, name) {
         return { getName: function () { return name; } };
       },
@@ -88,6 +102,10 @@ function makeSandbox(urlFetchScript) {
       getFolderById: function (id) {
         driveCalls.push(id);
         return makeFakeFolder();
+      },
+      getFileById: function (id) {
+        fileCalls.push(id);
+        return makeFakeAgreementFile();
       },
     },
     ContentService: {
@@ -138,7 +156,7 @@ function makeSandbox(urlFetchScript) {
       "\nthis.__doPost = doPost; this.__usernameKeyFromEmail = usernameKeyFromEmail; this.__fetchVerifiedProfile = fetchVerifiedProfile;",
     sandbox
   );
-  return { sandbox: sandbox, driveCalls: driveCalls };
+  return { sandbox: sandbox, driveCalls: driveCalls, fileCalls: fileCalls };
 }
 
 function callDoPost(sandbox, payloadObj) {
@@ -285,10 +303,88 @@ test("RECORRIDO completo (Riesgo 1): confirmedAt en la respuesta de upload es EX
   // devuelve el valor real de Drive, no un placeholder.
 });
 
-test("degradacion segura: si el perfil de Firestore no se puede leer, se usa la ficha del cliente (sin bloquear la entrega real)", () => {
+// ───── Fase 1 (auditoria profunda posterior a 2026-08-22): fail-CLOSED ─────
+// El bloque anterior (ver historial de este archivo) degradaba al valor del
+// payload del cliente cuando fetchVerifiedProfile no podia confirmar el
+// perfil real. Eso reabria el mismo hueco que el resto de este archivo
+// cierra: bastaba una caida de Firestore para que ficha/fullName
+// manipulados en devtools volvieran a decidir la carpeta destino. Estas
+// pruebas EJECUTAN doPost de verdad (mismo arnes vm que el resto del
+// archivo) para demostrar el nuevo comportamiento fail-closed.
+
+test("Fase 1 -- Firestore disponible: upload SI se ejecuta con normalidad (caso base)", () => {
+  const { sandbox, driveCalls } = makeSandbox({
+    identityEmail: "juan@sena-portal.local",
+    profileStatus: 200,
+    profileFicha: FICHA_ATACANTE_REAL,
+    profileFullName: "Juan Estudiante",
+  });
+
+  const response = callDoPost(sandbox, {
+    idToken: "token-juan",
+    action: "upload",
+    ficha: FICHA_ATACANTE_REAL,
+    fullName: "Juan Estudiante",
+    activityLabel: "Actividad 1.1.1",
+    fileName: "evidencia.pdf",
+    fileBase64: Buffer.from("contenido-fake").toString("base64"),
+  });
+
+  assert.equal(response.ok, true, "con Firestore disponible y perfil completo, la entrega debe completarse");
+  assert.equal(driveCalls[0], FOLDER_ATACANTE_REAL);
+});
+
+test("Fase 1 -- Firestore disponible: verify SI se ejecuta con normalidad (caso base)", () => {
+  const { sandbox, driveCalls } = makeSandbox({
+    identityEmail: "juan@sena-portal.local",
+    profileStatus: 200,
+    profileFicha: FICHA_ATACANTE_REAL,
+    profileFullName: "Juan Estudiante",
+  });
+
+  const response = callDoPost(sandbox, {
+    idToken: "token-juan",
+    action: "verify",
+    ficha: FICHA_ATACANTE_REAL,
+    fullName: "Juan Estudiante",
+    activityLabel: "Actividad 1.1.1",
+  });
+
+  assert.equal(response.ok, true, "con Firestore disponible y perfil completo, verify debe responder con normalidad");
+  assert.deepEqual(driveCalls, [FOLDER_ATACANTE_REAL]);
+});
+
+test("Fase 1 -- Firestore NO disponible: upload se rechaza temporalmente y no toca Drive", () => {
   const { sandbox, driveCalls } = makeSandbox({
     identityEmail: "juan@sena-portal.local",
     profileStatus: 500, // Firestore caido / doc inexistente
+  });
+
+  const response = callDoPost(sandbox, {
+    idToken: "token-juan",
+    action: "upload",
+    ficha: "3168850", // dato del cliente: NO debe usarse ni para rechazar ni para aceptar
+    fullName: "Juan Estudiante",
+    activityLabel: "Actividad 1.1.1",
+    fileName: "evidencia.pdf",
+    fileBase64: Buffer.from("contenido-fake").toString("base64"),
+  });
+
+  assert.equal(response.ok, false, "sin perfil verificado, la entrega NUNCA debe continuar con los datos del cliente");
+  assert.equal(response.transient, true, "el frontend debe poder distinguir esto de un error permanente y reintentar");
+  assert.match(response.message, /no fue posible verificar tu perfil/i);
+  assert.doesNotMatch(
+    response.message,
+    /extension|tamano|tamaño|selecciona el archivo|faltan datos|carpeta|no esta configurada|no cumple la politica/i,
+    "el mensaje no debe contener ninguna palabra clave que isPermanentDeliveryError (cliente) trate como error PERMANENTE"
+  );
+  assert.deepEqual(driveCalls, [], "no debe resolverse ninguna carpeta (ni la del cliente ni ninguna otra) sin perfil verificado");
+});
+
+test("Fase 1 -- Firestore NO disponible: verify se rechaza temporalmente y no toca Drive", () => {
+  const { sandbox, driveCalls } = makeSandbox({
+    identityEmail: "juan@sena-portal.local",
+    profileStatus: 500,
   });
 
   const response = callDoPost(sandbox, {
@@ -299,11 +395,12 @@ test("degradacion segura: si el perfil de Firestore no se puede leer, se usa la 
     activityLabel: "Actividad 1.1.1",
   });
 
-  assert.equal(response.ok, true, "no debe bloquear la entrega solo porque el perfil no se pudo leer");
-  assert.deepEqual(driveCalls, ["1fBPzXHU0OHDmKa18Y6V2tnomLyYWgiLp"], "debe caer de vuelta al valor del payload (comportamiento previo)");
+  assert.equal(response.ok, false, "sin perfil verificado, verify NUNCA debe continuar con los datos del cliente");
+  assert.equal(response.transient, true);
+  assert.deepEqual(driveCalls, []);
 });
 
-test("perfil verificado sin ficha/fullName (doc vacio) tambien degrada al valor del cliente", () => {
+test("Fase 1 -- perfil verificado incompleto (doc con campos vacios) tambien se rechaza, no degrada al cliente", () => {
   const { sandbox, driveCalls } = makeSandbox({
     identityEmail: "nuevo@sena-portal.local",
     profileStatus: 200,
@@ -317,6 +414,108 @@ test("perfil verificado sin ficha/fullName (doc vacio) tambien degrada al valor 
     fullName: "Aprendiz Nuevo",
     activityLabel: "Actividad 1.1.1",
   });
+  assert.equal(response.ok, false);
+  assert.equal(response.transient, true);
+  assert.deepEqual(driveCalls, []);
+});
+
+test("Fase 1 -- perfil verificado PARCIAL (ficha si, fullName no) tambien se rechaza: no se mezclan fuentes de confianza", () => {
+  const { sandbox, driveCalls } = makeSandbox({
+    identityEmail: "juan@sena-portal.local",
+    profileStatus: 200,
+    profileFicha: FICHA_ATACANTE_REAL,
+    profileFullName: "", // Firestore no tiene el nombre completo todavia
+  });
+  const response = callDoPost(sandbox, {
+    idToken: "token-juan",
+    action: "upload",
+    ficha: FICHA_VICTIMA_RECLAMADA, // si se mezclara, colaria este dato del cliente
+    fullName: "Nombre Inventado",
+    activityLabel: "Actividad 1.1.1",
+    fileName: "evidencia.pdf",
+    fileBase64: Buffer.from("contenido-fake").toString("base64"),
+  });
+  assert.equal(response.ok, false, "un perfil parcialmente verificado NO debe completar el campo faltante con el dato del cliente");
+  assert.equal(response.transient, true);
+  assert.deepEqual(driveCalls, []);
+});
+
+// ───── Fase 2 (auditoria profunda): descarga segura del acuerdo de Etapa ───
+// Productiva. El archivo ya no se referencia por URL publica en el cliente;
+// el Apps Script lo resuelve por la ficha VERIFICADA del propio idToken.
+
+test("Fase 2 -- action agreement: sirve el archivo de la ficha VERIFICADA, ignorando la ficha del payload", () => {
+  const { sandbox, fileCalls } = makeSandbox({
+    identityEmail: "juan@sena-portal.local",
+    profileStatus: 200,
+    profileFicha: FICHA_ATACANTE_REAL, // "3441939" -> id 1Gs67a5LUc0Alv1kqe3Yla3ryosCeBH0k
+    profileFullName: "Juan Estudiante",
+  });
+
+  const response = callDoPost(sandbox, {
+    idToken: "token-juan",
+    action: "agreement",
+    ficha: FICHA_VICTIMA_RECLAMADA, // el payload pide OTRA ficha: debe ignorarse
+  });
+
   assert.equal(response.ok, true);
-  assert.deepEqual(driveCalls, ["1p9HdGinK1me8PsbaLHYio_OC-idAmorR"]);
+  assert.deepEqual(fileCalls, ["1Gs67a5LUc0Alv1kqe3Yla3ryosCeBH0k"], "debe leer SOLO el archivo de la ficha real, nunca la reclamada");
+  assert.equal(response.fileBase64, Buffer.from("fake-agreement-bytes").toString("base64"));
+  assert.equal(response.fileName, "Acuerdo Etapa Productiva.xlsx");
+  assert.ok(response.mimeType, "debe informar el mimeType real del archivo");
+});
+
+test("Fase 2 -- action agreement: sin perfil verificable (Firestore caida), se rechaza SIN leer ningun archivo", () => {
+  const { sandbox, fileCalls, driveCalls } = makeSandbox({
+    identityEmail: "juan@sena-portal.local",
+    profileStatus: 500,
+  });
+
+  const response = callDoPost(sandbox, {
+    idToken: "token-juan",
+    action: "agreement",
+    ficha: FICHA_VICTIMA_RECLAMADA,
+  });
+
+  assert.equal(response.ok, false, "sin perfil verificado, jamas debe entregarse ningun documento sensible");
+  assert.equal(response.transient, true);
+  assert.deepEqual(fileCalls, [], "no debe leerse ningun archivo de Drive sin perfil verificado");
+  assert.deepEqual(driveCalls, []);
+});
+
+test("Fase 2 -- action agreement: ficha verificada sin acuerdo configurado responde ok:false sin lanzar excepcion", () => {
+  const { sandbox, fileCalls } = makeSandbox({
+    identityEmail: "sinacuerdo@sena-portal.local",
+    profileStatus: 200,
+    profileFicha: "9999999", // ficha real pero sin entrada en FICHA_AGREEMENT_FILE_IDS
+    profileFullName: "Aprendiz Sin Acuerdo",
+  });
+
+  const response = callDoPost(sandbox, { idToken: "token-x", action: "agreement" });
+
+  assert.equal(response.ok, false);
+  assert.deepEqual(fileCalls, []);
+  assert.match(response.message, /no tiene un acuerdo/i);
+});
+
+test("Fase 1 -- manipular ficha/fullName en el payload nunca cambia el destino real, con o sin Firestore disponible", () => {
+  // Con Firestore disponible: ya cubierto por las pruebas SEGURIDAD verify/upload
+  // de arriba (usan la ficha REAL del atacante, ignorando la reclamada). Aqui se
+  // confirma el otro extremo: sin Firestore disponible, ni siquiera se llega a
+  // resolver una carpeta -- ni la reclamada por el cliente ni ninguna otra.
+  const { sandbox, driveCalls } = makeSandbox({
+    identityEmail: "atacante@sena-portal.local",
+    profileStatus: 500,
+  });
+  const response = callDoPost(sandbox, {
+    idToken: "token-del-atacante",
+    action: "upload",
+    ficha: FICHA_VICTIMA_RECLAMADA,
+    fullName: "Nombre De La Victima",
+    activityLabel: "Actividad 3.1.1",
+    fileName: "evidencia.pdf",
+    fileBase64: Buffer.from("contenido-fake").toString("base64"),
+  });
+  assert.equal(response.ok, false);
+  assert.deepEqual(driveCalls, [], "ni la carpeta reclamada ni ninguna otra debe consultarse sin perfil verificado");
 });

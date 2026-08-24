@@ -453,8 +453,13 @@ test("las notas se registran a mano en la grilla (import por Excel viejo no vuel
 });
 
 test("calificar en bloque con Excel (2026-07-22): descarga/sube por Usuario, no por nombre", () => {
-  // La libreria SheetJS SI debe estar cargada para este flujo nuevo.
-  assert.match(html, /js\/xlsx\.full\.min\.js/);
+  // La libreria SheetJS SI debe estar disponible para este flujo -- desde
+  // Fase 12 (rendimiento) ya no como <script> estatico en el HTML (~930 KB
+  // que antes bajaban en TODA visita al panel, se usara o no), sino bajo
+  // demanda justo antes de usarla (ver ensureXlsxLoaded en admin_usuarios.js).
+  assert.doesNotMatch(html, /js\/xlsx\.full\.min\.js/, "ya no debe ser un <script> estatico");
+  assert.match(adminScript, /function ensureXlsxLoaded\(/);
+  assert.match(adminScript, /xlsx\.full\.min\.js/);
   assert.match(adminScript, /async function handleGradesExcelDownload\(\)/);
   assert.match(adminScript, /async function handleGradesExcelUpload\(\)/);
   assert.match(adminScript, /id="grades-excel-download-btn"/);
@@ -462,14 +467,21 @@ test("calificar en bloque con Excel (2026-07-22): descarga/sube por Usuario, no 
   assert.match(adminScript, /id="grades-excel-upload-btn"/);
   const uploadFn = adminScript.match(/async function handleGradesExcelUpload\(\)[\s\S]*?\n  \}/);
   assert.ok(uploadFn, "handleGradesExcelUpload debe existir");
+  // Fase 14: el mapeo de encabezado y la validacion fila-a-fila (que columna es
+  // "Usuario", que valores son A/D validos, que celdas vacias no se tocan) se
+  // movieron a js/admin_grades_excel_transform.js (mismo codigo, sin cambios) --
+  // se verifican ahi en vez de en el cuerpo de handleGradesExcelUpload.
+  const transformSrc = fs.readFileSync(path.join(root, "js/admin_grades_excel_transform.js"), "utf8");
+  assert.match(uploadFn[0], /transform\.mapGradesExcelHeader\(header, activities\)/);
+  assert.match(uploadFn[0], /transform\.parseGradesExcelRows\(/);
   // Empareja por la columna "Usuario" (usernameKey), nunca por nombre -- evita
   // la ambiguedad que causo eliminar el import anterior.
-  assert.match(uploadFn[0], /header\.indexOf\("Usuario"\)/);
-  assert.match(uploadFn[0], /usernameKey = String\(row\[usuarioIdx\]/);
+  assert.match(transformSrc, /header\.indexOf\("Usuario"\)/);
+  assert.match(transformSrc, /usernameKey = String\(row\[usuarioIdx\]/);
   // Celda vacia = no se toca (no borra notas existentes que no vengan en el Excel).
-  assert.match(uploadFn[0], /if \(!raw\) return; \/\/ celda vacia: no se toca/);
+  assert.match(transformSrc, /if \(!raw\) return; \/\/ celda vacia: no se toca/);
   // Solo A/D validos; el resto se reporta como invalido en vez de guardarse.
-  assert.match(uploadFn[0], /raw === "A" \|\| raw === "D"/);
+  assert.match(transformSrc, /raw === "A" \|\| raw === "D"/);
   // Reutiliza el mismo mecanismo que calificar a mano: setStudentGrades (no
   // setStudentActivityGrade en loop, para 1 escritura por aprendiz en vez de
   // 1 por celda) + solucion del banco al aprobar + confirmacion antes de aplicar.
