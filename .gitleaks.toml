@@ -1,0 +1,37 @@
+# Fase 15 (CI): configuracion de gitleaks (https://github.com/gitleaks/gitleaks)
+# para el escaneo de secretos en CI. Usa el set de reglas por defecto de
+# gitleaks (claves privadas, tokens de proveedores conocidos, credenciales
+# genericas) y solo agrega una lista de excepciones MUY especifica para lo
+# que este proyecto expone a proposito como publico -- ver CLAUDE.md
+# "Security Notes": la seguridad depende de Firestore Rules, no de ocultar
+# esta clave.
+title = "Portal SENA - reglas de secretos (Fase 15)"
+
+[extend]
+useDefault = true
+
+# La regla "generic-api-key" del set por defecto es un heuristico de
+# entropia MUY amplio: en este repo marcaba como "secreto" cosas como claves
+# de ruteo ("jfk-induccion-10a" en guia_router.js), pageKey internos
+# ("10a_guia4ciber" en portal_auth.js) y el hash SHA-256 publico del admin
+# (passwordHash, ya documentado como intencional en CLAUDE.md "Trust model")
+# -- +1400 falsos positivos verificados localmente al preparar esta fase, 0
+# de ellos un secreto real. Se reemplaza por una regex que nunca coincide
+# (equivale a desactivarla) y se conservan TODAS las demas reglas del set
+# por defecto (AWS, GCP, PEM, JWT, Slack, GitHub, Stripe, etc.), que son de
+# mucha mas precision. La cobertura especifica de este proyecto
+# (REGISTRATION_CODE_SECRET, contraseñas en texto plano) vive aparte en
+# tests/no_committed_secrets.test.cjs, con reglas exactas para sus propios
+# nombres -- no depende de este heuristico generico.
+[[rules]]
+id = "generic-api-key"
+description = "desactivada para este repo (ver comentario arriba) -- demasiado ruidosa"
+regex = '''zzz_gitleaks_generic_api_key_disabled_zzz'''
+
+[allowlist]
+description = "Claves/IDs publicos e intencionales de este proyecto"
+paths = [
+  # apiKey publica de Firebase (frontend). Nunca es un secreto: la
+  # proteccion real son las Firestore Rules, no ocultar esta cadena.
+  '''js/firebase-config\.js''',
+]

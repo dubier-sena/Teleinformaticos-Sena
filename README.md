@@ -18,3 +18,12 @@ Firebase Auth/Functions o un backend pequeno como autoridad segura.
 
 La documentacion tecnica interna y las notas de configuracion no se publican en
 el repositorio.
+
+## CI
+
+Cada push/PR a `main` corre `.github/workflows/ci.yml` (suite de pruebas,
+escaneo de secretos, smoke test de navegador y verificacion del build de
+paginas generadas). El detalle de cada job esta documentado como comentarios
+dentro de ese mismo archivo. GitHub Pages hoy publica directamente desde
+`main` de forma independiente de este CI (ver comentario al inicio del
+workflow).

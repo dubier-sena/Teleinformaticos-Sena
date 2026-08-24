@@ -1,0 +1,125 @@
+name: CI
+
+# Fase 15: valida el portal antes de que se considere publicable. GitHub
+# Pages de este repo hoy publica directamente desde la rama `main` (modo
+# "legacy" del repo, confirmado via API -- NO esta migrado a un deploy por
+# Actions), asi que este workflow NO despliega nada: es la señal verde/roja
+# que falta hoy. Los jobs de abajo documentan el detalle de cada validacion;
+# la ruta de migracion a un deploy realmente condicionado a este CI vive en
+# el README y en las notas de la sesion que agrego este workflow.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Si llegan varios push seguidos a la misma rama/PR, cancela la corrida
+# anterior en vez de dejarla terminar -- ahorra minutos de CI sin perder
+# cobertura (el ultimo commit es el que importa).
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Suite completa de Node (1075+ pruebas: CSP, identidad/UID, Apps Script,
+  # Firestore Rules, router, guardias de acceso, resumen del aprendiz,
+  # concurrencia, registro, privacidad -- todas ya viven en tests/*.test.cjs,
+  # este job no reconstruye nada, solo las ejecuta todas).
+  test:
+    name: Suite Node (tests/*.test.cjs)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          # Sin cache: npm -- el proyecto no tiene package.json/package-lock.json
+          # (sin build system, sin dependencias de npm; ver CLAUDE.md).
+
+      - name: node --test tests/*.test.cjs
+        run: node --test tests/*.test.cjs
+
+  # Escaneo generico de secretos (gitleaks) sobre el arbol actual del
+  # checkout -- complementa (no reemplaza) tests/no_committed_secrets.test.cjs:
+  # gitleaks trae un set de reglas amplio (claves privadas, tokens de
+  # proveedores conocidos AWS/GCP/etc., credenciales genericas) mantenido por
+  # terceros; el test propio de la suite cubre ademas los nombres EXACTOS de
+  # este proyecto (REGISTRATION_CODE_SECRET, contraseñas en texto plano) con
+  # los que gitleaks no puede estar familiarizado. Sin instalar nada via npm:
+  # se descarga el binario oficial (Go, un solo archivo) y se corre directo.
+  # .gitleaks.toml documenta la unica excepcion deliberada (la apiKey publica
+  # de Firebase).
+  secrets-scan:
+    name: Escaneo de secretos (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar gitleaks
+        run: |
+          set -euo pipefail
+          VERSION="8.21.2"
+          curl -sSL -o gitleaks.tar.gz \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz"
+          tar -xzf gitleaks.tar.gz gitleaks
+          chmod +x gitleaks
+
+      - name: gitleaks detect (arbol actual, sin historial de git)
+        run: ./gitleaks detect --source . --no-git --redact -v
+
+  # Smoke test de navegador headless: abre paginas reales (invitado, admin,
+  # auxiliar autenticada, guia.html) y falla si aparece un ReferenceError/
+  # TypeError, un script 404, o un error de orden de carga -- exactamente lo
+  # que la suite de Node NO puede ver (la Fase 14 encontro asi un bug real).
+  # Corre en paralelo al job "test", no depende de el (ninguno de los dos
+  # necesita el resultado del otro para arrancar).
+  smoke-test:
+    name: Smoke test (navegador headless)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: node tools/smoke_test.mjs
+        run: node tools/smoke_test.mjs
+
+  # sources/generated/*.template.html + data/generated_page_variants.json ->
+  # tools/build-generated-pages.ps1 -> paginas HTML publicas reales (p.ej.
+  # pages/auxiliares/grupo-10a-guia-02-actividad-322-matriz.html). El script
+  # asume rutas de Windows (Join-Path con "\"), asi que corre en un runner
+  # windows-latest de verdad, no con pwsh instalado sobre Ubuntu.
+  #
+  # git diff --exit-code detecta el caso que esta fase queria evitar:
+  # plantilla actualizada pero el HTML publico generado NO se volvio a
+  # generar/commitear.
+  windows-build-check:
+    name: Build de paginas generadas (Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Solo el test del catalogo + build de plantillas (no toda la suite)
+        run: node --test tests/generated_pages_build.test.cjs
+
+      - name: Reconstruir las paginas generadas en el propio checkout
+        shell: pwsh
+        run: ./tools/build-generated-pages.ps1
+
+      - name: git diff --exit-code (falla si el build generado difiere de lo commiteado)
+        shell: pwsh
+        run: |
+          # Solo pages/ es salida del build (sources/generated/*.template.html
+          # es la entrada -- plantillas que el script LEE, nunca escribe).
+          git diff --exit-code -- pages/
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Las paginas generadas no coinciden con las plantillas actuales. Corre tools/build-generated-pages.ps1 y commitea el resultado."
+            exit 1
+          }
