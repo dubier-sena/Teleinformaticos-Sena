@@ -64,9 +64,20 @@ function countInlineSurface() {
 // (61 -> 55 bloques de script inline). NO subir estos numeros sin una razon
 // documentada -- si una guia nueva agrega su propio <script> inline en vez de
 // reusar un archivo .js existente, esta prueba debe fallar.
+//
+// styleAttrs 2745 -> 2748 (2026-08-24, Fase 15/CI): sources/generated/
+// guia-02-matriz-322.template.html estaba MUY desactualizado (windows-build-
+// check lo detecto por primera vez -- nunca habia corrido en CI antes de esta
+// fase) y le faltaba el mecanismo de entrega a Drive que las paginas YA
+// publicadas (pages/auxiliares/grupo-{10a,10b}-guia-02-actividad-322-matriz.html)
+// tenian desde hace tiempo. Al restaurar ese bloque en la plantilla (para que
+// el build vuelva a coincidir con lo que ya esta en produccion) se
+// reincorporaron 3 atributos style="..." que ya eran parte del sitio real,
+// nunca contados aqui porque la plantilla nunca se habia regenerado/auditado.
+// No es una superficie nueva: es la plantilla alcanzando la realidad.
 const BASELINE = {
   scriptBlocks: 55,
-  styleAttrs: 2745,
+  styleAttrs: 2748,
   styleTags: 23,
 };
 

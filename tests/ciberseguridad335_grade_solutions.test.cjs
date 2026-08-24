@@ -31,8 +31,18 @@ const root = path.join(__dirname, "..");
 const FAMILY = "guia-02-herramientas";
 const USERNAME_KEY = "prueba.aprendiz";
 
+// grade_solutions_bank.json esta en .gitignore a proposito (es el banco de
+// respuestas modelo -- si un aprendiz pudiera leerlo, dejaria de ser una
+// evaluacion real). Solo existe en checkouts locales de quien lo mantiene;
+// un checkout limpio de CI (o de cualquier otro colaborador) no lo tiene.
+// Estas pruebas se saltan ahi en vez de fallar -- siguen corriendo de verdad
+// en cualquier maquina que sí tenga el archivo.
+const BANK_PATH = path.join(root, "grade_solutions_bank.json");
+const BANK_EXISTS = fs.existsSync(BANK_PATH);
+const SKIP_REASON = "grade_solutions_bank.json no existe en este checkout (gitignored a proposito)";
+
 function loadBank() {
-  return JSON.parse(fs.readFileSync(path.join(root, "grade_solutions_bank.json"), "utf8"));
+  return JSON.parse(fs.readFileSync(BANK_PATH, "utf8"));
 }
 
 // Misma tecnica que tests/ficha_caso_grade_solutions.test.cjs: corre el
@@ -82,7 +92,7 @@ function loadActivityGrades() {
   };
 }
 
-test("grade_solutions_bank.json tiene respuesta modelo para las 4 sub-secciones de Ciberseguridad (Actividad 9)", () => {
+test("grade_solutions_bank.json tiene respuesta modelo para las 4 sub-secciones de Ciberseguridad (Actividad 9)", { skip: !BANK_EXISTS && SKIP_REASON }, () => {
   const bank = loadBank();
   const fam = bank[FAMILY];
   assert.ok(fam, `debe existir bank['${FAMILY}']`);
@@ -115,7 +125,7 @@ test("grade_solutions_bank.json tiene respuesta modelo para las 4 sub-secciones 
   });
 });
 
-test("los valores del checklist de Ciberseguridad son niveles validos (cumple/mejora/no-aplica)", () => {
+test("los valores del checklist de Ciberseguridad son niveles validos (cumple/mejora/no-aplica)", { skip: !BANK_EXISTS && SKIP_REASON }, () => {
   const bank = loadBank();
   const entry = bank[FAMILY].cibersegChecklist335;
   const validLevels = new Set(["cumple", "mejora", "no-aplica"]);
@@ -124,13 +134,13 @@ test("los valores del checklist de Ciberseguridad son niveles validos (cumple/me
   });
 });
 
-test("cibersegGuia335 NO incluye 'ciberseg:guia:actor' (evita inventar un nombre de negocio que no coincida con el caso real)", () => {
+test("cibersegGuia335 NO incluye 'ciberseg:guia:actor' (evita inventar un nombre de negocio que no coincida con el caso real)", { skip: !BANK_EXISTS && SKIP_REASON }, () => {
   const bank = loadBank();
   const entry = bank[FAMILY].cibersegGuia335 || {};
   assert.equal(Object.prototype.hasOwnProperty.call(entry, "ciberseg:guia:actor"), false);
 });
 
-test("colaborativas334 rellena los 15 items del checklist de competencias digitales con un nivel valido (pedido jul-15)", () => {
+test("colaborativas334 rellena los 15 items del checklist de competencias digitales con un nivel valido (pedido jul-15)", { skip: !BANK_EXISTS && SKIP_REASON }, () => {
   const bank = loadBank();
   const entry = bank[FAMILY].colaborativas334 || {};
   // Ids reales de digitalCompetencyChecklist en script_guia2.js.
@@ -154,7 +164,7 @@ test("colaborativas334 rellena los 15 items del checklist de competencias digita
   });
 });
 
-test("applyApprovedSolutionsForFamily rellena los selects vacios del checklist de competencias y respeta los ya respondidos", () => {
+test("applyApprovedSolutionsForFamily rellena los selects vacios del checklist de competencias y respeta los ya respondidos", { skip: !BANK_EXISTS && SKIP_REASON }, () => {
   const bank = loadBank();
   const solution = bank[FAMILY].colaborativas334;
 
@@ -178,7 +188,7 @@ test("applyApprovedSolutionsForFamily rellena los selects vacios del checklist d
   assert.equal(answered.value, "reforzar", "la autoevaluacion que el aprendiz SI hizo se respeta");
 });
 
-test("applyApprovedSolutionsForFamily rellena de principio a fin los campos vacios de cibersegAmenazas335 con el contenido REAL del banco", () => {
+test("applyApprovedSolutionsForFamily rellena de principio a fin los campos vacios de cibersegAmenazas335 con el contenido REAL del banco", { skip: !BANK_EXISTS && SKIP_REASON }, () => {
   const bank = loadBank();
   const solution = bank[FAMILY].cibersegAmenazas335;
 

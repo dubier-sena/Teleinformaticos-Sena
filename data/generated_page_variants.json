@@ -46,7 +46,8 @@
     "ficha": "3441939",
     "inst": "Institucion Educativa Jhon F. Kennedy",
     "title": "Matriz de Diagn\u00f3stico Digital | Actividad 3.2.2 | Gu\u00eda 2 | Grupo 10A",
-    "backLink": "guia.html?g=grupo-10a-guia-02-herramientas-informaticas-digitales.html#contextualizacion"
+    "backLink": "guia.html?g=grupo-10a-guia-02-herramientas-informaticas-digitales.html#contextualizacion",
+    "pageFile": "10a_guia2.html"
   },
   "guia2-matriz-322-10b": {
     "template": "guia-02-matriz-322.template.html",
@@ -55,6 +56,7 @@
     "ficha": "3441942",
     "inst": "Institucion Educativa Jhon F. Kennedy",
     "title": "Matriz de Diagn\u00f3stico Digital | Actividad 3.2.2 | Gu\u00eda 2 | Grupo 10B",
-    "backLink": "guia.html?g=grupo-10b-guia-02-herramientas-informaticas-digitales.html#contextualizacion"
+    "backLink": "guia.html?g=grupo-10b-guia-02-herramientas-informaticas-digitales.html#contextualizacion",
+    "pageFile": "10b_guia2.html"
   }
 }

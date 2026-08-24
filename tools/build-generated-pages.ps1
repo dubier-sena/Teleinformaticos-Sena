@@ -126,6 +126,7 @@ function Get-VariantTokens {
     "DEFAULT_GRUPO" = [string]$Variant.grupo
     "GROUP_LABEL" = [string]$Variant.grupo
     "BACK_LINK" = [string]$Variant.backLink
+    "PAGE_FILE" = Get-OptionalValue -Variant $Variant -Key "pageFile"
   }
 }
 

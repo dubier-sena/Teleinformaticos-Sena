@@ -59,9 +59,16 @@ test("deadline manager keeps deadlines optional by default", () => {
 });
 
 test("deadline manager closes an activity only after the configured due date", () => {
+  // "now" se construye con offset Bogota explicito (-05:00): activity_deadlines.js
+  // interpreta un dueAt sin zona SIEMPRE como hora Bogota (normalizeDueAt), sin
+  // importar la zona horaria de la maquina donde corre. Si "now" se construye
+  // sin offset (new Date("...") a secas), Date lo interpreta como hora LOCAL del
+  // proceso -- en la Mac del autor coincide por casualidad con Bogota, pero en
+  // un runner de CI en UTC el resultado cambia (encontrado corriendo en GitHub
+  // Actions: este test fallaba solo ahi).
   const manager = loadDeadlineManager();
-  const active = manager.evaluatePolicy({ dueAt: "2026-05-10T18:00" }, new Date("2026-05-10T17:00:00"));
-  const closed = manager.evaluatePolicy({ dueAt: "2026-05-10T18:00" }, new Date("2026-05-10T18:30:00"));
+  const active = manager.evaluatePolicy({ dueAt: "2026-05-10T18:00" }, new Date("2026-05-10T17:00:00-05:00"));
+  const closed = manager.evaluatePolicy({ dueAt: "2026-05-10T18:00" }, new Date("2026-05-10T18:30:00-05:00"));
   assert.equal(active.state, "active");
   assert.equal(closed.state, "closed");
 });
@@ -99,7 +106,7 @@ test("deadline close blocks action buttons without disabling response fields", a
       delete this[name];
     },
   };
-  manager.__test.setNowProvider(() => new Date("2026-04-30T09:00:00"));
+  manager.__test.setNowProvider(() => new Date("2026-04-30T09:00:00-05:00"));
   manager.__testDocument.current = {
     querySelectorAll(selector) {
       return selector === "[data-store='respuesta']" ? [field] : [];
@@ -136,7 +143,7 @@ test("deadline manager resolves guide storage aliases to the public guide file",
     "admin"
   );
 
-  manager.__test.setNowProvider(() => new Date("2026-04-30T09:00:00"));
+  manager.__test.setNowProvider(() => new Date("2026-04-30T09:00:00-05:00"));
   const canSubmit = manager.canSubmit({
     pageFile: "10a_guia2.html",
     activityId: "extensiones331",

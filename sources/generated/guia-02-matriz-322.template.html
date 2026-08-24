@@ -13,23 +13,30 @@
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>{{PAGE_TITLE}}</title>
 <meta name="description" content="{{PAGE_DESCRIPTION}}">
-<script defer src="../js/portal_auth.js?v=20260816_1"></script>
-<script src="../js/firebase-config.js?v=20260527_3"></script>
+<script src="../../js/shared_utils.js?v=20260615_2"></script>
+<script src="../../js/global_error_handler.js?v=20260710_1"></script>
+<script defer src="../../js/portal_auth.js?v=20260816_1"></script>
+<script src="../../js/firebase-config.js?v=20260527_3"></script>
 <script defer src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
 <script defer src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
-<script src="../js/firebase_auth_bridge.js?v=20260618_1"></script>
-<script defer src="../js/firebase_db.js?v=20260823_1"></script>
-<script defer src="../js/project_integrations.js?v=20260823_1"></script>
-<script defer src="../js/drive_db.js?v=20260526_2"></script>
-<script defer src="../js/firebase_status_banner.js?v=20260822_1"></script>
-<script defer src="../js/save_status.js?v=20260822_1"></script>
+<script src="../../js/firebase_auth_bridge.js?v=20260618_1"></script>
+<script defer src="../../js/firebase_db.js?v=20260823_1"></script>
+<script defer src="../../js/drive_db.js?v=20260526_2"></script>
+<script defer src="../../js/firebase_status_banner.js?v=20260822_1"></script>
+<script defer src="../../js/save_status.js?v=20260822_1"></script>
+<script defer src="../../js/activity_deadlines.js?v=20260717_2"></script>
+<script defer src="../../js/guide_deadline_summary.js?v=20260615_1"></script>
+<script defer src="../../js/project_integrations.js?v=20260823_1"></script>
+<script defer src="../../js/shared_apps_script_delivery.js?v=20260823_1"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../css/site_tokens.css?v=20260617_1">
-<link rel="stylesheet" href="../css/components.css?v=20260617_1">
-<link rel="stylesheet" href="../css/shared_shell.css?v=20260617_1">
-<link rel="stylesheet" href="../css/guia_template.css?v=20260709_1">
+<link rel="stylesheet" href="../../css/site_tokens.css?v=20260617_1">
+<link rel="stylesheet" href="../../css/components.css?v=20260617_1">
+<link rel="stylesheet" href="../../css/interactive_help.css?v=20260519_1">
+<script defer src="../../js/interactive_help.js?v=20260519_1"></script>
+<link rel="stylesheet" href="../../css/shared_shell.css?v=20260617_1">
+<link rel="stylesheet" href="../../css/guia_template.css?v=20260709_1">
 <style>
   .matriz-page .app-main { padding: 24px 0 64px; }
   .matriz-page .content {
@@ -217,10 +224,11 @@
   .btn-export:hover { background: #15803d; transform: translateY(-1px); }
   .drive-link-panel { display: none; margin-top: 14px; }
 </style>
-<script defer src="../js/shared_shell.js?v=20260816_3"></script>
-<script defer src="../js/export_styles.js?v=20260517_1"></script>
-<script defer src="../js/word_search_generator.js?v=20260824_1"></script>
-<script defer src="../js/script_guia2.js?v=20260822_1"></script>
+<script defer src="../../js/shared_shell.js?v=20260816_3"></script>
+<script defer src="../../js/export_styles.js?v=20260517_1"></script>
+<script defer src="../../js/word_search_generator.js?v=20260824_1"></script>
+<script defer src="../../js/script_guia2.js?v=20260822_1"></script>
+<script defer src="../../js/activity_grades.js?v=20260815_1"></script>
 </head>
 <body
   class="app-shell app-shell--guide matriz-page"
@@ -240,7 +248,7 @@
     </div>
 
     <div class="content">
-      <a href="../{{BACK_LINK}}" class="back-btn">
+      <a href="../../{{BACK_LINK}}" class="back-btn">
         &#8592; Volver a la Guía 2
       </a>
 
@@ -249,7 +257,7 @@
         <input type="hidden" id="field-322-finalizada" data-store="322-finalizada">
         <input type="hidden" id="field-322-finalizada-at" data-store="322-finalizada-at">
         <button type="button" class="btn-save" id="btn-guardar" onclick="finalizarMatriz()">
-          &#128274; Guardar y finalizar actividad
+          &#128190; Guardar respuestas
         </button>
         <span class="save-status" id="save-status"></span>
         <span class="save-hint">Las respuestas también se guardan automáticamente al escribir.</span>
@@ -410,13 +418,18 @@
         </div>
       </div>
 
+      <div id="matriz322GradeMount" style="margin-bottom:16px"></div>
+
       <!-- Panel de exportación y entrega -->
       <div class="export-panel">
-        <h3>&#128196; Exportar y subir a Drive</h3>
-        <p>Cuando termines de diligenciar la matriz, exporta el documento con tus respuestas y súbelo a la carpeta de Drive correspondiente a tu ficha de aprendiz.</p>
-        <div class="export-actions">
+        <h3>&#128196; Exportar y entregar a Drive</h3>
+        <p>Cuando termines de diligenciar la matriz: (1) exporta el documento con tus respuestas y (2) entrégalo a Drive mediante el formulario seguro. El archivo se guardará en la carpeta de tu ficha.</p>
+        <div class="export-actions" style="display:flex;gap:10px;flex-wrap:wrap;">
           <button type="button" class="btn-export" onclick="exportarMatriz()">
             &#128202; Exportar Matriz (.doc)
+          </button>
+          <button type="button" class="btn-export" id="btn-entregar-matriz" onclick="entregarMatrizADrive()" style="background:#0b6b35;">
+            &#128228; Entregar a Drive
           </button>
         </div>
         <div class="drive-link-panel" id="drive-link-panel"></div>
@@ -429,7 +442,7 @@
 /* ── Descarga plantilla Word vacía ─────────────────────────────────────── */
 function descargarMatrizWord() {
   var a = document.createElement("a");
-  a.href = "../assets/materiales/guia2/MatrizDiagnosticoDigital.docx";
+  a.href = "../../assets/materiales/guia2/MatrizDiagnosticoDigital.docx";
   a.download = "MatrizDiagnosticoDigital.docx";
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
 }
@@ -468,16 +481,55 @@ function lockMatriz(finalizedAt, reasonText) {
   }
 }
 
+var MATRIZ_ACTIVITY_ID = "matriz322";
+
+// El instructor puede calificar esta actividad SIN que el aprendiz la haya
+// finalizado (reflectGradesForGuia2 en script_guia2.js marca
+// state["matriz322-locked"]). applyMatrizDeadlineLock() se repite varias
+// veces (al cargar, 1.5s despues, y cada vez que sincroniza con la nube) y
+// SIEMPRE reescribe el atributo disabled segun isLocked -- si no se incluye
+// esta calificacion aca, cada repeticion reactiva los campos (quedan grises
+// por lockMatriz() pero editables, porque applyAvailability solo toca
+// disabled/opacity/pointer-events, no el color de fondo).
+function isMatrizGradeLocked() {
+  return typeof state !== "undefined" && !!(state && state[MATRIZ_ACTIVITY_ID + "-locked"]);
+}
+
+function applyMatrizDeadlineLock() {
+  var field = document.getElementById("field-322-finalizada");
+  var locked = !!(field && (field.value === "true" || field.value === "1")) || isMatrizGradeLocked();
+  if (!window.activityDeadlineManager || typeof window.activityDeadlineManager.applyAvailability !== "function") {
+    return;
+  }
+  window.activityDeadlineManager.applyAvailability({
+    pageFile: "{{PAGE_FILE}}",
+    activityId: MATRIZ_ACTIVITY_ID,
+    isLocked: locked,
+    fieldSelector: "textarea[data-store]",
+    buttonId: "btn-guardar",
+    statusId: "save-status",
+    activeButtonText: "Guardar respuestas",
+    lockedButtonText: "Respuestas enviadas",
+    closedButtonText: "Entrega cerrada",
+    noticeMount: { mountSelector: ".save-bar" }
+  });
+}
+
 function checkLockState() {
   var field   = document.getElementById("field-322-finalizada");
   var fieldAt = document.getElementById("field-322-finalizada-at");
   if (field && (field.value === "true" || field.value === "1")) {
     lockMatriz(fieldAt ? fieldAt.value : "");
   }
+  applyMatrizDeadlineLock();
 }
 
 /* ── Finalizar actividad ───────────────────────────────────────────────── */
 async function finalizarMatriz() {
+  if (window.activityDeadlineManager && !window.activityDeadlineManager.canSubmit({ pageFile: "{{PAGE_FILE}}", activityId: MATRIZ_ACTIVITY_ID })) {
+    applyMatrizDeadlineLock();
+    return;
+  }
   if (!window.confirm("¿Finalizar la actividad 3.2.2?\n\nUna vez guardada, tus respuestas quedarán bloqueadas y no podrás modificarlas.")) {
     return;
   }
@@ -501,6 +553,7 @@ async function finalizarMatriz() {
     }
     if (status) { status.textContent = "\u2713 Guardado en Firestore"; status.className = "save-status ok"; }
     lockMatriz(now);
+    applyMatrizDeadlineLock();
   } catch(e) {
     if (fFin) { fFin.value = ""; fFin.dispatchEvent(new Event("input", { bubbles: true })); }
     if (fAt)  { fAt.value  = ""; fAt.dispatchEvent(new Event("input",  { bubbles: true })); }
@@ -511,8 +564,18 @@ async function finalizarMatriz() {
 }
 
 document.addEventListener("DOMContentLoaded", function() {
+  if (window.activityDeadlineManager && typeof window.activityDeadlineManager.ready === "function") {
+    window.activityDeadlineManager.ready().then(applyMatrizDeadlineLock).catch(function() {
+      applyMatrizDeadlineLock();
+    });
+  } else {
+    applyMatrizDeadlineLock();
+  }
   setTimeout(checkLockState, 1500);
 });
+
+window.addEventListener("activity-deadlines-updated", applyMatrizDeadlineLock);
+window.addEventListener("guia2-state-applied", checkLockState);
 
 /* ── Exportar Matrix (.doc) ────────────────────────────────────────────── */
 var MATRIZ_DRIVE_FOLDERS = {
@@ -633,6 +696,103 @@ function exportarMatriz() {
     panel.style.display = "block";
   }
 }
+
+/* \u2500\u2500 Entregar Matriz a Drive (formulario seguro Apps Script) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+function entregarMatrizADrive() {
+  var delivery = window.sharedAppsScriptDelivery;
+  if (!delivery || typeof delivery.openDeliveryModal !== "function") {
+    alert("El formulario seguro de entrega no esta disponible. Recarga la pagina e intenta de nuevo.");
+    return;
+  }
+  var session = window.portalAuth && typeof window.portalAuth.getCurrentSession === "function"
+    ? window.portalAuth.getCurrentSession() : null;
+  if (!session || session.role !== "student") {
+    alert("Debes iniciar sesion como aprendiz para entregar la matriz.");
+    return;
+  }
+  delivery.openDeliveryModal({
+    guideLabel: "Guia 2",
+    activityNumber: "3.2.2",
+    activityTitle: "Actividad 4: Matriz de Diagnostico Digital",
+    activityLabel: "Actividad 4 - Matriz de Diagnostico Digital",
+    panelKey: "guia2-3-2-2",
+    guideNumber: "2",
+    shortName: "MatrizDigital",
+    allowedExtensions: [".doc", ".docx"],
+    fileNamePrefix: "Actividad_4_MatrizDigital",
+    learnerNameMode: "full",
+  });
+}
+
+/* ── Render confirmacion + restaurar al abrir la pagina ───────────────── */
+function renderMatrizDeliveryConfirmation(record) {
+  if (!record || record.status !== "delivered") return;
+  var panel = document.getElementById("drive-link-panel");
+  if (!panel) return;
+  var btn = document.getElementById("btn-entregar-matriz");
+  if (btn) {
+    btn.disabled = true;
+    btn.style.background = "#16a34a";
+    btn.style.cursor = "default";
+    btn.innerHTML = "✓ Entregado";
+  }
+  var fecha = "";
+  try {
+    fecha = new Date(record.submittedAt || record.fechaEntrega).toLocaleString("es-CO", {
+      year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit"
+    });
+  } catch (e) {}
+  var fileName = record.savedFileName || record.nombreArchivoEstandar || record.originalFileName || "";
+  var driveUrl = record.driveUrl || record.enlaceDrive || "";
+  panel.innerHTML =
+    "<div style='background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:14px;'>"
+    + "<p style='font-size:.92rem;color:#15803d;font-weight:700;margin:0 0 8px;'>✅ Actividad entregada correctamente</p>"
+    + (fecha ? "<p style='font-size:.84rem;color:#166534;margin:0 0 4px;'>Fecha de entrega: " + escapeW(fecha) + "</p>" : "")
+    + (fileName ? "<p style='font-size:.84rem;color:#166534;margin:0 0 8px;'>Archivo entregado: " + escapeW(fileName) + "</p>" : "")
+    + (driveUrl
+        ? "<p style='margin:8px 0 0;'><a href='" + driveUrl + "' target='_blank' rel='noopener noreferrer' class='btn-export' style='background:#15803d;text-decoration:none;'>&#128194; Ver archivo en Drive &#8599;</a></p>"
+        : "")
+    + "<p style='font-size:.78rem;color:#475569;margin:10px 0 0;'>Para modificar la entrega, solicita al instructor que habilite nuevamente la actividad.</p>"
+    + "</div>";
+  panel.style.display = "block";
+}
+
+document.addEventListener("guide-delivery-registered", function (event) {
+  var detail = (event && event.detail) || {};
+  if (detail.panelKey === "guia2-3-2-2" || detail.activityNumber === "3.2.2") {
+    renderMatrizDeliveryConfirmation(detail);
+  }
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+  var delivery = window.sharedAppsScriptDelivery;
+  if (!delivery || typeof delivery.loadDeliveryRecord !== "function") return;
+  var record = delivery.loadDeliveryRecord({
+    guideLabel: "Guia 2",
+    activityNumber: "3.2.2",
+    activityLabel: "Actividad 4 - Matriz de Diagnostico Digital",
+    panelKey: "guia2-3-2-2",
+  });
+  if (record) renderMatrizDeliveryConfirmation(record);
+});
+
+// Badge Aprobado/Reprobado (matriz322) + relleno del banco si esta aprobado
+// y algun campo quedo vacio. Espera un tick para que script_guia2.js ya haya
+// restaurado (hydrateFields) las respuestas del equipo. Se repite cuando llega
+// un snapshot de la nube (evento "guia2-state-applied" de script_guia2.js):
+// si esa sincronizacion llega DESPUES del primer intento, hydrateFields()
+// puede pisar el relleno del banco -- repetir es seguro (solo llena campos
+// vacios) y evita que quede en blanco por una carrera de tiempos.
+function runMatriz322GradeAutoFill() {
+  var mgr = window.activityGradesManager;
+  if (mgr && typeof mgr.autoRenderForFile === "function") {
+    mgr.autoRenderForFile(PAGE_FILE);
+  }
+}
+window.addEventListener("load", function () {
+  setTimeout(runMatriz322GradeAutoFill, 250);
+});
+window.addEventListener("guia2-state-applied", runMatriz322GradeAutoFill);
 </script>
 
 </body>

@@ -75,6 +75,7 @@ const EXPECTED_VARIANTS = {
     inst: "Institucion Educativa Jhon F. Kennedy",
     title: "Matriz de Diagnóstico Digital | Actividad 3.2.2 | Guía 2 | Grupo 10A",
     backLink: "guia.html?g=grupo-10a-guia-02-herramientas-informaticas-digitales.html#contextualizacion",
+    pageFile: "10a_guia2.html",
   },
   "guia2-matriz-322-10b": {
     template: "guia-02-matriz-322.template.html",
@@ -84,6 +85,7 @@ const EXPECTED_VARIANTS = {
     inst: "Institucion Educativa Jhon F. Kennedy",
     title: "Matriz de Diagnóstico Digital | Actividad 3.2.2 | Guía 2 | Grupo 10B",
     backLink: "guia.html?g=grupo-10b-guia-02-herramientas-informaticas-digitales.html#contextualizacion",
+    pageFile: "10b_guia2.html",
   },
 };
 

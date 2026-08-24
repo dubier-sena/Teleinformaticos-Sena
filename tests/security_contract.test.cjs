@@ -19,8 +19,13 @@ test("server-side Firebase scripts do not keep real API keys in source", () => {
   assert.match(rosterSync, /requireEnv\("FIREBASE_API_KEY"\)/);
 });
 
-test("technical audit docs do not publish real password hashes", () => {
-  const docsDir = path.join(REPO_ROOT, "docs");
+// docs/ esta en .gitignore a proposito (documentacion tecnica interna, ver
+// README "Seguridad"); no existe en un checkout limpio de CI.
+const DOCS_DIR = path.join(REPO_ROOT, "docs");
+const DOCS_EXISTS = fs.existsSync(DOCS_DIR);
+
+test("technical audit docs do not publish real password hashes", { skip: !DOCS_EXISTS && "docs/ no existe en este checkout (gitignored a proposito)" }, () => {
+  const docsDir = DOCS_DIR;
   const docs = fs
     .readdirSync(docsDir)
     .filter((fileName) => fileName.endsWith(".md"))

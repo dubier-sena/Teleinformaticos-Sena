@@ -77,6 +77,12 @@ test("ningun archivo rastreado contiene una clave privada o un JSON de cuenta de
 test("REGISTRATION_CODE_SECRET nunca aparece con un valor asignado, solo como nombre de Script Property", () => {
   const problems = [];
   files.forEach((relPath) => {
+    // tests/ queda fuera: este mismo archivo define el patron de busqueda
+    // como texto ("REGISTRATION_CODE_SECRET[\"']?\\s*[:=]...") y por eso se
+    // detecta a si mismo; otros tests usan valores mock deliberadamente
+    // falsos (p.ej. "test-secret-nunca-en-git") para simular Apps Script sin
+    // tocar el secreto real -- ninguno de los dos casos es un secreto.
+    if (relPath.startsWith("tests/")) return;
     const fullPath = path.join(ROOT, relPath);
     let content;
     try {

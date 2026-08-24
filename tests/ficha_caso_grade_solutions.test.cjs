@@ -25,8 +25,18 @@ function readFicha(fileName) {
   return fs.readFileSync(path.join(root, "pages", "auxiliares", fileName), "utf8");
 }
 
-test("grade_solutions_bank.json tiene las 12 respuestas modelo de Ficha de caso (3 casos x 4 preguntas)", () => {
-  const bank = JSON.parse(fs.readFileSync(path.join(root, "grade_solutions_bank.json"), "utf8"));
+// grade_solutions_bank.json esta en .gitignore a proposito (banco de
+// respuestas modelo); ver la misma nota en
+// tests/ciberseguridad335_grade_solutions.test.cjs.
+const BANK_PATH = path.join(root, "grade_solutions_bank.json");
+const BANK_EXISTS = fs.existsSync(BANK_PATH);
+const SKIP_REASON = "grade_solutions_bank.json no existe en este checkout (gitignored a proposito)";
+
+test(
+  "grade_solutions_bank.json tiene las 12 respuestas modelo de Ficha de caso (3 casos x 4 preguntas)",
+  { skip: !BANK_EXISTS && SKIP_REASON },
+  () => {
+  const bank = JSON.parse(fs.readFileSync(BANK_PATH, "utf8"));
   const matriz322 = bank[FAMILY] && bank[FAMILY].matriz322;
   assert.ok(matriz322, "debe existir bank['guia-02-herramientas'].matriz322");
 

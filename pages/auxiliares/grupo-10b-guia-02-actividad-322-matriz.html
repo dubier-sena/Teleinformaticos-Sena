@@ -725,7 +725,7 @@ function entregarMatrizADrive() {
   });
 }
 
-/* \u2500\u2500 Render confirmacion + restaurar al abrir la pagina \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+/* ── Render confirmacion + restaurar al abrir la pagina ───────────────── */
 function renderMatrizDeliveryConfirmation(record) {
   if (!record || record.status !== "delivered") return;
   var panel = document.getElementById("drive-link-panel");
@@ -735,7 +735,7 @@ function renderMatrizDeliveryConfirmation(record) {
     btn.disabled = true;
     btn.style.background = "#16a34a";
     btn.style.cursor = "default";
-    btn.innerHTML = "\u2713 Entregado";
+    btn.innerHTML = "✓ Entregado";
   }
   var fecha = "";
   try {
@@ -747,7 +747,7 @@ function renderMatrizDeliveryConfirmation(record) {
   var driveUrl = record.driveUrl || record.enlaceDrive || "";
   panel.innerHTML =
     "<div style='background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:14px;'>"
-    + "<p style='font-size:.92rem;color:#15803d;font-weight:700;margin:0 0 8px;'>\u2705 Actividad entregada correctamente</p>"
+    + "<p style='font-size:.92rem;color:#15803d;font-weight:700;margin:0 0 8px;'>✅ Actividad entregada correctamente</p>"
     + (fecha ? "<p style='font-size:.84rem;color:#166534;margin:0 0 4px;'>Fecha de entrega: " + escapeW(fecha) + "</p>" : "")
     + (fileName ? "<p style='font-size:.84rem;color:#166534;margin:0 0 8px;'>Archivo entregado: " + escapeW(fileName) + "</p>" : "")
     + (driveUrl
