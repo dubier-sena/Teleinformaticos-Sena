@@ -1,12 +1,15 @@
 name: CI
 
-# Fase 15: valida el portal antes de que se considere publicable. GitHub
-# Pages de este repo hoy publica directamente desde la rama `main` (modo
-# "legacy" del repo, confirmado via API -- NO esta migrado a un deploy por
-# Actions), asi que este workflow NO despliega nada: es la señal verde/roja
-# que falta hoy. Los jobs de abajo documentan el detalle de cada validacion;
-# la ruta de migracion a un deploy realmente condicionado a este CI vive en
-# el README y en las notas de la sesion que agrego este workflow.
+# Fase 15: valida el portal antes de publicarlo, y solo publica si las 4
+# validaciones pasan. GitHub Pages de este repo publicaba en modo "legacy"
+# (deploy automatico desde la rama `main`, sin pasar por este workflow);
+# desde que se agrego el job "deploy" de abajo, Pages quedo migrado a modo
+# Actions y el flujo real es: push a main -> test + secrets-scan +
+# smoke-test + windows-build-check en paralelo -> si los 4 pasan, "deploy"
+# (que depende de los 4 via needs) publica el sitio. Si cualquiera falla, no
+# se publica nada. La ruta de migracion completa (por que, como se decidio
+# el contenido del artifact) vive en el README y en las notas de la sesion
+# que agrego este workflow.
 on:
   push:
     branches: [main]
@@ -15,10 +18,18 @@ on:
 
 # Si llegan varios push seguidos a la misma rama/PR, cancela la corrida
 # anterior en vez de dejarla terminar -- ahorra minutos de CI sin perder
-# cobertura (el ultimo commit es el que importa).
+# cobertura (el ultimo commit es el que importa). El job "deploy" NO usa
+# este grupo: tiene su propia concurrencia mas abajo, pensada para publicar
+# (nunca cancelar una publicacion a medias).
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+# Permiso por defecto para todos los jobs: solo lectura del repo. El job
+# "deploy" es el unico que necesita mas (pages, id-token) y lo declara el
+# mismo, explicitamente, mas abajo.
+permissions:
+  contents: read
 
 jobs:
   # Suite completa de Node (1075+ pruebas: CSP, identidad/UID, Apps Script,
@@ -123,3 +134,65 @@ jobs:
             Write-Error "Las paginas generadas no coinciden con las plantillas actuales. Corre tools/build-generated-pages.ps1 y commitea el resultado."
             exit 1
           }
+
+  # Publica en GitHub Pages -- SOLO si test + secrets-scan + smoke-test +
+  # windows-build-check pasaron los 4 (needs) y SOLO en un push directo a
+  # main (nunca en un pull_request, ni siquiera si viene de main). Si algo
+  # de arriba falla o se cancela, GitHub Actions no ejecuta este job: no se
+  # publica nada.
+  #
+  # No hay build nuevo aqui: Pages en modo "legacy" (el que tenia este repo
+  # antes de este job) publicaba la RAIZ del repo tal cual, via el Jekyll
+  # por defecto de Pages, que ya excluye cualquier archivo/carpeta que
+  # empiece con "." (.git, .github, .gitignore, .gitleaks.toml, etc.) --
+  # confirmado probando el sitio publicado hoy antes de escribir este job.
+  # El paso de abajo replica exactamente ese mismo recorte con rsync, para
+  # publicar el mismo contenido que ya se publicaba (ni mas, ni menos), en
+  # vez de inventar un build nuevo.
+  #
+  # Apps Script (apps-script/*.gs) y Firestore Rules (firestore.rules)
+  # siguen FUERA de este workflow: esto solo publica paginas estaticas para
+  # GitHub Pages, nunca despliega Apps Script ni reglas de Firestore.
+  deploy:
+    name: Deploy a GitHub Pages
+    needs: [test, secrets-scan, smoke-test, windows-build-check]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    # Concurrencia propia (no la de arriba): un despliegue en curso NUNCA se
+    # cancela por un push nuevo, se encola. Es el patron que recomienda la
+    # documentacion oficial de GitHub Pages para el job de deploy.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Preparar el contenido a publicar (mismo recorte que el Pages legacy actual)
+        run: |
+          set -euo pipefail
+          SITE_DIR="$RUNNER_TEMP/pages-site"
+          mkdir -p "$SITE_DIR"
+          rsync -a --exclude='.*' ./ "$SITE_DIR/"
+          echo "--- contenido preparado para Pages ---"
+          du -sh "$SITE_DIR"
+          test -f "$SITE_DIR/index.html" || { echo "::error::index.html no quedo en el artifact"; exit 1; }
+          test ! -e "$SITE_DIR/.git" || { echo "::error::.git quedo incluido en el artifact"; exit 1; }
+
+      - name: Configurar Pages
+        uses: actions/configure-pages@v5
+
+      - name: Subir artifact de Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ runner.temp }}/pages-site
+
+      - name: Publicar en GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
