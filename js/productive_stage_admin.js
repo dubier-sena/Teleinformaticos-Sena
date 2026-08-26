@@ -231,6 +231,183 @@
       "</tbody></table>";
   }
 
+  // ── Fechas limite de documentos (bitacoras, Sofia Plus) ─────────────────
+  // Solo los documentos con deliveryLabel Y presentes en el mapa legacy de
+  // js/productive_stage_deadlines.js son "con fecha" (bitacoras 1-6 +
+  // sofia-plus); ficha-inscripcion/acuerdo quedan fuera a proposito -- no
+  // tienen fecha hoy y el pedido explicito es no inventarles una (punto 39
+  // del pedido original / punto 6 de las aclaraciones).
+  function getDatedDocumentCatalog() {
+    const deadlines = window.productiveStageDeadlines;
+    const legacyMap = (deadlines && deadlines.LEGACY_DATE_ONLY_BY_DOC_ID) || {};
+    return DOCUMENT_CATALOG.filter(function (item) {
+      return Object.prototype.hasOwnProperty.call(legacyMap, item.id);
+    });
+  }
+
+  function setDocumentDeadlinesFeedback(message, type) {
+    const box = getById("document-deadlines-feedback");
+    if (!box) return;
+    box.className = "admin-feedback" + (message ? " " + (type || "success") : "");
+    box.textContent = message || "";
+  }
+
+  // Resumen por documento (punto 11 del pedido): cuenta sobre los mismos
+  // aprendices/entregas ya cargados en memoria (allUsers + snapshot) -- cero
+  // lecturas nuevas a Firestore.
+  function computeDocumentDeadlineSummary(documentItem, effective) {
+    const deadlines = window.productiveStageDeadlines;
+    const deliveryIndex = getDocumentDeliveryIndex();
+    const applicableUsers = allUsers.filter(function (user) {
+      return String(user && user.role || "student") === "student" &&
+        getDocumentCatalogForUser(user).some(function (item) { return item.id === documentItem.id; });
+    });
+
+    let delivered = 0;
+    let overdue = 0;
+    applicableUsers.forEach(function (user) {
+      const usernameKey = String(user.usernameKey || user.username || "").trim().toLowerCase();
+      const record = (deliveryIndex[usernameKey] || {})[documentItem.id];
+      if (record) {
+        delivered += 1;
+        return;
+      }
+      const status = deadlines && typeof deadlines.classifyStatus === "function"
+        ? deadlines.classifyStatus({ dueAt: effective.dueAt })
+        : "pending";
+      if (status === "overdue") overdue += 1;
+    });
+
+    return {
+      total: applicableUsers.length,
+      delivered: delivered,
+      pending: applicableUsers.length - delivered,
+      overdue: overdue,
+    };
+  }
+
+  function renderDocumentDeadlinesTable() {
+    const container = getById("document-deadlines-table");
+    if (!container) return;
+    const deadlines = window.productiveStageDeadlines;
+    if (!deadlines) {
+      container.innerHTML = '<div class="productive-stage-empty">Modulo de fechas limite no disponible en esta pagina.</div>';
+      return;
+    }
+
+    const documents = getDatedDocumentCatalog();
+    if (!documents.length) {
+      container.innerHTML = '<div class="productive-stage-empty">No hay documentos con fecha limite en el catalogo.</div>';
+      return;
+    }
+
+    container.innerHTML =
+      '<table class="document-delivery-table"><thead><tr>' +
+        "<th>Documento</th><th>Fecha limite</th><th>Origen</th><th>Aprendices</th><th>Entregaron</th><th>Pendientes</th><th>Vencidos</th><th></th>" +
+      "</tr></thead><tbody>" +
+      documents.map(function (documentItem) {
+        const effective = deadlines.resolveEffectiveDeadline(productiveStageSnapshot, documentItem.id);
+        const summary = computeDocumentDeadlineSummary(documentItem, effective);
+        const dueLabel = effective.dueAt
+          ? new Date(effective.dueAt).toLocaleString("es-CO", { timeZone: "America/Bogota", year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
+          : "Sin fecha límite";
+        const sourceLabel = { admin: "Configurada", legacy: "Por defecto", cleared: "Quitada por admin", none: "—" }[effective.source] || effective.source;
+        return (
+          "<tr>" +
+            "<th scope=\"row\">" + escapeHtml(documentItem.title) + "</th>" +
+            "<td>" + escapeHtml(dueLabel) + "</td>" +
+            "<td>" + escapeHtml(sourceLabel) + "</td>" +
+            "<td>" + summary.total + "</td>" +
+            "<td>" + summary.delivered + "</td>" +
+            "<td>" + summary.pending + "</td>" +
+            "<td>" + summary.overdue + "</td>" +
+            "<td><button type=\"button\" class=\"document-delivery-manual-link\" data-edit-document-deadline=\"" + escapeHtml(documentItem.id) + "\">Editar fecha</button></td>" +
+          "</tr>"
+        );
+      }).join("") +
+      "</tbody></table>";
+  }
+
+  let currentDocumentDeadlineDocId = "";
+
+  function closeDocumentDeadlineModal() {
+    const modal = getById("document-deadline-modal");
+    if (!modal || modal.hidden) return;
+    modal.hidden = true;
+    currentDocumentDeadlineDocId = "";
+    document.body.classList.remove("modal-open");
+  }
+
+  function openDocumentDeadlineModal(docId) {
+    const deadlines = window.productiveStageDeadlines;
+    const documentItem = DOCUMENT_CATALOG.find(function (item) { return item.id === docId; });
+    const modal = getById("document-deadline-modal");
+    if (!deadlines || !documentItem || !modal) return;
+
+    currentDocumentDeadlineDocId = docId;
+    const effective = deadlines.resolveEffectiveDeadline(productiveStageSnapshot, docId);
+    getById("document-deadline-context").textContent = documentItem.title;
+    getById("document-deadline-input").value = effective.dueAt ? deadlines.dueAtForInput(effective.dueAt) : "";
+    const legacyIso = deadlines.legacyDeadlineIso(docId);
+    const legacyLabel = legacyIso
+      ? new Date(legacyIso).toLocaleString("es-CO", { timeZone: "America/Bogota", year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
+      : "sin fecha por defecto";
+    getById("document-deadline-legacy-note").textContent = "Fecha por defecto si no configuras ninguna: " + legacyLabel + ".";
+    setDocumentDeadlinesFeedback("", "");
+    modal.hidden = false;
+    document.body.classList.add("modal-open");
+    getById("document-deadline-input").focus();
+  }
+
+  async function handleDocumentDeadlineSubmit() {
+    const deadlines = window.productiveStageDeadlines;
+    const docId = currentDocumentDeadlineDocId;
+    if (!deadlines || !docId) return;
+    const input = getById("document-deadline-input");
+    const value = input && input.value;
+    if (!value) {
+      setDocumentDeadlinesFeedback("Indica la fecha y hora limite.", "error");
+      return;
+    }
+    try {
+      const session = typeof auth.getCurrentSession === "function" ? auth.getCurrentSession() : null;
+      const updatedBy = session?.user?.usernameKey || session?.usernameKey || "admin";
+      const next = deadlines.setDeadline(productiveStageSnapshot, docId, value, updatedBy);
+      const saveResult = await window.productiveStageStore.saveSnapshot(next);
+      productiveStageSnapshot = next;
+      renderDocumentDeadlinesTable();
+      setDocumentDeadlinesFeedback(
+        saveResult.savedCloud ? "Fecha guardada y sincronizada." : "Fecha guardada localmente en este equipo.",
+        "success"
+      );
+      closeDocumentDeadlineModal();
+    } catch (error) {
+      setDocumentDeadlinesFeedback(error && error.message ? error.message : "No fue posible guardar la fecha.", "error");
+    }
+  }
+
+  async function handleDocumentDeadlineClear() {
+    const deadlines = window.productiveStageDeadlines;
+    const docId = currentDocumentDeadlineDocId;
+    if (!deadlines || !docId) return;
+    try {
+      const session = typeof auth.getCurrentSession === "function" ? auth.getCurrentSession() : null;
+      const updatedBy = session?.user?.usernameKey || session?.usernameKey || "admin";
+      const next = deadlines.clearDeadline(productiveStageSnapshot, docId, updatedBy);
+      const saveResult = await window.productiveStageStore.saveSnapshot(next);
+      productiveStageSnapshot = next;
+      renderDocumentDeadlinesTable();
+      setDocumentDeadlinesFeedback(
+        "Fecha eliminada: este documento queda sin fecha límite" +
+          (saveResult.savedCloud ? " (sincronizado)." : " (guardado localmente)."),
+        "success"
+      );
+      closeDocumentDeadlineModal();
+    } catch (error) {
+      setDocumentDeadlinesFeedback(error && error.message ? error.message : "No fue posible quitar la fecha.", "error");
+    }
+  }
+
   function setManualDocumentDeliveryFeedback(message, type) {
     const box = getById("document-delivery-manual-feedback");
     if (!box) return;
@@ -1073,6 +1250,7 @@
         imports: [],
         deliveries: [],
         documentDeliveries: [],
+        documentDeadlines: {},
         studentIndex: {},
         lastImportSummary: null,
         updatedAt: "",
@@ -1084,6 +1262,7 @@
     productiveStageSnapshot = await window.productiveStageStore.loadSnapshot();
     renderProductiveStageSection();
     renderDocumentDeliveryControl();
+    renderDocumentDeadlinesTable();
   }
 
   async function loadUsersForMatching() {
@@ -1193,6 +1372,8 @@
     getById("document-delivery-control-query")?.addEventListener("input", renderDocumentDeliveryControl);
     getById("document-delivery-control-only-pending")?.addEventListener("change", renderDocumentDeliveryControl);
     getById("document-delivery-manual-submit")?.addEventListener("click", handleManualDocumentDeliverySubmit);
+    getById("document-deadline-submit")?.addEventListener("click", handleDocumentDeadlineSubmit);
+    getById("document-deadline-clear")?.addEventListener("click", handleDocumentDeadlineClear);
 
     document.addEventListener("click", function (event) {
       const closeButton = event.target.closest("[data-close-productive-stage-modal]");
@@ -1207,12 +1388,24 @@
         return;
       }
 
+      const closeDeadlineButton = event.target.closest("[data-close-document-deadline-modal]");
+      if (closeDeadlineButton) {
+        closeDocumentDeadlineModal();
+        return;
+      }
+
       const manualButton = event.target.closest("[data-register-document-delivery]");
       if (manualButton) {
         openDocumentDeliveryManualModal(
           manualButton.getAttribute("data-register-document-delivery") || "",
           manualButton.getAttribute("data-document-id") || ""
         );
+        return;
+      }
+
+      const editDeadlineButton = event.target.closest("[data-edit-document-deadline]");
+      if (editDeadlineButton) {
+        openDocumentDeadlineModal(editDeadlineButton.getAttribute("data-edit-document-deadline") || "");
         return;
       }
 
@@ -1225,6 +1418,7 @@
     document.addEventListener("keydown", function (event) {
       if (event.key === "Escape") {
         closeDocumentDeliveryManualModal();
+        closeDocumentDeadlineModal();
         closeProductiveStageDetailModal();
       }
     });

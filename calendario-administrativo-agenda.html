@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+<meta
+  http-equiv="Content-Security-Policy"
+  content="default-src 'self' blob: data:; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' blob: https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://script.google.com https://script.googleusercontent.com https://cdn.jsdelivr.net; media-src 'self' blob: data: https:; frame-src 'self' https://es.educaplay.com;"
+>
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Agenda administrativa | Sistemas Teleinformaticos</title>
+<meta name="description" content="Agenda unificada para el admin: clases, entregas de guias, bitacoras, Etapa Productiva, Taller Integrador y eventos manuales, con filtros por institucion/ficha/tipo/estado.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/site_tokens.css?v=20260617_1">
+<link rel="stylesheet" href="css/components.css?v=20260617_1">
+<link rel="stylesheet" href="css/shared_shell.css?v=20260617_1">
+<link rel="stylesheet" href="css/page_student_calendar.css?v=20260826_2">
+<link rel="stylesheet" href="css/page_calendario_admin_agenda.css?v=20260826_4">
+<link rel="stylesheet" href="css/academic_agenda_calendar.css?v=20260826_3">
+<script src="js/shared_utils.js?v=20260615_2"></script>
+<script src="js/global_error_handler.js?v=20260710_1"></script>
+<script src="js/portal_auth.js?v=20260816_1"></script>
+<script src="js/firebase-config.js?v=20260527_3"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script src="js/firebase_auth_bridge.js?v=20260618_1"></script>
+<script src="js/guide_merge_utils.js?v=20260823_1"></script>
+<script src="js/firebase_db.js?v=20260823_1"></script>
+<script src="js/project_integrations.js?v=20260823_1"></script>
+<script src="js/drive_db.js?v=20260825_1"></script>
+<script defer src="js/firebase_status_banner.js?v=20260822_1"></script>
+<script defer src="js/save_status.js?v=20260822_1"></script>
+<script defer src="js/shared_shell.js?v=20260816_3"></script>
+<script src="data/calendario_2026_records.js?v=20260722_1"></script>
+<script defer src="js/activity_standard.js?v=20260822_1"></script>
+<script defer src="js/guide_declarations.js?v=20260815_1"></script>
+<script defer src="js/activity_deadlines.js?v=20260717_2"></script>
+<script defer src="js/productive_stage_store.js?v=20260825_2"></script>
+<script defer src="js/productive_stage_deadlines.js?v=20260824_1"></script>
+<script defer src="js/academic_agenda.js?v=20260824_1"></script>
+<script defer src="js/academic_agenda_context.js?v=20260824_1"></script>
+<script defer src="js/academic_agenda_admin_context.js?v=20260825_1"></script>
+<script defer src="js/academic_agenda_views.js?v=20260826_1"></script>
+<script defer src="js/academic_agenda_calendar_ui.js?v=20260826_1"></script>
+<script defer src="js/agenda_view_preference.js?v=20260826_1"></script>
+<script defer src="js/calendario_admin_manual_events.js?v=20260826_1"></script>
+<script defer src="js/calendario_admin_agenda_page.js?v=20260826_2"></script>
+<script src="js/access_guard_admin.js?v=20260823_1"></script>
+</head>
+<body class="app-shell app-shell--admin-agenda">
+  <header class="admin-agenda-hero">
+    <div class="admin-agenda-hero__inner">
+      <div>
+        <h1>Agenda administrativa</h1>
+        <p>Clases, entregas de guías, Taller Integrador, bitácoras, Etapa Productiva y eventos manuales de todas las fichas, en un solo lugar.</p>
+      </div>
+      <div class="admin-agenda-hero__actions">
+        <span class="student-cal-card__status" id="aa-status"></span>
+        <button class="c-btn c-btn--secondary" type="button" id="aa-refresh-counts" title="Calcula cuántos aprendices entregaron cada actividad de guía visible (consulta la nube, puede tardar unos segundos)">Actualizar conteos de entrega</button>
+        <button class="c-btn c-btn--ghost" type="button" id="aa-reload">Actualizar</button>
+        <a class="c-btn c-btn--ghost" href="index.html">Volver al portal</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="admin-agenda-main">
+    <section class="admin-agenda-filters" aria-label="Filtros de la agenda">
+      <label>Institución
+        <select id="aa-filter-institucion"><option value="">Todas las instituciones</option></select>
+      </label>
+      <label>Ficha
+        <select id="aa-filter-ficha"><option value="">Todas las fichas</option></select>
+      </label>
+      <label>Tipo
+        <select id="aa-filter-tipo">
+          <option value="">Todos los tipos</option>
+          <option value="CLASE">Clase</option>
+          <option value="ENTREGA">Entrega</option>
+          <option value="BITACORA">Bitácora</option>
+          <option value="DOCUMENTO">Documento</option>
+          <option value="ACTIVIDAD_ESPECIAL">Actividad especial</option>
+        </select>
+      </label>
+      <label>Estado
+        <select id="aa-filter-estado">
+          <option value="">Todos los estados</option>
+          <option value="pending">Pendiente</option>
+          <option value="due-today">Vence hoy</option>
+          <option value="due-tomorrow">Vence mañana</option>
+          <option value="overdue">Vencida</option>
+          <option value="delivered">Entregada</option>
+          <option value="no-deadline">Sin fecha límite</option>
+          <option value="scheduled">Programada</option>
+          <option value="cancelled">Cancelada</option>
+          <option value="rescheduled">Reprogramada</option>
+        </select>
+      </label>
+      <label>Guía
+        <select id="aa-filter-guia"><option value="">Todas las guías</option></select>
+      </label>
+      <label>Desde
+        <input type="date" id="aa-filter-desde">
+      </label>
+      <label>Hasta
+        <input type="date" id="aa-filter-hasta">
+      </label>
+      <div class="admin-agenda-filters__actions">
+        <span class="admin-agenda-filters__status" id="aa-refresh-counts-status"></span>
+        <button class="c-btn c-btn--primary" type="button" id="aa-manual-create">+ Nuevo evento manual</button>
+      </div>
+    </section>
+
+    <div class="admin-agenda-view-bar">
+      <div id="aa-view-switcher"></div>
+      <div id="aa-view-nav" hidden></div>
+    </div>
+
+    <section id="aa-list" class="admin-agenda-list" aria-live="polite">
+      <div class="msg msg--info"><h3>Cargando…</h3><p>Consultando la agenda administrativa.</p></div>
+    </section>
+    <section id="aa-week" hidden></section>
+    <section id="aa-month" hidden></section>
+  </main>
+
+  <!-- Modal: crear/editar evento manual -->
+  <div class="c-modal" id="aa-manual-modal" hidden>
+    <div class="c-modal__card" role="dialog" aria-modal="true" aria-labelledby="aa-manual-modal-title">
+      <div class="c-modal__header">
+        <h2 class="c-modal__title" id="aa-manual-modal-title">Nuevo evento manual</h2>
+        <button type="button" class="c-modal__close" id="aa-manual-modal-close" aria-label="Cerrar">✕</button>
+      </div>
+      <form id="aa-manual-form" class="admin-agenda-form">
+        <label>Título
+          <input class="c-input" type="text" name="title" maxlength="160" required>
+        </label>
+        <label>Descripción
+          <input class="c-input" type="text" name="description" maxlength="300">
+        </label>
+        <div class="admin-agenda-form__row">
+          <label>Fecha
+            <input class="c-input" type="date" name="date" required>
+          </label>
+          <label>Estado
+            <select class="c-input" name="status">
+              <option value="scheduled">Programada</option>
+              <option value="cancelled">Cancelada</option>
+              <option value="rescheduled">Reprogramada</option>
+            </select>
+          </label>
+        </div>
+        <label class="admin-agenda-allday-toggle">
+          <input type="checkbox" id="aa-manual-allday" name="allDay">
+          Todo el día (no exige hora)
+        </label>
+        <div id="aa-manual-slots-section">
+          <div id="aa-manual-slots-list"></div>
+          <button type="button" class="c-btn c-btn--ghost c-btn--sm" id="aa-manual-add-slot">+ Agregar otra franja horaria</button>
+          <p class="admin-agenda-form__hint">Puedes agregar varias franjas en el mismo día (p. ej. 8:00–10:00 y 14:10–16:15). No es obligatorio usar más de una.</p>
+        </div>
+        <label>Ficha (vacío = todas)
+          <select class="c-input" name="ficha"><option value="">Todas las fichas</option></select>
+        </label>
+        <label>Enlace directo (opcional)
+          <input class="c-input" type="text" name="route" placeholder="p.ej. etapa-productiva-admin.html">
+        </label>
+        <p class="admin-agenda-form__feedback" id="aa-manual-feedback"></p>
+        <div class="c-modal__footer">
+          <button type="button" class="c-btn c-btn--ghost" id="aa-manual-cancel">Cancelar</button>
+          <button type="submit" class="c-btn c-btn--primary">Guardar evento</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: detalle de un dia (vista Mes) o de un evento (chip de Semana) -->
+  <div class="c-modal" id="aa-day-detail-modal" hidden>
+    <div class="c-modal__card" role="dialog" aria-modal="true" aria-labelledby="aa-day-detail-title">
+      <div class="c-modal__header">
+        <h2 class="c-modal__title" id="aa-day-detail-title">Detalle del día</h2>
+        <button type="button" class="c-modal__close" id="aa-day-detail-close" aria-label="Cerrar">✕</button>
+      </div>
+      <div id="aa-day-detail-body"></div>
+    </div>
+  </div>
+
+  <footer class="footer" data-reveal>
+    <span>SENA</span> | Servicio Nacional de Aprendizaje | Sistemas Teleinform&aacute;ticos | C&oacute;digo 233108 V1 | <a href="mailto:domillan@sena.edu.co">domillan@sena.edu.co</a>
+  </footer>
+</body>
+</html>

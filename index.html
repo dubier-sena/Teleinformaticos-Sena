@@ -16,7 +16,7 @@
 <link rel="stylesheet" href="css/site_tokens.css?v=20260617_1">
 <link rel="stylesheet" href="css/components.css?v=20260617_1">
 <link rel="stylesheet" href="css/shared_shell.css?v=20260617_1">
-<link rel="stylesheet" href="css/page_portal.css?v=20260823_1">
+<link rel="stylesheet" href="css/page_portal.css?v=20260824_1">
 <script src="js/shared_utils.js?v=20260615_2"></script>
 <script src="js/global_error_handler.js?v=20260710_1"></script>
 <script defer src="js/portal_auth.js?v=20260816_1"></script>
@@ -27,7 +27,7 @@
 <script defer src="js/guide_merge_utils.js?v=20260823_1"></script>
 <script defer src="js/firebase_db.js?v=20260823_1"></script>
 <script defer src="js/project_integrations.js?v=20260823_1"></script>
-<script defer src="js/drive_db.js?v=20260526_2"></script>
+<script defer src="js/drive_db.js?v=20260825_1"></script>
 <script defer src="js/firebase_status_banner.js?v=20260822_1"></script>
 <script defer src="js/save_status.js?v=20260822_1"></script>
 <!-- Fase 12 (rendimiento): activity_standard/guide_declarations/activity_grades/
@@ -37,7 +37,7 @@
      ejecutan renderStudent(), asi que antes bajaban ~280 KB de JS de guias
      que jamas se usaban en su pantalla (medido: 19 scripts / 686 KB en el
      login, identico a un aprendiz ya autenticado). -->
-<script defer src="js/portal_home.js?v=20260823_2"></script>
+<script defer src="js/portal_home.js?v=20260824_1"></script>
 <script defer src="js/shared_shell.js?v=20260816_3"></script>
 </head>
 <body class="app-shell app-shell--portal portal-redesign">
@@ -141,6 +141,21 @@
 
     <div class="callouts" id="student-callouts" hidden></div>
 
+    <div class="agenda-summary" id="student-agenda-summary" hidden>
+      <div class="agenda-summary__indicators" id="student-agenda-indicators"></div>
+      <div class="agenda-summary__cols">
+        <div class="agenda-summary__col">
+          <h3>Próximas entregas</h3>
+          <div id="student-agenda-upcoming"></div>
+        </div>
+        <div class="agenda-summary__col">
+          <h3>Pendientes importantes</h3>
+          <div id="student-agenda-important"></div>
+        </div>
+      </div>
+      <a class="agenda-summary__link" href="pages/auxiliares/calendario-aprendiz.html">Ver agenda completa &rarr;</a>
+    </div>
+
     <div class="sec-head">
       <p class="sec-head__k">Tus gu&iacute;as</p>
       <h3>Selecciona la gu&iacute;a que vas a trabajar</h3>
@@ -183,6 +198,12 @@
         <div class="tool__ico">&#128197;</div>
         <h4>Calendario 2026</h4>
         <p>Fechas de clase y de entrega de actividades.</p>
+        <span class="tool__go">Abrir &rarr;</span>
+      </a>
+      <a class="tool" href="calendario-administrativo-agenda.html">
+        <div class="tool__ico">&#128203;</div>
+        <h4>Agenda administrativa</h4>
+        <p>Clases, entregas, bit&aacute;coras y eventos manuales de todas las fichas en un solo lugar.</p>
         <span class="tool__go">Abrir &rarr;</span>
       </a>
       <a class="tool" href="etapa-productiva-admin.html">

@@ -142,12 +142,15 @@
   async function collectProductiveDocsPending(usernameKey, ficha) {
     if (PRODUCTIVE_FICHAS.indexOf(String(ficha)) === -1) return null;
     var store = window.productiveStageStore;
-    if (!store || typeof store.loadSnapshot !== "function" ||
+    if (!store || typeof store.loadStudentSnapshot !== "function" ||
       typeof store.getDocumentDeliveriesByUsername !== "function") {
       return null;
     }
     try {
-      var snapshot = await store.loadSnapshot();
+      // Bloque C.1: vista propia (server-side, por idToken) en vez del
+      // snapshot completo -- este resumen del aprendiz nunca necesito datos
+      // de otros, solo lo parecia porque loadSnapshot() traia todo.
+      var snapshot = await store.loadStudentSnapshot();
       var byUsername = store.getDocumentDeliveriesByUsername(snapshot) || {};
       var delivered = byUsername[String(usernameKey || "").trim().toLowerCase()] || {};
       return Object.keys(PRODUCTIVE_BASE_DOC_LABELS).filter(function (docId) {

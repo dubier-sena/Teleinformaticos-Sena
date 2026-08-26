@@ -30,7 +30,7 @@
 <script src="js/firebase_auth_bridge.js?v=20260618_1"></script>
 <script src="js/guide_merge_utils.js?v=20260823_1"></script>
 <script src="js/firebase_db.js?v=20260823_1"></script>
-<script src="js/drive_db.js?v=20260526_2"></script>
+<script src="js/drive_db.js?v=20260825_1"></script>
 <script defer src="js/firebase_status_banner.js?v=20260822_1"></script>
 <script defer src="js/save_status.js?v=20260822_1"></script>
 <script defer src="js/shared_shell.js?v=20260816_3"></script>
@@ -38,7 +38,8 @@
 <script defer src="js/productive_stage_import.js?v=20260411_2"></script>
 <script defer src="js/project_integrations.js?v=20260823_1"></script>
 <script defer src="js/shared_apps_script_delivery.js?v=20260823_1"></script>
-<script defer src="js/productive_stage_store.js?v=20260727_1"></script>
+<script defer src="js/productive_stage_store.js?v=20260825_2"></script>
+<script defer src="js/productive_stage_deadlines.js?v=20260824_1"></script>
 <script defer src="js/tutoring_bookings.js?v=20260615_1"></script>
 <script src="js/access_guard_admin.js?v=20260823_1"></script>
 </head>
@@ -180,6 +181,20 @@
       <div class="admin-table-wrap" id="document-delivery-control-table"></div>
     </section>
 
+    <section class="panel productive-stage-admin-shell" id="document-deadlines-section" data-reveal>
+      <div class="productive-stage-admin-shell__top">
+        <div>
+          <h2>Fechas límite &mdash; Bitácoras y Sofía Plus</h2>
+          <p>
+            Configura fecha y hora límite (zona Bogotá) de cada bitácora y del pantallazo Sofía Plus.
+            Sin configurar, se usa la fecha ya acordada con el instructor de seguimiento.
+          </p>
+        </div>
+      </div>
+      <div class="admin-feedback" id="document-deadlines-feedback"></div>
+      <div class="admin-table-wrap" id="document-deadlines-table"></div>
+    </section>
+
     <section class="panel productive-stage-admin-shell" id="tutoring-admin-section" data-reveal>
       <p class="tutoring-admin-empty">Cargando reservas de tutoria...</p>
     </section>
@@ -209,6 +224,31 @@
     </section>
   </div>
 
+  <div class="modal-shell" id="document-deadline-modal" hidden>
+    <div class="modal-backdrop" data-close-document-deadline-modal></div>
+    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="document-deadline-title">
+      <div class="modal-header">
+        <div>
+          <h2 id="document-deadline-title">Fecha límite</h2>
+          <p id="document-deadline-context" class="admin-muted"></p>
+        </div>
+        <button class="modal-close" type="button" data-close-document-deadline-modal aria-label="Cerrar">x</button>
+      </div>
+      <div class="modal-body">
+        <label class="admin-field">
+          <span>Fecha y hora límite (zona Bogotá)</span>
+          <input type="datetime-local" id="document-deadline-input">
+        </label>
+        <p class="admin-muted" id="document-deadline-legacy-note"></p>
+        <div class="admin-feedback" id="document-deadline-feedback"></div>
+        <div class="admin-row-actions">
+          <button class="btn ghost" type="button" id="document-deadline-clear">Quitar fecha (sin límite)</button>
+          <button class="btn primary" type="button" id="document-deadline-submit">Guardar fecha</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
   <div class="modal-shell" id="productive-stage-detail-modal" hidden>
     <div class="modal-backdrop" data-close-productive-stage-modal></div>
     <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="productive-stage-detail-title">
@@ -224,6 +264,6 @@
     </section>
   </div>
 
-  <script defer src="js/productive_stage_admin.js?v=20260727_1"></script>
+  <script defer src="js/productive_stage_admin.js?v=20260824_1"></script>
 </body>
 </html>

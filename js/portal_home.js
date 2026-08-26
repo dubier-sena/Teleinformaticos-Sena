@@ -32,8 +32,12 @@
     "js/activity_standard.js?v=20260822_1",
     "js/guide_declarations.js?v=20260815_1",
     "js/activity_grades.js?v=20260815_1",
-    "js/productive_stage_store.js?v=20260823_1",
-    "js/student_summary.js?v=20260823_2",
+    "js/activity_deadlines.js?v=20260717_2",
+    "js/productive_stage_store.js?v=20260825_2",
+    "js/productive_stage_deadlines.js?v=20260824_1",
+    "js/academic_agenda.js?v=20260824_1",
+    "js/academic_agenda_context.js?v=20260824_1",
+    "js/student_summary.js?v=20260825_1",
   ];
   var _studentModulesPromise = null;
   function ensureStudentModulesLoaded() {
@@ -409,6 +413,7 @@
       .join("");
 
     renderCallouts(user, files);
+    renderAgendaSummary(user);
 
     // Equipo nuevo: baja los estados de guia que falten y re-pinta una vez.
     // hydrateTriedFiles evita lecturas repetidas (y el re-render en bucle).
@@ -549,6 +554,125 @@
 
   function calloutsBox() {
     return byId("student-callouts");
+  }
+
+  // ── Agenda Academica en el Home (Fase Agenda Academica, bloque C) ────────
+  // Consume EXACTAMENTE la misma lista normalizada que
+  // pages/auxiliares/calendario-aprendiz.html (mismo agregador, mismo
+  // contexto) -- no reconstruye pendientes por su cuenta. "Proxima clase" /
+  // "Proxima entrega" / "Proximas 5 entregas" / "Pendientes importantes"
+  // son distintos RECORTES de la misma lista de eventos, no fuentes nuevas.
+  var AGENDA_TYPE_ICON = { CLASE: "🕒", ENTREGA: "📌", BITACORA: "📒", DOCUMENTO: "📄", ACTIVIDAD_ESPECIAL: "📋" };
+  var AGENDA_STATUS_LABEL = {
+    "pending": "Pendiente", "due-today": "Vence hoy", "due-tomorrow": "Vence mañana",
+    "overdue": "Vencida", "delivered": "Entregada", "no-deadline": "Sin fecha límite",
+    "scheduled": "Programada", "cancelled": "Cancelada", "rescheduled": "Reprogramada",
+  };
+  var AGENDA_IMPORTANT_STATUSES = ["overdue", "due-today", "due-tomorrow", "no-deadline"];
+  var AGENDA_DELIVERABLE_TYPES = ["ENTREGA", "BITACORA", "DOCUMENTO"];
+
+  function agendaFmtWhen(event) {
+    var iso = event.dueAt || event.startAt || "";
+    if (!iso) return event.date ? "Sin hora fija" : "Sin fecha";
+    try {
+      return new Date(iso).toLocaleString("es-CO", { timeZone: "America/Bogota", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+    } catch (e) { return ""; }
+  }
+
+  function agendaEventRow(event) {
+    var icon = AGENDA_TYPE_ICON[event.type] || "•";
+    var statusLabel = AGENDA_STATUS_LABEL[event.status] || event.status || "";
+    var when = agendaFmtWhen(event);
+    var link = event.route ? '<a href="' + esc(event.route) + '">Ir →</a>' : "";
+    return (
+      '<div class="agenda-row" data-status="' + esc(event.status) + '">' +
+        '<span class="agenda-row__icon">' + icon + "</span>" +
+        '<span class="agenda-row__title">' + esc(event.title) + "</span>" +
+        '<span class="agenda-row__when">' + esc(when) + "</span>" +
+        '<span class="agenda-row__status agenda-row__status--' + esc(event.status) + '">' + esc(statusLabel) + "</span>" +
+        link +
+      "</div>"
+    );
+  }
+
+  function agendaIndicator(label, event) {
+    var body = event
+      ? esc(event.title) + '<small>' + esc(agendaFmtWhen(event)) + "</small>"
+      : '<span class="agenda-indicator__empty">Sin registro</span>';
+    return '<div class="agenda-indicator"><span class="agenda-indicator__label">' + esc(label) + "</span><div class=\"agenda-indicator__value\">" + body + "</div></div>";
+  }
+
+  async function renderAgendaSummary(user) {
+    var section = byId("student-agenda-summary");
+    if (!section) return;
+    var ctxApi = window.academicAgendaContext;
+    var agendaApi = window.academicAgenda;
+    if (!ctxApi || !agendaApi || typeof ctxApi.resolveStudentAgendaContext !== "function") {
+      section.hidden = true;
+      return;
+    }
+
+    var input;
+    try {
+      input = await ctxApi.resolveStudentAgendaContext();
+    } catch (e) {
+      input = null;
+    }
+    if (!input) {
+      section.hidden = true;
+      return;
+    }
+
+    var result;
+    try {
+      result = agendaApi.buildAcademicAgenda(input);
+    } catch (e) {
+      section.hidden = true;
+      return;
+    }
+
+    var events = result.events || [];
+    var nowMs = Date.now();
+
+    var nextClass = events.find(function (e) {
+      return e.type === "CLASE" && e.status !== "cancelled" && (Date.parse(e.startAt || e.date + "T00:00:00Z") || 0) >= nowMs - 24 * 3600000;
+    });
+
+    var deliverables = events.filter(function (e) { return AGENDA_DELIVERABLE_TYPES.indexOf(e.type) !== -1; });
+    var upcomingDeliverables = deliverables.filter(function (e) {
+      return e.status !== "delivered" && e.dueAt && Date.parse(e.dueAt) >= nowMs;
+    });
+    var nextDeliverable = upcomingDeliverables[0] || null;
+    var upcomingFive = upcomingDeliverables.slice(0, 5);
+
+    var important = deliverables.filter(function (e) {
+      return e.status !== "delivered" && AGENDA_IMPORTANT_STATUSES.indexOf(e.status) !== -1;
+    });
+
+    var indicatorsEl = byId("student-agenda-indicators");
+    if (indicatorsEl) {
+      indicatorsEl.innerHTML =
+        agendaIndicator("Próxima clase", nextClass) +
+        agendaIndicator("Próxima entrega", nextDeliverable) +
+        '<div class="agenda-indicator"><span class="agenda-indicator__label">Vencidos</span><div class="agenda-indicator__value agenda-indicator__value--count">' +
+          important.filter(function (e) { return e.status === "overdue"; }).length + "</div></div>";
+    }
+
+    var upcomingEl = byId("student-agenda-upcoming");
+    if (upcomingEl) {
+      upcomingEl.innerHTML = upcomingFive.length
+        ? upcomingFive.map(agendaEventRow).join("")
+        : '<p class="agenda-empty">No tienes entregas próximas registradas.</p>';
+    }
+
+    var importantEl = byId("student-agenda-important");
+    if (importantEl) {
+      importantEl.innerHTML = important.length
+        ? important.slice(0, 8).map(agendaEventRow).join("")
+        : '<p class="agenda-empty">No hay pendientes importantes por ahora.</p>';
+    }
+
+    section.hidden = false;
   }
 
   // Busca la guia (archivo) de una familia de calificaciones, para poder

@@ -350,7 +350,7 @@ test("Etapa Productiva: ficha con proyecto y documento base sin entregar aparece
     session: baseSession({ user: { usernameKey: "juan.perez", ficha: "3168850" } }),
     files: [],
     productiveStageStore: {
-      loadSnapshot: async () => ({ documentDeliveries: [] }),
+      loadStudentSnapshot: async () => ({ documentDeliveries: [] }),
       getDocumentDeliveriesByUsername: () => ({}),
     },
   });
@@ -367,7 +367,7 @@ test("Etapa Productiva: ficha con proyecto y documento base sin entregar aparece
 test("Etapa Productiva: ficha SIN proyecto -> productiveDocsPending es null (no aplica)", async () => {
   const stack = loadPortalHomeStack({
     uid: "uid-8", session: baseSession(), files: [],
-    productiveStageStore: { loadSnapshot: async () => ({}), getDocumentDeliveriesByUsername: () => ({}) },
+    productiveStageStore: { loadStudentSnapshot: async () => ({}), getDocumentDeliveriesByUsername: () => ({}) },
   });
   const summary = await stack.studentSummary.refreshNow(baseSession(), { force: true });
   assert.equal(summary.productiveDocsPending, null);
@@ -380,7 +380,7 @@ test("Etapa Productiva: documento ya entregado no aparece como pendiente", async
     session,
     files: [],
     productiveStageStore: {
-      loadSnapshot: async () => ({}),
+      loadStudentSnapshot: async () => ({}),
       getDocumentDeliveriesByUsername: () => ({ "juan.perez": { "ficha-inscripcion": { docId: "ficha-inscripcion" } } }),
     },
   });

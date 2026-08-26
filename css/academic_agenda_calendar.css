@@ -1,0 +1,366 @@
+/* academic_agenda_calendar.css
+ *
+ * Bloque E: vistas Semana/Mes compartidas por la agenda admin
+ * (calendario-administrativo-agenda.html) y la del aprendiz
+ * (pages/auxiliares/calendario-aprendiz.html). Genera el HTML
+ * js/academic_agenda_calendar_ui.js -- este archivo SOLO estiliza las
+ * clases "aac-*" que ese modulo produce.
+ */
+
+/* ── Selector de vista ──────────────────────────────────────────────── */
+.aac-view-switcher {
+  display: inline-flex;
+  gap: 2px;
+  background: var(--surface-2);
+  border-radius: var(--radius-pill);
+  padding: 3px;
+}
+
+.aac-view-switcher__btn {
+  border: none;
+  background: transparent;
+  padding: 6px 16px;
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background var(--motion-fast), color var(--motion-fast);
+}
+
+.aac-view-switcher__btn.is-active {
+  background: var(--brand-600);
+  color: #fff;
+}
+
+.aac-view-switcher__btn:not(.is-active):hover {
+  background: var(--surface-1);
+  color: var(--text-strong);
+}
+
+/* ── Navegacion (hoy / anterior / siguiente) ──────────────────────────── */
+.aac-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.aac-nav__label {
+  font-weight: 700;
+  color: var(--text-strong);
+  min-width: 12ch;
+  text-align: center;
+}
+
+/* ── Chips (bloques de evento reutilizados en semana/mes) ─────────────── */
+.aac-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 2px 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  background: #e8eefc;
+  color: #1d3a76;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.aac-chip__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.aac-chip--overdue { background: var(--color-danger); color: #fff; }
+.aac-chip--done { background: var(--brand-100, #e9f8ef); color: var(--brand-700, #0a5c31); }
+.aac-chip--soon { background: var(--gold-light, #fff0c0); color: #6e5300; }
+.aac-chip--cancelled { background: var(--color-danger); color: #fff; text-decoration: line-through; }
+.aac-chip--rescheduled { background: var(--accent-gold); color: var(--text-on-gold); }
+.aac-chip--manual { border-left: 3px solid var(--accent-gold); }
+
+.aac-chip--compact {
+  padding: 1px 4px;
+  font-size: 0.68rem;
+}
+
+.aac-chip--allday {
+  background: var(--surface-1);
+  border: 1px solid var(--border-soft);
+}
+
+/* ── Semana ─────────────────────────────────────────────────────────── */
+.aac-week {
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  overflow: hidden;
+}
+
+.aac-week__gutter-spacer {
+  width: 64px;
+  flex: 0 0 64px;
+  font-size: var(--font-size-xs);
+  color: var(--text-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  text-align: center;
+}
+
+.aac-week__header {
+  display: flex;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.aac-week__daycol-head {
+  flex: 1 1 0;
+  min-width: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-2) 0;
+  border-left: 1px solid var(--border-soft);
+}
+
+.aac-week__daycol-head.is-today {
+  background: var(--brand-100, #e9f8ef);
+}
+
+.aac-week__weekday {
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.aac-week__daynum {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.aac-week__allday-row {
+  display: flex;
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--surface-2);
+}
+
+.aac-week__allday-col {
+  flex: 1 1 0;
+  min-width: 100px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px;
+  border-left: 1px solid var(--border-soft);
+}
+
+.aac-week__body {
+  display: flex;
+  max-height: 640px;
+  overflow-y: auto;
+}
+
+.aac-week__gutter {
+  flex: 0 0 64px;
+  width: 64px;
+}
+
+.aac-week__hour-label {
+  height: 48px;
+  font-size: 0.7rem;
+  color: var(--text-soft);
+  text-align: right;
+  padding-right: 6px;
+  border-top: 1px solid var(--border-soft);
+  box-sizing: border-box;
+}
+
+.aac-week__grid {
+  flex: 1 1 auto;
+  display: flex;
+  position: relative;
+  background-image: repeating-linear-gradient(to bottom, var(--border-soft) 0, var(--border-soft) 1px, transparent 1px, transparent 48px);
+}
+
+.aac-week__daycol {
+  flex: 1 1 0;
+  min-width: 100px;
+  position: relative;
+  height: calc(var(--aac-week-rows, 14) * 48px);
+  border-left: 1px solid var(--border-soft);
+}
+
+.aac-week__daycol.is-today {
+  background: rgba(10, 92, 49, 0.04);
+}
+
+.aac-week__block {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  min-height: 18px;
+  overflow: hidden;
+}
+
+/* ── Mes ────────────────────────────────────────────────────────────── */
+.aac-month {
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  overflow: hidden;
+}
+
+.aac-month__header {
+  padding: var(--space-3) var(--space-4);
+  font-weight: 700;
+  font-family: var(--font-display);
+  color: var(--text-strong);
+  text-transform: capitalize;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.aac-month__weekday-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.aac-month__weekday-head {
+  text-align: center;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  padding: 6px 0;
+}
+
+.aac-month__week-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.aac-month__day {
+  min-height: 96px;
+  min-width: 0; /* sin esto, un titulo largo en .aac-chip (white-space:nowrap) fuerza el ancho intrinseco de la celda por encima de su track de grid -- desborda toda la pagina horizontalmente (bug real encontrado en navegador). */
+  border-left: 1px solid var(--border-soft);
+  border-top: 1px solid var(--border-soft);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  cursor: pointer;
+}
+
+.aac-month__day.is-outside {
+  background: var(--surface-2);
+  color: var(--text-soft);
+}
+
+.aac-month__day.is-outside .aac-month__daynum {
+  color: var(--text-soft);
+}
+
+.aac-month__day.is-today {
+  background: var(--brand-100, #e9f8ef);
+}
+
+.aac-month__daynum {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.aac-month__events {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.aac-month__more {
+  border: none;
+  background: transparent;
+  color: var(--brand-700, #0a5c31);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  padding: 1px 4px;
+}
+
+/* ── Detalle de dia (modal) ─────────────────────────────────────────── */
+.aac-day-detail__list {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.aac-day-detail__empty {
+  color: var(--text-muted);
+  text-align: center;
+  padding: var(--space-4);
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────── */
+/* Bloque E: en pantallas angostas los 7 dias (min-width por columna) no
+   caben -- el pedido explicito es "scroll horizontal si hace falta", pero
+   SOLO dentro del propio widget, nunca desbordando la pagina completa (bug
+   real encontrado en navegador: .aac-week quedaba mas ancho que su
+   contenedor y el body entero scrolleaba de lado). .aac-week es el UNICO
+   contenedor con overflow-x -- header/fila-todo-el-dia/cuerpo quedan
+   siempre alineados entre si porque escrollean juntos como una sola unidad
+   (si cada fila tuviera su propio overflow-x, se podrian desincronizar). */
+@media (max-width: 900px) {
+  .aac-week {
+    overflow-x: auto;
+    max-width: 100%;
+  }
+
+  .aac-week__daycol-head,
+  .aac-week__daycol,
+  .aac-week__allday-col {
+    min-width: 84px;
+  }
+}
+
+@media (max-width: 720px) {
+  .aac-month__day {
+    min-height: 68px;
+    padding: 2px;
+  }
+
+  .aac-month__daynum {
+    font-size: var(--font-size-xs);
+  }
+
+  .aac-chip__label {
+    display: none;
+  }
+
+  .aac-chip {
+    justify-content: center;
+    padding: 2px;
+  }
+
+  .aac-chip--compact .aac-chip__label {
+    display: none;
+  }
+
+  .aac-week__gutter-spacer {
+    width: 44px;
+    flex: 0 0 44px;
+  }
+
+  .aac-week__gutter {
+    flex: 0 0 44px;
+    width: 44px;
+  }
+}

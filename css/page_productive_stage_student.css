@@ -541,6 +541,18 @@
   color: #475569;
 }
 
+.student-document-status--soon {
+  border-color: #fbd38d;
+  background: #fff3e0;
+  color: #8a4b00;
+}
+
+.student-document-status--blocked {
+  border-color: #f3b0a8;
+  background: #fdecea;
+  color: #a02b1f;
+}
+
 .student-project-download-card__delivered {
   margin: 0;
   font-size: 0.85rem;

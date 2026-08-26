@@ -1,0 +1,297 @@
+/* page_calendario_admin_agenda.css
+ *
+ * Vista "Agenda administrativa" (Bloque D). Reutiliza .agenda-card /
+ * .agenda-status--* / .msg / .empty-state ya definidas en
+ * page_student_calendar.css (esa hoja se carga tambien en esta pagina) --
+ * aqui solo se agrega lo que es especifico del rol admin: barra de filtros,
+ * meta de institucion/ficha/grupo por tarjeta, barra de conteos de entrega y
+ * la insignia manual-vs-derivado.
+ */
+
+.app-shell--admin-agenda {
+  background: var(--bg-canvas);
+}
+
+/* Bloque E: [hidden] pierde contra .admin-agenda-list{display:grid} porque
+   ambos selectores tienen la MISMA especificidad (0,1,0) y esta hoja carga
+   despues de la del navegador -- gana la ultima regla, no [hidden]. Se
+   reafirma explicitamente para que ocultar la Agenda al cambiar a
+   Semana/Mes funcione de verdad (bug real encontrado en navegador). */
+#aa-list[hidden] {
+  display: none;
+}
+
+.admin-agenda-hero {
+  background: var(--surface-1);
+  border-bottom: 1px solid var(--border-soft);
+  padding: var(--space-6) var(--space-4);
+}
+
+.admin-agenda-hero__inner {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.admin-agenda-hero h1 {
+  margin: 0 0 var(--space-1);
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 2.2vw, 2rem);
+  color: var(--text-strong);
+}
+
+.admin-agenda-hero p {
+  margin: 0;
+  color: var(--text-muted);
+  max-width: 60ch;
+}
+
+.admin-agenda-hero__actions {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.admin-agenda-main {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4) var(--space-10);
+  display: grid;
+  gap: var(--space-5);
+}
+
+/* Bloque E: cada hijo directo de .admin-agenda-main es un item de grid con
+   min-width:auto por defecto -- eso ignora max-width:100% de un hijo
+   interno (p.ej. .aac-week) y usa el ancho intrinseco de su CONTENIDO como
+   piso, desbordando la pagina en movil (bug real encontrado en navegador,
+   misma familia que el fix de .aac-month__day). Se reafirma min-width:0
+   en todos los hijos directos para que max-width/overflow-x funcionen. */
+.admin-agenda-main > * {
+  min-width: 0;
+}
+
+/* ── Barra de filtros ───────────────────────────────────────────────── */
+.admin-agenda-filters {
+  background: var(--surface-1);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-3);
+  align-items: end;
+}
+
+.admin-agenda-filters label {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+/* Un <select> con opciones largas (p.ej. "3441939 -- 10A (I.E. Jhon F.
+   Kennedy)") tiene un ancho intrinseco que por defecto IGNORA el minmax()
+   del grid padre (min-width:auto en items de grid) y empuja a toda la
+   seccion fuera del viewport en pantallas angostas -- min-width:0 + width:
+   100% lo fuerza a respetar el track en vez de su contenido. */
+.admin-agenda-filters select,
+.admin-agenda-filters input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.admin-agenda-filters__actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--border-soft);
+  padding-top: var(--space-3);
+  margin-top: var(--space-1);
+}
+
+.admin-agenda-filters__status {
+  font-size: var(--font-size-xs);
+  color: var(--text-soft);
+}
+
+/* ── Lista ──────────────────────────────────────────────────────────── */
+.admin-agenda-list {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.admin-agenda-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: var(--space-2) 0;
+}
+
+.admin-agenda-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  background: var(--surface-2);
+  color: var(--text-body);
+  border: 1px solid var(--border-soft);
+}
+
+.admin-agenda-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.admin-agenda-badge--manual {
+  background: var(--gold-light, #fff0c0);
+  color: #6e5300;
+}
+
+.admin-agenda-badge--derivado {
+  background: #e8eefc;
+  color: #1d3a76;
+}
+
+.admin-agenda-source-note {
+  font-size: var(--font-size-xs);
+  color: var(--text-soft);
+  font-style: italic;
+}
+
+/* ── Barra de conteos de entrega ────────────────────────────────────── */
+.admin-agenda-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin: var(--space-3) 0;
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+}
+
+.admin-agenda-counts strong {
+  color: var(--text-strong);
+}
+
+.admin-agenda-counts__unavailable {
+  color: var(--text-soft);
+  font-style: italic;
+  font-size: var(--font-size-xs);
+}
+
+/* ── Acciones por tarjeta (editar / ver origen) ─────────────────────── */
+.admin-agenda-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.admin-agenda-readonly-note {
+  font-size: var(--font-size-xs);
+  color: var(--text-soft);
+}
+
+/* ── Barra de vista (selector Agenda/Semana/Mes + navegacion) ───────── */
+.admin-agenda-view-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* ── Todo el dia / franjas (formulario de evento manual) ────────────── */
+.admin-agenda-allday-toggle {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.admin-agenda-form__hint {
+  margin: 0;
+  font-size: var(--font-size-xs);
+  color: var(--text-soft);
+}
+
+.aa-slot-row {
+  align-items: end;
+  margin-bottom: var(--space-2);
+}
+
+/* ── Formulario de evento manual (dentro de .c-modal) ───────────────── */
+.admin-agenda-form {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.admin-agenda-form label {
+  display: grid;
+  gap: 4px;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-body);
+}
+
+.admin-agenda-form__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.admin-agenda-form__feedback {
+  font-size: var(--font-size-sm);
+  min-height: 1.2em;
+}
+
+.admin-agenda-form__feedback[data-kind="error"] {
+  color: var(--color-danger);
+}
+
+.admin-agenda-form__feedback[data-kind="success"] {
+  color: var(--brand-700, #0a5c31);
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────── */
+@media (max-width: 720px) {
+  .admin-agenda-hero__inner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-agenda-filters {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .admin-agenda-form__row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-agenda-filters {
+    grid-template-columns: 1fr;
+  }
+}

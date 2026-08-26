@@ -165,19 +165,24 @@
     });
   }
 
-  // Colombia no tiene horario de verano -- UTC-5 es siempre correcto.
+  // `value` es un ISO UTC ya resuelto (ver resolveDocumentDeadline): tanto el
+  // legacy (fecha sola -> fin de dia Bogota) como una fecha+hora configurada
+  // por el admin llegan aqui normalizados por igual, asi que ambos casos se
+  // formatean con la misma funcion.
   function formatDeadlineDate(value) {
     if (!value) {
       return "";
     }
-    const date = new Date(value + "T23:59:00-05:00");
+    const date = new Date(value);
     if (Number.isNaN(date.getTime())) {
       return "";
     }
-    return date.toLocaleDateString("es-CO", {
+    return date.toLocaleString("es-CO", {
       year: "numeric",
       month: "long",
       day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
       timeZone: "America/Bogota",
     });
   }
@@ -186,11 +191,33 @@
     if (!value) {
       return false;
     }
-    const deadline = new Date(value + "T23:59:00-05:00");
+    const deadline = new Date(value);
     if (Number.isNaN(deadline.getTime())) {
       return false;
     }
     return Date.now() > deadline.getTime();
+  }
+
+  // Fecha limite EFECTIVA de un documento base (bitacora, Sofia Plus...):
+  // admin-configurada > eliminada explicitamente ("cleared", sin fecha) >
+  // legacy hardcodeado en BITACORA_DEADLINES (ver
+  // js/productive_stage_deadlines.js, resolveEffectiveDeadline). Si el
+  // modulo compartido no cargo o el catalogo no tiene fecha, cae al legacy
+  // hardcodeado de este mismo archivo (documentItem.deadline) -- mismo
+  // comportamiento que existia antes de esta migracion.
+  function resolveDocumentDeadline(documentItem) {
+    const deadlines = window.productiveStageDeadlines;
+    if (deadlines && typeof deadlines.resolveEffectiveDeadline === "function") {
+      return deadlines.resolveEffectiveDeadline(currentState.snapshot, documentItem.id);
+    }
+    // js/productive_stage_deadlines.js no cargo: mismo comportamiento que
+    // existia antes de esta migracion (solo el legacy hardcodeado, fin de
+    // dia Bogota), sin admin-override ni estado "cleared".
+    if (!documentItem.deadline) {
+      return { dueAt: "", source: "none" };
+    }
+    const legacy = new Date(documentItem.deadline + "T23:59:00-05:00");
+    return { dueAt: Number.isNaN(legacy.getTime()) ? "" : legacy.toISOString(), source: "legacy" };
   }
 
   function getMainProject(viewModel) {
@@ -210,21 +237,43 @@
     return grupo.indexOf("10") === 0;
   }
 
-  // Registro local de la entrega de un documento base (solo consta en el
-  // navegador donde se entregó). Lee la clave nueva (panelKey estable) y la
-  // histórica (derivada del deliveryLabel, entregas previas a jul-2026).
+  // Registro de la entrega de un documento base. Prioridad 1: registro LOCAL
+  // (solo consta en el navegador donde se entrego -- clave nueva panelKey
+  // estable, o la historica derivada del deliveryLabel, entregas previas a
+  // jul-2026). Prioridad 2 (equipo limpio, sin registro local -- otro
+  // dispositivo, cache borrada): el registro REMOTO propio, ya incluido en
+  // currentState.snapshot por loadStudentSnapshot() (ver
+  // mergeOwnDeliveriesIntoSnapshot en productive_stage_store.js, cierre del
+  // hallazgo "syncDocumentDeliveryToCloud falla en silencio"). Nunca inventa
+  // "entregada" sin al menos uno de los dos.
   function getDocumentDeliveryRecord(doc) {
-    if (!doc.deliveryLabel || !sharedDelivery || typeof sharedDelivery.loadDeliveryRecord !== "function") {
+    if (!doc.deliveryLabel) {
       return null;
     }
-    const candidates = ["etapa-doc-" + doc.id, doc.deliveryLabel];
-    for (let i = 0; i < candidates.length; i++) {
-      const record = sharedDelivery.loadDeliveryRecord({ panelKey: candidates[i] });
-      if (record && record.status === "delivered") {
-        return record;
+    if (sharedDelivery && typeof sharedDelivery.loadDeliveryRecord === "function") {
+      const candidates = ["etapa-doc-" + doc.id, doc.deliveryLabel];
+      for (let i = 0; i < candidates.length; i++) {
+        const record = sharedDelivery.loadDeliveryRecord({ panelKey: candidates[i] });
+        if (record && record.status === "delivered") {
+          return record;
+        }
       }
     }
-    return null;
+    const session = currentState.session;
+    const usernameKey = String(session?.user?.usernameKey || "").trim().toLowerCase();
+    if (!usernameKey || !store || typeof store.getDocumentDeliveriesByUsername !== "function") {
+      return null;
+    }
+    const byUsername = store.getDocumentDeliveriesByUsername(currentState.snapshot) || {};
+    const remote = (byUsername[usernameKey] || {})[doc.id];
+    return remote
+      ? {
+          status: "delivered",
+          submittedAt: remote.submittedAt,
+          savedFileName: remote.savedFileName,
+          driveUrl: remote.driveUrl,
+        }
+      : null;
   }
 
   function buildResourcesMarkup() {
@@ -267,18 +316,27 @@
              ${canUpload ? "" : "disabled"}
            >${record ? "Volver a entregar" : "Entregar archivo"}</button>`
         : "";
+      const effectiveDeadline = hasDelivery ? resolveDocumentDeadline(documentItem) : { dueAt: "", source: "none" };
+      const deadlineDueAt = effectiveDeadline.dueAt;
+      // Punto 10 (pedido del usuario): estado visible del aprendiz --
+      // Pendiente / Vence hoy / Vence mañana / Vencida / Entregada. Reusa el
+      // mismo clasificador que alimentara agenda/calendario, para que el
+      // criterio "hoy"/"mañana" sea identico en todos lados (hora Bogota).
+      const deadlineState = window.productiveStageDeadlines && typeof window.productiveStageDeadlines.classifyStatus === "function"
+        ? window.productiveStageDeadlines.classifyStatus({ dueAt: deadlineDueAt, deliveredAt: record ? (record.submittedAt || record.fechaEntrega || record.uploadedAt || true) : "" })
+        : (record ? "delivered" : (deadlineDueAt && isPastDeadline(deadlineDueAt) ? "overdue" : (deadlineDueAt ? "pending" : "no-deadline")));
+      const STATE_LABELS = { "delivered": "Entregada", "overdue": "Vencida", "due-today": "Vence hoy", "due-tomorrow": "Vence mañana", "pending": "Pendiente", "no-deadline": "Pendiente" };
+      const STATE_CLASS = { "delivered": "done", "overdue": "blocked", "due-today": "soon", "due-tomorrow": "soon", "pending": "pending", "no-deadline": "pending" };
       const statusBadge = hasDelivery
-        ? record
-          ? '<span class="student-document-status student-document-status--done">Entregado</span>'
-          : '<span class="student-document-status student-document-status--pending">Pendiente</span>'
+        ? `<span class="student-document-status student-document-status--${escapeHtml(STATE_CLASS[deadlineState] || "pending")}">${escapeHtml(STATE_LABELS[deadlineState] || "Pendiente")}</span>`
         : '<span class="student-document-status student-document-status--reference">Solo consulta</span>';
       const deliveredNote = record
         ? `<p class="student-project-download-card__delivered">Entregado el ${escapeHtml(formatDate(record.submittedAt || record.fechaEntrega || record.uploadedAt))}${record.savedFileName ? ` &mdash; ${escapeHtml(record.savedFileName)}` : ""}</p>`
         : "";
-      const deadlineNote = !record && documentItem.deadline
-        ? isPastDeadline(documentItem.deadline)
-          ? `<p class="student-project-download-card__deadline student-project-download-card__deadline--overdue"><strong>Fecha limite vencida:</strong> ${escapeHtml(formatDeadlineDate(documentItem.deadline))}. Sin esta entrega, la Etapa Productiva NO se considera realizada y no podras graduarte.</p>`
-          : `<p class="student-project-download-card__deadline"><strong>Fecha limite de entrega:</strong> ${escapeHtml(formatDeadlineDate(documentItem.deadline))}. Es obligatoria para culminar la Etapa Productiva y graduarte.</p>`
+      const deadlineNote = !record && deadlineDueAt
+        ? isPastDeadline(deadlineDueAt)
+          ? `<p class="student-project-download-card__deadline student-project-download-card__deadline--overdue"><strong>Fecha limite vencida:</strong> ${escapeHtml(formatDeadlineDate(deadlineDueAt))}. Sin esta entrega, la Etapa Productiva NO se considera realizada y no podras graduarte.</p>`
+          : `<p class="student-project-download-card__deadline"><strong>Fecha limite de entrega:</strong> ${escapeHtml(formatDeadlineDate(deadlineDueAt))}. Es obligatoria para culminar la Etapa Productiva y graduarte.</p>`
         : "";
       const downloadBtn = documentItem.noDownload
         ? ""
@@ -610,13 +668,26 @@
 
   // El registro de entrega de shared_apps_script_delivery.js solo vive en el
   // localStorage del navegador donde se entrego (ver getDocumentDeliveryRecord).
-  // Para que el admin pueda llevar control de entregas desde otro equipo, esta
-  // funcion replica el registro al snapshot compartido de productiveStageStore
-  // (el mismo mecanismo cloud que ya usa "Avance del proyecto"). Best-effort:
-  // si falla, la entrega ya quedo en Drive y en el localStorage local -- no se
-  // bloquea ni se le muestra error al aprendiz por esto.
+  // Para que otro dispositivo del MISMO aprendiz (y, mas adelante, el admin)
+  // puedan saber que esto se entrego, esta funcion replica el registro al
+  // doc PROPIO del aprendiz (ver store.saveOwnDocumentDelivery).
+  //
+  // HALLAZGO CORREGIDO (antes de este cambio): esta funcion llamaba a
+  // store.loadSnapshot()/saveSnapshot(), que apuntan al doc AGREGADO del
+  // admin ("admin:productive-stage") -- un aprendiz real NUNCA es dueño de
+  // ese doc segun ninguna regla (ni Firestore Rules ni el fallback de Apps
+  // Script), asi que tanto la lectura como la escritura eran denegadas
+  // SIEMPRE, atrapadas en silencio por el catch de abajo. La entrega del
+  // ARCHIVO (Drive + registro local) nunca se vio afectada -- lo que fallaba
+  // en silencio era solo esta replica hacia otros dispositivos/admin. La
+  // correccion es de RUTEO: el doc PROPIO del aprendiz ("student:{usernameKey}",
+  // el MISMO esquema que ya usan las respuestas de guia) SI esta autorizado
+  // sin ningun cambio de reglas. Best-effort en el sentido de "no bloquea la
+  // entrega real", pero YA NO en silencio: si la replica falla, se avisa de
+  // forma visible (portalSaveStatus) para que el aprendiz sepa que debe
+  // reintentar o que el portal lo hara por su cuenta.
   async function syncDocumentDeliveryToCloud(record) {
-    if (!store || typeof store.loadSnapshot !== "function" || !record || !record.panelKey) {
+    if (!store || typeof store.saveOwnDocumentDelivery !== "function" || !record || !record.panelKey) {
       return;
     }
     if (record.panelKey.indexOf("etapa-doc-") !== 0) {
@@ -629,10 +700,9 @@
       return;
     }
 
+    let result;
     try {
-      const snapshot = await store.loadSnapshot();
-      const next = store.appendDocumentDeliveryToSnapshot(snapshot, {
-        usernameKey: usernameKey,
+      result = await store.saveOwnDocumentDelivery(usernameKey, {
         docId: docId,
         docLabel: record.activityLabel || docId,
         fullName: record.fullName || session?.user?.fullName || "",
@@ -643,9 +713,24 @@
         savedFileName: record.savedFileName || "",
         driveUrl: record.driveUrl || "",
       });
-      await store.saveSnapshot(next);
     } catch (error) {
-      // Silencioso: la entrega real (Drive + registro local) ya se completo.
+      result = { ok: false };
+    }
+
+    // result.ok es false SOLO si tanto Firestore como el respaldo de Drive
+    // fallaron (ver cloudSaveGuideData/driveFallbackSet en firebase_db.js) --
+    // si solo Firestore fallo pero Drive respondio, result.ok ya es true Y la
+    // escritura queda encolada para promoverse sola a Firestore en cuanto la
+    // conexion vuelva (recordPendingPromotion/scheduleFlushPromotions, MISMO
+    // mecanismo que ya usa cada guia). Por eso el aviso NO promete un
+    // reintento automatico que no existe para este caso -- sugiere el unico
+    // reintento real disponible: volver a entregar el archivo.
+    if (!result || !result.ok) {
+      if (window.portalSaveStatus && typeof window.portalSaveStatus.error === "function") {
+        window.portalSaveStatus.error(
+          "El archivo ya se entrego, pero no se pudo sincronizar el registro con la nube en este momento. Si el problema continua, vuelve a entregar el archivo."
+        );
+      }
     }
   }
 
@@ -657,9 +742,15 @@
     syncDocumentDeliveryToCloud(event && event.detail);
   });
 
-  // Catalogo de documentos entregables (id/label/deadline), reutilizado por el
-  // panel admin (productive_stage_admin.js) como unica fuente de verdad -- evita
-  // duplicar aqui y alla la lista de 9 documentos y que se desincronicen.
+  // Catalogo de documentos entregables (id/label/deadline) de ESTE archivo.
+  // HALLAZGO (2026-08-24, fase Agenda Academica): este catalogo NO es hoy la
+  // fuente unica -- productive_stage_admin.js mantiene su PROPIO
+  // DOCUMENT_CATALOG hardcodeado (misma lista de 9 ids, sin usar esta
+  // funcion; el admin ni siquiera carga este script). getDocumentCatalog()
+  // queda exportado por si algo mas lo necesita, pero no asumas que el panel
+  // admin lo consume. Unificar ambos catalogos queda fuera del alcance de
+  // esta fase (no fue pedido) -- documentado aqui para no repetir el
+  // hallazgo.
   function getDocumentCatalog() {
     return PROJECT_DOCUMENTS.filter(function (documentItem) {
       return !!documentItem.deliveryLabel;

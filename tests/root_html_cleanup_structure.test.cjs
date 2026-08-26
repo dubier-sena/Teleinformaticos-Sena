@@ -8,6 +8,7 @@ const AUX_ROOT = path.join(REPO_ROOT, "pages", "auxiliares");
 
 const EXPECTED_ROOT_HTML = [
   "calendario-academico-2026.html",
+  "calendario-administrativo-agenda.html",
   "etapa-productiva-admin.html",
   "etapa-productiva-estudiante.html",
   "guia.html",

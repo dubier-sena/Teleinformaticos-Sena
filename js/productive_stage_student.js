@@ -464,7 +464,14 @@
     }
 
     const usernameKey = resolveStudentUsernameKey(session);
-    const snapshot = await store.loadSnapshot();
+    // Bloque C.1: el admin (con o sin ?preview=usuario) SI necesita el
+    // snapshot completo -- para el preview, lo filtra el propio cliente
+    // (buildStudentViewModel), autorizado porque el admin YA puede ver a
+    // cualquiera. Un aprendiz real solo recibe SU vista, filtrada
+    // server-side (ver productiveStageStore.loadStudentSnapshot).
+    const snapshot = session.role === "admin"
+      ? await store.loadSnapshot()
+      : await store.loadStudentSnapshot();
 
     renderTutoringDates();
 

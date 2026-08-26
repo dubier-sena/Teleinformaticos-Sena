@@ -66,11 +66,23 @@ function doPost(e) {
       return jsonResponse({ ok: false, message: "BACKUP_ROOT_FOLDER_ID no configurado." });
     }
 
+    var actorParts = splitVersionedEmail(userInfo.email);
+
+    // Bloque C.1 (cierre de hallazgo de privacidad): vista PROPIA del
+    // catalogo de Etapa Productiva. No pasa por authorizeRequest() de abajo
+    // porque esa funcion decide por (collection, docId) que el cliente
+    // manda -- aqui el cliente NO manda ni docId ni usernameKey; la
+    // identidad sale UNICAMENTE del idToken ya verificado arriba, y el
+    // filtrado (solo los documentDeliveries del propio actor) ocurre DENTRO
+    // del handler, nunca en el cliente. Ver handleStudentProductiveStageView.
+    if (action === "studentproductivestageview") {
+      return handleStudentProductiveStageView(actorParts);
+    }
+
     // Autorizacion por propiedad/rol (cierra IDOR C1). El admin (por email)
     // accede a todo; el aprendiz solo a SUS documentos. Si el email viene
     // versionado (.vN, cuenta re-creada tras reset de password), se consulta
     // la version atestada en user_meta para confiar en la clave base.
-    var actorParts = splitVersionedEmail(userInfo.email);
     var authz = authorizeRequest({
       action: action,
       collection: payload.collection,
@@ -319,6 +331,87 @@ function handleGet(payload) {
   } catch (_) {
     return jsonResponse({ ok: false, message: "JSON corrupto en Drive." });
   }
+}
+
+// Doc real de Etapa Productiva (ver productive_stage_store.js SCOPE_KEY /
+// FILE_NAME y firebase_db.js guideStateDocId): "sena_portal_guide_state" /
+// "__guide_data__:admin:productive-stage:productive-stage-catalog". Fijo
+// aqui (no viene del cliente) porque esta accion nunca debe poder apuntar a
+// OTRO documento -- es exactamente lo que la vuelve segura pese a leer un
+// doc que el aprendiz no "posee" segun authorizeRequest().
+var PRODUCTIVE_STAGE_COLLECTION = "sena_portal_guide_state";
+var PRODUCTIVE_STAGE_DOC_ID = "__guide_data__:admin:productive-stage:productive-stage-catalog";
+
+// Bloque C.1: vista acotada del catalogo de Etapa Productiva para UN
+// aprendiz. `actorParts` viene de splitVersionedEmail(userInfo.email) en
+// doPost -- userInfo YA fue verificado contra Identity Toolkit, asi que
+// actorParts.base es la identidad REAL del llamador, nunca un valor que el
+// cliente pudo mandar en el payload (el payload de esta accion ni siquiera
+// se lee para identidad). Lee el documento COMPLETO server-side (mismo
+// camino que handleGet) y filtra documentDeliveries a SOLO los registros de
+// ese usernameKey antes de responder -- los de otros aprendices nunca
+// salen de este handler.
+function handleStudentProductiveStageView(actorParts) {
+  var usernameKey = String((actorParts && actorParts.base) || "").trim().toLowerCase();
+  if (!usernameKey) {
+    return jsonResponse({ ok: false, message: "Sin identidad valida en el token." });
+  }
+
+  var rawOutput = handleGet({ collection: PRODUCTIVE_STAGE_COLLECTION, docId: PRODUCTIVE_STAGE_DOC_ID });
+  var parsed;
+  try {
+    parsed = JSON.parse(rawOutput.getContent());
+  } catch (_) {
+    return jsonResponse({ ok: false, message: "Error leyendo el catalogo de Etapa Productiva." });
+  }
+  if (!parsed.ok) return jsonResponse(parsed);
+  if (!parsed.found || !parsed.data) {
+    return jsonResponse({ ok: true, found: false, data: null });
+  }
+
+  var full = parsed.data;
+
+  var documentDeliveries = Array.isArray(full.documentDeliveries) ? full.documentDeliveries : [];
+  var ownDocumentDeliveries = documentDeliveries.filter(function (record) {
+    return record && String(record.usernameKey || "").trim().toLowerCase() === usernameKey;
+  });
+
+  // "Resumen del proyecto" / "Avance del proyecto" / "Historial de informes"
+  // (productive_stage_student.js) necesitan el/los proyecto(s) del EQUIPO de
+  // este aprendiz (no solo documentDeliveries) -- un proyecto es compartido
+  // por varios companeros de equipo, asi que se filtra por membresia
+  // (studentUsernameKeys), no por igualdad exacta como documentDeliveries.
+  var allProjects = Array.isArray(full.projects) ? full.projects : [];
+  var ownProjects = allProjects.filter(function (project) {
+    var members = (project && project.studentUsernameKeys) || [];
+    return members.some(function (m) { return String(m || "").trim().toLowerCase() === usernameKey; });
+  });
+  var ownProjectIds = {};
+  ownProjects.forEach(function (project) { ownProjectIds[project.id] = true; });
+
+  var allReports = Array.isArray(full.reports) ? full.reports : [];
+  var ownReports = allReports.filter(function (report) { return report && ownProjectIds[report.projectId]; });
+
+  var allDeliveries = Array.isArray(full.deliveries) ? full.deliveries : [];
+  var ownDeliveries = allDeliveries.filter(function (delivery) { return delivery && ownProjectIds[delivery.projectId]; });
+
+  var studentIndex = {};
+  studentIndex[usernameKey] = ownProjects.map(function (project) { return project.id; });
+
+  return jsonResponse({
+    ok: true,
+    found: true,
+    data: {
+      schemaVersion: full.schemaVersion,
+      updatedAt: full.updatedAt,
+      documentDeadlines: (full.documentDeadlines && typeof full.documentDeadlines === "object") ? full.documentDeadlines : {},
+      documentDeliveries: ownDocumentDeliveries,
+      projects: ownProjects,
+      reports: ownReports,
+      deliveries: ownDeliveries,
+      studentIndex: studentIndex,
+    },
+  });
 }
 
 function handleUpdateField(payload, userInfo) {

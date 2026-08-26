@@ -102,6 +102,19 @@
     return Boolean(result && result.ok);
   }
 
+  // Bloque C.1 (cierre de hallazgo de privacidad): vista PROPIA del
+  // catalogo de Etapa Productiva. Sin collection/docId -- a proposito: la
+  // identidad la resuelve el Apps Script SOLO desde el idToken ya
+  // verificado (nunca desde nada que este cliente pudiera mandar), y el
+  // filtrado (solo los documentDeliveries del propio aprendiz) ocurre
+  // SERVER-SIDE (ver apps-script/respaldo_firestore.gs,
+  // handleStudentProductiveStageView). El cliente nunca ve ni podria pedir
+  // el documento completo por este camino.
+  async function getStudentProductiveStageView() {
+    var result = await call("studentProductiveStageView", {});
+    return result && result.ok && result.found ? result.data : null;
+  }
+
   async function list(collection) {
     var result = await call("list", { collection: collection });
     if (!result || !result.ok || !Array.isArray(result.docs)) return [];
@@ -121,5 +134,6 @@
     updateField: updateField,
     deleteDoc: deleteDoc,
     list: list,
+    getStudentProductiveStageView: getStudentProductiveStageView,
   };
 })();

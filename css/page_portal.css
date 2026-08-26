@@ -444,6 +444,71 @@
 .sync-status--pending { color: #92650a; }
 .sync-status--ok { color: var(--brand-600, #1f9d55); }
 
+/* Agenda Academica en el Home (Fase Agenda Academica, bloque C) */
+.agenda-summary {
+  border: 1px solid var(--border-soft, #d6e2da);
+  border-radius: var(--pg-r);
+  background: var(--surface-1, #fff);
+  padding: 1rem 1.2rem 1.2rem;
+  margin-bottom: 1.4rem;
+}
+.agenda-summary__indicators {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.7rem;
+  margin-bottom: 1rem;
+}
+.agenda-indicator {
+  border: 1px solid var(--border-soft, #d6e2da);
+  border-radius: 10px;
+  padding: 0.6rem 0.8rem;
+  background: var(--bg-canvas, #f7faf8);
+}
+.agenda-indicator__label { display: block; font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted, #5f7468); }
+.agenda-indicator__value { font-size: 0.9rem; font-weight: 700; color: var(--text-strong, #102117); margin-top: 2px; }
+.agenda-indicator__value small { display: block; font-weight: 600; font-size: 0.76rem; color: var(--text-muted, #5f7468); }
+.agenda-indicator__value--count { font-size: 1.4rem; }
+.agenda-indicator__empty { font-weight: 500; color: var(--text-soft, #94a3b8); }
+
+.agenda-summary__cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.agenda-summary__col h3 { margin: 0 0 0.5rem; font-size: 0.85rem; font-weight: 800; color: var(--pg-text); }
+.agenda-empty { font-size: 0.85rem; color: var(--text-soft, #94a3b8); margin: 0; }
+
+.agenda-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border-soft, #eef2f0);
+  font-size: 0.84rem;
+}
+.agenda-row:last-child { border-bottom: none; }
+.agenda-row__icon { flex: 0 0 auto; }
+.agenda-row__title { flex: 1 1 auto; font-weight: 600; color: var(--text-strong, #102117); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.agenda-row__when { flex: 0 0 auto; color: var(--text-muted, #5f7468); font-size: 0.78rem; }
+.agenda-row__status {
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #e8eefc;
+  color: #1d3a76;
+}
+.agenda-row__status--overdue { background: var(--color-danger, #dc2626); color: #fff; }
+.agenda-row__status--due-today, .agenda-row__status--due-tomorrow { background: var(--gold-light, #fff0c0); color: #6e5300; }
+.agenda-row__status--no-deadline { background: #f1f5f9; color: #475569; }
+.agenda-row a { flex: 0 0 auto; font-size: 0.78rem; font-weight: 800; color: var(--pg-brand-strong); white-space: nowrap; }
+
+.agenda-summary__link { display: inline-block; margin-top: 0.8rem; font-size: 0.85rem; font-weight: 800; color: var(--pg-brand-strong); }
+.agenda-summary__link:hover { text-decoration: underline; }
+
+@media (max-width: 640px) {
+  .agenda-summary__cols { grid-template-columns: 1fr; }
+  .agenda-row { flex-wrap: wrap; }
+  .agenda-row__when { order: 3; }
+}
+
 /* Encabezado de sección */
 .sec-head { margin-bottom: 1rem; }
 .sec-head__k {

@@ -8,6 +8,14 @@
   background: var(--bg-canvas);
 }
 
+/* Bloque E: [hidden] pierde contra .student-cal-list{display:grid} (misma
+   especificidad, esta hoja carga despues que la del navegador) -- se
+   reafirma para que ocultar la Agenda al cambiar a Semana/Mes funcione de
+   verdad (mismo bug real encontrado en la agenda admin). */
+#sc-list[hidden] {
+  display: none;
+}
+
 .student-cal-hero {
   background: linear-gradient(135deg, var(--brand-700), var(--brand-500));
   color: var(--text-on-brand);
@@ -123,6 +131,16 @@
 .student-cal-card__status {
   font-size: var(--font-size-xs);
   color: var(--text-muted);
+}
+
+/* ── Barra de vista (Bloque E: selector Agenda/Semana/Mes + navegacion) ── */
+.student-cal-view-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
 }
 
 .student-cal-list {
@@ -338,6 +356,122 @@
   text-align: right;
 }
 
+/* ── Agenda (Fase Agenda Academica, bloque C): tarjeta generica para
+   cualquier tipo de evento normalizado (clase, entrega, bitacora,
+   documento, actividad especial) ─────────────────────────────────── */
+.agenda-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--space-4);
+}
+
+.agenda-card[data-status="overdue"] {
+  border-color: var(--color-danger);
+}
+
+.agenda-card[data-status="cancelled"] {
+  opacity: 0.72;
+}
+
+.agenda-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.agenda-card__type {
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.agenda-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 12px;
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+}
+
+.agenda-status--pending {
+  background: #e8eefc;
+  color: #1d3a76;
+  border: 1px solid #c5d6f5;
+}
+
+.agenda-status--soon {
+  background: var(--gold-light, #fff0c0);
+  color: #6e5300;
+}
+
+.agenda-status--overdue {
+  background: var(--color-danger);
+  color: #fff;
+}
+
+.agenda-status--done {
+  background: var(--brand-100, #e9f8ef);
+  color: var(--brand-700, #0a5c31);
+}
+
+.agenda-status--scheduled {
+  background: #e8eefc;
+  color: #1d3a76;
+  border: 1px solid #c5d6f5;
+}
+
+.agenda-status--cancelled {
+  background: var(--color-danger);
+  color: #fff;
+}
+
+.agenda-status--rescheduled {
+  background: var(--accent-gold);
+  color: var(--text-on-gold);
+}
+
+.agenda-card__title {
+  margin: var(--space-3) 0 var(--space-1);
+  font-size: var(--font-size-lg);
+  font-family: var(--font-display);
+  color: var(--text-strong);
+}
+
+.agenda-card__datetime {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text-body);
+  text-transform: capitalize;
+}
+
+.agenda-card__desc {
+  margin: var(--space-2) 0 0;
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+}
+
+.agenda-card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.agenda-card__source {
+  font-size: var(--font-size-xs);
+  color: var(--text-soft);
+}
+
 /* ── Responsive ─────────────────────────────────────────────────── */
 @media (max-width: 720px) {
   .student-cal-hero__inner {
@@ -360,5 +494,18 @@
   .row {
     grid-template-columns: 1fr;
     gap: 2px;
+  }
+
+  .agenda-card {
+    padding: var(--space-4);
+  }
+
+  .agenda-card__foot {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .agenda-card__go {
+    text-align: center;
   }
 }
