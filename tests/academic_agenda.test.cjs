@@ -202,6 +202,95 @@ test("clase de OTRO grupo/institucion no aparece en el contexto actual", () => {
   assert.equal(result.events.filter((e) => e.source === "calendar").length, 0);
 });
 
+// Bloque F.2: reasignacion de grado/ficha via override (applyGradeToRecord
+// en calendario-academico-2026.html) debe cambiar la clasificacion EFECTIVA
+// de la clase, no solo su estado/horario/tema -- la asignacion efectiva es
+// "registro legacy + override administrativo", igual que getC()/getG() en
+// la herramienta legacy.
+
+test("F.2: clase reasignada de 10A a 11B via override YA NO aparece en el contexto 10A original", () => {
+  const result = agenda.buildAcademicAgenda({
+    context: JFK_10A, // grupo 10A
+    calendarRecords: [
+      { id: "reasignada1", fecha: "2026-08-25", colegio: "I.E. Jhon F. Kennedy", grado: "10A", horario: "9:00am–9:55am", tipo: "CLASE", defE: "Activa", defO: "" },
+    ],
+    calendarOverrides: { reasignada1: { colegio: "I.E. Santa Bárbara", grado: "11B" } },
+  });
+  assert.equal(result.events.filter((e) => e.sourceId === "reasignada1").length, 0);
+});
+
+test("F.2: la misma clase reasignada SI aparece en el contexto 11B nuevo, con institucion/grupo del contexto nuevo", () => {
+  const result = agenda.buildAcademicAgenda({
+    context: { ficha: "3168852", grupo: "11B", institucionShort: "I.E. Santa Bárbara", institucionLong: "Institucion Educativa Santa Barbara" },
+    calendarRecords: [
+      { id: "reasignada1", fecha: "2026-08-25", colegio: "I.E. Jhon F. Kennedy", grado: "10A", horario: "9:00am–9:55am", tipo: "CLASE", defE: "Activa", defO: "" },
+    ],
+    calendarOverrides: { reasignada1: { colegio: "I.E. Santa Bárbara", grado: "11B" } },
+  });
+  const events = result.events.filter((e) => e.sourceId === "reasignada1");
+  assert.equal(events.length, 1);
+  assert.equal(events[0].ficha, "3168852");
+  assert.equal(events[0].group, "11B");
+  assert.equal(events[0].institution, "Institucion Educativa Santa Barbara");
+});
+
+test("F.2: reasignacion de grado + cambio de horario simultaneos conservan ambos overrides", () => {
+  const result = agenda.buildAcademicAgenda({
+    context: { ficha: "3168852", grupo: "11B", institucionShort: "I.E. Santa Bárbara", institucionLong: "Institucion Educativa Santa Barbara" },
+    calendarRecords: [
+      { id: "reasignada2", fecha: "2026-08-25", colegio: "I.E. Jhon F. Kennedy", grado: "10A", horario: "9:00am–9:55am", tipo: "CLASE", defE: "Activa", defO: "" },
+    ],
+    calendarOverrides: { reasignada2: { colegio: "I.E. Santa Bárbara", grado: "11B", horario: "2:35pm–6:10pm" } },
+  });
+  const events = result.events.filter((e) => e.sourceId === "reasignada2");
+  assert.equal(events.length, 1);
+  assert.equal(events[0].group, "11B");
+  // 2:35pm Bogota (-05:00) == 19:35 UTC
+  assert.equal(events[0].startAt, "2026-08-25T19:35:00.000Z");
+});
+
+test("F.2: quitar el override de grado restaura la clasificacion original (10A vuelve a verla, 11B deja de verla)", () => {
+  const record = { id: "reasignada3", fecha: "2026-08-25", colegio: "I.E. Jhon F. Kennedy", grado: "10A", horario: "9:00am–9:55am", tipo: "CLASE", defE: "Activa", defO: "" };
+  const contextoNuevo = { ficha: "3168852", grupo: "11B", institucionShort: "I.E. Santa Bárbara", institucionLong: "Institucion Educativa Santa Barbara" };
+
+  const conOverride = agenda.buildAcademicAgenda({
+    context: contextoNuevo,
+    calendarRecords: [record],
+    calendarOverrides: { reasignada3: { colegio: "I.E. Santa Bárbara", grado: "11B" } },
+  });
+  assert.equal(conOverride.events.filter((e) => e.sourceId === "reasignada3").length, 1);
+
+  const sinOverride = agenda.buildAcademicAgenda({
+    context: contextoNuevo,
+    calendarRecords: [record],
+    calendarOverrides: {}, // override quitado -- equivalente a "delete next.colegio/grado" en applyGradeToRecord
+  });
+  assert.equal(sinOverride.events.filter((e) => e.sourceId === "reasignada3").length, 0);
+
+  const contextoOriginal = agenda.buildAcademicAgenda({
+    context: JFK_10A,
+    calendarRecords: [record],
+    calendarOverrides: {},
+  });
+  assert.equal(contextoOriginal.events.filter((e) => e.sourceId === "reasignada3").length, 1);
+});
+
+test("F.2: override de grado combinado con estado/tema -- ninguno de los dos se pierde", () => {
+  const result = agenda.buildAcademicAgenda({
+    context: { ficha: "3168852", grupo: "11B", institucionShort: "I.E. Santa Bárbara", institucionLong: "Institucion Educativa Santa Barbara" },
+    calendarRecords: [
+      { id: "reasignada4", fecha: "2026-08-25", colegio: "I.E. Jhon F. Kennedy", grado: "10A", horario: "9:00am–9:55am", tipo: "CLASE", defE: "Activa", defO: "" },
+    ],
+    calendarOverrides: { reasignada4: { colegio: "I.E. Santa Bárbara", grado: "11B", estado: "Cancelada", obs: "Paro de transporte", act: { nombre: "Subneteo IPv4" } } },
+  });
+  const events = result.events.filter((e) => e.sourceId === "reasignada4");
+  assert.equal(events.length, 1);
+  assert.equal(events[0].group, "11B");
+  assert.equal(events[0].status, agenda.CALENDAR_STATUS.CANCELLED);
+  assert.match(events[0].description, /Paro de transporte/);
+  assert.match(events[0].description, /Subneteo IPv4/);
+});
+
 test("override de calendario (cancelada) cambia el status del evento derivado sin duplicarlo", () => {
   const result = agenda.buildAcademicAgenda({
     context: JFK_10A,

@@ -110,19 +110,30 @@
   // record.colegio ya viene corto, p.ej. "I.E. Jhon F. Kennedy") + grado.
   // Aplica el override de Firestore (mismo shape que ya usa
   // student_calendar.js: {colegio, grado, horario, estado, obs, act}).
+  //
+  // Bloque F.2: la asignacion EFECTIVA de una clase es "registro legacy +
+  // override administrativo", igual que ya calculan getC()/getG() en
+  // calendario-academico-2026.html (estados[id]?.colegio ?? record.colegio).
+  // Antes este filtro usaba record.colegio/record.grado crudos: si el admin
+  // reasignaba una clase de grado via applyGradeToRecord, la herramienta
+  // legacy reflejaba el cambio pero la Agenda Academica seguia clasificando
+  // (y por lo tanto filtrando) la clase bajo su grado ORIGINAL -- el
+  // aprendiz reasignado nunca la veia, y el aprendiz original la seguia
+  // viendo. El resto de campos (horario/estado/obs/tema) ya se combinaban
+  // con el override correctamente antes de este fix.
   function buildCalendarEvents(ctx, calendarRecords, calendarOverrides, now) {
     var events = [];
     var overrides = calendarOverrides && typeof calendarOverrides === "object" ? calendarOverrides : {};
     (Array.isArray(calendarRecords) ? calendarRecords : []).forEach(function (record) {
       var mappedType = LEGACY_RECORD_TYPE_MAP[record && record.tipo];
       if (!mappedType) return; // SABADO/DOMINGO y tipos desconocidos: sin evento (ver limitaciones)
-      var recordInst = String(record.colegio || "");
-      var recordGrado = String(record.grado || "").trim().toUpperCase();
+      var override = overrides[record.id] || {};
+      var recordInst = String(override.colegio || record.colegio || "");
+      var recordGrado = String(override.grado || record.grado || "").trim().toUpperCase();
       if (ctx.institucionShort && recordInst !== ctx.institucionShort) return;
       if (ctx.grupo && recordGrado !== String(ctx.grupo).trim().toUpperCase()) return;
       if (!ctx.institucionShort && !ctx.grupo) return; // modo admin sin filtro: el llamador debe iterar por ficha
 
-      var override = overrides[record.id] || {};
       var estado = String(override.estado || record.defE || "Activa").toLowerCase();
       var obs = (override.obs === "" || override.obs == null) ? (record.defO || "") : override.obs;
       var horario = override.horario || record.horario;
