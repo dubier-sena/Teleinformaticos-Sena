@@ -593,6 +593,8 @@
     var allDayCheckbox = byId("aa-manual-allday");
     if (record) {
       form.querySelector("[name=title]").value = record.title || "";
+      form.querySelector("[name=type]").value = record.type || "ACTIVIDAD_ESPECIAL";
+      form.querySelector("[name=tema]").value = record.tema || "";
       form.querySelector("[name=description]").value = record.description || "";
       form.querySelector("[name=date]").value = record.date || "";
       form.querySelector("[name=status]").value = record.status || "scheduled";
@@ -641,6 +643,8 @@
     var input = {
       id: state.editingManualId,
       title: form.querySelector("[name=title]").value,
+      type: form.querySelector("[name=type]").value,
+      tema: form.querySelector("[name=tema]").value,
       description: form.querySelector("[name=description]").value,
       date: date,
       allDay: isAllDay,

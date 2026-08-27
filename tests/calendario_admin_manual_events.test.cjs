@@ -291,3 +291,91 @@ test("las 3 llamadas reales a la nube estan envueltas en withTimeout (nunca cuel
     assert.match(before, /withTimeout\($/, "cada llamada a la nube debe estar envuelta en withTimeout: " + call);
   });
 });
+
+// ── Bloque F.1: "Nueva clase" (type="CLASE") + campo "tema" ────────────────
+
+test("MANUAL_EVENT_TYPES incluye CLASE ademas de ACTIVIDAD_ESPECIAL", () => {
+  const mod = loadSandbox({});
+  // Array creado DENTRO del sandbox -- comparar como strings, no deepEqual
+  // (mismo gotcha cross-realm documentado en otros tests de este archivo).
+  const types = Array.prototype.slice.call(mod.MANUAL_EVENT_TYPES).sort().join(",");
+  assert.equal(types, "ACTIVIDAD_ESPECIAL,CLASE");
+});
+
+test("saveManualEvent: type='CLASE' se guarda tal cual (Nueva clase)", async () => {
+  const db = fakeDb();
+  const mod = loadSandbox({ _firebaseDb: db, portalAuth: { getCurrentSession: () => null } });
+  const result = await mod.saveManualEvent({
+    title: "Clase de refuerzo", date: "2026-09-10", type: "CLASE",
+    startAt: "2026-09-10T14:10:00-05:00", endAt: "2026-09-10T16:15:00-05:00",
+  });
+  assert.equal(result.ok, true);
+  assert.equal(result.record.type, "CLASE");
+});
+
+test("saveManualEvent: un type invalido/desconocido cae a ACTIVIDAD_ESPECIAL (nunca inventa un tipo nuevo)", async () => {
+  const db = fakeDb();
+  const mod = loadSandbox({ _firebaseDb: db, portalAuth: { getCurrentSession: () => null } });
+  const result = await mod.saveManualEvent({ title: "Aviso", date: "2026-09-10", allDay: true, type: "TIPO_QUE_NO_EXISTE" });
+  assert.equal(result.ok, true);
+  assert.equal(result.record.type, "ACTIVIDAD_ESPECIAL");
+});
+
+test("saveManualEvent: sin type explicito, default sigue siendo ACTIVIDAD_ESPECIAL (compatibilidad con eventos ya creados en Bloque D/E)", async () => {
+  const db = fakeDb();
+  const mod = loadSandbox({ _firebaseDb: db, portalAuth: { getCurrentSession: () => null } });
+  const result = await mod.saveManualEvent({ title: "Aviso", date: "2026-09-10", allDay: true });
+  assert.equal(result.record.type, "ACTIVIDAD_ESPECIAL");
+});
+
+test("saveManualEvent: guarda el campo tema", async () => {
+  const db = fakeDb();
+  const mod = loadSandbox({ _firebaseDb: db, portalAuth: { getCurrentSession: () => null } });
+  const result = await mod.saveManualEvent({
+    title: "Clase de refuerzo", date: "2026-09-10", type: "CLASE", tema: "Subneteo IPv4",
+    startAt: "2026-09-10T14:10:00-05:00", endAt: "2026-09-10T16:15:00-05:00",
+  });
+  assert.equal(result.record.tema, "Subneteo IPv4");
+});
+
+test("toAgendaEvent: antepone 'Tema: X' a la descripcion cuando hay tema", () => {
+  const mod = loadSandbox({});
+  const events = mod.toAgendaEvent({
+    id: "e1", title: "Clase", date: "2026-09-10", status: "scheduled", allDay: true,
+    type: "CLASE", tema: "Subneteo IPv4", description: "Traer calculadora",
+  });
+  assert.equal(events[0].description, "Tema: Subneteo IPv4 — Traer calculadora");
+  assert.equal(events[0].type, "CLASE");
+});
+
+test("toAgendaEvent: sin tema, la descripcion queda igual que antes (sin regresion)", () => {
+  const mod = loadSandbox({});
+  const events = mod.toAgendaEvent({ id: "e1", title: "Aviso", date: "2026-09-10", status: "scheduled", allDay: true, description: "Traer calculadora" });
+  assert.equal(events[0].description, "Traer calculadora");
+});
+
+test("Nueva clase: persiste tras 'recargar' (round-trip completo con type y tema)", async () => {
+  const db = fakeDb();
+  const mod = loadSandbox({ _firebaseDb: db, portalAuth: { getCurrentSession: () => ({ user: { fullName: "Instructor Uno" } }) } });
+  await mod.saveManualEvent({
+    title: "Clase de refuerzo - Redes", date: "2026-09-10", type: "CLASE", tema: "Subneteo IPv4",
+    ficha: "3441944", startAt: "2026-09-10T14:10:00-05:00", endAt: "2026-09-10T16:15:00-05:00",
+  });
+  const records = await mod.loadManualEventRecords();
+  assert.equal(records.length, 1);
+  assert.equal(records[0].type, "CLASE");
+  assert.equal(records[0].tema, "Subneteo IPv4");
+  assert.equal(records[0].ficha, "3441944");
+});
+
+test("Nueva clase: solo la ficha indicada la recibe (loadManualAgendaEvents no filtra por ficha -- eso lo hace el llamador, se prueba aqui que el dato de ficha se conserva)", async () => {
+  const db = fakeDb();
+  const mod = loadSandbox({ _firebaseDb: db, portalAuth: { getCurrentSession: () => null } });
+  await mod.saveManualEvent({
+    title: "Clase ficha 3441944", date: "2026-09-10", type: "CLASE", ficha: "3441944", allDay: true,
+  });
+  const events = await mod.loadManualAgendaEvents();
+  assert.equal(events.length, 1);
+  assert.equal(events[0].ficha, "3441944");
+  assert.equal(events[0].type, "CLASE");
+});

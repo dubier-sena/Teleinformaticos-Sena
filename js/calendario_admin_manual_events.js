@@ -12,13 +12,19 @@
  * evento manual vive SOLO aqui, un evento derivado NUNCA se escribe aqui.
  *
  * reglas de negocio:
- * - type siempre "ACTIVIDAD_ESPECIAL" (mismo bucket que ya usa
+ * - type: "ACTIVIDAD_ESPECIAL" (default, mismo bucket que ya usa
  *   academic_agenda.js para REUNIÓN RECTOR/DESPLAZAMIENTO/SENA del
- *   calendario legacy -- no se inventa un tipo nuevo en el agregador).
+ *   calendario legacy) o "CLASE" (Bloque F.1: "Nueva clase" desde la Agenda
+ *   Administrativa -- se guarda aqui, NUNCA en CALENDAR_2026_RECORDS ni en
+ *   calendario_2026_admin, para no tocar el registro legacy). No se inventa
+ *   ningun otro tipo nuevo en el agregador.
  * - status: uno de academicAgenda.CALENDAR_STATUS (scheduled/cancelled/
  *   rescheduled) -- vocabulario ya existente, sin duplicarlo aqui.
  * - ficha/grupo/institucion son OPCIONALES: vacio = evento general (visible
  *   para todas las fichas en la vista admin).
+ * - tema (Bloque F.1): opcional, se antepone a la descripcion como
+ *   "Tema: {tema}" al normalizar el evento (toAgendaEvent) -- igual que el
+ *   admin ya podia asignarle un "tema" (via act.nombre) a una clase legacy.
  *
  * Bloque E (vistas y horarios, 2026-08-26): un evento manual ahora puede
  * ser "todo el dia" (record.allDay explicito, ya NO inferido de si vinieron
@@ -37,6 +43,7 @@
 
   var CALENDAR_ID = "calendario_2026_manual_events";
   var CLOUD_TIMEOUT_MS = 12000;
+  var MANUAL_EVENT_TYPES = ["ACTIVIDAD_ESPECIAL", "CLASE"];
 
   function db() { return window._firebaseDb; }
 
@@ -149,8 +156,9 @@
 
     var record = {
       id: id,
-      type: "ACTIVIDAD_ESPECIAL",
+      type: MANUAL_EVENT_TYPES.indexOf(input.type) !== -1 ? input.type : "ACTIVIDAD_ESPECIAL",
       title: String(input.title).trim(),
+      tema: String(input.tema || "").trim(),
       description: String(input.description || "").trim(),
       date: String(input.date).trim(),
       allDay: isAllDay,
@@ -241,10 +249,12 @@
   // UNICO registro real), igual que academic_agenda.js#buildCalendarEvents
   // ya hace con horarios legacy de varias franjas.
   function toAgendaEvent(record) {
+    var tema = String(record.tema || "").trim();
+    var description = [tema ? ("Tema: " + tema) : "", record.description || ""].filter(Boolean).join(" — ");
     var base = {
       type: record.type || "ACTIVIDAD_ESPECIAL",
       title: record.title,
-      description: record.description || "",
+      description: description,
       source: "manual",
       sourceId: record.id,
       date: record.date,
@@ -292,6 +302,7 @@
 
   window.calendarioAdminManualEvents = Object.freeze({
     CALENDAR_ID: CALENDAR_ID,
+    MANUAL_EVENT_TYPES: MANUAL_EVENT_TYPES.slice(),
     loadManualEventRecords: loadManualEventRecords,
     loadManualAgendaEvents: loadManualAgendaEvents,
     saveManualEvent: saveManualEvent,

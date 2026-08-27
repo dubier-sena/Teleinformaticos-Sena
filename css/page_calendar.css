@@ -818,6 +818,37 @@ tr:hover td {
   color: #065f46;
 }
 
+/* Bloque F.1: editor de franjas horarias libres de la clase */
+.horario-section--hidden {
+  display: none;
+}
+
+.horario-allday-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.horario-slot-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.horario-slot-row .modal-inp {
+  width: auto;
+  flex: 1 1 0;
+}
+
+.horario-slot-row .btn-sm {
+  flex: 0 0 auto;
+}
+
 .modal-actions {
   display: flex;
   gap: 10px;

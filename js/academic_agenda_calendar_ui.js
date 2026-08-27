@@ -56,14 +56,33 @@
     return display + " " + suffix;
   }
 
-  function chipHtml(event, extraClass) {
+  // Igual que formatHourLabel pero con minutos -- usado en el chip de la
+  // franja de la semana, donde "Clase" sola no distingue una franja de
+  // otra (el titulo del evento CLASE es siempre el texto generico "Clase",
+  // la hora real solo vivia en el top/height del bloque, invisible como
+  // texto). minutesFromMidnight es hora LOCAL Bogota (igual que startMin/
+  // endMin de academic_agenda_views.js), no requiere conversion de zona.
+  function formatMinutesLabel(minutesFromMidnight) {
+    var total = ((minutesFromMidnight % 1440) + 1440) % 1440;
+    var h = Math.floor(total / 60);
+    var m = total % 60;
+    var suffix = h < 12 ? "a. m." : "p. m.";
+    var display = h % 12 === 0 ? 12 : h % 12;
+    return display + ":" + (m < 10 ? "0" + m : m) + " " + suffix;
+  }
+
+  function chipHtml(event, extraClass, opts) {
+    opts = opts || {};
     var meta = typeMetaOf(event);
     var isManual = event.isDerived === false;
+    var timeLabel = opts.timeRange ? escapeHtml(opts.timeRange) : "";
+    var titleAttr = escapeHtml(opts.timeRange ? event.title + " · " + opts.timeRange : event.title);
     return (
       '<button type="button" class="aac-chip aac-chip--' + statusClassOf(event) + (extraClass ? " " + extraClass : "") +
-        (isManual ? " aac-chip--manual" : "") + '" data-event-id="' + escapeHtml(event.id) + '" title="' + escapeHtml(event.title) + '">' +
+        (isManual ? " aac-chip--manual" : "") + '" data-event-id="' + escapeHtml(event.id) + '" title="' + titleAttr + '">' +
         '<span class="aac-chip__ico">' + meta.icon + "</span>" +
         '<span class="aac-chip__label">' + escapeHtml(event.title) + "</span>" +
+        (timeLabel ? '<span class="aac-chip__time">' + timeLabel + "</span>" : "") +
       "</button>"
     );
   }
@@ -126,9 +145,10 @@
       var blocks = day.timedSegments.map(function (seg) {
         var top = topPct(seg.startMin);
         var height = heightPct(seg.startMin, seg.endMin);
+        var timeRange = formatMinutesLabel(seg.startMin) + "–" + formatMinutesLabel(seg.endMin);
         return (
           '<div class="aac-week__block" style="top:' + top.toFixed(2) + '%;height:' + height.toFixed(2) + '%">' +
-            chipHtml(seg.event) +
+            chipHtml(seg.event, null, { timeRange: timeRange }) +
           "</div>"
         );
       }).join("");
@@ -205,6 +225,6 @@
     renderWeekGrid: renderWeekGrid,
     renderMonthGrid: renderMonthGrid,
     renderDayDetailList: renderDayDetailList,
-    __test: { chipHtml: chipHtml, formatHourLabel: formatHourLabel, escapeHtml: escapeHtml },
+    __test: { chipHtml: chipHtml, formatHourLabel: formatHourLabel, formatMinutesLabel: formatMinutesLabel, escapeHtml: escapeHtml },
   };
 });

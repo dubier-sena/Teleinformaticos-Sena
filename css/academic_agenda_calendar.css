@@ -55,8 +55,9 @@
 /* ── Chips (bloques de evento reutilizados en semana/mes) ─────────────── */
 .aac-chip {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 4px;
+  gap: 0 4px;
   width: 100%;
   border: none;
   border-radius: var(--radius-sm);
@@ -73,6 +74,20 @@
 }
 
 .aac-chip__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Hora de la franja (solo semana, cuando "Clase" u otro titulo generico no
+   distingue una franja de otra en el chip -- ver academic_agenda_calendar_ui.js).
+   flex-basis:100% la fuerza a su propia linea sin cambiar el layout de los
+   chips que no la usan (mes/todo-el-dia). */
+.aac-chip__time {
+  flex: 1 1 100%;
+  font-size: 0.64rem;
+  font-weight: 500;
+  opacity: 0.85;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

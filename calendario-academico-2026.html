@@ -18,7 +18,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="css/site_tokens.css?v=20260617_1"/>
 <link rel="stylesheet" href="css/shared_shell.css?v=20260617_1"/>
-<link rel="stylesheet" href="css/page_calendar.css?v=20260615_1"/>
+<link rel="stylesheet" href="css/page_calendar.css?v=20260826_1"/>
 <script src="js/shared_utils.js?v=20260615_2"></script>
 <script src="js/global_error_handler.js?v=20260710_1"></script>
 <script src="js/portal_auth.js?v=20260816_1"></script>
@@ -88,8 +88,18 @@
       <div id="grade-section" style="display:none;">
         <label class="modal-lbl">Grado asignado</label>
         <select id="m-grado" class="modal-sel"></select>
-        <div class="grade-note">Este cambio se aplica a esta clase y toma el horario del grado seleccionado.</div>
+        <div class="grade-note">Este cambio se aplica a esta clase y toma el horario del grado seleccionado, salvo que edites la franja horaria abajo.</div>
         <div id="horario-preview" class="grade-note"></div>
+      </div>
+
+      <div id="horario-section" class="horario-section--hidden">
+        <label class="modal-lbl">Franja horaria de la clase</label>
+        <label class="horario-allday-toggle">
+          <input type="checkbox" id="m-horario-allday"> Todo el día (sin franja horaria)
+        </label>
+        <div id="m-horario-slots"></div>
+        <button type="button" class="btn-sm" id="m-horario-add-slot">+ Agregar franja</button>
+        <div class="grade-note">Puedes agregar varias franjas en el mismo día (p. ej. 8:00am–10:00am y 2:15pm–4:15pm). No es obligatorio usar más de una. Cualquier minuto es válido.</div>
       </div>
 
       <div id="act-section" style="display:none;">
@@ -110,6 +120,7 @@
 
 <script src="data/calendario_2026_records.js"></script>
 <script src="data/calendario_2026_seed.js"></script>
+<script src="js/legacy_calendar_slot_editor.js?v=20260826_1"></script>
 <script>
 // ════════════════════════════════════════════════════════════════
 // CONSTANTES
@@ -295,6 +306,7 @@ let estados=JSON.parse(JSON.stringify(INITIAL_STATE));
 let adminFestivos=new Set();
 let curView='dash', curMonth=3;
 let modalRec=null, modalCurEstado='';
+let modalHorarioSlots=[]; // Bloque F.1: franjas en edicion del modal actual, formato {start:"HH:MM",end:"HH:MM"} (24h)
 let firebaseSyncAvailable=false;
 let syncTimer=null;
 let pendingCalendarSnapshot=null;
@@ -386,6 +398,150 @@ function applyGradeToRecord(record,selectionValue){
     delete next.horario;
   }
   estados[record.id]=next;
+}
+
+// ════════════════════════════════════════════════════════════════
+// FRANJAS HORARIAS LIBRES (Bloque F.1)
+// ════════════════════════════════════════════════════════════════
+// El admin ya podia reasignar grado/ficha (applyGradeToRecord, arriba), pero
+// no podia escribir una franja horaria libre: solo heredaba el horario fijo
+// de SBH/jhr para el grado elegido. Esto agrega edicion manual de franjas
+// (cualquier minuto, agregar/quitar, todo el dia) usando el MISMO override
+// por string "horario" que ya lee getH()/academic_agenda.js -- nunca se
+// modifica CALENDAR_2026_RECORDS ni window.CALENDAR_2026_RECORDS.
+//
+// Un registro "franja${n}" (slotCount>1, ver expandRecords arriba) es una
+// de VARIAS pastillas independientes que representan EL MISMO dia/clase en
+// la grilla propia de esta herramienta. La Agenda Academica (academic_agenda.js)
+// en cambio lee el override por el id BASE (record.id sin "|franjaN") y
+// separa las franjas ella misma via parseHorarioSlots -- por eso el horario
+// combinado (con TODAS las franjas) se guarda en estados[baseId], nunca en
+// estados[idDeUnaSolaFranja]: si se guardara en el id de una sola franja, la
+// Agenda Academica (que solo mira el id base) nunca lo veria.
+function legacyClassBaseId(record){
+  return record&&(record.baseId||record.id);
+}
+
+function legacyClassSiblingRecords(record){
+  const baseId=legacyClassBaseId(record);
+  return (RECORDS_BY_BASE_ID[baseId]||[record]).slice().sort((a,b)=>(a.slotIndex||1)-(b.slotIndex||1));
+}
+
+// Franjas actuales (24h, para <input type="time">) para precargar el editor
+// al abrir el modal. Si ya existe un override combinado guardado con este
+// mismo editor (estados[baseId].horario), se usa tal cual; si no, se
+// reconstruye a partir del horario ACTUAL de cada franja hermana (su propio
+// override previo, o el valor original de CALENDAR_2026_RECORDS).
+function legacyClassCurrentSlots(record){
+  if(!window.legacyCalendarSlotEditor)return [];
+  const baseId=legacyClassBaseId(record);
+  if((record.slotCount||1)<=1){
+    return window.legacyCalendarSlotEditor.parseHorarioToSlots(getH(record));
+  }
+  const baseOverride=estados[baseId]&&estados[baseId].horario;
+  if(baseOverride!=null){
+    return window.legacyCalendarSlotEditor.parseHorarioToSlots(baseOverride);
+  }
+  const combined=legacyClassSiblingRecords(record)
+    .map(sib=>getH(sib))
+    .filter(h=>h&&h!=='—')
+    .join(' / ');
+  return window.legacyCalendarSlotEditor.parseHorarioToSlots(combined);
+}
+
+function renderHorarioSlots(){
+  const container=document.getElementById('m-horario-slots');
+  if(!container)return;
+  container.innerHTML='';
+  modalHorarioSlots.forEach((slot,idx)=>{
+    const row=el('div','horario-slot-row');
+    const startInp=document.createElement('input');
+    startInp.type='time';startInp.className='modal-inp';startInp.value=slot.start||'';
+    startInp.addEventListener('input',()=>{modalHorarioSlots[idx]={...modalHorarioSlots[idx],start:startInp.value};});
+    const sep=document.createElement('span');sep.textContent='–';sep.style.cssText='font-weight:700;color:#9ca3af;';
+    const endInp=document.createElement('input');
+    endInp.type='time';endInp.className='modal-inp';endInp.value=slot.end||'';
+    endInp.addEventListener('input',()=>{modalHorarioSlots[idx]={...modalHorarioSlots[idx],end:endInp.value};});
+    const rmBtn=document.createElement('button');
+    rmBtn.type='button';rmBtn.className='btn-sm';rmBtn.textContent='Quitar franja';
+    rmBtn.addEventListener('click',(ev)=>{ev.stopPropagation();modalHorarioSlots.splice(idx,1);renderHorarioSlots();});
+    row.appendChild(startInp);row.appendChild(sep);row.appendChild(endInp);
+    if(modalHorarioSlots.length>1)row.appendChild(rmBtn);
+    container.appendChild(row);
+  });
+}
+
+function toggleHorarioAllDaySection(){
+  const checkbox=document.getElementById('m-horario-allday');
+  const slotsWrap=document.getElementById('m-horario-slots');
+  const addBtn=document.getElementById('m-horario-add-slot');
+  if(!checkbox)return;
+  const hidden=checkbox.checked;
+  if(slotsWrap)slotsWrap.style.display=hidden?'none':'';
+  if(addBtn)addBtn.style.display=hidden?'none':'';
+}
+
+function openHorarioSectionForModal(record){
+  const section=document.getElementById('horario-section');
+  if(!section||!window.legacyCalendarSlotEditor)return;
+  if(record.tipo!=='CLASE'){
+    section.style.display='none';
+    return;
+  }
+  section.style.display='block';
+  modalHorarioSlots=legacyClassCurrentSlots(record);
+  const isAllDay=!modalHorarioSlots.length;
+  if(!modalHorarioSlots.length)modalHorarioSlots=[{start:'',end:''}];
+  const checkbox=document.getElementById('m-horario-allday');
+  if(checkbox)checkbox.checked=isAllDay;
+  renderHorarioSlots();
+  toggleHorarioAllDaySection();
+
+  // updateHorarioPreview() (disparado por el select de grado, arriba en
+  // openModal) pisa #m-hr con el horario POR DEFECTO del grado -- aqui se
+  // corrige al final con el horario REAL (override combinado si existe,
+  // si no el original) para que la insignia de arriba del modal nunca
+  // muestre algo distinto de lo que en realidad esta guardado.
+  const hrDiv=document.getElementById('m-hr');
+  if(hrDiv){
+    if(isAllDay){
+      hrDiv.style.display='none';
+    }else{
+      const combined=window.legacyCalendarSlotEditor.buildHorarioFromSlots(modalHorarioSlots);
+      hrDiv.textContent='🕐 '+combined;
+      hrDiv.style.display='inline-block';
+    }
+  }
+}
+
+// Guarda la franja horaria editada como override COMBINADO en el id BASE
+// (lo que lee la Agenda Academica) y, ademas, refleja cada franja en su
+// pastilla hermana individual (compatibilidad visual con la grilla propia
+// de esta herramienta -- ver comentario de cabecera arriba). Si el admin
+// agrega MAS franjas de las que existian originalmente para ese dia, la
+// franja extra queda visible en la Agenda Academica (via el override base)
+// pero no crea una pastilla nueva en esta grilla (su conteo de pastillas es
+// fijo, calculado una sola vez desde CALENDAR_2026_RECORDS al cargar la
+// pagina) -- limitacion conocida y aceptada, documentada en el cierre de
+// este bloque.
+function saveHorarioOverride(record){
+  if(!window.legacyCalendarSlotEditor||record.tipo!=='CLASE')return;
+  const baseId=legacyClassBaseId(record);
+  const isAllDay=document.getElementById('m-horario-allday').checked;
+  const slots=isAllDay?[]:modalHorarioSlots.filter(s=>s.start&&s.end);
+  const combinedHorario=window.legacyCalendarSlotEditor.buildHorarioFromSlots(slots);
+  estados[baseId]={...(estados[baseId]||{}),horario:combinedHorario};
+
+  const siblings=legacyClassSiblingRecords(record);
+  if(siblings.length>1){
+    siblings.forEach((sib,idx)=>{
+      const part=slots[idx];
+      const sibHorario=part
+        ? window.legacyCalendarSlotEditor.buildHorarioFromSlots([part])
+        : '—';
+      estados[sib.id]={...(estados[sib.id]||{}),horario:sibHorario};
+    });
+  }
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -800,9 +956,20 @@ function configureDeploymentMode(){
   }
 }
 
+// Bloque F.1: antes esperaba 700ms antes de siquiera EMPEZAR el POST a
+// Firebase. saveModal()/toggleFestivo() no disparan saveData() en rafaga
+// (una accion de usuario = una llamada), asi que ese retraso no coalescia
+// nada real -- solo alargaba la ventana en la que un admin que guarda y
+// navega de inmediato (a otra vista, a "Volver al portal") se va antes de
+// que el POST arranque, dejando el cambio solo en localStorage de ese
+// navegador: el aprendiz (que lee calendario_2026_admin directo de
+// Firestore, ver academic_agenda_context.js) seguia viendo el horario
+// viejo hasta el siguiente guardado. setTimeout(...,0) sigue sacando el
+// POST del stack sincrono actual (mismo motivo de diseno que antes) pero
+// ya no le agrega una espera artificial de 700ms.
 function scheduleFirebaseSync(){
   clearTimeout(syncTimer);
-  syncTimer=setTimeout(()=>{syncFirebaseState(false);},700);
+  syncTimer=setTimeout(()=>{syncFirebaseState(false);},0);
 }
 
 async function syncFirebaseState(force){
@@ -1363,6 +1530,8 @@ function openModal(r){
     gradeSec.style.display='none';
   }
 
+  openHorarioSectionForModal(r);
+
   // Actividad — solo para clases
   const actSec=document.getElementById('act-section');
   if(r.tipo==='CLASE'){
@@ -1390,6 +1559,8 @@ function updateActPreview(){
 }
 document.getElementById('m-act-nombre').addEventListener('input',updateActPreview);
 document.getElementById('m-act-fecha').addEventListener('change',updateActPreview);
+document.getElementById('m-horario-add-slot').addEventListener('click',()=>{modalHorarioSlots.push({start:'',end:''});renderHorarioSlots();});
+document.getElementById('m-horario-allday').addEventListener('change',toggleHorarioAllDaySection);
 
 function updateHorarioPreview(){
   if(!modalRec)return;
@@ -1415,6 +1586,10 @@ function saveModal(){
   if(modalRec.tipo==='CLASE'){
     applyGradeToRecord(modalRec,document.getElementById('m-grado').value||getG(modalRec));
     estados[modalRec.id]={...(estados[modalRec.id]||{}),estado:modalCurEstado,obs,act};
+    // La franja horaria editada a mano SIEMPRE tiene la ultima palabra sobre
+    // el horario derivado automaticamente del grado (arriba) -- por eso se
+    // guarda despues, no antes.
+    saveHorarioOverride(modalRec);
   }
   saveData();closeModal();render();
 }

@@ -83,6 +83,43 @@ test("renderWeekGrid: escapa HTML en el titulo (sin XSS)", () => {
   assert.match(html, /&lt;img/);
 });
 
+// Bloque F.1: el titulo de un evento CLASE es siempre el texto generico
+// "Clase" (ver TYPE_META) -- sin la hora como texto en el chip, dos franjas
+// del mismo dia eran indistinguibles salvo por su posicion (top/height),
+// invisible al leer el HTML o al usar un lector de pantalla. La Agenda
+// (lista) y el detalle al hacer clic ya mostraban la hora real vía
+// description/startAt; solo la capa visual del chip de semana no la
+// exponia como texto.
+test("renderWeekGrid: el chip de una franja de clase muestra la hora como texto (no solo top/height)", () => {
+  const event = { id: "c1", type: "CLASE", status: "scheduled", title: "Clase", startAt: "2026-09-09T14:35:00-05:00", endAt: "2026-09-09T18:10:00-05:00" };
+  const week = views.buildWeekView({ events: [event], referenceIso: "2026-09-09T00:00:00-05:00", hourStart: 6, hourEnd: 20 });
+  const html = ui.renderWeekGrid(week);
+  assert.match(html, /aac-chip__time">2:35 p\. m\.–6:10 p\. m\./);
+  assert.match(html, /title="Clase · 2:35 p\. m\.–6:10 p\. m\."/);
+});
+
+test("renderWeekGrid: sin timeRange (evento todo-el-dia), el chip no agrega aac-chip__time", () => {
+  const event = { id: "allday1", type: "ACTIVIDAD_ESPECIAL", status: "scheduled", title: "Evento general", allDay: true, date: "2026-09-10" };
+  const week = views.buildWeekView({ events: [event], referenceIso: "2026-09-09T00:00:00-05:00" });
+  const html = ui.renderWeekGrid(week);
+  assert.doesNotMatch(html, /aac-chip__time/);
+});
+
+test("renderMonthGrid: los chips compactos de mes no agregan aac-chip__time (sin cambios de Bloque F.1)", () => {
+  const event = { id: "ev1", type: "CLASE", status: "scheduled", title: "Clase", startAt: "2026-09-15T08:00:00-05:00", endAt: "2026-09-15T09:00:00-05:00" };
+  const month = views.buildMonthView({ year: 2026, month: 9, events: [event] });
+  const html = ui.renderMonthGrid(month);
+  assert.doesNotMatch(html, /aac-chip__time/);
+});
+
+test("__test.formatMinutesLabel: mismo formato que formatHourLabel en horas exactas, con minutos cuando aplica", () => {
+  assert.equal(ui.__test.formatMinutesLabel(0), "12:00 a. m.");
+  assert.equal(ui.__test.formatMinutesLabel(12 * 60), "12:00 p. m.");
+  assert.equal(ui.__test.formatMinutesLabel(14 * 60 + 35), "2:35 p. m.");
+  assert.equal(ui.__test.formatMinutesLabel(23 * 60 + 59), "11:59 p. m.");
+  assert.equal(ui.__test.formatMinutesLabel(7 * 60), "7:00 a. m.");
+});
+
 // ── Mes ─────────────────────────────────────────────────────────────────
 
 test("renderMonthGrid: septiembre 2026 arma 5 filas de semana x 7 celdas", () => {
