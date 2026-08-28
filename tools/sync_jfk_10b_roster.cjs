@@ -32,133 +32,28 @@ const FICHA_META = {
   "3168852": { inst: "Institucion Educativa Santa Barbara", grupo: "11B", grado: "11" },
 };
 
-const OFFICIAL_ROSTERS = {
-  "3441939": [
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-  ],
-  "3441942": [
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-  ],
-  "3441944": [
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-  ],
-  "3441950": [
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-  ],
-  "3168850": [
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-  ],
-  "3168852": [
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-    "[DATO REDACTADO]",
-  ],
-};
+// Bloque G (auditoria 2026-08-27, cierre de hallazgo de privacidad): el
+// listado oficial con nombres COMPLETOS reales de ~113 aprendices (menores de
+// edad) de las 6 fichas vivia hardcodeado aqui mismo, commiteado en un repo
+// PUBLICO desde hace meses (detectado al investigar un caso no relacionado).
+// Mismo tipo de hallazgo que el purgado en la auditoria de PII de 2026-06
+// (notas -> Firestore), pero este archivo nunca paso por esa limpieza. Ahora
+// el listado real vive SOLO en tools/roster_data/official_rosters.local.json
+// (gitignored, nunca se commitea) -- ver tools/roster_data/official_rosters.example.json
+// para el formato esperado. Sin ese archivo local, el script falla con un
+// mensaje claro en vez de silenciosamente no tener datos.
+const ROSTER_DATA_FILE = path.join(__dirname, "roster_data", "official_rosters.local.json");
+
+function loadOfficialRosters() {
+  if (!fs.existsSync(ROSTER_DATA_FILE)) {
+    throw new Error(
+      `Falta ${path.relative(process.cwd(), ROSTER_DATA_FILE)} (gitignored, nunca se commitea). ` +
+        "Copia tools/roster_data/official_rosters.example.json a ese nombre y reemplaza los " +
+        "nombres de ejemplo por el listado oficial real de cada ficha antes de correr este script."
+    );
+  }
+  return JSON.parse(fs.readFileSync(ROSTER_DATA_FILE, "utf8"));
+}
 
 function normalizeName(value) {
   return String(value || "")
@@ -367,7 +262,10 @@ function addSummary(target, source) {
 
 function buildComparisonPlan(allUsers, options = {}) {
   const nowIso = options.nowIso || new Date().toISOString();
-  const rosters = options.rosters || OFFICIAL_ROSTERS;
+  // Bloque G: ya no hay un roster real "por defecto" -- el llamador (main(),
+  // o un test con datos sinteticos) SIEMPRE debe pasar options.rosters
+  // explicitamente. Sin el, se procesan cero fichas (no revienta, no inventa datos).
+  const rosters = options.rosters || {};
   const allowCreates = options.allowCreates !== false;
   const byFicha = {};
   const safeUpdates = [];
@@ -549,9 +447,9 @@ async function queryUsersByFicha(ficha) {
   return payload.filter((item) => item.document).map((item) => fromFsDoc(item.document));
 }
 
-async function listUsersForOfficialFichas() {
+async function listUsersForOfficialFichas(rosters) {
   const byId = new Map();
-  for (const ficha of Object.keys(OFFICIAL_ROSTERS)) {
+  for (const ficha of Object.keys(rosters)) {
     const docs = await queryUsersByFicha(ficha);
     docs.forEach((doc) => byId.set(doc._docId, doc));
   }
@@ -615,8 +513,9 @@ async function main() {
   const apply = process.argv.includes("--apply");
   const createMissing = process.argv.includes("--create-missing");
   const debug = process.argv.includes("--debug");
-  const users = await listUsersForOfficialFichas();
-  const plan = buildComparisonPlan(users, { allowCreates: createMissing });
+  const rosters = loadOfficialRosters();
+  const users = await listUsersForOfficialFichas(rosters);
+  const plan = buildComparisonPlan(users, { allowCreates: createMissing, rosters });
   const applied = {
     dryRun: !apply,
     updated: [],
@@ -651,7 +550,7 @@ async function main() {
 }
 
 module.exports = {
-  OFFICIAL_ROSTERS,
+  loadOfficialRosters,
   FICHA_META,
   normalizeName,
   tokenScore,

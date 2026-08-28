@@ -74,23 +74,28 @@ COL_MAP = {
 
 # Explicit manual overrides: Excel name (normalized) -> Firestore usernameKey
 # Used for ambiguous or partial names where automatic matching would be wrong.
-# "stacy" in Firestore has only "sahian stacy" but Excel has "sahian stacy [DATO REDACTADO]" -> ok auto
-# "arciniegas" in Firestore is "katalina" which collides with "katalina.bustos" -> prefer katalina.bustos
-# "danna_123." and "danna_trillos123." are duplicates -> prefer danna_trillos123.
-# For single-word names that are ambiguous, map manually:
+# Bloque G (2026-08-27): comentarios originales deletreaban nombres completos
+# reales de aprendices (menores de edad) -- genericizados aqui, la logica de
+# desambiguacion (nombre parcial/ambiguo -> usernameKey preferido) no cambia.
+# Ejemplo del patron real: un solo nombre de pila en el Excel ("Santiago")
+# cuando varias cuentas comparten ese nombre de pila, o dos cuentas duplicadas
+# para el mismo aprendiz -> se prefiere la que coincide exacto con su fullName.
+# Para single-word names that are ambiguous, map manually:
 MANUAL_OVERRIDES = {
-    # Excel norm -> preferred usernameKey
-    "santiago":       "santiago_cruz2010",    # Row 14 just "Santiago" -> likely Santiago Cruz (others have fuller names)
-    "valentina":      "valentina",            # Row 18 just "Valentina" -> Angie Valentina [DATO REDACTADO]
-    "darly acosta":   "darly",                # darly = DARLY BANESSA [DATO REDACTADO]
-    "katalina bustos": "katalina.bustos",     # prefer the one whose fullName matches exactly
+    # Excel norm -> preferred usernameKey (reemplaza con los reales si vuelves a correr el import)
+    "santiago":       "santiago_cruz2010",
+    "valentina":      "valentina",
+    "nombre apellido parcial 1": "darly",
+    "nombre apellido parcial 2": "katalina.bustos",
 }
 
-# Firestore users to prefer over duplicates (when two Firestore users would match same Excel row)
-# danna_trillos123. is the canonical account for Danna valentina [DATO REDACTADO]
+# Firestore users to prefer over duplicates (when two Firestore users would match same Excel row).
+# Import ya ejecutado una sola vez contra un Excel puntual -- si algun dia se
+# vuelve a correr contra un export nuevo, reemplaza estas 2 claves por el
+# fullName normalizado real de cada caso de duplicado que aparezca.
 PREFERRED_ACCOUNTS = {
-    "danna valentina [DATO REDACTADO]": "danna_trillos123.",
-    "angie valentina [DATO REDACTADO]":    "valentina",       # valentina2 is a duplicate account
+    "nombre completo normalizado del duplicado 1": "usernameKey_preferido_1",
+    "nombre completo normalizado del duplicado 2": "valentina",  # ejemplo real: cuenta duplicada
 }
 
 # ── Helpers ───────────────────────────────────────────────────────────────────

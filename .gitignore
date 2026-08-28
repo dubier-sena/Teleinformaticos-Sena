@@ -42,6 +42,13 @@ tools/publicar_github_pages.md
 # Copia local conservada como respaldo; NUNCA debe volver al repo publico.
 data/grades_induccion.js
 
+# Bloque G (2026-08-27): listado oficial de nombres reales de aprendices
+# (menores de edad) usado por tools/sync_jfk_10b_roster.cjs. Vivia hardcodeado
+# en ese script, commiteado en el repo publico -- purgado del HEAD y del
+# historial. Ver tools/roster_data/official_rosters.example.json para el
+# formato (con nombres de ejemplo, no reales).
+tools/roster_data/official_rosters.local.json
+
 # Banco de respuestas modelo (clave de respuestas). NUNCA debe ser publico.
 # Semilla que el admin importa a Firestore (sena_portal_grade_solutions, solo admin).
 grade_solutions_bank.json

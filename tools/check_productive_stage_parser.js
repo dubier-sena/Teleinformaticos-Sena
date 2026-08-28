@@ -4,6 +4,13 @@ const path = require("path");
 const modulePath = path.join(process.cwd(), "js", "productive_stage_import.js");
 const productiveStageImport = require(modulePath);
 
+// Auditoria 2026-08-27 (privacidad): este texto de muestra es TOTALMENTE
+// FICTICIO (nombres, titulos y resenas inventados para el check) -- antes
+// contenia el texto real de un informe de retroalimentacion de aprendices
+// reales de una ficha real. La ficha/grado/formato del documento se
+// conservan (son solo la estructura que el parser necesita reconocer, no
+// datos personales), pero ningun nombre ni descripcion de proyecto de aqui
+// corresponde a una persona o proyecto real.
 const sampleText = `
 INFORME DE RETROALIMENTACION
 Proyectos de Grado — Grados 11A y 11B
@@ -13,15 +20,15 @@ Ficha 3168850  ·  11 proyectos
 
 GRUPO 1 · TECNOLOGIA EDUCATIVA PARA PRIMARIA
 
-BIOEXPLORA — Pagina web de ciencias naturales
-👤 Charit Lorena [DATO REDACTADO]
+ECOAPRENDE — Pagina web de reciclaje escolar
+👤 Valentina Andrea Ospina Ruiz
 🎯 Poblacion: Estudiantes de grado 4 de primaria, I.E. Santa Barbara
 🛠️ Herramienta: Pagina web educativa + charlas presenciales
 
 Estado del documento: ✅ Completo
 
 📋 RESUMEN DEL PROYECTO
-Charit disena una pagina web interactiva para solucionar vacios en ciencias naturales.
+Valentina disena una pagina web interactiva para solucionar vacios en reciclaje escolar.
 
 🌟 FORTALEZAS
 ✔ Identifica con claridad la problematica.
@@ -33,15 +40,15 @@ Charit disena una pagina web interactiva para solucionar vacios en ciencias natu
 
 💡 Nota del asesor: Proyecto con base solida.
 
-App educativa de informatica: hardware y software
-👤 Kevin Santiago [DATO REDACTADO] & Luna Gabriela [DATO REDACTADO]
+App educativa de matematicas: figuras y numeros
+👤 Sebastian David Ramirez Cortes & Isabella Maria Cardenas Vega
 🎯 Poblacion: Estudiantes de grado 4 de primaria, escuelas sede
 🛠️ Herramienta: Aplicacion educativa interactiva
 
 Estado del documento: ✅ Completo
 
 📋 RESUMEN DEL PROYECTO
-Kevin y Luna desarrollan una aplicacion visual y sencilla sobre hardware y software.
+Sebastian e Isabella desarrollan una aplicacion visual y sencilla sobre figuras y numeros.
 
 🌟 FORTALEZAS
 ✔ Objetivos claramente formulados.
@@ -58,18 +65,18 @@ const result = productiveStageImport.parseProductiveStageReportText(sampleText, 
   importedAt: "2026-04-11T04:00:00.000Z",
   users: [
     {
-      usernameKey: "charit",
-      fullName: "Charit Lorena [DATO REDACTADO]",
+      usernameKey: "valentina",
+      fullName: "Valentina Andrea Ospina Ruiz",
       ficha: "3168850",
     },
     {
-      usernameKey: "kevin",
-      fullName: "Kevin Santiago [DATO REDACTADO]",
+      usernameKey: "sebastian",
+      fullName: "Sebastian David Ramirez Cortes",
       ficha: "3168850",
     },
     {
-      usernameKey: "luna",
-      fullName: "Luna Gabriela [DATO REDACTADO]",
+      usernameKey: "isabella",
+      fullName: "Isabella Maria Cardenas Vega",
       ficha: "3168850",
     },
   ],
@@ -91,17 +98,17 @@ assert.strictEqual(
 );
 assert.strictEqual(
   firstProject.projectTitle,
-  "BIOEXPLORA — Pagina web de ciencias naturales",
+  "ECOAPRENDE — Pagina web de reciclaje escolar",
   "Debe extraer el titulo del proyecto"
 );
 assert.deepStrictEqual(
   firstProject.studentNames,
-  ["Charit Lorena [DATO REDACTADO]"],
+  ["Valentina Andrea Ospina Ruiz"],
   "Debe detectar el nombre del aprendiz"
 );
 assert.deepStrictEqual(
   firstProject.studentUsernameKeys,
-  ["charit"],
+  ["valentina"],
   "Debe vincular el aprendiz registrado"
 );
 assert.strictEqual(firstProject.currentStatus, "Completo", "Debe normalizar el estado");
@@ -109,7 +116,7 @@ assert.strictEqual(firstProject.currentStatus, "Completo", "Debe normalizar el e
 const secondProject = result.projects[1];
 assert.deepStrictEqual(
   secondProject.studentUsernameKeys,
-  ["kevin", "luna"],
+  ["sebastian", "isabella"],
   "Debe vincular los integrantes del proyecto"
 );
 

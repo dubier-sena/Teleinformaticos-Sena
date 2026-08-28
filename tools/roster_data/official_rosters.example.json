@@ -1,0 +1,11 @@
+{
+  "_comment": "Formato esperado por tools/sync_jfk_10b_roster.cjs. Copia este archivo a official_rosters.local.json (gitignored, NUNCA se commitea) y reemplaza estos nombres de EJEMPLO por el listado oficial real de cada ficha. Formato de nombre: APELLIDOS NOMBRES, todo en mayusculas, igual que el listado oficial de SENA.",
+  "3441939": [
+    "PEREZ GOMEZ ANDRES FELIPE",
+    "RAMIREZ TORRES LAURA VALENTINA"
+  ],
+  "3441942": [
+    "DIAZ MORENO SARA JIZETH",
+    "CORDOBA VARGAS JOHAN ESTEBAN"
+  ]
+}

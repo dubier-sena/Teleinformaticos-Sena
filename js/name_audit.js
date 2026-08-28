@@ -3,8 +3,8 @@
 // contra un listado oficial pegado por el instructor.
 //
 // Empareja por CONJUNTO DE PALABRAS (sin importar orden, mayusculas ni acentos),
-// asi "[DATO REDACTADO]" (formato oficial: apellidos primero) empareja
-// con "Jhon Deiby [DATO REDACTADO]" (como suele registrarlo el aprendiz).
+// asi "PEREZ GOMEZ JUAN DAVID" (formato oficial: apellidos primero) empareja
+// con "Juan David Perez Gomez" (como suele registrarlo el aprendiz).
 //
 // - SEGURO  = coincidencia UNICA de palabras y el nombre actual difiere -> se actualiza.
 // - SIN CAMBIO = coincide y el nombre ya es identico.

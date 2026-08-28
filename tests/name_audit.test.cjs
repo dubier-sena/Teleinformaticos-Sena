@@ -1,20 +1,19 @@
-// Logica de auditoria/actualizacion de nombres de aprendices (js/name_audit.js).
 const test = require("node:test");
 const assert = require("node:assert");
 const path = require("path");
 const na = require(path.join("..", "js", "name_audit.js"));
 
 test("normalize: quita acentos y la tilde de la ñ; minusculas", () => {
-  assert.equal(na.normalize("[DATO REDACTADO]"), "montana leynor");
+  assert.equal(na.normalize("PEÑA Andrade"), "pena andrade");
   assert.equal(na.normalize("José Andrés Muñoz"), "jose andres munoz");
 });
 
 test("wordSetKey: orden, mayusculas y acentos no importan", () => {
   assert.equal(
-    na.wordSetKey("[DATO REDACTADO]"),
-    na.wordSetKey("Jhon Deiby [DATO REDACTADO]")
+    na.wordSetKey("GUTIERREZ PARDO JHON DAVID"),
+    na.wordSetKey("Jhon David Gutierrez Pardo")
   );
-  assert.equal(na.wordSetKey("[DATO REDACTADO]"), na.wordSetKey("pineros pinilla"));
+  assert.equal(na.wordSetKey("CAMPIÑA MOLINA"), na.wordSetKey("campina molina"));
 });
 
 test("parseOfficialNames: colapsa espacios y descarta vacios", () => {
@@ -24,29 +23,29 @@ test("parseOfficialNames: colapsa espacios y descarta vacios", () => {
 
 test("match: SEGURO con coincidencia unica de palabras y nombre distinto", () => {
   const users = [
-    { usernameKey: "a", username: "a", fullName: "jhon deiby [DATO REDACTADO]", ficha: "3441944" },
-    { usernameKey: "b", username: "b", fullName: "Ashlie Sofia [DATO REDACTADO]", ficha: "3441944" },
+    { usernameKey: "a", username: "a", fullName: "jhon david gutierrez pardo", ficha: "3441944" },
+    { usernameKey: "b", username: "b", fullName: "Ashley Sofia Medina Rojas", ficha: "3441944" },
   ];
   const res = na.matchOfficialNames(
-    ["[DATO REDACTADO]", "[DATO REDACTADO]"],
+    ["GUTIERREZ PARDO JHON DAVID", "MEDINA ROJAS ASHLEY SOFIA"],
     users
   );
   assert.equal(res.sure.length, 2);
-  assert.equal(res.sure[0].official, "[DATO REDACTADO]");
+  assert.equal(res.sure[0].official, "GUTIERREZ PARDO JHON DAVID");
   assert.equal(res.sure[0].user.usernameKey, "a");
   assert.equal(res.uncertain.length, 0);
 });
 
 test("match: SIN CAMBIO cuando el nombre ya es identico", () => {
-  const users = [{ usernameKey: "a", username: "a", fullName: "[DATO REDACTADO]", ficha: "1" }];
-  const res = na.matchOfficialNames(["[DATO REDACTADO]"], users);
+  const users = [{ usernameKey: "a", username: "a", fullName: "GUTIERREZ PARDO JHON DAVID", ficha: "1" }];
+  const res = na.matchOfficialNames(["GUTIERREZ PARDO JHON DAVID"], users);
   assert.equal(res.sure.length, 0);
   assert.equal(res.noChange.length, 1);
 });
 
 test("match: DUDOSO sin coincidencia exacta (apellido faltante) sugiere candidato", () => {
-  const users = [{ usernameKey: "a", username: "a", fullName: "Jhon Beltran", ficha: "1" }];
-  const res = na.matchOfficialNames(["[DATO REDACTADO]"], users);
+  const users = [{ usernameKey: "a", username: "a", fullName: "Jhon Gutierrez", ficha: "1" }];
+  const res = na.matchOfficialNames(["GUTIERREZ PARDO JHON DAVID"], users);
   assert.equal(res.sure.length, 0);
   assert.equal(res.uncertain.length, 1);
   assert.equal(res.uncertain[0].candidates.length, 1); // 2 palabras compartidas
@@ -55,10 +54,10 @@ test("match: DUDOSO sin coincidencia exacta (apellido faltante) sugiere candidat
 
 test("match: DUDOSO cuando varios aprendices coinciden (posible duplicado)", () => {
   const users = [
-    { usernameKey: "a", username: "a", fullName: "Jhon Deiby [DATO REDACTADO]", ficha: "1" },
-    { usernameKey: "b", username: "b", fullName: "[DATO REDACTADO]", ficha: "1" },
+    { usernameKey: "a", username: "a", fullName: "Jhon David Gutierrez Pardo", ficha: "1" },
+    { usernameKey: "b", username: "b", fullName: "Gutierrez Pardo Jhon David", ficha: "1" },
   ];
-  const res = na.matchOfficialNames(["[DATO REDACTADO]"], users);
+  const res = na.matchOfficialNames(["GUTIERREZ PARDO JHON DAVID"], users);
   assert.equal(res.sure.length, 0);
   assert.equal(res.uncertain.length, 1);
   assert.equal(res.uncertain[0].candidates.length, 2);
@@ -66,17 +65,17 @@ test("match: DUDOSO cuando varios aprendices coinciden (posible duplicado)", () 
 
 test("unmatchedStudents: aprendiz del sistema que no esta en el listado oficial", () => {
   const users = [
-    { usernameKey: "a", username: "a", fullName: "Jhon Deiby [DATO REDACTADO]", ficha: "1" },
+    { usernameKey: "a", username: "a", fullName: "Jhon David Gutierrez Pardo", ficha: "1" },
     { usernameKey: "x", username: "x", fullName: "Persona Extra Que Sobra", ficha: "1" },
   ];
-  const res = na.matchOfficialNames(["[DATO REDACTADO]"], users);
+  const res = na.matchOfficialNames(["GUTIERREZ PARDO JHON DAVID"], users);
   assert.equal(res.unmatchedStudents.length, 1);
   assert.equal(res.unmatchedStudents[0].usernameKey, "x");
 });
 
-test("integracion: el listado real 10A no rompe (sin usuarios cargados => todo dudoso)", () => {
+test("integracion: un listado con acentos/ene no rompe (sin usuarios cargados => todo dudoso)", () => {
   const oficial = na.parseOfficialNames(
-    "[DATO REDACTADO]\n[DATO REDACTADO]\n[DATO REDACTADO]"
+    "GUTIERREZ PARDO JHON DAVID\nMEDINA ROJAS ASHLEY SOFIA\nPEÑA ANDRADE EMMANUEL DAVID"
   );
   assert.equal(oficial.length, 3);
   const res = na.matchOfficialNames(oficial, []);
