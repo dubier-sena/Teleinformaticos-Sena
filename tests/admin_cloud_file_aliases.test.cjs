@@ -130,6 +130,33 @@ test("regresion: Redes Santa Barbara Guia 2 / RAP01 resuelve al doc con alias sb
   assert.strictEqual(adminResolve("santa-barbara-10b-guia-02-redes-rap01.html"), "sb_10b_redes.html");
 });
 
+test("regresion (Bloque G, 2026-08-27): Guia 5 Documentar Gestion (JFK 10) y Guia 8 (SB 11) resuelven a su alias corto, no al nombre crudo", () => {
+  // Mismo bug de fondo que Redes: ambas guias faltaban en las dos copias de
+  // la tabla (admin_habilitacion.js y firebase_db.js), asi que "Cargar estado
+  // desde la nube" buscaba el doc con el pageFile crudo, no encontraba nada, y
+  // el grupo salia vacio en Habilitacion SIN error en consola.
+  assert.strictEqual(adminResolve("grupo-10a-guia-05-documentar-gestion-informacion.html"), "10a_guia5doc.html");
+  assert.strictEqual(adminResolve("grupo-10b-guia-05-documentar-gestion-informacion.html"), "10b_guia5doc.html");
+  assert.strictEqual(adminResolve("grupo-11a-guia-08-documentar-gestion-informacion.html"), "11a_guia8.html");
+  assert.strictEqual(adminResolve("grupo-11b-guia-08-documentar-gestion-informacion.html"), "11b_guia8.html");
+});
+
+test("Bloque G: guide_declarations.js declara cloudFileNames para Guia 5 doc y Guia 8 (fuente unica para guias nuevas)", () => {
+  const declSrc = read("js/guide_declarations.js");
+  const pairs = [
+    ["grupo-10a-guia-05-documentar-gestion-informacion.html", "10a_guia5doc.html"],
+    ["grupo-10b-guia-05-documentar-gestion-informacion.html", "10b_guia5doc.html"],
+    ["grupo-11a-guia-08-documentar-gestion-informacion.html", "11a_guia8.html"],
+    ["grupo-11b-guia-08-documentar-gestion-informacion.html", "11b_guia8.html"],
+  ];
+  for (const [pageFile, cloudFile] of pairs) {
+    const re = new RegExp(
+      `"${pageFile.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\$&")}"\\s*:\\s*"${cloudFile.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\$&")}"`
+    );
+    assert.match(declSrc, re, `guide_declarations.js deberia declarar cloudFileNames["${pageFile}"] = "${cloudFile}"`);
+  }
+});
+
 // ── Cobertura ampliada a TODAS las copias del mapa ──────────────────────────
 // El alias pageFile->cloudFile esta duplicado en muchos modulos: firebase_db
 // (canonico), admin_habilitacion, admin_usuarios, guia_template, script.js,
