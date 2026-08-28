@@ -2355,13 +2355,15 @@
 
     // Filtros (live)
     const onFilter = () => {
+      const fichaValue = host.querySelector("#hab-filter-ficha")?.value || "";
       state.habilitacionFilters = {
         name: host.querySelector("#hab-filter-name")?.value || "",
-        ficha: host.querySelector("#hab-filter-ficha")?.value || "",
+        ficha: fichaValue,
         guide: host.querySelector("#hab-filter-guide")?.value || "",
         activity: host.querySelector("#hab-filter-activity")?.value || "",
       };
       renderHabilitacionPanel();
+      maybeAutoSyncHabilitacionFicha(fichaValue);
     };
     host.querySelector("#hab-filter-name")?.addEventListener("input", debounce(onFilter, 250));
     host.querySelector("#hab-filter-ficha")?.addEventListener("change", onFilter);
@@ -2378,6 +2380,49 @@
     if (cloudBtn) {
       cloudBtn.addEventListener("click", () => handleHabilitacionCloudSync(cloudBtn));
     }
+  }
+
+  // Bloque G: dispara pullCloudStateForUsers automaticamente al seleccionar
+  // una ficha (throttlado 10 min por ficha, ver adminHabilitacion.shouldAutoSyncFicha),
+  // sin la confirmacion ni el bloqueo de boton del sync manual -- corre en
+  // segundo plano mientras la tabla ya renderizada (con lo que hubiera en
+  // localStorage) sigue usable. Objetivo: "abre -> selecciona ficha -> aparecen
+  // los aprendices reales" sin que el admin tenga que acordarse de un boton.
+  function maybeAutoSyncHabilitacionFicha(ficha) {
+    const hab = window.adminHabilitacion;
+    const fichaKey = String(ficha || "").trim();
+    if (!fichaKey) return; // "todas las fichas": solo manual (costo de lecturas)
+    if (!hab || typeof hab.pullCloudStateForUsers !== "function" || typeof hab.shouldAutoSyncFicha !== "function") return;
+    if (!hab.shouldAutoSyncFicha(fichaKey)) return;
+    const users = (state.users || []).filter((u) => String(u.ficha) === fichaKey);
+    if (!users.length) return;
+
+    const host = byId("habilitacion-host");
+    const statusEl = host?.querySelector("#hab-cloud-sync-status");
+    if (statusEl) statusEl.textContent = "Actualizando desde la nube en segundo plano...";
+
+    hab.pullCloudStateForUsers(users, {
+      auth,
+      getGuideActivityStateKey,
+      onProgress: ({ idx, total }) => {
+        if (statusEl) statusEl.textContent = `Actualizando desde la nube (${idx}/${total})...`;
+      },
+    }).then((result) => {
+      hab.markFichaAutoSynced(fichaKey);
+      if (statusEl) {
+        statusEl.textContent = result && result.merged
+          ? `Actualizado desde la nube (${result.merged} estados de ${result.fetched} consultados).`
+          : "Sin cambios nuevos desde la nube.";
+      }
+      // Solo re-renderiza si el admin sigue viendo esta misma ficha (evita
+      // pisar la vista si ya cambio de filtro mientras esto corria en segundo plano).
+      if ((state.habilitacionFilters || {}).ficha === fichaKey) {
+        renderHabilitacionPanel();
+      }
+    }).catch((err) => {
+      console.error("[admin] auto-sync habilitacion fallo:", err);
+      if (statusEl) statusEl.textContent = "No se pudo actualizar automaticamente desde la nube (puedes reintentar con el boton de arriba).";
+    });
   }
 
   async function handleHabilitacionCloudSync(button) {

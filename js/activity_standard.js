@@ -499,6 +499,36 @@
     }
   }
 
+  // Bloque G.2: la cola durable puede descartar un archivo (tras agotar
+  // reintentos/antiguedad) en CUALQUIER carga de pagina, no necesariamente
+  // con esta guia abierta -- por eso se restaura desde el registro guardado
+  // (loadDeliveryRecord, mismo mecanismo que una entrega exitosa), igual que
+  // _restoreDeliveryFromState. Si la actividad YA esta entregada (por state),
+  // nunca se pisa esa confirmacion con un aviso de fallo viejo.
+  function _restoreDeliveryFailureFromRecord(activityDef, stateCtx) {
+    var state = stateCtx.getState();
+    var existing = state[activityDef.id + "-delivery"];
+    if (existing && existing.status === "delivered") return;
+    if (!window.sharedAppsScriptDelivery || typeof window.sharedAppsScriptDelivery.loadDeliveryRecord !== "function") return;
+
+    var panelKey = (activityDef.driveTarget || {}).panelKey || activityDef.id;
+    var record = window.sharedAppsScriptDelivery.loadDeliveryRecord({ panelKey: panelKey });
+    if (!record || record.status !== "delivery-failed") return;
+
+    _renderDeliveryFailureFallback(activityDef, panelKey, record);
+  }
+
+  function _renderDeliveryFailureFallback(activityDef, panelKey, record) {
+    var mountEl = _findOrCreateDeliveryMount(activityDef.id, panelKey);
+    if (mountEl && window.sharedAppsScriptDelivery && typeof window.sharedAppsScriptDelivery.renderManualDriveFallback === "function") {
+      window.sharedAppsScriptDelivery.renderManualDriveFallback(mountEl, {
+        ficha: record.ficha,
+        suggestedName: record.savedFileName,
+        queued: false,
+      });
+    }
+  }
+
   function _hideDeliveryButton(activityId, panelKey) {
     [activityId, panelKey].forEach(function (key) {
       var group = document.querySelector('[data-act-std-drive="' + key + '"]');
@@ -514,11 +544,107 @@
    * shared_apps_script_delivery.js) para la actividad dada.
    * También restaura la confirmación en la carga inicial si ya existe en el state.
    */
+  // ── Bloque E (multiarchivo) ────────────────────────────────────────────────
+
+  function _isGroupedFileActivity(activityDef) {
+    var dt = activityDef.driveTarget || {};
+    return Array.isArray(dt.requiredFiles) && dt.requiredFiles.length > 1;
+  }
+
+  function _groupPanelKeys(basePanelKey, requiredFiles) {
+    return requiredFiles.map(function (f) { return basePanelKey + "--" + f.key; });
+  }
+
+  function _groupDeliveredRecords(panelKeys) {
+    if (!window.sharedAppsScriptDelivery || typeof window.sharedAppsScriptDelivery.loadDeliveryRecord !== "function") {
+      return [];
+    }
+    return panelKeys
+      .map(function (pk) { return window.sharedAppsScriptDelivery.loadDeliveryRecord({ panelKey: pk }); })
+      .filter(function (r) { return r && r.status === "delivered"; });
+  }
+
+  // Muestra "N/M archivos subidos" mientras el grupo esta incompleto, o la
+  // confirmacion estandar una vez que TODOS los archivos llegaron. Reusa
+  // _findOrCreateDeliveryMount (mismo mount que una entrega de un solo
+  // archivo) para no duplicar el mecanismo de montaje en el DOM.
+  function _renderGroupDeliveryStatus(activityDef, basePanelKey, requiredFiles) {
+    var mountEl = _findOrCreateDeliveryMount(activityDef.id, basePanelKey);
+    if (!mountEl) return;
+    _injectDeliveryStyles();
+
+    var panelKeys = _groupPanelKeys(basePanelKey, requiredFiles);
+    var deliveredRecords = _groupDeliveredRecords(panelKeys);
+    var total = requiredFiles.length;
+
+    if (deliveredRecords.length >= total) {
+      var latest = deliveredRecords.slice().sort(function (a, b) {
+        return new Date(b.submittedAt || 0) - new Date(a.submittedAt || 0);
+      })[0];
+      renderDeliveryStatus(
+        Object.assign({}, latest, { savedFileName: total + " archivos entregados (" + requiredFiles.map(function (f) { return f.label; }).join(", ") + ")" }),
+        mountEl
+      );
+      return;
+    }
+
+    if (deliveredRecords.length > 0) {
+      var deliveredKeys = {};
+      deliveredRecords.forEach(function (r) { deliveredKeys[r.panelKey] = true; });
+      var missingLabels = requiredFiles
+        .filter(function (f, i) { return !deliveredKeys[panelKeys[i]]; })
+        .map(function (f) { return f.label; });
+      mountEl.innerHTML =
+        '<div class="act-std-delivery-panel" style="background:#fff8e1;border:1.5px solid #f5c453">' +
+        '<p class="act-std-delivery-title" style="color:#8a6100">&#9203; ' +
+        deliveredRecords.length + " / " + total + " archivos subidos &middot; pendiente de completar</p>" +
+        '<p class="act-std-delivery-notice">Falta subir: ' + escHtml(missingLabels.join(", ")) + '. ' +
+        "La actividad no queda marcada como entregada hasta que subas todos los archivos requeridos.</p>" +
+        "</div>";
+      return;
+    }
+
+    mountEl.innerHTML = "";
+  }
+
+  function _mountGroupedDeliveryWatcher(activityDef, stateCtx) {
+    var dt = activityDef.driveTarget || {};
+    var requiredFiles = dt.requiredFiles;
+    var basePanelKey = dt.panelKey || activityDef.id;
+    var panelKeys = _groupPanelKeys(basePanelKey, requiredFiles);
+
+    _renderGroupDeliveryStatus(activityDef, basePanelKey, requiredFiles);
+    window.addEventListener("activity-deadlines-updated", function () {
+      _renderGroupDeliveryStatus(activityDef, basePanelKey, requiredFiles);
+    });
+
+    document.addEventListener("guide-delivery-registered", function (event) {
+      var record = event.detail || {};
+      if (panelKeys.indexOf(record.panelKey || "") === -1) return;
+
+      _renderGroupDeliveryStatus(activityDef, basePanelKey, requiredFiles);
+
+      // Solo cuando TODOS los archivos del grupo esten se persiste el
+      // bloqueo/confirmacion de la actividad -- antes de eso, "{id}-locked"
+      // se queda sin poner para que la actividad no se reporte como
+      // entregada con solo una parte de lo requerido.
+      if (_groupDeliveredRecords(panelKeys).length >= requiredFiles.length) {
+        _persistDeliveryToState(activityDef.id, record, stateCtx);
+      }
+    });
+  }
+
   function _mountDeliveryWatcher(activityDef, stateCtx) {
+    if (_isGroupedFileActivity(activityDef)) {
+      _mountGroupedDeliveryWatcher(activityDef, stateCtx);
+      return;
+    }
+
     var panelKey = (activityDef.driveTarget || {}).panelKey || activityDef.id;
 
     // Restaurar al cargar la página (ya entregada en sesión anterior)
     _restoreDeliveryFromState(activityDef, stateCtx);
+    _restoreDeliveryFailureFromRecord(activityDef, stateCtx);
 
     // Si el admin aprueba la actividad DESPUES de este montaje inicial (banco de
     // respuestas, sin que el aprendiz suba nada) via reflectGradesIntoGuideState,
@@ -530,6 +656,16 @@
     // Taller Integrador SB 10B.
     window.addEventListener("activity-deadlines-updated", function () {
       _restoreDeliveryFromState(activityDef, stateCtx);
+      _restoreDeliveryFailureFromRecord(activityDef, stateCtx);
+    });
+
+    // Bloque G.2: si la cola durable descarta este archivo MIENTRAS la guia
+    // esta abierta (outage sostenido con la pestaña al frente), avisa de
+    // inmediato en vez de esperar al proximo recargo de pagina.
+    document.addEventListener("guide-delivery-failed", function (event) {
+      var record = event.detail || {};
+      if ((record.panelKey || "") !== panelKey) return;
+      _restoreDeliveryFailureFromRecord(activityDef, stateCtx);
     });
 
     // Escuchar nuevas entregas en esta sesión
@@ -1221,6 +1357,27 @@
   }
 
   function getActivityDeliveryInfo(act, state) {
+    // Bloque E (multiarchivo): "entregada" exige TODOS los archivos del
+    // grupo, no solo uno. Mientras falte alguno, kind:"partial" (nunca
+    // "delivered") para que ni el avance de la guia ni el % de progreso
+    // (script_guia_python.js) cuenten la actividad como completa.
+    if (_isGroupedFileActivity(act)) {
+      var dt = act.driveTarget || {};
+      var basePanelKey = dt.panelKey || act.id;
+      var panelKeys = _groupPanelKeys(basePanelKey, dt.requiredFiles);
+      var deliveredRecords = _groupDeliveredRecords(panelKeys);
+      if (deliveredRecords.length >= dt.requiredFiles.length) {
+        var when = deliveredRecords.reduce(function (acc, r) {
+          return (!acc || new Date(r.submittedAt || 0) > new Date(acc)) ? r.submittedAt : acc;
+        }, "");
+        return { kind: "delivered", when: when || "" };
+      }
+      if (deliveredRecords.length > 0) {
+        return { kind: "partial", when: "", filesDelivered: deliveredRecords.length, filesTotal: dt.requiredFiles.length };
+      }
+      return { kind: "pending", when: "" };
+    }
+
     var fromState = state ? state[act.id + "-delivery"] : null;
     if (fromState && fromState.status === "delivered") {
       return { kind: "delivered", when: fromState.submittedAt || "" };
@@ -1229,6 +1386,13 @@
       var record = window.sharedAppsScriptDelivery.loadDeliveryRecord({ panelKey: act.driveTarget.panelKey });
       if (record && record.status === "delivered") {
         return { kind: "delivered", when: record.submittedAt || record.fechaEntrega || "" };
+      }
+      // Bloque G.2: la cola durable agoto sus reintentos (o el error se
+      // reclasifico a permanente en background) y descarto el archivo -- el
+      // aprendiz debe enterarse (nunca queda "pendiente" en silencio para
+      // siempre) y usar el respaldo manual de Drive.
+      if (record && record.status === "delivery-failed") {
+        return { kind: "failed", reason: record.reason || "", ficha: record.ficha || "", standardName: record.savedFileName || "" };
       }
     }
     if (state && (act.type === "form" || act.type === "both") && _anyLockKeySet(state, act)) {
@@ -1338,6 +1502,9 @@
       } else if (info.kind === "delivered") {
         estado = "&#9989; Entregada" + (fecha ? " &middot; " + fecha : "");
         cls = "estado--ok";
+      } else if (info.kind === "partial") {
+        estado = "&#9203; " + (info.filesDelivered || 0) + "/" + (info.filesTotal || 0) + " archivos";
+        cls = "estado--pend";
       } else if (info.kind === "saved") {
         estado = "&#128190; Guardada";
         cls = "estado--ok";
@@ -1369,6 +1536,48 @@
    * Construye los targets de entrega Drive para las actividades de tipo "file"/"both".
    * Pasar a sharedDriveDelivery.appendDriveDeliveryPanels({ targets: ... }).
    */
+  function _buildSingleDriveTarget(act, dt, fileName, meta, selection, learnerName, shortNameOverride) {
+    return {
+      activityNumber: act.number,
+      panelKey: dt.panelKey || (fileName + "-" + act.id),
+      deadlineActivityId: dt.deadlineActivityId || act.id,
+      description: dt.description || "Sube a Drive la evidencia de esta actividad.",
+      note: dt.note || "",
+      activityContext: {
+        activityTitle: dt.activityTitle || act.label,
+        fileNamePrefix: buildFileName({
+          guideNumber: meta.guideNumber,
+          activityNumber: act.number,
+          shortName: shortNameOverride || act.shortName,
+          ficha: selection.ficha || "",
+          learnerName: learnerName,
+        }).replace(/\.doc$/, ""),
+        learnerNameMode: "full",
+        // Bloque G (hallazgo incidental): dt.allowedExtensions se declaraba en
+        // varias guias (p.ej. retoPython, reflexion311 de Redes RAP02) pero
+        // nunca llegaba al modal de entrega -- validateFile()/getAcceptedFileTypes()
+        // solo veian la lista GLOBAL de project_integrations.js, nunca la
+        // restriccion propia de la actividad. Se propaga aqui (unico lugar
+        // donde se arma el activityContext que openDeliveryModal recibe).
+        allowedExtensions: dt.allowedExtensions || undefined,
+      },
+    };
+  }
+
+  /**
+   * Construye los targets de entrega Drive para las actividades de tipo "file"/"both".
+   * Pasar a sharedDriveDelivery.appendDriveDeliveryPanels({ targets: ... }).
+   *
+   * Bloque E (multiarchivo): si driveTarget.requiredFiles trae 2+ archivos
+   * (p.ej. retoPython: .py + evidencia), se generan VARIOS targets
+   * independientes -- mismo mecanismo ya probado que usa Guia Python para
+   * Reto/Ejercicio adicional (paneles independientes dentro del mismo bloque
+   * .activity), reusado aqui en vez de inventar uno nuevo. Cada archivo sigue
+   * subiendose por separado (misma cantidad de solicitudes que hoy), pero
+   * todos comparten activityContext.logicalGroupKey para que
+   * _mountDeliveryWatcher/getActivityDeliveryInfo solo consideren la
+   * actividad "entregada" cuando TODOS los archivos del grupo esten.
+   */
   function buildDriveTargets(fileName, opts) {
     var config = getConfigForGuide(fileName);
     if (!config) return [];
@@ -1376,29 +1585,38 @@
     var selection = (opts && opts.getSelection) ? opts.getSelection() : {};
     var learnerName = (opts && opts.getLearnerName) ? opts.getLearnerName() : "";
 
-    return config.activities
+    var targets = [];
+    config.activities
       .filter(function (act) { return act.type === "file" || act.type === "both"; })
-      .map(function (act) {
+      .forEach(function (act) {
         var dt = act.driveTarget || {};
-        return {
-          activityNumber: act.number,
-          panelKey: dt.panelKey || (fileName + "-" + act.id),
-          deadlineActivityId: dt.deadlineActivityId || act.id,
-          description: dt.description || "Sube a Drive la evidencia de esta actividad.",
-          note: dt.note || "",
-          activityContext: {
-            activityTitle: dt.activityTitle || act.label,
-            fileNamePrefix: buildFileName({
-              guideNumber: meta.guideNumber,
-              activityNumber: act.number,
-              shortName: act.shortName,
-              ficha: selection.ficha || "",
-              learnerName: learnerName,
-            }).replace(/\.doc$/, ""),
-            learnerNameMode: "full",
-          },
-        };
+        var requiredFiles = Array.isArray(dt.requiredFiles) ? dt.requiredFiles : null;
+
+        if (!requiredFiles || requiredFiles.length < 2) {
+          targets.push(_buildSingleDriveTarget(act, dt, fileName, meta, selection, learnerName));
+          return;
+        }
+
+        var basePanelKey = dt.panelKey || (fileName + "-" + act.id);
+        requiredFiles.forEach(function (fileRole) {
+          var subDt = Object.assign({}, dt, {
+            panelKey: basePanelKey + "--" + fileRole.key,
+            activityTitle: (dt.activityTitle || act.label) + " — " + fileRole.label,
+            description: fileRole.description || dt.description,
+            note: fileRole.note || dt.note,
+            allowedExtensions: fileRole.allowedExtensions || dt.allowedExtensions,
+          });
+          var target = _buildSingleDriveTarget(
+            act, subDt, fileName, meta, selection, learnerName,
+            (act.shortName || "") + "_" + fileRole.key
+          );
+          target.activityContext.logicalGroupKey = basePanelKey;
+          target.activityContext.logicalGroupFileKey = fileRole.key;
+          target.activityContext.logicalGroupFileLabel = fileRole.label;
+          targets.push(target);
+        });
       });
+    return targets;
   }
 
   // ── Helpers HTML ──────────────────────────────────────────────────────────
@@ -1490,5 +1708,9 @@
 
     // Expuesto solo para pruebas unitarias (logica pura del historial de entregas).
     _persistDeliveryToState: _persistDeliveryToState,
+    // Bloque G.2: expuesto solo para pruebas unitarias del aviso de descarte
+    // definitivo de la cola durable (sin depender de un guide_declarations
+    // real ni de un bloque .activity completo en el DOM).
+    _restoreDeliveryFailureFromRecord: _restoreDeliveryFailureFromRecord,
   });
 })();

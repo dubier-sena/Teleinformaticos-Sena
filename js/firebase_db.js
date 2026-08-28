@@ -1262,6 +1262,14 @@
       "santa-barbara-10b-guia-04-taller-integrador.html": "sb_10b_guia4.html",
       "grupo-11a-guia-09-taller-integrador.html": "11a_guia9.html",
       "grupo-11b-guia-09-taller-integrador.html": "11b_guia9.html",
+      // Bloque G: mantener sincronizado con CLOUD_FILE_ALIASES en
+      // js/admin_habilitacion.js (tests/admin_cloud_file_aliases.test.cjs lo
+      // exige). Guias nuevas: preferir cloudFileNames en su registerGuide()
+      // de guide_declarations.js en vez de agregar aqui.
+      "grupo-10a-guia-05-documentar-gestion-informacion.html": "10a_guia5doc.html",
+      "grupo-10b-guia-05-documentar-gestion-informacion.html": "10b_guia5doc.html",
+      "grupo-11a-guia-08-documentar-gestion-informacion.html": "11a_guia8.html",
+      "grupo-11b-guia-08-documentar-gestion-informacion.html": "11b_guia8.html",
     };
     return aliases[fileName] || fileName;
   }

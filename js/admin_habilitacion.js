@@ -4,6 +4,39 @@
   const UNLOCK_LOG_KEY = "sena_portal_admin_unlock_log_v1";
   const MAX_LOG_ENTRIES = 200;
 
+  // ── Bloque G (auditoria 2026-08-27): auto-sync throttlado por ficha ────────
+  // Causa A del "panel sin aprendices": getLockedActivities() SOLO lee
+  // localStorage, y antes la UNICA forma de llenarlo era que el admin
+  // recordara pulsar "Cargar estado desde la nube". Ahora, al seleccionar una
+  // ficha en el filtro (admin_usuarios.js), se dispara este mismo pull
+  // automaticamente en segundo plano -- sin tocar getLockedActivities ni su
+  // logica de matching, solo automatizando CUANDO se llena localStorage.
+  // Throttle de 10 min por ficha (no global): cambiar de ficha y volver no
+  // deberia repetir el barrido de inmediato, pero cada ficha necesita su
+  // propia ventana (evita que sincronizar la ficha A bloquee el auto-sync de
+  // la ficha B). "Todas las fichas" (sin filtro) NUNCA se auto-sincroniza: el
+  // costo en lecturas de Firestore para el total de aprendices x guias solo
+  // se asume con el boton manual (con su confirmacion de costo estimado).
+  const AUTO_SYNC_THROTTLE_PREFIX = "sena_portal_admin_hab_autosync_v1_";
+  const AUTO_SYNC_THROTTLE_MS = 10 * 60 * 1000;
+
+  function shouldAutoSyncFicha(ficha) {
+    const key = String(ficha || "").trim();
+    if (!key) return false;
+    try {
+      const last = Number(localStorage.getItem(AUTO_SYNC_THROTTLE_PREFIX + key)) || 0;
+      return (Date.now() - last) >= AUTO_SYNC_THROTTLE_MS;
+    } catch (_) {
+      return true;
+    }
+  }
+
+  function markFichaAutoSynced(ficha) {
+    const key = String(ficha || "").trim();
+    if (!key) return;
+    try { localStorage.setItem(AUTO_SYNC_THROTTLE_PREFIX + key, String(Date.now())); } catch (_) { /* noop */ }
+  }
+
   // ── Trazabilidad ────────────────────────────────────────────────────────────
 
   function readUnlockLog() {
@@ -95,9 +128,34 @@
     "santa-barbara-10b-guia-04-taller-integrador.html": "sb_10b_guia4.html",
     "grupo-11a-guia-09-taller-integrador.html": "11a_guia9.html",
     "grupo-11b-guia-09-taller-integrador.html": "11b_guia9.html",
+    // Bloque G (auditoria 2026-08-27): faltaban estas 2 guias (4 pageFiles) --
+    // el pull de habilitacion buscaba el doc con el nombre crudo, no traia
+    // nada, y el grupo aparecia vacio en habilitacion SIN error (mismo patron
+    // que el bug de Redes documentado arriba). Confirmado contra el alias
+    // propio de cada script (STORAGE_FILE_ALIASES en script_guia5_documentar_gestion.js
+    // / script_guia8.js), que SI resuelve bien -- por eso el aprendiz guarda
+    // sin problema y solo el panel admin salia afectado.
+    "grupo-10a-guia-05-documentar-gestion-informacion.html": "10a_guia5doc.html",
+    "grupo-10b-guia-05-documentar-gestion-informacion.html": "10b_guia5doc.html",
+    "grupo-11a-guia-08-documentar-gestion-informacion.html": "11a_guia8.html",
+    "grupo-11b-guia-08-documentar-gestion-informacion.html": "11b_guia8.html",
   };
 
+  // Fuente unica para GUIAS NUEVAS (Bloque G): si guide_declarations.js
+  // registro un mapa cloudFileNames para esta guia, se usa DIRECTO, sin tocar
+  // esta tabla ni su copia en firebase_db.js (guideDataFileName). Las guias ya
+  // existentes siguen resolviendo por CLOUD_FILE_ALIASES de arriba (sin
+  // migrarlas: cero riesgo de regresion en lo que ya funciona). El checklist
+  // de "Adding a New Guide" en CLAUDE.md nunca mencionaba esta tabla -- por
+  // eso se olvido 2 veces seguidas (Guia 5 doc en ago, Guia 8 en jul); con
+  // cloudFileNames declarado junto al resto del registro, ya no hay una
+  // tabla aparte que se pueda olvidar actualizar.
   function getCloudFileName(pageFile) {
+    var std = window.ActivityStandard;
+    var config = std && typeof std.getConfigForGuide === "function" ? std.getConfigForGuide(pageFile) : null;
+    if (config && config.cloudFileNames && config.cloudFileNames[pageFile]) {
+      return config.cloudFileNames[pageFile];
+    }
     return CLOUD_FILE_ALIASES[pageFile] || pageFile;
   }
 
@@ -432,5 +490,7 @@
     getLockedActivities,
     pullCloudStateForUsers,
     getCloudFileName,
+    shouldAutoSyncFicha,
+    markFichaAutoSynced,
   });
 })();

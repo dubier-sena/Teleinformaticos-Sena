@@ -256,8 +256,10 @@
     },
     "santa-barbara-guia-python.html": {
       mode: "state-with-activity",
-      total: 20,
-      activityTotal: 20,
+      // 10 retos + 10 adicionales + 1 reto integrador (retoPython) = 21.
+      // Antes 20: no contaba retoPython, registrado en guide_declarations.js.
+      total: 21,
+      activityTotal: 21,
       pageKey: "sb_guia_python",
       stateKey: "guia_interactiva_santa_barbara_guia_python_html",
     },

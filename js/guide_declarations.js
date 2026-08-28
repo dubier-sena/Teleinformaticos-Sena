@@ -690,6 +690,16 @@
     guideNumber: "8",
     guideTitle: "Guia 8 - Documentar la gestion de la informacion (Grado 11)",
     stateKey: "guia_interactiva_11a_guia8_html",
+    // Bloque G (auditoria 2026-08-27): fuente unica del alias de Firestore de
+    // esta guia. admin_habilitacion.js (panel de habilitacion) lo consulta
+    // ANTES de su tabla CLOUD_FILE_ALIASES -- sin esto, el pull de habilitacion
+    // buscaba el doc con el nombre crudo, no encontraba nada, y el grupo
+    // aparecia vacio sin error (detectado porque faltaba tambien en esa tabla).
+    // Debe coincidir con STORAGE_FILE_ALIASES en js/script_guia8.js.
+    cloudFileNames: {
+      "grupo-11a-guia-08-documentar-gestion-informacion.html": "11a_guia8.html",
+      "grupo-11b-guia-08-documentar-gestion-informacion.html": "11b_guia8.html",
+    },
     program: PROGRAM,
     competencia: COMP_CIBERSEG,
     resultado: RAP_DOCUMENTAR_GESTION,
@@ -1068,6 +1078,13 @@
     guideNumber: "5",
     guideTitle: "Guia 5 - Documentar la gestion de la informacion (Grado 10)",
     stateKey: "guia_interactiva_10a_guia5doc_html",
+    // Bloque G (auditoria 2026-08-27): ver el mismo comentario en el registro
+    // de Guia 8 mas arriba -- misma causa, mismo fix. Debe coincidir con
+    // STORAGE_FILE_ALIASES en js/script_guia5_documentar_gestion.js.
+    cloudFileNames: {
+      "grupo-10a-guia-05-documentar-gestion-informacion.html": "10a_guia5doc.html",
+      "grupo-10b-guia-05-documentar-gestion-informacion.html": "10b_guia5doc.html",
+    },
     program: PROGRAM,
     competencia: COMP_CIBERSEG,
     resultado: RAP_DOCUMENTAR_GESTION,
@@ -1961,10 +1978,32 @@
         shortName: "RetoIntegrador", type: "file",
         driveTarget: {
           panelKey: "python-reto", deadlineActivityId: "retoPython",
-          activityTitle: "Reto integrador de Python (.py + captura)",
-          description: "Sube tu programa .py funcionando y una captura de pantalla del reporte que genera. Puedes comprimir el .py y la imagen en un solo .zip.",
-          note: "Nombre sugerido: RetoPython_NombreAprendiz_FICHA.zip",
-          allowedExtensions: [".py", ".zip", ".png", ".jpg", ".jpeg", ".pdf"],
+          activityTitle: "Reto integrador de Python",
+          description: "Sube tu programa .py funcionando y una captura de pantalla del reporte que genera.",
+          note: "",
+          allowedExtensions: [".py", ".png", ".jpg", ".jpeg", ".pdf"],
+          // Bloque E (auditoria 2026-08-27): antes se le pedia al aprendiz
+          // comprimir .py + evidencia en un solo .zip subido por el flujo de
+          // archivo unico -- sin ninguna verificacion de que el zip trajera
+          // los 2 archivos realmente. Ahora cada archivo se sube por su
+          // propio boton (misma cantidad de solicitudes que subir 2 archivos
+          // hoy), pero ActivityStandard los trata como UNA entrega logica:
+          // "N/2 archivos subidos" mientras falte alguno, y la actividad solo
+          // se marca "entregada" (o cuenta para el % de progreso) cuando
+          // ambos estan. Ver buildDriveTargets/_mountGroupedDeliveryWatcher
+          // en js/activity_standard.js.
+          requiredFiles: [
+            {
+              key: "programa", label: "Programa .py",
+              description: "Sube tu archivo .py funcionando.",
+              allowedExtensions: [".py"],
+            },
+            {
+              key: "evidencia", label: "Captura de pantalla o documento de evidencia",
+              description: "Sube una captura de pantalla o documento que muestre el reporte generado por tu programa.",
+              allowedExtensions: [".png", ".jpg", ".jpeg", ".pdf"],
+            },
+          ],
         },
       },
     ],

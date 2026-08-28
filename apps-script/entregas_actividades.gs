@@ -226,12 +226,43 @@ function handleUploadDelivery(payload) {
     const finalFileName = buildDeliveryFileName(fullName, ficha, activityLabel, fileName, payload);
     const destination = resolveTargetFolder(rootFolder, ficha, payload);
 
+    // Idempotencia (Bloque G, PENDIENTE DE REDEPLOY -- ver informe): el
+    // cliente genera un submissionId UNA vez por intento de entrega y lo
+    // conserva intacto a traves de retryWithBackoff y de la cola durable
+    // (IndexedDB guarda el payload completo). Si esta MISMA entrega logica ya
+    // creo un archivo antes -- por ejemplo la respuesta se perdio en la red,
+    // pero Drive SI llego a crear el archivo, y el cliente reintento -- se
+    // devuelve el archivo YA EXISTENTE en vez de crear un duplicado. Antes no
+    // existia ningun chequeo: createFile() se llamaba sin condicion alguna.
+    const submissionId = String(payload.submissionId || "").trim();
+    if (submissionId) {
+      const existing = findFileBySubmissionId(destination.folder, submissionId);
+      if (existing) {
+        return jsonResponse({
+          ok: true,
+          message: "Entrega ya registrada previamente (idempotente, sin crear un archivo duplicado).",
+          driveUrl: existing.getUrl(),
+          folderPath: destination.folderPath,
+          savedFileName: existing.getName(),
+          confirmedAt: existing.getDateCreated().toISOString(),
+          fileId: existing.getId(),
+          idempotentReplay: true,
+        });
+      }
+    }
+
     const blob = Utilities.newBlob(
       fileBytes,
       mimeType,
       finalFileName
     );
     const uploaded = destination.folder.createFile(blob);
+    if (submissionId) {
+      // Best-effort: si setDescription fallara por algun motivo, la entrega
+      // ya se completo (el archivo real es lo que importa) -- no debe
+      // reportarse como fallo por esto.
+      try { uploaded.setDescription("submissionId:" + submissionId); } catch (descriptionError) { /* noop */ }
+    }
 
     // Copia de respaldo en carpeta exclusiva del instructor (ADMIN_BACKUP_FOLDER_ID).
     // Esta carpeta NO es accesible por los aprendices; solo el instructor la ve.
@@ -536,7 +567,19 @@ function sanitizeLabel(value, fallback) {
 }
 
 function sanitizeFileSegment(value, fallback) {
-  return sanitizeLabel(value, fallback)
+  // Bloque G (auditoria 2026-08-27, PENDIENTE DE REDEPLOY -- ver informe):
+  // faltaba el paso NFD que SI tiene sanitizeSegment() en js/activity_standard.js.
+  // Sin normalizar, una vocal acentuada (a,e,i,o,u con tilde) o la ñ se
+  // eliminaba ENTERA por el filtro [^a-z0-9]+ de abajo -- "Sofia Avila" con
+  // tildes reales quedaba "Sof_a_vila", no "Sofia_Avila". Efecto real
+  // confirmado: (1) nombre de archivo final visualmente roto para cualquier
+  // aprendiz con tilde/ñ en el nombre; (2) mas grave, buildDeliveryFileNameStem
+  // usa esta misma funcion, asi que handleVerifyDelivery() buscaba un stem
+  // DISTINTO al que buildDeliveryFileNamePreview() (cliente, que SI normaliza)
+  // le habia sugerido subir manualmente -- el boton "Ya subi el archivo,
+  // verificar entrega" nunca encontraba el archivo para estos aprendices.
+  var normalized = sanitizeLabel(value, fallback).normalize("NFD").replace(/[̀-ͯ]/g, "");
+  return normalized
     .replace(/\s+/g, "_")
     .replace(/[^a-z0-9]+/gi, "_")
     .replace(/^_+|_+$/g, "") || fallback || "";
@@ -647,6 +690,24 @@ function buildDeliveryFileName(fullName, ficha, activityLabel, originalFileName,
   }
   const activitySegment = normalizeActivitySegment(activityLabel);
   return `${learnerLabel}_${activitySegment}${extension}`;
+}
+
+// Bloque G (PENDIENTE DE REDEPLOY): busca en `folder` un archivo cuya
+// descripcion sea EXACTAMENTE "submissionId:{submissionId}" (marcador que
+// handleUploadDelivery estampa al crear el archivo). Carpetas de
+// ficha/guia/actividad son pequeñas (una por aprendiz+actividad), asi que
+// recorrerla entera es barato. Nunca hace match por nombre: dos submissionId
+// distintos jamas colisionan (son generados client-side, unicos por intento).
+function findFileBySubmissionId(folder, submissionId) {
+  const marker = "submissionId:" + submissionId;
+  const files = folder.getFiles();
+  while (files.hasNext()) {
+    const file = files.next();
+    let description = "";
+    try { description = file.getDescription() || ""; } catch (descriptionReadError) { description = ""; }
+    if (description === marker) return file;
+  }
+  return null;
 }
 
 function getFileExtension(value) {
