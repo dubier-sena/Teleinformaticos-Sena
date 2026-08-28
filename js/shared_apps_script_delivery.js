@@ -335,6 +335,47 @@
     }
   }
 
+  // Bloque G.2: evento separado de "guide-delivery-registered" a proposito --
+  // ese evento y los lugares que lo escuchan asumen "entrega exitosa"
+  // (status "delivered"); reutilizarlo para un descarte definitivo obligaria
+  // a que cada listener existente aprendiera a distinguir ambos casos. Un
+  // nombre de evento distinto es mas simple y no puede confundirse con exito.
+  function notifyDeliveryFailed(record) {
+    try {
+      document.dispatchEvent(
+        new CustomEvent("guide-delivery-failed", {
+          detail: record || {},
+        })
+      );
+    } catch (error) {
+    }
+  }
+
+  // Bloque G.2: registro minimo de un descarte definitivo de la cola durable
+  // (tope de intentos/antiguedad, o error que se reclasifico a permanente
+  // durante un reintento en background). Se guarda con el MISMO mecanismo
+  // (saveDeliveryRecord/getDeliveryStorageKey) que una entrega exitosa, para
+  // que loadDeliveryRecord({panelKey}) -- ya usado por activity_standard.js
+  // -- lo encuentre igual. reason es solo diagnostico, nunca se muestra
+  // literal al aprendiz.
+  function handleQueueGiveUp(entry, reason) {
+    var dctx = (entry && entry.deliveryCtx) || {};
+    var record = {
+      status: "delivery-failed",
+      reason: reason || "",
+      panelKey: dctx.panelKey || "",
+      ficha: dctx.ficha || "",
+      fullName: dctx.fullName || "",
+      fileName: dctx.fileName || "",
+      savedFileName: dctx.standardName || dctx.fileName || "",
+      attemptedAt: dctx.submittedAt || "",
+      givenUpAt: new Date().toISOString(),
+    };
+    saveDeliveryRecord(dctx.context, record);
+    notifyDeliveryFailed(record);
+    return record;
+  }
+
   function markGuideActivitySeenForRecord(record) {
     if (!record || typeof window.setGuideActivitySeen !== "function") {
       return;
@@ -509,6 +550,19 @@
   // al primer intento, reintentamos con backoff + jitter. Los errores PERMANENTES
   // (extension/tamano/datos/carpeta) NO se reintentan: fallarian igual.
   function isPermanentDeliveryError(error) {
+    // Bloque G (auditoria 2026-08-27): entregas_actividades.gs YA calcula si
+    // un fallo es transitorio (payload.transient) para varios casos reales
+    // (perfil no verificado, sesion invalida) -- antes ese campo se
+    // descartaba y esta funcion adivinaba SIEMPRE por texto del mensaje, asi
+    // que un fallo real de identidad/perfil (mislabeled aqui como "no
+    // permanente" solo por casualidad de redaccion) se retentaba igual que
+    // una congestion normal, sin distinguirse en ningun lado. Cuando el error
+    // trae el flag explicito (del servidor, o de uploadToAppsScript para
+    // timeout/red), se usa DIRECTO; el texto sigue de respaldo para errores
+    // que nunca pasaron por el servidor (p.ej. validateFile en el cliente).
+    if (error && typeof error.transient === "boolean") {
+      return !error.transient;
+    }
     var msg = String((error && error.message) || "").toLowerCase();
     return (
       msg.indexOf("extension") >= 0 ||
@@ -520,6 +574,68 @@
       msg.indexOf("no esta configurada") >= 0 ||
       msg.indexOf("no cumple la politica") >= 0
     );
+  }
+
+  // ── Identificador estable de entrega (Bloque G, idempotencia) ─────────────
+  // Se genera UNA vez por intento de entrega (handleModalSubmit) y viaja
+  // intacto en el payload a traves de retryWithBackoff, la cola durable
+  // (IndexedDB guarda el payload completo) y un eventual reintento manual de
+  // "verificar entrega" -- asi entregas_actividades.gs puede reconocer que un
+  // reintento es LA MISMA entrega logica (no una nueva) y evitar crear un
+  // archivo duplicado si una respuesta se perdio en la red pero el archivo ya
+  // se habia creado.
+  function buildSubmissionId() {
+    try {
+      if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
+    } catch (idError) { /* sigue al fallback */ }
+    return "sub-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
+  }
+
+  // ── Observabilidad (Bloque G, bloque K) ────────────────────────────────────
+  // Registro acotado (ultimas 50) de intentos de entrega para poder responder
+  // "por que este aprendiz termino en el portafolio" sin adivinar. NUNCA
+  // guarda idToken/JWT/contrasena/base64 del archivo -- solo metadatos ya
+  // presentes en el error/contexto (stage, activityId, guia, intento, status
+  // HTTP, duracion, codigo de diagnostico).
+  var DELIVERY_DIAGNOSTICS_KEY = "sena_portal_delivery_diagnostics_v1";
+  var DELIVERY_DIAGNOSTICS_MAX = 50;
+
+  function logDeliveryDiagnostic(entry) {
+    try {
+      var raw = window.localStorage.getItem(DELIVERY_DIAGNOSTICS_KEY);
+      var list = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(list)) list = [];
+      list.unshift(Object.assign({ at: new Date().toISOString() }, entry));
+      if (list.length > DELIVERY_DIAGNOSTICS_MAX) list.length = DELIVERY_DIAGNOSTICS_MAX;
+      window.localStorage.setItem(DELIVERY_DIAGNOSTICS_KEY, JSON.stringify(list));
+    } catch (logError) { /* best-effort: nunca debe romper la entrega */ }
+  }
+
+  function getDeliveryDiagnostics() {
+    try {
+      var raw = window.localStorage.getItem(DELIVERY_DIAGNOSTICS_KEY);
+      var list = raw ? JSON.parse(raw) : [];
+      return Array.isArray(list) ? list : [];
+    } catch (readError) {
+      return [];
+    }
+  }
+
+  // Traduce un codigo de diagnostico tecnico (ver entregas_actividades.gs) a
+  // una pista breve y NO tecnica que ayuda a distinguir "problema con tu
+  // perfil/sesion" de "problema con el archivo" en el mensaje que ya se
+  // muestra -- sin esto, cualquier causa se veia identica ("no se pudo
+  // entregar"), que era exactamente la queja real (Michell y otros casos
+  // similares no se podian distinguir de una congestion normal).
+  var DELIVERY_DIAG_HINTS = {
+    "profile-unverified": "Parece un problema con tu perfil registrado (ficha o nombre), no con el archivo en si.",
+    "no-id-token": "Tu sesion de seguridad no estaba lista todavia.",
+    "client-timeout": "El servidor tardo demasiado en responder (congestion). Tu archivo no se perdio.",
+    "network-error": "No hay conexion con el servidor de entregas en este momento.",
+  };
+
+  function friendlyDiagHint(diag) {
+    return DELIVERY_DIAG_HINTS[String(diag || "")] || "";
   }
 
   // Reintenta fn() ante errores transitorios con backoff exponencial + jitter.
@@ -561,6 +677,24 @@
   var DELIVERY_QUEUE_DB = "sena_portal_delivery_queue";
   var DELIVERY_QUEUE_STORE = "pending";
   var deliveryQueueRunning = false;
+  // Bloque G.1 (H4): true mientras handleModalSubmit tiene un intento
+  // interactivo en curso (entre deshabilitar el boton de envio y su finally).
+  // Un solo booleano alcanza porque el modal de entrega es un singleton
+  // compartido -- nunca puede haber 2 envios interactivos en paralelo en el
+  // mismo navegador (ver comentario en ensureModal). Sirve solo para que la
+  // cola en segundo plano CEDA EL TURNO en su proximo intento; no bloquea
+  // nada de forma indefinida (la cola vuelve a intentar sola, sin este flag,
+  // en cuanto el intento interactivo termine, exito o no).
+  var interactiveDeliveryInFlight = false;
+  // Bloque G.1 (H3): jitter pequeño y acotado antes de drenar la cola cuando
+  // el disparo puede sincronizar muchos navegadores a la vez -- el caso real
+  // es una caida de red compartida (wifi del salon) que se recupera para
+  // 20-30 navegadores en el mismo instante fisico: sin esto, el evento
+  // "online" dispararia runDeliveryQueue() en todos ellos en la misma rafaga
+  // de milisegundos. NUNCA se aplica a la entrega interactiva (handleModalSubmit
+  // llama a uploadToAppsScript directo, jamas pasa por aqui). rand/setTimeoutFn
+  // son inyectables para que los tests sean deterministas.
+  var QUEUE_DRAIN_JITTER_MAX_MS = 4000;
 
   function deliveryIdbAvailable() {
     return typeof window !== "undefined" && !!window.indexedDB;
@@ -752,9 +886,23 @@
     var upload = deps.upload;
     var finalize = deps.finalize;
     var isPermanent = deps.isPermanent || function () { return false; };
-    var maxAttempts = deps.maxAttempts || 25;
+    // Bloque G.2 (auditoria 2026-08-27): con el intervalo real de produccion
+    // (runDeliveryQueue cada 60s), un tope de 25 intentos descartaba el
+    // archivo tras ~25 MINUTOS de caida sostenida -- muy antes de los 7 dias
+    // de maxAgeMs de abajo, que es el limite pensado como red de seguridad
+    // real (confirmado por simulacion, ver tests/delivery_load_simulation
+    // .test.cjs, escenario "Cuota agotada"). 20000 intentos x 60s =~ 13.9
+    // dias: mayor que maxAgeMs a proposito, para que la antiguedad sea
+    // SIEMPRE el limite que realmente decide el descarte, no este contador.
+    var maxAttempts = deps.maxAttempts || 20000;
     var maxAgeMs = deps.maxAgeMs || 7 * 24 * 60 * 60 * 1000;
     var now = deps.now || Date.now;
+    // Bloque G.2: se invoca (best-effort) justo antes de descartar una
+    // entrada para siempre, por cualquiera de los 2 motivos posibles (tope de
+    // intentos/antiguedad, o error ya clasificado como permanente). Antes de
+    // este cambio el descarte era silencioso: el aprendiz nunca se enteraba.
+    // Puramente inyectable para que el test no dependa de localStorage/DOM.
+    var onGiveUp = deps.onGiveUp || function () {};
     // Seguridad (computador compartido): identidad de la sesion ACTUAL. Si
     // una entrada tiene un dueno registrado (ownerUsernameKey) que no
     // coincide, se deja pendiente SIN intentar -- nunca se sube con la
@@ -773,6 +921,7 @@
         (entry.attempts || 0) >= maxAttempts ||
         (entry.createdAt && now() - entry.createdAt > maxAgeMs)
       ) {
+        try { onGiveUp(entry, "max-attempts-or-age"); } catch (_) {}
         await storage.remove(entry.key);
         result.dropped += 1;
         continue;
@@ -788,6 +937,7 @@
         result.delivered += 1;
       } catch (error) {
         if (isPermanent(error)) {
+          try { onGiveUp(entry, "permanent-error"); } catch (_) {}
           await storage.remove(entry.key);
           result.dropped += 1;
           continue;
@@ -801,8 +951,30 @@
     return result;
   }
 
+  // Bloque G.1 (H3): calcula un retraso pequeño y acotado (0..maxJitterMs) y
+  // programa runDeliveryQueue con el. Inyectable (rand/setTimeoutFn/runner)
+  // para pruebas deterministas con semilla fija; sin opts usa Math.random y
+  // window.setTimeout reales. Devuelve el jitter elegido (ms) para poder
+  // afirmarlo en tests sin depender de temporizadores reales.
+  function scheduleDeliveryQueueDrain(opts) {
+    opts = opts || {};
+    var maxJitterMs = Number.isFinite(opts.maxJitterMs) ? opts.maxJitterMs : QUEUE_DRAIN_JITTER_MAX_MS;
+    var rand = opts.rand || Math.random;
+    var runner = opts.runner || runDeliveryQueue;
+    var setTimeoutFn = opts.setTimeoutFn || setTimeout;
+    var jitterMs = maxJitterMs > 0 ? Math.floor(rand() * maxJitterMs) : 0;
+    setTimeoutFn(runner, jitterMs);
+    return jitterMs;
+  }
+
   async function runDeliveryQueue() {
     if (deliveryQueueRunning || !deliveryIdbAvailable()) return;
+    // Bloque G.1 (H4): la cola en segundo plano nunca compite con un envio
+    // interactivo en curso -- cede este turno y lo vuelve a intentar solo en
+    // el proximo disparo (intervalo de 60s, proxima reconexion, etc.). No es
+    // un bloqueo indefinido: el intento interactivo siempre termina (exito o
+    // pasa a la propia cola durable) y libera el flag en su finally.
+    if (interactiveDeliveryInFlight) return;
     deliveryQueueRunning = true;
     try {
       await processDeliveryQueue({
@@ -816,6 +988,7 @@
           var identity = getCurrentIdentity();
           return (identity.session && identity.session.user && identity.session.user.usernameKey) || "";
         },
+        onGiveUp: handleQueueGiveUp,
       });
     } catch (error) {
       /* best-effort: se reintenta en la proxima pasada */
@@ -1017,7 +1190,18 @@
     return idToken;
   }
 
-  async function uploadToAppsScript(payload) {
+  // Bloque G (auditoria 2026-08-27): antes NO existia ningun timeout del lado
+  // cliente -- una llamada colgada de Apps Script (posible bajo congestion
+  // real, 20-30 aprendices entregando cerca de una fecha limite) se quedaba
+  // "Subiendo archivo..." indefinidamente, sin siquiera llegar al segundo
+  // intento de retryWithBackoff. 25s por intento deja margen generoso a un
+  // cold-start + verificacion de Identity Toolkit + escritura en Drive bajo
+  // carga, sin dejar al aprendiz esperando para siempre si de verdad no hay
+  // respuesta. Configurable via opts.timeoutMs SOLO para pruebas.
+  var DELIVERY_FETCH_TIMEOUT_MS = 25000;
+
+  async function uploadToAppsScript(payload, opts) {
+    opts = opts || {};
     var integrations = getIntegrations();
     var endpoint = normalizeText(integrations.googleAppsScriptUrl);
 
@@ -1035,34 +1219,72 @@
     // tras esperar o volver a iniciar sesion.
     var idToken = await getDeliveryIdToken();
     if (!idToken) {
-      throw new Error(
+      var authError = new Error(
         "No se pudo verificar tu sesion de seguridad para la entrega. Suele pasar " +
         "por congestion cuando muchos entregan al mismo tiempo. Tus respuestas estan " +
         "guardadas: espera 1-2 minutos y reintenta, o cierra sesion y vuelve a entrar " +
         "antes de subir el archivo."
       );
+      authError.transient = true;
+      authError.diag = "no-id-token";
+      throw authError;
     }
 
     var finalPayload = Object.assign({}, payload, { idToken: idToken });
 
-    var response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "text/plain",
-      },
-      body: JSON.stringify(finalPayload),
-    });
+    var timeoutMs = Number(opts.timeoutMs) > 0 ? Number(opts.timeoutMs) : DELIVERY_FETCH_TIMEOUT_MS;
+    var controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+    var timeoutId = controller ? setTimeout(function () { controller.abort(); }, timeoutMs) : null;
+
+    var response;
+    try {
+      response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/plain",
+        },
+        body: JSON.stringify(finalPayload),
+        signal: controller ? controller.signal : undefined,
+      });
+    } catch (fetchError) {
+      var isAbort = Boolean(
+        fetchError && (fetchError.name === "AbortError" || /aborted/i.test(String(fetchError.message || "")))
+      );
+      var netError = new Error(
+        isAbort
+          ? "El servidor tardo demasiado en responder. Suele pasar por congestion cuando muchos " +
+            "entregan al mismo tiempo. Tu archivo no se perdio: se reintentara automaticamente."
+          : "No hay conexion con el servidor de entregas en este momento. Se reintentara automaticamente."
+      );
+      netError.transient = true;
+      netError.diag = isAbort ? "client-timeout" : "network-error";
+      throw netError;
+    } finally {
+      if (timeoutId) clearTimeout(timeoutId);
+    }
 
     var data = await response.json().catch(function () {
       return {};
     });
 
     if (!response.ok || data.ok === false) {
-      throw new Error(
+      var message =
         data && data.message
           ? data.message
-          : "No fue posible entregar el archivo en este momento."
-      );
+          : "No fue posible entregar el archivo en este momento.";
+      var serverError = new Error(message);
+      serverError.httpStatus = response.status;
+      // entregas_actividades.gs YA calcula si el fallo es transitorio
+      // (data.transient) y un codigo de diagnostico (data.diag/diagDetail) --
+      // antes se descartaban por completo y solo se leia data.message, asi
+      // que CUALQUIER causa (perfil sin verificar, sesion invalida, cuota,
+      // 5xx) se veia identica desde el cliente. Ahora viajan en el error para
+      // que isPermanentDeliveryError los use en vez de adivinar por texto, y
+      // para dejar un rastro diagnosticable (ver logDeliveryDiagnostic).
+      if (typeof data.transient === "boolean") serverError.transient = data.transient;
+      if (data.diag) serverError.diag = data.diag;
+      if (data.diagDetail) serverError.diagDetail = data.diagDetail;
+      throw serverError;
     }
 
     return data;
@@ -1564,8 +1786,13 @@
     nodes.submit.setAttribute("disabled", "disabled");
     if (nodes.fallback) { nodes.fallback.hidden = true; nodes.fallback.innerHTML = ""; }
     setStatus(nodes.status, "Subiendo archivo a la carpeta correspondiente de Drive...", "loading");
+    // Bloque G.1 (H4): desde aqui hay un intento interactivo real en curso;
+    // runDeliveryQueue() lo vera y cedera el turno hasta el finally de abajo.
+    interactiveDeliveryInFlight = true;
 
+    var attemptStartedAt = Date.now();
     try {
+      var submissionId = buildSubmissionId();
       var fileBase64 = await readFileAsBase64(file);
       var stdCtx = resolveGuideStandardContext(currentContext) || {};
       var guideNumber = currentContext.guideNumber || stdCtx.guideNumber || "";
@@ -1595,6 +1822,13 @@
         fileNamePrefix: currentContext.fileNamePrefix || "",
         learnerNameMode: currentContext.learnerNameMode || "firstToken",
         submittedAt: new Date().toISOString(),
+        // Bloque G: viaja intacto a traves de reintentos y de la cola durable
+        // (el payload completo se guarda en IndexedDB). Le permite al servidor
+        // reconocer un reintento de la MISMA entrega logica y no duplicar el
+        // archivo si una respuesta se perdio en la red pero el archivo si se
+        // llego a crear (ver findFileBySubmissionId en entregas_actividades.gs
+        // -- pendiente de despliegue, ver informe).
+        submissionId: submissionId,
       };
 
       var standardName = buildStandardFileName(fullName, currentContext, file.name, ficha);
@@ -1618,23 +1852,37 @@
         institucion: identity.institucion,
         submittedAt: payload.submittedAt,
         standardName: standardName,
+        submissionId: submissionId,
       };
 
       var response = await retryWithBackoff(
         function () { return uploadToAppsScript(payload); },
         {
           isPermanent: isPermanentDeliveryError,
-          onRetry: function (nextAttempt) {
+          onRetry: function (nextAttempt, wait, retryError) {
+            logDeliveryDiagnostic({
+              stage: "retry",
+              panelKey: deliveryCtx.panelKey,
+              pageFile: deliveryCtx.pageFile,
+              attempt: nextAttempt,
+              diag: retryError && retryError.diag,
+              httpStatus: retryError && retryError.httpStatus,
+            });
             setStatus(
               nodes.status,
-              "El servicio esta congestionado o tu sesion no estaba lista. " +
-                "Reintentando la entrega automaticamente (intento " + nextAttempt + ")... " +
+              "Problema temporal. Reintentando automaticamente (intento " + nextAttempt + ")... " +
                 "no cierres esta ventana.",
               "loading"
             );
           },
         }
       );
+      logDeliveryDiagnostic({
+        stage: "delivered",
+        panelKey: deliveryCtx.panelKey,
+        pageFile: deliveryCtx.pageFile,
+        durationMs: Date.now() - attemptStartedAt,
+      });
       finalizeDelivery(deliveryCtx, response, nodes);
     } catch (error) {
       var canQueue =
@@ -1642,22 +1890,31 @@
         typeof payload !== "undefined" &&
         typeof deliveryCtx !== "undefined" &&
         deliveryIdbAvailable();
+      logDeliveryDiagnostic({
+        stage: canQueue ? "queued" : "failed",
+        panelKey: typeof deliveryCtx !== "undefined" ? deliveryCtx.panelKey : (currentContext && currentContext.panelKey),
+        pageFile: identity.pageFile,
+        diag: error && error.diag,
+        httpStatus: error && error.httpStatus,
+        durationMs: Date.now() - attemptStartedAt,
+      });
       if (canQueue) {
         // Transitorio y agotados los reintentos en sesion -> a la cola durable.
         try { await enqueueDelivery(payload, deliveryCtx); } catch (_) {}
         setStatus(
           nodes.status,
-          "No se pudo entregar ahora (servicio congestionado). Tu entrega quedo EN COLA y se " +
-            "enviara automaticamente cuando el servicio responda; no necesitas volver a subirla. " +
-            "Puedes seguir trabajando o cerrar esta ventana.",
+          "Tu archivo esta guardado en este dispositivo y pendiente de sincronizacion. " +
+            "El portal seguira intentando entregarlo automaticamente, incluso si cierras esta ventana; " +
+            "no necesitas volver a subirlo.",
           "loading"
         );
       } else {
+        var diagHint = friendlyDiagHint(error && error.diag);
         setStatus(
           nodes.status,
-          error && error.message
-            ? error.message
-            : "No fue posible completar la entrega segura.",
+          "No fue posible realizar la entrega automatica. " +
+            (error && error.message ? error.message : "No fue posible completar la entrega segura.") +
+            (diagHint ? " " + diagHint : ""),
           "error"
         );
       }
@@ -1685,6 +1942,7 @@
       }
     } finally {
       nodes.submit.removeAttribute("disabled");
+      interactiveDeliveryInFlight = false;
     }
   }
 
@@ -1719,9 +1977,17 @@
     if (deliveryIdbAvailable()) {
       // Reintenta entregas en cola (Capa 2b): al cargar y luego periodicamente.
       // uploadToAppsScript ya espera la hidratacion de la sesion/token.
+      // Bloque G.1 (H3): el jitter se aplica SOLO a la reconexion ("online"),
+      // que es el unico disparo real de sincronizacion (una caida de red
+      // compartida puede recuperarse para 20-30 navegadores en el mismo
+      // instante). El arranque inicial (6s) y el intervalo de 60s se dejan
+      // tal cual: ya se auto-dispersan por la hora de carga de cada pestaña,
+      // y no representan el mismo riesgo de rafaga sincronizada -- agregarles
+      // jitter no resuelve nada real y complica el codigo sin necesidad
+      // ("cambios minimos").
       setTimeout(runDeliveryQueue, 6000);
       setInterval(runDeliveryQueue, 60000);
-      try { window.addEventListener("online", runDeliveryQueue); } catch (_) {}
+      try { window.addEventListener("online", function () { scheduleDeliveryQueueDrain(); }); } catch (_) {}
     }
   });
 
@@ -1744,6 +2010,7 @@
     offerManualDriveFallback: offerManualDriveFallback,
     verifyManualDelivery: verifyManualDelivery,
     downloadSecureDocument: downloadSecureDocument,
+    getDeliveryDiagnostics: getDeliveryDiagnostics,
     // Expuestos solo para pruebas unitarias (logica pura).
     _retryWithBackoff: retryWithBackoff,
     _isPermanentDeliveryError: isPermanentDeliveryError,
@@ -1752,5 +2019,13 @@
     _finalizeDelivery: finalizeDelivery,
     _getCurrentIdentity: getCurrentIdentity,
     _enqueueDelivery: enqueueDelivery,
+    _uploadToAppsScript: uploadToAppsScript,
+    _buildSubmissionId: buildSubmissionId,
+    _logDeliveryDiagnostic: logDeliveryDiagnostic,
+    _friendlyDiagHint: friendlyDiagHint,
+    _scheduleDeliveryQueueDrain: scheduleDeliveryQueueDrain,
+    _runDeliveryQueue: runDeliveryQueue,
+    _setInteractiveDeliveryInFlight: function (value) { interactiveDeliveryInFlight = Boolean(value); },
+    _handleQueueGiveUp: handleQueueGiveUp,
   };
 })();
