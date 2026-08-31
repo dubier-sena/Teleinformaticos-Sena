@@ -191,9 +191,21 @@ const PAGES = [
     url: "/guia.html?g=grupo-10a-guia-02-herramientas-informaticas-digitales.html",
     seed: STUDENT_SEED,
   },
+  {
+    // Bloque G (auditoria 2026-08-31, Prueba A / Guia 4 RAP03): esta pagina
+    // depende de window.GuideCloudSync para persistir bloqueos/entregas en
+    // Firestore (ver saveState() en script_guia_redes_rap03.js). Si falta
+    // <script src="js/guide_cloud_sync.js"> en el HTML, la llamada queda en
+    // undefined?.() -- SIN lanzar ningun error de consola ni request fallido,
+    // por eso ninguna otra pagina de este smoke test lo habria detectado.
+    label: "santa-barbara-10b-guia-04-redes-rap03.html (aprendiz simulado, depende de GuideCloudSync)",
+    url: "/pages/guias/santa-barbara-10b-guia-04-redes-rap03.html",
+    seed: STUDENT_SEED,
+    expectGlobals: ["GuideCloudSync"],
+  },
 ];
 
-async function checkPage(ws, base, { label, url, seed }) {
+async function checkPage(ws, base, { label, url, seed, expectGlobals }) {
   const consoleErrors = [];
   const failedRequests = [];
 
@@ -230,7 +242,20 @@ async function checkPage(ws, base, { label, url, seed }) {
     ws.removeEventListener("message", onMessage);
   }
 
-  return { label, url, consoleErrors, failedRequests };
+  // Globales que la pagina DEBE exponer tras cargar (p.ej. un modulo cargado
+  // por <script>). A diferencia de consoleErrors, esto detecta un script
+  // faltante que no lanza ninguna excepcion -- solo deja el global sin
+  // definir (ver PAGES arriba para el caso real que motivo esto).
+  const missingGlobals = [];
+  if (expectGlobals && expectGlobals.length) {
+    for (const name of expectGlobals) {
+      const result = await send(ws, "Runtime.evaluate", { expression: `typeof window.${name}` });
+      const type = result && result.result && result.result.value;
+      if (type === "undefined") missingGlobals.push(name);
+    }
+  }
+
+  return { label, url, consoleErrors, failedRequests, missingGlobals };
 }
 
 async function main() {
@@ -259,10 +284,11 @@ async function main() {
     let hasProblems = false;
     console.log("\n=== Resultado del smoke test ===");
     for (const r of results) {
-      const problems = r.consoleErrors.length + r.failedRequests.length;
+      const problems = r.consoleErrors.length + r.failedRequests.length + r.missingGlobals.length;
       console.log(`\n${r.label} (${r.url}) -> ${problems === 0 ? "OK" : problems + " problema(s)"}`);
       r.consoleErrors.forEach((e) => console.log("  [error consola] " + e));
       r.failedRequests.forEach((e) => console.log("  [request fallido] " + e));
+      r.missingGlobals.forEach((g) => console.log(`  [global faltante] window.${g} es undefined tras cargar la pagina`));
       if (problems > 0) hasProblems = true;
     }
 
