@@ -134,3 +134,82 @@ test("guia_router.js: dependencias criticas dentro de cada lista de scripts por 
   });
   assert.deepEqual(problems, [], problems.join("\n"));
 });
+
+// ── Dependencia estructural: window.GuideCloudSync ──────────────────────────
+// Bug real (auditoria 2026-08-31, Prueba A / Guia 4 RAP03): 19 paginas
+// cargaban un script que usa window.GuideCloudSync (guarda/bloquea/registra
+// entregas) SIN cargar js/guide_cloud_sync.js en absoluto. Con el modulo
+// ausente, `window.GuideCloudSync?.createStore(...)` y el posterior
+// `cloudStore?.notifyChanged()` quedan en `undefined` -- el encadenamiento
+// opcional los vuelve un no-op silencioso: localStorage se actualiza,
+// Firestore nunca, sin ninguna excepcion ni log de por medio. A diferencia de
+// CRITICAL_STATIC_ORDER_PAIRS (pares hardcodeados), esto AUTO-DESCUBRE los
+// scripts dependientes escaneando js/*.js por el uso literal de
+// "window.GuideCloudSync", para que una guia nueva que lo use quede cubierta
+// sin depender de que alguien se acuerde de agregarla a una lista.
+function findGuideCloudSyncDependents() {
+  const jsDir = path.join(ROOT, "js");
+  const dependents = [];
+  for (const entry of fs.readdirSync(jsDir, { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith(".js")) continue;
+    if (entry.name === "guide_cloud_sync.js") continue; // el modulo mismo, no depende de si mismo
+    const src = fs.readFileSync(path.join(jsDir, entry.name), "utf8");
+    if (/window\.GuideCloudSync\b/.test(src)) dependents.push(entry.name);
+  }
+  return dependents;
+}
+
+test("guide_cloud_sync.js: se detectan scripts dependientes (evita un falso verde silencioso)", () => {
+  const dependents = findGuideCloudSyncDependents();
+  assert.ok(
+    dependents.length > 0,
+    "se esperaba al menos un script en js/*.js que use window.GuideCloudSync"
+  );
+});
+
+test("guide_cloud_sync.js: toda pagina real que cargue un script dependiente tambien carga js/guide_cloud_sync.js, y antes", () => {
+  const dependents = findGuideCloudSyncDependents();
+  const problems = [];
+  htmlFiles.forEach((filePath) => {
+    const html = fs.readFileSync(filePath, "utf8");
+    const relPath = path.relative(ROOT, filePath);
+    const cloudSyncTag = findScriptTag(html, "guide_cloud_sync.js");
+    dependents.forEach((dependent) => {
+      const dependentTag = findScriptTag(html, dependent);
+      if (!dependentTag) return; // esta pagina no carga este script dependiente
+      if (!cloudSyncTag) {
+        problems.push(`${relPath}: carga ${dependent} (usa window.GuideCloudSync) pero NO carga js/guide_cloud_sync.js`);
+        return;
+      }
+      if (cloudSyncTag.index >= dependentTag.index) {
+        problems.push(
+          `${relPath}: js/guide_cloud_sync.js aparece DESPUES de ${dependent} (o en la misma etiqueta) -- debe cargar antes`
+        );
+      }
+    });
+  });
+  assert.deepEqual(problems, [], problems.join("\n"));
+});
+
+test("guia_router.js: si una ruta usa un script dependiente de GuideCloudSync, guide_cloud_sync.js debe ir antes en su lista de scripts", () => {
+  const dependents = findGuideCloudSyncDependents().map((name) => "js/" + name);
+  const routerSrc = fs.readFileSync(path.join(ROOT, "js", "guia_router.js"), "utf8");
+  const arrays = parseRouterScriptArrays(routerSrc);
+
+  const problems = [];
+  arrays.forEach((scripts, arrayIndex) => {
+    dependents.forEach((dependent) => {
+      const depIdx = scripts.indexOf(dependent);
+      if (depIdx === -1) return; // esta ruta no usa este script dependiente
+      const cloudSyncIdx = scripts.indexOf("js/guide_cloud_sync.js");
+      if (cloudSyncIdx === -1) {
+        problems.push(`ruta #${arrayIndex}: usa ${dependent} pero no incluye js/guide_cloud_sync.js en su lista de scripts`);
+        return;
+      }
+      if (cloudSyncIdx >= depIdx) {
+        problems.push(`ruta #${arrayIndex}: js/guide_cloud_sync.js debe ir antes que ${dependent} en el arreglo scripts`);
+      }
+    });
+  });
+  assert.deepEqual(problems, [], problems.join("\n"));
+});

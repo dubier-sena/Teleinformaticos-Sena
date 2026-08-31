@@ -153,7 +153,18 @@ test("renderMonthGrid: dia con pocos eventos no muestra boton +N mas", () => {
 test("renderMonthGrid: dias fuera del mes llevan la clase is-outside", () => {
   const month = views.buildMonthView({ year: 2026, month: 9, events: [] });
   const html = ui.renderMonthGrid(month);
-  assert.match(html, /data-month-day="2026-08-31"[^>]*class="aac-month__day is-outside"|class="aac-month__day is-outside"[^>]*data-month-day="2026-08-31"/);
+  // Chequeo semantico (pertenencia a la lista de clases), no un string exacto:
+  // el 31-ago puede coincidir con "hoy" (is-today) segun la fecha real en que
+  // corra el test -- is-outside debe seguir presente sin importar que otras
+  // clases se agreguen ni en que orden (aac-month__day is-outside is-today,
+  // aac-month__day is-today is-outside, etc. son todas validas).
+  const cellMatch = html.match(/<div class="([^"]*)" data-month-day="2026-08-31">/);
+  assert.ok(cellMatch, "no se encontro la celda del 31 de agosto en la grilla de septiembre 2026");
+  const classes = cellMatch[1].split(/\s+/);
+  assert.ok(
+    classes.includes("is-outside"),
+    `se esperaba la clase "is-outside" en la celda del 31-ago; clases encontradas: [${cellMatch[1]}]`
+  );
 });
 
 // ── Detalle de dia ──────────────────────────────────────────────────────
