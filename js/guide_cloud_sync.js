@@ -315,6 +315,20 @@
         }));
         try { window.localStorage.setItem(storageKey, JSON.stringify(resolved.state || {})); } catch (e) {}
         onHydrated(resolved.state);
+        // Auditoria 2026-08-31: onHydrated() de cada guion solo repinta
+        // campos de formulario y progreso -- nunca vuelve a llamar
+        // ActivityStandard.mountActivities(), asi que el panel de "Actividad
+        // entregada correctamente" y el bloqueo de campos (applyLock) se
+        // quedaban mostrando el estado PRE-hidratacion (formulario/boton de
+        // entrega activos) aunque el state ya se haya actualizado arriba.
+        // Se reusa el MISMO evento que ya dispara reflectGradesIntoGuideState
+        // (mountFormActivity y _mountDeliveryWatcher en activity_standard.js
+        // YA lo escuchan) para que la UI se reevalue con el estado recien
+        // fusionado -- sin volver a montar nada ni registrar un listener
+        // nuevo por cada hidratacion. Se dispara con el estado YA aplicado
+        // (setState arriba) y DESPUES de onHydrated, gane local o remoto:
+        // si gano local, repintar es un no-op (mismo estado que ya se veia).
+        try { window.dispatchEvent(new Event("activity-deadlines-updated")); } catch (e) {}
         if (resolved.source === "local") {
           // Lo local ganaba (mas nuevo que la nube): probablemente quedo sin
           // sincronizar de una sesion anterior (se cerro la pestaña antes de
@@ -350,6 +364,11 @@
           writeMeta(metaKey, Object.assign({}, meta, { updatedAt: resolved.updatedAt, lastSyncedAt: resolved.updatedAt }));
           try { window.localStorage.setItem(storageKey, JSON.stringify(resolved.state || {})); } catch (e) {}
           onHydrated(resolved.state);
+          // Mismo motivo que en hydrate() (ver comentario ahi arriba): sin
+          // esto, una entrega/calificacion que llega mientras la pestaña
+          // sigue abierta (refresco cada periodicRefreshMs) actualiza el
+          // state pero no el panel de confirmacion ni los candados visibles.
+          try { window.dispatchEvent(new Event("activity-deadlines-updated")); } catch (e) {}
         } catch (e) { /* red caida: se reintenta en el proximo intervalo */ }
       }, periodicRefreshMs);
     }
