@@ -34,6 +34,8 @@ function loadModule(sandboxOverrides) {
       localStorage,
       setTimeout,
       clearTimeout,
+      setInterval,
+      clearInterval,
       addEventListener: (type, fn) => { (listeners[type] = listeners[type] || []).push(fn); },
       dispatchEvent: (evt) => { (listeners[evt.type] || []).forEach((fn) => fn(evt)); },
       portalAuth: { getCurrentSession: () => ({ role: "student", user: { usernameKey: "auditoria_claude" } }) },
@@ -48,6 +50,7 @@ function loadModule(sandboxOverrides) {
     navigator: windowObj.navigator,
     console: { warn() {}, info() {}, error() {} },
     CustomEvent: function CustomEvent(type, init) { this.type = type; this.detail = init && init.detail; },
+    Event: function Event(type) { this.type = type; },
   };
   vm.createContext(sandbox);
   vm.runInContext(code, sandbox);
@@ -242,4 +245,159 @@ test("hydrate() nunca reemplaza una respuesta remota valida por un local vacio, 
   await store.hydrate();
   assert.equal(state.campo1, "Respuesta real de otro equipo", "debe aplicar la respuesta remota cuando lo local esta vacio");
   assert.deepEqual(hydratedWith, state, "debe avisar al guion (onHydrated) con el estado ya fusionado");
+});
+
+// ── Auditoria 2026-08-31: activity_standard.js nunca volvia a llamar
+// mountActivities() tras hydrate()/el refresco periodico, asi que el panel de
+// entrega y el bloqueo de campos se quedaban con el estado PRE-hidratacion.
+// Fix: se reusa el evento existente "activity-deadlines-updated" (que
+// mountFormActivity/_mountDeliveryWatcher ya escuchan), disparado DESPUES de
+// que el estado resuelto ya se aplico (setState) y de ejecutar onHydrated. ──
+
+test("hydrate(): dispara 'activity-deadlines-updated' EXACTAMENTE una vez, y solo despues de setState + onHydrated (orden estricto)", async () => {
+  const order = [];
+  let state = {};
+  const { GuideCloudSync, windowObj } = loadModule({
+    _firebaseDb: {
+      cloudGetGuideData: async () => ({ state: { campoX: "de la nube" }, updatedAt: "2026-08-31T22:00:05.000Z" }),
+      resolveGuideHydration: () => ({ state: { campoX: "de la nube" }, updatedAt: "2026-08-31T22:00:05.000Z", source: "remote" }),
+    },
+  });
+
+  const eventLog = [];
+  windowObj.addEventListener("activity-deadlines-updated", () => eventLog.push("event"));
+
+  const store = GuideCloudSync.createStore({
+    storageKey: "sena_portal:test:guide-data:order-hydrate",
+    guideDataFile: "order.html",
+    getState: () => state,
+    setState: (s) => { order.push("setState"); state = s; },
+    getActor: () => "Aprendiz Prueba",
+    onHydrated: () => { order.push("onHydrated"); eventLog.push("onHydrated-marker"); },
+  });
+
+  await store.hydrate();
+
+  assert.deepEqual(order, ["setState", "onHydrated"], "setState debe ejecutarse antes que onHydrated");
+  assert.deepEqual(eventLog, ["onHydrated-marker", "event"], "el evento debe emitirse DESPUES de onHydrated, nunca antes");
+  assert.equal(state.campoX, "de la nube", "el estado ya fusionado debe estar aplicado para cuando el evento se dispare");
+});
+
+test("hydrate(): tambien dispara el evento cuando gana lo LOCAL (repintar es un no-op seguro, pero debe ocurrir)", async () => {
+  const eventLog = [];
+  let state = { campoLocal: "ya estaba aqui" };
+  const { GuideCloudSync, windowObj } = loadModule({
+    _firebaseDb: {
+      cloudGetGuideData: async () => ({ state: { campoLocal: "version vieja de la nube" }, updatedAt: "2026-08-01T00:00:00.000Z" }),
+      resolveGuideHydration: () => ({ state: { campoLocal: "ya estaba aqui" }, updatedAt: "2026-08-31T23:00:00.000Z", source: "local" }),
+    },
+  });
+  windowObj.addEventListener("activity-deadlines-updated", () => eventLog.push("event"));
+
+  const store = GuideCloudSync.createStore({
+    storageKey: "sena_portal:test:guide-data:order-hydrate-local",
+    guideDataFile: "order-local.html",
+    getState: () => state,
+    setState: (s) => { state = s; },
+    getActor: () => "Aprendiz Prueba",
+    onHydrated: () => {},
+  });
+
+  await store.hydrate();
+  assert.equal(eventLog.length, 1, "debe dispararse tambien cuando gana lo local (la UI puede necesitar reevaluarse igual)");
+});
+
+test("hydrate(): si la nube no responde (sin sesion/red), NO se aplico ningun estado nuevo y el evento NO se dispara", async () => {
+  const eventLog = [];
+  let state = { campoLocal: "sin cambios" };
+  const { GuideCloudSync, windowObj } = loadModule({}); // sin _firebaseDb -> hydrate() sale temprano
+  windowObj.addEventListener("activity-deadlines-updated", () => eventLog.push("event"));
+
+  const store = GuideCloudSync.createStore({
+    storageKey: "sena_portal:test:guide-data:order-hydrate-noop",
+    guideDataFile: "order-noop.html",
+    getState: () => state,
+    setState: (s) => { state = s; },
+    getActor: () => "Aprendiz Prueba",
+    onHydrated: () => { eventLog.push("onHydrated-no-deberia-pasar"); },
+  });
+
+  await store.hydrate();
+  assert.deepEqual(eventLog, [], "sin resolucion real (setState/onHydrated nunca corrieron), no debe dispararse el evento");
+});
+
+test("startPeriodicRefresh() (via refresco automatico): dispara el evento EXACTAMENTE una vez por ciclo, solo despues de setState + onHydrated, y solo si gana lo remoto", async () => {
+  const log = []; // log UNICO y compartido: prueba el orden relativo real entre los 3 eventos, ciclo a ciclo
+  let state = { campoY: "version inicial" };
+  const { GuideCloudSync, windowObj } = loadModule({
+    _firebaseDb: {
+      cloudGetGuideData: async () => ({ state: { campoY: "version nueva de otro equipo" }, updatedAt: "2026-08-31T22:30:00.000Z" }),
+      resolveGuideHydration: () => ({ state: { campoY: "version nueva de otro equipo" }, updatedAt: "2026-08-31T22:30:00.000Z", source: "remote" }),
+    },
+  });
+  windowObj.addEventListener("activity-deadlines-updated", () => log.push("event"));
+
+  const store = GuideCloudSync.createStore({
+    storageKey: "sena_portal:test:guide-data:order-periodic",
+    guideDataFile: "order-periodic.html",
+    getState: () => state,
+    setState: (s) => { log.push("setState"); state = s; },
+    getActor: () => "Aprendiz Prueba",
+    periodicRefreshMs: 15,
+    onHydrated: () => { log.push("onHydrated"); },
+  });
+
+  await store.hydrate(); // primer hydrate: arranca el refresco periodico (periodicRefreshMs > 0)
+  log.length = 0;
+
+  await sleep(40); // deja correr uno o mas ciclos del refresco periodico (15ms) -- no se asume una cantidad exacta de ticks
+  store.stop();
+
+  // El refresco periodico es un setInterval real: en 40ms pueden caber 1 o
+  // varios ciclos de 15ms. En vez de asumir una cantidad exacta de ciclos, se
+  // valida que CADA ciclo que haya ocurrido siga el orden setState -> onHydrated
+  // -> event, sin saltarse ni adelantar ningun paso.
+  assert.ok(log.length >= 3, "debe haber corrido al menos un ciclo completo del refresco periodico: " + JSON.stringify(log));
+  assert.equal(log.length % 3, 0, "cada ciclo debe dejar la terna setState+onHydrated+event completa, nunca a medias: " + JSON.stringify(log));
+  for (let i = 0; i < log.length; i += 3) {
+    assert.deepEqual(
+      log.slice(i, i + 3),
+      ["setState", "onHydrated", "event"],
+      "en cada ciclo, el orden debe ser setState -> onHydrated -> event, nunca el evento antes"
+    );
+  }
+  assert.equal(state.campoY, "version nueva de otro equipo", "el estado ya fusionado debe estar aplicado para cuando el evento se dispare");
+});
+
+test("startPeriodicRefresh(): si lo local ya esta al dia (no gana remoto), NO llama a onHydrated ni dispara el evento", async () => {
+  const eventLog = [];
+  let state = { campoZ: "ya al dia" };
+  const { GuideCloudSync, windowObj } = loadModule({
+    _firebaseDb: {
+      cloudGetGuideData: async () => ({ state: { campoZ: "ya al dia" }, updatedAt: "2026-08-31T22:00:00.000Z" }),
+      resolveGuideHydration: () => ({ state: { campoZ: "ya al dia" }, updatedAt: "2026-08-31T22:00:00.000Z", source: "local" }),
+    },
+  });
+  windowObj.addEventListener("activity-deadlines-updated", () => eventLog.push("event"));
+
+  let hydratedCalls = 0;
+  const store = GuideCloudSync.createStore({
+    storageKey: "sena_portal:test:guide-data:order-periodic-noop",
+    guideDataFile: "order-periodic-noop.html",
+    getState: () => state,
+    setState: (s) => { state = s; },
+    getActor: () => "Aprendiz Prueba",
+    periodicRefreshMs: 15,
+    onHydrated: () => { hydratedCalls += 1; },
+  });
+
+  await store.hydrate();
+  hydratedCalls = 0;
+  eventLog.length = 0;
+
+  await sleep(40);
+  store.stop();
+
+  assert.equal(hydratedCalls, 0, "si lo local ya gana, el refresco periodico no debe llamar onHydrated (nada cambio)");
+  assert.deepEqual(eventLog, [], "sin cambio real, el refresco periodico no debe disparar el evento");
 });

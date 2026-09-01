@@ -12,12 +12,21 @@ const root = path.join(__dirname, "..");
 // solo "Guardada" -- que no le dice al aprendiz si el instructor ya la revisó.
 function loadActivityStandard(mocks) {
   const containerStub = { innerHTML: "" };
+  let querySelectorCalls = 0;
+  const windowListeners = {};
+  const docListeners = {};
   const ctx = {
     window: {},
     document: {
-      querySelector: (sel) => (sel === "[data-act-std-avance]" ? containerStub : null),
+      querySelector: (sel) => {
+        if (sel === "[data-act-std-avance]") { querySelectorCalls += 1; return containerStub; }
+        return null;
+      },
+      querySelectorAll: () => [],
       createElement: () => ({ setAttribute() {}, appendChild() {}, classList: { add() {} } }),
-      addEventListener: () => {},
+      addEventListener: (type, fn) => { (docListeners[type] = docListeners[type] || []).push(fn); },
+      getElementById: () => null,
+      head: { appendChild() {} },
     },
     localStorage: { getItem: () => null, setItem() {}, removeItem() {} },
     console,
@@ -26,9 +35,19 @@ function loadActivityStandard(mocks) {
   ctx.window.portalAuth = mocks.portalAuth || { getCurrentSession: () => null };
   ctx.window.activityGradesManager = mocks.activityGradesManager || null;
   ctx.window.sharedAppsScriptDelivery = null;
+  ctx.window.addEventListener = (type, fn) => { (windowListeners[type] = windowListeners[type] || []).push(fn); };
+  ctx.window.dispatchEvent = (evt) => { (windowListeners[evt.type] || []).forEach((fn) => fn(evt)); };
+  ctx.window.requestAnimationFrame = (fn) => fn();
   vm.createContext(ctx);
   vm.runInContext(fs.readFileSync(path.join(root, "js", "activity_standard.js"), "utf8"), ctx);
-  return { std: ctx.window.ActivityStandard, container: containerStub };
+  return {
+    std: ctx.window.ActivityStandard,
+    container: containerStub,
+    windowListeners,
+    docListeners,
+    fireActivityDeadlinesUpdated: () => (windowListeners["activity-deadlines-updated"] || []).forEach((fn) => fn({ type: "activity-deadlines-updated" })),
+    getAvanceQuerySelectorCalls: () => querySelectorCalls,
+  };
 }
 
 function studentSession(usernameKey) {
@@ -128,4 +147,59 @@ test("renderAvancePanel: aliasIds -- la actividad alias muestra la nota de su ac
 
   const approvedCount = (container.innerHTML.match(/Aprobada/g) || []).length;
   assert.equal(approvedCount, 2, "tanto sopaletras311 como su alias relaciona311 deben mostrar Aprobada");
+});
+
+// ── Auditoria 2026-08-31: GuideCloudSync dispara "activity-deadlines-updated"
+// tras hydrate()/refresco periodico. _mountAvancePanel() (llamado por
+// mountActivities()) debe reaccionar a ese evento reusando renderAvancePanel
+// -- sin crear un segundo panel y sin registrar un listener nuevo por cada
+// disparo del evento (el listener se instala UNA sola vez, en el montaje). ──
+
+test("mountActivities -> _mountAvancePanel: se repinta con 'activity-deadlines-updated' sin crear un segundo panel ni duplicar el listener", () => {
+  let state = {};
+  const { std, container, windowListeners, fireActivityDeadlinesUpdated, getAvanceQuerySelectorCalls } = loadActivityStandard({
+    portalAuth: studentSession("prueba.aprendiz"),
+    activityGradesManager: null,
+  });
+
+  std.registerGuide({
+    files: ["guia.html"],
+    activities: [
+      { id: "entregaTest", number: "1.1", label: "Entrega de prueba", type: "file", driveTarget: { panelKey: "entregaTest" } },
+    ],
+  });
+
+  const stateCtx = { getGuideDataFile: () => "guia.html", getState: () => state, getSelection: () => ({}), getLearnerName: () => "" };
+
+  // Montaje normal (equivalente a initGuiaX() -> ActivityStandard.mountActivities()).
+  std.mountActivities(stateCtx);
+
+  assert.doesNotMatch(container.innerHTML, /Entregada/, "antes de hidratar, la actividad no debe figurar como entregada en el avance");
+  const listenersAfterMount = (windowListeners["activity-deadlines-updated"] || []).length;
+  assert.ok(listenersAfterMount >= 1, "mountActivities debe instalar al menos un listener de activity-deadlines-updated (avance + entrega)");
+
+  // Simula lo que GuideCloudSync.hydrate() hace ANTES de disparar el evento:
+  // el estado ya fusionado se aplica primero (setState), despues se dispara.
+  state = {
+    "entregaTest-locked": true,
+    "entregaTest-delivery": { status: "delivered", submittedAt: "2026-08-31T22:00:00.000Z" },
+  };
+  fireActivityDeadlinesUpdated();
+
+  assert.match(container.innerHTML, /Entregada/, "el panel de avance debe reflejar la entrega tras el evento");
+  assert.equal(getAvanceQuerySelectorCalls() >= 2, true, "el panel se repinto reutilizando el MISMO contenedor (document.querySelector se volvio a llamar, no se creo uno nuevo)");
+
+  // Refresco periodico simulado 3 veces mas (igual que 3 ciclos de
+  // startPeriodicRefresh): no debe cambiar la cantidad de listeners.
+  fireActivityDeadlinesUpdated();
+  fireActivityDeadlinesUpdated();
+  fireActivityDeadlinesUpdated();
+
+  const listenersAfterRefreshes = (windowListeners["activity-deadlines-updated"] || []).length;
+  assert.equal(
+    listenersAfterRefreshes,
+    listenersAfterMount,
+    "disparar el evento varias veces (varias hidrataciones/refrescos) NO debe agregar listeners nuevos"
+  );
+  assert.match(container.innerHTML, /Entregada/, "el panel sigue correcto despues de varios refrescos consecutivos");
 });

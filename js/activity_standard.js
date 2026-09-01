@@ -1528,6 +1528,18 @@
     document.addEventListener("guide-delivery-registered", function () {
       window.requestAnimationFrame(function () { renderAvancePanel(stateCtx); });
     });
+    // Auditoria 2026-08-31: GuideCloudSync.hydrate()/el refresco periodico
+    // actualizan el state fusionado pero nunca volvian a pintar este panel
+    // (solo escuchaba "guide-delivery-registered", que es una entrega EN
+    // ESTA sesion, no una recuperada de la nube). Se reusa el mismo evento
+    // que mountFormActivity/_mountDeliveryWatcher ya escuchan -- el listener
+    // se instala UNA sola vez aqui (montaje normal, igual que el de arriba),
+    // nunca dentro de renderAvancePanel ni por cada hidratacion. Repintar es
+    // seguro: renderAvancePanel() solo reemplaza el innerHTML del contenedor
+    // [data-act-std-avance] que ya existe en el HTML, nunca crea uno nuevo.
+    window.addEventListener("activity-deadlines-updated", function () {
+      renderAvancePanel(stateCtx);
+    });
   }
 
   // ── Panel de entrega a Drive ───────────────────────────────────────────────
