@@ -29,6 +29,7 @@ ALL_PAIRS = [
     ("partials/guia-03-planificar-content.html",  "partials/guia-03-planificar-bundle.js"),
     ("partials/guia-04-planificar-ciberseguridad-content.html", "partials/guia-04-planificar-ciberseguridad-bundle.js"),
     ("partials/guia-05-documentar-gestion-content.html", "partials/guia-05-documentar-gestion-bundle.js"),
+    ("partials/guia-06-mantener-equipos-content.html", "partials/guia-06-mantener-equipos-bundle.js"),
     ("partials/guia-05-herramientas-content.html", "partials/guia-05-herramientas-bundle.js"),
     ("partials/guia-06-planificar-content.html",  "partials/guia-06-planificar-bundle.js"),
     ("partials/guia-07-planificar-ciberseguridad-content.html", "partials/guia-07-planificar-ciberseguridad-bundle.js"),

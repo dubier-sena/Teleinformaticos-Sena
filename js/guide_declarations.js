@@ -1252,6 +1252,206 @@
     ],
   });
 
+  // ── Guia 6 (Mantener equipos - Kennedy grado 10) ───────────────────────────
+  // Mismo proyecto/fichas que la Guia 5 (documentar gestion) y la Guia 4
+  // (ciberseguridad): 3441939/3441942, CIAS Puerto Boyaca. Duracion propia:
+  // 80 horas (60 directas + 20 independientes), competencia y RAP distintos.
+  var COMP_MANTENER_EQUIPOS = "220501001 - Mantener equipos de computo segun procedimiento tecnico.";
+  var RAP_PREPARAR_MANTENIMIENTO = "RAP 01 - Preparar el mantenimiento de los equipos de computo de acuerdo con procedimientos tecnicos y administrativos.";
+
+  register({
+    files: [
+      "grupo-10a-guia-06-mantener-equipos.html",
+      "grupo-10b-guia-06-mantener-equipos.html",
+    ],
+    guideNumber: "6",
+    guideTitle: "Guia 6 - Preparar el mantenimiento de equipos de computo (Grado 10)",
+    stateKey: "guia_interactiva_10a_guia6mant_html",
+    // Alias corto de storage (ver STORAGE_FILE_ALIASES en
+    // script_guia6_mantener_equipos.js): debe coincidir exactamente, o
+    // "Habilitar actividades entregadas"/"Ver respuestas" en el panel admin
+    // resuelven al documento equivocado (ver checklist "Adding a New Guide").
+    cloudFileNames: {
+      "grupo-10a-guia-06-mantener-equipos.html": "10a_guia6mant.html",
+      "grupo-10b-guia-06-mantener-equipos.html": "10b_guia6mant.html",
+    },
+    program: PROGRAM,
+    competencia: COMP_MANTENER_EQUIPOS,
+    resultado: RAP_PREPARAR_MANTENIMIENTO,
+    activities: [
+      {
+        id: "caso311", number: "3.1.1", label: "Detectives del mantenimiento: caso Ferreteria Puerto Real",
+        shortName: "CasoPuertoReal", type: "form",
+        formFields: ["g6mant_311_sintomas", "g6mant_311_causas", "g6mant_311_herramientas", "g6mant_311_precauciones", "g6mant_311_experiencia"],
+        buttonIds: { save: "btnGuardarCaso311", status: "statusCaso311" },
+        wordExport: {
+          contextBox:
+            "Caso Ferreteria y Miscelanea Puerto Real (Puerto Boyaca): 4 computadores sin mantenimiento programado. El de facturacion se calienta, el ventilador suena fuerte y a veces no reconoce el USB del lector de codigo de barras.",
+          sections: [
+            { label: "1. Sintomas del computador de facturacion (min. 3)", storeKey: "g6mant_311_sintomas" },
+            { label: "2. Posibles causas tecnicas de cada sintoma", storeKey: "g6mant_311_causas" },
+            { label: "3. Herramientas / EPP necesarios antes de abrir el equipo", storeKey: "g6mant_311_herramientas" },
+            { label: "4. Precauciones para no perder informacion ni danar el equipo", storeKey: "g6mant_311_precauciones" },
+            { label: "5. Experiencia propia con sintomas parecidos", storeKey: "g6mant_311_experiencia" },
+          ],
+        },
+      },
+      {
+        id: "plenaria312", number: "3.1.2", label: "Socializacion en plenaria",
+        shortName: "Plenaria", type: "form",
+        formFields: ["g6mant_312_sintoma_grupo", "g6mant_312_reflexion"],
+        buttonIds: { save: "btnGuardarPlenaria312", status: "statusPlenaria312" },
+        wordExport: {
+          contextBox: "Plenaria grupal sobre el caso Ferreteria Puerto Real: sintomas y causas agrupados en el tablero por tipo (mecanicas, electricas, de software, de falta de limpieza).",
+          sections: [
+            { label: "1. Sintoma mas preocupante compartido con el grupo y causa mas probable", storeKey: "g6mant_312_sintoma_grupo" },
+            { label: "2. Idea final: relacion entre mantenimiento preventivo y correctivo urgente", storeKey: "g6mant_312_reflexion" },
+          ],
+        },
+      },
+      {
+        id: "bloqueAB321", number: "3.2.1", label: "Estudio de contenidos de mantenimiento (Bloques A y B) - Tabla resumen",
+        shortName: "BloqueAB", type: "both",
+        formFields: ["g6mant_321_reparto", "g6mant_321_temas", "g6mant_321_tema_fila", "g6mant_321_paraque", "g6mant_321_ejemplo"],
+        buttonIds: { save: "btnGuardarBloqueAB321", status: "statusBloqueAB321" },
+        wordExport: {
+          contextBox:
+            "Estudio en equipo de los 7 temas conceptuales de mantenimiento de equipos (Bloques A y B: tipos/diagnostico de mantenimiento; materiales, herramientas y proteccion personal). Entregable de equipo: tabla resumen PDF.",
+          sections: [
+            { label: "1. Reparto de temas del equipo", storeKey: "g6mant_321_reparto" },
+            { label: "2. Temas que estudiaste", storeKey: "g6mant_321_temas" },
+            { label: "3. Tema de tu fila en la tabla resumen", storeKey: "g6mant_321_tema_fila" },
+            { label: "4. Para que sirve", storeKey: "g6mant_321_paraque" },
+            { label: "5. Ejemplo aplicado en la Ferreteria Puerto Real", storeKey: "g6mant_321_ejemplo" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "guia6mant-3-2-1",
+          deadlineActivityId: "bloqueAB321",
+          activityTitle: "Tabla resumen de los Bloques A y B (BloqueAB_RAP01_[TuNombre]_v1.0.pdf)",
+          description: "Sube a Drive la tabla resumen en PDF construida por el equipo (3 columnas: Tema, Para que sirve, Ejemplo aplicado en la Ferreteria Puerto Real).",
+          note: "Nombre sugerido: BloqueAB_RAP01_[TuNombre]_v1.0.pdf",
+        },
+      },
+      {
+        id: "inspeccion322", number: "3.2.2", label: "Ejercicio de inspeccion externa de equipos de computo",
+        shortName: "InspeccionExterna", type: "both",
+        formFields: ["g6mant_322_hallazgos", "g6mant_322_conclusion", "g6mant_322_disp_entrada", "g6mant_322_disp_salida", "g6mant_322_disp_almacenamiento"],
+        buttonIds: { save: "btnGuardarInspeccion322", status: "statusInspeccion322" },
+        wordExport: {
+          contextBox:
+            "Inspeccion puramente externa de un equipo real del taller: estado fisico, puertos, cables, ventilacion, ruidos y temperatura. Se diligencia el formato de inspeccion externa suministrado por el instructor.",
+          sections: [
+            { label: "1. Hallazgos de la inspeccion externa", storeKey: "g6mant_322_hallazgos" },
+            { label: "2. Conclusiones (preventivo/correctivo/ambos, justificado)", storeKey: "g6mant_322_conclusion" },
+            { label: "3. Dispositivo(s) de entrada identificados", storeKey: "g6mant_322_disp_entrada" },
+            { label: "4. Dispositivo(s) de salida identificados", storeKey: "g6mant_322_disp_salida" },
+            { label: "5. Dispositivo(s) de almacenamiento identificados", storeKey: "g6mant_322_disp_almacenamiento" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "guia6mant-3-2-2",
+          deadlineActivityId: "inspeccion322",
+          activityTitle: "Informe de inspeccion externa + tabla de dispositivos",
+          description: "Sube a Drive el formato de inspeccion externa diligenciado, el informe corto de conclusiones y la tabla de dispositivos de entrada/salida/almacenamiento.",
+          note: "Formato de entrega: PDF o DOCX.",
+        },
+      },
+      {
+        id: "analisis331", number: "3.3.1", label: "Consulta y analisis guiado de fallas comunes",
+        shortName: "AnalisisFallas", type: "both",
+        formFields: ["g6mant_331_bloqueC", "g6mant_331_reporte1", "g6mant_331_reporte2", "g6mant_331_recomendacion"],
+        buttonIds: { save: "btnGuardarAnalisis331", status: "statusAnalisis331" },
+        wordExport: {
+          contextBox:
+            "Bloque C (diagnostico avanzado) aplicado a dos nuevos reportes del caso Ferreteria Puerto Real: equipo de facturacion se reinicia solo con el software contable; equipo de bodega no reconoce la impresora de codigo de barras.",
+          sections: [
+            { label: "1. Estudio del Bloque C (fallas fisicas/logicas, sintoma-causa, priorizacion)", storeKey: "g6mant_331_bloqueC" },
+            { label: "2. Reporte 1: tipo de mantenimiento, causas y urgencia", storeKey: "g6mant_331_reporte1" },
+            { label: "3. Reporte 2: tipo de mantenimiento, causas y urgencia", storeKey: "g6mant_331_reporte2" },
+            { label: "4. Recomendacion tecnica redactada para el propietario", storeKey: "g6mant_331_recomendacion" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "guia6mant-3-3-1",
+          deadlineActivityId: "analisis331",
+          activityTitle: "Documento de analisis tecnico (diagnostico, causas, urgencia, recomendacion)",
+          description: "Sube a Drive el documento de analisis tecnico de los dos reportes del caso.",
+          note: "Formato: DOCX o PDF.",
+        },
+      },
+      {
+        id: "diagnostico332", number: "3.3.2", label: "Diagnostico tecnico y diligenciamiento de hoja de vida del equipo",
+        shortName: "DiagnosticoHV", type: "both",
+        formFields: ["g6mant_332_diagnostico", "g6mant_332_hv_identificacion", "g6mant_332_hv_especificaciones", "g6mant_332_hv_recomendacion"],
+        buttonIds: { save: "btnGuardarDiagnostico332", status: "statusDiagnostico332" },
+        wordExport: {
+          contextBox:
+            "Diagnostico tecnico completo de un equipo distinto al de la Actividad 3.2.2 y diligenciamiento de su hoja de vida (identificacion, especificaciones, historial, diagnostico, recomendacion).",
+          sections: [
+            { label: "1. Diagnostico tecnico completo", storeKey: "g6mant_332_diagnostico" },
+            { label: "2. Hoja de vida - identificacion del equipo", storeKey: "g6mant_332_hv_identificacion" },
+            { label: "3. Hoja de vida - especificaciones e historial", storeKey: "g6mant_332_hv_especificaciones" },
+            { label: "4. Recomendacion de mantenimiento en la hoja de vida", storeKey: "g6mant_332_hv_recomendacion" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "guia6mant-3-3-2",
+          deadlineActivityId: "diagnostico332",
+          activityTitle: "Hoja de vida del equipo diligenciada",
+          description: "Sube a Drive la hoja de vida del equipo diligenciada en su totalidad, firmada por el equipo de trabajo.",
+          note: "Formato: el suministrado por el instructor, en PDF.",
+        },
+      },
+      {
+        id: "hwmonitor341", number: "3.4.1", label: "Laboratorio de monitoreo tecnico con HWMonitor",
+        shortName: "LabHWMonitor", type: "both",
+        formFields: ["g6mant_341_registros", "g6mant_341_comparativa", "g6mant_341_conclusion"],
+        buttonIds: { save: "btnGuardarHwmonitor341", status: "statusHwmonitor341" },
+        wordExport: {
+          contextBox:
+            "Monitoreo de temperatura y velocidad de ventiladores con HWMonitor durante 3 dias (encendido, 30 min uso normal, 30 min uso exigente), consolidado en tabla comparativa de equipo con conclusiones.",
+          sections: [
+            { label: "1. Registros individuales de los 3 dias", storeKey: "g6mant_341_registros" },
+            { label: "2. Tabla comparativa consolidada del equipo", storeKey: "g6mant_341_comparativa" },
+            { label: "3. Conclusiones y recomendaciones de mantenimiento preventivo", storeKey: "g6mant_341_conclusion" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "guia6mant-3-4-1",
+          deadlineActivityId: "hwmonitor341",
+          activityTitle: "Tabla de registros (3 dias) + tabla comparativa consolidada",
+          description: "Sube a Drive la tabla de registros individuales de 3 dias y la tabla comparativa consolidada del equipo con conclusiones.",
+          note: "Formato: hoja de calculo (XLSX) exportada a PDF.",
+        },
+      },
+      {
+        id: "planMantenimiento342", number: "3.4.2", label: "Plan de Mantenimiento Preventivo y sustentacion",
+        shortName: "PlanMantenimiento", type: "both",
+        formFields: ["g6mant_342_cronograma", "g6mant_342_actividades", "g6mant_342_materiales", "g6mant_342_epp", "g6mant_342_responsables"],
+        buttonIds: { save: "btnGuardarPlanMantenimiento342", status: "statusPlanMantenimiento342" },
+        wordExport: {
+          contextBox:
+            "Plan de Mantenimiento Preventivo para los 4 equipos de la Ferreteria Puerto Real: cronograma anual, actividades por visita, materiales/herramientas, EPP y responsables. Anexa las hojas de vida de la Actividad 3.3.2. Sustentacion oral de maximo 10 minutos por equipo.",
+          sections: [
+            { label: "1. Cronograma anual de intervenciones (4 equipos)", storeKey: "g6mant_342_cronograma" },
+            { label: "2. Actividades a realizar en cada visita", storeKey: "g6mant_342_actividades" },
+            { label: "3. Materiales y herramientas necesarias", storeKey: "g6mant_342_materiales" },
+            { label: "4. Elementos de proteccion personal (EPP) requeridos", storeKey: "g6mant_342_epp" },
+            { label: "5. Responsable de cada actividad del plan", storeKey: "g6mant_342_responsables" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "guia6mant-3-4-2",
+          deadlineActivityId: "planMantenimiento342",
+          activityTitle: "Plan de Mantenimiento Preventivo (con hojas de vida como anexos)",
+          description: "Sube a Drive el Plan de Mantenimiento Preventivo completo, incluyendo las hojas de vida de la Actividad 3.3.2 como anexos.",
+          note: "Formato: DOCX o PDF.",
+        },
+      },
+    ],
+  });
+
   // ── Guia 2 (Redes - Santa Barbara) (10A + 10B) ─────────────────────────────
   register({
     files: [

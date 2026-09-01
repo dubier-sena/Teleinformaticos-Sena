@@ -33,6 +33,10 @@
       "Guía 5 - Documentar la gestión de la información | Grupo 10A",
     "grupo-10b-guia-05-documentar-gestion-informacion.html":
       "Guía 5 - Documentar la gestión de la información | Grupo 10B",
+    "grupo-10a-guia-06-mantener-equipos.html":
+      "Guía 6 - Preparar el mantenimiento de equipos de cómputo | Grupo 10A",
+    "grupo-10b-guia-06-mantener-equipos.html":
+      "Guía 6 - Preparar el mantenimiento de equipos de cómputo | Grupo 10B",
     "grupo-11a-guia-05-herramientas-informaticas-digitales.html":
       "Guía 5 - Operar herramientas informáticas y digitales | Grupo 11A",
     "grupo-11a-guia-06-planificar-informacion.html":
@@ -155,6 +159,20 @@
       activityTotal: 7,
       pageKey: "10b_guia5doc",
       stateKey: "guia_interactiva_10b_guia5doc_html",
+    },
+    "grupo-10a-guia-06-mantener-equipos.html": {
+      mode: "state-with-activity",
+      total: 33,
+      activityTotal: 8,
+      pageKey: "10a_guia6mant",
+      stateKey: "guia_interactiva_10a_guia6mant_html",
+    },
+    "grupo-10b-guia-06-mantener-equipos.html": {
+      mode: "state-with-activity",
+      total: 33,
+      activityTotal: 8,
+      pageKey: "10b_guia6mant",
+      stateKey: "guia_interactiva_10b_guia6mant_html",
     },
     "grupo-11a-guia-05-herramientas-informaticas-digitales.html": {
       mode: "state-with-activity",
@@ -304,6 +322,7 @@
         "grupo-10a-guia-03-planificar-informacion.html",
         "grupo-10a-guia-04-planificar-informacion-ciberseguridad.html",
         "grupo-10a-guia-05-documentar-gestion-informacion.html",
+        "grupo-10a-guia-06-mantener-equipos.html",
         "grupo-10a-guia-04-taller-integrador.html",
         "santa-barbara-guia-python.html",
       ],
@@ -318,6 +337,7 @@
         "grupo-10b-guia-03-planificar-informacion.html",
         "grupo-10b-guia-04-planificar-informacion-ciberseguridad.html",
         "grupo-10b-guia-05-documentar-gestion-informacion.html",
+        "grupo-10b-guia-06-mantener-equipos.html",
         "grupo-10b-guia-04-taller-integrador.html",
         "santa-barbara-guia-python.html",
       ],
