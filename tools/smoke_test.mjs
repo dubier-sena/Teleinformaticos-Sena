@@ -203,6 +203,16 @@ const PAGES = [
     seed: STUDENT_SEED,
     expectGlobals: ["GuideCloudSync"],
   },
+  {
+    // Guia 6 - Mantener equipos (Kennedy grado 10, fichas 3441939/3441942):
+    // usa page_runtime_loader.js + partials/guia-06-mantener-equipos-*
+    // (patron distinto al de guide_runtime_loader.js de la guia de redes de
+    // arriba, pero el mismo GuideCloudSync/ActivityStandard subyacente).
+    label: "grupo-10a-guia-06-mantener-equipos.html (aprendiz simulado, ficha 3441939)",
+    url: "/pages/guias/grupo-10a-guia-06-mantener-equipos.html",
+    seed: STUDENT_SEED,
+    expectGlobals: ["GuideCloudSync", "ActivityStandard"],
+  },
 ];
 
 async function checkPage(ws, base, { label, url, seed, expectGlobals }) {

@@ -169,6 +169,19 @@
         { id: "documento441",     label: "4.4.1 Documento Técnico + Sustentación" },
       ],
     },
+    "guia-06-mantener-equipos": {
+      label: "Guía 6 — Preparar el mantenimiento de equipos de cómputo (grado 10, Kennedy)",
+      activities: [
+        { id: "caso311",             label: "3.1.1 Detectives del mantenimiento: caso Ferretería Puerto Real" },
+        { id: "plenaria312",         label: "3.1.2 Socialización en plenaria" },
+        { id: "bloqueAB321",         label: "3.2.1 Estudio de contenidos de mantenimiento (Bloques A y B)" },
+        { id: "inspeccion322",       label: "3.2.2 Inspección externa de equipos de cómputo" },
+        { id: "analisis331",         label: "3.3.1 Consulta y análisis guiado de fallas comunes" },
+        { id: "diagnostico332",      label: "3.3.2 Diagnóstico técnico y hoja de vida del equipo" },
+        { id: "hwmonitor341",        label: "3.4.1 Laboratorio de monitoreo con HWMonitor" },
+        { id: "planMantenimiento342", label: "3.4.2 Plan de Mantenimiento Preventivo + Sustentación" },
+      ],
+    },
     "guia-08-documentar-gestion": {
       label: "Guía 8 — Documentar la gestión de la información (grado 11)",
       activities: [
@@ -699,6 +712,8 @@
     "grupo-10b-guia-04-planificar-informacion-ciberseguridad.html": "guia-04-ciberseguridad",
     "grupo-10a-guia-05-documentar-gestion-informacion.html": "guia-05-documentar-gestion",
     "grupo-10b-guia-05-documentar-gestion-informacion.html": "guia-05-documentar-gestion",
+    "grupo-10a-guia-06-mantener-equipos.html": "guia-06-mantener-equipos",
+    "grupo-10b-guia-06-mantener-equipos.html": "guia-06-mantener-equipos",
     "grupo-11a-guia-05-herramientas-informaticas-digitales.html": "guia-05-herramientas",
     "grupo-11b-guia-05-herramientas-informaticas-digitales.html": "guia-05-herramientas",
     "grupo-11a-guia-06-planificar-informacion.html": "guia-06-planificar",

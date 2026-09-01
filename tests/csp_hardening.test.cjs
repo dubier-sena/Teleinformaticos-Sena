@@ -75,9 +75,16 @@ function countInlineSurface() {
 // reincorporaron 3 atributos style="..." que ya eran parte del sitio real,
 // nunca contados aqui porque la plantilla nunca se habia regenerado/auditado.
 // No es una superficie nueva: es la plantilla alcanzando la realidad.
+// scriptBlocks 55 -> 57, styleAttrs 2748 -> 2820 (2026-09-01, Guia 6 - Mantener
+// equipos, Kennedy grado 10): 2 paginas nuevas (10A/10B), cada una con su
+// bloque inline window.__PAGE_CONTEXT__ = {...} (mismo patron que toda guia
+// que usa page_runtime_loader.js) + un partial nuevo con las mismas
+// convenciones de estilo inline (style="margin-top:16px", etc.) que ya usan
+// guia4ciber/guia5doc. No es una superficie nueva: es el mismo patron
+// existente aplicado a una guia mas.
 const BASELINE = {
-  scriptBlocks: 55,
-  styleAttrs: 2748,
+  scriptBlocks: 57,
+  styleAttrs: 2820,
   styleTags: 23,
 };
 

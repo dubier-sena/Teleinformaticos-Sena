@@ -1,0 +1,1076 @@
+<button class="hamburger" onclick="toggleSidebar()" aria-label="Menú">&#9776;</button>
+<button class="btn-sb-expand" onclick="showSidebar()" title="Mostrar barra lateral">&#9776;</button>
+
+<div class="layout app-layout">
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="badge">SENA &middot; FPI</div>
+      <h2>Gu&iacute;a 6 - Preparar el mantenimiento de equipos de c&oacute;mputo</h2>
+      <p>Sistemas Teleinform&aacute;ticos</p>
+      <button class="btn-sb-collapse" onclick="hideSidebar()" title="Ocultar barra lateral">&#9664;</button>
+    </div>
+
+    <div class="sidebar-ficha" id="sb-ficha-ok" style="display:none">
+      <div class="sf-label">Tu grupo</div>
+      <div class="sf-inst" id="sb-inst"></div>
+      <div class="sf-meta" id="sb-grupo-meta"></div>
+      <div class="sf-badge" id="sb-badge"></div>
+    </div>
+    <div class="sidebar-noficha" id="sb-ficha-warn">
+      <a href="index.html">Inicio | Seleccionar grupo / ficha</a>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span>Progreso</span>
+        <span id="progressValue">0%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <p class="progress-note">El avance se guarda localmente en este navegador.</p>
+      <button type="button" class="reset-button" id="resetProgress">Reiniciar respuestas</button>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Informaci&oacute;n</div>
+      <a class="nav-link active" href="#identificacion" onclick="setActive(this)">
+        <span class="icon">&#128203;</span> Identificaci&oacute;n
+      </a>
+      <a class="nav-link" href="#presentacion" onclick="setActive(this)">
+        <span class="icon">&#128075;</span> Presentaci&oacute;n
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Actividades</div>
+      <a class="nav-link" href="#reflexion" onclick="setActive(this)">
+        <span class="icon">&#128172;</span> 3.1 Reflexi&oacute;n Inicial
+        <span class="check">&#10003;</span>
+      </a>
+      <a class="nav-link" href="#contexto" onclick="setActive(this)">
+        <span class="icon">&#128269;</span> 3.2 Contextualizaci&oacute;n
+        <span class="check">&#10003;</span>
+      </a>
+      <a class="nav-link" href="#apropiacion" onclick="setActive(this)">
+        <span class="icon">&#128218;</span> 3.3 Apropiaci&oacute;n
+        <span class="check">&#10003;</span>
+      </a>
+      <a class="nav-link" href="#transferencia" onclick="setActive(this)">
+        <span class="icon">&#128640;</span> 3.4 Transferencia
+        <span class="check">&#10003;</span>
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Recursos</div>
+      <a class="nav-link" href="#control-avance" onclick="setActive(this)"><span class="icon">&#9989;</span> Control de avance</a>
+      <a class="nav-link" href="#materiales" onclick="setActive(this)">
+        <span class="icon">&#128193;</span> Materiales de apoyo
+      </a>
+      <a class="nav-link" href="#evidencias" onclick="setActive(this)">
+        <span class="icon">&#128202;</span> Evidencias
+      </a>
+      <a class="nav-link" href="#glosario" onclick="setActive(this)">
+        <span class="icon">&#128214;</span> Glosario
+      </a>
+      <a class="nav-link" href="#referencias" onclick="setActive(this)">
+        <span class="icon">&#128279;</span> Referencias
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Gu&iacute;a asignada</div>
+      <a class="nav-guide current" id="currentGuideNavLink" href="grupo-10a-guia-06-mantener-equipos.html" data-current-file="grupo-10a-guia-06-mantener-equipos.html">
+        <span class="g-icon">&#128295;</span>
+        <span class="g-info">
+          <span class="g-num">Gu&iacute;a 6</span>
+          <span class="g-name" id="currentGuideNavLabel">Preparar el mantenimiento de equipos | 10A</span>
+        </span>
+        <span class="g-tag actual">Actual</span>
+      </a>
+    </div>
+
+    <a class="nav-home-link" href="calendario-academico-2026.html">&#128197; <span>Calendario 2026</span></a>
+    <a class="nav-home-link" href="index.html">&#127968; <span>Volver al Inicio</span></a>
+  </nav>
+
+  <div class="main app-main">
+    <div class="topbar">
+      <div class="topbar-title">
+        <strong>Gu&iacute;a 6 - Preparar el mantenimiento de equipos de c&oacute;mputo</strong>
+      </div>
+      <div class="topbar-meta">
+        <span class="meta-item"><span>&#9201;</span><span>80 horas</span></span>
+        <span class="meta-item"><span>&#128197;</span><span>2026</span></span>
+        <span class="meta-item"><span>&#127979;</span><span id="topbarCampus">Kennedy | Grado 10</span></span>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="hero" id="inicio">
+        <div class="tag">Gu&iacute;a 6 | Fase: Planeaci&oacute;n</div>
+        <h1>Preparar el mantenimiento de los equipos de c&oacute;mputo de acuerdo con procedimientos t&eacute;cnicos y administrativos</h1>
+        <p>
+          En esta gu&iacute;a aprender&aacute;s a diferenciar el mantenimiento preventivo del correctivo, a
+          interpretar manuales t&eacute;cnicos de fabricante, a reconocer herramientas, materiales y elementos
+          de protecci&oacute;n personal, y a preparar un plan de trabajo antes de intervenir un equipo real.
+        </p>
+        <div class="hero-meta">
+          <div class="hero-meta-item">&#127963; SENA &mdash; Servicio Nacional de Aprendizaje</div>
+          <div class="hero-meta-item">&#128205; Competencia: Mantener equipos de c&oacute;mputo</div>
+          <div class="hero-meta-item">&#9201; 80 horas</div>
+          <div class="hero-meta-item">&#127891; C&oacute;digo: 233108 &middot; V1</div>
+        </div>
+      </div>
+
+      <div id="control-avance" class="section-title">Tu control de avance</div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#e8f5e9">&#9989;</div>
+            <div><h3>&iquest;Qu&eacute; llevas y qu&eacute; te falta?</h3><p>Se actualiza solo con tus entregas y respuestas guardadas</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div data-act-std-avance><p class="intro-text">Cargando tu avance...</p></div>
+          <div class="gnote gnote--recuerda"><div class="gnote__label">&#128161; Recuerda</div>
+            <p>Esta tabla se marca sola: <strong>Entregada</strong> cuando subes la evidencia a Drive y
+            <strong>Guardada</strong> cuando guardas tus respuestas. Lo que siga en Pendiente es lo que te falta.</p></div>
+        </div>
+      </div>
+
+      <div id="identificacion" class="section-title">Identificaci&oacute;n de la Gu&iacute;a</div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#e8f5e9">&#128203;</div>
+            <div>
+              <h3>Datos del Programa de Formaci&oacute;n</h3>
+              <p>Informaci&oacute;n oficial del programa y la competencia</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="table-scroll">
+            <table class="data-table ident-table">
+              <tbody>
+                <tr><td>Denominaci&oacute;n del Programa</td><td>T&eacute;cnico en Sistemas Teleinform&aacute;ticos</td></tr>
+                <tr><td>C&oacute;digo del Programa</td><td>233108 &middot; V1</td></tr>
+                <tr><td>Nombre del Proyecto Formativo</td><td>Alfabetizaci&oacute;n Digital, Asesor&iacute;a T&eacute;cnica y Ciberseguridad para la Mejora de Actividades Productivas Locales en la Zona de Influencia del CIAS.</td></tr>
+                <tr><td>Fase del Proyecto</td><td>Planeaci&oacute;n</td></tr>
+                <tr><td>Actividad del Proyecto</td><td>Planificar procesos de intervenci&oacute;n en alfabetizaci&oacute;n digital, asesor&iacute;a t&eacute;cnica y ciberseguridad.</td></tr>
+                <tr><td>Competencia</td><td>220501001 - Mantener equipos de c&oacute;mputo seg&uacute;n procedimiento t&eacute;cnico.</td></tr>
+                <tr><td>Resultado de Aprendizaje</td><td>RAP 01 - Preparar el mantenimiento de los equipos de c&oacute;mputo de acuerdo con procedimientos t&eacute;cnicos y administrativos.</td></tr>
+                <tr><td>Duraci&oacute;n</td><td>80 horas (60 horas de formaci&oacute;n directa y 20 horas de trabajo independiente)</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="presentacion" class="section-title">Presentaci&oacute;n</div>
+      <p class="section-intro">📍 <strong>Empieza por aquí:</strong> conoce de qué trata la guía y qué vas a lograr. Léela completa antes de comenzar las actividades.</p>
+      <div class="gnote gnote--ruta">
+        <div class="gnote__label">🧭 ¿Cómo trabajar esta guía? Paso a paso</div>
+        <ol>
+          <li><strong>Lee la teoría</strong> de las secciones de contextualización antes de resolver las actividades.</li>
+          <li><strong>Resuelve cada actividad</strong> en orden. Escribe tus respuestas en los campos de la guía.</li>
+          <li><strong>Guarda tus respuestas</strong> con el botón de cada actividad. Tu avance queda guardado en este navegador.</li>
+          <li><strong>Entrega las evidencias</strong> que lo pidan con el botón <em>Entregar a Drive</em>. Quedan en la carpeta de tu ficha.</li>
+          <li><strong>Revisa "Tu control de avance"</strong> (arriba): te muestra qué llevas Entregado, Guardado y Pendiente.</li>
+        </ol>
+      </div>
+      <div class="gnote gnote--recuerda"><div class="gnote__label">💡 Recuerda</div>
+        <p>No tienes que terminar todo de una vez: puedes salir y volver, tu trabajo se guarda solo. Si una actividad
+        ya fue entregada y necesitas corregirla, pídele a tu instructor que la habilite de nuevo.</p></div>
+
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#e3f2fd">&#128075;</div>
+            <div>
+              <h3>Bienvenida a la Gu&iacute;a</h3>
+              <p>Conoce el contexto, el alcance y las metas de este recorrido formativo</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <p class="intro-text">
+            &iexcl;Bienvenido, aprendiz! En el Magdalena Medio y el Occidente de Boyac&aacute;, ferreter&iacute;as,
+            miscel&aacute;neas, droguer&iacute;as y cooperativas agropecuarias dependen cada d&iacute;a m&aacute;s de sus
+            computadores para facturar, llevar inventarios y comunicarse con proveedores. Sin embargo, muy pocas
+            cuentan con un plan de mantenimiento: los equipos se intervienen solo cuando ya fallaron, casi
+            siempre en el peor momento.
+          </p>
+          <p class="intro-text">
+            Un t&eacute;cnico que sabe preparar el mantenimiento &mdash; diagnosticar antes de actuar, consultar
+            los manuales correctos, alistar las herramientas adecuadas y documentar lo planeado &mdash; evita
+            paradas de producci&oacute;n, alarga la vida &uacute;til de los equipos y protege la informaci&oacute;n del
+            negocio. En esta gu&iacute;a desarrollar&aacute;s el RAP 01 de la competencia &laquo;Mantener equipos de
+            c&oacute;mputo seg&uacute;n procedimiento t&eacute;cnico&raquo;: aprender&aacute;s a diferenciar el mantenimiento
+            preventivo del correctivo, a interpretar manuales t&eacute;cnicos de fabricante, a reconocer las
+            herramientas, materiales, elementos de limpieza y de protecci&oacute;n personal necesarios, y a
+            preparar un plan de trabajo antes de intervenir un equipo real.
+          </p>
+          <p class="intro-text">
+            El caso gu&iacute;a de esta gu&iacute;a es la <strong>Ferreter&iacute;a y Miscel&aacute;nea Puerto Real</strong>, un
+            negocio familiar de Puerto Boyac&aacute; (Magdalena Medio) que nunca ha recibido mantenimiento
+            programado en sus computadores. T&uacute; ser&aacute;s el t&eacute;cnico que la ayude a cambiar esa situaci&oacute;n.
+            Trabajar&aacute;s en cuatro momentos: primero reflexionar&aacute;s sobre el caso de Puerto Real; luego
+            estudiar&aacute;s los conceptos clave de mantenimiento de equipos y practicar&aacute;s una inspecci&oacute;n
+            externa; despu&eacute;s aplicar&aacute;s ese conocimiento diagnosticando un equipo real del taller y
+            diligenciando su hoja de vida; y finalmente construir&aacute;s, con ayuda de la herramienta HWMonitor,
+            un Plan de Mantenimiento Preventivo y Correctivo completo, que sustentar&aacute;s ante el instructor.
+          </p>
+          <div class="info-box green" style="margin-top:14px">
+            <div class="label">&#128204; Lo que necesitas para esta gu&iacute;a</div>
+            <p>
+              Computador con suite ofim&aacute;tica (LibreOffice o Microsoft Office), acceso a internet,
+              destornilladores de precisi&oacute;n, pulsera antiest&aacute;tica, soplador de aire comprimido y el
+              formato de hoja de vida de equipos suministrado por el instructor. Algunas actividades son de
+              trabajo directo con el instructor y otras de trabajo independiente. Lea siempre las instrucciones
+              completas antes de empezar y guarde cada evidencia con nombre descriptivo.
+              <strong>Sin evidencia, no hay evaluaci&oacute;n.</strong>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════ 3.1 REFLEXIÓN INICIAL ═══════════════════════╗ -->
+      <div id="reflexion" class="section-title">3.1 &middot; Actividades de Reflexi&oacute;n Inicial</div>
+      <p class="section-intro">📍 <strong>Fase de reflexión inicial:</strong> activa lo que ya sabes sobre el tema. Aquí no se evalúa el acierto, sino tu participación: responde con confianza, no hay respuestas malas.</p>
+      <div class="info-box blue" style="margin-bottom:16px">
+        <p>Activar lo que usted ya sabe sobre mantenimiento de equipos y reconocer el costo de no
+        planificarlo, antes de entrar a los conceptos t&eacute;cnicos. Metodolog&iacute;a: aprendizaje basado en
+        problemas (ABP), con la t&eacute;cnica activa de lluvia de ideas en equipo. Todo el tiempo de reflexi&oacute;n
+        es trabajo directo con el instructor.</p>
+      </div>
+      <div class="card open cat-reflexion">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128172;</div>
+            <div>
+              <h3>Actividades de Reflexi&oacute;n Inicial</h3>
+              <p>2 actividades &middot; Duraci&oacute;n: 1 hora directa</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+
+          <!-- ───────── Actividad 3.1.1 ───────── -->
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.1.1</span>
+              <span class="activity-title">&laquo;Detectives del mantenimiento&raquo;: el caso de la Ferreter&iacute;a Puerto Real</span>
+              <span class="mission-chip">Misi&oacute;n de arranque</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> en grupos de 3 o 4, analizar por lluvia de ideas los s&iacute;ntomas del caso Puerto Real. Duraci&oacute;n: 30 minutos directas.</p>
+
+              <article class="story-card" style="margin-top:16px">
+                <h3>&#128187; Caso &mdash; Ferreter&iacute;a y Miscel&aacute;nea Puerto Real, Puerto Boyac&aacute; (Magdalena Medio)</h3>
+                <p>Este negocio familiar tiene 4 computadores: facturaci&oacute;n, bodega, contabilidad y un punto
+                de atenci&oacute;n. Nunca han recibido mantenimiento programado. Esta semana, el computador de
+                facturaci&oacute;n se calienta demasiado, su ventilador suena fuerte y en ocasiones no reconoce la
+                memoria USB del lector de c&oacute;digo de barras.</p>
+              </article>
+
+              <article class="notes-card" style="margin-top:16px;">
+                <h3>Lluvia de ideas en grupo (3 o 4 personas)</h3>
+                <p class="intro-text" style="margin-top:0;font-size:.9rem">
+                  No es necesario entregar un producto escrito por el grupo: registra aqu&iacute; tus propias
+                  respuestas como participante de la discusi&oacute;n.
+                </p>
+                <label>
+                  <span>1. &iquest;Qu&eacute; s&iacute;ntomas del computador de facturaci&oacute;n llaman su atenci&oacute;n? Enumere al menos 3.</span>
+                  <textarea rows="4" data-store="g6mant_311_sintomas" data-track placeholder="Ej.: se calienta demasiado, el ventilador suena fuerte, a veces no reconoce el USB del lector de codigo de barras."></textarea>
+                </label>
+                <label>
+                  <span>2. &iquest;Qu&eacute; posibles causas t&eacute;cnicas podr&iacute;an explicar cada s&iacute;ntoma?</span>
+                  <textarea rows="4" data-store="g6mant_311_causas" data-track placeholder="Relaciona cada sintoma con una posible causa (polvo acumulado, ventilador danado, puerto USB con falla, etc.)."></textarea>
+                </label>
+                <label>
+                  <span>3. &iquest;Qu&eacute; herramientas o equipos de protecci&oacute;n creen que necesitar&aacute;n antes de abrir el computador?</span>
+                  <textarea rows="3" data-store="g6mant_311_herramientas" data-track placeholder="Ej.: destornillador de precision, pulsera antiestatica, soplador de aire comprimido."></textarea>
+                </label>
+                <label>
+                  <span>4. &iquest;Qu&eacute; precauciones tomar&iacute;an para no perder informaci&oacute;n ni da&ntilde;ar m&aacute;s el equipo?</span>
+                  <textarea rows="3" data-store="g6mant_311_precauciones" data-track placeholder="Ej.: hacer copia de seguridad de la facturacion antes de intervenir, desconectar el equipo de la corriente."></textarea>
+                </label>
+                <label>
+                  <span>5. &iquest;Alguna vez han visto un computador con s&iacute;ntomas parecidos en su casa, colegio o negocio familiar? &iquest;Qu&eacute; pas&oacute;?</span>
+                  <textarea rows="3" data-store="g6mant_311_experiencia" data-track placeholder="Describe brevemente una experiencia propia o cercana con sintomas similares."></textarea>
+                </label>
+                <div id="caso311DeadlineControls" style="margin-top:16px"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarCaso311" class="btn-save-response" onclick="actStd_save_caso311()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_caso311()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusCaso311" class="activity-saved-notice" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+            </div>
+          </div>
+
+          <!-- ───────── Actividad 3.1.2 ───────── -->
+          <div class="activity mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.1.2</span>
+              <span class="activity-title">Socializaci&oacute;n en plenaria</span>
+              <span class="mission-chip">Misi&oacute;n de arranque</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> compartir el hallazgo m&aacute;s preocupante de cada grupo y cerrar con una reflexi&oacute;n sobre mantenimiento preventivo vs. correctivo. Duraci&oacute;n: 30 minutos directas.</p>
+
+              <article class="support-card">
+                <h3>Instrucciones</h3>
+                <ol style="padding-left:1.4rem;margin:0;line-height:1.7">
+                  <li>Cada grupo comparte en m&aacute;ximo 2 minutos su s&iacute;ntoma m&aacute;s preocupante y la causa que consideran m&aacute;s probable.</li>
+                  <li>El instructor registra en el tablero los s&iacute;ntomas y agrupa las causas por tipo: mec&aacute;nicas, el&eacute;ctricas, de software o de falta de limpieza.</li>
+                </ol>
+              </article>
+
+              <article class="notes-card" style="margin-top:16px;">
+                <h3>Bit&aacute;cora de cierre</h3>
+                <label>
+                  <span>1. S&iacute;ntoma m&aacute;s preocupante que compartiste con el grupo general y la causa m&aacute;s probable</span>
+                  <textarea rows="3" data-store="g6mant_312_sintoma_grupo" data-track placeholder="Resume lo que tu grupo compartio en la plenaria."></textarea>
+                </label>
+                <label>
+                  <span>2. Idea final: &iquest;qu&eacute; relaci&oacute;n encuentra entre &laquo;no hacer mantenimiento preventivo&raquo; y &laquo;terminar haciendo mantenimiento correctivo urgente&raquo;?</span>
+                  <textarea rows="4" data-store="g6mant_312_reflexion" data-track placeholder="Escribe tu conclusion personal sobre preventivo vs. correctivo, con base en lo discutido en plenaria."></textarea>
+                </label>
+                <div id="plenaria312DeadlineControls" style="margin-top:16px"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarPlenaria312" class="btn-save-response" onclick="actStd_save_plenaria312()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_plenaria312()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusPlenaria312" class="activity-saved-notice" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════ 3.2 CONTEXTUALIZACIÓN ═══════════════════════╗ -->
+      <div id="contexto" class="section-title">3.2 &middot; Contextualizaci&oacute;n e Identificaci&oacute;n de Conocimientos</div>
+      <p class="section-intro">📍 <strong>Fase de contextualización:</strong> aquí están los conceptos y la teoría que necesitas. Estúdialos con calma — son la base para resolver bien las actividades que siguen.</p>
+      <div class="info-box blue" style="margin-bottom:16px">
+        <p>Construir la base conceptual sobre tipos de mantenimiento, manuales t&eacute;cnicos,
+        materiales/herramientas y elementos de protecci&oacute;n, y aplicarla en una primera inspecci&oacute;n
+        externa. Metodolog&iacute;a: aprendizaje colaborativo con estudio por bloques tem&aacute;ticos + demostraci&oacute;n guiada.</p>
+      </div>
+      <div class="card open cat-contexto">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128269;</div>
+            <div>
+              <h3>Actividades de Contextualizaci&oacute;n</h3>
+              <p>2 actividades &middot; Duraci&oacute;n: 10 horas (7 directas + 3 independientes)</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+
+          <!-- ───────── Actividad 3.2.1 ───────── -->
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.2.1</span>
+              <span class="activity-title">Estudio de contenidos de mantenimiento de equipos (Bloques A y B)</span>
+              <span class="mission-chip">Misi&oacute;n diagn&oacute;stica</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> estudiar en equipo de 3 los 7 temas de los Bloques A y B, y consolidar una tabla resumen exportada a PDF: <code>BloqueAB_RAP01_[TuNombre]_v1.0.pdf</code>. Duraci&oacute;n: 7 horas directas + 3 horas independientes previas.</p>
+
+              <div class="info-box" style="margin-top:14px">
+                <div class="label">&#9200; Trabajo independiente (3 horas, ANTES de la sesi&oacute;n)</div>
+                <p>Estudie los temas de los Bloques A y B usando los m&oacute;dulos de IT Essentials de Cisco
+                Networking Academy (netacad.com) y los manuales t&eacute;cnicos que le indique el instructor.
+                Tome apuntes en su bit&aacute;cora. Llegue a clase con los conceptos b&aacute;sicos de mantenimiento
+                preventivo, correctivo y elementos de protecci&oacute;n revisados.</p>
+              </div>
+
+              <div class="table-scroll" style="margin-top:16px">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th style="width:30%">Tema (Bloque A &mdash; Tipos y diagn&oacute;stico de mantenimiento)</th>
+                      <th>&iquest;Qu&eacute; debes aprender?</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>Mantenimiento preventivo</td><td>Concepto, periodicidad, ventajas y ejemplos aplicados a equipos de c&oacute;mputo (limpieza interna, verificaci&oacute;n de temperaturas, actualizaci&oacute;n de software).</td></tr>
+                    <tr><td>Mantenimiento correctivo</td><td>Concepto, diferencias con el preventivo, cu&aacute;ndo se aplica y riesgos de solo hacer mantenimiento correctivo.</td></tr>
+                    <tr><td>Diagn&oacute;stico de equipos</td><td>S&iacute;ntomas comunes de falla f&iacute;sica y l&oacute;gica, y su relaci&oacute;n con posibles causas (sobrecalentamiento, ruido, fallas de reconocimiento de dispositivos).</td></tr>
+                    <tr><td>Manuales t&eacute;cnicos</td><td>Qu&eacute; contienen (especificaciones, procedimientos de desarme, garant&iacute;a) y c&oacute;mo se consultan en el sitio del fabricante.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="table-scroll" style="margin-top:12px">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th style="width:30%">Tema (Bloque B &mdash; Materiales, herramientas y protecci&oacute;n personal)</th>
+                      <th>&iquest;Qu&eacute; debes aprender?</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>Herramientas de mantenimiento</td><td>Destornilladores de precisi&oacute;n, pulsera antiest&aacute;tica, soplador de aire comprimido, brochas: funci&oacute;n y uso correcto de cada una.</td></tr>
+                    <tr><td>Elementos de limpieza y productos qu&iacute;micos</td><td>Alcohol isopropil&iacute;co, aire comprimido, limpia contactos: caracter&iacute;sticas, usos y precauciones de manejo.</td></tr>
+                    <tr><td>Elementos de protecci&oacute;n personal (EPP)</td><td>Pulsera antiest&aacute;tica y su funci&oacute;n para evitar descargas electrost&aacute;ticas (ESD) que da&ntilde;en componentes.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <article class="support-card" style="margin-top:16px">
+                <h3>Instrucciones para la sesi&oacute;n directa</h3>
+                <ol style="padding-left:1.4rem;margin:0;line-height:1.7">
+                  <li>Forme un equipo de 3 personas. Repartan los 7 temas (4 del Bloque A + 3 del Bloque B): m&iacute;nimo 2 temas por integrante.</li>
+                  <li>Durante la primera hora, cada integrante explica sus temas al equipo (5 minutos por tema) mientras los dem&aacute;s completan sus apuntes.</li>
+                  <li>En LibreOffice Calc o Google Sheets, construyan una tabla de 3 columnas: &laquo;Tema&raquo;, &laquo;&iquest;Para qu&eacute; sirve?&raquo;, &laquo;Ejemplo aplicado en la Ferreter&iacute;a Puerto Real&raquo;. Completen una fila por tema.</li>
+                  <li>El instructor realiza una plenaria de cierre donde cada equipo comparte su fila m&aacute;s importante.</li>
+                  <li>Exporten la tabla a PDF con el nombre <strong>BloqueAB_RAP01_[TuNombre]_v1.0.pdf</strong> y comp&aacute;rtanla por el medio indicado por el instructor.</li>
+                </ol>
+              </article>
+
+              <article class="notes-card" style="margin-top:16px">
+                <h3>Registro guiado del aprendiz</h3>
+                <label>
+                  <span>1. Reparto del equipo: temas y responsable de cada uno</span>
+                  <textarea rows="4" data-store="g6mant_321_reparto" data-track placeholder="Ej.: Ana: mantenimiento preventivo, correctivo. Luis: diagnostico de equipos, manuales tecnicos. Yo: herramientas, limpieza, EPP."></textarea>
+                </label>
+                <label>
+                  <span>2. Temas que estudiaste t&uacute; (de los 7 distribuidos en tu equipo)</span>
+                  <textarea rows="3" data-store="g6mant_321_temas" data-track placeholder="Lista los temas que te tocaron y la fuente principal que revisaste (IT Essentials, manual tecnico)."></textarea>
+                </label>
+                <label>
+                  <span>3. Tema de tu fila en la tabla resumen</span>
+                  <textarea rows="2" data-store="g6mant_321_tema_fila" data-track placeholder="Ej.: Elementos de proteccion personal (EPP)."></textarea>
+                </label>
+                <label>
+                  <span>4. &iquest;Para qu&eacute; sirve?</span>
+                  <textarea rows="3" data-store="g6mant_321_paraque" data-track placeholder="Explica el concepto con tus palabras, sin copiar y pegar definiciones."></textarea>
+                </label>
+                <label>
+                  <span>5. Ejemplo aplicado en la Ferreter&iacute;a Puerto Real</span>
+                  <textarea rows="4" data-store="g6mant_321_ejemplo" data-track placeholder="Ej.: antes de abrir el computador de facturacion, el tecnico usa pulsera antiestatica para no danar la placa madre."></textarea>
+                </label>
+                <div id="bloqueAB321DeadlineControls" style="margin-top:16px"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarBloqueAB321" class="btn-save-response" onclick="actStd_save_bloqueAB321()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_bloqueAB321()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusBloqueAB321" class="activity-saved-notice" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+
+              <div id="driveDeliveryPanel-bloqueAB321" style="margin-top:16px"></div>
+            </div>
+          </div>
+
+          <!-- ───────── Actividad 3.2.2 ───────── -->
+          <div class="activity mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.2.2</span>
+              <span class="activity-title">Ejercicio de inspecci&oacute;n externa de equipos de c&oacute;mputo</span>
+              <span class="mission-chip">Misi&oacute;n diagn&oacute;stica</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> inspeccionar externamente un equipo real del taller y diligenciar el formato de inspecci&oacute;n suministrado por el instructor. Duraci&oacute;n: 3 horas directas (+ 8 horas independientes despu&eacute;s, de consulta sobre diagn&oacute;stico de fallas).</p>
+
+              <article class="support-card" style="margin-top:16px">
+                <h3>Instrucciones &mdash; sigue este orden sin saltarte pasos</h3>
+                <ol style="padding-left:1.4rem;margin:0;line-height:1.7">
+                  <li>En equipo de m&aacute;ximo 4 integrantes, reciban del instructor un equipo de c&oacute;mputo del taller (sin abrirlo todav&iacute;a).</li>
+                  <li>Realicen una inspecci&oacute;n puramente externa: estado f&iacute;sico de la carcasa, puertos, cables, ventilaci&oacute;n, ruidos al encender, temperatura al tacto en la carcasa despu&eacute;s de 10 minutos de uso.</li>
+                  <li>Registren sus hallazgos en el <a href="assets/materiales/guia6mant/Formato_Inspeccion_Externa_Equipos.pdf" target="_blank" rel="noopener">formato de inspecci&oacute;n externa</a> suministrado por el instructor, indicando para cada &iacute;tem si es normal o si requiere atenci&oacute;n.</li>
+                  <li>Redacten un informe corto (m&aacute;ximo 1 p&aacute;gina) con sus conclusiones: &iquest;el equipo parece requerir mantenimiento preventivo, correctivo, o ambos? Justifiquen con base en lo observado.</li>
+                  <li>Adicionalmente, con base en el mismo equipo inspeccionado, diligencien la tabla de identificaci&oacute;n de dispositivos de entrada, salida y almacenamiento.</li>
+                </ol>
+              </article>
+
+              <div class="info-box" style="margin-top:14px">
+                <div class="label">&#9200; Trabajo independiente (8 horas, ANTES de la sesi&oacute;n)</div>
+                <p>Consulte los recursos sobre diagn&oacute;stico de fallas de hardware y software recomendados por
+                el instructor (m&oacute;dulos IT Essentials de Cisco Networking Academy y manuales t&eacute;cnicos de
+                fabricantes). Elabore en su bit&aacute;cora una tabla personal de &laquo;s&iacute;ntoma &rarr; posible causa
+                &rarr; tipo de mantenimiento&raquo; con m&iacute;nimo 8 casos.</p>
+              </div>
+
+              <article class="notes-card" style="margin-top:16px">
+                <h3>Informe de inspecci&oacute;n (registro del aprendiz)</h3>
+                <label>
+                  <span>1. Hallazgos de la inspecci&oacute;n externa (estado f&iacute;sico, puertos, cables, ventilaci&oacute;n, ruidos, temperatura)</span>
+                  <textarea rows="6" data-store="g6mant_322_hallazgos" data-track placeholder="Describe lo observado en cada aspecto de la inspeccion externa."></textarea>
+                </label>
+                <label>
+                  <span>2. Conclusiones (m&aacute;ximo 1 p&aacute;gina): &iquest;el equipo requiere mantenimiento preventivo, correctivo o ambos? Justifica.</span>
+                  <textarea rows="6" data-store="g6mant_322_conclusion" data-track placeholder="Redacta tu conclusion tecnica justificada con base en los hallazgos."></textarea>
+                </label>
+                <label>
+                  <span>3. Dispositivo(s) de entrada identificados en el equipo: definici&oacute;n breve y ubicaci&oacute;n f&iacute;sica</span>
+                  <textarea rows="3" data-store="g6mant_322_disp_entrada" data-track placeholder="Ej.: teclado y mouse USB, conectados en los puertos traseros."></textarea>
+                </label>
+                <label>
+                  <span>4. Dispositivo(s) de salida identificados en el equipo: definici&oacute;n breve y ubicaci&oacute;n f&iacute;sica</span>
+                  <textarea rows="3" data-store="g6mant_322_disp_salida" data-track placeholder="Ej.: monitor conectado por HDMI, parlantes en el conector de audio."></textarea>
+                </label>
+                <label>
+                  <span>5. Dispositivo(s) de almacenamiento identificados en el equipo: definici&oacute;n breve y ubicaci&oacute;n f&iacute;sica</span>
+                  <textarea rows="3" data-store="g6mant_322_disp_almacenamiento" data-track placeholder="Ej.: disco duro interno de 1TB, identificado al abrir la carcasa lateral."></textarea>
+                </label>
+                <div id="inspeccion322DeadlineControls" style="margin-top:16px"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarInspeccion322" class="btn-save-response" onclick="actStd_save_inspeccion322()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_inspeccion322()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusInspeccion322" class="activity-saved-notice" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+
+              <div id="driveDeliveryPanel-inspeccion322" style="margin-top:16px"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════ 3.3 APROPIACIÓN ═══════════════════════╗ -->
+      <div id="apropiacion" class="section-title">3.3 &middot; Actividades de Apropiaci&oacute;n del Conocimiento</div>
+      <p class="section-intro">📍 <strong>Fase de apropiación:</strong> pones en práctica lo aprendido. La mayoría de las evidencias que debes entregar salen de esta fase.</p>
+      <div class="info-box blue" style="margin-bottom:16px">
+        <p>Profundizar en el diagn&oacute;stico t&eacute;cnico de equipos y en el diligenciamiento de la
+        documentaci&oacute;n de soporte (hoja de vida del equipo), aplicando criterio t&eacute;cnico frente a casos
+        reales. Metodolog&iacute;a: estudio de caso + aprendizaje basado en problemas (ABP), con trabajo guiado
+        por el instructor.</p>
+      </div>
+      <div class="card open cat-apropiacion">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128218;</div>
+            <div>
+              <h3>Actividades de Apropiaci&oacute;n</h3>
+              <p>2 actividades &middot; Duraci&oacute;n: 32 horas (24 directas + 8 independientes)</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+
+          <!-- ───────── Actividad 3.3.1 ───────── -->
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.3.1</span>
+              <span class="activity-title">Consulta y an&aacute;lisis guiado de fallas comunes</span>
+              <span class="mission-chip">Misi&oacute;n t&eacute;cnica</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> estudiar el Bloque C de diagn&oacute;stico avanzado y analizar dos nuevos reportes del caso Puerto Real. Duraci&oacute;n: 12 horas directas + 8 horas independientes previas.</p>
+
+              <div class="table-scroll" style="margin-top:16px">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th style="width:30%">Tema (Bloque C &mdash; Diagn&oacute;stico avanzado)</th>
+                      <th>&iquest;Qu&eacute; debes aprender?</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>Fallas f&iacute;sicas frecuentes</td><td>Acumulaci&oacute;n de polvo, ventiladores obstruidos, conexiones sueltas, deterioro de pasta t&eacute;rmica, oxidaci&oacute;n de contactos.</td></tr>
+                    <tr><td>Fallas l&oacute;gicas frecuentes</td><td>Software desactualizado, fragmentaci&oacute;n, malware, arranque lento, procesos que consumen recursos en exceso.</td></tr>
+                    <tr><td>Relaci&oacute;n entre s&iacute;ntoma y causa</td><td>C&oacute;mo asociar un s&iacute;ntoma reportado por el usuario (ej. &laquo;el equipo se calienta y hace ruido&raquo;) con posibles causas f&iacute;sicas o l&oacute;gicas.</td></tr>
+                    <tr><td>Priorizaci&oacute;n de intervenci&oacute;n</td><td>Criterios para decidir qu&eacute; se atiende primero: riesgo para el equipo, impacto en la operaci&oacute;n del negocio, complejidad de la soluci&oacute;n.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <article class="story-card" style="margin-top:16px">
+                <h3>&#128187; Caso &mdash; Ferreter&iacute;a Puerto Real: nuevos hallazgos</h3>
+                <p>Despu&eacute;s de la inspecci&oacute;n externa de la Actividad 3.2.2, el propietario entrega dos
+                reportes adicionales: (1) el equipo de facturaci&oacute;n se reinicia solo cuando corre el
+                software contable durante m&aacute;s de una hora; (2) el equipo de la bodega no reconoce la
+                impresora de c&oacute;digo de barras aunque el cable USB est&aacute; conectado. El propietario
+                pregunta si esto se soluciona con mantenimiento preventivo o si ya es correctivo.</p>
+              </article>
+
+              <article class="support-card" style="margin-top:16px">
+                <h3>Instrucciones para la sesi&oacute;n directa</h3>
+                <ol style="padding-left:1.4rem;margin:0;line-height:1.7">
+                  <li>En equipo de m&aacute;ximo 4 integrantes, analicen los dos reportes usando su tabla de s&iacute;ntoma-causa como referencia.</li>
+                  <li>Para cada reporte, determinen: tipo de mantenimiento requerido (preventivo, correctivo o ambos), posibles causas ordenadas de m&aacute;s a menos probable, y nivel de urgencia (alta, media, baja).</li>
+                  <li>Redacten una recomendaci&oacute;n t&eacute;cnica dirigida al propietario, en lenguaje claro y sin tecnicismos innecesarios, explicando qu&eacute; se va a hacer y por qu&eacute;.</li>
+                  <li>Socialicen su an&aacute;lisis en plenaria; el instructor retroalimenta la pertinencia t&eacute;cnica de cada diagn&oacute;stico.</li>
+                </ol>
+              </article>
+
+              <article class="notes-card" style="margin-top:16px">
+                <h3>An&aacute;lisis t&eacute;cnico (registro del aprendiz)</h3>
+                <label>
+                  <span>1. Estudio del Bloque C: notas sobre fallas f&iacute;sicas, l&oacute;gicas, relaci&oacute;n s&iacute;ntoma-causa y priorizaci&oacute;n</span>
+                  <textarea rows="5" data-store="g6mant_331_bloqueC" data-track placeholder="Resume lo que estudiaste del Bloque C antes de la sesion directa."></textarea>
+                </label>
+                <label>
+                  <span>2. Reporte 1 (facturaci&oacute;n se reinicia sola): tipo de mantenimiento, causas probables y urgencia</span>
+                  <textarea rows="4" data-store="g6mant_331_reporte1" data-track placeholder="Analiza el reporte 1: preventivo/correctivo, causas ordenadas y nivel de urgencia."></textarea>
+                </label>
+                <label>
+                  <span>3. Reporte 2 (impresora de bodega no reconocida): tipo de mantenimiento, causas probables y urgencia</span>
+                  <textarea rows="4" data-store="g6mant_331_reporte2" data-track placeholder="Analiza el reporte 2: preventivo/correctivo, causas ordenadas y nivel de urgencia."></textarea>
+                </label>
+                <label>
+                  <span>4. Recomendaci&oacute;n t&eacute;cnica redactada para el propietario (lenguaje claro, sin tecnicismos)</span>
+                  <textarea rows="5" data-store="g6mant_331_recomendacion" data-track placeholder="Redacta la recomendacion final dirigida al propietario de la ferreteria."></textarea>
+                </label>
+                <div id="analisis331DeadlineControls" style="margin-top:16px"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarAnalisis331" class="btn-save-response" onclick="actStd_save_analisis331()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_analisis331()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusAnalisis331" class="activity-saved-notice" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+
+              <div id="driveDeliveryPanel-analisis331" style="margin-top:16px"></div>
+            </div>
+          </div>
+
+          <!-- ───────── Actividad 3.3.2 ───────── -->
+          <div class="activity mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.3.2</span>
+              <span class="activity-title">Diagn&oacute;stico t&eacute;cnico y diligenciamiento de hoja de vida del equipo</span>
+              <span class="mission-chip">Misi&oacute;n t&eacute;cnica</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> diagnosticar t&eacute;cnicamente un equipo distinto al de la Actividad 3.2.2 y diligenciar su hoja de vida completa. Duraci&oacute;n: 12 horas directas.</p>
+
+              <article class="support-card">
+                <h3>Instrucciones &mdash; sigue este orden sin saltarte pasos</h3>
+                <ol style="padding-left:1.4rem;margin:0;line-height:1.7">
+                  <li>Reciban del instructor un equipo de c&oacute;mputo distinto al usado en la Actividad 3.2.2, junto con el formato de hoja de vida de equipos.</li>
+                  <li>Realicen un diagn&oacute;stico t&eacute;cnico completo: inspecci&oacute;n externa, encendido y verificaci&oacute;n de funcionamiento b&aacute;sico (sistema operativo, perif&eacute;ricos, temperatura, ruido).</li>
+                  <li>Diligencien la hoja de vida del equipo con todos los datos requeridos: identificaci&oacute;n del equipo, especificaciones t&eacute;cnicas, historial de intervenci&oacute;n (si aplica), diagn&oacute;stico actual y recomendaci&oacute;n de mantenimiento.</li>
+                  <li>Entreguen al instructor la hoja de vida diligenciada para revisi&oacute;n y retroalimentaci&oacute;n individual.</li>
+                </ol>
+              </article>
+
+              <div class="info-box" style="margin-top:14px">
+                <div class="label">&#128193; Formatos oficiales de hoja de vida (usa el que te indique el instructor)</div>
+                <ul class="note-list">
+                  <li><a href="assets/materiales/guia6mant/GA-F-05-HV-de-Equipos-de-Computo.pdf" target="_blank" rel="noopener">GA-F-05 &mdash; Hoja de Vida de Equipos de C&oacute;mputo (PDF)</a></li>
+                  <li><a href="assets/materiales/guia6mant/f-gr-02-hoja-de-vida-equipos-tecnologicos.pdf" target="_blank" rel="noopener">F-GR-02 &mdash; Hoja de Vida de Equipos Tecnol&oacute;gicos (PDF)</a></li>
+                  <li><a href="assets/materiales/guia6mant/GT-FO-01-FORMATO-HOJAS-DE-VIDA-EQUIPOS-V03.xlsx" target="_blank" rel="noopener">GT-FO-01 &mdash; Formato Hojas de Vida de Equipos, V03 (Excel)</a></li>
+                  <li><a href="assets/materiales/guia6mant/f-ga-146-ficha-tecnica-equipos-de-computo.xlsx" target="_blank" rel="noopener">F-GA-146 &mdash; Ficha T&eacute;cnica de Equipos de C&oacute;mputo (Excel)</a></li>
+                </ul>
+              </div>
+
+              <article class="notes-card" style="margin-top:16px">
+                <h3>Diagn&oacute;stico y hoja de vida (registro del aprendiz)</h3>
+                <label>
+                  <span>1. Diagn&oacute;stico t&eacute;cnico completo: inspecci&oacute;n externa, sistema operativo, perif&eacute;ricos, temperatura y ruido</span>
+                  <textarea rows="5" data-store="g6mant_332_diagnostico" data-track placeholder="Describe el resultado del diagnostico tecnico completo del equipo asignado."></textarea>
+                </label>
+                <label>
+                  <span>2. Hoja de vida &mdash; identificaci&oacute;n del equipo (marca, modelo, serial, ubicaci&oacute;n)</span>
+                  <textarea rows="3" data-store="g6mant_332_hv_identificacion" data-track placeholder="Datos de identificacion registrados en la hoja de vida."></textarea>
+                </label>
+                <label>
+                  <span>3. Hoja de vida &mdash; especificaciones t&eacute;cnicas y historial de intervenci&oacute;n (si aplica)</span>
+                  <textarea rows="4" data-store="g6mant_332_hv_especificaciones" data-track placeholder="Procesador, RAM, disco, sistema operativo y cualquier intervencion previa conocida."></textarea>
+                </label>
+                <label>
+                  <span>4. Recomendaci&oacute;n de mantenimiento registrada en la hoja de vida</span>
+                  <textarea rows="4" data-store="g6mant_332_hv_recomendacion" data-track placeholder="Recomendacion tecnica final que dejaste registrada en la hoja de vida."></textarea>
+                </label>
+                <div id="diagnostico332DeadlineControls" style="margin-top:16px"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarDiagnostico332" class="btn-save-response" onclick="actStd_save_diagnostico332()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_diagnostico332()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusDiagnostico332" class="activity-saved-notice" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+
+              <div id="driveDeliveryPanel-diagnostico332" style="margin-top:16px"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════ 3.4 TRANSFERENCIA ═══════════════════════╗ -->
+      <div id="transferencia" class="section-title">3.4 &middot; Actividades de Transferencia del Conocimiento</div>
+      <p class="section-intro">📍 <strong>Fase de transferencia:</strong> aplicas todo lo aprendido a un caso real o a una actividad integradora. Suele ser la evidencia más importante de la guía.</p>
+      <div class="info-box blue" style="margin-bottom:16px">
+        <p>Aplicar de manera integral lo aprendido, elaborando un plan de mantenimiento preventivo real
+        para el equipo de c&oacute;mputo de un negocio, con monitoreo t&eacute;cnico de par&aacute;metros y sustentaci&oacute;n
+        ante el instructor. Metodolog&iacute;a: aprendizaje basado en proyectos, con producto final evaluable.</p>
+      </div>
+      <div class="card open cat-transferencia">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128640;</div>
+            <div>
+              <h3>Actividades de Transferencia</h3>
+              <p>2 actividades &middot; Duraci&oacute;n: 37 horas (28 directas + 9 independientes)</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+
+          <!-- ───────── Actividad 3.4.1 ───────── -->
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.4.1</span>
+              <span class="activity-title">Laboratorio de monitoreo t&eacute;cnico con HWMonitor</span>
+              <span class="mission-chip">Misi&oacute;n t&eacute;cnica</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> monitorear temperatura y velocidad de ventiladores con HWMonitor durante 3 d&iacute;as y consolidar una tabla comparativa en equipo. Duraci&oacute;n: 12 horas directas + 9 horas independientes previas.</p>
+
+              <div class="info-box" style="margin-top:14px">
+                <div class="label">&#9200; Trabajo independiente (9 horas)</div>
+                <p>Instale en un equipo de c&oacute;mputo (propio, del hogar o del taller, seg&uacute;n indique el
+                instructor) el software <a href="https://www.cpuid.com" target="_blank" rel="noopener">HWMonitor</a>
+                u otra herramienta de monitoreo equivalente autorizada por el instructor. Explore sus funciones:
+                temperatura de CPU, velocidad de ventiladores, voltajes. Durante 3 d&iacute;as, registre en una
+                tabla las lecturas en tres momentos: equipo reci&eacute;n encendido, despu&eacute;s de 30 minutos de uso
+                normal, y despu&eacute;s de 30 minutos de uso exigente (varios programas abiertos). Consulta el
+                <a href="assets/materiales/guia6mant/HWMonitor_Manual_Usuario.pdf" target="_blank" rel="noopener">manual de usuario de HWMonitor</a>
+                y el <a href="assets/materiales/guia6mant/Anexo_Reporte_Ejemplo_HWMonitor.pdf" target="_blank" rel="noopener">reporte de ejemplo</a> como gu&iacute;a.</p>
+              </div>
+
+              <article class="support-card" style="margin-top:16px">
+                <h3>Instrucciones &mdash; sesi&oacute;n directa</h3>
+                <ol style="padding-left:1.4rem;margin:0;line-height:1.7">
+                  <li>En equipo de trabajo, comparen sus registros individuales y discutan qu&eacute; valores se consideran normales y cu&aacute;les indican posible sobrecalentamiento o falla de ventilaci&oacute;n, apoy&aacute;ndose en las especificaciones t&eacute;cnicas del fabricante consultadas en la Actividad 3.2.1.</li>
+                  <li>Elaboren una tabla comparativa consolidada del equipo, con conclusiones sobre el estado t&eacute;rmico de los equipos monitoreados y recomendaciones de mantenimiento preventivo.</li>
+                  <li>Exporten sus registros a hoja de c&aacute;lculo (XLSX) y luego a PDF.</li>
+                </ol>
+              </article>
+
+              <article class="notes-card" style="margin-top:16px">
+                <h3>Registro de monitoreo (registro del aprendiz)</h3>
+                <label>
+                  <span>1. Registros individuales de los 3 d&iacute;as (temperatura y velocidad de ventiladores en los 3 momentos)</span>
+                  <textarea rows="6" data-store="g6mant_341_registros" data-track placeholder="Resume tus lecturas de los 3 dias: encendido, 30 min uso normal, 30 min uso exigente."></textarea>
+                </label>
+                <label>
+                  <span>2. Tabla comparativa consolidada del equipo (resultado del trabajo en equipo)</span>
+                  <textarea rows="5" data-store="g6mant_341_comparativa" data-track placeholder="Resume la tabla comparativa consolidada por el equipo."></textarea>
+                </label>
+                <label>
+                  <span>3. Conclusiones sobre el estado t&eacute;rmico y recomendaciones de mantenimiento preventivo</span>
+                  <textarea rows="5" data-store="g6mant_341_conclusion" data-track placeholder="Conclusiones tecnicas y recomendaciones de mantenimiento preventivo."></textarea>
+                </label>
+                <div id="hwmonitor341DeadlineControls" style="margin-top:16px"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarHwmonitor341" class="btn-save-response" onclick="actStd_save_hwmonitor341()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_hwmonitor341()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusHwmonitor341" class="activity-saved-notice" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+
+              <div id="driveDeliveryPanel-hwmonitor341" style="margin-top:16px"></div>
+            </div>
+          </div>
+
+          <!-- ───────── Actividad 3.4.2 ───────── -->
+          <div class="activity mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.4.2</span>
+              <span class="activity-title">Plan de Mantenimiento Preventivo y sustentaci&oacute;n</span>
+              <span class="mission-chip">Misi&oacute;n integradora</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> elaborar el Plan de Mantenimiento Preventivo para los 4 equipos de la Ferreter&iacute;a Puerto Real y sustentarlo ante el instructor. Duraci&oacute;n: 16 horas directas.</p>
+
+              <article class="story-card" style="margin-top:16px">
+                <h3>&#127970; Caso &mdash; Ferreter&iacute;a Puerto Real: cierre del proceso</h3>
+                <p>Con base en todo lo trabajado (inspecci&oacute;n externa, diagn&oacute;stico t&eacute;cnico, hojas de
+                vida y monitoreo t&eacute;rmico), el propietario de la Ferreter&iacute;a Puerto Real les solicita
+                formalmente un Plan de Mantenimiento Preventivo para sus 4 equipos de c&oacute;mputo, que le
+                permita anticiparse a fallas y planificar el gasto en mantenimiento durante el a&ntilde;o.</p>
+              </article>
+
+              <div class="info-box" style="margin-top:14px">
+                <div class="label">&#128193; Ejemplos de referencia (planes de mantenimiento reales)</div>
+                <ul class="note-list">
+                  <li><a href="assets/materiales/guia6mant/Plan_de_Mantenimiento_Ejemplo.pdf" target="_blank" rel="noopener">Ejemplo de Plan de Mantenimiento (PDF)</a></li>
+                  <li><a href="assets/materiales/guia6mant/Programa_Mantenimiento_Ejemplo.pdf" target="_blank" rel="noopener">Ejemplo de Programa de Mantenimiento V1R3 (PDF)</a></li>
+                </ul>
+              </div>
+
+              <article class="support-card" style="margin-top:16px">
+                <h3>Instrucciones &mdash; sigue este orden sin saltarte pasos</h3>
+                <ol style="padding-left:1.4rem;margin:0;line-height:1.7">
+                  <li>En equipo de m&aacute;ximo 4 integrantes, elaboren el Plan de Mantenimiento Preventivo para los 4 equipos del caso, incluyendo como m&iacute;nimo: cronograma anual de intervenciones, actividades a realizar en cada visita, materiales y herramientas necesarias, elementos de protecci&oacute;n personal requeridos, y responsable de cada actividad.</li>
+                  <li>Anexen al plan las hojas de vida diligenciadas en la Actividad 3.3.2 como soporte del estado inicial de los equipos.</li>
+                  <li>Preparen una sustentaci&oacute;n oral de m&aacute;ximo 10 minutos por equipo, explicando su plan como si se lo presentaran directamente al propietario del negocio.</li>
+                  <li>Sustenten ante el instructor y sus compa&ntilde;eros. El instructor eval&uacute;a dominio t&eacute;cnico, claridad de la propuesta y pertinencia de las recomendaciones frente al caso.</li>
+                  <li>Entreguen el Plan de Mantenimiento Preventivo en formato digital final, incluyendo las hojas de vida como anexos.</li>
+                </ol>
+              </article>
+
+              <article class="notes-card" style="margin-top:16px">
+                <h3>Plan de Mantenimiento Preventivo (borrador previo a la redacci&oacute;n)</h3>
+                <label>
+                  <span>1. Cronograma anual de intervenciones para los 4 equipos</span>
+                  <textarea rows="4" data-store="g6mant_342_cronograma" data-track placeholder="Frecuencia y fechas propuestas de mantenimiento para cada uno de los 4 equipos."></textarea>
+                </label>
+                <label>
+                  <span>2. Actividades a realizar en cada visita de mantenimiento</span>
+                  <textarea rows="4" data-store="g6mant_342_actividades" data-track placeholder="Ej.: limpieza interna, verificacion de temperaturas, actualizacion de software."></textarea>
+                </label>
+                <label>
+                  <span>3. Materiales y herramientas necesarias</span>
+                  <textarea rows="3" data-store="g6mant_342_materiales" data-track placeholder="Ej.: destornilladores de precision, aire comprimido, alcohol isopropilico."></textarea>
+                </label>
+                <label>
+                  <span>4. Elementos de protecci&oacute;n personal (EPP) requeridos</span>
+                  <textarea rows="2" data-store="g6mant_342_epp" data-track placeholder="Ej.: pulsera antiestatica."></textarea>
+                </label>
+                <label>
+                  <span>5. Responsable de cada actividad del plan</span>
+                  <textarea rows="3" data-store="g6mant_342_responsables" data-track placeholder="Indica quien del equipo queda a cargo de cada actividad del plan."></textarea>
+                </label>
+                <div id="planMantenimiento342DeadlineControls" style="margin-top:16px"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarPlanMantenimiento342" class="btn-save-response" onclick="actStd_save_planMantenimiento342()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_planMantenimiento342()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusPlanMantenimiento342" class="activity-saved-notice" style="display:none;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-left:4px solid #2e7d32;border-radius:6px;color:#1b5e20;font-size:0.88rem">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+
+              <div id="driveDeliveryPanel-planMantenimiento342" style="margin-top:16px"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════ MATERIALES DE APOYO ═══════════════════════╗ -->
+      <div id="materiales" class="section-title">Materiales de Apoyo</div>
+      <p class="section-intro">📍 <strong>Consulta aquí</strong> los formatos oficiales, ejemplos y documentos de referencia que necesitas para las actividades de esta guía.</p>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#e0f2f1">&#128193;</div>
+            <div>
+              <h3>Formatos, ejemplos y documentos t&eacute;cnicos</h3>
+              <p>Descarga los materiales suministrados por el instructor</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Material</th>
+                  <th>Actividad</th>
+                  <th>Enlace</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Formato de Inspecci&oacute;n Externa de Equipos</td><td>3.2.2</td><td><a href="assets/materiales/guia6mant/Formato_Inspeccion_Externa_Equipos.pdf" target="_blank" rel="noopener">Abrir PDF</a></td></tr>
+                <tr><td>GA-F-05 &mdash; Hoja de Vida de Equipos de C&oacute;mputo</td><td>3.3.1 &middot; 3.3.2</td><td><a href="assets/materiales/guia6mant/GA-F-05-HV-de-Equipos-de-Computo.pdf" target="_blank" rel="noopener">Abrir PDF</a></td></tr>
+                <tr><td>F-GR-02 &mdash; Hoja de Vida de Equipos Tecnol&oacute;gicos</td><td>3.3.1 &middot; 3.3.2</td><td><a href="assets/materiales/guia6mant/f-gr-02-hoja-de-vida-equipos-tecnologicos.pdf" target="_blank" rel="noopener">Abrir PDF</a></td></tr>
+                <tr><td>GT-FO-01 &mdash; Formato Hojas de Vida de Equipos (V03, Excel)</td><td>3.3.1 &middot; 3.3.2</td><td><a href="assets/materiales/guia6mant/GT-FO-01-FORMATO-HOJAS-DE-VIDA-EQUIPOS-V03.xlsx" target="_blank" rel="noopener">Abrir Excel</a></td></tr>
+                <tr><td>F-GA-146 &mdash; Ficha T&eacute;cnica de Equipos de C&oacute;mputo (Excel)</td><td>3.3.1 &middot; 3.3.2</td><td><a href="assets/materiales/guia6mant/f-ga-146-ficha-tecnica-equipos-de-computo.xlsx" target="_blank" rel="noopener">Abrir Excel</a></td></tr>
+                <tr><td>Actividad &laquo;El Detective&raquo; (caso ampliado)</td><td>3.1.1</td><td><a href="assets/materiales/guia6mant/1_Actividad_El_Detective.docx" target="_blank" rel="noopener">Abrir Word</a></td></tr>
+                <tr><td>Manual de usuario de HWMonitor</td><td>3.4.1</td><td><a href="assets/materiales/guia6mant/HWMonitor_Manual_Usuario.pdf" target="_blank" rel="noopener">Abrir PDF</a></td></tr>
+                <tr><td>Reporte de ejemplo con HWMonitor</td><td>3.4.1</td><td><a href="assets/materiales/guia6mant/Anexo_Reporte_Ejemplo_HWMonitor.pdf" target="_blank" rel="noopener">Abrir PDF</a></td></tr>
+                <tr><td>Ejemplo de Plan de Mantenimiento</td><td>3.4.2</td><td><a href="assets/materiales/guia6mant/Plan_de_Mantenimiento_Ejemplo.pdf" target="_blank" rel="noopener">Abrir PDF</a></td></tr>
+                <tr><td>Ejemplo de Programa de Mantenimiento (V1R3)</td><td>3.4.2</td><td><a href="assets/materiales/guia6mant/Programa_Mantenimiento_Ejemplo.pdf" target="_blank" rel="noopener">Abrir PDF</a></td></tr>
+                <tr><td>Arquitectura de PC (referencia t&eacute;cnica)</td><td>3.2.1 &middot; 3.3.1</td><td><a href="assets/materiales/guia6mant/Arquitectura_PC.pdf" target="_blank" rel="noopener">Abrir PDF</a></td></tr>
+                <tr><td>Arquitectura de Laptops (referencia t&eacute;cnica)</td><td>3.2.1 &middot; 3.3.1</td><td><a href="assets/materiales/guia6mant/Arquitectura_Laptops.pdf" target="_blank" rel="noopener">Abrir PDF</a></td></tr>
+                <tr><td>Conexi&oacute;n M.2 y SATA (referencia t&eacute;cnica)</td><td>3.2.1 &middot; 3.3.1</td><td><a href="assets/materiales/guia6mant/Conexion_M2_y_SATA.docx" target="_blank" rel="noopener">Abrir Word</a></td></tr>
+                <tr><td>Manual de mantenimiento del computador</td><td>3.2.1 &middot; 3.3.1</td><td><a href="assets/materiales/guia6mant/Manual_Mantenimiento_del_Computador.pdf" target="_blank" rel="noopener">Abrir PDF</a></td></tr>
+                <tr><td>&laquo;Mantenimiento preventivo y correctivo para PCs&raquo; (Guti&eacute;rrez, Pe&ntilde;afiel, Villarreal)</td><td>3.2.1 &middot; 3.3.1</td><td><a href="assets/materiales/guia6mant/Comunidad_Emagister_Mantenimiento_Preventivo.pdf" target="_blank" rel="noopener">Abrir PDF</a></td></tr>
+                <tr><td>Cap&iacute;tulo 2 &mdash; Conocimiento del Hardware (componentes internos, reglas de seguridad y hoja de especificaciones)</td><td>3.2.1</td><td><a href="assets/materiales/guia6mant/Modulo_2_Referencia_Adicional.pdf" target="_blank" rel="noopener">Abrir PDF</a></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="info-box" style="margin-top:14px">
+            <div class="label">&#128295; Software de monitoreo (instalaci&oacute;n externa, Actividad 3.4.1)</div>
+            <p>HWMonitor se instala directamente desde el sitio oficial del fabricante:
+            <a href="https://www.cpuid.com" target="_blank" rel="noopener">cpuid.com</a>. Si no tienes acceso a
+            internet en el equipo donde vas a monitorear, ped&iacute;le al instructor el instalador en USB.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════ EVIDENCIAS ═══════════════════════╗ -->
+      <div id="evidencias" class="section-title">Planteamiento de Evidencias para la Evaluaci&oacute;n</div>
+      <p class="section-intro">📍 <strong>Resumen de lo que debes entregar:</strong> usa esta sección como lista de chequeo final. Revisa que no te falte ninguna evidencia y cómo se evalúa cada una.</p>
+      <div class="gnote gnote--entrega"><div class="gnote__label">📦 Antes de entregar, revisa</div>
+        <ul>
+          <li>Respondiste todas las actividades que se piden como evidencia.</li>
+          <li>Tus archivos tienen tu nombre y número de ficha.</li>
+          <li>Subiste cada evidencia con el botón <em>Entregar a Drive</em> y la ves marcada como <strong>Entregada</strong> en tu control de avance.</li>
+        </ul></div>
+
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#e3f2fd">&#128202;</div>
+            <div>
+              <h3>Tabla de Evidencias del Proceso Formativo</h3>
+              <p>3 evidencias: conocimiento, desempe&ntilde;o y producto</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Actividad de Aprendizaje</th>
+                  <th>Evidencias</th>
+                  <th>Criterios</th>
+                  <th>Instrumento</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>3.1 + 3.2.1 &mdash; Reflexi&oacute;n inicial y estudio de contenidos de mantenimiento</td>
+                  <td><strong>CONOCIMIENTO:</strong> cuestionario sobre tipos de mantenimiento (preventivo y correctivo), herramientas de diagn&oacute;stico y normas de seguridad el&eacute;ctrica.</td>
+                  <td>Determina el tipo de mantenimiento de los equipos de c&oacute;mputo de acuerdo con el procedimiento t&eacute;cnico establecido. Interpreta los manuales t&eacute;cnicos del fabricante de acuerdo con la labor a realizar.</td>
+                  <td>IE-01 &mdash; Cuestionario de conocimiento</td>
+                </tr>
+                <tr>
+                  <td>3.2.2 + 3.3.1 + 3.3.2 &mdash; Inspecci&oacute;n externa, an&aacute;lisis de fallas y diagn&oacute;stico t&eacute;cnico con hoja de vida</td>
+                  <td><strong>DESEMPE&Ntilde;O:</strong> inspecci&oacute;n y diagn&oacute;stico del estado f&iacute;sico y funcional de equipos de c&oacute;mputo reales del taller, aplicando normas de seguridad.</td>
+                  <td>Organiza el puesto de trabajo con los equipos, herramientas, materiales, elementos de protecci&oacute;n, productos qu&iacute;micos y manejo de residuos de acuerdo con normatividad vigente.</td>
+                  <td>IE-02 &mdash; Lista de chequeo de desempe&ntilde;o</td>
+                </tr>
+                <tr>
+                  <td>3.4.1 + 3.4.2 &mdash; Laboratorio de monitoreo con HWMonitor y Plan de Mantenimiento Preventivo</td>
+                  <td><strong>PRODUCTO:</strong> hoja de vida del equipo diligenciada y plan de mantenimiento propuesto para los equipos inspeccionados.</td>
+                  <td>Elabora plan de trabajo seg&uacute;n requerimientos y condiciones administrativas.</td>
+                  <td>IE-03 &mdash; Lista de chequeo de producto</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════ GLOSARIO ═══════════════════════╗ -->
+      <div id="glosario" class="section-title">Glosario de T&eacute;rminos</div>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#fff3e0">&#128214;</div>
+            <div>
+              <h3>Conceptos clave de mantenimiento de equipos</h3>
+              <p>8 t&eacute;rminos t&eacute;cnicos</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <dl class="glossary-list">
+            <dt>Mantenimiento preventivo</dt><dd>Conjunto de actividades programadas y realizadas de forma peri&oacute;dica sobre un equipo de c&oacute;mputo con el fin de evitar fallas antes de que ocurran, prolongando su vida &uacute;til.</dd>
+            <dt>Mantenimiento correctivo</dt><dd>Intervenci&oacute;n que se realiza sobre un equipo de c&oacute;mputo despu&eacute;s de que se ha presentado una falla, con el prop&oacute;sito de restablecer su funcionamiento normal.</dd>
+            <dt>CRU (Customer Replaceable Unit)</dt><dd>Componente o unidad de un equipo de c&oacute;mputo que puede ser reemplazada directamente por el usuario o t&eacute;cnico sin necesidad de intervenci&oacute;n especializada del fabricante.</dd>
+            <dt>EPP (Elementos de Protecci&oacute;n Personal)</dt><dd>Equipos o dispositivos que protegen al t&eacute;cnico de riesgos durante las labores de mantenimiento, como la pulsera antiest&aacute;tica.</dd>
+            <dt>ESD (Electrostatic Discharge)</dt><dd>Descarga electrost&aacute;tica que puede da&ntilde;ar componentes electr&oacute;nicos sensibles si no se toman las precauciones adecuadas (uso de pulsera antiest&aacute;tica, superficies de trabajo aterrizadas).</dd>
+            <dt>RAEE</dt><dd>Residuos de Aparatos El&eacute;ctricos y Electr&oacute;nicos: desechos generados por equipos electr&oacute;nicos en desuso, que requieren disposici&oacute;n especial seg&uacute;n normatividad ambiental vigente.</dd>
+            <dt>Hoja de vida del equipo</dt><dd>Documento t&eacute;cnico que registra la informaci&oacute;n completa de un equipo de c&oacute;mputo: identificaci&oacute;n, especificaciones, historial de intervenciones y estado actual.</dd>
+            <dt>Manual t&eacute;cnico</dt><dd>Documento suministrado por el fabricante que contiene las especificaciones, procedimientos de uso, mantenimiento y garant&iacute;a de un equipo o componente.</dd>
+          </dl>
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════ REFERENCIAS ═══════════════════════╗ -->
+      <div id="referencias" class="section-title">Referentes Bibliogr&aacute;ficos</div>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon" style="background:#ede7f6">&#128279;</div>
+            <div>
+              <h3>Fuentes oficiales y normativas</h3>
+              <p>6 referencias t&eacute;cnicas y normativas para consulta</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <ol class="references-list" style="padding-left:1.4rem;line-height:1.8">
+            <li>Cisco Networking Academy. <em>IT Essentials: PC Hardware and Software (v8.0)</em>. <a href="https://www.netacad.com" target="_blank" rel="noopener">netacad.com</a></li>
+            <li>Servicio Nacional de Aprendizaje &mdash; SENA. <em>Dise&ntilde;o Curricular T&eacute;cnico en Sistemas Teleinform&aacute;ticos</em>, versi&oacute;n 233108. SENA, Regional Boyac&aacute;.</li>
+            <li>Servicio Nacional de Aprendizaje &mdash; SENA. <em>Biblioteca Virtual SENA</em>. <a href="https://biblioteca.sena.edu.co" target="_blank" rel="noopener">biblioteca.sena.edu.co</a></li>
+            <li>Ministerio de Ambiente y Desarrollo Sostenible. <em>Resoluci&oacute;n 1297 de 2010</em> y <em>Decreto 284 de 2018</em> sobre gesti&oacute;n de Residuos de Aparatos El&eacute;ctricos y Electr&oacute;nicos (RAEE). Colombia. <a href="assets/materiales/guia6mant/resolucion-1297-de-2010.pdf" target="_blank" rel="noopener">Resoluci&oacute;n 1297/2010 (PDF)</a> &middot; <a href="assets/materiales/guia6mant/Decreto_284_de_2018.pdf" target="_blank" rel="noopener">Decreto 284/2018 (PDF)</a></li>
+            <li>Mueller, S. (2021). <em>Upgrading and Repairing PCs</em> (23rd ed.). Que Publishing.</li>
+            <li>CPUID. <em>HWMonitor</em> &mdash; Manual de usuario del software de monitoreo de hardware. <a href="https://www.cpuid.com" target="_blank" rel="noopener">cpuid.com</a></li>
+          </ol>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

@@ -125,6 +125,24 @@ window.__PAGE_RUNTIME_CONTEXTS__ = {
     "ficha": "3441942",
     "boot": "initGuia5DocumentarGestion"
   },
+  "jfk-guia6mant-10a": {
+    "family": "guia-06-mantener-equipos",
+    "pageFile": "grupo-10a-guia-06-mantener-equipos.html",
+    "partialPath": "partials/guia-06-mantener-equipos-content.html",
+    "inst": "Institucion Educativa Jhon F. Kennedy",
+    "grupo": "10A",
+    "ficha": "3441939",
+    "boot": "initGuia6MantenerEquipos"
+  },
+  "jfk-guia6mant-10b": {
+    "family": "guia-06-mantener-equipos",
+    "pageFile": "grupo-10b-guia-06-mantener-equipos.html",
+    "partialPath": "partials/guia-06-mantener-equipos-content.html",
+    "inst": "Institucion Educativa Jhon F. Kennedy",
+    "grupo": "10B",
+    "ficha": "3441942",
+    "boot": "initGuia6MantenerEquipos"
+  },
   "sb-guia5-11a": {
     "family": "guia-05-herramientas",
     "pageFile": "grupo-11a-guia-05-herramientas-informaticas-digitales.html",
