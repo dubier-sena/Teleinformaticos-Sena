@@ -108,6 +108,42 @@ export function buildTowerCooler(opts = {}) {
   return group;
 }
 
+/** Modulo de refrigeracion del portatil: bloque de contacto + heatpipe +
+ * paquete de aletas (mejora 3D: antes usaba buildGenericPart, una caja lisa
+ * de un solo color -- el unico "disipador" del laboratorio sin geometria
+ * propia, notorio en el preset "Refrigeracion" y el modo didactico (ambos lo
+ * señalan por nombre). Proporciones pensadas para el hueco delgado real de
+ * un portatil: mucho mas chato que la torre de escritorio, buildTowerCooler. */
+export function buildLaptopCooler(opts = {}) {
+  const width = opts.width || 0.02;
+  const height = opts.height || 0.006;
+  const depth = opts.depth || 0.11;
+  const group = new THREE.Group();
+  group.name = "laptop-cooler";
+
+  // Bloque de contacto con la CPU, en un extremo.
+  const base = box(width * 0.85, height * 0.85, width * 0.9, "copper");
+  base.position.z = -depth / 2 + width * 0.5;
+  group.add(base);
+
+  // Heatpipe: tubo delgado que recorre el largo del modulo hasta las aletas.
+  const pipe = cyl(height * 0.28, height * 0.28, depth * 0.75, "copper", 8);
+  pipe.rotation.x = Math.PI / 2;
+  pipe.position.z = depth * 0.05;
+  group.add(pipe);
+
+  // Paquete de aletas en el extremo opuesto (sale hacia el borde del equipo).
+  const finCount = 9;
+  for (let i = 0; i < finCount; i++) {
+    const fin = box(width * 0.95, height * 0.95, 0.001, "heatsinkFin");
+    fin.position.z = depth * 0.3 + (i / (finCount - 1)) * (depth * 0.18);
+    group.add(fin);
+  }
+
+  setShadow(group);
+  return group;
+}
+
 /** CPU: sustrato ceramico + tapa metalica (IHS). */
 export function buildCpu(opts = {}) {
   const group = new THREE.Group();
@@ -270,6 +306,25 @@ export function buildPsu(opts = {}) {
   label.position.set(0, 0, d / 2 + 0.0006);
   group.add(label);
 
+  // Panel trasero: toma IEC + interruptor + rejilla de ventilacion (mejora
+  // 3D: la fuente era una caja lisa con un solo detalle -- la etiqueta --
+  // uno de los componentes mas planos segun la auditoria visual, notorio de
+  // cerca en el preset "Energia"). Cara opuesta a la etiqueta (-Z); ninguno
+  // de estos meshes es interactivo ni afecta un anchor.
+  const iecSocket = box(w * 0.16, h * 0.22, 0.006, "plasticBlack");
+  iecSocket.position.set(-w * 0.32, -h * 0.1, -d / 2 - 0.002);
+  group.add(iecSocket);
+
+  const powerSwitch = box(w * 0.12, h * 0.14, 0.006, "plasticDark", { color: 0x2a2d33 });
+  powerSwitch.position.set(-w * 0.12, -h * 0.1, -d / 2 - 0.002);
+  group.add(powerSwitch);
+
+  for (let i = 0; i < 5; i++) {
+    const slat = box(w * 0.32, 0.003, 0.002, "metalDark", { color: 0x1c1f22 });
+    slat.position.set(w * 0.12, -h * 0.28 + i * (h * 0.13), -d / 2 - 0.0015);
+    group.add(slat);
+  }
+
   setShadow(group);
   return group;
 }
@@ -279,10 +334,19 @@ export function buildSsd25(opts = {}) {
   const w = opts.width || 0.07;
   const h = opts.height || 0.007;
   const d = opts.depth || 0.1;
-  const g = box(w, h, d, "metalDark");
-  g.name = "ssd-2-5";
-  setShadow(g);
-  return g;
+  const group = new THREE.Group();
+  group.name = "ssd-2-5";
+  const shell = box(w, h, d, "metalDark");
+  group.add(shell);
+  // Auditoria visual de mejora 3D: era una caja lisa sin ningun detalle --
+  // la unica pieza de almacenamiento sin etiqueta (buildHdd35, arriba, si
+  // tiene una). Misma solucion: una etiqueta clara para que se lea como
+  // "unidad SSD real", no como un bloque generico.
+  const label = box(w * 0.7, 0.001, d * 0.5, "plasticGray", { color: 0xe7e9ec });
+  label.position.y = h / 2 + 0.0006;
+  group.add(label);
+  setShadow(group);
+  return group;
 }
 
 /** HDD 3.5" (mas grueso, con etiqueta). */
@@ -316,6 +380,23 @@ export function buildM2(opts = {}) {
   gold.position.set(0, -0.0001, -l / 2 + 0.002);
   group.add(gold);
   setShadow(group);
+
+  // Proxy de clic invisible (item de mejora 3D: el M.2 real mide ~2.2cm de
+  // ancho y apenas ~1-2mm de alto, la pieza mas fina y dificil de acertar
+  // del laboratorio. Mismo criterio que en buildCable()). Se agrega DESPUES
+  // de setShadow(group) a proposito (mejora 3D): setShadow() fuerza
+  // castShadow/receiveShadow=true en todo lo que encuentre en el grupo en
+  // ese momento -- si el proxy se agregara antes, su castShadow=false de
+  // abajo quedaria pisado y una malla invisible terminaria proyectando una
+  // sombra visible con la forma/tamano del hitbox ampliado, no de la pieza
+  // real (bug silencioso: nunca lanza excepcion, solo se ve mal).
+  const hitBoxMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false });
+  const hitBox = new THREE.Mesh(new THREE.BoxGeometry(w * 2.2, 0.012, l * 1.08), hitBoxMat);
+  hitBox.name = "m2-hit-proxy";
+  hitBox.castShadow = false;
+  hitBox.receiveShadow = false;
+  group.add(hitBox);
+
   return group;
 }
 
@@ -364,8 +445,27 @@ export function buildCable(kind, fromLocal, toLocal, opts = {}) {
     plug.name = "cable-plug-" + (i === 0 ? "from" : "to");
     group.add(plug);
   });
-
   setShadow(group);
+
+  // Proxy de clic invisible (item de mejora 3D: piezas pequenas dificiles
+  // de acertar con mouse/touchpad): un tubo mas grueso, sin renderizar
+  // nada (opacity 0, no cast/receive shadow), que SI participa en el
+  // raycasting -- registerInteractive() registra el GRUPO completo, asi
+  // que agregar este mesh extra amplia el area clicable del cable sin
+  // tocar la geometria visible en absoluto. 4x el radio visible: sigue
+  // siendo delgado en terminos absolutos, pero el area de clic real
+  // (proporcional al radio) queda ~16x mayor. Se agrega DESPUES de
+  // setShadow(group) a proposito (mejora 3D): ver el comentario equivalente
+  // en buildM2 -- de lo contrario esta malla invisible terminaria
+  // proyectando una sombra visible con la forma del hitbox ampliado.
+  const hitGeo = new THREE.TubeGeometry(curve, 16, Math.max(radius * 4, 0.006), 6, false);
+  const hitMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false });
+  const hitProxy = new THREE.Mesh(hitGeo, hitMat);
+  hitProxy.name = "cable-hit-proxy";
+  hitProxy.castShadow = false;
+  hitProxy.receiveShadow = false;
+  group.add(hitProxy);
+
   group.userData.curveEndpoints = [fromLocal.clone(), toLocal.clone()];
   return group;
 }
@@ -390,5 +490,23 @@ export function buildGenericPart(opts = {}) {
   const g = box(w, h, d, opts.materialKind || "plasticGray");
   g.name = "generic-part";
   setShadow(g);
+
+  // Proxy de clic invisible opcional (mejora 3D, item 6): algunas piezas
+  // "generic" son muy chicas/finas (p.ej. la tarjeta Wi-Fi del portatil,
+  // ~3mm de alto) y dificiles de acertar con mouse/touchpad. Opt-in via
+  // buildOpts.hitPadding para no ampliar el area clicable de las piezas
+  // "generic" que ya tienen un tamano razonable (la mayoria). Se agrega
+  // DESPUES de setShadow(g) a proposito, mismo motivo que en buildM2/
+  // buildCable: evita que la malla invisible termine proyectando sombra.
+  if (opts.hitPadding) {
+    const pad = opts.hitPadding;
+    const hitMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false });
+    const hit = new THREE.Mesh(new THREE.BoxGeometry(w + pad, h + pad, d + pad), hitMat);
+    hit.name = "generic-hit-proxy";
+    hit.castShadow = false;
+    hit.receiveShadow = false;
+    g.add(hit);
+  }
+
   return g;
 }

@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="css/site_tokens.css?v=20260617_1">
 <link rel="stylesheet" href="css/components.css?v=20260617_1">
 <link rel="stylesheet" href="css/shared_shell.css?v=20260617_1">
-<link rel="stylesheet" href="css/page_hardware_lab.css?v=20260819_1">
+<link rel="stylesheet" href="css/page_hardware_lab.css?v=20260901_3">
 <script src="js/shared_utils.js?v=20260615_2"></script>
 <script src="js/global_error_handler.js?v=20260710_1"></script>
 <script src="js/portal_auth.js?v=20260816_1"></script>
@@ -68,13 +68,13 @@
 <script defer src="js/hardware_lab_tools.js?v=20260816_1"></script>
 <script defer src="js/hardware_lab_data_desktop.js?v=20260816_2"></script>
 <script defer src="js/hardware_lab_data_laptop.js?v=20260816_1"></script>
-<script defer src="js/hardware_lab_engine.js?v=20260816_2"></script>
+<script defer src="js/hardware_lab_engine.js?v=20260901_1"></script>
 <script defer src="js/hardware_lab_storage.js?v=20260816_1"></script>
-<script defer src="js/hardware_lab_diagnosis_engine.js?v=20260816_1"></script>
+<script defer src="js/hardware_lab_diagnosis_engine.js?v=20260901_1"></script>
 <script defer src="js/hardware_lab_diagnosis_cases.js?v=20260816_1"></script>
 <!-- Laboratorio 3D (WebGL real, ver CLAUDE.md / js/hardware_lab_3d_*.js). ES modules: -->
 <!-- se cargan y ordenan solos via import, este es el unico punto de entrada. -->
-<script type="module" src="js/hardware_lab_3d_bootstrap.js?v=20260819_1"></script>
+<script type="module" src="js/hardware_lab_3d_bootstrap.js?v=20260901_5"></script>
 </head>
 <body class="app-shell app-shell--portal hwlab-body">
   <main class="app-main hwlab-main" id="hwlab-shell">
@@ -146,6 +146,10 @@
             <h3>Vistas de cámara</h3>
             <div class="hwlab-view-grid" id="hwlab-view-buttons"></div>
           </div>
+          <div class="hwlab-panel" id="hwlab-focus-panel" hidden>
+            <h3>Enfoque rápido</h3>
+            <div class="hwlab-view-grid" id="hwlab-focus-buttons"></div>
+          </div>
           <div class="hwlab-panel" id="hwlab-tools-panel">
             <h3>Herramientas</h3>
             <p class="hwlab-tool-active" id="hwlab-tool-active-label">Ninguna seleccionada</p>
@@ -153,6 +157,7 @@
           </div>
           <div class="hwlab-panel">
             <button type="button" class="c-btn c-btn--secondary c-btn--sm c-btn--block" id="hwlab-explode-btn">Vista explotada</button>
+            <button type="button" class="c-btn c-btn--secondary c-btn--sm c-btn--block" id="hwlab-didactic-btn">Modo didáctico</button>
           </div>
         </aside>
 
@@ -163,6 +168,7 @@
             <p>Prueba con una versión reciente de Chrome, Edge o Firefox, o activa la aceleración por hardware del navegador.</p>
           </div>
           <div class="hwlab-tooltip" id="hwlab-tooltip" hidden></div>
+          <div class="hwlab-labels-layer" id="hwlab-labels-layer" hidden></div>
           <div class="hwlab-feedback" id="hwlab-feedback" hidden></div>
         </div>
 

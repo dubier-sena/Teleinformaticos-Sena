@@ -374,6 +374,15 @@
 .hwlab-view-btn.is-active { color: var(--hwlab-accent); border-color: var(--hwlab-accent); background: rgba(53,208,255,0.08); }
 .hwlab-view-btn svg { width: 18px; height: 18px; }
 
+/* Mejora 3D: estado encendido de los toggles "Vista explotada"/"Modo didactico". */
+#hwlab-explode-btn.is-active,
+#hwlab-didactic-btn.is-active {
+  color: var(--hwlab-accent);
+  border-color: var(--hwlab-accent);
+  background: rgba(53,208,255,0.1);
+}
+#hwlab-didactic-btn { margin-top: var(--space-2); }
+
 .hwlab-tool-active {
   margin: 0 0 var(--space-3);
   font-size: var(--font-size-sm);
@@ -458,6 +467,52 @@
   transform: translateX(-50%);
   border: 5px solid transparent;
   border-top-color: var(--hwlab-accent);
+}
+
+/* Etiquetas 3D del "Modo didactico" (mejora 3D, items 10-11): mas
+   discretas que el tooltip de hover -- puede haber varias a la vez, asi
+   que cada una pesa menos visualmente (fondo mas transparente, sin flecha,
+   solo un punto guia). pointer-events:none en toda la capa: nunca deben
+   interceptar clics destinados al canvas. */
+.hwlab-labels-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: calc(var(--z-overlay) - 1);
+}
+.hwlab-labels-layer[hidden] { display: none; }
+.hwlab-3d-label {
+  position: absolute;
+  transform: translate(-50%, calc(-100% - 8px));
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(10, 13, 18, 0.72);
+  border: 1px solid var(--hwlab-border-strong);
+  color: var(--hwlab-text);
+  padding: 2px 8px;
+  border-radius: var(--radius-xs);
+  font-size: 11px;
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  transition: opacity var(--motion-fast);
+}
+.hwlab-3d-label::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translateX(-50%);
+  width: 1px;
+  height: 8px;
+  background: var(--hwlab-border-strong);
+}
+.hwlab-3d-label__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--hwlab-accent);
+  flex: none;
 }
 
 .hwlab-feedback {
@@ -626,6 +681,28 @@
 .hwlab-result-bar__track { height: 8px; border-radius: var(--radius-pill); background: var(--hwlab-surface-3); overflow: hidden; }
 .hwlab-result-bar__fill { height: 100%; background: var(--hwlab-accent); border-radius: var(--radius-pill); transition: width var(--motion-slow); }
 
+/* Repaso educativo al aprobar un caso de diagnostico (item 11). */
+.hwlab-result-explanation {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--hwlab-border);
+}
+.hwlab-result-explanation h4 {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--hwlab-text-soft);
+  font-weight: var(--weight-semibold);
+}
+.hwlab-result-explanation p {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-normal);
+  color: var(--hwlab-text-muted);
+}
+.hwlab-result-explanation p strong { color: var(--hwlab-text); }
+
 /* ═══════════════════════════════════════════════════════════════════════
    PANTALLA COMPLETA (item 22)
    ═══════════════════════════════════════════════════════════════════════ */
@@ -653,6 +730,14 @@
   .hwlab-hud--right { border: none; border-top: 1px solid var(--hwlab-border); }
   .hwlab-canvas-wrap { height: 52vh; min-height: 320px; }
   .hwlab-hud-top__stats { order: 3; width: 100%; justify-content: space-between; }
+  /* Mejora 3D (item 15): en pantalla angosta el orden del DOM (izquierda,
+     canvas, derecha) obligaba a bajar por 4 paneles de controles (Vistas de
+     camara, Enfoque rapido, Herramientas, Vista explotada/Modo didactico)
+     antes de ver el equipo 3D. Reordenar visualmente (sin tocar el DOM/JS)
+     deja la escena primero; los controles siguen accesibles bajando. */
+  .hwlab-canvas-wrap { order: 1; }
+  .hwlab-hud--right { order: 2; }
+  .hwlab-hud--left { order: 3; }
 }
 
 @media (max-width: 600px) {

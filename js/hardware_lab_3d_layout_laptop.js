@@ -3,9 +3,12 @@
  * Layout 3D del portatil: mapea cada id REAL de pieza de
  * js/hardware_lab_data_laptop.js (18 piezas) a una posicion/geometria del
  * motor generico hardware_lab_3d_rig.js. Mismo espiritu que
- * hardware_lab_3d_layout_desktop.js. Piezas sin modelo dedicado (teclado,
- * touchpad, modulo de refrigeracion compacto) usan kind:"generic" con
- * proporciones realistas (item 30: geometria primero, GLB despues).
+ * hardware_lab_3d_layout_desktop.js. Piezas sin modelo dedicado (modulo de
+ * refrigeracion compacto, tarjeta Wi-Fi) usan kind:"generic" con
+ * proporciones realistas (item 30: geometria primero, GLB despues). Teclado
+ * y touchpad SI tienen modelo propio (buildLaptopKeyboard/buildLaptopTouchpad
+ * en hardware_lab_3d_chassis_factory.js): son piezas grandes que de otro
+ * modo tapan visualmente todo lo que hay debajo al desmontarlas.
  */
 import * as THREE from "./vendor/three.module.min.js";
 import {
@@ -45,15 +48,19 @@ export function createLaptopLayout() {
       tier: 3,
       build: () => buildLaptopBottomCover(baseDims),
       mount: (a) => a.base.bottomCoverCenter.clone().add(new THREE.Vector3(0, -0.004, 0)),
+      detachAxis: AXIS_NEG_Y, // se desliza hacia abajo, no hacia arriba (item 4).
     },
     {
       id: "screen-lid",
       partId: "screen-assembly",
       tier: 2,
       build: () => buildLaptopLid({ width: baseDims ? baseDims.width : 0.33 }),
-      // Pose abierta aproximada (bisagra real requeriria un grupo pivote
-      // dedicado; para una primera version basta con la inclinacion visual).
-      mount: (a) => a.base.hingeLine.clone().add(new THREE.Vector3(0, 0.135, -0.03)),
+      // Pose abierta: el origen local de buildLaptopLid AHORA es el propio
+      // eje de la bisagra (mejora 3D, ver el comentario en buildLaptopLid),
+      // asi que se monta directo en hingeLine -- el offset manual que habia
+      // antes (0,0.135,-0.03) era un parche para compensar un pivote mal
+      // ubicado; con el pivote corregido ya no hace falta.
+      mount: (a) => a.base.hingeLine.clone(),
       rotationEuler: [-1.85, 0, 0],
     },
   ];
@@ -78,7 +85,10 @@ export function createLaptopLayout() {
     },
     "wifi-card": {
       kind: "generic",
-      buildOpts: { width: 0.03, height: 0.003, depth: 0.018, materialKind: "pcbBlue" },
+      // hitPadding (mejora 3D, item 6): 3mm de alto es la pieza mas fina de
+      // "generic" en todo el laboratorio, similar al caso ya resuelto de
+      // buildM2 -- misma solucion (proxy invisible mas grande).
+      buildOpts: { width: 0.03, height: 0.003, depth: 0.018, materialKind: "pcbBlue", hitPadding: 0.014 },
       mount: (a) => mbOf(a).wifiSlot.clone(),
       detachAxis: AXIS_Y,
       tier: 1,
@@ -91,23 +101,27 @@ export function createLaptopLayout() {
       tier: 0,
     },
     cooler: {
-      kind: "generic",
-      buildOpts: { width: 0.02, height: 0.006, depth: 0.11, materialKind: "heatsinkFin" },
+      // Antes "generic" (caja lisa de un solo color, materialKind:
+      // "heatsinkFin"): ver buildLaptopCooler para el motivo del cambio
+      // (mejora 3D).
+      kind: "laptop-cooler",
+      buildOpts: { width: 0.02, height: 0.006, depth: 0.11 },
       mount: (a) => mbOf(a).cpuSocket.clone().add(new THREE.Vector3(0, 0.005, 0.03)),
       detachAxis: AXIS_Y,
       tier: 1,
     },
     keyboard: {
-      kind: "generic",
-      buildOpts: { width: 0.27, height: 0.006, depth: 0.11, materialKind: "plasticDark" },
-      mount: (a) => new THREE.Vector3(0, 0.02, -baseDims.depth * 0.03),
+      // Pieza real (deck + rejilla de teclas), no una caja generica: antes
+      // esta era una caja invisible superpuesta a un teclado visual que
+      // vivia baked en el chasis y nunca se podia retirar de verdad.
+      kind: "laptop-keyboard",
+      mount: (a) => a.base.keyboardMount.clone(),
       detachAxis: AXIS_Y,
       tier: 2,
     },
     touchpad: {
-      kind: "generic",
-      buildOpts: { width: 0.09, height: 0.003, depth: 0.055, materialKind: "metalBrushed" },
-      mount: () => new THREE.Vector3(0, 0.017, baseDims.depth * 0.32),
+      kind: "laptop-touchpad",
+      mount: (a) => a.base.touchpadMount.clone(),
       detachAxis: AXIS_Y,
       tier: 2,
     },

@@ -106,11 +106,52 @@ export function createAssemblyController(stage) {
     stage.renderToolGrid([], null);
     document.getElementById("hwlab-tools-panel").hidden = true;
     stage.clearActionLog();
-    rig.syncFromSessionParts(equipmentData.initialStateDisassembly);
+    // El gabinete/tapa arranca ABIERTO en este modo (a diferencia de las
+    // practicas de ensamble/desensamble): "explorar libremente cada pieza"
+    // debe incluir de entrada la tarjeta madre, CPU, RAM, GPU, fuente y
+    // cables -- todas "internal" (ver hardware_lab_data_desktop.js/_laptop.js)
+    // y por lo tanto imposibles de clickear/raycastear mientras la tapa siga
+    // instalada cubriendolas. Sin esto, mas de la mitad de las piezas del
+    // equipo quedaban inalcanzables en el unico modo pensado para conocerlas.
+    const learnState = Object.assign({}, equipmentData.initialStateDisassembly);
+    if (equipmentData.caseGatePartId) learnState[equipmentData.caseGatePartId] = false;
+    if (equipmentId === "laptop") {
+      // El portatil no queda "abierto" solo con la tapa inferior: el teclado
+      // (pieza propia, montada sobre la base) sigue cubriendo bateria,
+      // placa, CPU, RAM y tarjeta Wi-Fi desde cualquier angulo de camara
+      // razonable (a diferencia del gabinete de escritorio, que se abre
+      // hacia el costado). Confirmado con clic real: sin esto, el clic
+      // resolvia siempre al teclado en vez del componente real debajo.
+      learnState.keyboard = false;
+    }
+    rig.syncFromSessionParts(learnState);
+    // stage.loadRig() ya encuadro la camara "General" con las piezas en su
+    // posicion INSTALADA (antes de que la linea de arriba las mandara a la
+    // bandeja) -- en el portatil eso dejaba el teclado y la tapa inferior
+    // fuera de cuadro por completo (bandeja lejos del equipo cerrado, mucho
+    // mas chico que el gabinete de escritorio). Reencuadrar aqui, con el
+    // estado YA sincronizado, evita piezas "inaccesibles" fuera de camara.
+    // `installedOnly: true` (mejora 3D): la bandeja ya tiene 1-2 piezas en
+    // este punto (tapa/teclado) -- sin esto, el encuadre las incluye igual y
+    // aleja la camara mucho mas de lo necesario para ver el equipo abierto.
+    const learnBounds = rig.getBoundsWorld({ installedOnly: true });
+    stage.cameraRig.setRigBounds(learnBounds.center, learnBounds.radius);
+    stage.cameraRig.goToView("overview", { duration: 0 });
+    // Nota (mejora 3D): en el portatil, con la base solida (sin carcasa
+    // hueca como el gabinete de escritorio), buena parte de las piezas
+    // internas quedan mejor expuestas mirando desde abajo ("Interna") que
+    // desde "General". Se probo poner "Interna" como default aqui para el
+    // portatil, pero esa vista usa un encuadre con una altura fija (ver
+    // viewFromBelow en hardware_lab_3d_camera.js, pensado para el paso de
+    // desensamble donde se retira la tapa inferior) que no siempre encuadra
+    // bien el equipo YA abierto de este modo -- quedaba mas cerrado/cortado
+    // que "General". Se prefiere no arriesgar el primer encuadre que ve el
+    // aprendiz por mejorar un caso puntual; queda como ajuste de camara a
+    // futuro, no como bug que deba resolver esta pasada.
 
     stage.setInfoPanel(
       '<div class="hwlab-info-block"><h3>Explora cada pieza</h3>' +
-        "<p>Gira el equipo, acercate y haz clic en cualquier componente para ver su ficha tecnica completa: funcion, ubicacion, tipo de conexion, precauciones y fallas frecuentes.</p></div>"
+        "<p>Gira el equipo, acercate y haz clic en cualquier componente para ver su ficha tecnica completa: funcion, ubicacion, tipo de conexion, precauciones y fallas frecuentes. El gabinete ya esta abierto para que puedas ver tambien las piezas internas.</p></div>"
     );
 
     document.getElementById("hwlab-explode-btn").onclick = () => stage.toggleExplode();
@@ -160,7 +201,13 @@ export function createAssemblyController(stage) {
       rig.syncFromSessionParts(session.parts);
       stage.startTimer(session.startedAt);
       stage.clearActionLog();
+      stage.setHintUi(session.hints.used, session.hints.max, onHint);
       renderInfoPanel();
+      // Encontrado con clic real: faltaba aqui (a diferencia del arranque
+      // inicial de la practica, linea ~199, que si la llama) -- "Reiniciar"
+      // devolvia las piezas a su sitio pero el contador "Paso X/Y" y el de
+      // errores se quedaban mostrando los numeros de ANTES del reinicio.
+      refreshStats();
     };
 
     offClick = stage.interactions.onClick((root, meta) => {

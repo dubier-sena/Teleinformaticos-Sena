@@ -25,6 +25,50 @@ function hoverScaleKey(object3d) {
   return object3d.uuid + ":hover-scale";
 }
 
+// ── Emissive suave al SELECCIONAR (mejora 3D, item 5) ──────────────────────
+// Complementa el contorno existente (arriba) sin sus limitaciones: un tinte
+// emissive muy leve en el material real de la pieza, para que la pieza
+// seleccionada tambien se sienta "encendida", no solo enmarcada. Mismo
+// cuidado que el contorno: clona el material UNA vez (nunca toca el
+// compartido) y en la restauracion vuelve al valor ORIGINAL exacto -- no a
+// 0 a secas, porque unos pocos kinds de la paleta (ledRed, ledGreen) ya
+// traen emissive propio y apagarlo sin mas los dejaria "muertos".
+function eachGlowableMesh(root, fn) {
+  root.traverse((n) => {
+    if (!n.isMesh || !n.material || Array.isArray(n.material)) return;
+    if (!n.material.emissive) return; // MeshBasicMaterial (proxies de clic invisibles): nada que tintar
+    if (n.material.transparent && n.material.opacity === 0) return;
+    fn(n);
+  });
+}
+
+function ensureOwnMaterialForGlow(mesh) {
+  if (!mesh.userData.hwlabGlowOwned) {
+    mesh.userData.hwlabGlowOwned = true;
+    mesh.userData.hwlabGlowOriginalEmissive = mesh.material.emissive.getHex();
+    mesh.userData.hwlabGlowOriginalEmissiveIntensity = mesh.material.emissiveIntensity;
+    mesh.material = mesh.material.clone();
+  }
+  return mesh.material;
+}
+
+function setSelectGlow(root, color, intensity) {
+  eachGlowableMesh(root, (mesh) => {
+    const mat = ensureOwnMaterialForGlow(mesh);
+    mat.emissive.set(color);
+    mat.emissiveIntensity = intensity;
+  });
+}
+
+function clearSelectGlow(root) {
+  root.traverse((n) => {
+    if (n.isMesh && n.userData.hwlabGlowOwned) {
+      n.material.emissive.setHex(n.userData.hwlabGlowOriginalEmissive);
+      n.material.emissiveIntensity = n.userData.hwlabGlowOriginalEmissiveIntensity;
+    }
+  });
+}
+
 export function createInteractionLayer({ scene, camera, renderer, tweenGroup, onTick }) {
   const raycaster = new THREE.Raycaster();
   const pointerNdc = new THREE.Vector2(2, 2); // fuera de pantalla hasta el primer movimiento
@@ -55,6 +99,13 @@ export function createInteractionLayer({ scene, camera, renderer, tweenGroup, on
     });
     if (hoveredRoot === object3d) setHovered(null);
     if (selectedRoot === object3d) setSelected(null);
+  }
+
+  /** Metadatos (partId/kind/label) registrados para un root -- reusa lo que
+   * ya llega via registerInteractive() en vez de duplicar el nombre de
+   * cada pieza en otro lugar (mejora 3D: etiquetas del "Modo didactico"). */
+  function getMeta(object3d) {
+    return registry.get(object3d) || null;
   }
 
   function clearInteractives() {
@@ -143,6 +194,7 @@ export function createInteractionLayer({ scene, camera, renderer, tweenGroup, on
     if (selectedRoot) {
       const old = selectedRoot.getObjectByName("hwlab-outline-select");
       if (old) selectedRoot.remove(old);
+      clearSelectGlow(selectedRoot);
       if (selectedRoot !== hoveredRoot) {
         animateObject3D(tweenGroup, selectedRoot, { scale: new THREE.Vector3(1, 1, 1), duration: 0.18, targetKey: hoverScaleKey(selectedRoot) });
       }
@@ -152,6 +204,10 @@ export function createInteractionLayer({ scene, camera, renderer, tweenGroup, on
       const outline = buildOutline(selectedRoot, ACCENT.select);
       outline.name = "hwlab-outline-select";
       selectedRoot.add(outline);
+      // Intensidad baja a proposito (item 5: "emissive SUAVE"): debe leerse
+      // como una pieza "encendida/activa", no como una luz propia que
+      // compita con la iluminacion real de la escena.
+      setSelectGlow(selectedRoot, ACCENT.select, 0.35);
     }
   }
 
@@ -222,6 +278,7 @@ export function createInteractionLayer({ scene, camera, renderer, tweenGroup, on
     registerInteractive,
     unregisterInteractive,
     clearInteractives,
+    getMeta,
     setEnabled,
     onHover,
     onClick,

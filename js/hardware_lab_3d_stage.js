@@ -26,6 +26,55 @@ const VIEW_ICONS = {
 };
 const VIEW_LABELS = { front: "Frontal", side: "Lateral", top: "Superior", back: "Posterior", internal: "Interna", overview: "General" };
 
+// ── Presets de enfoque rapido por grupo de piezas (mejora 3D, item 8) ──────
+// Cada equipo tiene su propio set (el portatil no tiene fuente de poder
+// propia, usa bateria en su lugar). Los ids ausentes en un momento dado de
+// la practica (pieza ya retirada) se ignoran solos via focusOnObjects().
+const FOCUS_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg>';
+const FOCUS_PRESETS = {
+  desktop: [
+    { key: "motherboard", label: "Placa base", partIds: ["motherboard"] },
+    { key: "storage", label: "Almacenamiento", partIds: ["ssd", "ssd-m2"] },
+    { key: "cooling", label: "Refrigeración", partIds: ["cooler", "cable-cpu-fan"] },
+    { key: "power", label: "Energía", partIds: ["psu", "cable-atx", "cable-cpu-eps"] },
+  ],
+  laptop: [
+    { key: "motherboard", label: "Placa base", partIds: ["motherboard"] },
+    { key: "storage", label: "Almacenamiento", partIds: ["ssd-m2"] },
+    { key: "cooling", label: "Refrigeración", partIds: ["cooler", "cable-cpu-fan-laptop"] },
+    { key: "power", label: "Batería", partIds: ["battery", "cable-battery"] },
+  ],
+};
+
+// ── "Modo didactico" (mejora 3D, items 10-11): etiquetas 3D opcionales ─────
+// Solo las piezas MAYORES (no cada cable/antena/tornillo): con 16-18
+// piezas por equipo, etiquetar todo saturaria el canvas y se solaparia
+// todo el tiempo -- item 11 pide justamente evitar eso. Un subconjunto
+// curado por equipo es la forma mas simple de cumplirlo sin necesitar un
+// algoritmo de anti-solape.
+const DIDACTIC_LABEL_IDS = {
+  desktop: ["motherboard", "cpu", "ram", "gpu", "cooler", "psu", "ssd", "ssd-m2"],
+  laptop: ["motherboard", "cpu", "ram", "cooler", "ssd-m2", "battery", "keyboard", "touchpad", "screen-assembly"],
+};
+
+// "Tipo" de la ficha tecnica (mejora 3D, item 12): mapea la `category` cruda
+// de hardware_lab_data_desktop.js/_laptop.js (minusculas, sin tilde, uso
+// interno) a una etiqueta legible. Cubre las 11 categorias reales usadas en
+// ambos catalogos (confirmado por grep antes de escribir esto).
+const CATEGORY_LABELS = {
+  alimentacion: "Alimentación",
+  almacenamiento: "Almacenamiento",
+  cableado: "Cableado",
+  chasis: "Chasis",
+  conectividad: "Conectividad",
+  entrada: "Entrada",
+  expansion: "Expansión",
+  memoria: "Memoria",
+  procesamiento: "Procesamiento",
+  refrigeracion: "Refrigeración",
+  salida: "Salida",
+};
+
 function esc(value) {
   return String(value == null ? "" : value)
     .replace(/&/g, "&amp;")
@@ -45,6 +94,10 @@ export function createStage() {
   let toolSelectHandler = null;
   let activeToolId = null;
   let timerInterval = null;
+  let didacticActive = false;
+  let didacticEquipmentId = null;
+  let offDidacticTick = null;
+  let baseExposure = null;
 
   function ensureSceneReady() {
     if (sceneApi) return sceneApi.supported;
@@ -78,7 +131,106 @@ export function createStage() {
     renderViewButtons();
     wireFullscreen();
     wireSound();
+    wireDidacticMode();
     return true;
+  }
+
+  // ── Modo didactico (mejora 3D, items 10-11) ────────────────────────────────
+  function wireDidacticMode() {
+    const btn = document.getElementById("hwlab-didactic-btn");
+    if (!btn) return;
+    baseExposure = sceneApi.renderer.toneMappingExposure;
+    btn.addEventListener("click", () => setDidacticMode(!didacticActive));
+  }
+
+  function setDidacticMode(on) {
+    didacticActive = on;
+    const btn = document.getElementById("hwlab-didactic-btn");
+    if (btn) btn.classList.toggle("is-active", on);
+    const layer = document.getElementById("hwlab-labels-layer");
+    if (layer) layer.hidden = !on;
+
+    // "puede aumentar ligeramente el contraste" (item 10): un empujon
+    // pequeno y reversible a la exposicion global, no un pase de
+    // postprocesado nuevo (mas caro, mas riesgo -- ver item 14).
+    if (sceneApi && sceneApi.renderer) {
+      sceneApi.renderer.toneMappingExposure = on ? baseExposure + 0.12 : baseExposure;
+    }
+
+    if (offDidacticTick) {
+      offDidacticTick();
+      offDidacticTick = null;
+    }
+    if (layer) layer.innerHTML = "";
+
+    if (!on) return;
+
+    const ids = DIDACTIC_LABEL_IDS[didacticEquipmentId] || [];
+    const labelEls = new Map();
+    ids.forEach((partId) => {
+      const el = document.createElement("div");
+      el.className = "hwlab-3d-label";
+      el.innerHTML = '<span class="hwlab-3d-label__dot"></span><span></span>';
+      layer.appendChild(el);
+      labelEls.set(partId, el);
+    });
+
+    const MIN_LABEL_GAP = 24; // px verticales minimos entre etiquetas vecinas
+    const scratchVec3 = new THREE.Vector3(); // reusado cada tick (item 14: nada de asignar por frame)
+    offDidacticTick = sceneApi.onTick(() => {
+      if (!currentRig) return;
+      const canvasRect = sceneApi.renderer.domElement.getBoundingClientRect();
+
+      // Paso 1: posicion "real" de cada etiqueta visible, mas su distancia a
+      // camara (para decidir quien cede el paso al superponerse: la pieza
+      // mas cercana se queda en su lugar exacto).
+      const visible = [];
+      ids.forEach((partId) => {
+        const el = labelEls.get(partId);
+        const obj = currentRig.getObject3D(partId);
+        if (!el || !obj) return;
+        const pos = worldToScreen(obj, sceneApi.camera, sceneApi.renderer.domElement);
+        const inCanvas =
+          !pos.behindCamera && pos.x >= canvasRect.left && pos.x <= canvasRect.right && pos.y >= canvasRect.top && pos.y <= canvasRect.bottom;
+        if (!inCanvas) {
+          el.style.opacity = "0";
+          return;
+        }
+        const meta = interactions.getMeta(obj);
+        visible.push({
+          el,
+          x: pos.x - canvasRect.left,
+          y: pos.y - canvasRect.top,
+          dist: sceneApi.camera.position.distanceTo(obj.getWorldPosition(scratchVec3)),
+          label: (meta && meta.label) || partId,
+        });
+      });
+
+      // Paso 2: separacion vertical simple (item 11: "evitar solaparse en lo
+      // posible") -- ordena de mas cerca a mas lejos de la camara para que
+      // la pieza mas relevante en este encuadre conserve su punto real, y
+      // empuja hacia abajo cualquier etiqueta que quede muy junto a otra ya
+      // colocada. No es un layout perfecto, pero evita el amontonamiento
+      // ilegible del caso mas comun (varias piezas internas cercanas).
+      visible.sort((a, b) => a.dist - b.dist);
+      const placed = [];
+      visible.forEach((item) => {
+        let y = item.y;
+        const collides = () => placed.some((p) => Math.abs(p.x - item.x) < 90 && Math.abs(p.y - y) < MIN_LABEL_GAP);
+        let guard = 0;
+        while (collides() && guard++ < 12) y += MIN_LABEL_GAP;
+        placed.push({ x: item.x, y });
+        item.finalY = y;
+      });
+
+      visible.forEach((item) => {
+        item.el.style.opacity = "1";
+        item.el.style.left = item.x + "px";
+        item.el.style.top = item.finalY + "px";
+        const nameSpan = item.el.querySelector("span:last-child");
+        if (nameSpan.textContent !== item.label) nameSpan.textContent = item.label;
+      });
+    });
   }
 
   function renderViewButtons() {
@@ -89,9 +241,45 @@ export function createStage() {
       .join("");
     grid.querySelectorAll("[data-view]").forEach((btn) => {
       btn.addEventListener("click", () => {
-        grid.querySelectorAll(".hwlab-view-btn").forEach((b) => b.classList.remove("is-active"));
+        // Selector global (no solo dentro de "grid"): "Vistas de camara" y
+        // "Enfoque rapido" comparten la clase .hwlab-view-btn y son
+        // mutuamente excluyentes -- solo un boton activo entre los dos
+        // grupos a la vez.
+        document.querySelectorAll(".hwlab-view-btn").forEach((b) => b.classList.remove("is-active"));
         btn.classList.add("is-active");
         cameraRig.goToView(btn.getAttribute("data-view"));
+      });
+    });
+  }
+
+  /** Botones de enfoque rapido por grupo de piezas (mejora 3D, item 8). */
+  function renderFocusButtons(equipmentId) {
+    const panel = document.getElementById("hwlab-focus-panel");
+    const grid = document.getElementById("hwlab-focus-buttons");
+    const presets = FOCUS_PRESETS[equipmentId];
+    if (!panel || !grid || !presets) {
+      if (panel) panel.hidden = true;
+      return;
+    }
+    panel.hidden = false;
+    grid.innerHTML = presets
+      .map((p) => `<button type="button" class="hwlab-view-btn" data-focus="${p.key}">${FOCUS_ICON}<span>${esc(p.label)}</span></button>`)
+      .join("");
+    grid.querySelectorAll("[data-focus]").forEach((btn) => {
+      const preset = presets.find((p) => p.key === btn.getAttribute("data-focus"));
+      btn.addEventListener("click", () => {
+        if (!currentRig || !preset) return;
+        const objects = preset.partIds.map((id) => currentRig.getObject3D(id)).filter(Boolean);
+        if (!objects.length) return;
+        document.querySelectorAll(".hwlab-view-btn").forEach((b) => b.classList.remove("is-active"));
+        btn.classList.add("is-active");
+        // distanceFactor mas ajustado que el default (3.4, pensado para
+        // focusOnObject de una sola pieza chica): un grupo como "Refrigeracion"
+        // o "Energia" ya ocupa varias piezas, y con el default el resultado se
+        // sentia casi igual de alejado que la vista "General" (confirmado con
+        // clic real) -- 2.3 deja el grupo notablemente mas cerca sin llegar a
+        // recortar piezas del encuadre.
+        cameraRig.focusOnObjects(objects, { distanceFactor: 2.3 });
       });
     });
   }
@@ -162,11 +350,17 @@ export function createStage() {
     if (explodeCtl && explodeCtl.isExploded) explodeCtl.collapse({ duration: 0 });
     currentRig = createRig({ scene: sceneApi.scene, interactions, tweenGroup, layout, equipmentId });
     const sphere = currentRig.getBoundsWorld();
-    cameraRig.setRigBounds(sphere.center, sphere.radius);
+    // El portatil se abre por la tapa INFERIOR (ver caseGatePartId en
+    // hardware_lab_data_laptop.js) -- la vista "Interna" necesita mirar
+    // desde abajo hacia arriba para esa pieza, a diferencia del escritorio.
+    cameraRig.setRigBounds(sphere.center, sphere.radius, { viewFromBelow: equipmentId === "laptop" });
     cameraRig.goToView("overview", { duration: 0 });
     const activeBtn = document.querySelector('.hwlab-view-btn[data-view="overview"]');
     document.querySelectorAll(".hwlab-view-btn").forEach((b) => b.classList.remove("is-active"));
     if (activeBtn) activeBtn.classList.add("is-active");
+    renderFocusButtons(equipmentId);
+    didacticEquipmentId = equipmentId;
+    if (didacticActive) setDidacticMode(true); // reconstruye las etiquetas para el equipo nuevo
     return currentRig;
   }
 
@@ -177,7 +371,24 @@ export function createStage() {
 
   function toggleExplode() {
     if (!currentRig) return false;
-    return explodeCtl.toggle(currentRig.getExplodeEntries(), new THREE.Vector3(0, 0, 0));
+    const nowExploded = explodeCtl.toggle(currentRig.getExplodeEntries(), new THREE.Vector3(0, 0, 0));
+    const btn = document.getElementById("hwlab-explode-btn");
+    if (btn) btn.classList.toggle("is-active", nowExploded);
+    if (nowExploded) {
+      // Mejora 3D (item 7): sin esto, si el usuario ya estaba enfocado de
+      // cerca (clic en una pieza, o un preset de "Enfoque rapido") al activar
+      // la vista explotada, las piezas que se alejan del centro pueden
+      // terminar mas cerca de la camara que el propio near-plane -- la
+      // camara queda "adentro" de la geometria, mostrando solo caras
+      // internas muy de cerca (confirmado con clic real). Volver a "General"
+      // garantiza que la vista explotada siempre arranque desde un encuadre
+      // que ya contiene el equipo completo con margen.
+      cameraRig.goToView("overview");
+      document.querySelectorAll(".hwlab-view-btn").forEach((b) => b.classList.remove("is-active"));
+      const overviewBtn = document.querySelector('.hwlab-view-btn[data-view="overview"]');
+      if (overviewBtn) overviewBtn.classList.add("is-active");
+    }
+    return nowExploded;
   }
 
   // ── Herramientas (item 10) ────────────────────────────────────────────────
@@ -318,6 +529,7 @@ export function createStage() {
     if (title) title.textContent = part.name;
     const info = part.info || {};
     const rows = [
+      ["Tipo", CATEGORY_LABELS[part.category] || part.category],
       ["Funcion", info.function],
       ["Ubicacion", info.location],
       ["Tipo de conexion", info.connectionType],
@@ -371,7 +583,8 @@ export function createStage() {
           );
         })
         .join("") +
-      "</div>";
+      "</div>" +
+      (opts.extraHtml || "");
     if (pass) HardwareLabAudio.playComplete();
     const retryBtn = document.getElementById("hwlab-result-retry");
     const menuBtn = document.getElementById("hwlab-result-menu");

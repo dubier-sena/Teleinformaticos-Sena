@@ -208,7 +208,15 @@ export function buildMotherboard(opts = {}) {
 // PORTATIL
 // ─────────────────────────────────────────────────────────────────────────
 
-/** Base del chasis del portatil (donde va la placa, bateria, teclado...). */
+/** Base del chasis del portatil (donde va la placa, bateria...). El teclado y
+ * el touchpad NO se construyen aqui: son piezas propias, removibles de
+ * verdad (ver buildLaptopKeyboard/buildLaptopTouchpad mas abajo) -- antes
+ * estaban baked directo en este grupo estatico (sin partId, nunca
+ * interactivo), superpuestos a una copia SEPARADA e invisible ("keyboard"/
+ * "touchpad" en hardware_lab_3d_layout_laptop.js, un simple box "generic")
+ * que si era la pieza togglable real. Resultado: quitar el teclado en
+ * cualquier practica no cambiaba nada visualmente, y ademas ocultaba
+ * bateria/placa/CPU/RAM/Wi-Fi sin ninguna forma de revelarlos. */
 export function buildLaptopBase(opts = {}) {
   const w = opts.width || 0.33;
   const d = opts.depth || 0.23;
@@ -220,29 +228,16 @@ export function buildLaptopBase(opts = {}) {
   shell.position.y = h / 2;
   group.add(shell);
 
-  const keyboardDeck = box(w * 0.94, 0.002, d * 0.88, "plasticDark");
-  keyboardDeck.position.set(0, h + 0.001, -d * 0.03);
-  keyboardDeck.name = "laptop-keyboard-deck";
-  group.add(keyboardDeck);
-
-  // Teclas simplificadas: rejilla de pequenas teclas (bajo poligonaje).
-  const keyGeo = new THREE.BoxGeometry(w * 0.045, 0.0025, d * 0.045);
-  const keyMat = materialFor("plasticBlack");
-  const keysGroup = new THREE.Group();
-  keysGroup.name = "laptop-keys";
-  for (let row = 0; row < 5; row++) {
-    for (let col = 0; col < 13; col++) {
-      const key = new THREE.Mesh(keyGeo, keyMat);
-      key.position.set(-w * 0.42 + col * (w * 0.066), h + 0.0026, -d * 0.28 + row * (d * 0.11));
-      keysGroup.add(key);
-    }
+  // Rejilla de ventilacion decorativa, borde trasero (auditoria visual de
+  // mejora 3D: la base era una caja completamente lisa, sin ninguna
+  // referencia de "aqui respira el equipo" -- justo donde un portatil real
+  // la tiene, cerca de la bisagra/disipador). Solo estetica: no es una
+  // pieza propia ni afecta ningun anchor existente.
+  for (let i = 0; i < 7; i++) {
+    const slat = box(w * 0.045, h * 0.5, 0.0015, "plasticDark", { color: 0x0e0f11 });
+    slat.position.set(-w * 0.28 + i * (w * 0.05), h * 0.5, -d / 2 + 0.0012);
+    group.add(slat);
   }
-  keysGroup.position.z = -d * 0.02;
-  group.add(keysGroup);
-
-  const touchpad = box(w * 0.28, 0.0015, d * 0.16, "metalBrushed");
-  touchpad.position.set(0, h + 0.0016, d * 0.32);
-  group.add(touchpad);
 
   setShadow(group);
 
@@ -254,14 +249,90 @@ export function buildLaptopBase(opts = {}) {
       batteryBay: new THREE.Vector3(0, -0.001, d * 0.05),
       motherboardOrigin: new THREE.Vector3(-w * 0.32, -0.001, -d * 0.12),
       bottomCoverCenter: new THREE.Vector3(0, -0.001, 0),
+      // Misma posicion absoluta que antes ocupaba el keyboardDeck/touchpad
+      // estaticos -- al retirarse, no queda ningun hueco ni salto visual.
+      keyboardMount: new THREE.Vector3(0, h + 0.001, -d * 0.03),
+      touchpadMount: new THREE.Vector3(0, h + 0.0016, d * 0.32),
     },
   };
+}
+
+/** Teclado del portatil: deck + rejilla de teclas, como pieza propia y
+ * removible (antes vivia baked dentro de buildLaptopBase, sin poder
+ * quitarse nunca visualmente). El grupo se autora con el deck en su propio
+ * origen local (0,0,0); hardware_lab_3d_layout_laptop.js lo monta en
+ * `base.keyboardMount`, la misma posicion absoluta que ocupaba antes. */
+export function buildLaptopKeyboard(opts = {}) {
+  const w = opts.width || 0.33;
+  const d = opts.depth || 0.23;
+  const group = new THREE.Group();
+  group.name = "laptop-keyboard-assembly";
+
+  const deck = box(w * 0.94, 0.002, d * 0.88, "plasticDark");
+  deck.name = "laptop-keyboard-deck";
+  group.add(deck);
+
+  // Teclas simplificadas: rejilla de pequenas teclas (bajo poligonaje).
+  const keyGeo = new THREE.BoxGeometry(w * 0.045, 0.0025, d * 0.045);
+  const keyMat = materialFor("plasticBlack");
+  const keysGroup = new THREE.Group();
+  keysGroup.name = "laptop-keys";
+  for (let row = 0; row < 5; row++) {
+    for (let col = 0; col < 13; col++) {
+      const key = new THREE.Mesh(keyGeo, keyMat);
+      key.position.set(-w * 0.42 + col * (w * 0.066), 0.0016, -d * 0.27 + row * (d * 0.11));
+      keysGroup.add(key);
+    }
+  }
+  group.add(keysGroup);
+
+  setShadow(group);
+  // Devuelve el Group directo (no {group,...}): "laptop-keyboard" se
+  // registra en KIND_BUILDERS como builder de COMPONENTE (ver
+  // hardware_lab_3d_rig.js), y ese contrato exige el Object3D crudo -- a
+  // diferencia de los builders de ESTRUCTURA (buildLaptopBase y similares),
+  // que si envuelven {group, dims, anchors}. Envolverlo aqui rompia
+  // "object3d.position.copy(...)" en createRig con cualquier equipo portatil.
+  return group;
+}
+
+/** Touchpad del portatil: misma logica que el teclado (pieza propia y
+ * removible, autorada en su propio origen local). */
+export function buildLaptopTouchpad(opts = {}) {
+  const w = opts.width || 0.33;
+  const d = opts.depth || 0.23;
+  const group = new THREE.Group();
+  group.name = "laptop-touchpad-assembly";
+
+  const pad = box(w * 0.28, 0.0015, d * 0.16, "metalBrushed");
+  pad.name = "laptop-touchpad";
+  group.add(pad);
+
+  setShadow(group);
+  return group; // ver nota de contrato en buildLaptopKeyboard.
 }
 
 /** Tapa inferior removible del portatil (item 13-14). */
 export function buildLaptopBottomCover(dims) {
   const panel = box(dims.width * 0.97, 0.0025, dims.depth * 0.97, "aluminum");
   panel.name = "laptop-bottom-cover";
+
+  // Patas de goma decorativas en las 4 esquinas (auditoria visual de
+  // mejora 3D): el panel era liso por completo, sin ninguna referencia de
+  // "esta pieza apoya el equipo sobre la mesa". Solo estetica.
+  const footR = Math.min(dims.width, dims.depth) * 0.018;
+  const cornerOffsets = [
+    [dims.width * 0.42, dims.depth * 0.42],
+    [-dims.width * 0.42, dims.depth * 0.42],
+    [dims.width * 0.42, -dims.depth * 0.42],
+    [-dims.width * 0.42, -dims.depth * 0.42],
+  ];
+  cornerOffsets.forEach(([x, z]) => {
+    const foot = new THREE.Mesh(new THREE.CylinderGeometry(footR, footR, 0.0018, 10), materialFor("rubberBlack"));
+    foot.position.set(x, -0.0025 / 2 - 0.0009, z);
+    panel.add(foot);
+  });
+
   setShadow(panel);
   return { group: panel };
 }
@@ -274,12 +345,22 @@ export function buildLaptopLid(opts = {}) {
   const group = new THREE.Group();
   group.name = "laptop-lid";
 
+  // El origen local del grupo ES el eje de la bisagra (mejora 3D): antes el
+  // panel estaba centrado en Z sobre el origen, asi que al aplicar
+  // rotationEuler (abrir la tapa) la MITAD de la geometria giraba hacia
+  // adentro/abajo de la bisagra en vez de girar completa hacia arriba --
+  // resultado, la pantalla visible quedaba flotando con un hueco respecto a
+  // la base, claramente desconectada del equipo (confirmado con clic real,
+  // muy notorio en "Aprender componentes"). Desplazar todo +d/2 en Z deja el
+  // borde de la bisagra en z=0 y el resto del panel se extiende hacia +Z,
+  // que es el lado que efectivamente sube al rotar (ver mount() en
+  // hardware_lab_3d_layout_laptop.js).
   const back = box(w, t, d, "aluminum");
-  back.position.y = t / 2;
+  back.position.set(0, t / 2, d / 2);
   group.add(back);
 
   const screen = box(w * 0.94, 0.002, d * 0.92, "plasticBlack", { color: 0x050608 });
-  screen.position.set(0, t + 0.001, 0);
+  screen.position.set(0, t + 0.001, d / 2);
   group.add(screen);
 
   const bezelGlow = box(w * 0.86, 0.0015, d * 0.82, "plasticBlack", {
@@ -287,7 +368,7 @@ export function buildLaptopLid(opts = {}) {
     emissive: 0x0c2f66,
     emissiveIntensity: 0.35,
   });
-  bezelGlow.position.set(0, t + 0.0021, 0);
+  bezelGlow.position.set(0, t + 0.0021, d / 2);
   bezelGlow.name = "laptop-screen-emitter";
   group.add(bezelGlow);
 
@@ -339,6 +420,27 @@ export function buildLaptopMotherboard(opts = {}) {
   group.add(ramSlot);
 
   const wifiPos = new THREE.Vector3(-w * 0.36, t, d * 0.28);
+
+  // Detalle decorativo (auditoria visual de mejora 3D): la placa del
+  // portatil quedaba MUY por debajo del nivel de detalle de su equivalente
+  // de escritorio (buildMotherboard, arriba) -- una tabla lisa con 3 cajas
+  // planas. Nada de esto es funcional/interactivo (ningun partId propio,
+  // no afecta anchors ni geometria de las piezas reales): solo blindaje
+  // EMI + un puñado de capacitores + el chipset, autenticando la lectura
+  // visual sin tocar ninguna posicion de montaje existente.
+  const emiShield = box(w * 0.22, 0.0026, d * 0.24, "metalDark");
+  emiShield.position.set(w * 0.05, t + 0.0002, d * 0.02);
+  group.add(emiShield);
+
+  const chipset = box(0.014, 0.0022, 0.014, "aluminum");
+  chipset.position.set(w * 0.3, t, -d * 0.28);
+  group.add(chipset);
+
+  for (let i = 0; i < 6; i++) {
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.0009, 0.0009, 0.0022, 6), materialFor("metalDark"));
+    cap.position.set(-w * 0.32 + (i % 3) * 0.012, t + 0.0011, d * 0.1 + Math.floor(i / 3) * 0.012);
+    group.add(cap);
+  }
 
   setShadow(group);
   return {

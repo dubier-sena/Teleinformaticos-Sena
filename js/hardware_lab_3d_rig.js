@@ -34,11 +34,13 @@ import * as THREE from "./vendor/three.module.min.js";
 import { animateObject3D, Easing } from "./hardware_lab_3d_tween.js";
 import { ZONES } from "./hardware_lab_3d_constants.js";
 import * as PartsFactory from "./hardware_lab_3d_parts_factory.js";
+import { buildLaptopKeyboard, buildLaptopTouchpad } from "./hardware_lab_3d_chassis_factory.js";
 
 const KIND_BUILDERS = {
   cpu: (opts) => PartsFactory.buildCpu(opts),
   "cpu-socket": (opts) => PartsFactory.buildCpuSocket(opts),
   "cooler-tower": (opts) => PartsFactory.buildTowerCooler(opts),
+  "laptop-cooler": (opts) => PartsFactory.buildLaptopCooler(opts),
   "ram-stick": (opts) => PartsFactory.buildRamStick(opts),
   "ram-module": (opts) => PartsFactory.buildRamModule(opts.count, opts),
   "ram-slot": (opts) => PartsFactory.buildRamSlot(opts),
@@ -51,6 +53,8 @@ const KIND_BUILDERS = {
   fan: (opts) => PartsFactory.buildFan(opts.diameter, opts),
   port: (opts) => PartsFactory.buildPort(opts.portKind, opts),
   generic: (opts) => PartsFactory.buildGenericPart(opts),
+  "laptop-keyboard": (opts) => buildLaptopKeyboard(opts),
+  "laptop-touchpad": (opts) => buildLaptopTouchpad(opts),
 };
 
 function mapAnchors(rawAnchors, origin) {
@@ -69,10 +73,33 @@ function mapAnchors(rawAnchors, origin) {
   return out;
 }
 
+/** Nombre visible de una pieza (ficha de datos, ver hardware_lab_data_desktop.js/_laptop.js),
+ * usado para el tooltip de hover (item 8: "nombre claramente visible"). Sin
+ * esto el tooltip mostraba el id interno crudo ("gpu", "side-panel"). */
+function partDisplayName(equipmentId, partId) {
+  const HardwareLab = window.HardwareLab;
+  const data =
+    equipmentId === "laptop"
+      ? HardwareLab && HardwareLab.DataLaptop && HardwareLab.DataLaptop.LAPTOP_EQUIPMENT
+      : HardwareLab && HardwareLab.DataDesktop && HardwareLab.DataDesktop.DESKTOP_EQUIPMENT;
+  const part = data && data.parts && data.parts[partId];
+  return part ? part.name : partId;
+}
+
+// Espacio libre bajo el portatil (item 7/8: la tapa inferior debe poder
+// verse y clickearse desde abajo). En la mesa real, el portatil apoya
+// directo sobre el tablero -- sin hueco, ninguna camara "desde abajo" cabe
+// sin atravesar la mesa (se confirmo asi, literalmente viendo la pata de la
+// mesa, antes de este ajuste). Representa que el equipo se apoya sobre un
+// tapete/soporte de servicio elevado -- practica real de taller, no solo un
+// truco de camara.
+const LAPTOP_SERVICE_RISER_HEIGHT = 0.16;
+
 export function createRig({ scene, interactions, tweenGroup, layout, equipmentId }) {
   const root = new THREE.Group();
   root.name = "hwlab-rig-" + equipmentId;
   root.position.copy(ZONES.equipmentCenter);
+  if (equipmentId === "laptop") root.position.y += LAPTOP_SERVICE_RISER_HEIGHT;
   scene.add(root);
 
   const trayGroup = new THREE.Group();
@@ -84,10 +111,25 @@ export function createRig({ scene, interactions, tweenGroup, layout, equipmentId
   const partEntries = new Map(); // partId -> { object3d, config, installedPosition, installedQuaternion, present, trayPosition }
 
   // ── 1) Estructura (gabinete, placa base...) EN ORDEN ─────────────────────
+  // Los indices de bandeja de piezas estructurales arrancan DESPUES del
+  // ultimo indice de componente (ver bucle 2) para no colisionar con ellos.
+  const structuralTrayBase = Object.keys(layout.components || {}).length;
+  let structuralTrayOffset = 0;
   (layout.structure || []).forEach((entry) => {
     const built = entry.build();
     const origin = entry.mount ? entry.mount(anchors) : new THREE.Vector3();
     built.group.position.copy(origin);
+    // BUG real (mejora 3D, encontrado con clic real): a diferencia del bucle
+    // de COMPONENTES un poco mas abajo, esta rama nunca aplicaba
+    // entry.rotationEuler. La unica estructura que lo declara ("screen-lid"
+    // del portatil, ver hardware_lab_3d_layout_laptop.js) se montaba
+    // siempre PLANA -- el portatil nunca mostro su pantalla realmente
+    // abierta desde el rediseno 3D original, en NINGUN modo (aprender,
+    // practicas, diagnostico). Debe ir ANTES de capturar homeQuaternion mas
+    // abajo, para que "instalado" recuerde la pose abierta, no la identidad.
+    if (entry.rotationEuler) {
+      built.group.rotation.set(entry.rotationEuler[0], entry.rotationEuler[1], entry.rotationEuler[2]);
+    }
     root.add(built.group);
     structuralGroups[entry.id] = built.group;
     if (built.anchors) anchors[entry.id] = mapAnchors(built.anchors, origin);
@@ -97,7 +139,26 @@ export function createRig({ scene, interactions, tweenGroup, layout, equipmentId
         kind: "structural",
         homePosition: origin.clone(),
         homeQuaternion: built.group.quaternion.clone(),
+        // BUG critico (encontrado con clic real, no solo lectura de codigo):
+        // esta rama nunca fijaba detachAxis, a diferencia de la de
+        // componentes de mas abajo. setPresence() SIEMPRE lo usa
+        // (homePosition.addScaledVector(entry.detachAxis, ...)) al retirar
+        // una pieza -- sin este default, retirar CUALQUIER pieza estructural
+        // (tapa lateral, tapa inferior del portatil, tarjeta madre) por clic
+        // interactivo lanzaba "Cannot read properties of undefined (reading
+        // 'x')" y abortaba la funcion completa: sin animacion, sin guardado,
+        // sin avance de paso. Bloqueaba el primer paso de TODA practica de
+        // ensamble/desensamble (guiada, libre, evaluacion).
+        detachAxis: entry.detachAxis ? new THREE.Vector3().fromArray(entry.detachAxis) : new THREE.Vector3(0, 1, 0),
         tier: entry.tier != null ? entry.tier : 3,
+        // BUG real (confirmado con retiro directo + verificacion de posicion
+        // final, no visible a simple vista en una sola practica): esta rama
+        // nunca fijaba trayIndex, asi que setPresence() caia siempre al
+        // valor por defecto (0) -- CUALQUIER pieza estructural retirada
+        // (tapa lateral en escritorio, tapa inferior en portatil) terminaba
+        // superpuesta EXACTAMENTE sobre el primer componente de la bandeja
+        // (aqui: "Modulo RAM"), ambas piezas ocupando el mismo punto 3D.
+        trayIndex: structuralTrayBase + structuralTrayOffset++,
       });
     }
   });
@@ -135,7 +196,9 @@ export function createRig({ scene, interactions, tweenGroup, layout, equipmentId
   function registerTogglablePart(partId, object3d, meta) {
     object3d.userData.partId = partId;
     partEntries.set(partId, Object.assign({ object3d, present: true }, meta));
-    if (interactions) interactions.registerInteractive(object3d, { partId, kind: "part" });
+    if (interactions) {
+      interactions.registerInteractive(object3d, { partId, kind: "part", label: partDisplayName(equipmentId, partId) });
+    }
   }
 
   function trayPositionFor(index) {
@@ -226,8 +289,30 @@ export function createRig({ scene, interactions, tweenGroup, layout, equipmentId
     return entry ? entry.object3d : null;
   }
 
-  function getBoundsWorld() {
-    const box = new THREE.Box3().setFromObject(root);
+  /**
+   * `installedOnly` (mejora 3D, item 8/9): excluye del calculo cualquier
+   * pieza actualmente en la bandeja (present:false). Sin esto, encuadrar la
+   * camara justo despues de mover piezas a la bandeja (p.ej. "Aprender
+   * componentes", que abre el gabinete/tapa de entrada de una vez) infla la
+   * esfera con la distancia hasta la bandeja y aleja la camara mucho mas de
+   * lo necesario -- confirmado con clic real: el equipo se veia chico y las
+   * piezas restantes quedaban dispersas/dificiles de leer en el primer
+   * encuadre, mas notorio aun en el portatil (2 piezas van a bandeja de
+   * entrada: tapa inferior y teclado).
+   */
+  function getBoundsWorld(opts = {}) {
+    const box = new THREE.Box3();
+    if (!opts.installedOnly) {
+      box.setFromObject(root);
+    } else {
+      const excluded = new Set();
+      partEntries.forEach((entry) => {
+        if (!entry.present) excluded.add(entry.object3d);
+      });
+      root.children.forEach((child) => {
+        if (!excluded.has(child)) box.expandByObject(child);
+      });
+    }
     const sphere = new THREE.Sphere();
     box.getBoundingSphere(sphere);
     return sphere;
