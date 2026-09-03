@@ -72,7 +72,15 @@ export function createLaptopLayout() {
       kind: "ram-module",
       buildOpts: { count: 1, stickOpts: { width: 0.066, bodyHeight: 0.02 } },
       mount: (a) => mbOf(a).ramSlot.clone(),
-      rotationEuler: [0, 0, 0],
+      // Rotada 90 grados en X (correccion visual, sep-2026): buildRamStick
+      // autora el modulo como un DIMM de escritorio de pie (su dimension
+      // "alta", bodyHeight, se extiende en Y). Sin rotar, esa altura
+      // atravesaba el piso Y el techo de la bandeja del portatil por igual.
+      // Un SO-DIMM real de portatil va acostado, paralelo a la placa: rotar
+      // en X deja la cara delgada (grosor de la placa PCB) en Y y la
+      // dimension larga (bodyHeight) acostada en Z, igual que en el equipo
+      // real.
+      rotationEuler: [Math.PI / 2, 0, 0],
       detachAxis: AXIS_Y,
       tier: 1,
     },
@@ -132,11 +140,21 @@ export function createLaptopLayout() {
       detachAxis: AXIS_NEG_Y,
       tier: 1,
     },
+    // sag: 0.004 en los 7 cables de abajo (correccion visual, sep-2026):
+    // buildCable() (hardware_lab_3d_parts_factory.js) usa sag=0.03 (30mm)
+    // por defecto -- pensado para el hueco grande de un gabinete de
+    // escritorio. La cavidad real del portatil, tras hacer hueca la base
+    // (buildLaptopBase), mide ~12mm de alto: con el sag por defecto, el
+    // punto medio de CUALQUIER cable caia muy por debajo del piso de la
+    // bandeja, atravesandolo. 4mm de combado es visible (no queda tieso)
+    // sin cruzar piso ni paredes. No toca "radius" (grosor visible) ni el
+    // hitbox invisible de buildCable(), ambos ajenos a "sag".
     "cable-battery": {
       kind: "cable",
       cableKind: "front-panel",
       from: (a) => a.base.batteryBay.clone().add(new THREE.Vector3(0.06, 0.006, 0)),
       to: (a) => mbOf(a).cpuSocket.clone().add(new THREE.Vector3(0.03, 0, 0)),
+      buildOpts: { sag: 0.004 },
       detachAxis: AXIS_Y,
       tier: 3,
     },
@@ -145,6 +163,7 @@ export function createLaptopLayout() {
       cableKind: "front-panel",
       from: (a) => mbOf(a).cpuSocket.clone().add(new THREE.Vector3(0, 0.004, 0.02)),
       to: (a) => mbOf(a).cpuSocket.clone().add(new THREE.Vector3(0, 0.008, 0.07)),
+      buildOpts: { sag: 0.004 },
       detachAxis: AXIS_Y,
       tier: 3,
     },
@@ -153,6 +172,7 @@ export function createLaptopLayout() {
       cableKind: "front-panel",
       from: (a) => mbOf(a).cpuSocket.clone().add(new THREE.Vector3(-0.05, 0, -0.02)),
       to: () => new THREE.Vector3(0, 0.02, -0.02),
+      buildOpts: { sag: 0.004 },
       detachAxis: AXIS_Y,
       tier: 3,
     },
@@ -161,6 +181,7 @@ export function createLaptopLayout() {
       cableKind: "front-panel",
       from: (a) => mbOf(a).cpuSocket.clone().add(new THREE.Vector3(-0.05, 0, 0.02)),
       to: () => new THREE.Vector3(0, 0.017, 0.06),
+      buildOpts: { sag: 0.004 },
       detachAxis: AXIS_Y,
       tier: 3,
     },
@@ -169,6 +190,7 @@ export function createLaptopLayout() {
       cableKind: "front-panel",
       from: (a) => mbOf(a).cpuSocket.clone().add(new THREE.Vector3(0.05, 0, -0.04)),
       to: (a) => a.base.hingeLine.clone(),
+      buildOpts: { sag: 0.004 },
       detachAxis: AXIS_Y,
       tier: 3,
     },
@@ -177,6 +199,7 @@ export function createLaptopLayout() {
       cableKind: "front-panel",
       from: (a) => mbOf(a).wifiSlot.clone().add(new THREE.Vector3(-0.01, 0.002, 0)),
       to: (a) => a.base.hingeLine.clone().add(new THREE.Vector3(-0.1, 0.05, 0)),
+      buildOpts: { sag: 0.004 },
       detachAxis: AXIS_Y,
       tier: 3,
     },
@@ -185,6 +208,7 @@ export function createLaptopLayout() {
       cableKind: "front-panel",
       from: (a) => mbOf(a).wifiSlot.clone().add(new THREE.Vector3(0.01, 0.002, 0)),
       to: (a) => a.base.hingeLine.clone().add(new THREE.Vector3(0.1, 0.05, 0)),
+      buildOpts: { sag: 0.004 },
       detachAxis: AXIS_Y,
       tier: 3,
     },

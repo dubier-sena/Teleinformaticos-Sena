@@ -221,21 +221,58 @@ export function buildLaptopBase(opts = {}) {
   const w = opts.width || 0.33;
   const d = opts.depth || 0.23;
   const h = 0.014;
+  const wall = 0.0016;
   const group = new THREE.Group();
   group.name = "laptop-base";
 
-  const shell = box(w, h, d, "aluminum");
-  shell.position.y = h / 2;
-  group.add(shell);
+  // Carcasa hueca (correccion visual, sep-2026): antes esto era un bloque
+  // macizo box(w,h,d) sin cavidad -- motherboard/CPU/disipador/RAM/Wi-Fi/
+  // bateria quedaban tapados por el solido (o directamente fuera de el, ver
+  // pared izquierda mas abajo). Ahora es una bandeja de piso + 4 paredes
+  // delgadas, abierta por arriba (el teclado, pieza propia, cubre esa
+  // abertura -- ver keyboardMount). Mismo footprint y alto exterior que
+  // antes (w, d, h sin cambios): nada que dependa del exterior del chasis
+  // se ve afectado, solo el interior deja de ser solido.
+  // "metalBrushed" (no "aluminum") a proposito (correccion visual, FASE D
+  // sep-2026): las 3 superficies grandes originales (base/tapa/respaldo de
+  // tapa) compartian el mismo "aluminum" (roughness 0.28) sin ninguna
+  // ruptura -- se leian como una sola losa blanca y plana. El piso es la
+  // unica superficie realmente interior (las paredes se ven tanto desde
+  // afuera como desde la cavidad); usar el tono ya definido para el
+  // touchpad (mas mate, roughness 0.5) le da al interior una textura
+  // distinta de la carcasa exterior sin inventar un material nuevo ni
+  // tocar ningun color.
+  const floor = box(w, wall, d, "metalBrushed");
+  floor.position.y = wall / 2;
+  group.add(floor);
+
+  const backWall = box(w, h, wall, "aluminum");
+  backWall.position.set(0, h / 2, -d / 2 + wall / 2);
+  group.add(backWall);
+
+  const frontWall = box(w, h, wall, "aluminum");
+  frontWall.position.set(0, h / 2, d / 2 - wall / 2);
+  group.add(frontWall);
+
+  const leftWall = box(wall, h, d, "aluminum");
+  leftWall.position.set(-w / 2 + wall / 2, h / 2, 0);
+  group.add(leftWall);
+
+  const rightWall = box(wall, h, d, "aluminum");
+  rightWall.position.set(w / 2 - wall / 2, h / 2, 0);
+  group.add(rightWall);
 
   // Rejilla de ventilacion decorativa, borde trasero (auditoria visual de
   // mejora 3D: la base era una caja completamente lisa, sin ninguna
   // referencia de "aqui respira el equipo" -- justo donde un portatil real
-  // la tiene, cerca de la bisagra/disipador). Solo estetica: no es una
-  // pieza propia ni afecta ningun anchor existente.
+  // la tiene, cerca de la bisagra/disipador). Apoyada justo AFUERA de la
+  // cara exterior de la pared trasera (antes de la correccion visual, esa
+  // cara era la del bloque macizo; ahora es la pared delgada) para no
+  // competir en el mismo plano. Solo estetica: no es una pieza propia ni
+  // afecta ningun anchor existente.
   for (let i = 0; i < 7; i++) {
     const slat = box(w * 0.045, h * 0.5, 0.0015, "plasticDark", { color: 0x0e0f11 });
-    slat.position.set(-w * 0.28 + i * (w * 0.05), h * 0.5, -d / 2 + 0.0012);
+    slat.position.set(-w * 0.28 + i * (w * 0.05), h * 0.5, -d / 2 - 0.0008);
     group.add(slat);
   }
 
@@ -246,9 +283,32 @@ export function buildLaptopBase(opts = {}) {
     dims: { width: w, depth: d, height: h },
     anchors: {
       hingeLine: new THREE.Vector3(0, h, -d / 2),
-      batteryBay: new THREE.Vector3(0, -0.001, d * 0.05),
-      motherboardOrigin: new THREE.Vector3(-w * 0.32, -0.001, -d * 0.12),
-      bottomCoverCenter: new THREE.Vector3(0, -0.001, 0),
+      // Y reubicado (correccion visual, sep-2026): antes -0.001, por DEBAJO
+      // del bloque macizo (h=0..0.014) -- ni "dentro" ni realmente visible,
+      // solo tapado por igual. Ahora wall+radio de la pieza: apoyada sobre
+      // el piso de la bandeja, dentro de la cavidad real.
+      batteryBay: new THREE.Vector3(0, wall + 0.003, d * 0.05),
+      // X reubicado de -0.32*w a -0.12*w (correccion visual, sep-2026): con
+      // -0.32 la placa (ancho 0.24 por defecto, ver buildLaptopMotherboard)
+      // quedaba con su borde izquierdo en X=-0.2256, es decir 60mm AFUERA de
+      // la pared izquierda de un chasis de 0.33 de ancho (borde interior en
+      // -0.1634) -- la placa entera sobresalia del equipo, no solo la
+      // Wi-Fi (que se monta relativa a este mismo origen y arrastraba el
+      // mismo problema). Con -0.12 la placa completa (y todo lo montado
+      // sobre ella: CPU, disipador, RAM, SSD M.2, Wi-Fi) queda con margen
+      // real respecto a las 4 paredes. Y reubicado igual que bateria: apoyada
+      // sobre el piso de la bandeja (t/2 de la placa, ver buildLaptopMotherboard).
+      motherboardOrigin: new THREE.Vector3(-w * 0.12, wall + 0.0009, -d * 0.12),
+      // Y reubicado (correccion visual, sep-2026): antes -0.001 + otro
+      // -0.004 sumado en el mount() de hardware_lab_3d_layout_laptop.js
+      // (sin tocar ese archivo) = -0.005 final, un salto de ~4mm respecto a
+      // la cara inferior del piso (y=0) sin nada que lo explicara.
+      // 0.00175 aqui = -0.00225 final, dejando la tapa con su cara superior
+      // en y=-0.001: justo debajo del piso de la bandeja (y=0..wall), con
+      // 1mm de separacion visual limpia (evita z-fighting) y CERO
+      // superposicion con la bateria (que ahora vive por completo en
+      // y>=wall=0.0016, muy por encima).
+      bottomCoverCenter: new THREE.Vector3(0, 0.00175, 0),
       // Misma posicion absoluta que antes ocupaba el keyboardDeck/touchpad
       // estaticos -- al retirarse, no queda ningun hueco ni salto visual.
       keyboardMount: new THREE.Vector3(0, h + 0.001, -d * 0.03),

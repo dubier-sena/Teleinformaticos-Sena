@@ -37,7 +37,14 @@ export const MATERIAL_KIND = {
   metalSteel: { color: 0x8b93a1, roughness: 0.38, metalness: 0.85 },
   metalBrushed: { color: 0xa6adb8, roughness: 0.5, metalness: 0.75 },
   metalDark: { color: 0x4a4f58, roughness: 0.42, metalness: 0.8 },
-  aluminum: { color: 0xc7ccd4, roughness: 0.28, metalness: 0.9 },
+  // roughness 0.38 (antes 0.28, correccion visual FASE D sep-2026): en las
+  // superficies grandes del portatil (base/tapa inferior/respaldo de
+  // pantalla, ver hardware_lab_3d_chassis_factory.js) el valor original se
+  // leia casi como espejo, sin ninguna ruptura entre paneles -- "carcasa
+  // blanca y plana" (auditoria visual previa). Sigue mas brillante que
+  // metalDark (0.42, chasis de escritorio): aluminio pulido vs. acero
+  // oscuro mate son materiales distintos y deben distinguirse.
+  aluminum: { color: 0xc7ccd4, roughness: 0.38, metalness: 0.9 },
   copper: { color: 0xb87333, roughness: 0.32, metalness: 0.95 },
   goldPin: { color: 0xd4af37, roughness: 0.3, metalness: 0.95 },
   pcbGreen: { color: 0x0d4f2c, roughness: 0.75, metalness: 0.05 },
