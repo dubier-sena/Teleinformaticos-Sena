@@ -505,6 +505,61 @@ function renderSupportMaterialsRedes() {
   });
 }
 
+// CURRENT_GUIDE_LABEL (sep-2026, guias Redes adaptadas de Santa Barbara para
+// John F. Kennedy): esta guia hardcodeaba "Guia 2" en 17 llamadas a
+// delivery.uploadToAppsScript (entregas de laboratorios/evidencias) --
+// correcto solo para Santa Barbara. openDeliveryModal SI cae a
+// getGuideLabelFromDocument() cuando se omite guideLabel (ver
+// shared_apps_script_delivery.js), pero uploadToAppsScript reenvia el
+// payload tal cual, sin ese fallback: omitir guideLabel ahi dejaria
+// "guideLabel: undefined" en el registro de entrega y en la carpeta de
+// Drive real. CURRENT_GUIDE_LABEL se resuelve UNA vez en el arranque
+// (updateCurrentGuideLabel(), llamada junto a renderTopbarCampus) a partir
+// de context.guideNumberMap, y las 17 llamadas referencian esta variable
+// en vez del literal fijo.
+let CURRENT_GUIDE_LABEL = "Guia 2";
+
+function updateCurrentGuideLabel() {
+  const ctx = window.__GUIDE_RUNTIME_CONTEXT__;
+  const mapped = ctx && ctx.guideNumberMap && ctx.guideNumberMap["2"];
+  if (mapped) CURRENT_GUIDE_LABEL = "Guia " + mapped;
+}
+
+// remapGuideNumberReferences (sep-2026, mismo motivo): el partial
+// (partials/guia-redes-rap0N-content.html) esta compartido entre
+// instituciones con numeracion de guia distinta (Santa Barbara: 2/3/4;
+// John F. Kennedy: 10/11/12) y su HTML menciona el numero en texto plano
+// varias veces (encabezado, tag de fase, referencias cruzadas a otras
+// guias, titulos de iframe). Sin tocar el partial en si (sigue siendo
+// 100% compartido, mismo contenido pedagogico), esta funcion reescribe
+// esos numeros DESPUES de inyectar el contenido, usando
+// context.guideNumberMap. Solo toca nodos de TEXTO y atributos title --
+// nunca atributos onclick/JS ni el contenido pedagogico en si.
+function remapGuideNumberReferences(root) {
+  const ctx = window.__GUIDE_RUNTIME_CONTEXT__;
+  const map = ctx && ctx.guideNumberMap;
+  if (!root || !map) return;
+  const pattern = /([Gg]u[ií]as?)(\s+)(\d+(?:\s*(?:,|y)\s*\d+)*)/g;
+  function remapText(text) {
+    return text.replace(pattern, function (full, word, space, numList) {
+      const replaced = numList.replace(/\d+/g, function (d) {
+        return map[d] != null ? map[d] : d;
+      });
+      return word + space + replaced;
+    });
+  }
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  let node;
+  while ((node = walker.nextNode())) nodes.push(node);
+  nodes.forEach(function (n) {
+    if (n.nodeValue) n.nodeValue = remapText(n.nodeValue);
+  });
+  root.querySelectorAll("[title]").forEach(function (el) {
+    if (/[Gg]u[ií]a/.test(el.title)) el.title = remapText(el.title);
+  });
+}
+
 function renderTopbarCampus() {
   const el = document.getElementById("topbarCampus");
   if (!el) return;
@@ -653,7 +708,7 @@ window.subirImagenBloqueA = async function (input) {
     // Upload to Drive
     const fileBase64 = localBase64.split(",").pop();
     const response = await delivery.uploadToAppsScript({
-      guideLabel: "Guia 2",
+      guideLabel: CURRENT_GUIDE_LABEL,
       activityLabel: "Bloque A — Producto Individual",
       activityNumber: "3.2.A",
       activityTitle: "Producto Individual — Esquema LAN/MAN/WAN",
@@ -782,7 +837,7 @@ window.subirImagenBloqueB = async function (input) {
 
     const fileBase64 = localBase64.split(",").pop();
     const response = await delivery.uploadToAppsScript({
-      guideLabel: "Guia 2",
+      guideLabel: CURRENT_GUIDE_LABEL,
       activityLabel: "Bloque B — Producto Individual",
       activityNumber: "3.2.B",
       activityTitle: "Producto Individual — Topologías de red",
@@ -994,7 +1049,7 @@ window.subirImagenBloqueE = async function (input) {
 
     const fileBase64 = localBase64.split(",").pop();
     const response = await delivery.uploadToAppsScript({
-      guideLabel: "Guia 2",
+      guideLabel: CURRENT_GUIDE_LABEL,
       activityLabel: "Bloque E — Producto Individual",
       activityNumber: "3.2.1.E",
       activityTitle: "Producto Individual — Diagrama OSI",
@@ -1292,7 +1347,7 @@ window.exportarWordContextualizacion = async function (evt) {
     }
 
     window.sharedAppsScriptDelivery.openDeliveryModal({
-      guideLabel: "Guia 2",
+      guideLabel: CURRENT_GUIDE_LABEL,
       activityLabel: "Actividad 3.2.1",
       activityNumber: "3.2.1",
       activityTitle: "Exploracion Visual por Bloques Tematicos",
@@ -1744,7 +1799,7 @@ window.subirReflexion311AlDrive = function () {
   const file = buildReflexion311WordFile();
 
   window.sharedAppsScriptDelivery.openDeliveryModal({
-    guideLabel: "Guia 2",
+    guideLabel: CURRENT_GUIDE_LABEL,
     activityNumber: "3.1.1",
     activityTitle: "Reflexión Individual — Caso Carmen",
     activityLabel: "Actividad 3.1.1",
@@ -1863,7 +1918,7 @@ ${b3Rows}${b3Img}
     const file = new File([blob], fileName, { type: "application/msword" });
 
     window.sharedAppsScriptDelivery.openDeliveryModal({
-      guideLabel: "Guia 2",
+      guideLabel: CURRENT_GUIDE_LABEL,
       activityNumber: "3.3",
       activityTitle: "Direccionamiento IP \u2014 Bloques 1\u20133",
       activityLabel: "Actividad 3.3",
@@ -2039,7 +2094,7 @@ ${screenshotBlock}
     }
 
     window.sharedAppsScriptDelivery.openDeliveryModal({
-      guideLabel: "Guia 2",
+      guideLabel: CURRENT_GUIDE_LABEL,
       activityNumber: "3.3.4",
       activityTitle: "Actividad 3.3.4 — Taller IP (Ejercicios 1–5)",
       activityLabel: "Actividad 3.3.4",
@@ -2308,7 +2363,7 @@ window.subirPantallazoTallerIPEj4 = async function (input) {
 
     const fileBase64 = localBase64.split(",").pop();
     const response = await delivery.uploadToAppsScript({
-      guideLabel: "Guia 2",
+      guideLabel: CURRENT_GUIDE_LABEL,
       activityLabel: "Ejercicio 4 \u2014 Pantallazo ipconfig /all",
       activityNumber: "3.3.4",
       activityTitle: "Taller IP \u2014 Verificar parametros de red",
@@ -2576,7 +2631,7 @@ window.subirPantallazoLab1 = async function (slotKey, input) {
     refreshLab1EvidenceSlot(slotKey);
 
     const response = await delivery.uploadToAppsScript({
-      guideLabel: "Guia 2",
+      guideLabel: CURRENT_GUIDE_LABEL,
       activityLabel: `Laboratorio 1 \u2014 ${slot.title}`,
       activityNumber: "3.4.1",
       activityTitle: "Laboratorio 1 \u2014 Red topologia estrella con direccionamiento IP",
@@ -2656,7 +2711,7 @@ window.subirEntregaFinalLab1 = function () {
   }
 
   window.sharedAppsScriptDelivery.openDeliveryModal({
-    guideLabel: "Guia 2",
+    guideLabel: CURRENT_GUIDE_LABEL,
     activityNumber: "3.4.1",
     activityTitle: "Laboratorio 1 \u2014 Red topologia estrella con direccionamiento IP",
     activityLabel: "Actividad 3.4.1",
@@ -2832,7 +2887,7 @@ window.subirPantallazoLab2 = async function (slotKey, input) {
     refreshLab2EvidenceSlot(slotKey);
 
     const response = await delivery.uploadToAppsScript({
-      guideLabel: "Guia 2",
+      guideLabel: CURRENT_GUIDE_LABEL,
       activityLabel: `Laboratorio 2 — ${slot.title}`,
       activityNumber: "3.4.2",
       activityTitle: "Laboratorio 2 — Red topologia arbol con multiples segmentos (Autonomo)",
@@ -2912,7 +2967,7 @@ window.subirEntregaFinalLab2 = function () {
   }
 
   window.sharedAppsScriptDelivery.openDeliveryModal({
-    guideLabel: "Guia 2",
+    guideLabel: CURRENT_GUIDE_LABEL,
     activityNumber: "3.4.2",
     activityTitle: "Laboratorio 2 — Red topologia arbol con multiples segmentos (Autonomo)",
     activityLabel: "Actividad 3.4.2",
@@ -3099,7 +3154,7 @@ window.subirPantallazoLab3 = async function (slotKey, input) {
     refreshLab3EvidenceSlot(slotKey);
 
     const response = await delivery.uploadToAppsScript({
-      guideLabel: "Guia 2",
+      guideLabel: CURRENT_GUIDE_LABEL,
       activityLabel: `Laboratorio 3 - ${slot.title}`,
       activityNumber: "3.4.3",
       activityTitle: "Laboratorio 3 - Red hibrida estrella y arbol con fibra optica, cableado y Wi-Fi",
@@ -3179,7 +3234,7 @@ window.subirEntregaFinalLab3 = function () {
   }
 
   window.sharedAppsScriptDelivery.openDeliveryModal({
-    guideLabel: "Guia 2",
+    guideLabel: CURRENT_GUIDE_LABEL,
     activityNumber: "3.4.3",
     activityTitle: "Laboratorio 3 - Red hibrida estrella y arbol con fibra optica, cableado y Wi-Fi",
     activityLabel: "Actividad 3.4.3",
@@ -3280,7 +3335,7 @@ window.subirImagenBloqueIP3 = async function (input) {
 
     const fileBase64 = localBase64.split(",").pop();
     const response = await delivery.uploadToAppsScript({
-      guideLabel: "Guia 2",
+      guideLabel: CURRENT_GUIDE_LABEL,
       activityLabel: "Bloque 3 \u2014 Producto Individual",
       activityNumber: "3.3.3",
       activityTitle: "Producto Individual \u2014 Diagrama de par\u00e1metros de red",
@@ -3405,7 +3460,7 @@ window.subirImagenBloqueIP1 = async function (input) {
 
     const fileBase64 = localBase64.split(",").pop();
     const response = await delivery.uploadToAppsScript({
-      guideLabel: "Guia 2",
+      guideLabel: CURRENT_GUIDE_LABEL,
       activityLabel: "Bloque 1 \u2014 Producto Individual",
       activityNumber: "3.3.1",
       activityTitle: "Producto Individual \u2014 Diagrama IPv4",
@@ -3531,7 +3586,7 @@ window.subirImagenSocial = async function (input) {
 
     const fileBase64 = localBase64.split(",").pop();
     const response = await delivery.uploadToAppsScript({
-      guideLabel: "Guia 2",
+      guideLabel: CURRENT_GUIDE_LABEL,
       activityLabel: "Socializaci\u00f3n 3.2.1.G \u2014 Mapa elegido",
       activityNumber: "3.2.1.G",
       activityTitle: "Mapa mental \u2014 representaci\u00f3n visual m\u00e1s completa",
@@ -4528,6 +4583,8 @@ async function initGuiaRedes() {
   renderQuizRedesStatus();
   renderGlossary();
   renderSupportMaterialsRedes();
+  updateCurrentGuideLabel();
+  remapGuideNumberReferences(document.getElementById("guide-root"));
   renderTopbarCampus();
   hydrateFieldsRedes();
   bindEventsRedes();

@@ -65,6 +65,19 @@
       "Guía 4 - Documentar las acciones realizadas en la red, de acuerdo con la normativa | Grupo 10A",
     "santa-barbara-10b-guia-04-redes-rap03.html":
       "Guía 4 - Documentar las acciones realizadas en la red, de acuerdo con la normativa | Grupo 10B",
+    // Guias 10-12 (Redes), adaptadas de Santa Barbara para John F. Kennedy.
+    "grupo-10a-guia-10-redes-rap01.html":
+      "Guía 10 - Definir los parámetros y recursos de la red de acuerdo con normativa de telecomunicaciones | Grupo 10A",
+    "grupo-10b-guia-10-redes-rap01.html":
+      "Guía 10 - Definir los parámetros y recursos de la red de acuerdo con normativa de telecomunicaciones | Grupo 10B",
+    "grupo-10a-guia-11-redes-rap02.html":
+      "Guía 11 - Comprobar la conectividad de la red, de acuerdo con normativa de telecomunicaciones y orden de trabajo | Grupo 10A",
+    "grupo-10b-guia-11-redes-rap02.html":
+      "Guía 11 - Comprobar la conectividad de la red, de acuerdo con normativa de telecomunicaciones y orden de trabajo | Grupo 10B",
+    "grupo-10a-guia-12-redes-rap03.html":
+      "Guía 12 - Documentar las acciones realizadas en la red, de acuerdo con la normativa | Grupo 10A",
+    "grupo-10b-guia-12-redes-rap03.html":
+      "Guía 12 - Documentar las acciones realizadas en la red, de acuerdo con la normativa | Grupo 10B",
     "santa-barbara-guia-python.html":
       "Guía - Práctica de Python | Santa Bárbara",
     "santa-barbara-10a-guia-04-taller-integrador.html": "Taller Integrador | Grupo 10A",
@@ -272,6 +285,50 @@
       pageKey: "sb_10b_guia4_redes_rap03",
       stateKey: "guia_interactiva_santa_barbara_10b_guia_04_redes_rap03_html",
     },
+    // Guias 10-12 (Redes), adaptadas de Santa Barbara para John F. Kennedy:
+    // mismos total/activityTotal que su equivalente SB (contenido identico).
+    "grupo-10a-guia-10-redes-rap01.html": {
+      mode: "state-with-activity",
+      total: 13,
+      activityTotal: 0,
+      pageKey: "jfk_10a_guia10_redes_rap01",
+      stateKey: "guia_interactiva_grupo_10a_guia_10_redes_rap01_html",
+    },
+    "grupo-10b-guia-10-redes-rap01.html": {
+      mode: "state-with-activity",
+      total: 13,
+      activityTotal: 0,
+      pageKey: "jfk_10b_guia10_redes_rap01",
+      stateKey: "guia_interactiva_grupo_10b_guia_10_redes_rap01_html",
+    },
+    "grupo-10a-guia-11-redes-rap02.html": {
+      mode: "state-with-activity",
+      total: 34,
+      activityTotal: 9,
+      pageKey: "jfk_10a_guia11_redes_rap02",
+      stateKey: "guia_interactiva_grupo_10a_guia_11_redes_rap02_html",
+    },
+    "grupo-10b-guia-11-redes-rap02.html": {
+      mode: "state-with-activity",
+      total: 34,
+      activityTotal: 9,
+      pageKey: "jfk_10b_guia11_redes_rap02",
+      stateKey: "guia_interactiva_grupo_10b_guia_11_redes_rap02_html",
+    },
+    "grupo-10a-guia-12-redes-rap03.html": {
+      mode: "state-with-activity",
+      total: 66,
+      activityTotal: 11,
+      pageKey: "jfk_10a_guia12_redes_rap03",
+      stateKey: "guia_interactiva_grupo_10a_guia_12_redes_rap03_html",
+    },
+    "grupo-10b-guia-12-redes-rap03.html": {
+      mode: "state-with-activity",
+      total: 66,
+      activityTotal: 11,
+      pageKey: "jfk_10b_guia12_redes_rap03",
+      stateKey: "guia_interactiva_grupo_10b_guia_12_redes_rap03_html",
+    },
     "santa-barbara-guia-python.html": {
       mode: "state-with-activity",
       // 10 retos + 10 adicionales + 1 reto integrador (retoPython) = 21.
@@ -323,6 +380,9 @@
         "grupo-10a-guia-04-planificar-informacion-ciberseguridad.html",
         "grupo-10a-guia-05-documentar-gestion-informacion.html",
         "grupo-10a-guia-06-mantener-equipos.html",
+        "grupo-10a-guia-10-redes-rap01.html",
+        "grupo-10a-guia-11-redes-rap02.html",
+        "grupo-10a-guia-12-redes-rap03.html",
         "grupo-10a-guia-04-taller-integrador.html",
         "santa-barbara-guia-python.html",
       ],
@@ -338,6 +398,9 @@
         "grupo-10b-guia-04-planificar-informacion-ciberseguridad.html",
         "grupo-10b-guia-05-documentar-gestion-informacion.html",
         "grupo-10b-guia-06-mantener-equipos.html",
+        "grupo-10b-guia-10-redes-rap01.html",
+        "grupo-10b-guia-11-redes-rap02.html",
+        "grupo-10b-guia-12-redes-rap03.html",
         "grupo-10b-guia-04-taller-integrador.html",
         "santa-barbara-guia-python.html",
       ],

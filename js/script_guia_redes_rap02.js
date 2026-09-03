@@ -85,6 +85,60 @@
     };
   }
 
+  // renderTopbarCampus (sep-2026): esta guia comparte el mismo partial
+  // (#topbarCampus) que RAP01, pero -- a diferencia de script_guia_redes.js
+  // (ver renderTopbarCampus() ahi) -- nunca lo actualizaba en tiempo real, se
+  // quedaba con el texto fijo horneado en el HTML ("Santa Bárbara"). No se
+  // notaba porque Santa Barbara era la unica institucion que usaba esta
+  // guia; al compartirla con John F. Kennedy, un aprendiz de Kennedy veria
+  // "Santa Bárbara" en su propia guia. Mismo patron exacto que RAP01.
+  function renderTopbarCampus() {
+    const el = document.getElementById("topbarCampus");
+    if (!el) return;
+    const sel = getGuideSelection();
+    const inst = sel.inst || document.body.dataset.defaultInst || "";
+    const grupo = sel.grupo || document.body.dataset.defaultGrupo || "";
+    if (inst) el.textContent = grupo ? inst + " | " + grupo : inst;
+  }
+
+  // remapGuideNumberReferences (sep-2026): mismo mecanismo que
+  // script_guia_redes.js (RAP01, ver su comentario completo) -- el partial
+  // (guia-redes-rap02-content.html) esta compartido entre instituciones con
+  // numeracion de guia distinta (Santa Barbara: 3; John F. Kennedy: 11) y
+  // menciona el numero en texto plano varias veces (encabezado, topbar,
+  // tag de fase, referencias cruzadas a la Guia 2/RAP01, titulos de
+  // iframe). Sin tocar el partial en si, reescribe esos numeros DESPUES de
+  // inyectar el contenido usando context.guideNumberMap. Esta guia no
+  // hardcodea guideLabel en ninguna llamada de entrega (a diferencia de
+  // RAP01): usa ActivityStandard/openDeliveryModal, que ya cae solo a
+  // getGuideLabelFromDocument() -- una vez que el encabezado queda
+  // corregido aqui, ese fallback resuelve el label correcto sin cambios
+  // adicionales.
+  function remapGuideNumberReferences(root) {
+    const ctx = window.__GUIDE_RUNTIME_CONTEXT__;
+    const map = ctx && ctx.guideNumberMap;
+    if (!root || !map) return;
+    const pattern = /([Gg]u[ií]as?)(\s+)(\d+(?:\s*(?:,|y)\s*\d+)*)/g;
+    function remapText(text) {
+      return text.replace(pattern, function (full, word, space, numList) {
+        const replaced = numList.replace(/\d+/g, function (d) {
+          return map[d] != null ? map[d] : d;
+        });
+        return word + space + replaced;
+      });
+    }
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    let node;
+    while ((node = walker.nextNode())) nodes.push(node);
+    nodes.forEach(function (n) {
+      if (n.nodeValue) n.nodeValue = remapText(n.nodeValue);
+    });
+    root.querySelectorAll("[title]").forEach(function (el) {
+      if (/[Gg]u[ií]a/.test(el.title)) el.title = remapText(el.title);
+    });
+  }
+
   function getCurrentLearnerName() {
     const session = portalAuth?.getCurrentSession?.();
     return session?.user?.fullName || session?.user?.username || "";
@@ -109,6 +163,11 @@
     const folders = {
       "3441944": "https://drive.google.com/drive/folders/1fZ7atqeSym9ayQylRG47HqKm2xdBbFOf?usp=drive_link",
       "3441950": "https://drive.google.com/drive/folders/1N49ulJRgbF7ySD3JDRJzFE5czCKFO1KM?usp=drive_link",
+      // John F. Kennedy (sep-2026, guia adaptada de Santa Barbara): mismas
+      // URLs ya usadas por el resto de guias de JFK, ver fichaDriveFolders
+      // en js/project_integrations.js.
+      "3441939": "https://drive.google.com/drive/folders/1SLkk986REOKGEFaCyWV7rSeudj7lnUMs",
+      "3441942": "https://drive.google.com/drive/folders/1cv0DkFXhkMw22AddqIgC354DhUUHcQck",
     };
     const url = folders[sel.ficha] || "";
     if (url) window.open(url, "_blank", "noopener,noreferrer");
@@ -202,6 +261,8 @@
     if (booted) return;
     booted = true;
 
+    remapGuideNumberReferences(document.getElementById("guide-root"));
+    renderTopbarCampus();
     hydrateFields();
     bindFieldEvents();
     bindReset();

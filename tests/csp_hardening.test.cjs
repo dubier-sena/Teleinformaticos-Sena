@@ -82,9 +82,20 @@ function countInlineSurface() {
 // convenciones de estilo inline (style="margin-top:16px", etc.) que ya usan
 // guia4ciber/guia5doc. No es una superficie nueva: es el mismo patron
 // existente aplicado a una guia mas.
+// scriptBlocks 57 -> 63, styleAttrs 2820 -> 2826 (2026-09-03, Guias 10-12 -
+// Redes RAP01/02/03, Kennedy grado 10, adaptadas de Santa Barbara): 6
+// wrappers de guia nuevos (10A/10B x 3 RAP), cada uno con su bloque inline
+// window.__GUIDE_CONTEXT__ = {...} (mismo patron que toda guia que usa
+// guide_runtime_loader.js, ver p.ej. las guias de Redes de Santa Barbara
+// ya existentes) = +6 scriptBlocks. 6 paginas de quiz nuevas
+// (pages/auxiliares/grupo-10{a,b}-guia-10-redes-{rap01,ip}-quiz.html +
+// grupo-10{a,b}-guia-11-redes-rap02-quiz.html), cada una con el mismo
+// style="margin-top:22px" que ya usan las paginas de quiz de Santa Barbara
+// = +6 styleAttrs. No es superficie nueva: es el mismo patron existente
+// aplicado a 6 guias/paginas mas.
 const BASELINE = {
-  scriptBlocks: 57,
-  styleAttrs: 2820,
+  scriptBlocks: 63,
+  styleAttrs: 2826,
   styleTags: 23,
 };
 

@@ -1464,6 +1464,18 @@
     program: PROGRAM,
     competencia: "220501121 - Definir los parametros y recursos de la red de acuerdo con normativa de telecomunicaciones.",
     resultado: RAP_REDES,
+    // cloudFileNames (sep-2026): faltaba pese a que script_guia_redes.js SI le
+    // da a esta guia un alias corto (STORAGE_FILE_ALIASES_REDES, sb_10a/10b_
+    // redes.html != el pageFile crudo) -- el mismo gotcha que el checklist de
+    // "Adding a New Guide" en CLAUDE.md documenta como causa real de que
+    // "Habilitar actividades entregadas"/"Ver respuestas" en el panel admin
+    // muestren el grupo vacio. Detectado al adaptar esta guia para JFK
+    // (ver el registro nuevo de la Guia 10, mas abajo, que si lo declara
+    // desde el inicio).
+    cloudFileNames: {
+      "santa-barbara-10a-guia-02-redes-rap01.html": "sb_10a_redes.html",
+      "santa-barbara-10b-guia-02-redes-rap01.html": "sb_10b_redes.html",
+    },
     activities: [
       { id: "reflexion311",     number: "3.1.1", label: "Reflexion individual",     shortName: "Reflexion",     type: "form" },
       // El applier a medida de reflexion311 (ver script_guia_redes.js) bloquea
@@ -1723,6 +1735,504 @@
     guideNumber: "4",
     guideTitle: "Guia 4 - Documentar las acciones realizadas en la red (RAP 03)",
     stateKey: "guia_interactiva_santa_barbara_10a_guia_04_redes_rap03_html",
+    program: PROGRAM,
+    competencia: "280102129 - Evaluar red de acuerdo con procedimientos de telecomunicaciones y normativa tecnica.",
+    resultado: "RAP 03 - Documentar las acciones realizadas en la red de acuerdo con la normativa.",
+    activities: [
+      {
+        id: "reflexion311", number: "3.1.1", label: "Reflexion inicial - Caso consultorio medico Tunja",
+        shortName: "Reflexion", type: "form",
+        formFields: ["g5r_311_p1", "g5r_311_p2", "g5r_311_p3", "g5r_311_p4", "g5r_311_p5"],
+        buttonIds: { save: "btnGuardarReflexion311", status: "statusReflexion311" },
+        wordExport: {
+          contextBox: "Caso: el tecnico Juan instalo la red de un consultorio medico en Tunja (8 PC, 2 switches, 1 router, impresora de red) sin dejar documentacion. Tres meses despues, el nuevo tecnico no pudo resolver una falla sencilla por falta de registros.",
+          sections: [
+            { label: "1. Documentos que deberia haber dejado Juan (minimo 4)", storeKey: "g5r_311_p1" },
+            { label: "2. Informacion especifica a registrar de cada dispositivo", storeKey: "g5r_311_p2" },
+            { label: "3. Experiencia propia con falta de documentacion", storeKey: "g5r_311_p3" },
+            { label: "4. Diferencia entre un tecnico que documenta y uno que no, desde el cliente", storeKey: "g5r_311_p4" },
+            { label: "5. Formato o plantilla de documentacion tecnica conocido", storeKey: "g5r_311_p5" },
+          ],
+        },
+      },
+      {
+        id: "bloqueA321", number: "3.2.1", label: "Bloque A - Estandares de documentacion: TIA-568, TIA-606 e ISO/IEC 11801",
+        shortName: "BloqueA", type: "form",
+        formFields: ["g5r_321_q1", "g5r_321_q2", "g5r_321_q3"],
+        buttonIds: { save: "btnGuardarBloqueA321", status: "statusBloqueA321" },
+        wordExport: {
+          contextBox: "Bloque A: estandares TIA-568, TIA-606 e ISO/IEC 11801 que regulan la documentacion de redes.",
+          sections: [
+            { label: "1. Que establece la norma TIA-568 sobre el cableado estructurado", storeKey: "g5r_321_q1" },
+            { label: "2. Que es la norma TIA-606 y para que sirve en la documentacion", storeKey: "g5r_321_q2" },
+            { label: "3. Elementos minimos a documentar segun estos estandares", storeKey: "g5r_321_q3" },
+          ],
+        },
+      },
+      {
+        id: "bloqueB322", number: "3.2.2", label: "Bloque B - Herramientas de verificacion y certificacion de cableado",
+        shortName: "BloqueB", type: "form",
+        formFields: ["g5r_322_q1", "g5r_322_q2", "g5r_322_q3"],
+        buttonIds: { save: "btnGuardarBloqueB322", status: "statusBloqueB322" },
+        wordExport: {
+          contextBox: "Bloque B: tester de cable vs. certificador de cableado (p. ej. Fluke DTX-1800).",
+          sections: [
+            { label: "1. Diferencia entre tester de cable y certificador de cableado", storeKey: "g5r_322_q1" },
+            { label: "2. Parametros que mide un certificador y no un tester simple", storeKey: "g5r_322_q2" },
+            { label: "3. Resultado que genera el certificador y como se documenta", storeKey: "g5r_322_q3" },
+          ],
+        },
+      },
+      {
+        id: "bloqueC323", number: "3.2.3", label: "Bloque C - Parametros de certificacion de cableado",
+        shortName: "BloqueC", type: "form",
+        formFields: ["g5r_323_q1", "g5r_323_q2", "g5r_323_q3"],
+        buttonIds: { save: "btnGuardarBloqueC323", status: "statusBloqueC323" },
+        wordExport: {
+          contextBox: "Bloque C: parametros de certificacion (atenuacion, NEXT, BER, longitud de cable).",
+          sections: [
+            { label: "1. Que es la atenuacion (perdida de insercion) y como afecta la red", storeKey: "g5r_323_q1" },
+            { label: "2. Que significa un test BER aprobado y su implicacion documental", storeKey: "g5r_323_q2" },
+            { label: "3. Por que registrar la longitud del cable en el informe tecnico", storeKey: "g5r_323_q3" },
+          ],
+        },
+      },
+      {
+        id: "bloqueD324", number: "3.2.4", label: "Bloque D - Estructura de un informe tecnico de red",
+        shortName: "BloqueD", type: "form",
+        formFields: ["g5r_324_q1", "g5r_324_q2", "g5r_324_q3"],
+        buttonIds: { save: "btnGuardarBloqueD324", status: "statusBloqueD324" },
+        wordExport: {
+          contextBox: "Bloque D: estructura de un informe tecnico de red segun norma ICONTEC NTC 1486.",
+          sections: [
+            { label: "1. Diferencia entre informe tecnico e informe ejecutivo", storeKey: "g5r_324_q1" },
+            { label: "2. Secciones obligatorias de un informe tecnico de instalacion de red", storeKey: "g5r_324_q2" },
+            { label: "3. Evidencias graficas que debe incluir un informe tecnico de red", storeKey: "g5r_324_q3" },
+          ],
+        },
+      },
+      {
+        // Exportacion consolidada de los 4 bloques A-D — solo Word, sin save ni Drive.
+        // Mismo truco que exportBloques321a324 en la Guia 3 (script_guia_redes_rap02).
+        id: "exportBloques321a324", number: "3.2.x", label: "Exportar bloques A-D a Word",
+        shortName: "BloquesFinal", type: "form",
+        formFields: [],
+        buttonIds: { save: "_btnExportConsolidado_noexiste", status: "_statusExportConsolidado_noexiste" },
+        wordExport: {
+          contextBox: "Contextualizacion — estandares TIA-568/606/ISO 11801, herramientas de verificacion y certificacion, parametros de certificacion y estructura de un informe tecnico de red.",
+          sections: [
+            { label: "BLOQUE A — Estandares de documentacion: TIA-568, TIA-606 e ISO/IEC 11801", storeKey: "" },
+            { label: "A1. Que establece la norma TIA-568 sobre el cableado estructurado", storeKey: "g5r_321_q1" },
+            { label: "A2. Que es la norma TIA-606 y para que sirve en la documentacion", storeKey: "g5r_321_q2" },
+            { label: "A3. Elementos minimos a documentar segun estos estandares", storeKey: "g5r_321_q3" },
+            { label: "BLOQUE B — Herramientas de verificacion y certificacion de cableado", storeKey: "" },
+            { label: "B1. Diferencia entre tester de cable y certificador de cableado", storeKey: "g5r_322_q1" },
+            { label: "B2. Parametros que mide un certificador y no un tester simple", storeKey: "g5r_322_q2" },
+            { label: "B3. Resultado que genera el certificador y como se documenta", storeKey: "g5r_322_q3" },
+            { label: "BLOQUE C — Parametros de certificacion de cableado", storeKey: "" },
+            { label: "C1. Que es la atenuacion (perdida de insercion) y como afecta la red", storeKey: "g5r_323_q1" },
+            { label: "C2. Que significa un test BER aprobado y su implicacion documental", storeKey: "g5r_323_q2" },
+            { label: "C3. Por que registrar la longitud del cable en el informe tecnico", storeKey: "g5r_323_q3" },
+            { label: "BLOQUE D — Estructura de un informe tecnico de red", storeKey: "" },
+            { label: "D1. Diferencia entre informe tecnico e informe ejecutivo", storeKey: "g5r_324_q1" },
+            { label: "D2. Secciones obligatorias de un informe tecnico de instalacion de red", storeKey: "g5r_324_q2" },
+            { label: "D3. Evidencias graficas que debe incluir un informe tecnico de red", storeKey: "g5r_324_q3" },
+          ],
+        },
+      },
+      {
+        id: "entregaContexto", number: "3.2.5", label: "Entrega - Productos de contextualizacion (PDF)",
+        shortName: "Contextualizacion", type: "file",
+        driveTarget: {
+          panelKey: "g5redes-3-2-5", deadlineActivityId: "entregaContexto",
+          activityTitle: "Contextualizacion de documentacion (PDF con los 4 productos)",
+          description: "Sube a Drive un solo PDF con los 4 productos: tabla comparativa de estandares, cuadro de herramientas, tabla de parametros e indice comentado.",
+          note: "Nombre sugerido: Contextualizacion_Documentacion_NombreAprendiz_FICHA.pdf",
+        },
+      },
+      {
+        id: "demoHerramientas331", number: "3.3.1", label: "Demostracion practica de herramientas de cableado",
+        shortName: "DemoHerramientas", type: "form",
+        formFields: ["g5r_331_punchdown", "g5r_331_crimpadora", "g5r_331_tester", "g5r_331_certificador"],
+        buttonIds: { save: "btnGuardarDemoHerramientas331", status: "statusDemoHerramientas331" },
+        wordExport: {
+          contextBox: "Demostracion practica: Punch Down, crimpadora RJ-45, tester de cable y certificador de redes.",
+          sections: [
+            { label: "Punch Down — resultado y anotaciones", storeKey: "g5r_331_punchdown" },
+            { label: "Crimpadora RJ-45 — resultado y anotaciones", storeKey: "g5r_331_crimpadora" },
+            { label: "Tester de cable — resultado y anotaciones", storeKey: "g5r_331_tester" },
+            { label: "Certificador de redes — resultado y anotaciones", storeKey: "g5r_331_certificador" },
+          ],
+        },
+      },
+      {
+        id: "plantilla1Inventario", number: "3.3.2.1", label: "Plantilla 1 - Inventario de dispositivos de red",
+        shortName: "Plantilla1Inventario", type: "form",
+        formFields: [
+          "g5r_p1_r1", "g5r_p1_r2", "g5r_p1_r3", "g5r_p1_r4", "g5r_p1_r5", "g5r_p1_r6",
+          "g5r_p1_r7", "g5r_p1_r8", "g5r_p1_r9", "g5r_p1_r10", "g5r_p1_r11", "g5r_p1_r12",
+        ],
+        buttonIds: { save: "btnGuardarPlantilla1Inventario", status: "statusPlantilla1Inventario" },
+        wordExport: {
+          contextBox: "Plantilla 1 — Inventario de dispositivos de red de OccidenteServicios Ltda. (12 dispositivos: R1, S1, S2, PC0-PC7).",
+          sections: [
+            { label: "R1 — Gi0/0/0 (Router, enlace Planta 1)", storeKey: "g5r_p1_r1" },
+            { label: "R1 — Gi0/0/1 (Router, enlace Planta 2)", storeKey: "g5r_p1_r2" },
+            { label: "S1 — VLAN 1 (Switch Planta 1)", storeKey: "g5r_p1_r3" },
+            { label: "S2 — VLAN 1 (Switch Planta 2)", storeKey: "g5r_p1_r4" },
+            { label: "PC0 — Contabilidad (Planta 1)", storeKey: "g5r_p1_r5" },
+            { label: "PC1 — Gerencia (Planta 1)", storeKey: "g5r_p1_r6" },
+            { label: "PC2 — Recepcion (Planta 1)", storeKey: "g5r_p1_r7" },
+            { label: "PC3 — Soporte (Planta 1)", storeKey: "g5r_p1_r8" },
+            { label: "PC4 — Bodega (Planta 2)", storeKey: "g5r_p1_r9" },
+            { label: "PC5 — Despacho (Planta 2)", storeKey: "g5r_p1_r10" },
+            { label: "PC6 — Calidad (Planta 2)", storeKey: "g5r_p1_r11" },
+            { label: "PC7 — Sistemas (Planta 2)", storeKey: "g5r_p1_r12" },
+          ],
+        },
+      },
+      {
+        id: "plantilla2IP", number: "3.3.2.2", label: "Plantilla 2 - Tabla de direccionamiento IP",
+        shortName: "Plantilla2IP", type: "form",
+        formFields: [
+          "g5r_p2_r1", "g5r_p2_r2", "g5r_p2_r3", "g5r_p2_r4", "g5r_p2_r5", "g5r_p2_r6",
+          "g5r_p2_r7", "g5r_p2_r8", "g5r_p2_r9", "g5r_p2_r10", "g5r_p2_r11", "g5r_p2_r12",
+        ],
+        buttonIds: { save: "btnGuardarPlantilla2IP", status: "statusPlantilla2IP" },
+        wordExport: {
+          contextBox: "Plantilla 2 — Tabla de direccionamiento IP de OccidenteServicios Ltda. (192.168.1.0/24 Planta 1, 192.168.2.0/24 Planta 2).",
+          sections: [
+            { label: "R1 — Gi0/0/0", storeKey: "g5r_p2_r1" },
+            { label: "R1 — Gi0/0/1", storeKey: "g5r_p2_r2" },
+            { label: "S1 — VLAN 1", storeKey: "g5r_p2_r3" },
+            { label: "S2 — VLAN 1", storeKey: "g5r_p2_r4" },
+            { label: "PC0 — Contabilidad", storeKey: "g5r_p2_r5" },
+            { label: "PC1 — Gerencia", storeKey: "g5r_p2_r6" },
+            { label: "PC2 — Recepcion", storeKey: "g5r_p2_r7" },
+            { label: "PC3 — Soporte", storeKey: "g5r_p2_r8" },
+            { label: "PC4 — Bodega", storeKey: "g5r_p2_r9" },
+            { label: "PC5 — Despacho", storeKey: "g5r_p2_r10" },
+            { label: "PC6 — Calidad", storeKey: "g5r_p2_r11" },
+            { label: "PC7 — Sistemas", storeKey: "g5r_p2_r12" },
+          ],
+        },
+      },
+      {
+        id: "plantilla3Pruebas", number: "3.3.2.3", label: "Plantilla 3 - Registro de pruebas de conectividad",
+        shortName: "Plantilla3Pruebas", type: "form",
+        formFields: [
+          "g5r_p3_r1", "g5r_p3_r2", "g5r_p3_r3", "g5r_p3_r4", "g5r_p3_r5",
+          "g5r_p3_r6", "g5r_p3_r7", "g5r_p3_r8", "g5r_p3_r9", "g5r_p3_r10",
+        ],
+        buttonIds: { save: "btnGuardarPlantilla3Pruebas", status: "statusPlantilla3Pruebas" },
+        wordExport: {
+          contextBox: "Plantilla 3 — Registro de las 10 pruebas de conectividad de la red de OccidenteServicios Ltda. (mismas pruebas de la Guia 3).",
+          sections: [
+            { label: "1. PC0: ping 192.168.1.1 (Gateway Planta 1)", storeKey: "g5r_p3_r1" },
+            { label: "2. PC2: ping 192.168.1.13 (comunicacion PCs Planta 1)", storeKey: "g5r_p3_r2" },
+            { label: "3. PC4: ping 192.168.2.1 (Gateway Planta 2)", storeKey: "g5r_p3_r3" },
+            { label: "4. PC6: ping 192.168.2.13 (comunicacion PCs Planta 2)", storeKey: "g5r_p3_r4" },
+            { label: "5. PC0: ping 192.168.2.10 (enrutamiento Planta 1 a Planta 2)", storeKey: "g5r_p3_r5" },
+            { label: "6. PC7: ping 192.168.1.11 (enrutamiento inverso Planta 2 a Planta 1)", storeKey: "g5r_p3_r6" },
+            { label: "7. PC3: ping 192.168.1.2 (gestion del switch S1)", storeKey: "g5r_p3_r7" },
+            { label: "8. PC5: ping 192.168.2.2 (gestion del switch S2)", storeKey: "g5r_p3_r8" },
+            { label: "9. PC0: tracert 192.168.2.13 (ruta entre plantas)", storeKey: "g5r_p3_r9" },
+            { label: "10. PC4: telnet 192.168.1.1 (acceso administrativo remoto)", storeKey: "g5r_p3_r10" },
+          ],
+        },
+      },
+      {
+        id: "informeTecnico", number: "3.4.1", label: "Informe tecnico completo de la red",
+        shortName: "InformeTecnico", type: "file",
+        driveTarget: {
+          panelKey: "g5redes-3-4-1", deadlineActivityId: "informeTecnico",
+          activityTitle: "Informe tecnico completo de la red (OccidenteServicios Ltda.)",
+          description: "Sube a Drive el informe tecnico completo en PDF (minimo 8 paginas, 10 secciones, con topologia exportada de Packet Tracer y las 3 plantillas incluidas).",
+          note: "Nombre sugerido: InformeTecnico_OccidenteServicios_NombreAprendiz_FICHA.pdf",
+          allowedExtensions: [".pdf"],
+        },
+      },
+    ],
+  });
+
+  // ── Guia 10 (Redes RAP01 - John F. Kennedy) (10A + 10B) ─────────────────────
+  // Adaptada de Santa Barbara (misma competencia/contenido, ver Guia 2 arriba).
+  register({
+    files: [
+      "grupo-10a-guia-10-redes-rap01.html",
+      "grupo-10b-guia-10-redes-rap01.html",
+    ],
+    guideNumber: "10",
+    guideTitle: "Guia 10 - Definir parametros y recursos de la red (RAP 01)",
+    stateKey: "guia_interactiva_grupo_10a_guia_10_redes_rap01_html",
+    program: PROGRAM,
+    competencia: "280102129 - Evaluar red de acuerdo con procedimientos de telecomunicaciones y normativa tecnica.",
+    resultado: RAP_REDES,
+    cloudFileNames: {
+      "grupo-10a-guia-10-redes-rap01.html": "jfk_10a_guia10_redes_rap01.html",
+      "grupo-10b-guia-10-redes-rap01.html": "jfk_10b_guia10_redes_rap01.html",
+    },
+    activities: [
+      { id: "reflexion311",     number: "3.1.1", label: "Reflexion individual",     shortName: "Reflexion",     type: "form" },
+      // El applier a medida de reflexion311 (ver script_guia_redes.js) bloquea
+      // esta actividad bajo la llave "reflexion-socializacion-locked", NO bajo
+      // "socializacion311-locked" (la convencion generica {id}-locked). Sin
+      // legacyLockKeys, el panel "Tus actividades de esta guia" (activity_standard.js)
+      // la mostraba "Pendiente" para siempre aunque el contenido ya estuviera
+      // guardado y bloqueado. Detectado 2026-07-23.
+      { id: "socializacion311", number: "3.1.1", label: "Socializacion",            shortName: "Socializacion", type: "form", legacyLockKeys: ["reflexion-socializacion-locked"] },
+      // "Exploracion Visual por Bloques Tematicos" (Actividad 3.2.1 en el export
+      // Word): 5 bloques independientes, cada uno con su propio boton Guardar/
+      // lock (guardarBloqueA..E en script_guia_redes.js). Numeracion 3.2.1.1..5
+      // para no chocar con el "3.2.1" ya usado (de forma inconsistente) por ip1.
+      { id: "bloqueA", number: "3.2.1.1", label: "Bloque A - Tipos de redes: LAN, MAN y WAN", shortName: "BloqueA", type: "form" },
+      { id: "bloqueB", number: "3.2.1.2", label: "Bloque B - Topologias de red",              shortName: "BloqueB", type: "form" },
+      { id: "bloqueC", number: "3.2.1.3", label: "Bloque C - Medios de transmision",          shortName: "BloqueC", type: "form" },
+      { id: "bloqueD", number: "3.2.1.4", label: "Bloque D - Dispositivos de interconexion",  shortName: "BloqueD", type: "form" },
+      { id: "bloqueE", number: "3.2.1.5", label: "Bloque E - Modelo OSI y TCP/IP",            shortName: "BloqueE", type: "form" },
+      // Entrega de solo archivo (mapa mental en PNG/PDF, sin campos de texto).
+      // Antes era un boton de sharedAppsScriptDelivery.openDeliveryModal suelto
+      // (sin panelKey) sin ningun rastro en el catalogo ni en el state: no se
+      // podia calificar ni mostraba confirmacion de entrega. Se agrego panelKey
+      // "mapaMental322" al boton + candado/confirmacion propios en
+      // script_guia_redes.js (applyMapaMental322Lock). Agregado 2026-07-23.
+      { id: "mapaMental322", number: "3.2.2", label: "Mapa mental integrador de fundamentos de redes", shortName: "MapaMental", type: "file" },
+      // Quiz autocalificado (numero real "3.2.1.H", no numerico -> se usa
+      // "3.2.1.6" para el conteo de entregables). Al aprobar sin intento real
+      // se copia un intento completo desde el banco (ver activity_grades.js).
+      { id: "quiz-redes-321h", number: "3.2.1.6", label: "Quiz individual de fundamentos de redes", shortName: "QuizFundamentos", type: "form" },
+      // Numeros reales confirmados por el propio HTML (activity-num badges),
+      // js/redes_quiz_bank.js (topic:"3.3.1/2/3") y los exports Word con
+      // activityNumber propio (script_guia_redes.js): ip1=3.3.1, ip2=3.3.2,
+      // ip3=3.3.3. Las etiquetas anteriores (3.2.1/3.2.2/3.2.3) eran
+      // incorrectas (no visibles para el aprendiz, pero rompian el conteo de
+      // "Tus actividades de esta guia" al no coincidir con nada real, y mi
+      // primer intento de agregar ip2 con "3.2.2" chocaba ademas con el
+      // numero real de "Mapa mental integrador de fundamentos de redes",
+      // que no esta en este catalogo). Taller IP - Ejercicios 1-5 son 5
+      // columnas calificables por separado (igual que bloqueA-E) pero
+      // comparten el numero real "3.3.4" (un solo badge en el HTML para
+      // los 5 ejercicios) -- se subnumeran 3.3.4.1..5, mismo patron que
+      // 3.2.1.1..5 para bloqueA-E. Corregido 2026-07-23.
+      { id: "ip1",              number: "3.3.1", label: "Bloque IP 1",              shortName: "BloqueIP1",     type: "form" },
+      { id: "ip2",              number: "3.3.2", label: "Bloque IP 2 - Clases de IP", shortName: "BloqueIP2",   type: "form" },
+      { id: "ip3",              number: "3.3.3", label: "Bloque IP 3",              shortName: "BloqueIP3",     type: "form" },
+      { id: "taller-ip-ej1",    number: "3.3.4.1", label: "Taller IP - Ejercicio 1",  shortName: "TallerIP1",     type: "form" },
+      { id: "taller-ip-ej2",    number: "3.3.4.2", label: "Taller IP - Ejercicio 2",  shortName: "TallerIP2",     type: "form" },
+      { id: "taller-ip-ej3",    number: "3.3.4.3", label: "Taller IP - Ejercicio 3",  shortName: "TallerIP3",     type: "form" },
+      { id: "taller-ip-ej4",    number: "3.3.4.4", label: "Taller IP - Ejercicio 4",  shortName: "TallerIP4",     type: "form" },
+      { id: "taller-ip-ej5",    number: "3.3.4.5", label: "Taller IP - Ejercicio 5",  shortName: "TallerIP5",     type: "form" },
+      // Quiz autocalificado (numero real "3.3.H", no numerico -> se usa "3.3.9").
+      { id: "quiz-redes-33h",   number: "3.3.9", label: "Quiz individual de parametros de red", shortName: "QuizIP", type: "form" },
+      { id: "lab1",             number: "3.4.1", label: "Laboratorio 1 - Topologia estrella", shortName: "LabEstrella", type: "file" },
+      { id: "lab2",             number: "3.4.2", label: "Laboratorio 2 - Topologia arbol",    shortName: "LabArbol",    type: "file" },
+      { id: "lab3",             number: "3.4.3", label: "Laboratorio 3 - Red hibrida",        shortName: "LabHibrida",  type: "file" },
+      { id: "social",           number: "3.5.1", label: "Socializacion final",                shortName: "SocialFinal", type: "form" },
+    ],
+  });
+
+  // ── Guia 11 (Redes RAP02 - John F. Kennedy) (10A + 10B) ─────────────────────
+  // Adaptada de Santa Barbara (misma competencia/contenido, ver Guia 3 arriba).
+  var RAP_REDES_02_JFK = "RAP 02 - Comprobar la conectividad de la red, de acuerdo con normativa de telecomunicaciones y orden de trabajo.";
+  register({
+    files: [
+      "grupo-10a-guia-11-redes-rap02.html",
+      "grupo-10b-guia-11-redes-rap02.html",
+    ],
+    guideNumber: "11",
+    guideTitle: "Guia 11 - Comprobar la conectividad de la red (RAP 02)",
+    stateKey: "guia_interactiva_grupo_10a_guia_11_redes_rap02_html",
+    program: PROGRAM,
+    competencia: "280102129 - Evaluar red de acuerdo con procedimientos de telecomunicaciones y normativa tecnica.",
+    resultado: RAP_REDES_02_JFK,
+    activities: [
+      {
+        id: "reflexion311", number: "3.1.1", label: "Reflexion inicial - Caso Ferreteria Don Misael",
+        shortName: "Reflexion", type: "both",
+        formFields: ["g3r_311_p1", "g3r_311_p2", "g3r_311_p3", "g3r_311_p4", "g3r_311_p5"],
+        buttonIds: { save: "btnGuardarReflexion311", status: "statusReflexion311" },
+        allowedExtensions: [".pdf", ".doc", ".docx", ".jpg", ".jpeg", ".png"],
+        driveTarget: {
+          panelKey: "guia3-reflexion311",
+          deadlineActivityId: "reflexion311",
+          activityTitle: "Reflexion inicial - Caso Ferreteria Don Misael",
+          description: "Entrega tu reflexion individual escrita exportada a Word o en PDF.",
+          note: "Entrega sugerida: exporta a Word y convierte a PDF antes de subir.",
+        },
+        wordExport: {
+          contextBox: "Caso Ferreteria Don Misael (Sogamoso): 5 PC en red, impresora compartida, camara IP y punto de venta. Fallas multiples de conectividad antes de visitar el local.",
+          sections: [
+            { label: "1. Por que el PC de caja no imprime si la LAN funciona", storeKey: "g3r_311_p1" },
+            { label: "2. Diferencia entre 'no tener internet' y 'no estar en la red'", storeKey: "g3r_311_p2" },
+            { label: "3. Por que la camara IP puede desaparecer aunque el cable siga conectado", storeKey: "g3r_311_p3" },
+            { label: "4. Que revisaria primero (router, cables o PCs) y por que ese orden", storeKey: "g3r_311_p4" },
+            { label: "5. Comandos de Windows que conoce para diagnosticar", storeKey: "g3r_311_p5" },
+          ],
+        },
+      },
+      {
+        id: "bloqueA321", number: "3.2.1", label: "Bloque A - Router, Switch y Access Point",
+        shortName: "BloqueA", type: "form",
+        formFields: ["g3r_321_q1", "g3r_321_q2", "g3r_321_q3"],
+        buttonIds: { save: "btnGuardarBloqueA321", status: "statusBloqueA321" },
+        wordExport: {
+          contextBox: "Bloque A: dispositivos activos (router, switch, access point) en la Ferreteria Don Misael.",
+          sections: [
+            { label: "1. Que dispositivo conecta los 5 PC y cual da salida a internet", storeKey: "g3r_321_q1" },
+            { label: "2. Por que el router tiene dos interfaces IP (LAN y WAN)", storeKey: "g3r_321_q2" },
+            { label: "3. Diferencia entre puerto LAN y puerto WAN", storeKey: "g3r_321_q3" },
+          ],
+        },
+      },
+      {
+        id: "bloqueB322", number: "3.2.2", label: "Bloque B - Protocolo TCP/IP y modelo de capas",
+        shortName: "BloqueB", type: "form",
+        formFields: ["g3r_322_q1", "g3r_322_q2", "g3r_322_q3"],
+        buttonIds: { save: "btnGuardarBloqueB322", status: "statusBloqueB322" },
+        wordExport: {
+          contextBox: "Bloque B: modelo TCP/IP de 4 capas y sus protocolos.",
+          sections: [
+            { label: "1. Que hace la capa de Red y que protocolo opera en ella", storeKey: "g3r_322_q1" },
+            { label: "2. Capa de Transporte: diferencia entre TCP y UDP", storeKey: "g3r_322_q2" },
+            { label: "3. En que capa opera ICMP cuando un PC hace ping", storeKey: "g3r_322_q3" },
+          ],
+        },
+      },
+      {
+        id: "bloqueC323", number: "3.2.3", label: "Bloque C - Servicios DHCP, DNS y Firewall",
+        shortName: "BloqueC", type: "form",
+        formFields: ["g3r_323_q1", "g3r_323_q2", "g3r_323_q3"],
+        buttonIds: { save: "btnGuardarBloqueC323", status: "statusBloqueC323" },
+        wordExport: {
+          contextBox: "Bloque C: servicios de red DHCP, DNS y Firewall y su impacto en la conectividad.",
+          sections: [
+            { label: "1. Que servicio asigna IPs automaticamente y que pasa si falla", storeKey: "g3r_323_q1" },
+            { label: "2. Por que dos PC de la misma red, uno sin internet (relacion con DHCP)", storeKey: "g3r_323_q2" },
+            { label: "3. Que tiene que ver el DNS con una pagina que no carga", storeKey: "g3r_323_q3" },
+          ],
+        },
+      },
+      {
+        id: "bloqueD324", number: "3.2.4", label: "Bloque D - IP publica vs privada y NAT",
+        shortName: "BloqueD", type: "form",
+        formFields: ["g3r_324_q1", "g3r_324_q2", "g3r_324_q3"],
+        buttonIds: { save: "btnGuardarBloqueD324", status: "statusBloqueD324" },
+        wordExport: {
+          contextBox: "Bloque D: IP publica vs privada y NAT en una MiPyme.",
+          sections: [
+            { label: "1. Por que 5 PC con IP privada salen con una sola IP publica", storeKey: "g3r_324_q1" },
+            { label: "2. Que es NAT y cual dispositivo lo realiza", storeKey: "g3r_324_q2" },
+            { label: "3. Ping a 8.8.8.8 funciona pero no abre google.com: que servicio fallo", storeKey: "g3r_324_q3" },
+          ],
+        },
+      },
+      {
+        // Exportación consolidada de los 4 bloques A-D — solo Word, sin save ni Drive
+        id: "exportBloques321a324", number: "3.2.x", label: "Exportar bloques A-D a Word",
+        shortName: "BloquesFinal", type: "form",
+        formFields: [],
+        buttonIds: { save: "_btnExportConsolidado_noexiste", status: "_statusExportConsolidado_noexiste" },
+        wordExport: {
+          contextBox: "Contextualización — Ferretería Don Misael (Sogamoso): 5 PC en red, impresora compartida, cámara IP y punto de venta. Análisis de dispositivos, protocolos TCP/IP, servicios de red e IPs públicas/privadas.",
+          sections: [
+            { label: "BLOQUE A — Router, Switch y Access Point", storeKey: "" },
+            { label: "A1. Dispositivo que conecta los 5 PC y cuál da salida a internet", storeKey: "g3r_321_q1" },
+            { label: "A2. Por qué el router tiene dos interfaces IP (LAN y WAN)", storeKey: "g3r_321_q2" },
+            { label: "A3. Diferencia entre puerto LAN y puerto WAN", storeKey: "g3r_321_q3" },
+            { label: "BLOQUE B — Protocolo TCP/IP y modelo de capas", storeKey: "" },
+            { label: "B1. Qué hace la capa de Red y qué protocolo opera en ella", storeKey: "g3r_322_q1" },
+            { label: "B2. Capa de Transporte: diferencia entre TCP y UDP", storeKey: "g3r_322_q2" },
+            { label: "B3. En qué capa opera ICMP cuando un PC hace ping", storeKey: "g3r_322_q3" },
+            { label: "BLOQUE C — Servicios DHCP, DNS y Firewall", storeKey: "" },
+            { label: "C1. Qué servicio asigna IPs automáticamente y qué pasa si falla", storeKey: "g3r_323_q1" },
+            { label: "C2. Por qué dos PC de la misma red, uno sin internet (relación con DHCP)", storeKey: "g3r_323_q2" },
+            { label: "C3. Qué tiene que ver el DNS con una página que no carga", storeKey: "g3r_323_q3" },
+            { label: "BLOQUE D — IP pública vs privada y NAT", storeKey: "" },
+            { label: "D1. Por qué 5 PC con IP privada salen con una sola IP pública", storeKey: "g3r_324_q1" },
+            { label: "D2. Qué es NAT y cuál dispositivo lo realiza", storeKey: "g3r_324_q2" },
+            { label: "D3. Ping a 8.8.8.8 funciona pero no abre google.com: qué servicio falló", storeKey: "g3r_324_q3" },
+          ],
+        },
+      },
+      {
+        id: "entregaContexto325", number: "3.2.5", label: "Entrega - Productos de contextualizacion (PDF)",
+        shortName: "Contextualizacion", type: "file",
+        driveTarget: {
+          panelKey: "g3redes-3-2-5", deadlineActivityId: "entregaContexto325",
+          activityTitle: "Contextualizacion de conectividad (PDF con los 4 productos)",
+          description: "Sube a Drive un solo PDF con los 4 productos: diagrama de red, tabla TCP/IP, analisis DHCP/DNS/Firewall y esquema NAT.",
+          note: "Nombre sugerido: Contextualizacion_Conectividad_NombreAprendiz_FICHA.pdf",
+        },
+      },
+      {
+        id: "comandos331", number: "3.3.1", label: "Comandos de diagnostico CLI",
+        shortName: "ComandosCLI", type: "form",
+        formFields: ["g3r_331_ipconfig", "g3r_331_ping_local", "g3r_331_ping_gw", "g3r_331_ping_8888", "g3r_331_ping_google", "g3r_331_tracert", "g3r_331_nslookup", "g3r_331_netstat"],
+        buttonIds: { save: "btnGuardarComandos331", status: "statusComandos331" },
+        wordExport: {
+          contextBox: "Registro de resultados de los comandos de diagnostico ejecutados en CMD (Windows + R -> cmd).",
+          sections: [
+            { label: "ipconfig /all (IP/DHCP, gateway, DNS)", storeKey: "g3r_331_ipconfig" },
+            { label: "ping 127.0.0.1 (tarjeta de red propia)", storeKey: "g3r_331_ping_local" },
+            { label: "ping [gateway] (comunicacion con el router)", storeKey: "g3r_331_ping_gw" },
+            { label: "ping 8.8.8.8 (internet por IP)", storeKey: "g3r_331_ping_8888" },
+            { label: "ping google.com (internet + DNS)", storeKey: "g3r_331_ping_google" },
+            { label: "tracert 8.8.8.8 (saltos hasta el destino)", storeKey: "g3r_331_tracert" },
+            { label: "nslookup google.com (resolucion DNS)", storeKey: "g3r_331_nslookup" },
+            { label: "netstat -n (conexiones activas)", storeKey: "g3r_331_netstat" },
+          ],
+        },
+      },
+      {
+        id: "presentacion332", number: "3.3.2", label: "Presentacion tecnica de averias (5 escenarios)",
+        shortName: "PresentacionAverias", type: "file",
+        driveTarget: {
+          panelKey: "g3redes-3-3-2", deadlineActivityId: "presentacion332",
+          activityTitle: "Presentacion de averias (minimo 15 diapositivas)",
+          description: "Sube a Drive la presentacion (PowerPoint, Canva o Google Slides, minimo 15 diapositivas) con los 5 escenarios de falla y el procedimiento de resolucion.",
+          note: "Nombre sugerido: PresentacionAverias_NombreAprendiz_FICHA",
+        },
+      },
+      {
+        id: "laboratorio341", number: "3.4.1", label: "Laboratorio Packet Tracer - Red de 2 plantas + 10 pruebas",
+        shortName: "LabConectividad", type: "file",
+        driveTarget: {
+          panelKey: "g3redes-3-4-1", deadlineActivityId: "laboratorio341",
+          activityTitle: "Laboratorio de conectividad (.pkt + PDF con 10 pruebas)",
+          description: "Sube a Drive el archivo .pkt y el PDF con las 10 capturas de las pruebas de conectividad, organizadas y comentadas.",
+          note: "Nombre sugerido: Lab_Conectividad_NombreAprendiz_FICHA.pkt",
+          allowedExtensions: [".pkt", ".pdf", ".zip"],
+        },
+      },
+      {
+        id: "caso342", number: "3.4.2",
+        label: "Laboratorio integral - Red con DHCP, DNS, AP y NAT (Packet Tracer)",
+        shortName: "LabIntegral", type: "file",
+        driveTarget: {
+          panelKey: "g3redes-3-4-2", deadlineActivityId: "caso342",
+          activityTitle: "Laboratorio integral - Red con DHCP, DNS, AP y NAT",
+          description: "Sube a Drive el archivo .pkt y el PDF con las 10 capturas de las pruebas comentadas.",
+          note: "Nombre sugerido: LabIntegral_NombreAprendiz_FICHA.pkt + PDF",
+          allowedExtensions: [".pkt", ".pdf", ".zip"],
+        },
+      },
+      // Quiz autocalificado de cierre, sin numero propio en la guia (seccion
+      // aparte al final, "Quiz de conectividad"). Mismo hueco que los demas
+      // quiz del portal: nunca estuvo en el catalogo. Detectado 2026-07-23.
+      { id: "quiz-redes-321h-rap02", number: "3.5.1", label: "Quiz de conectividad", shortName: "QuizConectividad", type: "form" },
+    ],
+  });
+
+  // ── Guia 12 (Redes RAP03 - John F. Kennedy) (10A + 10B) ─────────────────────
+  // Adaptada de Santa Barbara (misma competencia/contenido, ver Guia 4 arriba).
+  register({
+    files: [
+      "grupo-10a-guia-12-redes-rap03.html",
+      "grupo-10b-guia-12-redes-rap03.html",
+    ],
+    guideNumber: "12",
+    guideTitle: "Guia 12 - Documentar las acciones realizadas en la red (RAP 03)",
+    stateKey: "guia_interactiva_grupo_10a_guia_12_redes_rap03_html",
     program: PROGRAM,
     competencia: "280102129 - Evaluar red de acuerdo con procedimientos de telecomunicaciones y normativa tecnica.",
     resultado: "RAP 03 - Documentar las acciones realizadas en la red de acuerdo con la normativa.",

@@ -39,6 +39,46 @@
     "cloudFileName": "sb_10b_redes.html",
     "backLink": "guia.html?g=santa-barbara-10b-guia-02-redes-rap01.html#apropiacion"
   },
+  "redes-rap01-quiz-jfk10a": {
+    "template": "redes-rap01-quiz.template.html",
+    "outputFile": "pages/auxiliares/grupo-10a-guia-10-redes-rap01-quiz.html",
+    "grupo": "10A",
+    "ficha": "3441939",
+    "inst": "Institucion Educativa Jhon F. Kennedy",
+    "title": "Quiz 3.2.1.H | Redes Jhon F. Kennedy 10A",
+    "cloudFileName": "jfk_10a_guia10_redes_rap01.html",
+    "backLink": "guia.html?g=grupo-10a-guia-10-redes-rap01.html#contexto"
+  },
+  "redes-rap01-quiz-jfk10b": {
+    "template": "redes-rap01-quiz.template.html",
+    "outputFile": "pages/auxiliares/grupo-10b-guia-10-redes-rap01-quiz.html",
+    "grupo": "10B",
+    "ficha": "3441942",
+    "inst": "Institucion Educativa Jhon F. Kennedy",
+    "title": "Quiz 3.2.1.H | Redes Jhon F. Kennedy 10B",
+    "cloudFileName": "jfk_10b_guia10_redes_rap01.html",
+    "backLink": "guia.html?g=grupo-10b-guia-10-redes-rap01.html#contexto"
+  },
+  "redes-ip-quiz-jfk10a": {
+    "template": "redes-ip-quiz.template.html",
+    "outputFile": "pages/auxiliares/grupo-10a-guia-10-redes-ip-quiz.html",
+    "grupo": "10A",
+    "ficha": "3441939",
+    "inst": "Institucion Educativa Jhon F. Kennedy",
+    "title": "Quiz 3.3.H | Parámetros de Red Jhon F. Kennedy 10A",
+    "cloudFileName": "jfk_10a_guia10_redes_rap01.html",
+    "backLink": "guia.html?g=grupo-10a-guia-10-redes-rap01.html#apropiacion"
+  },
+  "redes-ip-quiz-jfk10b": {
+    "template": "redes-ip-quiz.template.html",
+    "outputFile": "pages/auxiliares/grupo-10b-guia-10-redes-ip-quiz.html",
+    "grupo": "10B",
+    "ficha": "3441942",
+    "inst": "Institucion Educativa Jhon F. Kennedy",
+    "title": "Quiz 3.3.H | Parámetros de Red Jhon F. Kennedy 10B",
+    "cloudFileName": "jfk_10b_guia10_redes_rap01.html",
+    "backLink": "guia.html?g=grupo-10b-guia-10-redes-rap01.html#apropiacion"
+  },
   "guia2-matriz-322-10a": {
     "template": "guia-02-matriz-322.template.html",
     "outputFile": "pages/auxiliares/grupo-10a-guia-02-actividad-322-matriz.html",
