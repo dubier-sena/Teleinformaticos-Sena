@@ -1857,17 +1857,42 @@
   // Firestore/Drive. Se alias-ean con los MISMOS nombres locales para que
   // absolutamente ninguna de las lecturas de mas abajo en este archivo tenga
   // que cambiar.
-  var _guideMergeUtils = window.guideMergeUtils;
-  var readSnapshotPayload = _guideMergeUtils.readSnapshotPayload;
-  var plainObject = _guideMergeUtils.plainObject;
-  var snapshotState = _guideMergeUtils.snapshotState;
-  var hasMeaningfulGuideValue = _guideMergeUtils.hasMeaningfulGuideValue;
-  var countMeaningfulGuideValues = _guideMergeUtils.countMeaningfulGuideValues;
-  var deriveProgressFromGuideDataDoc = _guideMergeUtils.deriveProgressFromGuideDataDoc;
-  var mergeGuideValue = _guideMergeUtils.mergeGuideValue;
-  var mergeGuideState = _guideMergeUtils.mergeGuideState;
-  var snapshotTimestamp = _guideMergeUtils.snapshotTimestamp;
-  var mergeGuideDataSnapshotForSave = _guideMergeUtils.mergeGuideDataSnapshotForSave;
+  //
+  // Cierre Bug 1 (2026-09-07): la lectura de window.guideMergeUtils era
+  // incondicional y ocurria al cargar el script (no dentro de una funcion).
+  // En cualquier pagina donde guide_merge_utils.js no se hubiera cargado
+  // todavia -- confirmado en ~27 paginas reales de pages/auxiliares/ que
+  // nunca lo referencian, y en teoria en cualquier pagina ante un desfase de
+  // cache entre el HTML y este archivo -- ese acceso lanzaba de inmediato y
+  // abortaba TODO el resto del archivo: ninguna funcion de mas abajo llegaba
+  // a definirse y window._firebaseDb quedaba sin definir para toda la sesion,
+  // incluyendo funciones que no tienen nada que ver con el merge de guias
+  // (calificaciones, calendario, resumen del aprendiz, etc.). Ahora cada
+  // alias es una funcion que resuelve window.guideMergeUtils en el momento
+  // en que de verdad se usa -- siempre dentro de una funcion async invocada
+  // mucho despues de que este script ya termino de cargar -- asi que una
+  // ausencia real solo afecta la operacion puntual que necesita el merge, no
+  // el modulo completo.
+  function _requireGuideMergeUtils() {
+    var utils = window.guideMergeUtils;
+    if (!utils) {
+      throw new Error(
+        "[firebase_db] window.guideMergeUtils no esta disponible en esta pagina " +
+        "(falta cargar js/guide_merge_utils.js antes que js/firebase_db.js)."
+      );
+    }
+    return utils;
+  }
+  function readSnapshotPayload(doc) { return _requireGuideMergeUtils().readSnapshotPayload(doc); }
+  function plainObject(value) { return _requireGuideMergeUtils().plainObject(value); }
+  function snapshotState(snapshot) { return _requireGuideMergeUtils().snapshotState(snapshot); }
+  function hasMeaningfulGuideValue(value) { return _requireGuideMergeUtils().hasMeaningfulGuideValue(value); }
+  function countMeaningfulGuideValues(record) { return _requireGuideMergeUtils().countMeaningfulGuideValues(record); }
+  function deriveProgressFromGuideDataDoc(fileName, doc) { return _requireGuideMergeUtils().deriveProgressFromGuideDataDoc(fileName, doc); }
+  function mergeGuideValue(previous, incoming) { return _requireGuideMergeUtils().mergeGuideValue(previous, incoming); }
+  function mergeGuideState(previousState, incomingState, allowMissingLockRemoval) { return _requireGuideMergeUtils().mergeGuideState(previousState, incomingState, allowMissingLockRemoval); }
+  function snapshotTimestamp(snapshot) { return _requireGuideMergeUtils().snapshotTimestamp(snapshot); }
+  function mergeGuideDataSnapshotForSave(existingSnapshot, incomingSnapshot) { return _requireGuideMergeUtils().mergeGuideDataSnapshotForSave(existingSnapshot, incomingSnapshot); }
 
   async function saveGuideStateDoc(prefix, kind, scopeKey, fileName, payload, expectedUpdateTime) {
     // Fase 5: las escrituras NUEVAS van UNICAMENTE al doc por UID (nunca al

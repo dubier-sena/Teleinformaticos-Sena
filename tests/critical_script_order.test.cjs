@@ -93,6 +93,38 @@ CRITICAL_STATIC_ORDER_PAIRS.forEach(({ before, after }) => {
   });
 });
 
+// Cierre Bug 1 (validacion E2E Guias 10/11/12 Kennedy, 2026-09-07): el test
+// de arriba compara ORDEN pero se salta por completo cualquier pagina que no
+// tenga AMBAS etiquetas ("esta pagina no usa el par, no aplica") -- eso dejo
+// pasar en silencio ~27 paginas reales de pages/auxiliares/ (quizzes, matriz
+// 322, ficha de caso, formulario) que cargaban firebase_db.js sin cargar
+// guide_merge_utils.js en absoluto. firebase_db.js lee window.guideMergeUtils
+// de forma incondicional al nivel superior del script -- sin el, revienta al
+// cargar y window._firebaseDb queda indefinido el resto de la sesion (ver
+// tests/firebase_db_missing_guide_merge_utils.test.cjs para la reproduccion
+// en runtime). Mismo patron que la guardia de window.GuideCloudSync de mas
+// abajo (auditoria 2026-08-31): ahi tambien hacia falta comprobar PRESENCIA,
+// no solo orden relativo.
+test("toda pagina real que cargue js/firebase_db.js tambien carga js/guide_merge_utils.js, y antes", () => {
+  const problems = [];
+  htmlFiles.forEach((filePath) => {
+    const html = fs.readFileSync(filePath, "utf8");
+    const firebaseDbTag = findScriptTag(html, "firebase_db.js");
+    if (!firebaseDbTag) return; // esta pagina no carga firebase_db.js, no aplica
+
+    const relPath = path.relative(ROOT, filePath);
+    const mergeUtilsTag = findScriptTag(html, "guide_merge_utils.js");
+    if (!mergeUtilsTag) {
+      problems.push(`${relPath}: carga firebase_db.js pero NO carga js/guide_merge_utils.js`);
+      return;
+    }
+    if (mergeUtilsTag.index >= firebaseDbTag.index) {
+      problems.push(`${relPath}: guide_merge_utils.js aparece DESPUES de firebase_db.js (o en la misma etiqueta)`);
+    }
+  });
+  assert.deepEqual(problems, [], problems.join("\n"));
+});
+
 // ── guia_router.js: dependencias dentro de las listas "scripts: [...]" que
 //    inyecta por ruta. El propio router carga estos scripts en un for-await
 //    secuencial (ver loadScript/loop en guia_router.js) -- por eso aqui basta
