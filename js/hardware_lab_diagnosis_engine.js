@@ -168,7 +168,7 @@
     }
 
     if (session.parts[attempt.partId] === Engine.ACTION_TARGET_PRESENT[attempt.action]) {
-      return { ok: true, message: part.name + " ya se encontraba " + actionInfo.pastParticiple + ".", session: session };
+      return { ok: true, message: actionInfo.alreadyLabel + ": " + part.name + ".", session: session };
     }
 
     var updatedParts = Object.assign({}, session.parts);
@@ -184,7 +184,7 @@
       });
     }
 
-    return { ok: true, message: part.name + " " + actionInfo.pastParticiple + " correctamente.", session: updated };
+    return { ok: true, message: actionInfo.doneLabel + ": " + part.name + ".", session: updated };
   }
 
   function toolLabel(toolId) {

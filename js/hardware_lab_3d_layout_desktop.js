@@ -43,6 +43,7 @@ export function createDesktopLayout() {
       tier: 3,
       build: () => buildDesktopSidePanel(chassisDims),
       mount: () => new THREE.Vector3(chassisDims.width / 2, chassisDims.height / 2, 0),
+      detachAxis: AXIS_X, // se desliza hacia el costado, no hacia arriba (item 4).
     },
   ];
 
@@ -164,7 +165,20 @@ export function createDesktopLayout() {
       kind: "cable",
       cableKind: "atx24",
       from: (a) => psuBayOf(a).add(new THREE.Vector3(0, -0.02, -0.06)),
-      to: () => new THREE.Vector3(0.9, -0.6, -1.3), // toma de corriente en el fondo de la escena
+      // Toma de corriente cerca de la fuente (item 7: nunca dejar al
+      // aprendiz "perdiendo completamente el modelo"). El valor original,
+      // (0.9,-0.6,-1.3), quedaba casi fuera de cuadro incluso en la vista
+      // "Superior" -- inaceptable para el Caso 1 de diagnostico, el mas
+      // facil de los 10 y pensado como primer contacto con el modulo.
+      // Ademas, al desconectarse este cable (a diferencia de una pieza
+      // normal) NO queda "colgando junto a la fuente": todo el grupo se
+      // traslada rigido a la bandeja de piezas (ver trayPositionFor en
+      // hardware_lab_3d_rig.js) conservando su forma local -- un "to" lejano
+      // hacia produce un tubo largo que, sumado al desplazamiento a la
+      // bandeja, terminaba fuera del area visible/clicable. Por eso el
+      // extremo se mantiene cerca de "from" (cable corto), no solo cerca de
+      // la camara.
+      to: () => new THREE.Vector3(0.15, -0.35, -0.25),
       detachAxis: AXIS_NEG_Z,
       tier: 4,
     },

@@ -152,8 +152,13 @@ export function createDiagnosisController(stage) {
       stage.currentRig.syncFromSessionParts(session.parts);
       stage.startTimer(session.startedAt);
       stage.clearActionLog();
+      stage.setHintUi(session.hints.used, session.hints.max, onHint);
       updateMonitor();
       renderInfoPanel();
+      // Mismo bug que en hardware_lab_3d_controller.js: sin esto, el
+      // contador de errores se quedaba mostrando el numero de ANTES del
+      // reinicio.
+      refreshStats();
     };
 
     offClick = stage.interactions.onClick((root, meta) => {
@@ -211,6 +216,30 @@ export function createDiagnosisController(stage) {
     persist();
   }
 
+  // Resumen educativo (item 11: que pasaba, por que, como diagnosticarlo,
+  // como se arregla, procedimiento optimo). Cada caso ya trae este texto
+  // (ver hardware_lab_diagnosis_cases.js) pero nunca se mostraba en ningun
+  // lado: el aprendiz resolvia el caso sin un cierre que conectara lo que
+  // hizo con el porque. Se muestra solo al aprobar (no es "la respuesta"
+  // para copiar, es el repaso posterior).
+  function buildExplanationHtml() {
+    const ex = caseDef.explanation;
+    if (!ex) return "";
+    const rows = [
+      ["Que estaba pasando", ex.whatWasHappening],
+      ["Por que ocurria", ex.why],
+      ["Como diagnosticarlo", ex.howToDiagnose],
+      ["Como se soluciona", ex.howToFix],
+      ["Procedimiento optimo", ex.optimalProcedure],
+    ].filter((r) => r[1]);
+    return (
+      '<div class="hwlab-result-explanation">' +
+      "<h4>Repaso del caso</h4>" +
+      rows.map(([label, value]) => `<p><strong>${esc(label)}:</strong> ${esc(value)}</p>`).join("") +
+      "</div>"
+    );
+  }
+
   function checkPowerOn() {
     const result = Engine().checkPowerOn(equipmentData, session);
     session = result.session;
@@ -225,6 +254,7 @@ export function createDiagnosisController(stage) {
       stage.showFeedback(result.message, "success");
       HardwareLabAudio.playComplete();
       stage.openResultModal(finished.result, {
+        extraHtml: buildExplanationHtml(),
         onRetry: () => {
           session = Engine().createDiagnosisSession(equipmentData, caseDef);
           stage.currentRig.syncFromSessionParts(session.parts);

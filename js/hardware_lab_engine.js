@@ -25,11 +25,19 @@
 (function (root) {
   "use strict";
 
+  // doneLabel/alreadyLabel: el sujeto gramatical de estas frases es la
+  // ACCION (Retiro/Instalacion/Desconexion/Conexion, genero fijo y conocido
+  // de antemano), no el nombre de la pieza -- evita el error de concordancia
+  // de genero que salia con "{pieza} retirado" para piezas femeninas
+  // ("Tapa lateral retirado", "Tarjeta madre retirado", en vez de
+  // "retirada"): el modelo de datos no registra el genero gramatical de
+  // cada pieza, y agregarlo solo para esto habria sido un cambio mucho mas
+  // grande que reformular el mensaje.
   var ACTION_LABELS = {
-    remove: { verb: "retirar", pastParticiple: "retirado" },
-    install: { verb: "instalar", pastParticiple: "instalado" },
-    disconnect: { verb: "desconectar", pastParticiple: "desconectado" },
-    connect: { verb: "conectar", pastParticiple: "conectado" },
+    remove: { verb: "retirar", pastParticiple: "retirado", doneLabel: "Retiro completado", alreadyLabel: "Retiro ya realizado" },
+    install: { verb: "instalar", pastParticiple: "instalado", doneLabel: "Instalacion completada", alreadyLabel: "Instalacion ya realizada" },
+    disconnect: { verb: "desconectar", pastParticiple: "desconectado", doneLabel: "Desconexion completada", alreadyLabel: "Desconexion ya realizada" },
+    connect: { verb: "conectar", pastParticiple: "conectado", doneLabel: "Conexion completada", alreadyLabel: "Conexion ya realizada" },
   };
 
   // Cada accion mueve la pieza a este valor de "present".
@@ -376,7 +384,7 @@
     if (session.parts[attempt.partId] === ACTION_TARGET_PRESENT[attempt.action]) {
       return {
         ok: true,
-        message: part.name + " ya se encontraba " + actionInfo.pastParticiple + ".",
+        message: actionInfo.alreadyLabel + ": " + part.name + ".",
         session: session,
         finished: isFinished(session),
       };
@@ -400,7 +408,7 @@
 
     return {
       ok: true,
-      message: part.name + " " + actionInfo.pastParticiple + " correctamente.",
+      message: actionInfo.doneLabel + ": " + part.name + ".",
       session: updatedSession,
       finished: isFinished(updatedSession),
     };

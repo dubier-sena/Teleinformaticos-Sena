@@ -44,9 +44,17 @@ function practiceOptionsFor(equipmentId) {
   ];
 }
 
+// BUG real (confirmado con clic real, no visible leyendo el codigo en frio
+// sin probar la UI): a diferencia de EQUIPMENT_OPTIONS/practiceOptionsFor,
+// estas dos entradas nunca declaraban "available" -- renderCard() trata
+// cualquier "available" ausente como deshabilitado (boton inerte + sufijo
+// "(proximamente)"), asi que "Practica libre" y "Evaluacion" (los unicos
+// modos que piden direccion) quedaban con AMBOS botones de direccion
+// permanentemente deshabilitados: ningun clic los activaba, sin error ni
+// aviso. Bloqueaba por completo esos 2 modos, en escritorio y portatil.
 const DIRECTION_OPTIONS = [
-  { direction: "disassembly", icon: ICONS.disassemble, title: "Desensamblar", desc: "Parte de un equipo completamente armado." },
-  { direction: "assembly", icon: ICONS.assemble, title: "Ensamblar", desc: "Parte de un equipo/gabinete vacio." },
+  { direction: "disassembly", icon: ICONS.disassemble, title: "Desensamblar", desc: "Parte de un equipo completamente armado.", available: true },
+  { direction: "assembly", icon: ICONS.assemble, title: "Ensamblar", desc: "Parte de un equipo/gabinete vacio.", available: true },
 ];
 
 function esc(value) {

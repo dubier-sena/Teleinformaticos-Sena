@@ -46,11 +46,29 @@ export class TweenGroup {
 
   update(deltaSeconds) {
     if (!this._tweens.length) return;
-    const stillRunning = [];
-    for (const tw of this._tweens) {
+    // BUG real (encontrado con clic real, no visible leyendo el codigo en
+    // frio): setPresence() encadena dos animaciones -- la segunda ("viajar
+    // a la bandeja") se agrega desde el onComplete() de la primera
+    // ("levantar"), que se dispara AQUI MISMO, en medio de este for. Si se
+    // itera "this._tweens" directo y se reasigna al final con un
+    // "stillRunning" armado desde el ARRAY VIEJO, cualquier tween agregado
+    // (o quitado via killTarget) DENTRO de un onComplete de este mismo tick
+    // queda pisado por esa reasignacion final -- se pierde en silencio, sin
+    // excepcion. Efecto real: CUALQUIER pieza retirada (en cualquier
+    // practica, escritorio o portatil) se quedaba congelada en la posicion
+    // de "levantada" (un desplazamiento de solo 0.045 unidades) y nunca
+    // llegaba a la bandeja -- invisible a simple vista salvo que se midiera
+    // la posicion final, exactamente el tipo de "pieza flotando" que el
+    // punto 8 de la validacion pide descartar.
+    // Fix: iterar sobre una COPIA (snapshot) y, al final, quitar de
+    // "this._tweens" (el array VIVO, que los onComplete() pueden haber
+    // mutado) solo los que de verdad terminaron este tick -- nunca
+    // reasignar el array completo a ciegas.
+    const snapshot = this._tweens.slice();
+    const completed = new Set();
+    for (const tw of snapshot) {
       if (tw._delayRemaining > 0) {
         tw._delayRemaining -= deltaSeconds;
-        stillRunning.push(tw);
         continue;
       }
       tw._elapsed += deltaSeconds;
@@ -58,12 +76,13 @@ export class TweenGroup {
       const eased = tw.easing(t);
       tw.onUpdate(eased, t);
       if (t >= 1) {
+        completed.add(tw);
         if (tw.onComplete) tw.onComplete();
-      } else {
-        stillRunning.push(tw);
       }
     }
-    this._tweens = stillRunning;
+    if (completed.size) {
+      this._tweens = this._tweens.filter((tw) => !completed.has(tw));
+    }
   }
 
   add(tween) {
@@ -200,7 +219,15 @@ export function animateObject3D(group, object3d, opts = {}) {
     _delayRemaining: opts.delay || 0,
     onUpdate: (eased) => {
       if (endPos) object3d.position.lerpVectors(startPos, endPos, eased);
-      if (endQuat) THREE.Quaternion.slerp(startQuat, endQuat, object3d.quaternion, eased);
+      // THREE.Quaternion.slerp (estatico, 4 argumentos) ya no existe en la
+      // version vendorizada (0.185.1) -- fue reemplazado por el metodo de
+      // INSTANCIA slerpQuaternions, llamado sobre el quaternion destino.
+      // Encontrado con clic real: instalar de vuelta CUALQUIER pieza con
+      // rotacion (rotationEuler) lanzaba "THREE.Quaternion.slerp is not a
+      // function" y la animacion de reinstalar quedaba congelada a medio
+      // camino -- afecta el ensamble/reinstalacion en todo el laboratorio,
+      // no solo el portatil.
+      if (endQuat) object3d.quaternion.slerpQuaternions(startQuat, endQuat, eased);
       if (endScale) object3d.scale.lerpVectors(startScale, endScale, eased);
       if (endOpacity != null) writeOpacity(object3d, startOpacity + (endOpacity - startOpacity) * eased);
       if (opts.onUpdate) opts.onUpdate(eased);

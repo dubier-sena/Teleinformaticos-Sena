@@ -33,13 +33,20 @@
   }
 
   function labelForMode(mode) {
+    // OJO: estas llaves deben coincidir EXACTO con el storageMode real que
+    // arma hardware_lab_3d_controller.js (`direction + "-" + practiceMode`,
+    // p.ej. "disassembly-free"/"assembly-evaluation") -- NO con el modo del
+    // motor puro ("-open"), que es distinto (ver el comentario al inicio de
+    // ese archivo). Con las llaves viejas ("-open-libre"/"-open-eval") esta
+    // funcion nunca hacia match con una sesion real de practica libre o
+    // evaluacion y mostraba el string crudo en el panel del instructor.
     var known = {
       "disassembly-guided": "Desensamble guiado",
       "assembly-guided": "Ensamble guiado",
-      "disassembly-open-libre": "Practica libre (desensamble)",
-      "assembly-open-libre": "Practica libre (ensamble)",
-      "disassembly-open-eval": "Evaluacion (desensamble)",
-      "assembly-open-eval": "Evaluacion (ensamble)",
+      "disassembly-free": "Practica libre (desensamble)",
+      "assembly-free": "Practica libre (ensamble)",
+      "disassembly-evaluation": "Evaluacion (desensamble)",
+      "assembly-evaluation": "Evaluacion (ensamble)",
     };
     return known[mode] || mode;
   }
@@ -389,5 +396,5 @@
 
   // Exportado solo para tests (funciones puras, sin DOM): ver
   // tests/admin_hardware_lab.test.cjs.
-  root.__hwlabAdminTest__ = { parseHwlabState: parseHwlabState, summarizeStudent: summarizeStudent };
+  root.__hwlabAdminTest__ = { parseHwlabState: parseHwlabState, summarizeStudent: summarizeStudent, labelForMode: labelForMode };
 })(typeof window !== "undefined" ? window : this);
