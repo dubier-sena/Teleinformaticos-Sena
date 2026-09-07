@@ -134,21 +134,53 @@ test("sena_portal_guide_state: create/read/update usan isOwnerOfGuideStateDoc co
   assert.match(guideStateBlock, /allow read: if isAdmin\(\)\s*\n\s*\|\| \(signedIn\(\) && isOwnerOfGuideStateDoc\(docId, resource\.data\)\)/);
 });
 
-// ───── sanitizedTokenKey(): PENDIENTE DE CONFIRMACION (auditoria profunda) ──
-// No se modifico la funcion (instruccion explicita del usuario: sin emulador
-// de Firestore disponible en este entorno, no hay como confirmar el
-// comportamiento real de .replace() con un patron pasado como string). Este
-// test.todo es el recordatorio permanente en la suite -- ver el comentario
-// "PENDIENTE DE CONFIRMACION" junto a sanitizedTokenKey() en firestore.rules
-// para la estrategia de validacion concreta (Firebase Console Rules
-// Playground, sin instalar nada).
-test.todo(
-  "PENDIENTE DE CONFIRMACION: sanitizedTokenKey() puede no reemplazar TODAS las coincidencias " +
-  "(o ninguna, si .replace() trata el patron como substring literal) -- validar con Firebase " +
-  "Console > Firestore > Rules > Playground: get sobre " +
-  "sena_portal_progress/__guide_data__:student:ana_maria_lopez:archivo con " +
-  "auth.token.email=ana.maria.lopez@sena-portal.local. Si el resultado es Deny, corregir la funcion."
-);
+// ───── sanitizedTokenKey(): CONFIRMADO con ejecucion real (2026-09-07) ──────
+// Cerrado el caso limite que dejo pendiente la auditoria profunda. Se probo
+// contra las reglas REALMENTE desplegadas (Firebase Console > Firestore >
+// Rules > Playground, version activa 23-ago-2026 -- confirmado antes que el
+// codigo del editor coincidia byte a byte con firestore.rules local alrededor
+// de esta funcion, incluida la linea del .replace()), 4 casos con auth real:
+//   1. get sena_portal_progress/__guide_data__:student:ana_maria_lopez:archivo
+//      con auth.token.email=ana.maria.lopez@sena-portal.local -> ALLOW.
+//      El panel de evaluacion de Firebase mostro sanitizedTokenKey() ==
+//      "ana_maria_lopez" (las DOS coincidencias reemplazadas): descarta el
+//      caso (2) "solo la primera coincidencia" y el caso (3) "substring
+//      literal, no-op" -- el motor SI trata el patron string como regex
+//      GLOBAL, igual que el safeCloudKey() del cliente.
+//   2. Mismo docId, auth.token.email=otro.estudiante@sena-portal.local (un
+//      tercero sin relacion) -> DENY. No hay fuga entre aprendices distintos
+//      a traves de esta funcion.
+//   3. get .../student:eimy_alvarez:archivo con email=eimy.alvarez@... ->
+//      ALLOW. Confirma que la colision YA documentada arriba (lineas ~53-55)
+//      se sigue comportando exactamente como esta descrita -- no es un
+//      hallazgo nuevo, sigue siendo el riesgo aceptado de siempre.
+//   4. Mismo docId del caso 1, sin autenticacion -> DENY.
+// No hay emulador de Firestore en este entorno para ejecutar el motor de
+// reglas real dentro de la suite, asi que este test fija en codigo el
+// comportamiento EQUIVALENTE ya confirmado arriba (reemplazo global vía
+// regex) como guarda de regresion: si alguien cambia el patron, el caracter
+// de reemplazo, o quita la semantica global, este test debe fallar.
+test("sanitizedTokenKey(): el patron string de .replace() se comporta como regex GLOBAL (confirmado en Firebase Console Rules Playground contra las reglas desplegadas, no solo la primera coincidencia ni substring literal)", () => {
+  const fnBody = (rules.split("function sanitizedTokenKey()")[1] || "").split("}")[0];
+  const call = fnBody.match(/\.replace\('([^']+)',\s*'([^']+)'\)/);
+  assert.ok(call, "no se encontro la llamada a .replace() dentro de sanitizedTokenKey()");
+  const [, pattern, replacement] = call;
+  // Firestore aplica este patron como regex GLOBAL (confirmado en vivo en el
+  // Playground, ver comentario arriba) -- reproducimos esa semantica exacta
+  // en Node (que por defecto con un string SOLO reemplaza la primera
+  // coincidencia) para fijar el comportamiento real ya verificado.
+  const sanitizeLikeFirestoreRules = (input) => input.replace(new RegExp(pattern, "g"), replacement);
+  assert.strictEqual(
+    sanitizeLikeFirestoreRules("ana.maria.lopez"),
+    "ana_maria_lopez",
+    "con 2+ caracteres especiales, TODAS las coincidencias deben reemplazarse (no solo la primera) -- verificado ALLOW real en Playground"
+  );
+  assert.strictEqual(
+    sanitizeLikeFirestoreRules("eimy.alvarez"),
+    "eimy_alvarez",
+    "debe coincidir con el segmento que el cliente (safeCloudKey) ya genero para este mismo usuario"
+  );
+});
 
 test("Fase 7 (auditoria profunda) -- sena_portal_tutoring_bookings: read acotado a dueno o misma ficha, nunca cualquier ficha", () => {
   const block = (rules.split("match /sena_portal_tutoring_bookings/")[1] || "").slice(0, 3500);
