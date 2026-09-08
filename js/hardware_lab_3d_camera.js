@@ -195,6 +195,24 @@ export function createCameraRig({ camera, renderer, tweenGroup, onTick }) {
     const pos = sphere.center.clone().addScaledVector(dir, distance);
     // Evita que la camara termine por debajo del tablero al enfocar piezas bajas.
     pos.y = Math.max(pos.y, sphere.center.y + sphere.radius * 0.35);
+    // Evita que la camara quede DENTRO del volumen del equipo (mejora 3D,
+    // encontrado con clic real): los botones de "Enfoque rapido" para grupos
+    // pequenos cercanos a una pared externa (Almacenamiento, Energia) usan un
+    // distanceFactor ajustado (ver renderFocusButtons en hardware_lab_3d_stage.js)
+    // que, visto desde el angulo "Lateral", colocaba la camara mas cerca del
+    // grupo que la propia tapa lateral -- atravesandola, con el resultado de
+    // quedar pegada a la cara interna de la tapa (aunque el equipo este cerrado)
+    // en vez de mostrar la pieza enfocada. Si el punto calculado cae dentro de
+    // la esfera envolvente completa del equipo, se empuja hacia afuera en la
+    // misma direccion, sin tocar el objetivo ni el encuadre de las vistas que
+    // ya funcionaban bien (quedan fuera de la esfera y no se modifican).
+    const minDistFromRig = rigRadius * 1.05;
+    const outFromRig = new THREE.Vector3().subVectors(pos, rigCenter);
+    if (outFromRig.lengthSq() < minDistFromRig * minDistFromRig) {
+      if (outFromRig.lengthSq() < 1e-6) outFromRig.copy(dir);
+      outFromRig.normalize();
+      pos.copy(rigCenter).addScaledVector(outFromRig, minDistFromRig);
+    }
     flyTo(pos, sphere.center, opts);
   }
 
