@@ -109,13 +109,27 @@ export function createCameraRig({ camera, renderer, tweenGroup, onTick }) {
     const r = rigRadius;
     switch (name) {
       case "front":
-        return { pos: new THREE.Vector3(c.x, c.y + r * 0.25, c.z + r * 2.1), target: c };
+        // Distancia subida de 2.1 a 3.2 (mejora visual, auditoria con clic
+        // real): a 2.1r el equipo de escritorio (angosto y alto: 0.205 x
+        // 0.44 x 0.41) llenaba el cuadro de borde a borde, recortado arriba
+        // y abajo -- "overview" ya usaba ~3.2r de distancia total y ese si
+        // se veia bien encuadrado, asi que se empareja esa misma escala para
+        // front/side/back en vez de inventar un numero nuevo sin referencia.
+        return { pos: new THREE.Vector3(c.x, c.y + r * 0.32, c.z + r * 3.2), target: c };
       case "side":
-        return { pos: new THREE.Vector3(c.x + r * 2.2, c.y + r * 0.2, c.z), target: c };
+        // Lado NEGATIVO de X (mejora visual, auditoria con clic real): la
+        // bandeja de piezas retiradas (ZONES.trayOrigin, hardware_lab_3d_
+        // constants.js) vive del lado +X del equipo -- con la camara
+        // tambien en +X, cualquier pieza ya retirada (p.ej. la propia tapa
+        // lateral, que arranca "afuera" en el modo Aprender) quedaba
+        // exactamente en la linea de vision, tapando el gabinete casi por
+        // completo. Mirando desde -X se evita esa colision sin tocar la
+        // posicion de la bandeja ni ningun otro preset.
+        return { pos: new THREE.Vector3(c.x - r * 3.2, c.y + r * 0.28, c.z), target: c };
       case "top":
         return { pos: new THREE.Vector3(c.x + 0.001, c.y + r * 2.6, c.z + 0.15), target: c };
       case "back":
-        return { pos: new THREE.Vector3(c.x, c.y + r * 0.25, c.z - r * 2.1), target: c };
+        return { pos: new THREE.Vector3(c.x, c.y + r * 0.32, c.z - r * 3.2), target: c };
       case "internal":
         if (viewFromBelow) {
           // Mira hacia arriba desde debajo del equipo -- el unico angulo

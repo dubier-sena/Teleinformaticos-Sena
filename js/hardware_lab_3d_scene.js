@@ -168,9 +168,18 @@ function buildEnvironmentLighting(renderer, scene) {
   // ambiente reflejado, como corresponde a luz de taller/oficina interior.
   lightPanel(0x8fb4ff, 2.1, 7, 7, -6.9, 1.2, 0, 0, Math.PI / 2);
   // Panel de acento cian: coincide con la luz de borde real (estetica "lab").
-  // Bajado de 3.6 -- sigue dando el toque "lab tecnico" en los bordes/metal
-  // sin tenir de cian toda superficie con algo de rugosidad.
-  lightPanel(0x35d0ff, 2.1, 5, 5, 2.5, 2.2, -6.9, 0, 0);
+  // Bajado de 3.6 a 2.1 -- sigue dando el toque "lab tecnico" en los
+  // bordes/metal sin tenir de cian toda superficie con algo de rugosidad.
+  // Bajado de nuevo, 2.1 a 0.7 (auditoria visual con clic real, sep-2026):
+  // ESTE panel (no la luz `rim` de buildLighting, que es un objeto de
+  // three.js totalmente separado y no participa en absoluto de este bake)
+  // es el que se ve reflejado casi solido en el panel trasero del gabinete
+  // desde la vista "Posterior" -- confirmado bajando `rim` primero sin
+  // ningun cambio visible, lo que aislo el problema a este bake de entorno
+  // en vez de una luz real de la escena. Este panel esta del mismo lado
+  // (z=-6.9) que la camara de esa vista, y para un panel casi de frente a la
+  // camara el reflejo especular coincide casi exacto con esa direccion.
+  lightPanel(0x35d0ff, 0.7, 5, 5, 2.5, 2.2, -6.9, 0, 0);
   // Panel frontal: evita que la cara que mira a la camara quede sin nada brillante que reflejar.
   lightPanel(0xc3ccd6, 2.4, 6, 6, 0, 1.5, 6.9, 0, Math.PI);
 
@@ -227,7 +236,17 @@ function buildLighting(scene) {
   // Bajado de 18 a 11 (auditoria visual de mejora 3D): a 18 tenia demasiado
   // alcance -- teñia de cian superficies neutras lejos del equipo (mesa,
   // piso) en vez de quedarse como un simple acento de borde/fondo.
-  const rim = new THREE.PointLight(0x35d0ff, 11, 8, 2);
+  // Bajado de nuevo, 11 a 6 (auditoria visual con clic real, sep-2026): el
+  // panel trasero del gabinete de escritorio (metalDark, encarado casi
+  // directo hacia esta luz desde la vista "Posterior") se veia casi 100%
+  // cian solido -- el color base del panel dejaba de percibirse por
+  // completo. La intensidad DIFUSA de una luz muy saturada tiñe la
+  // superficie sin importar metalness/roughness (a diferencia del reflejo
+  // especular, que si depende de esos parametros); bajar metalness en
+  // constants.js no alcanzaba a resolver esto. 6 sigue dando el acento
+  // "borde/fondo tecnico" visible en las demas vistas sin saturar por
+  // completo una cara que lo mira de frente.
+  const rim = new THREE.PointLight(0x35d0ff, 6, 8, 2);
   rim.position.set(-0.4, 1.7, -1.4);
   scene.add(rim);
 

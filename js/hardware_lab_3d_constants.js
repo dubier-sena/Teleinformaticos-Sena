@@ -6,6 +6,7 @@
  * aluminio). Un solo lugar para que factory/rig/escena midan igual.
  */
 import * as THREE from "./vendor/three.module.min.js";
+import { pcbTexture, brushedRoughnessTexture } from "./hardware_lab_3d_textures.js";
 
 // ── Layout de la mesa de trabajo (unidades = metros aprox.) ────────────────
 export const TABLE = {
@@ -35,20 +36,47 @@ export const ZONES = {
 // roughness/metalness siguen el flujo PBR estandar de three.js MeshStandardMaterial.
 export const MATERIAL_KIND = {
   metalSteel: { color: 0x8b93a1, roughness: 0.38, metalness: 0.85 },
-  metalBrushed: { color: 0xa6adb8, roughness: 0.5, metalness: 0.75 },
-  metalDark: { color: 0x4a4f58, roughness: 0.42, metalness: 0.8 },
-  // roughness 0.38 (antes 0.28, correccion visual FASE D sep-2026): en las
-  // superficies grandes del portatil (base/tapa inferior/respaldo de
-  // pantalla, ver hardware_lab_3d_chassis_factory.js) el valor original se
-  // leia casi como espejo, sin ninguna ruptura entre paneles -- "carcasa
-  // blanca y plana" (auditoria visual previa). Sigue mas brillante que
-  // metalDark (0.42, chasis de escritorio): aluminio pulido vs. acero
-  // oscuro mate son materiales distintos y deben distinguirse.
-  aluminum: { color: 0xc7ccd4, roughness: 0.38, metalness: 0.9 },
+  // metalBrushed/metalDark/aluminum: metalness/roughness recalibrados
+  // (mejora visual, auditoria con clic real, sep-2026; primer intento a
+  // metalness 0.5/0.5/0.55 -- verificado insuficiente, el blowout seguia
+  // presente) de 0.75/0.8/0.9 a 0.2/0.2/0.28. Con los valores originales (y
+  // con el primer intento a 0.5), las superficies GRANDES y planas que usan
+  // estos 3 materiales (paneles del gabinete, base/tapa del portatil)
+  // mostraban un "blowout" especular severo bajo el entorno PMREM de la
+  // escena: el panel superior del gabinete se veia casi blanco puro (vista
+  // "Superior") y el panel trasero casi 100% cian, reflejo directo de la luz
+  // de acento (vista "Posterior") -- el color base (gris oscuro/plata)
+  // practicamente no se percibia. Un metal pintado/anodizado real (el
+  // acabado de un gabinete o chasis de portatil comun) es, en terminos PBR,
+  // mayormente DIELECTRICO -- pintura/oxido sobre el metal, no metal puro
+  // expuesto -- por eso metalness bajo (~0.2-0.3) es mas correcto que un
+  // valor "medio", ademas de evitar el blowout. Roughness tambien subido
+  // (mate satinado en vez de semi-espejo). Los metales chicos pensados para
+  // verse brillantes a proposito (copper, goldPin, heatsinkFin, screwHead,
+  // metalSteel) NO se tocan: el contraste "detalle pulido vs. carcasa mate"
+  // sigue intacto. Se complementa con un roughnessMap (ver
+  // applyProceduralTexture mas abajo) que dispersa el reflejo en vez de
+  // concentrarlo en un solo punto.
+  metalBrushed: { color: 0xa6adb8, roughness: 0.62, metalness: 0.2 },
+  metalDark: { color: 0x4a4f58, roughness: 0.58, metalness: 0.2 },
+  aluminum: { color: 0xc7ccd4, roughness: 0.5, metalness: 0.28 },
   copper: { color: 0xb87333, roughness: 0.32, metalness: 0.95 },
   goldPin: { color: 0xd4af37, roughness: 0.3, metalness: 0.95 },
-  pcbGreen: { color: 0x0d4f2c, roughness: 0.75, metalness: 0.05 },
-  pcbBlue: { color: 0x0b2f5c, roughness: 0.72, metalness: 0.05 },
+  // Color base oscurecido (mejora visual con clic real, sep-2026: 0x0d4f2c/
+  // 0x0b2f5c -> mitad de brillo aprox.): a pesar de tener metalness casi nulo
+  // (0.05, descarta el reflejo especular/entorno como causa), la placa base
+  // se veia PRACTICAMENTE BLANCA en varias vistas (Interna, enfoque "Placa
+  // base") -- la luz clave (`key`, DirectionalLight intensity 5.5 en
+  // hardware_lab_3d_scene.js) es muy fuerte por diseño (evita que el
+  // gabinete se vea como silueta negra, ver comentario en ese archivo) y,
+  // combinada con el tonemapping ACES, empuja incluso un verde oscuro a
+  // blanco cuando la cara recibe luz directa de lleno. Reducir esa luz
+  // global arriesgaba oscurecer otras vistas ya calibradas; en cambio se
+  // oscurece el color base de ESTE material especifico (sin tocar ninguna
+  // luz compartida ni otro tipo de superficie) para que la textura de PCB
+  // (ver hardware_lab_3d_textures.js) siga siendo legible bajo la misma luz.
+  pcbGreen: { color: 0x062e1a, roughness: 0.75, metalness: 0.05 },
+  pcbBlue: { color: 0x061a33, roughness: 0.72, metalness: 0.05 },
   plasticBlack: { color: 0x16181c, roughness: 0.55, metalness: 0.05 },
   plasticDark: { color: 0x2a2d33, roughness: 0.5, metalness: 0.08 },
   plasticGray: { color: 0x5c6067, roughness: 0.55, metalness: 0.1 },
@@ -67,6 +95,45 @@ export const MATERIAL_KIND = {
 
 const materialCache = new Map();
 
+// ── Texturas procedurales por tipo (mejora visual, sep-2026) ────────────────
+// Un solo lugar que decide QUE tipo lleva textura y CUAL: el resto del motor
+// (parts_factory/chassis_factory) sigue llamando materialFor("pcbGreen") tal
+// cual, sin saber nada de canvas/texturas -- ver hardware_lab_3d_textures.js
+// para el porque de cada una (PCB: "todo bloques de color basico"; metal:
+// romper el reflejo especular uniforme de los paneles grandes).
+function applyProceduralTexture(mat, kind) {
+  switch (kind) {
+    case "pcbGreen":
+      // Fondo BLANCO a proposito (no el verde real): `.map` multiplica por
+      // material.color, asi que un fondo blanco (neutro, x1) reproduce
+      // exactamente el pcbGreen ya definido arriba sin oscurecerlo una
+      // segunda vez -- solo las trazas/pads quedan como variacion sobre esa
+      // base, en vez de hornear un segundo tono de verde que compita con el
+      // color real del material.
+      mat.map = pcbTexture("pcbGreen", "#ffffff", "#4a4438", "#2a2c2f");
+      mat.needsUpdate = true;
+      break;
+    case "pcbBlue":
+      mat.map = pcbTexture("pcbBlue", "#ffffff", "#324450", "#2a2c2f");
+      mat.needsUpdate = true;
+      break;
+    case "metalDark":
+      mat.roughnessMap = brushedRoughnessTexture("metalDark");
+      mat.needsUpdate = true;
+      break;
+    case "aluminum":
+      mat.roughnessMap = brushedRoughnessTexture("aluminum");
+      mat.needsUpdate = true;
+      break;
+    case "metalBrushed":
+      mat.roughnessMap = brushedRoughnessTexture("metalBrushed");
+      mat.needsUpdate = true;
+      break;
+    default:
+      break;
+  }
+}
+
 /** Devuelve (y cachea) un MeshStandardMaterial para el tipo indicado. */
 export function materialFor(kind, overrides) {
   const key = kind + (overrides ? JSON.stringify(overrides) : "");
@@ -74,6 +141,7 @@ export function materialFor(kind, overrides) {
   const base = MATERIAL_KIND[kind] || MATERIAL_KIND.plasticGray;
   const params = Object.assign({}, base, overrides || {});
   const mat = new THREE.MeshStandardMaterial(params);
+  applyProceduralTexture(mat, kind);
   materialCache.set(key, mat);
   return mat;
 }
@@ -81,7 +149,9 @@ export function materialFor(kind, overrides) {
 /** Clona un material base para un uso que necesita mutarse (highlight, fx) sin afectar al resto. */
 export function materialInstanceFor(kind, overrides) {
   const base = MATERIAL_KIND[kind] || MATERIAL_KIND.plasticGray;
-  return new THREE.MeshStandardMaterial(Object.assign({}, base, overrides || {}));
+  const mat = new THREE.MeshStandardMaterial(Object.assign({}, base, overrides || {}));
+  applyProceduralTexture(mat, kind);
+  return mat;
 }
 
 // ── Colores de acento de la interfaz (coinciden con css/page_hardware_lab.css) ─

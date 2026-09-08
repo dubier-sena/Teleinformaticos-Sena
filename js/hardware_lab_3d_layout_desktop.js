@@ -186,7 +186,26 @@ export function createDesktopLayout() {
       kind: "cable",
       cableKind: "front-panel",
       from: (a) => a.motherboard.pcieSlot.clone().add(new THREE.Vector3(0.06, -0.02, -0.03)),
-      to: () => new THREE.Vector3(0.55, 0.15, -0.5), // hacia el monitor de diagnostico
+      // Corregido (mejora visual): el "to" original, (0.55,0.15,-0.5), apunta
+      // literalmente al monitor de diagnostico (ZONES.monitorBase), un objeto
+      // que solo existe en el modulo de Diagnostico. Como este cable esta
+      // SIEMPRE "conectado por defecto" (ver comentario mas arriba) tambien
+      // en Aprender/Practica libre/Evaluacion/Guiado -- donde ese monitor
+      // nunca se construye -- el resultado era un cable larguisimo saliendo
+      // del gabinete hacia la nada, visible en TODAS las vistas de camara de
+      // esos modos (confirmado con clic real). Ademas, al ser parte del rig
+      // desde el primer instante, su geometria (incluido el hit-proxy 4x mas
+      // grueso, ver buildCable) se sumaba al Box3 que calcula
+      // rigCenter/rigRadius (hardware_lab_3d_rig.js:getBoundsWorld, llamado
+      // en stage.js:loadRig ANTES de que Diagnostico exista o no) -- un
+      // punto a 0.55/-0.5 infla y descentra esa esfera muchisimo mas que el
+      // propio gabinete (~0.1-0.2 de semi-extension), rompiendo el encuadre
+      // de los presets "Frontal"/"Lateral" y de varios enfoques rapidos en
+      // TODOS los modos, no solo en Diagnostico. Se acorta a un punto corto
+      // y creible saliendo por la parte trasera del gabinete (misma idea que
+      // el fix ya aplicado a power-cable-wall, arriba): sigue leyendose como
+      // "cable de video conectado", sin el efecto secundario sobre camara.
+      to: () => new THREE.Vector3(0.05, 0.03, -0.22),
       detachAxis: AXIS_X,
       tier: 4,
     },
