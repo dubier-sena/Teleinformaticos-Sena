@@ -976,6 +976,16 @@
       return;
     }
 
+    // Cierre Bugs 2/4 (auditoria E2E Guias 10/11/12 Kennedy, 2026-09-08):
+    // este bloque ya calcula el numero real de CADA guia desde su propio
+    // GUIDE_TITLES (getGuideDisplayMeta), sin ambiguedad. Las guias de Redes
+    // adaptadas de Santa Barbara (script_guia_redes*.js) corren DESPUES un
+    // remapGuideNumberReferences() que reescribe cualquier "Guia N" dentro de
+    // #guide-root usando su propio guideNumberMap -- sin este marcador, ese
+    // paso reescribia tambien las entradas de OTRAS guias (ej. la Guia 2/3/4
+    // real) que aparecen aqui mismo, duplicando/mal-rotulando numeros. Ver
+    // el mismo data-no-guide-remap en remapGuideNumberReferences.
+    guideSection.setAttribute("data-no-guide-remap", "true");
     guideSection.innerHTML =
       '<div class="nav-label">Guia asignada</div>' +
       files

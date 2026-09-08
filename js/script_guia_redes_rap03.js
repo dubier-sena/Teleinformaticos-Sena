@@ -126,9 +126,15 @@
     let node;
     while ((node = walker.nextNode())) nodes.push(node);
     nodes.forEach(function (n) {
-      if (n.nodeValue) n.nodeValue = remapText(n.nodeValue);
+      // Cierre Bug 2 (2026-09-08): ver comentario completo en
+      // script_guia_redes.js -- excluye la seccion "Guia asignada" (ya
+      // correcta por si misma) de este remap generico.
+      if (n.nodeValue && !(n.parentElement && n.parentElement.closest("[data-no-guide-remap]"))) {
+        n.nodeValue = remapText(n.nodeValue);
+      }
     });
     root.querySelectorAll("[title]").forEach(function (el) {
+      if (el.closest("[data-no-guide-remap]")) return;
       if (/[Gg]u[ií]a/.test(el.title)) el.title = remapText(el.title);
     });
   }

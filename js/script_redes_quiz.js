@@ -134,6 +134,25 @@
     if (!scopeKey || !config.cloudFileName) {
       return null;
     }
+    // Cierre Bloque B (2026-09-08): esta pagina de quiz no pasa por
+    // guide_runtime_loader.js (que ya retrasa naturalmente su primera
+    // lectura al esperar el fetch del contexto + partial), asi que su
+    // DOMContentLoaded dispara esta lectura en la nube casi de inmediato --
+    // demasiado pronto para que el puente de Firebase Auth (window.portalFirebaseAuth)
+    // termine de hidratar la sesion desde IndexedDB tras un reload en frio.
+    // getBridgeCurrentUid() (camino rapido de resolveUidForScope, en
+    // firebase_db.js) es sincrono: si el SDK aun no hidrato, ese camino
+    // rapido falla y cae al camino lento (una lectura REST adicional a
+    // sena_portal_users) -- en la practica, esa carrera podia dejar
+    // guideState sin el intento en curso justo despues de un reload. Mismo
+    // mecanismo que firebase_db.js ya usa para authHeaders() (ver
+    // ensureAuthHydrated), aqui aplicado antes de la PRIMERA lectura de
+    // esta pagina en vez de a cada peticion.
+    if (window.portalFirebaseAuth && typeof window.portalFirebaseAuth.waitForAuthHydration === "function") {
+      try {
+        await window.portalFirebaseAuth.waitForAuthHydration(2500);
+      } catch (_) { /* si la espera falla, se sigue con el intento normal */ }
+    }
     try {
       const snapshot = await window._firebaseDb.cloudGetGuideData(scopeKey, config.cloudFileName);
       if (!snapshot || typeof snapshot !== "object") {

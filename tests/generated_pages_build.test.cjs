@@ -34,6 +34,7 @@ const EXPECTED_VARIANTS = {
     ficha: "3441944",
     inst: "Institucion Educativa Santa Barbara",
     title: "Quiz 3.2.1.H | Redes Santa Barbara 10A",
+    guideLabel: "Guia 2",
     cloudFileName: "sb_10a_redes.html",
     backLink: "guia.html?g=santa-barbara-10a-guia-02-redes-rap01.html#contexto",
   },
@@ -44,6 +45,7 @@ const EXPECTED_VARIANTS = {
     ficha: "3441950",
     inst: "Institucion Educativa Santa Barbara",
     title: "Quiz 3.2.1.H | Redes Santa Barbara 10B",
+    guideLabel: "Guia 2",
     cloudFileName: "sb_10b_redes.html",
     backLink: "guia.html?g=santa-barbara-10b-guia-02-redes-rap01.html#contexto",
   },
@@ -54,6 +56,7 @@ const EXPECTED_VARIANTS = {
     ficha: "3441944",
     inst: "Institucion Educativa Santa Barbara",
     title: "Quiz 3.3.H | Parámetros de Red Santa Barbara 10A",
+    guideLabel: "Guia 2",
     cloudFileName: "sb_10a_redes.html",
     backLink: "guia.html?g=santa-barbara-10a-guia-02-redes-rap01.html#apropiacion",
   },
@@ -64,6 +67,7 @@ const EXPECTED_VARIANTS = {
     ficha: "3441950",
     inst: "Institucion Educativa Santa Barbara",
     title: "Quiz 3.3.H | Parámetros de Red Santa Barbara 10B",
+    guideLabel: "Guia 2",
     cloudFileName: "sb_10b_redes.html",
     backLink: "guia.html?g=santa-barbara-10b-guia-02-redes-rap01.html#apropiacion",
   },
@@ -77,6 +81,7 @@ const EXPECTED_VARIANTS = {
     ficha: "3441939",
     inst: "Institucion Educativa Jhon F. Kennedy",
     title: "Quiz 3.2.1.H | Redes Jhon F. Kennedy 10A",
+    guideLabel: "Guia 10",
     cloudFileName: "jfk_10a_guia10_redes_rap01.html",
     backLink: "guia.html?g=grupo-10a-guia-10-redes-rap01.html#contexto",
   },
@@ -87,6 +92,7 @@ const EXPECTED_VARIANTS = {
     ficha: "3441942",
     inst: "Institucion Educativa Jhon F. Kennedy",
     title: "Quiz 3.2.1.H | Redes Jhon F. Kennedy 10B",
+    guideLabel: "Guia 10",
     cloudFileName: "jfk_10b_guia10_redes_rap01.html",
     backLink: "guia.html?g=grupo-10b-guia-10-redes-rap01.html#contexto",
   },
@@ -97,6 +103,7 @@ const EXPECTED_VARIANTS = {
     ficha: "3441939",
     inst: "Institucion Educativa Jhon F. Kennedy",
     title: "Quiz 3.3.H | Parámetros de Red Jhon F. Kennedy 10A",
+    guideLabel: "Guia 10",
     cloudFileName: "jfk_10a_guia10_redes_rap01.html",
     backLink: "guia.html?g=grupo-10a-guia-10-redes-rap01.html#apropiacion",
   },
@@ -107,6 +114,7 @@ const EXPECTED_VARIANTS = {
     ficha: "3441942",
     inst: "Institucion Educativa Jhon F. Kennedy",
     title: "Quiz 3.3.H | Parámetros de Red Jhon F. Kennedy 10B",
+    guideLabel: "Guia 10",
     cloudFileName: "jfk_10b_guia10_redes_rap01.html",
     backLink: "guia.html?g=grupo-10b-guia-10-redes-rap01.html#apropiacion",
   },
@@ -177,6 +185,14 @@ test(
     assert.match(html, new RegExp(variant.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
     assert.match(html, new RegExp(`Grupo ${variant.grupo}`));
     assert.match(html, new RegExp(variant.backLink.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+
+    // Cierre Bug 4 (2026-09-08): el kicker "Guia N · Actividad ..." estaba
+    // hardcodeado como "Guia 2" en el template, incorrecto para las variantes
+    // de Kennedy (Guia 10). Confirma que el numero real quedo en el HTML
+    // generado, no solo en el catalogo de variantes.
+    if (variant.guideLabel) {
+      assert.match(html, new RegExp(`redes-quiz-kicker">${variant.guideLabel.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`));
+    }
 
     if (variant.cloudFileName) {
       assert.match(html, new RegExp(variant.cloudFileName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));

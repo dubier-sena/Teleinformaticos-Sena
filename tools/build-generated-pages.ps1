@@ -117,6 +117,7 @@ function Get-VariantTokens {
     "QUIZ_GROUP" = [string]$Variant.grupo
     "QUIZ_FICHA" = [string]$Variant.ficha
     "QUIZ_CLOUD_FILE" = Get-OptionalValue -Variant $Variant -Key "cloudFileName"
+    "QUIZ_GUIDE_LABEL" = Get-OptionalValue -Variant $Variant -Key "guideLabel"
     "QUIZ_PAGE_FILE" = Get-OptionalValue -Variant $defaults -Key "QUIZ_PAGE_FILE"
     "QUIZ_BACK_LINK" = [string]$Variant.backLink
     "QUIZ_STORAGE_KEY" = Get-OptionalValue -Variant $defaults -Key "QUIZ_STORAGE_KEY"

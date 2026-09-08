@@ -522,7 +522,16 @@ let CURRENT_GUIDE_LABEL = "Guia 2";
 function updateCurrentGuideLabel() {
   const ctx = window.__GUIDE_RUNTIME_CONTEXT__;
   const mapped = ctx && ctx.guideNumberMap && ctx.guideNumberMap["2"];
-  if (mapped) CURRENT_GUIDE_LABEL = "Guia " + mapped;
+  if (mapped) {
+    CURRENT_GUIDE_LABEL = "Guia " + mapped;
+    // Cierre Bug 4 (2026-09-08): REDES_WORD_METADATA.guideName alimenta el
+    // campo "Guia" del encabezado institucional exportado a Word
+    // (buildInstitutionalWordHeaderRedes) y hasta ahora quedaba fijo en
+    // "Guia 2 - Redes RAP01" -- correcto solo para Santa Barbara. Se
+    // actualiza aqui, junto a CURRENT_GUIDE_LABEL, para que el documento
+    // exportado refleje el numero real de la guia (10/11/12 en Kennedy).
+    REDES_WORD_METADATA.guideName = CURRENT_GUIDE_LABEL + " - Redes RAP01";
+  }
 }
 
 // remapGuideNumberReferences (sep-2026, mismo motivo): el partial
@@ -553,9 +562,16 @@ function remapGuideNumberReferences(root) {
   let node;
   while ((node = walker.nextNode())) nodes.push(node);
   nodes.forEach(function (n) {
-    if (n.nodeValue) n.nodeValue = remapText(n.nodeValue);
+    // Cierre Bug 2 (2026-09-08): la seccion "Guia asignada" (renderAssignedGuides
+    // en guia_template.js) ya calcula el numero real de cada guia una por una;
+    // sin esta exclusion, este remap generico reescribia tambien esas entradas
+    // (ej. la Guia 2/3/4 real de la ficha), duplicando/mal-rotulando numeros.
+    if (n.nodeValue && !(n.parentElement && n.parentElement.closest("[data-no-guide-remap]"))) {
+      n.nodeValue = remapText(n.nodeValue);
+    }
   });
   root.querySelectorAll("[title]").forEach(function (el) {
+    if (el.closest("[data-no-guide-remap]")) return;
     if (/[Gg]u[ií]a/.test(el.title)) el.title = remapText(el.title);
   });
 }
