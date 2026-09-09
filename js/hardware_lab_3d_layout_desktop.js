@@ -55,7 +55,19 @@ export function createDesktopLayout() {
     ram: {
       kind: "ram-module",
       buildOpts: { count: 2 },
-      mount: (a) => a.motherboard.ramSlots[0].clone().lerp(a.motherboard.ramSlots[1], 0.5),
+      // Ranuras 2 y 3 (no 0 y 1): con la torre del cooler (buildTowerCooler,
+      // ancho 0.13) rotada 90 grados sobre Y para el escritorio, su huella
+      // queda orientada hacia las ranuras MAS CERCANAS al zocalo del CPU --
+      // encontrado con clic real: el bounding box del cooler contenia
+      // COMPLETO al de la RAM (coolerBox.containsBox(ramBox) === true) en
+      // las ranuras 0/1, dejando la RAM geometricamente sin poder
+      // seleccionarse (el rayo del clic siempre golpea primero al cooler,
+      // sin importar el angulo de camara probado). Las 4 ranuras del
+      // motherboard siguen dibujandose siempre (buildMotherboard); mover el
+      // modulo instalable a las ranuras 2/3 no cambia nada visualmente salvo
+      // en cual par queda la RAM removible, y las aleja lo suficiente del
+      // cooler para que el clic las alcance.
+      mount: (a) => a.motherboard.ramSlots[2].clone().lerp(a.motherboard.ramSlots[3], 0.5),
       rotationEuler: [0, Math.PI / 2, Math.PI / 2],
       detachAxis: AXIS_X,
       tier: 1,
