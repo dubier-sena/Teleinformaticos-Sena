@@ -631,16 +631,20 @@
     var badgeClass, icon, html;
     var fecha = formatGradeDate(gradedAtIso);
     var fechaHtml = fecha ? '<br><span class="grade-badge-date">Calificado el ' + fecha + '</span>' : "";
+    // Observacion que el instructor eligio del banco de comentarios o escribio a
+    // mano al calificar (setStudentActivityObservation, panel Calificaciones).
+    // Opcional: sin observacion, el badge se ve igual que antes. Se muestra en
+    // AMBAS notas -- hasta 2026-09-15 solo se pintaba en "No aprobado", asi que
+    // un comentario sobre una actividad aprobada se guardaba pero el aprendiz
+    // nunca lo veia.
+    var obsHtml = obs ? '<br><span class="grade-badge-obs">' + escapeHtmlLocal(obs) + "</span>" : "";
     if (grade === "A") {
       badgeClass = "activity-grade-badge activity-grade-badge--aprobado";
       icon = "✅";
-      html = "<strong>¡Aprobado!</strong> Buen trabajo. 🎉" + fechaHtml;
+      html = "<strong>¡Aprobado!</strong> Buen trabajo. 🎉" + obsHtml + fechaHtml;
     } else if (grade === "D") {
       badgeClass = "activity-grade-badge activity-grade-badge--desaprobado";
       icon = "❌";
-      // Motivo que el instructor eligio/escribio al calificar (setStudentActivityObservation,
-      // panel Calificaciones). Opcional: sin motivo, el badge se ve igual que antes.
-      var obsHtml = obs ? '<br><span class="grade-badge-obs">' + escapeHtmlLocal(obs) + "</span>" : "";
       html = "<strong>No aprobado.</strong> Habla con tu instructor para reforzar esta actividad." + obsHtml + fechaHtml;
     } else {
       return null;
@@ -737,6 +741,43 @@
     "grupo-11b-guia-09-taller-integrador.html": "taller-integrador-sb11",
   };
 
+  // ── Familias declaradas por la propia guía (fuente única) ───────────────────
+  // Una guía que ya se registra en js/guide_declarations.js puede declarar ahí
+  // su `gradeFamily`; esa declaración se deposita en un buzón global
+  // (window.__portalGuideGradeFamilies) y se absorbe aquí. Sirve para NO tener
+  // que mantener dos listados: sin esto, una guía nueva queda invisible en el
+  // módulo de Calificaciones sin ningún error (pasó con las Guias 10/11/12 de
+  // John F. Kennedy, adaptadas de Santa Barbara: estaban en FICHA_MAP,
+  // guide_declarations.js y guia_router.js, pero no en el mapa de arriba, asi
+  // que el desplegable de guia del panel las descartaba en silencio).
+  //
+  // El buzón es un objeto global y no una llamada directa a proposito: el orden
+  // de carga de los dos archivos NO es el mismo en todas las paginas
+  // (activity_grades.js carga ANTES que guide_declarations.js en las guias, y
+  // DESPUES en el panel admin), por lo que ninguno de los dos puede llamar al
+  // otro al cargarse. Por eso la absorcion es perezosa: ocurre en el getter de
+  // GUIDE_FAMILY_BY_FILE y en resolveGuideFamily, siempre en tiempo de lectura.
+  //
+  // El mapa explícito de arriba SIEMPRE manda: una familia ya existente nunca se
+  // renombra ni se pisa (las llaves de familia estan persistidas en Firestore,
+  // dentro de sena_portal_grades).
+  var _absorbedFamilyCount = -1;
+  function absorbDeclaredGuideFamilies() {
+    var box = (typeof window !== "undefined" && window.__portalGuideGradeFamilies) || null;
+    if (!box) return;
+    var files = Object.keys(box);
+    if (files.length === _absorbedFamilyCount) return;   // nada nuevo desde la ultima vez
+    _absorbedFamilyCount = files.length;
+    files.forEach(function (file) {
+      if (!GUIDE_FAMILY_BY_FILE[file] && box[file]) GUIDE_FAMILY_BY_FILE[file] = box[file];
+    });
+  }
+
+  function resolveGuideFamily(pageFile) {
+    absorbDeclaredGuideFamilies();
+    return GUIDE_FAMILY_BY_FILE[String(pageFile || "")] || "";
+  }
+
   // ── Banco de respuestas: relleno de actividades aprobadas y vacías ──────────
   // Cuando una actividad fue APROBADA (A) y el aprendiz dejó el/los campo(s) vacío(s),
   // se rellenan con la solución que el admin EMBEBIÓ en las notas del aprendiz al aprobar
@@ -798,7 +839,7 @@
   // después de inyectar el contenido. Resuelve el mount de cada actividad por convención,
   // y rellena desde el banco las actividades aprobadas que quedaron vacías.
   async function autoRenderForFile(pageFile) {
-    var family = GUIDE_FAMILY_BY_FILE[String(pageFile || "")];
+    var family = resolveGuideFamily(pageFile);
     if (!family) return;
     var entry = GRADE_CATALOG[family];
     if (!entry || !Array.isArray(entry.activities)) return;
@@ -940,7 +981,7 @@
   // ── API pública ──────────────────────────────────────────────────────────────
   window.activityGradesManager = {
     GRADE_CATALOG: GRADE_CATALOG,
-    GUIDE_FAMILY_BY_FILE: GUIDE_FAMILY_BY_FILE,
+    resolveGuideFamily: resolveGuideFamily,
     autoRenderForFile: autoRenderForFile,
     applyApprovedSolutionsForFamily: applyApprovedSolutionsForFamily,
     reflectGradesIntoGuideState: reflectGradesIntoGuideState,
@@ -956,4 +997,19 @@
     getMyGrades: getMyGrades,
     renderGradeBadges: renderGradeBadges,
   };
+
+  // GUIDE_FAMILY_BY_FILE se expone como GETTER (no como propiedad normal) para
+  // que los 8 consumidores que ya hacen `mgr.GUIDE_FAMILY_BY_FILE[archivo]`
+  // (admin_usuarios, activity_standard, improvement_plans, portal_home,
+  // student_summary, script_taller_integrador...) reciban las familias
+  // declaradas por las guias SIN tener que cambiar ni una linea en ellos:
+  // la absorcion ocurre en el momento de la lectura, cuando guide_declarations.js
+  // ya corrio, sea cual sea el orden de carga de esa pagina.
+  Object.defineProperty(window.activityGradesManager, "GUIDE_FAMILY_BY_FILE", {
+    enumerable: true,
+    get: function () {
+      absorbDeclaredGuideFamilies();
+      return GUIDE_FAMILY_BY_FILE;
+    },
+  });
 })();

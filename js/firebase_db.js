@@ -73,6 +73,7 @@
   var COL_USER_INDEX = "sena_portal_user_index";
   var COL_GRADES = "sena_portal_grades";
   var COL_GRADE_SOLUTIONS = "sena_portal_grade_solutions";
+  var COL_GRADE_COMMENTS = "sena_portal_grade_comments";
   var COL_IMPROVEMENT_PLANS = "sena_portal_improvement_plans";
   var COL_REINFORCEMENT_WORKSHOPS = "sena_portal_reinforcement_workshops";
   var COL_REINFORCEMENT_ANSWERS = "sena_portal_reinforcement_answers";
@@ -1466,6 +1467,26 @@
   async function cloudSaveGradeSolutions(solutions) {
     return fsPatch(COL_GRADE_SOLUTIONS, "bank", {
       solutions: solutions && typeof solutions === "object" ? solutions : {},
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
+  // ── Banco de COMENTARIOS de calificacion (SOLO admin, rule isAdmin) ───────
+  // Frases reutilizables que el instructor inserta en la observacion de una
+  // actividad al calificar. NO tiene nada que ver con el banco de respuestas
+  // modelo de arriba (ese guarda las soluciones de las actividades): aqui solo
+  // hay texto de retroalimentacion del instructor.
+  // Doc unico "bank": { comments: [ { id, texto, tipo } ], updatedAt }.
+  // El aprendiz nunca lee este doc; solo ve la frase concreta que el instructor
+  // dejo en SU actividad, copiada dentro de sus notas ({actId}:obs).
+  async function cloudGetGradeComments() {
+    var doc = await fsGet(COL_GRADE_COMMENTS, "bank");
+    return doc && Array.isArray(doc.comments) ? doc.comments : [];
+  }
+
+  async function cloudSaveGradeComments(comments) {
+    return fsPatch(COL_GRADE_COMMENTS, "bank", {
+      comments: Array.isArray(comments) ? comments : [],
       updatedAt: new Date().toISOString(),
     });
   }
@@ -3330,6 +3351,8 @@
     cloudSaveStudentSummary: cloudSaveStudentSummary,
     cloudGetGradeSolutions: cloudGetGradeSolutions,
     cloudSaveGradeSolutions: cloudSaveGradeSolutions,
+    cloudGetGradeComments: cloudGetGradeComments,
+    cloudSaveGradeComments: cloudSaveGradeComments,
     cloudGetImprovementPlans: cloudGetImprovementPlans,
     cloudSaveImprovementPlans: cloudSaveImprovementPlans,
     cloudGetReinforcementWorkshops: cloudGetReinforcementWorkshops,

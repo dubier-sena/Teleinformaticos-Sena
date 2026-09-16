@@ -70,10 +70,31 @@ test("buildGradeBadge: el motivo se escapa (no permite inyectar HTML desde el ca
   assert.match(badge.innerHTML, /&lt;img/);
 });
 
-test("buildGradeBadge: 'Aprobado' ignora el motivo (el motivo solo aplica a No aprobado)", () => {
+// CAMBIO 2026-09-15 (banco de comentarios, pedido explicito del usuario): antes
+// el badge de "Aprobado" IGNORABA la observacion -- el instructor podia guardar
+// "Buen trabajo, evidencia completa" y el aprendiz no la veia nunca. Ahora la
+// observacion se muestra con las dos notas.
+test("buildGradeBadge: 'Aprobado' CON observacion la muestra junto al badge", () => {
   const win = loadManagerWithBadgeExposed();
-  const badge = win.__buildGradeBadge("A", "matriz322", "", "No entregó a tiempo.");
+  const badge = win.__buildGradeBadge("A", "matriz322", "", "Buen trabajo, evidencia completa.");
+
+  assert.match(badge.innerHTML, /Aprobado/);
+  assert.match(badge.innerHTML, /grade-badge-obs/);
+  assert.match(badge.innerHTML, /Buen trabajo, evidencia completa/);
+});
+
+test("buildGradeBadge: 'Aprobado' SIN observacion se ve igual que antes (sin linea extra)", () => {
+  const win = loadManagerWithBadgeExposed();
+  const badge = win.__buildGradeBadge("A", "matriz322", "2026-09-15T00:00:00.000Z", "");
 
   assert.match(badge.innerHTML, /Aprobado/);
   assert.doesNotMatch(badge.innerHTML, /grade-badge-obs/);
+});
+
+test("buildGradeBadge: la observacion de 'Aprobado' tambien se escapa (XSS)", () => {
+  const win = loadManagerWithBadgeExposed();
+  const badge = win.__buildGradeBadge("A", "matriz322", "", '<img src=x onerror=alert(1)>');
+
+  assert.doesNotMatch(badge.innerHTML, /<img/);
+  assert.match(badge.innerHTML, /&lt;img/);
 });

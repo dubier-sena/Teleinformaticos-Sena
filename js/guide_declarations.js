@@ -28,6 +28,19 @@
     if (window.ActivityStandard && typeof window.ActivityStandard.registerGuide === "function") {
       window.ActivityStandard.registerGuide(config);
     }
+    // Calificaciones (fuente unica): si la guia declara `gradeFamily`, se deposita
+    // aqui el archivo -> familia para que js/activity_grades.js lo absorba al leer
+    // GUIDE_FAMILY_BY_FILE. Evita mantener un segundo listado de guias: una guia
+    // registrada aqui con su familia aparece sola en el modulo de Calificaciones.
+    // Es un buzon global (y no una llamada directa) porque el orden de carga de
+    // los dos archivos cambia segun la pagina; ver la nota extensa en
+    // js/activity_grades.js (absorbDeclaredGuideFamilies).
+    if (config && config.gradeFamily && Array.isArray(config.files)) {
+      var box = window.__portalGuideGradeFamilies || (window.__portalGuideGradeFamilies = {});
+      config.files.forEach(function (fileName) {
+        if (!box[fileName]) box[fileName] = config.gradeFamily;
+      });
+    }
   }
 
   var PROGRAM = "Sistemas Teleinformaticos";
@@ -1964,6 +1977,12 @@
     ],
     guideNumber: "10",
     guideTitle: "Guia 10 - Definir parametros y recursos de la red (RAP 01)",
+    // Reutiliza la familia de calificacion de Santa Barbara: el contenido, el
+    // partial y los ids de actividad son los MISMOS (esta guia es la copia de
+    // santa-barbara-*-guia-02-redes-rap01.html). Asi hereda el catalogo, el
+    // banco de respuestas modelo y el banco de planes de mejoramiento ya
+    // existentes, sin duplicar nada.
+    gradeFamily: "guia-redes-rap01",
     stateKey: "guia_interactiva_grupo_10a_guia_10_redes_rap01_html",
     program: PROGRAM,
     competencia: "280102129 - Evaluar red de acuerdo con procedimientos de telecomunicaciones y normativa tecnica.",
@@ -2041,6 +2060,7 @@
     ],
     guideNumber: "11",
     guideTitle: "Guia 11 - Comprobar la conectividad de la red (RAP 02)",
+    gradeFamily: "guia-redes-rap02",   // ver nota en la Guia 10 (mismo contenido que Santa Barbara)
     stateKey: "guia_interactiva_grupo_10a_guia_11_redes_rap02_html",
     program: PROGRAM,
     competencia: "280102129 - Evaluar red de acuerdo con procedimientos de telecomunicaciones y normativa tecnica.",
@@ -2232,6 +2252,7 @@
     ],
     guideNumber: "12",
     guideTitle: "Guia 12 - Documentar las acciones realizadas en la red (RAP 03)",
+    gradeFamily: "guia-redes-rap03",   // ver nota en la Guia 10 (mismo contenido que Santa Barbara)
     stateKey: "guia_interactiva_grupo_10a_guia_12_redes_rap03_html",
     program: PROGRAM,
     competencia: "280102129 - Evaluar red de acuerdo con procedimientos de telecomunicaciones y normativa tecnica.",

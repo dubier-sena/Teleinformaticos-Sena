@@ -834,14 +834,65 @@ progress::-moz-progress-bar {
   display: grid;
   gap: 4px;
 }
-.grade-reason-select {
+/* Banco de comentarios: desplegable (atajo) + campo de texto editable, dentro
+   de la misma celda de la nota. Ambos se ocultan mientras la celda no tenga
+   nota. Reemplazan al antiguo .grade-reason-select (2 motivos fijos). */
+.grade-comment-select,
+.grade-obs-input {
   min-width: 132px;
+  max-width: 220px;
   font-size: 0.78rem;
   color: var(--admin-muted);
-  border-color: var(--color-danger-soft, #fde6e3);
 }
-.grade-reason-select[hidden] {
+.grade-comment-select[hidden],
+.grade-obs-input[hidden] {
   display: none;
+}
+.grade-obs-input {
+  color: var(--admin-text, inherit);
+  padding: 4px 6px;
+}
+.grade-comment-new {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.grade-comment-new input[type="text"] {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+.grade-comment-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.grade-comment-item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 8px;
+  border: 1px solid var(--admin-border, #e2e8f0);
+  border-radius: var(--radius-sm, 6px);
+}
+.grade-comment-text {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+.grade-comment-tag {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--admin-muted);
+  white-space: nowrap;
+}
+.grade-comment-item .btn {
+  padding: 4px 10px;
+  font-size: 0.78rem;
 }
 /* Guias con muchas actividades (Guia 2 tiene 9) desbordan la tabla y el admin
    perdia de vista el nombre del aprendiz Y la columna "Aprobadas" (%) al

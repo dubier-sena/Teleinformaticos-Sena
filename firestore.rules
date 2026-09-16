@@ -291,6 +291,17 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // ───── Banco de COMENTARIOS de calificacion (solo instructor) ──────────
+    // Frases de retroalimentacion reutilizables que el instructor inserta en la
+    // observacion de una actividad al calificar. Igual que el banco de arriba,
+    // el aprendiz NUNCA lee este documento: solo ve la frase concreta que quedo
+    // en SU actividad, copiada dentro de su doc de notas (sena_portal_grades,
+    // llave "{actId}:obs"), que si puede leer por ser suyo.
+    // Doc unico "bank": { comments: [ { id, texto, tipo } ], updatedAt }
+    match /sena_portal_grade_comments/{docId} {
+      allow read, write: if isAdmin();
+    }
+
     // ───── Planes de mejoramiento (remediacion por aprendiz) ───────────────
     // El instructor (admin) asigna un plan a un aprendiz que no entrego a tiempo:
     // re-habilita la actividad con motivo + nueva fecha, y queda como evidencia.

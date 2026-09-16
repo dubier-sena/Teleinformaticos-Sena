@@ -3065,17 +3065,25 @@
     }
     select.dataset.previousGrade = nextGrade;
 
-    // El selector de motivo solo tiene sentido junto a "No aprobado". Al
-    // salir de "D" (aprobado o sin nota) se oculta y se borra cualquier
-    // motivo guardado -- no tiene sentido conservar "no entrego a tiempo"
-    // sobre una actividad ya aprobada.
-    const reasonSelect = select.closest(".grade-cell")?.querySelector(".grade-reason-select");
-    if (reasonSelect) {
-      if (nextGrade === "D") {
-        reasonSelect.hidden = false;
-      } else {
-        reasonSelect.hidden = true;
-        reasonSelect.value = "";
+    // Controles de comentario: visibles con CUALQUIER nota (A o D). Al quitar la
+    // nota (celda en "—") se ocultan y se borra la observacion, que ya no tiene
+    // a que referirse. Al pasar de D a A la observacion SE CONSERVA (pedido
+    // explicito del usuario 2026-09-15): antes se borraba, y con ello se perdia
+    // la retroalimentacion al aprobar una actividad tras la correccion.
+    // El desplegable se repuebla porque los comentarios de "Aprobado" no sirven
+    // para una "D" y viceversa.
+    const cell = select.closest(".grade-cell");
+    const commentSelect = cell?.querySelector(".grade-comment-select");
+    const obsInput = cell?.querySelector(".grade-obs-input");
+    if (commentSelect) {
+      commentSelect.innerHTML = commentOptionsMarkup(nextGrade);
+      commentSelect.value = "";
+      commentSelect.hidden = !nextGrade;
+    }
+    if (obsInput) {
+      obsInput.hidden = !nextGrade;
+      if (!nextGrade) {
+        obsInput.value = "";
         try { gradesManager.setStudentActivityObservation(usernameKey, guideFamily, activityId, ""); } catch (e) { /* no critico */ }
       }
     }
@@ -3119,37 +3127,36 @@
     setFeedback(msg, "success");
   }
 
-  // Guarda el motivo elegido para una actividad "No aprobado". Los dos motivos
-  // predeterminados van directo; "Otro" pide el texto con un prompt nativo
-  // (mismo patron ya usado en otras partes del portal, p. ej. confirmaciones
-  // de entrega) para no armar un modal nuevo solo para esto.
-  async function handleGradeReasonChange(select) {
-    const usernameKey = select.dataset.gradeUser || "";
-    const guideFamily = select.dataset.gradeFamily || "";
-    const activityId = select.dataset.gradeActivity || "";
+  // Insertar un comentario del banco en la celda: SOLO rellena el campo de texto
+  // (que queda editable) y lo guarda. El desplegable vuelve a su estado neutro
+  // porque no representa la observacion, solo es un atajo para escribirla.
+  function handleGradeCommentSelect(select) {
+    const obsInput = select.closest(".grade-cell")?.querySelector(".grade-obs-input");
+    if (!obsInput) return;
+    const chosen = getGradeComments().find((c) => c.id === select.value);
+    select.value = "";
+    if (!chosen) return;
+    obsInput.value = chosen.texto;
+    saveGradeObservation(obsInput);
+  }
+
+  // Guarda la observacion escrita/insertada. Es el UNICO camino de guardado
+  // (insertar del banco tambien pasa por aqui), asi que el texto siempre queda
+  // tal cual lo dejo el instructor, lo haya elegido o escrito a mano.
+  function saveGradeObservation(input) {
+    const usernameKey = input.dataset.gradeUser || "";
+    const guideFamily = input.dataset.gradeFamily || "";
+    const activityId = input.dataset.gradeActivity || "";
     const gradesManager = window.activityGradesManager;
     if (!gradesManager || !usernameKey || !guideFamily || !activityId) return;
-
-    const code = select.value || "";
-    let message = "";
-    if (code === "custom") {
-      const custom = window.prompt("Escribe el motivo (el aprendiz lo vera junto a su calificacion):", "");
-      if (custom == null) {
-        select.value = "";
-        return; // el instructor cancelo el prompt
-      }
-      message = custom.trim();
-    } else if (code) {
-      message = GRADE_REJECTION_REASONS[code] || "";
-    }
-
-    window.portalSaveStatus?.saving("Guardando motivo...");
+    const message = String(input.value || "").trim();
+    window.portalSaveStatus?.saving("Guardando observacion...");
     try {
       gradesManager.setStudentActivityObservation(usernameKey, guideFamily, activityId, message);
-      window.portalSaveStatus?.saved(message ? "Motivo guardado." : "Motivo borrado.");
+      window.portalSaveStatus?.saved(message ? "Observacion guardada." : "Observacion borrada.");
     } catch (err) {
-      window.portalSaveStatus?.error("Error al guardar el motivo.");
-      setFeedback("Error al guardar el motivo: " + (err && err.message ? err.message : err), "error");
+      window.portalSaveStatus?.error("Error al guardar la observacion.");
+      setFeedback("Error al guardar la observacion: " + (err && err.message ? err.message : err), "error");
     }
   }
 
@@ -3327,39 +3334,162 @@
     if (cell) cell.textContent = approvalCellText(approved, selects.length);
   }
 
-  // Motivos predeterminados al marcar "No aprobado" (pedido explicito del
-  // usuario 2026-07-09): evita que cada instructor escriba el motivo a mano
-  // cada vez. Se guarda con setStudentActivityObservation (activity_grades.js)
-  // -- ya existia esa funcion pero no estaba conectada a ninguna UI -- y el
-  // aprendiz lo ve junto al badge "No aprobado" (buildGradeBadge).
-  const GRADE_REJECTION_REASONS = {
-    "no-entrego-tiempo": "No entregó la actividad en los tiempos establecidos.",
-    "no-entrego-como-solicitado": "No entregó la actividad como se solicitó en la guía.",
-  };
+  // ── Banco de comentarios de calificacion ────────────────────────────────────
+  // Frases de retroalimentacion reutilizables. Sustituye a los 2 motivos fijos
+  // + window.prompt que existian antes (GRADE_REJECTION_REASONS): esos dos
+  // textos sobreviven como semillas de tipo "no-aprobado", asi que nada se
+  // pierde. Se guardan en Firestore (sena_portal_grade_comments/bank, solo
+  // admin) para que el instructor los tenga en cualquier equipo.
+  // NO tiene relacion con grade_solutions_bank.json (respuestas modelo de las
+  // actividades): aqui solo hay texto del instructor.
+  // El texto elegido se guarda con setStudentActivityObservation
+  // (activity_grades.js) dentro de las notas del aprendiz ({actId}:obs) y el
+  // aprendiz lo ve junto a su badge, tanto en Aprobado como en No aprobado.
+  const GRADE_COMMENT_TYPES = { aprobado: "Aprobado", "no-aprobado": "No aprobado", general: "General" };
+
+  const GRADE_COMMENT_SEEDS = [
+    { texto: "Actividad aprobada correctamente.", tipo: "aprobado" },
+    { texto: "La actividad cumple con lo solicitado.", tipo: "aprobado" },
+    { texto: "Buen trabajo, evidencia completa.", tipo: "aprobado" },
+    { texto: "Actividad incompleta.", tipo: "no-aprobado" },
+    { texto: "Faltan evidencias.", tipo: "no-aprobado" },
+    { texto: "Debe corregir y volver a entregar.", tipo: "no-aprobado" },
+    { texto: "El archivo entregado no corresponde a la actividad.", tipo: "no-aprobado" },
+    { texto: "Evidencia insuficiente.", tipo: "no-aprobado" },
+    { texto: "Debe mejorar la presentación.", tipo: "general" },
+    { texto: "Debe completar los puntos faltantes.", tipo: "no-aprobado" },
+    { texto: "No entregó la actividad.", tipo: "no-aprobado" },
+    { texto: "Requiere revisión o corrección.", tipo: "general" },
+    // Los 2 motivos que ya existian en el panel antes del banco (2026-07-09).
+    { texto: "No entregó la actividad en los tiempos establecidos.", tipo: "no-aprobado" },
+    { texto: "No entregó la actividad como se solicitó en la guía.", tipo: "no-aprobado" },
+  ];
+
+  // Clave anti-duplicados: mismo texto sin tildes, sin mayusculas, sin espacios
+  // extra y sin puntuacion final cuenta como el mismo comentario.
+  function gradeCommentKey(texto) {
+    return String(texto || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .replace(/[.;:,!¡?¿]+$/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function normalizeGradeComment(entry, index) {
+    const texto = String((entry && entry.texto) || "").trim().slice(0, 300);
+    if (!texto) return null;
+    const tipo = GRADE_COMMENT_TYPES[entry && entry.tipo] ? entry.tipo : "general";
+    const id = String((entry && entry.id) || ("c" + Date.now() + "_" + index));
+    return { id, texto, tipo };
+  }
+
+  // Deduplica conservando el PRIMERO (el mas antiguo gana: no se pierde el que
+  // el instructor ya venia usando).
+  function dedupeGradeComments(list) {
+    const seen = new Set();
+    const out = [];
+    (Array.isArray(list) ? list : []).forEach((raw, i) => {
+      const c = normalizeGradeComment(raw, i);
+      if (!c) return;
+      const key = gradeCommentKey(c.texto);
+      if (seen.has(key)) return;
+      seen.add(key);
+      out.push(c);
+    });
+    return out;
+  }
+
+  let _gradeComments = null;
+  let _gradeCommentsLoaded = false;  // true SOLO tras una lectura exitosa a Firestore
+
+  // Carga el banco una vez por sesion. Si esta COMPLETAMENTE vacio, lo siembra
+  // con GRADE_COMMENT_SEEDS y lo persiste. Si ya tiene algo (aunque sea un solo
+  // comentario del instructor) NO se siembra ni se sobrescribe nada.
+  // Un fallo de red NO marca el banco como cargado: sin eso, un token que aun no
+  // estaba listo dejaba el banco vacio en silencio el resto de la sesion -- y
+  // peor, la siembra se habria disparado sobre un banco que en realidad si tenia
+  // datos, duplicandolo todo en la nube.
+  async function ensureGradeCommentsBank(force) {
+    if (_gradeCommentsLoaded && !force) return _gradeComments;
+    const db = window._firebaseDb;
+    if (!db || typeof db.cloudGetGradeComments !== "function") {
+      _gradeComments = _gradeComments || dedupeGradeComments(GRADE_COMMENT_SEEDS);
+      return _gradeComments;   // sin nube: semillas en memoria, sin persistir
+    }
+    let remote = null;
+    try {
+      remote = await db.cloudGetGradeComments();
+      _gradeCommentsLoaded = true;
+    } catch (_) {
+      _gradeComments = _gradeComments || [];
+      return _gradeComments;   // transitorio: se reintenta en la proxima lectura
+    }
+    const clean = dedupeGradeComments(remote);
+    if (!clean.length) {
+      _gradeComments = dedupeGradeComments(GRADE_COMMENT_SEEDS);
+      try { await db.cloudSaveGradeComments(_gradeComments); } catch (_) { /* se reintenta al proximo cambio */ }
+    } else {
+      _gradeComments = clean;
+    }
+    return _gradeComments;
+  }
+
+  function getGradeComments() {
+    return Array.isArray(_gradeComments) ? _gradeComments : [];
+  }
+
+  async function saveGradeCommentsBank(list) {
+    _gradeComments = dedupeGradeComments(list);
+    const db = window._firebaseDb;
+    if (db && typeof db.cloudSaveGradeComments === "function") {
+      await db.cloudSaveGradeComments(_gradeComments);
+    }
+    return _gradeComments;
+  }
+
+  // Comentarios ofrecidos para una nota concreta: los de su tipo + los generales.
+  // Sin nota todavia (celda en "—") no se ofrece ninguno.
+  function gradeCommentsForGrade(grade) {
+    if (!grade) return [];
+    const tipo = grade === "A" ? "aprobado" : "no-aprobado";
+    return getGradeComments().filter((c) => c.tipo === tipo || c.tipo === "general");
+  }
 
   function gradeSelectMarkup(usernameKey, guideFamily, activityId, current, currentObs) {
     const cur = current || "";
+    const obs = String(currentObs || "");
     function opt(value, label) {
       return `<option value="${value}"${cur === value ? " selected" : ""}>${label}</option>`;
     }
-    const reasonCode = Object.keys(GRADE_REJECTION_REASONS).find((code) => GRADE_REJECTION_REASONS[code] === currentObs)
-      || (currentObs ? "custom" : "");
-    function reasonOpt(value, label) {
-      return `<option value="${value}"${reasonCode === value ? " selected" : ""}>${label}</option>`;
-    }
-    const gradeSelect = `<select class="grade-select" data-grade-user="${escapeHtml(usernameKey)}" `
-      + `data-grade-family="${escapeHtml(guideFamily)}" data-grade-activity="${escapeHtml(activityId)}" `
+    const dataAttrs = `data-grade-user="${escapeHtml(usernameKey)}" `
+      + `data-grade-family="${escapeHtml(guideFamily)}" data-grade-activity="${escapeHtml(activityId)}"`;
+    const gradeSelect = `<select class="grade-select" ${dataAttrs} `
       + `data-previous-grade="${escapeHtml(cur)}" aria-label="Calificacion">`
       + opt("", "&mdash;") + opt("A", "Aprobado") + opt("D", "No aprobado") + `</select>`;
-    const reasonSelect = `<select class="grade-reason-select" data-grade-user="${escapeHtml(usernameKey)}" `
-      + `data-grade-family="${escapeHtml(guideFamily)}" data-grade-activity="${escapeHtml(activityId)}" `
-      + `aria-label="Motivo de no aprobado"${cur === "D" ? "" : " hidden"}>`
-      + reasonOpt("", "Motivo (opcional)")
-      + reasonOpt("no-entrego-tiempo", "No entregó a tiempo")
-      + reasonOpt("no-entrego-como-solicitado", "No entregó como se solicitó")
-      + reasonOpt("custom", "Otro (escribir)…")
+    // Los controles de comentario aparecen con CUALQUIER nota (A o D), no solo
+    // con "No aprobado": el instructor tambien quiere dejar constancia en una
+    // actividad aprobada ("Buen trabajo, evidencia completa").
+    const hidden = cur ? "" : " hidden";
+    const commentSelect = `<select class="grade-comment-select" ${dataAttrs}`
+      + ` aria-label="Comentario del banco"${hidden}>`
+      + commentOptionsMarkup(cur)
       + `</select>`;
-    return `<div class="grade-cell">${gradeSelect}${reasonSelect}</div>`;
+    const obsInput = `<input type="text" class="grade-obs-input" ${dataAttrs}`
+      + ` maxlength="500" placeholder="Observación para el aprendiz (opcional)"`
+      + ` aria-label="Observacion" value="${escapeHtml(obs)}"${hidden}>`;
+    return `<div class="grade-cell">${gradeSelect}${commentSelect}${obsInput}</div>`;
+  }
+
+  // Opciones del desplegable de comentarios para una nota dada. Se regenera al
+  // cambiar la nota (los comentarios de "Aprobado" no sirven para una "D").
+  function commentOptionsMarkup(grade) {
+    const list = gradeCommentsForGrade(grade);
+    const head = '<option value="">Insertar comentario del banco…</option>';
+    if (!list.length) return head;
+    return head + list.map((c) =>
+      `<option value="${escapeHtml(c.id)}">${escapeHtml(c.texto)}</option>`).join("");
   }
 
   function renderGrades() {
@@ -3381,6 +3511,21 @@
         <button type="button" id="grades-resync-btn" class="btn secondary">Re-sincronizar soluciones de actividades aprobadas</button>
         <span id="grades-resync-status" class="admin-muted"></span>
       </details>
+      <details class="grades-bank-import" id="grades-comments-bank">
+        <summary>Banco de comentarios <span id="grades-comments-count" class="admin-muted"></span></summary>
+        <p class="admin-muted">Frases de retroalimentacion reutilizables. Al calificar, el desplegable de cada celda las ofrece segun la nota (Aprobado / No aprobado / General) y el texto queda editable antes de guardarse. Es independiente del banco de respuestas modelo de arriba.</p>
+        <div class="grade-comment-new">
+          <input type="text" id="grade-comment-text" maxlength="300" placeholder="Nuevo comentario">
+          <select id="grade-comment-type">
+            <option value="aprobado">Aprobado</option>
+            <option value="no-aprobado">No aprobado</option>
+            <option value="general">General</option>
+          </select>
+          <button type="button" id="grade-comment-add" class="btn secondary">Agregar</button>
+        </div>
+        <span id="grade-comment-status" class="admin-muted"></span>
+        <ul id="grade-comment-list" class="grade-comment-list"></ul>
+      </details>
       <div class="grades-manual__filters">
         <select id="grades-ficha-filter">${getFichaOptions("", false)}</select>
         <select id="grades-guide-filter" disabled>${guideFilterOptionsMarkup("", "")}</select>
@@ -3399,10 +3544,114 @@
       <div id="grades-grid" class="grades-grid"></div>
     `;
     ensureGradeSolutionsBank();   // precarga el banco para aplicar soluciones al aprobar
+    // El banco de comentarios se carga (y se siembra si esta vacio) antes de que
+    // la grilla arme sus desplegables; si tarda, renderGradesGrid lo vuelve a
+    // esperar, asi que nunca se pinta una celda con el banco a medias.
+    ensureGradeCommentsBank().then(renderGradeCommentBank).catch(() => renderGradeCommentBank());
     byId("grades-bank-import-btn")?.addEventListener("click", handleGradeBankImport);
     byId("grades-resync-btn")?.addEventListener("click", handleSolutionResync);
     byId("grades-excel-download-btn")?.addEventListener("click", handleGradesExcelDownload);
     byId("grades-excel-upload-btn")?.addEventListener("click", handleGradesExcelUpload);
+    byId("grade-comment-add")?.addEventListener("click", handleGradeCommentAdd);
+  }
+
+  // ── Banco de comentarios: lista + alta/edicion/borrado ──────────────────────
+  function renderGradeCommentBank() {
+    const list = byId("grade-comment-list");
+    const count = byId("grades-comments-count");
+    const comments = getGradeComments();
+    if (count) count.textContent = `(${comments.length})`;
+    if (!list) return;
+    list.innerHTML = comments.length
+      ? comments.map((c) => `
+        <li class="grade-comment-item" data-comment-id="${escapeHtml(c.id)}">
+          <span class="grade-comment-tag">${escapeHtml(GRADE_COMMENT_TYPES[c.tipo] || "General")}</span>
+          <span class="grade-comment-text">${escapeHtml(c.texto)}</span>
+          <button type="button" class="btn secondary grade-comment-edit" data-comment-id="${escapeHtml(c.id)}">Editar</button>
+          <button type="button" class="btn secondary grade-comment-delete" data-comment-id="${escapeHtml(c.id)}">Eliminar</button>
+        </li>`).join("")
+      : '<li class="admin-muted">El banco esta vacio.</li>';
+  }
+
+  function setCommentStatus(msg) {
+    const el = byId("grade-comment-status");
+    if (el) el.textContent = msg || "";
+  }
+
+  // Repuebla los desplegables ya pintados en la grilla tras cambiar el banco,
+  // para no obligar a recargar el modulo. Conserva la nota y la observacion de
+  // cada celda (solo se tocan las <option> del desplegable del banco).
+  function refreshGradeCommentSelects() {
+    document.querySelectorAll("#grades-grid .grade-cell").forEach((cell) => {
+      const grade = cell.querySelector(".grade-select")?.value || "";
+      const sel = cell.querySelector(".grade-comment-select");
+      if (!sel) return;
+      sel.innerHTML = commentOptionsMarkup(grade);
+      sel.value = "";
+    });
+  }
+
+  // Se pinta PRIMERO y se sincroniza despues (igual que el resto del panel).
+  // Con la red lenta, esperar a Firestore antes de repintar dejaba la lista
+  // congelada varios segundos: el instructor cree que el boton no hizo nada y
+  // vuelve a pulsarlo. La lista en memoria ya quedo actualizada y deduplicada
+  // por saveGradeCommentsBank, asi que lo que se pinta es el estado real.
+  async function persistGradeCommentBank(next, okMsg) {
+    const sync = saveGradeCommentsBank(next);   // actualiza _gradeComments de inmediato
+    renderGradeCommentBank();
+    refreshGradeCommentSelects();
+    setCommentStatus(okMsg);
+    try {
+      await sync;
+    } catch (err) {
+      setCommentStatus("Guardado local, pero fallo la sincronizacion a la nube: "
+        + (err && err.message ? err.message : err));
+    }
+  }
+
+  async function handleGradeCommentAdd() {
+    const input = byId("grade-comment-text");
+    const tipoSel = byId("grade-comment-type");
+    const texto = String(input?.value || "").trim();
+    if (!texto) { setCommentStatus("Escribe el comentario primero."); return; }
+    const key = gradeCommentKey(texto);
+    if (getGradeComments().some((c) => gradeCommentKey(c.texto) === key)) {
+      setCommentStatus("Ese comentario ya esta en el banco.");
+      return;
+    }
+    const next = getGradeComments().concat([{
+      id: "c" + Date.now(),
+      texto,
+      tipo: (tipoSel && tipoSel.value) || "general",
+    }]);
+    if (input) input.value = "";
+    await persistGradeCommentBank(next, "Comentario agregado.");
+  }
+
+  async function handleGradeCommentEdit(commentId) {
+    const current = getGradeComments().find((c) => c.id === commentId);
+    if (!current) return;
+    const texto = window.prompt("Editar comentario:", current.texto);
+    if (texto == null) return;                       // el instructor cancelo
+    const limpio = String(texto).trim();
+    if (!limpio) { setCommentStatus("El comentario no puede quedar vacio."); return; }
+    const key = gradeCommentKey(limpio);
+    if (getGradeComments().some((c) => c.id !== commentId && gradeCommentKey(c.texto) === key)) {
+      setCommentStatus("Ya existe otro comentario con ese texto.");
+      return;
+    }
+    const next = getGradeComments().map((c) =>
+      (c.id === commentId ? { id: c.id, texto: limpio, tipo: c.tipo } : c));
+    await persistGradeCommentBank(next, "Comentario actualizado.");
+  }
+
+  async function handleGradeCommentDelete(commentId) {
+    const current = getGradeComments().find((c) => c.id === commentId);
+    if (!current) return;
+    const ok = await confirmAdminAction(`Eliminar del banco el comentario "${current.texto}"?`);
+    if (!ok) return;
+    const next = getGradeComments().filter((c) => c.id !== commentId);
+    await persistGradeCommentBank(next, "Comentario eliminado.");
   }
 
   async function renderGradesGrid() {
@@ -3422,6 +3671,11 @@
       return;
     }
     grid.innerHTML = '<p class="response-status">Cargando calificaciones desde la nube...</p>';
+    // El banco de comentarios tiene que estar listo ANTES de armar las celdas:
+    // gradeSelectMarkup pinta sus <option> una sola vez por render. Es idempotente
+    // y cacheada, asi que en los siguientes renders no cuesta ninguna lectura.
+    await ensureGradeCommentsBank().catch(() => null);
+    renderGradeCommentBank();
     // Trae las notas de cada aprendiz desde Firestore (en paralelo) para prellenar.
     const db = window._firebaseDb;
     const gradesByUser = {};
@@ -4987,8 +5241,20 @@
       }
       const sel = target && target.closest ? target.closest(".grade-select") : null;
       if (sel) { handleGradeChange(sel); return; }
-      const reasonSel = target && target.closest ? target.closest(".grade-reason-select") : null;
-      if (reasonSel) handleGradeReasonChange(reasonSel);
+      // Banco de comentarios: insertar uno en la celda, o guardar el texto que el
+      // instructor escribio/ajusto a mano (el "change" de un <input type=text>
+      // dispara al salir del campo o con Enter, no en cada tecla).
+      const commentSel = target && target.closest ? target.closest(".grade-comment-select") : null;
+      if (commentSel) { handleGradeCommentSelect(commentSel); return; }
+      const obsInput = target && target.closest ? target.closest(".grade-obs-input") : null;
+      if (obsInput) saveGradeObservation(obsInput);
+    });
+    // Modulo Notas: acciones del banco de comentarios (editar / eliminar).
+    byId("module-notas")?.addEventListener("click", (event) => {
+      const editBtn = event.target?.closest?.(".grade-comment-edit");
+      if (editBtn) { handleGradeCommentEdit(editBtn.dataset.commentId || ""); return; }
+      const delBtn = event.target?.closest?.(".grade-comment-delete");
+      if (delBtn) handleGradeCommentDelete(delBtn.dataset.commentId || "");
     });
     // Modulo Autorizaciones de firma: filtro, constancia y acciones admin.
     byId("module-autorizaciones")?.addEventListener("change", (event) => {
