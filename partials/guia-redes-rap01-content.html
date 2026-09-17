@@ -2004,11 +2004,11 @@
                   </div>
                   <div style="padding:14px;border-radius:14px;background:#f4fbf6;border:1px solid #cce7d0">
                     <strong style="display:block;color:#166534;margin-bottom:6px">3. Conecta la topolog&iacute;a estrella</strong>
-                    <span style="color:#374151;font-size:.9rem">Todos los PCs deben salir desde el switch central; esa es la caracter&iacute;stica principal de esta topolog&iacute;a.</span>
+                    <span style="color:#374151;font-size:.9rem">Todos los PCs deben salir desde el switch central; esa es la caracter&iacute;stica principal de esta topolog&iacute;a. El <strong>Access Point</strong> (AccessPoint-PT) tambi&eacute;n va al switch: su <strong>Port 0</strong> a un puerto libre, por ejemplo <strong>FastEthernet 0/7</strong>, con cable Copper Straight-Through.</span>
                   </div>
                   <div style="padding:14px;border-radius:14px;background:#f4fbf6;border:1px solid #cce7d0">
                     <strong style="display:block;color:#166534;margin-bottom:6px">4. Configura las IPs y prueba</strong>
-                    <span style="color:#374151;font-size:.9rem">Asigna IP, m&aacute;scara, gateway y DNS seg&uacute;n la tabla y luego ejecuta los pings y <code>ipconfig</code>.</span>
+                    <span style="color:#374151;font-size:.9rem">Asigna IP, m&aacute;scara, gateway y DNS seg&uacute;n la tabla (PC &rarr; <strong>Desktop</strong> &rarr; <strong>IP Configuration</strong> &rarr; <strong>Static</strong>) y luego ejecuta los pings y <code>ipconfig</code> (PC &rarr; <strong>Desktop</strong> &rarr; <strong>Command Prompt</strong>). No se usa CLI de Cisco: el switch 2960 funciona sin configuraci&oacute;n.</span>
                   </div>
                 </div>
               </div>
@@ -2038,11 +2038,12 @@
 
               <div class="checklist-card compact-card" style="margin-top:12px">
                 <h3>Pruebas obligatorias</h3>
+                <p class="cmd-lead">Se ejecutan en cada PC &rarr; <strong>Desktop</strong> &rarr; <strong>Command Prompt</strong>, <strong>un comando a la vez</strong>.</p>
                 <ol class="note-list">
-                  <li>Desde <strong>PC1_Caja</strong> ejecuta <code>ping 192.168.10.15</code> y verifica si responde <strong>PC6_Gerencia</strong>.</li>
-                  <li>Desde <strong>PC3_Bodega</strong> ejecuta <code>ping 192.168.10.13</code> para probar conectividad hacia <strong>PC4_Punto1</strong>.</li>
-                  <li>Desde <strong>PC2_Admin</strong> ejecuta <code>ping 192.168.10.255</code> y analiza qu&eacute; ocurre con el broadcast.</li>
-                  <li>Desde cualquier equipo ejecuta <code>ipconfig</code> y comprueba IP, m&aacute;scara, gateway y DNS.</li>
+                  <li>Desde <strong>PC1_Caja</strong> ejecuta <code>ping 192.168.10.15</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.10.15">Copiar</button> y verifica si responde <strong>PC6_Gerencia</strong>.</li>
+                  <li>Desde <strong>PC3_Bodega</strong> ejecuta <code>ping 192.168.10.13</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.10.13">Copiar</button> para probar conectividad hacia <strong>PC4_Punto1</strong>.</li>
+                  <li>Desde <strong>PC2_Admin</strong> ejecuta <code>ping 192.168.10.255</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.10.255">Copiar</button> y analiza qu&eacute; ocurre con el broadcast.</li>
+                  <li>Desde cualquier equipo ejecuta <code>ipconfig</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ipconfig">Copiar</button> y comprueba IP, m&aacute;scara, gateway y DNS.</li>
                 </ol>
               </div>
 
@@ -2052,7 +2053,7 @@
                 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px">
                   <div style="padding:14px;border-radius:14px;background:#fff;border:1px solid #dbeafe">
                     <strong style="display:block;color:#0f172a;margin-bottom:6px">1. Ping PC1_Caja &rarr; PC6_Gerencia</strong>
-                    <span style="display:block;color:#64748b;font-size:.88rem;margin-bottom:10px">Comando esperado: <code>ping 192.168.10.15</code></span>
+                    <span style="display:block;color:#64748b;font-size:.88rem;margin-bottom:10px">Comando esperado: <code>ping 192.168.10.15</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.10.15">Copiar</button></span>
                     <input type="file" id="lab1Ping1Input" accept="image/*" style="display:none" onchange="subirPantallazoLab1('ping1', this)">
                     <button type="button" id="btnSubirLab1Ping1" onclick="document.getElementById('lab1Ping1Input').click()"
                       style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:inherit">
@@ -2065,7 +2066,7 @@
                   </div>
                   <div style="padding:14px;border-radius:14px;background:#fff;border:1px solid #dbeafe">
                     <strong style="display:block;color:#0f172a;margin-bottom:6px">2. Ping PC3_Bodega &rarr; PC4_Punto1</strong>
-                    <span style="display:block;color:#64748b;font-size:.88rem;margin-bottom:10px">Comando esperado: <code>ping 192.168.10.13</code></span>
+                    <span style="display:block;color:#64748b;font-size:.88rem;margin-bottom:10px">Comando esperado: <code>ping 192.168.10.13</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.10.13">Copiar</button></span>
                     <input type="file" id="lab1Ping2Input" accept="image/*" style="display:none" onchange="subirPantallazoLab1('ping2', this)">
                     <button type="button" id="btnSubirLab1Ping2" onclick="document.getElementById('lab1Ping2Input').click()"
                       style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:inherit">
@@ -2078,7 +2079,7 @@
                   </div>
                   <div style="padding:14px;border-radius:14px;background:#fff;border:1px solid #dbeafe">
                     <strong style="display:block;color:#0f172a;margin-bottom:6px">3. Ping broadcast</strong>
-                    <span style="display:block;color:#64748b;font-size:.88rem;margin-bottom:10px">Comando esperado: <code>ping 192.168.10.255</code></span>
+                    <span style="display:block;color:#64748b;font-size:.88rem;margin-bottom:10px">Comando esperado: <code>ping 192.168.10.255</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.10.255">Copiar</button></span>
                     <input type="file" id="lab1BroadcastInput" accept="image/*" style="display:none" onchange="subirPantallazoLab1('broadcast', this)">
                     <button type="button" id="btnSubirLab1Broadcast" onclick="document.getElementById('lab1BroadcastInput').click()"
                       style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:inherit">
@@ -2215,11 +2216,11 @@
                   </div>
                   <div style="padding:14px;border-radius:14px;background:#f4fbf6;border:1px solid #cce7d0">
                     <strong style="display:block;color:#166534;margin-bottom:6px">3. Configura las IPs por departamento</strong>
-                    <span style="color:#374151;font-size:.9rem">Asigna las direcciones de la tabla respetando rangos, m&aacute;scara <code>255.255.255.0</code> y gateway <code>192.168.1.1</code>.</span>
+                    <span style="color:#374151;font-size:.9rem">Asigna las direcciones de la tabla respetando rangos, m&aacute;scara <code>255.255.255.0</code> y gateway <code>192.168.1.1</code> (PC &rarr; <strong>Desktop</strong> &rarr; <strong>IP Configuration</strong> &rarr; <strong>Static</strong>). Los switches no necesitan configuraci&oacute;n.</span>
                   </div>
                   <div style="padding:14px;border-radius:14px;background:#f4fbf6;border:1px solid #cce7d0">
                     <strong style="display:block;color:#166534;margin-bottom:6px">4. Ejecuta pruebas y analiza</strong>
-                    <span style="color:#374151;font-size:.9rem">Realiza <code>ping</code> y <code>tracert</code>, guarda los pantallazos y explica qu&eacute; ocurri&oacute; en cada caso.</span>
+                    <span style="color:#374151;font-size:.9rem">Realiza <code>ping</code> y <code>tracert</code> desde PC &rarr; <strong>Desktop</strong> &rarr; <strong>Command Prompt</strong>, guarda los pantallazos y explica qu&eacute; ocurri&oacute; en cada caso.</span>
                   </div>
                 </div>
               </div>
@@ -2254,11 +2255,12 @@
 
               <div class="checklist-card compact-card" style="margin-top:12px">
                 <h3>Pruebas obligatorias</h3>
+                <p class="cmd-lead">Se ejecutan en cada PC &rarr; <strong>Desktop</strong> &rarr; <strong>Command Prompt</strong>, <strong>un comando a la vez</strong>.</p>
                 <ol class="note-list">
-                  <li>Desde <strong>Admin_PC1</strong> ejecuta <code>ping 192.168.1.11</code> para verificar conectividad dentro del mismo departamento.</li>
-                  <li>Desde <strong>Ventas_PC1</strong> ejecuta <code>ping 192.168.1.30</code> para probar conectividad hacia Bodega.</li>
-                  <li>Desde <strong>Admin_PC1</strong> ejecuta <code>tracert 192.168.1.30</code> y analiza cu&aacute;ntos saltos aparecen.</li>
-                  <li>Desde cualquier PC ejecuta <code>tracert 8.8.8.8</code> y explica qu&eacute; ocurre con una ruta externa.</li>
+                  <li>Desde <strong>Admin_PC1</strong> ejecuta <code>ping 192.168.1.11</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.1.11">Copiar</button> para verificar conectividad dentro del mismo departamento.</li>
+                  <li>Desde <strong>Ventas_PC1</strong> ejecuta <code>ping 192.168.1.30</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.1.30">Copiar</button> para probar conectividad hacia Bodega.</li>
+                  <li>Desde <strong>Admin_PC1</strong> ejecuta <code>tracert 192.168.1.30</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="tracert 192.168.1.30">Copiar</button> y analiza cu&aacute;ntos saltos aparecen.</li>
+                  <li>Desde cualquier PC ejecuta <code>tracert 8.8.8.8</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="tracert 8.8.8.8">Copiar</button> y explica qu&eacute; ocurre con una ruta externa.</li>
                 </ol>
               </div>
 
@@ -2273,7 +2275,7 @@
                 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px">
                   <div style="padding:14px;border-radius:14px;background:#fff;border:1px solid #dbeafe">
                     <strong style="display:block;color:#0f172a;margin-bottom:6px">1. Ping del mismo departamento</strong>
-                    <span style="display:block;color:#64748b;font-size:.88rem;margin-bottom:10px">Comando sugerido: <code>ping 192.168.1.11</code></span>
+                    <span style="display:block;color:#64748b;font-size:.88rem;margin-bottom:10px">Comando sugerido: <code>ping 192.168.1.11</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.1.11">Copiar</button></span>
                     <input type="file" id="lab2PingMismoInput" accept="image/*" style="display:none" onchange="subirPantallazoLab2('mismo', this)">
                     <button type="button" id="btnSubirLab2PingMismo" onclick="document.getElementById('lab2PingMismoInput').click()"
                       style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:inherit">
@@ -2286,7 +2288,7 @@
                   </div>
                   <div style="padding:14px;border-radius:14px;background:#fff;border:1px solid #dbeafe">
                     <strong style="display:block;color:#0f172a;margin-bottom:6px">2. Ping entre departamentos</strong>
-                    <span style="display:block;color:#64748b;font-size:.88rem;margin-bottom:10px">Comando sugerido: <code>ping 192.168.1.30</code></span>
+                    <span style="display:block;color:#64748b;font-size:.88rem;margin-bottom:10px">Comando sugerido: <code>ping 192.168.1.30</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.1.30">Copiar</button></span>
                     <input type="file" id="lab2PingDifInput" accept="image/*" style="display:none" onchange="subirPantallazoLab2('diferente', this)">
                     <button type="button" id="btnSubirLab2PingDif" onclick="document.getElementById('lab2PingDifInput').click()"
                       style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:inherit">
@@ -2299,7 +2301,7 @@
                   </div>
                   <div style="padding:14px;border-radius:14px;background:#fff;border:1px solid #dbeafe">
                     <strong style="display:block;color:#0f172a;margin-bottom:6px">3. Tracert interno</strong>
-                    <span style="display:block;color:#64748b;font-size:.88rem;margin-bottom:10px">Comando sugerido: <code>tracert 192.168.1.30</code></span>
+                    <span style="display:block;color:#64748b;font-size:.88rem;margin-bottom:10px">Comando sugerido: <code>tracert 192.168.1.30</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="tracert 192.168.1.30">Copiar</button></span>
                     <input type="file" id="lab2TracertInternoInput" accept="image/*" style="display:none" onchange="subirPantallazoLab2('tracertInterno', this)">
                     <button type="button" id="btnSubirLab2TracertInterno" onclick="document.getElementById('lab2TracertInternoInput').click()"
                       style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:inherit">
@@ -2312,7 +2314,7 @@
                   </div>
                   <div style="padding:14px;border-radius:14px;background:#fff;border:1px solid #dbeafe">
                     <strong style="display:block;color:#0f172a;margin-bottom:6px">4. Tracert externo</strong>
-                    <span style="display:block;color:#64748b;font-size:.88rem;margin-bottom:10px">Comando sugerido: <code>tracert 8.8.8.8</code></span>
+                    <span style="display:block;color:#64748b;font-size:.88rem;margin-bottom:10px">Comando sugerido: <code>tracert 8.8.8.8</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="tracert 8.8.8.8">Copiar</button></span>
                     <input type="file" id="lab2TracertExternoInput" accept="image/*" style="display:none" onchange="subirPantallazoLab2('tracertExterno', this)">
                     <button type="button" id="btnSubirLab2TracertExterno" onclick="document.getElementById('lab2TracertExternoInput').click()"
                       style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:inherit">
@@ -2461,7 +2463,7 @@
                   </div>
                   <div style="padding:14px;border-radius:14px;background:#f4fbf6;border:1px solid #cce7d0">
                     <strong style="display:block;color:#166534;margin-bottom:6px">4. Configura IPs y Wi-Fi</strong>
-                    <span style="color:#374151;font-size:.9rem">Asigna direcciones seg&uacute;n la tabla, configura el gateway y conecta los clientes inal&aacute;mbricos al AP correcto.</span>
+                    <span style="color:#374151;font-size:.9rem">Asigna direcciones seg&uacute;n la tabla, configura el gateway y conecta los clientes inal&aacute;mbricos al AP correcto. <em>(Comandos y pasos en <strong>Configuraci&oacute;n de apoyo en Packet Tracer</strong>, m&aacute;s abajo.)</em></span>
                   </div>
                   <div style="padding:14px;border-radius:14px;background:#f4fbf6;border:1px solid #cce7d0">
                     <strong style="display:block;color:#166534;margin-bottom:6px">5. Ejecuta pruebas y analiza</strong>
@@ -2502,12 +2504,80 @@
                 </div>
               </div>
 
+              <!-- Material de apoyo Lab 3 (revisión de laboratorios Packet Tracer, sep-2026): el laboratorio
+                   pide un router como gateway 192.168.20.1, enlaces de fibra y clientes Wi-Fi, pero no traía
+                   los comandos del router ni cómo lograr esos enlaces y asociaciones en Packet Tracer. -->
+              <div class="checklist-card compact-card cmd-scope cmd-card" data-cmd-scope>
+                <h3>&#128203; Configuraci&oacute;n de apoyo en Packet Tracer</h3>
+                <p class="cmd-lead">Todo lo que necesitas para que los equipos de la tabla funcionen. Haz primero la parte f&iacute;sica (dispositivos y cables) y despu&eacute;s la configuraci&oacute;n.</p>
+
+                <h4 class="cmd-h4">1. Router / Gateway &mdash; 192.168.20.1</h4>
+                <p class="cmd-lead">Con&eacute;ctalo al <strong>switch central</strong> con cable <strong>Copper Straight-Through</strong>. Abre el router &rarr; pesta&ntilde;a <strong>CLI</strong> (si pregunta <em>initial configuration dialog? [yes/no]</em> responde <code>no</code>) y pega el bloque del <strong>modelo que agregaste</strong>. El nombre de la interfaz cambia seg&uacute;n el modelo.</p>
+                <div class="cmd-block" data-cmd-block>
+                  <div class="cmd-block__head">
+                    <span class="cmd-block__device">Router 4321 / 4331 &mdash; CLI<small>Interfaz GigabitEthernet0/0/0 hacia el switch central</small></span>
+                    <button type="button" class="cmd-block__copy" data-copy-commands>[ Copiar comandos ]</button>
+                  </div>
+<pre class="cmd-block__code">enable
+configure terminal
+interface GigabitEthernet0/0/0
+ ip address 192.168.20.1 255.255.255.0
+ no shutdown
+ exit
+end
+write memory</pre>
+                </div>
+                <div class="cmd-block" data-cmd-block>
+                  <div class="cmd-block__head">
+                    <span class="cmd-block__device">Router 2911 / 1941 &mdash; CLI<small>Interfaz GigabitEthernet0/0 hacia el switch central</small></span>
+                    <button type="button" class="cmd-block__copy" data-copy-commands>[ Copiar comandos ]</button>
+                  </div>
+<pre class="cmd-block__code">enable
+configure terminal
+interface GigabitEthernet0/0
+ ip address 192.168.20.1 255.255.255.0
+ no shutdown
+ exit
+end
+write memory</pre>
+                  <p class="cmd-block__note">Comprueba en el router con <code>show ip interface brief</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="show ip interface brief">Copiar</button>: la interfaz debe quedar <strong>up/up</strong> con la IP 192.168.20.1. Si cableaste otro puerto, cambia el nombre de la interfaz en la l&iacute;nea <code>interface</code>.</p>
+                </div>
+
+                <h4 class="cmd-h4">2. Enlaces de fibra &oacute;ptica (switch central &harr; switches de bloque)</h4>
+                <ol class="cmd-steps">
+                  <li>Los switches 2960 de Packet Tracer no traen puertos de fibra. Para el central y los de bloque usa <strong>Switch-PT</strong> (Network Devices &rarr; Switches).</li>
+                  <li>Switch &rarr; pesta&ntilde;a <strong>Physical</strong> &rarr; <strong>apaga</strong> el switch con su bot&oacute;n de encendido.</li>
+                  <li>Arrastra un m&oacute;dulo de fibra <strong>PT-SWITCH-NM-1FGE</strong> (Gigabit) o <strong>PT-SWITCH-NM-1FFE</strong> (Fast Ethernet) a una ranura vac&iacute;a. Si no hay ranuras libres, retira primero un m&oacute;dulo de cobre <strong>PT-SWITCH-NM-1CFE</strong> que no vayas a usar.</li>
+                  <li>Vuelve a <strong>encender</strong> el switch.</li>
+                  <li>El switch central necesita <strong>3</strong> puertos de fibra (uno por bloque) y cada switch de bloque <strong>1</strong>. Deja suficientes puertos de cobre para sus PCs, impresora y access point.</li>
+                  <li>Une cada par de puertos de fibra con el cable <strong>Fiber</strong> (naranja). PCs, impresora y AP van con <strong>Copper Straight-Through</strong>.</li>
+                </ol>
+
+                <h4 class="cmd-h4">3. Access points y clientes Wi-Fi</h4>
+                <ol class="cmd-steps">
+                  <li>Agrega <strong>AccessPoint-PT</strong> en el Bloque Acad&eacute;mico y en la Biblioteca. Conecta su <strong>Port 0</strong> al switch de su bloque con Copper Straight-Through.</li>
+                  <li>AP &rarr; <strong>Config</strong> &rarr; <strong>Port 1</strong> &rarr; escribe un <strong>SSID</strong> por zona (por ejemplo <code>Academico</code> y <code>Biblioteca</code>). Si activas <strong>WPA2-PSK</strong>, usa la misma clave en el cliente.</li>
+                  <li>El AccessPoint-PT trabaja como puente y <strong>no tiene campo de IP</strong>: las direcciones .40 y .41 de la tabla quedan como registro de documentaci&oacute;n. <em>(Si en su lugar usas un WRT300N, as&iacute;gnale esa IP en <strong>GUI &rarr; Setup</strong>, pon <strong>DHCP Server: Disabled</strong> y conecta el switch a un puerto Ethernet 1&ndash;4, no al puerto Internet.)</em></li>
+                  <li>Cliente Wi-Fi (Laptop-PT) &rarr; <strong>Physical</strong>: <strong>apaga</strong> el equipo, retira la tarjeta cableada, instala la tarjeta <strong>WPC300N</strong> y vuelve a encenderlo.</li>
+                  <li>Cliente &rarr; <strong>Desktop</strong> &rarr; <strong>PC Wireless</strong> &rarr; <strong>Connect</strong> &rarr; elige el SSID del AP de su zona &rarr; <strong>Connect</strong> (y la clave, si la configuraste).</li>
+                  <li>Cliente &rarr; <strong>Desktop</strong> &rarr; <strong>IP Configuration</strong> &rarr; <strong>Static</strong>: <code>192.168.20.50</code> o <code>.51</code>, m&aacute;scara <code>255.255.255.0</code>, gateway <code>192.168.20.1</code>.</li>
+                </ol>
+
+                <h4 class="cmd-h4">4. PCs e impresora</h4>
+                <ul class="cmd-steps cmd-steps--disc">
+                  <li>PCs: <strong>Desktop</strong> &rarr; <strong>IP Configuration</strong> &rarr; <strong>Static</strong> &rarr; IP, m&aacute;scara y gateway de la tabla.</li>
+                  <li>Impresora (Printer-PT): <strong>Config</strong> &rarr; <strong>Settings</strong> (Global) &rarr; Gateway <code>192.168.20.1</code>; <strong>Config</strong> &rarr; <strong>FastEthernet0</strong> &rarr; <strong>Static</strong> &rarr; <code>192.168.20.29</code> / <code>255.255.255.0</code>.</li>
+                  <li>Pruebas: en el PC o cliente &rarr; <strong>Desktop</strong> &rarr; <strong>Command Prompt</strong>, <strong>un comando a la vez</strong> (botones <em>Copiar</em> de la lista de pruebas).</li>
+                </ul>
+              </div>
+
               <div class="checklist-card compact-card" style="margin-top:12px">
                 <h3>Pruebas obligatorias</h3>
+                <p class="cmd-lead">Se ejecutan en el equipo indicado &rarr; <strong>Desktop</strong> &rarr; <strong>Command Prompt</strong>, <strong>un comando a la vez</strong>.</p>
                 <ol class="note-list">
-                  <li>Desde <strong>Academico_PC1</strong> ejecuta <code>ping 192.168.20.20</code> para verificar conectividad entre bloques.</li>
-                  <li>Desde <strong>Cliente_WiFi_1</strong> ejecuta <code>ping 192.168.20.30</code> para probar conectividad desde Wi-Fi hacia un equipo cableado.</li>
-                  <li>Ejecuta <code>ipconfig</code> en un equipo cableado y verifica IP, m&aacute;scara y gateway.</li>
+                  <li>Desde <strong>Academico_PC1</strong> ejecuta <code>ping 192.168.20.20</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.20.20">Copiar</button> para verificar conectividad entre bloques.</li>
+                  <li>Desde <strong>Cliente_WiFi_1</strong> ejecuta <code>ping 192.168.20.30</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.20.30">Copiar</button> para probar conectividad desde Wi-Fi hacia un equipo cableado.</li>
+                  <li>Ejecuta <code>ipconfig</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ipconfig">Copiar</button> en un equipo cableado y verifica IP, m&aacute;scara y gateway.</li>
                   <li>Comprueba los par&aacute;metros del cliente inal&aacute;mbrico o su conectividad una vez asociado al access point.</li>
                 </ol>
               </div>
@@ -2536,7 +2606,7 @@
                   </div>
                   <div style="padding:14px;border-radius:14px;background:#fff;border:1px solid #dbeafe">
                     <strong style="display:block;color:#0f172a;margin-bottom:6px">2. Ping entre bloques</strong>
-                    <span style="display:block;color:#64748b;font-size:.88rem;margin-bottom:10px">Comando sugerido: <code>ping 192.168.20.20</code></span>
+                    <span style="display:block;color:#64748b;font-size:.88rem;margin-bottom:10px">Comando sugerido: <code>ping 192.168.20.20</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.20.20">Copiar</button></span>
                     <input type="file" id="lab3PingBloquesInput" accept="image/*" style="display:none" onchange="subirPantallazoLab3('pingBloques', this)">
                     <button type="button" id="btnSubirLab3PingBloques" onclick="document.getElementById('lab3PingBloquesInput').click()"
                       style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:inherit">
@@ -2549,7 +2619,7 @@
                   </div>
                   <div style="padding:14px;border-radius:14px;background:#fff;border:1px solid #dbeafe">
                     <strong style="display:block;color:#0f172a;margin-bottom:6px">3. Ping Wi-Fi a equipo cableado</strong>
-                    <span style="display:block;color:#64748b;font-size:.88rem;margin-bottom:10px">Comando sugerido: <code>ping 192.168.20.30</code></span>
+                    <span style="display:block;color:#64748b;font-size:.88rem;margin-bottom:10px">Comando sugerido: <code>ping 192.168.20.30</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.20.30">Copiar</button></span>
                     <input type="file" id="lab3PingWifiInput" accept="image/*" style="display:none" onchange="subirPantallazoLab3('pingWifi', this)">
                     <button type="button" id="btnSubirLab3PingWifi" onclick="document.getElementById('lab3PingWifiInput').click()"
                       style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:inherit">
@@ -2575,7 +2645,7 @@
                   </div>
                   <div style="padding:14px;border-radius:14px;background:#fff;border:1px solid #dbeafe">
                     <strong style="display:block;color:#0f172a;margin-bottom:6px">5. ipconfig equipo cableado</strong>
-                    <span style="display:block;color:#64748b;font-size:.88rem;margin-bottom:10px">Comando: <code>ipconfig</code> &mdash; Debe verse IP, m&aacute;scara y gateway del equipo.</span>
+                    <span style="display:block;color:#64748b;font-size:.88rem;margin-bottom:10px">Comando: <code>ipconfig</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ipconfig">Copiar</button> &mdash; Debe verse IP, m&aacute;scara y gateway del equipo.</span>
                     <input type="file" id="lab3IpconfigCableadoInput" accept="image/*" style="display:none" onchange="subirPantallazoLab3('ipconfigCableado', this)">
                     <button type="button" id="btnSubirLab3IpconfigCableado" onclick="document.getElementById('lab3IpconfigCableadoInput').click()"
                       style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:inherit">

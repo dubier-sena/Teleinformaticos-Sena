@@ -868,7 +868,7 @@
                   <li>Hostname: <code>R1-XXX</code> / <code>S1-XXX</code> / <code>S2-XXX</code> (XXX = últimos 3 dígitos de tu identidad).</li>
                   <li>Banner de bienvenida (<code>banner motd</code>), <code>enable secret</code>, contraseñas de consola y VTY.</li>
                   <li><code>service password-encryption</code>, <code>no ip domain-lookup</code>, <code>logging synchronous</code>.</li>
-                  <li>Guarda con <code>write memory</code> en cada dispositivo. <em>(Ver cápsula &#128204; si no recuerdas los comandos.)</em></li>
+                  <li>Guarda con <code>write memory</code> en cada dispositivo. <em>(Comandos completos por dispositivo en los bloques &#128203; <strong>R1</strong>, <strong>S1</strong> y <strong>S2</strong> de abajo.)</em></li>
                 </ul>
               </li>
               <li>
@@ -876,7 +876,7 @@
                 <ul style="margin:4px 0 0 1rem;padding:0;list-style:disc;color:#444;font-size:.85rem;display:flex;flex-direction:column;gap:3px">
                   <li><code>Gi0/0/0</code> → 192.168.1.1 /24 (<code>no shutdown</code>) — gateway Planta 1.</li>
                   <li><code>Gi0/0/1</code> → 192.168.2.1 /24 (<code>no shutdown</code>) — gateway Planta 2.</li>
-                  <li>Verifica: <code>show ip interface brief</code> — ambas deben aparecer <strong>up/up</strong>. <em>(Ver cápsula &#128204;.)</em></li>
+                  <li>Verifica en R1 (modo <code>#</code>): <code>show ip interface brief</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="show ip interface brief">Copiar</button> — ambas deben aparecer <strong>up/up</strong>. <em>(Tambi&eacute;n en el bloque &#128203; <strong>Comandos de verificaci&oacute;n</strong>.)</em></li>
                 </ul>
               </li>
               <li>
@@ -891,80 +891,179 @@
                 <ul style="margin:4px 0 0 1rem;padding:0;list-style:disc;color:#444;font-size:.85rem;display:flex;flex-direction:column;gap:3px">
                   <li>Planta 1 — PC0–PC3: 192.168.1.10–.13 | Gateway: 192.168.1.1</li>
                   <li>Planta 2 — PC4–PC7: 192.168.2.10–.13 | Gateway: 192.168.2.1</li>
+                  <li>D&oacute;nde: PC &rarr; <strong>Desktop</strong> &rarr; <strong>IP Configuration</strong> &rarr; <strong>Static</strong> (IPv4 Address, Subnet Mask, Default Gateway).</li>
                 </ul>
               </li>
               <li>
                 <strong>&#9989; Verificaci&oacute;n m&iacute;nima antes de pasar a la Parte 2</strong>
                 <ul style="margin:4px 0 0 1rem;padding:0;list-style:disc;color:#444;font-size:.85rem;display:flex;flex-direction:column;gap:3px">
-                  <li>Desde PC0: <code>ping 192.168.1.1</code> → debe responder (gateway Planta 1).</li>
-                  <li>Desde PC4: <code>ping 192.168.2.1</code> → debe responder (gateway Planta 2).</li>
+                  <li>Desde PC0 (<strong>Desktop &rarr; Command Prompt</strong>): <code>ping 192.168.1.1</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.1.1">Copiar</button> → debe responder (gateway Planta 1).</li>
+                  <li>Desde PC4: <code>ping 192.168.2.1</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.2.1">Copiar</button> → debe responder (gateway Planta 2).</li>
                   <li>Si falla, revisa <code>no shutdown</code> en las interfaces y que la IP del PC tenga el gateway correcto.</li>
                 </ul>
               </li>
             </ol>
           </div>
 
-          <!-- Cápsulas de recordatorio 3.4.1 -->
-          <div style="display:flex;flex-direction:column;gap:8px;margin:14px 0">
+          <!-- Comandos listos para copiar 3.4.1 (revisión de laboratorios Packet Tracer, sep-2026).
+               Sustituye las cápsulas anteriores: el bloque de interfaces no traía "enable/configure terminal"
+               (pegado tal cual fallaba), S2 no tenía su bloque y la verificación mezclaba comentarios "!"
+               en la misma línea del comando, que la CLI rechaza. -->
+          <div class="cmd-scope" data-cmd-scope style="display:flex;flex-direction:column;gap:8px;margin:14px 0">
+
+            <div class="info-box" style="margin:0">
+              <div class="label">&#128203; Comandos listos para copiar y pegar &mdash; uno por dispositivo</div>
+              <ol class="cmd-steps">
+                <li>Haz clic en el dispositivo &rarr; pesta&ntilde;a <strong>CLI</strong>.</li>
+                <li>Si aparece <em>Would you like to enter the initial configuration dialog? [yes/no]</em>, escribe <code>no</code> y presiona <strong>Enter</strong>.</li>
+                <li>Pulsa <strong>[ Copiar comandos ]</strong> del bloque de <strong>ese</strong> dispositivo y p&eacute;galo en la CLI (clic derecho &rarr; Paste, o <kbd>Ctrl</kbd>+<kbd>V</kbd>).</li>
+                <li>Pega cada bloque en un equipo <strong>reci&eacute;n agregado</strong> (sin contrase&ntilde;as). Si ya lo configuraste antes, entra a mano (consola: <code>cisco</code>, <code>enable</code>: <code>cisco123</code>) y pega a partir de <code>configure terminal</code>.</li>
+              </ol>
+              <label style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:.85rem;margin-top:6px">
+                <span>&Uacute;ltimos 3 d&iacute;gitos de tu identidad (reemplazan <code>XXX</code> al copiar):</span>
+                <input type="text" data-cmd-var="XXX" maxlength="3" inputmode="numeric" pattern="[0-9]{3}" placeholder="123" aria-label="Últimos 3 dígitos de tu identidad" style="width:80px;padding:6px 8px;border:1px solid #9fa8da;border-radius:6px;font:inherit">
+              </label>
+            </div>
 
             <details style="border:1.5px solid #b0bec5;border-radius:10px;overflow:hidden">
               <summary style="padding:10px 14px;background:#eceff1;cursor:pointer;font-weight:700;font-size:.88rem;list-style:none;display:flex;align-items:center;gap:8px">
                 <span style="background:#455a64;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:.75rem;flex-shrink:0">&#128204;</span>
-                Recordatorio — C&oacute;mo configurar hostname, banner y contrase&ntilde;as en un router o switch
+                R1 (Router 4321) &mdash; configuraci&oacute;n b&aacute;sica + interfaces hacia cada planta (pasos 2 y 3)
               </summary>
               <div style="padding:12px 16px;background:#fafafa">
-                <pre style="background:#1a237e;color:#e8eaf6;border-radius:8px;padding:12px;font-size:.8rem;overflow-x:auto;margin:0">enable
+                <div class="cmd-block" data-cmd-block>
+                  <div class="cmd-block__head">
+                    <span class="cmd-block__device">R1-XXX &mdash; CLI del router<small>Hostname, contrase&ntilde;as, interfaces Gi0/0/0 y Gi0/0/1, guardar</small></span>
+                    <button type="button" class="cmd-block__copy" data-copy-commands>[ Copiar comandos ]</button>
+                  </div>
+<pre class="cmd-block__code">enable
 configure terminal
 hostname R1-XXX
-banner motd # Acceso restringido — solo personal autorizado #
+banner motd # Acceso restringido - solo personal autorizado #
 enable secret cisco123
+service password-encryption
+no ip domain-lookup
 line console 0
  password cisco
  login
  logging synchronous
+ exit
 line vty 0 4
  password cisco
  login
-service password-encryption
-no ip domain-lookup
-end
-write memory</pre>
-              </div>
-            </details>
-
-            <details style="border:1.5px solid #b0bec5;border-radius:10px;overflow:hidden">
-              <summary style="padding:10px 14px;background:#eceff1;cursor:pointer;font-weight:700;font-size:.88rem;list-style:none;display:flex;align-items:center;gap:8px">
-                <span style="background:#455a64;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:.75rem;flex-shrink:0">&#128204;</span>
-                Recordatorio — C&oacute;mo configurar las interfaces del router (R1) e IP de VLAN en el switch
-              </summary>
-              <div style="padding:12px 16px;background:#fafafa">
-                <p style="font-size:.82rem;margin:0 0 8px;font-weight:600">Router R1 — interfaces hacia cada planta:</p>
-                <pre style="background:#1a237e;color:#e8eaf6;border-radius:8px;padding:12px;font-size:.8rem;overflow-x:auto;margin:0">interface GigabitEthernet0/0/0
+ exit
+interface GigabitEthernet0/0/0
  ip address 192.168.1.1 255.255.255.0
  no shutdown
+ exit
 interface GigabitEthernet0/0/1
  ip address 192.168.2.1 255.255.255.0
- no shutdown</pre>
-                <p style="font-size:.82rem;margin:10px 0 8px;font-weight:600">Switch S1 — IP de administraci&oacute;n VLAN 1:</p>
-                <pre style="background:#1a237e;color:#e8eaf6;border-radius:8px;padding:12px;font-size:.8rem;overflow-x:auto;margin:0">interface vlan 1
- ip address 192.168.1.2 255.255.255.0
  no shutdown
-ip default-gateway 192.168.1.1</pre>
+ exit
+end
+write memory</pre>
+                  <p class="cmd-block__note">Al terminar, <code>show ip interface brief</code> debe mostrar Gi0/0/0 y Gi0/0/1 en <strong>up/up</strong> (si dicen <em>down</em>, revisa que el cable al switch est&eacute; conectado en esa interfaz).</p>
+                </div>
               </div>
             </details>
 
             <details style="border:1.5px solid #b0bec5;border-radius:10px;overflow:hidden">
               <summary style="padding:10px 14px;background:#eceff1;cursor:pointer;font-weight:700;font-size:.88rem;list-style:none;display:flex;align-items:center;gap:8px">
                 <span style="background:#455a64;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:.75rem;flex-shrink:0">&#128204;</span>
-                Recordatorio — Comandos de verificaci&oacute;n m&aacute;s usados
+                S1 (Switch 2960, Planta 1) &mdash; configuraci&oacute;n b&aacute;sica + IP de administraci&oacute;n VLAN 1 (pasos 2 y 4)
               </summary>
               <div style="padding:12px 16px;background:#fafafa">
-                <pre style="background:#1a237e;color:#e8eaf6;border-radius:8px;padding:12px;font-size:.8rem;overflow-x:auto;margin:0">show ip interface brief        ! estado up/up de cada interfaz
-show running-config            ! ver toda la configuración actual
-show ip route                  ! tabla de enrutamiento del router
-ping 192.168.1.1               ! prueba de conectividad básica
-tracert 192.168.2.10           ! ruta de saltos (desde PC en CMD)
-telnet 192.168.1.1             ! acceso remoto al router</pre>
+                <div class="cmd-block" data-cmd-block>
+                  <div class="cmd-block__head">
+                    <span class="cmd-block__device">S1-XXX &mdash; CLI del switch<small>Hostname, contrase&ntilde;as, VLAN 1 192.168.1.2, gateway, guardar</small></span>
+                    <button type="button" class="cmd-block__copy" data-copy-commands>[ Copiar comandos ]</button>
+                  </div>
+<pre class="cmd-block__code">enable
+configure terminal
+hostname S1-XXX
+banner motd # Acceso restringido - solo personal autorizado #
+enable secret cisco123
+service password-encryption
+no ip domain-lookup
+line console 0
+ password cisco
+ login
+ logging synchronous
+ exit
+line vty 0 4
+ password cisco
+ login
+ exit
+interface vlan 1
+ ip address 192.168.1.2 255.255.255.0
+ no shutdown
+ exit
+ip default-gateway 192.168.1.1
+end
+write memory</pre>
+                </div>
+              </div>
+            </details>
+
+            <details style="border:1.5px solid #b0bec5;border-radius:10px;overflow:hidden">
+              <summary style="padding:10px 14px;background:#eceff1;cursor:pointer;font-weight:700;font-size:.88rem;list-style:none;display:flex;align-items:center;gap:8px">
+                <span style="background:#455a64;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:.75rem;flex-shrink:0">&#128204;</span>
+                S2 (Switch 2960, Planta 2) &mdash; configuraci&oacute;n b&aacute;sica + IP de administraci&oacute;n VLAN 1 (pasos 2 y 4)
+              </summary>
+              <div style="padding:12px 16px;background:#fafafa">
+                <div class="cmd-block" data-cmd-block>
+                  <div class="cmd-block__head">
+                    <span class="cmd-block__device">S2-XXX &mdash; CLI del switch<small>Hostname, contrase&ntilde;as, VLAN 1 192.168.2.2, gateway, guardar</small></span>
+                    <button type="button" class="cmd-block__copy" data-copy-commands>[ Copiar comandos ]</button>
+                  </div>
+<pre class="cmd-block__code">enable
+configure terminal
+hostname S2-XXX
+banner motd # Acceso restringido - solo personal autorizado #
+enable secret cisco123
+service password-encryption
+no ip domain-lookup
+line console 0
+ password cisco
+ login
+ logging synchronous
+ exit
+line vty 0 4
+ password cisco
+ login
+ exit
+interface vlan 1
+ ip address 192.168.2.2 255.255.255.0
+ no shutdown
+ exit
+ip default-gateway 192.168.2.1
+end
+write memory</pre>
+                </div>
+              </div>
+            </details>
+
+            <details style="border:1.5px solid #b0bec5;border-radius:10px;overflow:hidden">
+              <summary style="padding:10px 14px;background:#eceff1;cursor:pointer;font-weight:700;font-size:.88rem;list-style:none;display:flex;align-items:center;gap:8px">
+                <span style="background:#455a64;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:.75rem;flex-shrink:0">&#128204;</span>
+                Comandos de verificaci&oacute;n (router/switch) y d&oacute;nde configurar los PCs
+              </summary>
+              <div style="padding:12px 16px;background:#fafafa">
+                <div class="cmd-block" data-cmd-block>
+                  <div class="cmd-block__head">
+                    <span class="cmd-block__device">R1-XXX &mdash; modo privilegiado (<code>R1-XXX#</code>)<small>Si ves <code>R1-XXX&gt;</code>, escribe primero <code>enable</code> (clave <code>cisco123</code>)</small></span>
+                    <button type="button" class="cmd-block__copy" data-copy-commands>[ Copiar comandos ]</button>
+                  </div>
+<pre class="cmd-block__code">show ip interface brief
+show ip route
+show running-config</pre>
+                  <p class="cmd-block__note"><code>show ip interface brief</code>: estado up/up de cada interfaz &middot; <code>show ip route</code>: las redes 192.168.1.0 y 192.168.2.0 deben aparecer como <strong>C</strong> (conectadas) &middot; <code>show running-config</code>: configuraci&oacute;n completa. En S1 y S2 usa <code>show ip interface brief</code> y <code>show running-config</code>.</p>
+                </div>
+                <p style="font-size:.84rem;margin:10px 0 4px"><strong>PCs (no usan CLI de Cisco):</strong></p>
+                <ul style="font-size:.84rem;margin:0;padding-left:1.1rem;line-height:1.7">
+                  <li>IP est&aacute;tica: PC &rarr; pesta&ntilde;a <strong>Desktop</strong> &rarr; <strong>IP Configuration</strong> &rarr; <strong>Static</strong> &rarr; IPv4 Address, Subnet Mask y Default Gateway seg&uacute;n la tabla.</li>
+                  <li>Pruebas (<code>ping</code>, <code>tracert</code>, <code>telnet</code>): PC &rarr; <strong>Desktop</strong> &rarr; <strong>Command Prompt</strong>. Escribe o pega <strong>un comando a la vez</strong> (botones <em>Copiar</em> de la tabla de pruebas).</li>
+                </ul>
               </div>
             </details>
 
@@ -975,16 +1074,16 @@ telnet 192.168.1.1             ! acceso remoto al router</pre>
             <table class="data-table">
               <thead><tr><th>#</th><th>Prueba</th><th>&iquest;Qu&eacute; confirma?</th></tr></thead>
               <tbody>
-                <tr><td>1</td><td>PC0: <code>ping 192.168.1.1</code></td><td>LAN Planta 1 — PC0 alcanza el router</td></tr>
-                <tr><td>2</td><td>PC2: <code>ping 192.168.1.13</code></td><td>Comunicaci&oacute;n entre todos los PCs de Planta 1</td></tr>
-                <tr><td>3</td><td>PC4: <code>ping 192.168.2.1</code></td><td>LAN Planta 2 — PC4 alcanza el router</td></tr>
-                <tr><td>4</td><td>PC6: <code>ping 192.168.2.13</code></td><td>Comunicaci&oacute;n entre todos los PCs de Planta 2</td></tr>
-                <tr><td>5</td><td>PC0: <code>ping 192.168.2.10</code></td><td>Enrutamiento entre plantas (Planta 1 → Planta 2)</td></tr>
-                <tr><td>6</td><td>PC7: <code>ping 192.168.1.11</code></td><td>Enrutamiento inverso (Planta 2 → Planta 1)</td></tr>
-                <tr><td>7</td><td>PC3: <code>ping 192.168.1.2</code> (S1)</td><td>Gesti&oacute;n del switch S1 accesible</td></tr>
-                <tr><td>8</td><td>PC5: <code>ping 192.168.2.2</code> (S2)</td><td>Gesti&oacute;n del switch S2 accesible</td></tr>
-                <tr><td>9</td><td>PC0: <code>tracert 192.168.2.13</code></td><td>Ruta de enrutamiento entre plantas (2 saltos)</td></tr>
-                <tr><td>10</td><td>PC4: <code>telnet 192.168.1.1</code></td><td>Acceso administrativo remoto al router desde Planta 2</td></tr>
+                <tr><td>1</td><td>PC0: <code>ping 192.168.1.1</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.1.1">Copiar</button></td><td>LAN Planta 1 — PC0 alcanza el router</td></tr>
+                <tr><td>2</td><td>PC2: <code>ping 192.168.1.13</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.1.13">Copiar</button></td><td>Comunicaci&oacute;n entre todos los PCs de Planta 1</td></tr>
+                <tr><td>3</td><td>PC4: <code>ping 192.168.2.1</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.2.1">Copiar</button></td><td>LAN Planta 2 — PC4 alcanza el router</td></tr>
+                <tr><td>4</td><td>PC6: <code>ping 192.168.2.13</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.2.13">Copiar</button></td><td>Comunicaci&oacute;n entre todos los PCs de Planta 2</td></tr>
+                <tr><td>5</td><td>PC0: <code>ping 192.168.2.10</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.2.10">Copiar</button></td><td>Enrutamiento entre plantas (Planta 1 → Planta 2)</td></tr>
+                <tr><td>6</td><td>PC7: <code>ping 192.168.1.11</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.1.11">Copiar</button></td><td>Enrutamiento inverso (Planta 2 → Planta 1)</td></tr>
+                <tr><td>7</td><td>PC3: <code>ping 192.168.1.2</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.1.2">Copiar</button> (S1)</td><td>Gesti&oacute;n del switch S1 accesible</td></tr>
+                <tr><td>8</td><td>PC5: <code>ping 192.168.2.2</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.2.2">Copiar</button> (S2)</td><td>Gesti&oacute;n del switch S2 accesible</td></tr>
+                <tr><td>9</td><td>PC0: <code>tracert 192.168.2.13</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="tracert 192.168.2.13">Copiar</button></td><td>Ruta de enrutamiento entre plantas (2 saltos)</td></tr>
+                <tr><td>10</td><td>PC4: <code>telnet 192.168.1.1</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="telnet 192.168.1.1">Copiar</button></td><td>Acceso administrativo remoto al router desde Planta 2. Pide la contrase&ntilde;a VTY (<code>cisco</code>); para modo privilegiado <code>enable</code> (<code>cisco123</code>); para salir <code>exit</code>.</td></tr>
               </tbody>
             </table>
           </div>
@@ -1050,11 +1149,11 @@ telnet 192.168.1.1             ! acceso remoto al router</pre>
                   <li>
                     <strong>&#128268; Construye la topolog&iacute;a en Packet Tracer</strong>
                     <ul style="margin:4px 0 0 1rem;padding:0;list-style:disc;color:#444;font-size:.85rem;display:flex;flex-direction:column;gap:3px">
-                      <li>Dispositivos: Router 4321 (R1), Router genérico (ISP), Switch 2960 (S1), Access Point WRT300N (AP-Sala), 5 PCs, 1 Server, 3 Laptops.</li>
-                      <li>Conecta PCs, Server y AP → S1 con <strong>cable recto</strong>.</li>
+                      <li>Dispositivos: Router 4321 (R1), Router 4321 (ISP), Switch 2960 (S1), Access Point WRT300N (AP-Sala), 5 PCs, 1 Server, 3 Laptops. <em>(El ISP tambi&eacute;n es un 4321 para que su interfaz sea <code>Gi0/0/0</code>, como en la tabla.)</em></li>
+                      <li>Conecta PCs, Server y AP → S1 con <strong>cable recto</strong> (en el WRT300N usa un puerto <strong>Ethernet 1–4</strong>, no el puerto Internet).</li>
                       <li>Conecta S1 → R1 <code>Gi0/0/0</code> con <strong>cable recto Gigabit</strong>.</li>
                       <li>Conecta R1 <code>Gi0/0/1</code> → ISP con <strong>cable cruzado</strong> (o Serial si el modelo lo exige).</li>
-                      <li>Las 3 Laptops se conectan <strong>por Wi-Fi</strong> al AP (SSID: <code>CoopAndes</code>). <em>(Ver cápsula &#128204; AP.)</em></li>
+                      <li>Las 3 Laptops se conectan <strong>por Wi-Fi</strong> al AP (SSID: <code>CoopAndes</code>). <em>(Pasos en el bloque &#128204; AP-Sala de abajo.)</em></li>
                     </ul>
                   </li>
                   <li>
@@ -1063,7 +1162,7 @@ telnet 192.168.1.1             ! acceso remoto al router</pre>
                       <li>Hostname: <code>R1-CoopAndes</code> / <code>S1-CoopAndes</code>.</li>
                       <li>Banner de bienvenida, <code>enable secret</code>, contraseñas de consola y VTY.</li>
                       <li><code>service password-encryption</code>, <code>no ip domain-lookup</code>, <code>logging synchronous</code>.</li>
-                      <li>Guarda con <code>write memory</code>. <em>(Ver cápsula &#128204; hostname/contraseñas.)</em></li>
+                      <li>Guarda con <code>write memory</code>. <em>(Comandos completos en los bloques &#128203; <strong>R1-CoopAndes</strong> y <strong>S1-CoopAndes</strong> de abajo.)</em></li>
                     </ul>
                   </li>
                   <li>
@@ -1071,8 +1170,8 @@ telnet 192.168.1.1             ! acceso remoto al router</pre>
                     <ul style="margin:4px 0 0 1rem;padding:0;list-style:disc;color:#444;font-size:.85rem;display:flex;flex-direction:column;gap:3px">
                       <li><code>Gi0/0/0</code> (LAN) → 192.168.20.1 /24 + <code>no shutdown</code>.</li>
                       <li><code>Gi0/0/1</code> (WAN) → 200.15.10.1 /30 + <code>no shutdown</code>.</li>
-                      <li>ISP: <code>Gi0/0/0</code> → 200.15.10.2 /30 + <code>no shutdown</code>.</li>
-                      <li>Verifica: <code>show ip interface brief</code> — todas <strong>up/up</strong>.</li>
+                      <li>ISP: <code>Gi0/0/0</code> → 200.15.10.2 /30 + <code>no shutdown</code>. <em>(Bloque &#128203; <strong>ISP</strong>.)</em></li>
+                      <li>Verifica en R1 y en el ISP (modo <code>#</code>): <code>show ip interface brief</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="show ip interface brief">Copiar</button> — todas <strong>up/up</strong>.</li>
                     </ul>
                   </li>
                   <li>
@@ -1085,104 +1184,155 @@ telnet 192.168.1.1             ! acceso remoto al router</pre>
                   <li>
                     <strong>&#128187; Asigna IPs est&aacute;ticas a los 5 PCs de oficina y al Servidor DNS</strong>
                     <ul style="margin:4px 0 0 1rem;padding:0;list-style:disc;color:#444;font-size:.85rem;display:flex;flex-direction:column;gap:3px">
-                      <li>PC-Gerencia .10 · PC-Contabilidad .11 · PC-Sistemas .12 · PC-Recepción .13 · PC-Almacén .14 — todas con gateway 192.168.20.1</li>
+                      <li>PC-Gerencia .10 · PC-Contabilidad .11 · PC-Sistemas .12 · PC-Recepción .13 · PC-Almacén .14 — todas con gateway 192.168.20.1 y <strong>DNS 192.168.20.3</strong> <em>(PC &rarr; Desktop &rarr; IP Configuration &rarr; Static)</em></li>
                       <li>DNS-Server: 192.168.20.3 /24 | Gateway: 192.168.20.1 | DNS: 192.168.20.3</li>
-                      <li>AP-Sala: 192.168.20.5 /24 | Gateway: 192.168.20.1 <em>(ver cápsula &#128204; AP.)</em></li>
+                      <li>AP-Sala: 192.168.20.5 /24 y <strong>su DHCP desactivado</strong> <em>(ver bloque &#128204; AP-Sala.)</em></li>
                     </ul>
                   </li>
                   <li>
                     <strong>&#9989; Verificaci&oacute;n m&iacute;nima antes de pasar a la Parte 2</strong>
                     <ul style="margin:4px 0 0 1rem;padding:0;list-style:disc;color:#444;font-size:.85rem;display:flex;flex-direction:column;gap:3px">
-                      <li>PC-Gerencia: <code>ping 192.168.20.1</code> → debe responder.</li>
-                      <li>PC-Gerencia: <code>ping 200.15.10.2</code> (ISP WAN) → debe responder.</li>
-                      <li>Si falla, revisa <code>no shutdown</code> en <code>Gi0/0/0</code> y la IP del PC.</li>
+                      <li>PC-Gerencia (<strong>Desktop &rarr; Command Prompt</strong>): <code>ping 192.168.20.1</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.20.1">Copiar</button> → debe responder.</li>
+                      <li>PC-Gerencia: <code>ping 200.15.10.1</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 200.15.10.1">Copiar</button> (interfaz WAN de R1) → debe responder.</li>
+                      <li><strong>Todav&iacute;a no</strong> esperes respuesta de <code>ping 200.15.10.2</code> (ISP): el ISP no conoce la red 192.168.20.0 y no puede contestar hasta que configures NAT en la Parte 4 (prueba 8).</li>
+                      <li>Si falla, revisa <code>no shutdown</code> en <code>Gi0/0/0</code> y <code>Gi0/0/1</code>, y la IP del PC.</li>
                     </ul>
                   </li>
                 </ol>
               </div>
 
-              <!-- Cápsulas de recordatorio 3.4.2 -->
-              <div style="display:flex;flex-direction:column;gap:8px;margin:14px 0">
+              <!-- Comandos listos para copiar 3.4.2 (revisión de laboratorios Packet Tracer, sep-2026).
+                   Antes: no había bloque para S1 ni para el ISP; el AP se explicaba con los menús del
+                   AccessPoint-PT ("Config > Port 1") aunque el laboratorio usa un WRT300N, que trae su
+                   propio servidor DHCP activo y repartía 192.168.0.x a las laptops. -->
+              <div class="cmd-scope" data-cmd-scope style="display:flex;flex-direction:column;gap:8px;margin:14px 0">
+
+                <div class="info-box" style="margin:0">
+                  <div class="label">&#128203; Comandos listos para copiar y pegar &mdash; uno por dispositivo</div>
+                  <ol class="cmd-steps">
+                    <li>Haz clic en el dispositivo &rarr; pesta&ntilde;a <strong>CLI</strong>. Si pregunta <em>initial configuration dialog? [yes/no]</em>, responde <code>no</code>.</li>
+                    <li>Pulsa <strong>[ Copiar comandos ]</strong> del bloque de <strong>ese</strong> dispositivo y p&eacute;galo en su CLI.</li>
+                    <li>Los bloques de la Parte 1 van en equipos reci&eacute;n agregados. Los de DHCP (Parte 2) y NAT (Parte 4) se pegan en R1 ya configurado: entra con la clave de consola <code>cisco</code>, escribe <code>enable</code> (clave <code>cisco123</code>) y pega el bloque.</li>
+                  </ol>
+                </div>
 
                 <details style="border:1.5px solid #b0bec5;border-radius:10px;overflow:hidden">
                   <summary style="padding:10px 14px;background:#eceff1;cursor:pointer;font-weight:700;font-size:.88rem;list-style:none;display:flex;align-items:center;gap:8px">
                     <span style="background:#455a64;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:.75rem;flex-shrink:0">&#128204;</span>
-                    Recordatorio — C&oacute;mo configurar hostname, banner y contrase&ntilde;as en R1
+                    R1-CoopAndes (Router 4321) &mdash; configuraci&oacute;n b&aacute;sica + interfaces LAN y WAN (pasos 2 y 3)
                   </summary>
                   <div style="padding:12px 16px;background:#fafafa">
-                    <pre style="background:#1a237e;color:#e8eaf6;border-radius:8px;padding:12px;font-size:.8rem;overflow-x:auto;margin:0">enable
+                    <div class="cmd-block" data-cmd-block>
+                      <div class="cmd-block__head">
+                        <span class="cmd-block__device">R1-CoopAndes &mdash; CLI del router<small>Hostname, contrase&ntilde;as, Gi0/0/0 LAN 192.168.20.1, Gi0/0/1 WAN 200.15.10.1, guardar</small></span>
+                        <button type="button" class="cmd-block__copy" data-copy-commands>[ Copiar comandos ]</button>
+                      </div>
+<pre class="cmd-block__code">enable
 configure terminal
 hostname R1-CoopAndes
-banner motd # Acceso restringido — Cooperativa Los Andes #
+banner motd # Acceso restringido - Cooperativa Los Andes #
 enable secret cisco123
+service password-encryption
+no ip domain-lookup
 line console 0
  password cisco
  login
  logging synchronous
+ exit
 line vty 0 4
  password cisco
  login
-service password-encryption
-no ip domain-lookup
+ exit
+interface GigabitEthernet0/0/0
+ ip address 192.168.20.1 255.255.255.0
+ no shutdown
+ exit
+interface GigabitEthernet0/0/1
+ ip address 200.15.10.1 255.255.255.252
+ no shutdown
+ exit
 end
 write memory</pre>
+                    </div>
                   </div>
                 </details>
 
                 <details style="border:1.5px solid #b0bec5;border-radius:10px;overflow:hidden">
                   <summary style="padding:10px 14px;background:#eceff1;cursor:pointer;font-weight:700;font-size:.88rem;list-style:none;display:flex;align-items:center;gap:8px">
                     <span style="background:#455a64;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:.75rem;flex-shrink:0">&#128204;</span>
-                    Recordatorio — C&oacute;mo configurar DHCP en el router (Bloque C)
+                    ISP (Router 4321) &mdash; interfaz hacia R1 (paso 3)
                   </summary>
                   <div style="padding:12px 16px;background:#fafafa">
-                    <pre style="background:#1a237e;color:#e8eaf6;border-radius:8px;padding:12px;font-size:.8rem;overflow-x:auto;margin:0">ip dhcp excluded-address 192.168.20.1 192.168.20.99
-ip dhcp pool VISITANTES
- network 192.168.20.0 255.255.255.0
- default-router 192.168.20.1
- dns-server 192.168.20.3
-!
-! Verificar asignaciones:
-show ip dhcp binding
-show ip dhcp pool</pre>
-                  </div>
-                </details>
-
-                <details style="border:1.5px solid #b0bec5;border-radius:10px;overflow:hidden">
-                  <summary style="padding:10px 14px;background:#eceff1;cursor:pointer;font-weight:700;font-size:.88rem;list-style:none;display:flex;align-items:center;gap:8px">
-                    <span style="background:#455a64;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:.75rem;flex-shrink:0">&#128204;</span>
-                    Recordatorio — C&oacute;mo configurar NAT overload (PAT) en el router (Bloque D)
-                  </summary>
-                  <div style="padding:12px 16px;background:#fafafa">
-                    <pre style="background:#1a237e;color:#e8eaf6;border-radius:8px;padding:12px;font-size:.8rem;overflow-x:auto;margin:0">! 1. Definir qué IPs se van a traducir
-access-list 1 permit 192.168.20.0 0.0.0.255
-!
-! 2. Aplicar NAT overload usando la interfaz WAN
-ip nat inside source list 1 interface GigabitEthernet0/0/1 overload
-!
-! 3. Marcar las interfaces
+                    <div class="cmd-block" data-cmd-block>
+                      <div class="cmd-block__head">
+                        <span class="cmd-block__device">ISP &mdash; CLI del router que simula el proveedor<small>Gi0/0/0 200.15.10.2 /30, guardar</small></span>
+                        <button type="button" class="cmd-block__copy" data-copy-commands>[ Copiar comandos ]</button>
+                      </div>
+<pre class="cmd-block__code">enable
+configure terminal
+hostname ISP
 interface GigabitEthernet0/0/0
- ip nat inside
-interface GigabitEthernet0/0/1
- ip nat outside
-!
-! Verificar:
-show ip nat translations
-show ip nat statistics</pre>
+ ip address 200.15.10.2 255.255.255.252
+ no shutdown
+ exit
+end
+write memory</pre>
+                      <p class="cmd-block__note">Usa un <strong>Router 4321</strong> para el ISP: as&iacute; su interfaz se llama <code>GigabitEthernet0/0/0</code>, como en la tabla. En el <em>Router-PT</em> gen&eacute;rico las interfaces tienen otros nombres y este bloque no funcionar&iacute;a.</p>
+                    </div>
                   </div>
                 </details>
 
                 <details style="border:1.5px solid #b0bec5;border-radius:10px;overflow:hidden">
                   <summary style="padding:10px 14px;background:#eceff1;cursor:pointer;font-weight:700;font-size:.88rem;list-style:none;display:flex;align-items:center;gap:8px">
                     <span style="background:#455a64;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:.75rem;flex-shrink:0">&#128204;</span>
-                    Recordatorio — C&oacute;mo configurar el servidor DNS en Packet Tracer (Bloque C)
+                    S1-CoopAndes (Switch 2960) &mdash; configuraci&oacute;n b&aacute;sica + VLAN 1 de administraci&oacute;n (pasos 2 y 4)
+                  </summary>
+                  <div style="padding:12px 16px;background:#fafafa">
+                    <div class="cmd-block" data-cmd-block>
+                      <div class="cmd-block__head">
+                        <span class="cmd-block__device">S1-CoopAndes &mdash; CLI del switch<small>Hostname, contrase&ntilde;as, VLAN 1 192.168.20.2, gateway, guardar</small></span>
+                        <button type="button" class="cmd-block__copy" data-copy-commands>[ Copiar comandos ]</button>
+                      </div>
+<pre class="cmd-block__code">enable
+configure terminal
+hostname S1-CoopAndes
+banner motd # Acceso restringido - Cooperativa Los Andes #
+enable secret cisco123
+service password-encryption
+no ip domain-lookup
+line console 0
+ password cisco
+ login
+ logging synchronous
+ exit
+line vty 0 4
+ password cisco
+ login
+ exit
+interface vlan 1
+ ip address 192.168.20.2 255.255.255.0
+ no shutdown
+ exit
+ip default-gateway 192.168.20.1
+end
+write memory</pre>
+                    </div>
+                  </div>
+                </details>
+
+                <details style="border:1.5px solid #b0bec5;border-radius:10px;overflow:hidden">
+                  <summary style="padding:10px 14px;background:#eceff1;cursor:pointer;font-weight:700;font-size:.88rem;list-style:none;display:flex;align-items:center;gap:8px">
+                    <span style="background:#455a64;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:.75rem;flex-shrink:0">&#128204;</span>
+                    PCs de oficina y DNS-Server &mdash; IP est&aacute;tica y servicio DNS (paso 5 y Bloque C)
                   </summary>
                   <div style="padding:12px 16px;background:#fafafa">
                     <ol style="font-size:.85rem;line-height:1.9;margin:0;padding-left:18px">
-                      <li>Haz clic en el <strong>DNS-Server</strong> → pesta&ntilde;a <strong>Services</strong> → <strong>DNS</strong></li>
-                      <li>Activa el servicio: <strong>DNS Service → ON</strong></li>
-                      <li>Agrega el primer registro: Name <code>cooperativa.local</code> → Type <code>A Record</code> → Address <code>192.168.20.10</code> → <strong>Add</strong></li>
-                      <li>Agrega el segundo: Name <code>intranet.local</code> → Type <code>A Record</code> → Address <code>192.168.20.11</code> → <strong>Add</strong></li>
-                      <li>Verifica desde PC-Gerencia con <code>nslookup cooperativa.local</code> en el Command Prompt</li>
+                      <li>Cada PC de oficina &rarr; <strong>Desktop</strong> &rarr; <strong>IP Configuration</strong> &rarr; <strong>Static</strong>: IP seg&uacute;n la tabla, m&aacute;scara <code>255.255.255.0</code>, gateway <code>192.168.20.1</code> y <strong>DNS Server <code>192.168.20.3</code></strong> (sin este dato, <code>nslookup</code> de la prueba 4 no puede resolver).</li>
+                      <li><strong>DNS-Server</strong> &rarr; <strong>Desktop</strong> &rarr; <strong>IP Configuration</strong> &rarr; <strong>Static</strong>: <code>192.168.20.3</code> / <code>255.255.255.0</code>, gateway <code>192.168.20.1</code>, DNS <code>192.168.20.3</code>.</li>
+                      <li><strong>DNS-Server</strong> &rarr; pesta&ntilde;a <strong>Services</strong> &rarr; <strong>DNS</strong> &rarr; <strong>DNS Service: On</strong>.</li>
+                      <li>Registro 1: Name <code>cooperativa.local</code> &rarr; Type <code>A Record</code> &rarr; Address <code>192.168.20.10</code> &rarr; <strong>Add</strong>.</li>
+                      <li>Registro 2: Name <code>intranet.local</code> &rarr; Type <code>A Record</code> &rarr; Address <code>192.168.20.11</code> &rarr; <strong>Add</strong>.</li>
+                      <li>Verifica desde PC-Gerencia (<strong>Desktop &rarr; Command Prompt</strong>): <code>nslookup cooperativa.local</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="nslookup cooperativa.local">Copiar</button></li>
                     </ol>
                   </div>
                 </details>
@@ -1190,16 +1340,19 @@ show ip nat statistics</pre>
                 <details style="border:1.5px solid #b0bec5;border-radius:10px;overflow:hidden">
                   <summary style="padding:10px 14px;background:#eceff1;cursor:pointer;font-weight:700;font-size:.88rem;list-style:none;display:flex;align-items:center;gap:8px">
                     <span style="background:#455a64;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:.75rem;flex-shrink:0">&#128204;</span>
-                    Recordatorio — C&oacute;mo configurar el Access Point y conectar laptops por Wi-Fi (Bloque A)
+                    AP-Sala (WRT300N) y laptops por Wi-Fi (Bloque A)
                   </summary>
                   <div style="padding:12px 16px;background:#fafafa">
+                    <p style="font-size:.84rem;margin:0 0 6px"><strong>Importante:</strong> el WRT300N es un router inal&aacute;mbrico con su <strong>propio servidor DHCP encendido</strong>. Si no lo apagas, las laptops recibir&aacute;n direcciones <code>192.168.0.x</code> del AP en vez del rango <code>.100&ndash;.150</code> de R1.</p>
                     <ol style="font-size:.85rem;line-height:1.9;margin:0;padding-left:18px">
-                      <li>Haz clic en el <strong>AP-Sala</strong> → pesta&ntilde;a <strong>Config</strong> → <strong>Port 1 (Wireless)</strong></li>
-                      <li>SSID: <code>CoopAndes</code> — Authentication: <strong>WPA2-PSK</strong> — PSK Pass Phrase: <code>coop2025</code></li>
-                      <li>Asigna IP fija al AP: <code>192.168.20.5</code>, m&aacute;scara <code>255.255.255.0</code>, gateway <code>192.168.20.1</code></li>
-                      <li>En cada <strong>Laptop</strong>: retira la tarjeta de red cableada (si tiene) e instala la tarjeta <strong>WPC300N</strong></li>
-                      <li>Laptop → pesta&ntilde;a <strong>Desktop</strong> → <strong>PC Wireless</strong> → Connect → selecciona <code>CoopAndes</code> → ingresa la clave</li>
-                      <li>Verifica con <code>ipconfig</code> que recibi&oacute; IP en el rango <code>192.168.20.100–150</code></li>
+                      <li>Conecta S1 a uno de los puertos <strong>Ethernet 1&ndash;4</strong> del WRT300N (no al puerto <strong>Internet</strong>).</li>
+                      <li>AP-Sala &rarr; pesta&ntilde;a <strong>GUI</strong> &rarr; <strong>Setup</strong> &rarr; <em>Network Setup</em>: Router IP <code>192.168.20.5</code>, Subnet Mask <code>255.255.255.0</code>.</li>
+                      <li>En la misma p&aacute;gina: <strong>DHCP Server: Disabled</strong> &rarr; <strong>Save Settings</strong>.</li>
+                      <li><strong>Wireless</strong> &rarr; <em>Basic Wireless Settings</em>: Network Name (SSID) <code>CoopAndes</code> &rarr; <strong>Save Settings</strong>.</li>
+                      <li><strong>Wireless</strong> &rarr; <em>Wireless Security</em>: Security Mode <strong>WPA2 Personal</strong>, Encryption <strong>AES</strong>, Passphrase <code>coop2025</code> &rarr; <strong>Save Settings</strong>.</li>
+                      <li>Cada <strong>Laptop</strong> &rarr; pesta&ntilde;a <strong>Physical</strong>: <strong>apaga</strong> el equipo (bot&oacute;n de encendido), arrastra fuera la tarjeta cableada, instala la tarjeta <strong>WPC300N</strong> y vuelve a encenderlo.</li>
+                      <li>Laptop &rarr; <strong>Desktop</strong> &rarr; <strong>PC Wireless</strong> &rarr; <strong>Connect</strong> &rarr; selecciona <code>CoopAndes</code> &rarr; <strong>Connect</strong> &rarr; Pre-shared Key <code>coop2025</code>.</li>
+                      <li>Laptop &rarr; <strong>Desktop</strong> &rarr; <strong>IP Configuration</strong> &rarr; <strong>DHCP</strong>. Verifica con <code>ipconfig</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ipconfig">Copiar</button> que recibi&oacute; una IP entre <code>192.168.20.100</code> y <code>192.168.20.150</code>.</li>
                     </ol>
                   </div>
                 </details>
@@ -1223,13 +1376,32 @@ show ip nat statistics</pre>
 
               <div class="info-box" style="margin-top:10px">
                 <div class="label">&#127968; Parte 2 — DHCP en el router (Bloque C)</div>
-                <p style="font-size:.88rem">Configura un pool DHCP en R1 para los dispositivos inal&aacute;mbricos:</p>
-                <pre style="background:#1a237e;color:#e8eaf6;border-radius:8px;padding:12px;font-size:.82rem;overflow-x:auto;margin-top:8px">ip dhcp pool VISITANTES
+                <p style="font-size:.88rem">Configura un pool DHCP en R1 para los dispositivos inal&aacute;mbricos. Las exclusiones van <strong>antes</strong> del pool, para que el router no alcance a entregar una IP reservada; la segunda exclusi&oacute;n deja el rango en <code>.100&ndash;.150</code>, como pide la tabla.</p>
+                <div class="cmd-block" data-cmd-block>
+                  <div class="cmd-block__head">
+                    <span class="cmd-block__device">R1-CoopAndes &mdash; modo privilegiado (<code>R1-CoopAndes#</code>)<small>Pool DHCP VISITANTES</small></span>
+                    <button type="button" class="cmd-block__copy" data-copy-commands>[ Copiar comandos ]</button>
+                  </div>
+<pre class="cmd-block__code">configure terminal
+ip dhcp excluded-address 192.168.20.1 192.168.20.99
+ip dhcp excluded-address 192.168.20.151 192.168.20.254
+ip dhcp pool VISITANTES
  network 192.168.20.0 255.255.255.0
  default-router 192.168.20.1
  dns-server 192.168.20.3
-ip dhcp excluded-address 192.168.20.1 192.168.20.99</pre>
-                <p style="font-size:.85rem;margin-top:6px">Verifica con <code>show ip dhcp binding</code> que la Laptop recibi&oacute; IP del rango .100–.150.</p>
+ exit
+end
+write memory</pre>
+                </div>
+                <div class="cmd-block" data-cmd-block>
+                  <div class="cmd-block__head">
+                    <span class="cmd-block__device">R1-CoopAndes &mdash; verificaci&oacute;n (despu&eacute;s de conectar las laptops)</span>
+                    <button type="button" class="cmd-block__copy" data-copy-commands>[ Copiar comandos ]</button>
+                  </div>
+<pre class="cmd-block__code">show ip dhcp binding
+show ip dhcp pool</pre>
+                  <p class="cmd-block__note"><code>show ip dhcp binding</code> debe listar la IP entregada a cada laptop (rango .100&ndash;.150).</p>
+                </div>
               </div>
 
               <div class="ihelp-trigger">
@@ -1259,7 +1431,7 @@ ip dhcp excluded-address 192.168.20.1 192.168.20.99</pre>
                     </tbody>
                   </table>
                 </div>
-                <p style="font-size:.85rem;margin-top:8px">Verifica desde PC-Admin1 con el comando <code>nslookup cooperativa.local</code> — debe devolver <code>192.168.20.10</code>.</p>
+                <p style="font-size:.85rem;margin-top:8px">Pasos en el bloque &#128204; <strong>PCs de oficina y DNS-Server</strong>. Verifica desde <strong>PC-Gerencia</strong> (Desktop &rarr; Command Prompt) con <code>nslookup cooperativa.local</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="nslookup cooperativa.local">Copiar</button> — debe devolver <code>192.168.20.10</code>.</p>
               </div>
 
               <div class="ihelp-trigger">
@@ -1280,13 +1452,32 @@ ip dhcp excluded-address 192.168.20.1 192.168.20.99</pre>
               <div class="info-box" style="margin-top:10px">
                 <div class="label">&#127757; Parte 4 — NAT overload (PAT) hacia internet (Bloque D)</div>
                 <p style="font-size:.88rem">Configura NAT en R1 para que toda la LAN salga con la IP p&uacute;blica <code>200.15.10.1</code>:</p>
-                <pre style="background:#1a237e;color:#e8eaf6;border-radius:8px;padding:12px;font-size:.82rem;overflow-x:auto;margin-top:8px">access-list 1 permit 192.168.20.0 0.0.0.255
-ip nat inside source list 1 interface Gi0/0/1 overload
-interface Gi0/0/0
+                <div class="cmd-block" data-cmd-block>
+                  <div class="cmd-block__head">
+                    <span class="cmd-block__device">R1-CoopAndes &mdash; modo privilegiado (<code>R1-CoopAndes#</code>)<small>ACL de la LAN, NAT overload por Gi0/0/1, interfaces inside/outside</small></span>
+                    <button type="button" class="cmd-block__copy" data-copy-commands>[ Copiar comandos ]</button>
+                  </div>
+<pre class="cmd-block__code">configure terminal
+access-list 1 permit 192.168.20.0 0.0.0.255
+ip nat inside source list 1 interface GigabitEthernet0/0/1 overload
+interface GigabitEthernet0/0/0
  ip nat inside
-interface Gi0/0/1
- ip nat outside</pre>
-                <p style="font-size:.85rem;margin-top:6px">Verifica con <code>show ip nat translations</code> despu&eacute;s de hacer ping al ISP desde un PC.</p>
+ exit
+interface GigabitEthernet0/0/1
+ ip nat outside
+ exit
+end
+write memory</pre>
+                </div>
+                <div class="cmd-block" data-cmd-block>
+                  <div class="cmd-block__head">
+                    <span class="cmd-block__device">R1-CoopAndes &mdash; verificaci&oacute;n (justo despu&eacute;s de hacer ping al ISP desde un PC)</span>
+                    <button type="button" class="cmd-block__copy" data-copy-commands>[ Copiar comandos ]</button>
+                  </div>
+<pre class="cmd-block__code">show ip nat translations
+show ip nat statistics</pre>
+                  <p class="cmd-block__note">Las traducciones ICMP duran poco (unos 60 s): si la tabla sale vac&iacute;a, repite el ping y vuelve a consultar.</p>
+                </div>
               </div>
 
               <div class="info-box green" style="margin-top:14px">
@@ -1296,16 +1487,16 @@ interface Gi0/0/1
                 <table class="data-table">
                   <thead><tr><th>#</th><th>Prueba</th><th>&iquest;Qu&eacute; confirma?</th></tr></thead>
                   <tbody>
-                    <tr><td>1</td><td>PC-Gerencia: <code>ping 192.168.20.1</code></td><td>LAN OK — PC de oficina alcanza el gateway</td></tr>
-                    <tr><td>2</td><td>PC-Gerencia: <code>ping 192.168.20.14</code></td><td>Comunicaci&oacute;n entre los 5 PCs de oficina</td></tr>
-                    <tr><td>3</td><td>PC-Sistemas: <code>ping 192.168.20.3</code></td><td>Servidor DNS interno alcanzable</td></tr>
-                    <tr><td>4</td><td>PC-Gerencia: <code>nslookup cooperativa.local</code></td><td>DNS interno resuelve el nombre → 192.168.20.10 (Bloque C)</td></tr>
-                    <tr><td>5</td><td>Laptop-Visita1: <code>ipconfig</code></td><td>DHCP asign&oacute; IP en rango .100–.150 (Bloque C)</td></tr>
-                    <tr><td>6</td><td>Laptop-Visita2: <code>ipconfig</code></td><td>Segunda laptop Wi-Fi tambi&eacute;n obtuvo IP por DHCP</td></tr>
-                    <tr><td>7</td><td>Laptop-Visita1: <code>ping 192.168.20.12</code></td><td>Visitante Wi-Fi se comunica con red cableada (AP OK — Bloque A)</td></tr>
-                    <tr><td>8</td><td>PC-Recepci&oacute;n: <code>ping 200.15.10.2</code></td><td>Salida WAN — NAT traduce IP privada a p&uacute;blica (Bloque D)</td></tr>
-                    <tr><td>9</td><td>PC-Almac&eacute;n: <code>tracert 200.15.10.2</code></td><td>Ruta de salida a internet verificada (Bloque B)</td></tr>
-                    <tr><td>10</td><td>R1: <code>show ip nat translations</code></td><td>Tabla NAT muestra todas las traducciones activas (Bloque D)</td></tr>
+                    <tr><td>1</td><td>PC-Gerencia: <code>ping 192.168.20.1</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.20.1">Copiar</button></td><td>LAN OK — PC de oficina alcanza el gateway</td></tr>
+                    <tr><td>2</td><td>PC-Gerencia: <code>ping 192.168.20.14</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.20.14">Copiar</button></td><td>Comunicaci&oacute;n entre los 5 PCs de oficina</td></tr>
+                    <tr><td>3</td><td>PC-Sistemas: <code>ping 192.168.20.3</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.20.3">Copiar</button></td><td>Servidor DNS interno alcanzable</td></tr>
+                    <tr><td>4</td><td>PC-Gerencia: <code>nslookup cooperativa.local</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="nslookup cooperativa.local">Copiar</button></td><td>DNS interno resuelve el nombre → 192.168.20.10 (Bloque C)</td></tr>
+                    <tr><td>5</td><td>Laptop-Visita1: <code>ipconfig</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ipconfig">Copiar</button></td><td>DHCP asign&oacute; IP en rango .100–.150 (Bloque C)</td></tr>
+                    <tr><td>6</td><td>Laptop-Visita2: <code>ipconfig</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ipconfig">Copiar</button></td><td>Segunda laptop Wi-Fi tambi&eacute;n obtuvo IP por DHCP</td></tr>
+                    <tr><td>7</td><td>Laptop-Visita1: <code>ping 192.168.20.12</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.20.12">Copiar</button></td><td>Visitante Wi-Fi se comunica con red cableada (AP OK — Bloque A)</td></tr>
+                    <tr><td>8</td><td>PC-Recepci&oacute;n: <code>ping 200.15.10.2</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 200.15.10.2">Copiar</button></td><td>Salida WAN — NAT traduce IP privada a p&uacute;blica (Bloque D)</td></tr>
+                    <tr><td>9</td><td>PC-Almac&eacute;n: <code>tracert 200.15.10.2</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="tracert 200.15.10.2">Copiar</button></td><td>Ruta de salida a internet verificada (Bloque B)</td></tr>
+                    <tr><td>10</td><td>R1: <code>show ip nat translations</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="show ip nat translations">Copiar</button></td><td>Tabla NAT muestra todas las traducciones activas (Bloque D)</td></tr>
                   </tbody>
                 </table>
               </div>

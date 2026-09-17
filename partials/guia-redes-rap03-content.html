@@ -633,6 +633,77 @@
           </template>
         </div>
 
+          <!-- Apoyo Packet Tracer 3.3.2 (revisión de laboratorios, sep-2026): las plantillas y la
+               sección 7 del informe piden modelo, interfaces, IP, máscara, gateway, DNS y el
+               "show running-config", pero la guía no decía con qué comandos sacar esos datos
+               de la red de OccidenteServicios ni en qué dispositivo ejecutarlos. -->
+          <div class="info-box cmd-scope cmd-box" data-cmd-scope>
+            <div class="label">&#128203; C&oacute;mo obtener los datos desde Packet Tracer (comandos listos para copiar)</div>
+            <ol class="cmd-steps">
+              <li>Abre el archivo <code>.pkt</code> de la red de <strong>OccidenteServicios Ltda.</strong> que construiste en la actividad <strong>3.4.1 de la gu&iacute;a anterior (RAP 02)</strong>. Si ya no lo tienes, vuelve a montarla con los bloques <strong>[ Copiar comandos ]</strong> de esa actividad.</li>
+              <li>Haz clic en el dispositivo &rarr; pesta&ntilde;a <strong>CLI</strong> &rarr; <strong>Enter</strong>. Escribe la clave de consola <code>cisco</code>, luego <code>enable</code> y la clave <code>cisco123</code>. El indicador debe terminar en <strong>#</strong> (por ejemplo <code>R1-XXX#</code>).</li>
+              <li>Reci&eacute;n entonces pega el bloque de ese dispositivo. <em>No pegues <code>enable</code> dentro del bloque: la l&iacute;nea siguiente se tomar&iacute;a como contrase&ntilde;a.</em></li>
+              <li>Para llevar la salida a tu documento: selecci&oacute;nala con el mouse en la CLI y usa el bot&oacute;n <strong>Copy</strong> de la parte inferior de la pesta&ntilde;a (o <kbd>Ctrl</kbd>+<kbd>C</kbd>).</li>
+            </ol>
+
+            <div class="cmd-block" data-cmd-block>
+              <div class="cmd-block__head">
+                <span class="cmd-block__device">R1-XXX (Router 4321) &mdash; modo privilegiado <code>#</code><small>Modelo, interfaces con su IP, rutas conectadas y configuraci&oacute;n completa</small></span>
+                <button type="button" class="cmd-block__copy" data-copy-commands>[ Copiar comandos ]</button>
+              </div>
+<pre class="cmd-block__code">terminal length 0
+show version
+show ip interface brief
+show ip route
+show running-config</pre>
+              <p class="cmd-block__note"><code>terminal length 0</code> evita que la salida se detenga en <code>--More--</code> (sin &eacute;l, las l&iacute;neas pegadas despu&eacute;s se pierden en esa pausa).</p>
+            </div>
+
+            <div class="cmd-block" data-cmd-block>
+              <div class="cmd-block__head">
+                <span class="cmd-block__device">S1-XXX y S2-XXX (Switch 2960) &mdash; modo privilegiado <code>#</code><small>P&eacute;galo en S1 y despu&eacute;s en S2, uno a la vez</small></span>
+                <button type="button" class="cmd-block__copy" data-copy-commands>[ Copiar comandos ]</button>
+              </div>
+<pre class="cmd-block__code">terminal length 0
+show version
+show ip interface brief
+show running-config</pre>
+            </div>
+
+            <div class="table-scroll">
+              <table class="data-table">
+                <thead><tr><th>Dato que pide la plantilla o el informe</th><th>D&oacute;nde sale</th></tr></thead>
+                <tbody>
+                  <tr><td>Marca/modelo de R1, S1, S2 (Plantilla 1)</td><td><code>show version</code>: l&iacute;nea <code>cisco ISR4321/K9</code> en R1 y <code>WS-C2960-24TT-L</code> en los switches.</td></tr>
+                  <tr><td>Hostname (Plantilla 1)</td><td>El indicador de la CLI o la l&iacute;nea <code>hostname</code> de <code>show running-config</code>.</td></tr>
+                  <tr><td>Interfaz y estado (Plantilla 1)</td><td><code>show ip interface brief</code>: nombre, IP y estado <em>up/up</em>.</td></tr>
+                  <tr><td>IP y m&aacute;scara de R1, S1, S2 (Plantilla 2)</td><td><code>show running-config</code>: l&iacute;neas <code>ip address</code> bajo cada <code>interface</code> (<code>show ip interface brief</code> no muestra la m&aacute;scara).</td></tr>
+                  <tr><td>Gateway de S1 y S2 (Plantilla 2)</td><td><code>show running-config</code>: l&iacute;nea <code>ip default-gateway</code>.</td></tr>
+                  <tr><td>Modelo de los PCs (Plantilla 1)</td><td>Pasa el mouse sobre el PC en la vista Logical: el recuadro indica <strong>Device Model</strong> (<strong>PC-PT</strong>).</td></tr>
+                  <tr><td>IP, m&aacute;scara, gateway y DNS de los PCs (Plantilla 2)</td><td>PC &rarr; <strong>Desktop</strong> &rarr; <strong>Command Prompt</strong>: <code>ipconfig /all</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ipconfig /all">Copiar</button></td></tr>
+                  <tr><td>Configuraci&oacute;n aplicada (Informe, secci&oacute;n 7)</td><td><code>show running-config</code> de R1, S1 y S2, resumido a: <code>hostname</code>, <code>banner motd</code>, <code>enable secret</code>, <code>service password-encryption</code>, <code>line console 0</code>, <code>line vty 0 4</code>, las <code>interface</code> con su IP e <code>ip default-gateway</code>.</td></tr>
+                  <tr><td>Diagrama de topolog&iacute;a (Informe, secci&oacute;n 4)</td><td>Vista <strong>Logical</strong> con todos los equipos visibles. Si tu versi&oacute;n de Packet Tracer no trae la opci&oacute;n de exportar imagen, usa <strong>File &rarr; Print</strong> hacia PDF o una captura de pantalla (<kbd>Win</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd>) del &aacute;rea de trabajo.</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <p class="cmd-lead cmd-lead--gap"><strong>Pruebas de la Plantilla 3</strong> &mdash; cada una en el PC indicado &rarr; <strong>Desktop</strong> &rarr; <strong>Command Prompt</strong>, un comando a la vez:</p>
+            <ol class="cmd-steps">
+              <li><strong>PC0</strong>: <code>ping 192.168.1.1</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.1.1">Copiar</button></li>
+              <li><strong>PC2</strong>: <code>ping 192.168.1.13</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.1.13">Copiar</button></li>
+              <li><strong>PC4</strong>: <code>ping 192.168.2.1</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.2.1">Copiar</button></li>
+              <li><strong>PC6</strong>: <code>ping 192.168.2.13</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.2.13">Copiar</button></li>
+              <li><strong>PC0</strong>: <code>ping 192.168.2.10</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.2.10">Copiar</button></li>
+              <li><strong>PC7</strong>: <code>ping 192.168.1.11</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.1.11">Copiar</button></li>
+              <li><strong>PC3</strong>: <code>ping 192.168.1.2</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.1.2">Copiar</button></li>
+              <li><strong>PC5</strong>: <code>ping 192.168.2.2</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.2.2">Copiar</button></li>
+              <li><strong>PC0</strong>: <code>tracert 192.168.2.13</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="tracert 192.168.2.13">Copiar</button></li>
+              <li><strong>PC4</strong>: <code>telnet 192.168.1.1</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="telnet 192.168.1.1">Copiar</button>
+                <p class="cmd-hint">Usa las credenciales ya configuradas en R1 en el laboratorio de la gu&iacute;a anterior: en <em>Password:</em> escribe la contrase&ntilde;a VTY <code>cisco</code> (no se ve mientras la escribes). Para modo privilegiado escribe <code>enable</code> y la clave <code>cisco123</code>. Para salir, <code>exit</code>.</p></li>
+            </ol>
+            <p class="cmd-hint">El primer <code>ping</code> entre plantas puede perder 1 paquete mientras se resuelve ARP: es normal; rep&iacute;telo antes de marcarlo como fallido.</p>
+          </div>
+
           <div class="activity open">
             <div class="activity-header" onclick="toggleActivity(this.parentElement)">
               <span class="activity-num">3.3.2.1</span><span class="activity-title">Plantilla 1 — Inventario de dispositivos de red</span><span class="activity-toggle">&#9662;</span>
@@ -765,6 +836,7 @@
                 <p>Este informe no se escribe desde cero: casi todo ya lo produjiste en actividades anteriores. Solo hay que ensamblarlo en el orden correcto.</p>
                 <ul>
                   <li>Secciones 5 y 6 (inventario y direccionamiento) &rarr; copia directo de las Plantillas 1 y 2 (actividad 3.3.2).</li>
+                  <li>Sección 7 (configuración aplicada) &rarr; salida de <code>show running-config</code> de R1, S1 y S2, resumida (comandos listos para copiar en el bloque «Cómo obtener los datos desde Packet Tracer» de la actividad 3.3.2).</li>
                   <li>Sección 8 (pruebas) &rarr; copia de la Plantilla 3 y las capturas que ya tomaste en la Guía 3.</li>
                   <li>Sección 4 (descripción de la red) &rarr; exporta el diagrama de topología directo de Packet Tracer (Archivo &rarr; Exportar &rarr; Imagen).</li>
                 </ul>
@@ -782,7 +854,7 @@
                     <tr><td>4</td><td>Descripción de la red</td><td>Diagrama de topología exportado desde Packet Tracer. Descripción de la arquitectura: número de plantas, segmentos, dispositivos activos.</td></tr>
                     <tr><td>5</td><td>Inventario de dispositivos</td><td>Plantilla 1 completada: todos los dispositivos con hostname, modelo, interfaz, ubicación y función.</td></tr>
                     <tr><td>6</td><td>Tabla de direccionamiento IP</td><td>Plantilla 2 completada: todos los dispositivos con IP, máscara, gateway y DNS.</td></tr>
-                    <tr><td>7</td><td>Configuración aplicada</td><td>Comandos de configuración aplicados en el router y los switches (show running-config resumido). Parámetros de seguridad: hostname, contraseñas, cifrado.</td></tr>
+                    <tr><td>7</td><td>Configuración aplicada</td><td>Comandos de configuración aplicados en el router y los switches (<code>show running-config</code> resumido). Parámetros de seguridad: hostname, contraseñas, cifrado. <em>Cómo sacarlo: bloque «Cómo obtener los datos desde Packet Tracer» de la actividad 3.3.2.</em></td></tr>
                     <tr><td>8</td><td>Registro de pruebas de conectividad</td><td>Plantilla 3 completada con los resultados de las 10 pruebas. Capturas de pantalla de cada prueba numeradas y comentadas.</td></tr>
                     <tr><td>9</td><td>Conclusiones</td><td>Mínimo 3 conclusiones técnicas: ¿la red cumple los requerimientos? ¿qué recomendarías mejorar? ¿qué normativa se aplicó?</td></tr>
                     <tr><td>10</td><td>Bibliografía</td><td>Mínimo 4 fuentes citadas en formato APA: normas (TIA-568, TIA-606), documentación de Cisco y fuentes académicas.</td></tr>
