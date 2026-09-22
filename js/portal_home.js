@@ -30,7 +30,7 @@
   //    activity_standard.js ya haya corrido.
   var STUDENT_ONLY_SCRIPTS = [
     "js/activity_standard.js?v=20260822_1",
-    "js/guide_declarations.js?v=20260915_1",
+    "js/guide_declarations.js?v=20260922_1",
     "js/activity_grades.js?v=20260915_1",
     "js/activity_deadlines.js?v=20260717_2",
     "js/productive_stage_store.js?v=20260825_2",

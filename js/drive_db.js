@@ -52,11 +52,26 @@
     });
   }
 
+  // Un fallo de TRANSPORTE (el Apps Script no responde, responde 404/5xx, o se
+  // agota DRIVE_DB_TIMEOUT_MS) NO es lo mismo que "el documento no existe".
+  // Hasta 2026-09-22 ambos casos devolvian exactamente lo mismo (null) y el
+  // llamador no podia distinguirlos: firebase_db.js interpretaba la caida de la
+  // replica como "documento vacio" y el guardado de guia escribia el estado
+  // local ENCIMA del documento de Firestore sin fusionar nada.
+  //
+  // Medicion en produccion el 2026-09-22 contra el Web App de respaldo: con solo
+  // 3 peticiones simultaneas, 1 de 3 respondio 404 tras 34 s; con 6, dos 404; con
+  // 10, tres 404 y latencias de 10-32 s (el mismo documento en Firestore: 0,8 s y
+  // 100% de exito). Un salon entero abriendo guias supera ese umbral de sobra,
+  // asi que este caso no es teorico.
+  //
+  // `transport: true` marca ese fallo para que quien llame pueda reintentar
+  // contra Firestore en vez de dar por buena una lectura vacia.
   async function call(action, body) {
     var url = getBackupUrl();
-    if (!url) return { ok: false };
+    if (!url) return { ok: false, transport: true };
     var idToken = await getIdToken();
-    if (!idToken) return { ok: false };
+    if (!idToken) return { ok: false, transport: true };
 
     var payload = Object.assign({ action: action, idToken: idToken }, body || {});
     try {
@@ -70,16 +85,33 @@
         },
         DRIVE_DB_TIMEOUT_MS
       );
-      if (!res.ok) return { ok: false };
+      if (!res.ok) return { ok: false, transport: true, status: res.status };
       return await res.json();
     } catch (_) {
-      return { ok: false };
+      return { ok: false, transport: true };
     }
   }
 
-  async function get(collection, docId) {
+  // Lectura con el resultado DESGLOSADO:
+  //   { status: "found",       data }  -> la replica tiene el documento
+  //   { status: "missing",     data: null } -> la replica respondio y NO lo tiene
+  //   { status: "unavailable", data: null } -> la replica no respondio (no se sabe)
+  async function getDetailed(collection, docId) {
     var result = await call("get", { collection: collection, docId: docId });
-    return result && result.ok && result.found ? result.data : null;
+    if (!result || (result.ok !== true && result.transport === true)) {
+      return { status: "unavailable", data: null };
+    }
+    if (!result.ok) return { status: "missing", data: null };
+    return result.found
+      ? { status: "found", data: result.data }
+      : { status: "missing", data: null };
+  }
+
+  // Se conserva con el MISMO contrato de siempre (dato o null) para no cambiar
+  // el comportamiento de ningun llamador que no necesite el desglose.
+  async function get(collection, docId) {
+    var detailed = await getDetailed(collection, docId);
+    return detailed.status === "found" ? detailed.data : null;
   }
 
   async function set(collection, docId, data) {
@@ -130,6 +162,7 @@
   window.driveDb = {
     isEnabled: isEnabled,
     get: get,
+    getDetailed: getDetailed,
     set: set,
     updateField: updateField,
     deleteDoc: deleteDoc,

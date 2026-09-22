@@ -1475,8 +1475,13 @@
     guideTitle: "Guia 2 - Definir parametros y recursos de la red (RAP 01)",
     stateKey: "guia_interactiva_santa_barbara_10a_guia_02_redes_rap01_html",
     program: PROGRAM,
-    competencia: "220501121 - Definir los parametros y recursos de la red de acuerdo con normativa de telecomunicaciones.",
-    resultado: RAP_REDES,
+    // Correccion academica (2026-09-22): estas guias declaraban la competencia
+    // 220501121 ("Operar herramientas informaticas"), que no es la de Redes. Ese
+    // texto viajaba en el encabezado de los Word que el aprendiz entrega como
+    // evidencia. Se alinea con la competencia oficial de Redes, la misma que ya
+    // usan la Guia 4 de 10 SB, las de Kennedy y las Guias 9/10/11 de grado 11.
+    competencia: "280102129 - Evaluar red de acuerdo con procedimientos de telecomunicaciones y normativa tecnica.",
+    resultado: "RAP 01 - Definir los parametros y recursos de la red de acuerdo con normativa de telecomunicaciones.",
     // cloudFileNames (sep-2026): faltaba pese a que script_guia_redes.js SI le
     // da a esta guia un alias corto (STORAGE_FILE_ALIASES_REDES, sb_10a/10b_
     // redes.html != el pageFile crudo) -- el mismo gotcha que el checklist de
@@ -1559,7 +1564,12 @@
     guideTitle: "Guia 3 - Comprobar la conectividad de la red (RAP 02)",
     stateKey: "guia_interactiva_santa_barbara_10a_guia_03_redes_rap02_html",
     program: PROGRAM,
-    competencia: "220501121 - Definir los parametros y recursos de la red de acuerdo con normativa de telecomunicaciones.",
+    // Correccion academica (2026-09-22): estas guias declaraban la competencia
+    // 220501121 ("Operar herramientas informaticas"), que no es la de Redes. Ese
+    // texto viajaba en el encabezado de los Word que el aprendiz entrega como
+    // evidencia. Se alinea con la competencia oficial de Redes, la misma que ya
+    // usan la Guia 4 de 10 SB, las de Kennedy y las Guias 9/10/11 de grado 11.
+    competencia: "280102129 - Evaluar red de acuerdo con procedimientos de telecomunicaciones y normativa tecnica.",
     resultado: RAP_REDES_02,
     activities: [
       {

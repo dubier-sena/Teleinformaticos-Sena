@@ -833,6 +833,26 @@
     try { return await window.driveDb.get(collection, docId); } catch (_) { return null; }
   }
 
+  // Igual que driveFallbackGet pero conservando POR QUE no hay dato:
+  //   "found" | "missing" (la replica respondio y no lo tiene) | "unavailable"
+  //   (la replica no respondio: 404/5xx/timeout del Apps Script).
+  // Distinguir "missing" de "unavailable" es lo que evita que una caida de la
+  // replica se propague como "documento vacio" hasta el merge del guardado.
+  async function driveFallbackGetDetailed(collection, docId) {
+    if (!isDriveFallbackEnabled()) return { status: "unavailable", data: null };
+    try {
+      if (typeof window.driveDb.getDetailed === "function") {
+        var detailed = await window.driveDb.getDetailed(collection, docId);
+        if (detailed && typeof detailed.status === "string") return detailed;
+      }
+      // drive_db.js antiguo (sin getDetailed): se degrada al contrato viejo.
+      var data = await window.driveDb.get(collection, docId);
+      return data ? { status: "found", data: data } : { status: "missing", data: null };
+    } catch (_) {
+      return { status: "unavailable", data: null };
+    }
+  }
+
   async function driveFallbackSet(collection, docId, data) {
     if (!isDriveFallbackEnabled()) return false;
     try {
@@ -901,7 +921,28 @@
   async function fsGet(collection, docId, opts) {
     var skipDriveOn404 = Boolean(opts && opts.skipDriveOn404);
     if (!(await canCallFirestore(collection, false, opts))) {
-      return await driveFallbackGet(collection, docId);
+      // Ruteo Drive-primario (useDriveAsPrimary): la lectura va a la replica.
+      var replica = await driveFallbackGetDetailed(collection, docId);
+      if (replica.status !== "unavailable") return replica.data;
+      // La replica NO respondio. Devolver null aqui equivaldria a afirmar que
+      // el documento no existe, y esa afirmacion viaja hasta
+      // cloudSaveGuideDataImpl, que entonces guarda el estado local SIN
+      // fusionar y reemplaza en Firestore lo que este dispositivo no tenga.
+      // Antes de eso se consulta la fuente de verdad. `firestoreFirst` salta
+      // UNICAMENTE el ruteo a Drive: el resto de condiciones (configuracion,
+      // cooldown, sesion Firebase hidratada con uid) se siguen exigiendo, asi
+      // que si Firestore tampoco esta disponible se devuelve null como antes.
+      var directOpts = Object.assign({}, opts || {}, { firestoreFirst: true });
+      if (!(await canCallFirestore(collection, false, directOpts))) return null;
+      // Ya sabemos que la replica no responde: si Firestore contesta 404 no
+      // tiene sentido volver a preguntarle (seria otra espera de hasta 15 s).
+      skipDriveOn404 = true;
+      if (typeof console !== "undefined" && console.warn) {
+        console.warn(
+          "[firebase_db] La replica de Drive no respondio; se lee de Firestore para no confundir la caida con un documento vacio.",
+          collection, docId
+        );
+      }
     }
     try {
       var res = await fetchWithTimeout(
@@ -2016,7 +2057,25 @@
   async function cloudSaveGuideDataImpl(scopeKey, fileName, snapshot) {
     var maxAttempts = 4;
     for (var attempt = 1; attempt <= maxAttempts; attempt++) {
-      var existingDoc = await readGuideStateDoc(GUIDE_DATA_FALLBACK_PREFIX, scopeKey, fileName);
+      // La base de la fusion se lee de FIRESTORE, no de la replica de Drive.
+      // Tres razones, todas comprobadas el 2026-09-22:
+      //   1. El destino de esta escritura es Firestore. Fusionar contra una
+      //      replica que va por detras puede revivir valores viejos.
+      //   2. Solo el documento de Firestore trae `_updateTime`. Leyendo de la
+      //      replica, expectedUpdateTime era SIEMPRE null y la precondicion
+      //      optimista que protege de dos dispositivos escribiendo a la vez
+      //      (ver el comentario largo sobre withGuideStateWriteQueue) nunca
+      //      llegaba a activarse en produccion.
+      //   3. Cada intento hacia hasta 4 lecturas encadenadas al Apps Script,
+      //      medidas en 1,6-15 s cada una (un guardado real tardo 21 s), con
+      //      un 20-33% de respuestas 404 en cuanto hay 3-10 peticiones a la
+      //      vez. En Firestore la misma lectura son 0,8 s.
+      // Drive sigue siendo el failover normal de fsGet si Firestore falla, y
+      // las lecturas de HIDRATACION (alto volumen) siguen yendo a la replica:
+      // esto solo afecta a la lectura previa de un guardado.
+      var existingDoc = await readGuideStateDoc(
+        GUIDE_DATA_FALLBACK_PREFIX, scopeKey, fileName, { firestoreFirst: true }
+      );
       var existing = readSnapshotPayload(existingDoc);
       var safeSnapshot = existing
         ? mergeGuideDataSnapshotForSave(existing, snapshot || {})
