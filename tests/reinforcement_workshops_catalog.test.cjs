@@ -2,6 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
+const { materialIsAvailable, whereIsMaterial } = require("./_material_apoyo_helper.cjs");
 const vm = require("node:vm");
 
 const root = path.resolve(__dirname, "..");
@@ -50,10 +51,16 @@ test("cada entrada del catálogo de talleres apunta a una familia real y tiene l
   }
 });
 
-test("el PDF de cada taller existe de verdad en el repo (evita enlaces rotos)", () => {
+test("el PDF de cada taller se puede abrir de verdad (evita enlaces rotos)", () => {
+  // Migracion a Drive (2026-09-21): el PDF ya no vive en el repositorio, lo
+  // sirve Google Drive. El catalogo conserva la ruta original como clave y
+  // MaterialApoyoLinks la traduce al cargar la pagina, asi que la comprobacion
+  // util es que el material este disponible en alguno de los dos sitios.
   const catalog = loadCatalog();
   for (const [key, entry] of Object.entries(catalog)) {
-    const filePath = path.join(root, entry.fileUrl);
-    assert.ok(fs.existsSync(filePath), `"${key}": el archivo referenciado en fileUrl no existe: ${entry.fileUrl}`);
+    assert.ok(
+      materialIsAvailable(entry.fileUrl),
+      `"${key}": el material de fileUrl no esta ni en el repo ni en el catalogo de Drive: ${entry.fileUrl} (${whereIsMaterial(entry.fileUrl)})`
+    );
   }
 });

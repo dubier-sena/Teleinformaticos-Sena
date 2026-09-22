@@ -1,0 +1,391 @@
+{
+  "_comentario": "Catalogo central de material de apoyo migrado a Google Drive (auditoria 2026-09-21). Clave: ruta del archivo tal como vivia en el repositorio. Valor: id del archivo en Drive y su ubicacion dentro de Portal_SENA_Material_Apoyo. Varias rutas del repositorio pueden compartir el mismo id: un recurso duplicado en varias guias tiene UNA sola copia en Drive.",
+  "_cuenta": "dubierportatil@gmail.com",
+  "_carpeta_raiz": "Portal_SENA_Material_Apoyo",
+  "_carpeta_raiz_id": "1kXH2HQYJPAVULopdkHzz9RiRLIii65aH",
+  "_generado": "2026-09-21",
+  "_recursos_unicos": 78,
+  "_rutas_mapeadas": 95,
+  "archivos": {
+    "assets/materiales/comun/Teams_Quick_Start_Guide.pdf": {
+      "id": "1_EkFvOu7iFtfdj5ctac6Ih2UGRLNue07",
+      "drive": "08_Comun/Teams_Quick_Start_Guide.pdf"
+    },
+    "assets/materiales/comun/VirtualBox_UserManual_7.2.6.pdf": {
+      "id": "1xUmt6F-bcfWcOKWL0WhepvBw19eLrreg",
+      "drive": "08_Comun/VirtualBox_UserManual_7.2.6.pdf"
+    },
+    "assets/materiales/etapa-productiva/1. Ficha de inscripcion.docx": {
+      "id": "1_Mu89SxT0QORhi9lm-DghRiFpCCvrgvu",
+      "drive": "07_Etapa_Productiva/1. Ficha de inscripcion.docx"
+    },
+    "assets/materiales/etapa-productiva/2. Formato Proyecto Productivo.docx": {
+      "id": "1qPLmwbYXD59u1PdcfuxQ55iTP1FNzu-N",
+      "drive": "07_Etapa_Productiva/2. Formato Proyecto Productivo.docx"
+    },
+    "assets/materiales/etapa-productiva/2.1. Anexo financiero.xlsx": {
+      "id": "1YN5eJNU3ewQ8EHEQbfKKT-C9WWMngT2c",
+      "drive": "07_Etapa_Productiva/2.1. Anexo financiero.xlsx"
+    },
+    "assets/materiales/etapa-productiva/Diseno Curricular Sistemas Teleinformaticos.pdf": {
+      "id": "1x4JcMFc1OyXeW1xBLPW5KWHxCelGLPTJ",
+      "drive": "08_Comun/Diseno Curricular Sistemas Teleinformaticos.pdf"
+    },
+    "assets/materiales/etapa-productiva/GFPI-F-147 Formato Bitacora Seguimiento Etapa Productiva.xlsx": {
+      "id": "1KZ9f9gxlNh8OuPfCZQBME9Qf1fyxcg-3",
+      "drive": "07_Etapa_Productiva/GFPI-F-147 Formato Bitacora Seguimiento Etapa Productiva.xlsx"
+    },
+    "assets/materiales/guia2/Bitacora_Para_Caso.docx": {
+      "id": "1eUUi4jaKwfhL14auSHG5Hg771WuS4lyG",
+      "drive": "02_Guia2_Herramientas/Bitacora_Para_Caso.docx"
+    },
+    "assets/materiales/guia2/CISA_Phishing_Guidance.pdf": {
+      "id": "1pivn6yp42wKJoU_83gbthFNSFGlAqQpf",
+      "drive": "08_Comun/CISA_Phishing_Guidance.pdf"
+    },
+    "assets/materiales/guia2/Cybersecurity_Awareness_Slides.pdf": {
+      "id": "13cJgXNXGoFTtkyX7BsFKvk3HYtxjE0sV",
+      "drive": "08_Comun/Cybersecurity_Awareness_Slides.pdf"
+    },
+    "assets/materiales/guia2/FHS_3.0_Filesystem_Hierarchy_Standard.pdf": {
+      "id": "1kleDPOucM6plAdVJ17hlGSteFvGhIRwF",
+      "drive": "08_Comun/FHS_3.0_Filesystem_Hierarchy_Standard.pdf"
+    },
+    "assets/materiales/guia2/GFPI-F-165FormatoSeleccionModificacionAlternativaEtapaProductiva.xlsx": {
+      "id": "1fXFvb4l3kkyB9q2lO4hQuQRlTeO6hA1L",
+      "drive": "08_Comun/GFPI-F-165FormatoSeleccionModificacionAlternativaEtapaProductiva.xlsx"
+    },
+    "assets/materiales/guia2/Guia_2_OperarHerramientas.docx": {
+      "id": "1dm6wBLDwqnvCYDzWx4eSc8QFsEOJFqLV",
+      "drive": "02_Guia2_Herramientas/Guia_2_OperarHerramientas.docx"
+    },
+    "assets/materiales/guia2/Guia_rapida_normas_IEEE.pdf": {
+      "id": "1A8ufITQCRI_mVAns2ApkqD1aNUq3qOCX",
+      "drive": "08_Comun/Guia_rapida_normas_IEEE.pdf"
+    },
+    "assets/materiales/guia2/IEEE_Editorial_Style_Manual.pdf": {
+      "id": "1eb1j5MlztHZoyHYFM9KzdfPdzyd-YmZo",
+      "drive": "08_Comun/IEEE_Editorial_Style_Manual.pdf"
+    },
+    "assets/materiales/guia2/Linux_Boot_Process_Presentation_Notes.pdf": {
+      "id": "1RRnudwcoWIUhh-x_77IdVEz3e4FY7qpH",
+      "drive": "08_Comun/Linux_Boot_Process_Presentation_Notes.pdf"
+    },
+    "assets/materiales/guia2/MatrizDiagnosticoDigital.docx": {
+      "id": "1UhWyolEHl7alhBCssVs4XUToy17viKN5",
+      "drive": "02_Guia2_Herramientas/MatrizDiagnosticoDigital.docx"
+    },
+    "assets/materiales/guia2/NIST_SP800-83r1_Malware_Incident.pdf": {
+      "id": "1QM9WGhdqLp62vsBBaQtE7HQzqkd-BZBx",
+      "drive": "08_Comun/NIST_SP800-83r1_Malware_Incident.pdf"
+    },
+    "assets/materiales/guia2/SharePoint_Quick_Start_Guide.pdf": {
+      "id": "1mEwWD3O8ZX67hKnXIrOKft4rMlhM810y",
+      "drive": "08_Comun/SharePoint_Quick_Start_Guide.pdf"
+    },
+    "assets/materiales/guia2/Taller_1_Guia2.docx": {
+      "id": "1Z8AZCHIM-xDR2Be8QPHfj-bLfrNTsw6x",
+      "drive": "08_Comun/Taller_1_Guia2.docx"
+    },
+    "assets/materiales/guia2/Virtualization_Lecture_Slides.ppt": {
+      "id": "1bvmDORcx7PsoOgxu5_hhwqqObmz_ES3e",
+      "drive": "08_Comun/Virtualization_Lecture_Slides.ppt"
+    },
+    "assets/materiales/guia2/taller 1_guia5.docx": {
+      "id": "1Z8AZCHIM-xDR2Be8QPHfj-bLfrNTsw6x",
+      "drive": "08_Comun/Taller_1_Guia2.docx"
+    },
+    "assets/materiales/guia4ciber/12_consejos_copias_borrado_seguro.pdf": {
+      "id": "1fzGDoRA3g2SR1wWCzsAs3AI3hECyFACT",
+      "drive": "08_Comun/12_consejos_copias_borrado_seguro.pdf"
+    },
+    "assets/materiales/guia4ciber/CONPES_3995_2020.pdf": {
+      "id": "1-5GvYQ8ro1QQS0H8w0tJ_GO4Z-PHeTBM",
+      "drive": "05_Guia4_Ciberseguridad/CONPES_3995_2020.pdf"
+    },
+    "assets/materiales/guia4ciber/Estrategia_Nacional_Seguridad_Digital_Colombia_2025_2027.pdf": {
+      "id": "1UTPame2rSg4PuYK8x_pfXMuhGs8Q17FS",
+      "drive": "05_Guia4_Ciberseguridad/Estrategia_Nacional_Seguridad_Digital_Colombia_2025_2027.pdf"
+    },
+    "assets/materiales/guia4ciber/INCIBE_Proteccion_de_la_informacion_mirror.pdf": {
+      "id": "1ftlVj47NBMjAyN0zfO678AXqhW6TnFQR",
+      "drive": "08_Comun/INCIBE_Proteccion_de_la_informacion_mirror.pdf"
+    },
+    "assets/materiales/guia4ciber/MinTIC_Guia_Gestion_Clasificacion_Activos_2016.pdf": {
+      "id": "1GaS3YDytBgVk5uOcDWqxfkjXI4TP9tOM",
+      "drive": "05_Guia4_Ciberseguridad/MinTIC_Guia_Gestion_Clasificacion_Activos_2016.pdf"
+    },
+    "assets/materiales/guia4ciber/MinTIC_Guia_Gestion_Clasificacion_Incidentes_G21.pdf": {
+      "id": "1pEs7mZVv7XXap-27CY2lKJ_u_WlVG35X",
+      "drive": "08_Comun/MinTIC_Guia_Gestion_Clasificacion_Incidentes_G21.pdf"
+    },
+    "assets/materiales/guia4ciber/MinTIC_Guia_Gestion_Riesgos_G7.pdf": {
+      "id": "1-nezny90goBksEK7hzvfojGXr3mCY3gB",
+      "drive": "05_Guia4_Ciberseguridad/MinTIC_Guia_Gestion_Riesgos_G7.pdf"
+    },
+    "assets/materiales/guia4ciber/MinTIC_Guia_Indicadores_Gestion_Seguridad_G9.pdf": {
+      "id": "1ZHWZasx_DpUriqApm-dgwWRmdAv_Yom_",
+      "drive": "05_Guia4_Ciberseguridad/MinTIC_Guia_Indicadores_Gestion_Seguridad_G9.pdf"
+    },
+    "assets/materiales/guia4ciber/MinTIC_Guia_Seguridad_en_la_Nube_G12.pdf": {
+      "id": "19CU1dbWkncFNky-2vS5Sw3hAVpvyJKt9",
+      "drive": "05_Guia4_Ciberseguridad/MinTIC_Guia_Seguridad_en_la_Nube_G12.pdf"
+    },
+    "assets/materiales/guia4ciber/MinTIC_Lineamientos_Inventario_Clasificacion_Activos_2025.pdf": {
+      "id": "1maZOcog-uNE6yBhdD0ccNwN9p0v3EiPb",
+      "drive": "05_Guia4_Ciberseguridad/MinTIC_Lineamientos_Inventario_Clasificacion_Activos_2025.pdf"
+    },
+    "assets/materiales/guia4ciber/MinTIC_Lineamientos_Modelo_Gestion_Riesgo_SI_2025.pdf": {
+      "id": "1z_z6Q7QuXvLKxLc2Yg_C_5DIBOBMvwrW",
+      "drive": "05_Guia4_Ciberseguridad/MinTIC_Lineamientos_Modelo_Gestion_Riesgo_SI_2025.pdf"
+    },
+    "assets/materiales/guia4ciber/MinTIC_Modelo_Seguridad_Privacidad_Informacion_MSPI.pdf": {
+      "id": "1l-rQPK-S8p6vGinxB4VM_o0FSDnfmvsL",
+      "drive": "05_Guia4_Ciberseguridad/MinTIC_Modelo_Seguridad_Privacidad_Informacion_MSPI.pdf"
+    },
+    "assets/materiales/guia4ciber/NIST_CSF_2_0_es.pdf": {
+      "id": "16HMZtx-ib35oAGk6KfLFLWKq0ZXgfo_P",
+      "drive": "05_Guia4_Ciberseguridad/NIST_CSF_2_0_es.pdf"
+    },
+    "assets/materiales/guia5/Bitacora_Para_Caso.docx": {
+      "id": "1WlNeXoOqrNgNJOE85qLJmCM82eN_MCeP",
+      "drive": "03_Guia5_Herramientas/Bitacora_Para_Caso.docx"
+    },
+    "assets/materiales/guia5/CISA_Phishing_Guidance.pdf": {
+      "id": "1pivn6yp42wKJoU_83gbthFNSFGlAqQpf",
+      "drive": "08_Comun/CISA_Phishing_Guidance.pdf"
+    },
+    "assets/materiales/guia5/Cybersecurity_Awareness_Slides.pdf": {
+      "id": "13cJgXNXGoFTtkyX7BsFKvk3HYtxjE0sV",
+      "drive": "08_Comun/Cybersecurity_Awareness_Slides.pdf"
+    },
+    "assets/materiales/guia5/FHS_3.0_Filesystem_Hierarchy_Standard.pdf": {
+      "id": "1kleDPOucM6plAdVJ17hlGSteFvGhIRwF",
+      "drive": "08_Comun/FHS_3.0_Filesystem_Hierarchy_Standard.pdf"
+    },
+    "assets/materiales/guia5/GFPI-F-165FormatoSeleccionModificacionAlternativaEtapaProductiva.xlsx": {
+      "id": "1fXFvb4l3kkyB9q2lO4hQuQRlTeO6hA1L",
+      "drive": "08_Comun/GFPI-F-165FormatoSeleccionModificacionAlternativaEtapaProductiva.xlsx"
+    },
+    "assets/materiales/guia5/Guia_rapida_normas_IEEE.pdf": {
+      "id": "1A8ufITQCRI_mVAns2ApkqD1aNUq3qOCX",
+      "drive": "08_Comun/Guia_rapida_normas_IEEE.pdf"
+    },
+    "assets/materiales/guia5/IEEE_Editorial_Style_Manual.pdf": {
+      "id": "1eb1j5MlztHZoyHYFM9KzdfPdzyd-YmZo",
+      "drive": "08_Comun/IEEE_Editorial_Style_Manual.pdf"
+    },
+    "assets/materiales/guia5/Linux_Boot_Process_Presentation_Notes.pdf": {
+      "id": "1RRnudwcoWIUhh-x_77IdVEz3e4FY7qpH",
+      "drive": "08_Comun/Linux_Boot_Process_Presentation_Notes.pdf"
+    },
+    "assets/materiales/guia5/NIST_SP800-83r1_Malware_Incident.pdf": {
+      "id": "1QM9WGhdqLp62vsBBaQtE7HQzqkd-BZBx",
+      "drive": "08_Comun/NIST_SP800-83r1_Malware_Incident.pdf"
+    },
+    "assets/materiales/guia5/SharePoint_Quick_Start_Guide.pdf": {
+      "id": "1mEwWD3O8ZX67hKnXIrOKft4rMlhM810y",
+      "drive": "08_Comun/SharePoint_Quick_Start_Guide.pdf"
+    },
+    "assets/materiales/guia5/Virtualization_Lecture_Slides.ppt": {
+      "id": "1bvmDORcx7PsoOgxu5_hhwqqObmz_ES3e",
+      "drive": "08_Comun/Virtualization_Lecture_Slides.ppt"
+    },
+    "assets/materiales/guia5/taller 1_guia5.docx": {
+      "id": "1Z8AZCHIM-xDR2Be8QPHfj-bLfrNTsw6x",
+      "drive": "08_Comun/Taller_1_Guia2.docx"
+    },
+    "assets/materiales/guia6/Conceptos Seguridad.pdf": {
+      "id": "1YFAa-y9gfN51qkCU4lb-DUg95RNJ5EIE",
+      "drive": "04_Guia6_Planificar/Conceptos Seguridad.pdf"
+    },
+    "assets/materiales/guia6/CrystalDiskInfo9_8_0.zip": {
+      "id": "1PVupEmRyK0rBUM7OClAnHTczqsAPjouI",
+      "drive": "04_Guia6_Planificar/CrystalDiskInfo9_8_0.zip"
+    },
+    "assets/materiales/guia6/GFPI-F-165FormatoSeleccionModificacionAlternativaEtapaProductiva.xlsx": {
+      "id": "1fXFvb4l3kkyB9q2lO4hQuQRlTeO6hA1L",
+      "drive": "08_Comun/GFPI-F-165FormatoSeleccionModificacionAlternativaEtapaProductiva.xlsx"
+    },
+    "assets/materiales/guia6/Guia-Accountability - Habeas Data.pdf": {
+      "id": "10ImtoEIs-_CJp61fgbxto1lutfHDh06w",
+      "drive": "04_Guia6_Planificar/Guia-Accountability - Habeas Data.pdf"
+    },
+    "assets/materiales/guia6/INCIBE_Copias_borrado_seguro_12_consejos.pdf": {
+      "id": "1fzGDoRA3g2SR1wWCzsAs3AI3hECyFACT",
+      "drive": "08_Comun/12_consejos_copias_borrado_seguro.pdf"
+    },
+    "assets/materiales/guia6/INCIBE_Proteccion_de_la_informacion_mirror_uv.pdf": {
+      "id": "1ftlVj47NBMjAyN0zfO678AXqhW6TnFQR",
+      "drive": "08_Comun/INCIBE_Proteccion_de_la_informacion_mirror.pdf"
+    },
+    "assets/materiales/guia6/INCIBE_guia_ciberseguridad_para_todos.pdf": {
+      "id": "1bFAPvuXTcmhApVjXWbBZSWTVmWW0vvmE",
+      "drive": "04_Guia6_Planificar/INCIBE_guia_ciberseguridad_para_todos.pdf"
+    },
+    "assets/materiales/guia6/ITE7_Chp13 - Seguridad.pdf": {
+      "id": "1YIHAxlTUt0MxM32Ye9C_hvDaJG9_FY4j",
+      "drive": "04_Guia6_Planificar/ITE7_Chp13 - Seguridad.pdf"
+    },
+    "assets/materiales/guia6/Ley_1581_de_2012.pdf": {
+      "id": "1_Pj7ePC8xxho5332knfu-a_ixbMmy9Wv",
+      "drive": "04_Guia6_Planificar/Ley_1581_de_2012.pdf"
+    },
+    "assets/materiales/guia6/MinEducacion_Guia_Implementacion_Politica_Seguridad_Digital.pdf": {
+      "id": "1HE_h2iwaBAA4Cfv2STy8cjRiO7Hu-oAo",
+      "drive": "04_Guia6_Planificar/MinEducacion_Guia_Implementacion_Politica_Seguridad_Digital.pdf"
+    },
+    "assets/materiales/guia6/MinTIC_Guia_Gestion_Clasificacion_Incidentes.pdf": {
+      "id": "1pEs7mZVv7XXap-27CY2lKJ_u_WlVG35X",
+      "drive": "08_Comun/MinTIC_Guia_Gestion_Clasificacion_Incidentes_G21.pdf"
+    },
+    "assets/materiales/guia6/NTC-ISO-IEC 27001_2013.pdf": {
+      "id": "1o8a8oczFwWyu4VKx7-o4YQ4C0X0K4meh",
+      "drive": "04_Guia6_Planificar/NTC-ISO-IEC 27001_2013.pdf"
+    },
+    "assets/materiales/guia6/PRESENTACION LEY 1581 de 2012.pptx": {
+      "id": "1CCF2Jp0DCb7-_QX63uGRyp9jE5iezqMz",
+      "drive": "04_Guia6_Planificar/PRESENTACION LEY 1581 de 2012.pptx"
+    },
+    "assets/materiales/guia6/guia-copias-de-seguridad.pdf": {
+      "id": "1zKx7OAtpPoBxvbaICA-0clmS3dYLs5kv",
+      "drive": "04_Guia6_Planificar/guia-copias-de-seguridad.pdf"
+    },
+    "assets/materiales/guia6/materiales_apoyo_guia6_PDFs_y_enlaces.zip": {
+      "id": "1kbWCKAy3hhK9W2s7zAKtE6ZJizl8MZCP",
+      "drive": "04_Guia6_Planificar/materiales_apoyo_guia6_PDFs_y_enlaces.zip"
+    },
+    "assets/materiales/guia6mant/1_Actividad_El_Detective.docx": {
+      "id": "1GoTJB80rTqauaZ0T9qD-ugd-cxauBul5",
+      "drive": "06_Guia6_Mantener_Equipos/1_Actividad_El_Detective.docx"
+    },
+    "assets/materiales/guia6mant/Anexo_Reporte_Ejemplo_HWMonitor.pdf": {
+      "id": "1f0_5AcvZFduivSbuYl9qpq-3SQC82xJ8",
+      "drive": "06_Guia6_Mantener_Equipos/Anexo_Reporte_Ejemplo_HWMonitor.pdf"
+    },
+    "assets/materiales/guia6mant/Arquitectura_Laptops.pdf": {
+      "id": "11RQ1CJssqjYPU2p1mgHHTCydRVqQoHNG",
+      "drive": "06_Guia6_Mantener_Equipos/Arquitectura_Laptops.pdf"
+    },
+    "assets/materiales/guia6mant/Arquitectura_PC.pdf": {
+      "id": "1cLluaxO1aNeeKNAoRx7TM-mnsUJD7dpf",
+      "drive": "06_Guia6_Mantener_Equipos/Arquitectura_PC.pdf"
+    },
+    "assets/materiales/guia6mant/Comunidad_Emagister_Mantenimiento_Preventivo.pdf": {
+      "id": "1md1D1VQGL-Muwa8P7pl7XvrQYy4PWnxv",
+      "drive": "06_Guia6_Mantener_Equipos/Comunidad_Emagister_Mantenimiento_Preventivo.pdf"
+    },
+    "assets/materiales/guia6mant/Conexion_M2_y_SATA.docx": {
+      "id": "1GQNhxVwbkM4rE_P--OGeMhL5WMg-f2qd",
+      "drive": "06_Guia6_Mantener_Equipos/Conexion_M2_y_SATA.docx"
+    },
+    "assets/materiales/guia6mant/Decreto_284_de_2018.pdf": {
+      "id": "1UaD2t_95VqiOnG7iES7yZUoRieUcyTYR",
+      "drive": "06_Guia6_Mantener_Equipos/Decreto_284_de_2018.pdf"
+    },
+    "assets/materiales/guia6mant/Formato_Inspeccion_Externa_Equipos.pdf": {
+      "id": "1OUhbXb9m_BApy28GFzokRTJesUOazd2x",
+      "drive": "06_Guia6_Mantener_Equipos/Formato_Inspeccion_Externa_Equipos.pdf"
+    },
+    "assets/materiales/guia6mant/GA-F-05-HV-de-Equipos-de-Computo.pdf": {
+      "id": "1W8Ob3_n-c3xdXFPlC0H2EUQVMb_G-xU6",
+      "drive": "06_Guia6_Mantener_Equipos/GA-F-05-HV-de-Equipos-de-Computo.pdf"
+    },
+    "assets/materiales/guia6mant/GT-FO-01-FORMATO-HOJAS-DE-VIDA-EQUIPOS-V03.xlsx": {
+      "id": "1G4uFoJB3w6MhkPYoxxxaXQI8W64vatgg",
+      "drive": "06_Guia6_Mantener_Equipos/GT-FO-01-FORMATO-HOJAS-DE-VIDA-EQUIPOS-V03.xlsx"
+    },
+    "assets/materiales/guia6mant/HWMonitor_Manual_Usuario.pdf": {
+      "id": "1QCMarvLS9xULewvB5T1duSviOMckEwCF",
+      "drive": "06_Guia6_Mantener_Equipos/HWMonitor_Manual_Usuario.pdf"
+    },
+    "assets/materiales/guia6mant/Manual_Mantenimiento_del_Computador.pdf": {
+      "id": "1cbxeAmh1SaGqJeJfXFAjjKGwtJwdVae7",
+      "drive": "06_Guia6_Mantener_Equipos/Manual_Mantenimiento_del_Computador.pdf"
+    },
+    "assets/materiales/guia6mant/Modulo_2_Referencia_Adicional.pdf": {
+      "id": "1H-Dohco3HdpLXcLDNBZwogKWiKMEMj55",
+      "drive": "06_Guia6_Mantener_Equipos/Modulo_2_Referencia_Adicional.pdf"
+    },
+    "assets/materiales/guia6mant/Plan_de_Mantenimiento_Ejemplo.pdf": {
+      "id": "13zh14499OX0yLg0pI33zLKf1_Y9HDoTX",
+      "drive": "06_Guia6_Mantener_Equipos/Plan_de_Mantenimiento_Ejemplo.pdf"
+    },
+    "assets/materiales/guia6mant/Programa_Mantenimiento_Ejemplo.pdf": {
+      "id": "19vXYiSU0b1Y4aVq30WCdKvbHuUoRfsR3",
+      "drive": "06_Guia6_Mantener_Equipos/Programa_Mantenimiento_Ejemplo.pdf"
+    },
+    "assets/materiales/guia6mant/f-ga-146-ficha-tecnica-equipos-de-computo.xlsx": {
+      "id": "1cTgMO1uBR1emeYEFGt-8kMzdPtsgYnTz",
+      "drive": "06_Guia6_Mantener_Equipos/f-ga-146-ficha-tecnica-equipos-de-computo.xlsx"
+    },
+    "assets/materiales/guia6mant/f-gr-02-hoja-de-vida-equipos-tecnologicos.pdf": {
+      "id": "1Y1S73dUPAr3wAGaENUb23RnhkvGUyAf0",
+      "drive": "06_Guia6_Mantener_Equipos/f-gr-02-hoja-de-vida-equipos-tecnologicos.pdf"
+    },
+    "assets/materiales/guia6mant/resolucion-1297-de-2010.pdf": {
+      "id": "19bJJ1vwfZZIns5cCyAPbzBChkolPqW4d",
+      "drive": "06_Guia6_Mantener_Equipos/resolucion-1297-de-2010.pdf"
+    },
+    "assets/materiales/induccion/3. Formato EstiloAprendizaje.xls": {
+      "id": "1zVlt3ARjeo3ZHXzpQi-Tsz4JSnSuE9_u",
+      "drive": "01_Induccion/3. Formato EstiloAprendizaje.xls"
+    },
+    "assets/materiales/induccion/3.1PROGRAMA - PROYECTO (1).pptx": {
+      "id": "1_vn9piBY7WdsEoLVL4DDQkQTUlraGzDY",
+      "drive": "01_Induccion/3.1PROGRAMA - PROYECTO (1).pptx"
+    },
+    "assets/materiales/induccion/Acuerdo_009_2024_Reglamento_Aprendiz_SENA.pdf": {
+      "id": "1CT7Kk8ay9n-detH0zoVRMWaTiaI0ie-9",
+      "drive": "01_Induccion/Acuerdo_009_2024_Reglamento_Aprendiz_SENA.pdf"
+    },
+    "assets/materiales/induccion/Dia3_PEI_y_Formacion_por_Proyectos.pptx": {
+      "id": "1LSNCTaEOUzZGnxWshIzVSKmE5qkb7oN9",
+      "drive": "01_Induccion/Dia3_PEI_y_Formacion_por_Proyectos.pptx"
+    },
+    "assets/materiales/induccion/Diseno_Curricular_Sistemas_Teleinformaticos.pdf": {
+      "id": "1x4JcMFc1OyXeW1xBLPW5KWHxCelGLPTJ",
+      "drive": "08_Comun/Diseno Curricular Sistemas Teleinformaticos.pdf"
+    },
+    "assets/materiales/induccion/Instructivo_APA_Biblioteca_SENA.pdf": {
+      "id": "1wRuDTKTs6bybQSjKveGmLYvR7af5HA4e",
+      "drive": "01_Induccion/Instructivo_APA_Biblioteca_SENA.pdf"
+    },
+    "assets/materiales/induccion/Instructivo_OPAC_Biblioteca_SENA.pdf": {
+      "id": "1lK5heOgBSnTzN--VsIJKvE5QO8v3pytM",
+      "drive": "01_Induccion/Instructivo_OPAC_Biblioteca_SENA.pdf"
+    },
+    "assets/materiales/induccion/Manual_Formacion_Virtual_SOFIA.pdf": {
+      "id": "1-HNcdMnY7jpfFiVmFMN51kCSl9XCBaAu",
+      "drive": "01_Induccion/Manual_Formacion_Virtual_SOFIA.pdf"
+    },
+    "assets/materiales/induccion/PROYECTO EDUCATIVO INSTITUCIONAL SENA.pdf": {
+      "id": "1wGdfWA66TVIb2-XB3nqcuN652qcisAYK",
+      "drive": "01_Induccion/PROYECTO EDUCATIVO INSTITUCIONAL SENA.pdf"
+    },
+    "assets/materiales/induccion/Proyecto_Acuerdo_Reglamento_Aprendiz_Anexos.pdf": {
+      "id": "1u9w0erYn2UF9xlnDLTBerLqF5AtKSAK9",
+      "drive": "01_Induccion/Proyecto_Acuerdo_Reglamento_Aprendiz_Anexos.pdf"
+    },
+    "assets/materiales/induccion/T1_Analisis_Logo_Simbolos_SENA.docx": {
+      "id": "1nY6-AA5eJm47XJ3D6pQ_zUQNvZwna57Y",
+      "drive": "01_Induccion/T1_Analisis_Logo_Simbolos_SENA.docx"
+    },
+    "assets/materiales/induccion/T2_Uso_Plataformas_Portafolio.docx": {
+      "id": "1WiHyfb0NdmepYzLB9FQwkol3osxN7P_X",
+      "drive": "01_Induccion/T2_Uso_Plataformas_Portafolio.docx"
+    },
+    "assets/materiales/induccion/arbol-vida.jpeg": {
+      "id": "1SJ1Xtsd0Tsdn2o6rabSN-U0SunVSN8rO",
+      "drive": "01_Induccion/arbol-vida.jpeg"
+    },
+    "assets/materiales/induccion/infografia EJEMPLO.pdf": {
+      "id": "1AbiVNYj97xbi8MUX1-TlF8FvTp3zNZOx",
+      "drive": "01_Induccion/infografia EJEMPLO.pdf"
+    },
+    "assets/materiales/talleres_refuerzo/induccion/TALLER_REFUERZO_Guia_Induccion.pdf": {
+      "id": "1Ydk5CoR4H9WWPp5_dgOEBGKuveY3R5KZ",
+      "drive": "09_Talleres_Refuerzo/TALLER_REFUERZO_Guia_Induccion.pdf"
+    }
+  }
+}

@@ -541,7 +541,13 @@ const supportTemplates = [
 const supportDocuments = [
   {
     title: "Manual de usuario de VirtualBox 7.2.6",
-    file: "VirtualBox_UserManual_7.2.6.pdf",
+    // Este href NO es un archivo local: desde la migracion del 21/09/2026 el
+    // documento lo sirve Google Drive. La ruta se conserva porque es la CLAVE
+    // con la que buildMaterialHref() lo busca en data/material_apoyo_drive.js
+    // (el mapa esta indexado por la ruta que el archivo tenia en el repositorio).
+    // Se usa href en vez de file porque el documento se comparte con otras guias
+    // y nunca estuvo en la carpeta base de esta.
+    href: "assets/materiales/comun/VirtualBox_UserManual_7.2.6.pdf",
     type: "PDF local",
     description:
       "Guia oficial para crear maquinas virtuales, configurar hardware y gestionar discos e imagenes ISO.",
@@ -604,7 +610,13 @@ const supportDocuments = [
   },
   {
     title: "Guia rapida de Microsoft Teams",
-    file: "Teams_Quick_Start_Guide.pdf",
+    // Este href NO es un archivo local: desde la migracion del 21/09/2026 el
+    // documento lo sirve Google Drive. La ruta se conserva porque es la CLAVE
+    // con la que buildMaterialHref() lo busca en data/material_apoyo_drive.js
+    // (el mapa esta indexado por la ruta que el archivo tenia en el repositorio).
+    // Se usa href en vez de file porque el documento se comparte con otras guias
+    // y nunca estuvo en la carpeta base de esta.
+    href: "assets/materiales/comun/Teams_Quick_Start_Guide.pdf",
     type: "PDF local",
     description:
       "Apoyo para colaboracion, reuniones y comunicacion del equipo durante el desarrollo de evidencias.",
@@ -5079,11 +5091,31 @@ function renderMaterialCard(item) {
 }
 
 function buildMaterialHref(item) {
-  if (item.href) {
+  // Un href absoluto (Drive, web externa) manda siempre: no es material del
+  // repositorio. Un href RELATIVO si es material local -- se usa cuando el
+  // archivo no vive en la carpeta base de esta guia (p. ej. assets/materiales/
+  // comun/) -- y por tanto tambien puede migrar a Drive.
+  const isExternal = item.href && /^[a-z]+:\/\//i.test(item.href);
+  if (isExternal) {
     return item.href;
   }
 
-  return encodeURI(`${SUPPORT_BASE_PATH}${item.file}`);
+  const localPath = item.href || `${SUPPORT_BASE_PATH}${item.file}`;
+
+  // Migracion de almacenamiento (2026-09-21): si el catalogo central de Drive
+  // esta activo y conoce esta ruta, el material se sirve desde Drive en vez de
+  // desde el repositorio. Con enabled:false -- el estado actual -- se devuelve
+  // siempre la ruta local, de modo que el comportamiento no cambia.
+  // Ver data/material_apoyo_drive.js.
+  const driveCatalog = window.__MATERIAL_APOYO_DRIVE__;
+  if (driveCatalog && driveCatalog.enabled && driveCatalog.files) {
+    const fileId = driveCatalog.files[localPath];
+    if (fileId) {
+      return `https://drive.google.com/file/d/${fileId}/view?usp=sharing`;
+    }
+  }
+
+  return encodeURI(localPath);
 }
 
 const guide5ExportConfig = {

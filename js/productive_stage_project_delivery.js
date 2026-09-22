@@ -765,6 +765,14 @@
     });
   }
 
+  // Migracion a Google Drive (2026-09-21): las rutas de PROJECT_DOCUMENTS se
+  // conservan como CLAVE del catalogo central (data/material_apoyo_drive.js) y
+  // se traducen aqui, ya completada la lista (hay documentos que se agregan con
+  // push mas arriba). Si el catalogo no esta cargado, quedan intactas.
+  if (window.MaterialApoyoLinks) {
+    window.MaterialApoyoLinks.rewriteDataUrls(PROJECT_DOCUMENTS);
+  }
+
   window.productiveStageProjectDelivery = {
     render: render,
     renderProjectResources: renderProjectResources,

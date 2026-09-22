@@ -9,6 +9,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
+const { materialIsAvailable, driveCatalog } = require("./_material_apoyo_helper.cjs");
 const vm = require("node:vm");
 
 const ROOT = path.resolve(__dirname, "..");
@@ -180,16 +181,29 @@ test("Guia 4 ciber: todo el material de apoyo enlazado existe en assets/material
     (m) => m[1]
   );
   assert.ok(linked.length >= 13, `el partial deberia enlazar al menos 13 PDF del material (hay ${linked.length})`);
+  // Migracion a Drive (2026-09-21): estos PDF ya no viven en el repositorio, los
+  // sirve Google Drive. "Existe de verdad" pasa a significar: esta en el repo O
+  // esta en el catalogo central. El enlace del partial conserva la ruta original
+  // porque es la clave con la que MaterialApoyoLinks lo traduce.
   linked.forEach((rel) => {
-    assert.ok(fs.existsSync(path.join(ROOT, rel)), `enlace roto: ${rel} no existe en el repo`);
+    assert.ok(
+      materialIsAvailable(rel),
+      `enlace roto: ${rel} no esta ni en el repo ni en el catalogo de Drive`
+    );
   });
-  const onDisk = fs.readdirSync(path.join(ROOT, MATERIALS_DIR)).filter((f) => f.toLowerCase().endsWith(".pdf"));
+  // Y al reves: todo PDF de guia4ciber que este en Drive debe estar enlazado en
+  // la guia, para que no quede material subido que el aprendiz nunca ve.
+  const catalogPdfs = Object.keys(driveCatalog().files || {})
+    .filter((rel) => rel.startsWith(MATERIALS_DIR + "/") && rel.toLowerCase().endsWith(".pdf"));
   const linkedNames = new Set(linked.map((rel) => rel.split("/").pop()));
-  onDisk.forEach((f) => {
-    assert.ok(linkedNames.has(f), `el PDF ${f} esta en ${MATERIALS_DIR} pero la guia no lo enlaza`);
+  catalogPdfs.forEach((rel) => {
+    const name = rel.split("/").pop();
+    assert.ok(linkedNames.has(name), `el PDF ${name} esta en el material de la guia 4 pero el partial no lo enlaza`);
   });
   // Los instaladores .exe NO van al repo publico: se enlaza la fuente oficial.
-  const exes = fs.readdirSync(path.join(ROOT, MATERIALS_DIR)).filter((f) => f.toLowerCase().endsWith(".exe"));
+  const exes = fs.existsSync(path.join(ROOT, MATERIALS_DIR))
+    ? fs.readdirSync(path.join(ROOT, MATERIALS_DIR)).filter((f) => f.toLowerCase().endsWith(".exe"))
+    : [];
   assert.deepEqual(exes, [], "no debe haber ejecutables dentro de assets/materiales/guia4ciber");
   assert.match(partialHtml, /belarc\.com/, "falta el enlace oficial de Belarc Advisor");
   assert.match(partialHtml, /easeus\.com/, "falta el enlace oficial de EaseUS Todo Backup");

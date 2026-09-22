@@ -93,9 +93,15 @@ function countInlineSurface() {
 // style="margin-top:22px" que ya usan las paginas de quiz de Santa Barbara
 // = +6 styleAttrs. No es superficie nueva: es el mismo patron existente
 // aplicado a 6 guias/paginas mas.
+// Redes grado 11 (2026-09-22): 6 shells nuevos (grupo-11{a,b}-guia-{09,10,11}-
+// redes-rap0{1,2,3}.html), cada uno con el mismo unico <script> inline
+// window.__GUIDE_CONTEXT__ = {...} de todas las guias que usan
+// guide_runtime_loader.js = +6 scriptBlocks. Y 6 paginas de quiz nuevas
+// copiadas de las de Santa Barbara 10, con sus mismos style="..." = +4
+// styleAttrs. No es superficie nueva: es el patron existente en 6 paginas mas.
 const BASELINE = {
-  scriptBlocks: 63,
-  styleAttrs: 2826,
+  scriptBlocks: 69,
+  styleAttrs: 2830,
   styleTags: 23,
 };
 
@@ -155,14 +161,21 @@ test("CSP: ninguna pagina debe volver a usar connect-src con un comodin generico
   assert.deepEqual(offenders, [], "estas paginas usan un comodin generico en connect-src: " + offenders.join(", "));
 });
 
+// Modulos que de verdad hacen red hacia Firebase o Apps Script. Cargar portal_auth.js
+// NO implica hablar con la red: la sesion vive en localStorage. Una pagina que solo
+// necesita la sesion (p. ej. simulador-ensamble-portatil.html, que ademas corre el
+// simulador en un iframe aparte) puede y debe quedarse con connect-src 'self'.
+const MODULOS_DE_RED = /firebase_db\.js|firebase-app-compat|firebase-auth-compat|firebase_auth_bridge\.js|drive_db\.js|shared_apps_script_delivery\.js|firebase_status_banner\.js/;
+
 test("CSP: las paginas que llaman a Firebase/Apps Script declaran EXPLICITAMENTE los 6 hosts confirmados en connect-src", () => {
-  // Solo se exige en paginas que realmente cargan portal_auth.js (todas las
-  // que necesitan red autenticada) -- la unica pagina 100% estatica sin
-  // portal_auth.js puede seguir con connect-src 'self' a secas.
+  // Se exige en las paginas que cargan portal_auth.js Y algun modulo de red. Las que
+  // solo usan la sesion local se comprueban en la prueba siguiente, que les exige lo
+  // contrario: connect-src 'self' y nada mas.
   const missing = [];
   for (const file of allHtmlFiles()) {
     const html = fs.readFileSync(file, "utf8");
     if (!/portal_auth\.js/.test(html)) continue;
+    if (!MODULOS_DE_RED.test(html)) continue;
     const csp = cspOf(html);
     if (!csp) { missing.push(path.relative(ROOT, file) + " (sin CSP)"); continue; }
     const connectMatch = csp.match(/connect-src([^;]*);/);
@@ -173,6 +186,35 @@ test("CSP: las paginas que llaman a Firebase/Apps Script declaran EXPLICITAMENTE
     }
   }
   assert.deepEqual(missing, [], "paginas con connect-src incompleto: " + missing.join(" | "));
+});
+
+test("CSP: una pagina con sesion pero SIN modulos de red se queda en connect-src 'self'", () => {
+  // Contrapeso de la prueba anterior: si una pagina no habla con Firebase ni con Apps
+  // Script, no puede declarar sus hosts "por si acaso". Hoy la unica es la del
+  // simulador clasico, que ejecuta el simulador dentro de un iframe del mismo origen.
+  const revisadas = [];
+  for (const file of allHtmlFiles()) {
+    const html = fs.readFileSync(file, "utf8");
+    if (!/portal_auth\.js/.test(html)) continue;
+    if (MODULOS_DE_RED.test(html)) continue;
+    const csp = cspOf(html);
+    assert.ok(csp, path.relative(ROOT, file) + " deberia declarar CSP");
+    const connectMatch = csp.match(/connect-src([^;]*);/);
+    const connectSrc = (connectMatch ? connectMatch[1] : "").trim();
+    assert.equal(
+      connectSrc,
+      "'self'",
+      path.relative(ROOT, file) + " no hace red: su connect-src debe ser 'self' y es: " + connectSrc
+    );
+    revisadas.push(path.relative(ROOT, file));
+  }
+  // Sin sanity check de "al menos una": la unica pagina que hoy cumple el filtro
+  // es la del simulador clasico, que esta bajo bloqueo de publicacion y por eso
+  // NO existe en el repositorio limpio desde el que se publica. Exigir >= 1
+  // hacia fallar la suite alli, en un repositorio donde la ausencia de esa
+  // pagina es justamente lo correcto. La comprobacion util es la del bucle:
+  // si tal pagina existe, su connect-src debe ser 'self'.
+  void revisadas;
 });
 
 test("CSP: la pagina 100% estatica conserva connect-src 'self' (mas estricto que el resto, no se afloja)", () => {

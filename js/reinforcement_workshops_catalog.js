@@ -157,3 +157,12 @@ window.reinforcementWorkshopsCatalog = {
     ],
   },
 };
+
+// Migracion a Google Drive (2026-09-21): las rutas de arriba se conservan como
+// CLAVE del catalogo central (data/material_apoyo_drive.js). Aqui se traducen a
+// su URL de Drive una sola vez, al cargar, de modo que todos los consumidores
+// del catalogo reciben ya el enlace correcto sin saber nada de la migracion.
+// Si el catalogo no esta cargado o esta desactivado, las rutas quedan intactas.
+if (window.MaterialApoyoLinks) {
+  window.MaterialApoyoLinks.rewriteDataUrls(window.reinforcementWorkshopsCatalog);
+}

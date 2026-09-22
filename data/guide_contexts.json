@@ -20,5 +20,125 @@
     "cloudFileName": "sb_10b_redes.html",
     "quizRedesUrl": "pages/auxiliares/santa-barbara-10b-guia-02-redes-rap01-quiz.html",
     "quizIpUrl": "pages/auxiliares/santa-barbara-10b-guia-02-redes-ip-quiz.html"
+  },
+  "sb11-redes-rap01-11a": {
+    "template": "guia-redes-rap01",
+    "partialPath": "partials/guia-redes-rap01-content.html",
+    "pageFile": "grupo-11a-guia-09-redes-rap01.html",
+    "inst": "Institucion Educativa Santa Barbara",
+    "grupo": "11A",
+    "ficha": "3168850",
+    "cloudFileName": "grupo-11a-guia-09-redes-rap01.html",
+    "quizRedesUrl": "pages/auxiliares/grupo-11a-guia-09-redes-rap01-quiz.html",
+    "quizIpUrl": "pages/auxiliares/grupo-11a-guia-09-redes-ip-quiz.html",
+    "guideNumberMap": {
+      "2": "9",
+      "3": "10",
+      "4": "11"
+    },
+    "competencia": "280102129 — Evaluar red de acuerdo con procedimientos de telecomunicaciones y normativa técnica.",
+    "rap": "RAP 01 — Definir los parámetros y recursos de la red de acuerdo con normativa de telecomunicaciones.",
+    "fase": "Análisis",
+    "duracion": "60 horas (45 horas de formación directa y 15 horas de trabajo independiente)",
+    "duracionCorta": "60 horas"
+  },
+  "sb11-redes-rap01-11b": {
+    "template": "guia-redes-rap01",
+    "partialPath": "partials/guia-redes-rap01-content.html",
+    "pageFile": "grupo-11b-guia-09-redes-rap01.html",
+    "inst": "Institucion Educativa Santa Barbara",
+    "grupo": "11B",
+    "ficha": "3168852",
+    "cloudFileName": "grupo-11b-guia-09-redes-rap01.html",
+    "quizRedesUrl": "pages/auxiliares/grupo-11b-guia-09-redes-rap01-quiz.html",
+    "quizIpUrl": "pages/auxiliares/grupo-11b-guia-09-redes-ip-quiz.html",
+    "guideNumberMap": {
+      "2": "9",
+      "3": "10",
+      "4": "11"
+    },
+    "competencia": "280102129 — Evaluar red de acuerdo con procedimientos de telecomunicaciones y normativa técnica.",
+    "rap": "RAP 01 — Definir los parámetros y recursos de la red de acuerdo con normativa de telecomunicaciones.",
+    "fase": "Análisis",
+    "duracion": "60 horas (45 horas de formación directa y 15 horas de trabajo independiente)",
+    "duracionCorta": "60 horas"
+  },
+  "sb11-redes-rap02-11a": {
+    "template": "guia-redes-rap02",
+    "partialPath": "partials/guia-redes-rap02-content.html",
+    "pageFile": "grupo-11a-guia-10-redes-rap02.html",
+    "inst": "Institucion Educativa Santa Barbara",
+    "grupo": "11A",
+    "ficha": "3168850",
+    "cloudFileName": "grupo-11a-guia-10-redes-rap02.html",
+    "quizRedesUrl": "pages/auxiliares/grupo-11a-guia-10-redes-rap02-quiz.html",
+    "guideNumberMap": {
+      "2": "9",
+      "3": "10",
+      "4": "11"
+    },
+    "competencia": "280102129 — Evaluar red de acuerdo con procedimientos de telecomunicaciones y normativa técnica.",
+    "rap": "RAP 02 — Comprobar la conectividad de la red, de acuerdo con normativa de telecomunicaciones y orden de trabajo.",
+    "fase": "Análisis",
+    "duracion": "40 horas",
+    "duracionCorta": "40 horas"
+  },
+  "sb11-redes-rap02-11b": {
+    "template": "guia-redes-rap02",
+    "partialPath": "partials/guia-redes-rap02-content.html",
+    "pageFile": "grupo-11b-guia-10-redes-rap02.html",
+    "inst": "Institucion Educativa Santa Barbara",
+    "grupo": "11B",
+    "ficha": "3168852",
+    "cloudFileName": "grupo-11b-guia-10-redes-rap02.html",
+    "quizRedesUrl": "pages/auxiliares/grupo-11b-guia-10-redes-rap02-quiz.html",
+    "guideNumberMap": {
+      "2": "9",
+      "3": "10",
+      "4": "11"
+    },
+    "competencia": "280102129 — Evaluar red de acuerdo con procedimientos de telecomunicaciones y normativa técnica.",
+    "rap": "RAP 02 — Comprobar la conectividad de la red, de acuerdo con normativa de telecomunicaciones y orden de trabajo.",
+    "fase": "Análisis",
+    "duracion": "40 horas",
+    "duracionCorta": "40 horas"
+  },
+  "sb11-redes-rap03-11a": {
+    "template": "guia-redes-rap03",
+    "partialPath": "partials/guia-redes-rap03-content.html",
+    "pageFile": "grupo-11a-guia-11-redes-rap03.html",
+    "inst": "Institucion Educativa Santa Barbara",
+    "grupo": "11A",
+    "ficha": "3168850",
+    "cloudFileName": "grupo-11a-guia-11-redes-rap03.html",
+    "guideNumberMap": {
+      "2": "9",
+      "3": "10",
+      "4": "11"
+    },
+    "competencia": "280102129 — Evaluar red de acuerdo con procedimientos de telecomunicaciones y normativa técnica.",
+    "rap": "RAP 03 — Documentar las acciones realizadas en la red de acuerdo con la normativa.",
+    "fase": "Análisis",
+    "duracion": "40 horas (30 horas de trabajo directo y 10 horas de trabajo independiente)",
+    "duracionCorta": "40 horas"
+  },
+  "sb11-redes-rap03-11b": {
+    "template": "guia-redes-rap03",
+    "partialPath": "partials/guia-redes-rap03-content.html",
+    "pageFile": "grupo-11b-guia-11-redes-rap03.html",
+    "inst": "Institucion Educativa Santa Barbara",
+    "grupo": "11B",
+    "ficha": "3168852",
+    "cloudFileName": "grupo-11b-guia-11-redes-rap03.html",
+    "guideNumberMap": {
+      "2": "9",
+      "3": "10",
+      "4": "11"
+    },
+    "competencia": "280102129 — Evaluar red de acuerdo con procedimientos de telecomunicaciones y normativa técnica.",
+    "rap": "RAP 03 — Documentar las acciones realizadas en la red de acuerdo con la normativa.",
+    "fase": "Análisis",
+    "duracion": "40 horas (30 horas de trabajo directo y 10 horas de trabajo independiente)",
+    "duracionCorta": "40 horas"
   }
 }

@@ -59,6 +59,37 @@
     });
   }
 
+  // Campos academicos por contexto (Redes grado 11, 2026-09-22).
+  //
+  // Un mismo partial sirve a varios grupos: Santa Barbara 10 (guias 2/3/4),
+  // Kennedy 10 (guias 10/11/12) y Santa Barbara 11 (guias 9/10/11). Las
+  // ACTIVIDADES son identicas a proposito -- es el mismo archivo -- y lo unico
+  // que cambia entre grados es la ficha academica: competencia, RAP, fase y
+  // duracion. Esos cuatro valores se marcan en el partial con data-ctx-* y se
+  // sustituyen aqui cuando el contexto los trae.
+  //
+  // Si el contexto NO los trae (caso de los grupos de grado 10), no se toca
+  // nada y queda el valor escrito en el partial: por eso añadir esto no altera
+  // ninguna guia existente.
+  function setContextAcademicFields(container, context) {
+    if (!container || typeof container.querySelectorAll !== "function") return;
+    var fields = {
+      "data-ctx-competencia": context.competencia,
+      "data-ctx-rap": context.rap,
+      "data-ctx-fase": context.fase,
+      "data-ctx-duracion": context.duracion,
+      "data-ctx-duracion-corta": context.duracionCorta || context.duracion,
+    };
+    Object.keys(fields).forEach(function (attr) {
+      var value = fields[attr];
+      if (!value) return;
+      var nodes = container.querySelectorAll("[" + attr + "]");
+      Array.prototype.forEach.call(nodes, function (node) {
+        node.textContent = value;
+      });
+    });
+  }
+
   function setContextLinks(context) {
     const quizRedesLink = document.getElementById("quizRedesActionLink");
     const quizIpLink = document.getElementById("quizIPActionLink");
@@ -104,8 +135,14 @@
     root.innerHTML = html;
     window.__GUIDE_RUNTIME_CONTEXT__ = context;
     setContextDatasets(context);
+    setContextAcademicFields(root, context);
     setContextLinks(context);
     rewireGuideLinks(root);
+    // Traduce a Google Drive los enlaces de material que el partial escribe como
+    // ruta local. Si el catalogo no esta cargado o desactivado, no hace nada.
+    if (window.MaterialApoyoLinks) {
+      window.MaterialApoyoLinks.rewire(root);
+    }
 
     if (typeof window.initGuiaTemplateShell === "function") {
       window.initGuiaTemplateShell();

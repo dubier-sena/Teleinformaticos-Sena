@@ -65,6 +65,20 @@
       "Guía 4 - Documentar las acciones realizadas en la red, de acuerdo con la normativa | Grupo 10A",
     "santa-barbara-10b-guia-04-redes-rap03.html":
       "Guía 4 - Documentar las acciones realizadas en la red, de acuerdo con la normativa | Grupo 10B",
+    // Guias 9-11 (Redes) de grado 11 Santa Barbara: mismas actividades que las
+    // guias 2-4 de Redes de 10 SB; solo cambian competencia, RAP, fase y duracion.
+    "grupo-11a-guia-09-redes-rap01.html":
+      "Guía 9 - Definir los parámetros y recursos de la red de acuerdo con normativa de telecomunicaciones | Grupo 11A",
+    "grupo-11b-guia-09-redes-rap01.html":
+      "Guía 9 - Definir los parámetros y recursos de la red de acuerdo con normativa de telecomunicaciones | Grupo 11B",
+    "grupo-11a-guia-10-redes-rap02.html":
+      "Guía 10 - Comprobar la conectividad de la red, de acuerdo con normativa de telecomunicaciones y orden de trabajo | Grupo 11A",
+    "grupo-11b-guia-10-redes-rap02.html":
+      "Guía 10 - Comprobar la conectividad de la red, de acuerdo con normativa de telecomunicaciones y orden de trabajo | Grupo 11B",
+    "grupo-11a-guia-11-redes-rap03.html":
+      "Guía 11 - Documentar las acciones realizadas en la red de acuerdo con la normativa | Grupo 11A",
+    "grupo-11b-guia-11-redes-rap03.html":
+      "Guía 11 - Documentar las acciones realizadas en la red de acuerdo con la normativa | Grupo 11B",
     // Guias 10-12 (Redes), adaptadas de Santa Barbara para John F. Kennedy.
     "grupo-10a-guia-10-redes-rap01.html":
       "Guía 10 - Definir los parámetros y recursos de la red de acuerdo con normativa de telecomunicaciones | Grupo 10A",
@@ -287,6 +301,48 @@
     },
     // Guias 10-12 (Redes), adaptadas de Santa Barbara para John F. Kennedy:
     // mismos total/activityTotal que su equivalente SB (contenido identico).
+    "grupo-11a-guia-09-redes-rap01.html": {
+      mode: "state-with-activity",
+      total: 13,
+      activityTotal: 0,
+      pageKey: "sb_11a_guia09_redes_rap01",
+      stateKey: "guia_interactiva_sb_11a_guia09_redes_rap01",
+    },
+    "grupo-11b-guia-09-redes-rap01.html": {
+      mode: "state-with-activity",
+      total: 13,
+      activityTotal: 0,
+      pageKey: "sb_11b_guia09_redes_rap01",
+      stateKey: "guia_interactiva_sb_11b_guia09_redes_rap01",
+    },
+    "grupo-11a-guia-10-redes-rap02.html": {
+      mode: "state-with-activity",
+      total: 34,
+      activityTotal: 9,
+      pageKey: "sb_11a_guia10_redes_rap02",
+      stateKey: "guia_interactiva_sb_11a_guia10_redes_rap02",
+    },
+    "grupo-11b-guia-10-redes-rap02.html": {
+      mode: "state-with-activity",
+      total: 34,
+      activityTotal: 9,
+      pageKey: "sb_11b_guia10_redes_rap02",
+      stateKey: "guia_interactiva_sb_11b_guia10_redes_rap02",
+    },
+    "grupo-11a-guia-11-redes-rap03.html": {
+      mode: "state-with-activity",
+      total: 66,
+      activityTotal: 11,
+      pageKey: "sb_11a_guia11_redes_rap03",
+      stateKey: "guia_interactiva_sb_11a_guia11_redes_rap03",
+    },
+    "grupo-11b-guia-11-redes-rap03.html": {
+      mode: "state-with-activity",
+      total: 66,
+      activityTotal: 11,
+      pageKey: "sb_11b_guia11_redes_rap03",
+      stateKey: "guia_interactiva_sb_11b_guia11_redes_rap03",
+    },
     "grupo-10a-guia-10-redes-rap01.html": {
       mode: "state-with-activity",
       total: 13,
@@ -428,6 +484,9 @@
         "grupo-11a-guia-08-documentar-gestion-informacion.html",
         "santa-barbara-guia-python.html",
         "grupo-11a-guia-09-taller-integrador.html",
+        "grupo-11a-guia-09-redes-rap01.html",
+        "grupo-11a-guia-10-redes-rap02.html",
+        "grupo-11a-guia-11-redes-rap03.html",
       ],
     },
     "3168852": {
@@ -441,6 +500,9 @@
         "grupo-11b-guia-08-documentar-gestion-informacion.html",
         "santa-barbara-guia-python.html",
         "grupo-11b-guia-09-taller-integrador.html",
+        "grupo-11b-guia-09-redes-rap01.html",
+        "grupo-11b-guia-10-redes-rap02.html",
+        "grupo-11b-guia-11-redes-rap03.html",
       ],
     },
   };

@@ -5,6 +5,7 @@ const test = require("node:test");
 const assert = require("node:assert");
 const fs = require("fs");
 const path = require("path");
+const { materialIsAvailable, whereIsMaterial } = require("./_material_apoyo_helper.cjs");
 
 const ROOT = path.join(__dirname, "..");
 const read = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8");
@@ -171,7 +172,12 @@ test("feedback del usuario: cada actividad con documentos reales necesarios (Reg
    "Manual_Formacion_Virtual_SOFIA.pdf",
    "T1_Analisis_Logo_Simbolos_SENA.docx",
    "T2_Uso_Plataformas_Portafolio.docx"].forEach((name) => {
-    const full = path.join(__dirname, "..", "assets", "materiales", "induccion", name);
-    assert.ok(fs.existsSync(full), "debe existir el archivo real: " + name);
+    // Migracion a Drive (2026-09-21): el documento ya no vive en el repositorio.
+    // Lo que debe seguir siendo cierto es que el aprendiz pueda abrirlo.
+    const rel = "assets/materiales/induccion/" + name;
+    assert.ok(
+      materialIsAvailable(rel),
+      "el documento debe poder abrirse (repo o Drive): " + name + " -> " + whereIsMaterial(rel)
+    );
   });
 });

@@ -233,7 +233,16 @@ async function runLoader(options) {
 test("guide contexts expose the two Santa Barbara runtime entries", () => {
   const contexts = JSON.parse(fs.readFileSync(CONTEXT_FILE, "utf8"));
 
-  assert.deepEqual(Object.keys(contexts).sort(), ["sb-redes-10a", "sb-redes-10b"]);
+  // Redes grado 11 (2026-09-22): al catalogo se sumaron los 6 contextos de
+  // 11A/11B (sb11-redes-rap0{1,2,3}-11{a,b}). Esta prueba sigue cubriendo los
+  // dos de Santa Barbara 10, que son los que el loader usa en su harness.
+  const sbEntries = Object.keys(contexts).filter((k) => k.startsWith("sb-redes-")).sort();
+  assert.deepEqual(sbEntries, ["sb-redes-10a", "sb-redes-10b"]);
+  assert.equal(
+    Object.keys(contexts).filter((k) => k.startsWith("sb11-redes-")).length,
+    6,
+    "deben existir los 6 contextos de Redes de grado 11"
+  );
   assert.deepEqual(contexts["sb-redes-10a"], EXPECTED_CONTEXTS["sb-redes-10a"]);
   assert.deepEqual(contexts["sb-redes-10b"], EXPECTED_CONTEXTS["sb-redes-10b"]);
 });

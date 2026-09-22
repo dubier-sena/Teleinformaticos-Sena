@@ -187,6 +187,11 @@
     window.__PAGE_RUNTIME_CONTEXT__ = context;
     setContextDatasets(context);
     rewireGuideLinks(root);
+    // Traduce a Google Drive los enlaces de material que el partial escribe como
+    // ruta local. Si el catalogo no esta cargado o desactivado, no hace nada.
+    if (window.MaterialApoyoLinks) {
+      window.MaterialApoyoLinks.rewire(root);
+    }
     executeInlinePartialScripts(root);
 
     if (typeof window.initGuiaTemplateShell === "function") {

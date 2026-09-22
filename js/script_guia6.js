@@ -331,10 +331,16 @@ const supportTools = [
   },
   {
     title: "LibreOffice",
-    file: "LibreOffice_26.2.1_Win_x86-64.msi",
-    type: "MSI local",
+    // El instalador (355 MB) NO se versiona en el repositorio: esta excluido en
+    // .gitignore, de modo que el enlace local daba 404 en produccion aunque
+    // funcionara al abrir el portal desde el equipo del instructor. Se sirve
+    // desde la misma carpeta de Drive que el resto de instaladores (7-Zip,
+    // CPU-Z, CmapTools, VirtualBox).
+    href: "https://drive.google.com/drive/folders/19AY6LsSHM--2VVXp4_Bzzjz2SVyAiSMc?usp=sharing",
+    type: "Drive",
     description:
       "Suite ofimatica para elaborar documentos tecnicos, tablas y presentaciones de evidencia.",
+    cta: "Abrir en Drive ↗",
   },
   {
     title: "CmapTools",
@@ -1582,11 +1588,31 @@ function renderMaterialCard(item) {
 }
 
 function buildMaterialHref(item) {
-  if (item.href) {
+  // Un href absoluto (Drive, web externa) manda siempre: no es material del
+  // repositorio. Un href RELATIVO si es material local -- se usa cuando el
+  // archivo no vive en la carpeta base de esta guia (p. ej. assets/materiales/
+  // comun/) -- y por tanto tambien puede migrar a Drive.
+  const isExternal = item.href && /^[a-z]+:\/\//i.test(item.href);
+  if (isExternal) {
     return item.href;
   }
 
-  return encodeURI(`${SUPPORT_BASE_PATH}${item.file}`);
+  const localPath = item.href || `${SUPPORT_BASE_PATH}${item.file}`;
+
+  // Migracion de almacenamiento (2026-09-21): si el catalogo central de Drive
+  // esta activo y conoce esta ruta, el material se sirve desde Drive en vez de
+  // desde el repositorio. Con enabled:false -- el estado actual -- se devuelve
+  // siempre la ruta local, de modo que el comportamiento no cambia.
+  // Ver data/material_apoyo_drive.js.
+  const driveCatalog = window.__MATERIAL_APOYO_DRIVE__;
+  if (driveCatalog && driveCatalog.enabled && driveCatalog.files) {
+    const fileId = driveCatalog.files[localPath];
+    if (fileId) {
+      return `https://drive.google.com/file/d/${fileId}/view?usp=sharing`;
+    }
+  }
+
+  return encodeURI(localPath);
 }
 
 function hydrateFields() {
