@@ -48,7 +48,10 @@
   var RAP_INDUCCION = "Induccion al programa Sistemas Teleinformaticos";
   var RAP_HERRAMIENTAS = "RAP 1 - Operar herramientas informaticas y digitales segun normativa vigente.";
   var RAP_PLANIFICAR = "RAP 2 - Planificar la informacion de acuerdo con normativa vigente.";
-  var RAP_REDES = "RAP 1 - Definir los parametros y recursos de la red de acuerdo con normativa de telecomunicaciones.";
+  // Normalizacion de formato (2026-09-22): decia "RAP 1". El titulo de la propia
+  // guia ya usa "RAP 01" y el resto de declaraciones de Redes usan dos digitos.
+  // Solo cambia el formato del numero: el texto del RAP es identico.
+  var RAP_REDES = "RAP 01 - Definir los parametros y recursos de la red de acuerdo con normativa de telecomunicaciones.";
 
   // ── Guia 1 — Induccion (10A + 10B) ─────────────────────────────────────────
   register({

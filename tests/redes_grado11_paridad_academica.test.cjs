@@ -143,3 +143,51 @@ test("las seis paginas de grado 11 existen y apuntan a su contexto", () => {
     }
   }
 });
+
+// ── Correccion academica de 10 Santa Barbara (2026-09-22) ─────────────────
+// Las Guias 2 y 3 de Redes de 10 SB declaraban la competencia 220501121
+// ("Operar herramientas informaticas"), que no es la de Redes. Ese texto no se
+// veia en pantalla -- el partial ya mostraba la correcta -- pero SI viajaba en
+// el encabezado de los Word que el aprendiz entrega como evidencia, que es
+// donde importa. Esta guardia impide que vuelva a colarse en cualquier guia de
+// Redes, de cualquier grado.
+test("ninguna guia de Redes declara la competencia 220501121", () => {
+  const src = read("js/guide_declarations.js");
+  const malas = [];
+  for (const m of src.matchAll(/register\(\{[\s\S]*?\n {2}\}\);/g)) {
+    const bloque = m[0];
+    const archivos = [...bloque.matchAll(/"([a-z0-9-]*guia-\d+-redes-rap0[123]\.html)"/g)].map((x) => x[1]);
+    if (!archivos.length) continue;
+    // Solo el valor declarado, no los comentarios que explican la correccion.
+    const competencia = (bloque.match(/^\s*competencia:\s*"([^"]+)"/m) || [])[1] || "";
+    if (competencia.startsWith("220501121")) malas.push(archivos[0]);
+  }
+  assert.deepEqual(malas, [], `guias de Redes con la competencia equivocada:\n  ${malas.join("\n  ")}`);
+});
+
+test("toda guia de Redes declara la competencia 280102129 y el RAP a dos digitos", () => {
+  const src = read("js/guide_declarations.js");
+  const constantes = Object.fromEntries(
+    [...src.matchAll(/var (RAP_REDES[A-Z0-9_]*) = "([^"]+)"/g)].map((m) => [m[1], m[2]])
+  );
+  const problemas = [];
+  for (const m of src.matchAll(/register\(\{[\s\S]*?\n {2}\}\);/g)) {
+    const bloque = m[0];
+    const archivos = [...bloque.matchAll(/"([a-z0-9-]*guia-\d+-redes-rap0[123]\.html)"/g)].map((x) => x[1]);
+    if (!archivos.length) continue;
+    const competencia = (bloque.match(/^\s*competencia:\s*"([^"]+)"/m) || [])[1] || "";
+    if (!competencia.startsWith("280102129")) {
+      problemas.push(`${archivos[0]}: competencia "${competencia.slice(0, 40)}"`);
+    }
+    const crudo = (bloque.match(/^\s*resultado:\s*([^,\n]+)/m) || [])[1] || "";
+    const resultado = crudo.startsWith('"') ? crudo.slice(1, -1) : constantes[crudo.trim()] || crudo;
+    // Sin excepciones: desde el 2026-09-22 las 18 declaraciones de Redes (Santa
+    // Barbara 10, Kennedy 10 y grado 11) usan el RAP a dos digitos, igual que el
+    // titulo de cada guia. La excepcion que aqui dejaba fuera a Kennedy 10 ya no
+    // hace falta -- si vuelve a aparecer un "RAP 1", esta prueba lo detiene.
+    if (!/^RAP 0[123] - /.test(resultado)) {
+      problemas.push(`${archivos[0]}: resultado "${resultado.slice(0, 40)}"`);
+    }
+  }
+  assert.deepEqual(problemas, [], `declaraciones de Redes incorrectas:\n  ${problemas.join("\n  ")}`);
+});
