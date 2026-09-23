@@ -386,6 +386,7 @@
           </div>
           <div class="student-project-downloads">
             ${options.contexts.map(buildDocumentCard).join("")}
+            ${options.extraCardsHtml || ""}
           </div>
         </section>
       `;
@@ -406,6 +407,21 @@
     const logContexts = documentContexts.filter(function (context) {
       return context.item.id.indexOf("bitacora-") === 0;
     });
+    // "Revision de bitacora con IA" (LOOP para copiar, ver
+    // js/bitacora_review_loop.js): SOLO SB 11A/11B. Se decide aqui, al generar
+    // el HTML -- para cualquier otra ficha la tarjeta no existe en el DOM.
+    const loopModule = window.bitacoraReviewLoop || null;
+    const loopContextFicha = loopModule
+      ? loopModule.resolveContextFicha({
+          session: session,
+          auth: auth,
+          search: window.location ? window.location.search : "",
+          fallbackFicha: (getMainProject(currentState.viewModel) || {}).ficha,
+        })
+      : "";
+    const loopCardHtml = loopModule && loopModule.isAuthorizedFicha(loopContextFicha)
+      ? loopModule.buildCardHtml()
+      : "";
 
     return `
       <div class="student-document-workflow">
@@ -469,6 +485,7 @@
           description: "Consultalo cuando necesites identificar las competencias del programa que debes registrar en las bitacoras.",
           modifier: "reference",
           contexts: referenceContexts,
+          extraCardsHtml: loopCardHtml,
         })}
       </div>
     `;
@@ -524,6 +541,12 @@
         // ya usa la ficha/grupo de la sesion como respaldo.
         const project = getMainProject(currentState.viewModel);
         openDocumentDeliveryModal(doc, project, session);
+      });
+    });
+
+    body.querySelectorAll("[data-bitacora-loop-open]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        if (window.bitacoraReviewLoop) window.bitacoraReviewLoop.open();
       });
     });
 

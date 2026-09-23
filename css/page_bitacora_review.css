@@ -1,0 +1,141 @@
+/* Modal "Revision de bitacora con IA" (js/bitacora_review_loop.js).
+   La tarjeta reutiliza .student-project-download-card; aqui solo el modal,
+   que se apoya en .c-modal de components.css. */
+
+/* El aviso de sincronizacion (firebase_status_banner.js) usa z-index 99999
+   fijo y tapaba la cabecera del modal (incluida la X de cerrar). Mientras el
+   modal esta abierto queda por encima; al cerrarlo el aviso sigue visible. */
+.bitacora-loop.c-modal {
+  z-index: 100000;
+}
+
+/* Flujo normal (no grid): en un contenedor con max-height + scroll, las filas
+   de un grid se comprimian y el mensaje "LOOP copiado" (2 lineas en movil)
+   quedaba tapado por los botones. */
+.bitacora-loop__card {
+  width: min(760px, 100%);
+  display: block;
+}
+
+.bitacora-loop__card > * + * {
+  margin-top: var(--space-4);
+}
+
+.bitacora-loop__card .c-modal__header {
+  margin-bottom: 0;
+}
+
+.bitacora-loop__card .c-modal__title {
+  margin-top: var(--space-2);
+}
+
+.bitacora-loop__section h4 {
+  margin: 0 0 var(--space-2);
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-strong);
+}
+
+.bitacora-loop__steps,
+.bitacora-loop__docs {
+  margin: 0;
+  padding-left: 1.4rem;
+  display: grid;
+  gap: 6px;
+  color: var(--text-body);
+  line-height: 1.55;
+}
+
+.bitacora-loop__docs-heading {
+  margin: var(--space-3) 0 var(--space-2);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--brand-700);
+}
+
+.bitacora-loop__important {
+  margin: var(--space-3) 0 0;
+  color: var(--text-body);
+  line-height: 1.55;
+}
+
+.bitacora-loop__privacy {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--gold-strong);
+  background: var(--gold-light);
+  color: var(--text-body);
+  line-height: 1.55;
+}
+
+.bitacora-loop__privacy p {
+  margin: var(--space-1) 0 0;
+}
+
+.bitacora-loop__text {
+  margin: 0;
+  max-height: 320px;
+  overflow: auto;
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-soft);
+  background: var(--surface-2);
+  color: var(--text-body);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.bitacora-loop__error {
+  margin: 0;
+  color: var(--color-danger);
+}
+
+.bitacora-loop__status {
+  margin-bottom: 0;
+  min-height: 1.5em;
+  font-weight: 700;
+  color: var(--brand-700);
+}
+
+.bitacora-loop__status--error {
+  color: var(--color-danger);
+}
+
+.bitacora-loop__footer {
+  flex-wrap: wrap;
+}
+
+.bitacora-loop__footer .app-btn {
+  min-height: var(--hit-target-min);
+}
+
+@media (max-width: 600px) {
+  .bitacora-loop.c-modal {
+    padding: var(--space-2);
+    align-items: stretch;
+  }
+
+  .bitacora-loop__card {
+    padding: var(--space-4);
+    max-height: calc(100vh - var(--space-4));
+  }
+
+  .bitacora-loop__footer {
+    flex-direction: column-reverse;
+  }
+
+  .bitacora-loop__footer .app-btn {
+    width: 100%;
+  }
+}
+
+.bitacora-loop__intro {
+  margin-bottom: 0;
+  color: var(--text-body);
+  line-height: 1.55;
+}
