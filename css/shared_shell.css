@@ -138,7 +138,11 @@ body.app-shell {
   left: 0;
   right: 0;
   z-index: 500;
-  height: var(--navbar-height, 60px);
+  /* Altura PROPIA de la barra. --navbar-height es el espacio superior que
+     reserva el layout y crece mientras el aviso de sincronizacion
+     (firebase_status_banner.js) esta visible bajo la barra; el navbar no debe
+     crecer con el. */
+  height: var(--navbar-bar-height, 60px);
   background: rgba(255, 255, 255, 0.88);
   -webkit-backdrop-filter: saturate(150%) blur(12px);
   backdrop-filter: saturate(150%) blur(12px);

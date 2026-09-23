@@ -76,22 +76,98 @@
     el.id = BANNER_ID;
     el.setAttribute("role", "status");
     el.setAttribute("aria-live", "polite");
+    // z-index 490: por DEBAJO del navbar (500), sus desplegables y el menu
+    // movil. Antes era top 0 con z-index 99999 y tapaba el navbar entero (en
+    // movil, con 5 lineas, tambien la hamburguesa): ningun control recibia el
+    // clic. `top` lo fija applyBannerLayout() bajo la barra real.
     el.style.cssText = [
       "position:fixed",
       "top:0", "left:0", "right:0",
-      "z-index:99999",
+      "z-index:490",
       "padding:8px 16px",
       "background:#f5b700",
       "color:#102117",
       "font:600 13px/1.4 'Inter','Segoe UI',sans-serif",
       "text-align:center",
       "box-shadow:0 2px 8px rgba(7,26,18,0.18)",
-      "transform:translateY(-100%)",
-      "transition:transform 220ms ease",
+      // Aparece con un fundido en su sitio (bajo el navbar). Un deslizamiento
+      // desde translateY(-100%) lo haria pasar por detras de la barra, que es
+      // semitransparente.
+      "opacity:0",
+      "transition:opacity 220ms ease",
       "display:none",
     ].join(";");
     document.body.appendChild(el);
     return el;
+  }
+
+  // ── Presentacion: el aviso reserva su propio espacio bajo el navbar ────────
+  // El layout del portal ya se desplaza con --navbar-height (padding del body,
+  // barras laterales fijas/sticky, cabeceras, modales y menu movil). Mientras
+  // el aviso esta visible, esa variable pasa a ser "barra + altura REAL del
+  // aviso" (medida, nunca un valor fijo: el texto ocupa de 1 a 5+ lineas) y
+  // todo baja exactamente una vez. El navbar usa --navbar-bar-height para su
+  // propia altura, asi que medirlo no depende de --navbar-height (sin ciclos).
+  // Se calcula siempre desde cero (barra + aviso), por lo que mostrar/ocultar
+  // muchas veces no acumula desplazamiento. Sin navbar: top:0 y no se reserva
+  // nada (no se inventa el hueco de una barra inexistente).
+  var layoutObserver = null;
+
+  function getRoot() {
+    return document.documentElement || null;
+  }
+
+  function measureHeight(node) {
+    if (!node || typeof node.getBoundingClientRect !== "function") return 0;
+    var height = node.getBoundingClientRect().height;
+    return height > 0 ? height : 0;
+  }
+
+  function isBannerShown(el) {
+    return Boolean(el) && el.style.display !== "none" && el.style.display !== "";
+  }
+
+  function applyBannerLayout() {
+    var el = document.getElementById(BANNER_ID);
+    var root = getRoot();
+    if (!el) return;
+    var bar = measureHeight(document.getElementById("app-navbar"));
+    el.style.top = bar + "px";
+    if (!root || !root.style || typeof root.style.setProperty !== "function") return;
+    if (isBannerShown(el) && bar > 0) {
+      root.style.setProperty("--navbar-height", bar + measureHeight(el) + "px");
+    } else {
+      root.style.removeProperty("--navbar-height");
+    }
+  }
+
+  function startBannerLayout() {
+    applyBannerLayout();
+    if (layoutObserver || typeof ResizeObserver !== "function") return;
+    // Un solo observer mientras el aviso esta visible: detecta cambios de
+    // mensaje (1 -> 5 lineas) y de ancho de pantalla sin recargar.
+    layoutObserver = new ResizeObserver(applyBannerLayout);
+    var el = document.getElementById(BANNER_ID);
+    if (el) layoutObserver.observe(el);
+    var navbar = document.getElementById("app-navbar");
+    if (navbar) layoutObserver.observe(navbar);
+    // Si el aviso aparece antes de que shared_shell.js inyecte el navbar
+    // (p. ej. offline al cargar), se recoloca en cuanto la barra existe.
+    if (!navbar && document.readyState !== "complete" && typeof window.addEventListener === "function") {
+      window.addEventListener("load", function onLoad() {
+        var nav = document.getElementById("app-navbar");
+        if (layoutObserver && nav) layoutObserver.observe(nav);
+        applyBannerLayout();
+      }, { once: true });
+    }
+  }
+
+  function stopBannerLayout() {
+    if (layoutObserver) {
+      layoutObserver.disconnect();
+      layoutObserver = null;
+    }
+    applyBannerLayout();
   }
 
   // `studentMessage` es opcional: si se omite y quien mira la pagina NO es
@@ -103,18 +179,23 @@
     var el = ensureBanner();
     if (!el) return;
     el.textContent = admin ? message : studentMessage;
-    // Forzar reflow para que la animacion arranque
+    // Visible, colocado bajo el navbar y con su espacio reservado ANTES del
+    // fundido: el contenido nunca queda un instante debajo del aviso.
     el.style.display = "block";
+    startBannerLayout();
+    // Forzar reflow para que la animacion arranque
     void el.offsetHeight;
-    el.style.transform = "translateY(0)";
+    el.style.opacity = "1";
   }
 
   function hideBanner() {
     var el = document.getElementById(BANNER_ID);
     if (!el) return;
-    el.style.transform = "translateY(-100%)";
+    el.style.opacity = "0";
     window.setTimeout(function () {
       if (el && el.parentNode) el.style.display = "none";
+      // Ya oculto: se libera el espacio reservado y el observer.
+      stopBannerLayout();
     }, 250);
   }
 
