@@ -72,7 +72,7 @@
   }
 
   var HOW_TO_STEPS = [
-    "Descarga el Diseño Curricular del programa utilizando la tarjeta ubicada al lado de esta herramienta.",
+    "Descarga el Diseño Curricular del programa utilizando la tarjeta disponible en esta misma sección.",
     "Ten disponible tu bitácora de Etapa Productiva que deseas revisar.",
     "Si tienes evidencias o soportes relacionados con las actividades registradas, tenlos disponibles.",
     "Pulsa “Copiar LOOP”.",

@@ -412,7 +412,7 @@ test("texto visible: flujo completo claro y sin insinuar que el portal ejecuta l
   assert.match(text, /El portal no revisa tu bitácora ni se conecta con ninguna IA/);
   const steps = modal.querySelectorAll(".bitacora-loop__steps li").map((li) => li.textContent);
   const flow = [
-    /Descarga el Diseño Curricular del programa/,
+    /^Descarga el Diseño Curricular del programa utilizando la tarjeta disponible en esta misma sección\.$/,
     /Ten disponible tu bitácora/,
     /evidencias o soportes/,
     /Pulsa “Copiar LOOP”/,
