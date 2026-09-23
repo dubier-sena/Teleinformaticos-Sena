@@ -919,23 +919,22 @@
 
   // ── Selector de guías para el admin (Panel de gestión) ───────────────────
   // El admin no tiene "Mis guías" (no pertenece a una ficha). Ofrecemos un
-  // acceso desde el panel: un modal que CLONA la lista ya construida del navbar
-  // (fuente única en shared_shell.js), agrupada por institución. Los enlaces ya
-  // apuntan a guia.html?g=… así que funcionan tal cual.
+  // acceso desde el panel: un modal que MONTA el mismo acordeón por ficha del
+  // menú "Guías" (shared_shell.js, generado desde FICHA_MAP) con sus propios ids
+  // y manejadores. Copiar el innerHTML del navbar dejaría grupos cerrados sin
+  // manejadores e ids duplicados.
   function openGuidePicker() {
     var modal = byId("guide-picker");
     var body = byId("guide-picker-body");
     if (!modal || !body) return;
-    var src = document.querySelector('.app-navbar__drop[data-nav-key="guias"] .app-navbar__drop-panel');
-    if (src && src.children.length) {
-      body.innerHTML = src.innerHTML;
-    } else {
+    var nav = window.portalGuideNav;
+    if (!nav || typeof nav.mount !== "function" || !nav.mount(body, "guide-picker")) {
       body.innerHTML = '<p class="guide-picker__empty">No se pudo cargar la lista de guías. Usa el menú <strong>Guías</strong> de la barra superior.</p>';
     }
     modal.hidden = false;
     document.body.classList.add("guide-picker-open");
-    var firstLink = body.querySelector("a");
-    if (firstLink) { try { firstLink.focus(); } catch (e) {} }
+    var first = body.querySelector("button, a");
+    if (first) { try { first.focus(); } catch (e) {} }
   }
 
   function closeGuidePicker() {

@@ -46,8 +46,196 @@
     return "";
   }
 
-  function guideHref(p, fileName) {
-    return p + "guia.html?g=" + encodeURIComponent(fileName);
+  // ─────────────────────────────────────────────
+  //  Menu "Guias": capa de PRESENTACION sobre FICHA_MAP
+  // ─────────────────────────────────────────────
+  // FICHA_MAP (portal_auth.js) es la UNICA fuente de verdad de que guias tiene
+  // cada ficha, sus archivos, institucion y grupo; las URLs salen de
+  // getGuideHref(). Aqui solo hay metadatos de presentacion (orden de los
+  // grupos, etiqueta corta de institucion, nombre corto de cada tema y guias que
+  // van al final). Una guia registrada en FICHA_MAP aparece en el menu sin tocar
+  // este archivo; si no tiene nombre corto se usa su titulo oficial.
+
+  // Orden visual de los grupos del instructor. Una ficha que exista en
+  // FICHA_MAP y no este aqui se agrega al final (nunca se pierde).
+  var NAV_GROUP_ORDER = ["3441939", "3441942", "3441944", "3441950", "3168850", "3168852"];
+
+  var NAV_INSTITUTIONS = [
+    { pattern: /kennedy/i, label: "Kennedy", slug: "kennedy" },
+    { pattern: /santa\s*b[aá]rbara/i, label: "Santa Bárbara", slug: "santa-barbara" },
+  ];
+
+  // Orden visual: se respeta el orden de FICHA_MAP salvo estas guias, que van al
+  // final del menu (orden ya publicado). NO reordena FICHA_MAP: la portada, la
+  // "Guia asignada" y el panel admin siguen usando su propio orden.
+  var NAV_GUIDES_LAST = ["santa-barbara-guia-python.html"];
+
+  // Nombre corto por tema (patron del archivo). Solo texto del menu: los titulos
+  // academicos (GUIDE_TITLES) no cambian. "$1" toma el grupo capturado.
+  var NAV_GUIDE_SHORT_NAMES = [
+    { pattern: /-induccion\.html$/, name: "Inducción" },
+    { pattern: /-herramientas-informaticas-digitales\.html$/, name: "Herramientas" },
+    { pattern: /^grupo-10[ab]-guia-03-planificar-informacion\.html$/, name: "Planificar" },
+    { pattern: /^grupo-11[ab]-guia-06-planificar-informacion\.html$/, name: "Implementar componentes" },
+    { pattern: /-planificar-informacion-ciberseguridad\.html$/, name: "Ciberseguridad" },
+    { pattern: /-documentar-gestion-informacion\.html$/, name: "Documentar la gestión" },
+    { pattern: /-mantener-equipos\.html$/, name: "Mantener equipos" },
+    { pattern: /-redes-rap(\d+)\.html$/, name: "Redes RAP$1" },
+    { pattern: /-taller-integrador\.html$/, name: "Taller Integrador", standalone: true },
+    { pattern: /-guia-python\.html$/, name: "Práctica de Python", standalone: true },
+  ];
+
+  function escapeHtml(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function getGuideMenuLabel(auth, fileName) {
+    var title = "";
+    try { title = String(auth.getGuideTitle(fileName) || ""); } catch (e) {}
+    var numberMatch = title.match(/^Gu[ií]a\s+(\d+)/i);
+    for (var i = 0; i < NAV_GUIDE_SHORT_NAMES.length; i++) {
+      var rule = NAV_GUIDE_SHORT_NAMES[i];
+      var match = fileName.match(rule.pattern);
+      if (!match) continue;
+      var name = rule.name.replace(/\$(\d)/g, function (_, n) { return match[Number(n)] || ""; });
+      if (rule.standalone || !numberMatch) return name;
+      return "Guía " + numberMatch[1] + " — " + name;
+    }
+    // Fallback seguro: el titulo oficial sin el sufijo "| Grupo X".
+    var official = title.replace(/\s*\|\s*[^|]*$/, "").replace(/\s+-\s+/, " — ").trim();
+    return official && official !== fileName ? official : fileName;
+  }
+
+  function orderGuidesForMenu(files) {
+    var seen = {};
+    var unique = (files || []).filter(function (file) {
+      if (!file || seen[file]) return false;
+      seen[file] = true;
+      return true;
+    });
+    var head = unique.filter(function (file) { return NAV_GUIDES_LAST.indexOf(file) === -1; });
+    var tail = NAV_GUIDES_LAST.filter(function (file) { return seen[file]; });
+    return head.concat(tail);
+  }
+
+  function describeGuideGroup(auth, ficha) {
+    var info = auth.getFichaInfo(ficha);
+    if (!info) return null;
+    var inst = null;
+    for (var i = 0; i < NAV_INSTITUTIONS.length; i++) {
+      if (NAV_INSTITUTIONS[i].pattern.test(info.inst || "")) { inst = NAV_INSTITUTIONS[i]; break; }
+    }
+    var grupo = String(info.grupo || "").trim();
+    var grade = (grupo.match(/\d{1,2}/) || [""])[0];
+    var slug = ((inst ? inst.slug : "ficha") + "-" + (grupo || ficha)).toLowerCase().replace(/[^a-z0-9-]+/g, "-");
+    return {
+      ficha: String(ficha),
+      instLabel: inst ? inst.label : String(info.inst || "Ficha " + ficha),
+      grade: grade,
+      grupo: grupo,
+      slug: slug,
+      files: orderGuidesForMenu(auth.getGuidesForFicha(ficha)),
+    };
+  }
+
+  function getGuideMenuGroups(auth) {
+    var map = (auth && auth.FICHA_MAP) || {};
+    var fichas = NAV_GROUP_ORDER.filter(function (f) { return map[f]; })
+      .concat(Object.keys(map).filter(function (f) { return NAV_GROUP_ORDER.indexOf(f) === -1; }));
+    return fichas.map(function (f) { return describeGuideGroup(auth, f); }).filter(Boolean);
+  }
+
+  // Archivo de la guia abierta (guia.html?g=… o pages/guias/<archivo>.html).
+  function getCurrentGuideFile() {
+    try {
+      var g = new URLSearchParams(window.location.search || "").get("g");
+      if (g) return g;
+    } catch (e) {}
+    var last = String(window.location.pathname || "").split("/").pop();
+    return /\.html$/i.test(last) ? decodeURIComponent(last) : "";
+  }
+
+  function renderGuideList(auth, p, files, currentFile) {
+    return '<ul class="app-navbar__guide-list">' + files.map(function (file) {
+      var current = currentFile && file === currentFile ? ' aria-current="page"' : "";
+      return '<li><a class="app-navbar__drop-link" href="' + escapeHtml(p + auth.getGuideHref(file)) + '"' +
+        ' data-guide-file="' + escapeHtml(file) + '"' + current + ">" +
+        escapeHtml(getGuideMenuLabel(auth, file)) + "</a></li>";
+    }).join("") + "</ul>";
+  }
+
+  // Contenido del menu segun la sesion. Solo genera lo que corresponde: un
+  // aprendiz NUNCA recibe en el DOM grupos de otras fichas (antes se ocultaban y
+  // sus bordes quedaban como lineas sueltas).
+  function buildGuidesMenuHtml(auth, session, idPrefix) {
+    var p = getNavRootPrefix();
+    if (!auth || !session) {
+      return '<p class="app-navbar__guide-empty"><a href="' + p + 'index.html">Inicia sesión</a> para ver tus guías.</p>';
+    }
+    var currentFile = getCurrentGuideFile();
+
+    if (session.role !== "admin") {
+      var group = describeGuideGroup(auth, session.user && session.user.ficha);
+      if (!group || !group.files.length) {
+        return '<p class="app-navbar__guide-empty">No hay guías asignadas a tu ficha.</p>';
+      }
+      var headingId = idPrefix + "-heading";
+      return '<section class="app-navbar__guide-student" aria-labelledby="' + headingId + '" data-guide-ficha="' + escapeHtml(group.ficha) + '">' +
+        '<p class="app-navbar__drop-heading" id="' + headingId + '">' +
+        escapeHtml(group.instLabel + " · Grado " + group.grade + " · " + group.grupo) + "</p>" +
+        renderGuideList(auth, p, group.files, currentFile) +
+        "</section>";
+    }
+
+    var groups = getGuideMenuGroups(auth);
+    // Grupo abierto por defecto (y aria-current) SOLO si la guia actual pertenece
+    // a una unica ficha; Induccion o Python (varias fichas) no eligen ninguna.
+    var owners = groups.filter(function (g) { return currentFile && g.files.indexOf(currentFile) !== -1; });
+    var openFicha = owners.length === 1 ? owners[0].ficha : "";
+    return '<div class="app-navbar__guide-groups">' + groups.map(function (g) {
+      var panelId = idPrefix + "-" + g.slug;
+      var isOpen = g.ficha === openFicha;
+      return '<div class="app-navbar__guide-group" data-guide-ficha="' + escapeHtml(g.ficha) + '">' +
+        '<button class="app-navbar__guide-group-btn" type="button" aria-expanded="' + isOpen + '" aria-controls="' + panelId + '" data-guide-group-toggle>' +
+        "<span>" + escapeHtml(g.instLabel + " · " + g.grupo) + '</span><span class="app-navbar__caret" aria-hidden="true">▾</span>' +
+        "</button>" +
+        '<div class="app-navbar__guide-group-panel" id="' + panelId + '"' + (isOpen ? "" : " hidden") + ">" +
+        renderGuideList(auth, p, g.files, isOpen ? currentFile : "") +
+        "</div></div>";
+    }).join("") + "</div>";
+  }
+
+  // Acordeon del instructor: un solo grupo abierto a la vez (abrir 11B cierra 11A).
+  function bindGuideAccordion(container) {
+    var groups = container.querySelectorAll(".app-navbar__guide-group");
+    groups.forEach(function (group) {
+      var btn = group.querySelector("[data-guide-group-toggle]");
+      if (!btn) return;
+      btn.addEventListener("click", function () {
+        var willOpen = btn.getAttribute("aria-expanded") !== "true";
+        groups.forEach(function (other) {
+          var otherBtn = other.querySelector("[data-guide-group-toggle]");
+          var otherPanel = other.querySelector(".app-navbar__guide-group-panel");
+          var open = willOpen && other === group;
+          if (otherBtn) otherBtn.setAttribute("aria-expanded", String(open));
+          if (otherPanel) otherPanel.hidden = !open;
+        });
+      });
+    });
+  }
+
+  function renderGuidesMenu(container, idPrefix) {
+    if (!container) return false;
+    var auth = window.portalAuth || null;
+    var session = null;
+    try { session = auth ? auth.getCurrentSession() : null; } catch (e) { session = null; }
+    container.innerHTML = buildGuidesMenuHtml(auth, session, idPrefix || "app-navbar-guias");
+    bindGuideAccordion(container);
+    return true;
   }
 
   // ─────────────────────────────────────────────
@@ -71,71 +259,14 @@
       // Portal
       '      <a class="app-navbar__link" href="' + p + 'index.html" data-nav-key="portal">Portal</a>',
 
-      // Guías dropdown
+      // Guías dropdown. El contenido NO se escribe aqui: renderGuidesMenu() lo
+      // genera desde FICHA_MAP (portal_auth.js) segun la sesion -- un solo bloque
+      // para el aprendiz, acordeon por ficha para el instructor.
       '      <div class="app-navbar__drop" data-nav-key="guias">',
-      '        <button class="app-navbar__link app-navbar__drop-btn" type="button" aria-expanded="false" aria-haspopup="true">',
+      '        <button class="app-navbar__link app-navbar__drop-btn" type="button" aria-expanded="false" aria-controls="app-navbar-guias-panel">',
       '          Guías <span class="app-navbar__caret" aria-hidden="true">▾</span>',
       '        </button>',
-      '        <div class="app-navbar__drop-panel" role="menu">',
-      '          <div class="app-navbar__drop-group" data-guide-group data-guide-group-key="kennedy-10">',
-      '            <span class="app-navbar__drop-heading">J.F. Kennedy · Grado 10</span>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-10a-guia-01-induccion.html") + '" role="menuitem" data-guide-file="grupo-10a-guia-01-induccion.html">10A · Guía 1 — Inducción</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-10a-guia-02-herramientas-informaticas-digitales.html") + '" role="menuitem" data-guide-file="grupo-10a-guia-02-herramientas-informaticas-digitales.html">10A · Guía 2 — Herramientas</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-10a-guia-03-planificar-informacion.html") + '" role="menuitem" data-guide-file="grupo-10a-guia-03-planificar-informacion.html">10A · Guía 3 — Planificar</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-10a-guia-04-planificar-informacion-ciberseguridad.html") + '" role="menuitem" data-guide-file="grupo-10a-guia-04-planificar-informacion-ciberseguridad.html">10A · Guía 4 — Ciberseguridad</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-10a-guia-05-documentar-gestion-informacion.html") + '" role="menuitem" data-guide-file="grupo-10a-guia-05-documentar-gestion-informacion.html">10A · Guía 5 — Documentar la gestión</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-10a-guia-06-mantener-equipos.html") + '" role="menuitem" data-guide-file="grupo-10a-guia-06-mantener-equipos.html">10A · Guía 6 — Mantener equipos</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-10a-guia-10-redes-rap01.html") + '" role="menuitem" data-guide-file="grupo-10a-guia-10-redes-rap01.html">10A · Guía 10 — Redes RAP01</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-10a-guia-11-redes-rap02.html") + '" role="menuitem" data-guide-file="grupo-10a-guia-11-redes-rap02.html">10A · Guía 11 — Redes RAP02</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-10a-guia-12-redes-rap03.html") + '" role="menuitem" data-guide-file="grupo-10a-guia-12-redes-rap03.html">10A · Guía 12 — Redes RAP03</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-10a-guia-04-taller-integrador.html") + '" role="menuitem" data-guide-file="grupo-10a-guia-04-taller-integrador.html">10A · Taller Integrador</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-10b-guia-01-induccion.html") + '" role="menuitem" data-guide-file="grupo-10b-guia-01-induccion.html">10B · Guía 1 — Inducción</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-10b-guia-02-herramientas-informaticas-digitales.html") + '" role="menuitem" data-guide-file="grupo-10b-guia-02-herramientas-informaticas-digitales.html">10B · Guía 2 — Herramientas</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-10b-guia-03-planificar-informacion.html") + '" role="menuitem" data-guide-file="grupo-10b-guia-03-planificar-informacion.html">10B · Guía 3 — Planificar</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-10b-guia-04-planificar-informacion-ciberseguridad.html") + '" role="menuitem" data-guide-file="grupo-10b-guia-04-planificar-informacion-ciberseguridad.html">10B · Guía 4 — Ciberseguridad</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-10b-guia-05-documentar-gestion-informacion.html") + '" role="menuitem" data-guide-file="grupo-10b-guia-05-documentar-gestion-informacion.html">10B · Guía 5 — Documentar la gestión</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-10b-guia-06-mantener-equipos.html") + '" role="menuitem" data-guide-file="grupo-10b-guia-06-mantener-equipos.html">10B · Guía 6 — Mantener equipos</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-10b-guia-10-redes-rap01.html") + '" role="menuitem" data-guide-file="grupo-10b-guia-10-redes-rap01.html">10B · Guía 10 — Redes RAP01</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-10b-guia-11-redes-rap02.html") + '" role="menuitem" data-guide-file="grupo-10b-guia-11-redes-rap02.html">10B · Guía 11 — Redes RAP02</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-10b-guia-12-redes-rap03.html") + '" role="menuitem" data-guide-file="grupo-10b-guia-12-redes-rap03.html">10B · Guía 12 — Redes RAP03</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-10b-guia-04-taller-integrador.html") + '" role="menuitem" data-guide-file="grupo-10b-guia-04-taller-integrador.html">10B · Taller Integrador</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "santa-barbara-guia-python.html") + '" role="menuitem" data-guide-file="santa-barbara-guia-python.html">10A/10B · Guía - Práctica de Python</a>',
-      '          </div>',
-      '          <div class="app-navbar__drop-group" data-guide-group data-guide-group-key="sb-10">',
-      '            <span class="app-navbar__drop-heading">Santa Bárbara · Grado 10</span>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-10a-guia-01-induccion.html") + '" role="menuitem" data-guide-file="grupo-10a-guia-01-induccion.html">10A · Guía 1 — Inducción</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "santa-barbara-10a-guia-02-redes-rap01.html") + '" role="menuitem" data-guide-file="santa-barbara-10a-guia-02-redes-rap01.html">10A · Guía 2 — Redes RAP01</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "santa-barbara-10a-guia-03-redes-rap02.html") + '" role="menuitem" data-guide-file="santa-barbara-10a-guia-03-redes-rap02.html">10A · Guía 3 — Redes RAP02</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "santa-barbara-10a-guia-04-redes-rap03.html") + '" role="menuitem" data-guide-file="santa-barbara-10a-guia-04-redes-rap03.html">10A · Guía 4 — Redes RAP03</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "santa-barbara-10a-guia-04-taller-integrador.html") + '" role="menuitem" data-guide-file="santa-barbara-10a-guia-04-taller-integrador.html">10A · Taller Integrador</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-10b-guia-01-induccion.html") + '" role="menuitem" data-guide-file="grupo-10b-guia-01-induccion.html">10B · Guía 1 — Inducción</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "santa-barbara-10b-guia-02-redes-rap01.html") + '" role="menuitem" data-guide-file="santa-barbara-10b-guia-02-redes-rap01.html">10B · Guía 2 — Redes RAP01</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "santa-barbara-10b-guia-03-redes-rap02.html") + '" role="menuitem" data-guide-file="santa-barbara-10b-guia-03-redes-rap02.html">10B · Guía 3 — Redes RAP02</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "santa-barbara-10b-guia-04-redes-rap03.html") + '" role="menuitem" data-guide-file="santa-barbara-10b-guia-04-redes-rap03.html">10B · Guía 4 — Redes RAP03</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "santa-barbara-10b-guia-04-taller-integrador.html") + '" role="menuitem" data-guide-file="santa-barbara-10b-guia-04-taller-integrador.html">10B · Taller Integrador</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "santa-barbara-guia-python.html") + '" role="menuitem" data-guide-file="santa-barbara-guia-python.html">10A/10B · Guía - Práctica de Python</a>',
-      '          </div>',
-      '          <div class="app-navbar__drop-group" data-guide-group data-guide-group-key="sb-11">',
-      '            <span class="app-navbar__drop-heading">Santa Bárbara · Grado 11</span>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-11a-guia-05-herramientas-informaticas-digitales.html") + '" role="menuitem" data-guide-file="grupo-11a-guia-05-herramientas-informaticas-digitales.html">11A · Guía 5 — Herramientas</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-11a-guia-06-planificar-informacion.html") + '" role="menuitem" data-guide-file="grupo-11a-guia-06-planificar-informacion.html">11A · Guía 6 — Implementar componentes</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-11a-guia-07-planificar-informacion-ciberseguridad.html") + '" role="menuitem" data-guide-file="grupo-11a-guia-07-planificar-informacion-ciberseguridad.html">11A · Guía 7 — Ciberseguridad</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-11a-guia-08-documentar-gestion-informacion.html") + '" role="menuitem" data-guide-file="grupo-11a-guia-08-documentar-gestion-informacion.html">11A · Guía 8 — Documentar la gestión</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-11a-guia-09-taller-integrador.html") + '" role="menuitem" data-guide-file="grupo-11a-guia-09-taller-integrador.html">11A · Taller Integrador</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-11a-guia-09-redes-rap01.html") + '" role="menuitem" data-guide-file="grupo-11a-guia-09-redes-rap01.html">11A · Guía 9 — Redes RAP01</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-11a-guia-10-redes-rap02.html") + '" role="menuitem" data-guide-file="grupo-11a-guia-10-redes-rap02.html">11A · Guía 10 — Redes RAP02</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-11a-guia-11-redes-rap03.html") + '" role="menuitem" data-guide-file="grupo-11a-guia-11-redes-rap03.html">11A · Guía 11 — Redes RAP03</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-11b-guia-05-herramientas-informaticas-digitales.html") + '" role="menuitem" data-guide-file="grupo-11b-guia-05-herramientas-informaticas-digitales.html">11B · Guía 5 — Herramientas</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-11b-guia-06-planificar-informacion.html") + '" role="menuitem" data-guide-file="grupo-11b-guia-06-planificar-informacion.html">11B · Guía 6 — Implementar componentes</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-11b-guia-07-planificar-informacion-ciberseguridad.html") + '" role="menuitem" data-guide-file="grupo-11b-guia-07-planificar-informacion-ciberseguridad.html">11B · Guía 7 — Ciberseguridad</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-11b-guia-08-documentar-gestion-informacion.html") + '" role="menuitem" data-guide-file="grupo-11b-guia-08-documentar-gestion-informacion.html">11B · Guía 8 — Documentar la gestión</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-11b-guia-09-taller-integrador.html") + '" role="menuitem" data-guide-file="grupo-11b-guia-09-taller-integrador.html">11B · Taller Integrador</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-11b-guia-09-redes-rap01.html") + '" role="menuitem" data-guide-file="grupo-11b-guia-09-redes-rap01.html">11B · Guía 9 — Redes RAP01</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-11b-guia-10-redes-rap02.html") + '" role="menuitem" data-guide-file="grupo-11b-guia-10-redes-rap02.html">11B · Guía 10 — Redes RAP02</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "grupo-11b-guia-11-redes-rap03.html") + '" role="menuitem" data-guide-file="grupo-11b-guia-11-redes-rap03.html">11B · Guía 11 — Redes RAP03</a>',
-      '            <a class="app-navbar__drop-link" href="' + guideHref(p, "santa-barbara-guia-python.html") + '" role="menuitem" data-guide-file="santa-barbara-guia-python.html">11A/11B · Guía - Práctica de Python</a>',
-      '          </div>',
-      '        </div>',
+      '        <div class="app-navbar__drop-panel app-navbar__drop-panel--guides" id="app-navbar-guias-panel" data-guides-panel></div>',
       '      </div>',
 
       // Calendario (admin only — shown by updateNavbarSession)
@@ -222,6 +353,8 @@
   //  Show session info + admin-only links
   // ─────────────────────────────────────────────
   function updateNavbarSession() {
+    renderGuidesMenu(document.querySelector("[data-guides-panel]"), "app-navbar-guias");
+
     var auth = window.portalAuth || null;
     if (!auth) return;
 
@@ -251,40 +384,6 @@
       document.querySelectorAll(".app-navbar__admin-only").forEach(function (el) {
         el.style.display = "";
       });
-    } else {
-      // Estudiante: mostrar únicamente el grupo (institución + grado) de su ficha
-      // y, dentro de él, solo las guías a las que tiene acceso. Las guías
-      // compartidas (p. ej. Práctica de Python) están listadas en los tres grupos
-      // del navbar; si solo filtráramos por archivo se mostrarían varias veces,
-      // incluido un encabezado de "Grado 11" que no corresponde al aprendiz.
-      var studentGuides = [];
-      var groupKey = "";
-      try {
-        var ficha = session.user && session.user.ficha;
-        studentGuides = auth.getGuidesForFicha(ficha) || [];
-        var fichaInfo = typeof auth.getFichaInfo === "function" ? auth.getFichaInfo(ficha) : null;
-        if (fichaInfo) {
-          var instKey = /kennedy/i.test(fichaInfo.inst) ? "kennedy"
-            : /santa\s*b[aá]rbara/i.test(fichaInfo.inst) ? "sb" : "";
-          var gradeKey = (String(fichaInfo.grupo || "").match(/\d{1,2}/) || [""])[0];
-          if (instKey && gradeKey) groupKey = instKey + "-" + gradeKey;
-        }
-      } catch (e) {}
-
-      document.querySelectorAll("[data-guide-group]").forEach(function (group) {
-        // Si no se pudo determinar el grupo del aprendiz (ficha desconocida),
-        // se recurre al filtrado por archivo en todos los grupos.
-        var groupMatches = !groupKey || group.getAttribute("data-guide-group-key") === groupKey;
-        var visibleCount = 0;
-        group.querySelectorAll(".app-navbar__drop-link[data-guide-file]").forEach(function (link) {
-          var file = link.getAttribute("data-guide-file");
-          var show = groupMatches && studentGuides.includes(file);
-          link.style.display = show ? "" : "none";
-          if (show) visibleCount++;
-        });
-        var heading = group.querySelector(".app-navbar__drop-heading");
-        if (heading) heading.style.display = visibleCount ? "" : "none";
-      });
     }
   }
 
@@ -308,57 +407,54 @@
       });
     }
 
+    // Desplegables del navbar (Guías, Etapa Productiva...): el CLIC es la unica
+    // forma de abrir/cerrar, en cualquier ancho de pantalla. Antes un
+    // mouseenter abria el panel y el clic siguiente lo cerraba (toggle), y en
+    // tablets tactiles el toque disparaba ambos a la vez.
     var drops = nav.querySelectorAll(".app-navbar__drop");
 
-    // Click toggle for dropdowns
+    function setDropOpen(drop, open) {
+      drop.classList.toggle("is-open", open);
+      var btn = drop.querySelector(".app-navbar__drop-btn");
+      if (btn) btn.setAttribute("aria-expanded", String(open));
+    }
+
     drops.forEach(function (drop) {
       var btn = drop.querySelector(".app-navbar__drop-btn");
       if (!btn) return;
 
-      btn.addEventListener("click", function (e) {
-        e.stopPropagation();
-        var isOpen = drop.classList.toggle("is-open");
-        btn.setAttribute("aria-expanded", String(isOpen));
-
-        // Close siblings
+      btn.addEventListener("click", function () {
+        var willOpen = !drop.classList.contains("is-open");
         drops.forEach(function (other) {
-          if (other !== drop) {
-            other.classList.remove("is-open");
-            var otherBtn = other.querySelector(".app-navbar__drop-btn");
-            if (otherBtn) otherBtn.setAttribute("aria-expanded", "false");
-          }
+          if (other !== drop) setDropOpen(other, false);
         });
+        setDropOpen(drop, willOpen);
+      });
+
+      // Tab fuera del desplegable lo cierra. Un clic dentro sobre algo no
+      // enfocable deja relatedTarget en null y NO debe cerrarlo.
+      drop.addEventListener("focusout", function (e) {
+        var next = e.relatedTarget;
+        if (next && !drop.contains(next)) setDropOpen(drop, false);
       });
     });
 
-    // Close on outside click
-    document.addEventListener("click", function () {
+    // Clic fuera cierra; un clic dentro del panel (encabezado, grupo del
+    // acordeon) no.
+    document.addEventListener("click", function (e) {
       drops.forEach(function (drop) {
-        drop.classList.remove("is-open");
-        var btn = drop.querySelector(".app-navbar__drop-btn");
-        if (btn) btn.setAttribute("aria-expanded", "false");
+        if (!drop.contains(e.target)) setDropOpen(drop, false);
       });
     });
 
-    // Desktop: hover open/close with short delay
-    drops.forEach(function (drop) {
-      var leaveTimer = null;
-
-      drop.addEventListener("mouseenter", function () {
-        if (window.innerWidth <= 768) return;
-        clearTimeout(leaveTimer);
-        drop.classList.add("is-open");
+    // Escape cierra y devuelve el foco al boton que lo abrio.
+    document.addEventListener("keydown", function (e) {
+      if (e.key !== "Escape" && e.key !== "Esc") return;
+      drops.forEach(function (drop) {
+        if (!drop.classList.contains("is-open")) return;
+        setDropOpen(drop, false);
         var btn = drop.querySelector(".app-navbar__drop-btn");
-        if (btn) btn.setAttribute("aria-expanded", "true");
-      });
-
-      drop.addEventListener("mouseleave", function () {
-        if (window.innerWidth <= 768) return;
-        leaveTimer = setTimeout(function () {
-          drop.classList.remove("is-open");
-          var btn = drop.querySelector(".app-navbar__drop-btn");
-          if (btn) btn.setAttribute("aria-expanded", "false");
-        }, 120);
+        if (btn) btn.focus();
       });
     });
   }
@@ -393,6 +489,9 @@
   //  Init
   // ─────────────────────────────────────────────
   window.initSharedShell = initSharedShell;
+  // Mismo contenido del menu "Guias" montado en otro contenedor (p. ej. el
+  // selector de guias del Panel de gestion en index.html), con sus propios ids.
+  window.portalGuideNav = { mount: renderGuidesMenu };
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", initSharedShell);
