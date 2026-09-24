@@ -2,8 +2,24 @@
   padding-bottom: 78px;
 }
 
+/* La onda (svg.wave) se monta sobre el borde inferior del hero y su relleno
+   (currentColor) prolonga el lienzo de la pagina: --surface-2 es el token que
+   coincide con el fondo real medido bajo el hero. Antes no tenia color (heredaba
+   el texto, casi negro) y el main subia 46px sobre ella: el titulo quedaba
+   sobre una franja oscura.
+   - display:block quita el hueco de linea de un svg inline.
+   - margin-top:-40px (su altura) la superpone al borde inferior del hero.
+   - position:relative: el hero es posicionado y se pinta por encima de los
+     elementos estaticos; sin esto la onda quedaria oculta bajo el hero. */
+.app-shell--productive-stage .wave {
+  display: block;
+  position: relative;
+  margin-top: -40px;
+  color: var(--surface-2, #f5faf7);
+}
+
 .productive-stage-admin-main {
-  margin-top: -46px;
+  margin-top: 0;
 }
 
 .productive-stage-hero-top {
@@ -387,13 +403,18 @@
   color: var(--text-muted);
 }
 
+/* 721-900px: las 4 columnas minimas de la barra (260 + 3x180 + huecos) no caben
+   y desbordaban el documento. Va ANTES del bloque de 720px para que su
+   "1 columna" siga ganando por orden de cascada. */
+@media (max-width: 900px) {
+  .productive-stage-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 720px) {
   .app-shell--productive-stage .app-hero {
     padding-bottom: 60px;
-  }
-
-  .productive-stage-admin-main {
-    margin-top: -28px;
   }
 
   .productive-stage-admin-shell__top,
@@ -411,6 +432,12 @@
   .productive-stage-hero-chips {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  /* El control nativo (~307px + relleno) no encoge y ensanchaba la pagina a
+     421px en moviles: que ocupe el ancho de su columna. */
+  .productive-stage-import input[type="file"] {
+    width: 100%;
   }
 }
 
