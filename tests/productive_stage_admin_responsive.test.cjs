@@ -82,6 +82,27 @@ test("onda: color explicito del lienzo (token --surface-2), bloque y montada sob
   assert.match(rule, /position:\s*relative/, "sin position la onda queda oculta bajo el hero (posicionado)");
 });
 
+// Contraste y casilla (2026-09-23). La 1ª cabecera de .document-delivery-table
+// tenia background: var(--text-strong) (#102117) sin color propio: texto
+// #16211b sobre #102117 = 1.01:1. Sin ese fondo hereda el #fff (opaco, sticky)
+// de th:first-child: 16.57:1. La casilla "Solo con pendientes" heredaba el
+// min-height:46px de los campos de la barra (13x46, texto 17px desalineado).
+test("primera cabecera de las tablas: sin fondo oscuro, y sigue opaca y fija (sticky)", () => {
+  const head = ruleBody(baseCss, ".document-delivery-table thead th:first-child");
+  assert.ok(head, "falta la regla de la primera cabecera");
+  assert.doesNotMatch(head, /background/, "la primera cabecera no debe redefinir el fondo (era var(--text-strong): contraste 1.01:1)");
+  assert.match(head, /z-index:\s*2/);
+  const col = ruleBody(baseCss, ".document-delivery-table th:first-child");
+  assert.match(col, /position:\s*sticky/);
+  assert.match(col, /background:\s*#fff\b/, "la columna fija necesita un fondo opaco");
+});
+
+test("casilla de la barra: no hereda el min-height de los campos de texto", () => {
+  assert.match(ruleBody(baseCss, ".productive-stage-toolbar input,\n.productive-stage-toolbar select") || "", /min-height:\s*46px/, "la regla general de campos no debe cambiar");
+  const cb = ruleBody(baseCss, '.productive-stage-toolbar input[type="checkbox"]');
+  assert.ok(cb && /min-height:\s*0/.test(cb), "falta la excepcion min-height:0 para la casilla");
+});
+
 test("no se oculta el sintoma con overflow-x", () => {
   assert.doesNotMatch(css, /overflow-x:\s*(hidden|clip)/);
 });

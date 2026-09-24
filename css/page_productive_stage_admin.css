@@ -134,6 +134,12 @@
   color: var(--text-strong);
 }
 
+/* La regla anterior es para campos de texto y selectores: su min-height
+   estiraria la casilla y descuadraria su texto. */
+.productive-stage-toolbar input[type="checkbox"] {
+  min-height: 0;
+}
+
 .productive-stage-last-import {
   border-radius: 16px;
   border: 1px solid rgba(15, 63, 43, 0.1);
@@ -530,7 +536,6 @@
 
 .document-delivery-table thead th:first-child {
   z-index: 2;
-  background: var(--text-strong);
 }
 
 .document-delivery-table th small {
