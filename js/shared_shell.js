@@ -256,6 +256,13 @@
       // Links
       '    <div class="app-navbar__links" id="app-navbar-links">',
 
+      // Identidad dentro del menu: solo se ve en modo compacto/movil, donde el
+      // chip de la barra se oculta. Texto, no interactivo (fuera del orden de Tab).
+      '      <p class="app-navbar__menu-user" id="app-navbar-menu-user" hidden>',
+      '        <span class="app-navbar__user-role" id="app-navbar-menu-role"></span>',
+      '        <span class="app-navbar__menu-user-name" id="app-navbar-menu-username"></span>',
+      '      </p>',
+
       // Portal
       '      <a class="app-navbar__link" href="' + p + 'index.html" data-nav-key="portal">Portal</a>',
 
@@ -378,6 +385,17 @@
       roleEl.className = "app-navbar__user-role" + (isAdmin ? " app-navbar__user-role--admin" : "");
       usernameEl.textContent = displayName;
       userEl.style.display = "";
+
+      // La misma identidad del chip, dentro del menu compacto.
+      var menuUser = document.getElementById("app-navbar-menu-user");
+      var menuRole = document.getElementById("app-navbar-menu-role");
+      var menuName = document.getElementById("app-navbar-menu-username");
+      if (menuUser && menuRole && menuName) {
+        menuRole.textContent = roleEl.textContent;
+        menuRole.className = roleEl.className;
+        menuName.textContent = displayName;
+        menuUser.hidden = false;
+      }
     }
 
     if (isAdmin) {
@@ -385,6 +403,9 @@
         el.style.display = "";
       });
     }
+
+    // Rol, enlaces o nombre pueden haber cambiado el ancho de la barra.
+    scheduleNavbarMeasurement();
   }
 
   // ─────────────────────────────────────────────
@@ -460,6 +481,118 @@
   }
 
   // ─────────────────────────────────────────────
+  //  Modo compacto segun el contenido
+  // ─────────────────────────────────────────────
+  // La barra de escritorio es una fila rigida (el logo y el chip no encogen y los
+  // enlaces no parten linea): con la sesion de instructor necesita ~1240px y hasta
+  // ahora, entre 769px y ese ancho, "Panel Admin" y el chip quedaban fuera de la
+  // pantalla. Cuando el contenido no cabe se activa .app-navbar--compact, que
+  // aplica el mismo diseno del movil (reglas espejo del bloque <=768px en
+  // shared_shell.css; ese bloque sigue siendo la garantia si este JS falla).
+  // Se mide SIEMPRE el ancho del estado escritorio -- quitando la clase un
+  // instante dentro de la misma tarea, sin llegar a pintar --, asi que la
+  // decision no depende del estado actual y no puede oscilar.
+  var NAVBAR_COMPACT_CLASS = "app-navbar--compact";
+  var NAVBAR_MOBILE_QUERY = "(max-width: 768px)";
+  // Margen para salir del modo compacto: absorbe redondeos subpixel (<1px)
+  // entre mediciones; la decision ya es estable porque siempre se mide el
+  // estado escritorio.
+  var NAVBAR_COMPACT_HYSTERESIS = 4;
+  var navbarMeasureFrame = 0;
+  var navbarCompactReady = false;
+
+  function measureDesktopNavbarWidth(nav) {
+    var inner = nav.querySelector(".app-navbar__inner");
+    var logo = nav.querySelector(".app-navbar__logo");
+    var links = document.getElementById("app-navbar-links");
+    var end = nav.querySelector(".app-navbar__end");
+    if (!inner || !logo || !links || !end || typeof logo.getBoundingClientRect !== "function") return null;
+    var wasCompact = nav.classList.contains(NAVBAR_COMPACT_CLASS);
+    if (wasCompact) nav.classList.remove(NAVBAR_COMPACT_CLASS);
+    var required = logo.getBoundingClientRect().width + end.getBoundingClientRect().width;
+    Array.prototype.forEach.call(links.children, function (child) {
+      required += child.getBoundingClientRect().width;
+    });
+    var available = inner.clientWidth;
+    if (wasCompact) nav.classList.add(NAVBAR_COMPACT_CLASS);
+    return { required: required, available: available };
+  }
+
+  function setNavbarCompact(nav, compact) {
+    if (nav.classList.contains(NAVBAR_COMPACT_CLASS) === compact) return;
+    nav.classList.toggle(NAVBAR_COMPACT_CLASS, compact);
+    if (compact) return;
+    // De vuelta al escritorio: el menu desplegable del modo compacto se cierra.
+    var links = document.getElementById("app-navbar-links");
+    var hamburger = document.getElementById("app-navbar-hamburger");
+    if (links) links.classList.remove("is-open");
+    if (hamburger) {
+      hamburger.classList.remove("is-open");
+      hamburger.setAttribute("aria-expanded", "false");
+      hamburger.setAttribute("aria-label", "Abrir menú");
+    }
+  }
+
+  function updateNavbarCompactState() {
+    navbarMeasureFrame = 0;
+    var nav = document.getElementById("app-navbar");
+    if (!nav) return;
+    if (typeof window.matchMedia === "function" && window.matchMedia(NAVBAR_MOBILE_QUERY).matches) {
+      setNavbarCompact(nav, true);
+      return;
+    }
+    var m = measureDesktopNavbarWidth(nav);
+    if (!m || !(m.available > 0)) return;
+    var compact = nav.classList.contains(NAVBAR_COMPACT_CLASS)
+      ? m.available < m.required + NAVBAR_COMPACT_HYSTERESIS
+      : m.required > m.available;
+    setNavbarCompact(nav, compact);
+  }
+
+  // Un solo calculo por frame, aunque lleguen muchos avisos (resize continuo).
+  function scheduleNavbarMeasurement() {
+    if (!navbarCompactReady || navbarMeasureFrame) return;
+    navbarMeasureFrame = typeof window.requestAnimationFrame === "function"
+      ? window.requestAnimationFrame(updateNavbarCompactState)
+      : window.setTimeout(updateNavbarCompactState, 16);
+  }
+
+  function setupNavbarCompactMode() {
+    var nav = document.getElementById("app-navbar");
+    if (!nav || navbarCompactReady) return;
+    navbarCompactReady = true;
+    // Primera decision sincrona, en la misma tarea que inyecta la barra: no se
+    // llega a pintar la barra de escritorio cortada.
+    updateNavbarCompactState();
+    if (typeof window.ResizeObserver === "function") {
+      new window.ResizeObserver(scheduleNavbarMeasurement).observe(nav);
+    } else if (typeof window.addEventListener === "function") {
+      window.addEventListener("resize", scheduleNavbarMeasurement);
+    }
+    if (typeof window.matchMedia === "function") {
+      var mq = window.matchMedia(NAVBAR_MOBILE_QUERY);
+      if (typeof mq.addEventListener === "function") mq.addEventListener("change", scheduleNavbarMeasurement);
+    }
+    // Las fuentes web cambian el ancho de los textos al terminar de cargar.
+    if (document.fonts) {
+      if (document.fonts.ready && typeof document.fonts.ready.then === "function") {
+        document.fonts.ready.then(scheduleNavbarMeasurement);
+      }
+      if (typeof document.fonts.addEventListener === "function") {
+        document.fonts.addEventListener("loadingdone", scheduleNavbarMeasurement);
+      }
+    }
+    // Cambios del nombre del chip o de la visibilidad de enlaces (rol).
+    var user = document.getElementById("app-navbar-user");
+    var links = document.getElementById("app-navbar-links");
+    if (typeof window.MutationObserver === "function") {
+      var mo = new window.MutationObserver(scheduleNavbarMeasurement);
+      if (user) mo.observe(user, { childList: true, characterData: true, subtree: true });
+      if (links) mo.observe(links, { attributes: true, attributeFilter: ["style", "hidden"], subtree: true });
+    }
+  }
+
+  // ─────────────────────────────────────────────
   //  Reveal motion
   // ─────────────────────────────────────────────
   function markShellReady() {
@@ -483,6 +616,7 @@
     attachRevealMotion();
     updateNavbarSession();
     attachNavbarInteractions();
+    setupNavbarCompactMode();
   }
 
   // ─────────────────────────────────────────────

@@ -434,6 +434,11 @@ body.app-shell {
   text-overflow: ellipsis;
 }
 
+/* Identidad dentro del menu: solo en modo compacto/movil (ver mas abajo). */
+.app-navbar__menu-user {
+  display: none;
+}
+
 .app-navbar__user-role {
   background: var(--brand-600, #007934);
   color: #fff;
@@ -569,7 +574,128 @@ body.app-shell {
   .app-navbar__user {
     display: none;
   }
+
+  .app-navbar__menu-user:not([hidden]) {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0 0 4px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border-soft, #d6e2da);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--brand-700, #0a5c31);
+  }
+
+  .app-navbar__menu-user-name {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
 }
+
+/* ── Modo compacto por contenido (.app-navbar--compact) ──
+   shared_shell.js activa esta clase cuando la barra de escritorio no cabe en
+   el ancho disponible (p. ej. instructor entre 769 y ~1255px). Es un ESPEJO
+   exacto del bloque @media (max-width: 768px) de arriba, que sigue siendo la
+   garantia del movil aunque falle el JS: si cambias uno, cambia el otro
+   (tests/navbar_compact_mode.test.cjs comprueba que coinciden). */
+.app-navbar--compact .app-navbar__hamburger {
+  display: flex;
+}
+
+.app-navbar--compact .app-navbar__links {
+  display: none;
+  position: fixed;
+  top: var(--navbar-height, 60px);
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border-bottom: 1px solid var(--border-soft, #d6e2da);
+  box-shadow: 0 8px 24px rgba(10, 44, 28, 0.12);
+  flex-direction: column;
+  align-items: stretch;
+  padding: 8px;
+  gap: 2px;
+  z-index: 499;
+  max-height: calc(100vh - var(--navbar-height, 60px));
+  overflow-y: auto;
+}
+
+.app-navbar--compact .app-navbar__links.is-open {
+  display: flex;
+}
+
+.app-navbar--compact .app-navbar__link {
+  height: auto;
+  padding: 11px 14px;
+  border-radius: 10px;
+  border-bottom: none;
+  font-size: 14px;
+}
+
+.app-navbar--compact .app-navbar__link.is-active {
+  background: rgba(0, 121, 52, 0.08);
+  border-bottom: none;
+  color: var(--brand-600, #007934);
+}
+
+.app-navbar--compact .app-navbar__drop {
+  flex-direction: column;
+}
+
+.app-navbar--compact .app-navbar__drop-btn {
+  border-radius: 10px;
+}
+
+.app-navbar--compact .app-navbar__drop-panel {
+  position: static;
+  box-shadow: none;
+  border: none;
+  background: rgba(0, 121, 52, 0.04);
+  border-radius: 10px;
+  margin-top: 2px;
+  margin-left: 8px;
+  animation: none;
+  max-height: none;
+  overflow: visible;
+}
+
+.app-navbar--compact .app-navbar__drop-panel--guides {
+  width: auto;
+  min-width: 0;
+  max-width: none;
+}
+
+.app-navbar--compact .app-navbar__guide-list .app-navbar__drop-link {
+  min-height: var(--hit-target-min, 44px);
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+}
+
+.app-navbar--compact .app-navbar__user {
+  display: none;
+}
+
+.app-navbar--compact .app-navbar__menu-user:not([hidden]) {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 4px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-soft, #d6e2da);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--brand-700, #0a5c31);
+}
+
+.app-navbar--compact .app-navbar__menu-user-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 
 @media (prefers-reduced-motion: reduce) {
   html {

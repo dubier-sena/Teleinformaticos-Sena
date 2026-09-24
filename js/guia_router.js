@@ -8,7 +8,7 @@
       title: "Guia 1 - Induccion | Grupo 10A",
       type: "page",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "data/calendario_2026_records.js?v=20260722_1",
         "data/calendario_2026_seed.js?v=20260722_1",
         "js/activity_standard.js?v=20260822_1",
@@ -32,7 +32,7 @@
       title: "Guia 1 - Induccion | Grupo 10B",
       type: "page",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "data/calendario_2026_records.js?v=20260722_1",
         "data/calendario_2026_seed.js?v=20260722_1",
         "js/activity_standard.js?v=20260822_1",
@@ -56,7 +56,7 @@
       title: "Guia 2 - Operar Herramientas Informaticas y Digitales | Grupo 10A",
       type: "page",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "data/calendario_2026_records.js?v=20260722_1",
@@ -84,7 +84,7 @@
       title: "Guia 2 - Operar Herramientas Informaticas y Digitales | Grupo 10B",
       type: "page",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "data/calendario_2026_records.js?v=20260722_1",
@@ -112,7 +112,7 @@
       title: "Guia 3 - Implementar componentes | Grupo 10A",
       type: "page",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/guia3_quiz_bank.js?v=20260506_1",
@@ -137,7 +137,7 @@
       title: "Guia 3 - Implementar componentes | Grupo 10B",
       type: "page",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/guia3_quiz_bank.js?v=20260506_1",
@@ -162,7 +162,7 @@
       title: "Taller Integrador | Grupo 10A",
       type: "page",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/activity_standard.js?v=20260822_1",
@@ -185,7 +185,7 @@
       title: "Taller Integrador | Grupo 10B",
       type: "page",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/activity_standard.js?v=20260822_1",
@@ -208,7 +208,7 @@
       title: "Taller Integrador | Grupo 10A | Santa Barbara",
       type: "page",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/activity_standard.js?v=20260822_1",
@@ -231,7 +231,7 @@
       title: "Taller Integrador | Grupo 10B | Santa Barbara",
       type: "page",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/activity_standard.js?v=20260822_1",
@@ -254,7 +254,7 @@
       title: "Guia 4 - Planificar la informacion segun criterios de ciberseguridad | Grupo 10A",
       type: "page",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/activity_standard.js?v=20260822_1",
@@ -279,7 +279,7 @@
       title: "Guia 4 - Planificar la informacion segun criterios de ciberseguridad | Grupo 10B",
       type: "page",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/activity_standard.js?v=20260822_1",
@@ -304,7 +304,7 @@
       title: "Guia 5 - Documentar la gestion de la informacion | Grupo 10A",
       type: "page",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260728_1",
         "js/activity_standard.js?v=20260822_1",
@@ -327,7 +327,7 @@
       title: "Guia 5 - Documentar la gestion de la informacion | Grupo 10B",
       type: "page",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260728_1",
         "js/activity_standard.js?v=20260822_1",
@@ -350,7 +350,7 @@
       title: "Guia 6 - Preparar el mantenimiento de equipos de computo | Grupo 10A",
       type: "page",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260728_1",
         "js/activity_standard.js?v=20260822_1",
@@ -375,7 +375,7 @@
       title: "Guia 6 - Preparar el mantenimiento de equipos de computo | Grupo 10B",
       type: "page",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260728_1",
         "js/activity_standard.js?v=20260822_1",
@@ -400,7 +400,7 @@
       title: "Guia 5 - Operar Herramientas Informaticas y Digitales | Grupo 11A",
       type: "page",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/activity_standard.js?v=20260822_1",
@@ -425,7 +425,7 @@
       title: "Guia 5 - Operar Herramientas Informaticas y Digitales | Grupo 11B",
       type: "page",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/activity_standard.js?v=20260822_1",
@@ -450,7 +450,7 @@
       title: "Guia 6 - Implementar componentes de las herramientas tecnologicas | Grupo 11A",
       type: "page",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/guia6_quiz_bank.js?v=20260428_1",
@@ -475,7 +475,7 @@
       title: "Guia 6 - Implementar componentes de las herramientas tecnologicas | Grupo 11B",
       type: "page",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/guia6_quiz_bank.js?v=20260428_1",
@@ -500,7 +500,7 @@
       title: "Guia 7 - Planificar la informacion segun criterios de ciberseguridad | Grupo 11A",
       type: "page",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/activity_standard.js?v=20260822_1",
@@ -523,7 +523,7 @@
       title: "Guia 7 - Planificar la informacion segun criterios de ciberseguridad | Grupo 11B",
       type: "page",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/activity_standard.js?v=20260822_1",
@@ -546,7 +546,7 @@
       title: "Guia 8 - Documentar la gestion de la informacion | Grupo 11A",
       type: "page",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/activity_standard.js?v=20260822_1",
@@ -569,7 +569,7 @@
       title: "Guia 8 - Documentar la gestion de la informacion | Grupo 11B",
       type: "page",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/activity_standard.js?v=20260822_1",
@@ -592,7 +592,7 @@
       title: "Taller Integrador | Grupo 11A | Santa Barbara",
       type: "page",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/activity_standard.js?v=20260822_1",
@@ -615,7 +615,7 @@
       title: "Taller Integrador | Grupo 11B | Santa Barbara",
       type: "page",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "js/activity_standard.js?v=20260822_1",
@@ -638,7 +638,7 @@
       title: "Guia 2 - Redes RAP01 | Grupo 10A",
       type: "guide",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "data/calendario_2026_records.js?v=20260722_1",
@@ -665,7 +665,7 @@
       title: "Guia 2 - Redes RAP01 | Grupo 10B",
       type: "guide",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "data/calendario_2026_records.js?v=20260722_1",
@@ -692,7 +692,7 @@
       title: "Guia 3 - Comprobar la conectividad de la red (RAP 02) | Grupo 10A",
       type: "guide",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "data/calendario_2026_records.js?v=20260722_1",
@@ -718,7 +718,7 @@
       title: "Guia 4 - Documentar las acciones realizadas en la red (RAP 03) | Grupo 10A",
       type: "guide",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260728_1",
         "data/calendario_2026_records.js?v=20260722_1",
@@ -744,7 +744,7 @@
       title: "Guia 4 - Documentar las acciones realizadas en la red (RAP 03) | Grupo 10B",
       type: "guide",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260728_1",
         "data/calendario_2026_records.js?v=20260722_1",
@@ -773,7 +773,7 @@
       title: "Guia 10 - Redes RAP01 | Grupo 10A",
       type: "guide",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260827_1",
         "js/shared_drive_delivery.js?v=20260728_1",
         "data/calendario_2026_records.js?v=20260722_1",
@@ -800,7 +800,7 @@
       title: "Guia 10 - Redes RAP01 | Grupo 10B",
       type: "guide",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260827_1",
         "js/shared_drive_delivery.js?v=20260728_1",
         "data/calendario_2026_records.js?v=20260722_1",
@@ -827,7 +827,7 @@
       title: "Guia 11 - Comprobar la conectividad de la red (RAP 02) | Grupo 10A",
       type: "guide",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260827_1",
         "js/shared_drive_delivery.js?v=20260728_1",
         "data/calendario_2026_records.js?v=20260722_1",
@@ -853,7 +853,7 @@
       title: "Guia 11 - Comprobar la conectividad de la red (RAP 02) | Grupo 10B",
       type: "guide",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260827_1",
         "js/shared_drive_delivery.js?v=20260728_1",
         "data/calendario_2026_records.js?v=20260722_1",
@@ -879,7 +879,7 @@
       title: "Guia 12 - Documentar las acciones realizadas en la red (RAP 03) | Grupo 10A",
       type: "guide",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260827_1",
         "js/shared_drive_delivery.js?v=20260728_1",
         "data/calendario_2026_records.js?v=20260722_1",
@@ -905,7 +905,7 @@
       title: "Guia 12 - Documentar las acciones realizadas en la red (RAP 03) | Grupo 10B",
       type: "guide",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260827_1",
         "js/shared_drive_delivery.js?v=20260728_1",
         "data/calendario_2026_records.js?v=20260722_1",
@@ -931,7 +931,7 @@
       title: "Guia 3 - Comprobar la conectividad de la red (RAP 02) | Grupo 10B",
       type: "guide",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "data/calendario_2026_records.js?v=20260722_1",
@@ -957,7 +957,7 @@
       title: "Guia - Practica de Python | Santa Barbara",
       type: "guide",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "data/calendario_2026_records.js?v=20260722_1",
@@ -981,7 +981,7 @@
       title: "Guia 9 - Redes RAP01 | Grupo 11A",
       type: "guide",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "data/calendario_2026_records.js?v=20260722_1",
@@ -1008,7 +1008,7 @@
       title: "Guia 9 - Redes RAP01 | Grupo 11B",
       type: "guide",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "data/calendario_2026_records.js?v=20260722_1",
@@ -1035,7 +1035,7 @@
       title: "Guia 10 - Redes RAP02 | Grupo 11A",
       type: "guide",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "data/calendario_2026_records.js?v=20260722_1",
@@ -1061,7 +1061,7 @@
       title: "Guia 10 - Redes RAP02 | Grupo 11B",
       type: "guide",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260611_2",
         "data/calendario_2026_records.js?v=20260722_1",
@@ -1087,7 +1087,7 @@
       title: "Guia 11 - Redes RAP03 | Grupo 11A",
       type: "guide",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260728_1",
         "data/calendario_2026_records.js?v=20260722_1",
@@ -1113,7 +1113,7 @@
       title: "Guia 11 - Redes RAP03 | Grupo 11B",
       type: "guide",
       scripts: [
-        "js/shared_shell.js?v=20260923_2",
+        "js/shared_shell.js?v=20260923_3",
         "js/shared_apps_script_delivery.js?v=20260822_2",
         "js/shared_drive_delivery.js?v=20260728_1",
         "data/calendario_2026_records.js?v=20260722_1",
