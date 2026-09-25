@@ -65,6 +65,17 @@ function makeFakeCloud() {
       docs[scopeKey + "|" + fileName] = snapshot;
       return true;
     },
+    // 2026-09-25: saveOwnDocumentDelivery escribe con la variante ESTRICTA
+    // (leer -> aplicar por id -> escribir con precondicion). Mismo "doc en la
+    // nube" en memoria que arriba.
+    cloudUpdateGuideDataStrict: async function (scopeKey, fileName, mutate) {
+      const key = scopeKey + "|" + fileName;
+      const current = Object.prototype.hasOwnProperty.call(docs, key) ? JSON.parse(JSON.stringify(docs[key])) : {};
+      const next = mutate(current);
+      if (!next || next.abort) return { ok: false, status: "aborted" };
+      docs[key] = next;
+      return { ok: true, status: "saved", snapshot: next };
+    },
   };
 }
 
@@ -165,18 +176,25 @@ test("4. Firestore disponible -- cloudSaveGuideData/cloudGetGuideData exitosos d
   assert.equal(merged.documentDeliveries[0].docId, "sofia-plus");
 });
 
-test("5. Firestore caido -> fallback: cloudSaveGuideData resuelve true via Drive (mismo contrato que el resto del portal) y saveOwnDocumentDelivery lo refleja sin fallo falso", async () => {
+// 2026-09-25 (cambio de contrato deliberado): antes, con Firestore caido,
+// la lectura previa devolvia VACIO y cloudSaveGuideData reemplazaba el doc
+// via Drive -- se perdian las entregas anteriores del aprendiz. Ahora la
+// escritura es estricta: lectura fallida = cero escrituras y ok:false; la
+// pagina deja la entrega en una cola local y la reintenta (ver
+// productive_stage_project_delivery.js, flushPendingCloudRecords).
+test("5. Firestore caido -> lectura fallida = CERO escrituras y ok:false explicito (nunca reemplaza el doc a ciegas)", async () => {
   resetGlobals();
-  // Simula exactamente lo que devuelve firebase_db.js cuando fsPatch cae a
-  // driveFallbackSet y este SI tiene exito: true (y ahi mismo, dentro de
-  // firebase_db.js -- no aqui -- queda registrada la promocion pendiente).
+  let blindWrites = 0;
   global._firebaseDb = {
     cloudGetGuideData: async function () { return null; },
-    cloudSaveGuideData: async function () { return true; },
+    cloudSaveGuideData: async function () { blindWrites += 1; return true; },
+    cloudUpdateGuideDataStrict: async function () { return { ok: false, status: "read-failed" }; },
   };
 
   const result = await store.saveOwnDocumentDelivery("ana.lopez", { docId: "bitacora-2", submittedAt: "2026-08-25T10:00:00.000Z" });
-  assert.equal(result.ok, true, "un exito via respaldo Drive debe verse como exito, no como fallo silencioso ni como error falso");
+  assert.equal(result.ok, false);
+  assert.equal(result.status, "read-failed");
+  assert.equal(blindWrites, 0, "no debe usar el guardado que reemplaza el doc completo");
 });
 
 test("5b. Firestore Y Drive caidos (fallo total) -- saveOwnDocumentDelivery NUNCA falla en silencio: devuelve ok:false explicito", async () => {
@@ -184,6 +202,7 @@ test("5b. Firestore Y Drive caidos (fallo total) -- saveOwnDocumentDelivery NUNC
   global._firebaseDb = {
     cloudGetGuideData: async function () { return null; },
     cloudSaveGuideData: async function () { return false; },
+    cloudUpdateGuideDataStrict: async function () { return { ok: false, status: "write-failed" }; },
   };
 
   const result = await store.saveOwnDocumentDelivery("ana.lopez", { docId: "bitacora-3", submittedAt: "2026-08-25T10:00:00.000Z" });
@@ -237,23 +256,26 @@ test("loadStudentSnapshot: sin sesion resuelta (portalAuth ausente) no revienta,
   assert.equal(snap.documentDeliveries.length, 1);
 });
 
-test("estructura: productive_stage_project_delivery.js ya no usa loadSnapshot/saveSnapshot (doc admin) para syncDocumentDeliveryToCloud", () => {
+test("estructura: el registro en la nube (documentos y avances) usa el doc PROPIO del aprendiz, nunca loadSnapshot/saveSnapshot (doc admin)", () => {
   const code = read("js/productive_stage_project_delivery.js");
-  const syncFnMatch = code.match(/async function syncDocumentDeliveryToCloud\([\s\S]*?\n  \}/);
-  assert.ok(syncFnMatch, "no se encontro syncDocumentDeliveryToCloud");
-  const fnBody = syncFnMatch[0];
-  assert.doesNotMatch(fnBody, /store\.loadSnapshot\(/, "ya no debe leer el doc admin agregado");
-  assert.doesNotMatch(fnBody, /store\.saveSnapshot\(/, "ya no debe escribir el doc admin agregado");
-  assert.match(fnBody, /store\.saveOwnDocumentDelivery\(/, "debe usar el doc propio del aprendiz");
+  const opMatch = code.match(/function buildCloudOperation\([\s\S]*?\n  \}/);
+  assert.ok(opMatch, "no se encontro buildCloudOperation");
+  const syncMatch = code.match(/async function syncDeliveryToCloud\([\s\S]*?\n  \}/);
+  assert.ok(syncMatch, "no se encontro syncDeliveryToCloud");
+  const body = opMatch[0] + syncMatch[0];
+  assert.doesNotMatch(body, /store\.loadSnapshot\(/, "ya no debe leer el doc admin agregado");
+  assert.doesNotMatch(body, /store\.saveSnapshot\(/, "ya no debe escribir el doc admin agregado");
+  assert.match(body, /store\.saveOwnDocumentDelivery\(/, "documentos base: doc propio del aprendiz");
+  assert.match(body, /store\.saveOwnProjectDelivery\(/, "avances: doc propio del aprendiz");
 });
 
-test("estructura: un fallo de sincronizacion se avisa de forma visible (portalSaveStatus.error), nunca en silencio", () => {
+test("estructura: un fallo de sincronizacion se avisa de forma visible (portalSaveStatus.error) y queda en cola, nunca en silencio", () => {
   const code = read("js/productive_stage_project_delivery.js");
-  const syncFnMatch = code.match(/async function syncDocumentDeliveryToCloud\([\s\S]*?\n  \}/);
-  const fnBody = syncFnMatch[0];
-  assert.match(fnBody, /if \(!result \|\| !result\.ok\)/, "debe distinguir explicitamente el caso de fallo");
+  const fnBody = code.match(/async function syncDeliveryToCloud\([\s\S]*?\n  \}/)[0];
+  assert.match(fnBody, /if \(result && result\.ok\)/, "debe distinguir explicitamente el exito");
+  assert.match(fnBody, /addPending\(/, "el fallo debe quedar en la cola de reintento");
   assert.match(fnBody, /portalSaveStatus\.error\(/, "debe avisar con el toast visible existente, no tragarse el error");
-  assert.doesNotMatch(fnBody, /\/\/ Silencioso/i, "no debe quedar el comentario/patron del catch silencioso original");
+  assert.doesNotMatch(fnBody, /\/\/ Silencioso/i);
 });
 
 test("estructura: getDocumentDeliveryRecord cae al registro remoto propio (equipo limpio) usando getDocumentDeliveriesByUsername", () => {

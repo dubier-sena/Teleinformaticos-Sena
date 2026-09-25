@@ -9,6 +9,10 @@
   const DOCUMENT_CATALOG = [
     { id: "ficha-inscripcion", title: "Ficha de inscripcion", deliveryLabel: "Ficha de Inscripcion", hideForGrade10: false },
     { id: "acuerdo-etapa-productiva", title: "Acuerdo de Etapa Productiva", deliveryLabel: "Acuerdo de Etapa Productiva", hideForGrade10: false },
+    // Entregables desde 2026-09-25 (antes "Solo consulta"): mismos ids y
+    // deliveryLabel que PROJECT_DOCUMENTS en productive_stage_project_delivery.js.
+    { id: "formato-proyecto", title: "Formato Proyecto Productivo", deliveryLabel: "Formato Proyecto Productivo", hideForGrade10: true },
+    { id: "anexo-financiero", title: "Anexo financiero", deliveryLabel: "Anexo Financiero", hideForGrade10: true },
     { id: "sofia-plus", title: "Pantallazo Sofia Plus", deliveryLabel: "Pantallazo Sofia Plus", hideForGrade10: true },
     { id: "bitacora-1", title: "Bitacora N° 1", deliveryLabel: "Bitacora 1", hideForGrade10: true },
     { id: "bitacora-2", title: "Bitacora N° 2", deliveryLabel: "Bitacora 2", hideForGrade10: true },
@@ -30,6 +34,12 @@
           lastImportSummary: null,
           updatedAt: "",
         };
+  // A7 (2026-09-25): registros PROPIOS de cada aprendiz (doc
+  // "student:{key}" / productive-stage-own-deliveries: documentos base y
+  // avances que el aprendiz entrego). Se fusionan SOLO en la vista
+  // (viewSnapshot); productiveStageSnapshot sigue siendo exactamente el doc
+  // admin que este panel guarda, sin copias de datos de aprendices.
+  let studentOwnRecords = {};
   let currentDetailProjectId = "";
   let currentManualDocumentDelivery = null;
 
@@ -104,10 +114,52 @@
     });
   }
 
+  function viewSnapshot() {
+    return store && typeof store.mergeStudentOwnRecordsIntoView === "function"
+      ? store.mergeStudentOwnRecordsIntoView(productiveStageSnapshot, studentOwnRecords)
+      : productiveStageSnapshot;
+  }
+
   function getDocumentDeliveryIndex() {
     return store && typeof store.getDocumentDeliveriesByUsername === "function"
-      ? store.getDocumentDeliveriesByUsername(productiveStageSnapshot)
+      ? store.getDocumentDeliveriesByUsername(viewSnapshot())
       : {};
+  }
+
+  // Lee el doc propio de cada aprendiz con Etapa Productiva (no grado 10),
+  // de a pocos a la vez. Un aprendiz cuyo doc no se pudo leer simplemente no
+  // aporta registros (se avisa), nunca borra nada.
+  async function loadStudentOwnRecords() {
+    const dbApi = window._firebaseDb;
+    if (!store || !dbApi || typeof dbApi.cloudGetGuideData !== "function") return;
+    const keys = (Array.isArray(allUsers) ? allUsers : [])
+      .filter(function (user) { return user && user.usernameKey && user.ficha && !isGrade10User(user); })
+      .map(function (user) { return String(user.usernameKey).trim().toLowerCase(); })
+      .filter(function (key, index, list) { return key && list.indexOf(key) === index; });
+    const next = {};
+    let failed = 0;
+    let cursor = 0;
+    async function worker() {
+      while (cursor < keys.length) {
+        const key = keys[cursor++];
+        try {
+          const own = await dbApi.cloudGetGuideData("student:" + key, store.OWN_DELIVERIES_FILE_NAME);
+          if (own) next[key] = own;
+        } catch (error) {
+          failed += 1;
+        }
+      }
+    }
+    await Promise.all([worker(), worker(), worker(), worker()]);
+    studentOwnRecords = next;
+    renderProductiveStageSection();
+    renderDocumentDeliveryControl();
+    if (failed) {
+      setDocumentDeliveryControlFeedback(
+        "No se pudieron leer las entregas registradas por " + failed + " aprendiz(es). Pulsa Actualizar para reintentar.",
+        "error"
+      );
+    }
   }
 
   function setDocumentDeliveryControlFeedback(message, type) {
@@ -738,7 +790,7 @@
   function buildProductiveStageDeliveryHistoryMarkup(projectId) {
     const deliveries =
       window.productiveStageStore && typeof window.productiveStageStore.getProjectDeliveries === "function"
-        ? window.productiveStageStore.getProjectDeliveries(productiveStageSnapshot, projectId)
+        ? window.productiveStageStore.getProjectDeliveries(viewSnapshot(), projectId)
         : [];
 
     if (!deliveries.length) {
@@ -1289,6 +1341,7 @@
   async function refreshProductiveStageModule() {
     await loadUsersForMatching();
     await loadProductiveStageSnapshot();
+    await loadStudentOwnRecords();
   }
 
   async function handleProductiveStageImport() {

@@ -18,7 +18,7 @@
 <link rel="stylesheet" href="css/components.css?v=20260617_1">
 <link rel="stylesheet" href="css/shared_shell.css?v=20260923_3">
 <link rel="stylesheet" href="css/page_student_calendar.css?v=20260826_2">
-<link rel="stylesheet" href="css/page_calendario_admin_agenda.css?v=20260826_4">
+<link rel="stylesheet" href="css/page_calendario_admin_agenda.css?v=20260925_1">
 <link rel="stylesheet" href="css/academic_agenda_calendar.css?v=20260826_4">
 <script src="js/shared_utils.js?v=20260615_2"></script>
 <script src="js/global_error_handler.js?v=20260710_1"></script>
@@ -28,9 +28,9 @@
 <script defer src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
 <script src="js/firebase_auth_bridge.js?v=20260618_1"></script>
 <script src="js/guide_merge_utils.js?v=20260823_1"></script>
-<script src="js/firebase_db.js?v=20260922_1"></script>
+<script src="js/firebase_db.js?v=20260925_1"></script>
 <script src="js/project_integrations.js?v=20260823_1"></script>
-<script src="js/drive_db.js?v=20260922_1"></script>
+<script src="js/drive_db.js?v=20260925_1"></script>
 <script defer src="js/firebase_status_banner.js?v=20260923_1"></script>
 <script defer src="js/save_status.js?v=20260822_1"></script>
 <script defer src="js/shared_shell.js?v=20260923_3"></script>
@@ -38,7 +38,7 @@
 <script defer src="js/activity_standard.js?v=20260827_1"></script>
 <script defer src="js/guide_declarations.js?v=20260922_2"></script>
 <script defer src="js/activity_deadlines.js?v=20260717_2"></script>
-<script defer src="js/productive_stage_store.js?v=20260825_2"></script>
+<script defer src="js/productive_stage_store.js?v=20260925_1"></script>
 <script defer src="js/productive_stage_deadlines.js?v=20260824_1"></script>
 <script defer src="js/academic_agenda.js?v=20260824_1"></script>
 <script defer src="js/academic_agenda_context.js?v=20260824_1"></script>
@@ -46,8 +46,8 @@
 <script defer src="js/academic_agenda_views.js?v=20260826_1"></script>
 <script defer src="js/academic_agenda_calendar_ui.js?v=20260826_2"></script>
 <script defer src="js/agenda_view_preference.js?v=20260826_1"></script>
-<script defer src="js/calendario_admin_manual_events.js?v=20260826_2"></script>
-<script defer src="js/calendario_admin_agenda_page.js?v=20260826_3"></script>
+<script defer src="js/calendario_admin_manual_events.js?v=20260925_1"></script>
+<script defer src="js/calendario_admin_agenda_page.js?v=20260925_1"></script>
 <script src="js/access_guard_admin.js?v=20260823_1"></script>
 </head>
 <body class="app-shell app-shell--admin-agenda">
@@ -109,7 +109,8 @@
       </label>
       <div class="admin-agenda-filters__actions">
         <span class="admin-agenda-filters__status" id="aa-refresh-counts-status"></span>
-        <button class="c-btn c-btn--primary" type="button" id="aa-manual-create">+ Nuevo evento manual</button>
+        <button class="c-btn c-btn--primary" type="button" id="aa-class-create">+ Agregar clase</button>
+        <button class="c-btn c-btn--secondary" type="button" id="aa-manual-create">+ Evento especial</button>
       </div>
     </section>
 
@@ -125,11 +126,60 @@
     <section id="aa-month" hidden></section>
   </main>
 
-  <!-- Modal: crear/editar evento manual -->
+  <!-- Modal: agregar/editar CLASE (flujo directo: ficha, fecha, horas y tema) -->
+  <div class="c-modal" id="aa-class-modal" hidden>
+    <div class="c-modal__card" role="dialog" aria-modal="true" aria-labelledby="aa-class-modal-title">
+      <div class="c-modal__header">
+        <h2 class="c-modal__title" id="aa-class-modal-title">Agregar clase</h2>
+        <button type="button" class="c-modal__close" id="aa-class-modal-close" aria-label="Cerrar">✕</button>
+      </div>
+      <form id="aa-class-form" class="admin-agenda-form" novalidate>
+        <label>Ficha *
+          <select class="c-input" name="ficha" required><option value="">Selecciona la ficha…</option></select>
+        </label>
+        <p class="aa-class-context" id="aa-class-context" hidden></p>
+        <label>Fecha *
+          <input class="c-input" type="date" name="date" required>
+        </label>
+        <div class="admin-agenda-form__row">
+          <label>Hora inicio *
+            <input class="c-input" type="time" name="start" required>
+          </label>
+          <label>Hora fin *
+            <input class="c-input" type="time" name="end" required>
+          </label>
+        </div>
+        <p class="admin-agenda-form__hint" id="aa-class-schedule-hint" hidden></p>
+        <label>Tema *
+          <input class="c-input" type="text" name="tema" maxlength="160" placeholder="p. ej. Subneteo IPv4" required>
+        </label>
+        <details class="aa-class-advanced">
+          <summary>Opciones avanzadas</summary>
+          <label>Descripción (opcional)
+            <input class="c-input" type="text" name="description" maxlength="300">
+          </label>
+          <label>Estado
+            <select class="c-input" name="status">
+              <option value="scheduled">Programada</option>
+              <option value="cancelled">Cancelada</option>
+              <option value="rescheduled">Reprogramada</option>
+            </select>
+          </label>
+        </details>
+        <p class="admin-agenda-form__feedback" id="aa-class-feedback" role="status" aria-live="polite"></p>
+        <div class="c-modal__footer">
+          <button type="button" class="c-btn c-btn--ghost" id="aa-class-cancel">Cancelar</button>
+          <button type="submit" class="c-btn c-btn--primary" id="aa-class-submit">Guardar clase</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: crear/editar evento especial (editor completo: tipo, todo el dia, varias franjas) -->
   <div class="c-modal" id="aa-manual-modal" hidden>
     <div class="c-modal__card" role="dialog" aria-modal="true" aria-labelledby="aa-manual-modal-title">
       <div class="c-modal__header">
-        <h2 class="c-modal__title" id="aa-manual-modal-title">Nuevo evento manual</h2>
+        <h2 class="c-modal__title" id="aa-manual-modal-title">Nuevo evento especial</h2>
         <button type="button" class="c-modal__close" id="aa-manual-modal-close" aria-label="Cerrar">✕</button>
       </div>
       <form id="aa-manual-form" class="admin-agenda-form">
@@ -177,10 +227,10 @@
         <label>Enlace directo (opcional)
           <input class="c-input" type="text" name="route" placeholder="p.ej. etapa-productiva-admin.html">
         </label>
-        <p class="admin-agenda-form__feedback" id="aa-manual-feedback"></p>
+        <p class="admin-agenda-form__feedback" id="aa-manual-feedback" role="status" aria-live="polite"></p>
         <div class="c-modal__footer">
           <button type="button" class="c-btn c-btn--ghost" id="aa-manual-cancel">Cancelar</button>
-          <button type="submit" class="c-btn c-btn--primary">Guardar evento</button>
+          <button type="submit" class="c-btn c-btn--primary" id="aa-manual-submit">Guardar evento</button>
         </div>
       </form>
     </div>

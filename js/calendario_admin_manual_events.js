@@ -112,44 +112,81 @@
     return [];
   }
 
+  function slotMinutes(iso) {
+    var match = String(iso || "").match(/T(\d{2}):(\d{2})/);
+    return match ? Number(match[1]) * 60 + Number(match[2]) : NaN;
+  }
+
   function validateInput(input) {
     var title = String((input && input.title) || "").trim();
     var date = String((input && input.date) || "").trim();
-    if (!title) return "El titulo es obligatorio.";
+    var isClass = input && input.type === "CLASE";
+    if (isClass && !String((input && input.ficha) || "").trim()) return "Selecciona la ficha de la clase.";
+    if (!title) return isClass ? "Escribe el tema de la clase." : "El titulo es obligatorio.";
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return "La fecha debe tener formato AAAA-MM-DD.";
 
     if (!(input && input.allDay)) {
       var slots = normalizeSlotsInput(input);
-      if (!slots.length) return "Indica al menos una franja horaria (hora inicio y hora fin) o marca Todo el día.";
+      if (!slots.length) return isClass ? "Indica la hora de inicio y la hora de fin." : "Indica al menos una franja horaria (hora inicio y hora fin) o marca Todo el día.";
       for (var i = 0; i < slots.length; i++) {
         if (!slots[i].startAt || !slots[i].endAt) return "Cada franja horaria necesita hora de inicio y hora de fin.";
+        var start = slotMinutes(slots[i].startAt);
+        var end = slotMinutes(slots[i].endAt);
+        if (Number.isFinite(start) && Number.isFinite(end) && end <= start) {
+          return "La hora de fin debe ser posterior a la hora de inicio.";
+        }
       }
     }
     return "";
   }
 
-  // Crea o actualiza (si input.id ya existe en la lista guardada). Lectura +
-  // escritura del documento completo -- mismo patron y mismo riesgo de
-  // carrera ya aceptado hoy por calendario-academico-2026.html para
-  // calendario_2026_admin (uso admin-only, de baja concurrencia).
+  // Id de un evento NUEVO. El formulario lo genera UNA sola vez al abrirse y
+  // lo reenvia en cada reintento: asi un timeout + reintento nunca crea una
+  // segunda clase (la escritura es un upsert por id).
+  function newManualEventId() {
+    return "manual-" + Date.now() + "-" + Math.random().toString(36).slice(2, 7);
+  }
+
+  function strictApiAvailable(dbApi) {
+    return Boolean(dbApi && typeof dbApi.cloudUpdateCalendarStrict === "function" && typeof dbApi.cloudGetCalendarStrict === "function");
+  }
+
+  var MESSAGES = {
+    unavailable: "El guardado seguro en la nube no esta disponible. Recarga la pagina e intenta de nuevo.",
+    readFailed: "No se pudo leer la agenda en la nube. No se guardo nada (asi no se borra ninguna clase existente). Intenta de nuevo.",
+    conflict: "La agenda cambio varias veces seguidas desde otro equipo o pestaña. No se guardo nada; intenta de nuevo.",
+    notSaved: "No se pudo guardar. Tus datos siguen en el formulario: usa Reintentar.",
+    unconfirmed: "No fue posible confirmar si se guardo (la nube no respondio). Revisa tu conexion y usa Reintentar: no se duplicara.",
+  };
+
+  // Relee (estricto) y busca el id: la unica forma honesta de responder
+  // despues de una escritura ambigua (timeout / respuesta perdida).
+  // -> "present" (con ese updatedAt si se pasa) | "absent" | "unknown"
+  async function verifyRecord(dbApi, id, expectedUpdatedAt) {
+    var read = await withTimeout(dbApi.cloudGetCalendarStrict(CALENDAR_ID), CLOUD_TIMEOUT_MS, { status: "error" });
+    if (!read || read.status === "error") return "unknown";
+    var list = unwrapCalendarSnapshot(read.snapshot).events;
+    var found = (Array.isArray(list) ? list : []).find(function (ev) { return ev && ev.id === id; });
+    if (!found) return "absent";
+    if (expectedUpdatedAt && found.updatedAt !== expectedUpdatedAt) return "absent";
+    return "present";
+  }
+
+  // Crea o actualiza (upsert por id) SIN riesgo de borrar lo ajeno:
+  //   * lectura fallida           -> cero escrituras (read-failed);
+  //   * otra pestaña escribio     -> se relee y se reaplica por id;
+  //   * respuesta ambigua/timeout -> se verifica releyendo antes de decir
+  //     "no se guardo" (y el reintento usa el MISMO id: nunca duplica).
+  // -> { ok, record, code, message }
   async function saveManualEvent(input) {
     var error = validateInput(input);
-    if (error) return { ok: false, message: error };
+    if (error) return { ok: false, code: "validation", message: error };
 
     var dbApi = db();
-    if (!dbApi || typeof dbApi.cloudSaveCalendar !== "function" || typeof dbApi.cloudGetCalendar !== "function") {
-      return { ok: false, message: "El guardado en la nube no esta disponible en este momento." };
-    }
+    if (!strictApiAvailable(dbApi)) return { ok: false, code: "unavailable", message: MESSAGES.unavailable };
 
     var nowIso = new Date().toISOString();
-    var id = String((input && input.id) || "").trim() || ("manual-" + Date.now() + "-" + Math.random().toString(36).slice(2, 7));
-
-    var events;
-    try {
-      events = await loadManualEventRecords();
-    } catch (e) {
-      return { ok: false, message: "No se pudo leer los eventos manuales existentes." };
-    }
+    var id = String((input && input.id) || "").trim() || newManualEventId();
 
     var isAllDay = !!input.allDay;
     var slots = isAllDay ? [] : normalizeSlotsInput(input);
@@ -178,64 +215,83 @@
       updatedAt: nowIso,
     };
 
-    var existingIdx = -1;
-    for (var i = 0; i < events.length; i++) {
-      if (events[i] && events[i].id === id) { existingIdx = i; break; }
-    }
-    if (existingIdx !== -1) {
-      record.createdBy = events[existingIdx].createdBy || record.createdBy;
-      record.createdAt = events[existingIdx].createdAt || record.createdAt;
-      events[existingIdx] = record;
-    } else {
-      events.push(record);
-    }
-
-    try {
-      // cloudSaveCalendar devuelve boolean (ver js/firebase_db.js). Con
-      // timeout: si la nube nunca responde, no se deja al admin esperando
-      // indefinidamente (ver comentario de withTimeout arriba).
-      var saved = await withTimeout(dbApi.cloudSaveCalendar(CALENDAR_ID, { events: events }), CLOUD_TIMEOUT_MS, false);
-      if (!saved) {
-        return { ok: false, message: "No se pudo guardar el evento manual en la nube (sin respuesta o tiempo de espera agotado). Intenta de nuevo." };
+    // Se aplica sobre la version LEIDA en cada intento (si hubo conflicto,
+    // sobre la version nueva): nunca sobre una lista vieja en memoria.
+    function applyUpsert(state) {
+      var events = Array.isArray(state.events) ? state.events.slice() : [];
+      var existingIdx = -1;
+      for (var i = 0; i < events.length; i++) {
+        if (events[i] && events[i].id === id) { existingIdx = i; break; }
       }
-    } catch (e) {
-      return { ok: false, message: "No se pudo guardar el evento manual en la nube." };
+      if (existingIdx !== -1) {
+        record.createdBy = events[existingIdx].createdBy || record.createdBy;
+        record.createdAt = events[existingIdx].createdAt || record.createdAt;
+        events[existingIdx] = record;
+      } else {
+        events.push(record);
+      }
+      return Object.assign({}, state, { events: events });
     }
 
-    return { ok: true, record: record };
+    var result = await withTimeout(
+      Promise.resolve().then(function () { return dbApi.cloudUpdateCalendarStrict(CALENDAR_ID, applyUpsert); }),
+      CLOUD_TIMEOUT_MS,
+      { ok: false, status: "timeout" }
+    );
+    if (result && result.ok) return { ok: true, code: "saved", record: record };
+    if (result && result.status === "read-failed") return { ok: false, code: "read-failed", message: MESSAGES.readFailed, id: id };
+    if (result && result.status === "conflict-exhausted") return { ok: false, code: "conflict", message: MESSAGES.conflict, id: id };
+
+    // write-failed / timeout: la escritura pudo haberse aplicado igual.
+    var check = await verifyRecord(dbApi, id, record.updatedAt);
+    if (check === "present") return { ok: true, code: "saved-verified", record: record };
+    if (check === "absent") return { ok: false, code: "not-saved", message: MESSAGES.notSaved, id: id };
+    return { ok: false, code: "unconfirmed", message: MESSAGES.unconfirmed, id: id };
   }
 
+  // Elimina SOLO ese id. Mismas garantias que saveManualEvent: lectura
+  // fallida = cero escrituras, conflicto = releer (nunca revive ni borra lo
+  // que otra pestaña cambio), respuesta ambigua = verificar releyendo.
   async function deleteManualEvent(id) {
     var targetId = String(id || "").trim();
-    if (!targetId) return { ok: false, message: "Falta el id del evento a eliminar." };
+    if (!targetId) return { ok: false, code: "validation", message: "Falta el id del evento a eliminar." };
 
     var dbApi = db();
-    if (!dbApi || typeof dbApi.cloudSaveCalendar !== "function") {
-      return { ok: false, message: "El guardado en la nube no esta disponible en este momento." };
+    if (!strictApiAvailable(dbApi)) return { ok: false, code: "unavailable", message: MESSAGES.unavailable };
+
+    function applyDelete(state) {
+      var events = Array.isArray(state.events) ? state.events : [];
+      var filtered = events.filter(function (ev) { return !(ev && ev.id === targetId); });
+      if (filtered.length === events.length) return { abort: "not-found" };
+      return Object.assign({}, state, { events: filtered });
     }
 
-    var events;
-    try {
-      events = await loadManualEventRecords();
-    } catch (e) {
-      return { ok: false, message: "No se pudo leer los eventos manuales existentes." };
-    }
+    var result = await withTimeout(
+      Promise.resolve().then(function () { return dbApi.cloudUpdateCalendarStrict(CALENDAR_ID, applyDelete); }),
+      CLOUD_TIMEOUT_MS,
+      { ok: false, status: "timeout" }
+    );
+    if (result && result.ok) return { ok: true, code: "deleted" };
+    if (result && result.status === "aborted") return { ok: false, code: "not-found", message: "El evento ya no existe." };
+    if (result && result.status === "read-failed") return { ok: false, code: "read-failed", message: "No se pudo leer la agenda en la nube. No se elimino nada. Intenta de nuevo." };
+    if (result && result.status === "conflict-exhausted") return { ok: false, code: "conflict", message: MESSAGES.conflict };
 
-    var filtered = events.filter(function (ev) { return ev && ev.id !== targetId; });
-    if (filtered.length === events.length) {
-      return { ok: false, message: "El evento ya no existe." };
-    }
+    var check = await verifyRecord(dbApi, targetId, "");
+    if (check === "absent") return { ok: true, code: "deleted-verified" };
+    if (check === "present") return { ok: false, code: "not-deleted", message: "No se pudo eliminar. Intenta de nuevo." };
+    return { ok: false, code: "unconfirmed", message: "No fue posible confirmar si se elimino (la nube no respondio). Revisa tu conexion e intenta de nuevo." };
+  }
 
-    try {
-      var saved = await withTimeout(dbApi.cloudSaveCalendar(CALENDAR_ID, { events: filtered }), CLOUD_TIMEOUT_MS, false);
-      if (!saved) {
-        return { ok: false, message: "No se pudo eliminar el evento en la nube (sin respuesta o tiempo de espera agotado). Intenta de nuevo." };
-      }
-    } catch (e) {
-      return { ok: false, message: "No se pudo eliminar el evento en la nube." };
-    }
-
-    return { ok: true };
+  // Lectura para PINTAR la agenda del admin, distinguiendo "no hay eventos"
+  // de "no se pudo leer" (para avisarlo en vez de mostrar una agenda vacia).
+  // -> { ok, records }
+  async function loadManualEventRecordsStrict() {
+    var dbApi = db();
+    if (!strictApiAvailable(dbApi)) return { ok: false, records: [] };
+    var read = await withTimeout(dbApi.cloudGetCalendarStrict(CALENDAR_ID), CLOUD_TIMEOUT_MS, { status: "error" });
+    if (!read || read.status === "error") return { ok: false, records: [] };
+    var list = unwrapCalendarSnapshot(read.snapshot).events;
+    return { ok: true, records: Array.isArray(list) ? list : [] };
   }
 
   // Normaliza un registro manual al MISMO shape de evento que produce
@@ -295,6 +351,57 @@
     });
   }
 
+  // ── Horario sugerido para "Agregar clase" (puro, sin red) ───────────────
+  // Fuente: los registros del calendario academico (CALENDAR_2026_RECORDS,
+  // mismo dato que ya pinta la agenda) para ESE colegio + grupo + fecha. Se
+  // sugiere hora solo si ese dia hay exactamente UNA franja de clase: con
+  // varias franjas no hay forma honesta de elegir una, y sin registro no se
+  // inventa ninguna (el instructor la escribe).
+  function normalizeInst(value) {
+    return String(value || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
+      .replace(/institucion educativa|i\.e\./g, "").replace(/[^a-z0-9]+/g, " ").trim();
+  }
+
+  function parseClock(text) {
+    var m = String(text || "").trim().toLowerCase().match(/^(\d{1,2}):(\d{2})\s*(am|pm)?$/);
+    if (!m) return "";
+    var h = Number(m[1]);
+    var min = Number(m[2]);
+    if (m[3] === "pm" && h < 12) h += 12;
+    if (m[3] === "am" && h === 12) h = 0;
+    if (h > 23 || min > 59) return "";
+    return (h < 10 ? "0" : "") + h + ":" + (min < 10 ? "0" : "") + min;
+  }
+
+  function parseHorario(horario) {
+    // Varias franjas vienen separadas por ";" o por salto de linea (ambos
+    // formatos existen en CALENDAR_2026_RECORDS).
+    return String(horario || "").split(/[;\n]+/).filter(function (part) { return part.trim(); }).map(function (part) {
+      var pieces = part.split(/[–—-]/);
+      if (pieces.length !== 2) return null;
+      var start = parseClock(pieces[0]);
+      var end = parseClock(pieces[1]);
+      return start && end && end > start ? { start: start, end: end } : null;
+    });
+  }
+
+  // -> { start, end, text } | { start:"", end:"", text } (varias franjas) | null
+  function suggestClassSlot(records, info, date) {
+    var inst = normalizeInst(info && info.inst);
+    var grupo = String((info && info.grupo) || "").trim().toUpperCase();
+    if (!inst || !grupo || !/^\d{4}-\d{2}-\d{2}$/.test(String(date || ""))) return null;
+    var match = (Array.isArray(records) ? records : []).find(function (r) {
+      return r && r.tipo === "CLASE" && r.fecha === date &&
+        String(r.grado || "").trim().toUpperCase() === grupo &&
+        normalizeInst(r.colegio) === inst;
+    });
+    if (!match) return null;
+    var slots = parseHorario(match.horario);
+    var text = String(match.horario || "").split(/[;\n]+/).map(function (p) { return p.trim(); }).filter(Boolean).join(" y ");
+    if (slots.length === 1 && slots[0]) return { start: slots[0].start, end: slots[0].end, text: text };
+    return { start: "", end: "", text: text };
+  }
+
   async function loadManualAgendaEvents() {
     var records = await loadManualEventRecords();
     return records.reduce(function (all, record) { return all.concat(toAgendaEvent(record)); }, []);
@@ -304,12 +411,16 @@
     CALENDAR_ID: CALENDAR_ID,
     MANUAL_EVENT_TYPES: MANUAL_EVENT_TYPES.slice(),
     loadManualEventRecords: loadManualEventRecords,
+    loadManualEventRecordsStrict: loadManualEventRecordsStrict,
     loadManualAgendaEvents: loadManualAgendaEvents,
     saveManualEvent: saveManualEvent,
     deleteManualEvent: deleteManualEvent,
+    newManualEventId: newManualEventId,
+    suggestClassSlot: suggestClassSlot,
     toAgendaEvent: toAgendaEvent,
     __test: {
       validateInput: validateInput,
+      MESSAGES: MESSAGES,
       unwrapCalendarSnapshot: unwrapCalendarSnapshot,
       withTimeout: withTimeout,
       CLOUD_TIMEOUT_MS: CLOUD_TIMEOUT_MS,

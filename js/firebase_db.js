@@ -1053,6 +1053,124 @@
     }
   }
 
+  // ── Lectura/escritura ESTRICTAS (Etapa Productiva + Agenda, 2026-09-25) ────
+  // fsGet/fsPatch estan pensados para "que el guardado nunca se pierda": ante
+  // cualquier falla caen a la replica de Drive y fsGet devuelve null tanto si
+  // el documento no existe como si la lectura fallo. Para una escritura de
+  // LISTA COMPLETA (leer -> agregar/quitar por id -> escribir todo) esa
+  // ambigüedad es exactamente lo que borraba datos: lectura fallida -> "no hay
+  // nada" -> se escribe solo el elemento nuevo encima de todo lo demas.
+  // Estas dos funciones NO tienen failover a Drive y distinguen los tres
+  // casos, para que el llamador pueda cumplir "lectura fallida = cero
+  // escrituras" y detectar conflictos con la precondicion de Firestore.
+
+  // -> { status: "found"|"missing"|"error", data, updateTime }
+  async function fsGetStrict(collection, docId) {
+    if (!(await canCallFirestore(collection, false, { firestoreFirst: true }))) {
+      return { status: "error", data: null, updateTime: "", reason: "unavailable" };
+    }
+    try {
+      var res = await fetchWithTimeout(
+        docUrl(collection, docId),
+        { method: "GET", cache: "no-store", headers: await authHeaders() },
+        API_TIMEOUT_MS
+      );
+      if (res.status === 404) {
+        registerFirestoreOperation("read", 1);
+        markFirestoreSuccess();
+        return { status: "missing", data: null, updateTime: "" };
+      }
+      if (!res.ok) {
+        if (isAuthRejection(res.status)) markFirestoreRejection();
+        return { status: "error", data: null, updateTime: "", reason: "http-" + res.status };
+      }
+      var payload = await res.json();
+      registerFirestoreOperation("read", 1);
+      markFirestoreSuccess();
+      var data = fromFsDoc(payload);
+      return { status: "found", data: data || {}, updateTime: (payload && payload.updateTime) || "" };
+    } catch (e) {
+      return { status: "error", data: null, updateTime: "", reason: "network" };
+    }
+  }
+
+  // Estados de Firestore que significan "la precondicion no se cumplio":
+  // updateTime distinto, o exists=false sobre un documento que ya existe.
+  async function isStrictPreconditionConflict(res) {
+    try {
+      var body = await res.json();
+      var status = body && body.error && body.error.status;
+      return status === "FAILED_PRECONDITION" || status === "ABORTED" || status === "ALREADY_EXISTS";
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // PATCH solo-Firestore con precondicion OBLIGATORIA:
+  //   opts.expectedUpdateTime -> el documento no cambio desde que se leyo;
+  //   opts.mustNotExist       -> el documento todavia no existe.
+  // -> { status: "ok"|"conflict"|"error", updateTime }
+  // "error" es AMBIGUO a proposito (p.ej. timeout: Firestore pudo haber
+  // aplicado la escritura igual) -- el llamador debe verificar releyendo.
+  async function fsPatchStrict(collection, docId, data, opts) {
+    var expectedUpdateTime = opts && opts.expectedUpdateTime;
+    var mustNotExist = Boolean(opts && opts.mustNotExist);
+    if (!expectedUpdateTime && !mustNotExist) {
+      return { status: "error", updateTime: "", reason: "missing-precondition" };
+    }
+    if (shouldBlockCloudWrites() || !(await canCallFirestore(collection, true))) {
+      return { status: "error", updateTime: "", reason: "unavailable" };
+    }
+    var precondition = expectedUpdateTime
+      ? "currentDocument.updateTime=" + encodeURIComponent(expectedUpdateTime)
+      : "currentDocument.exists=false";
+    try {
+      var res = await fetchWithTimeout(
+        docUrl(collection, docId, precondition),
+        {
+          method: "PATCH",
+          headers: await authHeaders({ "Content-Type": "application/json" }),
+          body: JSON.stringify(toFsDoc(data)),
+        },
+        API_TIMEOUT_MS
+      );
+      if (res.ok) {
+        registerFirestoreOperation("write", 1);
+        markFirestoreSuccess();
+        var written = null;
+        try { written = await res.json(); } catch (_) { written = null; }
+        backupWriteToDrive(collection, docId, data);
+        return { status: "ok", updateTime: (written && written.updateTime) || "" };
+      }
+      if ((res.status === 400 || res.status === 409 || res.status === 412) && (await isStrictPreconditionConflict(res))) {
+        return { status: "conflict", updateTime: "" };
+      }
+      if (isAuthRejection(res.status)) markFirestoreRejection();
+      return { status: "error", updateTime: "", reason: "http-" + res.status };
+    } catch (e) {
+      return { status: "error", updateTime: "", reason: "network" };
+    }
+  }
+
+  // Quita los metadatos que fromFsDoc agrega (_docId, _docName, _updateTime)
+  // antes de volver a escribir un documento leido.
+  function stripFsMeta(doc) {
+    var out = {};
+    Object.keys(doc || {}).forEach(function (k) {
+      if (k === "_docId" || k === "_docName" || k === "_updateTime") return;
+      out[k] = doc[k];
+    });
+    return out;
+  }
+
+  function strictRetryDelay(attempt) {
+    return new Promise(function (resolve) {
+      window.setTimeout(resolve, 40 * attempt + Math.floor(Math.random() * 80));
+    });
+  }
+
+  var STRICT_MAX_ATTEMPTS = 4;
+
   async function fsDelete(collection, docId) {
     if (shouldBlockCloudDeletes()) {
       return await driveFallbackDelete(collection, docId);
@@ -1809,6 +1927,84 @@
     return fallbackSaved || canonicalSaved;
   }
 
+  // Version ESTRICTA de cloudGetCalendar (Agenda, 2026-09-25): mismo orden de
+  // lectura (doc de respaldo en COL_PROGRESS primero, luego el canonico),
+  // pero sin failover a Drive y distinguiendo "no existe" de "no se pudo
+  // leer". cloudGetCalendar/cloudSaveCalendar NO cambian (las usa el
+  // calendario legacy).
+  // -> { status: "found"|"missing"|"error", snapshot, updateTime, source }
+  function calendarDocToSnapshot(doc) {
+    if (!doc) return {};
+    if (typeof doc.snapshotJson === "string") {
+      try { return JSON.parse(doc.snapshotJson) || {}; } catch (_) { return null; }
+    }
+    return stripFsMeta(doc);
+  }
+
+  async function cloudGetCalendarStrict(calendarId) {
+    if (!calendarId) return { status: "error", snapshot: null, updateTime: "", source: "" };
+    var fallbackId = calendarFallbackDocId(calendarId);
+    var fallback = await fsGetStrict(COL_PROGRESS, fallbackId);
+    if (fallback.status === "error") return { status: "error", snapshot: null, updateTime: "", source: "" };
+    if (fallback.status === "found") {
+      var fromFallback = calendarDocToSnapshot(fallback.data);
+      if (fromFallback === null) return { status: "error", snapshot: null, updateTime: "", source: "" };
+      return { status: "found", snapshot: fromFallback, updateTime: fallback.updateTime, source: "fallback" };
+    }
+    var canonical = await fsGetStrict(COL_CALENDAR, calendarId);
+    if (canonical.status === "error") return { status: "error", snapshot: null, updateTime: "", source: "" };
+    if (canonical.status === "found") {
+      var fromCanonical = calendarDocToSnapshot(canonical.data);
+      if (fromCanonical === null) return { status: "error", snapshot: null, updateTime: "", source: "" };
+      // El doc de respaldo (destino de la precondicion) todavia no existe.
+      return { status: "found", snapshot: fromCanonical, updateTime: "", source: "canonical" };
+    }
+    return { status: "missing", snapshot: {}, updateTime: "", source: "" };
+  }
+
+  // Leer -> aplicar `mutate` -> escribir con precondicion -> reintentar si otra
+  // pestaña/equipo escribio en medio. Invariantes:
+  //   * lectura fallida  => CERO escrituras (status "read-failed");
+  //   * conflicto        => se relee y se vuelve a aplicar `mutate` sobre la
+  //                         version nueva (nunca se pisa lo ajeno), maximo
+  //                         STRICT_MAX_ATTEMPTS veces;
+  //   * `mutate(state)` recibe una COPIA y devuelve el estado nuevo, o
+  //     { abort: "motivo" } para no escribir nada.
+  // El doc protegido por la precondicion es el de respaldo (COL_PROGRESS, el
+  // que cloudGetCalendar lee primero); el canonico se actualiza despues con
+  // el MISMO contenido, igual que cloudSaveCalendar.
+  // -> { ok, status: "saved"|"read-failed"|"write-failed"|"conflict-exhausted"|"aborted", snapshot }
+  async function cloudUpdateCalendarStrict(calendarId, mutate) {
+    if (!calendarId || typeof mutate !== "function") return { ok: false, status: "aborted", snapshot: null };
+    var fallbackId = calendarFallbackDocId(calendarId);
+    for (var attempt = 1; attempt <= STRICT_MAX_ATTEMPTS; attempt++) {
+      var current = await cloudGetCalendarStrict(calendarId);
+      if (current.status === "error") return { ok: false, status: "read-failed", snapshot: null };
+      var base = JSON.parse(JSON.stringify(current.snapshot || {}));
+      delete base._usernameKey;
+      delete base._kind;
+      var next = mutate(base);
+      if (!next || next.abort) return { ok: false, status: "aborted", reason: next && next.abort, snapshot: null };
+      var payload = Object.assign({}, next, { calendarId: calendarId, updatedAt: new Date().toISOString() });
+      var precondition = current.source === "fallback" && current.updateTime
+        ? { expectedUpdateTime: current.updateTime }
+        : { mustNotExist: true };
+      var written = await fsPatchStrict(
+        COL_PROGRESS,
+        fallbackId,
+        Object.assign({ _usernameKey: fallbackId, _kind: "calendar" }, payload),
+        precondition
+      );
+      if (written.status === "ok") {
+        try { await fsPatch(COL_CALENDAR, calendarId, payload); } catch (_) { /* canonico: best-effort, igual que cloudSaveCalendar */ }
+        return { ok: true, status: "saved", snapshot: payload };
+      }
+      if (written.status === "error") return { ok: false, status: "write-failed", snapshot: null };
+      if (attempt < STRICT_MAX_ATTEMPTS) await strictRetryDelay(attempt);
+    }
+    return { ok: false, status: "conflict-exhausted", snapshot: null };
+  }
+
   function guideStateDocId(prefix, scopeKey, fileName) {
     return prefix + safeCloudKey(scopeKey) + ":" + fileNameToKey(fileName);
   }
@@ -2036,6 +2232,84 @@
     return withGuideStateWriteQueue(scopeKey, fileName, function () {
       return cloudSaveGuideDataImpl(scopeKey, fileName, snapshot);
     });
+  }
+
+  // Lectura ESTRICTA de un doc de guia/registro: mismo conjunto de documentos
+  // que readGuideStateDoc (legado por usernameKey + nuevo por UID, cada uno
+  // en COL_PROGRESS y, si falta, COL_GUIDE_STATE) y misma fusion, pero sin
+  // failover a Drive: si CUALQUIER lectura falla -> status "error".
+  // -> { status: "found"|"missing"|"error", snapshot, targetDocId, targetUpdateTime }
+  async function readStrictGuideStateDocById(docId) {
+    var progress = await fsGetStrict(COL_PROGRESS, docId);
+    if (progress.status !== "missing") return { result: progress, progress: progress };
+    var state = await fsGetStrict(COL_GUIDE_STATE, docId);
+    return { result: state, progress: progress };
+  }
+
+  async function cloudGetGuideDataStrict(scopeKey, fileName) {
+    if (!scopeKey || !fileName) return { status: "error", snapshot: null };
+    var legacyId = guideStateDocId(GUIDE_DATA_FALLBACK_PREFIX, scopeKey, fileName);
+    var legacy = await readStrictGuideStateDocById(legacyId);
+    if (legacy.result.status === "error") return { status: "error", snapshot: null };
+    var uid = await resolveUidForScope(scopeKey);
+    var uidRead = null;
+    var targetDocId = legacyId;
+    var targetProgress = legacy.progress;
+    if (uid) {
+      targetDocId = guideStateDocId(GUIDE_DATA_FALLBACK_PREFIX, "uid:" + uid, fileName);
+      uidRead = await readStrictGuideStateDocById(targetDocId);
+      if (uidRead.result.status === "error") return { status: "error", snapshot: null };
+      targetProgress = uidRead.progress;
+    }
+    var legacyDoc = legacy.result.status === "found" ? legacy.result.data : null;
+    var uidDoc = uidRead && uidRead.result.status === "found" ? uidRead.result.data : null;
+    var merged = uid ? mergeLegacyAndUidGuideStateDocs(legacyDoc, uidDoc) : legacyDoc;
+    var snapshot = merged ? readSnapshotPayload(merged) : null;
+    if (merged && !snapshot) return { status: "error", snapshot: null };
+    return {
+      status: merged ? "found" : "missing",
+      snapshot: snapshot || {},
+      targetDocId: targetDocId,
+      targetUpdateTime: targetProgress && targetProgress.status === "found" ? targetProgress.updateTime : "",
+    };
+  }
+
+  // Leer -> `mutate` -> escribir con precondicion, para docs de registro que
+  // son LISTAS por id (p.ej. entregas propias de Etapa Productiva). Mismas
+  // invariantes que cloudUpdateCalendarStrict: lectura fallida = cero
+  // escrituras; conflicto = releer y reaplicar; maximo STRICT_MAX_ATTEMPTS.
+  // Escribe en el MISMO doc y con el MISMO formato que saveGuideStateDoc
+  // (COL_PROGRESS, doc por UID cuando se conoce), asi que cloudGetGuideData
+  // lo sigue leyendo sin cambios.
+  // -> { ok, status: "saved"|"read-failed"|"write-failed"|"conflict-exhausted"|"aborted", snapshot }
+  async function cloudUpdateGuideDataStrict(scopeKey, fileName, mutate) {
+    if (!scopeKey || !fileName || typeof mutate !== "function") return { ok: false, status: "aborted", snapshot: null };
+    for (var attempt = 1; attempt <= STRICT_MAX_ATTEMPTS; attempt++) {
+      var current = await cloudGetGuideDataStrict(scopeKey, fileName);
+      if (current.status === "error") return { ok: false, status: "read-failed", snapshot: null };
+      var next = mutate(JSON.parse(JSON.stringify(current.snapshot || {})));
+      if (!next || next.abort) return { ok: false, status: "aborted", reason: next && next.abort, snapshot: null };
+      next.updatedAt = new Date().toISOString();
+      var docId = current.targetDocId;
+      var written = await fsPatchStrict(
+        COL_PROGRESS,
+        docId,
+        {
+          _usernameKey: docId,
+          usernameKey: docId,
+          _kind: "guide-data",
+          scopeKey: scopeKey,
+          fileName: fileName,
+          updatedAt: next.updatedAt,
+          snapshotJson: JSON.stringify(next),
+        },
+        current.targetUpdateTime ? { expectedUpdateTime: current.targetUpdateTime } : { mustNotExist: true }
+      );
+      if (written.status === "ok") return { ok: true, status: "saved", snapshot: next };
+      if (written.status === "error") return { ok: false, status: "write-failed", snapshot: null };
+      if (attempt < STRICT_MAX_ATTEMPTS) await strictRetryDelay(attempt);
+    }
+    return { ok: false, status: "conflict-exhausted", snapshot: null };
   }
 
   // withGuideStateWriteQueue (ver mas abajo) solo serializa escrituras DENTRO
@@ -3399,6 +3673,12 @@
     cloudSaveCalendar: cloudSaveCalendar,
     cloudGetGuideData: cloudGetGuideData,
     cloudSaveGuideData: cloudSaveGuideData,
+    // Lectura/escritura ESTRICTAS (sin failover a Drive, con precondicion):
+    // Agenda "Agregar clase" y registro propio de Etapa Productiva.
+    cloudGetCalendarStrict: cloudGetCalendarStrict,
+    cloudUpdateCalendarStrict: cloudUpdateCalendarStrict,
+    cloudGetGuideDataStrict: cloudGetGuideDataStrict,
+    cloudUpdateGuideDataStrict: cloudUpdateGuideDataStrict,
     guideDataFileName: guideDataFileName,
     adminApplySolutionToGuide: adminApplySolutionToGuide,
     adminMarkActivityDelivered: adminMarkActivityDelivered,

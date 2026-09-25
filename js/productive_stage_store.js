@@ -424,26 +424,49 @@
   // escrituras (autorizacion correcta: ver el hallazgo original). Si la
   // fusion falla por cualquier razon, se devuelve la vista server-side tal
   // cual -- nunca peor que el comportamiento anterior.
+  // A8 (2026-09-25): el resultado lleva `viewStatus` ("ok" | "error") para
+  // que la pagina NUNCA convierta una falla tecnica (Apps Script caido, sin
+  // red, token vencido) en "el instructor todavia no te vinculo". Un catalogo
+  // que de verdad no existe o no incluye al aprendiz sigue siendo "ok" con
+  // projects vacio.
   async function loadStudentSnapshot() {
     let scoped = createEmptySnapshot();
-    if (runtimeScope.driveDb && typeof runtimeScope.driveDb.getStudentProductiveStageView === "function") {
+    let viewStatus = "error";
+    const driveDb = runtimeScope.driveDb;
+    if (driveDb && typeof driveDb.getStudentProductiveStageViewDetailed === "function") {
       try {
-        const raw = await runtimeScope.driveDb.getStudentProductiveStageView();
-        scoped = raw ? Object.assign(createEmptySnapshot(), raw) : createEmptySnapshot();
+        const detailed = await driveDb.getStudentProductiveStageViewDetailed();
+        if (detailed && detailed.status === "found") {
+          scoped = Object.assign(createEmptySnapshot(), detailed.data || {});
+          viewStatus = "ok";
+        } else if (detailed && detailed.status === "missing") {
+          viewStatus = "ok";
+        }
       } catch (error) {
-        scoped = createEmptySnapshot();
+        viewStatus = "error";
+      }
+    } else if (driveDb && typeof driveDb.getStudentProductiveStageView === "function") {
+      // drive_db.js viejo en cache: sin forma de distinguir, se asume error
+      // solo si lanza (comportamiento previo).
+      try {
+        const raw = await driveDb.getStudentProductiveStageView();
+        scoped = raw ? Object.assign(createEmptySnapshot(), raw) : createEmptySnapshot();
+        viewStatus = "ok";
+      } catch (error) {
+        viewStatus = "error";
       }
     }
     const usernameKey = currentUsernameKey();
-    if (!usernameKey) {
-      return scoped;
+    let result = scoped;
+    if (usernameKey) {
+      try {
+        const own = await loadOwnDocumentDeliveries(usernameKey);
+        result = mergeOwnDeliveriesIntoSnapshot(scoped, own, usernameKey);
+      } catch (error) {
+        result = scoped;
+      }
     }
-    try {
-      const own = await loadOwnDocumentDeliveries(usernameKey);
-      return mergeOwnDeliveriesIntoSnapshot(scoped, own, usernameKey);
-    } catch (error) {
-      return scoped;
-    }
+    return Object.assign(result, { viewStatus: viewStatus });
   }
 
   // Resuelve la usernameKey de la sesion ACTUAL (nunca la de un parametro
@@ -496,29 +519,98 @@
   // handleStudentProductiveStageView del lado de lectura. Nunca traga el
   // error: devuelve {ok:false} para que el llamador pueda avisar de forma
   // visible en vez de fallar en silencio.
-  async function saveOwnDocumentDelivery(usernameKey, deliveryRecord) {
+  //
+  // 2026-09-25: escribe con cloudUpdateGuideDataStrict (leer -> agregar por
+  // id -> escribir con precondicion). Antes leia con loadOwnDocumentDeliveries,
+  // que ante una lectura fallida devolvia un snapshot VACIO y el guardado
+  // reemplazaba el doc: se perdian las entregas anteriores del aprendiz.
+  // Ahora: lectura fallida = cero escrituras ({ok:false, status:"read-failed"})
+  // y dos dispositivos a la vez nunca se pisan (conflicto -> releer).
+  async function updateOwnDeliveries(usernameKey, mutate) {
     const key = String(usernameKey || "").trim().toLowerCase();
-    if (!key) {
-      return { ok: false, savedCloud: false };
+    const dbApi = runtimeScope._firebaseDb;
+    if (!key || !dbApi || typeof dbApi.cloudUpdateGuideDataStrict !== "function") {
+      return { ok: false, savedCloud: false, status: "unavailable" };
     }
-    if (!runtimeScope._firebaseDb || typeof runtimeScope._firebaseDb.cloudSaveGuideData !== "function") {
-      return { ok: false, savedCloud: false };
-    }
-    const current = await loadOwnDocumentDeliveries(key);
-    const next = appendDocumentDeliveryToSnapshot(
-      current,
-      Object.assign({}, deliveryRecord || {}, { usernameKey: key })
-    );
     try {
-      const savedCloud = await runtimeScope._firebaseDb.cloudSaveGuideData(
+      const result = await dbApi.cloudUpdateGuideDataStrict(
         ownDeliveriesScopeKey(key),
         OWN_DELIVERIES_FILE_NAME,
-        next
+        function (current) { return mutate(Object.assign(createEmptySnapshot(), current || {}), key); }
       );
-      return { ok: Boolean(savedCloud), savedCloud: Boolean(savedCloud) };
+      return { ok: Boolean(result && result.ok), savedCloud: Boolean(result && result.ok), status: (result && result.status) || "write-failed" };
     } catch (error) {
-      return { ok: false, savedCloud: false };
+      return { ok: false, savedCloud: false, status: "write-failed" };
     }
+  }
+
+  async function saveOwnDocumentDelivery(usernameKey, deliveryRecord) {
+    return updateOwnDeliveries(usernameKey, function (current, key) {
+      return appendDocumentDeliveryToSnapshot(current, Object.assign({}, deliveryRecord || {}, { usernameKey: key }));
+    });
+  }
+
+  // ── Avance del proyecto registrado por el propio aprendiz (A3/A4/A5) ────
+  // El archivo vive en Drive; aqui solo metadatos, en el doc PROPIO del
+  // aprendiz (nunca en el catalogo admin, que un aprendiz no puede escribir).
+  // `submissionId` identifica UNA entrega real: el mismo evento repetido, un
+  // refresh o un reintento producen el mismo id (no duplica); una reentrega
+  // nueva trae otro archivo/fecha y por tanto otro id.
+  function buildProjectSubmissionId(usernameKey, record) {
+    const r = record || {};
+    const key = String(usernameKey || "").trim().toLowerCase();
+    const unique = String(r.fileId || "").trim() ||
+      (String(r.submittedAt || r.uploadedAt || "").trim() + "|" + String(r.savedFileName || "").trim());
+    return "student:" + key + ":" + String(r.projectId || "").trim() + ":" + unique;
+  }
+
+  function appendOwnProjectDelivery(previousSnapshot, usernameKey, record) {
+    const base = Object.assign(createEmptySnapshot(), previousSnapshot || {});
+    const list = Array.isArray(base.projectDeliveries) ? base.projectDeliveries.slice() : [];
+    const key = String(usernameKey || "").trim().toLowerCase();
+    const r = record || {};
+    const projectId = String(r.projectId || "").trim();
+    if (!key || !projectId) return base;
+    const submissionId = String(r.submissionId || "").trim() || buildProjectSubmissionId(key, r);
+    if (list.some(function (item) { return item && item.submissionId === submissionId; })) {
+      return base; // idempotente: ya registrada
+    }
+    list.push({
+      submissionId: submissionId,
+      deliveryId: submissionId,
+      projectId: projectId,
+      projectTitle: String(r.projectTitle || ""),
+      usernameKey: key,
+      uploadedByUsernameKey: key,
+      uploadedByName: String(r.fullName || r.uploadedByName || ""),
+      ficha: String(r.ficha || ""),
+      grupo: String(r.grupo || ""),
+      uploadedAt: String(r.submittedAt || r.uploadedAt || new Date().toISOString()),
+      savedFileName: String(r.savedFileName || ""),
+      driveUrl: String(r.driveUrl || ""),
+      fileId: String(r.fileId || ""),
+      status: "delivered",
+      source: "student",
+    });
+    return Object.assign({}, base, { projectDeliveries: list });
+  }
+
+  async function saveOwnProjectDelivery(usernameKey, record) {
+    return updateOwnDeliveries(usernameKey, function (current, key) {
+      return appendOwnProjectDelivery(current, key, record);
+    });
+  }
+
+  // Avances propios -> formato de `deliveries` (el mismo que ya pintan el
+  // historial del aprendiz y el del admin), sin duplicar por deliveryId.
+  function mergeProjectDeliveriesInto(base, records) {
+    const deliveries = Array.isArray(base.deliveries) ? base.deliveries.slice() : [];
+    (Array.isArray(records) ? records : []).forEach(function (record) {
+      if (!record || !record.projectId || !record.deliveryId) return;
+      if (deliveries.some(function (d) { return d && d.deliveryId === record.deliveryId; })) return;
+      deliveries.push(Object.assign({}, record));
+    });
+    return Object.assign({}, base, { deliveries: deliveries });
   }
 
   // Fusiona las entregas PROPIAS (doc por aprendiz) dentro de la vista ya
@@ -533,12 +625,50 @@
     const ownDeliveries = Array.isArray(ownSnapshot && ownSnapshot.documentDeliveries)
       ? ownSnapshot.documentDeliveries
       : [];
-    return ownDeliveries.reduce(function (acc, record) {
+    const merged = ownDeliveries.reduce(function (acc, record) {
       if (String((record && record.usernameKey) || "").trim().toLowerCase() !== key) {
         return acc;
       }
       return appendDocumentDeliveryToSnapshot(acc, record);
     }, base);
+    const ownProjectDeliveries = (Array.isArray(ownSnapshot && ownSnapshot.projectDeliveries) ? ownSnapshot.projectDeliveries : [])
+      .filter(function (record) { return String((record && record.usernameKey) || "").trim().toLowerCase() === key; });
+    return mergeProjectDeliveriesInto(merged, ownProjectDeliveries);
+  }
+
+  // A7 (vista del instructor): fusiona, SOLO PARA MOSTRAR, los docs propios
+  // de los aprendices dentro del catalogo admin. Nunca modifica el snapshot
+  // admin recibido (el panel sigue guardando exactamente sus propios datos):
+  //   * documentos base: el registro del aprendiz se usa si el admin no
+  //     tiene uno para ese aprendiz+documento, o si el del aprendiz es mas
+  //     reciente (una reentrega real);
+  //   * avances: se agregan por deliveryId sin tocar los manuales del admin.
+  // `ownByUser` = { [usernameKey]: snapshotPropio }.
+  function mergeStudentOwnRecordsIntoView(adminSnapshot, ownByUser) {
+    let view = Object.assign(createEmptySnapshot(), adminSnapshot || {});
+    view = Object.assign({}, view, {
+      documentDeliveries: (Array.isArray(view.documentDeliveries) ? view.documentDeliveries : []).slice(),
+      deliveries: (Array.isArray(view.deliveries) ? view.deliveries : []).slice(),
+    });
+    Object.keys(ownByUser || {}).forEach(function (rawKey) {
+      const key = String(rawKey || "").trim().toLowerCase();
+      const own = ownByUser[rawKey] || {};
+      (Array.isArray(own.documentDeliveries) ? own.documentDeliveries : []).forEach(function (record) {
+        if (!record || String(record.usernameKey || "").trim().toLowerCase() !== key || !record.docId) return;
+        const existing = view.documentDeliveries.find(function (item) {
+          return item && String(item.usernameKey || "").trim().toLowerCase() === key && item.docId === record.docId;
+        });
+        const existingTime = Date.parse((existing && existing.submittedAt) || "") || 0;
+        const recordTime = Date.parse(record.submittedAt || "") || 0;
+        if (!existing || recordTime > existingTime) {
+          view = appendDocumentDeliveryToSnapshot(view, record);
+        }
+      });
+      const projectRecords = (Array.isArray(own.projectDeliveries) ? own.projectDeliveries : [])
+        .filter(function (record) { return record && String(record.usernameKey || "").trim().toLowerCase() === key; });
+      view = mergeProjectDeliveriesInto(view, projectRecords);
+    });
+    return view;
   }
 
   async function saveSnapshot(snapshot) {
@@ -573,6 +703,10 @@
     OWN_DELIVERIES_FILE_NAME: OWN_DELIVERIES_FILE_NAME,
     loadOwnDocumentDeliveries: loadOwnDocumentDeliveries,
     saveOwnDocumentDelivery: saveOwnDocumentDelivery,
+    saveOwnProjectDelivery: saveOwnProjectDelivery,
+    appendOwnProjectDelivery: appendOwnProjectDelivery,
+    buildProjectSubmissionId: buildProjectSubmissionId,
     mergeOwnDeliveriesIntoSnapshot: mergeOwnDeliveriesIntoSnapshot,
+    mergeStudentOwnRecordsIntoView: mergeStudentOwnRecordsIntoView,
   };
 });

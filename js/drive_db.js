@@ -147,6 +147,17 @@
     return result && result.ok && result.found ? result.data : null;
   }
 
+  // Igual que la anterior pero DESGLOSADA (Etapa Productiva, A8): a
+  // diferencia de un documento generico, aqui cualquier respuesta ok:false
+  // del servidor (token invalido, catalogo corrupto, configuracion) es un
+  // ERROR, nunca "no hay proyecto".
+  //   { status: "found", data } | { status: "missing", data: null } | { status: "error", data: null }
+  async function getStudentProductiveStageViewDetailed() {
+    var result = await call("studentProductiveStageView", {});
+    if (!result || result.ok !== true) return { status: "error", data: null };
+    return result.found ? { status: "found", data: result.data } : { status: "missing", data: null };
+  }
+
   async function list(collection) {
     var result = await call("list", { collection: collection });
     if (!result || !result.ok || !Array.isArray(result.docs)) return [];
@@ -168,5 +179,6 @@
     deleteDoc: deleteDoc,
     list: list,
     getStudentProductiveStageView: getStudentProductiveStageView,
+    getStudentProductiveStageViewDetailed: getStudentProductiveStageViewDetailed,
   };
 })();

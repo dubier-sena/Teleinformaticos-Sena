@@ -227,7 +227,7 @@ test("los documentos se presentan como una ruta guiada con progreso y bloques co
   assert.match(html, /Diligencia<\/strong> y guarda el archivo/);
   assert.match(html, /Entrega<\/strong> el archivo desde esta pagina/);
   assert.match(html, /Documentos iniciales obligatorios/);
-  assert.match(html, /Plantillas para desarrollar el proyecto/);
+  assert.match(html, /Proyecto productivo y anexo financiero/);
   assert.match(html, /Evidencia de actualizacion en Sofia Plus/);
   assert.match(html, /Bitacoras de seguimiento/);
   assert.match(html, /Documento de consulta/);
@@ -237,7 +237,7 @@ test("los documentos se presentan como una ruta guiada con progreso y bloques co
 test("grado 10 recibe una ruta corta sin bloques que no le aplican", () => {
   const html = renderFor("3441939");
   assert.match(html, /Documentos iniciales obligatorios/);
-  assert.doesNotMatch(html, /Plantillas para desarrollar el proyecto/);
+  assert.doesNotMatch(html, /Proyecto productivo y anexo financiero/);
   assert.doesNotMatch(html, /Evidencia de actualizacion en Sofia Plus/);
   assert.doesNotMatch(html, /Bitacoras de seguimiento/);
   assert.doesNotMatch(html, /Documento de consulta/);

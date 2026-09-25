@@ -22,6 +22,9 @@
         "Documento guia para estructurar el proyecto, objetivos, propuesta y desarrollo tecnico.",
       href: "assets/materiales/etapa-productiva/2.%20Formato%20Proyecto%20Productivo.docx",
       fileName: "2. Formato Proyecto Productivo.docx",
+      // Se descarga Y se entrega (2026-09-25): antes era "Solo consulta" y el
+      // aprendiz no tenia donde subir su proyecto diligenciado.
+      deliveryLabel: "Formato Proyecto Productivo",
       // Grado 10 no tiene proyecto de Etapa Productiva este ano (ver
       // applyGrade10DocumentsOnlyView en productive_stage_student.js).
       hideForGrade10: true,
@@ -34,6 +37,7 @@
         "Archivo de apoyo para costos, presupuestos, ingresos estimados y sostenibilidad del proyecto.",
       href: "assets/materiales/etapa-productiva/2.1.%20Anexo%20financiero.xlsx",
       fileName: "2.1. Anexo financiero.xlsx",
+      deliveryLabel: "Anexo Financiero",
       hideForGrade10: true,
     },
     {
@@ -127,6 +131,11 @@
       deadline: BITACORA_DEADLINES[i - 1],
     });
   }
+
+  // Prefijo del panelKey del "Avance del proyecto" (etapa-avance-{projectId}).
+  const PROJECT_ADVANCE_PANEL_PREFIX = "etapa-avance-";
+  // Cola local de registros de nube pendientes (por aprendiz).
+  const PENDING_CLOUD_KEY = "sena_portal_ep_pending_cloud_v1";
 
   let currentState = {
     snapshot: null,
@@ -457,8 +466,8 @@
         ${buildDocumentGroup({
           id: "plantillas-proyecto",
           step: "2",
-          title: "Plantillas para desarrollar el proyecto",
-          description: "Usa estas plantillas como base para estructurar el proyecto y sus costos. No se entregan desde este bloque.",
+          title: "Proyecto productivo y anexo financiero",
+          description: "Descarga cada plantilla, desarrolla tu proyecto y sus costos, y entrega el archivo diligenciado desde su tarjeta.",
           modifier: "project",
           contexts: projectContexts,
         })}
@@ -619,10 +628,27 @@
     const uploadEnabled = isStudentUploader(session);
 
     if (!project) {
+      // A8: una falla tecnica NUNCA se presenta como "no estas vinculado".
+      if (currentState.snapshot && currentState.snapshot.viewStatus === "error") {
+        body.innerHTML = `
+          <div class="student-project-delivery-card">
+            <div class="student-project-delivery-status is-warning" role="alert">
+              No fue posible cargar la informacion del proyecto. Revisa tu conexion e intentalo de nuevo.
+            </div>
+            <div class="student-project-delivery-actions">
+              <button class="app-btn app-btn--outline" type="button" id="student-project-delivery-retry">Reintentar</button>
+            </div>
+          </div>
+        `;
+        getById("student-project-delivery-retry")?.addEventListener("click", function () {
+          window.location.reload();
+        });
+        return;
+      }
       body.innerHTML = `
         <div class="student-project-delivery-card">
           <p class="student-project-placeholder">
-            Cuando el instructor vincule tu nombre a un proyecto, aqui podras subir el avance grupal y ver su historial.
+            Aún no tienes un proyecto vinculado. Cuando el instructor vincule tu nombre a un proyecto, aqui podras subir el avance grupal y ver su historial.
           </p>
         </div>
       `;
@@ -669,6 +695,9 @@
       activityLabel: "Avance del Proyecto",
       activityTitle: project.projectTitle || "Proyecto",
       activityNumber: "",
+      // Clave estable: identifica el proyecto en el registro que emite el
+      // modulo de entregas (el modulo no propaga projectId por si mismo).
+      panelKey: PROJECT_ADVANCE_PANEL_PREFIX + project.id,
       projectId: project.id,
       ficha: project.ficha || session?.user?.ficha || "",
       grupo: project.grupo || session?.user?.grupo || "",
@@ -687,6 +716,7 @@
 
     renderProjectResources();
     renderProjectDelivery();
+    flushPendingCloudRecords();
   }
 
   // El registro de entrega de shared_apps_script_delivery.js solo vive en el
@@ -709,60 +739,175 @@
   // entrega real", pero YA NO en silencio: si la replica falla, se avisa de
   // forma visible (portalSaveStatus) para que el aprendiz sepa que debe
   // reintentar o que el portal lo hara por su cuenta.
-  async function syncDocumentDeliveryToCloud(record) {
-    if (!store || typeof store.saveOwnDocumentDelivery !== "function" || !record || !record.panelKey) {
-      return;
-    }
-    if (record.panelKey.indexOf("etapa-doc-") !== 0) {
-      return;
-    }
-    const docId = record.panelKey.slice("etapa-doc-".length);
+  // Registro en la nube de una entrega ya hecha en Drive (documento base o
+  // avance del proyecto), en el doc PROPIO del aprendiz. Idempotente (el
+  // mismo evento dos veces, un refresh o un reintento no duplican). Si la
+  // nube falla, la entrega queda en una cola local y se reintenta sola en la
+  // proxima carga de la pagina -- el aprendiz lo ve, nunca falla en silencio.
+  function currentStudentKey() {
     const session = currentState.session;
-    const usernameKey = String(session?.user?.usernameKey || "").trim().toLowerCase();
-    if (!usernameKey || session?.role !== "student") {
-      return;
-    }
+    if (!session || session.role !== "student") return "";
+    return String(session?.user?.usernameKey || "").trim().toLowerCase();
+  }
 
+  function pendingKey(usernameKey) {
+    return PENDING_CLOUD_KEY + ":" + usernameKey;
+  }
+
+  function readPending(usernameKey) {
+    try {
+      const raw = window.localStorage.getItem(pendingKey(usernameKey));
+      const list = raw ? JSON.parse(raw) : [];
+      return Array.isArray(list) ? list : [];
+    } catch (error) {
+      return [];
+    }
+  }
+
+  function writePending(usernameKey, list) {
+    try {
+      if (list.length) window.localStorage.setItem(pendingKey(usernameKey), JSON.stringify(list));
+      else window.localStorage.removeItem(pendingKey(usernameKey));
+    } catch (error) {
+      // sin almacenamiento local: el aviso visible ya se mostro
+    }
+  }
+
+  function pendingId(item) {
+    return item.kind + "|" + (item.record.panelKey || "") + "|" + (item.record.fileId || item.record.submittedAt || "") + "|" + (item.record.savedFileName || "");
+  }
+
+  function addPending(usernameKey, item) {
+    const list = readPending(usernameKey).filter(function (entry) { return pendingId(entry) !== pendingId(item); });
+    list.push(item);
+    writePending(usernameKey, list);
+  }
+
+  function removePending(usernameKey, item) {
+    writePending(usernameKey, readPending(usernameKey).filter(function (entry) { return pendingId(entry) !== pendingId(item); }));
+  }
+
+  // Convierte el registro del modulo de entregas en la operacion de nube.
+  // -> { kind, run: () => Promise<{ok}> } | null (no es de Etapa Productiva)
+  function buildCloudOperation(usernameKey, record) {
+    if (!store || !record || !record.panelKey) return null;
+    const session = currentState.session;
+    if (record.panelKey.indexOf("etapa-doc-") === 0 && typeof store.saveOwnDocumentDelivery === "function") {
+      const docId = record.panelKey.slice("etapa-doc-".length);
+      return {
+        kind: "doc",
+        run: function () {
+          return store.saveOwnDocumentDelivery(usernameKey, {
+            docId: docId,
+            docLabel: record.activityLabel || docId,
+            fullName: record.fullName || session?.user?.fullName || "",
+            ficha: record.ficha || session?.user?.ficha || "",
+            grupo: record.grupo || session?.user?.grupo || "",
+            institucion: record.institucion || "",
+            submittedAt: record.submittedAt || new Date().toISOString(),
+            savedFileName: record.savedFileName || "",
+            driveUrl: record.driveUrl || "",
+          });
+        },
+      };
+    }
+    if (record.panelKey.indexOf(PROJECT_ADVANCE_PANEL_PREFIX) === 0 && typeof store.saveOwnProjectDelivery === "function") {
+      const projectId = record.panelKey.slice(PROJECT_ADVANCE_PANEL_PREFIX.length);
+      if (!projectId) return null;
+      return {
+        kind: "project",
+        run: function () {
+          return store.saveOwnProjectDelivery(usernameKey, {
+            projectId: projectId,
+            projectTitle: record.activityTitle || "",
+            fullName: record.fullName || session?.user?.fullName || "",
+            ficha: record.ficha || session?.user?.ficha || "",
+            grupo: record.grupo || session?.user?.grupo || "",
+            submittedAt: record.submittedAt || "",
+            savedFileName: record.savedFileName || "",
+            driveUrl: record.driveUrl || "",
+            fileId: record.fileId || "",
+          });
+        },
+      };
+    }
+    return null;
+  }
+
+  // El historial se actualiza al instante (sin recargar) con el avance recien
+  // entregado; el mismo registro se fusiona desde la nube en otro equipo.
+  function reflectProjectDeliveryLocally(usernameKey, record) {
+    if (!store || typeof store.appendOwnProjectDelivery !== "function" || typeof store.mergeOwnDeliveriesIntoSnapshot !== "function") return;
+    const projectId = record.panelKey.slice(PROJECT_ADVANCE_PANEL_PREFIX.length);
+    const own = store.appendOwnProjectDelivery({}, usernameKey, Object.assign({}, record, { projectId: projectId }));
+    const viewStatus = currentState.snapshot && currentState.snapshot.viewStatus;
+    currentState.snapshot = Object.assign(
+      store.mergeOwnDeliveriesIntoSnapshot(currentState.snapshot, own, usernameKey),
+      { viewStatus: viewStatus }
+    );
+  }
+
+  async function syncDeliveryToCloud(record) {
+    const usernameKey = currentStudentKey();
+    if (!usernameKey || !record) return;
+    const operation = buildCloudOperation(usernameKey, record);
+    if (!operation) return;
     let result;
     try {
-      result = await store.saveOwnDocumentDelivery(usernameKey, {
-        docId: docId,
-        docLabel: record.activityLabel || docId,
-        fullName: record.fullName || session?.user?.fullName || "",
-        ficha: record.ficha || session?.user?.ficha || "",
-        grupo: record.grupo || session?.user?.grupo || "",
-        institucion: record.institucion || "",
-        submittedAt: record.submittedAt || new Date().toISOString(),
-        savedFileName: record.savedFileName || "",
-        driveUrl: record.driveUrl || "",
-      });
+      result = await operation.run();
     } catch (error) {
       result = { ok: false };
     }
+    if (result && result.ok) {
+      removePending(usernameKey, { kind: operation.kind, record: record });
+      return;
+    }
+    addPending(usernameKey, { kind: operation.kind, record: record });
+    if (window.portalSaveStatus && typeof window.portalSaveStatus.error === "function") {
+      window.portalSaveStatus.error(
+        "El archivo ya se entrego en Drive, pero su registro en la nube no se pudo guardar ahora. Se reintentara automaticamente al volver a abrir esta pagina."
+      );
+    }
+  }
 
-    // result.ok es false SOLO si tanto Firestore como el respaldo de Drive
-    // fallaron (ver cloudSaveGuideData/driveFallbackSet en firebase_db.js) --
-    // si solo Firestore fallo pero Drive respondio, result.ok ya es true Y la
-    // escritura queda encolada para promoverse sola a Firestore en cuanto la
-    // conexion vuelva (recordPendingPromotion/scheduleFlushPromotions, MISMO
-    // mecanismo que ya usa cada guia). Por eso el aviso NO promete un
-    // reintento automatico que no existe para este caso -- sugiere el unico
-    // reintento real disponible: volver a entregar el archivo.
-    if (!result || !result.ok) {
-      if (window.portalSaveStatus && typeof window.portalSaveStatus.error === "function") {
-        window.portalSaveStatus.error(
-          "El archivo ya se entrego, pero no se pudo sincronizar el registro con la nube en este momento. Si el problema continua, vuelve a entregar el archivo."
-        );
+  let flushingPending = false;
+  async function flushPendingCloudRecords() {
+    const usernameKey = currentStudentKey();
+    if (!usernameKey || flushingPending) return;
+    flushingPending = true;
+    try {
+      const list = readPending(usernameKey);
+      for (let i = 0; i < list.length; i++) {
+        const operation = buildCloudOperation(usernameKey, list[i].record);
+        if (!operation) {
+          removePending(usernameKey, list[i]);
+          continue;
+        }
+        let result;
+        try {
+          result = await operation.run();
+        } catch (error) {
+          result = { ok: false };
+        }
+        if (result && result.ok) removePending(usernameKey, list[i]);
       }
+    } finally {
+      flushingPending = false;
     }
   }
 
   // Al completarse una entrega (evento del modulo de entregas), la card del
-  // documento se re-pinta para mostrar "Entregado" sin recargar la pagina, y
-  // se replica el registro al panel de control del admin.
+  // documento / el historial del avance se re-pintan sin recargar la pagina,
+  // y el registro se guarda en la nube (doc propio del aprendiz).
   document.addEventListener("guide-delivery-registered", function (event) {
+    const record = event && event.detail;
+    const usernameKey = currentStudentKey();
+    if (record && usernameKey && String(record.panelKey || "").indexOf(PROJECT_ADVANCE_PANEL_PREFIX) === 0) {
+      reflectProjectDeliveryLocally(usernameKey, record);
+      renderProjectDelivery();
+    }
     renderProjectResources();
-    syncDocumentDeliveryToCloud(event && event.detail);
+    syncDeliveryToCloud(record);
   });
 
   // Catalogo de documentos entregables (id/label/deadline) de ESTE archivo.
@@ -801,5 +946,11 @@
     renderProjectResources: renderProjectResources,
     openProjectDeliveryModal: openProjectDeliveryModal,
     getDocumentCatalog: getDocumentCatalog,
+    __test: {
+      syncDeliveryToCloud: syncDeliveryToCloud,
+      flushPendingCloudRecords: flushPendingCloudRecords,
+      readPending: readPending,
+      getState: function () { return currentState; },
+    },
   };
 })();

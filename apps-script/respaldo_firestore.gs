@@ -76,6 +76,14 @@ function doPost(e) {
     // filtrado (solo los documentDeliveries del propio actor) ocurre DENTRO
     // del handler, nunca en el cliente. Ver handleStudentProductiveStageView.
     if (action === "studentproductivestageview") {
+      // Misma regla que authorizeRequest(): un email versionado (.vN, cuenta
+      // re-creada tras un reset de password) SOLO vale si N coincide con la
+      // version atestada por el admin en user_meta. Sin esto, cualquiera
+      // podria crear una cuenta Auth "victima.v2@sena-portal.local" y leer
+      // los proyectos y entregas de la victima por esta ruta.
+      if (actorParts.version > 1 && actorParts.version !== getAttestedAuthVersion(actorParts.base)) {
+        return jsonResponse({ ok: false, message: "Version de cuenta no atestada. Pide al instructor resetear tu password de nuevo." });
+      }
       return handleStudentProductiveStageView(actorParts);
     }
 
@@ -341,6 +349,27 @@ function handleGet(payload) {
 // doc que el aprendiz no "posee" segun authorizeRequest().
 var PRODUCTIVE_STAGE_COLLECTION = "sena_portal_guide_state";
 var PRODUCTIVE_STAGE_DOC_ID = "__guide_data__:admin:productive-stage:productive-stage-catalog";
+// 2026-09-25: el panel admin guarda el catalogo en sena_portal_progress (ver
+// saveGuideStateDoc en js/firebase_db.js, que ademas espera la copia a Drive
+// en ESA misma coleccion) y con el formato { snapshotJson: "<json>" }. Leer
+// solo sena_portal_guide_state (copia legado, casi nunca actualizada) y
+// esperar el catalogo ya expandido hacia que el aprendiz nunca viera su
+// proyecto vinculado. Se lee primero el doc real y el legado solo si falta.
+var PRODUCTIVE_STAGE_COLLECTIONS_IN_ORDER = ["sena_portal_progress", PRODUCTIVE_STAGE_COLLECTION];
+
+// Catalogo en cualquiera de sus dos formatos -> objeto con projects/deliveries...
+function unwrapProductiveStageCatalog(data) {
+  if (!data || typeof data !== "object") return null;
+  if (typeof data.snapshotJson === "string") {
+    try {
+      var parsed = JSON.parse(data.snapshotJson);
+      return parsed && typeof parsed === "object" ? parsed : null;
+    } catch (_) {
+      return null;
+    }
+  }
+  return data;
+}
 
 // Bloque C.1: vista acotada del catalogo de Etapa Productiva para UN
 // aprendiz. `actorParts` viene de splitVersionedEmail(userInfo.email) en
@@ -357,19 +386,25 @@ function handleStudentProductiveStageView(actorParts) {
     return jsonResponse({ ok: false, message: "Sin identidad valida en el token." });
   }
 
-  var rawOutput = handleGet({ collection: PRODUCTIVE_STAGE_COLLECTION, docId: PRODUCTIVE_STAGE_DOC_ID });
-  var parsed;
-  try {
-    parsed = JSON.parse(rawOutput.getContent());
-  } catch (_) {
-    return jsonResponse({ ok: false, message: "Error leyendo el catalogo de Etapa Productiva." });
+  var parsed = null;
+  for (var c = 0; c < PRODUCTIVE_STAGE_COLLECTIONS_IN_ORDER.length; c++) {
+    var rawOutput = handleGet({ collection: PRODUCTIVE_STAGE_COLLECTIONS_IN_ORDER[c], docId: PRODUCTIVE_STAGE_DOC_ID });
+    try {
+      parsed = JSON.parse(rawOutput.getContent());
+    } catch (_) {
+      return jsonResponse({ ok: false, message: "Error leyendo el catalogo de Etapa Productiva." });
+    }
+    if (!parsed.ok) return jsonResponse(parsed);
+    if (parsed.found && parsed.data) break;
   }
-  if (!parsed.ok) return jsonResponse(parsed);
-  if (!parsed.found || !parsed.data) {
+  if (!parsed || !parsed.found || !parsed.data) {
     return jsonResponse({ ok: true, found: false, data: null });
   }
 
-  var full = parsed.data;
+  var full = unwrapProductiveStageCatalog(parsed.data);
+  if (!full) {
+    return jsonResponse({ ok: false, message: "Catalogo de Etapa Productiva ilegible." });
+  }
 
   var documentDeliveries = Array.isArray(full.documentDeliveries) ? full.documentDeliveries : [];
   var ownDocumentDeliveries = documentDeliveries.filter(function (record) {

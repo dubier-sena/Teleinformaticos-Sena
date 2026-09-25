@@ -75,6 +75,15 @@
     fichaOptions: [],
     filters: { institucion: "", ficha: "", tipo: "", estado: "", guia: "", desde: "", hasta: "" },
     editingManualId: "",
+    // Id del evento/clase que se esta creando: se genera UNA vez al abrir el
+    // formulario y se reutiliza en cada reintento (nunca duplica).
+    manualDraftId: "",
+    classEditingId: "",
+    classDraftId: "",
+    // true mientras hay una escritura en curso: bloquea doble envio y el
+    // cierre del modal (el formulario no se pierde).
+    saving: false,
+    manualLoadFailed: false,
     view: "agenda",
     referenceDate: new Date(),
     slotsDraft: [{ start: "", end: "" }],
@@ -155,6 +164,14 @@
         return '<option value="' + escapeHtml(opt.ficha) + '">' + escapeHtml(opt.ficha) + " — " + escapeHtml(opt.grupo) + " (" + escapeHtml(opt.institucionShort) + ")</option>";
       }).join("");
 
+    var classFichaSel = document.querySelector("#aa-class-form [name=ficha]");
+    if (classFichaSel) {
+      classFichaSel.innerHTML = '<option value="">Selecciona la ficha…</option>' +
+        state.fichaOptions.map(function (opt) {
+          return '<option value="' + escapeHtml(opt.ficha) + '">' + escapeHtml(opt.ficha) + " — " + escapeHtml(opt.grupo) + " (" + escapeHtml(opt.institucionShort) + ")</option>";
+        }).join("");
+    }
+
     var manualFichaSel = document.querySelector("#aa-manual-form [name=ficha]");
     if (manualFichaSel) {
       manualFichaSel.innerHTML = '<option value="">Todas las fichas</option>' +
@@ -217,10 +234,14 @@
     try {
       var results = await Promise.all([
         window.academicAgendaAdminContext.resolveAdminAgendaContext({ fichas: fichas }),
-        window.calendarioAdminManualEvents.loadManualEventRecords().catch(function () { return []; }),
+        window.calendarioAdminManualEvents.loadManualEventRecordsStrict().catch(function () { return { ok: false, records: [] }; }),
       ]);
       adminResult = results[0];
-      manualRecords = results[1] || [];
+      // Lectura fallida != "no hay clases": se avisa en vez de pintar una
+      // agenda vacia (y los formularios siguen protegidos: no escriben si no
+      // pueden leer).
+      state.manualLoadFailed = !(results[1] && results[1].ok);
+      manualRecords = (results[1] && results[1].records) || [];
     } catch (e) {
       renderMessage(listEl, "Error al construir la agenda", "Intenta nuevamente más tarde.", "error");
       if (statusEl) statusEl.textContent = "";
@@ -246,7 +267,9 @@
 
     if (statusEl) {
       statusEl.textContent = state.events.length + (state.events.length === 1 ? " evento" : " eventos") +
-        " · Actualizado " + new Date(adminResult.generatedAt).toLocaleTimeString("es-CO", { timeZone: "America/Bogota", hour: "numeric", minute: "2-digit" });
+        " · Actualizado " + new Date(adminResult.generatedAt).toLocaleTimeString("es-CO", { timeZone: "America/Bogota", hour: "numeric", minute: "2-digit" }) +
+        (state.manualLoadFailed ? " · ⚠ No se pudieron cargar las clases y eventos creados a mano. Pulsa Actualizar." : "");
+      statusEl.setAttribute("data-kind", state.manualLoadFailed ? "warn" : "");
     }
   }
 
@@ -490,7 +513,15 @@
 
   function bindCardActionHandlersIn(root) {
     root.querySelectorAll("[data-manual-edit]").forEach(function (btn) {
-      btn.addEventListener("click", function () { closeDayDetailModal(); openManualModal(btn.getAttribute("data-manual-edit")); });
+      btn.addEventListener("click", function () {
+        var id = btn.getAttribute("data-manual-edit");
+        closeDayDetailModal();
+        // Una clase simple (una franja) se edita en el formulario de clase;
+        // cualquier otro registro (evento especial, todo el dia, varias
+        // franjas) en el editor completo, que conserva todos sus campos.
+        if (isSimpleClassRecord(findManualRecordById(id))) openClassModal(id);
+        else openManualModal(id);
+      });
     });
     root.querySelectorAll("[data-manual-delete]").forEach(function (btn) {
       btn.addEventListener("click", function () { handleDeleteManual(btn.getAttribute("data-manual-delete")); });
@@ -578,17 +609,211 @@
     section.hidden = checkbox.checked;
   }
 
+  // ── Guardado comun (clase y evento especial) ───────────────────────────
+  // Estados del boton: "Guardar …" -> "Guardando…" -> "… guardada ✓", o en
+  // error "Reintentar" SIN borrar el formulario. Mientras guarda: boton
+  // deshabilitado (doble clic = 1 sola operacion) y el modal no se puede
+  // cerrar (ni ✕, ni Cancelar, ni Escape).
+  function setFormBusy(prefix, busy) {
+    ["-submit", "-cancel", "-modal-close"].forEach(function (suffix) {
+      var el = byId(prefix + suffix);
+      if (el) el.disabled = !!busy;
+    });
+    var modal = byId(prefix + "-modal");
+    if (modal) modal.setAttribute("aria-busy", busy ? "true" : "false");
+  }
+
+  function setFeedback(prefix, text, kind) {
+    var feedback = byId(prefix + "-feedback");
+    if (!feedback) return;
+    feedback.textContent = text || "";
+    if (kind) feedback.setAttribute("data-kind", kind);
+    else feedback.removeAttribute("data-kind");
+  }
+
+  async function runSave(prefix, input, labels) {
+    if (state.saving) return null; // segundo clic mientras guarda: ignorado
+    state.saving = true;
+    var submit = byId(prefix + "-submit");
+    setFormBusy(prefix, true);
+    if (submit) submit.textContent = "Guardando…";
+    setFeedback(prefix, "", "");
+    // Dentro del modal el estado vive en el propio boton y en el mensaje del
+    // formulario: el aviso flotante (portalSaveStatus) quedaria ENCIMA del pie
+    // del modal en movil y taparia "Reintentar".
+    if (window.portalSaveStatus) window.portalSaveStatus.hide();
+
+    var result;
+    try {
+      result = await window.calendarioAdminManualEvents.saveManualEvent(input);
+    } catch (e) {
+      result = { ok: false, code: "unconfirmed", message: "Ocurrio un error inesperado al guardar. Usa Reintentar: no se duplicara." };
+    }
+    state.saving = false;
+    setFormBusy(prefix, false);
+
+    if (!result || !result.ok) {
+      var message = (result && result.message) || "No se pudo guardar.";
+      if (submit) submit.textContent = result && result.code === "validation" ? labels.idle : "Reintentar";
+      setFeedback(prefix, message, "error");
+      return result;
+    }
+
+    if (submit) { submit.textContent = labels.done; submit.disabled = true; }
+    setFeedback(prefix, labels.done, "success");
+    if (window.portalSaveStatus) window.portalSaveStatus.saved();
+    return result;
+  }
+
+  function isModalBusy() { return state.saving; }
+
+  // ── Modal "Agregar clase" ────────────────────────────────────────────────
+
+  function isSimpleClassRecord(record) {
+    if (!record || record.type !== "CLASE" || record.allDay) return false;
+    var slots = Array.isArray(record.slots) && record.slots.length
+      ? record.slots
+      : ((record.startAt || record.endAt) ? [{ startAt: record.startAt, endAt: record.endAt }] : []);
+    return slots.length === 1;
+  }
+
+  function fichaInfoFor(ficha) {
+    var opt = state.fichaOptions.find(function (o) { return o.ficha === ficha; });
+    return opt ? { ficha: opt.ficha, grupo: opt.grupo, inst: opt.institucionLong, instShort: opt.institucionShort } : null;
+  }
+
+  // Datos que el sistema YA conoce al elegir la ficha (grupo, institucion)
+  // y horario sugerido del calendario academico para esa fecha, si existe.
+  function updateClassContext(options) {
+    var form = byId("aa-class-form");
+    if (!form) return;
+    var info = fichaInfoFor(form.querySelector("[name=ficha]").value);
+    var ctx = byId("aa-class-context");
+    if (ctx) {
+      ctx.hidden = !info;
+      ctx.textContent = info ? ("Grupo " + info.grupo + " · " + info.inst) : "";
+    }
+    var hint = byId("aa-class-schedule-hint");
+    var date = form.querySelector("[name=date]").value;
+    var suggestion = info && window.calendarioAdminManualEvents.suggestClassSlot
+      ? window.calendarioAdminManualEvents.suggestClassSlot(window.CALENDAR_2026_RECORDS || [], info, date)
+      : null;
+    if (hint) {
+      hint.hidden = !suggestion;
+      hint.textContent = suggestion
+        ? (suggestion.start ? "Horario del calendario académico para ese día: " : "Ese día el calendario académico tiene varias franjas: ") + suggestion.text + ". Puedes cambiarlo."
+        : "";
+    }
+    // Solo precarga si el instructor no escribio ya una hora (nunca pisa lo escrito).
+    if (suggestion && suggestion.start && !(options && options.keepTimes)) {
+      var startInput = form.querySelector("[name=start]");
+      var endInput = form.querySelector("[name=end]");
+      if (!startInput.value && !endInput.value) {
+        startInput.value = suggestion.start;
+        endInput.value = suggestion.end;
+      }
+    }
+  }
+
+  function openClassModal(id) {
+    var modal = byId("aa-class-modal");
+    var form = byId("aa-class-form");
+    if (!modal || !form || state.saving) return;
+    form.reset();
+    setFeedback("aa-class", "", "");
+    var record = id ? findManualRecordById(id) : null;
+    state.classEditingId = record ? record.id : "";
+    state.classDraftId = record ? record.id : window.calendarioAdminManualEvents.newManualEventId();
+    byId("aa-class-modal-title").textContent = record ? "Editar clase" : "Agregar clase";
+    var submit = byId("aa-class-submit");
+    if (submit) submit.textContent = "Guardar clase";
+    setFormBusy("aa-class", false);
+    if (record) {
+      var slot = (Array.isArray(record.slots) && record.slots[0]) || { startAt: record.startAt, endAt: record.endAt };
+      form.querySelector("[name=ficha]").value = record.ficha || "";
+      form.querySelector("[name=date]").value = record.date || "";
+      form.querySelector("[name=start]").value = String(slot.startAt || "").slice(11, 16);
+      form.querySelector("[name=end]").value = String(slot.endAt || "").slice(11, 16);
+      form.querySelector("[name=tema]").value = record.tema || record.title || "";
+      form.querySelector("[name=description]").value = record.description || "";
+      form.querySelector("[name=status]").value = record.status || "scheduled";
+      state.classEditingRecord = record;
+    } else {
+      state.classEditingRecord = null;
+      // Si la agenda esta filtrada por UNA ficha, se propone esa.
+      if (state.filters.ficha) form.querySelector("[name=ficha]").value = state.filters.ficha;
+    }
+    updateClassContext({ keepTimes: !!record });
+    modal.hidden = false;
+    var first = form.querySelector(record ? "[name=tema]" : "[name=ficha]");
+    if (first && typeof first.focus === "function") first.focus();
+  }
+
+  function closeClassModal() {
+    if (isModalBusy()) return; // no se cierra mientras guarda
+    var modal = byId("aa-class-modal");
+    if (modal) modal.hidden = true;
+    state.classEditingId = "";
+    state.classDraftId = "";
+    state.classEditingRecord = null;
+  }
+
+  function buildClassInput(form) {
+    var ficha = form.querySelector("[name=ficha]").value.trim();
+    var info = fichaInfoFor(ficha);
+    var date = form.querySelector("[name=date]").value;
+    var start = form.querySelector("[name=start]").value;
+    var end = form.querySelector("[name=end]").value;
+    var tema = form.querySelector("[name=tema]").value.trim();
+    var previous = state.classEditingRecord || {};
+    return {
+      id: state.classDraftId,
+      type: "CLASE",
+      // Un solo campo para el instructor: el tema es tambien el titulo.
+      title: tema,
+      tema: tema,
+      description: form.querySelector("[name=description]").value,
+      date: date,
+      allDay: false,
+      slots: [{
+        startAt: start && date ? (date + "T" + start + ":00-05:00") : "",
+        endAt: end && date ? (date + "T" + end + ":00-05:00") : "",
+      }],
+      status: form.querySelector("[name=status]").value || "scheduled",
+      ficha: ficha,
+      group: info ? info.grupo : "",
+      institution: info ? info.inst : "",
+      // Campo avanzado que este formulario no muestra: se conserva al editar.
+      route: previous.route || "",
+    };
+  }
+
+  async function handleClassFormSubmit(evt) {
+    evt.preventDefault();
+    if (state.saving) return;
+    var form = evt.target;
+    var result = await runSave("aa-class", buildClassInput(form), { idle: "Guardar clase", done: "Clase guardada ✓" });
+    if (result && result.ok) {
+      setTimeout(function () { closeClassModal(); loadAndRender(); }, 700);
+    }
+  }
+
+  // ── Modal de evento especial (editor completo) ──────────────────────────
+
   function openManualModal(id) {
     var modal = byId("aa-manual-modal");
     var form = byId("aa-manual-form");
-    if (!modal || !form) return;
+    if (!modal || !form || state.saving) return;
     form.reset();
-    var feedback = byId("aa-manual-feedback");
-    if (feedback) { feedback.textContent = ""; feedback.removeAttribute("data-kind"); }
+    setFeedback("aa-manual", "", "");
 
     var record = id ? findManualRecordById(id) : null;
     state.editingManualId = record ? record.id : "";
-    byId("aa-manual-modal-title").textContent = record ? "Editar evento manual" : "Nuevo evento manual";
+    state.manualDraftId = record ? record.id : window.calendarioAdminManualEvents.newManualEventId();
+    byId("aa-manual-modal-title").textContent = record ? "Editar evento" : "Nuevo evento especial";
+    var submit = byId("aa-manual-submit");
+    if (submit) submit.textContent = "Guardar evento";
+    setFormBusy("aa-manual", false);
 
     var allDayCheckbox = byId("aa-manual-allday");
     if (record) {
@@ -617,15 +842,17 @@
   }
 
   function closeManualModal() {
+    if (isModalBusy()) return;
     var modal = byId("aa-manual-modal");
     if (modal) modal.hidden = true;
     state.editingManualId = "";
+    state.manualDraftId = "";
   }
 
   async function handleManualFormSubmit(evt) {
     evt.preventDefault();
+    if (state.saving) return;
     var form = evt.target;
-    var feedback = byId("aa-manual-feedback");
     var fichaValue = form.querySelector("[name=ficha]").value.trim();
     var fichaInfo = fichaValue ? state.fichaOptions.find(function (o) { return o.ficha === fichaValue; }) : null;
     var date = form.querySelector("[name=date]").value;
@@ -641,7 +868,7 @@
       });
 
     var input = {
-      id: state.editingManualId,
+      id: state.manualDraftId,
       title: form.querySelector("[name=title]").value,
       type: form.querySelector("[name=type]").value,
       tema: form.querySelector("[name=tema]").value,
@@ -656,31 +883,37 @@
       route: form.querySelector("[name=route]").value,
     };
 
-    if (window.portalSaveStatus) window.portalSaveStatus.saving();
-    var result = await window.calendarioAdminManualEvents.saveManualEvent(input);
-    if (!result.ok) {
-      if (feedback) { feedback.textContent = result.message || "No se pudo guardar el evento."; feedback.setAttribute("data-kind", "error"); }
-      if (window.portalSaveStatus) window.portalSaveStatus.error(result.message || "No se pudo guardar.");
-      return;
+    var result = await runSave("aa-manual", input, { idle: "Guardar evento", done: "Evento guardado ✓" });
+    if (result && result.ok) {
+      setTimeout(function () { closeManualModal(); loadAndRender(); }, 700);
     }
-    if (window.portalSaveStatus) window.portalSaveStatus.saved();
-    closeManualModal();
-    await loadAndRender();
   }
 
+  var deletingIds = {};
+
   async function handleDeleteManual(id) {
+    if (!id || deletingIds[id]) return; // doble clic en Eliminar: 1 sola operacion
     var confirmFn = window.portalConfirm || function (msg) { return Promise.resolve(window.confirm(msg)); };
-    var confirmed = await confirmFn("¿Eliminar este evento manual? Esta acción no se puede deshacer.", {
-      title: "Eliminar evento manual",
-      confirmText: "Eliminar",
-    });
+    var record = findManualRecordById(id);
+    var isClass = record && record.type === "CLASE";
+    var confirmed = await confirmFn(
+      isClass ? "¿Eliminar esta clase? Solo se elimina esta clase; las demás no cambian." : "¿Eliminar este evento? Esta acción no se puede deshacer.",
+      { title: isClass ? "Eliminar clase" : "Eliminar evento", confirmText: "Eliminar" }
+    );
     if (!confirmed) return;
 
+    deletingIds[id] = true;
     closeDayDetailModal();
     if (window.portalSaveStatus) window.portalSaveStatus.saving();
-    var result = await window.calendarioAdminManualEvents.deleteManualEvent(id);
-    if (!result.ok) {
-      if (window.portalSaveStatus) window.portalSaveStatus.error(result.message || "No se pudo eliminar.");
+    var result;
+    try {
+      result = await window.calendarioAdminManualEvents.deleteManualEvent(id);
+    } finally {
+      delete deletingIds[id];
+    }
+    if (!result || !result.ok) {
+      if (window.portalSaveStatus) window.portalSaveStatus.error((result && result.message) || "No se pudo eliminar.");
+      if (result && result.code === "not-found") await loadAndRender();
       return;
     }
     if (window.portalSaveStatus) window.portalSaveStatus.saved();
@@ -716,6 +949,31 @@
     });
   }
 
+  function bindClassHandlers() {
+    var createBtn = byId("aa-class-create");
+    if (createBtn) createBtn.addEventListener("click", function () { openClassModal(""); });
+    var closeBtn = byId("aa-class-modal-close");
+    if (closeBtn) closeBtn.addEventListener("click", closeClassModal);
+    var cancelBtn = byId("aa-class-cancel");
+    if (cancelBtn) cancelBtn.addEventListener("click", closeClassModal);
+    var form = byId("aa-class-form");
+    if (!form) return;
+    form.addEventListener("submit", handleClassFormSubmit);
+    form.querySelector("[name=ficha]").addEventListener("change", function () { updateClassContext(); });
+    form.querySelector("[name=date]").addEventListener("change", function () { updateClassContext(); });
+    // Si el instructor cambia un dato despues de un error, el boton vuelve a
+    // decir "Guardar clase" (el id de la clase sigue siendo el mismo).
+    form.addEventListener("input", function () {
+      var submit = byId("aa-class-submit");
+      if (submit && !state.saving && submit.textContent === "Reintentar") submit.textContent = "Guardar clase";
+    });
+    document.addEventListener("keydown", function (evt) {
+      if (evt.key !== "Escape") return;
+      var modal = byId("aa-class-modal");
+      if (modal && !modal.hidden) closeClassModal();
+    });
+  }
+
   function bindManualEventHandlers() {
     var createBtn = byId("aa-manual-create");
     if (createBtn) createBtn.addEventListener("click", function () { openManualModal(""); });
@@ -741,12 +999,20 @@
     if (refreshCountsBtn) refreshCountsBtn.addEventListener("click", handleRefreshGuideCounts);
     bindFilterHandlers();
     bindManualEventHandlers();
+    bindClassHandlers();
     loadAndRender();
   }
 
   window.calendarioAdminAgendaPage = {
     load: loadAndRender,
-    __test: { applyPresentationFilters: applyPresentationFilters, eventDateKey: eventDateKey },
+    __test: {
+      applyPresentationFilters: applyPresentationFilters,
+      eventDateKey: eventDateKey,
+      isSimpleClassRecord: isSimpleClassRecord,
+      openClassModal: openClassModal,
+      closeClassModal: closeClassModal,
+      getState: function () { return state; },
+    },
   };
 
   if (document.readyState === "loading") {
