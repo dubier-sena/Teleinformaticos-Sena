@@ -33,12 +33,22 @@ export function createCameraRig({ camera, renderer, tweenGroup, onTick }) {
   // hardware_lab_3d_stage.js), se conserva aunque otras llamadas a
   // setRigBounds no lo repitan (p.ej. el reencuadre de modo Aprender).
   let viewFromBelow = false;
+  // Punto al que mira la vista "Interna" desde abajo: el centro de la BASE del
+  // portatil (no el de todo el equipo, que la pantalla abierta sube mucho).
+  // Lo fija hardware_lab_3d_stage.js al cargar el equipo; sticky como el flag.
+  let belowTarget = null;
+  // Encuadre de la vista "Interna" cuando el equipo sigue CERRADO por abajo
+  // (ver setBelowFrameProvider): devuelve el radio de lo que hay que encuadrar
+  // (la tapa inferior completa) o null si ya esta abierto.
+  let belowFrameProvider = null;
 
   function setRigBounds(center, radius, opts) {
     rigCenter = center.clone();
     rigRadius = Math.max(0.08, radius);
+    if (opts && opts.belowTarget) belowTarget = opts.belowTarget.clone();
     if (opts && opts.viewFromBelow != null) {
       viewFromBelow = !!opts.viewFromBelow;
+      if (!viewFromBelow) belowTarget = null;
       // OrbitControls vuelve a acomodar (clampear) el angulo polar de la
       // camara en CADA tick contra maxPolarAngle, sin importar si la
       // posicion vino de un arrastre del usuario o de un flyTo() directo
@@ -157,9 +167,43 @@ export function createCameraRig({ camera, renderer, tweenGroup, onTick }) {
           // teclado (aun instalado en este punto de la secuencia) tapaba
           // todo lo demas. Se ancla a un offset fijo y pequeno sobre la
           // camara, al nivel real de esos componentes.
+          // Fase 3: con la geometria nueva los componentes cuelgan de la
+          // placa hacia la tapa inferior; la vista debe MIRAR HACIA ARRIBA al
+          // interior con un angulo claro (~27 grados), no rasante: a 0.05 m
+          // de la mesa y ~0.33 m de distancia horizontal (antes) la pared
+          // del chasis tapaba casi todo. Se usa el centro de la base
+          // (belowTarget, fijado por el stage) y se baja la camara hasta
+          // casi la mesa.
+          if (belowTarget) {
+            const camY = TABLE.topY + 0.022;
+            const rise = Math.max(0.05, belowTarget.y - camY);
+            // ENCUADRE ADAPTATIVO (ver setBelowFrameProvider). Quien llama
+            // (el stage) dice QUE hay que ver desde abajo en este momento: la
+            // tapa inferior completa mientras siga puesta, o la pieza del paso
+            // actual una vez abierto. Medido con clic real antes de esto:
+            //   - con la tapa puesta, 3 de los 5 tornillos caian FUERA del
+            //     frustum (|NDC| hasta 1.5);
+            //   - ya abierto, el tornillo trasero izquierdo de la placa base
+            //     quedaba en NDC -1.31.
+            // Ninguno de los dos se podia clickear sin orbitar a mano.
+            // El angulo de ~27 grados se conserva SIEMPRE que alcance: solo se
+            // abre (camara mas lejos, vista mas rasante) cuando lo que hay que
+            // encuadrar no cabe -- y no puede caber de otra forma, porque la
+            // camara no baja de la mesa y el equipo esta a 160 mm de ella.
+            // ~27 grados: suficiente para ver el interior sin que las paredes
+            // lo tapen, y lejos para encuadrar toda la cara inferior (330 mm).
+            let horiz = rise / Math.tan(THREE.MathUtils.degToRad(27));
+            const frameRadius = belowFrameProvider ? belowFrameProvider() : null;
+            if (frameRadius > 0) {
+              const need = (frameRadius / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) * 1.12;
+              horiz = Math.max(horiz, Math.sqrt(Math.max(need * need - rise * rise, 1e-4)));
+            }
+            const pos = new THREE.Vector3(belowTarget.x - horiz * 0.62, camY, belowTarget.z + horiz * 0.78);
+            return { pos, target: belowTarget.clone() };
+          }
           const belowY = TABLE.topY + 0.05;
-          const belowTarget = new THREE.Vector3(c.x, belowY + 0.02, c.z);
-          return { pos: new THREE.Vector3(c.x - r * 0.9, belowY, c.z - r * 0.95), target: belowTarget };
+          const belowTargetFallback = new THREE.Vector3(c.x, belowY + 0.02, c.z);
+          return { pos: new THREE.Vector3(c.x - r * 0.9, belowY, c.z - r * 0.95), target: belowTargetFallback };
         }
         return { pos: new THREE.Vector3(c.x + r * 1.1, c.y + r * 0.85, c.z + r * 1.35), target: c };
       case "overview":
@@ -193,8 +237,17 @@ export function createCameraRig({ camera, renderer, tweenGroup, onTick }) {
     dir.normalize();
     const distance = Math.max(0.22, sphere.radius * (opts.distanceFactor || 3.4));
     const pos = sphere.center.clone().addScaledVector(dir, distance);
-    // Evita que la camara termine por debajo del tablero al enfocar piezas bajas.
-    pos.y = Math.max(pos.y, sphere.center.y + sphere.radius * 0.35);
+    // Portatil visto desde abajo (fase 3): sus piezas internas solo se ven
+    // por la cara inferior. Si la camara ya esta por debajo de la pieza, se
+    // conserva ABAJO en vez de subirla por encima (donde el reposamanos y la
+    // placa la tapan). Solo aplica con viewFromBelow (portatil).
+    const keepBelow = viewFromBelow && dir.y < 0;
+    if (keepBelow) {
+      pos.y = Math.min(pos.y, sphere.center.y - sphere.radius * 0.35);
+    } else {
+      // Evita que la camara termine por debajo del tablero al enfocar piezas bajas.
+      pos.y = Math.max(pos.y, sphere.center.y + sphere.radius * 0.35);
+    }
     // Evita que la camara quede DENTRO del volumen del equipo (mejora 3D,
     // encontrado con clic real): los botones de "Enfoque rapido" para grupos
     // pequenos cercanos a una pared externa (Almacenamiento, Energia) usan un
@@ -213,6 +266,9 @@ export function createCameraRig({ camera, renderer, tweenGroup, onTick }) {
       outFromRig.normalize();
       pos.copy(rigCenter).addScaledVector(outFromRig, minDistFromRig);
     }
+    // Nunca por debajo del tablero (la camara del portatil puede quedar bajo
+    // el equipo, pero no atravesar la mesa).
+    if (viewFromBelow) pos.y = Math.max(pos.y, TABLE.topY + 0.025);
     flyTo(pos, sphere.center, opts);
   }
 
@@ -258,9 +314,17 @@ export function createCameraRig({ camera, renderer, tweenGroup, onTick }) {
     controls.dispose();
   }
 
+  /** Quien llama (el stage) decide QUE hay que encuadrar cuando se mira desde
+   * abajo: devuelve el radio de la tapa inferior mientras siga instalada, o
+   * null cuando ya se retiro (ahi manda el encuadre cerrado del interior). */
+  function setBelowFrameProvider(fn) {
+    belowFrameProvider = typeof fn === "function" ? fn : null;
+  }
+
   return {
     controls,
     setRigBounds,
+    setBelowFrameProvider,
     goToView,
     focusOnObject,
     focusOnObjects,

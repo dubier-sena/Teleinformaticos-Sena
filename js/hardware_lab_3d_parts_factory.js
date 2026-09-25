@@ -425,22 +425,150 @@ export function buildScrew(opts = {}) {
 }
 
 /** Cable curvo entre dos puntos locales (ATX/EPS/SATA/panel frontal). */
+/** Cinta plana (flex/FPC) a lo largo de una curva: seccion rectangular de
+ *  2*halfWidth x 2*halfThick. El ancho sigue la direccion horizontal
+ *  perpendicular a la tangente; si la tangente es vertical se conserva la del
+ *  tramo anterior (sin giros bruscos). Solo la usan los cables del portatil. */
+function buildRibbonGeometry(curve, segments, halfWidth, halfThick) {
+  const up = new THREE.Vector3(0, 1, 0);
+  const rings = [];
+  let prevSide = null;
+  for (let i = 0; i <= segments; i++) {
+    const t = i / segments;
+    const p = curve.getPointAt(t);
+    const tan = curve.getTangentAt(t).normalize();
+    let side = new THREE.Vector3().crossVectors(tan, up);
+    if (side.lengthSq() < 1e-6) side = prevSide ? prevSide.clone() : new THREE.Vector3(1, 0, 0);
+    side.normalize();
+    if (prevSide && side.dot(prevSide) < 0) side.negate();
+    const nrm = new THREE.Vector3().crossVectors(side, tan).normalize();
+    rings.push({ p, side, nrm });
+    prevSide = side;
+  }
+  const corners = [[1, 1], [-1, 1], [-1, -1], [1, -1]];
+  const pos = [];
+  rings.forEach(({ p, side, nrm }) => {
+    corners.forEach(([a, b]) => {
+      pos.push(
+        p.x + side.x * halfWidth * a + nrm.x * halfThick * b,
+        p.y + side.y * halfWidth * a + nrm.y * halfThick * b,
+        p.z + side.z * halfWidth * a + nrm.z * halfThick * b
+      );
+    });
+  });
+  const idx = [];
+  for (let i = 0; i < segments; i++) {
+    for (let k = 0; k < 4; k++) {
+      const a = i * 4 + k, b = i * 4 + ((k + 1) % 4), c = (i + 1) * 4 + k, d = (i + 1) * 4 + ((k + 1) % 4);
+      idx.push(a, c, b, b, c, d);
+    }
+  }
+  const e = segments * 4;
+  idx.push(0, 1, 2, 0, 2, 3, e, e + 2, e + 1, e, e + 3, e + 2);
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  geo.setIndex(idx);
+  geo.computeVertexNormals();
+  geo.computeBoundingBox();
+  return geo;
+}
+
 export function buildCable(kind, fromLocal, toLocal, opts = {}) {
   const group = new THREE.Group();
   group.name = "cable-" + kind;
   const sagAmount = opts.sag != null ? opts.sag : 0.03;
-  const mid = fromLocal.clone().lerp(toLocal, 0.5);
-  mid.y -= sagAmount;
-  const curve = new THREE.CatmullRomCurve3([fromLocal, mid, toLocal]);
+  // RECORRIDO (fase 2): un cable real no va en linea recta de A a B -- baja del
+  // conector, corre pegado a un borde o canaleta y sube al conector de destino.
+  // `opts.waypoints` permite describir ese recorrido punto por punto; sin el se
+  // conserva el comportamiento anterior (un solo punto medio combado), que es
+  // el que usa todo el equipo de escritorio.
+  let points;
+  if (Array.isArray(opts.waypoints) && opts.waypoints.length) {
+    points = [fromLocal].concat(opts.waypoints.map((p) => (p.isVector3 ? p : new THREE.Vector3(p[0], p[1], p[2])))).concat([toLocal]);
+  } else {
+    const mid = fromLocal.clone().lerp(toLocal, 0.5);
+    mid.y -= sagAmount;
+    points = [fromLocal, mid, toLocal];
+  }
+  const curve = new THREE.CatmullRomCurve3(points, false, "catmullrom", opts.tension != null ? opts.tension : 0.5);
   const radius = opts.radius || (kind === "sata" ? 0.0035 : kind === "front-panel" ? 0.0012 : 0.0045);
-  const tubeGeo = new THREE.TubeGeometry(curve, 16, radius, 6, false);
-  const cableMat = materialFor(kind === "sata" ? "cableSleeved" : "cableBlack");
-  const tube = new THREE.Mesh(tubeGeo, cableMat);
+  const tubeSegments = points.length > 3 ? 40 : 16;
+  const tubeGeo = new THREE.TubeGeometry(curve, tubeSegments, radius, 6, false);
+  // Color por FAMILIA de cable (reconstruccion del portatil, sep-2026): antes
+  // los 7 cables del portatil usaban el mismo "front-panel" negro, asi que era
+  // imposible saber cual era alimentacion, cual dato y cual antena. Cada
+  // familia tiene ahora su material; los tipos del equipo de escritorio
+  // (sata/atx24/eps/front-panel) conservan exactamente el aspecto anterior.
+  const CABLE_MATERIAL = {
+    sata: "cableSleeved",
+    power: "cableRed",
+    flex: "cableFlex",
+    display: "cableFlexDark",
+    "antenna-main": "cableWhite",
+    "antenna-aux": "cableBlack",
+  };
+  const cableMat = materialFor(CABLE_MATERIAL[kind] || "cableBlack");
+  // Flex/FPC (teclado, touchpad, eDP): son CINTAS planas, no tubos.
+  // BUG real (fase 3, medido): la version anterior hacia `tube.scale.y = 0.35`
+  // sobre la malla completa. Como el tubo esta en coordenadas absolutas del
+  // equipo, eso no aplastaba la SECCION sino todo el RECORRIDO hacia y = 0: la
+  // cinta se dibujaba a un tercio de su altura real, separada de sus propios
+  // enchufes. Ahora se extruye una seccion rectangular a lo largo de la curva.
+  // Solo lo usan los cables del portatil; el escritorio no pasa `flat`.
+  let tube;
+  const ribbonWidth = opts.flat ? (opts.ribbonWidth || radius * 2) : 0;
+  if (opts.flat) {
+    // Cinta con su ANCHO siempre perpendicular al recorrido y lo mas
+    // horizontal posible (como apoya un flex real sobre placa o chasis). Con
+    // marcos de Frenet (ExtrudeGeometry) la cinta quedaba DE CANTO en los
+    // tramos que bajan: desde abajo se veia una linea de 0.8 mm.
+    tube = new THREE.Mesh(buildRibbonGeometry(curve, tubeSegments, ribbonWidth / 2, Math.max(0.00015, opts.ribbonThickness || 0.0003)), materialInstanceFor(CABLE_MATERIAL[kind] || "cableBlack"));
+    tube.material.side = THREE.DoubleSide;
+    tube.name = "cable-ribbon";
+    tubeGeo.dispose();
+  } else if (kind === "power") {
+    // Alimentacion del portatil (bateria, ventilador): PAR TRENZADO rojo/negro
+    // (iteracion visual sep-18; antes un solo tubo rojo liso, que se leia como
+    // una manguera). Los dos hilos giran alrededor de la MISMA curva y quedan
+    // dentro de su radio, asi que recorrido, holguras medidas y zona de clic
+    // (proxy, mas abajo) no cambian. Solo el portatil usa "power".
+    tube = new THREE.Group();
+    tube.name = "cable-twisted-pair";
+    const len = curve.getLength();
+    const n = Math.max(48, Math.round(len / 0.0012));
+    const frames = curve.computeFrenetFrames(n, false);
+    const pitch = 0.009;                       // una vuelta cada 9 mm
+    ["cableRed", "cableBlack"].forEach((matKind, j) => {
+      const pts = [];
+      for (let i = 0; i <= n; i++) {
+        const u = i / n;
+        const base = curve.getPointAt(u);
+        // Los hilos se juntan en los enchufes (sin salirse de ellos).
+        const spread = Math.min(1, Math.min(u, 1 - u) * len / 0.004);
+        const a = (u * len / pitch) * Math.PI * 2 + j * Math.PI;
+        const off = radius * 0.45 * spread;
+        pts.push(base.clone()
+          .addScaledVector(frames.normals[i], Math.cos(a) * off)
+          .addScaledVector(frames.binormals[i], Math.sin(a) * off));
+      }
+      const wireCurve = new THREE.CatmullRomCurve3(pts);
+      const wire = new THREE.Mesh(new THREE.TubeGeometry(wireCurve, n, radius * 0.55, 6, false), materialFor(matKind));
+      wire.name = "cable-wire";
+      tube.add(wire);
+    });
+    tubeGeo.dispose();
+  } else {
+    tube = new THREE.Mesh(tubeGeo, cableMat);
+  }
   group.add(tube);
 
-  const plugSize = kind === "atx24" ? 0.02 : kind === "eps" ? 0.014 : kind === "sata" ? 0.01 : 0.006;
+  const plugSize = kind === "atx24" ? 0.02 : kind === "eps" ? 0.014 : kind === "sata" ? 0.01
+    : (kind === "antenna-main" || kind === "antenna-aux") ? 0.0028
+    : (kind === "flex" || kind === "display") ? 0.005 : 0.006;
+  // Enchufe de una cinta: tan ancho como la cinta (un ZIF abarca todo el flex).
+  const plugW = opts.flat ? Math.max(plugSize, ribbonWidth + 0.001) : plugSize;
   [fromLocal, toLocal].forEach((pt, i) => {
-    const plug = box(plugSize, plugSize * 0.7, plugSize * 0.9, "plasticBlack");
+    const plug = box(plugW, plugSize * 0.7, plugSize * 0.9, "plasticBlack");
     plug.position.copy(pt);
     plug.name = "cable-plug-" + (i === 0 ? "from" : "to");
     group.add(plug);
@@ -458,7 +586,10 @@ export function buildCable(kind, fromLocal, toLocal, opts = {}) {
   // setShadow(group) a proposito (mejora 3D): ver el comentario equivalente
   // en buildM2 -- de lo contrario esta malla invisible terminaria
   // proyectando una sombra visible con la forma del hitbox ampliado.
-  const hitGeo = new THREE.TubeGeometry(curve, 16, Math.max(radius * 4, 0.006), 6, false);
+  // `hitRadius` (portatil): las antenas miden 0.8 mm; con el minimo de 6 mm su
+  // zona de clic tapaba la tarjeta Wi-Fi entera (medido con raycast). El
+  // escritorio no lo pasa y conserva el minimo de siempre.
+  const hitGeo = new THREE.TubeGeometry(curve, tubeSegments, Math.max(radius * 4, opts.hitRadius != null ? opts.hitRadius : 0.006), 6, false);
   const hitMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false });
   const hitProxy = new THREE.Mesh(hitGeo, hitMat);
   hitProxy.name = "cable-hit-proxy";
@@ -466,7 +597,28 @@ export function buildCable(kind, fromLocal, toLocal, opts = {}) {
   hitProxy.receiveShadow = false;
   group.add(hitProxy);
 
+  // Sujeciones: trocitos de cinta/clip sobre el recorrido, en las fracciones
+  // indicadas. Es lo que en un equipo real impide que el cable baile dentro
+  // del chasis, y visualmente ancla el recorrido al borde que sigue.
+  if (Array.isArray(opts.clipsAt) && opts.clipsAt.length) {
+    opts.clipsAt.forEach((t) => {
+      const p = curve.getPointAt(Math.min(0.99, Math.max(0.01, t)));
+      const tan = curve.getTangentAt(Math.min(0.99, Math.max(0.01, t)));
+      const tape = new THREE.Mesh(
+        opts.flat
+          ? new THREE.BoxGeometry(ribbonWidth * 1.25, 0.0006, 0.004)
+          : new THREE.BoxGeometry(radius * 5.5, radius * 1.4, radius * 5.5),
+        materialFor(opts.clipKind || "tapeKapton")
+      );
+      tape.position.copy(p);
+      tape.lookAt(p.clone().add(tan));
+      tape.castShadow = false;
+      group.add(tape);
+    });
+  }
+
   group.userData.curveEndpoints = [fromLocal.clone(), toLocal.clone()];
+  group.userData.curve = curve;
   return group;
 }
 

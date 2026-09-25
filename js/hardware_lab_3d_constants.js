@@ -60,8 +60,21 @@ export const MATERIAL_KIND = {
   metalBrushed: { color: 0xa6adb8, roughness: 0.62, metalness: 0.2 },
   metalDark: { color: 0x4a4f58, roughness: 0.58, metalness: 0.2 },
   aluminum: { color: 0xc7ccd4, roughness: 0.5, metalness: 0.28 },
-  copper: { color: 0xb87333, roughness: 0.32, metalness: 0.95 },
-  goldPin: { color: 0xd4af37, roughness: 0.3, metalness: 0.95 },
+  // metalness bajado de 0.95 a 0.7 y color aclarado (fase 2, sep-2026): con
+  // metalness casi 1 el color base practicamente no interviene -- la
+  // superficie es puro reflejo del entorno, asi que la placa de contacto del
+  // disipador (una cara plana y grande mirando hacia arriba) devolvia el
+  // fondo oscuro de la escena y se leia como PLASTICO MARRON, no como cobre.
+  // El heatpipe cilindrico no lo sufria porque su curvatura recoge luz desde
+  // muchas direcciones. Es el mismo diagnostico ya aplicado a metalBrushed/
+  // aluminum/goldPin: a esta escala manda el color, no el reflejo.
+  copper: { color: 0xc87f3a, roughness: 0.38, metalness: 0.7 },
+  // roughness/metalness recalibrados (reconstruccion del portatil, sep-2026):
+  // con 0.3/0.95 las hileras de contactos de los sockets SO-DIMM y M.2 se
+  // veian BLANCAS, no doradas -- el mismo blowout especular ya corregido en
+  // metalBrushed/aluminum. Un contacto chapado en oro sigue siendo metalico,
+  // pero a esta escala (0.6 mm) lo que domina es el color, no el reflejo.
+  goldPin: { color: 0xc9a227, roughness: 0.45, metalness: 0.6 },
   // Color base oscurecido (mejora visual con clic real, sep-2026: 0x0d4f2c/
   // 0x0b2f5c -> mitad de brillo aprox.): a pesar de tener metalness casi nulo
   // (0.05, descarta el reflejo especular/entorno como causa), la placa base
@@ -91,6 +104,45 @@ export const MATERIAL_KIND = {
   ledGreen: { color: 0x35ff8a, roughness: 0.3, metalness: 0, emissive: 0x20ff70, emissiveIntensity: 1.2 },
   batteryCell: { color: 0x2f3237, roughness: 0.4, metalness: 0.6 },
   woodMat: { color: 0x2b2f33, roughness: 0.85, metalness: 0 },
+
+  // ── Materiales de detalle del portatil (reconstruccion 3D, sep-2026) ─────
+  // La auditoria visual mostro que TODO el interior se leia como "una losa
+  // azul sobre una bandeja blanca": no habia forma de distinguir un chip de
+  // un conector ni un PCB de una etiqueta. Estos 7 tipos son los minimos
+  // necesarios para que cada familia de pieza se reconozca de un vistazo.
+  // Son propios (color/roughness/metalness elegidos aqui); no proceden de
+  // ningun recurso de terceros.
+  //
+  // Encapsulado de chip: negro mate con un punto de brillo, NO plastico puro
+  // (un BGA real refleja poco pero no es goma).
+  chipBlack: { color: 0x15161a, roughness: 0.42, metalness: 0.12 },
+  // PCB de modulo (SO-DIMM/M.2/Wi-Fi): verde mas oscuro y mate que el
+  // pcbGreen de la placa base, para que un modulo montado ENCIMA de la placa
+  // no se confunda con ella.
+  pcbDarkGreen: { color: 0x09291a, roughness: 0.8, metalness: 0.04 },
+  // Die de silicio desnudo del SoC: gris azulado con brillo especular alto,
+  // la pista visual de "aqui va la pasta termica".
+  silicon: { color: 0x6f7c8a, roughness: 0.18, metalness: 0.55 },
+  // Pasta termica: gris claro totalmente mate.
+  thermalPaste: { color: 0xb9bcc0, roughness: 0.95, metalness: 0 },
+  // Conectores FPC/ZIF y de bateria: el marfil claro es justo lo que los
+  // hace saltar a la vista sobre el verde de la placa.
+  connectorIvory: { color: 0xd2ccbd, roughness: 0.52, metalness: 0.08 },
+  // Etiquetas de servicio (RAM, SSD, bateria).
+  labelWhite: { color: 0xe6e8ea, roughness: 0.85, metalness: 0 },
+  // Condensadores/bobinas: marron-tostado tipico del tantalio.
+  capBrown: { color: 0x6b4a2a, roughness: 0.55, metalness: 0.2 },
+  // Familias de cable, para poder distinguirlas de un vistazo dentro del
+  // portatil (alimentacion / flex de datos / pantalla / antena principal /
+  // antena auxiliar). cableBlack y cableSleeved, ya existentes arriba, siguen
+  // cubriendo el equipo de escritorio sin cambios.
+  cableRed: { color: 0x8c2b2b, roughness: 0.65, metalness: 0.05 },
+  cableWhite: { color: 0xd9dade, roughness: 0.6, metalness: 0.05 },
+  cableFlex: { color: 0xb8863c, roughness: 0.55, metalness: 0.15 },
+  cableFlexDark: { color: 0x2c3d52, roughness: 0.55, metalness: 0.1 },
+  // Cinta Kapton: la cinta ambar translucida que sujeta cables y flex dentro
+  // de un portatil real. Se usa en los puntos de sujeción del recorrido.
+  tapeKapton: { color: 0xa9741f, roughness: 0.45, metalness: 0.05 },
 };
 
 const materialCache = new Map();

@@ -217,7 +217,7 @@ export function buildMotherboard(opts = {}) {
  * que si era la pieza togglable real. Resultado: quitar el teclado en
  * cualquier practica no cambiaba nada visualmente, y ademas ocultaba
  * bateria/placa/CPU/RAM/Wi-Fi sin ninguna forma de revelarlos. */
-export function buildLaptopBase(opts = {}) {
+function __legacy_buildLaptopBase(opts = {}) {
   const w = opts.width || 0.33;
   const d = opts.depth || 0.23;
   const h = 0.014;
@@ -322,7 +322,7 @@ export function buildLaptopBase(opts = {}) {
  * quitarse nunca visualmente). El grupo se autora con el deck en su propio
  * origen local (0,0,0); hardware_lab_3d_layout_laptop.js lo monta en
  * `base.keyboardMount`, la misma posicion absoluta que ocupaba antes. */
-export function buildLaptopKeyboard(opts = {}) {
+function __legacy_buildLaptopKeyboard(opts = {}) {
   const w = opts.width || 0.33;
   const d = opts.depth || 0.23;
   const group = new THREE.Group();
@@ -358,7 +358,7 @@ export function buildLaptopKeyboard(opts = {}) {
 
 /** Touchpad del portatil: misma logica que el teclado (pieza propia y
  * removible, autorada en su propio origen local). */
-export function buildLaptopTouchpad(opts = {}) {
+function __legacy_buildLaptopTouchpad(opts = {}) {
   const w = opts.width || 0.33;
   const d = opts.depth || 0.23;
   const group = new THREE.Group();
@@ -373,7 +373,7 @@ export function buildLaptopTouchpad(opts = {}) {
 }
 
 /** Tapa inferior removible del portatil (item 13-14). */
-export function buildLaptopBottomCover(dims) {
+function __legacy_buildLaptopBottomCover(dims) {
   const panel = box(dims.width * 0.97, 0.0025, dims.depth * 0.97, "aluminum");
   panel.name = "laptop-bottom-cover";
 
@@ -398,7 +398,7 @@ export function buildLaptopBottomCover(dims) {
 }
 
 /** Pantalla/tapa del portatil, articulada en el eje de la bisagra. */
-export function buildLaptopLid(opts = {}) {
+function __legacy_buildLaptopLid(opts = {}) {
   const w = opts.width || 0.33;
   const d = opts.depth || 0.22;
   const t = 0.009;
@@ -437,7 +437,7 @@ export function buildLaptopLid(opts = {}) {
 }
 
 /** Bateria interna del portatil. */
-export function buildLaptopBattery(opts = {}) {
+function __legacy_buildLaptopBattery(opts = {}) {
   const w = opts.width || 0.2;
   const d = opts.depth || 0.09;
   const h = opts.height || 0.006;
@@ -455,7 +455,7 @@ export function buildLaptopBattery(opts = {}) {
 }
 
 /** Placa base compacta del portatil (autorada plana, se instala horizontal). */
-export function buildLaptopMotherboard(opts = {}) {
+function __legacy_buildLaptopMotherboard(opts = {}) {
   const w = opts.width || 0.24;
   const d = opts.depth || 0.16;
   const t = 0.0018;
@@ -509,3 +509,21 @@ export function buildLaptopMotherboard(opts = {}) {
     anchors: { cpuSocket: socketPos, m2Slot: m2Pos, ramSlot: ramPos, wifiSlot: wifiPos },
   };
 }
+
+
+/* ── Portatil: reconstruido en js/hardware_lab_3d_laptop_factory.js ─────────
+ * Las funciones buildLaptop* vivian aqui. La reconstruccion por sistemas
+ * (sep-2026) necesitaba mucho mas detalle del que cabe en este archivo, que
+ * ademas es COMPARTIDO con el equipo de escritorio. Se re-exportan para que
+ * cualquier import existente siga funcionando sin cambios. Las versiones
+ * anteriores quedan como __legacy_* (sin usar) por si hace falta comparar.
+ */
+export {
+  buildLaptopBase,
+  buildLaptopKeyboard,
+  buildLaptopTouchpad,
+  buildLaptopBottomCover,
+  buildLaptopLid,
+  buildLaptopBattery,
+  buildLaptopMotherboard,
+} from "./hardware_lab_3d_laptop_factory.js";

@@ -25,6 +25,13 @@
  *       }
  *     },
  *     screwFor: { [partId]: ["screwPartId", ...] },  // decorativo/informativo
+ *     screws: [                       // TORNILLOS INTERACTIVOS (opcional)
+ *       { id, partId, label,          // ver hardware_lab_3d_screws.js
+ *         position: (anchors) => Vector3,   // plano de asiento de la cabeza
+ *         outDir: [x, y, z],          // hacia donde SALE el tornillo
+ *         size: {...} },
+ *     ],
+ *     screwDish: (anchors) => Vector3,  // bandeja magnetica de tornillos
  *   }
  *
  * `session.parts[partId] === false` retira la pieza (se mueve a la bandeja);
@@ -32,15 +39,21 @@
  */
 import * as THREE from "./vendor/three.module.min.js";
 import { animateObject3D, Easing } from "./hardware_lab_3d_tween.js";
-import { ZONES } from "./hardware_lab_3d_constants.js";
+import { TABLE, ZONES } from "./hardware_lab_3d_constants.js";
 import * as PartsFactory from "./hardware_lab_3d_parts_factory.js";
-import { buildLaptopKeyboard, buildLaptopTouchpad } from "./hardware_lab_3d_chassis_factory.js";
+import * as LaptopFactory from "./hardware_lab_3d_laptop_factory.js";
+import { computeM2Pose, computeSoDimmPose } from "./hardware_lab_3d_laptop_factory.js";
+import { buildServiceScrew, buildScrewDish } from "./hardware_lab_3d_screws.js";
+
+// Recorridos de montaje propios (portatil): pieza que pivota sobre su borde de
+// contactos en vez de salir recta. Ver hardware_lab_3d_laptop_factory.js.
+const INSERTION_POSES = { sodimm: computeSoDimmPose, m2: computeM2Pose };
 
 const KIND_BUILDERS = {
   cpu: (opts) => PartsFactory.buildCpu(opts),
   "cpu-socket": (opts) => PartsFactory.buildCpuSocket(opts),
   "cooler-tower": (opts) => PartsFactory.buildTowerCooler(opts),
-  "laptop-cooler": (opts) => PartsFactory.buildLaptopCooler(opts),
+  "laptop-cooler": (opts) => LaptopFactory.buildLaptopCooler(opts),
   "ram-stick": (opts) => PartsFactory.buildRamStick(opts),
   "ram-module": (opts) => PartsFactory.buildRamModule(opts.count, opts),
   "ram-slot": (opts) => PartsFactory.buildRamSlot(opts),
@@ -53,8 +66,16 @@ const KIND_BUILDERS = {
   fan: (opts) => PartsFactory.buildFan(opts.diameter, opts),
   port: (opts) => PartsFactory.buildPort(opts.portKind, opts),
   generic: (opts) => PartsFactory.buildGenericPart(opts),
-  "laptop-keyboard": (opts) => buildLaptopKeyboard(opts),
-  "laptop-touchpad": (opts) => buildLaptopTouchpad(opts),
+  "laptop-keyboard": (opts) => LaptopFactory.buildLaptopKeyboard(opts),
+  "laptop-touchpad": (opts) => LaptopFactory.buildLaptopTouchpad(opts),
+  // Piezas propias del portatil reconstruido (sep-2026). Antes reusaban las
+  // del equipo de escritorio ("ram-module", "m2-ssd") o cajas "generic", lo
+  // que daba modulos con proporciones de DIMM de torre dentro de un portatil.
+  "laptop-cpu": (opts) => LaptopFactory.buildLaptopCpu(opts),
+  "laptop-sodimm": (opts) => LaptopFactory.buildSoDimm(opts),
+  "laptop-m2-ssd": (opts) => LaptopFactory.buildM2Ssd(opts),
+  "laptop-wifi-card": (opts) => LaptopFactory.buildWifiCard(opts),
+  "laptop-battery": (opts) => LaptopFactory.buildLaptopBattery(opts),
 };
 
 function mapAnchors(rawAnchors, origin) {
@@ -77,6 +98,9 @@ function mapAnchors(rawAnchors, origin) {
  * usado para el tooltip de hover (item 8: "nombre claramente visible"). Sin
  * esto el tooltip mostraba el id interno crudo ("gpu", "side-panel"). */
 function partDisplayName(equipmentId, partId) {
+  // Sin navegador (tests de geometria en Node) no hay catalogo de datos: el
+  // id crudo es una etiqueta valida y evita romper la construccion del rig.
+  if (typeof window === "undefined") return partId;
   const HardwareLab = window.HardwareLab;
   const data =
     equipmentId === "laptop"
@@ -106,6 +130,27 @@ export function createRig({ scene, interactions, tweenGroup, layout, equipmentId
   trayGroup.name = "hwlab-tray";
   scene.add(trayGroup);
 
+  // Estructura DECORATIVA declarada por el layout (`decor`, hoy solo el
+  // soporte de servicio del portatil). No es una pieza: no se registra en
+  // interactions (ni como pieza ni como oclusor, asi que nunca intercepta un
+  // clic), no va a la bandeja, no entra en la vista explotada ni en el
+  // encuadre de camara (vive fuera de `root`, que es lo que mide
+  // getBoundsWorld). Sin `decor` (escritorio) no se crea nada.
+  let decorGroup = null;
+  if (Array.isArray(layout.decor) && layout.decor.length) {
+    decorGroup = new THREE.Group();
+    decorGroup.name = "hwlab-decor-" + equipmentId;
+    decorGroup.position.copy(root.position);
+    const tableLocalY = TABLE.topY - root.position.y;
+    layout.decor.forEach((item) => {
+      const obj = item.build({ tableLocalY });
+      if (!obj) return;
+      obj.userData.decorId = item.id || "decor";
+      decorGroup.add(obj);
+    });
+    scene.add(decorGroup);
+  }
+
   const anchors = {};
   const structuralGroups = {};
   const partEntries = new Map(); // partId -> { object3d, config, installedPosition, installedQuaternion, present, trayPosition }
@@ -132,6 +177,13 @@ export function createRig({ scene, interactions, tweenGroup, layout, equipmentId
     }
     root.add(built.group);
     structuralGroups[entry.id] = built.group;
+    // Portatil (fase 3): el cuerpo base (reposamanos, paredes, bisagras) no es
+    // una pieza seleccionable, pero SI tapa lo que hay detras. Se registra
+    // como oclusor para que el clic no lo atraviese. Solo el portatil: el
+    // escritorio conserva su comportamiento de siempre.
+    if (!entry.partId && equipmentId === "laptop" && interactions && interactions.registerOccluder) {
+      interactions.registerOccluder(built.group);
+    }
     if (built.anchors) anchors[entry.id] = mapAnchors(built.anchors, origin);
     else anchors[entry.id] = {};
     if (entry.partId) {
@@ -159,6 +211,7 @@ export function createRig({ scene, interactions, tweenGroup, layout, equipmentId
         // superpuesta EXACTAMENTE sobre el primer componente de la bandeja
         // (aqui: "Modulo RAM"), ambas piezas ocupando el mismo punto 3D.
         trayIndex: structuralTrayBase + structuralTrayOffset++,
+        trayRotationEuler: entry.trayRotationEuler || null,
       });
     }
   });
@@ -172,7 +225,13 @@ export function createRig({ scene, interactions, tweenGroup, layout, equipmentId
       // Un cable NO tiene una unica posicion de montaje: su geometria (tubo)
       // ya codifica sus dos extremos en espacio local del rig, asi que el
       // grupo mismo queda en el origen (0,0,0) local.
-      object3d = PartsFactory.buildCable(cfg.cableKind || "generic", cfg.from(anchors), cfg.to(anchors), cfg.buildOpts || {});
+      // `waypoints` (fase 2 del portatil) describe el RECORRIDO del cable, no
+      // solo sus extremos: se resuelve aqui porque, igual que from/to, necesita
+      // los anchors ya calculados.
+      const cableOpts = Object.assign({}, cfg.buildOpts || {});
+      if (typeof cfg.waypoints === "function") cableOpts.waypoints = cfg.waypoints(anchors);
+      else if (Array.isArray(cfg.waypoints)) cableOpts.waypoints = cfg.waypoints;
+      object3d = PartsFactory.buildCable(cfg.cableKind || "generic", cfg.from(anchors), cfg.to(anchors), cableOpts);
       position = new THREE.Vector3(0, 0, 0);
     } else {
       const builder = KIND_BUILDERS[cfg.kind] || KIND_BUILDERS.generic;
@@ -190,8 +249,71 @@ export function createRig({ scene, interactions, tweenGroup, layout, equipmentId
       tier: cfg.tier != null ? cfg.tier : 1,
       trayIndex: i,
       trayRotationEuler: cfg.trayRotationEuler || null,
+      insertionMotion: cfg.insertionMotion || null,
+      insertionOpts: cfg.insertionOpts || null,
     });
   });
+
+  // ── 3) Tornillos interactivos (opcional, ver hardware_lab_3d_screws.js) ──
+  // Viven en su propio grupo, HERMANO de `root` y con su misma posicion (igual
+  // que `decor`), no dentro de el. Dos razones medidas, no de estilo:
+  //   1. getBoundsWorld() encuadra la camara con setFromObject(root): la
+  //      bandeja magnetica de tornillos (que va sobre la MESA, 160 mm mas
+  //      abajo y a un lado) habria estirado el encuadre de TODAS las vistas.
+  //   2. La auditoria de colisiones (tests/laptop_3d_service_access.test.cjs)
+  //      recorre rig.root: un tornillo tiene que atravesar la tapa y la torre
+  //      que enrosca -- es su funcion -- y habria salido como "colision".
+  //      Los tornillos se validan aparte (tests/laptop_3d_screws.test.cjs).
+  // No son piezas: no van a la bandeja de piezas, no entran en la vista
+  // explotada ni en partEntries. Se registran en interactions con kind
+  // "screw" y SIN `partId`, para que los manejadores de clic de pieza ya
+  // existentes los ignoren solos.
+  let screwGroup = null;
+  let screwDishOrigin = null;
+  const screwEntries = [];
+  if (Array.isArray(layout.screws) && layout.screws.length) {
+    screwGroup = new THREE.Group();
+    screwGroup.name = "hwlab-screws";
+    screwGroup.position.copy(root.position);
+    scene.add(screwGroup);
+
+    if (typeof layout.screwDish === "function") {
+      screwDishOrigin = layout.screwDish(anchors, { tableLocalY: TABLE.topY - root.position.y });
+      const dish = buildScrewDish();
+      dish.position.copy(screwDishOrigin);
+      screwGroup.add(dish);
+    }
+
+    layout.screws.forEach((decl) => {
+      const object3d = buildServiceScrew(decl.size || {});
+      object3d.userData.headR = (decl.size && decl.size.headR) || undefined;
+      const position = decl.position(anchors);
+      const outDir = new THREE.Vector3().fromArray(decl.outDir || [0, 1, 0]).normalize();
+      object3d.position.copy(position);
+      object3d.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), outDir);
+      object3d.userData.screwId = decl.id;
+      object3d.userData.screwPartId = decl.partId;
+      screwGroup.add(object3d);
+      screwEntries.push({
+        id: decl.id,
+        partId: decl.partId,
+        bearsOn: decl.bearsOn || "part",
+        label: decl.label || decl.id,
+        partName: partDisplayName(equipmentId, decl.partId),
+        object3d,
+        homePosition: position.clone(),
+        outDir,
+      });
+      if (interactions) {
+        interactions.registerInteractive(object3d, {
+          kind: "screw",
+          screwId: decl.id,
+          screwPartId: decl.partId,
+          label: decl.label || decl.id,
+        });
+      }
+    });
+  }
 
   function registerTogglablePart(partId, object3d, meta) {
     object3d.userData.partId = partId;
@@ -211,12 +333,137 @@ export function createRig({ scene, interactions, tweenGroup, layout, equipmentId
     );
   }
 
+  // Bandeja con posiciones declaradas por el layout (`traySlots`, solo el
+  // portatil, sep-2026). La rejilla generica de arriba no servia al portatil
+  // (medido con la geometria real): no descontaba el elevador de servicio, asi
+  // que las piezas retiradas flotaban ~175 mm sobre la mesa, y sus 20 piezas en
+  // 3 columnas llegaban hasta z = 1.59 m, fuera del borde de la mesa (0.75 m),
+  // justo las piezas que el aprendiz debe tomar de la bandeja para ENSAMBLAR.
+  // Cada slot es el centro {x, z} de la pieza sobre la mesa (coordenadas de
+  // escena); la altura se calcula con la caja real de la pieza para que quede
+  // apoyada, y `trayRotationEuler` la deja en su postura natural (los modulos
+  // montados boca abajo vuelven boca arriba). Sin `traySlots` (escritorio) todo
+  // sigue exactamente igual.
+  const traySlots = layout.traySlots || null;
+  const TRAY_REST_GAP = 0.0015;
+
+  function computeSlotPose(entry, slot) {
+    const obj = entry.object3d;
+    const savedPosition = obj.position.clone();
+    const savedQuaternion = obj.quaternion.clone();
+    const quaternion = entry.trayRotationEuler
+      ? new THREE.Quaternion().setFromEuler(new THREE.Euler(entry.trayRotationEuler[0], entry.trayRotationEuler[1], entry.trayRotationEuler[2]))
+      : entry.homeQuaternion.clone();
+    const savedScale = obj.scale.clone();
+    obj.position.set(0, 0, 0);
+    obj.quaternion.copy(quaternion);
+    obj.scale.set(1, 1, 1);
+    root.updateMatrixWorld(true);
+    // Solo la geometria de la pieza: los contornos de hover/seleccion
+    // (interactions) son hijos del objeto y agrandarian la caja.
+    const box = new THREE.Box3();
+    obj.traverse((n) => {
+      if (n.isMesh && !(n.name && n.name.startsWith("hwlab-outline"))) box.expandByObject(n, false);
+    });
+    obj.position.copy(savedPosition);
+    obj.quaternion.copy(savedQuaternion);
+    obj.scale.copy(savedScale);
+    root.updateMatrixWorld(true);
+    const center = box.getCenter(new THREE.Vector3()).sub(root.position);
+    const minY = box.min.y - root.position.y;
+    return {
+      position: new THREE.Vector3(
+        slot.x - root.position.x - center.x,
+        TABLE.topY + TRAY_REST_GAP - root.position.y - minY,
+        slot.z - root.position.z - center.z
+      ),
+      quaternion,
+    };
+  }
+
+  function traySlotPose(partId, entry) {
+    const slot = traySlots && traySlots[partId];
+    if (!slot) return null;
+    if (!entry.traySlotPose) entry.traySlotPose = computeSlotPose(entry, slot);
+    return entry.traySlotPose;
+  }
+  // Se calculan al construir el equipo, con cada pieza en su sitio, a escala 1
+  // y sin contornos: el primer retiro real ocurre justo tras el clic, con la
+  // pieza agrandada por el hover.
+  if (traySlots) partEntries.forEach((entry, partId) => traySlotPose(partId, entry));
+
+  // Recorrido de las piezas con slot (portatil). Medido con los tweens reales
+  // contra el chasis: una recta directa del punto de extraccion a la mesa
+  // atravesaba el chasis con el teclado o el touchpad, y un traslado a la
+  // altura de extraccion rozaba la pared con la RAM inclinada o la placa al
+  // girar. Por eso la pieza baja (o sube) primero a un plano de traslado con
+  // holgura (`layout.trayTransit`, alturas locales del equipo), cruza en
+  // horizontal girando a su postura de bandeja y solo entonces baja a la mesa.
+  // Al instalar hace el camino inverso y asienta SIN "overshoot": easeOutBack
+  // metia la pieza entre 1.2 y 4 mm dentro de lo que la rodea antes de volver.
+  const trayTransit = layout.trayTransit || null;
+
+  function runChain(obj, steps, onDone) {
+    const next = (i) => {
+      if (i >= steps.length) {
+        if (onDone) onDone();
+        return;
+      }
+      animateObject3D(tweenGroup, obj, Object.assign({}, steps[i], { onComplete: () => next(i + 1) }));
+    };
+    next(0);
+  }
+
+  function moveWithSlot(entry, slotPose, present, animate, opts) {
+    const obj = entry.object3d;
+    if (!animate) {
+      obj.position.copy(present ? entry.homePosition : slotPose.position);
+      obj.quaternion.copy(present ? entry.homeQuaternion : slotPose.quaternion);
+      return;
+    }
+    const release = releasePoseFor(entry);
+    const liftPos = release ? release.position
+      : entry.homePosition.clone().addScaledVector(entry.detachAxis, 0.045);
+    const liftQuat = release ? release.quaternion : entry.homeQuaternion;
+    const below = liftPos.y < entry.homePosition.y;
+    let transitY = liftPos.y;
+    if (trayTransit) transitY = below ? Math.min(liftPos.y, trayTransit.below) : Math.max(liftPos.y, trayTransit.above);
+    const overEquipment = new THREE.Vector3(liftPos.x, transitY, liftPos.z);
+    const overTray = new THREE.Vector3(slotPose.position.x, transitY, slotPose.position.z);
+    if (!present) {
+      runChain(obj, [
+        { position: liftPos, quaternion: liftQuat, duration: release ? 0.5 : 0.32, easing: Easing.easeOutQuad },
+        { position: overEquipment, duration: 0.2, easing: Easing.easeInOutQuad },
+        { position: overTray, quaternion: slotPose.quaternion, duration: 0.5, easing: Easing.easeInOutCubic },
+        { position: slotPose.position, duration: 0.3, easing: Easing.easeInOutCubic },
+      ], opts.onSettled);
+    } else {
+      runChain(obj, [
+        { position: overTray, duration: 0.3, easing: Easing.easeInOutCubic },
+        { position: overEquipment, quaternion: liftQuat, duration: 0.5, easing: Easing.easeInOutCubic },
+        { position: liftPos, duration: 0.2, easing: Easing.easeInOutQuad },
+        { position: entry.homePosition, quaternion: entry.homeQuaternion, duration: 0.3, easing: Easing.easeOutCubic },
+      ], opts.onSettled);
+    }
+  }
+
   /**
    * Mueve una pieza a instalada/retirada. Animacion de 2 fases al retirar
    * (item 4): primero se separa un poco a lo largo de detachAxis (simula
    * abrir seguro / aflojar), luego viaja a la bandeja. Al instalar, el mismo
    * camino en reversa.
    */
+  /** Pose de "liberada" de una pieza con recorrido de montaje propio, o null
+   *  si usa el desmontaje recto de siempre. */
+  function releasePoseFor(entry) {
+    const poseFn = entry && INSERTION_POSES[entry.insertionMotion];
+    if (!poseFn) return null;
+    return poseFn(1, Object.assign({
+      homePosition: entry.homePosition,
+      homeQuaternion: entry.homeQuaternion,
+    }, entry.insertionOpts || {}));
+  }
+
   function setPresence(partId, present, opts = {}) {
     const entry = partEntries.get(partId);
     if (!entry || entry.present === present) return;
@@ -224,17 +471,29 @@ export function createRig({ scene, interactions, tweenGroup, layout, equipmentId
     const animate = opts.animate !== false;
     const obj = entry.object3d;
 
+    const slotPose = traySlotPose(partId, entry);
+    if (slotPose) {
+      moveWithSlot(entry, slotPose, present, animate, opts);
+      return;
+    }
+
     if (!present) {
       const trayIdx = opts.trayIndex != null ? opts.trayIndex : entry.trayIndex || 0;
       const trayPos = trayPositionFor(trayIdx);
-      const liftPos = entry.homePosition.clone().addScaledVector(entry.detachAxis, 0.045);
+      // Piezas con recorrido de montaje propio (SO-DIMM): la primera fase no
+      // es un tiron recto por detachAxis, sino el giro sobre los contactos +
+      // la salida siguiendo ese angulo. Ver computeSoDimmPose.
+      const release = releasePoseFor(entry);
+      const liftPos = release ? release.position
+        : entry.homePosition.clone().addScaledVector(entry.detachAxis, 0.045);
       if (!animate) {
         obj.position.copy(trayPos);
         return;
       }
       animateObject3D(tweenGroup, obj, {
         position: liftPos,
-        duration: 0.32,
+        quaternion: release ? release.quaternion : undefined,
+        duration: release ? 0.5 : 0.32,
         easing: Easing.easeOutQuad,
         onComplete: () => {
           const toTray = { position: trayPos, duration: 0.55, easing: Easing.easeInOutCubic, onComplete: opts.onSettled };
@@ -243,7 +502,11 @@ export function createRig({ scene, interactions, tweenGroup, layout, equipmentId
         },
       });
     } else {
-      const liftPos = entry.homePosition.clone().addScaledVector(entry.detachAxis, 0.045);
+      // Al instalar, el camino inverso: primero se aproxima INCLINADA hasta la
+      // boca del socket y despues gira hasta quedar horizontal y asegurada.
+      const releaseIn = releasePoseFor(entry);
+      const liftPos = releaseIn ? releaseIn.position
+        : entry.homePosition.clone().addScaledVector(entry.detachAxis, 0.045);
       if (!animate) {
         obj.position.copy(entry.homePosition);
         obj.quaternion.copy(entry.homeQuaternion);
@@ -251,6 +514,7 @@ export function createRig({ scene, interactions, tweenGroup, layout, equipmentId
       }
       animateObject3D(tweenGroup, obj, {
         position: liftPos,
+        quaternion: releaseIn ? releaseIn.quaternion : undefined,
         duration: 0.45,
         easing: Easing.easeInOutCubic,
         onComplete: () => {
@@ -278,7 +542,13 @@ export function createRig({ scene, interactions, tweenGroup, layout, equipmentId
         entry.object3d.position.copy(entry.homePosition);
         entry.object3d.quaternion.copy(entry.homeQuaternion);
       } else {
-        entry.object3d.position.copy(trayPositionFor(trayIdx));
+        const slotPose = traySlotPose(partId, entry);
+        if (slotPose) {
+          entry.object3d.position.copy(slotPose.position);
+          entry.object3d.quaternion.copy(slotPose.quaternion);
+        } else {
+          entry.object3d.position.copy(trayPositionFor(trayIdx));
+        }
         trayIdx += 1;
       }
     });
@@ -332,7 +602,13 @@ export function createRig({ scene, interactions, tweenGroup, layout, equipmentId
     partEntries.forEach((entry) => {
       if (interactions) interactions.unregisterInteractive(entry.object3d);
     });
-    [root, trayGroup].forEach((g) => {
+    screwEntries.forEach((entry) => {
+      if (interactions) interactions.unregisterInteractive(entry.object3d);
+    });
+    if (interactions && interactions.unregisterOccluder) {
+      Object.values(structuralGroups).forEach((g) => interactions.unregisterOccluder(g));
+    }
+    [root, trayGroup].concat(decorGroup ? [decorGroup] : []).concat(screwGroup ? [screwGroup] : []).forEach((g) => {
       scene.remove(g);
       g.traverse((n) => {
         if (n.geometry) n.geometry.dispose();
@@ -358,6 +634,18 @@ export function createRig({ scene, interactions, tweenGroup, layout, equipmentId
     getExplodeEntries,
     get partIds() {
       return Array.from(partEntries.keys());
+    },
+    get screwEntries() {
+      return screwEntries;
+    },
+    get screwGroup() {
+      return screwGroup;
+    },
+    get tableWorldY() {
+      return TABLE.topY;
+    },
+    get screwDishOrigin() {
+      return screwDishOrigin ? screwDishOrigin.clone() : null;
     },
     dispose,
   };

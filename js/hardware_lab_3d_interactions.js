@@ -74,6 +74,12 @@ export function createInteractionLayer({ scene, camera, renderer, tweenGroup, on
   const pointerNdc = new THREE.Vector2(2, 2); // fuera de pantalla hasta el primer movimiento
   const registry = new Map(); // root Object3D -> { partId, kind, data }
   const meshToRoot = new Map(); // Mesh -> root Object3D (acelera la busqueda de ancestro)
+  // Oclusores (fase 3 del portatil): geometria NO seleccionable que igual
+  // debe BLOQUEAR el rayo, como el chasis del portatil. Sin esto el clic
+  // atravesaba el reposamanos y seleccionaba piezas que no se veian (medido:
+  // hasta 55 % de los rayos). Opcional: si nadie registra oclusores (el
+  // escritorio no lo hace) el comportamiento es exactamente el de siempre.
+  const occluders = new Set();
 
   let hoveredRoot = null;
   let selectedRoot = null;
@@ -108,9 +114,18 @@ export function createInteractionLayer({ scene, camera, renderer, tweenGroup, on
     return registry.get(object3d) || null;
   }
 
+  function registerOccluder(object3d) {
+    occluders.add(object3d);
+  }
+
+  function unregisterOccluder(object3d) {
+    occluders.delete(object3d);
+  }
+
   function clearInteractives() {
     registry.clear();
     meshToRoot.clear();
+    occluders.clear();
     setHovered(null);
     setSelected(null);
   }
@@ -127,12 +142,28 @@ export function createInteractionLayer({ scene, camera, renderer, tweenGroup, on
 
   function raycastRoot() {
     raycaster.setFromCamera(pointerNdc, camera);
-    const hits = raycaster.intersectObjects(Array.from(registry.keys()), true);
+    const targets = Array.from(registry.keys());
+    occluders.forEach((o) => targets.push(o));
+    const hits = raycaster.intersectObjects(targets, true);
     for (const hit of hits) {
-      const root = hit.object.isMesh ? findRoot(hit.object) : null;
+      if (!hit.object.isMesh) continue;
+      const root = findRoot(hit.object);
       if (root) return root;
+      // Primer impacto en un oclusor visible: la pieza de detras no se ve,
+      // asi que tampoco se puede seleccionar.
+      if (hit.object.visible && isUnderOccluder(hit.object)) return null;
     }
     return null;
+  }
+
+  function isUnderOccluder(mesh) {
+    if (!occluders.size) return false;
+    let n = mesh;
+    while (n) {
+      if (occluders.has(n)) return true;
+      n = n.parent;
+    }
+    return false;
   }
 
   function buildOutline(root, color) {
@@ -277,6 +308,8 @@ export function createInteractionLayer({ scene, camera, renderer, tweenGroup, on
   return {
     registerInteractive,
     unregisterInteractive,
+    registerOccluder,
+    unregisterOccluder,
     clearInteractives,
     getMeta,
     setEnabled,

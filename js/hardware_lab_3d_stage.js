@@ -13,6 +13,7 @@ import { createCameraRig } from "./hardware_lab_3d_camera.js";
 import { createInteractionLayer, worldToScreen } from "./hardware_lab_3d_interactions.js";
 import { TweenGroup } from "./hardware_lab_3d_tween.js";
 import { createRig } from "./hardware_lab_3d_rig.js";
+import { createScrewController } from "./hardware_lab_3d_screws.js";
 import { createExplodeController } from "./hardware_lab_3d_explode.js";
 import { HardwareLabAudio } from "./hardware_lab_3d_audio.js";
 
@@ -90,6 +91,15 @@ export function createStage() {
   let tweenGroup = null;
   let explodeCtl = null;
   let currentRig = null;
+  // Tornillos interactivos (solo equipos cuyo layout los declara). Los hooks
+  // los fija el controlador de practica, que es quien tiene la sesion del
+  // motor: el stage no sabe de reglas, solo de escena y HUD.
+  let currentScrews = null;
+  let screwHooks = {};
+  // Pieza que la vista "Interna" debe encuadrar completa mientras siga
+  // instalada (la tapa inferior del portatil). La fija el controlador, que es
+  // quien sabe si la pieza sigue puesta.
+  let belowFramePartId = null;
   let feedbackTimer = null;
   let toolSelectHandler = null;
   let activeToolId = null;
@@ -117,7 +127,10 @@ export function createStage() {
     interactions.onHover((root, meta) => {
       const tip = document.getElementById("hwlab-tooltip");
       if (!tip) return;
-      if (!root || !meta || !meta.partId) {
+      // Los tornillos tambien tienen nombre propio (kind "screw", sin partId):
+      // sin esto, pasar el mouse por un tornillo no mostraba nada y no habia
+      // forma de saber cual es antes de hacer clic.
+      if (!root || !meta || !(meta.partId || meta.label)) {
         tip.hidden = true;
         return;
       }
@@ -349,11 +362,45 @@ export function createStage() {
     if (interactions) interactions.clearInteractives();
     if (explodeCtl && explodeCtl.isExploded) explodeCtl.collapse({ duration: 0 });
     currentRig = createRig({ scene: sceneApi.scene, interactions, tweenGroup, layout, equipmentId });
+    currentScrews = null;
+    if (currentRig.screwEntries && currentRig.screwEntries.length) {
+      currentScrews = createScrewController({
+        group: currentRig.screwGroup,
+        entries: currentRig.screwEntries,
+        tweenGroup,
+        dishOrigin: currentRig.screwDishOrigin || new THREE.Vector3(),
+        // Plano de la mesa: el destornillador nunca debe acercarse tanto que
+        // su mango termine dentro del tablero.
+        floorY: currentRig.tableWorldY,
+        canOperatePart: (partId, action) => (screwHooks.canOperatePart ? screwHooks.canOperatePart(partId, action) : { ok: true }),
+        onChanged: (screwId, installed, partId) => screwHooks.onChanged && screwHooks.onChanged(screwId, installed, partId),
+        notify: (message, kind) => showFeedback(message, kind),
+        onBusyChange: (busy) => screwHooks.onBusyChange && screwHooks.onBusyChange(busy),
+        playSound: () => HardwareLabAudio.playScrew(),
+      });
+    }
     const sphere = currentRig.getBoundsWorld();
     // El portatil se abre por la tapa INFERIOR (ver caseGatePartId en
     // hardware_lab_data_laptop.js) -- la vista "Interna" necesita mirar
     // desde abajo hacia arriba para esa pieza, a diferencia del escritorio.
-    cameraRig.setRigBounds(sphere.center, sphere.radius, { viewFromBelow: equipmentId === "laptop" });
+    cameraRig.setRigBounds(sphere.center, sphere.radius, {
+      viewFromBelow: equipmentId === "laptop",
+      // Centro de la BASE del portatil, a la altura de sus componentes.
+      belowTarget: equipmentId === "laptop" ? currentRig.root.position.clone().add(new THREE.Vector3(0, 0.008, 0)) : null,
+    });
+    cameraRig.setBelowFrameProvider(() => {
+      if (!belowFramePartId || !currentRig) return null;
+      const obj = currentRig.getObject3D(belowFramePartId);
+      if (!obj) return null;
+      const box = new THREE.Box3().setFromObject(obj);
+      // Los tornillos de esa pieza tambien tienen que entrar en el cuadro:
+      // son parte del trabajo del paso, y algunos quedan en el borde exacto
+      // de la pieza (medido: el trasero izquierdo de la placa base).
+      if (currentScrews) {
+        currentScrews.forPart(belowFramePartId).forEach((e) => box.expandByObject(e.object3d));
+      }
+      return box.getBoundingSphere(new THREE.Sphere()).radius;
+    });
     cameraRig.goToView("overview", { duration: 0 });
     const activeBtn = document.querySelector('.hwlab-view-btn[data-view="overview"]');
     document.querySelectorAll(".hwlab-view-btn").forEach((b) => b.classList.remove("is-active"));
@@ -362,6 +409,18 @@ export function createStage() {
     didacticEquipmentId = equipmentId;
     if (didacticActive) setDidacticMode(true); // reconstruye las etiquetas para el equipo nuevo
     return currentRig;
+  }
+
+  /** El controlador de practica registra aqui las reglas que dependen de la
+   * sesion del motor (que pieza puede operarse ahora, persistencia). */
+  function setScrewHooks(hooks) {
+    screwHooks = hooks || {};
+  }
+
+  /** Pieza que la vista "Interna" debe encuadrar completa en este momento
+   * (con sus tornillos): la tapa mientras siga puesta, o la pieza del paso. */
+  function setBelowFraming(partId) {
+    belowFramePartId = partId || null;
   }
 
   function focusOnPart(partId) {
@@ -623,6 +682,11 @@ export function createStage() {
     get currentRig() {
       return currentRig;
     },
+    get screws() {
+      return currentScrews;
+    },
+    setScrewHooks,
+    setBelowFraming,
     get sceneApi() {
       return sceneApi;
     },

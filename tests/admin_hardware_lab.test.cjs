@@ -66,6 +66,18 @@ test("summarizeStudent calcula casos completados/pendientes, promedio y nivel al
   assert.strictEqual(summary.lastActivity, Date.parse("2026-08-03T10:00:00.000Z"));
 });
 
+test("labelForMode reconoce los storageMode reales que arma el controlador 3D (direction + '-' + practiceMode)", () => {
+  // Estas 4 llaves son EXACTAMENTE las que hardware_lab_3d_controller.js
+  // arma para practica libre/evaluacion (ver su storageMode). Si alguien
+  // cambia esos nombres ahi sin actualizar aqui, este test debe fallar.
+  assert.strictEqual(testApi.labelForMode("disassembly-free"), "Practica libre (desensamble)");
+  assert.strictEqual(testApi.labelForMode("assembly-free"), "Practica libre (ensamble)");
+  assert.strictEqual(testApi.labelForMode("disassembly-evaluation"), "Evaluacion (desensamble)");
+  assert.strictEqual(testApi.labelForMode("assembly-evaluation"), "Evaluacion (ensamble)");
+  assert.strictEqual(testApi.labelForMode("disassembly-guided"), "Desensamble guiado");
+  assert.strictEqual(testApi.labelForMode("assembly-guided"), "Ensamble guiado");
+});
+
 test("summarizeStudent con cero intentos no revienta y da promedio null", () => {
   const summary = testApi.summarizeStudent({ fullName: "Nadie" }, { practices: [], diagnosisCases: [] });
   assert.strictEqual(summary.attempts, 0);
