@@ -670,10 +670,22 @@
     writeJson(USERS_KEY, users);
   }
 
+  // Clave de orden tolerante: un documento de usuario incompleto (p. ej. sin
+  // fullName/username, sincronizado desde sena_portal_users) no debe romper la
+  // lista entera -- antes lanzaba TypeError y tumbaba la Agenda administrativa.
+  // Solo afecta al ORDEN: el registro se devuelve tal cual, sin rellenarle
+  // ninguna identidad.
+  function studentSortKey(user) {
+    return String((user && (user.fullName || user.username || user.usernameKey)) || "");
+  }
+
   function listStudents() {
     return getUsers()
       .slice()
-      .sort((left, right) => left.fullName.localeCompare(right.fullName, "es"));
+      .sort((left, right) =>
+        studentSortKey(left).localeCompare(studentSortKey(right), "es") ||
+        String((left && left.usernameKey) || "").localeCompare(String((right && right.usernameKey) || ""), "es")
+      );
   }
 
   function getStudentByUsernameKey(usernameKey) {
