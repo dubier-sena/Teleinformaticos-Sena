@@ -27,6 +27,14 @@ const VIEW_ICONS = {
 };
 const VIEW_LABELS = { front: "Frontal", side: "Lateral", top: "Superior", back: "Posterior", internal: "Interna", overview: "General" };
 
+// ── "Mover portatil" (posiciones tecnicas, sep-26) ─────────────────────────
+const POSE_ICONS = {
+  yawLeft: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12a8 8 0 108-8"/><path d="M4 4v6h6"/></svg>',
+  yawRight: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12a8 8 0 11-8-8"/><path d="M20 4v6h-6"/></svg>',
+  flip: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="9" width="16" height="6" rx="1"/><path d="M12 3v4M12 17v4M9 5l3-2 3 2M9 19l3 2 3-2"/></svg>',
+  lid: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 18h16"/><path d="M6 18L9 6h9l-3 12"/></svg>',
+};
+
 // ── Presets de enfoque rapido por grupo de piezas (mejora 3D, item 8) ──────
 // Cada equipo tiene su propio set (el portatil no tiene fuente de poder
 // propia, usa bateria en su lugar). Los ids ausentes en un momento dado de
@@ -108,6 +116,9 @@ export function createStage() {
   let didacticEquipmentId = null;
   let offDidacticTick = null;
   let baseExposure = null;
+  // Posiciones tecnicas: el controlador de practica dice que posicion pide la
+  // tarea actual (Vista de trabajo contextual) y se entera de las transiciones.
+  let poseHooks = {};
 
   function ensureSceneReady() {
     if (sceneApi) return sceneApi.supported;
@@ -254,6 +265,11 @@ export function createStage() {
       .join("");
     grid.querySelectorAll("[data-view]").forEach((btn) => {
       btn.addEventListener("click", () => {
+        // GENERAL = ENCUADRE: reencuadra el equipo segun su transformacion
+        // ACTUAL (girado, volteado...), sin cambiar su pose ni sus piezas.
+        // Solo equipos con posiciones tecnicas: el escritorio no se mueve y
+        // conserva su encuadre de siempre.
+        if (currentRig && currentRig.hasPose) refreshRigBounds();
         // Selector global (no solo dentro de "grid"): "Vistas de camara" y
         // "Enfoque rapido" comparten la clase .hwlab-view-btn y son
         // mutuamente excluyentes -- solo un boton activo entre los dos
@@ -369,6 +385,7 @@ export function createStage() {
         entries: currentRig.screwEntries,
         tweenGroup,
         dishOrigin: currentRig.screwDishOrigin || new THREE.Vector3(),
+        dishWorldOrigin: currentRig.screwDishWorldOrigin || undefined,
         // Plano de la mesa: el destornillador nunca debe acercarse tanto que
         // su mango termine dentro del tablero.
         floorY: currentRig.tableWorldY,
@@ -378,6 +395,12 @@ export function createStage() {
         onBusyChange: (busy) => screwHooks.onBusyChange && screwHooks.onBusyChange(busy),
         playSound: () => HardwareLabAudio.playScrew(),
       });
+      // Posiciones tecnicas: al girar/voltear el portatil, los tornillos ya
+      // retirados siguen en la bandeja magnetica de la mesa.
+      if (currentRig.onPoseChange) {
+        const screwsCtl = currentScrews;
+        currentRig.onPoseChange(() => screwsCtl.refreshStowed());
+      }
     }
     const sphere = currentRig.getBoundsWorld();
     // El portatil se abre por la tapa INFERIOR (ver caseGatePartId en
@@ -401,6 +424,7 @@ export function createStage() {
       }
       return box.getBoundingSphere(new THREE.Sphere()).radius;
     });
+    setupPoseControls();
     cameraRig.goToView("overview", { duration: 0 });
     const activeBtn = document.querySelector('.hwlab-view-btn[data-view="overview"]');
     document.querySelectorAll(".hwlab-view-btn").forEach((b) => b.classList.remove("is-active"));
@@ -409,6 +433,186 @@ export function createStage() {
     didacticEquipmentId = equipmentId;
     if (didacticActive) setDidacticMode(true); // reconstruye las etiquetas para el equipo nuevo
     return currentRig;
+  }
+
+  // ── POSICIONES TECNICAS (sep-26) ──────────────────────────────────────────
+  /** Encuadre de camara con el equipo tal como esta AHORA (solo lo instalado:
+   *  la bandeja no infla el cuadro). */
+  function refreshRigBounds() {
+    if (!currentRig || !cameraRig) return;
+    const sphere = currentRig.getBoundsWorld({ installedOnly: true });
+    const box = currentRig.getBoundsBoxWorld ? currentRig.getBoundsBoxWorld() : null;
+    cameraRig.setRigBounds(sphere.center, sphere.radius, box ? { height: box.max.y - box.min.y } : undefined);
+  }
+
+  function poseBusy() {
+    if (!currentRig || !currentRig.hasPose) return false;
+    return currentRig.isPoseAnimating() || (currentRig.anyMoving && currentRig.anyMoving()) || (currentScrews && currentScrews.isBusy());
+  }
+
+  /** Posicion de trabajo que tiene sentido con el equipo como esta, cuando el
+   *  controlador no pide una concreta (p.ej. "Aprender componentes"). */
+  function defaultWorkPreset() {
+    const pose = currentRig.getPose();
+    if (pose.flipped) return isPresent("bottom-cover") ? "bottom" : "internal";
+    return "keyboard";
+  }
+  function isPresent(partId) {
+    return !!(currentRig && currentRig.isPresent && currentRig.isPresent(partId));
+  }
+
+  function frameWorkView(name, opts) {
+    if (!currentRig || !currentRig.hasPose) return;
+    const box = currentRig.workFocusBox(name);
+    const dir = currentRig.workViewDir(name);
+    if (!dir) return;
+    document.querySelectorAll(".hwlab-view-btn").forEach((b) => b.classList.remove("is-active"));
+    cameraRig.frameWork(box, dir, opts);
+  }
+
+  /** Lleva el portatil a una posicion tecnica (con su transicion visible) y
+   *  encuadra su vista de trabajo. Devuelve false si ahora no se puede. */
+  function goToWorkPose(name, opts = {}) {
+    if (!currentRig || !currentRig.hasPose) return false;
+    const target = currentRig.presetPose(name);
+    if (!target) return false;
+    if (poseBusy()) {
+      showFeedback("Espera a que termine la operacion en curso antes de mover el portatil.", "info");
+      return false;
+    }
+    if (currentRig.isAtPreset(name)) {
+      refreshRigBounds();
+      if (opts.frame !== false) frameWorkView(name);
+      if (opts.onDone) opts.onDone();
+      renderPoseStatus();
+      return true;
+    }
+    const label = (currentRig.presets[name] && currentRig.presets[name].label) || name;
+    return movePose(target, {
+      announce: "Preparando el portatil: " + label.toLowerCase() + ".",
+      onDone: () => {
+        if (opts.frame !== false) frameWorkView(name);
+        if (opts.onDone) opts.onDone();
+      },
+    });
+  }
+
+  function movePose(target, opts = {}) {
+    if (poseBusy()) {
+      showFeedback("Espera a que termine la operacion en curso antes de mover el portatil.", "info");
+      return false;
+    }
+    if (poseHooks.onPoseStart) poseHooks.onPoseStart();
+    if (opts.announce) showFeedback(opts.announce, "info");
+    setPoseButtonsEnabled(false);
+    const ok = currentRig.setPose(target, {
+      onDone: () => {
+        refreshRigBounds();
+        setPoseButtonsEnabled(true);
+        renderPoseStatus();
+        if (opts.onDone) opts.onDone();
+        if (poseHooks.onPoseEnd) poseHooks.onPoseEnd(currentRig.getPose());
+      },
+    });
+    if (!ok) setPoseButtonsEnabled(true);
+    return ok;
+  }
+
+  function setPoseButtonsEnabled(on) {
+    document.querySelectorAll("#hwlab-pose-panel button").forEach((b) => { b.disabled = !on; });
+  }
+
+  function renderPoseStatus() {
+    const el = document.getElementById("hwlab-pose-status");
+    if (!el || !currentRig || !currentRig.hasPose) return;
+    const presets = currentRig.presets;
+    const pose = currentRig.getPose();
+    // Volteado, "Tapa inferior" y "Componentes internos" son la misma
+    // orientacion: el nombre depende de si la tapa sigue puesta.
+    const skip = pose.flipped ? (isPresent("bottom-cover") ? "internal" : "bottom") : null;
+    const match = Object.keys(presets).find((k) => k !== skip && currentRig.isAtPreset(k));
+    let text;
+    const lidId = currentRig.lidConfig ? currentRig.lidConfig.partId : null;
+    if (!pose.flipped && lidId && !isPresent(lidId)) text = "Derecho, sin pantalla";
+    // Teclado y pantalla comparten orientacion (tapa a 90 grados, medido).
+    else if ((match === "keyboard" || match === "display") && currentRig.isAtPreset("keyboard") && currentRig.isAtPreset("display")) text = "Trabajo por arriba (pantalla a 90 grados)";
+    else if (match) text = presets[match].label;
+    else if (pose.flipped) text = "Boca abajo (girado)";
+    else text = Math.abs(pose.lid) < 0.01 ? "Cerrado (girado)" : "Abierto (girado)";
+    el.textContent = "Posicion actual: " + text;
+    const lidBtn = document.querySelector('[data-pose="lid"]');
+    if (lidBtn) {
+      lidBtn.querySelector("span").textContent = Math.abs(pose.lid) < 0.01 ? "Abrir pantalla" : "Cerrar pantalla";
+      // Boca abajo la pantalla queda cerrada contra el soporte.
+      if (!currentRig.isPoseAnimating()) lidBtn.disabled = !!pose.flipped;
+    }
+  }
+
+  function setupPoseControls() {
+    const panel = document.getElementById("hwlab-pose-panel");
+    const rig = currentRig;
+    if (!rig || !rig.hasPose) {
+      if (panel) panel.hidden = true;
+      cameraRig.setInteriorProvider(null);
+      return;
+    }
+    // La vista "Interna" mira el interior por donde este: desde arriba con el
+    // equipo volteado, desde abajo (como siempre) con el equipo derecho.
+    cameraRig.setInteriorProvider(() => {
+      const pose = rig.getPose();
+      if (pose.flipped) {
+        const name = isPresent("bottom-cover") ? "bottom" : "internal";
+        return { up: true, box: rig.workFocusBox(name), dir: rig.workViewDir(name) };
+      }
+      return { up: false, belowTarget: rig.root.localToWorld(new THREE.Vector3(0, 0.008, 0)) };
+    });
+    if (!panel) return;
+    panel.hidden = false;
+    const grid = document.getElementById("hwlab-pose-buttons");
+    const btns = [
+      ["yawLeft", "Girar izq.", "Girar el portatil 90 grados a la izquierda", POSE_ICONS.yawLeft],
+      ["yawRight", "Girar der.", "Girar el portatil 90 grados a la derecha", POSE_ICONS.yawRight],
+      ["flip", "Voltear", "Cerrar y voltear el portatil", POSE_ICONS.flip],
+      ["lid", "Cerrar pantalla", "Abrir o cerrar la pantalla", POSE_ICONS.lid],
+    ];
+    grid.innerHTML = btns
+      .map(([k, label, title, icon]) => `<button type="button" class="hwlab-view-btn hwlab-pose-btn" data-pose="${k}" title="${esc(title)}">${icon}<span>${esc(label)}</span></button>`)
+      .join("");
+    grid.querySelectorAll("[data-pose]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const pose = rig.getPose();
+        const lidCfg = rig.lidConfig;
+        const k = btn.getAttribute("data-pose");
+        const reframe = () => { refreshRigBounds(); cameraRig.goToView("overview"); };
+        if (k === "yawLeft" || k === "yawRight") {
+          movePose({ yaw: pose.yaw + (k === "yawLeft" ? 1 : -1) * Math.PI / 2 }, { onDone: reframe });
+        } else if (k === "flip") {
+          movePose({ flipped: !pose.flipped, lid: lidCfg ? lidCfg.closedAngle : pose.lid }, {
+            announce: pose.flipped ? "Volteando el portatil a su posicion normal." : "Cerrando y volteando el portatil.",
+            onDone: reframe,
+          });
+        } else if (k === "lid") {
+          if (pose.flipped) {
+            showFeedback("Con el portatil boca abajo la pantalla queda cerrada: primero voltealo a su posicion normal.", "info");
+            return;
+          }
+          const closed = Math.abs(pose.lid - (lidCfg ? lidCfg.closedAngle : 0)) < 0.01;
+          movePose({ lid: closed ? lidCfg.openAngle : lidCfg.closedAngle }, { onDone: reframe });
+        }
+      });
+    });
+    const workBtn = document.getElementById("hwlab-work-view-btn");
+    if (workBtn) {
+      workBtn.onclick = () => {
+        const name = (poseHooks.contextualPreset && poseHooks.contextualPreset()) || defaultWorkPreset();
+        goToWorkPose(name);
+      };
+    }
+    renderPoseStatus();
+  }
+
+  function setPoseHooks(hooks) {
+    poseHooks = hooks || {};
   }
 
   /** El controlador de practica registra aqui las reglas que dependen de la
@@ -687,6 +891,12 @@ export function createStage() {
     },
     setScrewHooks,
     setBelowFraming,
+    setPoseHooks,
+    goToWorkPose,
+    frameWorkView,
+    refreshRigBounds,
+    renderPoseStatus,
+    isPoseBusy: poseBusy,
     get sceneApi() {
       return sceneApi;
     },

@@ -745,3 +745,17 @@
   .hwlab-view-grid,
   .hwlab-tool-grid { grid-template-columns: repeat(3, 1fr); }
 }
+
+/* Posiciones tecnicas del portatil (sep-26) */
+.hwlab-pose-status {
+  margin: var(--space-2) 0;
+  font-size: var(--font-size-xs);
+  color: var(--hwlab-text-muted);
+}
+.hwlab-pose-btn[disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.hwlab-prepare-btn {
+  margin-top: var(--space-2);
+}

@@ -51,6 +51,9 @@ export function createAssemblyController(stage) {
   // del motor puro -- un tornillo solo se puede tocar cuando su pieza se
   // podria operar de verdad en este momento.
   let screwsBusy = false;
+  // Posiciones tecnicas (sep-26): ultima posicion que pidio una operacion que
+  // el aprendiz intento con el portatil en otra orientacion (modos abiertos).
+  let neededPreset = null;
 
   function Engine() {
     return window.HardwareLab.Engine;
@@ -86,6 +89,8 @@ export function createAssemblyController(stage) {
 
     if (!stage.showStage()) return;
     const rig = stage.loadRig(layoutFor(id), id);
+    neededPreset = null;
+    setupPoseHooks();
 
     if (offClick) {
       offClick();
@@ -215,6 +220,8 @@ export function createAssemblyController(stage) {
     document.getElementById("hwlab-back-to-intro").onclick = backToIntro;
     document.getElementById("hwlab-restart-btn").onclick = () => {
       session = Engine().createSession(equipmentData, engineMode, { maxHints });
+      neededPreset = null;
+      resetPose();
       rig.syncFromSessionParts(session.parts);
       setupScrews(session.parts, { assembly: direction === "assembly" || engineMode === "assembly-guided" });
       stage.startTimer(session.startedAt);
@@ -244,6 +251,107 @@ export function createAssemblyController(stage) {
 
   function getPart(partId) {
     return equipmentData.parts[partId] || null;
+  }
+
+  // ── POSICIONES TECNICAS (sep-26) ─────────────────────────────────────────
+  function rig3d() {
+    return stage.currentRig;
+  }
+  function hasPose() {
+    const r = rig3d();
+    return !!(r && r.hasPose);
+  }
+  function presetLabel(name) {
+    const r = rig3d();
+    const p = r && r.presets[name];
+    return p ? p.label : name;
+  }
+  function isAssemblyPractice() {
+    return direction === "assembly" || engineMode === "assembly-guided";
+  }
+
+  /** Posicion que pide operar `partId` ahora: la de sus tornillos mientras
+   *  queden por retirar/colocar, si no la de la pieza. */
+  function requiredPresetFor(partId, action) {
+    const r = rig3d();
+    if (!hasPose() || !partId) return null;
+    const ctl = screws();
+    const removing = action === "remove" || action === "disconnect";
+    const pendingScrews = ctl && ctl.hasScrews(partId) && (removing ? ctl.pendingRemoval(partId) > 0 : session && session.parts[partId] && ctl.pendingInstall(partId) > 0);
+    if (pendingScrews) {
+      const first = ctl.forPart(partId)[0];
+      return { preset: r.workPresetFor(partId, r.screwAccess(first.id)), access: r.screwAccess(first.id), forScrews: true };
+    }
+    return { preset: r.workPresetFor(partId, r.partAccess(partId)), access: r.partAccess(partId), forScrews: false };
+  }
+
+  /** Posicion de la tarea ACTUAL (para "Vista de trabajo" y el panel). */
+  function contextualPreset() {
+    if (!hasPose() || !session || isLearn) return null;
+    if (Engine().isFinished(session) && isAssemblyPractice()) return "open";
+    // Una pieza recien instalada con tornillos por colocar manda (solo al
+    // ENSAMBLAR: al desensamblar, una pieza aun montada sin sus tornillos es
+    // justo lo esperado antes de retirarla).
+    const pendiente = isAssemblyPractice() ? partWithPendingScrews(null) : null;
+    if (pendiente) return requiredPresetFor(pendiente, "install").preset;
+    const step = Engine().currentStep(session);
+    if (session.kind === "guided" && step && step.kind === "action") return requiredPresetFor(step.partId, step.action).preset;
+    return neededPreset;
+  }
+
+  function setupPoseHooks() {
+    stage.setPoseHooks({
+      contextualPreset,
+      onPoseStart: () => {},
+      onPoseEnd: () => {
+        if (!session || isLearn) return;
+        renderInfoPanel();
+        maybeFinish();
+      },
+    });
+  }
+
+  function resetPose() {
+    const r = rig3d();
+    if (!hasPose()) return;
+    r.setPose(r.presetPose("open"), { animate: false });
+    stage.refreshRigBounds();
+    stage.renderPoseStatus();
+  }
+
+  /** Mensaje (sin castigo) cuando la operacion es correcta pero el portatil
+   *  no esta en la orientacion que la permite fisicamente. */
+  function poseBlockMessage(req, what) {
+    if (req.access === "interior") {
+      return "Para " + what + " el portatil tiene que estar boca abajo, con el interior hacia arriba. Usa \"Preparar para " +
+        presetLabel(req.preset).toLowerCase() + "\" o \"Vista de trabajo\".";
+    }
+    return "Para " + what + " el portatil tiene que estar derecho y con la pantalla abierta. Usa \"Preparar para " +
+      presetLabel(req.preset).toLowerCase() + "\" o \"Vista de trabajo\".";
+  }
+
+  /** Bloque del panel con la posicion de trabajo que pide la tarea. */
+  function poseSectionHtml() {
+    if (!hasPose() || !session) return "";
+    const r = rig3d();
+    const name = contextualPreset();
+    if (!name) return "";
+    let ok;
+    if (name === "open") ok = r.isAtPreset("open");
+    else {
+      const step = Engine().currentStep(session);
+      const pendiente = isAssemblyPractice() ? partWithPendingScrews(null) : null;
+      const partId = pendiente || (step && step.kind === "action" ? step.partId : null);
+      const req = partId ? requiredPresetFor(partId, pendiente ? "install" : step.action) : null;
+      ok = req ? r.poseAllows(req.access) : r.isAtPreset(name);
+    }
+    const label = presetLabel(name);
+    let html = `<p class="hwlab-muted">Posicion de trabajo: <strong>${esc(label)}</strong>${ok ? " &#9989;" : ""}</p>`;
+    if (!ok) {
+      html += `<button type="button" class="c-btn c-btn--primary c-btn--sm c-btn--block hwlab-prepare-btn" id="hwlab-prepare-btn" data-preset="${esc(name)}">` +
+        (name === "open" ? "Dejar el portatil abierto (posicion normal)" : "Preparar para " + esc(label.toLowerCase())) + "</button>";
+    }
+    return html;
   }
 
   // ── TORNILLOS ────────────────────────────────────────────────────────────
@@ -308,6 +416,19 @@ export function createAssemblyController(stage) {
           (next ? next.name : step.partId) +
           ".",
       };
+    }
+    // Posicion tecnica: el tornillo es el correcto, pero hay que poder
+    // alcanzarlo (p.ej. los de la tapa inferior, con el portatil boca abajo).
+    if (hasPose()) {
+      if (rig3d().isPoseAnimating()) return { ok: false, reason: "Espera a que el portatil termine de moverse." };
+      const r = rig3d();
+      const first = screws().forPart(partId)[0];
+      const access = first ? r.screwAccess(first.id) : null;
+      if (access && !r.poseAllows(access)) {
+        neededPreset = r.workPresetFor(partId, access);
+        setTimeout(renderInfoPanel, 0);
+        return { ok: false, reason: poseBlockMessage({ access, preset: neededPreset }, "trabajar este tornillo") };
+      }
     }
     return { ok: true };
   }
@@ -406,6 +527,21 @@ export function createAssemblyController(stage) {
         }
       }
     }
+    if (hasPose()) {
+      const r = rig3d();
+      if (r.isPoseAnimating()) {
+        stage.showFeedback("Espera a que el portatil termine de moverse.", "info");
+        return;
+      }
+      const access = r.partAccess(partId);
+      if (access && !r.poseAllows(access) && actionWouldBeValid(partId, action)) {
+        neededPreset = r.workPresetFor(partId, access);
+        const verb = (Engine().ACTION_LABELS[action] || { verb: "operar" }).verb.toLowerCase();
+        stage.showFeedback(poseBlockMessage({ access, preset: neededPreset }, verb + " " + part.name), "info");
+        renderInfoPanel();
+        return;
+      }
+    }
     stage.focusOnPart(partId);
     const toolId = stage.getActiveToolId();
     const result = Engine().attemptAction(equipmentData, session, { partId, action, toolId });
@@ -443,6 +579,25 @@ export function createAssemblyController(stage) {
     renderInfoPanel();
     refreshStats();
     maybeFinish();
+  }
+
+  /** ¿El motor aceptaria esta accion (orden, requisitos, herramienta)? Sin
+   *  modificar la sesion. Solo entonces la posicion puede bloquearla SIN
+   *  castigo; una accion invalida sigue yendo al motor, que la penaliza igual
+   *  que siempre. */
+  function actionWouldBeValid(partId, action) {
+    const gate = Engine().canOperateOnPart(equipmentData, session, partId);
+    if (!gate.ok) return false;
+    const partAction = action === "remove" || action === "disconnect" ? "remove" : "install";
+    const req = Engine().checkRequirements(equipmentData, session, partId, partAction);
+    if (!req.ok) return false;
+    const step = Engine().currentStep(session);
+    if (step && step.kind === "safety") return false;
+    if (session.kind === "guided" && step && step.kind === "action" && (step.partId !== partId || step.action !== action)) return false;
+    const part = getPart(partId);
+    const toolId = stage.getActiveToolId();
+    if (part && part.tool && part.tool !== "hands" && toolId !== part.tool) return false;
+    return true;
   }
 
   function onHint() {
@@ -539,11 +694,14 @@ export function createAssemblyController(stage) {
           .join("") +
         "</ul>";
     }
+    html += poseSectionHtml();
     html += "</div>";
     stage.setInfoPanel(html);
     refreshScrewHighlight();
     const safetyBtn = document.getElementById("hwlab-safety-confirm-btn");
     if (safetyBtn && step) safetyBtn.onclick = () => attemptSafety(step.id);
+    const prepareBtn = document.getElementById("hwlab-prepare-btn");
+    if (prepareBtn) prepareBtn.onclick = () => stage.goToWorkPose(prepareBtn.getAttribute("data-preset"));
   }
 
   /** Marca en la escena los tornillos que el paso actual pide tocar. En modo
@@ -615,6 +773,13 @@ export function createAssemblyController(stage) {
       );
       return;
     }
+    // Ensamble: el equipo termina como empezo -- derecho y abierto (pose
+    // inicial aprobada). No se castiga: solo se retiene el cierre.
+    if (hasPose() && isAssemblyPractice() && !rig3d().isAtPreset("open")) {
+      stage.showFeedback("Ya esta armado: vuelve a ponerlo derecho y abre la pantalla para terminar (\"Dejar el portatil abierto\").", "info");
+      renderInfoPanel();
+      return;
+    }
     stage.stopTimer();
     const finished = Engine().finish(session);
     session = finished;
@@ -622,7 +787,10 @@ export function createAssemblyController(stage) {
     stage.openResultModal(finished.result, {
       onRetry: () => {
         session = Engine().createSession(equipmentData, engineMode, { maxHints: session.hints.max });
+        neededPreset = null;
+        resetPose();
         stage.currentRig.syncFromSessionParts(session.parts);
+        setupScrews(session.parts, { assembly: isAssemblyPractice() });
         stage.startTimer(session.startedAt);
         stage.clearActionLog();
         renderInfoPanel();

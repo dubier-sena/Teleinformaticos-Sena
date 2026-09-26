@@ -35,6 +35,10 @@ import {
   LAPTOP_KEYBOARD_SCREW_X,
   LAPTOP_TOUCHPAD_SCREW_X,
   LAPTOP_LID_OPEN_ANGLE,
+  LAPTOP_LID_CLOSED_ANGLE,
+  LAPTOP_LID_KEYBOARD_ANGLE,
+  LAPTOP_LID_DISPLAY_ANGLE,
+  LAPTOP_LID_MAX_OPEN_ANGLE,
   LAPTOP_SCREEN_SCREW_X,
   buildLaptopBase,
   buildLaptopBottomCover,
@@ -536,5 +540,66 @@ export function createLaptopLayout() {
   // por debajo de la linea de vision).
   const screwDish = (anchors, opts) => v(0.0, (opts && opts.tableLocalY) || -0.16, 0.21);
 
-  return { structure, components, traySlots: TRAY_SLOTS, trayTransit, decor, screws, screwDish };
+  // POSICIONES TECNICAS (sep-26): el rig puede girar, cerrar y voltear el
+  // portatil sobre su soporte. La tapa gira sobre el eje de bisagra; su hoja de
+  // bisagra (hinge-leaf-frame) pertenece a la base mientras este montada.
+  const pose = {
+    lid: {
+      structureId: "screen-lid",
+      partId: "screen-assembly",
+      leafFrame: "hinge-leaf-frame",
+      openAngle: LAPTOP_LID_OPEN_ANGLE,
+      closedAngle: LAPTOP_LID_CLOSED_ANGLE,
+      maxOpenAngle: LAPTOP_LID_MAX_OPEN_ANGLE,
+    },
+    // Posiciones TECNICAS de trabajo. `yaw` 0: siempre la orientacion canonica
+    // (asi "Vista de trabajo" devuelve el equipo exactamente a su sitio aunque
+    // el aprendiz lo haya girado para inspeccionarlo).
+    presets: {
+      // Pose inicial aprobada: derecho, pantalla abierta como en General.
+      open: { label: "Abierto (posicion normal)", yaw: 0, flipped: false, lid: LAPTOP_LID_OPEN_ANGLE },
+      closed: { label: "Cerrado", yaw: 0, flipped: false, lid: LAPTOP_LID_CLOSED_ANGLE },
+      // Tapa inferior: cerrado y boca abajo, la tapa inferior hacia arriba.
+      bottom: { label: "Tapa inferior", yaw: 0, flipped: true, lid: LAPTOP_LID_CLOSED_ANGLE },
+      // Componentes internos: misma orientacion, encuadre del interior util.
+      internal: { label: "Componentes internos", yaw: 0, flipped: true, lid: LAPTOP_LID_CLOSED_ANGLE },
+      keyboard: { label: "Teclado", yaw: 0, flipped: false, lid: LAPTOP_LID_KEYBOARD_ANGLE },
+      display: { label: "Pantalla", yaw: 0, flipped: false, lid: LAPTOP_LID_DISPLAY_ANGLE },
+    },
+    // Apertura minima para trabajar por arriba: medido, por debajo de ~86
+    // grados la tapa se proyecta sobre la huella del teclado.
+    minTopWorkLid: -86 * Math.PI / 180,
+    // Que posicion tecnica pide cada operacion. `access` lo deduce el rig de
+    // la geometria: "interior" (sale por la cara inferior: detachAxis -Y,
+    // cables del interior, tornillos que salen hacia -Y) o "top" (sale por
+    // arriba: teclado, touchpad, pantalla).
+    workPresetFor: (partId, access) => {
+      if (access === "interior") return partId === "bottom-cover" ? "bottom" : "internal";
+      return partId === "screen-assembly" ? "display" : "keyboard";
+    },
+    // Encuadre de cada posicion de trabajo. `dirLocal`: de donde mira la
+    // camara, en el marco del portatil (asi sigue al equipo girado/volteado).
+    // `focus`: que tiene que caber en el cuadro.
+    workViews: {
+      // Boca abajo: la cara inferior mira a +Y de mundo (-Y local). Desde
+      // arriba y algo por delante, con toda la tapa y sus 5 tornillos.
+      bottom: { dirLocal: [0.16, -1.3, 0.78], focus: { parts: ["bottom-cover"], withScrews: true } },
+      // Interior UTIL (piezas internas instaladas + sus tornillos), no la mesa.
+      internal: { dirLocal: [0.12, -1.55, 0.72], focus: { interior: true, withScrews: true } },
+      // Teclado: vista elevada algo isometrica desde el frente; centro real de
+      // la zona del teclado (su borde superior, el que se libera primero).
+      keyboard: {
+        dirLocal: [0.26, 0.95, 1.0],
+        focus: { parts: ["keyboard"], localBox: [[-0.142, 0.017, -0.085], [0.142, 0.024, 0.04]] },
+      },
+      // Pantalla: las dos bisagras, sus hojas, las entradas de cable y el
+      // arranque de la tapa, desde el frente y por encima del reposamanos.
+      display: {
+        dirLocal: [0.15, 0.85, 1.0],
+        focus: { localBox: [[-0.15, 0.010, -0.125], [0.15, 0.09, -0.07]] },
+      },
+    },
+  };
+
+  return { structure, components, traySlots: TRAY_SLOTS, trayTransit, decor, screws, screwDish, pose };
 }

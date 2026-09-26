@@ -11,6 +11,48 @@ import { OrbitControls } from "./vendor/OrbitControls.js";
 import { Easing, prefersReducedMotion } from "./hardware_lab_3d_tween.js";
 import { TABLE } from "./hardware_lab_3d_constants.js";
 
+// ── Limite fisico inferior de la camara (sep-26) ────────────────────────────
+// Medido: con el maxPolarAngle FIJO del portatil (0.97*PI, pensado para la
+// vista "desde abajo") la orbita manual llevaba la camara bajo la mesa y, con
+// zoom out, hasta y = -5.5 m (6.3 m bajo el tablero, 0 % del equipo visible).
+// La superficie real es el tapete de hardware_lab_3d_scene.js (TABLE.topY +
+// 1 mm); la camara nunca baja de ella + 20 mm.
+export const CAMERA_TABLE_MARGIN = 0.02;
+export const CAMERA_MIN_WORLD_Y = TABLE.topY + 0.001 + CAMERA_TABLE_MARGIN;
+
+/** Angulo polar maximo (desde +Y) que mantiene la camara a una altura >= minY
+ *  para un objetivo a `targetY` y una distancia `distance`:
+ *  y = targetY + distance * cos(phi) >= minY  =>  phi <= acos((minY - targetY) / distance). */
+export function polarLimitForMinY(targetY, distance, minY = CAMERA_MIN_WORLD_Y) {
+  if (!(distance > 1e-9)) return Math.PI;
+  const c = (minY - targetY) / distance;
+  if (c <= -1) return Math.PI;
+  if (c >= 1) return 0;
+  return Math.acos(c);
+}
+
+/** Si la camara quedo bajo minY, la lleva a minY conservando su distancia al
+ *  objetivo y su acimut (sin saltos: solo corrige lo que se paso). Devuelve
+ *  true si corrigio. */
+export function clampCameraAboveY(position, target, minY = CAMERA_MIN_WORLD_Y) {
+  if (position.y >= minY - 1e-9) return false;
+  const r = position.distanceTo(target);
+  const dy = minY - target.y;
+  if (r > Math.abs(dy)) {
+    const hx = position.x - target.x;
+    const hz = position.z - target.z;
+    const hLen = Math.hypot(hx, hz);
+    const h = Math.sqrt(r * r - dy * dy);
+    const ux = hLen > 1e-9 ? hx / hLen : 0;
+    const uz = hLen > 1e-9 ? hz / hLen : 1;
+    position.set(target.x + ux * h, minY, target.z + uz * h);
+  } else {
+    // Objetivo muy por debajo del limite (desplazado a mano): justo encima.
+    position.set(target.x, minY, target.z);
+  }
+  return true;
+}
+
 export function createCameraRig({ camera, renderer, tweenGroup, onTick }) {
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
@@ -18,11 +60,19 @@ export function createCameraRig({ camera, renderer, tweenGroup, onTick }) {
   controls.minDistance = 0.18;
   controls.maxDistance = 6.5;
   controls.maxPolarAngle = Math.PI * 0.495;
+  // Limite polar "de diseño" de cada equipo (0.495*PI escritorio, 0.97*PI
+  // portatil). El efectivo en cada cuadro es el menor entre este y el que
+  // impone la mesa (ver polarLimitForMinY).
+  let basePolarMax = controls.maxPolarAngle;
   controls.target.set(0, 0.95, 0);
   controls.update();
 
   let rigCenter = new THREE.Vector3(0, 0.95, 0);
   let rigRadius = 0.5;
+  // Alto real del equipo (caja de mundo). Con el portatil VOLTEADO el equipo
+  // es una losa de 38 mm: las vistas Frontal/Lateral/Posterior, casi rasantes
+  // (unos 6 grados), lo veian de canto -- medido: 0 % de la imagen.
+  let rigHeight = null;
   let flightActive = false;
   // El portatil se abre por ABAJO (tapa inferior, ver caseGatePartId en
   // hardware_lab_data_laptop.js) -- ninguna vista existente (todas con Y
@@ -41,10 +91,17 @@ export function createCameraRig({ camera, renderer, tweenGroup, onTick }) {
   // (ver setBelowFrameProvider): devuelve el radio de lo que hay que encuadrar
   // (la tapa inferior completa) o null si ya esta abierto.
   let belowFrameProvider = null;
+  // Posiciones tecnicas (sep-26): el portatil puede estar VOLTEADO, con su
+  // interior mirando hacia arriba. Quien sabe como esta el equipo (el stage)
+  // responde { up, box, dir }: si `up`, la vista "Interna" encuadra el
+  // interior desde arriba; si no, sigue la vista desde abajo de siempre, con
+  // `belowTarget` (centro de la base) recalculado segun la pose actual.
+  let interiorProvider = null;
 
   function setRigBounds(center, radius, opts) {
     rigCenter = center.clone();
     rigRadius = Math.max(0.08, radius);
+    rigHeight = opts && opts.height != null ? opts.height : null;
     if (opts && opts.belowTarget) belowTarget = opts.belowTarget.clone();
     if (opts && opts.viewFromBelow != null) {
       viewFromBelow = !!opts.viewFromBelow;
@@ -57,7 +114,8 @@ export function createCameraRig({ camera, renderer, tweenGroup, onTick }) {
       // "correjia" sola de vuelta arriba un frame despues de terminar el
       // vuelo. Se relaja solo para el portatil (ver hardware_lab_3d_stage.js);
       // el escritorio conserva el limite original sin cambios.
-      controls.maxPolarAngle = viewFromBelow ? Math.PI * 0.97 : Math.PI * 0.495;
+      basePolarMax = viewFromBelow ? Math.PI * 0.97 : Math.PI * 0.495;
+      controls.maxPolarAngle = basePolarMax;
     }
   }
 
@@ -74,8 +132,24 @@ export function createCameraRig({ camera, renderer, tweenGroup, onTick }) {
   }
   renderer.domElement.addEventListener("pointerdown", onPointerDownDuringFlight, { passive: true });
 
+  /** Limite de la mesa ANTES de que OrbitControls aplique la orbita. */
+  function applyTableLimit() {
+    const distance = camera.position.distanceTo(controls.target);
+    controls.maxPolarAngle = Math.min(basePolarMax, polarLimitForMinY(controls.target.y, distance));
+  }
+  // Los manejadores de OrbitControls llaman a update() tambien fuera del
+  // tick; el limite queda fijado para esas llamadas.
+  controls.addEventListener("change", () => {
+    if (clampCameraAboveY(camera.position, controls.target)) camera.lookAt(controls.target);
+  });
+
   const offTick = onTick(() => {
+    applyTableLimit();
     controls.update();
+    // Respaldo: OrbitControls limita phi ANTES de aplicar el zoom (el radio se
+    // multiplica despues), asi que alejar con la camara en el limite podia
+    // dejarla por debajo. Se corrige conservando distancia y acimut.
+    if (clampCameraAboveY(camera.position, controls.target)) camera.lookAt(controls.target);
   });
 
   function flyTo(position, target, opts = {}) {
@@ -117,6 +191,10 @@ export function createCameraRig({ camera, renderer, tweenGroup, onTick }) {
   function viewPreset(name) {
     const c = rigCenter;
     const r = rigRadius;
+    // Elevacion de las vistas laterales: la de siempre (0.32r) salvo que el
+    // equipo sea una losa (alto menor que medio radio), que se ve de arriba en
+    // angulo (~19 grados) para que ocupe cuadro.
+    const sideLift = rigHeight != null && rigHeight < r * 0.5 ? r * 1.1 : r * 0.32;
     switch (name) {
       case "front":
         // Distancia subida de 2.1 a 3.2 (mejora visual, auditoria con clic
@@ -125,7 +203,7 @@ export function createCameraRig({ camera, renderer, tweenGroup, onTick }) {
         // y abajo -- "overview" ya usaba ~3.2r de distancia total y ese si
         // se veia bien encuadrado, asi que se empareja esa misma escala para
         // front/side/back en vez de inventar un numero nuevo sin referencia.
-        return { pos: new THREE.Vector3(c.x, c.y + r * 0.32, c.z + r * 3.2), target: c };
+        return { pos: new THREE.Vector3(c.x, c.y + sideLift, c.z + r * 3.2), target: c };
       case "side":
         // Lado NEGATIVO de X (mejora visual, auditoria con clic real): la
         // bandeja de piezas retiradas (ZONES.trayOrigin, hardware_lab_3d_
@@ -135,12 +213,17 @@ export function createCameraRig({ camera, renderer, tweenGroup, onTick }) {
         // exactamente en la linea de vision, tapando el gabinete casi por
         // completo. Mirando desde -X se evita esa colision sin tocar la
         // posicion de la bandeja ni ningun otro preset.
-        return { pos: new THREE.Vector3(c.x - r * 3.2, c.y + r * 0.28, c.z), target: c };
+        return { pos: new THREE.Vector3(c.x - r * 3.2, c.y + (sideLift === r * 0.32 ? r * 0.28 : sideLift), c.z), target: c };
       case "top":
         return { pos: new THREE.Vector3(c.x + 0.001, c.y + r * 2.6, c.z + 0.15), target: c };
       case "back":
-        return { pos: new THREE.Vector3(c.x, c.y + r * 0.32, c.z - r * 3.2), target: c };
+        return { pos: new THREE.Vector3(c.x, c.y + sideLift, c.z - r * 3.2), target: c };
       case "internal":
+        if (interiorProvider) {
+          const info = interiorProvider();
+          if (info && info.up && info.box && !info.box.isEmpty()) return workFrame(info.box, info.dir);
+          if (info && info.belowTarget) belowTarget = info.belowTarget.clone();
+        }
         if (viewFromBelow) {
           // Mira hacia arriba desde debajo del equipo -- el unico angulo
           // desde el que la tapa inferior (y lo que hay detras) es visible.
@@ -212,6 +295,26 @@ export function createCameraRig({ camera, renderer, tweenGroup, onTick }) {
     }
   }
 
+  /** Encuadre de trabajo: la caja completa, vista desde `dir` (mundo), con la
+   *  camara siempre por encima del tablero. */
+  function workFrame(box, dir) {
+    const sphere = box.getBoundingSphere(new THREE.Sphere());
+    const d = dir.clone().normalize();
+    // Margen: el cuadro vertical es el mas estrecho; se usa el FOV vertical y
+    // un 25 % de aire para que lo encuadrado no toque los bordes (medido en
+    // las capturas de teclado y pantalla, que con 10 % quedaban al ras).
+    const dist = Math.max(0.24, (Math.max(sphere.radius, 0.02) / Math.sin(THREE.MathUtils.degToRad(camera.fov / 2))) * 1.25);
+    const pos = sphere.center.clone().addScaledVector(d, dist);
+    pos.y = Math.max(pos.y, TABLE.topY + 0.05);
+    return { pos, target: sphere.center.clone() };
+  }
+
+  function frameWork(box, dir, opts) {
+    if (!box || box.isEmpty()) return;
+    const f = workFrame(box, dir);
+    flyTo(f.pos, f.target, opts);
+  }
+
   function goToView(name, opts) {
     const preset = viewPreset(name);
     flyTo(preset.pos, preset.target, opts);
@@ -241,7 +344,8 @@ export function createCameraRig({ camera, renderer, tweenGroup, onTick }) {
     // por la cara inferior. Si la camara ya esta por debajo de la pieza, se
     // conserva ABAJO en vez de subirla por encima (donde el reposamanos y la
     // placa la tapan). Solo aplica con viewFromBelow (portatil).
-    const keepBelow = viewFromBelow && dir.y < 0;
+    const interiorUp = interiorProvider ? !!(interiorProvider() || {}).up : false;
+    const keepBelow = viewFromBelow && !interiorUp && dir.y < 0;
     if (keepBelow) {
       pos.y = Math.min(pos.y, sphere.center.y - sphere.radius * 0.35);
     } else {
@@ -321,10 +425,17 @@ export function createCameraRig({ camera, renderer, tweenGroup, onTick }) {
     belowFrameProvider = typeof fn === "function" ? fn : null;
   }
 
+  function setInteriorProvider(fn) {
+    interiorProvider = typeof fn === "function" ? fn : null;
+  }
+
   return {
     controls,
     setRigBounds,
     setBelowFrameProvider,
+    setInteriorProvider,
+    frameWork,
+    workFrame,
     goToView,
     focusOnObject,
     focusOnObjects,

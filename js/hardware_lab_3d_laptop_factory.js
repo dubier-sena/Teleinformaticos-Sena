@@ -234,6 +234,30 @@ export const LAPTOP_TOUCHPAD_SCREW_X = 0.035;
 // de bisagra; ~100 grados desde la horizontal). La usa el layout como
 // rotationEuler y buildLaptopLid para compensar la hoja de bisagra.
 export const LAPTOP_LID_OPEN_ANGLE = -1.75;
+// Tapa CERRADA (posiciones tecnicas, sep-26): giro 0 sobre el eje de bisagra.
+export const LAPTOP_LID_CLOSED_ANGLE = 0;
+// Angulos TECNICOS de la tapa (sep-26), elegidos por MEDICION de la geometria
+// real (barrido 60-150 grados, OBB por malla y separacion por ejes; no son
+// "90 porque si" ni el angulo de la vista General):
+//  - Teclado: por debajo de 88 grados la tapa se proyecta sobre la huella del
+//    teclado (84: -13.5 mm de margen, 86: -21, 88: -28.4) y desde 90 el margen
+//    ya no mejora (-28.6: lo mas adelantado pasa a ser el nudillo). Por encima
+//    de 90 solo baja la holgura del brazo de bisagra con la base.
+//  - Pantalla: la holgura del brazo de bisagra con la base al EXTRAER el
+//    conjunto tiene su maximo en 90 grados (3.1 mm; 89 y 91: 3.0; 100: 2.4;
+//    140: 0.0) y la holgura montada es la maxima (2.0 mm) hasta 90.
+export const LAPTOP_LID_KEYBOARD_ANGLE = -Math.PI / 2;
+export const LAPTOP_LID_DISPLAY_ANGLE = -Math.PI / 2;
+// Tope mecanico medido: con la pantalla montada, a partir de ~112 grados el
+// brazo de bisagra entra en la pared trasera de la base (110: +0.1 mm,
+// 115: -0.3, 145: -2.5). Ninguna pose puede abrir mas que esto.
+export const LAPTOP_LID_MAX_OPEN_ANGLE = -110 * Math.PI / 180;
+// Altura (sobre el eje de bisagra) de la cara del marco/panel con la tapa
+// cerrada. Medido: el teclado llega a y 22.7 mm (eje en 21.0); con 0.6 mm de
+// holgura la cara del panel queda en 23.3 mm. Antes el contenido de la tapa
+// colgaba POR DEBAJO del eje (-8.3 mm): cerrada se hundia 10 mm en el teclado,
+// asi que el portatil no podia cerrarse ni voltearse.
+const LID_CLOSED_FACE_ABOVE_AXIS = 0.0023;
 // Tramo del soporte de bisagra (chasis) que queda bajo el nudillo de la TAPA:
 // ahi se rebaja para alojar la hoja de bisagra de la pantalla.
 const HINGE_LEAF_X0 = 0.1122, HINGE_LEAF_X1 = 0.125;
@@ -1839,15 +1863,30 @@ export function buildLaptopLid(opts = {}) {
     put(body, mic, x, fy - 0.0012, camZ);
   });
 
+  // Cuerpo POR ENCIMA del eje (sep-26): el contenido se autoro colgando bajo
+  // el eje; se sube lo justo para que, cerrada (giro 0), la cara mas baja
+  // (lente de la camara) quede LID_CLOSED_FACE_ABOVE_AXIS sobre el eje. Se
+  // mide la caja real del cuerpo en vez de sumar espesores a mano.
+  const bodyBox = new THREE.Box3().setFromObject(body);
+  body.position.y = LID_CLOSED_FACE_ABOVE_AXIS - bodyBox.min.y;
+  const bodyLift = body.position.y;
+
   // Bisagra: nudillo EXTERIOR del eje (el interior es del cuerpo base) y su
-  // brazo, que lo une a la tapa. Mismo eje que el origen del grupo.
+  // brazo, que lo une a la tapa. Mismo eje que el origen del grupo. El brazo
+  // sube desde el nudillo hasta el cuerpo (que ahora esta sobre el eje) por
+  // dentro del marco inferior.
   const hgL = LAPTOP.hinge, knuckleL = hgL.length / 2;
+  // Arranca EN el eje (el nudillo cubre la union): con -1.5 mm, cerrada, el
+  // brazo entraba 1.5 mm en el reposamanos (medido en W02).
+  const armY0 = 0.0003, armY1 = bodyLift - t / 2;
   [-1, 1].forEach((s) => {
     const kx = s * (hgL.x + knuckleL / 2);
     const k = new THREE.Mesh(cyl(hgL.radius, hgL.radius, knuckleL, 16), materialFor("metalSteel"));
     k.rotation.z = Math.PI / 2;
     put(g, k, kx, 0, 0);
-    put(g, box(knuckleL, 0.0045, 0.012, "metalSteel"), kx, -t / 2, 0.008);
+    const arm = box(knuckleL, armY1 - armY0, 0.012, "metalSteel");
+    arm.name = "lid-hinge-arm";
+    put(g, arm, kx, (armY0 + armY1) / 2, 0.008);
   });
 
   // Hojas de bisagra (sep-2026): chapa de la PANTALLA que asienta sobre el

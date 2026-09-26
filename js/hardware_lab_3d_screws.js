@@ -251,6 +251,7 @@ export function createScrewController(options) {
     entries,
     tweenGroup,
     dishOrigin,
+    dishWorldOrigin: dishWorldOriginOpt,
     floorY,
     canOperatePart,
     onChanged,
@@ -261,6 +262,18 @@ export function createScrewController(options) {
 
   const byId = new Map();
   entries.forEach((e) => byId.set(e.id, Object.assign({ installed: true }, e)));
+
+  // El grupo de tornillos SIGUE al portatil (posiciones tecnicas, sep-26: se
+  // gira y se voltea con el), pero la bandeja magnetica se queda en la mesa.
+  // Su origen se fija en MUNDO al crear el controlador (el equipo esta en su
+  // pose inicial) y cada tornillo guardado se traduce al espacio del grupo
+  // segun como este el equipo ahora. Con el grupo sin girar, la traduccion
+  // devuelve exactamente la posicion local de siempre.
+  const dishWorldOrigin = dishWorldOriginOpt
+    ? dishWorldOriginOpt.clone()
+    : dishOrigin.clone().applyQuaternion(group.quaternion).add(group.position);
+  const toGroupLocal = (world) => world.clone().sub(group.position).applyQuaternion(group.quaternion.clone().invert());
+  const stowedQuaternion = () => group.quaternion.clone().invert();
 
   const driver = buildPrecisionScrewdriver();
   driver.visible = false;
@@ -302,7 +315,7 @@ export function createScrewController(options) {
     // se tapaban entre si y un tornillo de la bandeja quedaba inseleccionable
     // (medido con clic real).
     const r = ring * 0.013;
-    return new THREE.Vector3(dishOrigin.x + Math.cos(a) * r, dishOrigin.y + 0.0032, dishOrigin.z + Math.sin(a) * r);
+    return toGroupLocal(new THREE.Vector3(dishWorldOrigin.x + Math.cos(a) * r, dishWorldOrigin.y + 0.0032, dishWorldOrigin.z + Math.sin(a) * r));
   }
 
   function orientScrew(entry, object3d) {
@@ -330,7 +343,7 @@ export function createScrewController(options) {
       o.visible = true;
     } else {
       o.position.copy(dishSlot(dishIndex != null ? dishIndex : entry.dishIndex || 0));
-      o.quaternion.setFromUnitVectors(UP, new THREE.Vector3(0, 1, 0));
+      o.quaternion.copy(stowedQuaternion());
       o.visible = true;
     }
   }
@@ -409,9 +422,13 @@ export function createScrewController(options) {
   // entraba 25 mm en la mesa en cada tornillo de la tapa inferior (el portatil
   // esta elevado 160 mm y la herramienta mide 125).
   function maxApproachGap(entry) {
-    const oy = entry.outDir.y;
+    // En MUNDO: con el portatil volteado, un tornillo que "sale hacia abajo"
+    // del equipo sale hacia ARRIBA de la mesa y la herramienta no la toca.
+    const outW = entry.outDir.clone().applyQuaternion(group.quaternion);
+    const oy = outW.y;
     if (floorY == null || oy >= -1e-6) return 0.06; // no baja: la mesa no estorba
-    const headWorldY = group.position.y + entry.homePosition.y + oy * SCREW_SIZE.headH;
+    const headWorld = entry.homePosition.clone().applyQuaternion(group.quaternion).add(group.position);
+    const headWorldY = headWorld.y + oy * SCREW_SIZE.headH;
     const room = (headWorldY - (floorY + 0.006)) / -oy - DRIVER_LENGTH;
     return Math.max(0.004, Math.min(0.06, room));
   }
@@ -523,12 +540,14 @@ export function createScrewController(options) {
       entry.presented = false;
       entry.dishIndex = list().filter((s) => !s.installed && !s.presented && s !== entry).length;
       const slot = dishSlot(entry.dishIndex);
+      entry.stowing = true;
       animateObject3D(tweenGroup, entry.object3d, {
         position: slot,
-        quaternion: new THREE.Quaternion(),
+        quaternion: stowedQuaternion(),
         duration: prefersReducedMotion() ? 0 : 0.45,
         easing: Easing.easeInOutCubic,
         onComplete: () => {
+          entry.stowing = false;
           setBusy(false);
           if (onChanged) onChanged(entry.id, false, entry.partId);
           if (onDone) onDone(true);
@@ -576,6 +595,16 @@ export function createScrewController(options) {
     return { ok: true, started: true, direction };
   }
 
+  /** El portatil cambio de pose: los tornillos guardados siguen en la bandeja
+   *  magnetica de la mesa (los instalados y presentados viajan con el grupo). */
+  function refreshStowed() {
+    list().forEach((entry) => {
+      if (entry.installed || entry.presented || entry.stowing) return;
+      entry.object3d.position.copy(dishSlot(entry.dishIndex || 0));
+      entry.object3d.quaternion.copy(stowedQuaternion());
+    });
+  }
+
   /** Enciende el aro de "pendiente" en los tornillos que el paso actual pide
    * tocar (los instalados si toca retirar, los que faltan si toca colocar). */
   function setHighlight(partId, action) {
@@ -620,6 +649,7 @@ export function createScrewController(options) {
     setState,
     handleScrewClick,
     setHighlight,
+    refreshStowed,
     setEnabled,
     isBusy,
     dispose,
