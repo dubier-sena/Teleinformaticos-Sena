@@ -41,8 +41,8 @@ function loadLoopText() {
 // ─── 1. Integridad del LOOP ────────────────────────────────────────────────
 // La huella fija el texto entregado por el instructor: cualquier edicion
 // (resumir, reescribir, quitar una regla) rompe esta prueba a proposito.
-const LOOP_SHA256 = "a30f1478c6a8eded5f32bc2a361c837a2da56b45e2728a4b4f60d6e215984f37";
-const LOOP_LENGTH = 14892;
+const LOOP_SHA256 = "f434e8e339094a762e70cca230c91ccd0f281b4c5b74c9f08a67d9d7f44c2b55";
+const LOOP_LENGTH = 21247;
 
 test("LOOP: el texto coincide byte a byte con el entregado (huella SHA-256 y longitud)", () => {
   const { text } = loadLoopText();
@@ -64,11 +64,15 @@ test("LOOP: contiene los 33 bloques numerados, en orden y sin repetir", () => {
 
 test("LOOP: conserva la prohibicion de 999999999 en todos sus puntos", () => {
   const { text } = loadLoopText();
-  assert.equal((text.match(/999999999/g) || []).length, 22);
+  assert.equal((text.match(/999999999/g) || []).length, 31);
   assert.match(text, /4\. PROHIBICIÓN ABSOLUTA DEL CÓDIGO 999999999/);
   assert.match(text, /5\. 999999999 NO ES UNA OPCIÓN/);
   assert.match(text, /NO utilizar 999999999 bajo ninguna circunstancia como competencia final\./);
-  assert.match(text, /1\. ¿Aparece 999999999\?\n\nSI → ERROR\./);
+  // El control final evalua el CAMPO Competencia, no la simple aparicion
+  // del codigo (ajuste 2026-09-26: puede mencionarse en DATOS POR CONFIRMAR
+  // y aparece legitimamente en el Diseño Curricular).
+  assert.match(text, /1\. ¿Algún campo Competencia final quedó con 999999999\?\n\nSI → ERROR\./);
+  assert.doesNotMatch(text, /¿Aparece 999999999\?/);
 });
 
 test("LOOP: formato obligatorio, DATOS POR CONFIRMAR, CONTROL FINAL y cierre completo", () => {
@@ -87,6 +91,9 @@ test("LOOP: formato obligatorio, DATOS POR CONFIRMAR, CONTROL FINAL y cierre com
 
 // Bloque 33 tal como lo entrego el instructor (correccion 2026-09-23: la
 // primera version quedo truncada en el paso 15). Se compara literalmente.
+// Ajuste 2026-09-26: el paso 3 comprueba si se proporciono el Diseño
+// Curricular (y prevalece sobre 4-9) y el paso 8 ya no sirve de sustituto
+// generico cuando lo que falta es el documento.
 const EXPECTED_BLOCK_33 = `==================================================
 33. INICIO
 ==================================================
@@ -97,7 +104,10 @@ Para CADA actividad:
 
 1. Lee la actividad.
 2. Lee la evidencia.
-3. Identifica la competencia actual.
+3. Identifica la competencia actual y comprueba si el Diseño
+   Curricular oficial fue proporcionado en esta conversación. Si no
+   lo fue y la competencia requiere validación curricular:
+   REQUIERE DISEÑO CURRICULAR OFICIAL (prevalece sobre los pasos 4 a 9).
 
 4. SI ES 999999999:
    - DESCÁRTALA INMEDIATAMENTE.
@@ -117,8 +127,8 @@ Para CADA actividad:
 7. Si no corresponde:
    buscar otra competencia mediante RAP.
 
-8. Si falta información:
-   REQUIERE ACLARAR LA ACTIVIDAD REALIZADA.
+8. Si falta información sobre la actividad o la evidencia:
+   REQUIERE ACLARAR LA INFORMACIÓN.
 
 9. Si existe información suficiente pero ningún RAP aplica:
    NO SE IDENTIFICA COMPETENCIA APLICABLE.
@@ -160,6 +170,75 @@ test("LOOP: el bloque 33 contiene explicitamente los pasos 15 a 20 y numera 1..2
   }
   const steps = [...block.matchAll(/^(\d+)\. /gm)].map((m) => Number(m[1])).slice(1);
   assert.deepEqual(steps, Array.from({ length: 20 }, (_, i) => i + 1));
+});
+
+// ─── 1b. Diseño Curricular ausente y regla de 999999999 (2026-09-26) ───────
+function getSection(text, n) {
+  const re = new RegExp("={50}\\n" + n + "\\. [^\\n]+\\n={50}\\n([\\s\\S]*?)(?=\\n={50}\\n\\d+\\. |$)");
+  const m = text.match(re);
+  assert.ok(m, "no se encontro la seccion " + n);
+  return m[1];
+}
+
+test("REQUIERE DISEÑO CURRICULAR OFICIAL: estado temporal, distinto de DATOS POR CONFIRMAR", () => {
+  const { text } = loadLoopText();
+  assert.match(text, /REQUIERE DISEÑO CURRICULAR OFICIAL es un estado temporal de revisión:\nno es una competencia SENA, ni un código, ni un RAP, ni un valor\ndefinitivo\. No debe quedar en la bitácora oficial del aprendiz/);
+  assert.match(text, /"DATOS POR CONFIRMAR" es la sección final de la\nrespuesta \(sección 30\); nunca se escribe como valor de un campo\./);
+  // DATOS POR CONFIRMAR nunca aparece como valor del campo Competencia.
+  assert.doesNotMatch(text, /Competencia:\*{0,2}\n+DATOS POR CONFIRMAR/);
+  assert.match(getSection(text, 32), /¿Algún campo Competencia dice DATOS POR CONFIRMAR\?\n\nSI → ERROR\./);
+  // Aviso de revision provisional al inicio de DATOS POR CONFIRMAR.
+  assert.match(getSection(text, 30), /REVISIÓN PROVISIONAL: todavía no copies estas actividades a tu\nbitácora oficial\./);
+});
+
+test("999999999: existe en el Diseño Curricular, pero no es asignable como competencia", () => {
+  const { text } = loadLoopText();
+  assert.match(getSection(text, 4), /999999999 — RESULTADOS DE APRENDIZAJE ETAPA PRACTICA sí aparece en el\nDiseño Curricular oficial: no es un código inventado, falso ni\ninexistente, y su presencia en el documento no es un error\./);
+  // Ninguna linea que mencione 999999999 lo llama inventado/falso/inexistente
+  // (la seccion 12 lista "A) Es 999999999." y "B) El código no existe." como
+  // motivos DISTINTOS, en lineas separadas).
+  for (const line of text.split("\n").filter((l) => l.includes("999999999"))) {
+    assert.doesNotMatch(line, /inventad|falso|inexistente|no existe/i, "linea ambigua: " + line);
+  }
+  // Excluido de las candidatas al buscar con el documento (su RAP es generico).
+  assert.match(getSection(text, 6), /Revisa las competencias del Diseño Curricular oficial proporcionado,\nexcluyendo 999999999\./);
+  assert.match(getSection(text, 13), /Excluir 999999999 de las competencias candidatas aunque aparezca en\nel Diseño Curricular/);
+  assert.match(getSection(text, 23), /buscar competencia real en el Diseño\nCurricular, excluyendo 999999999\./);
+  // Puede mencionarse como valor registrado; lo que se prohibe es el campo.
+  assert.match(getSection(text, 4), /7\. NO lo incluyas como competencia en la respuesta final \(sí puedes\n   mencionarlo en DATOS POR CONFIRMAR como valor originalmente\n   registrado\)\./);
+  assert.match(getSection(text, 32), /Mencionar 999999999 en DATOS POR CONFIRMAR como valor registrado, o\nreconocer que aparece en el Diseño Curricular, no es un error\./);
+});
+
+test("999999999 sin Diseño Curricular: REQUIERE DISEÑO CURRICULAR OFICIAL, sin inventar el reemplazo", () => {
+  const s7 = getSection(loadLoopText().text, 7);
+  const iDoc = s7.indexOf("el Diseño Curricular oficial no fue\nproporcionado en esta conversación (esta situación se evalúa primero)");
+  const iAclarar = s7.indexOf("REQUIERE ACLARAR LA INFORMACIÓN");
+  assert.ok(iDoc >= 0 && iAclarar > iDoc, "la ausencia del documento debe evaluarse antes");
+  assert.match(s7, /Competencia:\nREQUIERE DISEÑO CURRICULAR OFICIAL\n\ny en DATOS POR CONFIRMAR indica que la actividad tiene registrado\n999999999 — RESULTADOS DE APRENDIZAJE ETAPA PRACTICA/);
+  assert.match(s7, /No lo reemplaces con memoria,\nconocimiento previo, búsquedas ni códigos recordados\./);
+  assert.match(s7, /NUNCA utilizar 999999999 como solución\./);
+});
+
+test("REQUIERE DISEÑO CURRICULAR OFICIAL y REQUIERE ACLARAR LA INFORMACIÓN tienen funciones distintas", () => {
+  const { text } = loadLoopText();
+  assert.doesNotMatch(text, /REQUIERE ACLARAR LA ACTIVIDAD REALIZADA/);
+  assert.match(text, /REQUIERE DISEÑO CURRICULAR OFICIAL se usa solo cuando falta el Diseño\nCurricular\./);
+  assert.match(text, /No sustituyas una por la otra\./);
+  // El paso 8 del bloque 33 y el orden de decision ya no son genericos.
+  assert.match(getSection(text, 23), /Si falta información sobre la actividad o la evidencia:\nREQUIERE ACLARAR LA INFORMACIÓN\./);
+});
+
+test("competencia registrada sin Diseño Curricular: ni incorrecta ni validada; la regla prevalece", () => {
+  const { text } = loadLoopText();
+  assert.match(text, /no la declares incorrecta ni\nla reemplaces por otra por ese solo motivo/);
+  assert.match(text, /no\nla presentes como validada ni la copies como resultado final/);
+  assert.match(text, /anotarla ahí no significa que haya sido validada/);
+  assert.match(text, /Esta regla prevalece sobre las reglas generales de conservación\n\(secciones 3, 10, 11, 27 y 31\)\./);
+  // Orden de decision: la ausencia del documento es la PRIMERA pregunta.
+  const s23 = getSection(text, 23);
+  assert.ok(s23.trimStart().startsWith("¿La decisión requiere el Diseño Curricular oficial y este NO fue\nproporcionado en esta conversación?"));
+  assert.ok(s23.indexOf("REQUIERE DISEÑO CURRICULAR OFICIAL") < s23.indexOf("¿Competencia = 999999999?"));
+  assert.match(getSection(text, 32), /NO → ningún campo Competencia puede presentarse como validado,\ncorregido ni asignado/);
 });
 
 test("LOOP: una sola fuente -- el texto no esta duplicado en otros archivos", () => {
@@ -299,6 +378,19 @@ test("modal: 'Ver y copiar LOOP' abre el panel con instrucciones, documentos, pr
   // El LOOP visible es el completo (sin truncar).
   const pre = modal.querySelector("[data-bitacora-loop-text]");
   assert.equal(pre.textContent, ctx.BITACORA_REVIEW_LOOP.text);
+});
+
+test("modal: advierte que una respuesta con REQUIERE DISEÑO CURRICULAR OFICIAL no se copia como definitiva", () => {
+  const { modal } = openModalFromCard();
+  const note = modal.querySelector("[data-bitacora-loop-provisional]");
+  assert.ok(note, "falta el aviso de revision provisional");
+  const t = note.textContent;
+  assert.match(t, /REQUIERE DISEÑO CURRICULAR OFICIAL/);
+  assert.match(t, /todavía NO está lista y esa frase no es una competencia: no la copies a tu bitácora/);
+  assert.match(t, /Falta el Diseño Curricular oficial: adjúntalo en esa misma conversación y pide de nuevo la revisión\./);
+  assert.match(t, /solo cuando cada actividad tenga su competencia validada/);
+  // Sigue habiendo exactamente 10 pasos (el aviso no es un paso).
+  assert.equal(modal.querySelectorAll(".bitacora-loop__steps li").length, 10);
 });
 
 test("modal: 'Copiar LOOP' copia EXACTAMENTE el texto de la fuente unica y confirma", async () => {

@@ -119,6 +119,10 @@
           '<ol class="bitacora-loop__steps">' + steps + "</ol>" +
           '<p class="bitacora-loop__important"><strong>IMPORTANTE:</strong> La IA NO debe modificar directamente tu archivo original. ' +
           "Revisa el resultado antes de copiarlo a tu bitácora.</p>" +
+          '<p class="bitacora-loop__important" data-bitacora-loop-provisional><strong>Si la respuesta dice “REQUIERE DISEÑO CURRICULAR OFICIAL”:</strong> ' +
+          "la revisión todavía NO está lista y esa frase no es una competencia: no la copies a tu bitácora. " +
+          "Falta el Diseño Curricular oficial: adjúntalo en esa misma conversación y pide de nuevo la revisión. " +
+          "Copia el resultado a tu bitácora solo cuando cada actividad tenga su competencia validada.</p>" +
         "</section>" +
 
         '<section class="bitacora-loop__section" aria-labelledby="bitacora-loop-docs">' +

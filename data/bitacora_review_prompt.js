@@ -1,9 +1,10 @@
 // Fuente UNICA del LOOP "Revision y correccion de bitacoras SENA con validacion
 // curricular" (Etapa Productiva, grado 11 -- ver js/bitacora_review_loop.js).
 // La tarjeta, el modal, "Copiar LOOP" y "Descargar LOOP" leen SOLO de aqui.
-// Texto entregado por el instructor (2026-09-22): no resumir, no reescribir,
+// Texto entregado por el instructor (2026-09-22; ajuste 2026-09-26: Diseño
+// Curricular ausente y regla de 999999999): no resumir, no reescribir,
 // no quitar reglas -- en especial la prohibicion de 999999999 y el control
-// final. tests/bitacora_review_prompt.test.cjs verifica su integridad.
+// final. tests/bitacora_review_loop.test.cjs verifica su integridad.
 (function () {
   var text = `LOOP — REVISIÓN Y CORRECCIÓN DE BITÁCORAS SENA CON VALIDACIÓN CURRICULAR
 
@@ -57,6 +58,87 @@ PROHIBIDO:
 - modificar denominaciones oficiales;
 - utilizar competencias de otro programa;
 - completar información curricular de memoria.
+
+DISPONIBILIDAD DEL DISEÑO CURRICULAR
+
+Este LOOP será copiado por el aprendiz y utilizado en la herramienta
+de inteligencia artificial que elija.
+
+IMPORTANTE:
+No asumas que tienes acceso al Diseño Curricular por el solo hecho de
+recibir este LOOP. Utiliza únicamente el Diseño Curricular que el
+aprendiz haya proporcionado en esta conversación.
+
+Para validar, corregir o asignar competencias y Resultados de
+Aprendizaje (RAP), la IA debe trabajar únicamente con el Diseño
+Curricular oficial proporcionado por el aprendiz en esa misma
+conversación.
+
+Si el Diseño Curricular oficial no ha sido adjuntado o suministrado:
+
+- no inventar competencias;
+- no inventar códigos;
+- no inventar RAP;
+- no completar información curricular de memoria;
+- no utilizar información curricular obtenida de otros programas;
+- no utilizar información de conversaciones anteriores, búsquedas
+  externas ni códigos recordados;
+- no asignar un código solo porque el nombre de la actividad se
+  parezca al de una competencia;
+- solicitar al aprendiz que proporcione el Diseño Curricular oficial
+  antes de realizar cualquier corrección que requiera validación
+  curricular.
+
+Si para validar, corregir o asignar una competencia o un RAP se
+necesita consultar el Diseño Curricular oficial y este NO fue
+proporcionado por el aprendiz en esta conversación:
+
+- en el campo Competencia registrar exactamente:
+
+  REQUIERE DISEÑO CURRICULAR OFICIAL
+
+- en la sección DATOS POR CONFIRMAR indicar que el aprendiz debe
+  proporcionar el Diseño Curricular oficial para poder validar,
+  corregir o asignar la competencia y el RAP correspondientes;
+- no afirmar ni insinuar que se consultó un Diseño Curricular que no
+  se recibió;
+- no utilizar información curricular de memoria ni información de
+  otro programa de formación.
+
+"REQUIERE DISEÑO CURRICULAR OFICIAL" es el valor del campo
+Competencia. "DATOS POR CONFIRMAR" es la sección final de la
+respuesta (sección 30); nunca se escribe como valor de un campo.
+
+REQUIERE DISEÑO CURRICULAR OFICIAL es un estado temporal de revisión:
+no es una competencia SENA, ni un código, ni un RAP, ni un valor
+definitivo. No debe quedar en la bitácora oficial del aprendiz; solo
+indica que la revisión de esa actividad sigue pendiente.
+
+REQUIERE DISEÑO CURRICULAR OFICIAL se usa solo cuando falta el Diseño
+Curricular. Cuando la competencia no puede determinarse porque falta,
+es contradictoria o es insuficiente otra información (actividad,
+descripción, evidencia o contexto), se usa REQUIERE ACLARAR LA
+INFORMACIÓN. Las inconsistencias de fechas se registran en DATOS POR
+CONFIRMAR (sección 25). No sustituyas una por la otra. Si en una misma
+actividad faltan el Diseño Curricular y otra información, registra
+REQUIERE DISEÑO CURRICULAR OFICIAL en el campo Competencia y explica
+las dos faltas en DATOS POR CONFIRMAR.
+
+La ausencia del Diseño Curricular NO autoriza a inventar códigos,
+competencias ni RAP, y NO permite utilizar 999999999 como solución.
+
+La ausencia del Diseño Curricular tampoco significa que una
+competencia registrada sea incorrecta: no la declares incorrecta ni
+la reemplaces por otra por ese solo motivo. Pero sin el Diseño
+Curricular tampoco puede validarse (secciones 10 y 11), así que no
+la presentes como validada ni la copies como resultado final:
+registra REQUIERE DISEÑO CURRICULAR OFICIAL en el campo Competencia
+y, en DATOS POR CONFIRMAR, anota la competencia registrada como
+referencia para validarla cuando el aprendiz proporcione el documento
+(anotarla ahí no significa que haya sido validada).
+
+Esta regla prevalece sobre las reglas generales de conservación
+(secciones 3, 10, 11, 27 y 31).
 
 ==================================================
 2. ALCANCE
@@ -116,6 +198,14 @@ como competencia de una actividad.
 
 Esta prohibición es ABSOLUTA.
 
+999999999 — RESULTADOS DE APRENDIZAJE ETAPA PRACTICA sí aparece en el
+Diseño Curricular oficial: no es un código inventado, falso ni
+inexistente, y su presencia en el documento no es un error. La
+prohibición no niega que exista: significa que no es asignable como
+competencia de una actividad de la bitácora, ni siquiera cuando
+aparece en el Diseño Curricular proporcionado. Exclúyelo siempre de
+las competencias candidatas.
+
 Si aparece 999999999 en la bitácora:
 
 1. Considéralo automáticamente como un campo de competencia que debe ser
@@ -125,7 +215,9 @@ Si aparece 999999999 en la bitácora:
 4. NO lo presentes como alternativa.
 5. NO lo utilices como competencia provisional.
 6. NO lo utilices cuando no encuentres otra competencia.
-7. NO lo incluyas en la respuesta final.
+7. NO lo incluyas como competencia en la respuesta final (sí puedes
+   mencionarlo en DATOS POR CONFIRMAR como valor originalmente
+   registrado).
 
 Debes buscar la competencia REAL del programa mediante:
 
@@ -172,7 +264,8 @@ PASO 2
 Analiza la evidencia disponible.
 
 PASO 3
-Revisa las competencias del Diseño Curricular oficial.
+Revisa las competencias del Diseño Curricular oficial proporcionado,
+excluyendo 999999999.
 
 PASO 4
 Revisa los RAP pertinentes.
@@ -192,13 +285,25 @@ Reemplaza 999999999 por:
 7. SI NO PUEDES REEMPLAZAR 999999999
 ==================================================
 
-Si aparece 999999999 pero la información disponible NO permite determinar
-la competencia real:
+Si aparece 999999999 pero el Diseño Curricular oficial no fue
+proporcionado en esta conversación (esta situación se evalúa primero):
+
+Competencia:
+REQUIERE DISEÑO CURRICULAR OFICIAL
+
+y en DATOS POR CONFIRMAR indica que la actividad tiene registrado
+999999999 — RESULTADOS DE APRENDIZAJE ETAPA PRACTICA y que se necesita
+el Diseño Curricular oficial para determinar la competencia y el RAP
+que realmente corresponden. No lo reemplaces con memoria,
+conocimiento previo, búsquedas ni códigos recordados.
+
+Si aparece 999999999, el Diseño Curricular fue proporcionado, pero la
+información disponible NO permite determinar la competencia real:
 
 Si falta información sobre lo que hizo realmente el aprendiz:
 
 Competencia:
-REQUIERE ACLARAR LA ACTIVIDAD REALIZADA
+REQUIERE ACLARAR LA INFORMACIÓN
 
 y agrega una pregunta breve en DATOS POR CONFIRMAR.
 
@@ -315,6 +420,10 @@ RAP OFICIAL
 COMPETENCIA OFICIAL
 
 No seleccionar únicamente por similitud de palabras.
+
+Excluir 999999999 de las competencias candidatas aunque aparezca en
+el Diseño Curricular: su RAP describe la etapa práctica en general y
+coincide con casi cualquier actividad, por eso no sirve para asignar.
 
 ==================================================
 14. PRUEBA OBLIGATORIA
@@ -466,10 +575,22 @@ No inventar acciones no realizadas.
 23. ORDEN DE DECISIÓN
 ==================================================
 
+¿La decisión requiere el Diseño Curricular oficial y este NO fue
+proporcionado en esta conversación?
+
+SI:
+REQUIERE DISEÑO CURRICULAR OFICIAL.
+Prevalece sobre conservar, cambiar o asignar, también cuando la
+competencia registrada es 999999999.
+
+NO:
+continuar.
+
 ¿Competencia = 999999999?
 
 SI:
-DESCARTAR inmediatamente y buscar competencia real.
+DESCARTAR inmediatamente y buscar competencia real en el Diseño
+Curricular, excluyendo 999999999.
 
 NO:
 validar competencia actual mediante RAP ↔ actividad ↔ evidencia.
@@ -480,8 +601,8 @@ CONSERVAR.
 Si no:
 buscar competencia correcta.
 
-Si falta información:
-REQUIERE ACLARAR LA ACTIVIDAD REALIZADA.
+Si falta información sobre la actividad o la evidencia:
+REQUIERE ACLARAR LA INFORMACIÓN.
 
 Si existe información suficiente pero ningún RAP aplica:
 NO SE IDENTIFICA COMPETENCIA APLICABLE.
@@ -593,6 +714,13 @@ Al final:
 
 Incluir únicamente lo que realmente no pueda resolverse.
 
+Si algún campo Competencia dice REQUIERE DISEÑO CURRICULAR OFICIAL,
+empieza esta sección con:
+
+REVISIÓN PROVISIONAL: todavía no copies estas actividades a tu
+bitácora oficial. Adjunta el Diseño Curricular oficial en esta misma
+conversación y pide de nuevo la revisión.
+
 Si no existen pendientes:
 
 ### DATOS POR CONFIRMAR
@@ -620,9 +748,12 @@ NO utilizar 999999999 bajo ninguna circunstancia como competencia final.
 
 Antes de responder comprobar:
 
-1. ¿Aparece 999999999?
+1. ¿Algún campo Competencia final quedó con 999999999?
 
 SI → ERROR.
+
+Mencionar 999999999 en DATOS POR CONFIRMAR como valor registrado, o
+reconocer que aparece en el Diseño Curricular, no es un error.
 
 2. ¿Cada código existe en el Diseño Curricular?
 
@@ -633,6 +764,17 @@ SI → ERROR.
 5. ¿Se inventó información?
 
 6. ¿Se cambió una competencia válida innecesariamente?
+
+7. ¿Se proporcionó el Diseño Curricular oficial en esta conversación?
+
+NO → ningún campo Competencia puede presentarse como validado,
+corregido ni asignado: los que requieran validación curricular deben
+decir REQUIERE DISEÑO CURRICULAR OFICIAL, y DATOS POR CONFIRMAR debe
+empezar con REVISIÓN PROVISIONAL y solicitar el documento.
+
+8. ¿Algún campo Competencia dice DATOS POR CONFIRMAR?
+
+SI → ERROR.
 
 Corregir antes de entregar.
 
@@ -646,7 +788,10 @@ Para CADA actividad:
 
 1. Lee la actividad.
 2. Lee la evidencia.
-3. Identifica la competencia actual.
+3. Identifica la competencia actual y comprueba si el Diseño
+   Curricular oficial fue proporcionado en esta conversación. Si no
+   lo fue y la competencia requiere validación curricular:
+   REQUIERE DISEÑO CURRICULAR OFICIAL (prevalece sobre los pasos 4 a 9).
 
 4. SI ES 999999999:
    - DESCÁRTALA INMEDIATAMENTE.
@@ -666,8 +811,8 @@ Para CADA actividad:
 7. Si no corresponde:
    buscar otra competencia mediante RAP.
 
-8. Si falta información:
-   REQUIERE ACLARAR LA ACTIVIDAD REALIZADA.
+8. Si falta información sobre la actividad o la evidencia:
+   REQUIERE ACLARAR LA INFORMACIÓN.
 
 9. Si existe información suficiente pero ningún RAP aplica:
    NO SE IDENTIFICA COMPETENCIA APLICABLE.
