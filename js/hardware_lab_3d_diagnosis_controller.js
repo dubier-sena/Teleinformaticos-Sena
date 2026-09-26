@@ -47,9 +47,6 @@ export function createDiagnosisController(stage) {
   function Cases() {
     return window.HardwareLab.DiagnosisCases.CASES;
   }
-  function Tools() {
-    return window.HardwareLab.Tools;
-  }
 
   function storageModeFor(caseId) {
     return "diagnosis-" + caseId;
@@ -131,16 +128,8 @@ export function createDiagnosisController(stage) {
 
     stage.setModeTitle("Diagnostico - Caso " + caseDef.number, caseDef.name);
     stage.startTimer(session.startedAt);
-    stage.renderToolGrid(
-      Tools()
-        .listTools()
-        .map((t) => t.id)
-        .filter((id) => id !== "hands"),
-      () => {}
-    );
     stage.clearActionLog();
     stage.setHintUi(session.hints.used, session.hints.max, onHint);
-    document.getElementById("hwlab-tools-panel").hidden = false;
     document.getElementById("hwlab-hint-btn").hidden = false;
     document.getElementById("hwlab-restart-btn").hidden = false;
     document.getElementById("hwlab-timer").parentElement.hidden = false;
@@ -188,8 +177,8 @@ export function createDiagnosisController(stage) {
     if (!part) return;
     stage.focusOnPart(partId);
     const action = inferAction(partId);
-    const toolId = stage.getActiveToolId();
-    const result = Engine().attemptAction(equipmentData, session, { partId, action, toolId });
+    // Herramienta contextual: la que requiere la pieza (ver controller.js).
+    const result = Engine().attemptAction(equipmentData, session, { partId, action, toolId: part.tool || "hands" });
     session = result.session;
     if (result.ok) {
       const nowPresent = session.parts[partId];

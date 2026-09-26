@@ -160,11 +160,22 @@ export function createDesktopLayout() {
       detachAxis: AXIS_X,
       tier: 3,
     },
+    // Recorrido FUERA del disipador (sep-26, medido): antes iba de socket+30 mm
+    // a socket+90 mm con 20 mm de separacion de la placa, es decir, por DENTRO
+    // del volumen del disipador (34/34 vertices dentro de su caja). Ningun rayo
+    // de las vistas del lado abierto llegaba al cable (0 % de 2112): el clic
+    // caia en el disipador, en el cable EPS o, orbitando, en la fuente, y el
+    // aprendiz recibia "bloqueado" por intentar el paso correcto. Ahora sale de
+    // la parte superior del disipador (4 mm por encima) hacia el conector
+    // CPU_FAN de la placa, entre el borde superior del disipador y el de la placa.
     "cable-cpu-fan": {
       kind: "cable",
       cableKind: "front-panel",
-      from: (a) => a.motherboard.cpuSocket.clone().add(new THREE.Vector3(0.02, 0.03, 0.03)),
-      to: (a) => a.motherboard.cpuSocket.clone().add(new THREE.Vector3(0.02, 0.09, 0)),
+      from: (a) => a.motherboard.cpuSocket.clone().add(new THREE.Vector3(0.066, 0.161, 0.02)),
+      to: (a) => a.motherboard.cpuSocket.clone().add(new THREE.Vector3(0.016, 0.169, 0)),
+      // Combado hacia ARRIBA: con la comba por defecto (hacia abajo) el tramo
+      // medio volvia a hundirse en el disipador.
+      buildOpts: { sag: -0.004 },
       detachAxis: AXIS_X,
       tier: 3,
     },

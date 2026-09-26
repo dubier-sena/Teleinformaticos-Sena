@@ -15,6 +15,7 @@ const ICONS = {
   learn: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5.5A2.5 2.5 0 016.5 3H20v15H6.5A2.5 2.5 0 004 20.5v-15z"/><path d="M4 20.5A2.5 2.5 0 016.5 18H20"/></svg>',
   wrenchDown: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 005.4-5.4l-2.5 2.5-2-2 2.5-2.5z"/><path d="M12 15l4 4"/></svg>',
   wrenchUp: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 005.4-5.4l-2.5 2.5-2-2 2.5-2.5z"/><path d="M18 3l3 3-3 3"/></svg>',
+  maintenance: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="2"/><path d="M12 10c0-4 1-6 4-6s2 5-2 7M14 12c4 0 6 1 6 4s-5 2-7-2M12 14c0 4-1 6-4 6s-2-5 2-7M10 12c-4 0-6-1-6-4s5-2 7 2"/></svg>',
   free: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 3h6M10 3v5l-5 9a2 2 0 001.7 3h10.6a2 2 0 001.7-3l-5-9V3"/></svg>',
   evaluation: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>',
   diagnosis: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3v6a4 4 0 008 0V3M10 21a4 4 0 004-4v-3"/><circle cx="18" cy="16" r="2.3"/></svg>',
@@ -30,8 +31,13 @@ const EQUIPMENT_OPTIONS = [
 function practiceOptionsFor(equipmentId) {
   return [
     { mode: "learn", icon: ICONS.learn, title: "Aprender componentes", desc: "Explora libremente cada pieza en 3D y su ficha tecnica completa.", available: true },
-    { mode: "disassembly-guided", icon: ICONS.wrenchDown, title: "Desensamble guiado", desc: "Sigue instrucciones paso a paso: seguridad, herramienta correcta y orden de retiro.", available: true },
+    { mode: "disassembly-guided", icon: ICONS.wrenchDown, title: "Desensamble guiado", desc: "Sigue instrucciones paso a paso: seguridad, orden de retiro y la herramienta que usa cada pieza.", available: true },
     { mode: "assembly-guided", icon: ICONS.wrenchUp, title: "Ensamble guiado", desc: "Vuelve a armar el equipo desde el gabinete vacio, en el orden correcto.", available: true },
+    // Mantenimiento termico (sep-26): solo el portatil tiene su modulo modelado
+    // con polvo y pasta termica (ver hardware_lab_thermal.js).
+    ...(equipmentId === "laptop"
+      ? [{ mode: "maintenance-guided", icon: ICONS.maintenance, title: "Mantenimiento preventivo", desc: "Abre el portatil hasta la refrigeracion, limpia el polvo, renueva la pasta termica y vuelve a cerrarlo.", available: true }]
+      : []),
     { mode: "free", icon: ICONS.free, title: "Practica libre", desc: "Practica sin instrucciones constantes; consulta pistas si las necesitas.", available: true, needsDirection: true },
     { mode: "evaluation", icon: ICONS.evaluation, title: "Evaluacion", desc: "Sin pistas de que sigue: se califica sobre 100 puntos con rubrica.", available: true, needsDirection: true },
     {

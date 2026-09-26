@@ -18,11 +18,13 @@
 import { createDesktopLayout } from "./hardware_lab_3d_layout_desktop.js";
 import { createLaptopLayout } from "./hardware_lab_3d_layout_laptop.js";
 import { HardwareLabAudio } from "./hardware_lab_3d_audio.js";
+import { applyThermalLook } from "./hardware_lab_3d_thermal_look.js";
 
 const TITLES = {
   learn: "Aprender componentes",
   "disassembly-guided": "Desensamble guiado",
   "assembly-guided": "Ensamble guiado",
+  "maintenance-guided": "Mantenimiento preventivo",
   free: "Practica libre",
   evaluation: "Evaluacion",
 };
@@ -54,6 +56,12 @@ export function createAssemblyController(stage) {
   // Posiciones tecnicas (sep-26): ultima posicion que pidio una operacion que
   // el aprendiz intento con el portatil en otra orientacion (modos abiertos).
   let neededPreset = null;
+  // Mantenimiento termico del portatil (sep-26): polvo + pasta termica. Estado
+  // puro en hardware_lab_thermal.js; aqui solo se conecta y se persiste.
+  let thermal = null;
+  // Ultima pieza que el aprendiz toco (modos abiertos): el panel explica su
+  // herramienta y su precaucion, ya que no hay "paso actual" que lo diga.
+  let lastPartId = null;
 
   function Engine() {
     return window.HardwareLab.Engine;
@@ -64,6 +72,9 @@ export function createAssemblyController(stage) {
   function Tools() {
     return window.HardwareLab.Tools;
   }
+  function Thermal() {
+    return window.HardwareLab.Thermal;
+  }
 
   function layoutFor(id) {
     return id === "laptop" ? createLaptopLayout() : createDesktopLayout();
@@ -73,11 +84,22 @@ export function createAssemblyController(stage) {
     return id === "laptop" ? window.HardwareLab.DataLaptop.LAPTOP_EQUIPMENT : window.HardwareLab.DataDesktop.DESKTOP_EQUIPMENT;
   }
 
-  function allToolIds() {
-    return Tools()
-      .listTools()
-      .map((t) => t.id)
-      .filter((id) => id !== "hands");
+  /** Herramienta que usa la pieza (metadato educativo, no un paso previo que el aprendiz deba elegir). */
+  function contextualToolId(part) {
+    return (part && part.tool) || "hands";
+  }
+
+  /** Bloque "Herramienta recomendada" + precaucion de una pieza. */
+  function toolInfoHtml(part) {
+    const tool = Tools().getTool(contextualToolId(part));
+    if (!tool) return "";
+    return (
+      '<div class="hwlab-tool-info">' +
+      `<p><span aria-hidden="true">${esc(tool.icon)}</span> Herramienta recomendada: <strong>${esc(tool.name)}</strong></p>` +
+      `<p class="hwlab-muted">${esc(tool.description)}</p>` +
+      (tool.precaution ? `<p class="hwlab-tool-info__caution">Precaución: ${esc(tool.precaution)}</p>` : "") +
+      "</div>"
+    );
   }
 
   function start(id, mode, dir) {
@@ -86,6 +108,8 @@ export function createAssemblyController(stage) {
     isLearn = mode === "learn";
     practiceMode = mode;
     direction = dir;
+    thermal = null;
+    lastPartId = null;
 
     if (!stage.showStage()) return;
     const rig = stage.loadRig(layoutFor(id), id);
@@ -113,8 +137,6 @@ export function createAssemblyController(stage) {
     document.getElementById("hwlab-restart-btn").hidden = true;
     stage.stopTimer();
     document.getElementById("hwlab-timer").parentElement.hidden = true;
-    stage.renderToolGrid([], null);
-    document.getElementById("hwlab-tools-panel").hidden = true;
     stage.clearActionLog();
     // El gabinete/tapa arranca ABIERTO en este modo (a diferencia de las
     // practicas de ensamble/desensamble): "explorar libremente cada pieza"
@@ -186,12 +208,11 @@ export function createAssemblyController(stage) {
 
   // ── PRACTICAS DE ENSAMBLE/DESENSAMBLE ────────────────────────────────────
   function startPractice(rig) {
-    document.getElementById("hwlab-tools-panel").hidden = false;
     document.getElementById("hwlab-hint-btn").hidden = false;
     document.getElementById("hwlab-restart-btn").hidden = false;
     document.getElementById("hwlab-timer").parentElement.hidden = false;
 
-    if (practiceMode === "disassembly-guided" || practiceMode === "assembly-guided") {
+    if (practiceMode === "disassembly-guided" || practiceMode === "assembly-guided" || practiceMode === "maintenance-guided") {
       engineMode = practiceMode;
       storageMode = practiceMode;
     } else {
@@ -203,6 +224,7 @@ export function createAssemblyController(stage) {
     const saved = Storage().loadLocal(equipmentId, storageMode);
     session = saved ? Engine().deserialize(equipmentData, saved) : Engine().createSession(equipmentData, engineMode, { maxHints });
     rig.syncFromSessionParts(session.parts);
+    resetThermal(saved && saved.thermal);
     // El estado de los tornillos viaja en la MISMA llave de almacenamiento que
     // la sesion (el motor ignora las claves que no conoce al deserializar).
     setupScrews(session.parts, {
@@ -212,7 +234,6 @@ export function createAssemblyController(stage) {
 
     stage.setModeTitle(TITLES[practiceMode], equipmentData.name + (direction ? " - " + (direction === "assembly" ? "Ensamble" : "Desensamble") : ""));
     stage.startTimer(session.startedAt);
-    stage.renderToolGrid(allToolIds(), () => {});
     stage.clearActionLog();
     stage.setHintUi(session.hints.used, session.hints.max, onHint);
 
@@ -223,6 +244,7 @@ export function createAssemblyController(stage) {
       neededPreset = null;
       resetPose();
       rig.syncFromSessionParts(session.parts);
+      resetThermal(null);
       setupScrews(session.parts, { assembly: direction === "assembly" || engineMode === "assembly-guided" });
       stage.startTimer(session.startedAt);
       stage.clearActionLog();
@@ -269,6 +291,18 @@ export function createAssemblyController(stage) {
   function isAssemblyPractice() {
     return direction === "assembly" || engineMode === "assembly-guided";
   }
+  function isMaintenance() {
+    return engineMode === "maintenance-guided";
+  }
+  /** ¿El equipo se esta VOLVIENDO a armar? En mantenimiento, desde el primer
+   *  paso de montaje: ahi rigen las mismas reglas que al ensamblar (tornillos
+   *  por colocar, terminar derecho y abierto). */
+  function reassembling() {
+    if (isAssemblyPractice()) return true;
+    if (!isMaintenance() || !session) return false;
+    const firstInstall = session.sequence.findIndex((st) => st.kind === "action" && (st.action === "install" || st.action === "connect"));
+    return firstInstall >= 0 && session.stepIndex >= firstInstall;
+  }
 
   /** Posicion que pide operar `partId` ahora: la de sus tornillos mientras
    *  queden por retirar/colocar, si no la de la pieza. */
@@ -288,11 +322,11 @@ export function createAssemblyController(stage) {
   /** Posicion de la tarea ACTUAL (para "Vista de trabajo" y el panel). */
   function contextualPreset() {
     if (!hasPose() || !session || isLearn) return null;
-    if (Engine().isFinished(session) && isAssemblyPractice()) return "open";
+    if (Engine().isFinished(session) && reassembling()) return "open";
     // Una pieza recien instalada con tornillos por colocar manda (solo al
     // ENSAMBLAR: al desensamblar, una pieza aun montada sin sus tornillos es
     // justo lo esperado antes de retirarla).
-    const pendiente = isAssemblyPractice() ? partWithPendingScrews(null) : null;
+    const pendiente = reassembling() ? partWithPendingScrews(null) : null;
     if (pendiente) return requiredPresetFor(pendiente, "install").preset;
     const step = Engine().currentStep(session);
     if (session.kind === "guided" && step && step.kind === "action") return requiredPresetFor(step.partId, step.action).preset;
@@ -340,7 +374,7 @@ export function createAssemblyController(stage) {
     if (name === "open") ok = r.isAtPreset("open");
     else {
       const step = Engine().currentStep(session);
-      const pendiente = isAssemblyPractice() ? partWithPendingScrews(null) : null;
+      const pendiente = reassembling() ? partWithPendingScrews(null) : null;
       const partId = pendiente || (step && step.kind === "action" ? step.partId : null);
       const req = partId ? requiredPresetFor(partId, pendiente ? "install" : step.action) : null;
       ok = req ? r.poseAllows(req.access) : r.isAtPreset(name);
@@ -494,7 +528,25 @@ export function createAssemblyController(stage) {
   function handlePartClick(partId) {
     const part = getPart(partId);
     if (!part) return;
+    // En modos abiertos el panel explica YA la herramienta de la pieza tocada,
+    // tambien cuando el clic se detiene antes (tornillos, posicion, disipador).
+    if (session && session.kind === "open" && lastPartId !== partId) {
+      lastPartId = partId;
+      renderInfoPanel();
+    }
+    lastPartId = partId;
     const action = inferAction(partId);
+    // El modulo de refrigeracion solo se monta con pasta nueva bien dosificada.
+    // Como el bloqueo por posicion, no penaliza: explica que falta.
+    if (thermal && partId === "cooler" && action === "install" && actionWouldBeValid(partId, action)) {
+      const gate = Thermal().coolerInstallGate(thermal);
+      if (!gate.ok) {
+        stage.showFeedback(gate.reason, "info");
+        stage.pushActionLog("Disipador sin montar: preparar la pasta térmica", "error");
+        renderInfoPanel();
+        return;
+      }
+    }
     const ctl = screws();
     if (ctl) {
       if (screwsBusy) {
@@ -543,8 +595,9 @@ export function createAssemblyController(stage) {
       }
     }
     stage.focusOnPart(partId);
-    const toolId = stage.getActiveToolId();
-    const result = Engine().attemptAction(equipmentData, session, { partId, action, toolId });
+    // La herramienta es CONTEXTUAL: el aprendiz elige la pieza y la accion, y
+    // el laboratorio usa la que esa pieza requiere (se explica en el panel).
+    const result = Engine().attemptAction(equipmentData, session, { partId, action, toolId: contextualToolId(part) });
     session = result.session;
     if (result.ok) {
       const nowPresent = session.parts[partId];
@@ -575,10 +628,81 @@ export function createAssemblyController(stage) {
       stage.showFeedback(result.message, "error");
       stage.pushActionLog(part.name + ": bloqueado", "error");
     }
+    refreshThermalLook();
     persist();
     renderInfoPanel();
     refreshStats();
     maybeFinish();
+  }
+
+  // ── MANTENIMIENTO TERMICO (sep-26) ───────────────────────────────────────
+  function resetThermal(saved) {
+    thermal = null;
+    if (equipmentId !== "laptop" || !Thermal()) return;
+    thermal = saved ? Thermal().normalize(saved) : Thermal().createThermalState(isAssemblyPractice() ? "new" : "used");
+    refreshThermalLook();
+  }
+
+  function refreshThermalLook() {
+    const r = rig3d();
+    if (!thermal || !r) return;
+    applyThermalLook(r.getObject3D("cpu"), r.getObject3D("cooler"), thermal, { coolerInstalled: !!session.parts.cooler });
+  }
+
+  function thermalContext() {
+    return { coolerInstalled: !!session.parts.cooler, cpuInstalled: !!session.parts.cpu };
+  }
+
+  /** Solo cuando el modulo esta FUERA y queda algo que hacer o comprobar. */
+  function thermalPanelVisible() {
+    if (!thermal || !session || Engine().isFinished(session) || session.parts.cooler) return false;
+    return !!session.parts.cpu || thermal.dust !== "clean";
+  }
+
+  function thermalTaskButton(taskId, label, extra) {
+    const task = Thermal().TASKS[taskId];
+    const tool = Tools().getTool(task.tool);
+    return `<button type="button" class="c-btn c-btn--secondary c-btn--sm c-btn--block hwlab-thermal-btn" data-thermal-task="${esc(taskId)}"${extra || ""}>` +
+      `${esc(label)}<span class="hwlab-thermal-btn__tool">${esc(tool ? tool.name : task.tool)}</span></button>`;
+  }
+
+  function thermalPanelHtml() {
+    if (!thermalPanelVisible()) return "";
+    const d = Thermal().describe(thermal);
+    const T = Thermal().TASKS;
+    let html = '<div class="hwlab-thermal">' +
+      "<h3>Mantenimiento de la refrigeración</h3>" +
+      `<p class="hwlab-muted">Aletas y ventilador: <strong>${esc(d.dust)}</strong>${d.dustClean ? " &#9989;" : ""}</p>`;
+    if (session.parts.cpu) html += `<p class="hwlab-muted">Pasta térmica: <strong>${esc(d.paste)}</strong>${d.pasteReady ? " &#9989;" : ""}</p>`;
+    if (!d.dustClean) html += thermalTaskButton("brush", T.brush.label) + thermalTaskButton("air", T.air.label);
+    if (session.parts.cpu && !d.pasteReady) {
+      if (thermal.paste === "old") html += thermalTaskButton("scrape", T.scrape.label);
+      if (thermal.paste === "old" || thermal.paste === "residue" || thermal.paste === "new") html += thermalTaskButton("alcohol", T.alcohol.label);
+      if (thermal.paste !== "new") {
+        html += `<p class="hwlab-muted">${esc(T.apply.label)}: ¿cuánta?</p>`;
+        Object.keys(Thermal().AMOUNTS).forEach((k) => {
+          html += thermalTaskButton("apply", Thermal().AMOUNTS[k].label, ` data-amount="${esc(k)}"`);
+        });
+      }
+    }
+    return html + "</div>";
+  }
+
+  function onThermalTask(taskId, amount) {
+    const r = Thermal().applyTask(thermal, taskId, thermalContext(), { amount });
+    thermal = r.state;
+    stage.showFeedback(r.message, r.level);
+    const task = Thermal().TASKS[taskId];
+    if (r.ok || r.level === "error") {
+      stage.pushActionLog(
+        (taskId === "apply" ? "Pasta térmica: " + (amount || "") : task.label) + (r.ok ? " ✓" : " ✗"),
+        r.ok ? "success" : "error"
+      );
+    }
+    if (r.ok) HardwareLabAudio.playClick();
+    refreshThermalLook();
+    persist();
+    renderInfoPanel();
   }
 
   /** ¿El motor aceptaria esta accion (orden, requisitos, herramienta)? Sin
@@ -594,9 +718,6 @@ export function createAssemblyController(stage) {
     const step = Engine().currentStep(session);
     if (step && step.kind === "safety") return false;
     if (session.kind === "guided" && step && step.kind === "action" && (step.partId !== partId || step.action !== action)) return false;
-    const part = getPart(partId);
-    const toolId = stage.getActiveToolId();
-    if (part && part.tool && part.tool !== "hands" && toolId !== part.tool) return false;
     return true;
   }
 
@@ -676,16 +797,13 @@ export function createAssemblyController(stage) {
           .map((i) => `<li>${esc(i)}</li>`)
           .join("") +
         "</ol>";
-      if (part && part.tool && part.tool !== "hands") {
-        const tool = Tools().getTool(part.tool);
-        html += `<p class="hwlab-muted">Herramienta necesaria: <strong>${esc(tool ? tool.name : part.tool)}</strong></p>`;
-      }
+      html += toolInfoHtml(part);
       html += screwStatusHtml(step.partId, step.action);
     } else if (Engine().isFinished(session)) {
       html += "<h3>Practica completa</h3><p>Revisa el resultado en el panel de puntuacion.</p>";
     } else {
       html +=
-        "<h3>Practica libre</h3><p>Elige una herramienta si la pieza la necesita y haz clic directamente sobre el componente en la escena para actuar sobre el.</p>" +
+        "<h3>Practica libre</h3><p>Haz clic directamente sobre el componente en la escena para actuar sobre él. El laboratorio usa la herramienta adecuada y te la indica al seleccionarlo.</p>" +
         '<ul class="hwlab-tray-list">' +
         Object.keys(equipmentData.parts)
           .filter((id) => session.parts[id] !== (direction === "assembly"))
@@ -693,10 +811,16 @@ export function createAssemblyController(stage) {
           .map((id) => `<li>${esc(equipmentData.parts[id].name)}</li>`)
           .join("") +
         "</ul>";
+      const last = lastPartId && getPart(lastPartId);
+      if (last) html += `<p class="hwlab-muted">Última pieza: <strong>${esc(last.name)}</strong></p>` + toolInfoHtml(last);
     }
+    html += thermalPanelHtml();
     html += poseSectionHtml();
     html += "</div>";
     stage.setInfoPanel(html);
+    document.querySelectorAll("[data-thermal-task]").forEach((b) => {
+      b.onclick = () => onThermalTask(b.getAttribute("data-thermal-task"), b.getAttribute("data-amount") || undefined);
+    });
     refreshScrewHighlight();
     const safetyBtn = document.getElementById("hwlab-safety-confirm-btn");
     if (safetyBtn && step) safetyBtn.onclick = () => attemptSafety(step.id);
@@ -754,6 +878,7 @@ export function createAssemblyController(stage) {
       const payload = Engine().serialize(session);
       const screwCtl = screws();
       if (screwCtl) payload.screws = screwCtl.getState();
+      if (thermal) payload.thermal = thermal;
       Storage().persist(equipmentId, storageMode, payload);
     }, 500);
   }
@@ -775,7 +900,7 @@ export function createAssemblyController(stage) {
     }
     // Ensamble: el equipo termina como empezo -- derecho y abierto (pose
     // inicial aprobada). No se castiga: solo se retiene el cierre.
-    if (hasPose() && isAssemblyPractice() && !rig3d().isAtPreset("open")) {
+    if (hasPose() && reassembling() && !rig3d().isAtPreset("open")) {
       stage.showFeedback("Ya esta armado: vuelve a ponerlo derecho y abre la pantalla para terminar (\"Dejar el portatil abierto\").", "info");
       renderInfoPanel();
       return;
@@ -785,11 +910,13 @@ export function createAssemblyController(stage) {
     session = finished;
     persist();
     stage.openResultModal(finished.result, {
+      extraHtml: equipmentCheckHtml(),
       onRetry: () => {
         session = Engine().createSession(equipmentData, engineMode, { maxHints: session.hints.max });
         neededPreset = null;
         resetPose();
         stage.currentRig.syncFromSessionParts(session.parts);
+        resetThermal(null);
         setupScrews(session.parts, { assembly: isAssemblyPractice() });
         stage.startTimer(session.startedAt);
         stage.clearActionLog();
@@ -798,6 +925,34 @@ export function createAssemblyController(stage) {
       },
       onMenu: backToIntro,
     });
+  }
+
+  /** "Comprobacion del equipo": se calcula del estado REAL al terminar. */
+  function equipmentCheckHtml() {
+    const Check = window.HardwareLab.EquipmentCheck;
+    if (!Check) return "";
+    const names = {};
+    Object.keys(equipmentData.parts).forEach((id) => { names[id] = equipmentData.parts[id].name; });
+    const dir = isMaintenance() ? "maintenance" : isAssemblyPractice() ? "assembly" : "disassembly";
+    const out = Check.equipmentCheck({
+      direction: dir,
+      parts: session.parts,
+      partNames: names,
+      pendingScrewPart: dir === "disassembly" ? null : partWithPendingScrews(null),
+      thermal,
+      poseOk: hasPose() && dir !== "disassembly" ? rig3d().isAtPreset("open") : null,
+    });
+    const icon = { ok: "&#9989;", warn: "&#9888;&#65039;", fail: "&#10060;" };
+    return (
+      '<section class="hwlab-check" aria-label="Comprobación del equipo">' +
+      "<h3>Comprobación del equipo</h3>" +
+      `<p class="hwlab-check__verdict hwlab-check__verdict--${esc(out.verdict.status)}">${esc(out.verdict.text)}</p>` +
+      "<ul>" +
+      out.items
+        .map((i) => `<li class="hwlab-check__item hwlab-check__item--${esc(i.status)}"><span aria-hidden="true">${icon[i.status]}</span> <strong>${esc(i.label)}:</strong> ${esc(i.detail)}</li>`)
+        .join("") +
+      "</ul></section>"
+    );
   }
 
   function backToIntro() {

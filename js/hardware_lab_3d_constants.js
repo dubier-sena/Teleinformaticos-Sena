@@ -214,3 +214,21 @@ export const ACCENT = {
   success: 0x35e07a,
   connection: 0xffd23f, // pulso de "origen -> destino" en cables (item 12)
 };
+
+// ── Hitboxes (auditoria sep-26) ─────────────────────────────────────────────
+// Tres responsabilidades separadas: GEOMETRIA VISIBLE (lo que se ve), HITBOX
+// (solo el clic) y RESALTADO (calculado sobre lo visible). Un hitbox es una
+// malla que three.js raycastea aunque este oculta (Raycaster no mira
+// `visible`), pero que NO se dibuja, NO proyecta ni recibe sombra y NO entra en
+// el contorno de seleccion. Antes eran mallas transparentes de opacidad 0 que
+// se dibujaban (32 draw calls) e inflaban el contorno de los cables 2-4 veces.
+export function markAsHitbox(mesh) {
+  mesh.userData.hwlabHitbox = true;
+  mesh.visible = false;
+  mesh.castShadow = false;
+  mesh.receiveShadow = false;
+  return mesh;
+}
+export function isHitbox(obj) {
+  return !!(obj && obj.userData && obj.userData.hwlabHitbox);
+}

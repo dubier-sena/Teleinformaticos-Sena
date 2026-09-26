@@ -100,6 +100,7 @@
   }
 
   function modeDirection(mode) {
+    if (/^maintenance/.test(mode)) return "maintenance";
     return /^assembly/.test(mode) ? "assembly" : "disassembly";
   }
 
@@ -116,6 +117,7 @@
     if (!sequence) {
       throw new Error("Modo no soportado por este equipo: " + mode);
     }
+    // "maintenance" parte, como el desensamble, del equipo completo y armado.
     var initialParts =
       direction === "assembly" ? equipmentData.initialStateAssembly : equipmentData.initialStateDisassembly;
 

@@ -9,7 +9,7 @@
  * "RAM 2", solo sabe construir "una memoria RAM".
  */
 import * as THREE from "./vendor/three.module.min.js";
-import { materialFor, materialInstanceFor } from "./hardware_lab_3d_constants.js";
+import { materialFor, materialInstanceFor, markAsHitbox } from "./hardware_lab_3d_constants.js";
 
 function box(w, h, d, kind, overrides) {
   const geo = new THREE.BoxGeometry(w, h, d);
@@ -393,9 +393,7 @@ export function buildM2(opts = {}) {
   const hitBoxMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false });
   const hitBox = new THREE.Mesh(new THREE.BoxGeometry(w * 2.2, 0.012, l * 1.08), hitBoxMat);
   hitBox.name = "m2-hit-proxy";
-  hitBox.castShadow = false;
-  hitBox.receiveShadow = false;
-  group.add(hitBox);
+  group.add(markAsHitbox(hitBox));
 
   return group;
 }
@@ -593,9 +591,7 @@ export function buildCable(kind, fromLocal, toLocal, opts = {}) {
   const hitMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false });
   const hitProxy = new THREE.Mesh(hitGeo, hitMat);
   hitProxy.name = "cable-hit-proxy";
-  hitProxy.castShadow = false;
-  hitProxy.receiveShadow = false;
-  group.add(hitProxy);
+  group.add(markAsHitbox(hitProxy));
 
   // Sujeciones: trocitos de cinta/clip sobre el recorrido, en las fracciones
   // indicadas. Es lo que en un equipo real impide que el cable baile dentro
@@ -655,9 +651,7 @@ export function buildGenericPart(opts = {}) {
     const hitMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false });
     const hit = new THREE.Mesh(new THREE.BoxGeometry(w + pad, h + pad, d + pad), hitMat);
     hit.name = "generic-hit-proxy";
-    hit.castShadow = false;
-    hit.receiveShadow = false;
-    g.add(hit);
+    g.add(markAsHitbox(hit));
   }
 
   return g;

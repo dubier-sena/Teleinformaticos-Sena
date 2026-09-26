@@ -14,7 +14,44 @@
  */
 import * as THREE from "./vendor/three.module.min.js";
 import { animateObject3D, Easing } from "./hardware_lab_3d_tween.js";
-import { ACCENT } from "./hardware_lab_3d_constants.js";
+import { ACCENT, isHitbox } from "./hardware_lab_3d_constants.js";
+
+/**
+ * Caja de la GEOMETRIA VISIBLE de una pieza en su propio espacio local
+ * (auditoria sep-26). Excluye hitboxes, contornos, mallas ocultas y mallas
+ * de opacidad 0. El contorno se construia con la caja de MUNDO
+ * (setFromObject) pero se colgaba como hija de la pieza, asi que heredaba su
+ * rotacion: con la pantalla abierta a ~100 grados medía 356x234x58 mm sobre
+ * sus ejes frente a 330x15x222 reales (4.5 veces el volumen), y los cables
+ * salian 2-4 veces mas grandes por su hitbox.
+ */
+export function visibleLocalBox(root) {
+  root.updateWorldMatrix(true, true);
+  const inv = root.matrixWorld.clone().invert();
+  const box = new THREE.Box3();
+  const tmp = new THREE.Box3();
+  const m = new THREE.Matrix4();
+  const shown = (n) => {
+    for (let o = n; o && o !== root.parent; o = o.parent) if (!o.visible) return false;
+    return true;
+  };
+  root.traverse((n) => {
+    if (!n.isMesh || isHitbox(n) || (n.name && n.name.startsWith("hwlab-outline")) || !shown(n)) return;
+    const mat = n.material;
+    if (mat && !Array.isArray(mat) && mat.transparent && mat.opacity === 0) return;
+    let local;
+    if (n.isInstancedMesh) {
+      if (!n.boundingBox) n.computeBoundingBox();
+      local = n.boundingBox;
+    } else {
+      if (!n.geometry.boundingBox) n.geometry.computeBoundingBox();
+      local = n.geometry.boundingBox;
+    }
+    tmp.copy(local).applyMatrix4(m.multiplyMatrices(inv, n.matrixWorld));
+    box.union(tmp);
+  });
+  return box;
+}
 
 const CLICK_MOVE_THRESHOLD = 6; // px: mas que esto se considera arrastre de camara, no clic
 
@@ -167,7 +204,10 @@ export function createInteractionLayer({ scene, camera, renderer, tweenGroup, on
   }
 
   function buildOutline(root, color) {
-    const box = new THREE.Box3().setFromObject(root);
+    // En el espacio LOCAL de la pieza y solo con lo visible: el contorno es
+    // hijo de la pieza y gira con ella (ver visibleLocalBox).
+    const box = visibleLocalBox(root);
+    if (box.isEmpty()) box.set(new THREE.Vector3(-0.002, -0.002, -0.002), new THREE.Vector3(0.002, 0.002, 0.002));
     const size = new THREE.Vector3();
     box.getSize(size);
     const center = new THREE.Vector3();
@@ -179,7 +219,6 @@ export function createInteractionLayer({ scene, camera, renderer, tweenGroup, on
     );
     const edges = new THREE.EdgesGeometry(geo);
     const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color, linewidth: 1.5 }));
-    root.worldToLocal(center);
     line.position.copy(center);
     line.name = "hwlab-outline";
     line.renderOrder = 999;

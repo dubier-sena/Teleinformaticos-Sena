@@ -37,7 +37,7 @@
  * puede operarse en este momento.
  */
 import * as THREE from "./vendor/three.module.min.js";
-import { materialFor, ACCENT } from "./hardware_lab_3d_constants.js";
+import { materialFor, ACCENT, markAsHitbox } from "./hardware_lab_3d_constants.js";
 import { animateObject3D, animateValue, Easing, prefersReducedMotion } from "./hardware_lab_3d_tween.js";
 
 const UP = new THREE.Vector3(0, 1, 0);
@@ -143,7 +143,7 @@ export function buildServiceScrew(opts = {}) {
   );
   hit.name = "screw-hit-proxy";
   hit.userData.hitH = s.hitH;
-  g.add(hit);
+  g.add(markAsHitbox(hit));
   setProxyScale(hit, SCREW_PROXY_IDLE);
 
   g.traverse((n) => {
@@ -549,16 +549,23 @@ export function createScrewController(options) {
         onComplete: () => {
           entry.stowing = false;
           setBusy(false);
-          if (onChanged) onChanged(entry.id, false, entry.partId);
+          // Primero la confirmacion de la operacion (onDone -> "Tornillo
+          // retirado") y DESPUES sus consecuencias (onChanged -> el
+          // controlador puede anunciar un bloqueo o el cierre de la practica):
+          // comparten el mismo aviso y gana el ultimo en escribir.
           if (onDone) onDone(true);
+          if (onChanged) onChanged(entry.id, false, entry.partId);
         },
       });
     } else {
       entry.installed = true;
       entry.presented = false;
       setBusy(false);
-      if (onChanged) onChanged(entry.id, true, entry.partId);
+      // Mismo orden que al retirar: con el ultimo tornillo, el aviso de
+      // posicion del controlador ("vuelve a ponerlo derecho...") ya no queda
+      // tapado por "Tornillo instalado" (medido con clic real, sep-26).
       if (onDone) onDone(true);
+      if (onChanged) onChanged(entry.id, true, entry.partId);
     }
   }
 

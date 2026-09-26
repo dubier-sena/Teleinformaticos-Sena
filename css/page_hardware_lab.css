@@ -327,7 +327,12 @@
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: 232px minmax(0, 1fr) 300px;
+  grid-template-columns: 200px minmax(0, 1fr) 300px;
+  /* La fila ocupa EXACTAMENTE el alto disponible (sep-26): sin esto crecia
+     hasta el alto intrinseco del canvas y, al llenarse el historial de
+     acciones, el pie tapaba la parte baja de los paneles laterales (botones
+     sin poder pulsarse, medido con elementFromPoint a 1440x900). */
+  grid-template-rows: minmax(0, 1fr);
 }
 
 .hwlab-hud--left,
@@ -383,39 +388,38 @@
 }
 #hwlab-didactic-btn { margin-top: var(--space-2); }
 
-.hwlab-tool-active {
-  margin: 0 0 var(--space-3);
-  font-size: var(--font-size-sm);
-  color: var(--hwlab-accent);
-  font-weight: var(--weight-medium);
-  min-height: 1.4em;
+/* Herramienta CONTEXTUAL (sep-26): el aprendiz ya no elige herramienta antes
+   de actuar; el panel de la pieza explica cual se usa y con que cuidado. */
+.hwlab-tool-info {
+  margin: var(--space-3) 0;
+  padding: var(--space-3);
+  border: 1px solid var(--hwlab-border);
+  border-radius: var(--radius-sm);
+  background: var(--hwlab-surface-2);
 }
-.hwlab-tool-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-2);
+.hwlab-tool-info p { margin: 0 0 var(--space-2); font-size: var(--font-size-sm); }
+.hwlab-tool-info p:last-child { margin-bottom: 0; }
+.hwlab-tool-info__caution { color: var(--hwlab-amber); }
+
+/* Mantenimiento termico del portatil (sep-26). */
+.hwlab-thermal {
+  margin: var(--space-3) 0;
+  padding: var(--space-3);
+  border: 1px solid var(--hwlab-border-strong);
+  border-radius: var(--radius-sm);
 }
-.hwlab-tool-btn {
+.hwlab-thermal h3 { margin-top: 0; }
+.hwlab-thermal p { margin: 0 0 var(--space-2); }
+.hwlab-thermal-btn {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: var(--space-3) var(--space-2);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--hwlab-border);
-  background: var(--hwlab-surface-2);
-  color: var(--hwlab-text-muted);
-  cursor: pointer;
-  text-align: center;
-  font-size: 0.7rem;
-  line-height: 1.2;
-  min-height: 64px;
-  transition: border-color var(--motion-fast), color var(--motion-fast), transform var(--motion-fast);
+  align-items: flex-start;
+  gap: 2px;
+  min-height: var(--hit-target-min);
+  margin-bottom: var(--space-2);
+  text-align: left;
 }
-.hwlab-tool-btn:hover { color: #fff; border-color: var(--hwlab-border-strong); transform: translateY(-1px); }
-.hwlab-tool-btn.is-active { color: var(--hwlab-amber); border-color: var(--hwlab-amber); background: rgba(255,176,32,0.1); }
-.hwlab-tool-btn svg { width: 22px; height: 22px; }
+.hwlab-thermal-btn__tool { font-size: var(--font-size-xs); color: var(--hwlab-text-muted); font-weight: var(--weight-regular); }
 
 .hwlab-canvas-wrap {
   position: relative;
@@ -423,6 +427,10 @@
   min-width: 0;
 }
 #hwlab-canvas {
+  /* Absoluto: el canvas (alto fijo en su atributo) no debe dictar el alto de
+     su contenedor, o este no se encoge cuando cambia el espacio disponible. */
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   display: block;
@@ -720,19 +728,19 @@
    RESPONSIVE (item 27: prioriza escritorio; simplifica en pantallas chicas)
    ═══════════════════════════════════════════════════════════════════════ */
 @media (max-width: 1180px) {
-  .hwlab-hud-body { grid-template-columns: 208px minmax(0, 1fr) 260px; }
+  .hwlab-hud-body { grid-template-columns: 184px minmax(0, 1fr) 260px; }
 }
 
 @media (max-width: 900px) {
   .hwlab-stage { height: auto; min-height: 100vh; }
-  .hwlab-hud-body { grid-template-columns: 1fr; }
+  .hwlab-hud-body { grid-template-columns: 1fr; grid-template-rows: none; }
   .hwlab-hud--left,
   .hwlab-hud--right { border: none; border-top: 1px solid var(--hwlab-border); }
   .hwlab-canvas-wrap { height: 52vh; min-height: 320px; }
   .hwlab-hud-top__stats { order: 3; width: 100%; justify-content: space-between; }
   /* Mejora 3D (item 15): en pantalla angosta el orden del DOM (izquierda,
      canvas, derecha) obligaba a bajar por 4 paneles de controles (Vistas de
-     camara, Enfoque rapido, Herramientas, Vista explotada/Modo didactico)
+     camara, Enfoque rapido, Vista explotada/Modo didactico)
      antes de ver el equipo 3D. Reordenar visualmente (sin tocar el DOM/JS)
      deja la escena primero; los controles siguen accesibles bajando. */
   .hwlab-canvas-wrap { order: 1; }
@@ -742,8 +750,7 @@
 
 @media (max-width: 600px) {
   .hwlab-hud-top__left { min-width: 100%; }
-  .hwlab-view-grid,
-  .hwlab-tool-grid { grid-template-columns: repeat(3, 1fr); }
+  .hwlab-view-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
 /* Posiciones tecnicas del portatil (sep-26) */
@@ -759,3 +766,13 @@
 .hwlab-prepare-btn {
   margin-top: var(--space-2);
 }
+
+/* Comprobacion del equipo al terminar (sep-26). */
+.hwlab-check { margin-top: var(--space-4); }
+.hwlab-check h3 { margin: 0 0 var(--space-2); font-size: var(--font-size-sm); }
+.hwlab-check ul { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--space-2); }
+.hwlab-check__item { font-size: var(--font-size-sm); }
+.hwlab-check__verdict { margin: 0 0 var(--space-3); font-weight: var(--weight-semibold); }
+.hwlab-check__verdict--ok { color: var(--hwlab-accent); }
+.hwlab-check__verdict--warn { color: var(--hwlab-amber); }
+.hwlab-check__verdict--fail { color: var(--hwlab-danger); }

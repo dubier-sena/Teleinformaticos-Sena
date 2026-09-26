@@ -109,8 +109,6 @@ export function createStage() {
   // quien sabe si la pieza sigue puesta.
   let belowFramePartId = null;
   let feedbackTimer = null;
-  let toolSelectHandler = null;
-  let activeToolId = null;
   let timerInterval = null;
   let didacticActive = false;
   let didacticEquipmentId = null;
@@ -654,51 +652,6 @@ export function createStage() {
     return nowExploded;
   }
 
-  // ── Herramientas (item 10) ────────────────────────────────────────────────
-  function renderToolGrid(toolIds, onSelect) {
-    const grid = document.getElementById("hwlab-tool-grid");
-    const Tools = window.HardwareLab && window.HardwareLab.Tools;
-    if (!grid || !Tools) return;
-    toolSelectHandler = onSelect;
-    activeToolId = null;
-    grid.innerHTML = toolIds
-      .map((id) => {
-        const tool = Tools.getTool(id);
-        return `<button type="button" class="hwlab-tool-btn" data-tool="${esc(id)}" title="${esc(tool ? tool.description : "")}">
-          <span aria-hidden="true">${esc(tool ? tool.icon : "")}</span>
-          <span>${esc(tool ? tool.name : id)}</span>
-        </button>`;
-      })
-      .join("");
-    grid.querySelectorAll("[data-tool]").forEach((btn) => {
-      btn.addEventListener("click", () => setActiveTool(btn.getAttribute("data-tool") === activeToolId ? null : btn.getAttribute("data-tool")));
-    });
-    updateToolActiveLabel();
-  }
-
-  function setActiveTool(toolId) {
-    activeToolId = toolId;
-    const grid = document.getElementById("hwlab-tool-grid");
-    if (grid) {
-      grid.querySelectorAll(".hwlab-tool-btn").forEach((b) => b.classList.toggle("is-active", b.getAttribute("data-tool") === toolId));
-    }
-    updateToolActiveLabel();
-    HardwareLabAudio.playClick();
-    if (toolSelectHandler) toolSelectHandler(toolId);
-  }
-
-  function updateToolActiveLabel() {
-    const label = document.getElementById("hwlab-tool-active-label");
-    const Tools = window.HardwareLab && window.HardwareLab.Tools;
-    if (!label) return;
-    const tool = activeToolId && Tools ? Tools.getTool(activeToolId) : null;
-    label.textContent = tool ? "Activa: " + tool.name : "Ninguna seleccionada (usa las manos)";
-  }
-
-  function getActiveToolId() {
-    return activeToolId || "hands";
-  }
-
   // ── Feedback / historial ──────────────────────────────────────────────────
   function showFeedback(message, tone) {
     const el = document.getElementById("hwlab-feedback");
@@ -862,9 +815,6 @@ export function createStage() {
     loadRig,
     focusOnPart,
     toggleExplode,
-    renderToolGrid,
-    setActiveTool,
-    getActiveToolId,
     showFeedback,
     pushActionLog,
     clearActionLog,

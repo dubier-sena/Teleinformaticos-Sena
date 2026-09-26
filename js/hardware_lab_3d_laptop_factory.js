@@ -1354,7 +1354,8 @@ export function buildLaptopCooler(opts = {}) {
 
   // ── Bloque de contacto (cobre pulido) + pasta termica sobre el die ──────
   put(g, box(0.030, 0.0016, 0.030, "copper", T.plate), 0, -0.0008, 0);
-  put(g, box(0.017, 0.0003, 0.017, "thermalPaste", T.paste), 0, -0.0001, 0);
+  // Nombrada: el mantenimiento termico cambia su aspecto (hardware_lab_3d_thermal_look.js).
+  put(g, box(0.017, 0.0003, 0.017, "thermalPaste", T.paste), 0, -0.0001, 0).name = "cooler-contact-paste";
 
   // ── Heatpipe (seccion aplanada 6.4 x 3.5 mm) ────────────────────────────
   // Tramo A cruza el bloque de cobre (soldado a el) hacia la pared trasera,

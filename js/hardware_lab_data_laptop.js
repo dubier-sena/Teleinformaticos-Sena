@@ -690,6 +690,21 @@
     { kind: "action", action: "install", partId: "bottom-cover" },
   ].concat(VERIFY_STEPS);
 
+  // Mantenimiento preventivo del sistema de refrigeracion (sep-26): se abre el
+  // equipo solo hasta el modulo termico, se limpia (polvo y pasta, ver
+  // hardware_lab_thermal.js) y se vuelve a cerrar. El montaje del modulo exige
+  // pasta nueva en cantidad adecuada.
+  var MAINTENANCE_SEQUENCE = SAFETY_STEPS.concat([
+    { kind: "action", action: "remove", partId: "bottom-cover" },
+    { kind: "action", action: "disconnect", partId: "cable-battery" },
+    { kind: "action", action: "disconnect", partId: "cable-cpu-fan-laptop" },
+    { kind: "action", action: "remove", partId: "cooler" },
+    { kind: "action", action: "install", partId: "cooler" },
+    { kind: "action", action: "connect", partId: "cable-cpu-fan-laptop" },
+    { kind: "action", action: "connect", partId: "cable-battery" },
+    { kind: "action", action: "install", partId: "bottom-cover" },
+  ]).concat(VERIFY_STEPS);
+
   var LAPTOP_EQUIPMENT = {
     id: "laptop",
     name: "Computador portatil",
@@ -709,6 +724,7 @@
     sequences: {
       disassembly: DISASSEMBLY_SEQUENCE,
       assembly: ASSEMBLY_SEQUENCE,
+      maintenance: MAINTENANCE_SEQUENCE,
     },
   };
 
