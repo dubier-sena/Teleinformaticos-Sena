@@ -290,11 +290,10 @@
       '        </div>',
       '      </div>',
 
-      // Laboratorio Virtual de Hardware. TEMPORAL: solo admin (pedido
-      // 2026-08-16, mientras se revisa el modulo antes de abrirlo a
-      // aprendices) -- misma clase/oculto que "Calendario" y "Panel Admin",
-      // updateNavbarSession() lo revela para sesion admin.
-      '      <a class="app-navbar__link app-navbar__admin-only" href="' + p + 'laboratorio-virtual-hardware.html" data-nav-key="laboratorio" style="display:none">Laboratorio Virtual</a>',
+      // Laboratorio Virtual de Hardware: oculto hasta conocer la sesion;
+      // updateNavbarSession() lo revela al admin y al aprendiz cuya ficha
+      // tiene optionalModules.hardwareLab (FICHA_MAP, portal_auth.js).
+      '      <a class="app-navbar__link app-navbar__hwlab-link" href="' + p + 'laboratorio-virtual-hardware.html" data-nav-key="laboratorio" style="display:none">Laboratorio Virtual</a>',
 
       // Autorizacion de uso de firma (cualquier sesion; no depende de ficha/guia)
       '      <a class="app-navbar__link" href="' + p + 'pages/auxiliares/autorizacion-firma.html" data-nav-key="firma">Autorización de firma</a>',
@@ -403,6 +402,17 @@
         el.style.display = "";
       });
     }
+
+    // Laboratorio Virtual de Hardware: admin, o aprendiz con el modulo
+    // habilitado para su ficha (misma condicion que el gate de la pagina).
+    var hwlabAllowed = isAdmin;
+    if (!hwlabAllowed && session.role === "student" && session.user && typeof auth.getFichaInfo === "function") {
+      var fichaInfo = auth.getFichaInfo(session.user.ficha);
+      hwlabAllowed = !!(fichaInfo && fichaInfo.optionalModules && fichaInfo.optionalModules.hardwareLab === true);
+    }
+    document.querySelectorAll(".app-navbar__hwlab-link").forEach(function (el) {
+      el.style.display = hwlabAllowed ? "" : "none";
+    });
 
     // Rol, enlaces o nombre pueden haber cambiado el ancho de la barra.
     scheduleNavbarMeasurement();

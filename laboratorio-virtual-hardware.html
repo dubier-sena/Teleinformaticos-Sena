@@ -25,13 +25,10 @@
 <script src="js/portal_auth.js?v=20260816_1"></script>
 <script>
 (function () {
-  // Gate propio (no una guia). TEMPORAL: mientras se revisa el modulo, solo
-  // el admin puede entrar (pedido explicito del usuario 2026-08-16) --
-  // ningun aprendiz debe verlo todavia, aunque su ficha ya tenga
-  // optionalModules.hardwareLab en FICHA_MAP (portal_auth.js). Ese flag por
-  // ficha se deja intacto para cuando se reactive el acceso de aprendices:
-  // en ese momento, cambiar la condicion de abajo de vuelta a
-  // "session.role === 'student' && ...optionalModules.hardwareLab".
+  // Gate propio (no una guia). Entra el admin y el APRENDIZ cuya ficha tiene
+  // optionalModules.hardwareLab en FICHA_MAP (portal_auth.js), la fuente
+  // central de fichas (habilitado para aprendices 2026-09-27; antes solo
+  // admin mientras se revisaba el modulo).
   // Mismo criterio de bypass local que requireFileAccess/requireAdminAccess
   // (shouldBypassAccessGuardsForLocalPreview en portal_auth.js), para poder
   // previsualizar con file:// o localhost.
@@ -43,7 +40,12 @@
   if (isLocalPreview) return;
 
   var session = auth && typeof auth.getCurrentSession === "function" ? auth.getCurrentSession() : null;
-  var allowed = !!(session && session.role === "admin");
+  var fichaInfo =
+    session && session.role === "student" && session.user && typeof auth.getFichaInfo === "function"
+      ? auth.getFichaInfo(session.user.ficha)
+      : null;
+  var studentAllowed = !!(fichaInfo && fichaInfo.optionalModules && fichaInfo.optionalModules.hardwareLab === true);
+  var allowed = !!(session && (session.role === "admin" || studentAllowed));
   if (!allowed) {
     if (auth && typeof auth.setFlashMessage === "function") {
       auth.setFlashMessage("El Laboratorio Virtual de Hardware todavía no esta disponible para aprendices.", "warn");
@@ -63,7 +65,7 @@
 <script src="js/drive_db.js?v=20260922_1"></script>
 <script defer src="js/firebase_status_banner.js?v=20260923_1"></script>
 <script defer src="js/save_status.js?v=20260822_1"></script>
-<script defer src="js/shared_shell.js?v=20260923_3"></script>
+<script defer src="js/shared_shell.js?v=20260927_1"></script>
 <!-- Motor de datos/logica pura (sin DOM, con tests dedicados) -- intacto. -->
 <script defer src="js/hardware_lab_tools.js?v=20260927_1"></script>
 <script defer src="js/hardware_lab_data_desktop.js?v=20260927_1"></script>
