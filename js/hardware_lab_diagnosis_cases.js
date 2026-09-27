@@ -156,7 +156,7 @@
       explanation: {
         whatWasHappening: "La placa detectaba que el ventilador del procesador no giraba.",
         why: "El cable del ventilador CPU estaba desconectado del header CPU_FAN.",
-        howToDiagnose: "Una advertencia especifica de ventilador/temperatura apunta directo al sistema de refrigeracion, no a la alimentacion general.",
+        howToDiagnose: "Una advertencia especifica de ventilador/temperatura apunta directo al sistema de refrigeración, no a la alimentacion general.",
         howToFix: "Reconectar el cable del ventilador en el header CPU_FAN.",
         optimalProcedure: "Abrir gabinete -> localizar el header CPU_FAN -> reconectar -> comprobar que la advertencia desaparece.",
       },
@@ -240,7 +240,7 @@
       explanation: {
         whatWasHappening: "La temperatura subia progresivamente hasta forzar una reduccion de rendimiento o apagado.",
         why: "El disipador no estaba correctamente asentado sobre el procesador (mal contacto termico).",
-        howToDiagnose: "Un sobrecalentamiento progresivo (no un apagado instantaneo) apunta al sistema de refrigeracion: flujo de aire, instalacion del disipador o pasta termica.",
+        howToDiagnose: "Un sobrecalentamiento progresivo (no un apagado instantaneo) apunta al sistema de refrigeración: flujo de aire, instalacion del disipador o pasta termica.",
         howToFix: "Retirar el disipador y reinstalarlo verificando que quede bien asentado y a nivel.",
         optimalProcedure: "Abrir gabinete -> desconectar cable del ventilador -> retirar disipador -> reinstalar firme -> reconectar cable -> comprobar temperatura.",
       },

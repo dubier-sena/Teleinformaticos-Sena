@@ -396,7 +396,7 @@ export function createLaptopLayout() {
   screws.push({
     id: "ssd-m2-1",
     partId: "ssd-m2",
-    label: "Tornillo de fijacion del SSD M.2",
+    label: "Tornillo de fijación del SSD M.2",
     // 2.75 mm bajo la cara de la placa: cara inferior MEDIDA del PCB de la
     // tarjeta junto al standoff (no la de los chips NAND, que bajan 1.2 mm
     // mas pero quedan lejos del tornillo).
@@ -411,7 +411,7 @@ export function createLaptopLayout() {
   screws.push({
     id: "wifi-card-1",
     partId: "wifi-card",
-    label: "Tornillo de fijacion de la tarjeta Wi-Fi",
+    label: "Tornillo de fijación de la tarjeta Wi-Fi",
     // Cara inferior MEDIDA del PCB de la tarjeta junto a su standoff.
     position: (a) => at(mbOf(a).wifiSlot, 0.014, -0.0027, 0),
     outDir: DOWN,
@@ -461,7 +461,7 @@ export function createLaptopLayout() {
     screws.push({
       id: "battery-" + (i + 1),
       partId: "battery",
-      label: "Tornillo " + (i + 1) + " de fijacion de la bateria",
+      label: "Tornillo " + (i + 1) + " de fijación de la batería",
       position: (a) => at(baseOf(a).batteryBay, sx * LAPTOP_BATTERY_SCREW_X, -0.00275, LAPTOP_BATTERY_SCREW_DZ),
       outDir: [0, -1, 0],
       size: { headR: 0.0019, headH: 0.0008, shankR: 0.001, shankLen: 0.004 },
@@ -480,7 +480,7 @@ export function createLaptopLayout() {
     screws.push({
       id: "keyboard-" + (i + 1),
       partId: "keyboard",
-      label: "Tornillo " + (i + 1) + " de fijacion del teclado",
+      label: "Tornillo " + (i + 1) + " de fijación del teclado",
       position: () => v(sx * LAPTOP_KEYBOARD_SCREW_X, LAPTOP.deckBottomY - 0.004, -0.005),
       outDir: [0, -1, 0],
       bearsOn: "chassis",
@@ -495,7 +495,7 @@ export function createLaptopLayout() {
     screws.push({
       id: "touchpad-" + (i + 1),
       partId: "touchpad",
-      label: "Tornillo " + (i + 1) + " de fijacion del touchpad",
+      label: "Tornillo " + (i + 1) + " de fijación del touchpad",
       position: (a) => v(sx * LAPTOP_TOUCHPAD_SCREW_X, LAPTOP.deckBottomY - 0.0023, baseOf(a).touchpadMount.z),
       outDir: [0, -1, 0],
       bearsOn: "chassis",
@@ -557,7 +557,7 @@ export function createLaptopLayout() {
     // el aprendiz lo haya girado para inspeccionarlo).
     presets: {
       // Pose inicial aprobada: derecho, pantalla abierta como en General.
-      open: { label: "Abierto (posicion normal)", yaw: 0, flipped: false, lid: LAPTOP_LID_OPEN_ANGLE },
+      open: { label: "Abierto (posición normal)", yaw: 0, flipped: false, lid: LAPTOP_LID_OPEN_ANGLE },
       closed: { label: "Cerrado", yaw: 0, flipped: false, lid: LAPTOP_LID_CLOSED_ANGLE },
       // Tapa inferior: cerrado y boca abajo, la tapa inferior hacia arriba.
       bottom: { label: "Tapa inferior", yaw: 0, flipped: true, lid: LAPTOP_LID_CLOSED_ANGLE },

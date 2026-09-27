@@ -90,7 +90,7 @@ test("el cable de bateria bloquea CUALQUIER pieza interna hasta desconectarse (r
     toolId: "hands",
   });
   assert.strictEqual(outcome.ok, false);
-  assert.match(outcome.message, /Cable de la bateria/);
+  assert.match(outcome.message, /Cable de la batería/);
 });
 
 test("las antenas Wi-Fi deben desconectarse antes de retirar la pantalla, y antes de la tarjeta Wi-Fi", () => {

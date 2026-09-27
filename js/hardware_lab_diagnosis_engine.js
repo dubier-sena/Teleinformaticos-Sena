@@ -162,7 +162,7 @@
       var need = reqCheck.expected ? "Primero debes instalar/conectar: " : "Primero debes retirar/desconectar: ";
       return {
         ok: false,
-        message: "No puedes " + actionInfo.verb + " " + part.name + " todavia. " + need + missingNames.join(", ") + ".",
+        message: "No puedes " + actionInfo.verb + " " + part.name + " todavía. " + need + missingNames.join(", ") + ".",
         session: recordError(session, "blocked"),
       };
     }

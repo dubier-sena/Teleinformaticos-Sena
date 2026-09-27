@@ -53,6 +53,83 @@ export function clampCameraAboveY(position, target, minY = CAMERA_MIN_WORLD_Y) {
   return true;
 }
 
+/**
+ * ENCUADRE POR PIEZA OBJETIVO (sep-26). Posicion de camara que muestra la caja
+ * `box` (mundo) COMPLETA dentro del rectangulo `ndcRect` = [x0, x1, y0, y1]
+ * (coordenadas NDC del area util de la escena, sin la interfaz), mirando en la
+ * direccion `dir` (del objetivo hacia la camara: se conserva el angulo de
+ * trabajo actual) y con el centro de la caja en el centro de ese rectangulo.
+ * Usa el FOV vertical Y el horizontal (segun `aspect`): el encuadre de trabajo
+ * solo usaba el vertical y en un movil vertical (aspecto ~0,6) lo ancho se
+ * salia por los lados. Se verifica proyectando las 8 esquinas con una camara
+ * real y alejando un 4 % mientras alguna quede fuera. No mueve nada: devuelve
+ * { pos, target, dist }.
+ */
+export function frameBoxInRect({ box, dir, fovY, aspect, ndcRect, minDist = 0.2, maxDist = 6, up = new THREE.Vector3(0, 1, 0) }) {
+  const C = box.getCenter(new THREE.Vector3());
+  const d = dir.clone().normalize();
+  const forward = d.clone().negate();
+  const right = new THREE.Vector3().crossVectors(forward, up);
+  if (right.lengthSq() < 1e-8) right.set(1, 0, 0);
+  right.normalize();
+  const camUp = new THREE.Vector3().crossVectors(right, forward).normalize();
+  const tanY = Math.tan(THREE.MathUtils.degToRad(fovY / 2));
+  const tanX = tanY * aspect;
+  const [x0, x1, y0, y1] = ndcRect;
+  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, hw = (x1 - x0) / 2, hh = (y1 - y0) / 2;
+  const corners = [];
+  for (let i = 0; i < 8; i++) corners.push(new THREE.Vector3(i & 1 ? box.max.x : box.min.x, i & 2 ? box.max.y : box.min.y, i & 4 ? box.max.z : box.min.z));
+  // Estimacion directa (proyeccion conica de cada esquina)...
+  let D = minDist;
+  corners.forEach((p) => {
+    const v = p.clone().sub(C);
+    const xr = Math.abs(v.dot(right)), yu = Math.abs(v.dot(camUp)), zc = v.dot(d);
+    D = Math.max(D, zc + xr / (hw * tanX), zc + yu / (hh * tanY));
+  });
+  const place = (dist) => {
+    const target = C.clone().addScaledVector(right, -cx * dist * tanX).addScaledVector(camUp, -cy * dist * tanY);
+    return { pos: target.clone().addScaledVector(d, dist), target, dist };
+  };
+  // ...y verificacion con una camara real (la estimacion ignora la perspectiva del desplazamiento).
+  const cam = new THREE.PerspectiveCamera(fovY, aspect, 0.01, 50);
+  cam.up.copy(up);
+  let f = place(Math.min(D, maxDist));
+  for (let k = 0; k < 40 && f.dist < maxDist; k++) {
+    cam.position.copy(f.pos);
+    cam.lookAt(f.target);
+    cam.updateMatrixWorld(true);
+    const fits = corners.every((p) => {
+      const q = p.clone().project(cam);
+      return q.z < 1 && q.x >= x0 - 1e-3 && q.x <= x1 + 1e-3 && q.y >= y0 - 1e-3 && q.y <= y1 + 1e-3;
+    });
+    if (fits) break;
+    f = place(Math.min(maxDist, f.dist * 1.04));
+  }
+  return f;
+}
+
+/**
+ * Caja de ENFOQUE a partir de la caja real de la pieza: margen proporcional a
+ * su tamano (30 %, entre 12 y 40 mm) y un minimo de contexto de 120 mm para
+ * piezas diminutas (conectores, antenas): se ve DONDE esta, no solo la pieza.
+ * Las piezas MUY grandes (pantalla, tapa, placa: > 250 x 150 mm) van sin margen:
+ * ya son su propio contexto y alejarlas mas encogia sus tornillos (medido en
+ * la tapa inferior del movil). No toca la geometria ni la zona de clic.
+ * Devuelve { box, large }.
+ */
+export function padFocusBox(pieceBox) {
+  const box = pieceBox.clone();
+  const size = box.getSize(new THREE.Vector3());
+  const dims = [size.x, size.y, size.z].sort((a, b) => b - a);
+  const s = dims[0];
+  // "Grande" = SUPERFICIE grande (dos lados grandes). Un cable largo y fino
+  // (antena Wi-Fi 2: 285 x 8 x 95 mm) no lo es: necesita el 90 % y margen.
+  if (dims[0] > 0.25 && dims[1] > 0.15) return { box, large: true };
+  box.expandByScalar(THREE.MathUtils.clamp(s * 0.3, 0.012, 0.04));
+  box.union(new THREE.Box3().setFromCenterAndSize(box.getCenter(new THREE.Vector3()), new THREE.Vector3(0.12, 0.12, 0.12)));
+  return { box, large: false };
+}
+
 export function createCameraRig({ camera, renderer, tweenGroup, onTick }) {
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;

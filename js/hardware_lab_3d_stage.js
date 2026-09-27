@@ -9,8 +9,9 @@
  */
 import * as THREE from "./vendor/three.module.min.js";
 import { createLabScene } from "./hardware_lab_3d_scene.js";
-import { createCameraRig } from "./hardware_lab_3d_camera.js";
-import { createInteractionLayer, worldToScreen } from "./hardware_lab_3d_interactions.js";
+import { createCameraRig, frameBoxInRect, padFocusBox, CAMERA_MIN_WORLD_Y } from "./hardware_lab_3d_camera.js";
+import { createInteractionLayer, worldToScreen, visibleLocalBox } from "./hardware_lab_3d_interactions.js";
+import { rect as uiRect, area as uiArea, cardCandidates, chooseSlot, coverRatio, chooseFeedbackSpot, chooseDockSpot, safeViewRect, framingVerdict } from "./hardware_lab_3d_ui_layout.js";
 import { TweenGroup } from "./hardware_lab_3d_tween.js";
 import { createRig } from "./hardware_lab_3d_rig.js";
 import { createScrewController } from "./hardware_lab_3d_screws.js";
@@ -26,6 +27,9 @@ const VIEW_ICONS = {
   overview: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M3 12h4M17 12h4M12 3v4M12 17v4"/></svg>',
 };
 const VIEW_LABELS = { front: "Frontal", side: "Lateral", top: "Superior", back: "Posterior", internal: "Interna", overview: "General" };
+// Interfaz v2 (sep-26): los botones son ICONOS dentro de la escena; el texto
+// completo va en aria-label y en el tooltip (data-tip), orientado al aprendiz.
+const VIEW_TIPS = { front: "Vista frontal", side: "Vista lateral", top: "Vista superior", back: "Vista posterior", internal: "Vista interna", overview: "Vista general" };
 
 // ── "Mover portatil" (posiciones tecnicas, sep-26) ─────────────────────────
 const POSE_ICONS = {
@@ -39,6 +43,12 @@ const POSE_ICONS = {
 // Cada equipo tiene su propio set (el portatil no tiene fuente de poder
 // propia, usa bateria en su lugar). Los ids ausentes en un momento dado de
 // la practica (pieza ya retirada) se ignoran solos via focusOnObjects().
+const FOCUS_ICONS = {
+  motherboard: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="1"/><rect x="9" y="9" width="6" height="6"/><path d="M9 4v2M15 4v2M9 18v2M15 18v2M4 9h2M4 15h2M18 9h2M18 15h2"/></svg>',
+  storage: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="10" rx="1"/><path d="M7 11h6M17 12h.01"/></svg>',
+  cooling: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2"/><path d="M12 10c0-4 1-6 4-6s2 5-2 7M14 12c4 0 6 1 6 4s-5 2-7-2M12 14c0 4-1 6-4 6s-2-5 2-7M10 12c-4 0-6-1-6-4s5-2 7 2"/></svg>',
+  power: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="8" width="16" height="9" rx="1"/><path d="M19 11h2v3h-2M8 10l-2 3h4l-2 3"/></svg>',
+};
 const FOCUS_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg>';
 const FOCUS_PRESETS = {
   desktop: [
@@ -151,10 +161,137 @@ export function createStage() {
     });
 
     renderViewButtons();
+    wireFloatingUi();
+    window.addEventListener("resize", () => {
+      schedulePlaceCard(200);
+      onViewportChange();
+    });
+    // Vigia de reposo: cada cuadro solo compara la posicion de la camara y del
+    // equipo (unos pocos numeros). Cuando el movimiento TERMINA (encuadre de
+    // trabajo, volteo, orbita) se programa UNA recolocacion; nunca se coloca
+    // la interfaz en cada cuadro. Medido: sin esto la tarjeta se decidia con
+    // la pieza en su posicion anterior (SSD tapado un 86 % en el movil).
+    let motionSig = "", moving = false, stillSince = 0;
+    sceneApi.onTick(() => {
+      const c = sceneApi.camera;
+      const r = currentRig && currentRig.root;
+      const sig = c.position.x.toFixed(3) + c.position.y.toFixed(3) + c.position.z.toFixed(3) + c.quaternion.w.toFixed(4) +
+        (r ? r.position.y.toFixed(3) + r.quaternion.x.toFixed(4) + r.quaternion.y.toFixed(4) : "");
+      const now = performance.now();
+      if (sig !== motionSig) { motionSig = sig; moving = true; stillSince = now; return; }
+      if (moving && now - stillSince > 300) {
+        moving = false;
+        schedulePlaceCard(60);
+        if (!frameState.done) scheduleFrameCheck(80);
+      }
+    });
+    if (cameraRig.controls && cameraRig.controls.addEventListener) cameraRig.controls.addEventListener("end", () => schedulePlaceCard(300));
     wireFullscreen();
     wireSound();
     wireDidacticMode();
     return true;
+  }
+
+  // ── Interfaz flotante v2 (sep-26) ─────────────────────────────────────────
+  // Dock de controles (grupos que en pantallas compactas se abren uno a la
+  // vez), tarjeta de instrucciones (contraer / ver mas) e historial plegable.
+  // Solo presentacion: ninguna regla del laboratorio vive aqui.
+  // Abre/contrae la tarjeta de instrucciones (la asigna wireFloatingUi).
+  let setCard = () => {};
+  let lastSummary = "";
+  function wireFloatingUi() {
+    const dock = document.getElementById("hwlab-dock");
+    if (dock) {
+      const groups = Array.from(dock.querySelectorAll(".hwlab-dock__group"));
+      const closeAll = (except) => groups.forEach((g) => { if (g !== except) { g.removeAttribute("data-open"); g.querySelector(".hwlab-dock__toggle").setAttribute("aria-expanded", "false"); } });
+      groups.forEach((g) => {
+        const t = g.querySelector(".hwlab-dock__toggle");
+        t.addEventListener("click", () => {
+          const open = g.hasAttribute("data-open");
+          closeAll(g);
+          if (open) g.removeAttribute("data-open"); else g.setAttribute("data-open", "");
+          t.setAttribute("aria-expanded", String(!open));
+        });
+      });
+      // En modo compacto, elegir una accion cierra el grupo (deja la escena libre).
+      dock.addEventListener("click", (e) => {
+        const btn = e.target.closest(".hwlab-dock__items button");
+        if (btn && getComputedStyle(dock).getPropertyValue("--hwlab-dock-compact").trim() === "1") closeAll(null);
+      });
+      document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeAll(null); });
+      // Tocar la escena (o cualquier cosa fuera del dock) cierra el panel del
+      // grupo abierto: si no, quedaba encima de la pieza (medido en el movil).
+      document.addEventListener("pointerdown", (e) => { if (!dock.contains(e.target)) closeAll(null); }, true);
+    }
+    const card = document.getElementById("hwlab-card");
+    const toggle = document.getElementById("hwlab-card-toggle");
+    setCard = (open) => {
+      if (!card || !toggle) return;
+      card.setAttribute("data-state", open ? "open" : "closed");
+      toggle.setAttribute("aria-expanded", String(open));
+      const label = open ? "Contraer instrucciones" : "Mostrar instrucciones";
+      toggle.setAttribute("aria-label", label);
+      toggle.setAttribute("data-tip", label);
+    };
+    const more = document.getElementById("hwlab-card-more");
+    if (card && toggle) {
+      toggle.addEventListener("click", () => {
+        if (card.getAttribute("data-auto-compact") === "true") {
+          // El aprendiz quiere ver el detalle: se respeta durante este paso.
+          userExpandedFor = (document.getElementById("hwlab-card-summary") || {}).textContent || "";
+          card.removeAttribute("data-auto-compact");
+          card.style.maxHeight = "";
+          setCard(true);
+          return;
+        }
+        setCard(card.getAttribute("data-state") === "closed");
+      });
+    }
+    if (card && more) {
+      more.addEventListener("click", () => {
+        const full = card.getAttribute("data-detail") === "full";
+        card.setAttribute("data-detail", full ? "brief" : "full");
+        more.setAttribute("aria-pressed", String(!full));
+        more.textContent = full ? "Ver más" : "Ver menos";
+      });
+    }
+    const hist = document.getElementById("hwlab-history");
+    const ht = document.getElementById("hwlab-history-toggle");
+    const log = document.getElementById("hwlab-action-log");
+    if (hist && ht && log) {
+      ht.addEventListener("click", () => {
+        const open = hist.getAttribute("data-open") === "true";
+        hist.setAttribute("data-open", String(!open));
+        ht.setAttribute("aria-expanded", String(!open));
+        log.hidden = open;
+        layoutHistory();
+        if (!open) log.scrollTop = log.scrollHeight;
+      });
+      window.addEventListener("resize", layoutHistory);
+    }
+  }
+
+  /** El historial ABIERTO nunca tapa los controles (medido: en 1024x625 cubria
+   *  Enfoque/Visualizacion y en el movil la barra de grupos). Escritorio: su
+   *  lista no sube por encima del dock. Movil: el dock sube lo que crece. */
+  function layoutHistory() {
+    const scene = document.getElementById("hwlab-scene");
+    const hist = document.getElementById("hwlab-history");
+    const log = document.getElementById("hwlab-action-log");
+    const dock = document.getElementById("hwlab-dock");
+    if (!scene || !hist || !log || !dock) return;
+    log.style.maxHeight = "";
+    scene.style.setProperty("--hwlab-history-extra", "0px");
+    if (hist.getAttribute("data-open") !== "true") return;
+    if (window.matchMedia && window.matchMedia("(max-width: 600px)").matches) {
+      scene.style.setProperty("--hwlab-history-extra", log.getBoundingClientRect().height + "px");
+      return;
+    }
+    const d = dock.getBoundingClientRect(), h = hist.getBoundingClientRect(), l = log.getBoundingClientRect();
+    if (d.left < h.right && d.right > h.left) {
+      const room = Math.floor(l.bottom - (d.bottom + 8));
+      if (room < l.height) log.style.maxHeight = Math.max(56, room) + "px";
+    }
   }
 
   // ── Modo didactico (mejora 3D, items 10-11) ────────────────────────────────
@@ -168,7 +305,7 @@ export function createStage() {
   function setDidacticMode(on) {
     didacticActive = on;
     const btn = document.getElementById("hwlab-didactic-btn");
-    if (btn) btn.classList.toggle("is-active", on);
+    if (btn) { btn.classList.toggle("is-active", on); btn.setAttribute("aria-pressed", String(on)); }
     const layer = document.getElementById("hwlab-labels-layer");
     if (layer) layer.hidden = !on;
 
@@ -259,7 +396,7 @@ export function createStage() {
     const grid = document.getElementById("hwlab-view-buttons");
     if (!grid) return;
     grid.innerHTML = Object.keys(VIEW_ICONS)
-      .map((v) => `<button type="button" class="hwlab-view-btn" data-view="${v}">${VIEW_ICONS[v]}<span>${VIEW_LABELS[v]}</span></button>`)
+      .map((v) => `<button type="button" class="hwlab-view-btn hwlab-dock__btn" data-view="${v}" aria-label="${VIEW_TIPS[v]}" data-tip="${VIEW_TIPS[v]}">${VIEW_ICONS[v]}<span class="hwlab-dock__label">${VIEW_LABELS[v]}</span></button>`)
       .join("");
     grid.querySelectorAll("[data-view]").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -275,6 +412,7 @@ export function createStage() {
         document.querySelectorAll(".hwlab-view-btn").forEach((b) => b.classList.remove("is-active"));
         btn.classList.add("is-active");
         cameraRig.goToView(btn.getAttribute("data-view"));
+        schedulePlaceCard(CAMERA_SETTLE_MS);
       });
     });
   }
@@ -290,7 +428,7 @@ export function createStage() {
     }
     panel.hidden = false;
     grid.innerHTML = presets
-      .map((p) => `<button type="button" class="hwlab-view-btn" data-focus="${p.key}">${FOCUS_ICON}<span>${esc(p.label)}</span></button>`)
+      .map((p) => `<button type="button" class="hwlab-view-btn hwlab-dock__btn" data-focus="${p.key}" aria-label="Enfocar: ${esc(p.label)}" data-tip="Enfocar: ${esc(p.label)}">${FOCUS_ICONS[p.key] || FOCUS_ICON}<span class="hwlab-dock__label">${esc(p.label)}</span></button>`)
       .join("");
     grid.querySelectorAll("[data-focus]").forEach((btn) => {
       const preset = presets.find((p) => p.key === btn.getAttribute("data-focus"));
@@ -307,6 +445,7 @@ export function createStage() {
         // clic real) -- 2.3 deja el grupo notablemente mas cerca sin llegar a
         // recortar piezas del encuadre.
         cameraRig.focusOnObjects(objects, { distanceFactor: 2.3 });
+        schedulePlaceCard(CAMERA_SETTLE_MS);
       });
     });
   }
@@ -372,6 +511,9 @@ export function createStage() {
   }
 
   function loadRig(layout, equipmentId) {
+    // Cada practica fija su propia politica de encuadre (la diagnostica no usa ninguna).
+    framingPolicy = null;
+    frameState = { key: null, done: true };
     if (currentRig) currentRig.dispose();
     if (interactions) interactions.clearInteractives();
     if (explodeCtl && explodeCtl.isExploded) explodeCtl.collapse({ duration: 0 });
@@ -465,6 +607,26 @@ export function createStage() {
     const dir = currentRig.workViewDir(name);
     if (!dir) return;
     document.querySelectorAll(".hwlab-view-btn").forEach((b) => b.classList.remove("is-active"));
+    // Encuadre de trabajo pedido (Preparar / Vista de trabajo): se evalua ANTES
+    // de volar si dejara bien la pieza objetivo; si no, se vuela directamente
+    // al encuadre corregido. UN solo vuelo: medido, un segundo vuelo 0,4 s
+    // despues del primero hacia que un clic en un tornillo cayera en la placa
+    // (error penalizado en el ensamble del movil).
+    if (framingActive() && box && !box.isEmpty()) {
+      const wf = cameraRig.workFrame(box, dir);
+      const cam = sceneApi.camera.clone();
+      cam.position.copy(wf.pos);
+      cam.lookAt(wf.target);
+      cam.updateMatrixWorld(true);
+      const plan = planTargetFrame(cam, wf.target);
+      if (plan) {
+        frameState.done = true;
+        if (!plan.ok) {
+          cameraRig.flyTo(plan.frame.pos, plan.frame.target, opts);
+          return;
+        }
+      }
+    }
     cameraRig.frameWork(box, dir, opts);
   }
 
@@ -487,7 +649,7 @@ export function createStage() {
     }
     const label = (currentRig.presets[name] && currentRig.presets[name].label) || name;
     return movePose(target, {
-      announce: "Preparando el portatil: " + label.toLowerCase() + ".",
+      announce: "Preparando: " + label.toLowerCase(),
       onDone: () => {
         if (opts.frame !== false) frameWorkView(name);
         if (opts.onDone) opts.onDone();
@@ -501,23 +663,29 @@ export function createStage() {
       return false;
     }
     if (poseHooks.onPoseStart) poseHooks.onPoseStart();
-    if (opts.announce) showFeedback(opts.announce, "info");
+    const announceId = opts.announce ? showFeedback(opts.announce, "info", { transient: true }) : 0;
     setPoseButtonsEnabled(false);
     const ok = currentRig.setPose(target, {
       onDone: () => {
+        if (announceId) endTransientFeedback(announceId);
         refreshRigBounds();
         setPoseButtonsEnabled(true);
         renderPoseStatus();
         if (opts.onDone) opts.onDone();
         if (poseHooks.onPoseEnd) poseHooks.onPoseEnd(currentRig.getPose());
+        schedulePlaceCard(CAMERA_SETTLE_MS);
       },
     });
-    if (!ok) setPoseButtonsEnabled(true);
+    if (!ok) {
+      setPoseButtonsEnabled(true);
+      if (announceId) endTransientFeedback(announceId);
+    }
     return ok;
   }
 
   function setPoseButtonsEnabled(on) {
-    document.querySelectorAll("#hwlab-pose-panel button").forEach((b) => { b.disabled = !on; });
+    // Solo los botones de la accion (no el que abre/cierra el grupo del dock).
+    document.querySelectorAll("#hwlab-pose-items button").forEach((b) => { b.disabled = !on; });
   }
 
   function renderPoseStatus() {
@@ -537,10 +705,13 @@ export function createStage() {
     else if (match) text = presets[match].label;
     else if (pose.flipped) text = "Boca abajo (girado)";
     else text = Math.abs(pose.lid) < 0.01 ? "Cerrado (girado)" : "Abierto (girado)";
-    el.textContent = "Posicion actual: " + text;
+    el.textContent = "Posición actual: " + text;
     const lidBtn = document.querySelector('[data-pose="lid"]');
     if (lidBtn) {
-      lidBtn.querySelector("span").textContent = Math.abs(pose.lid) < 0.01 ? "Abrir pantalla" : "Cerrar pantalla";
+      const lidText = Math.abs(pose.lid) < 0.01 ? "Abrir pantalla" : "Cerrar pantalla";
+      lidBtn.querySelector("span").textContent = lidText;
+      lidBtn.setAttribute("aria-label", lidText);
+      lidBtn.setAttribute("data-tip", lidText);
       // Boca abajo la pantalla queda cerrada contra el soporte.
       if (!currentRig.isPoseAnimating()) lidBtn.disabled = !!pose.flipped;
     }
@@ -568,13 +739,13 @@ export function createStage() {
     panel.hidden = false;
     const grid = document.getElementById("hwlab-pose-buttons");
     const btns = [
-      ["yawLeft", "Girar izq.", "Girar el portatil 90 grados a la izquierda", POSE_ICONS.yawLeft],
-      ["yawRight", "Girar der.", "Girar el portatil 90 grados a la derecha", POSE_ICONS.yawRight],
-      ["flip", "Voltear", "Cerrar y voltear el portatil", POSE_ICONS.flip],
-      ["lid", "Cerrar pantalla", "Abrir o cerrar la pantalla", POSE_ICONS.lid],
+      ["yawLeft", "Girar izq.", "Girar el portátil 90° a la izquierda", POSE_ICONS.yawLeft],
+      ["yawRight", "Girar der.", "Girar el portátil 90° a la derecha", POSE_ICONS.yawRight],
+      ["flip", "Voltear", "Cerrar y voltear el portátil", POSE_ICONS.flip],
+      ["lid", "Cerrar pantalla", "Cerrar la pantalla", POSE_ICONS.lid],
     ];
     grid.innerHTML = btns
-      .map(([k, label, title, icon]) => `<button type="button" class="hwlab-view-btn hwlab-pose-btn" data-pose="${k}" title="${esc(title)}">${icon}<span>${esc(label)}</span></button>`)
+      .map(([k, label, title, icon]) => `<button type="button" class="hwlab-view-btn hwlab-dock__btn hwlab-pose-btn" data-pose="${k}" aria-label="${esc(title)}" data-tip="${esc(title)}">${icon}<span class="hwlab-dock__label">${esc(label)}</span></button>`)
       .join("");
     grid.querySelectorAll("[data-pose]").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -586,12 +757,12 @@ export function createStage() {
           movePose({ yaw: pose.yaw + (k === "yawLeft" ? 1 : -1) * Math.PI / 2 }, { onDone: reframe });
         } else if (k === "flip") {
           movePose({ flipped: !pose.flipped, lid: lidCfg ? lidCfg.closedAngle : pose.lid }, {
-            announce: pose.flipped ? "Volteando el portatil a su posicion normal." : "Cerrando y volteando el portatil.",
+            announce: pose.flipped ? "Volteando a su posición normal" : "Cerrando y volteando el portátil",
             onDone: reframe,
           });
         } else if (k === "lid") {
           if (pose.flipped) {
-            showFeedback("Con el portatil boca abajo la pantalla queda cerrada: primero voltealo a su posicion normal.", "info");
+            showFeedback("Con el portátil boca abajo la pantalla queda cerrada: primero voltéalo a su posición normal.", "info");
             return;
           }
           const closed = Math.abs(pose.lid - (lidCfg ? lidCfg.closedAngle : 0)) < 0.01;
@@ -622,19 +793,381 @@ export function createStage() {
   /** Pieza que la vista "Interna" debe encuadrar completa en este momento
    * (con sus tornillos): la tapa mientras siga puesta, o la pieza del paso. */
   function setBelowFraming(partId) {
+    const changed = (partId || null) !== belowFramePartId;
+    if (changed) schedulePlaceCard(CAMERA_SETTLE_MS);
     belowFramePartId = partId || null;
+    if (changed) {
+      frameState = { key: belowFramePartId, done: false };
+      scheduleFrameCheck(350);
+    }
   }
 
   function focusOnPart(partId) {
+    // Practica guiada: la camara no persigue cada pieza clicada (antes se
+    // acercaba a 0,22 m de la pieza RECIEN RETIRADA y el objetivo siguiente
+    // quedaba fuera de cuadro: antena Wi-Fi al 24 %, cable del ventilador al
+    // 0 %, medido). Se re-verifica el encuadre de la pieza OBJETIVO y solo se
+    // mueve si hace falta (p. ej. una pieza recien instalada con tornillos).
+    if (framingActive()) {
+      frameState.done = false;
+      scheduleFrameCheck(350);
+      schedulePlaceCard(CAMERA_SETTLE_MS);
+      return;
+    }
     const obj = currentRig && currentRig.getObject3D(partId);
     if (obj) cameraRig.focusOnObject(obj);
+    schedulePlaceCard(CAMERA_SETTLE_MS);
+  }
+
+  // ── Encuadre por pieza objetivo (sep-26) ──────────────────────────────────
+  // Al empezar una accion guiada se comprueba UNA vez si la pieza de trabajo
+  // (belowFramePartId) se ve bien dentro del AREA SEGURA (escena sin las
+  // bandas de interfaz). Solo si no (menos del 90 % dentro, o demasiado
+  // pequena) se vuela a un encuadre que la muestra completa y centrada,
+  // conservando el angulo de trabajo actual. Histeresis: una vez comprobada,
+  // no se vuelve a mover por esa pieza salvo que cambie el objetivo, el
+  // tamano de la ventana o se pida un nuevo enfoque. Nunca en cada cuadro ni
+  // despues de que el aprendiz orbite.
+  let framingPolicy = null; // { active(): bool, accessible(partId): bool } del controlador de practica
+  let frameState = { key: null, done: true };
+  let frameTimer = null;
+  let frameViewport = "";
+  let lastFraming = null; // diagnostico (lo leen las pruebas)
+
+  function setFramingPolicy(policy) {
+    framingPolicy = policy || null;
+    frameState = { key: belowFramePartId, done: !framingPolicy };
+    if (framingPolicy) scheduleFrameCheck(400);
+  }
+
+  function framingActive() {
+    return !!(framingPolicy && framingPolicy.active && framingPolicy.active());
+  }
+
+  function scheduleFrameCheck(ms) {
+    if (frameTimer) clearTimeout(frameTimer);
+    frameTimer = setTimeout(() => {
+      frameTimer = null;
+      tryFrameCheck();
+    }, ms);
+  }
+
+  function onViewportChange() {
+    const scene = document.getElementById("hwlab-scene");
+    if (!scene) return;
+    const r = scene.getBoundingClientRect();
+    const prev = frameViewport.split("x").map(Number);
+    frameViewport = Math.round(r.width) + "x" + Math.round(r.height);
+    // Solo un cambio SIGNIFICATIVO (giro del movil, ventana redimensionada).
+    if (prev.length === 2 && (Math.abs(prev[0] - r.width) > prev[0] * 0.1 || Math.abs(prev[1] - r.height) > prev[1] * 0.1)) {
+      frameState.done = false;
+      scheduleFrameCheck(400);
+    }
+  }
+
+  /** Caja de ENFOQUE de la pieza: su geometria visible (y sus tornillos en su
+   *  sitio) + un margen que depende de su tamano + un minimo de contexto. */
+  function targetFocusBox(partId) {
+    const obj = currentRig && currentRig.getObject3D(partId);
+    if (!obj || !obj.visible) return null;
+    obj.updateMatrixWorld(true);
+    const local = visibleLocalBox(obj);
+    if (local.isEmpty()) return null;
+    const box = new THREE.Box3();
+    for (let i = 0; i < 8; i++) {
+      box.expandByPoint(new THREE.Vector3(i & 1 ? local.max.x : local.min.x, i & 2 ? local.max.y : local.min.y, i & 4 ? local.max.z : local.min.z).applyMatrix4(obj.matrixWorld));
+    }
+    if (currentScrews && currentScrews.forPart) {
+      currentScrews.forPart(partId).forEach((e) => {
+        const o = e.object3d;
+        if (o && o.visible && e.homePosition && o.position.distanceTo(e.homePosition) < 0.02) box.expandByObject(o);
+      });
+    }
+    return padFocusBox(box);
+  }
+
+  /** Proyeccion de la geometria visible de la pieza (tambien lo que cae fuera de la pantalla). */
+  function targetScreenPoints(partId, cam = sceneApi.camera) {
+    const obj = currentRig && currentRig.getObject3D(partId);
+    if (!obj) return [];
+    const cr = sceneApi.renderer.domElement.getBoundingClientRect();
+    const pts = [];
+    const push = (v) => {
+      const p = v.project(cam);
+      pts.push({ x: cr.left + ((p.x + 1) / 2) * cr.width, y: cr.top + ((1 - p.y) / 2) * cr.height, front: p.z > -1 && p.z < 1 });
+    };
+    obj.updateMatrixWorld(true);
+    obj.traverse((n) => {
+      if (!n.isMesh || (n.userData && n.userData.hwlabHitbox)) return;
+      for (let q = n; q; q = q.parent) if (!q.visible) return;
+      if (n.geometry.parameters && n.geometry.parameters.path) { for (let k = 0; k <= 24; k++) push(n.geometry.parameters.path.getPointAt(k / 24).applyMatrix4(n.matrixWorld)); return; }
+      // Mallas instanciadas (componentes SMD): cada copia esta en SU matriz;
+      // con solo la plantilla, los puntos caian lejos de la pieza (medido: RAM).
+      if (n.isInstancedMesh) {
+        const m = new THREE.Matrix4();
+        const c = new THREE.Vector3();
+        if (!n.geometry.boundingBox) n.geometry.computeBoundingBox();
+        n.geometry.boundingBox.getCenter(c);
+        const step = Math.max(1, Math.floor(n.count / 24));
+        for (let i = 0; i < n.count; i += step) { n.getMatrixAt(i, m); push(c.clone().applyMatrix4(m).applyMatrix4(n.matrixWorld)); }
+        return;
+      }
+      const pa = n.geometry.attributes.position;
+      const step = Math.max(1, Math.floor(pa.count / 24));
+      for (let i = 0; i < pa.count; i += step) push(new THREE.Vector3().fromBufferAttribute(pa, i).applyMatrix4(n.matrixWorld));
+    });
+    return pts;
+  }
+
+  /** Centro en pantalla de cada tornillo de la pieza que sigue en su sitio (por quitar o por apretar). */
+  function pendingScrewPoints(partId, cam = sceneApi.camera) {
+    if (!currentScrews || !currentScrews.forPart) return [];
+    const cr = sceneApi.renderer.domElement.getBoundingClientRect();
+    return currentScrews.forPart(partId)
+      .filter((e) => e.object3d && e.object3d.visible && e.homePosition && e.object3d.position.distanceTo(e.homePosition) < 0.02)
+      .map((e) => {
+        const c = e.object3d.getWorldPosition(new THREE.Vector3());
+        const sphere = new THREE.Box3().setFromObject(e.object3d).getBoundingSphere(new THREE.Sphere());
+        const p = c.clone().project(cam);
+        // Diametro aparente: el radio real del tornillo llevado al plano de la camara.
+        const right = new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld, 0).multiplyScalar(Math.max(sphere.radius, 0.001));
+        const q = c.clone().add(right).project(cam);
+        const px = Math.hypot((q.x - p.x) * cr.width, (q.y - p.y) * cr.height); // = 2 * radio en px
+        return { x: cr.left + ((p.x + 1) / 2) * cr.width, y: cr.top + ((1 - p.y) / 2) * cr.height, front: p.z > -1 && p.z < 1, px };
+      });
+  }
+
+  /** Decide el encuadre de la pieza objetivo para una camara dada (la real o
+   *  una hipotetica: la del encuadre de trabajo que se va a pedir). Devuelve
+   *  null si ahora no se puede decidir, { ok: true } si esa camara ya la
+   *  muestra bien, o { ok: false, frame } con la posicion corregida. */
+  function planTargetFrame(cam, lookTarget) {
+    if (!framingActive() || !belowFramePartId || !currentRig || !sceneApi) return null;
+    // Pieza aun inaccesible en esta posicion (p. ej. interior con el portatil
+    // derecho): se espera a que el aprendiz prepare la posicion.
+    if (framingPolicy.accessible && !framingPolicy.accessible(belowFramePartId)) return null;
+    const scene = rectOf(document.getElementById("hwlab-scene"));
+    const cr = sceneApi.renderer.domElement.getBoundingClientRect();
+    if (!scene || !cr.width || !cr.height) return null;
+    const focus = targetFocusBox(belowFramePartId);
+    if (!focus) return null;
+    const safe = safeViewRect({
+      scene,
+      card: rectOf(document.getElementById("hwlab-card")),
+      dock: rectOf(document.getElementById("hwlab-dock")),
+      history: rectOf(document.getElementById("hwlab-history-toggle")),
+    });
+    const verdict = framingVerdict(targetScreenPoints(belowFramePartId, cam), safe, { large: focus.large, screws: pendingScrewPoints(belowFramePartId, cam) });
+    lastFraming = { part: belowFramePartId, verdict, moved: false };
+    if (verdict.ok) return { ok: true };
+    const dir = cam.position.clone().sub(lookTarget);
+    // Vista desde ABAJO (portatil derecho, encuadre propio de la tapa): no se toca.
+    if (dir.y < 0 || dir.lengthSq() < 1e-8) return { ok: true, skipped: true };
+    const ndcRect = [
+      ((safe.left - cr.left) / cr.width) * 2 - 1,
+      ((safe.right - cr.left) / cr.width) * 2 - 1,
+      1 - ((safe.bottom - cr.top) / cr.height) * 2,
+      1 - ((safe.top - cr.top) / cr.height) * 2,
+    ];
+    const f = frameBoxInRect({ box: focus.box, dir, fovY: cam.fov, aspect: cam.aspect, ndcRect, minDist: cameraRig.controls.minDistance + 0.02, maxDist: cameraRig.controls.maxDistance * 0.9 });
+    const finite = [f.pos.x, f.pos.y, f.pos.z, f.target.x, f.target.y, f.target.z].every(Number.isFinite);
+    // Nunca por debajo del tablero.
+    if (!finite || f.pos.y < CAMERA_MIN_WORLD_Y + 0.01) return { ok: true, skipped: true };
+    lastFraming.moved = true;
+    lastFraming.dist = f.dist;
+    return { ok: false, frame: f };
+  }
+
+  function tryFrameCheck() {
+    if (!framingActive() || frameState.done || !belowFramePartId || !currentRig || !sceneApi) return;
+    // Nada se decide con la camara o el equipo en movimiento.
+    if (cameraRig.isFlying() || poseBusy() || (currentRig.anyMoving && currentRig.anyMoving())) {
+      scheduleFrameCheck(300);
+      return;
+    }
+    const plan = planTargetFrame(sceneApi.camera, cameraRig.controls.target);
+    if (!plan) return;
+    frameState.done = true;
+    if (!plan.ok) cameraRig.flyTo(plan.frame.pos, plan.frame.target); // si ya se ve bien: la camara NO se mueve
+  }
+
+  // ── Interfaz alrededor del trabajo (sep-26) ─────────────────────────────────
+  // La tarjeta y los avisos evitan TAPAR la pieza del paso actual. Solo se
+  // decide en momentos concretos (cambio de paso o de vista, fin de una
+  // animacion u orbita, cambio de tamano de ventana), nunca en cada cuadro.
+  const CAMERA_SETTLE_MS = 1200; // la camara anima ~1.05 s
+  let placeTimer = null;
+  let cardSlot = null;
+  let userExpandedFor = null; // resumen del paso en que el aprendiz expandio a mano
+
+  function schedulePlaceCard(ms) {
+    if (placeTimer) clearTimeout(placeTimer);
+    placeTimer = setTimeout(() => { placeTimer = null; placeCard(); }, ms == null ? 120 : ms);
+  }
+
+  /** Rectangulo en pantalla de la GEOMETRIA VISIBLE de la pieza del paso. */
+  function targetScreenRect() {
+    if (!belowFramePartId || !currentRig || !sceneApi) return null;
+    const obj = currentRig.getObject3D(belowFramePartId);
+    if (!obj || !obj.visible) return null;
+    const box = visibleLocalBox(obj);
+    if (box.isEmpty()) return null;
+    const cam = sceneApi.camera;
+    const cr = sceneApi.renderer.domElement.getBoundingClientRect();
+    let l = Infinity, t = Infinity, r = -Infinity, b = -Infinity, front = 0;
+    for (let i = 0; i < 8; i++) {
+      const p = new THREE.Vector3(i & 1 ? box.max.x : box.min.x, i & 2 ? box.max.y : box.min.y, i & 4 ? box.max.z : box.min.z).applyMatrix4(obj.matrixWorld).project(cam);
+      if (p.z > 1) continue;
+      front++;
+      const x = cr.left + ((p.x + 1) / 2) * cr.width, y = cr.top + ((1 - p.y) / 2) * cr.height;
+      l = Math.min(l, x); t = Math.min(t, y); r = Math.max(r, x); b = Math.max(b, y);
+    }
+    if (!front) return null;
+    const clip = { left: Math.max(l, cr.left), top: Math.max(t, cr.top), right: Math.min(r, cr.right), bottom: Math.min(b, cr.bottom) };
+    if (!(clip.right > clip.left && clip.bottom > clip.top)) return null;
+    // Muestra de la GEOMETRIA VISIBLE (linea central de los cables, vertices
+    // del resto), solo los puntos dentro de la escena. Se calcula al colocar,
+    // no en cada cuadro.
+    const pts = [];
+    const push = (v) => { const p = v.project(cam); if (p.z > 1) return; const x = cr.left + ((p.x + 1) / 2) * cr.width, y = cr.top + ((1 - p.y) / 2) * cr.height; if (x >= cr.left && x <= cr.right && y >= cr.top && y <= cr.bottom) pts.push({ x, y }); };
+    obj.traverse((n) => {
+      if (!n.isMesh || (n.userData && n.userData.hwlabHitbox)) return;
+      for (let q = n; q; q = q.parent) if (!q.visible) return;
+      if (n.geometry.parameters && n.geometry.parameters.path) { for (let k = 0; k <= 24; k++) push(n.geometry.parameters.path.getPointAt(k / 24).applyMatrix4(n.matrixWorld)); return; }
+      const pa = n.geometry.attributes.position;
+      const step = Math.max(1, Math.floor(pa.count / 24));
+      for (let i = 0; i < pa.count; i += step) push(new THREE.Vector3().fromBufferAttribute(pa, i).applyMatrix4(n.matrixWorld));
+    });
+    clip.points = pts;
+    return clip;
+  }
+
+  const rectOf = (el) => { if (!el || el.hidden) return null; const r = el.getBoundingClientRect(); return r.width ? { left: r.left, top: r.top, right: r.right, bottom: r.bottom } : null; };
+
+  function placeCard() {
+    const card = document.getElementById("hwlab-card");
+    const scene = document.getElementById("hwlab-scene");
+    if (!card || !scene || !scene.offsetParent) return;
+    const mobile = window.matchMedia && window.matchMedia("(max-width: 600px)").matches;
+    const summary = (document.getElementById("hwlab-card-summary") || {}).textContent || "";
+    // Medir el tamano NATURAL (sin compactar ni posiciones forzadas).
+    card.removeAttribute("data-auto-compact");
+    card.style.top = card.style.left = card.style.right = card.style.bottom = card.style.maxHeight = card.style.width = "";
+    const natural = card.getBoundingClientRect();
+    const sceneR = rectOf(scene);
+    const gap = mobile ? 8 : 12;
+    const target = targetScreenRect();
+    placeDock(target, sceneR, mobile);
+    const dock = rectOf(document.getElementById("hwlab-dock"));
+    const hist = rectOf(document.getElementById("hwlab-history-toggle"));
+    const cands = cardCandidates({ scene: sceneR, card: { width: natural.width, height: natural.height }, dock: mobile ? null : dock, history: hist, gap, mobile });
+    if (mobile && dock) {
+      // En el movil el dock es la barra inferior: la banda "abajo" queda encima de ella.
+      cands.forEach((c) => { if (c.slot === "bottom" && c.rect.bottom > dock.top - gap) c.rect = uiRect(c.rect.left, dock.top - gap - (c.rect.bottom - c.rect.top), c.rect.right - c.rect.left, c.rect.bottom - c.rect.top); });
+    }
+    let pick = target ? chooseSlot(cands, target, cardSlot) : cands.find((c) => c.slot === (mobile ? "top" : "tr")) || null;
+    if (!pick) return;
+    // Segunda defensa: si ninguna esquina deja la pieza libre, la tarjeta se
+    // COMPACTA sola (queda "Paso X/Y · accion"; se puede expandir a mano).
+    let compact = false;
+    // Movil: el espacio del modelo manda. La tarjeta es una BANDA compacta por
+    // defecto (resumen + boton de accion si el paso lo pide); el detalle
+    // (instruccion, herramienta, precaucion) se abre a mano.
+    // Tablet/escritorio: la decision depende del ESPACIO y de la oclusion, no
+    // del tipo de equipo: tambien se compacta si la tarjeta ocuparia mas del
+    // 40 % de la escena (le quitaria demasiada area util al modelo).
+    const crowding = uiArea(pick.rect) / Math.max(1, uiArea(sceneR)) > 0.4;
+    if ((mobile || crowding || (target && pick.cover > 0.1)) && userExpandedFor !== summary) {
+      card.setAttribute("data-auto-compact", "true");
+      const bar = card.getBoundingClientRect().height;
+      const small = cands.map((c) => ({ slot: c.slot, rect: c.slot === "br" || c.slot === "bl" || c.slot === "bottom" ? uiRect(c.rect.left, c.rect.bottom - bar, c.rect.right - c.rect.left, bar) : uiRect(c.rect.left, c.rect.top, c.rect.right - c.rect.left, bar) }));
+      pick = (target ? chooseSlot(small, target, cardSlot) : small.find((c) => c.slot === pick.slot)) || pick;
+      compact = true;
+    }
+    // Registro de diagnostico SOLO si una prueba lo activa (inerte en uso normal).
+    if (Array.isArray(window.__HWLAB_UI_DEBUG__)) window.__HWLAB_UI_DEBUG__.push({ part: belowFramePartId, target: target && { l: Math.round(target.left), t: Math.round(target.top), r: Math.round(target.right), b: Math.round(target.bottom), n: target.points && target.points.length }, cands: cands.map((c) => ({ slot: c.slot, cover: target ? +coverRatio(c.rect, target).toFixed(2) : null, r: [Math.round(c.rect.left), Math.round(c.rect.top), Math.round(c.rect.right), Math.round(c.rect.bottom)] })), pick: pick.slot, compact, prev: cardSlot, dock: dock && [Math.round(dock.left), Math.round(dock.top), Math.round(dock.right), Math.round(dock.bottom)] });
+    cardSlot = pick.slot;
+    card.setAttribute("data-slot", pick.slot);
+    const pr = pick.rect;
+    card.style.left = (pr.left - sceneR.left) + "px";
+    card.style.top = (pr.top - sceneR.top) + "px";
+    card.style.right = "auto";
+    card.style.bottom = "auto";
+    card.style.width = (pr.right - pr.left) + "px";
+    if (!compact) card.style.maxHeight = (pr.bottom - pr.top) + "px";
+    card.dataset.cover = target ? String(Math.round(coverRatio(card.getBoundingClientRect(), target) * 100)) : "";
+    // Un aviso aun visible se decidio para la pieza ANTERIOR: se recoloca.
+    const fb = document.getElementById("hwlab-feedback");
+    if (fb && !fb.hidden) {
+      const c = placeFeedback(fb);
+      // Confirmacion simple que ahora cae sobre la pieza del NUEVO paso: se retira ya.
+      if (feedbackKind === "success" && c > 0.1) {
+        if (feedbackTimer) clearTimeout(feedbackTimer);
+        feedbackTimer = setTimeout(() => { fb.hidden = true; feedbackShown = { rank: 0, at: 0 }; }, 600);
+      }
+    }
+  }
+
+  /** Dock COMPACTO de escritorio/tablet: si tapa la pieza, baja sobre el historial. */
+  let dockPos = "";
+  function placeDock(target, sceneR, mobile) {
+    const dock = document.getElementById("hwlab-dock");
+    if (!dock) return;
+    const compact = getComputedStyle(dock).getPropertyValue("--hwlab-dock-compact").trim() === "1";
+    if (!compact || mobile || !target) { dock.removeAttribute("data-pos"); dockPos = ""; return; }
+    dock.removeAttribute("data-pos");
+    const top = rectOf(dock);
+    if (!top) return;
+    const hist = rectOf(document.getElementById("hwlab-history-toggle"));
+    const h = top.bottom - top.top, gap = 12;
+    const bottomY = (hist ? hist.top : sceneR.bottom) - 6 - h;
+    const spots = [{ pos: "", rect: top }, { pos: "bottom", rect: uiRect(top.left, bottomY, top.right - top.left, h) }];
+    const pick = chooseDockSpot(spots, target, dockPos);
+    dockPos = pick.pos;
+    if (dockPos) dock.setAttribute("data-pos", dockPos);
+  }
+
+  /** El aviso se aparta de la pieza objetivo y de su etiqueta (abajo o arriba
+   *  al centro, a un lado, o sobre el historial). Se decide al mostrarlo y al
+   *  recolocar la interfaz, nunca en cada cuadro. */
+  function placeFeedback(el) {
+    el.removeAttribute("data-pos");
+    const target = targetScreenRect();
+    if (!target) return 0;
+    const sceneR = rectOf(document.getElementById("hwlab-scene"));
+    const r = el.getBoundingClientRect();
+    const w = r.width, h = r.height, gap = 12;
+    const midY = sceneR.top + (sceneR.bottom - sceneR.top - h) / 2;
+    const spots = [
+      { pos: "", rect: { left: r.left, top: r.top, right: r.right, bottom: r.bottom } },
+      { pos: "top", rect: uiRect(sceneR.left + (sceneR.right - sceneR.left - w) / 2, sceneR.top + gap, w, h) },
+    ];
+    // A los lados solo si el aviso es ESTRECHO frente a la escena: en el movil
+    // ocupa casi todo el ancho y "a un lado" seria el centro, donde esta el
+    // modelo (medido: tapaba la etiqueta y los tornillos).
+    if (w <= (sceneR.right - sceneR.left) * 0.45) {
+      spots.push(
+        { pos: "left", rect: uiRect(sceneR.left + gap, midY, w, h) },
+        { pos: "right", rect: uiRect(sceneR.right - gap - w, midY, w, h) },
+        { pos: "side", rect: uiRect(sceneR.right - gap - w, r.top, w, h) }
+      );
+    }
+    // Sobre la barra del historial (lo menos prioritario de la escena).
+    spots.push({ pos: "hist", rect: uiRect(sceneR.left + gap, sceneR.bottom - gap - h, w, h) });
+    const tip = document.getElementById("hwlab-tooltip");
+    const pick = chooseFeedbackSpot(spots, target, [rectOf(document.getElementById("hwlab-card")), rectOf(document.getElementById("hwlab-dock"))], {
+      protect: [tip && !tip.hidden ? rectOf(tip) : null],
+      low: [rectOf(document.getElementById("hwlab-history-toggle"))],
+    });
+    if (pick && pick.pos) el.setAttribute("data-pos", pick.pos);
+    return pick ? coverRatio(pick.rect, target) : 0;
   }
 
   function toggleExplode() {
     if (!currentRig) return false;
     const nowExploded = explodeCtl.toggle(currentRig.getExplodeEntries(), new THREE.Vector3(0, 0, 0));
     const btn = document.getElementById("hwlab-explode-btn");
-    if (btn) btn.classList.toggle("is-active", nowExploded);
+    if (btn) { btn.classList.toggle("is-active", nowExploded); btn.setAttribute("aria-pressed", String(nowExploded)); }
     if (nowExploded) {
       // Mejora 3D (item 7): sin esto, si el usuario ya estaba enfocado de
       // cerca (clic en una pieza, o un preset de "Enfoque rapido") al activar
@@ -653,34 +1186,95 @@ export function createStage() {
   }
 
   // ── Feedback / historial ──────────────────────────────────────────────────
-  function showFeedback(message, tone) {
+  // Avisos flotantes (interfaz v2): icono + texto + estilo por TIPO (no solo
+  // color). Prioridad: bloqueo/error > informacion > exito. Un exito
+  // operacional ("Tornillo instalado") no tapa en el MISMO instante un aviso
+  // mas importante: se queda solo en el historial.
+  const FEEDBACK_ICONS = {
+    success: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>',
+    info: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/></svg>',
+    warning: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/></svg>',
+    error: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg>',
+  };
+  const FEEDBACK_RANK = { success: 1, info: 2, warning: 3, error: 4 };
+  const FEEDBACK_MS = { success: 3800, info: 7000, warning: 8000, error: 8000 };
+  // Un aviso de TRANSICION ("Preparando: pantalla") solo vive lo que dura el
+  // movimiento: al terminar se retira (tras un minimo para poder leerlo).
+  const TRANSIENT_MIN_MS = 1200;
+  let feedbackShown = { rank: 0, at: 0 };
+  let feedbackKind = "";
+  let feedbackSeq = 0;
+  let transientFeedback = null; // { id, at }
+  function endTransientFeedback(id) {
+    if (!transientFeedback || transientFeedback.id !== id) return;
     const el = document.getElementById("hwlab-feedback");
-    if (!el) return;
-    el.textContent = message;
-    el.className = "hwlab-feedback hwlab-feedback--" + (tone || "info");
-    el.hidden = false;
+    const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+    const wait = Math.max(0, TRANSIENT_MIN_MS - (now - transientFeedback.at));
     if (feedbackTimer) clearTimeout(feedbackTimer);
     feedbackTimer = setTimeout(() => {
+      if (!transientFeedback || transientFeedback.id !== id) return;
+      if (el) el.hidden = true;
+      transientFeedback = null;
+      feedbackShown = { rank: 0, at: 0 };
+    }, wait);
+  }
+  function showFeedback(message, tone, opts = {}) {
+    const el = document.getElementById("hwlab-feedback");
+    if (!el) return;
+    const kind = FEEDBACK_ICONS[tone] ? tone : "info";
+    const rank = FEEDBACK_RANK[kind];
+    const now = (typeof performance !== "undefined" ? performance.now() : Date.now());
+    if (!el.hidden && rank < feedbackShown.rank && now - feedbackShown.at < 250) return 0;
+    feedbackShown = { rank, at: now };
+    const id = ++feedbackSeq;
+    transientFeedback = opts.transient ? { id, at: now } : null;
+    el.innerHTML = FEEDBACK_ICONS[kind] + '<span class="hwlab-feedback__text"></span>';
+    el.lastChild.textContent = message;
+    el.className = "hwlab-feedback hwlab-feedback--" + kind;
+    feedbackKind = kind;
+    el.hidden = false;
+    const cover = placeFeedback(el);
+    if (feedbackTimer) clearTimeout(feedbackTimer);
+    // Una confirmacion simple que no encuentra hueco libre y cae sobre la pieza
+    // se retira antes (sigue en el historial): la pieza manda.
+    const ms = kind === "success" && cover > 0.1 ? 1400 : FEEDBACK_MS[kind];
+    feedbackTimer = setTimeout(() => {
       el.hidden = true;
-    }, 4200);
-    if (tone === "error") HardwareLabAudio.playError();
-    else if (tone === "success") HardwareLabAudio.playSuccess();
+      transientFeedback = null;
+      feedbackShown = { rank: 0, at: 0 };
+    }, ms);
+    if (kind === "error") HardwareLabAudio.playError();
+    else if (kind === "success") HardwareLabAudio.playSuccess();
+    return id;
   }
 
   function pushActionLog(text, tone) {
     const list = document.getElementById("hwlab-action-log");
     if (!list) return;
     const li = document.createElement("li");
-    li.textContent = text;
+    const time = document.createElement("time");
+    const d = new Date();
+    time.textContent = [d.getHours(), d.getMinutes(), d.getSeconds()].map((n) => String(n).padStart(2, "0")).join(":");
+    li.appendChild(time);
+    li.appendChild(document.createTextNode(" " + text));
     if (tone) li.className = "is-" + tone;
     list.appendChild(li);
     list.scrollLeft = list.scrollWidth;
+    list.scrollTop = list.scrollHeight;
     while (list.children.length > 60) list.removeChild(list.firstChild);
+    updateHistoryCount();
+  }
+
+  function updateHistoryCount() {
+    const list = document.getElementById("hwlab-action-log");
+    const c = document.getElementById("hwlab-history-count");
+    if (list && c) c.textContent = String(list.children.length);
   }
 
   function clearActionLog() {
     const list = document.getElementById("hwlab-action-log");
     if (list) list.innerHTML = "";
+    updateHistoryCount();
   }
 
   // ── Barra superior / panel derecho ────────────────────────────────────────
@@ -734,6 +1328,29 @@ export function createStage() {
   function setInfoPanel(html) {
     const panel = document.getElementById("hwlab-info-panel");
     if (panel) panel.innerHTML = html;
+    updateCardSummary();
+    schedulePlaceCard(CAMERA_SETTLE_MS);
+  }
+
+  /** Resumen de la tarjeta (se ve aun contraida): "Paso X de Y · accion". */
+  function updateCardSummary() {
+    const panel = document.getElementById("hwlab-info-panel");
+    const out = document.getElementById("hwlab-card-summary");
+    if (!panel || !out) return;
+    const h = panel.querySelector("h3");
+    const first = panel.querySelector(".hwlab-info-block > p");
+    const title = h ? h.textContent.trim() : "";
+    let action = /^Paso \d/.test(title) && first ? first.textContent.trim() : "";
+    if (action) action = action.charAt(0).toUpperCase() + action.slice(1);
+    out.textContent = action ? title + " · " + action : title;
+    // Marca para el CSS: el "Paso X de Y" y la accion ya estan en el resumen.
+    if (action) panel.setAttribute("data-step", ""); else panel.removeAttribute("data-step");
+    // Paso NUEVO que se completa con un boton de la propia tarjeta (confirmar
+    // seguridad, preparar posicion, mantenimiento): se abre aunque el
+    // aprendiz la hubiera contraido, para que nunca quede oculto.
+    const summary = out.textContent;
+    if (summary !== lastSummary && panel.querySelector("#hwlab-safety-confirm-btn, #hwlab-prepare-btn, .hwlab-thermal[data-required] [data-thermal-task]")) setCard(true);
+    lastSummary = summary;
   }
 
   // ── Ficha tecnica (item 7) ─────────────────────────────────────────────────
@@ -841,6 +1458,17 @@ export function createStage() {
     },
     setScrewHooks,
     setBelowFraming,
+    setFramingPolicy,
+    /** Diagnostico del ultimo encuadre automatico (solo lectura, para pruebas). */
+    get lastFraming() {
+      return lastFraming;
+    },
+    /** El contenido de la tarjeta cambio de tamano (p. ej. se abrio una seccion): recolocar una vez. */
+    refreshLayout: (byUser) => {
+      // Abrir una seccion a mano cuenta como "expandir": no se re-compacta sola.
+      if (byUser) userExpandedFor = (document.getElementById("hwlab-card-summary") || {}).textContent || "";
+      schedulePlaceCard(120);
+    },
     setPoseHooks,
     goToWorkPose,
     frameWorkView,

@@ -266,6 +266,28 @@ export function createAssemblyController(stage) {
       handlePartClick(meta.partId);
     });
 
+    // Encuadre automatico por pieza objetivo (sep-26): solo en la practica
+    // GUIADA (en la libre y la evaluacion el aprendiz busca la pieza). Solo
+    // cuando la posicion actual ya permite operar la pieza; si no, primero
+    // "Preparar" (la comprobacion se repite al terminar ese movimiento).
+    if (stage.setFramingPolicy) {
+      stage.setFramingPolicy(
+        session && session.kind === "guided"
+          ? {
+              active: () => !!session && session.kind === "guided" && !isLearn && !Engine().isFinished(session),
+              accessible: (partId) => {
+                if (!hasPose()) return true;
+                const step = Engine().currentStep(session);
+                const pendiente = reassembling() ? partWithPendingScrews(null) : null;
+                const action = partId === pendiente ? "install" : step && step.kind === "action" && step.partId === partId ? step.action : "remove";
+                const req = requiredPresetFor(partId, action);
+                return !req || rig3d().poseAllows(req.access);
+              },
+            }
+          : null
+      );
+    }
+
     renderInfoPanel();
     refreshStats();
     maybeFinish();
@@ -380,10 +402,10 @@ export function createAssemblyController(stage) {
       ok = req ? r.poseAllows(req.access) : r.isAtPreset(name);
     }
     const label = presetLabel(name);
-    let html = `<p class="hwlab-muted">Posicion de trabajo: <strong>${esc(label)}</strong>${ok ? " &#9989;" : ""}</p>`;
+    let html = `<p class="hwlab-muted">Posición de trabajo: <strong>${esc(label)}</strong>${ok ? " &#9989;" : ""}</p>`;
     if (!ok) {
       html += `<button type="button" class="c-btn c-btn--primary c-btn--sm c-btn--block hwlab-prepare-btn" id="hwlab-prepare-btn" data-preset="${esc(name)}">` +
-        (name === "open" ? "Dejar el portatil abierto (posicion normal)" : "Preparar para " + esc(label.toLowerCase())) + "</button>";
+        (name === "open" ? "Dejar el portátil abierto (posición normal)" : "Preparar para " + esc(label.toLowerCase())) + "</button>";
     }
     return html;
   }
@@ -420,7 +442,7 @@ export function createAssemblyController(stage) {
     if (action !== "remove" && session.parts[partId] === false) {
       return {
         ok: false,
-        reason: "Primero instala " + part.name + ": todavia no hay donde atornillar este tornillo.",
+        reason: "Primero instala " + part.name + ": todavía no hay donde atornillar este tornillo.",
       };
     }
     const gate = Engine().canOperateOnPart(equipmentData, session, partId);
@@ -431,7 +453,7 @@ export function createAssemblyController(stage) {
       return {
         ok: false,
         reason:
-          "Este tornillo todavia no debe retirarse: primero hay que " +
+          "Este tornillo todavía no debe retirarse: primero hay que " +
           (partAction === "remove" ? "retirar o desconectar" : "instalar") +
           " " +
           (req.missing || []).map((id) => (getPart(id) ? getPart(id).name : id)).join(", ") +
@@ -444,7 +466,7 @@ export function createAssemblyController(stage) {
       return {
         ok: false,
         reason:
-          "Ese tornillo no corresponde todavia. En la practica guiada el siguiente paso es: " +
+          "Ese tornillo no corresponde todavía. En la practica guiada el siguiente paso es: " +
           info.verb +
           " " +
           (next ? next.name : step.partId) +
@@ -476,6 +498,11 @@ export function createAssemblyController(stage) {
       onChanged: () => {
         persist();
         renderInfoPanel();
+        // Colocado el ULTIMO tornillo de una pieza, lo que el aprendiz tiene
+        // entre manos pasa a ser la pieza siguiente (medido en el ensamble:
+        // la camara y la tarjeta seguian pensando en la placa base mientras
+        // el paso ya pedia la CPU, que quedaba fuera de cuadro).
+        if (session) refreshBelowFraming(session.parts);
         // Un tornillo puede ser lo ultimo que faltaba para cerrar la practica.
         if (session) maybeFinish();
       },
@@ -638,6 +665,7 @@ export function createAssemblyController(stage) {
   // ── MANTENIMIENTO TERMICO (sep-26) ───────────────────────────────────────
   function resetThermal(saved) {
     thermal = null;
+    thermalOpen = false;
     if (equipmentId !== "laptop" || !Thermal()) return;
     thermal = saved ? Thermal().normalize(saved) : Thermal().createThermalState(isAssemblyPractice() ? "new" : "used");
     refreshThermalLook();
@@ -654,6 +682,7 @@ export function createAssemblyController(stage) {
   }
 
   /** Solo cuando el modulo esta FUERA y queda algo que hacer o comprobar. */
+  let thermalOpen = false; // el aprendiz abrio a mano el mantenimiento opcional
   function thermalPanelVisible() {
     if (!thermal || !session || Engine().isFinished(session) || session.parts.cooler) return false;
     return !!session.parts.cpu || thermal.dust !== "clean";
@@ -670,9 +699,17 @@ export function createAssemblyController(stage) {
     if (!thermalPanelVisible()) return "";
     const d = Thermal().describe(thermal);
     const T = Thermal().TASKS;
-    let html = '<div class="hwlab-thermal">' +
-      "<h3>Mantenimiento de la refrigeración</h3>" +
-      `<p class="hwlab-muted">Aletas y ventilador: <strong>${esc(d.dust)}</strong>${d.dustClean ? " &#9989;" : ""}</p>`;
+    // "required": sin esta limpieza no se puede volver a montar el disipador
+    // (ensamble o mantenimiento). En el desensamble es opcional. En el guiado
+    // solo es la ACCION ACTUAL en el paso del disipador; antes es contenido de
+    // apoyo y va plegado (el aprendiz puede abrirlo; nada cambia en la logica).
+    const step = session.kind === "guided" ? Engine().currentStep(session) : null;
+    const required = (isAssemblyPractice() || isMaintenance()) && (!step || (step.kind === "action" && step.partId === "cooler"));
+    const title = "Mantenimiento de la refrigeración";
+    let html = required
+      ? `<div class="hwlab-thermal" data-required="true"><h3>${title}</h3>`
+      : `<details class="hwlab-thermal" id="hwlab-thermal-details"${thermalOpen ? " open" : ""}><summary class="hwlab-thermal__summary">${title}</summary>`;
+    html += `<p class="hwlab-muted">Aletas y ventilador: <strong>${esc(d.dust)}</strong>${d.dustClean ? " &#9989;" : ""}</p>`;
     if (session.parts.cpu) html += `<p class="hwlab-muted">Pasta térmica: <strong>${esc(d.paste)}</strong>${d.pasteReady ? " &#9989;" : ""}</p>`;
     if (!d.dustClean) html += thermalTaskButton("brush", T.brush.label) + thermalTaskButton("air", T.air.label);
     if (session.parts.cpu && !d.pasteReady) {
@@ -685,7 +722,7 @@ export function createAssemblyController(stage) {
         });
       }
     }
-    return html + "</div>";
+    return html + (required ? "</div>" : "</details>");
   }
 
   function onThermalTask(taskId, amount) {
@@ -803,7 +840,7 @@ export function createAssemblyController(stage) {
       html += "<h3>Practica completa</h3><p>Revisa el resultado en el panel de puntuacion.</p>";
     } else {
       html +=
-        "<h3>Practica libre</h3><p>Haz clic directamente sobre el componente en la escena para actuar sobre él. El laboratorio usa la herramienta adecuada y te la indica al seleccionarlo.</p>" +
+        "<h3>Práctica libre</h3><p>Haz clic directamente sobre el componente en la escena para actuar sobre él. El laboratorio usa la herramienta adecuada y te la indica al seleccionarlo.</p>" +
         '<ul class="hwlab-tray-list">' +
         Object.keys(equipmentData.parts)
           .filter((id) => session.parts[id] !== (direction === "assembly"))
@@ -818,6 +855,8 @@ export function createAssemblyController(stage) {
     html += poseSectionHtml();
     html += "</div>";
     stage.setInfoPanel(html);
+    const thermalDetails = document.getElementById("hwlab-thermal-details");
+    if (thermalDetails) thermalDetails.addEventListener("toggle", () => { thermalOpen = thermalDetails.open; stage.refreshLayout(thermalOpen); });
     document.querySelectorAll("[data-thermal-task]").forEach((b) => {
       b.onclick = () => onThermalTask(b.getAttribute("data-thermal-task"), b.getAttribute("data-amount") || undefined);
     });
@@ -901,7 +940,7 @@ export function createAssemblyController(stage) {
     // Ensamble: el equipo termina como empezo -- derecho y abierto (pose
     // inicial aprobada). No se castiga: solo se retiene el cierre.
     if (hasPose() && reassembling() && !rig3d().isAtPreset("open")) {
-      stage.showFeedback("Ya esta armado: vuelve a ponerlo derecho y abre la pantalla para terminar (\"Dejar el portatil abierto\").", "info");
+      stage.showFeedback("Ya está armado: vuelve a ponerlo derecho y abre la pantalla para terminar (\"Dejar el portátil abierto\").", "info");
       renderInfoPanel();
       return;
     }

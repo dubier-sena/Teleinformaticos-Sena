@@ -586,7 +586,7 @@ export function createScrewController(options) {
 
     const check = canOperatePart ? canOperatePart(entry.partId, direction) : { ok: true };
     if (!check.ok) {
-      const msg = check.reason || "Este tornillo todavia no debe retirarse. Revisa el procedimiento.";
+      const msg = check.reason || "Este tornillo todavía no debe retirarse. Revisa el procedimiento.";
       if (notify) notify(msg, "error");
       return { ok: false, message: msg };
     }

@@ -30,7 +30,7 @@
       removeRequires: [],
       installRequires: [],
       removeInstructions: [
-        "Retira todos los tornillos de la tapa inferior (suelen ser de distinto tamano: no los mezcles).",
+        "Retira todos los tornillos de la tapa inferior (suelen ser de distinto tamaño: no los mezcles).",
         "Usa la herramienta plastica de apertura para liberar los seguros a presion del borde.",
         "Levanta la tapa con cuidado, sin forzar los cables que puedan estar pegados con cinta.",
       ],
@@ -41,7 +41,7 @@
       ],
       info: {
         function: "Protege los componentes internos y permite el acceso para mantenimiento.",
-        characteristics: "Lamina plastica o metalica sujeta con tornillos pequenos y seguros a presion.",
+        characteristics: "Lamina plastica o metalica sujeta con tornillos pequeños y seguros a presion.",
         location: "Parte inferior del portatil.",
         connectionType: "Tornillos + seguros a presion en el borde.",
         precautions: "Los tornillos de un portatil casi nunca son todos iguales: separalos por posicion.",
@@ -53,7 +53,7 @@
     "cable-battery": {
       id: "cable-battery",
       kind: "cable",
-      name: "Cable de la bateria",
+      name: "Cable de la batería",
       category: "cableado",
       location: "internal",
       icon: "\u{1F50C}",
@@ -62,7 +62,7 @@
       removeRequires: [],
       installRequires: ["motherboard", "battery"],
       removeInstructions: [
-        "Localiza el conector de la bateria en la tarjeta madre (cerca del borde de la bateria).",
+        "Localiza el conector de la batería en la tarjeta madre (cerca del borde de la batería).",
         "Con cuidado, haz palanca con la una o un spudger para desconectarlo (nunca tires del cable).",
       ],
       installInstructions: [
@@ -70,11 +70,11 @@
         "Presiona parejo hasta que asiente por completo.",
       ],
       info: {
-        function: "Alimenta el equipo desde la bateria y es el PRIMER punto que se desconecta al intervenir un portatil.",
-        characteristics: "Conector pequeno, a veces con cinta adhesiva de refuerzo encima.",
-        location: "Junto al borde de la bateria, sobre la tarjeta madre.",
+        function: "Alimenta el equipo desde la batería y es el PRIMER punto que se desconecta al intervenir un portatil.",
+        characteristics: "Conector pequeño, a veces con cinta adhesiva de refuerzo encima.",
+        location: "Junto al borde de la batería, sobre la tarjeta madre.",
         connectionType: "Conector a presion.",
-        precautions: "A diferencia del escritorio (donde basta desconectar la pared), en un portatil la bateria sigue alimentando el equipo aunque este desconectado de la corriente: por eso este cable se desconecta SIEMPRE primero.",
+        precautions: "A diferencia del escritorio (donde basta desconectar la pared), en un portatil la batería sigue alimentando el equipo aunque este desconectado de la corriente: por eso este cable se desconecta SIEMPRE primero.",
         compatibility: "Especifica de cada modelo.",
         commonErrors: "Tocar RAM, SSD o cualquier otra pieza antes de desconectar este cable puede provocar un corto o danar el componente.",
       },
@@ -83,7 +83,7 @@
     battery: {
       id: "battery",
       kind: "component",
-      name: "Bateria",
+      name: "Batería",
       category: "alimentacion",
       location: "internal",
       icon: "\u{1F50B}",
@@ -92,12 +92,12 @@
       removeRequires: ["cable-battery"],
       installRequires: ["motherboard"],
       removeInstructions: [
-        "Verifica que el cable de la bateria ya este desconectado.",
+        "Verifica que el cable de la batería ya este desconectado.",
         "Retira los tornillos que la fijan al chasis.",
-        "Levanta la bateria con cuidado; si esta hinchada, no la presiones ni perfores.",
+        "Levanta la batería con cuidado; si esta hinchada, no la presiones ni perfores.",
       ],
       installInstructions: [
-        "Coloca la bateria en su bahia, alineando los orificios de tornillo.",
+        "Coloca la batería en su bahia, alineando los orificios de tornillo.",
         "Ajusta los tornillos de fijacion.",
       ],
       info: {
@@ -105,9 +105,9 @@
         characteristics: "Celda de iones de litio, sellada; se degrada con el tiempo y el numero de ciclos de carga.",
         location: "Ocupa gran parte del area inferior del chasis.",
         connectionType: "Tornillos de fijacion + cable-battery.",
-        precautions: "Nunca perfores, dobles ni expongas una bateria de litio a altas temperaturas: riesgo de incendio.",
+        precautions: "Nunca perfores, dobles ni expongas una batería de litio a altas temperaturas: riesgo de incendio.",
         compatibility: "Especifica de cada modelo; no todas son removibles en portatiles ultradelgados.",
-        commonErrors: "Una bateria hinchada (se ve abultada) debe manipularse con extremo cuidado y reportarse antes de continuar.",
+        commonErrors: "Una batería hinchada (se ve abultada) debe manipularse con extremo cuidado y reportarse antes de continuar.",
       },
     },
 
@@ -123,7 +123,7 @@
       removeRequires: ["cable-battery"],
       installRequires: ["motherboard"],
       removeInstructions: [
-        "Verifica que el cable de la bateria ya este desconectado.",
+        "Verifica que el cable de la batería ya este desconectado.",
         "Libera los seguros laterales del slot presionandolos hacia afuera.",
         "El modulo se levanta en angulo; sujetalo por los bordes y retiralo.",
       ],
@@ -133,7 +133,7 @@
       ],
       info: {
         function: "Igual que en el escritorio: memoria de trabajo temporal para la CPU.",
-        characteristics: "Formato SO-DIMM (mas pequeno que el DIMM de escritorio), DDR4 o DDR5 segun el modelo.",
+        characteristics: "Formato SO-DIMM (mas pequeño que el DIMM de escritorio), DDR4 o DDR5 segun el modelo.",
         location: "Uno o dos slots visibles al retirar la tapa inferior.",
         connectionType: "A presion, en angulo, con seguros laterales.",
         precautions: "Manipula solo por los bordes.",
@@ -154,7 +154,7 @@
       removeRequires: ["cable-battery"],
       installRequires: ["motherboard"],
       removeInstructions: [
-        "Verifica que el cable de la bateria ya este desconectado.",
+        "Verifica que el cable de la batería ya este desconectado.",
         "Retira el unico tornillo que fija el extremo libre de la unidad.",
         "La unidad se levanta en angulo (como la RAM); retirala deslizandola del slot.",
       ],
@@ -185,7 +185,7 @@
       removeRequires: ["cable-battery"],
       installRequires: ["wifi-card", "screen-assembly"],
       removeInstructions: [
-        "Con las pinzas, sujeta el pequeno conector (no el cable) junto a la tarjeta Wi-Fi.",
+        "Con las pinzas, sujeta el pequeño conector (no el cable) junto a la tarjeta Wi-Fi.",
         "Hazlo palanca hacia arriba con cuidado hasta que se suelte.",
       ],
       installInstructions: [
@@ -215,7 +215,7 @@
       removeRequires: ["cable-battery"],
       installRequires: ["wifi-card", "screen-assembly"],
       removeInstructions: [
-        "Con las pinzas, sujeta el pequeno conector (no el cable) junto a la tarjeta Wi-Fi.",
+        "Con las pinzas, sujeta el pequeño conector (no el cable) junto a la tarjeta Wi-Fi.",
         "Hazlo palanca hacia arriba con cuidado hasta que se suelte.",
       ],
       installInstructions: [
@@ -255,7 +255,7 @@
       ],
       info: {
         function: "Provee conectividad inalambrica (Wi-Fi y Bluetooth) al portatil.",
-        characteristics: "Tarjeta pequena en formato M.2, con dos conectores de antena.",
+        characteristics: "Tarjeta pequeña en formato M.2, con dos conectores de antena.",
         location: "Slot M.2 dedicado, separado del slot del SSD.",
         connectionType: "Ranura M.2 + tornillo + 2 conectores de antena.",
         precautions: "Desconecta siempre las antenas antes de retirar la tarjeta.",
@@ -276,7 +276,7 @@
       removeRequires: ["cable-battery"],
       installRequires: ["motherboard", "cooler"],
       removeInstructions: [
-        "Localiza el conector pequeno del ventilador junto al modulo de refrigeracion.",
+        "Localiza el conector pequeño del ventilador junto al modulo de refrigeración.",
         "Sujeta el conector (no el cable) y desconectalo tirando hacia arriba.",
       ],
       installInstructions: [
@@ -285,10 +285,10 @@
       ],
       info: {
         function: "Igual que en escritorio: permite que la placa controle y monitoree el ventilador.",
-        characteristics: "Conector pequeno de 2 a 4 pines.",
-        location: "Junto al modulo de refrigeracion (heatpipe + ventilador).",
+        characteristics: "Conector pequeño de 2 a 4 pines.",
+        location: "Junto al modulo de refrigeración (heatpipe + ventilador).",
         connectionType: "Conector a presion.",
-        precautions: "Desconectalo antes de retirar el modulo de refrigeracion, nunca despues.",
+        precautions: "Desconectalo antes de retirar el modulo de refrigeración, nunca despues.",
         compatibility: "Especifico de cada modelo.",
         commonErrors: "Un ventilador desconectado provoca sobrecalentamiento y apagados por proteccion termica.",
       },
@@ -297,7 +297,7 @@
     cooler: {
       id: "cooler",
       kind: "component",
-      name: "Modulo de refrigeracion (heatpipe + ventilador)",
+      name: "Modulo de refrigeración (heatpipe + ventilador)",
       category: "refrigeracion",
       location: "internal",
       icon: "\u{1F4A8}",
@@ -337,7 +337,7 @@
       removeRequires: ["cable-battery", "cooler"],
       installRequires: ["motherboard"],
       removeInstructions: [
-        "Verifica que el modulo de refrigeracion ya este retirado y la pasta termica limpia.",
+        "Verifica que el modulo de refrigeración ya este retirado y la pasta termica limpia.",
         "En los modelos con socket (no soldados), libera la palanca o el seguro y retira el procesador por los bordes.",
       ],
       installInstructions: [
@@ -347,7 +347,7 @@
       info: {
         function: "Igual que en escritorio: ejecuta las instrucciones de los programas.",
         characteristics: "En muchos portatiles modernos viene soldado (BGA) y no es removible; este equipo lo modela como removible con fines de practica.",
-        location: "Bajo el modulo de refrigeracion.",
+        location: "Bajo el modulo de refrigeración.",
         connectionType: "Socket con seguro (cuando es removible) o soldado directamente a la placa (BGA).",
         precautions: "Nunca toques los contactos ni fuerces la orientacion.",
         compatibility: "Debe coincidir con el socket/BGA especifico de la placa.",
@@ -558,7 +558,7 @@
       ],
       installRequires: [],
       removeInstructions: [
-        "Verifica que todos los cables y la tarjeta Wi-Fi ya esten desconectados/retirados, y el modulo de refrigeracion fuera.",
+        "Verifica que todos los cables y la tarjeta Wi-Fi ya esten desconectados/retirados, y el modulo de refrigeración fuera.",
         "Retira los tornillos que fijan la placa al chasis.",
         "Levanta la placa con cuidado, sujetandola por los bordes.",
       ],

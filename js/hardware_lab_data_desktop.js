@@ -78,7 +78,7 @@
       removeRequires: [],
       installRequires: ["motherboard"],
       removeInstructions: [
-        "Localiza el bloque de pines pequenos en la esquina de la placa (power SW, reset, LEDs, audio frontal, USB).",
+        "Localiza el bloque de pines pequeños en la esquina de la placa (power SW, reset, LEDs, audio frontal, USB).",
         "Anota o fotografia la posicion de cada conector antes de retirarlo.",
         "Retira cada conector con cuidado, sujetandolo por el plastico, no por los cables.",
       ],
@@ -89,7 +89,7 @@
       ],
       info: {
         function: "Conecta el boton de encendido, reinicio, LEDs y puertos frontales del gabinete a la placa madre.",
-        characteristics: "Grupo de conectores pequenos de 2 a 4 pines cada uno.",
+        characteristics: "Grupo de conectores pequeños de 2 a 4 pines cada uno.",
         location: "Esquina inferior de la tarjeta madre, cerca del borde frontal del gabinete.",
         connectionType: "Pines individuales o bloque plastico segun el gabinete.",
         precautions: "Un conector en la posicion equivocada puede impedir que el equipo encienda.",
@@ -179,7 +179,7 @@
       ],
       info: {
         function: "Transporta los datos entre la unidad de almacenamiento y la tarjeta madre.",
-        characteristics: "Cable delgado en forma de L, conectores pequenos de 7 pines.",
+        characteristics: "Cable delgado en forma de L, conectores pequeños de 7 pines.",
         location: "Puerto SATA de la placa madre <-> puerto de datos de la unidad.",
         connectionType: "Conector a friccion, sin seguro mecanico en la mayoria de cables.",
         precautions: "Es distinto del cable SATA de alimentacion (mas ancho, viene de la fuente).",
@@ -388,7 +388,7 @@
         "Levanta el disipador en linea recta; puede requerir un giro suave si la pasta termica lo pega al procesador.",
       ],
       installInstructions: [
-        "Aplica una porcion pequena de pasta termica nueva en el centro del procesador (si se reutiliza, limpia primero la pasta vieja).",
+        "Aplica una porcion pequeña de pasta termica nueva en el centro del procesador (si se reutiliza, limpia primero la pasta vieja).",
         "Coloca el disipador alineado con los orificios de montaje.",
         "Ajusta los 4 tornillos en cruz y por turnos, sin apretar uno solo por completo antes que los demas.",
       ],
@@ -458,7 +458,7 @@
       ],
       info: {
         function: "Procesa y genera la imagen que se muestra en el monitor; en tareas graficas exigentes, descarga ese trabajo del procesador.",
-        characteristics: "Ocupa una o mas ranuras de expansion; suele tener su propio sistema de refrigeracion.",
+        characteristics: "Ocupa una o mas ranuras de expansion; suele tener su propio sistema de refrigeración.",
         location: "Ranura PCIe x16 principal de la tarjeta madre.",
         connectionType: "Ranura PCIe con seguro + cable de alimentacion PCIe (6/8 pines) si la tarjeta lo requiere.",
         precautions: "Sujeta siempre por los bordes; el peso de tarjetas grandes puede forzar la ranura si no se apoya bien.",

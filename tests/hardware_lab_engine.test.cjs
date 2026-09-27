@@ -136,7 +136,7 @@ test("retirar una pieza sin resolver su dependencia explica exactamente que falt
     toolId: "phillips",
   });
   assert.strictEqual(outcome.ok, false);
-  assert.match(outcome.message, /No puedes retirar Tarjeta grafica \(GPU\) todavia/);
+  assert.match(outcome.message, /No puedes retirar Tarjeta grafica \(GPU\) todavía/);
   assert.match(outcome.message, /Cable de alimentacion GPU/);
   assert.strictEqual(outcome.session.errorsByType.blocked, 1);
 });

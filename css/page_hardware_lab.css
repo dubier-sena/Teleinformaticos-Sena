@@ -39,11 +39,13 @@
   color: var(--hwlab-text);
 }
 
-/* Full-bleed: escapa del max-width del shell del portal sin tocar shared_shell.js. */
+/* Ancho REAL del contenedor (interfaz v2, sep-26). Antes: width 100vw +
+   margin-left calc(50% - 50vw). Con barra de scroll clasica 100vw la incluye
+   y la pagina desbordaba ~8 px en horizontal (medido). .hwlab-main ya ocupa
+   todo el ancho sin padding, asi que el "full-bleed" no hacia falta. */
 .hwlab-intro,
 .hwlab-stage {
-  width: 100vw;
-  margin-left: calc(50% - 50vw);
+  width: 100%;
 }
 
 .hwlab-muted {
@@ -228,8 +230,13 @@
 .hwlab-stage {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  min-height: 640px;
+  /* Alto util REAL: la ventana menos la barra de navegacion fija del portal
+     (el body ya reserva --navbar-height como padding-top). Con 100vh y
+     min-height 640 la pagina siempre desbordaba 60 px y en 1024x625 los
+     controles quedaban fuera de la ventana (medido). */
+  height: calc(100vh - var(--navbar-height, 60px));
+  height: calc(100dvh - var(--navbar-height, 60px));
+  min-height: 320px;
   background: var(--hwlab-bg);
 }
 /* El atributo [hidden] pierde contra un display: explicito de igual
@@ -323,72 +330,162 @@
   background: rgba(53, 208, 255, 0.1);
 }
 
-.hwlab-hud-body {
+/* ═══════════════════════════════════════════════════════════════════════
+   INTERFAZ v2 (sep-26): escena 3D dominante con controles flotantes
+   ═══════════════════════════════════════════════════════════════════════ */
+.hwlab-scene {
+  position: relative;
   flex: 1;
   min-height: 0;
-  display: grid;
-  grid-template-columns: 200px minmax(0, 1fr) 300px;
-  /* La fila ocupa EXACTAMENTE el alto disponible (sep-26): sin esto crecia
-     hasta el alto intrinseco del canvas y, al llenarse el historial de
-     acciones, el pie tapaba la parte baja de los paneles laterales (botones
-     sin poder pulsarse, medido con elementFromPoint a 1440x900). */
-  grid-template-rows: minmax(0, 1fr);
+  overflow: hidden;
+  --hwlab-float-bg: rgba(12, 16, 22, 0.88);
+  --hwlab-gap: 12px;
+  --hwlab-history-bar: 44px;
 }
 
-.hwlab-hud--left,
-.hwlab-hud--right {
-  overflow-y: auto;
-  padding: var(--space-4);
+/* ── Dock de controles (arriba a la izquierda) ─────────────────────────── */
+.hwlab-dock {
+  --hwlab-dock-compact: 0;
+  position: absolute;
+  top: var(--hwlab-gap);
+  left: var(--hwlab-gap);
+  z-index: 20;
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: 8px;
 }
-.hwlab-hud--left { border-right: 1px solid var(--hwlab-border); }
-.hwlab-hud--right { border-left: 1px solid var(--hwlab-border); }
-
-.hwlab-panel h3 {
-  margin: 0 0 var(--space-3);
-  font-size: var(--font-size-xs);
+.hwlab-dock__group {
+  position: relative;
+  background: var(--hwlab-float-bg);
+  border: 1px solid var(--hwlab-border);
+  border-radius: 10px;
+  padding: 6px;
+  box-shadow: var(--shadow-md);
+  backdrop-filter: blur(6px);
+}
+.hwlab-dock__group[hidden] { display: none; }
+.hwlab-dock__title {
+  margin: 0 0 4px 2px;
+  font-size: 10px;
   text-transform: uppercase;
   letter-spacing: var(--tracking-wide);
   color: var(--hwlab-text-soft);
   font-weight: var(--weight-semibold);
 }
-
-.hwlab-view-grid {
+.hwlab-dock__grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-2);
+  grid-template-columns: repeat(4, 40px);
+  gap: 4px;
 }
-.hwlab-view-btn {
-  display: flex;
+.hwlab-dock__btn,
+.hwlab-dock__toggle {
+  position: relative;
+  display: inline-flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: var(--space-2);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--hwlab-border);
-  background: var(--hwlab-surface-2);
+  justify-content: center;
+  gap: 2px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
   color: var(--hwlab-text-muted);
   cursor: pointer;
+  font: inherit;
+  transition: background var(--motion-fast), color var(--motion-fast), border-color var(--motion-fast);
+}
+.hwlab-dock__btn svg,
+.hwlab-dock__toggle svg,
+.hwlab-card__toggle svg,
+.hwlab-history__toggle svg,
+.hwlab-feedback svg {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.hwlab-dock__btn:hover,
+.hwlab-dock__toggle:hover { color: #fff; background: var(--hwlab-surface-3); border-color: var(--hwlab-border-strong); }
+.hwlab-dock__btn:focus-visible,
+.hwlab-dock__toggle:focus-visible,
+.hwlab-dock__work:focus-visible,
+.hwlab-card button:focus-visible,
+.hwlab-history__toggle:focus-visible { outline: 2px solid var(--hwlab-accent); outline-offset: 2px; }
+/* Estado ACTIVO de interfaz (no el contorno 3D de las piezas). */
+.hwlab-dock__btn.is-active,
+.hwlab-dock__btn[aria-pressed="true"] { color: var(--hwlab-accent); border-color: var(--hwlab-accent); background: rgba(53, 208, 255, 0.12); }
+.hwlab-dock__btn[disabled] { opacity: 0.4; cursor: not-allowed; }
+/* El texto va en aria-label/tooltip; la etiqueta visible solo en modo compacto. */
+.hwlab-dock__label,
+.hwlab-dock__toggle-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.hwlab-dock__toggle { display: none; }
+/* Visible solo para lectores de pantalla (p. ej. el paso en la barra superior:
+   la tarjeta es la fuente visual del "Paso X/Y"). */
+.hwlab-visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+}
+/* Camara: los iconos (cuadrado, cubo, rombo...) no se explican solos; en el
+   dock desplegado llevan su nombre debajo. */
+.hwlab-dock__group[data-group="camera"] .hwlab-dock__grid { grid-template-columns: repeat(3, 56px); }
+.hwlab-dock__group[data-group="camera"] .hwlab-dock__btn { width: 56px; height: 48px; }
+.hwlab-dock__group[data-group="camera"] .hwlab-dock__label {
+  position: static; width: auto; height: auto; overflow: visible; clip: auto;
+  font-size: 10px; line-height: 1; color: inherit;
+}
+.hwlab-dock__work {
+  width: 100%;
+  min-height: 32px;
+  margin-bottom: 4px;
+  border-radius: 8px;
+  border: 1px solid var(--hwlab-accent);
+  background: rgba(53, 208, 255, 0.14);
+  color: #dff7ff;
   font-size: var(--font-size-xs);
-  min-height: var(--hit-target-min);
-  transition: border-color var(--motion-fast), color var(--motion-fast);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
 }
-.hwlab-view-btn:hover { color: #fff; border-color: var(--hwlab-border-strong); }
-.hwlab-view-btn.is-active { color: var(--hwlab-accent); border-color: var(--hwlab-accent); background: rgba(53,208,255,0.08); }
-.hwlab-view-btn svg { width: 18px; height: 18px; }
+.hwlab-dock__work:hover { background: rgba(53, 208, 255, 0.24); }
+.hwlab-dock__work[disabled] { opacity: 0.45; cursor: not-allowed; }
 
-/* Mejora 3D: estado encendido de los toggles "Vista explotada"/"Modo didactico". */
-#hwlab-explode-btn.is-active,
-#hwlab-didactic-btn.is-active {
-  color: var(--hwlab-accent);
-  border-color: var(--hwlab-accent);
-  background: rgba(53,208,255,0.1);
+/* Tooltip de los iconos: con raton (hover) y con teclado (focus). */
+.hwlab-dock [data-tip]:hover::after,
+.hwlab-dock [data-tip]:focus-visible::after,
+.hwlab-card [data-tip]:hover::after,
+.hwlab-card [data-tip]:focus-visible::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: calc(100% + 8px);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 40;
+  padding: 4px 8px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--hwlab-accent);
+  background: rgba(10, 13, 18, 0.96);
+  color: #fff;
+  font-size: var(--font-size-xs);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  pointer-events: none;
 }
-#hwlab-didactic-btn { margin-top: var(--space-2); }
+.hwlab-card [data-tip]:hover::after,
+.hwlab-card [data-tip]:focus-visible::after { left: auto; right: calc(100% + 8px); }
 
-/* Herramienta CONTEXTUAL (sep-26): el aprendiz ya no elige herramienta antes
+/* Herramienta CONTEXTUAL (sep-26)/* Herramienta CONTEXTUAL (sep-26): el aprendiz ya no elige herramienta antes
    de actuar; el panel de la pieza explica cual se usa y con que cuidado. */
 .hwlab-tool-info {
   margin: var(--space-3) 0;
@@ -409,6 +506,24 @@
   border-radius: var(--radius-sm);
 }
 .hwlab-thermal h3 { margin-top: 0; }
+/* Opcional en este paso (no es la accion actual): plegado, se abre a mano. */
+details.hwlab-thermal { padding: 0 var(--space-3); }
+details.hwlab-thermal[open] { padding-bottom: var(--space-3); }
+.hwlab-thermal__summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--hit-target-min);
+  cursor: pointer;
+  color: #fff;
+  font-weight: var(--weight-semibold);
+  font-size: var(--font-size-sm);
+  list-style: none;
+}
+.hwlab-thermal__summary::-webkit-details-marker { display: none; }
+.hwlab-thermal__summary::before { content: "\25B8"; color: var(--hwlab-text-muted); transition: transform var(--motion-fast, 120ms); }
+details.hwlab-thermal[open] > .hwlab-thermal__summary::before { transform: rotate(90deg); }
+.hwlab-thermal__summary:focus-visible { outline: 2px solid var(--hwlab-accent); outline-offset: 2px; border-radius: 4px; }
 .hwlab-thermal p { margin: 0 0 var(--space-2); }
 .hwlab-thermal-btn {
   display: flex;
@@ -422,9 +537,10 @@
 .hwlab-thermal-btn__tool { font-size: var(--font-size-xs); color: var(--hwlab-text-muted); font-weight: var(--weight-regular); }
 
 .hwlab-canvas-wrap {
-  position: relative;
+  /* Toda la escena: los controles flotan encima (interfaz v2). */
+  position: absolute;
+  inset: 0;
   background: radial-gradient(ellipse at 50% 30%, #0d1219 0%, #06080b 100%);
-  min-width: 0;
 }
 #hwlab-canvas {
   /* Absoluto: el canvas (alto fijo en su atributo) no debe dictar el alto de
@@ -604,36 +720,181 @@
 .hwlab-monitor-readout .value--warn { color: var(--hwlab-amber); }
 .hwlab-monitor-readout .value--danger { color: var(--hwlab-danger); }
 
-.hwlab-hud--bottom {
-  border-top: 1px solid var(--hwlab-border);
-  padding: var(--space-2) var(--space-5);
-  max-height: 96px;
-  overflow-y: auto;
+/* ── Tarjeta de instrucciones (arriba a la derecha) ───────────────────── */
+.hwlab-card {
+  position: absolute;
+  top: var(--hwlab-gap);
+  right: var(--hwlab-gap);
+  z-index: 20;
+  width: min(340px, calc(100% - 2 * var(--hwlab-gap)));
+  max-height: calc(100% - 2 * var(--hwlab-gap) - var(--hwlab-history-bar));
+  display: flex;
+  flex-direction: column;
+  background: var(--hwlab-float-bg);
+  border: 1px solid var(--hwlab-border-strong);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(6px);
 }
-.hwlab-hud--bottom h4 {
-  margin: 0 0 var(--space-1);
-  font-size: 0.68rem;
+.hwlab-card__bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 8px 8px 12px;
+  border-bottom: 1px solid var(--hwlab-border);
+}
+.hwlab-card[data-state="closed"] .hwlab-card__bar { border-bottom: none; }
+.hwlab-card__summary {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  color: #fff;
+  font-weight: var(--weight-semibold);
+  font-size: var(--font-size-sm);
+  line-height: 1.3;
+  /* Hasta 3 lineas: la ACCION del paso nunca queda cortada ("Desconectar Antena Wi-..."). */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.hwlab-card__more,
+.hwlab-card__toggle {
+  position: relative;
+  flex: none;
+  min-height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--hwlab-border);
+  background: var(--hwlab-surface-2);
+  color: var(--hwlab-text-muted);
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+}
+.hwlab-card__more { padding: 0 10px; }
+.hwlab-card__toggle { width: 36px; display: inline-flex; align-items: center; justify-content: center; }
+.hwlab-card__more:hover,
+.hwlab-card__toggle:hover { color: #fff; border-color: var(--hwlab-border-strong); }
+.hwlab-card[data-state="closed"] .hwlab-card__toggle svg { transform: rotate(180deg); }
+.hwlab-card[data-state="closed"] .hwlab-card__body,
+.hwlab-card[data-state="closed"] .hwlab-card__more { display: none; }
+/* Compactada AUTOMATICAMENTE porque tapaba la pieza del paso: queda el
+   resumen y, si el paso se completa desde la tarjeta, su boton de accion. */
+.hwlab-card[data-auto-compact="true"] .hwlab-card__more { display: none; }
+.hwlab-card[data-auto-compact="true"] .hwlab-card__body { padding-top: 0; padding-bottom: 8px; }
+.hwlab-card[data-auto-compact="true"] .hwlab-card__body .hwlab-info-block > :not(#hwlab-safety-confirm-btn):not(#hwlab-prepare-btn):not(.hwlab-thermal[data-required]) { display: none; }
+.hwlab-card[data-auto-compact="true"] .hwlab-card__body:not(:has(#hwlab-safety-confirm-btn, #hwlab-prepare-btn, .hwlab-thermal[data-required])) { display: none; }
+.hwlab-card[data-auto-compact="true"] .hwlab-card__toggle svg { transform: rotate(180deg); }
+.hwlab-card__body {
+  overflow-y: auto;
+  padding: 10px 12px 12px;
+  min-height: 0;
+  font-size: var(--font-size-sm);
+  line-height: 1.45;
+}
+.hwlab-card__body p,
+.hwlab-card__body li { font-size: inherit; line-height: inherit; }
+.hwlab-card__body ol { margin: 0 0 var(--space-2); padding-left: 1.2em; }
+/* La ACCION del paso (confirmar / preparar posicion) siempre a la vista:
+   queda fija al pie de la zona desplazable de la tarjeta. */
+.hwlab-card__body #hwlab-safety-confirm-btn,
+.hwlab-card__body #hwlab-prepare-btn {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  box-shadow: 0 -10px 12px -4px var(--hwlab-float-bg);
+}
+.hwlab-card__body .hwlab-tool-info { margin: var(--space-2) 0; padding: var(--space-2) var(--space-3); }
+/* El encabezado del paso ya esta en el resumen de la barra. */
+.hwlab-card__body .hwlab-info-block > h3:first-child { display: none; }
+.hwlab-card__body[data-step] .hwlab-info-block > h3:first-child + p { display: none; }
+/* Modo BREVE: 1 instruccion + herramienta + precaucion (el resto con "Ver mas"). */
+.hwlab-card[data-detail="brief"] .hwlab-info-block:has(.hwlab-tool-info) > ol > li:nth-child(n + 2),
+.hwlab-card[data-detail="brief"] .hwlab-tool-info > .hwlab-muted { display: none; }
+
+/* ── Avisos flotantes ──────────────────────────────────────────────────── */
+/* (estilos base en .hwlab-feedback; aqui el icono y el tipo "advertencia") */
+.hwlab-feedback {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  z-index: 25;
+  /* Ancho propio del texto: centrado con left 50%, el ancho disponible era la
+     MITAD de la escena y el aviso se partia en 3-4 lineas en el movil. */
+  width: max-content;
+  max-width: min(560px, calc(100% - 2 * var(--hwlab-gap, 12px)));
+  /* Encima del historial plegado, centrado: no tapa la tarjeta ni el dock. */
+  bottom: calc(var(--hwlab-gap, 12px) + var(--hwlab-history-bar, 44px) + 8px);
+}
+.hwlab-feedback[hidden] { display: none; }
+.hwlab-feedback--warning { background: rgba(255, 176, 32, 0.16); border-color: var(--hwlab-amber); color: #ffe7bf; }
+/* Posiciones alternativas si el aviso caeria sobre la pieza del paso. */
+.hwlab-feedback[data-pos="top"] { top: var(--hwlab-gap, 12px); bottom: auto; }
+.hwlab-feedback[data-pos="side"] { left: auto; right: var(--hwlab-gap, 12px); transform: none; animation: none; }
+.hwlab-feedback[data-pos="left"],
+.hwlab-feedback[data-pos="right"] { top: 50%; bottom: auto; transform: translateY(-50%); animation: none; }
+.hwlab-feedback[data-pos="left"] { left: var(--hwlab-gap, 12px); }
+.hwlab-feedback[data-pos="right"] { left: auto; right: var(--hwlab-gap, 12px); }
+.hwlab-feedback[data-pos="hist"] { left: var(--hwlab-gap, 12px); bottom: var(--hwlab-gap, 12px); transform: none; animation: none; z-index: 26; }
+/* Dock compacto bajado porque tapaba la pieza del paso: sus paneles se abren hacia arriba. */
+.hwlab-dock[data-pos="bottom"] { top: auto; bottom: calc(var(--hwlab-gap) + var(--hwlab-history-bar) + 6px); }
+.hwlab-dock[data-pos="bottom"] .hwlab-dock__items { top: auto; bottom: calc(100% + 6px); }
+
+/* ── Historial plegable (abajo a la izquierda, superpuesto) ───────────── */
+.hwlab-history {
+  position: absolute;
+  left: var(--hwlab-gap);
+  bottom: var(--hwlab-gap);
+  z-index: 22;
+  display: flex;
+  flex-direction: column-reverse;
+  max-width: min(640px, calc(100% - 2 * var(--hwlab-gap)));
+  background: var(--hwlab-float-bg);
+  border: 1px solid var(--hwlab-border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-md);
+}
+.hwlab-history__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: none;
+  background: transparent;
+  color: var(--hwlab-text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: var(--weight-semibold);
   text-transform: uppercase;
   letter-spacing: var(--tracking-wide);
-  color: var(--hwlab-text-soft);
+  cursor: pointer;
 }
+.hwlab-history__toggle:hover { color: #fff; }
+.hwlab-history__count {
+  min-width: 22px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--hwlab-surface-3);
+  color: var(--hwlab-text);
+  font-family: var(--font-mono);
+  text-align: center;
+}
+.hwlab-history__chevron { margin-left: auto; transition: transform var(--motion-fast); }
+.hwlab-history[data-open="true"] .hwlab-history__chevron { transform: rotate(180deg); }
 .hwlab-action-log {
   list-style: none;
   margin: 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
+  padding: 8px 12px 4px;
+  max-height: min(180px, 34vh);
+  overflow-y: auto;
+  border-bottom: 1px solid var(--hwlab-border);
   font-family: var(--font-mono);
   font-size: 0.72rem;
+  display: grid;
+  gap: 2px;
 }
-.hwlab-action-log li {
-  padding: 2px var(--space-2);
-  border-radius: var(--radius-xs);
-  background: var(--hwlab-surface-2);
-  color: var(--hwlab-text-muted);
-  white-space: nowrap;
-}
+.hwlab-action-log[hidden] { display: none; }
+.hwlab-action-log li { color: var(--hwlab-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hwlab-action-log li time { color: var(--hwlab-text-soft); margin-right: 6px; }
 .hwlab-action-log li.is-error { color: var(--hwlab-danger); }
 .hwlab-action-log li.is-success { color: var(--hwlab-success); }
 
@@ -727,36 +988,79 @@
 /* ═══════════════════════════════════════════════════════════════════════
    RESPONSIVE (item 27: prioriza escritorio; simplifica en pantallas chicas)
    ═══════════════════════════════════════════════════════════════════════ */
-@media (max-width: 1180px) {
-  .hwlab-hud-body { grid-template-columns: 184px minmax(0, 1fr) 260px; }
+/* Pantallas COMPACTAS (ancho de tablet o poca altura): cada grupo del dock se
+   reduce a un boton que abre su panel; solo uno abierto a la vez. */
+@media (max-width: 900px), (max-height: 700px) {
+  .hwlab-dock { --hwlab-dock-compact: 1; flex-direction: row; gap: 6px; }
+  .hwlab-dock__group { padding: 3px; }
+  /* Crece hasta el ancho de su nombre ("Visualización" no cabia en 52 px). */
+  .hwlab-dock__toggle { display: inline-flex; width: auto; min-width: 52px; padding: 0 6px; height: 48px; }
+  .hwlab-dock__toggle-label {
+    position: static; width: auto; height: auto; overflow: visible; clip: auto;
+    font-size: 10px; line-height: 1; color: var(--hwlab-text-soft);
+  }
+  .hwlab-dock__group[data-open] .hwlab-dock__toggle { color: var(--hwlab-accent); border-color: var(--hwlab-accent); }
+  .hwlab-dock__items {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 30;
+    padding: 8px;
+    background: var(--hwlab-float-bg);
+    border: 1px solid var(--hwlab-border-strong);
+    border-radius: 10px;
+    box-shadow: var(--shadow-lg);
+  }
+  .hwlab-dock__group[data-open] .hwlab-dock__items { display: block; }
+  /* En tactil el texto no depende del hover: etiqueta visible bajo el icono. */
+  .hwlab-dock__items .hwlab-dock__grid { grid-template-columns: repeat(3, 64px); }
+  .hwlab-dock__items .hwlab-dock__btn { width: 64px; height: 52px; }
+  .hwlab-dock__items .hwlab-dock__label {
+    position: static; width: auto; height: auto; overflow: visible; clip: auto;
+    font-size: 10px; line-height: 1.1; color: inherit; white-space: normal; text-align: center;
+  }
+  .hwlab-dock [data-tip]:hover::after { display: none; }
+  .hwlab-hud-top__stats { font-size: var(--font-size-xs); gap: var(--space-3); }
 }
 
-@media (max-width: 900px) {
-  .hwlab-stage { height: auto; min-height: 100vh; }
-  .hwlab-hud-body { grid-template-columns: 1fr; grid-template-rows: none; }
-  .hwlab-hud--left,
-  .hwlab-hud--right { border: none; border-top: 1px solid var(--hwlab-border); }
-  .hwlab-canvas-wrap { height: 52vh; min-height: 320px; }
-  .hwlab-hud-top__stats { order: 3; width: 100%; justify-content: space-between; }
-  /* Mejora 3D (item 15): en pantalla angosta el orden del DOM (izquierda,
-     canvas, derecha) obligaba a bajar por 4 paneles de controles (Vistas de
-     camara, Enfoque rapido, Vista explotada/Modo didactico)
-     antes de ver el equipo 3D. Reordenar visualmente (sin tocar el DOM/JS)
-     deja la escena primero; los controles siguen accesibles bajando. */
-  .hwlab-canvas-wrap { order: 1; }
-  .hwlab-hud--right { order: 2; }
-  .hwlab-hud--left { order: 3; }
+/* Poca altura en escritorio: tarjeta mas compacta. */
+@media (max-height: 700px) and (min-width: 901px) {
+  .hwlab-scene { --hwlab-gap: 8px; }
+  .hwlab-card { width: min(320px, calc(100% - 2 * var(--hwlab-gap))); }
+  .hwlab-hud--top { padding-top: var(--space-2); padding-bottom: var(--space-2); }
 }
 
+/* MOVIL: controles abajo (barra de grupos), instrucciones como banda arriba. */
 @media (max-width: 600px) {
+  .hwlab-scene { --hwlab-gap: 8px; }
+  .hwlab-hud--top { padding: var(--space-2) var(--space-3); gap: var(--space-2); }
   .hwlab-hud-top__left { min-width: 100%; }
-  .hwlab-view-grid { grid-template-columns: repeat(3, 1fr); }
+  .hwlab-hud-top__stats { order: 3; width: 100%; justify-content: space-between; }
+  .hwlab-dock {
+    top: auto;
+    left: var(--hwlab-gap);
+    right: var(--hwlab-gap);
+    bottom: calc(var(--hwlab-gap) + var(--hwlab-history-bar) + 4px + var(--hwlab-history-extra, 0px));
+    justify-content: space-between;
+  }
+  .hwlab-dock__group { flex: 1; display: flex; justify-content: center; }
+  .hwlab-dock__toggle { width: 100%; }
+  .hwlab-dock__items { top: auto; bottom: calc(100% + 6px); }
+  .hwlab-dock__group[data-group="focus"] .hwlab-dock__items,
+  .hwlab-dock__group[data-group="display"] .hwlab-dock__items { left: auto; right: 0; }
+  /* Banda de instrucciones arriba: maximo 42 % del alto, contraible. */
+  .hwlab-card { left: var(--hwlab-gap); right: var(--hwlab-gap); width: auto; max-height: 42%; }
+  .hwlab-history { right: var(--hwlab-gap); max-width: none; }
+  .hwlab-feedback { bottom: calc(var(--hwlab-gap) + var(--hwlab-history-bar) + 64px + var(--hwlab-history-extra, 0px)); }
 }
 
 /* Posiciones tecnicas del portatil (sep-26) */
 .hwlab-pose-status {
-  margin: var(--space-2) 0;
-  font-size: var(--font-size-xs);
+  margin: 4px 2px 0;
+  max-width: 172px;
+  font-size: 11px;
+  line-height: 1.3;
   color: var(--hwlab-text-muted);
 }
 .hwlab-pose-btn[disabled] {

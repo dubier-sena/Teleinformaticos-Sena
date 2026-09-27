@@ -34,7 +34,7 @@
       id: "tweezers",
       name: "Pinzas",
       icon: "\u{1F4CE}",
-      description: "Para tornillos pequenos o conectores dificiles de alcanzar con los dedos.",
+      description: "Para tornillos pequeños o conectores dificiles de alcanzar con los dedos.",
       precaution: "Sujeta el conector por su cuerpo, nunca tirando del cable.",
     },
     "antistatic-strap": {

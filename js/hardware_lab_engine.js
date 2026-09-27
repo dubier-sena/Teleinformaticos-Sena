@@ -35,9 +35,9 @@
   // grande que reformular el mensaje.
   var ACTION_LABELS = {
     remove: { verb: "retirar", pastParticiple: "retirado", doneLabel: "Retiro completado", alreadyLabel: "Retiro ya realizado" },
-    install: { verb: "instalar", pastParticiple: "instalado", doneLabel: "Instalacion completada", alreadyLabel: "Instalacion ya realizada" },
-    disconnect: { verb: "desconectar", pastParticiple: "desconectado", doneLabel: "Desconexion completada", alreadyLabel: "Desconexion ya realizada" },
-    connect: { verb: "conectar", pastParticiple: "conectado", doneLabel: "Conexion completada", alreadyLabel: "Conexion ya realizada" },
+    install: { verb: "instalar", pastParticiple: "instalado", doneLabel: "Instalación completada", alreadyLabel: "Instalación ya realizada" },
+    disconnect: { verb: "desconectar", pastParticiple: "desconectado", doneLabel: "Desconexión completada", alreadyLabel: "Desconexión ya realizada" },
+    connect: { verb: "conectar", pastParticiple: "conectado", doneLabel: "Conexión completada", alreadyLabel: "Conexión ya realizada" },
   };
 
   // Cada accion mueve la pieza a este valor de "present".
@@ -233,7 +233,7 @@
       actionInfo.verb +
       " " +
       part.name +
-      " todavia. " +
+      " todavía. " +
       need +
       missingNames.join(", ") +
       "."

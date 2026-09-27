@@ -25,7 +25,7 @@ const ICONS = {
 
 const EQUIPMENT_OPTIONS = [
   { id: "desktop", icon: ICONS.desktop, title: "PC de escritorio", desc: "Gabinete, fuente, tarjeta madre, procesador, RAM, SSD, GPU y cableado principal.", available: true },
-  { id: "laptop", icon: ICONS.laptop, title: "Computador portatil", desc: "Bateria, refrigeracion, teclado, touchpad, pantalla y componentes propios del portatil.", available: true },
+  { id: "laptop", icon: ICONS.laptop, title: "Computador portatil", desc: "Batería, refrigeración, teclado, touchpad, pantalla y componentes propios del portatil.", available: true },
 ];
 
 function practiceOptionsFor(equipmentId) {
@@ -36,7 +36,7 @@ function practiceOptionsFor(equipmentId) {
     // Mantenimiento termico (sep-26): solo el portatil tiene su modulo modelado
     // con polvo y pasta termica (ver hardware_lab_thermal.js).
     ...(equipmentId === "laptop"
-      ? [{ mode: "maintenance-guided", icon: ICONS.maintenance, title: "Mantenimiento preventivo", desc: "Abre el portatil hasta la refrigeracion, limpia el polvo, renueva la pasta termica y vuelve a cerrarlo.", available: true }]
+      ? [{ mode: "maintenance-guided", icon: ICONS.maintenance, title: "Mantenimiento preventivo", desc: "Abre el portatil hasta la refrigeración, limpia el polvo, renueva la pasta termica y vuelve a cerrarlo.", available: true }]
       : []),
     { mode: "free", icon: ICONS.free, title: "Practica libre", desc: "Practica sin instrucciones constantes; consulta pistas si las necesitas.", available: true, needsDirection: true },
     { mode: "evaluation", icon: ICONS.evaluation, title: "Evaluacion", desc: "Sin pistas de que sigue: se califica sobre 100 puntos con rubrica.", available: true, needsDirection: true },
