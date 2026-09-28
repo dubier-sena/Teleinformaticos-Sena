@@ -51,14 +51,20 @@
     return known[mode] || mode;
   }
 
-  function caseLabel(caseKeySuffix) {
+  // Nombre del caso segun EQUIPO + id (sep-27): escritorio y portatil tienen
+  // listas propias y sus numeros de caso se repiten. Los datos antiguos del
+  // escritorio (caso_01..10) siguen resolviendo igual.
+  function caseLabel(caseKeySuffix, equipmentId) {
     var HardwareLab = root.HardwareLab;
-    var cases = (HardwareLab && HardwareLab.DiagnosisCases && HardwareLab.DiagnosisCases.CASES) || [];
+    var DC = HardwareLab && HardwareLab.DiagnosisCases;
+    var equip = equipmentId || "desktop";
+    var cases = DC && typeof DC.casesFor === "function" ? DC.casesFor(equip) : (DC && equip === "desktop" && DC.CASES) || [];
     var normalized = caseKeySuffix.replace(/_/g, "-");
     var found = cases.find(function (c) {
       return c.id === normalized;
     });
-    return found ? "Caso " + found.number + " — " + found.name : caseKeySuffix;
+    var prefix = equip === "laptop" ? "Portátil · " : "";
+    return found ? prefix + "Caso " + found.number + " — " + found.name : prefix + caseKeySuffix;
   }
 
   // ── Parseo de las llaves planas "hwlab_*" dentro del state de un aprendiz ─
@@ -70,9 +76,11 @@
       var value = state[key];
       if (!value || typeof value !== "object") return;
       var rest = key.slice("hwlab_".length);
-      if (rest.indexOf("desktop_diagnosis_caso_") === 0 || rest.indexOf("laptop_diagnosis_caso_") === 0) {
-        var casoSuffix = rest.replace(/^(desktop|laptop)_diagnosis_/, "");
-        diagnosisCases.push({ key: key, equipmentId: rest.split("_")[0], caseKey: casoSuffix, session: value });
+      // hwlab_{equipo}_diagnosis_{caso}: escritorio "caso_01" (antiguo) y
+      // portatil "laptop_case_01" (sep-27). El equipo forma parte de la identidad.
+      var diag = rest.match(/^(desktop|laptop)_diagnosis_(.+)$/);
+      if (diag) {
+        diagnosisCases.push({ key: key, equipmentId: diag[1], caseKey: diag[2], session: value });
         return;
       }
       // hwlab_{equipo}_{modo con guiones bajos}
@@ -314,7 +322,7 @@
         var r = c.session.result;
         return (
           "<li><strong>" +
-          esc(caseLabel(c.caseKey)) +
+          esc(caseLabel(c.caseKey, c.equipmentId)) +
           "</strong>: " +
           (r ? r.score + "/100 — " + esc(r.status) + " — " + fmtTime(r.durationSeconds) : "en curso") +
           "</li>"

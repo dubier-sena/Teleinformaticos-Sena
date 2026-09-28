@@ -9,7 +9,7 @@
  * "RAM 2", solo sabe construir "una memoria RAM".
  */
 import * as THREE from "./vendor/three.module.min.js";
-import { materialFor, materialInstanceFor, markAsHitbox } from "./hardware_lab_3d_constants.js";
+import { materialFor, materialInstanceFor, markAsHitbox } from "./hardware_lab_3d_constants.js?v=20260928_1";
 
 function box(w, h, d, kind, overrides) {
   const geo = new THREE.BoxGeometry(w, h, d);

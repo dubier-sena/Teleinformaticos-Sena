@@ -22,7 +22,7 @@
  * materiales de aqui son propios y se generan proceduralmente.
  */
 import * as THREE from "./vendor/three.module.min.js";
-import { materialFor, materialInstanceFor } from "./hardware_lab_3d_constants.js";
+import { materialFor, materialInstanceFor } from "./hardware_lab_3d_constants.js?v=20260928_1";
 import {
   batteryLabelTexture,
   chipMarkingTexture,
@@ -33,7 +33,7 @@ import {
   shieldLidTexture,
   silkTextTexture,
   smdPassiveTexture,
-} from "./hardware_lab_3d_textures.js";
+} from "./hardware_lab_3d_textures.js?v=20260928_1";
 
 // ── Medidas maestras del equipo ───────────────────────────────────────────
 //

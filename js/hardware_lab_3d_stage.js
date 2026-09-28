@@ -8,15 +8,15 @@
  * hardware_lab_3d_diagnosis_controller.js reutilizan sin duplicar DOM.
  */
 import * as THREE from "./vendor/three.module.min.js";
-import { createLabScene } from "./hardware_lab_3d_scene.js";
-import { createCameraRig, frameBoxInRect, padFocusBox, CAMERA_MIN_WORLD_Y } from "./hardware_lab_3d_camera.js";
-import { createInteractionLayer, worldToScreen, visibleLocalBox } from "./hardware_lab_3d_interactions.js";
-import { rect as uiRect, area as uiArea, cardCandidates, chooseSlot, coverRatio, chooseFeedbackSpot, chooseDockSpot, safeViewRect, framingVerdict } from "./hardware_lab_3d_ui_layout.js";
-import { TweenGroup } from "./hardware_lab_3d_tween.js";
-import { createRig } from "./hardware_lab_3d_rig.js";
-import { createScrewController } from "./hardware_lab_3d_screws.js";
-import { createExplodeController } from "./hardware_lab_3d_explode.js";
-import { HardwareLabAudio } from "./hardware_lab_3d_audio.js";
+import { createLabScene } from "./hardware_lab_3d_scene.js?v=20260928_1";
+import { createCameraRig, frameBoxInRect, padFocusBox, CAMERA_MIN_WORLD_Y } from "./hardware_lab_3d_camera.js?v=20260928_1";
+import { createInteractionLayer, worldToScreen, visibleLocalBox } from "./hardware_lab_3d_interactions.js?v=20260928_1";
+import { rect as uiRect, area as uiArea, cardCandidates, chooseSlot, coverRatio, chooseFeedbackSpot, chooseDockSpot, safeViewRect, framingVerdict } from "./hardware_lab_3d_ui_layout.js?v=20260928_1";
+import { TweenGroup } from "./hardware_lab_3d_tween.js?v=20260928_1";
+import { createRig } from "./hardware_lab_3d_rig.js?v=20260928_1";
+import { createScrewController } from "./hardware_lab_3d_screws.js?v=20260928_1";
+import { createExplodeController } from "./hardware_lab_3d_explode.js?v=20260928_1";
+import { HardwareLabAudio } from "./hardware_lab_3d_audio.js?v=20260928_1";
 
 const VIEW_ICONS = {
   front: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="5" width="14" height="14" rx="1"/></svg>',
@@ -199,6 +199,7 @@ export function createStage() {
   // Abre/contrae la tarjeta de instrucciones (la asigna wireFloatingUi).
   let setCard = () => {};
   let lastSummary = "";
+  let lastHadAction = false;
   function wireFloatingUi() {
     const dock = document.getElementById("hwlab-dock");
     if (dock) {
@@ -1130,11 +1131,16 @@ export function createStage() {
   /** El aviso se aparta de la pieza objetivo y de su etiqueta (abajo o arriba
    *  al centro, a un lado, o sobre el historial). Se decide al mostrarlo y al
    *  recolocar la interfaz, nunca en cada cuadro. */
+  // Controles que el aprendiz NECESITA y que un aviso nunca debe tapar.
+  const REQUIRED_CONTROLS = "#hwlab-card-toggle, #hwlab-power-check-btn, #hwlab-prepare-btn, #hwlab-safety-confirm-btn, #hwlab-card .hwlab-thermal[data-required] button, #hwlab-card [data-diag-thermal]";
   function placeFeedback(el) {
     el.removeAttribute("data-pos");
+    el.style.top = "";
+    // Sin pieza objetivo (p. ej. diagnostico, que no encuadra la falla) el
+    // aviso igual se aparta de los controles; antes se quedaba donde cayera.
     const target = targetScreenRect();
-    if (!target) return 0;
     const sceneR = rectOf(document.getElementById("hwlab-scene"));
+    if (!sceneR) return 0;
     const r = el.getBoundingClientRect();
     const w = r.width, h = r.height, gap = 12;
     const midY = sceneR.top + (sceneR.bottom - sceneR.top - h) / 2;
@@ -1154,13 +1160,23 @@ export function createStage() {
     }
     // Sobre la barra del historial (lo menos prioritario de la escena).
     spots.push({ pos: "hist", rect: uiRect(sceneR.left + gap, sceneR.bottom - gap - h, w, h) });
+    // Aviso ancho (movil): justo debajo de la tarjeta, si cabe antes del dock.
+    const cardR = rectOf(document.getElementById("hwlab-card"));
+    const dockR = rectOf(document.getElementById("hwlab-dock"));
+    if (w > (sceneR.right - sceneR.left) * 0.45 && cardR && (cardR.top + cardR.bottom) / 2 < (sceneR.top + sceneR.bottom) / 2) {
+      const top = cardR.bottom + gap;
+      if (top + h <= (dockR ? dockR.top : sceneR.bottom) - gap) spots.push({ pos: "free", rect: uiRect(sceneR.left + (sceneR.right - sceneR.left - w) / 2, top, w, h) });
+    }
+    const required = Array.from(document.querySelectorAll(REQUIRED_CONTROLS)).filter((b) => b.offsetParent !== null).map(rectOf);
     const tip = document.getElementById("hwlab-tooltip");
-    const pick = chooseFeedbackSpot(spots, target, [rectOf(document.getElementById("hwlab-card")), rectOf(document.getElementById("hwlab-dock"))], {
+    const pick = chooseFeedbackSpot(spots, target, [cardR, dockR], {
       protect: [tip && !tip.hidden ? rectOf(tip) : null],
       low: [rectOf(document.getElementById("hwlab-history-toggle"))],
+      required,
     });
     if (pick && pick.pos) el.setAttribute("data-pos", pick.pos);
-    return pick ? coverRatio(pick.rect, target) : 0;
+    if (pick && pick.pos === "free") el.style.top = Math.round(pick.rect.top - sceneR.top) + "px";
+    return pick && target ? coverRatio(pick.rect, target) : 0;
   }
 
   function toggleExplode() {
@@ -1342,15 +1358,28 @@ export function createStage() {
     const title = h ? h.textContent.trim() : "";
     let action = /^Paso \d/.test(title) && first ? first.textContent.trim() : "";
     if (action) action = action.charAt(0).toUpperCase() + action.slice(1);
-    out.textContent = action ? title + " · " + action : title;
+    // Un modo puede declarar que texto resume la tarjeta (diagnostico: el
+    // SINTOMA, que en la banda compacta del movil quedaba oculto).
+    const custom = panel.querySelector("[data-card-summary]");
+    if (custom) out.textContent = (custom.getAttribute("data-card-summary") || title) + ": " + custom.textContent.trim();
+    else out.textContent = action ? title + " · " + action : title;
     // Marca para el CSS: el "Paso X de Y" y la accion ya estan en el resumen.
     if (action) panel.setAttribute("data-step", ""); else panel.removeAttribute("data-step");
     // Paso NUEVO que se completa con un boton de la propia tarjeta (confirmar
     // seguridad, preparar posicion, mantenimiento): se abre aunque el
     // aprendiz la hubiera contraido, para que nunca quede oculto.
     const summary = out.textContent;
-    if (summary !== lastSummary && panel.querySelector("#hwlab-safety-confirm-btn, #hwlab-prepare-btn, .hwlab-thermal[data-required] [data-thermal-task]")) setCard(true);
+    const hasAction = !!panel.querySelector("#hwlab-safety-confirm-btn, #hwlab-prepare-btn, .hwlab-thermal[data-required] [data-thermal-task]");
+    // Diagnostico: un caso NUEVO (otro sintoma) empieza con la tarjeta abierta,
+    // con "Encender y comprobar" a la vista, aunque el caso anterior la cerrara.
+    if (summary !== lastSummary && (hasAction || custom)) setCard(true);
+    // Diagnostico: el resumen (el sintoma) no cambia durante el caso, asi que
+    // el boton "Preparar" que aparece a mitad del caso nunca abria la tarjeta
+    // y quedaba oculto si estaba contraida (medido con clic real, 1024x625).
+    // Se abre cuando ese boton APARECE, no en cada redibujado.
+    else if (custom && hasAction && !lastHadAction) setCard(true);
     lastSummary = summary;
+    lastHadAction = hasAction;
   }
 
   // ── Ficha tecnica (item 7) ─────────────────────────────────────────────────
@@ -1462,6 +1491,13 @@ export function createStage() {
     /** Diagnostico del ultimo encuadre automatico (solo lectura, para pruebas). */
     get lastFraming() {
       return lastFraming;
+    },
+    /** Diagnostico: olvida la expansion manual de la tarjeta. Su resumen (el
+     *  sintoma) no cambia en todo el caso, asi que sin esto la tarjeta quedaba
+     *  expandida tras "Reiniciar" y tapaba la escena en el movil (medido, 390). */
+    resetCardExpansion: () => {
+      userExpandedFor = null;
+      schedulePlaceCard(120);
     },
     /** El contenido de la tarjeta cambio de tamano (p. ej. se abrio una seccion): recolocar una vez. */
     refreshLayout: (byUser) => {

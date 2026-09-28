@@ -145,7 +145,7 @@ test("M11. comprobacion del equipo: listo solo con piezas, tornillos, pasta adec
   // Cada fallo real cambia el veredicto y se nombra.
   const noCooler = Check.equipmentCheck({ direction: "assembly", parts: { ...allIn, cooler: false }, partNames: names, thermal: good, poseOk: true });
   assert.equal(noCooler.verdict.status, "fail");
-  assert.match(noCooler.items[0].detail, /Modulo de refrigeración/);
+  assert.match(noCooler.items[0].detail, /Módulo de refrigeración/);
   const loose = Check.equipmentCheck({ direction: "assembly", parts: allIn, partNames: names, pendingScrewPart: "keyboard", thermal: good, poseOk: true });
   assert.equal(loose.verdict.status, "fail");
   const dusty = Check.equipmentCheck({ direction: "maintenance", parts: allIn, partNames: names, thermal: { ...good, dust: "loose" }, poseOk: true });

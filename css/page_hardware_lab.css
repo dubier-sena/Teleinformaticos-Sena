@@ -781,8 +781,11 @@ details.hwlab-thermal[open] > .hwlab-thermal__summary::before { transform: rotat
    resumen y, si el paso se completa desde la tarjeta, su boton de accion. */
 .hwlab-card[data-auto-compact="true"] .hwlab-card__more { display: none; }
 .hwlab-card[data-auto-compact="true"] .hwlab-card__body { padding-top: 0; padding-bottom: 8px; }
-.hwlab-card[data-auto-compact="true"] .hwlab-card__body .hwlab-info-block > :not(#hwlab-safety-confirm-btn):not(#hwlab-prepare-btn):not(.hwlab-thermal[data-required]) { display: none; }
-.hwlab-card[data-auto-compact="true"] .hwlab-card__body:not(:has(#hwlab-safety-confirm-btn, #hwlab-prepare-btn, .hwlab-thermal[data-required])) { display: none; }
+.hwlab-card[data-auto-compact="true"] .hwlab-card__body .hwlab-info-block > :not(#hwlab-safety-confirm-btn):not(#hwlab-prepare-btn):not(#hwlab-power-check-btn):not(.hwlab-thermal[data-required]) { display: none; }
+.hwlab-card[data-auto-compact="true"] .hwlab-card__body:not(:has(#hwlab-safety-confirm-btn, #hwlab-prepare-btn, #hwlab-power-check-btn, .hwlab-thermal[data-required])) { display: none; }
+/* Diagnostico compactado: solo el bloque del sintoma (con su boton); el
+   panel de estado se ve al expandir la tarjeta. */
+.hwlab-card[data-auto-compact="true"] .hwlab-card__body .hwlab-info-block:not(:has(#hwlab-safety-confirm-btn, #hwlab-prepare-btn, #hwlab-power-check-btn, .hwlab-thermal[data-required])) { display: none; }
 .hwlab-card[data-auto-compact="true"] .hwlab-card__toggle svg { transform: rotate(180deg); }
 .hwlab-card__body {
   overflow-y: auto;
@@ -817,7 +820,12 @@ details.hwlab-thermal[open] > .hwlab-thermal__summary::before { transform: rotat
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  z-index: 25;
+  /* Microfase C.1: DEBAJO de la tarjeta y el dock (20) y del historial (22).
+     En 390 no siempre hay hueco para el aviso sin tapar la pieza, la tarjeta
+     o el dock (medido); si coincide con ellos, los controles quedan encima y
+     siguen pulsables: el aviso nunca bloquea una accion (placeFeedback ya lo
+     aparta de ellos cuando puede; lo unico que se sacrifica es legibilidad). */
+  z-index: 19;
   /* Ancho propio del texto: centrado con left 50%, el ancho disponible era la
      MITAD de la escena y el aviso se partia en 3-4 lineas en el movil. */
   width: max-content;
@@ -834,7 +842,9 @@ details.hwlab-thermal[open] > .hwlab-thermal__summary::before { transform: rotat
 .hwlab-feedback[data-pos="right"] { top: 50%; bottom: auto; transform: translateY(-50%); animation: none; }
 .hwlab-feedback[data-pos="left"] { left: var(--hwlab-gap, 12px); }
 .hwlab-feedback[data-pos="right"] { left: auto; right: var(--hwlab-gap, 12px); }
-.hwlab-feedback[data-pos="hist"] { left: var(--hwlab-gap, 12px); bottom: var(--hwlab-gap, 12px); transform: none; animation: none; z-index: 26; }
+/* Movil: debajo de la tarjeta (el "top" exacto lo calcula placeFeedback). */
+.hwlab-feedback[data-pos="free"] { bottom: auto; }
+.hwlab-feedback[data-pos="hist"] { left: var(--hwlab-gap, 12px); bottom: var(--hwlab-gap, 12px); transform: none; animation: none; }
 /* Dock compacto bajado porque tapaba la pieza del paso: sus paneles se abren hacia arriba. */
 .hwlab-dock[data-pos="bottom"] { top: auto; bottom: calc(var(--hwlab-gap) + var(--hwlab-history-bar) + 6px); }
 .hwlab-dock[data-pos="bottom"] .hwlab-dock__items { top: auto; bottom: calc(100% + 6px); }

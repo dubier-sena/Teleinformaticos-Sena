@@ -110,17 +110,19 @@ export function chooseSlot(candidates, target, current, { limit = 0.1, margin = 
 
 /**
  * Posicion del aviso flotante. `spots` = [{pos, rect}] en orden de preferencia
- * (el primero es abajo al centro). Nunca encima de la tarjeta ni del dock
- * (`avoid`): texto sobre texto no se lee (medido en el movil, sep-26). Entre
- * las posiciones libres: no tapar la PIEZA (mas de `limit`) > no tapar su
+ * (el primero es abajo al centro). Prioridades (microfase C.1): no tapar la
+ * PIEZA (mas de `limit`) > no tapar un control OBLIGATORIO (`required`: el
+ * boton de la tarjeta, "Encender y comprobar", "Preparar"...; medido en 390:
+ * el aviso de "Preparar" tapaba el propio boton "Preparar") > no pisar la
+ * tarjeta ni el dock (`avoid`: texto sobre texto no se lee) > no tapar la
  * ETIQUETA (`protect`) > no pisar el historial (`low`) > la preferida.
  */
-export function chooseFeedbackSpot(spots, target, avoid = [], { limit = 0.1, protect = [], low = [] } = {}) {
+export function chooseFeedbackSpot(spots, target, avoid = [], { limit = 0.1, protect = [], low = [], required = [] } = {}) {
   const hits = (r, list) => list.filter((a) => a && intersection(r, a) > 0).length;
   const scored = spots.map((s, i) => {
     const cover = target ? coverRatio(s.rect, target) : 0;
     // Dentro del limite se prefiere igual la que MENOS tapa (en pasos de 5 %).
-    return { s, key: [hits(s.rect, avoid), cover > limit ? cover : 0, hits(s.rect, protect), Math.round(cover * 20), hits(s.rect, low), i] };
+    return { s, key: [cover > limit ? cover : 0, hits(s.rect, required), hits(s.rect, avoid), hits(s.rect, protect), Math.round(cover * 20), hits(s.rect, low), i] };
   });
   scored.sort((a, b) => { for (let k = 0; k < a.key.length; k++) if (a.key[k] !== b.key[k]) return a.key[k] - b.key[k]; return 0; });
   return scored[0].s;

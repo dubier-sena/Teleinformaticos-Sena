@@ -297,7 +297,7 @@
     cooler: {
       id: "cooler",
       kind: "component",
-      name: "Modulo de refrigeración (heatpipe + ventilador)",
+      name: "Módulo de refrigeración (heatpipe + ventilador)",
       category: "refrigeracion",
       location: "internal",
       icon: "\u{1F4A8}",
@@ -306,22 +306,22 @@
       removeRequires: ["cable-battery", "cable-cpu-fan-laptop"],
       installRequires: ["cpu"],
       removeInstructions: [
-        "Verifica que el cable del ventilador ya este desconectado.",
+        "Verifica que el cable del ventilador ya esté desconectado.",
         "Afloja los tornillos en el orden inverso al numerado en el propio heatpipe (suelen estar numerados).",
-        "Levanta el modulo con cuidado; puede requerir un giro suave si la pasta termica lo pega al procesador.",
+        "Levanta el módulo con cuidado; puede requerir un giro suave si la pasta térmica lo pega al procesador.",
       ],
       installInstructions: [
-        "Aplica pasta termica nueva en el procesador si se reutiliza el modulo.",
-        "Coloca el heatpipe alineado y ajusta los tornillos en el orden numerado (o en cruz si no estan numerados).",
+        "Aplica pasta térmica nueva en el procesador si se reutiliza el módulo.",
+        "Coloca el heatpipe alineado y ajusta los tornillos en el orden numerado (o en cruz si no están numerados).",
       ],
       info: {
         function: "Extrae el calor del procesador (y a veces de la GPU integrada) mediante tubos de calor y un ventilador compacto.",
-        characteristics: "Mas delgado y compacto que el disipador de escritorio; suele cubrir CPU y chipset a la vez.",
+        characteristics: "Más delgado y compacto que el disipador de escritorio; suele cubrir CPU y chipset a la vez.",
         location: "Sobre el procesador, generalmente cerca del borde del chasis para expulsar el aire.",
         connectionType: "Tornillos numerados + cable del ventilador.",
         precautions: "Afloja los tornillos en el orden indicado para no deformar el heatpipe.",
-        compatibility: "Especifico de cada modelo y procesador.",
-        commonErrors: "Pasta termica reseca es causa comun de sobrecalentamiento en portatiles con varios anos de uso.",
+        compatibility: "Específico de cada modelo y procesador.",
+        commonErrors: "La pasta térmica reseca es una causa común de sobrecalentamiento en portátiles con varios años de uso.",
       },
     },
 
@@ -337,7 +337,7 @@
       removeRequires: ["cable-battery", "cooler"],
       installRequires: ["motherboard"],
       removeInstructions: [
-        "Verifica que el modulo de refrigeración ya este retirado y la pasta termica limpia.",
+        "Verifica que el módulo de refrigeración ya esté retirado y la pasta térmica limpia.",
         "En los modelos con socket (no soldados), libera la palanca o el seguro y retira el procesador por los bordes.",
       ],
       installInstructions: [

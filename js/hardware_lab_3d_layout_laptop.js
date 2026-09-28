@@ -45,7 +45,7 @@ import {
   buildLaptopLid,
   buildLaptopMotherboard,
   buildLaptopServiceStand,
-} from "./hardware_lab_3d_laptop_factory.js";
+} from "./hardware_lab_3d_laptop_factory.js?v=20260928_1";
 
 const AXIS_Y = [0, 1, 0];
 const AXIS_NEG_Y = [0, -1, 0];

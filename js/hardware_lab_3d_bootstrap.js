@@ -5,9 +5,9 @@
  * corresponda. Unico <script type="module"> de la pagina: todo lo demas se
  * resuelve via import (ver laboratorio-virtual-hardware.html).
  */
-import { createStage } from "./hardware_lab_3d_stage.js";
-import { createAssemblyController } from "./hardware_lab_3d_controller.js";
-import { createDiagnosisController } from "./hardware_lab_3d_diagnosis_controller.js";
+import { createStage } from "./hardware_lab_3d_stage.js?v=20260928_1";
+import { createAssemblyController } from "./hardware_lab_3d_controller.js?v=20260928_1";
+import { createDiagnosisController } from "./hardware_lab_3d_diagnosis_controller.js?v=20260928_1";
 
 const ICONS = {
   desktop: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="11" rx="1"/><path d="M9 20h6M12 15v5"/></svg>',
@@ -36,16 +36,17 @@ function practiceOptionsFor(equipmentId) {
     // Mantenimiento termico (sep-26): solo el portatil tiene su modulo modelado
     // con polvo y pasta termica (ver hardware_lab_thermal.js).
     ...(equipmentId === "laptop"
-      ? [{ mode: "maintenance-guided", icon: ICONS.maintenance, title: "Mantenimiento preventivo", desc: "Abre el portatil hasta la refrigeración, limpia el polvo, renueva la pasta termica y vuelve a cerrarlo.", available: true }]
+      ? [{ mode: "maintenance-guided", icon: ICONS.maintenance, title: "Mantenimiento preventivo", desc: "Abre el portátil hasta la refrigeración, limpia el polvo, renueva la pasta térmica y vuelve a cerrarlo.", available: true }]
       : []),
     { mode: "free", icon: ICONS.free, title: "Practica libre", desc: "Practica sin instrucciones constantes; consulta pistas si las necesitas.", available: true, needsDirection: true },
     { mode: "evaluation", icon: ICONS.evaluation, title: "Evaluacion", desc: "Sin pistas de que sigue: se califica sobre 100 puntos con rubrica.", available: true, needsDirection: true },
     {
       mode: "diagnosis",
       icon: ICONS.diagnosis,
-      title: "Diagnostico y reparacion",
-      desc: equipmentId === "desktop" ? "10 casos de diagnostico de fallas reales, de facil a moderado." : "Proximamente para portatil.",
-      available: equipmentId === "desktop",
+      title: "Diagnóstico y reparación",
+      desc: equipmentId === "desktop" ? "10 casos de diagnóstico de fallas reales, de fácil a moderado." : "8 casos de diagnóstico: fallas reales y una falla desconocida.",
+      // Release 20260928_1: diagnostico disponible para los DOS equipos (y solo esos).
+      available: equipmentId === "desktop" || equipmentId === "laptop",
     },
   ];
 }
@@ -73,7 +74,7 @@ function esc(value) {
 
 function renderCard(kind, opt) {
   const disabledAttr = opt.available ? "" : " disabled";
-  const suffix = opt.available ? "" : " (proximamente)";
+  const suffix = opt.available ? "" : " (próximamente)";
   const dataAttr = kind === "equipment" ? "data-equipment" : kind === "practice" ? "data-practice" : "data-direction";
   const value = kind === "equipment" ? opt.id : kind === "practice" ? opt.mode : opt.direction;
   return (
@@ -136,7 +137,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     document.getElementById("hwlab-direction-group").hidden = true;
     if (mode === "diagnosis") {
-      diagnosisController.showCaseMenu();
+      diagnosisController.showCaseMenu(selectedEquipmentId);
       return;
     }
     document.getElementById("hwlab-diag-case-group").hidden = true;

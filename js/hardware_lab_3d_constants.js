@@ -6,7 +6,7 @@
  * aluminio). Un solo lugar para que factory/rig/escena midan igual.
  */
 import * as THREE from "./vendor/three.module.min.js";
-import { pcbTexture, brushedRoughnessTexture } from "./hardware_lab_3d_textures.js";
+import { pcbTexture, brushedRoughnessTexture } from "./hardware_lab_3d_textures.js?v=20260928_1";
 
 // ── Layout de la mesa de trabajo (unidades = metros aprox.) ────────────────
 export const TABLE = {

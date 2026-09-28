@@ -38,12 +38,12 @@
  * `true` la instala (misma logica que hardware_lab_engine.js).
  */
 import * as THREE from "./vendor/three.module.min.js";
-import { animateObject3D, animateValue, Easing } from "./hardware_lab_3d_tween.js";
-import { TABLE, ZONES } from "./hardware_lab_3d_constants.js";
-import * as PartsFactory from "./hardware_lab_3d_parts_factory.js";
-import * as LaptopFactory from "./hardware_lab_3d_laptop_factory.js";
-import { computeM2Pose, computeSoDimmPose } from "./hardware_lab_3d_laptop_factory.js";
-import { buildServiceScrew, buildScrewDish } from "./hardware_lab_3d_screws.js";
+import { animateObject3D, animateValue, Easing } from "./hardware_lab_3d_tween.js?v=20260928_1";
+import { TABLE, ZONES } from "./hardware_lab_3d_constants.js?v=20260928_1";
+import * as PartsFactory from "./hardware_lab_3d_parts_factory.js?v=20260928_1";
+import * as LaptopFactory from "./hardware_lab_3d_laptop_factory.js?v=20260928_1";
+import { computeM2Pose, computeSoDimmPose } from "./hardware_lab_3d_laptop_factory.js?v=20260928_1";
+import { buildServiceScrew, buildScrewDish } from "./hardware_lab_3d_screws.js?v=20260928_1";
 
 // Recorridos de montaje propios (portatil): pieza que pivota sobre su borde de
 // contactos en vez de salir recta. Ver hardware_lab_3d_laptop_factory.js.
@@ -879,6 +879,8 @@ export function createRig({ scene, interactions, tweenGroup, layout, equipmentId
     const entry = partEntries.get(partId);
     if (!entry || entry.present === present) return;
     entry.present = present;
+    // Retirarla o reinstalarla la reasienta: deja de estar "mal asentada".
+    entry.restOffset = null;
     const animate = opts.animate !== false;
     const obj = entry.object3d;
 
@@ -942,6 +944,28 @@ export function createRig({ scene, interactions, tweenGroup, layout, equipmentId
   }
 
   /** Aplica session.parts completo sin animar (carga inicial / restaurar sesion). */
+  /** Diagnostico (sep-27): pieza MAL ASENTADA. Sigue en su sitio, pero
+   *  desplazada unos milimetros a lo largo de su eje de extraccion, como si
+   *  hubiera quedado un poco fuera del conector: solo se nota al inspeccionar
+   *  de cerca. Solo afecta a piezas presentes y quietas; al retirarla y volver
+   *  a instalarla, la animacion normal la devuelve a su posicion correcta. */
+  function setMisseated(partId, distance) {
+    const entry = partEntries.get(partId);
+    if (!entry || !entry.present || entry.moving) return false;
+    // Es su posicion de REPOSO mientras siga mal asentada (la vista explotada
+    // parte de aqui y vuelve aqui; antes volvia a la nominal y borraba la
+    // falla visible, medido con clic real en la auditoria final).
+    entry.restOffset = entry.detachAxis.clone().multiplyScalar(distance > 0 ? distance : 0);
+    entry.object3d.position.copy(entry.homePosition).add(entry.restOffset);
+    return true;
+  }
+
+  /** Distancia (m) de una pieza a su posicion nominal (solo lectura, pruebas). */
+  function homeOffset(partId) {
+    const entry = partEntries.get(partId);
+    return entry && entry.present ? entry.object3d.position.distanceTo(entry.homePosition) : null;
+  }
+
   function syncFromSessionParts(sessionParts) {
     let trayIdx = 0;
     Object.keys(sessionParts).forEach((partId) => {
@@ -950,6 +974,7 @@ export function createRig({ scene, interactions, tweenGroup, layout, equipmentId
       const present = sessionParts[partId] !== false;
       entry.present = present;
       entry.moving = false;
+      entry.restOffset = null;
       if (lidEntry && entry === lidEntry && leafFrame) {
         leafFrame.rotation.x = present ? -pose.lid : -lidCfg.openAngle;
       }
@@ -1016,7 +1041,7 @@ export function createRig({ scene, interactions, tweenGroup, layout, equipmentId
     const entries = [];
     partEntries.forEach((entry) => {
       if (entry.present) {
-        entries.push({ object3d: entry.object3d, tier: entry.tier, homePosition: entry.homePosition });
+        entries.push({ object3d: entry.object3d, tier: entry.tier, homePosition: entry.restOffset ? entry.homePosition.clone().add(entry.restOffset) : entry.homePosition });
       }
     });
     return entries;
@@ -1080,6 +1105,8 @@ export function createRig({ scene, interactions, tweenGroup, layout, equipmentId
     },
     setPresence,
     syncFromSessionParts,
+    setMisseated,
+    homeOffset,
     getObject3D,
     getBoundsWorld,
     getBoundsBoxWorld,

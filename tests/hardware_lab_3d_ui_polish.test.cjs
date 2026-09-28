@@ -151,7 +151,7 @@ test("P06. mantenimiento de la refrigeracion: plegado cuando no es la accion act
   assert.match(ctl, /thermalOpen = thermalDetails\.open; stage\.refreshLayout\(thermalOpen\);/);
   assert.match(stage, /if \(byUser\) userExpandedFor = /);
   // Compactada: la accion obligatoria sigue a la vista; lo opcional no.
-  assert.match(cssRules, /\.hwlab-card\[data-auto-compact="true"\] \.hwlab-card__body \.hwlab-info-block > :not\(#hwlab-safety-confirm-btn\):not\(#hwlab-prepare-btn\):not\(\.hwlab-thermal\[data-required\]\) \{ display: none; \}/);
+  assert.match(cssRules, /\.hwlab-card\[data-auto-compact="true"\] \.hwlab-card__body \.hwlab-info-block > :not\(#hwlab-safety-confirm-btn\):not\(#hwlab-prepare-btn\):not\(#hwlab-power-check-btn\):not\(\.hwlab-thermal\[data-required\]\) \{ display: none; \}/);
   // El resumen muestra la accion completa (hasta 3 lineas, no se corta en 2).
   assert.match(cssRules, /\.hwlab-card__summary \{[^}]*-webkit-line-clamp: 3;/);
   // Resumen plegable accesible por teclado (elemento nativo) con foco visible y 44 px.

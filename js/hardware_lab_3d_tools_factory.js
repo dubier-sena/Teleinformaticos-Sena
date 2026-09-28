@@ -8,7 +8,7 @@
  * hands), asi el controlador no necesita una tabla de traduccion aparte.
  */
 import * as THREE from "./vendor/three.module.min.js";
-import { materialFor } from "./hardware_lab_3d_constants.js";
+import { materialFor } from "./hardware_lab_3d_constants.js?v=20260928_1";
 
 export const TOOL_KINDS = [
   "phillips",

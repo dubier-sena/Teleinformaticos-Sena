@@ -54,13 +54,13 @@
     },
     alcohol: {
       id: "alcohol",
-      label: "Limpiar con alcohol isopropilico",
+      label: "Limpiar con alcohol isopropílico",
       tool: "isopropyl-alcohol",
       target: "paste",
     },
     apply: {
       id: "apply",
-      label: "Aplicar pasta termica nueva",
+      label: "Aplicar pasta térmica nueva",
       tool: "thermal-paste",
       target: "paste",
     },
@@ -69,9 +69,12 @@
   var DUST_LABELS = { dirty: "Con polvo acumulado", loose: "Polvo suelto", clean: "Limpio" };
   var PASTE_LABELS = { old: "Pasta vieja y reseca", residue: "Restos de pasta", clean: "Superficie limpia, sin pasta", new: "Pasta nueva" };
 
-  /** "used": equipo con uso (polvo y pasta reseca). "new": piezas nuevas, sin pasta aplicada. */
+  /** "used": equipo con uso (polvo y pasta reseca). "new": piezas nuevas, sin pasta aplicada.
+   *  "serviced": equipo en buen estado termico (aletas limpias y pasta nueva bien
+   *  dosificada); es el punto de partida del diagnostico cuando la falla no es termica. */
   function createThermalState(kind) {
     if (kind === "new") return { dust: "clean", paste: "clean", amount: null, mistakes: 0 };
+    if (kind === "serviced") return { dust: "clean", paste: "new", amount: "adecuada", mistakes: 0 };
     return { dust: "dirty", paste: "old", amount: null, mistakes: 0 };
   }
 
@@ -177,6 +180,14 @@
     return { ok: false, reason: reason };
   }
 
+  /** ¿El sistema de refrigeracion quedo en buen estado? Aletas y ventilador
+   *  limpios y pasta nueva en cantidad adecuada. Es la misma condicion que ya
+   *  exige coolerInstallGate para la pasta, mas el polvo: una sola regla. */
+  function isReady(state) {
+    var s = normalize(state);
+    return s.dust === "clean" && coolerInstallGate(s).ok;
+  }
+
   /** Estado que se muestra en el panel. */
   function describe(state) {
     var s = normalize(state);
@@ -195,6 +206,7 @@
     normalize: normalize,
     applyTask: applyTask,
     coolerInstallGate: coolerInstallGate,
+    isReady: isReady,
     describe: describe,
   };
 

@@ -114,8 +114,19 @@ CASES.forEach(function (caseDef) {
 
       session = solveFixCondition(session, session.fixCondition);
 
+      // Sep-27: la falla corregida con el gabinete ABIERTO no aprueba todavia
+      // ("equipo listo" es parte de la reparacion valida), y el motivo es
+      // distinto de "la falla sigue".
+      if (session.parts["side-panel"] === false) {
+        var abierto = DiagEngine.checkPowerOn(desktop, session);
+        assert.strictEqual(abierto.fixed, false, "No debe aprobar con el gabinete abierto");
+        assert.strictEqual(abierto.outcome, "not-ready");
+        session = DiagEngine.attemptAction(desktop, abierto.session, { action: "install", partId: "side-panel", toolId: "phillips" }).session;
+      }
+
       var after = DiagEngine.checkPowerOn(desktop, session);
       assert.strictEqual(after.fixed, true, "El caso deberia quedar resuelto tras la reparacion correcta: " + after.message);
+      assert.strictEqual(after.outcome, "fixed");
     }
   );
 });
