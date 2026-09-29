@@ -10,12 +10,12 @@
  * Diagnostico es un modo ABIERTO: no hay encuadre automatico de la pieza
  * (revelaria la falla); el aprendiz inspecciona con los controles normales.
  */
-import { createDesktopLayout } from "./hardware_lab_3d_layout_desktop.js?v=20260928_1";
-import { createLaptopLayout } from "./hardware_lab_3d_layout_laptop.js?v=20260928_1";
-import { createDiagnosticMonitor } from "./hardware_lab_3d_monitor.js?v=20260928_1";
-import { createLaptopDiagnosisMechanics } from "./hardware_lab_3d_diagnosis_mechanics.js?v=20260928_1";
-import { ZONES } from "./hardware_lab_3d_constants.js?v=20260928_1";
-import { HardwareLabAudio } from "./hardware_lab_3d_audio.js?v=20260928_1";
+import { createDesktopLayout } from "./hardware_lab_3d_layout_desktop.js?v=20260928_2";
+import { createLaptopLayout } from "./hardware_lab_3d_layout_laptop.js?v=20260928_2";
+import { createDiagnosticMonitor } from "./hardware_lab_3d_monitor.js?v=20260928_2";
+import { createLaptopDiagnosisMechanics } from "./hardware_lab_3d_diagnosis_mechanics.js?v=20260928_2";
+import { ZONES } from "./hardware_lab_3d_constants.js?v=20260928_2";
+import { HardwareLabAudio } from "./hardware_lab_3d_audio.js?v=20260928_2";
 
 function esc(value) {
   return String(value == null ? "" : value)

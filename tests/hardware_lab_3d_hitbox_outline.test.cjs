@@ -100,13 +100,25 @@ test("H03. hitboxes: ocultos, sin sombra, marcados y fuera del contorno, en port
     });
     assert.ok(n > 0, `${eq}: no se encontraron hitboxes`);
   }
-  // Los cables: su contorno visible es MENOR que la caja con hitbox (antes 2-4x).
+  // Los cables: el contorno visible NO depende del hitbox. Loop 3D (sep-28):
+  // los hitboxes del portatil se ajustaron a radio visible + ~1.5 mm, asi que
+  // la comparacion de volumen solo discrimina en la antena (0.8 -> 2.5 mm);
+  // para el resto se comprueba directamente: agrandar el hitbox x10 no mueve
+  // el contorno ni una decima de milimetro.
   const { rig } = build("laptop");
-  ["cable-battery", "cable-screen-flex", "wifi-antenna-2"].forEach((id) => {
+  const antena = rig.getObject3D("wifi-antenna-2");
+  const visA = visibleLocalBox(antena).getSize(new THREE.Vector3());
+  const allA = new THREE.Box3().setFromObject(antena).getSize(new THREE.Vector3());
+  assert.ok(visA.x * visA.y * visA.z < allA.x * allA.y * allA.z * 0.8, "wifi-antenna-2: el contorno sigue incluyendo el hitbox");
+  ["cable-battery", "cable-screen-flex", "cable-cpu-fan-laptop", "cable-keyboard-flex", "cable-touchpad-flex", "wifi-antenna-1", "wifi-antenna-2"].forEach((id) => {
     const obj = rig.getObject3D(id);
-    const vis = visibleLocalBox(obj).getSize(new THREE.Vector3());
-    const all = new THREE.Box3().setFromObject(obj).getSize(new THREE.Vector3());
-    assert.ok(vis.x * vis.y * vis.z < all.x * all.y * all.z * 0.8, `${id}: el contorno sigue incluyendo el hitbox`);
+    const antes = visibleLocalBox(obj).clone();
+    obj.traverse((m) => { if (isHitbox(m)) m.scale.multiplyScalar(10); });
+    obj.updateMatrixWorld(true);
+    const despues = visibleLocalBox(obj);
+    obj.traverse((m) => { if (isHitbox(m)) m.scale.multiplyScalar(0.1); });
+    obj.updateMatrixWorld(true);
+    assert.ok(antes.min.distanceTo(despues.min) < 1e-4 && antes.max.distanceTo(despues.max) < 1e-4, `${id}: el contorno depende del hitbox`);
   });
 });
 

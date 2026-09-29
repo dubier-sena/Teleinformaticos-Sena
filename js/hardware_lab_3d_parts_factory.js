@@ -9,7 +9,7 @@
  * "RAM 2", solo sabe construir "una memoria RAM".
  */
 import * as THREE from "./vendor/three.module.min.js";
-import { materialFor, materialInstanceFor, markAsHitbox } from "./hardware_lab_3d_constants.js?v=20260928_1";
+import { materialFor, materialInstanceFor, markAsHitbox } from "./hardware_lab_3d_constants.js?v=20260928_2";
 
 function box(w, h, d, kind, overrides) {
   const geo = new THREE.BoxGeometry(w, h, d);
@@ -587,7 +587,13 @@ export function buildCable(kind, fromLocal, toLocal, opts = {}) {
   // `hitRadius` (portatil): las antenas miden 0.8 mm; con el minimo de 6 mm su
   // zona de clic tapaba la tarjeta Wi-Fi entera (medido con raycast). El
   // escritorio no lo pasa y conserva el minimo de siempre.
-  const hitGeo = new THREE.TubeGeometry(curve, tubeSegments, Math.max(radius * 4, opts.hitRadius != null ? opts.hitRadius : 0.006), 6, false);
+  // Loop 3D (sep-28, medido con el puntero real en 390/768/1024/1440): con
+  // max(radio x 4, 6 mm) el hitbox de los cables del portatil sobresalia
+  // hasta 7 mm de lo visible y le quitaba el clic a la placa, el teclado o la
+  // bateria que se veian bajo el cursor. Un `hitRadius` explicito se respeta
+  // tal cual; sin el (escritorio) queda la regla de siempre.
+  const hitR = opts.hitRadius != null ? opts.hitRadius : Math.max(radius * 4, 0.006);
+  const hitGeo = new THREE.TubeGeometry(curve, tubeSegments, hitR, 6, false);
   const hitMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false });
   const hitProxy = new THREE.Mesh(hitGeo, hitMat);
   hitProxy.name = "cable-hit-proxy";

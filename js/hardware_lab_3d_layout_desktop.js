@@ -11,7 +11,7 @@
  * power-cable-wall / cable-video, ver hardware_lab_diagnosis_engine.js).
  */
 import * as THREE from "./vendor/three.module.min.js";
-import { buildDesktopCaseShell, buildDesktopSidePanel, buildMotherboard } from "./hardware_lab_3d_chassis_factory.js?v=20260928_1";
+import { buildDesktopCaseShell, buildDesktopSidePanel, buildMotherboard } from "./hardware_lab_3d_chassis_factory.js?v=20260928_2";
 
 const AXIS_X = [1, 0, 0];
 const AXIS_Y = [0, 1, 0];

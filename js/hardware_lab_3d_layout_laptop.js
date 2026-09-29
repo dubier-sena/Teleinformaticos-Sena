@@ -45,7 +45,7 @@ import {
   buildLaptopLid,
   buildLaptopMotherboard,
   buildLaptopServiceStand,
-} from "./hardware_lab_3d_laptop_factory.js?v=20260928_1";
+} from "./hardware_lab_3d_laptop_factory.js?v=20260928_2";
 
 const AXIS_Y = [0, 1, 0];
 const AXIS_NEG_Y = [0, -1, 0];
@@ -246,7 +246,7 @@ export function createLaptopLayout() {
         const b = baseOf(a).batteryBay;
         return [v(b.x + 0.082, 0.0065, 0.005), v(b.x + 0.054, 0.0095, -0.018)];
       },
-      buildOpts: { radius: 0.0016, clipsAt: [0.45] },
+      buildOpts: { radius: 0.0016, hitRadius: 0.0031, clipsAt: [0.45] },
       detachAxis: AXIS_NEG_Y,
       tier: 3,
     },
@@ -261,7 +261,7 @@ export function createLaptopLayout() {
         const c = mbOf(a).cpuSocket;
         return [v(c.x - 0.026, c.y - 0.0053, c.z + 0.013)];
       },
-      buildOpts: { radius: 0.0011, clipsAt: [0.55] },
+      buildOpts: { radius: 0.0011, hitRadius: 0.0026, clipsAt: [0.55] },
       detachAxis: AXIS_NEG_Y,
       tier: 3,
     },
@@ -279,7 +279,7 @@ export function createLaptopLayout() {
         // rozar el conector.
         return [v(f.x, f.y + 0.0006, -0.0232), v(f.x, f.y - 0.0024, -0.029)];
       },
-      buildOpts: { radius: 0.0018, flat: true, ribbonWidth: 0.012, clipsAt: [0.62] },
+      buildOpts: { radius: 0.0018, flat: true, ribbonWidth: 0.012, hitRadius: 0.003, clipsAt: [0.62] },
       detachAxis: AXIS_NEG_Y,
       tier: 3,
     },
@@ -293,7 +293,7 @@ export function createLaptopLayout() {
       from: (a) => at(baseOf(a).touchpadMount, 0, -0.0023 - PLUG_HALF.flex, -0.0305),
       to: (a) => at(mbOf(a).touchpadFpc, 0, -PLUG_HALF.flex, 0),
       waypoints: () => [v(0.004, 0.0152, 0.022), v(0.010, 0.0126, -0.016)],
-      buildOpts: { radius: 0.0014, flat: true, ribbonWidth: 0.008, clipsAt: [0.5] },
+      buildOpts: { radius: 0.0014, flat: true, ribbonWidth: 0.008, hitRadius: 0.003, clipsAt: [0.5] },
       detachAxis: AXIS_NEG_Y,
       tier: 3,
     },
@@ -305,7 +305,7 @@ export function createLaptopLayout() {
       from: (a) => at(mbOf(a).edpConnector, 0, -PLUG_HALF.display, 0),
       to: (a) => at(baseOf(a).hingeEntryRight, -0.008, -0.0027, 0.00225),
       waypoints: () => [v(0.096, 0.0112, -0.0985), v(0.101, 0.0126, -0.101)],
-      buildOpts: { radius: 0.0015, flat: true, ribbonWidth: 0.008, clipsAt: [0.3, 0.55] },
+      buildOpts: { radius: 0.0015, flat: true, ribbonWidth: 0.008, hitRadius: 0.003, clipsAt: [0.3, 0.55] },
       detachAxis: AXIS_NEG_Y,
       tier: 3,
     },
