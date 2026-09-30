@@ -2268,6 +2268,12 @@
       db: window._firebaseDb,
       users: state.users || [],
     });
+    // Seguimiento del Laboratorio (historial de intentos, sep-29): una consulta
+    // por ficha a sena_portal_hwlab_attempts; la vista anterior queda plegada.
+    const trackHost = byId("hwtrack-host");
+    if (trackHost && window.adminHwlabTracking && typeof window.adminHwlabTracking.mount === "function") {
+      window.adminHwlabTracking.mount(trackHost, { auth, db: window._firebaseDb, users: state.users || [] });
+    }
   }
 
   function renderAuditPanel() {

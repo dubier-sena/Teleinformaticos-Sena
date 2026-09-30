@@ -15,10 +15,10 @@
  * item 23) y la llave de almacenamiento, que aqui SI se guarda por separado
  * (storageMode) para que evaluacion no pise el progreso de practica libre.
  */
-import { createDesktopLayout } from "./hardware_lab_3d_layout_desktop.js?v=20260928_2";
-import { createLaptopLayout } from "./hardware_lab_3d_layout_laptop.js?v=20260928_2";
-import { HardwareLabAudio } from "./hardware_lab_3d_audio.js?v=20260928_2";
-import { applyThermalLook } from "./hardware_lab_3d_thermal_look.js?v=20260928_2";
+import { createDesktopLayout } from "./hardware_lab_3d_layout_desktop.js?v=20260929_1";
+import { createLaptopLayout } from "./hardware_lab_3d_layout_laptop.js?v=20260929_1";
+import { HardwareLabAudio } from "./hardware_lab_3d_audio.js?v=20260929_1";
+import { applyThermalLook } from "./hardware_lab_3d_thermal_look.js?v=20260929_1";
 
 const TITLES = {
   learn: "Aprender componentes",
@@ -66,6 +66,18 @@ export function createAssemblyController(stage) {
   function Engine() {
     return window.HardwareLab.Engine;
   }
+  // Seguimiento academico (LOOP seguimiento, sep-29): cada sesion NUEVA recibe
+  // un nonce unico (id de su intento); una sesion guardada sin nonce es
+  // anterior al sistema y conserva el id determinista "legacy".
+  function Attempts() {
+    return window.HardwareLab.Attempts || null;
+  }
+  function freshSession(opts) {
+    const s = Engine().createSession(equipmentData, engineMode, opts);
+    const A = Attempts();
+    return A ? Object.assign({}, s, { attemptNonce: A.makeNonce() }) : s;
+  }
+
   function Storage() {
     return window.HardwareLab.Storage;
   }
@@ -222,7 +234,7 @@ export function createAssemblyController(stage) {
     const maxHints = practiceMode === "evaluation" ? 0 : 3;
 
     const saved = Storage().loadLocal(equipmentId, storageMode);
-    session = saved ? Engine().deserialize(equipmentData, saved) : Engine().createSession(equipmentData, engineMode, { maxHints });
+    session = saved ? Engine().deserialize(equipmentData, saved) : freshSession({ maxHints });
     rig.syncFromSessionParts(session.parts);
     resetThermal(saved && saved.thermal);
     // El estado de los tornillos viaja en la MISMA llave de almacenamiento que
@@ -240,7 +252,7 @@ export function createAssemblyController(stage) {
     document.getElementById("hwlab-explode-btn").onclick = () => stage.toggleExplode();
     document.getElementById("hwlab-back-to-intro").onclick = backToIntro;
     document.getElementById("hwlab-restart-btn").onclick = () => {
-      session = Engine().createSession(equipmentData, engineMode, { maxHints });
+      session = freshSession({ maxHints });
       neededPreset = null;
       resetPose();
       rig.syncFromSessionParts(session.parts);
@@ -915,6 +927,7 @@ export function createAssemblyController(stage) {
     if (persistTimer) clearTimeout(persistTimer);
     persistTimer = setTimeout(() => {
       const payload = Engine().serialize(session);
+      if (session.attemptNonce) payload.attemptNonce = session.attemptNonce;
       const screwCtl = screws();
       if (screwCtl) payload.screws = screwCtl.getState();
       if (thermal) payload.thermal = thermal;
@@ -947,11 +960,17 @@ export function createAssemblyController(stage) {
     stage.stopTimer();
     const finished = Engine().finish(session);
     session = finished;
+    // Cada intento terminado queda en el historial central (cola local si no
+    // hay red). Nunca bloquea ni cambia el resultado mostrado.
+    if (Attempts()) {
+      const done = Object.assign(Engine().serialize(finished), { attemptNonce: finished.attemptNonce });
+      Attempts().recordFinished({ session: done, equipo: equipmentId, practica: storageMode });
+    }
     persist();
     stage.openResultModal(finished.result, {
       extraHtml: equipmentCheckHtml(),
       onRetry: () => {
-        session = Engine().createSession(equipmentData, engineMode, { maxHints: session.hints.max });
+        session = freshSession({ maxHints: session.hints.max });
         neededPreset = null;
         resetPose();
         stage.currentRig.syncFromSessionParts(session.parts);

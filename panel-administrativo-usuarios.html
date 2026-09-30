@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="css/site_tokens.css?v=20260617_1">
 <link rel="stylesheet" href="css/components.css?v=20260617_1">
 <link rel="stylesheet" href="css/shared_shell.css?v=20260923_3">
-<link rel="stylesheet" href="css/page_admin.css?v=20260915_1">
+<link rel="stylesheet" href="css/page_admin.css?v=20260929_1">
 <script src="js/shared_utils.js?v=20260615_2"></script>
 <script src="js/global_error_handler.js?v=20260710_1"></script>
 <script src="js/portal_auth.js?v=20260816_1"></script>
@@ -26,7 +26,7 @@
 <script defer src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
 <script src="js/firebase_auth_bridge.js?v=20260618_1"></script>
 <script src="js/guide_merge_utils.js?v=20260823_1"></script>
-<script src="js/firebase_db.js?v=20260922_1"></script>
+<script src="js/firebase_db.js?v=20260929_1"></script>
 <script src="js/project_integrations.js?v=20260823_1"></script>
 <script src="js/drive_db.js?v=20260922_1"></script>
 <script defer src="js/firebase_status_banner.js?v=20260923_1"></script>
@@ -331,7 +331,11 @@
       <section class="admin-module" id="module-talleres" data-admin-panel="talleres" hidden></section>
 
       <section class="admin-module" id="module-laboratorio" data-admin-panel="laboratorio" hidden>
-        <div id="hwlab-admin-host"></div>
+        <div id="hwtrack-host"></div>
+        <details class="hwtrack-old">
+          <summary>Estado actual de cada práctica (vista anterior; lee ~27 documentos por aprendiz)</summary>
+          <div id="hwlab-admin-host"></div>
+        </details>
       </section>
 
       <section class="admin-module" id="module-autorizaciones" data-admin-panel="autorizaciones" hidden></section>
@@ -451,8 +455,10 @@
        pesada del panel) ya no carga aqui de entrada -- admin_usuarios.js la
        pide bajo demanda solo al exportar/subir un Excel de calificaciones
        (ver ensureXlsxLoaded). -->
-  <script src="js/hardware_lab_diagnosis_cases.js?v=20260928_2"></script>
-  <script src="js/admin_hardware_lab.js?v=20260928_2"></script>
-  <script src="js/admin_usuarios.js?v=20260915_1"></script>
+  <script src="js/hardware_lab_diagnosis_cases.js?v=20260929_1"></script>
+  <script src="js/admin_hardware_lab.js?v=20260929_1"></script>
+  <script src="js/hardware_lab_attempts.js?v=20260929_1"></script>
+  <script src="js/admin_hwlab_tracking.js?v=20260929_1"></script>
+  <script src="js/admin_usuarios.js?v=20260929_1"></script>
 </body>
 </html>

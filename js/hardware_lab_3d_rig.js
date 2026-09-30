@@ -38,12 +38,12 @@
  * `true` la instala (misma logica que hardware_lab_engine.js).
  */
 import * as THREE from "./vendor/three.module.min.js";
-import { animateObject3D, animateValue, Easing } from "./hardware_lab_3d_tween.js?v=20260928_2";
-import { TABLE, ZONES } from "./hardware_lab_3d_constants.js?v=20260928_2";
-import * as PartsFactory from "./hardware_lab_3d_parts_factory.js?v=20260928_2";
-import * as LaptopFactory from "./hardware_lab_3d_laptop_factory.js?v=20260928_2";
-import { computeM2Pose, computeSoDimmPose } from "./hardware_lab_3d_laptop_factory.js?v=20260928_2";
-import { buildServiceScrew, buildScrewDish } from "./hardware_lab_3d_screws.js?v=20260928_2";
+import { animateObject3D, animateValue, Easing } from "./hardware_lab_3d_tween.js?v=20260929_1";
+import { TABLE, ZONES } from "./hardware_lab_3d_constants.js?v=20260929_1";
+import * as PartsFactory from "./hardware_lab_3d_parts_factory.js?v=20260929_1";
+import * as LaptopFactory from "./hardware_lab_3d_laptop_factory.js?v=20260929_1";
+import { computeM2Pose, computeSoDimmPose } from "./hardware_lab_3d_laptop_factory.js?v=20260929_1";
+import { buildServiceScrew, buildScrewDish } from "./hardware_lab_3d_screws.js?v=20260929_1";
 
 // Recorridos de montaje propios (portatil): pieza que pivota sobre su borde de
 // contactos en vez de salir recta. Ver hardware_lab_3d_laptop_factory.js.

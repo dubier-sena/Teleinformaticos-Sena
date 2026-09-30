@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="css/site_tokens.css?v=20260617_1">
 <link rel="stylesheet" href="css/components.css?v=20260617_1">
 <link rel="stylesheet" href="css/shared_shell.css?v=20260923_3">
-<link rel="stylesheet" href="css/page_hardware_lab.css?v=20260928_2">
+<link rel="stylesheet" href="css/page_hardware_lab.css?v=20260929_1">
 <script src="js/shared_utils.js?v=20260615_2"></script>
 <script src="js/global_error_handler.js?v=20260710_1"></script>
 <script src="js/portal_auth.js?v=20260816_1"></script>
@@ -61,24 +61,26 @@
 <script defer src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
 <script src="js/firebase_auth_bridge.js?v=20260618_1"></script>
 <script src="js/guide_merge_utils.js?v=20260823_1"></script>
-<script src="js/firebase_db.js?v=20260922_1"></script>
+<script src="js/firebase_db.js?v=20260929_1"></script>
 <script src="js/drive_db.js?v=20260922_1"></script>
 <script defer src="js/firebase_status_banner.js?v=20260923_1"></script>
 <script defer src="js/save_status.js?v=20260822_1"></script>
 <script defer src="js/shared_shell.js?v=20260927_1"></script>
 <!-- Motor de datos/logica pura (sin DOM, con tests dedicados) -- intacto. -->
-<script defer src="js/hardware_lab_tools.js?v=20260928_2"></script>
+<script defer src="js/hardware_lab_tools.js?v=20260929_1"></script>
 <script defer src="js/hardware_lab_data_desktop.js?v=20260927_1"></script>
-<script defer src="js/hardware_lab_data_laptop.js?v=20260928_2"></script>
-<script defer src="js/hardware_lab_engine.js?v=20260927_1"></script>
-<script defer src="js/hardware_lab_thermal.js?v=20260928_2"></script>
+<script defer src="js/hardware_lab_data_laptop.js?v=20260929_1"></script>
+<script defer src="js/hardware_lab_engine.js?v=20260929_1"></script>
+<script defer src="js/hardware_lab_thermal.js?v=20260929_1"></script>
 <script defer src="js/hardware_lab_equipment_check.js?v=20260926_2"></script>
 <script defer src="js/hardware_lab_storage.js?v=20260816_1"></script>
-<script defer src="js/hardware_lab_diagnosis_engine.js?v=20260928_2"></script>
-<script defer src="js/hardware_lab_diagnosis_cases.js?v=20260928_2"></script>
+<script defer src="js/hardware_lab_attempts.js?v=20260929_1"></script>
+<script defer src="js/hardware_lab_progress_view.js?v=20260929_1"></script>
+<script defer src="js/hardware_lab_diagnosis_engine.js?v=20260929_1"></script>
+<script defer src="js/hardware_lab_diagnosis_cases.js?v=20260929_1"></script>
 <!-- Laboratorio 3D (WebGL real, ver CLAUDE.md / js/hardware_lab_3d_*.js). ES modules: -->
 <!-- se cargan y ordenan solos via import, este es el unico punto de entrada. -->
-<script type="module" src="js/hardware_lab_3d_bootstrap.js?v=20260928_2"></script>
+<script type="module" src="js/hardware_lab_3d_bootstrap.js?v=20260929_1"></script>
 </head>
 <body class="app-shell app-shell--portal hwlab-body">
   <main class="app-main hwlab-main" id="hwlab-shell">
@@ -92,6 +94,11 @@
       </div>
 
       <div class="hwlab-steps">
+        <div class="hwlab-progress-entry" id="hwlab-progress-entry" hidden>
+          <button type="button" class="c-btn c-btn--secondary hwlab-progress-btn" id="hwlab-progress-btn" aria-expanded="false" aria-controls="hwlab-progress">Mi progreso</button>
+          <section id="hwlab-progress" class="hwlab-progress" aria-live="polite" aria-label="Mi progreso en el Laboratorio Virtual" hidden></section>
+        </div>
+
         <div class="hwlab-step-group">
           <h2><span class="hwlab-step-num">1</span> Elige el equipo</h2>
           <div class="hwlab-card-grid" id="hwlab-equipment-grid"></div>

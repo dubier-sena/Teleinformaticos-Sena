@@ -5,9 +5,9 @@
  * corresponda. Unico <script type="module"> de la pagina: todo lo demas se
  * resuelve via import (ver laboratorio-virtual-hardware.html).
  */
-import { createStage } from "./hardware_lab_3d_stage.js?v=20260928_2";
-import { createAssemblyController } from "./hardware_lab_3d_controller.js?v=20260928_2";
-import { createDiagnosisController } from "./hardware_lab_3d_diagnosis_controller.js?v=20260928_2";
+import { createStage } from "./hardware_lab_3d_stage.js?v=20260929_1";
+import { createAssemblyController } from "./hardware_lab_3d_controller.js?v=20260929_1";
+import { createDiagnosisController } from "./hardware_lab_3d_diagnosis_controller.js?v=20260929_1";
 
 const ICONS = {
   desktop: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="11" rx="1"/><path d="M9 20h6M12 15v5"/></svg>',

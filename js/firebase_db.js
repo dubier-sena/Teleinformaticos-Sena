@@ -79,6 +79,9 @@
   var COL_REINFORCEMENT_ANSWERS = "sena_portal_reinforcement_answers";
   var COL_SIGNATURE_AUTH = "sena_portal_signature_auth";
   var COL_STUDENT_SUMMARY = "sena_portal_student_summary";
+  // Seguimiento academico del Laboratorio Virtual (LOOP seguimiento, sep-29):
+  // un documento INMUTABLE por intento. Ver js/hardware_lab_attempts.js.
+  var COL_HWLAB_ATTEMPTS = "sena_portal_hwlab_attempts";
   var CALENDAR_FALLBACK_PREFIX = "__calendar__:";
   var AVAILABILITY_DOC_ID = CALENDAR_FALLBACK_PREFIX + "calendario_2026_admin";
   var GUIDE_DATA_FALLBACK_PREFIX = "__guide_data__:";
@@ -3661,7 +3664,103 @@
   }
 
   // API de depuracion (solo disponible en consola del navegador)
+
+  // ════════════════════════════════════════════════════════════════════════════
+  //  SEGUIMIENTO DEL LABORATORIO VIRTUAL (sena_portal_hwlab_attempts)
+  //  Estricto a proposito: SIN respaldo en Drive (el historial academico vive
+  //  solo en Firestore) y sin reintentos aqui -- la cola local de
+  //  hardware_lab_attempts.js reintenta. La creacion usa :commit con
+  //  precondicion "el documento no existe" y la hora del SERVIDOR en
+  //  recibidoEn (la regla exige recibidoEn == request.time): reenviar el mismo
+  //  intento nunca crea un segundo documento ni reescribe el primero.
+  // ════════════════════════════════════════════════════════════════════════════
+  async function cloudCreateHwlabAttempt(attempt) {
+    if (!attempt || !attempt.attemptId) return { status: "invalid" };
+    if (shouldBlockCloudWrites()) return { status: "quota" };
+    if (!(await canCallFirestore(COL_HWLAB_ATTEMPTS, true))) return { status: "offline" };
+    var data = Object.assign({}, attempt);
+    delete data.recibidoEn;
+    var docName = BASE_URL.replace(/^https:\/\/firestore\.googleapis\.com\/v1\//, "") + "/" + COL_HWLAB_ATTEMPTS + "/" + attempt.attemptId;
+    var body = { writes: [{
+      update: { name: docName, fields: toFsDoc(data).fields },
+      updateTransforms: [{ fieldPath: "recibidoEn", setToServerValue: "REQUEST_TIME" }],
+      currentDocument: { exists: false },
+    }] };
+    try {
+      var res = await fetchWithTimeout(BASE_URL + ":commit?key=" + FIREBASE_API_KEY, {
+        method: "POST",
+        headers: await authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify(body),
+      }, API_TIMEOUT_MS);
+      if (res.ok) {
+        registerFirestoreOperation("write", 1);
+        markFirestoreSuccess();
+        return { status: "created" };
+      }
+      // Ya existia (reenvio del mismo intento) o la regla lo trato como
+      // "update" y lo nego: se confirma leyendo el propio documento.
+      if (res.status === 409 || res.status === 400 || res.status === 403) {
+        var existing = await cloudGetHwlabAttempt(attempt.attemptId);
+        if (existing && existing.status === "found") return { status: "exists" };
+        return { status: res.status === 403 ? "denied" : "rejected", httpStatus: res.status };
+      }
+      if (isTransientHttpStatus(res.status)) return { status: "offline", httpStatus: res.status };
+      return { status: "rejected", httpStatus: res.status };
+    } catch (e) {
+      return { status: "offline" };
+    }
+  }
+
+  async function cloudGetHwlabAttempt(attemptId) {
+    if (!attemptId) return { status: "invalid" };
+    if (!(await canCallFirestore(COL_HWLAB_ATTEMPTS, false, { firestoreFirst: true }))) return { status: "offline" };
+    try {
+      var res = await fetchWithTimeout(docUrl(COL_HWLAB_ATTEMPTS, attemptId), {
+        method: "GET", cache: "no-store", headers: await authHeaders(),
+      }, API_TIMEOUT_MS);
+      registerFirestoreOperation("read", 1);
+      if (res.ok) return { status: "found", doc: fromFsDoc(await res.json()) };
+      if (res.status === 404) return { status: "missing" };
+      return { status: isAuthRejection(res.status) ? "denied" : "error", httpStatus: res.status };
+    } catch (e) {
+      return { status: "offline" };
+    }
+  }
+
+  // Consulta por UN campo de igualdad ("ficha" para el panel, "uid" para el
+  // detalle y para "Mi progreso"): usa los indices automaticos de campo unico;
+  // el orden por fecha se hace en el cliente. Devuelve tambien cuantas
+  // lecturas facturo Firestore (1 minimo aunque no haya resultados).
+  async function cloudQueryHwlabAttempts(field, value, opts) {
+    if (field !== "ficha" && field !== "uid") return { status: "invalid", docs: [], reads: 0 };
+    if (!(await canCallFirestore(COL_HWLAB_ATTEMPTS, false, { firestoreFirst: true }))) return { status: "offline", docs: [], reads: 0 };
+    var limit = (opts && opts.limit) || 2000;
+    try {
+      var res = await fetchWithTimeout(BASE_URL + ":runQuery?key=" + FIREBASE_API_KEY, {
+        method: "POST",
+        headers: await authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ structuredQuery: {
+          from: [{ collectionId: COL_HWLAB_ATTEMPTS }],
+          where: { fieldFilter: { field: { fieldPath: field }, op: "EQUAL", value: { stringValue: String(value) } } },
+          limit: limit,
+        } }),
+      }, API_TIMEOUT_MS);
+      if (!res.ok) return { status: isAuthRejection(res.status) ? "denied" : "error", httpStatus: res.status, docs: [], reads: 1 };
+      var rows = await res.json();
+      var docs = (Array.isArray(rows) ? rows : []).map(function (r) { return r && r.document ? fromFsDoc(r.document) : null; }).filter(Boolean);
+      var reads = Math.max(1, docs.length);
+      registerFirestoreOperation("read", reads);
+      markFirestoreSuccess();
+      return { status: "ok", docs: docs, reads: reads };
+    } catch (e) {
+      return { status: "offline", docs: [], reads: 0 };
+    }
+  }
+
   window._firebaseDb = {
+    cloudCreateHwlabAttempt: cloudCreateHwlabAttempt,
+    cloudGetHwlabAttempt: cloudGetHwlabAttempt,
+    cloudQueryHwlabAttempts: cloudQueryHwlabAttempts,
     checkAvailability: checkAvailability,
     backfillToDrive:   backfillToDrive,
     backfillFromDrive: backfillFromDrive,

@@ -8,15 +8,15 @@
  * hardware_lab_3d_diagnosis_controller.js reutilizan sin duplicar DOM.
  */
 import * as THREE from "./vendor/three.module.min.js";
-import { createLabScene } from "./hardware_lab_3d_scene.js?v=20260928_2";
-import { createCameraRig, frameBoxInRect, padFocusBox, CAMERA_MIN_WORLD_Y } from "./hardware_lab_3d_camera.js?v=20260928_2";
-import { createInteractionLayer, worldToScreen, visibleLocalBox } from "./hardware_lab_3d_interactions.js?v=20260928_2";
-import { rect as uiRect, area as uiArea, cardCandidates, chooseSlot, coverRatio, chooseFeedbackSpot, chooseDockSpot, safeViewRect, framingVerdict } from "./hardware_lab_3d_ui_layout.js?v=20260928_2";
-import { TweenGroup } from "./hardware_lab_3d_tween.js?v=20260928_2";
-import { createRig } from "./hardware_lab_3d_rig.js?v=20260928_2";
-import { createScrewController } from "./hardware_lab_3d_screws.js?v=20260928_2";
-import { createExplodeController } from "./hardware_lab_3d_explode.js?v=20260928_2";
-import { HardwareLabAudio } from "./hardware_lab_3d_audio.js?v=20260928_2";
+import { createLabScene } from "./hardware_lab_3d_scene.js?v=20260929_1";
+import { createCameraRig, frameBoxInRect, padFocusBox, CAMERA_MIN_WORLD_Y } from "./hardware_lab_3d_camera.js?v=20260929_1";
+import { createInteractionLayer, worldToScreen, visibleLocalBox } from "./hardware_lab_3d_interactions.js?v=20260929_1";
+import { rect as uiRect, area as uiArea, cardCandidates, chooseSlot, coverRatio, chooseFeedbackSpot, chooseDockSpot, safeViewRect, framingVerdict } from "./hardware_lab_3d_ui_layout.js?v=20260929_1";
+import { TweenGroup } from "./hardware_lab_3d_tween.js?v=20260929_1";
+import { createRig } from "./hardware_lab_3d_rig.js?v=20260929_1";
+import { createScrewController } from "./hardware_lab_3d_screws.js?v=20260929_1";
+import { createExplodeController } from "./hardware_lab_3d_explode.js?v=20260929_1";
+import { HardwareLabAudio } from "./hardware_lab_3d_audio.js?v=20260929_1";
 
 const VIEW_ICONS = {
   front: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="5" width="14" height="14" rx="1"/></svg>',
@@ -1429,9 +1429,17 @@ export function createStage() {
     if (!modal || !body) return;
     const pass = result.status === "APROBADO";
     const categories = Object.keys(result.breakdown).filter((k) => k !== "total");
+    // Escala oficial sobre 100 (LOOP seguimiento, sep-29): la rubrica de
+    // ensamble/desensamble/mantenimiento suma 90 BRUTOS; se muestra el
+    // normalizado (bruto x 100 / maximo) y, si la rubrica no es de 100, el
+    // bruto al lado. El diagnostico (maximo 100) se ve igual que siempre.
+    const rawMax = categories.reduce((sum, k) => sum + (Number(result.breakdown[k].max) || 0), 0) || 100;
+    const normalized = (result.score * 100) / rawMax;
+    const fmt = (n) => { const r = Math.round(n * 100) / 100; return Number.isInteger(r) ? String(r) : r.toFixed(2).replace(/0$/, "").replace(".", ","); };
     body.innerHTML =
       '<div class="hwlab-result-score">' +
-      `<div class="hwlab-result-score__value">${result.score}<span style="font-size:1.2rem;color:var(--hwlab-text-muted)">/100</span></div>` +
+      `<div class="hwlab-result-score__value">${fmt(normalized)}<span style="font-size:1.2rem;color:var(--hwlab-text-muted)">/100</span></div>` +
+      (rawMax !== 100 ? `<p class="hwlab-muted hwlab-result-score__raw">Puntaje de la rúbrica: ${result.score}/${rawMax}</p>` : "") +
       `<span class="hwlab-result-score__status hwlab-result-score__status--${pass ? "pass" : "fail"}">${pass ? "Aprobado" : "Por mejorar"}</span>` +
       "</div>" +
       '<div class="hwlab-result-bars">' +

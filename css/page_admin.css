@@ -1438,3 +1438,20 @@ progress::-moz-progress-bar {
 .taller-roster__list { display: flex; flex-direction: column; gap: 4px; max-height: 240px; overflow: auto; padding: 8px; border: 1px solid var(--border-soft); border-radius: var(--radius-sm); background: var(--surface-1); }
 .taller-roster__item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: var(--radius-sm); font-weight: 400 !important; cursor: pointer; min-height: var(--hit-target-min); }
 .taller-roster__item:hover { background: var(--surface-2); }
+
+/* ── Seguimiento del Laboratorio (sep-29) ─────────────────────────────── */
+.hwtrack-toolbar { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin: 0.75rem 0; }
+.hwtrack-toolbar select, .hwtrack-toolbar input { min-height: 44px; max-width: 100%; }
+.hwtrack-meta { color: var(--text-muted); font-size: 0.875rem; margin: 0.25rem 0 0.75rem; }
+.hwtrack-state { display: inline-block; padding: 0.1rem 0.45rem; border-radius: 999px; border: 1px solid currentColor; font-size: 0.78rem; white-space: nowrap; }
+.hwtrack-state--aprobado { color: var(--color-success-strong); }
+.hwtrack-state--por_mejorar { color: var(--color-danger-strong); }
+.hwtrack-state--en_progreso, .hwtrack-state--historico_parcial { color: var(--color-warning-strong); }
+.hwtrack-state--sin_registros { color: var(--text-muted); }
+.hwtrack-cell { display: grid; gap: 0.15rem; font-size: 0.82rem; }
+.hwtrack-warn { color: var(--color-danger-strong); font-size: 0.82rem; }
+.hwtrack-detail { margin: 1rem 0; padding: 1rem; border: 1px solid var(--border-soft); border-radius: 12px; background: var(--surface-2); max-width: 100%; }
+.hwtrack-detail h3 { margin-top: 0; }
+.hwtrack-table td, .hwtrack-table th { white-space: nowrap; }
+.hwtrack-old { margin-top: 1.5rem; }
+#hwtrack-host, #hwtrack-host .admin-panel { min-width: 0; max-width: 100%; }

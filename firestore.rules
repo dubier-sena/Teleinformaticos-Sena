@@ -253,6 +253,47 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // ───── Seguimiento del Laboratorio Virtual (LOOP seguimiento, 2026-09-29) ─
+    // Un documento INMUTABLE por intento terminado (historial). Id:
+    // {uid}__{equipo}__{practica}__{inicioMs}__{nonce}. El aprendiz solo crea
+    // los suyos y solo lee los suyos; nadie los modifica ni borra. El admin lee
+    // y lista todo (consultas por ficha/uid) y solo puede crear registros
+    // MIGRADOS (nunca "new" en nombre de otro). recibidoEn = hora del servidor.
+    // LIMITE: la ficha se contrasta con sena_portal_user_index, que el propio
+    // aprendiz puede escribir, y el puntaje se calcula en el navegador: esto es
+    // AUDITABLE, NO antifraude (el panel contrasta ademas con el perfil).
+    function hwlabAttemptValid(attemptId, d) {
+      return d.keys().hasOnly(['attemptId', 'uid', 'usernameKey', 'ficha', 'equipo', 'practica',
+          'actividad', 'modo', 'caso', 'completado', 'rawScore', 'rawMaxScore', 'normalizedScore',
+          'normalizedMaxScore', 'estado', 'estadoLegacy', 'breakdown', 'fechaInicio', 'fechaFin',
+          'duracion', 'pistas', 'errores', 'erroresPorTipo', 'versionSimulador', 'origen', 'fuente',
+          'fechaMigracion', 'recibidoEn'])
+        && d.attemptId == attemptId
+        && d.uid is string && d.uid.size() > 0
+        && attemptId.matches('^' + d.uid + '__(desktop|laptop)__[a-z0-9-]+__([0-9]+|sinfecha)__[a-z0-9]{1,16}$')
+        && d.equipo in ['desktop', 'laptop']
+        && d.actividad in ['ensamble', 'desensamble', 'mantenimiento', 'diagnostico']
+        && d.origen in ['new', 'migrated', 'legacy_partial']
+        && d.completado is bool
+        && (d.rawScore == null || (d.rawScore is number && d.rawMaxScore is number
+              && d.rawMaxScore > 0 && d.rawMaxScore <= 100
+              && d.rawScore >= 0 && d.rawScore <= d.rawMaxScore))
+        && (d.normalizedScore == null || (d.normalizedScore is number
+              && d.normalizedScore >= 0 && d.normalizedScore <= 100 && d.normalizedMaxScore == 100))
+        && (d.estado == null || d.estado in ['APROBADO', 'POR MEJORAR'])
+        && d.recibidoEn == request.time
+        && d.ficha is string
+        && d.ficha == get(/databases/$(database)/documents/sena_portal_user_index/$(d.uid)).data.ficha;
+    }
+    match /sena_portal_hwlab_attempts/{attemptId} {
+      allow get, list: if signedIn() && (isAdmin() || resource.data.uid == request.auth.uid);
+      allow create: if signedIn()
+        && hwlabAttemptValid(attemptId, request.resource.data)
+        && (request.resource.data.uid == request.auth.uid
+            || (isAdmin() && request.resource.data.origen != 'new'));
+      allow update, delete: if false;
+    }
+
     // ───── Progreso por aprendiz ───────────────────────────────────────────
     // {usernameKey} puede ser: (a) la clave simple del aprendiz (doc de % de
     // progreso), o (b) un docId COMPUESTO "__guide_data__/__guide_ui__:student:

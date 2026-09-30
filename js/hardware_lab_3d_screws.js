@@ -37,8 +37,8 @@
  * puede operarse en este momento.
  */
 import * as THREE from "./vendor/three.module.min.js";
-import { materialFor, ACCENT, markAsHitbox } from "./hardware_lab_3d_constants.js?v=20260928_2";
-import { animateObject3D, animateValue, Easing, prefersReducedMotion } from "./hardware_lab_3d_tween.js?v=20260928_2";
+import { materialFor, ACCENT, markAsHitbox } from "./hardware_lab_3d_constants.js?v=20260929_1";
+import { animateObject3D, animateValue, Easing, prefersReducedMotion } from "./hardware_lab_3d_tween.js?v=20260929_1";
 
 const UP = new THREE.Vector3(0, 1, 0);
 

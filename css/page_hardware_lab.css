@@ -1090,3 +1090,22 @@ details.hwlab-thermal[open] > .hwlab-thermal__summary::before { transform: rotat
 .hwlab-check__verdict--ok { color: var(--hwlab-accent); }
 .hwlab-check__verdict--warn { color: var(--hwlab-amber); }
 .hwlab-check__verdict--fail { color: var(--hwlab-danger); }
+
+/* ── Mi progreso (seguimiento academico, sep-29) ──────────────────────────
+   Tablas con desplazamiento PROPIO: nunca generan overflow horizontal de la
+   pagina en moviles. El estado va en texto (no solo color). */
+.hwlab-progress-entry { margin: 0 0 1.25rem; min-width: 0; max-width: 100%; }
+.hwlab-progress-btn { min-height: 44px; }
+.hwlab-progress { min-width: 0; margin-top: 0.75rem; padding: 1rem; border: 1px solid var(--hwlab-border); border-radius: 12px; background: var(--hwlab-surface-1); color: var(--hwlab-text); max-width: 100%; }
+.hwlab-progress__summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 0.25rem 1rem; margin-bottom: 0.75rem; }
+.hwlab-progress__summary p { margin: 0.2rem 0; }
+.hwlab-progress__table-wrap { width: 100%; overflow-x: auto; margin: 0.75rem 0; -webkit-overflow-scrolling: touch; }
+.hwlab-progress__table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+.hwlab-progress__table caption { text-align: left; font-weight: 700; padding: 0 0 0.4rem; }
+.hwlab-progress__table th, .hwlab-progress__table td { padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--hwlab-border); text-align: left; white-space: nowrap; }
+.hwlab-progress__table th { color: var(--hwlab-text-muted); font-weight: 600; }
+.hwlab-state { display: inline-block; padding: 0.1rem 0.5rem; border-radius: 999px; border: 1px solid var(--hwlab-border-strong); font-size: 0.8rem; }
+.hwlab-state--aprobado { border-color: var(--hwlab-success); color: var(--hwlab-success); }
+.hwlab-state--por_mejorar { border-color: var(--hwlab-danger); color: var(--hwlab-danger); }
+.hwlab-state--en_progreso, .hwlab-state--historico_parcial { border-color: var(--hwlab-accent); color: var(--hwlab-accent); }
+.hwlab-result-score__raw { margin: 0.25rem 0 0; font-size: 0.9rem; }

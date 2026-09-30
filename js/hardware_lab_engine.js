@@ -456,11 +456,17 @@
   }
 
   // ── Resultado final: rubrica de 4 categorias (item 17) ───────────────────
-  // Procedimiento 30 · Herramientas 20 · Seguridad 20 · Orden 20 = 100.
+  // Procedimiento 30 · Herramientas 20 · Seguridad 20 · Orden 20 = 90 BRUTOS.
+  // (El comentario original decia "= 100": error de suma; nunca existio un
+  // quinto criterio, auditado en Git el 2026-09-29.) La escala oficial es
+  // sobre 100: normalizedScore = bruto x 100 / 90, y se aprueba con
+  // normalizedScore >= 70 (antes: bruto >= 70, que exigia 77,8 %). El bruto
+  // se conserva SIEMPRE (score, rawScore, rawMaxScore).
   // En modo guiado "Orden" casi siempre queda perfecto (el motor ya impide
   // el desorden); en modo abierto es donde realmente se pone a prueba.
   var CATEGORY_MAX = { procedimiento: 30, herramientas: 20, seguridad: 20, orden: 20 };
-  var PASS_THRESHOLD = 70;
+  var PASS_THRESHOLD = 70; // sobre la escala normalizada de 100
+  var RAW_MAX_SCORE = CATEGORY_MAX.procedimiento + CATEGORY_MAX.herramientas + CATEGORY_MAX.seguridad + CATEGORY_MAX.orden; // 90
 
   function computeScoreBreakdown(session) {
     var e = session.errorsByType;
@@ -501,6 +507,8 @@
       Math.round((Date.parse(finishedAt) - Date.parse(session.startedAt)) / 1000)
     );
     var breakdown = computeScoreBreakdown(session);
+    var rawMaxScore = RAW_MAX_SCORE;
+    var normalizedScore = (breakdown.total * 100) / rawMaxScore; // sin redondear
     var result = {
       equipmentId: session.equipmentId,
       mode: session.mode,
@@ -510,8 +518,12 @@
       hintsUsed: session.hints.used,
       durationSeconds: durationSeconds,
       breakdown: breakdown,
-      score: breakdown.total,
-      status: breakdown.total >= PASS_THRESHOLD ? "APROBADO" : "POR MEJORAR",
+      score: breakdown.total, // BRUTO (compatibilidad con todo lo existente)
+      rawScore: breakdown.total,
+      rawMaxScore: rawMaxScore,
+      normalizedScore: normalizedScore,
+      normalizedMaxScore: 100,
+      status: normalizedScore >= PASS_THRESHOLD ? "APROBADO" : "POR MEJORAR",
     };
     return Object.assign({}, session, { finishedAt: finishedAt, result: result });
   }

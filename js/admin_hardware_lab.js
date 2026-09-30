@@ -93,6 +93,20 @@
     return { practices: practices, diagnosisCases: diagnosisCases };
   }
 
+  // Escala oficial sobre 100 (sep-29): la rubrica de ensamble/desensamble/
+  // mantenimiento suma 90 brutos; se muestra el normalizado y el bruto.
+  function rawMaxOf(r) {
+    var b = (r && r.breakdown) || {};
+    var m = Object.keys(b).reduce(function (sum, k) { return k === "total" ? sum : sum + (Number(b[k] && b[k].max) || 0); }, 0);
+    return m || 100;
+  }
+  function normalizedOf(r) { return (r.score * 100) / rawMaxOf(r); }
+  function scoreText(r) {
+    var n = Math.round(normalizedOf(r) * 100) / 100;
+    var max = rawMaxOf(r);
+    return String(n).replace(".", ",") + "/100" + (max !== 100 ? " (rúbrica " + r.score + "/" + max + ")" : "");
+  }
+
   // ── Agregado por aprendiz ──────────────────────────────────────────────────
   function summarizeStudent(user, parsed) {
     var allSessions = parsed.practices.map(function (p) { return p.session; }).concat(
@@ -106,10 +120,10 @@
     var totalTime = finished.reduce(function (sum, s) { return sum + (s.result.durationSeconds || 0); }, 0);
     var totalErrors = allSessions.reduce(function (sum, s) { return sum + (s.errors || 0); }, 0);
     var totalHints = allSessions.reduce(function (sum, s) { return sum + ((s.hints && s.hints.used) || 0); }, 0);
-    var scores = finished.map(function (s) { return s.result.score; });
+    var scores = finished.map(function (s) { return normalizedOf(s.result); });
     var avgScore = scores.length ? Math.round(scores.reduce(function (a, b) { return a + b; }, 0) / scores.length) : null;
     var highestCasePassed = casesCompleted.reduce(function (max, c) {
-      var num = parseInt((c.caseKey.match(/caso_(\d+)/) || [])[1], 10);
+      var num = parseInt((c.caseKey.match(/(?:caso|case)_(\d+)/) || [])[1], 10);
       return isFinite(num) ? Math.max(max, num) : max;
     }, 0);
     var lastActivity = allSessions.reduce(function (max, s) {
@@ -312,7 +326,7 @@
           "<li><strong>" +
           esc(labelForMode(p.mode)) +
           " (" + esc(p.equipmentId) + ")</strong>: " +
-          (r ? r.score + "/100 — " + esc(r.status) + " — " + fmtTime(r.durationSeconds) : "en curso") +
+          (r ? esc(scoreText(r)) + " — " + esc(r.status) + " — " + fmtTime(r.durationSeconds) : "en curso") +
           "</li>"
         );
       })
@@ -324,7 +338,7 @@
           "<li><strong>" +
           esc(caseLabel(c.caseKey, c.equipmentId)) +
           "</strong>: " +
-          (r ? r.score + "/100 — " + esc(r.status) + " — " + fmtTime(r.durationSeconds) : "en curso") +
+          (r ? esc(scoreText(r)) + " — " + esc(r.status) + " — " + fmtTime(r.durationSeconds) : "en curso") +
           "</li>"
         );
       })

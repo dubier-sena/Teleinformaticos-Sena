@@ -10,12 +10,12 @@
  * Diagnostico es un modo ABIERTO: no hay encuadre automatico de la pieza
  * (revelaria la falla); el aprendiz inspecciona con los controles normales.
  */
-import { createDesktopLayout } from "./hardware_lab_3d_layout_desktop.js?v=20260928_2";
-import { createLaptopLayout } from "./hardware_lab_3d_layout_laptop.js?v=20260928_2";
-import { createDiagnosticMonitor } from "./hardware_lab_3d_monitor.js?v=20260928_2";
-import { createLaptopDiagnosisMechanics } from "./hardware_lab_3d_diagnosis_mechanics.js?v=20260928_2";
-import { ZONES } from "./hardware_lab_3d_constants.js?v=20260928_2";
-import { HardwareLabAudio } from "./hardware_lab_3d_audio.js?v=20260928_2";
+import { createDesktopLayout } from "./hardware_lab_3d_layout_desktop.js?v=20260929_1";
+import { createLaptopLayout } from "./hardware_lab_3d_layout_laptop.js?v=20260929_1";
+import { createDiagnosticMonitor } from "./hardware_lab_3d_monitor.js?v=20260929_1";
+import { createLaptopDiagnosisMechanics } from "./hardware_lab_3d_diagnosis_mechanics.js?v=20260929_1";
+import { ZONES } from "./hardware_lab_3d_constants.js?v=20260929_1";
+import { HardwareLabAudio } from "./hardware_lab_3d_audio.js?v=20260929_1";
 
 function esc(value) {
   return String(value == null ? "" : value)
@@ -139,7 +139,10 @@ export function createDiagnosisController(stage) {
   }
 
   function createSession() {
-    return Engine().createDiagnosisSession(equipmentData, caseDef);
+    const s = Engine().createDiagnosisSession(equipmentData, caseDef);
+    // Seguimiento academico: nonce del intento (ver hardware_lab_attempts.js).
+    const A = window.HardwareLab.Attempts;
+    return A ? Object.assign({}, s, { attemptNonce: A.makeNonce() }) : s;
   }
 
   /** Falla "mal asentada" aun sin reasentar: la pieza se ve un poco fuera. */
@@ -423,6 +426,11 @@ export function createDiagnosisController(stage) {
       finished.result.trace = Engine().diagnosisTrace(equipmentData, session);
       session = finished;
       persist();
+      const A = window.HardwareLab.Attempts;
+      if (A) {
+        const done = Object.assign(Engine().serialize(finished), { attemptNonce: finished.attemptNonce });
+        A.recordFinished({ session: done, equipo: equipmentId, practica: storageModeFor(caseDef.id) });
+      }
       stage.showFeedback(result.message, "success");
       HardwareLabAudio.playComplete();
       stage.openResultModal(finished.result, {
@@ -529,6 +537,7 @@ export function createDiagnosisController(stage) {
 
   function persist() {
     const data = Engine().serialize(session);
+    if (session.attemptNonce) data.attemptNonce = session.attemptNonce;
     if (mech) data.screws = mech.screwState();
     Storage().persist(equipmentId, storageModeFor(caseDef.id), data);
   }
