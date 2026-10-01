@@ -42,10 +42,14 @@ export function prefersReducedMotion() {
 export class TweenGroup {
   constructor() {
     this._tweens = [];
+    // Velocidad global de las animaciones (perfil movil: 1,5; ver
+    // hardware_lab_3d_quality.js). No cambia el estado final de ninguna.
+    this.timeScale = 1;
   }
 
   update(deltaSeconds) {
     if (!this._tweens.length) return;
+    deltaSeconds *= this.timeScale > 0 ? this.timeScale : 1;
     // BUG real (encontrado con clic real, no visible leyendo el codigo en
     // frio): setPresence() encadena dos animaciones -- la segunda ("viajar
     // a la bandeja") se agrega desde el onComplete() de la primera

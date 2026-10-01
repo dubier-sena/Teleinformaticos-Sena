@@ -9,6 +9,7 @@
  */
 import * as THREE from "./vendor/three.module.min.js";
 import { createLabScene } from "./hardware_lab_3d_scene.js?v=20260929_1";
+import { chooseQualityProfile, readDeviceEnv } from "./hardware_lab_3d_quality.js?v=20260929_1";
 import { createCameraRig, frameBoxInRect, padFocusBox, CAMERA_MIN_WORLD_Y } from "./hardware_lab_3d_camera.js?v=20260929_1";
 import { createInteractionLayer, worldToScreen, visibleLocalBox } from "./hardware_lab_3d_interactions.js?v=20260929_1";
 import { rect as uiRect, area as uiArea, cardCandidates, chooseSlot, coverRatio, chooseFeedbackSpot, chooseDockSpot, safeViewRect, framingVerdict } from "./hardware_lab_3d_ui_layout.js?v=20260929_1";
@@ -131,14 +132,22 @@ export function createStage() {
   function ensureSceneReady() {
     if (sceneApi) return sceneApi.supported;
     const canvas = document.getElementById("hwlab-canvas");
-    sceneApi = createLabScene(canvas);
+    // Perfil de calidad segun el dispositivo (Fase E): en el telefono, menos
+    // pixeles, sombras bajo demanda y animaciones mas cortas.
+    const quality = chooseQualityProfile(readDeviceEnv());
+    sceneApi = createLabScene(canvas, quality);
     if (!sceneApi.supported) {
       const fallback = document.getElementById("hwlab-canvas-fallback");
       if (fallback) fallback.hidden = false;
       return false;
     }
     tweenGroup = new TweenGroup();
-    sceneApi.onTick((dt) => tweenGroup.update(dt));
+    tweenGroup.timeScale = quality.motionScale;
+    sceneApi.onTick((dt) => {
+      // Mientras haya una animacion, la escena se dibuja en todos los cuadros.
+      if (tweenGroup.activeCount) sceneApi.keepAwake(300);
+      tweenGroup.update(dt);
+    });
     cameraRig = createCameraRig({ camera: sceneApi.camera, renderer: sceneApi.renderer, tweenGroup, onTick: sceneApi.onTick });
     interactions = createInteractionLayer({ scene: sceneApi.scene, camera: sceneApi.camera, renderer: sceneApi.renderer, tweenGroup, onTick: sceneApi.onTick });
     explodeCtl = createExplodeController({ tweenGroup });

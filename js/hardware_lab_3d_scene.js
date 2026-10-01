@@ -9,7 +9,11 @@
 import * as THREE from "./vendor/three.module.min.js";
 import { TABLE } from "./hardware_lab_3d_constants.js?v=20260929_1";
 
-export function createLabScene(canvas) {
+export function createLabScene(canvas, profile) {
+  const quality = Object.assign(
+    { pixelRatio: Math.min(window.devicePixelRatio || 1, 2), antialias: true, shadowType: "vsm", shadowMapSize: 2048, shadowsOnDemand: false, idleFps: 12 },
+    profile || {}
+  );
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x0a0d12);
   scene.fog = new THREE.FogExp2(0x0a0d12, 0.045);
@@ -21,7 +25,7 @@ export function createLabScene(canvas) {
   try {
     renderer = new THREE.WebGLRenderer({
       canvas,
-      antialias: true,
+      antialias: quality.antialias,
       alpha: false,
       powerPreference: "high-performance",
     });
@@ -30,19 +34,22 @@ export function createLabScene(canvas) {
   }
   if (!renderer) return { supported: false };
 
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setPixelRatio(quality.pixelRatio);
   renderer.shadowMap.enabled = true;
   // PCFSoftShadowMap esta deprecado en la version vendorizada (0.185.1):
   // WebGLShadowMap lo detecta y hace fallback SILENCIOSO a PCFShadowMap (mas
   // duro, sin el difuminado que el codigo ya pedia via shadow.radius) --
   // solo un warning en consola, ninguna excepcion, facil de pasar por alto.
   // VSMShadowMap es el reemplazo soportado para sombras suaves.
-  renderer.shadowMap.type = THREE.VSMShadowMap;
+  // Perfil movil: PCF (sin las pasadas de desenfoque de VSM) y solo cuando
+  // algo se mueve; el resto de cuadros reutiliza el mapa de sombras.
+  renderer.shadowMap.type = quality.shadowType === "pcf" ? THREE.PCFShadowMap : THREE.VSMShadowMap;
+  if (quality.shadowsOnDemand) renderer.shadowMap.autoUpdate = false;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.15;
 
-  buildLighting(scene);
+  buildLighting(scene, quality);
   buildEnvironment(scene);
   const envRenderTarget = buildEnvironmentLighting(renderer, scene);
 
@@ -56,12 +63,59 @@ export function createLabScene(canvas) {
   const clock = new THREE.Clock();
   let running = true;
 
+  // ── Render bajo demanda (Fase E) ─────────────────────────────────────────
+  // La logica (tweens, camara, interaccion) corre en todos los cuadros, pero
+  // la escena solo se DIBUJA mientras algo cambia: una animacion, la camara
+  // en movimiento o una accion del aprendiz. En reposo se dibuja a pocos
+  // cuadros por segundo (red de seguridad). Antes eran 60 cuadros por segundo
+  // con ~1 180 draw calls aunque el aprendiz solo estuviera leyendo.
+  const now = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
+  let awakeUntil = now() + 3000;
+  let shadowsDirtyUntil = awakeUntil;
+  let lastRender = 0;
+  const stats = { renders: 0, shadowUpdates: 0 };
+  const lastCam = new Float32Array(16);
+  /** Mantiene el dibujo continuo durante `ms`. `shadows: false` cuando solo
+   *  cambia el punto de vista (la sombra no depende de la camara). */
+  function keepAwake(ms, opts) {
+    const until = now() + (ms > 0 ? ms : 1200);
+    if (until > awakeUntil) awakeUntil = until;
+    if (!opts || opts.shadows !== false) shadowsDirtyUntil = Math.max(shadowsDirtyUntil, until);
+  }
+  function cameraMoved() {
+    const e = camera.matrixWorld.elements;
+    let moved = false;
+    for (let i = 0; i < 16; i++) if (Math.abs(e[i] - lastCam[i]) > 1e-7) { moved = true; lastCam[i] = e[i]; }
+    return moved;
+  }
+
   renderer.setAnimationLoop(() => {
     if (!running) return;
     const dt = Math.min(clock.getDelta(), 0.05); // clamp: evita saltos tras pestana inactiva
     tickCallbacks.forEach((fn) => fn(dt));
+    camera.updateMatrixWorld();
+    if (cameraMoved()) keepAwake(350, { shadows: false });
+    const t = now();
+    if (t >= awakeUntil && t - lastRender < 1000 / quality.idleFps) return;
+    if (quality.shadowsOnDemand) {
+      const dirty = t < shadowsDirtyUntil;
+      renderer.shadowMap.needsUpdate = dirty;
+      if (dirty) stats.shadowUpdates++;
+    }
     renderer.render(scene, camera);
+    stats.renders++;
+    lastRender = t;
   });
+
+  // Cualquier gesto del aprendiz despierta el dibujo: sobre el lienzo solo
+  // cambia la vista (o el resaltado); un boton puede cambiar la escena.
+  const wakeView = () => keepAwake(900, { shadows: false });
+  const wakeAll = () => keepAwake(1500);
+  ["pointerdown", "pointermove", "wheel", "touchmove"].forEach((type) => canvas.addEventListener(type, wakeView, { passive: true }));
+  canvas.addEventListener("pointerup", wakeAll, { passive: true });
+  document.addEventListener("click", wakeAll, true);
+  document.addEventListener("keydown", wakeAll, true);
+  document.addEventListener("visibilitychange", wakeAll);
 
   // ── Resize: el canvas ocupa su contenedor (item 21), no la ventana. ───────
   const container = canvas.parentElement;
@@ -71,6 +125,7 @@ export function createLabScene(canvas) {
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
     renderer.setSize(w, h, false);
+    keepAwake(600);
   }
   const resizeObserver = new ResizeObserver(resize);
   resizeObserver.observe(container);
@@ -78,11 +133,17 @@ export function createLabScene(canvas) {
 
   function setPaused(paused) {
     running = !paused;
-    if (!paused) clock.getDelta(); // descarta el tiempo acumulado mientras estaba pausado
+    if (!paused) {
+      clock.getDelta(); // descarta el tiempo acumulado mientras estaba pausado
+      keepAwake(1500);
+    }
   }
 
   function dispose() {
     running = false;
+    document.removeEventListener("click", wakeAll, true);
+    document.removeEventListener("keydown", wakeAll, true);
+    document.removeEventListener("visibilitychange", wakeAll);
     resizeObserver.disconnect();
     renderer.setAnimationLoop(null);
     scene.traverse((node) => {
@@ -105,6 +166,9 @@ export function createLabScene(canvas) {
     camera,
     renderer,
     onTick,
+    keepAwake,
+    stats,
+    quality,
     resize,
     setPaused,
     dispose,
@@ -189,7 +253,7 @@ function buildEnvironmentLighting(renderer, scene) {
   return renderTarget;
 }
 
-function buildLighting(scene) {
+function buildLighting(scene, quality) {
   // Three.js r155+ usa un modelo de iluminacion fisicamente correcto (lumens/
   // candela reales, no las "intensidades" arbitrarias de versiones viejas):
   // los valores originales aqui (hemi 0.65, key 1.45, fill 0.35, rim 0.55)
@@ -204,7 +268,7 @@ function buildLighting(scene) {
   const key = new THREE.DirectionalLight(0xfff2df, 5.5);
   key.position.set(2.2, 3.4, 1.6);
   key.castShadow = true;
-  key.shadow.mapSize.set(2048, 2048);
+  key.shadow.mapSize.set(quality.shadowMapSize, quality.shadowMapSize);
   key.shadow.camera.near = 0.5;
   key.shadow.camera.far = 8;
   key.shadow.camera.left = -1.8;
