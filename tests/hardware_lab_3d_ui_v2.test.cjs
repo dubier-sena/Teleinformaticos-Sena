@@ -49,7 +49,8 @@ test("U03. tarjeta de instrucciones plegable con resumen siempre visible, y el p
   assert.match(card, /id="hwlab-card-more"/);
   assert.ok(card.includes('id="hwlab-info-panel"'), "el contenido del paso no esta dentro de la tarjeta");
   // Contraida solo se oculta el CUERPO; el resumen (Paso X · accion) queda.
-  assert.match(css, /\.hwlab-card\[data-state="closed"\] \.hwlab-card__body/);
+  // Fase B (2026-10-01): y el cuerpo NO se oculta si el paso tiene una accion pendiente.
+  assert.match(css, /\.hwlab-card\[data-state="closed"\]:not\(\[data-pending="true"\]\) \.hwlab-card__body/);
   assert.doesNotMatch(css, /\.hwlab-card\[data-state="closed"\][^{]*\.hwlab-card__summary/);
   // Un paso que se completa con un boton de la tarjeta la vuelve a abrir.
   assert.match(stage, /#hwlab-safety-confirm-btn, #hwlab-prepare-btn, \.hwlab-thermal\[data-required\] \[data-thermal-task\]/);
@@ -158,7 +159,7 @@ test("U12. el aviso se aparta de la pieza sin pisar la tarjeta ni el dock", asyn
 });
 
 test("U13. compactacion automatica: resumen visible y, si el paso lo necesita, su boton de accion", () => {
-  assert.match(css, /\.hwlab-card\[data-auto-compact="true"\] \.hwlab-card__body \.hwlab-info-block > :not\(#hwlab-safety-confirm-btn\):not\(#hwlab-prepare-btn\):not\(#hwlab-power-check-btn\):not\(\.hwlab-thermal\[data-required\]\)/);
+  assert.match(css, /\.hwlab-card:is\(\[data-auto-compact="true"\], \[data-state="closed"\]\[data-pending="true"\]\) \.hwlab-card__body \.hwlab-info-block > :not\(#hwlab-safety-confirm-btn\):not\(#hwlab-prepare-btn\):not\(#hwlab-power-check-btn\):not\(\.hwlab-thermal\[data-required\]\):not\(\[data-required-action\]\)/);
   assert.doesNotMatch(css, /\[data-auto-compact="true"\][^{]*\.hwlab-card__summary/);
   assert.match(stage, /card\.setAttribute\("data-auto-compact", "true"\)/);
   assert.match(stage, /userExpandedFor = /, "el aprendiz puede expandirla a mano y se respeta en ese paso");

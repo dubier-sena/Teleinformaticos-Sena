@@ -243,9 +243,18 @@ export function createStage() {
           card.removeAttribute("data-auto-compact");
           card.style.maxHeight = "";
           setCard(true);
+          schedulePlaceCard(0);
           return;
         }
         setCard(card.getAttribute("data-state") === "closed");
+        // Fase B (2026-10-01): al contraer, placeCard dejaba un max-height en
+        // linea con el alto de la tarjeta CONTRAIDA (54 px); si despues
+        // cambiaba la altura visible (giro del telefono, barra del navegador)
+        // y se volvia a abrir, la tarjeta quedaba "abierta" pero recortada y
+        // su boton, inalcanzable (reproducido 20 de 20). Abrir o contraer
+        // siempre descarta ese alto forzado y recoloca con el estado nuevo.
+        card.style.maxHeight = "";
+        schedulePlaceCard(0);
       });
     }
     if (card && more) {
@@ -1095,7 +1104,10 @@ export function createStage() {
     card.style.right = "auto";
     card.style.bottom = "auto";
     card.style.width = (pr.right - pr.left) + "px";
-    if (!compact) card.style.maxHeight = (pr.bottom - pr.top) + "px";
+    // Con la tarjeta contraida el alto medido es el de la barra: fijarlo como
+    // maximo la dejaba recortada al reabrir (ver el control de la tarjeta).
+    card.style.maxHeight = !compact && card.getAttribute("data-state") !== "closed" ? (pr.bottom - pr.top) + "px" : "";
+    syncCardToggleLabel();
     card.dataset.cover = target ? String(Math.round(coverRatio(card.getBoundingClientRect(), target) * 100)) : "";
     // Un aviso aun visible se decidio para la pieza ANTERIOR: se recoloca.
     const fb = document.getElementById("hwlab-feedback");
@@ -1348,6 +1360,37 @@ export function createStage() {
     schedulePlaceCard(CAMERA_SETTLE_MS);
   }
 
+  /** El control dice lo que HARA: una banda compacta se "muestra", una tarjeta desplegada se "contrae". */
+  function syncCardToggleLabel() {
+    const card = document.getElementById("hwlab-card");
+    const toggle = document.getElementById("hwlab-card-toggle");
+    if (!card || !toggle) return;
+    const band = card.getAttribute("data-state") === "closed" || card.getAttribute("data-auto-compact") === "true";
+    const label = band ? "Mostrar instrucciones" : "Contraer instrucciones";
+    toggle.setAttribute("aria-label", label);
+    toggle.setAttribute("data-tip", label);
+    toggle.setAttribute("aria-expanded", String(!band));
+  }
+
+  // Accion OBLIGATORIA del paso (Fase B): lo que bloquea el avance hasta que el
+  // aprendiz lo pulse. Nunca depende de tener la tarjeta desplegada.
+  const BLOCKING_ACTION = "#hwlab-safety-confirm-btn, #hwlab-prepare-btn, .hwlab-thermal[data-required] [data-thermal-task], [data-required-action]";
+  const MAIN_ACTION = BLOCKING_ACTION + ", #hwlab-power-check-btn";
+  function syncPendingAction(panel) {
+    const card = document.getElementById("hwlab-card");
+    const note = document.getElementById("hwlab-card-pending");
+    if (!card) return;
+    const blocking = panel.querySelector(BLOCKING_ACTION);
+    if (panel.querySelector(MAIN_ACTION)) card.setAttribute("data-pending", "true"); else card.removeAttribute("data-pending");
+    if (!note) return;
+    let text = "";
+    if (blocking) {
+      text = blocking.getAttribute("data-pending-text") || (blocking.closest(".hwlab-thermal") ? "Tarea pendiente: complétala para continuar." : blocking.id === "hwlab-prepare-btn" ? "Acción pendiente: coloca el equipo en posición para continuar." : "Acción pendiente: confirma para continuar.");
+    }
+    note.textContent = text;
+    note.hidden = !text;
+  }
+
   /** Resumen de la tarjeta (se ve aun contraida): "Paso X de Y · accion". */
   function updateCardSummary() {
     const panel = document.getElementById("hwlab-info-panel");
@@ -1369,7 +1412,8 @@ export function createStage() {
     // seguridad, preparar posicion, mantenimiento): se abre aunque el
     // aprendiz la hubiera contraido, para que nunca quede oculto.
     const summary = out.textContent;
-    const hasAction = !!panel.querySelector("#hwlab-safety-confirm-btn, #hwlab-prepare-btn, .hwlab-thermal[data-required] [data-thermal-task]");
+    syncPendingAction(panel);
+    const hasAction = !!panel.querySelector(BLOCKING_ACTION);
     // Diagnostico: un caso NUEVO (otro sintoma) empieza con la tarjeta abierta,
     // con "Encender y comprobar" a la vista, aunque el caso anterior la cerrara.
     if (summary !== lastSummary && (hasAction || custom)) setCard(true);

@@ -150,8 +150,8 @@ test("P06. mantenimiento de la refrigeracion: plegado cuando no es la accion act
   // Abrirlo a mano se recuerda en la sesion y cuenta como "expandir" (no se re-compacta sola).
   assert.match(ctl, /thermalOpen = thermalDetails\.open; stage\.refreshLayout\(thermalOpen\);/);
   assert.match(stage, /if \(byUser\) userExpandedFor = /);
-  // Compactada: la accion obligatoria sigue a la vista; lo opcional no.
-  assert.match(cssRules, /\.hwlab-card\[data-auto-compact="true"\] \.hwlab-card__body \.hwlab-info-block > :not\(#hwlab-safety-confirm-btn\):not\(#hwlab-prepare-btn\):not\(#hwlab-power-check-btn\):not\(\.hwlab-thermal\[data-required\]\) \{ display: none; \}/);
+  // Compactada (o contraida con accion pendiente, Fase B 2026-10-01): la accion obligatoria sigue a la vista; lo opcional no.
+  assert.match(cssRules, /\.hwlab-card:is\(\[data-auto-compact="true"\], \[data-state="closed"\]\[data-pending="true"\]\) \.hwlab-card__body \.hwlab-info-block > :not\(#hwlab-safety-confirm-btn\):not\(#hwlab-prepare-btn\):not\(#hwlab-power-check-btn\):not\(\.hwlab-thermal\[data-required\]\):not\(\[data-required-action\]\) \{ display: none; \}/);
   // El resumen muestra la accion completa (hasta 3 lineas, no se corta en 2).
   assert.match(cssRules, /\.hwlab-card__summary \{[^}]*-webkit-line-clamp: 3;/);
   // Resumen plegable accesible por teclado (elemento nativo) con foco visible y 44 px.

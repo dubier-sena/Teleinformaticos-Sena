@@ -775,18 +775,34 @@ details.hwlab-thermal[open] > .hwlab-thermal__summary::before { transform: rotat
 .hwlab-card__more:hover,
 .hwlab-card__toggle:hover { color: #fff; border-color: var(--hwlab-border-strong); }
 .hwlab-card[data-state="closed"] .hwlab-card__toggle svg { transform: rotate(180deg); }
-.hwlab-card[data-state="closed"] .hwlab-card__body,
+/* Contraida: se oculta el detalle, pero NUNCA la accion que el paso exige
+   (Fase B, 2026-10-01): si hay una accion pendiente, la tarjeta contraida es
+   una BANDA con el resumen y esa accion. Antes el boton desaparecia y el
+   laboratorio parecia no avanzar. */
+.hwlab-card[data-state="closed"]:not([data-pending="true"]) .hwlab-card__body,
 .hwlab-card[data-state="closed"] .hwlab-card__more { display: none; }
-/* Compactada AUTOMATICAMENTE porque tapaba la pieza del paso: queda el
-   resumen y, si el paso se completa desde la tarjeta, su boton de accion. */
-.hwlab-card[data-auto-compact="true"] .hwlab-card__more { display: none; }
-.hwlab-card[data-auto-compact="true"] .hwlab-card__body { padding-top: 0; padding-bottom: 8px; }
-.hwlab-card[data-auto-compact="true"] .hwlab-card__body .hwlab-info-block > :not(#hwlab-safety-confirm-btn):not(#hwlab-prepare-btn):not(#hwlab-power-check-btn):not(.hwlab-thermal[data-required]) { display: none; }
-.hwlab-card[data-auto-compact="true"] .hwlab-card__body:not(:has(#hwlab-safety-confirm-btn, #hwlab-prepare-btn, #hwlab-power-check-btn, .hwlab-thermal[data-required])) { display: none; }
+/* Banda: compactada automaticamente (tapaba la pieza del paso) o contraida a
+   mano con una accion pendiente. Queda el resumen y, si el paso se completa
+   desde la tarjeta, su boton de accion. */
+.hwlab-card:is([data-auto-compact="true"], [data-state="closed"][data-pending="true"]) .hwlab-card__more { display: none; }
+.hwlab-card:is([data-auto-compact="true"], [data-state="closed"][data-pending="true"]) .hwlab-card__body { padding-top: 0; padding-bottom: 8px; }
+.hwlab-card:is([data-auto-compact="true"], [data-state="closed"][data-pending="true"]) .hwlab-card__body .hwlab-info-block > :not(#hwlab-safety-confirm-btn):not(#hwlab-prepare-btn):not(#hwlab-power-check-btn):not(.hwlab-thermal[data-required]):not([data-required-action]) { display: none; }
+.hwlab-card:is([data-auto-compact="true"], [data-state="closed"][data-pending="true"]) .hwlab-card__body:not(:has(#hwlab-safety-confirm-btn, #hwlab-prepare-btn, #hwlab-power-check-btn, .hwlab-thermal[data-required], [data-required-action])) { display: none; }
 /* Diagnostico compactado: solo el bloque del sintoma (con su boton); el
    panel de estado se ve al expandir la tarjeta. */
-.hwlab-card[data-auto-compact="true"] .hwlab-card__body .hwlab-info-block:not(:has(#hwlab-safety-confirm-btn, #hwlab-prepare-btn, #hwlab-power-check-btn, .hwlab-thermal[data-required])) { display: none; }
+.hwlab-card:is([data-auto-compact="true"], [data-state="closed"][data-pending="true"]) .hwlab-card__body .hwlab-info-block:not(:has(#hwlab-safety-confirm-btn, #hwlab-prepare-btn, #hwlab-power-check-btn, .hwlab-thermal[data-required], [data-required-action])) { display: none; }
 .hwlab-card[data-auto-compact="true"] .hwlab-card__toggle svg { transform: rotate(180deg); }
+/* Aviso persistente de accion pendiente (solo en banda: desplegada, el
+   contexto ya se lee en la propia tarjeta). */
+.hwlab-card__pending {
+  margin: 0;
+  padding: 0 12px 6px;
+  color: var(--hwlab-amber);
+  font-size: var(--font-size-xs);
+  font-weight: var(--weight-semibold);
+  line-height: 1.3;
+}
+.hwlab-card:not([data-auto-compact="true"]):not([data-state="closed"]) .hwlab-card__pending { display: none; }
 .hwlab-card__body {
   overflow-y: auto;
   padding: 10px 12px 12px;
@@ -1109,3 +1125,17 @@ details.hwlab-thermal[open] > .hwlab-thermal__summary::before { transform: rotat
 .hwlab-state--por_mejorar { border-color: var(--hwlab-danger); color: var(--hwlab-danger); }
 .hwlab-state--en_progreso, .hwlab-state--historico_parcial { border-color: var(--hwlab-accent); color: var(--hwlab-accent); }
 .hwlab-result-score__raw { margin: 0.25rem 0 0; font-size: 0.9rem; }
+
+/* ── Objetivos tactiles (Fase B, 2026-10-01) ──────────────────────────────
+   En pantallas tactiles o estrechas ningun control del laboratorio mide menos
+   de 44 px: con el dedo, el boton de contraer (36 px) o "Preparar" (36 px) se
+   fallaban y el toque caia en la escena 3D. */
+@media (pointer: coarse), (max-width: 900px) {
+  .hwlab-card__more,
+  .hwlab-card__toggle,
+  .hwlab-history__toggle,
+  #hwlab-restart-btn,
+  .hwlab-card__body .c-btn,
+  .hwlab-card__body .hwlab-thermal button { min-height: var(--hit-target-min); }
+  .hwlab-card__toggle { width: var(--hit-target-min); }
+}
