@@ -142,6 +142,10 @@ export function createStage() {
     cameraRig = createCameraRig({ camera: sceneApi.camera, renderer: sceneApi.renderer, tweenGroup, onTick: sceneApi.onTick });
     interactions = createInteractionLayer({ scene: sceneApi.scene, camera: sceneApi.camera, renderer: sceneApi.renderer, tweenGroup, onTick: sceneApi.onTick });
     explodeCtl = createExplodeController({ tweenGroup });
+    // Toque entre dos piezas (Fase C): no se adivina ni se penaliza; se explica.
+    interactions.onClick((root, meta, event, pick) => {
+      if (!root && pick && pick.reason === "ambiguous") showFeedback("Tocaste entre dos piezas. Acerca la cámara o toca el centro de la pieza que quieres.", "info", { transient: true });
+    });
 
     interactions.onHover((root, meta) => {
       const tip = document.getElementById("hwlab-tooltip");

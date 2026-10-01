@@ -222,16 +222,16 @@ export function createLaptopDiagnosisMechanics({ stage, getSession, setSession, 
       const n = c.pendingRemoval(partId);
       return {
         ok: false,
-        tone: "error",
-        log: part.name + ": tornillos puestos",
-        message: (n === 1 ? "Falta 1 tornillo" : "Faltan " + n + " tornillos") + " por retirar en " + part.name + ". Haz clic directamente sobre cada tornillo.",
+        tone: "info",
+        log: part.name + ": faltan tornillos por retirar",
+        message: (n === 1 ? "Falta 1 tornillo" : "Faltan " + n + " tornillos") + " por retirar en " + part.name + ". Toca cada tornillo marcado para retirarlo.",
       };
     }
     if (c && (action === "install" || action === "connect")) {
       const pending = partWithPendingScrews(partId);
       if (pending) {
         const p = partOf(pending);
-        return { ok: false, tone: "error", message: "Antes de continuar, asegura " + (p ? p.name : pending) + " con sus tornillos." };
+        return { ok: false, tone: "info", message: "Antes de continuar, asegura " + (p ? p.name : pending) + " con sus tornillos." };
       }
     }
     const r = rig();

@@ -15,6 +15,7 @@
 import * as THREE from "./vendor/three.module.min.js";
 import { animateObject3D, Easing } from "./hardware_lab_3d_tween.js?v=20260929_1";
 import { ACCENT, isHitbox } from "./hardware_lab_3d_constants.js?v=20260929_1";
+import { pickTolerancePx, ringOffsets, choosePick } from "./hardware_lab_3d_pick_policy.js?v=20260929_1";
 
 /**
  * Caja de la GEOMETRIA VISIBLE de una pieza en su propio espacio local
@@ -124,6 +125,12 @@ export function createInteractionLayer({ scene, camera, renderer, tweenGroup, on
   let downPos = null;
   let hoverListeners = [];
   let clickListeners = [];
+  // Seleccion tolerante (Fase C): el modo activo declara que objetivos espera
+  // el paso actual. null = no espera nada concreto (explorar, diagnostico).
+  let pickExpectation = null;
+  // Con el dedo no existe "pasar por encima": el rayo de hover por cuadro solo
+  // gastaba CPU en el telefono (y dejaba un resaltado pegado tras cada toque).
+  let lastPointerType = "mouse";
 
   const el = renderer.domElement;
 
@@ -163,6 +170,7 @@ export function createInteractionLayer({ scene, camera, renderer, tweenGroup, on
     registry.clear();
     meshToRoot.clear();
     occluders.clear();
+    pickExpectation = null;
     setHovered(null);
     setSelected(null);
   }
@@ -177,8 +185,8 @@ export function createInteractionLayer({ scene, camera, renderer, tweenGroup, on
     pointerNdc.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
   }
 
-  function raycastRoot() {
-    raycaster.setFromCamera(pointerNdc, camera);
+  function raycastRoot(ndc) {
+    raycaster.setFromCamera(ndc || pointerNdc, camera);
     const targets = Array.from(registry.keys());
     occluders.forEach((o) => targets.push(o));
     const hits = raycaster.intersectObjects(targets, true);
@@ -191,6 +199,41 @@ export function createInteractionLayer({ scene, camera, renderer, tweenGroup, on
       if (hit.object.visible && isUnderOccluder(hit.object)) return null;
     }
     return null;
+  }
+
+  /**
+   * Que se seleccionaria con un toque en (clientX, clientY). Consulta pura:
+   * no selecciona ni notifica. Devuelve { root, assisted, reason, exact },
+   * donde exact es lo que hay bajo el pixel exacto (lo unico que se miraba
+   * antes de la seleccion tolerante).
+   */
+  function pickAt(clientX, clientY, pointerType) {
+    const rect = el.getBoundingClientRect();
+    const ndc = new THREE.Vector2();
+    const cast = (x, y) => {
+      if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) return null;
+      ndc.set(((x - rect.left) / rect.width) * 2 - 1, -((y - rect.top) / rect.height) * 2 + 1);
+      return raycastRoot(ndc);
+    };
+    const exact = cast(clientX, clientY);
+    const rule = (typeof pickExpectation === "function" ? pickExpectation() : null) || {};
+    const metaOf = (root) => (root ? registry.get(root) || {} : null);
+    const expected = typeof rule.expected === "function" ? (root, exactRoot) => !!rule.expected(metaOf(root), metaOf(exactRoot)) : null;
+    // El pixel exacto ya basta: no hace falta muestrear alrededor.
+    if (exact && (!expected || expected(exact, exact))) return { root: exact, assisted: false, reason: "exact", exact };
+    const near = [];
+    for (const o of ringOffsets(pickTolerancePx(pointerType))) {
+      const root = cast(clientX + o.dx, clientY + o.dy);
+      if (root) near.push({ key: root, dist: o.dist });
+    }
+    const pick = choosePick({ exact, near, expected, nearestOnEmpty: rule.nearestOnEmpty !== false });
+    return { root: pick.key, assisted: pick.assisted, reason: pick.reason, exact };
+  }
+
+  /** fn() -> null | { expected: (meta, metaExacta) => boolean, nearestOnEmpty: boolean }.
+   *  Ver hardware_lab_3d_pick_policy.js. */
+  function setPickExpectation(fn) {
+    pickExpectation = typeof fn === "function" ? fn : null;
   }
 
   function isUnderOccluder(mesh) {
@@ -281,12 +324,22 @@ export function createInteractionLayer({ scene, camera, renderer, tweenGroup, on
     }
   }
 
+  function notePointerType(event) {
+    const type = event.pointerType || "mouse";
+    if (type !== lastPointerType) {
+      lastPointerType = type;
+      if (type !== "mouse") setHovered(null);
+    }
+  }
+
   function onPointerMove(event) {
     if (!enabled) return;
+    notePointerType(event);
     updatePointer(event);
   }
 
   function onPointerDown(event) {
+    notePointerType(event);
     downPos = { x: event.clientX, y: event.clientY };
   }
 
@@ -297,10 +350,11 @@ export function createInteractionLayer({ scene, camera, renderer, tweenGroup, on
     downPos = null;
     if (Math.hypot(dx, dy) > CLICK_MOVE_THRESHOLD) return; // fue arrastre de camara, no clic
     updatePointer(event);
-    const root = raycastRoot();
+    const pick = pickAt(event.clientX, event.clientY, event.pointerType || "mouse");
+    const root = pick.root;
     setSelected(root);
     const meta = root ? registry.get(root) : null;
-    clickListeners.forEach((fn) => fn(root, meta, event));
+    clickListeners.forEach((fn) => fn(root, meta, event, pick));
   }
 
   el.addEventListener("pointermove", onPointerMove, { passive: true });
@@ -309,7 +363,7 @@ export function createInteractionLayer({ scene, camera, renderer, tweenGroup, on
   el.addEventListener("pointerleave", () => setHovered(null));
 
   const offTick = onTick(() => {
-    if (!enabled || !registry.size) return;
+    if (!enabled || !registry.size || lastPointerType !== "mouse") return;
     const root = raycastRoot();
     setHovered(root);
   });
@@ -351,6 +405,8 @@ export function createInteractionLayer({ scene, camera, renderer, tweenGroup, on
     unregisterOccluder,
     clearInteractives,
     getMeta,
+    pickAt,
+    setPickExpectation,
     setEnabled,
     onHover,
     onClick,

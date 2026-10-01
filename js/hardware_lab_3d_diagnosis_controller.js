@@ -234,6 +234,17 @@ export function createDiagnosisController(stage) {
       if (!meta || !meta.partId) return;
       handlePartClick(meta.partId);
     });
+    // Seleccion tolerante (Fase C): tocar una pieza atornillada a pocos pixeles
+    // de uno de SUS tornillos es tocar ese tornillo; un toque al aire junto a
+    // una pieza la selecciona. Diagnosticar no depende de la punteria.
+    stage.interactions.setPickExpectation(() => ({
+      nearestOnEmpty: true,
+      expected: (meta, exact) => {
+        if (!meta || meta.kind !== "screw" || !exact || !exact.partId || !stage.screws) return false;
+        const entry = stage.screws.get(meta.screwId);
+        return !!entry && entry.installed && entry.partId === exact.partId;
+      },
+    }));
 
     updateMonitor();
     renderInfoPanel();
@@ -280,7 +291,7 @@ export function createDiagnosisController(stage) {
       const pre = mech.beforePartAction(partId, action);
       if (!pre.ok) {
         stage.showFeedback(pre.message, pre.tone || "info");
-        if (pre.log) stage.pushActionLog(pre.log, "error");
+        if (pre.log) stage.pushActionLog(pre.log, pre.tone === "error" ? "error" : undefined);
         renderInfoPanel();
         return;
       }

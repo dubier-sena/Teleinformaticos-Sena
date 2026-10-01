@@ -277,6 +277,7 @@ export function createAssemblyController(stage) {
       if (!meta || !meta.partId) return;
       handlePartClick(meta.partId);
     });
+    stage.interactions.setPickExpectation(pickExpectation);
 
     // Encuadre automatico por pieza objetivo (sep-26): solo en la practica
     // GUIADA (en la libre y la evaluacion el aprendiz busca la pieza). Solo
@@ -431,7 +432,7 @@ export function createAssemblyController(stage) {
    * un tornillo se puede retirar/colocar solo si su pieza se podria
    * retirar/instalar ahora mismo. Mensajes educativos (item 12: enseñar el
    * orden, no castigar) -- no cuentan como error de la practica. */
-  function canOperateScrewPart(partId, action) {
+  function canOperateScrewPart(partId, action, dry) {
     if (isLearn) {
       return { ok: false, reason: "En \"Aprender componentes\" los tornillos solo se observan: practica el destornillado en Desensamble o Ensamble." };
     }
@@ -487,6 +488,9 @@ export function createAssemblyController(stage) {
     }
     // Posicion tecnica: el tornillo es el correcto, pero hay que poder
     // alcanzarlo (p.ej. los de la tapa inferior, con el portatil boca abajo).
+    // Consulta sin efectos (seleccion tolerante): el tornillo ES el correcto
+    // aunque todavia falte colocar el equipo en posicion.
+    if (dry) return { ok: true };
     if (hasPose()) {
       if (rig3d().isPoseAnimating()) return { ok: false, reason: "Espera a que el portatil termine de moverse." };
       const r = rig3d();
@@ -545,6 +549,31 @@ export function createAssemblyController(stage) {
     return ids.length ? ids[0] : null;
   }
 
+  /** Seleccion tolerante (Fase C): que objetivos tienen prioridad cuando el
+   *  toque cae a pocos pixeles. Solo lo que el procedimiento aceptaria AHORA
+   *  (el tornillo o la pieza del paso): un toque impreciso junto al objetivo
+   *  correcto cuenta como el objetivo correcto, nunca como error de orden. */
+  function pickExpectation() {
+    if (isLearn || !session || Engine().isFinished(session)) return null;
+    const ctl = screws();
+    return {
+      nearestOnEmpty: false,
+      expected: (meta) => {
+        if (!meta) return false;
+        if (meta.kind === "screw") {
+          const entry = ctl && ctl.get(meta.screwId);
+          return !!entry && canOperateScrewPart(entry.partId, entry.installed ? "remove" : "install", true).ok;
+        }
+        if (!meta.partId || !getPart(meta.partId)) return false;
+        const action = inferAction(meta.partId);
+        if (!actionWouldBeValid(meta.partId, action)) return false;
+        if (ctl && action === "remove" && ctl.pendingRemoval(meta.partId) > 0) return false;
+        if (ctl && (action === "install" || action === "connect") && partWithPendingScrews(meta.partId)) return false;
+        return true;
+      },
+    };
+  }
+
   function handleScrewClick(screwId) {
     const ctl = screws();
     if (!ctl) return;
@@ -598,10 +627,10 @@ export function createAssemblyController(stage) {
         const n = ctl.pendingRemoval(partId);
         stage.showFeedback(
           (n === 1 ? "Falta 1 tornillo" : "Faltan " + n + " tornillos") + " por retirar en " + part.name +
-            ". Haz clic directamente sobre cada tornillo.",
-          "error"
+            ". Toca cada tornillo marcado para retirarlo.",
+          "info"
         );
-        stage.pushActionLog(part.name + ": tornillos puestos", "error");
+        stage.pushActionLog(part.name + ": faltan tornillos por retirar");
         return;
       }
       // Y al ensamblar, no se deja una pieza a medio asegurar para pasar a la
@@ -612,7 +641,7 @@ export function createAssemblyController(stage) {
           const p = getPart(pending);
           stage.showFeedback(
             "Antes de continuar, asegura " + (p ? p.name : pending) + " con sus tornillos.",
-            "error"
+            "info"
           );
           return;
         }
