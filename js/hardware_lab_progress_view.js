@@ -26,8 +26,8 @@
 
   function caseName(equipo, caso) {
     var DC = root.HardwareLab && root.HardwareLab.DiagnosisCases;
-    var list = DC && typeof DC.casesFor === "function" ? DC.casesFor(equipo) : [];
-    var c = (list || []).find(function (x) { return x.id === caso; });
+    var c = DC && typeof DC.getCase === "function" ? DC.getCase(equipo, caso) : null;
+    if (c && c.evaluation) return "Evaluación — " + c.name;
     return c ? "Caso " + c.number + " — " + c.name : caso || "";
   }
   function fecha(iso) {

@@ -16,6 +16,8 @@ import { createDiagnosticMonitor } from "./hardware_lab_3d_monitor.js?v=20260929
 import { createLaptopDiagnosisMechanics } from "./hardware_lab_3d_diagnosis_mechanics.js?v=20260929_1";
 import { ZONES } from "./hardware_lab_3d_constants.js?v=20260929_1";
 import { HardwareLabAudio } from "./hardware_lab_3d_audio.js?v=20260929_1";
+import { createLaptopScreen } from "./hardware_lab_3d_laptop_screen.js?v=20260929_1";
+import { applyDamageLook, clearDamageLook } from "./hardware_lab_3d_damage_look.js?v=20260929_1";
 
 function esc(value) {
   return String(value == null ? "" : value)
@@ -32,6 +34,8 @@ const LEVEL_LABEL = {
   intermedio: "Intermedio",
   "intermedio-moderado": "Intermedio-moderado",
   moderado: "Moderado",
+  avanzado: "Avanzado",
+  evaluacion: "Evaluación",
 };
 
 // Lo propio de cada equipo. El escritorio conserva su monitor externo en la
@@ -71,6 +75,12 @@ export function createDiagnosisController(stage) {
   let offClick = null;
   let monitor = null;
   let mech = null;
+  // Pantalla viva del portatil (Fase F): muestra el sintoma al encender.
+  let screen = null;
+  let checking = false;
+  // Evaluacion del portatil (fases J-K): escenario asignado al azar.
+  let evaluationMode = false;
+  let deliverArmed = false;
 
   function Engine() {
     return window.HardwareLab.DiagnosisEngine;
@@ -148,19 +158,79 @@ export function createDiagnosisController(stage) {
   /** Falla "mal asentada" aun sin reasentar: la pieza se ve un poco fuera. */
   function applyMisseat() {
     if (equipmentId !== "laptop" || !session || !stage.currentRig.setMisseated) return;
-    const fix = session.fixCondition;
-    if (!fix || fix.type !== "reseated" || session.parts[fix.partId] !== true) return;
-    if (Engine().hasReseated(session, fix.partId)) return;
-    const distance = MISSEAT_DISTANCE_BY_PART[fix.partId] || MISSEAT_DISTANCE;
-    stage.currentRig.setMisseated(fix.partId, distance);
-    (MISSEAT_CARRIES[fix.partId] || []).forEach((id) => {
-      if (session.parts[id] === true) stage.currentRig.setMisseated(id, distance);
+    // Una falla doble puede tener dos piezas mal asentadas a la vez.
+    Engine().conditionList(session.fixCondition).forEach((fix) => {
+      if (!fix || fix.type !== "reseated" || session.parts[fix.partId] !== true) return;
+      if (Engine().hasReseated(session, fix.partId)) return;
+      const distance = MISSEAT_DISTANCE_BY_PART[fix.partId] || MISSEAT_DISTANCE;
+      stage.currentRig.setMisseated(fix.partId, distance);
+      (MISSEAT_CARRIES[fix.partId] || []).forEach((id) => {
+        if (session.parts[id] === true) stage.currentRig.setMisseated(id, distance);
+      });
     });
   }
 
+  /** Componente averiado RETIRADO: el dano se ve en la pieza (fase I). */
+  function refreshDamageLook() {
+    if (!session || !stage.currentRig) return;
+    (session.damagedPartIds || []).forEach((id) => {
+      const obj = stage.currentRig.getObject3D(id);
+      if (!obj) return;
+      const show = session.parts[id] === false && Engine().isDamaged(session, id);
+      if (show) applyDamageLook(obj);
+      else clearDamageLook(obj);
+    });
+    stage.sceneApi.keepAwake(400);
+  }
+
+  // ── Pantalla del portatil (Fase F) ───────────────────────────────────────
+  function mountScreen() {
+    screen = null;
+    if (equipmentId !== "laptop") return;
+    const root = stage.currentRig.getObject3D("screen-assembly");
+    screen = createLaptopScreen({ root, keepAwake: stage.sceneApi.keepAwake });
+  }
+  /** El aprendiz vuelve a trabajar en el equipo: se apaga. */
+  function screenOff() {
+    if (screen && screen.state !== "off") screen.setState("off");
+  }
+
+  // ── Evaluacion: escenario asignado (fases J-K) ───────────────────────────
+  // Se elige al azar entre los que el aprendiz aun no ha entregado en esta
+  // vuelta (al completar los seis, la vuelta empieza de nuevo) y queda
+  // ASIGNADO hasta entregarlo: recargar la pagina no lo cambia.
+  const EVAL_ASSIGN_MODE = "evaluation-assignment";
+  function assignedScenario(rng) {
+    const all = window.HardwareLab.DiagnosisCases.evaluationScenarios(equipmentId).map((c) => c.id);
+    if (!all.length) return null;
+    const saved = Storage().loadLocal(equipmentId, EVAL_ASSIGN_MODE) || {};
+    if (saved.current && all.indexOf(saved.current) !== -1) return saved.current;
+    let done = (saved.done || []).filter((id) => all.indexOf(id) !== -1);
+    let pool = all.filter((id) => done.indexOf(id) === -1);
+    if (!pool.length) { done = []; pool = all.filter((id) => id !== saved.last || all.length === 1); }
+    const current = pool[Math.floor((rng || Math.random)() * pool.length)];
+    Storage().persist(equipmentId, EVAL_ASSIGN_MODE, { current, done, last: saved.last || null });
+    return current;
+  }
+  function closeAssignedScenario(id) {
+    const saved = Storage().loadLocal(equipmentId, EVAL_ASSIGN_MODE) || {};
+    const done = (saved.done || []).filter((x) => x !== id).concat([id]);
+    Storage().persist(equipmentId, EVAL_ASSIGN_MODE, { current: null, done, last: id });
+  }
+  function startEvaluation(forEquipmentId) {
+    if (forEquipmentId && EQUIPMENT[forEquipmentId]) equipmentId = forEquipmentId;
+    const id = assignedScenario();
+    if (!id) return false;
+    startCase(id, { evaluation: true });
+    return true;
+  }
+
   // ── Caso en curso (escena 3D compartida) ──────────────────────────────────
-  function startCase(caseId) {
-    caseDef = Cases().find((c) => c.id === caseId);
+  function startCase(caseId, opts) {
+    evaluationMode = !!(opts && opts.evaluation);
+    deliverArmed = false;
+    checking = false;
+    caseDef = evaluationMode ? window.HardwareLab.DiagnosisCases.getCase(equipmentId, caseId) : Cases().find((c) => c.id === caseId);
     if (!caseDef) return;
     const eq = EQUIPMENT[equipmentId];
     equipmentData = eq.data();
@@ -208,18 +278,22 @@ export function createDiagnosisController(stage) {
               refreshStats();
             },
             onRender: renderInfoPanel,
+            onPoseStart: screenOff,
           })
         : null;
     if (mech) mech.setup(saved && !saved.result ? saved.screws : null);
     applyMisseat();
+    mountScreen();
+    refreshDamageLook();
 
     if (stage.resetCardExpansion) stage.resetCardExpansion();
-    stage.setModeTitle("Diagnóstico - Caso " + caseDef.number, caseDef.name);
+    stage.setModeTitle(evaluationMode ? "Evaluación" : "Diagnóstico - Caso " + caseDef.number, caseDef.name);
     stage.startTimer(session.startedAt);
     stage.clearActionLog();
     stage.setHintUi(session.hints.used, session.hints.max, onHint);
-    document.getElementById("hwlab-hint-btn").hidden = false;
-    document.getElementById("hwlab-restart-btn").hidden = false;
+    // Evaluacion: sin pistas y sin reinicio (se entrega y se empieza otra).
+    document.getElementById("hwlab-hint-btn").hidden = evaluationMode;
+    document.getElementById("hwlab-restart-btn").hidden = evaluationMode;
     document.getElementById("hwlab-timer").parentElement.hidden = false;
 
     document.getElementById("hwlab-explode-btn").onclick = () => stage.toggleExplode();
@@ -228,6 +302,7 @@ export function createDiagnosisController(stage) {
 
     offClick = stage.interactions.onClick((root, meta) => {
       if (meta && meta.kind === "screw") {
+        screenOff();
         if (mech) mech.handleScrewClick(meta.screwId);
         return;
       }
@@ -259,6 +334,10 @@ export function createDiagnosisController(stage) {
     // variante, polvo/pasta del inicio): nada del intento anterior sobrevive.
     if (mech) mech.setup(null);
     applyMisseat();
+    refreshDamageLook();
+    deliverArmed = false;
+    checking = false;
+    if (screen) screen.setState("off");
     if (stage.resetCardExpansion) stage.resetCardExpansion();
     stage.startTimer(session.startedAt);
     stage.clearActionLog();
@@ -286,6 +365,8 @@ export function createDiagnosisController(stage) {
   function handlePartClick(partId) {
     const part = getPart(partId);
     if (!part) return;
+    screenOff();
+    deliverArmed = false;
     const action = inferAction(partId);
     // Portatil: tornillos y posicion antes de intentar (sin castigo: explica).
     if (mech) {
@@ -310,6 +391,7 @@ export function createDiagnosisController(stage) {
           applyMisseat();
         },
       });
+      refreshDamageLook();
       if (mech) mech.afterPartAction(partId, nowPresent);
       if (part.tool && part.tool !== "hands") HardwareLabAudio.playScrew();
       else HardwareLabAudio[nowPresent ? "playConnect" : "playDisconnect"]();
@@ -390,7 +472,8 @@ export function createDiagnosisController(stage) {
   function visibleSymptom() {
     if (session.fixed) return session.symptomFixed;
     if (caseDef.revealSymptomOnCheck && !session.actionLog.some((e) => e.type === "power-on-check")) return caseDef.symptom;
-    return session.symptomBroken;
+    // Falla doble: el sintoma de la ultima comprobacion (no cambia al reparar).
+    return Engine().observedSymptom(session);
   }
 
   function buildExplanationHtml() {
@@ -415,7 +498,52 @@ export function createDiagnosisController(stage) {
     );
   }
 
+  /** Cierra el intento (falla corregida o evaluacion entregada) y muestra el resultado. */
+  function concludeSession() {
+    stage.stopTimer();
+    const finished = Engine().finish(session, { equipmentData });
+    // Traza de identificacion (dato; no cambia la nota de los casos).
+    finished.result.trace = Engine().diagnosisTrace(equipmentData, session);
+    session = finished;
+    persist();
+    const A = window.HardwareLab.Attempts;
+    if (A) {
+      const done = Object.assign(Engine().serialize(finished), { attemptNonce: finished.attemptNonce });
+      A.recordFinished({ session: done, equipo: equipmentId, practica: storageModeFor(caseDef.id) });
+    }
+    const wasEvaluation = evaluationMode;
+    if (wasEvaluation) closeAssignedScenario(caseDef.id);
+    stage.openResultModal(finished.result, {
+      extraHtml: (wasEvaluation ? evaluationSummaryHtml(finished.result) : "") + buildExplanationHtml(),
+      retryLabel: wasEvaluation ? "Otra orden de servicio" : null,
+      onRetry: () => {
+        if (wasEvaluation) startEvaluation(equipmentId);
+        else restartCase();
+      },
+      onMenu: backToCaseMenu,
+    });
+  }
+
+  /** Resumen de la evaluacion: que se logro, con palabras (no solo barras). */
+  function evaluationSummaryHtml(result) {
+    const names = (ids) => ids.map((id) => (getPart(id) ? getPart(id).name : id)).join(", ");
+    const rows = [
+      ["Escenario", caseDef.name],
+      ["Fallas corregidas", result.faultsFixed + " de " + result.faultsTotal],
+      ["Equipo entregado funcionando", result.diagnosisCorrect ? "Sí" : "No"],
+      ["Componentes cambiados", result.replacedParts.length ? names(result.replacedParts) : "Ninguno"],
+      ["Sustituciones no justificadas", result.unjustifiedReplacements.length ? names(result.unjustifiedReplacements) + " (el componente no estaba averiado)" : "Ninguna"],
+      ["Errores de procedimiento", String(result.errors)],
+    ];
+    return (
+      '<div class="hwlab-result-explanation"><h4>Resumen de la evaluación</h4>' +
+      rows.map(([label, value]) => `<p><strong>${esc(label)}:</strong> ${esc(value)}</p>`).join("") +
+      "</div>"
+    );
+  }
+
   function checkPowerOn() {
+    if (checking) return;
     // Portatil: se enciende en su posicion normal (derecho y abierto). Es una
     // indicacion, no un intento de comprobacion: no se registra ni penaliza.
     if (mech) {
@@ -426,40 +554,106 @@ export function createDiagnosisController(stage) {
         return;
       }
     }
+    deliverArmed = false;
     const result = Engine().checkPowerOn(equipmentData, session, { screwsSecured: mech ? mech.screwsSecured() : true });
     session = result.session;
     if (monitor && EQUIPMENT[equipmentId].monitor3d) monitor.setPowered(true);
     updateMonitor();
     persist();
-    if (result.fixed) {
-      stage.stopTimer();
-      const finished = Engine().finish(session);
-      // Traza de identificacion (dato; no cambia la nota).
-      finished.result.trace = Engine().diagnosisTrace(equipmentData, session);
-      session = finished;
-      persist();
-      const A = window.HardwareLab.Attempts;
-      if (A) {
-        const done = Object.assign(Engine().serialize(finished), { attemptNonce: finished.attemptNonce });
-        A.recordFinished({ session: done, equipo: equipmentId, practica: storageModeFor(caseDef.id) });
+    const show = () => {
+      checking = false;
+      if (result.fixed) {
+        stage.showFeedback(result.message, "success");
+        HardwareLabAudio.playComplete();
+        concludeSession();
+      } else {
+        // "La falla sigue" (error) frente a "corregida, pero el equipo no esta
+        // listo para encender" (advertencia): no se revela que falta.
+        const notReady = result.outcome === "not-ready";
+        stage.showFeedback(result.message, notReady ? "warning" : "error");
+        stage.pushActionLog(notReady ? "Encendido: equipo sin terminar de armar" : "Encendido: sigue con falla", "error");
       }
-      stage.showFeedback(result.message, "success");
-      HardwareLabAudio.playComplete();
-      stage.openResultModal(finished.result, {
-        extraHtml: buildExplanationHtml(),
-        onRetry: () => {
-          restartCase();
-        },
-        onMenu: backToCaseMenu,
-      });
-    } else {
-      // "La falla sigue" (error) frente a "corregida, pero el equipo no esta
-      // listo para encender" (advertencia): no se revela que falta.
-      const notReady = result.outcome === "not-ready";
-      stage.showFeedback(result.message, notReady ? "warning" : "error");
-      stage.pushActionLog(notReady ? "Encendido: equipo sin terminar de armar" : "Encendido: sigue con falla", "error");
+      renderInfoPanel();
+    };
+    // Portatil (Fase F): la pantalla del equipo muestra lo que pasa al
+    // encender; el aviso llega cuando el aprendiz ya lo vio.
+    if (screen && result.outcome !== "not-ready") {
+      checking = true;
+      stage.cameraRig.goToView("front");
+      screen.powerOn(result.screen).then(show);
+      renderInfoPanel();
+      return;
     }
+    show();
+  }
+
+  // ── Revisar y cambiar componentes (fase G) ───────────────────────────────
+  function onInspect(partId) {
+    const r = Engine().inspectPart(equipmentData, session, partId);
+    session = r.session;
+    stage.showFeedback(r.message, !r.ok ? "info" : r.damaged ? "warning" : "info");
+    if (r.ok) {
+      stage.pushActionLog("Revisión: " + getPart(partId).name + (r.damaged ? " (con daño)" : " (sin daño)"));
+      stage.pointAtPart(partId);
+    }
+    persist();
     renderInfoPanel();
+  }
+
+  function onReplace(partId) {
+    const r = Engine().replacePart(equipmentData, session, partId);
+    session = r.session;
+    stage.showFeedback(r.message, r.ok ? "success" : "info");
+    if (r.ok) {
+      HardwareLabAudio.playPlace();
+      stage.pushActionLog("Repuesto: " + getPart(partId).name, "success");
+      stage.pointAtPart(partId);
+      refreshDamageLook();
+    }
+    persist();
+    renderInfoPanel();
+  }
+
+  /** Piezas retiradas: se pueden revisar y, si hay repuesto, cambiar. Solo
+   *  en equipos con banco de repuestos (portatil). */
+  function removedPartsHtml() {
+    if (!equipmentData.spares || session.fixed) return "";
+    const list = Engine().removedParts(equipmentData, session).filter((p) => p.partId !== "bottom-cover");
+    if (!list.length) return "";
+    return (
+      '<div class="hwlab-info-block"><h3>Piezas retiradas</h3>' +
+      '<p class="hwlab-muted">Revisa una pieza antes de decidir. Cambia por repuesto solo lo que esté averiado.</p>' +
+      '<ul class="hwlab-removed">' +
+      list.map((p) =>
+        `<li><span class="hwlab-removed__name">${esc(p.name)}${p.replaced ? ' <span class="hwlab-removed__tag">repuesto nuevo</span>' : ""}</span>` +
+        `<span class="hwlab-removed__actions"><button type="button" class="c-btn c-btn--secondary c-btn--sm" data-diag-inspect="${esc(p.partId)}">Revisar</button>` +
+        (p.spare && !p.replaced ? `<button type="button" class="c-btn c-btn--secondary c-btn--sm" data-diag-replace="${esc(p.partId)}">Cambiar por repuesto</button>` : "") +
+        "</span></li>"
+      ).join("") +
+      "</ul></div>"
+    );
+  }
+
+  /** Evaluacion: entregar el equipo como esta (dos toques, sin dialogos). */
+  function deliverHtml() {
+    if (!evaluationMode || session.fixed) return "";
+    return (
+      '<div class="hwlab-info-block">' +
+      `<button type="button" class="c-btn c-btn--secondary c-btn--sm c-btn--block" id="hwlab-eval-deliver-btn">${deliverArmed ? "Confirmar: entregar la evaluación ahora" : "Entregar evaluación"}</button>` +
+      `<p class="hwlab-muted">${deliverArmed ? "Se calificará el equipo tal como está. Toca otra vez para confirmar." : "Úsalo solo si no puedes continuar: se califica lo que hayas logrado."}</p>` +
+      "</div>"
+    );
+  }
+
+  function onDeliver() {
+    if (!deliverArmed) {
+      deliverArmed = true;
+      renderInfoPanel();
+      return;
+    }
+    deliverArmed = false;
+    stage.pushActionLog("Evaluación entregada");
+    concludeSession();
   }
 
   /** Resultado de la ultima comprobacion (del historial de la sesion). */
@@ -564,14 +758,20 @@ export function createDiagnosisController(stage) {
       `<button type="button" class="c-btn c-btn--primary c-btn--block" id="hwlab-power-check-btn" data-pending-text="Fase ${phase.index + 1} de ${phase.phases.length} · ${esc(phase.label)}">Encender y comprobar</button>` +
       (mech ? mech.poseSectionHtml(esc) : "") +
       "</div>" +
+      removedPartsHtml() +
       (mech && mech.thermalSectionHtml(esc) ? '<div class="hwlab-info-block">' + mech.thermalSectionHtml(esc) + "</div>" : "") +
       `<div class="hwlab-info-block"><h3>${equipmentId === "laptop" ? "Estado del equipo" : "Monitor de diagnóstico"}</h3>` +
       '<div class="hwlab-monitor-readout">' +
       lines.map((l) => `<div class="row"><span class="label">${esc(l.label)}</span><span class="value--${l.tone}">${esc(l.value)}</span></div>`).join("") +
-      "</div></div>";
+      "</div></div>" +
+      deliverHtml();
     stage.setInfoPanel(html);
     const btn = document.getElementById("hwlab-power-check-btn");
-    if (btn) btn.onclick = checkPowerOn;
+    if (btn) { btn.onclick = checkPowerOn; btn.disabled = checking; }
+    document.querySelectorAll("[data-diag-inspect]").forEach((b) => { b.onclick = () => onInspect(b.getAttribute("data-diag-inspect")); });
+    document.querySelectorAll("[data-diag-replace]").forEach((b) => { b.onclick = () => onReplace(b.getAttribute("data-diag-replace")); });
+    const deliver = document.getElementById("hwlab-eval-deliver-btn");
+    if (deliver) deliver.onclick = onDeliver;
     if (mech) {
       mech.wirePrepareButton();
       mech.wireThermalSection(onThermalTask);
@@ -588,13 +788,23 @@ export function createDiagnosisController(stage) {
   function backToCaseMenu() {
     stage.stopTimer();
     stage.hideStage();
+    // La evaluacion no se elige de un menu: se vuelve a la seleccion de practica.
+    if (evaluationMode) {
+      evaluationMode = false;
+      const group = document.getElementById("hwlab-diag-case-group");
+      if (group) group.hidden = true;
+      return;
+    }
     showCaseMenu(equipmentId);
   }
 
   return {
     showCaseMenu,
     startCase,
+    startEvaluation,
     /** Solo lectura (pruebas y diagnostico): la sesion en curso. */
     getSession: () => session,
+    /** Solo lectura (pruebas): estado que muestra la pantalla del portatil. */
+    getScreenState: () => (screen ? screen.state : null),
   };
 }

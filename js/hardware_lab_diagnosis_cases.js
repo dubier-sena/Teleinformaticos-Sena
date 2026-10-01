@@ -376,6 +376,7 @@
         overrides: [{ partId: "ram", present: true }],
         relevantPartIds: LAPTOP_ACCESS.concat(["ram"]),
         fixCondition: { type: "reseated", partId: "ram" },
+        screen: { broken: "no-post", fixed: "desktop" },
         symptomBroken:
           "El portátil enciende y el ventilador gira, pero sigue sin arrancar: sin sonido de inicio, sin actividad de disco y sin imagen.",
         symptomFixed: "El portátil completa el arranque y muestra imagen con normalidad.",
@@ -408,6 +409,7 @@
         overrides: [{ partId: "ssd-m2", present: true }],
         relevantPartIds: LAPTOP_ACCESS.concat(["ssd-m2"]),
         fixCondition: { type: "reseated", partId: "ssd-m2" },
+        screen: { broken: "no-boot", fixed: "desktop" },
         symptomBroken: "El equipo muestra imagen, pero sigue indicando que no hay un dispositivo de arranque disponible.",
         symptomFixed: "El sistema detecta la unidad de almacenamiento y carga el sistema operativo.",
       },
@@ -438,6 +440,7 @@
         overrides: [{ partId: "cable-touchpad-flex", present: true }],
         relevantPartIds: LAPTOP_ACCESS.concat(["cable-touchpad-flex"]),
         fixCondition: { type: "reseated", partId: "cable-touchpad-flex" },
+        screen: { broken: "touchpad-fail", fixed: "desktop" },
         symptomBroken: "El sistema funciona, pero el touchpad sigue sin responder.",
         symptomFixed: "El touchpad responde con normalidad.",
       },
@@ -468,6 +471,7 @@
         overrides: [{ partId: "cable-keyboard-flex", present: true }],
         relevantPartIds: LAPTOP_ACCESS.concat(["cable-keyboard-flex"]),
         fixCondition: { type: "reseated", partId: "cable-keyboard-flex" },
+        screen: { broken: "keyboard-fail", fixed: "desktop" },
         symptomBroken: "El sistema funciona, pero el teclado integrado sigue sin responder.",
         symptomFixed: "El teclado integrado responde con normalidad.",
       },
@@ -499,6 +503,7 @@
         overrides: [{ partId: "cable-screen-flex", present: true }],
         relevantPartIds: LAPTOP_ACCESS.concat(["cable-screen-flex"]),
         fixCondition: { type: "reseated", partId: "cable-screen-flex" },
+        screen: { broken: "no-image", fixed: "desktop" },
         symptomBroken: "El sistema sigue arrancando con normalidad, pero la pantalla integrada no muestra imagen.",
         symptomFixed: "La pantalla integrada muestra imagen con normalidad.",
       },
@@ -548,6 +553,7 @@
           overrides: [{ partId: "wifi-card", present: true }],
           relevantPartIds: WIFI_RELEVANT,
           fixCondition: { type: "reseated", partId: "wifi-card" },
+          screen: { broken: "wifi-fail", fixed: "desktop" },
           symptomBroken: WIFI_BROKEN,
           symptomFixed: WIFI_FIXED,
           explanation: {
@@ -562,6 +568,7 @@
           overrides: [{ partId: "wifi-antenna-1", present: true }],
           relevantPartIds: WIFI_RELEVANT,
           fixCondition: { type: "reseated", partId: "wifi-antenna-1" },
+          screen: { broken: "wifi-weak", fixed: "desktop" },
           symptomBroken: WIFI_BROKEN,
           symptomFixed: WIFI_FIXED,
           explanation: {
@@ -576,6 +583,7 @@
           overrides: [{ partId: "wifi-antenna-2", present: true }],
           relevantPartIds: WIFI_RELEVANT,
           fixCondition: { type: "reseated", partId: "wifi-antenna-2" },
+          screen: { broken: "wifi-weak", fixed: "desktop" },
           symptomBroken: WIFI_BROKEN,
           symptomFixed: WIFI_FIXED,
           explanation: {
@@ -628,6 +636,7 @@
           thermal: { dust: "dirty", paste: "new", amount: "adecuada" },
           relevantPartIds: THERMAL_RELEVANT,
           fixCondition: { type: "thermalReady" },
+          screen: { broken: "overheat", fixed: "desktop" },
           symptomBroken: THERMAL_BROKEN,
           symptomFixed: THERMAL_FIXED,
           explanation: {
@@ -643,6 +652,7 @@
           thermal: { dust: "clean", paste: "old" },
           relevantPartIds: THERMAL_RELEVANT,
           fixCondition: { type: "thermalReady" },
+          screen: { broken: "overheat", fixed: "desktop" },
           symptomBroken: THERMAL_BROKEN,
           symptomFixed: THERMAL_FIXED,
           explanation: {
@@ -657,6 +667,7 @@
           overrides: [{ partId: "cable-cpu-fan-laptop", present: true }],
           relevantPartIds: THERMAL_RELEVANT,
           fixCondition: { type: "reseated", partId: "cable-cpu-fan-laptop" },
+          screen: { broken: "overheat", fixed: "desktop" },
           symptomBroken: THERMAL_BROKEN,
           symptomFixed: THERMAL_FIXED,
           explanation: {
@@ -739,6 +750,303 @@
     },
   });
 
+  // ── Casos 09-11 (LOOP portatil, fases G-H, 2026-10-01) ────────────────────
+  // Hasta el caso 08 toda falla era "pieza mal asentada" o mantenimiento: se
+  // resolvia reasentando. Aqui aparecen las dos situaciones que faltaban:
+  //   - COMPONENTE AVERIADO: reasentar no sirve; hay que revisar la pieza
+  //     retirada y cambiarla por un repuesto ({type:"replaced"}).
+  //   - FALLA DOBLE (`faults`): dos causas a la vez. Al corregir la primera y
+  //     encender, aparece el sintoma de la segunda: se comprueba dos veces.
+  // No entran en el pool del caso 08 (que ya esta construido arriba).
+  var BOOT_SYMPTOM = "El portátil enciende y el ventilador gira, pero no arranca: sin sonido de inicio y sin imagen.";
+  var NOBOOT_SYMPTOM = "El equipo muestra imagen, pero indica que no hay un dispositivo de arranque disponible.";
+  var NOIMAGE_SYMPTOM = "El portátil arranca (se oye el inicio y hay actividad), pero la pantalla integrada sigue sin imagen.";
+  var KEYBOARD_SYMPTOM = "El sistema funciona, pero el teclado integrado no responde.";
+  var BATTERY_SYMPTOM = "El sistema inicia, pero la batería no carga: marca 0 % y el equipo solo funciona con el cargador conectado.";
+  var ALL_OK = "El portátil arranca y todo funciona con normalidad.";
+
+  var DAMAGED = {
+    ram: {
+      variantId: "ram-damaged",
+      overrides: [],
+      relevantPartIds: LAPTOP_ACCESS.concat(["ram"]),
+      fixCondition: { type: "replaced", partId: "ram" },
+      screen: { broken: "no-post", fixed: "desktop" },
+      finding: "Varios contactos dorados están oscurecidos y hay un chip con una marca de quemado: el módulo está averiado.",
+      symptomBroken: BOOT_SYMPTOM,
+      symptomFixed: "El portátil completa el arranque y muestra imagen con normalidad.",
+      explanation: {
+        whatWasHappening: "En este intento, el módulo de memoria RAM estaba averiado: aunque estuviera bien insertado, no superaba la prueba de memoria del arranque.",
+        why: "Una descarga electrostática, un pico de tensión o el desgaste pueden dañar un módulo. Por fuera parece bien puesto, y reasentarlo no cambia nada.",
+        howToFix: "Con la batería desconectada: retirar el módulo, revisarlo, cambiarlo por un repuesto compatible e insertarlo hasta que las pestañas lo aseguren.",
+        optimalProcedure: LAPTOP_PROCEDURE + "retirar la memoria RAM → revisarla → cambiarla por el repuesto → instalarla" + LAPTOP_CLOSE,
+      },
+    },
+    ssd: {
+      variantId: "ssd-damaged",
+      overrides: [],
+      relevantPartIds: LAPTOP_ACCESS.concat(["ssd-m2"]),
+      fixCondition: { type: "replaced", partId: "ssd-m2" },
+      screen: { broken: "no-boot", fixed: "desktop" },
+      finding: "El controlador de la unidad tiene una marca de sobrecalentamiento y un contacto del conector está levantado: la unidad está averiada.",
+      symptomBroken: NOBOOT_SYMPTOM,
+      symptomFixed: "El sistema detecta la unidad de almacenamiento y carga el sistema operativo.",
+      explanation: {
+        whatWasHappening: "En este intento, el SSD M.2 estaba averiado: el equipo no lo reconocía aunque estuviera bien insertado y atornillado.",
+        why: "Las unidades de estado sólido fallan por desgaste, calor o defectos del controlador. Cuando el controlador muere, la unidad desaparece para el equipo.",
+        howToFix: "Con la batería desconectada: retirar el tornillo y el SSD, revisarlo, cambiarlo por un repuesto, insertarlo a fondo y fijarlo con su tornillo. Después se reinstala el sistema o se restaura la copia de seguridad.",
+        optimalProcedure: LAPTOP_PROCEDURE + "retirar el SSD M.2 → revisarlo → cambiarlo por el repuesto → instalarlo con su tornillo" + LAPTOP_CLOSE,
+      },
+    },
+    wifi: {
+      variantId: "wifi-damaged",
+      overrides: [],
+      relevantPartIds: WIFI_RELEVANT,
+      fixCondition: { type: "replaced", partId: "wifi-card" },
+      screen: { broken: "wifi-fail", fixed: "desktop" },
+      finding: "Uno de los conectores de antena está arrancado de la tarjeta y el blindaje metálico está deformado: la tarjeta está averiada.",
+      symptomBroken: "El sistema funciona, pero no detecta ninguna red inalámbrica: el adaptador no aparece.",
+      symptomFixed: WIFI_FIXED,
+      explanation: {
+        whatWasHappening: "En este intento, la tarjeta Wi-Fi estaba averiada: el sistema no veía el adaptador inalámbrico.",
+        why: "Tirar del cable de antena en vez de desconectarlo con pinzas puede arrancar el conector u.FL de la tarjeta. Sin ese conector, la tarjeta no se puede recuperar.",
+        howToFix: "Con la batería desconectada: desconectar las antenas con pinzas, retirar la tarjeta, revisarla, cambiarla por un repuesto, atornillarla y reconectar las dos antenas.",
+        optimalProcedure: LAPTOP_PROCEDURE + "desconectar las antenas → retirar la tarjeta Wi-Fi → revisarla → cambiarla por el repuesto → instalarla → reconectar las antenas" + LAPTOP_CLOSE,
+      },
+    },
+    battery: {
+      variantId: "battery-damaged",
+      overrides: [],
+      relevantPartIds: LAPTOP_ACCESS.concat(["battery"]),
+      fixCondition: { type: "replaced", partId: "battery" },
+      screen: { broken: "battery-fail", fixed: "desktop" },
+      finding: "La batería está hinchada: la carcasa está abombada y ya no asienta plana. Es un riesgo; no se debe volver a montar.",
+      symptomBroken: BATTERY_SYMPTOM,
+      symptomFixed: "La batería carga con normalidad y el equipo funciona sin el cargador.",
+      explanation: {
+        whatWasHappening: "En este intento, la batería estaba averiada (hinchada): no retenía carga y el equipo dependía del cargador.",
+        why: "Con los ciclos de carga y el calor, las celdas de litio se degradan y pueden hincharse. Una batería hinchada no se repara: se sustituye y se lleva a un punto de recolección.",
+        howToFix: "Desconectar el cable de la batería, retirar sus tornillos y la batería, revisarla, montar el repuesto, atornillarlo y reconectar el cable.",
+        optimalProcedure: LAPTOP_PROCEDURE.replace(" → desconectar la batería → ", " → desconectar el cable de la batería → ") + "retirar la batería → revisarla → cambiarla por el repuesto → instalarla" + LAPTOP_CLOSE,
+      },
+    },
+  };
+  var DAMAGED_HINTS = [
+    "Primero reproduce la falla y decide qué subsistema está implicado, igual que en los casos anteriores.",
+    "Si reasentar la pieza sospechosa no corrige la falla, la conexión no era el problema. Retira la pieza y revísala de cerca: en la tarjeta aparece el botón «Revisar».",
+    "Un componente averiado no se arregla reasentándolo: retíralo, revísalo y, si tiene daño, cámbialo por el repuesto del banco del taller antes de montar.",
+  ];
+
+  function loose(partId, screen, symptomBroken) {
+    return { fixCondition: { type: "reseated", partId: partId }, screen: { broken: screen }, symptomBroken: symptomBroken };
+  }
+  function pick(fault) {
+    return { fixCondition: fault.fixCondition, screen: fault.screen, symptomBroken: fault.symptomBroken, finding: fault.finding };
+  }
+
+  LAPTOP_CASES.push(
+    {
+      id: "laptop-case-09",
+      equipmentId: "laptop",
+      number: 9,
+      name: "Componente averiado",
+      level: "moderado",
+      requiresCaseOpenHint: true,
+      revealSymptomOnCheck: true,
+      symptom:
+        "El usuario cuenta que ya llevó el portátil a revisar y «le ajustaron todo por dentro», pero la falla sigue igual. Reproduce la falla, encuentra la causa y repárala.",
+      faultPool: [DAMAGED.ram, DAMAGED.ssd, DAMAGED.wifi, DAMAGED.battery],
+      hints: DAMAGED_HINTS,
+      explanation: {
+        howToDiagnose:
+          "Cuando el síntoma apunta a una pieza y reasentarla no cambia nada, se pasa de «conexión» a «componente»: se retira la pieza, se revisa de cerca y, si tiene daño, se sustituye. Cambiar piezas sin revisarlas gasta repuestos y no enseña la causa.",
+        prevention:
+          "Usa pulsera antiestática, desconecta siempre la batería antes de tocar componentes y nunca tires de un cable para desconectarlo.",
+      },
+    },
+    {
+      id: "laptop-case-10",
+      equipmentId: "laptop",
+      number: 10,
+      name: "Dos fallas a la vez",
+      level: "avanzado",
+      requiresCaseOpenHint: true,
+      revealSymptomOnCheck: true,
+      symptom:
+        "El portátil se cayó de una mesa. Desde entonces el usuario dice que «quedó con varios problemas». Reproduce las fallas, corrígelas todas y entrega el equipo funcionando.",
+      faultPool: [
+        {
+          variantId: "screen-and-wifi",
+          overrides: [{ partId: "cable-screen-flex", present: true }, { partId: "wifi-antenna-1", present: true }],
+          relevantPartIds: WIFI_RELEVANT.concat(["cable-screen-flex"]),
+          faults: [loose("cable-screen-flex", "no-image", NOIMAGE_SYMPTOM), loose("wifi-antenna-1", "wifi-weak", WIFI_BROKEN)],
+          screen: { fixed: "desktop" },
+          symptomBroken: NOIMAGE_SYMPTOM,
+          symptomFixed: ALL_OK,
+          explanation: {
+            whatWasHappening: "En este intento había dos fallas: el cable flex de la pantalla estaba mal asentado (sin imagen) y la antena Wi-Fi principal estaba suelta (señal muy débil).",
+            why: "Un golpe mueve varios conectores a la vez. La primera falla tapaba a la segunda: sin imagen no se podía ver que además fallaba la red inalámbrica.",
+            howToFix: "Con la batería desconectada: reasentar el flex de pantalla en su conector y reconectar la antena principal sobre la tarjeta Wi-Fi.",
+            optimalProcedure: LAPTOP_PROCEDURE + "reasentar el flex de pantalla → armar y comprobar → al ver la falla de red, volver a abrir → reconectar la antena principal" + LAPTOP_CLOSE,
+          },
+        },
+        {
+          variantId: "keyboard-and-fan",
+          overrides: [{ partId: "cable-keyboard-flex", present: true }, { partId: "cable-cpu-fan-laptop", present: true }],
+          relevantPartIds: THERMAL_RELEVANT.concat(["cable-keyboard-flex"]),
+          faults: [loose("cable-keyboard-flex", "keyboard-fail", KEYBOARD_SYMPTOM), loose("cable-cpu-fan-laptop", "overheat", THERMAL_BROKEN)],
+          screen: { fixed: "desktop" },
+          symptomBroken: KEYBOARD_SYMPTOM,
+          symptomFixed: ALL_OK,
+          explanation: {
+            whatWasHappening: "En este intento había dos fallas: el cable flex del teclado estaba mal asentado y el conector del ventilador estaba suelto (el equipo se calentaba).",
+            why: "Un golpe mueve varios conectores a la vez. El teclado se nota al instante; el calor solo aparece tras unos minutos de uso, y por eso hay que comprobar con calma después de cada reparación.",
+            howToFix: "Con la batería desconectada: reasentar el flex del teclado con la herramienta plástica y reconectar a fondo el conector del ventilador.",
+            optimalProcedure: LAPTOP_PROCEDURE + "reasentar el flex del teclado → armar y comprobar → al ver la temperatura, volver a abrir → reconectar el ventilador" + LAPTOP_CLOSE,
+          },
+        },
+      ],
+      hints: [
+        "Trabaja una falla a la vez: reproduce, corrige lo que el síntoma indica y vuelve a encender.",
+        "Después de corregir la primera falla, observa de nuevo la pantalla: puede aparecer un síntoma que antes no se podía ver.",
+        "Un golpe suele aflojar conexiones internas. Revisa los cables y conectores del subsistema que señala cada síntoma, uno por uno.",
+      ],
+      explanation: {
+        howToDiagnose:
+          "Con más de una falla, el orden importa: primero la que impide ver o usar el equipo; después se comprueba otra vez desde cero. Nunca se da por terminado un equipo sin una comprobación completa.",
+        prevention: "Tras un golpe o una caída se revisan todos los conectores internos, no solo el que explica el primer síntoma.",
+      },
+    },
+    {
+      id: "laptop-case-11",
+      equipmentId: "laptop",
+      number: 11,
+      name: "Falla doble con avería",
+      level: "avanzado",
+      requiresCaseOpenHint: true,
+      revealSymptomOnCheck: true,
+      symptom:
+        "El portátil estuvo guardado mucho tiempo en un lugar húmedo y caluroso. El usuario dice que «ya no sirve». Reproduce las fallas, corrígelas todas y entrega el equipo funcionando.",
+      faultPool: [
+        {
+          variantId: "ram-damaged-and-dust",
+          overrides: [],
+          thermal: { dust: "dirty", paste: "new", amount: "adecuada" },
+          thermalVariant: "dust",
+          relevantPartIds: THERMAL_RELEVANT.concat(["ram"]),
+          faults: [pick(DAMAGED.ram), { fixCondition: { type: "thermalReady" }, screen: { broken: "overheat" }, symptomBroken: THERMAL_BROKEN }],
+          screen: { fixed: "desktop" },
+          symptomBroken: BOOT_SYMPTOM,
+          symptomFixed: ALL_OK,
+          explanation: {
+            whatWasHappening: "En este intento había dos fallas: el módulo de memoria RAM estaba averiado (no arrancaba) y la refrigeración tenía polvo acumulado (se calentaba).",
+            why: "La humedad daña los contactos y los chips de la memoria; el polvo se compacta en las aletas con el tiempo. Hasta que el equipo no arranca, el sobrecalentamiento no se puede observar.",
+            howToFix: "Con la batería desconectada: cambiar la memoria por el repuesto; después desconectar el ventilador, retirar el módulo de refrigeración, limpiar con brocha y aire comprimido, montarlo y reconectar el ventilador.",
+            optimalProcedure: LAPTOP_PROCEDURE + "revisar y cambiar la memoria RAM → armar y comprobar → al ver la temperatura, volver a abrir → limpiar la refrigeración" + LAPTOP_CLOSE,
+          },
+        },
+        {
+          variantId: "battery-damaged-and-screen",
+          overrides: [{ partId: "cable-screen-flex", present: true }],
+          relevantPartIds: LAPTOP_ACCESS.concat(["battery", "cable-screen-flex"]),
+          faults: [loose("cable-screen-flex", "no-image", NOIMAGE_SYMPTOM), pick(DAMAGED.battery)],
+          screen: { fixed: "desktop" },
+          symptomBroken: NOIMAGE_SYMPTOM,
+          symptomFixed: ALL_OK,
+          explanation: {
+            whatWasHappening: "En este intento había dos fallas: el cable flex de la pantalla estaba mal asentado (sin imagen) y la batería estaba hinchada (no cargaba).",
+            why: "Una batería hinchada empuja desde dentro y puede desplazar cables y conectores cercanos. Sin imagen no se podía ver el aviso de la batería.",
+            howToFix: "Con el cable de la batería desconectado: reasentar el flex de pantalla y cambiar la batería hinchada por el repuesto.",
+            optimalProcedure: LAPTOP_PROCEDURE + "reasentar el flex de pantalla → armar y comprobar → al ver el aviso de batería, volver a abrir → revisar y cambiar la batería" + LAPTOP_CLOSE,
+          },
+        },
+      ],
+      hints: [
+        "Trabaja una falla a la vez: reproduce, corrige lo que el síntoma indica y vuelve a encender.",
+        "No todas las fallas son conexiones flojas: si reasentar no corrige, retira la pieza y revísala con el botón «Revisar».",
+        "Aquí hay una pieza averiada (se cambia por el repuesto) y otra falla distinta (conexión o mantenimiento). La pantalla te muestra cuál queda después de cada comprobación.",
+      ],
+      explanation: {
+        howToDiagnose:
+          "Se combina todo lo anterior: una falla a la vez, comprobar después de cada reparación y distinguir entre conexión floja, mantenimiento y componente averiado antes de gastar un repuesto.",
+        prevention: "Guarda los equipos en lugares secos y frescos, y con la batería a media carga si van a estar mucho tiempo sin uso.",
+      },
+    }
+  );
+
+  // Una falla doble tambien declara su condicion completa (todas las etapas),
+  // para quien lea `fixCondition` sin conocer las etapas.
+  LAPTOP_CASES.forEach(function (c) {
+    (c.faultPool || []).forEach(function (f) {
+      if (f.faults && !f.fixCondition) {
+        f.fixCondition = { type: "all", conditions: f.faults.map(function (x) { return x.fixCondition; }) };
+      }
+    });
+  });
+
+  // ── Banco de EVALUACION del portatil (fase J) ─────────────────────────────
+  // Seis escenarios independientes de los casos de practica: el aprendiz
+  // recibe uno al azar (queda asignado hasta terminarlo, recargar no lo
+  // cambia). Sin pistas. No aparecen en el menu de casos. Combinan lo que el
+  // laboratorio ensena: conexion floja, mantenimiento, componente averiado y
+  // falla doble. El enunciado nunca nombra la pieza.
+  function evalScenario(n, name, symptom, faultPool) {
+    return {
+      id: "eval-e" + n,
+      equipmentId: "laptop",
+      number: n,
+      name: name,
+      level: "evaluacion",
+      evaluation: true,
+      requiresCaseOpenHint: true,
+      revealSymptomOnCheck: true,
+      symptom: symptom,
+      faultPool: faultPool,
+      hints: [],
+      explanation: {
+        howToDiagnose:
+          "Método: reproducir la falla, describir qué funciona y qué no, decidir el subsistema, intervenir lo mínimo necesario, comprobar después de cada reparación y entregar el equipo armado.",
+      },
+    };
+  }
+  function variantFrom(caseId, variantId) {
+    var c = LAPTOP_CASES.find(function (x) { return x.id === caseId; });
+    var f = (c.faultPool || [c.fault]).find(function (x) { return !variantId || x.variantId === variantId; });
+    return Object.assign({}, f, {
+      variantId: caseId + (f.variantId ? ":" + f.variantId : ""),
+      explanation: Object.assign({}, c.explanation, f.explanation || {}),
+    });
+  }
+  var EVAL_INTRO = "Evaluación. Un usuario entrega este portátil con una orden de servicio: ";
+  var EVALUATION_SCENARIOS = [
+    evalScenario(1, "Orden de servicio A", EVAL_INTRO + "«Lo prendo y no hace nada más».", [
+      variantFrom("laptop-case-01"),
+      variantFrom("laptop-case-05"),
+    ]),
+    evalScenario(2, "Orden de servicio B", EVAL_INTRO + "«Ya lo revisaron y sigue igual, no arranca».", [
+      variantFrom("laptop-case-09", "ram-damaged"),
+      variantFrom("laptop-case-09", "ssd-damaged"),
+    ]),
+    evalScenario(3, "Orden de servicio C", EVAL_INTRO + "«No me deja conectar a internet sin cable».", [
+      variantFrom("laptop-case-06", "wifi-card"),
+      variantFrom("laptop-case-06", "wifi-antenna-2"),
+      variantFrom("laptop-case-09", "wifi-damaged"),
+    ]),
+    evalScenario(4, "Orden de servicio D", EVAL_INTRO + "«Se pone lentísimo y quema».", [
+      variantFrom("laptop-case-07", "dust"),
+      variantFrom("laptop-case-07", "paste"),
+      variantFrom("laptop-case-07", "fan-cable"),
+    ]),
+    evalScenario(5, "Orden de servicio E", EVAL_INTRO + "«Se me cayó y quedó fallando de varias cosas».", [
+      variantFrom("laptop-case-10", "screen-and-wifi"),
+      variantFrom("laptop-case-10", "keyboard-and-fan"),
+    ]),
+    evalScenario(6, "Orden de servicio F", EVAL_INTRO + "«Estuvo guardado un año y ya no sirve».", [
+      variantFrom("laptop-case-11", "ram-damaged-and-dust"),
+      variantFrom("laptop-case-11", "battery-damaged-and-screen"),
+    ]),
+  ];
+
   var ALL_CASES = CASES.concat(LAPTOP_CASES);
 
   /** Casos de un equipo (los antiguos, sin equipmentId, son de escritorio). */
@@ -748,9 +1056,17 @@
     });
   }
 
+  /** Escenarios de evaluacion de un equipo (hoy solo el portatil). */
+  function evaluationScenarios(equipmentId) {
+    return EVALUATION_SCENARIOS.filter(function (c) {
+      return c.equipmentId === equipmentId;
+    });
+  }
+
+  /** Caso de practica o escenario de evaluacion por id. */
   function getCase(equipmentId, caseId) {
     return (
-      casesFor(equipmentId).find(function (c) {
+      casesFor(equipmentId).concat(evaluationScenarios(equipmentId)).find(function (c) {
         return c.id === caseId;
       }) || null
     );
@@ -758,7 +1074,7 @@
 
   // CASES se mantiene como la lista del ESCRITORIO (compatibilidad con quien ya
   // la usa). La lista completa, por equipo, se obtiene con casesFor/ALL_CASES.
-  var api = { CASES: CASES, LAPTOP_CASES: LAPTOP_CASES, ALL_CASES: ALL_CASES, casesFor: casesFor, getCase: getCase };
+  var api = { CASES: CASES, LAPTOP_CASES: LAPTOP_CASES, ALL_CASES: ALL_CASES, EVALUATION_SCENARIOS: EVALUATION_SCENARIOS, casesFor: casesFor, evaluationScenarios: evaluationScenarios, getCase: getCase };
 
   root.HardwareLab = root.HardwareLab || {};
   root.HardwareLab.DiagnosisCases = api;

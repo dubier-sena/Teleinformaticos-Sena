@@ -74,8 +74,9 @@ test("D03. las piezas externas del escritorio no existen en el portatil", () => 
 test("L01. los casos del portatil: IDs propios, equipo declarado, sin chocar con el escritorio", () => {
   const ids = Cases.casesFor("laptop").map((c) => c.id);
   // 01-05 (Fase A+B) + 06 Wi-Fi y 07 sobrecalentamiento (Fase C, con variantes)
-  // + 08 falla desconocida (C.2: reutiliza las condiciones de 01-07).
-  same(ids, ["laptop-case-01", "laptop-case-02", "laptop-case-03", "laptop-case-04", "laptop-case-05", "laptop-case-06", "laptop-case-07", "laptop-case-08"]);
+  // + 08 falla desconocida (C.2: reutiliza las condiciones de 01-07)
+  // + 09 componente averiado, 10 y 11 fallas dobles (LOOP portatil, oct-1).
+  same(ids, ["laptop-case-01", "laptop-case-02", "laptop-case-03", "laptop-case-04", "laptop-case-05", "laptop-case-06", "laptop-case-07", "laptop-case-08", "laptop-case-09", "laptop-case-10", "laptop-case-11"]);
   assert.equal(Cases.casesFor("desktop").length, 10);
   assert.equal(Cases.CASES.length, 10, "CASES sigue siendo la lista del escritorio (compatibilidad)");
   Cases.casesFor("desktop").forEach((c) => assert.match(c.id, /^caso-\d\d$/, "IDs del escritorio intactos"));
@@ -206,7 +207,7 @@ test("L06. controlador y bootstrap: multiequipo, sin encuadre automatico y la ta
   const boot = read("js/hardware_lab_3d_bootstrap.js");
   // Release 20260928_1: el diagnostico del portatil queda HABILITADO (y solo escritorio + portatil).
   assert.match(boot, /available: equipmentId === "desktop" \|\| equipmentId === "laptop",/, "diagnostico disponible para escritorio y portatil");
-  assert.match(boot, /"8 casos de diagnóstico: fallas reales y una falla desconocida\."/);
+  assert.match(boot, /"11 casos de diagnóstico: conexiones, mantenimiento, componentes averiados y fallas dobles\."/);
   assert.doesNotMatch(boot, /Próximamente para portátil/);
   assert.match(boot, /diagnosisController\.showCaseMenu\(selectedEquipmentId\)/);
   assert.match(ctl, /Storage\(\)\.persist\(equipmentId, storageModeFor\(caseDef\.id\), data\)/);

@@ -726,6 +726,10 @@
       { id: "input", title: "Teclado y touchpad" },
       { id: "screen", title: "Pantalla" },
     ],
+    // Banco de repuestos del taller (LOOP portatil, fase G): piezas que se
+    // pueden cambiar por una nueva en el diagnostico. La tarjeta madre, el
+    // procesador y el conjunto de pantalla no estan: una averia ahi se escala.
+    spares: ["ram", "ssd-m2", "wifi-card", "battery", "cooler", "keyboard", "touchpad", "cable-keyboard-flex", "cable-touchpad-flex", "cable-screen-flex"],
     initialStateDisassembly: buildInitialState(true),
     initialStateAssembly: buildInitialState(false),
     sequences: {

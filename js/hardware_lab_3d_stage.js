@@ -1535,7 +1535,10 @@ export function createStage() {
     if (pass) HardwareLabAudio.playComplete();
     const retryBtn = document.getElementById("hwlab-result-retry");
     const menuBtn = document.getElementById("hwlab-result-menu");
-    if (retryBtn) retryBtn.onclick = () => { modal.hidden = true; if (opts.onRetry) opts.onRetry(); };
+    if (retryBtn) {
+      retryBtn.textContent = opts.retryLabel || "Repetir";
+      retryBtn.onclick = () => { modal.hidden = true; if (opts.onRetry) opts.onRetry(); };
+    }
     if (menuBtn) menuBtn.onclick = () => { modal.hidden = true; if (opts.onMenu) opts.onMenu(); };
     modal.hidden = false;
   }

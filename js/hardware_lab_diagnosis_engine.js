@@ -135,6 +135,23 @@
       parts[o.partId] = o.present;
     });
 
+    // Fallas del intento (LOOP portatil, fases G-H). Una falla simple es una
+    // lista de UNA etapa; una falla doble declara `faults: [...]` y cada etapa
+    // tiene su condicion, su sintoma y su pantalla. El aprendiz ve el sintoma
+    // de la primera etapa sin resolver: al corregirla y volver a encender,
+    // aparece el de la siguiente (por eso hay que comprobar otra vez).
+    var stages = (fault.faults && fault.faults.length ? fault.faults : [fault]).map(function (f) {
+      return {
+        fixCondition: f.fixCondition,
+        symptomBroken: f.symptomBroken || fault.symptomBroken || caseDef.symptom,
+        screen: (f.screen && f.screen.broken) || (fault.screen && fault.screen.broken) || null,
+        finding: f.finding || null,
+      };
+    });
+    var fixCondition = stages.length > 1
+      ? { type: "all", conditions: stages.map(function (st) { return st.fixCondition; }) }
+      : fault.fixCondition;
+
     return {
       caseId: caseDef.id,
       equipmentId: equipmentData.id,
@@ -146,12 +163,21 @@
       parts: parts,
       faultPartIds: fault.relevantPartIds.slice(),
       relevantPartIds: fault.relevantPartIds.slice(),
-      fixCondition: fault.fixCondition,
+      fixCondition: fixCondition,
+      stages: stages,
+      // Componentes AVERIADOS: reasentarlos no basta, hay que sustituirlos.
+      damagedPartIds: conditionList(fixCondition).filter(function (c) { return c.type === "replaced"; }).map(function (c) { return c.partId; }),
+      replaced: {},
+      unjustifiedReplacements: [],
+      inspectedPartIds: [],
+      screenFixed: (fault.screen && fault.screen.fixed) || null,
+      thermalVariant: fault.thermalVariant || null,
+      evaluation: !!caseDef.evaluation,
       symptomBroken: fault.symptomBroken || caseDef.symptom,
       symptomFixed: fault.symptomFixed || "El equipo funciona con normalidad.",
       errors: 0,
       errorsByType: emptyErrorCounts(),
-      hints: { used: 0, max: 3 },
+      hints: { used: 0, max: caseDef.evaluation ? 0 : 3 },
       actionLog: [],
       unnecessaryPartIds: [],
       checkAttempts: 0,
@@ -353,9 +379,10 @@
       var p = getPart(equipmentData, id);
       ((p && p.removeRequires) || []).forEach(function (r) { if (r !== powerPart) add(r); });
     }
-    var cond = session.fixCondition || {};
-    if (cond.type === "reseated" || cond.type === "stateEquals") add(cond.partId);
-    if (cond.type === "thermalReady") add("cooler");
+    conditionList(session.fixCondition).forEach(function (cond) {
+      if (cond.type === "reseated" || cond.type === "stateEquals" || cond.type === "replaced") add(cond.partId);
+      if (cond.type === "thermalReady") add("cooler");
+    });
     return need;
   }
   function diagnosisTrace(equipmentData, session) {
@@ -366,9 +393,8 @@
       if (e.type === "action" && (e.action === "remove" || e.action === "disconnect") && touched.indexOf(e.partId) === -1) touched.push(e.partId);
       if ((e.type === "thermal" || e.type === "thermal-noop") && tasks.indexOf(e.task) === -1) tasks.push(e.task);
     });
-    var variantKey = session.fixCondition && session.fixCondition.type === "thermalReady" && session.variantId
-      ? String(session.variantId).split(":").pop()
-      : null;
+    var hasThermalCond = conditionList(session.fixCondition).some(function (c) { return c.type === "thermalReady"; });
+    var variantKey = !hasThermalCond ? null : session.thermalVariant || (session.variantId ? String(session.variantId).split(":").pop() : null);
     var neededTasks = NEEDED_THERMAL_TASKS[variantKey] || [];
     var extraParts = touched.filter(function (id) { return !need[id]; });
     var extraTasks = tasks.filter(function (t) { return neededTasks.indexOf(t) === -1; });
@@ -380,6 +406,8 @@
       repairedWithoutDiagnosis: corrected && !targeted,
       extraParts: extraParts,
       extraThermalTasks: extraTasks,
+      replacedParts: Object.keys(session.replaced || {}),
+      unjustifiedReplacements: (session.unjustifiedReplacements || []).slice(),
       fixedBy: fixedBy(session),
       basis: "acciones",
     };
@@ -419,8 +447,28 @@
     return false;
   }
 
-  function isFixConditionMet(equipmentData, session) {
-    var cond = session.fixCondition;
+  /** Condiciones elementales de una condicion (una sola, o las de "all"). */
+  function conditionList(cond) {
+    if (!cond) return [];
+    if (cond.type === "all") return (cond.conditions || []).reduce(function (acc, c) { return acc.concat(conditionList(c)); }, []);
+    return [cond];
+  }
+
+  /** Conexiones propias de la pieza (sin contar la bateria, que es requisito
+   *  de SEGURIDAD y no una conexion de la pieza). */
+  function ownConnectionsPresent(equipmentData, session, partId) {
+    var part = getPart(equipmentData, partId);
+    var powerPart = POWER_SOURCE_PART_BY_EQUIPMENT[equipmentData && equipmentData.id];
+    return ((part && part.removeRequires) || [])
+      .filter(function (id) { return id !== powerPart; })
+      .every(function (id) { return session.parts[id] === true; });
+  }
+
+  function conditionMet(equipmentData, session, cond) {
+    if (!cond) return false;
+    if (cond.type === "all") {
+      return (cond.conditions || []).every(function (c) { return conditionMet(equipmentData, session, c); });
+    }
     if (cond.type === "stateEquals") {
       return session.parts[cond.partId] === cond.present;
     }
@@ -432,23 +480,148 @@
       // quedar reconectados para considerar la reparacion completa. Sin este
       // chequeo, "reasentar" la GPU sin reconectar su alimentacion se
       // marcaria como resuelto aunque en la realidad seguiria sin dar imagen.
-      var part = getPart(equipmentData, cond.partId);
       // La bateria del portatil es requisito de SEGURIDAD para retirar casi
       // cualquier pieza interna, no una conexion propia de la pieza: que este
       // desconectada no significa que la falla siga (eso lo exige, aparte, la
       // regla de "equipo listo para comprobar").
-      var powerPart = POWER_SOURCE_PART_BY_EQUIPMENT[equipmentData && equipmentData.id];
-      var requires = ((part && part.removeRequires) || []).filter(function (id) {
-        return id !== powerPart;
-      });
-      return requires.every(function (id) {
-        return session.parts[id] === true;
-      });
+      return ownConnectionsPresent(equipmentData, session, cond.partId);
+    }
+    if (cond.type === "replaced") {
+      // Componente averiado: solo un repuesto NUEVO, instalado y con sus
+      // conexiones, corrige la falla. Reasentar el averiado no cambia nada.
+      return !!(session.replaced && session.replaced[cond.partId]) && session.parts[cond.partId] === true &&
+        ownConnectionsPresent(equipmentData, session, cond.partId);
     }
     if (cond.type === "thermalReady") {
       return hasThermal(equipmentData) && getThermal().isReady(session.thermal);
     }
     return false;
+  }
+
+  function isFixConditionMet(equipmentData, session) {
+    return conditionMet(equipmentData, session, session.fixCondition);
+  }
+
+  /** Etapas de la falla (sesiones anteriores a las fallas dobles: una sola). */
+  function stagesOf(session) {
+    if (session.stages && session.stages.length) return session.stages;
+    return [{ fixCondition: session.fixCondition, symptomBroken: session.symptomBroken, screen: null, finding: null }];
+  }
+
+  /** Primera etapa sin resolver (lo que el aprendiz observa al encender), o null. */
+  function pendingStage(equipmentData, session) {
+    var st = stagesOf(session);
+    for (var i = 0; i < st.length; i++) if (!conditionMet(equipmentData, session, st[i].fixCondition)) return st[i];
+    return null;
+  }
+
+  /** Cuantas etapas de la falla estan resueltas: { fixed, total }. */
+  function stageProgress(equipmentData, session) {
+    var st = stagesOf(session);
+    return { fixed: st.filter(function (x) { return conditionMet(equipmentData, session, x.fixCondition); }).length, total: st.length };
+  }
+
+  /** Sintoma que el aprendiz tiene a la vista: el de la ULTIMA comprobacion. */
+  function observedSymptom(session) {
+    var st = stagesOf(session);
+    for (var i = session.actionLog.length - 1; i >= 0; i--) {
+      var e = session.actionLog[i];
+      if (e.type === "power-on-check") return (st[e.stage] && st[e.stage].symptomBroken) || session.symptomBroken;
+    }
+    return (st[0] && st[0].symptomBroken) || session.symptomBroken;
+  }
+
+  /** Estado de pantalla que corresponde a la ultima comprobacion. */
+  function screenStateFor(equipmentData, session, outcome) {
+    if (outcome === "fixed") return session.screenFixed || "desktop";
+    if (outcome === "not-ready") return "off";
+    var st = pendingStage(equipmentData, session);
+    return (st && st.screen) || "no-post";
+  }
+
+  // ── Revisar y sustituir componentes (LOOP portatil, fase G) ───────────────
+  // Una pieza RETIRADA se puede revisar (gratis: es observar) y, si el equipo
+  // tiene repuesto de esa pieza, cambiar por una nueva. Cambiar una pieza que
+  // no estaba averiada es una "sustitucion no justificada": no se impide (en
+  // un taller real tambien se puede hacer), pero queda registrada.
+  var HEALTHY_FINDING = "Sin daño visible: contactos limpios y completos, sin marcas de calor ni piezas flojas.";
+  var DAMAGED_FINDING = "Se observa daño: este componente no se puede recuperar reasentándolo.";
+
+  function isDamaged(session, partId) {
+    return (session.damagedPartIds || []).indexOf(partId) !== -1 && !(session.replaced && session.replaced[partId]);
+  }
+
+  function sparesFor(equipmentData) {
+    return (equipmentData && equipmentData.spares) || [];
+  }
+
+  /** Piezas retiradas ahora mismo que se pueden revisar: [{ partId, name, spare, replaced }]. */
+  function removedParts(equipmentData, session) {
+    var merged = mergedEquipment(equipmentData);
+    var spares = sparesFor(equipmentData);
+    return Object.keys(merged.parts)
+      .filter(function (id) { return session.parts[id] === false; })
+      .map(function (id) {
+        return { partId: id, name: merged.parts[id].name, spare: spares.indexOf(id) !== -1, replaced: !!(session.replaced && session.replaced[id]) };
+      });
+  }
+
+  function inspectPart(equipmentData, session, partId) {
+    var part = getPart(equipmentData, partId);
+    if (!part) return { ok: false, message: "Esa pieza no existe en este equipo.", session: session };
+    if (session.parts[partId] !== false) {
+      return { ok: false, message: "Para revisar " + part.name + " de cerca, primero retírala del equipo.", session: session };
+    }
+    var replaced = !!(session.replaced && session.replaced[partId]);
+    var damaged = isDamaged(session, partId);
+    var finding = replaced
+      ? "Es el repuesto nuevo: sin uso y en buen estado."
+      : damaged
+      ? findingFor(session, partId) || DAMAGED_FINDING
+      : HEALTHY_FINDING;
+    var updated = logAction(session, { type: "inspect", partId: partId, damaged: damaged, ok: true });
+    if ((updated.inspectedPartIds || []).indexOf(partId) === -1) {
+      updated = Object.assign({}, updated, { inspectedPartIds: (updated.inspectedPartIds || []).concat([partId]) });
+    }
+    return { ok: true, damaged: damaged, message: part.name + ": " + finding, session: updated };
+  }
+
+  function findingFor(session, partId) {
+    var st = stagesOf(session);
+    for (var i = 0; i < st.length; i++) {
+      var c = st[i].fixCondition;
+      if (c && c.type === "replaced" && c.partId === partId && st[i].finding) return st[i].finding;
+    }
+    return null;
+  }
+
+  function replacePart(equipmentData, session, partId) {
+    var part = getPart(equipmentData, partId);
+    if (!part) return { ok: false, message: "Esa pieza no existe en este equipo.", session: session };
+    if (sparesFor(equipmentData).indexOf(partId) === -1) {
+      return { ok: false, message: "No hay repuesto de " + part.name + " en el banco del taller.", session: session };
+    }
+    if (session.parts[partId] !== false) {
+      return { ok: false, message: "Primero retira " + part.name + " del equipo: el repuesto se monta en su lugar.", session: session };
+    }
+    if (session.replaced && session.replaced[partId]) {
+      return { ok: false, message: part.name + " ya es un repuesto nuevo.", session: session };
+    }
+    var justified = isDamaged(session, partId);
+    var replaced = Object.assign({}, session.replaced || {});
+    replaced[partId] = true;
+    var updated = Object.assign({}, session, { replaced: replaced });
+    if (!justified) {
+      updated = Object.assign({}, updated, { unjustifiedReplacements: (session.unjustifiedReplacements || []).concat([partId]) });
+    }
+    updated = logAction(updated, { type: "replace", partId: partId, justified: justified, ok: true });
+    updated = noteFaultTransition(equipmentData, session, updated, { action: "replace", partId: partId });
+    return {
+      ok: true,
+      justified: justified,
+      message: "Repuesto listo: en la bandeja hay un repuesto nuevo de " + part.name + ". Móntalo en el equipo.",
+      session: updated,
+    };
   }
 
   // ── Equipo LISTO para la comprobacion final (sep-27) ──────────────────────
@@ -492,9 +665,22 @@
       checkAttempts: session.checkAttempts + 1,
       fixed: fixed,
     });
-    updated = logAction(updated, { type: "power-on-check", ok: fixed, outcome: outcome });
-    var message = fixed ? updated.symptomFixed : outcome === "not-ready" ? NOT_READY_MESSAGE : updated.symptomBroken;
-    return { fixed: fixed, faultFixed: faultFixed, ready: readiness.ready, outcome: outcome, message: message, session: updated };
+    var stage = pendingStage(equipmentData, session);
+    // Que etapa se OBSERVO en esta comprobacion: el sintoma visible no cambia
+    // hasta que el aprendiz vuelve a encender (reparar no lo revela).
+    updated = logAction(updated, { type: "power-on-check", ok: fixed, outcome: outcome, stage: stage ? stagesOf(session).indexOf(stage) : null });
+    var progress = stageProgress(equipmentData, session);
+    var broken = (stage && stage.symptomBroken) || updated.symptomBroken;
+    // Falla doble con una parte ya corregida: se dice que algo mejoro, sin
+    // nombrar la pieza, para que el aprendiz siga diagnosticando.
+    if (!faultFixed && progress.total > 1 && progress.fixed > 0) {
+      broken = "Una de las fallas quedó corregida, pero el equipo todavía no funciona bien. " + broken;
+    }
+    var message = fixed ? updated.symptomFixed : outcome === "not-ready" ? NOT_READY_MESSAGE : broken;
+    return {
+      fixed: fixed, faultFixed: faultFixed, ready: readiness.ready, outcome: outcome, message: message,
+      screen: screenStateFor(equipmentData, session, outcome), stagesFixed: progress.fixed, stagesTotal: progress.total, session: updated,
+    };
   }
 
   /** Variante activa dentro del pool del caso (o null). */
@@ -536,7 +722,11 @@
     );
     var reparacion = session.fixed ? CATEGORY_MAX.reparacion : 0;
     var herramientas = Math.max(0, CATEGORY_MAX.herramientas - (e.wrongTool || 0) * 3);
-    var eficiencia = Math.max(0, CATEGORY_MAX.eficiencia - session.unnecessaryPartIds.length * 2);
+    // Cambiar un componente que no estaba averiado es gastar un repuesto sin
+    // diagnostico: resta 3 en eficiencia (solo existe desde el banco de
+    // repuestos; los intentos anteriores no tienen sustituciones).
+    var unjustified = (session.unjustifiedReplacements || []).length;
+    var eficiencia = Math.max(0, CATEGORY_MAX.eficiencia - session.unnecessaryPartIds.length * 2 - unjustified * 3);
     return {
       diagnostico: { value: diagnostico, max: CATEGORY_MAX.diagnostico },
       procedimiento: { value: procedimiento, max: CATEGORY_MAX.procedimiento },
@@ -547,21 +737,75 @@
     };
   }
 
+  // ── Rubrica de la EVALUACION del portatil (fases J-K) ─────────────────────
+  // Diagnostico 30 · Procedimiento 25 · Reparacion 25 · Herramientas 10 = 90
+  // brutos; el seguimiento la normaliza a 100 (bruto x 100 / 90), igual que
+  // las practicas. Es una rubrica NUEVA para una actividad nueva: la de los
+  // casos de practica (arriba) no cambia. Se evalua conocimiento y
+  // procedimiento, no punteria ni velocidad: no hay categoria de tiempo.
+  //   Diagnostico: proporcional a las fallas corregidas; resta cambiar
+  //     componentes sanos (-10 c/u) y acertar desmontando otros subsistemas
+  //     sin necesidad (-5).
+  //   Reparacion: completa solo si TODAS las fallas quedan corregidas y el
+  //     equipo se entrega armado y comprobado; si no, parcial por falla.
+  //   Procedimiento y herramientas se GANAN trabajando: entregar sin haber
+  //     hecho nada no da puntos. Sin ninguna falla corregida cuentan al 40 %
+  //     si al menos se abrio el equipo de forma segura (bateria desconectada);
+  //     con parte de las fallas corregidas, entre el 50 % y el 100 %.
+  var EVALUATION_MAX = { diagnostico: 30, procedimiento: 25, reparacion: 25, herramientas: 10 };
+
+  function computeEvaluationBreakdown(equipmentData, session) {
+    var e = session.errorsByType || {};
+    var progress = stageProgress(equipmentData, session);
+    var ratio = progress.total ? progress.fixed / progress.total : 0;
+    var trace = diagnosisTrace(equipmentData, session);
+    var unjustified = (session.unjustifiedReplacements || []).length;
+    var diagnostico = Math.round(EVALUATION_MAX.diagnostico * ratio) - unjustified * 10 - (trace.repairedWithoutDiagnosis && !unjustified ? 5 : 0);
+    diagnostico = Math.max(0, Math.min(EVALUATION_MAX.diagnostico, diagnostico));
+    var powerPart = POWER_SOURCE_PART_BY_EQUIPMENT[equipmentData.id];
+    var openedSafely = !powerPart || (session.actionLog || []).some(function (a) {
+      return a.type === "action" && a.ok && a.partId === powerPart && (a.action === "disconnect" || a.action === "remove");
+    });
+    var effort = session.fixed ? 1 : ratio > 0 ? 0.5 + 0.5 * ratio : openedSafely ? 0.4 : 0;
+    var procedimiento = Math.round(effort * Math.max(
+      0,
+      EVALUATION_MAX.procedimiento - (e.blocked || 0) * 3 - (e.caseClosed || 0) * 3 - (e.unsafe || 0) * 3 - (e.thermal || 0) * 3
+    ));
+    var reparacion = session.fixed ? EVALUATION_MAX.reparacion : Math.round(EVALUATION_MAX.reparacion * ratio * 0.6);
+    var herramientas = Math.round(effort * Math.max(0, EVALUATION_MAX.herramientas - (e.wrongTool || 0) * 3));
+    return {
+      diagnostico: { value: diagnostico, max: EVALUATION_MAX.diagnostico },
+      procedimiento: { value: procedimiento, max: EVALUATION_MAX.procedimiento },
+      reparacion: { value: reparacion, max: EVALUATION_MAX.reparacion },
+      herramientas: { value: herramientas, max: EVALUATION_MAX.herramientas },
+      total: diagnostico + procedimiento + reparacion + herramientas,
+    };
+  }
+
   function finish(session, options) {
     var opts = options || {};
     var finishedAt = opts.now || new Date().toISOString();
     var durationSeconds = Math.max(0, Math.round((Date.parse(finishedAt) - Date.parse(session.startedAt)) / 1000));
-    var breakdown = computeScoreBreakdown(session);
+    var isEvaluation = !!(session.evaluation && opts.equipmentData);
+    var breakdown = isEvaluation ? computeEvaluationBreakdown(opts.equipmentData, session) : computeScoreBreakdown(session);
+    var rawMax = isEvaluation ? 90 : 100;
+    var progress = opts.equipmentData ? stageProgress(opts.equipmentData, session) : null;
     var result = {
       caseId: session.caseId,
+      evaluation: isEvaluation,
+      faultsFixed: progress ? progress.fixed : null,
+      faultsTotal: progress ? progress.total : null,
+      errorsByType: session.errorsByType,
       diagnosisCorrect: session.fixed,
       durationSeconds: durationSeconds,
       hintsUsed: session.hints.used,
       errors: session.errors,
       unnecessaryParts: session.unnecessaryPartIds.length,
+      replacedParts: Object.keys(session.replaced || {}),
+      unjustifiedReplacements: (session.unjustifiedReplacements || []).slice(),
       breakdown: breakdown,
       score: breakdown.total,
-      status: breakdown.total >= PASS_THRESHOLD ? "APROBADO" : "POR MEJORAR",
+      status: (breakdown.total * 100) / rawMax >= PASS_THRESHOLD ? "APROBADO" : "POR MEJORAR",
     };
     return Object.assign({}, session, { finishedAt: finishedAt, result: result });
   }
@@ -578,6 +822,14 @@
       faultPartIds: session.faultPartIds,
       relevantPartIds: session.relevantPartIds,
       fixCondition: session.fixCondition,
+      stages: session.stages || null,
+      damagedPartIds: session.damagedPartIds || [],
+      replaced: session.replaced || {},
+      unjustifiedReplacements: session.unjustifiedReplacements || [],
+      inspectedPartIds: session.inspectedPartIds || [],
+      screenFixed: session.screenFixed || null,
+      thermalVariant: session.thermalVariant || null,
+      evaluation: !!session.evaluation,
       symptomBroken: session.symptomBroken,
       symptomFixed: session.symptomFixed,
       errors: session.errors,
@@ -613,6 +865,17 @@
     diagnosisTrace: diagnosisTrace,
     applyThermalTask: applyThermalTask,
     isFixConditionMet: isFixConditionMet,
+    conditionMet: conditionMet,
+    conditionList: conditionList,
+    stagesOf: stagesOf,
+    pendingStage: pendingStage,
+    stageProgress: stageProgress,
+    screenStateFor: screenStateFor,
+    observedSymptom: observedSymptom,
+    isDamaged: isDamaged,
+    removedParts: removedParts,
+    inspectPart: inspectPart,
+    replacePart: replacePart,
     createDiagnosisSession: createDiagnosisSession,
     isCaseOpen: isCaseOpen,
     attemptAction: attemptAction,
@@ -620,6 +883,8 @@
     useHint: useHint,
     finish: finish,
     computeScoreBreakdown: computeScoreBreakdown,
+    computeEvaluationBreakdown: computeEvaluationBreakdown,
+    EVALUATION_MAX: EVALUATION_MAX,
     serialize: serialize,
     deserialize: deserialize,
   };

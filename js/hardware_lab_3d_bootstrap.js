@@ -39,12 +39,17 @@ function practiceOptionsFor(equipmentId) {
       ? [{ mode: "maintenance-guided", icon: ICONS.maintenance, title: "Mantenimiento preventivo", desc: "Abre el portátil hasta la refrigeración, limpia el polvo, renueva la pasta térmica y vuelve a cerrarlo.", available: true }]
       : []),
     { mode: "free", icon: ICONS.free, title: "Practica libre", desc: "Practica sin instrucciones constantes; consulta pistas si las necesitas.", available: true, needsDirection: true },
-    { mode: "evaluation", icon: ICONS.evaluation, title: "Evaluacion", desc: "Sin pistas de que sigue: se califica sobre 100 puntos con rubrica.", available: true, needsDirection: true },
+    // Portatil (LOOP oct-1): la evaluacion es una ORDEN DE SERVICIO al azar
+    // (uno de 6 escenarios de diagnostico y reparacion), no un desensamble sin
+    // guia. El escritorio conserva la evaluacion de siempre.
+    equipmentId === "laptop"
+      ? { mode: "evaluation", icon: ICONS.evaluation, title: "Evaluación", desc: "Recibes una orden de servicio al azar: diagnostica, repara y entrega el equipo funcionando. Sin pistas; se califica sobre 100 con rúbrica.", available: true, serviceOrder: true }
+      : { mode: "evaluation", icon: ICONS.evaluation, title: "Evaluacion", desc: "Sin pistas de que sigue: se califica sobre 100 puntos con rubrica.", available: true, needsDirection: true },
     {
       mode: "diagnosis",
       icon: ICONS.diagnosis,
       title: "Diagnóstico y reparación",
-      desc: equipmentId === "desktop" ? "10 casos de diagnóstico de fallas reales, de fácil a moderado." : "8 casos de diagnóstico: fallas reales y una falla desconocida.",
+      desc: equipmentId === "desktop" ? "10 casos de diagnóstico de fallas reales, de fácil a moderado." : "11 casos de diagnóstico: conexiones, mantenimiento, componentes averiados y fallas dobles.",
       // Release 20260928_1: diagnostico disponible para los DOS equipos (y solo esos).
       available: equipmentId === "desktop" || equipmentId === "laptop",
     },
@@ -136,6 +141,11 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
     document.getElementById("hwlab-direction-group").hidden = true;
+    if (opt.serviceOrder) {
+      document.getElementById("hwlab-diag-case-group").hidden = true;
+      diagnosisController.startEvaluation(selectedEquipmentId);
+      return;
+    }
     if (mode === "diagnosis") {
       diagnosisController.showCaseMenu(selectedEquipmentId);
       return;

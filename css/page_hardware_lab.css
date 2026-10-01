@@ -1156,6 +1156,14 @@ details.hwlab-thermal[open] > .hwlab-thermal__summary::before { transform: rotat
 .hwlab-phases__text { margin: 0 0 8px; font-size: var(--font-size-sm); color: var(--hwlab-text); }
 @media (max-width: 360px) { .hwlab-card__body .hwlab-phases { font-size: 11px; gap: 2px; } }
 
+/* Piezas retiradas: revisar / cambiar por repuesto (fase G). */
+.hwlab-removed { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.hwlab-removed li { display: grid; gap: 6px; padding: 8px; border: 1px solid var(--hwlab-border); border-radius: 8px; }
+.hwlab-removed__name { font-weight: var(--weight-semibold); font-size: var(--font-size-sm); }
+.hwlab-removed__tag { margin-left: 6px; padding: 1px 6px; border-radius: 999px; border: 1px solid var(--hwlab-success); color: var(--hwlab-success); font-size: var(--font-size-xs); font-weight: var(--weight-regular, 400); }
+.hwlab-removed__actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.hwlab-removed__actions .c-btn { flex: 1 1 auto; }
+
 /* La accion principal de la tarjeta queda SIEMPRE a la vista aunque el texto
    del paso sea mas alto que la tarjeta (en el telefono mide el 42 % de la
    escena): se pega al borde inferior del area con desplazamiento. */

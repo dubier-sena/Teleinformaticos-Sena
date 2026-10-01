@@ -48,8 +48,8 @@
   function dur(s) { return typeof s === "number" ? Math.floor(s / 60) + " min " + (Math.round(s % 60) < 10 ? "0" : "") + Math.round(s % 60) + " s" : "—"; }
   function caseName(eq, caso) {
     var DC = root.HardwareLab && root.HardwareLab.DiagnosisCases;
-    var list = DC && typeof DC.casesFor === "function" ? DC.casesFor(eq) : [];
-    var c = (list || []).find(function (x) { return x.id === caso; });
+    var c = DC && typeof DC.getCase === "function" ? DC.getCase(eq, caso) : null;
+    if (c && c.evaluation) return c.name;
     return c ? "Caso " + c.number : caso || "";
   }
 

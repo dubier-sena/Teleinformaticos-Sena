@@ -52,6 +52,9 @@
 
   function describePractice(practica) {
     var p = String(practica || "");
+    // Evaluacion del portatil (LOOP portatil, oct-1): un escenario de
+    // diagnostico en modo evaluacion. Mismos campos que cualquier intento.
+    if (p.indexOf("diagnosis-eval-") === 0) return { actividad: "diagnostico", modo: "evaluacion", caso: p.slice("diagnosis-".length) };
     if (p.indexOf("diagnosis-") === 0) return { actividad: "diagnostico", modo: "diagnostico", caso: p.slice("diagnosis-".length) };
     var known = PRACTICES[p];
     return known ? { actividad: known.actividad, modo: known.modo, caso: null } : null;

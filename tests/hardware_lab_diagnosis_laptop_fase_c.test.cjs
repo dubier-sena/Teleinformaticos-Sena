@@ -417,7 +417,9 @@ const CANDIDATES = Object.keys(LAPTOP.parts).filter((id) => id !== "bottom-cover
 
 test("M. matriz: cada falla de 01-07 solo se repara por el camino fisico que pasa por su pieza", () => {
   let checked = 0;
-  Cases.casesFor("laptop").forEach((c) => {
+  // Casos 01-08: una sola condicion por intento. Los 09-11 (averias y fallas
+  // dobles) tienen su propia matriz en hardware_lab_diagnosis_faults.test.cjs.
+  Cases.casesFor("laptop").filter((c) => c.number <= 8).forEach((c) => {
     (c.faultPool || [c.fault]).forEach((f, idx) => {
       CANDIDATES.forEach((cand) => {
         const pathIds = reseatPath(cand);

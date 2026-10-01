@@ -26,7 +26,8 @@ const Thermal = H.Thermal;
 const LAPTOP = H.DataLaptop.LAPTOP_EQUIPMENT;
 const Cases = H.DiagnosisCases;
 const C8 = Cases.getCase("laptop", "laptop-case-08");
-const BASE = Cases.casesFor("laptop").filter((c) => c.id !== "laptop-case-08");
+// Los casos 09-11 (averias y fallas dobles, oct-1) no entran en el pool del 08.
+const BASE = Cases.casesFor("laptop").filter((c) => c.number < 8);
 const same = (a, b, msg) => assert.equal(JSON.stringify(a), JSON.stringify(b), msg);
 
 function sessionFor(variantId) {

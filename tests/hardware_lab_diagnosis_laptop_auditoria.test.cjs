@@ -151,7 +151,7 @@ test("D6. textos visibles con tildes; ids, claves y categorias sin cambios", () 
   assert.match(data, /name: "Módulo de refrigeración \(heatpipe \+ ventilador\)",\s*category: "refrigeracion",/, "la categoria (clave) no cambia");
   assert.doesNotMatch(data, /varios anos de uso/);
   const boot = read("js/hardware_lab_3d_bootstrap.js");
-  assert.match(boot, /"8 casos de diagnóstico: fallas reales y una falla desconocida\."/);
+  assert.match(boot, /"11 casos de diagnóstico: conexiones, mantenimiento, componentes averiados y fallas dobles\."/);
   assert.match(boot, /available: equipmentId === "desktop" \|\| equipmentId === "laptop",/, "habilitado para escritorio y portatil");
   // Ningun texto visible del modulo termico queda sin tilde.
   const literals = (src) => src.split("\n").filter((l) => !/^\s*(\*|\/\/|\/\*)/.test(l)).flatMap((l) => [...l.matchAll(/"((?:[^"\\]|\\.)*)"/g)].map((m) => m[1]));
@@ -160,13 +160,13 @@ test("D6. textos visibles con tildes; ids, claves y categorias sin cambios", () 
 });
 
 // ── Release 20260928_1: habilitacion y versionado ───────────────────────────
-test("REL-1. diagnostico habilitado SOLO para escritorio y portatil; 8 casos del portatil y 10 del escritorio", () => {
+test("REL-1. diagnostico habilitado SOLO para escritorio y portatil; 11 casos del portatil y 10 del escritorio", () => {
   const boot = read("js/hardware_lab_3d_bootstrap.js");
   const equipos = [...boot.matchAll(/\{ id: "([a-z]+)", icon: ICONS\.[a-z]+, title:/g)].map((m) => m[1]);
   assert.deepEqual(equipos, ["desktop", "laptop"], "ningun otro equipo");
   assert.match(boot, /available: equipmentId === "desktop" \|\| equipmentId === "laptop",/);
   assert.doesNotMatch(boot, /mode: "diagnosis",[\s\S]{0,400}available: true/, "sin habilitacion generica");
-  assert.equal(Cases.casesFor("laptop").length, 8);
+  assert.equal(Cases.casesFor("laptop").length, 11);
   assert.equal(Cases.casesFor("desktop").length, 10);
   // La entrada al diagnostico pasa el equipo elegido al menu de casos.
   assert.match(boot, /diagnosisController\.showCaseMenu\(selectedEquipmentId\)/);

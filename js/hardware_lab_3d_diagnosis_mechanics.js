@@ -22,7 +22,7 @@
  */
 import { applyThermalLook } from "./hardware_lab_3d_thermal_look.js?v=20260929_1";
 
-export function createLaptopDiagnosisMechanics({ stage, getSession, setSession, getEquipmentData, onChanged, onRender }) {
+export function createLaptopDiagnosisMechanics({ stage, getSession, setSession, getEquipmentData, onChanged, onRender, onPoseStart }) {
   let neededPreset = null;
   let screwsBusy = false;
   let thermalOpen = false; // el aprendiz desplego a mano el panel de refrigeracion
@@ -145,7 +145,7 @@ export function createLaptopDiagnosisMechanics({ stage, getSession, setSession, 
     else c.syncFromParts(getSession().parts, { installedWhenPresent: true });
     stage.setPoseHooks({
       contextualPreset: () => neededPreset,
-      onPoseStart: () => {},
+      onPoseStart: () => { if (onPoseStart) onPoseStart(); },
       onPoseEnd: () => {
         refreshFraming();
         onRender();
