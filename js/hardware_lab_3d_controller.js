@@ -66,6 +66,9 @@ export function createAssemblyController(stage) {
   function Engine() {
     return window.HardwareLab.Engine;
   }
+  function Guidance() {
+    return window.HardwareLab.Guidance;
+  }
   // Seguimiento academico (LOOP seguimiento, sep-29): cada sesion NUEVA recibe
   // un nonce unico (id de su intento); una sesion guardada sin nonce es
   // anterior al sistema y conserva el id determinista "legacy".
@@ -145,6 +148,7 @@ export function createAssemblyController(stage) {
     stage.setModeTitle("Aprender componentes", equipmentData.name);
     stage.setStats({ step: null });
     stage.setHintUi(0, 0, null);
+    stage.setHelpHandler(() => stage.showFeedback(Guidance().whatToDo({ mode: "learn" }), "info"));
     document.getElementById("hwlab-hint-btn").hidden = true;
     document.getElementById("hwlab-restart-btn").hidden = true;
     stage.stopTimer();
@@ -278,6 +282,7 @@ export function createAssemblyController(stage) {
       handlePartClick(meta.partId);
     });
     stage.interactions.setPickExpectation(pickExpectation);
+    stage.setHelpHandler(onHelp);
 
     // Encuadre automatico por pieza objetivo (sep-26): solo en la practica
     // GUIADA (en la libre y la evaluacion el aprendiz busca la pieza). Solo
@@ -800,11 +805,91 @@ export function createAssemblyController(stage) {
   }
 
   function onHint() {
+    const before = session.hints.used;
     const result = Engine().useHint(session);
     session = result.session;
     stage.setHintUi(session.hints.used, session.hints.max, onHint);
-    stage.showFeedback(result.message, result.ok ? "info" : "error");
+    let message = result.message;
+    if (result.ok && session.hints.used > before) {
+      // La pista cuesta lo mismo que siempre (-3 en procedimiento); antes se
+      // cobraba y el aviso salia VACIO (medido con clic real).
+      const step = Engine().currentStep(session);
+      const safety = step && step.kind === "safety" ? { confirmLabel: Guidance().safetyConfirmLabel(step) } : null;
+      const target = safety ? null : targetSummary(nextTarget());
+      message = Guidance().practiceHint({ mode: session.kind, safety, target });
+      if (target) stage.pointAtPart(target.partId);
+      stage.pushActionLog("Pista usada (" + session.hints.used + " de " + session.hints.max + ")");
+    }
+    stage.showFeedback(message, result.ok ? "info" : "error");
     persist();
+  }
+
+  // ── ORIENTACION (Fase D) ─────────────────────────────────────────────────
+  /** Pieza que el procedimiento pide ahora. Guiado: la del paso. Libre y
+   *  evaluacion: la primera de la secuencia de referencia que todavia falta y
+   *  que el motor aceptaria (solo se usa en la PISTA, que cuesta puntos). */
+  function nextTarget() {
+    if (!session || isLearn || Engine().isFinished(session)) return null;
+    const step = Engine().currentStep(session);
+    if (step && step.kind === "safety") return null;
+    if (session.kind === "guided") return step && step.kind === "action" ? { partId: step.partId, action: step.action } : null;
+    const want = (st) => st.action === "install" || st.action === "connect";
+    const pending = (session.sequence || []).filter((st) => st.kind === "action" && session.parts[st.partId] !== want(st));
+    const ok = pending.find((st) => actionWouldBeValid(st.partId, st.action));
+    return ok ? { partId: ok.partId, action: ok.action } : null;
+  }
+
+  function targetSummary(target) {
+    const part = target && getPart(target.partId);
+    if (!part) return null;
+    const ctl = screws();
+    const removing = target.action === "remove" || target.action === "disconnect";
+    const tool = Tools().getTool(contextualToolId(part));
+    const req = Engine().checkRequirements(equipmentData, session, target.partId, removing ? "remove" : "install");
+    return {
+      partId: target.partId,
+      partName: part.name,
+      verb: (Engine().ACTION_LABELS[target.action] || { verb: "operar" }).verb,
+      where: part.info && part.info.location,
+      tool: tool && tool.id !== "hands" ? tool.name : "",
+      screws: ctl && ctl.hasScrews(target.partId) ? (removing ? ctl.pendingRemoval(target.partId) : 0) : 0,
+      missing: req.ok ? [] : (req.missing || []).map((id) => (getPart(id) ? getPart(id).name : id)),
+    };
+  }
+
+  function guidanceContext() {
+    const step = session ? Engine().currentStep(session) : null;
+    const safety = step && step.kind === "safety" ? { title: step.title, confirmLabel: Guidance().safetyConfirmLabel(step) } : null;
+    const prepare = document.getElementById("hwlab-prepare-btn");
+    const pendiente = session && !safety ? partWithPendingScrews(null) : null;
+    const guidedStep = session && session.kind === "guided" ? step : null;
+    return {
+      mode: isLearn ? "learn" : session.kind,
+      finished: !!session && Engine().isFinished(session),
+      safety,
+      pose: prepare ? { label: prepare.textContent.trim() } : null,
+      pendingInstall: pendiente ? { partId: pendiente, partName: getPart(pendiente).name, n: screws().pendingInstall(pendiente) } : null,
+      thermalRequired: !!document.querySelector("#hwlab-info-panel .hwlab-thermal[data-required] [data-thermal-task]") && (!guidedStep || (guidedStep.kind === "action" && guidedStep.partId === "cooler")),
+      target: session && session.kind === "guided" ? targetSummary(nextTarget()) : null,
+      hintsLeft: session ? session.hints.max - session.hints.used : 0,
+    };
+  }
+
+  // "¿Que debo hacer?": gratis. Explica que espera la interfaz; en el guiado,
+  // la segunda vez en el mismo paso ademas senala la pieza (el guiado ya la
+  // nombra). En practica libre y evaluacion nunca revela la pieza.
+  let helpKey = null;
+  function onHelp() {
+    const ctx = guidanceContext();
+    const key = [session.kind, session.stepIndex || 0, ctx.target ? ctx.target.partId : "", ctx.pose ? "pose" : "", ctx.pendingInstall ? ctx.pendingInstall.partId : ""].join(":");
+    const again = helpKey === key;
+    helpKey = key;
+    let text = Guidance().whatToDo(ctx);
+    if (again && ctx.mode === "guided" && ctx.target && !ctx.pose && !ctx.safety && !ctx.thermalRequired) {
+      const shown = stage.pointAtPart(ctx.pendingInstall ? ctx.pendingInstall.partId : ctx.target.partId);
+      if (shown) text = "Te la muestro: queda enmarcada en la escena. " + text.replace(/ Si no la ves.*$/, "");
+    }
+    stage.showFeedback(text, "info");
   }
 
   function attemptSafety(stepId) {
@@ -863,7 +948,7 @@ export function createAssemblyController(stage) {
         "<ol>" +
         (step.instructions || []).map((i) => `<li>${esc(i)}</li>`).join("") +
         "</ol>" +
-        `<button type="button" class="c-btn c-btn--primary c-btn--block" id="hwlab-safety-confirm-btn">Confirmar paso</button>`;
+        `<button type="button" class="c-btn c-btn--primary c-btn--block" id="hwlab-safety-confirm-btn" data-pending-text="Paso de seguridad pendiente: léelo y confírmalo para continuar.">${esc(Guidance().safetyConfirmLabel(step))}</button>`;
     } else if (session.kind === "guided" && step && step.kind === "action") {
       const part = getPart(step.partId);
       const actionInfo = Engine().ACTION_LABELS[step.action];

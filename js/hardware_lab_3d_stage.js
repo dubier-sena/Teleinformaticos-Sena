@@ -1328,6 +1328,24 @@ export function createStage() {
     if (stepStat) stepStat.hidden = step == null;
   }
 
+  /** "¿Que debo hacer?" (Fase D): el modo activo aporta el texto. Sin
+   *  manejador, el boton no se muestra. */
+  function setHelpHandler(fn) {
+    const btn = document.getElementById("hwlab-help-btn");
+    if (!btn) return;
+    btn.hidden = typeof fn !== "function";
+    btn.onclick = typeof fn === "function" ? fn : null;
+  }
+
+  /** Senala una pieza en la escena: la enmarca y lleva la camara a ella. */
+  function pointAtPart(partId) {
+    const obj = currentRig && currentRig.getObject3D(partId);
+    if (!obj || !obj.visible) return false;
+    if (interactions) interactions.setSelected(obj);
+    focusOnPart(partId);
+    return true;
+  }
+
   function setHintUi(used, max, onClick) {
     const btn = document.getElementById("hwlab-hint-btn");
     const count = document.getElementById("hwlab-hint-count");
@@ -1387,7 +1405,9 @@ export function createStage() {
     const blocking = panel.querySelector(BLOCKING_ACTION);
     if (panel.querySelector(MAIN_ACTION)) card.setAttribute("data-pending", "true"); else card.removeAttribute("data-pending");
     if (!note) return;
-    let text = "";
+    // Un modo puede declarar su propio texto (diagnostico: la fase actual).
+    const declared = panel.querySelector("[data-pending-text]");
+    let text = declared && !blocking ? declared.getAttribute("data-pending-text") || "" : "";
     if (blocking) {
       text = blocking.getAttribute("data-pending-text") || (blocking.closest(".hwlab-thermal") ? "Tarea pendiente: complétala para continuar." : blocking.id === "hwlab-prepare-btn" ? "Acción pendiente: coloca el equipo en posición para continuar." : "Acción pendiente: confirma para continuar.");
     }
@@ -1518,6 +1538,8 @@ export function createStage() {
     focusOnPart,
     toggleExplode,
     showFeedback,
+    setHelpHandler,
+    pointAtPart,
     pushActionLog,
     clearActionLog,
     setModeTitle,

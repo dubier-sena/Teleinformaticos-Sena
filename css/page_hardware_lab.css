@@ -759,6 +759,7 @@ details.hwlab-thermal[open] > .hwlab-thermal__summary::before { transform: rotat
   overflow: hidden;
 }
 .hwlab-card__more,
+.hwlab-card__help,
 .hwlab-card__toggle {
   position: relative;
   flex: none;
@@ -770,7 +771,8 @@ details.hwlab-thermal[open] > .hwlab-thermal__summary::before { transform: rotat
   cursor: pointer;
   font-size: var(--font-size-xs);
 }
-.hwlab-card__more { padding: 0 10px; }
+.hwlab-card__more,
+.hwlab-card__help { padding: 0 10px; }
 .hwlab-card__toggle { width: 36px; display: inline-flex; align-items: center; justify-content: center; }
 .hwlab-card__more:hover,
 .hwlab-card__toggle:hover { color: #fff; border-color: var(--hwlab-border-strong); }
@@ -1126,12 +1128,60 @@ details.hwlab-thermal[open] > .hwlab-thermal__summary::before { transform: rotat
 .hwlab-state--en_progreso, .hwlab-state--historico_parcial { border-color: var(--hwlab-accent); color: var(--hwlab-accent); }
 .hwlab-result-score__raw { margin: 0.25rem 0 0; font-size: 0.9rem; }
 
+/* ── Orientacion (Fase D, 2026-10-01) ─────────────────────────────────────
+   Boton "Ayuda" (¿que debo hacer?) y fases del diagnostico. */
+.hwlab-card__help { color: var(--hwlab-accent); border-color: var(--hwlab-accent); font-weight: var(--weight-semibold); }
+.hwlab-card__help:hover { color: #fff; }
+.hwlab-card__help[hidden] { display: none; }
+.hwlab-card__body .hwlab-phases {
+  display: flex;
+  gap: 4px;
+  margin: 0 0 6px;
+  padding: 0;
+  list-style: none;
+  font-size: var(--font-size-xs);
+}
+.hwlab-phases li {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 4px 3px;
+  border-radius: 6px;
+  border: 1px solid var(--hwlab-border);
+  color: var(--hwlab-text-muted);
+  text-align: center;
+  white-space: nowrap;
+}
+.hwlab-phases li[data-done="true"] { color: var(--hwlab-success); border-color: var(--hwlab-success); }
+.hwlab-phases li[aria-current="step"] { color: var(--hwlab-bg); background: var(--hwlab-accent); border-color: var(--hwlab-accent); font-weight: var(--weight-semibold); }
+.hwlab-phases__text { margin: 0 0 8px; font-size: var(--font-size-sm); color: var(--hwlab-text); }
+@media (max-width: 360px) { .hwlab-card__body .hwlab-phases { font-size: 11px; gap: 2px; } }
+
+/* La accion principal de la tarjeta queda SIEMPRE a la vista aunque el texto
+   del paso sea mas alto que la tarjeta (en el telefono mide el 42 % de la
+   escena): se pega al borde inferior del area con desplazamiento. */
+.hwlab-card__body #hwlab-safety-confirm-btn,
+.hwlab-card__body #hwlab-prepare-btn,
+.hwlab-card__body .hwlab-info-block:not(:has(#hwlab-prepare-btn)) > #hwlab-power-check-btn {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  box-shadow: 0 -10px 10px -4px var(--hwlab-surface-1);
+}
+
+/* En pantallas tactiles ":hover" queda pegado tras el toque: la etiqueta
+   flotante de un boton tapaba al boton vecino ("Ayuda"). Solo con raton. */
+@media (hover: none) {
+  .hwlab-dock [data-tip]:hover::after,
+  .hwlab-card [data-tip]:hover::after { display: none; }
+}
+
 /* ── Objetivos tactiles (Fase B, 2026-10-01) ──────────────────────────────
    En pantallas tactiles o estrechas ningun control del laboratorio mide menos
    de 44 px: con el dedo, el boton de contraer (36 px) o "Preparar" (36 px) se
    fallaban y el toque caia en la escena 3D. */
 @media (pointer: coarse), (max-width: 900px) {
   .hwlab-card__more,
+  .hwlab-card__help,
   .hwlab-card__toggle,
   .hwlab-history__toggle,
   #hwlab-restart-btn,

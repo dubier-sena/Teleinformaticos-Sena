@@ -72,6 +72,7 @@
 <script defer src="js/hardware_lab_data_laptop.js?v=20260929_1"></script>
 <script defer src="js/hardware_lab_engine.js?v=20260929_1"></script>
 <script defer src="js/hardware_lab_thermal.js?v=20260929_1"></script>
+<script defer src="js/hardware_lab_guidance.js?v=20260929_1"></script>
 <script defer src="js/hardware_lab_equipment_check.js?v=20260926_2"></script>
 <script defer src="js/hardware_lab_storage.js?v=20260816_1"></script>
 <script defer src="js/hardware_lab_attempts.js?v=20261001_1"></script>
@@ -216,6 +217,7 @@
         <aside class="hwlab-card" id="hwlab-card" aria-label="Instrucciones del paso actual" data-state="open" data-detail="brief">
           <div class="hwlab-card__bar">
             <p class="hwlab-card__summary" id="hwlab-card-summary" aria-live="polite"></p>
+            <button type="button" class="hwlab-card__help" id="hwlab-help-btn" aria-label="¿Qué debo hacer? Ayuda del paso actual" hidden>Ayuda</button>
             <button type="button" class="hwlab-card__more" id="hwlab-card-more" aria-pressed="false">Ver más</button>
             <button type="button" class="hwlab-card__toggle" id="hwlab-card-toggle" aria-expanded="true" aria-controls="hwlab-info-panel" aria-label="Contraer instrucciones" data-tip="Contraer instrucciones">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>

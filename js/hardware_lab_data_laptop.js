@@ -583,6 +583,7 @@
       id: "safety-power-off",
       kind: "safety",
       title: "Apagar el equipo correctamente",
+      confirmLabel: "Ya apagué el equipo",
       instructions: [
         "Guarda tu trabajo y cierra el sistema operativo desde el menu de apagado.",
         "Espera a que el equipo termine de apagarse por completo.",
@@ -592,6 +593,7 @@
       id: "safety-unplug",
       kind: "safety",
       title: "Desconectar el cargador",
+      confirmLabel: "Ya desconecté el cargador",
       instructions: [
         "Desconecta el cargador de la toma de corriente y del portatil.",
         "Nunca trabajes dentro del equipo con el cargador conectado.",
@@ -600,7 +602,8 @@
     {
       id: "safety-peripherals",
       kind: "safety",
-      title: "Retirar perifericos",
+      title: "Retirar periféricos",
+      confirmLabel: "Ya retiré los periféricos",
       instructions: [
         "Desconecta mouse, USB y cualquier dispositivo externo.",
         "Cierra la pantalla y voltea el equipo boca abajo sobre una superficie limpia y plana.",
@@ -609,7 +612,8 @@
     {
       id: "safety-strap",
       kind: "safety",
-      title: "Colocarse la proteccion antiestatica",
+      title: "Colocarse la protección antiestática",
+      confirmLabel: "Ya tengo la pulsera antiestática",
       tool: "antistatic-strap",
       instructions: [
         "Coloca la pulsera antiestatica en tu muneca.",
@@ -619,7 +623,8 @@
     {
       id: "safety-discharge",
       kind: "safety",
-      title: "Descargar energia residual",
+      title: "Descargar energía residual",
+      confirmLabel: "Ya descargué la energía residual",
       instructions: [
         "Con el cargador desconectado, manten presionado el boton de encendido por 15 segundos.",
         "Esto ayuda a descargar la energia residual de los capacitores antes de continuar.",
@@ -631,7 +636,8 @@
     {
       id: "verify-peripherals",
       kind: "safety",
-      title: "Reconectar perifericos y cargador",
+      title: "Reconectar periféricos y cargador",
+      confirmLabel: "Ya reconecté cargador y periféricos",
       instructions: [
         "Conecta el cargador y espera unos segundos antes de encender.",
         "Conecta cualquier periferico externo que uses habitualmente.",
@@ -641,6 +647,7 @@
       id: "verify-power-on",
       kind: "safety",
       title: "Encender y comprobar el funcionamiento",
+      confirmLabel: "Ya encendí y comprobé el equipo",
       instructions: [
         "Enciende el equipo y observa si arranca con normalidad.",
         "Verifica pantalla, teclado, touchpad y conexion Wi-Fi.",

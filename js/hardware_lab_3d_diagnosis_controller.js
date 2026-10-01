@@ -234,6 +234,7 @@ export function createDiagnosisController(stage) {
       if (!meta || !meta.partId) return;
       handlePartClick(meta.partId);
     });
+    stage.setHelpHandler(onHelp);
     // Seleccion tolerante (Fase C): tocar una pieza atornillada a pocos pixeles
     // de uno de SUS tornillos es tocar ese tornillo; un toque al aire junto a
     // una pieza la selecciona. Diagnosticar no depende de la punteria.
@@ -521,15 +522,46 @@ export function createDiagnosisController(stage) {
     stage.setStats({ step: null, errors: session.errors });
   }
 
+  // ── ORIENTACION (Fase D): fase actual del caso ───────────────────────────
+  function phaseContext() {
+    const log = session.actionLog || [];
+    const isWork = (e) => e.ok && (e.type === "action" || e.type === "thermal");
+    let lastCheck = -1;
+    log.forEach((e, i) => { if (e.type === "power-on-check") lastCheck = i; });
+    const prepare = document.getElementById("hwlab-prepare-btn");
+    return {
+      checks: log.filter((e) => e.type === "power-on-check").length,
+      actions: log.filter(isWork).length,
+      actionsSinceCheck: log.filter((e, i) => i > lastCheck && isWork(e)).length,
+      fixed: !!session.fixed,
+      pose: prepare ? { label: prepare.textContent.trim() } : null,
+    };
+  }
+
+  function phaseHtml(phase) {
+    return (
+      '<ol class="hwlab-phases" aria-label="Fases del diagnóstico">' +
+      phase.phases.map((p, i) => `<li${i === phase.index ? ' aria-current="step"' : ""}${i < phase.index ? ' data-done="true"' : ""}>${esc(p.label)}</li>`).join("") +
+      "</ol>" +
+      `<p class="hwlab-phases__text">${esc(phase.text)}</p>`
+    );
+  }
+
+  function onHelp() {
+    stage.showFeedback(window.HardwareLab.Guidance.whatToDoDiagnosis(phaseContext()), "info");
+  }
+
   function renderInfoPanel() {
     const lines = computeMonitorLines(CoreEngine().isCaseOpen(equipmentData, session));
     const symptom = visibleSymptom();
+    const phase = window.HardwareLab.Guidance.diagnosisPhase(phaseContext());
     // data-card-summary: el sintoma es lo que se ve en la banda compacta (movil).
     const html =
       '<div class="hwlab-info-block">' +
       "<h3>&#129517; Síntoma reportado</h3>" +
       `<p data-card-summary="Síntoma">${esc(symptom)}</p>` +
-      '<button type="button" class="c-btn c-btn--primary c-btn--block" id="hwlab-power-check-btn">Encender y comprobar</button>' +
+      phaseHtml(phase) +
+      `<button type="button" class="c-btn c-btn--primary c-btn--block" id="hwlab-power-check-btn" data-pending-text="Fase ${phase.index + 1} de ${phase.phases.length} · ${esc(phase.label)}">Encender y comprobar</button>` +
       (mech ? mech.poseSectionHtml(esc) : "") +
       "</div>" +
       (mech && mech.thermalSectionHtml(esc) ? '<div class="hwlab-info-block">' + mech.thermalSectionHtml(esc) + "</div>" : "") +
