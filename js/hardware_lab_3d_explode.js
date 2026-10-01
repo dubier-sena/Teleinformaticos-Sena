@@ -7,7 +7,7 @@
  * hace falta autorar un vector por pieza a mano.
  */
 import * as THREE from "./vendor/three.module.min.js";
-import { animateObject3D, Easing } from "./hardware_lab_3d_tween.js?v=20260929_1";
+import { animateObject3D, Easing } from "./hardware_lab_3d_tween.js?v=20261001_2";
 
 export function createExplodeController({ tweenGroup }) {
   let exploded = false;

@@ -7,7 +7,7 @@
  * interacciones se enganchen al loop de render sin acoplarse entre si.
  */
 import * as THREE from "./vendor/three.module.min.js";
-import { TABLE } from "./hardware_lab_3d_constants.js?v=20260929_1";
+import { TABLE } from "./hardware_lab_3d_constants.js?v=20261001_2";
 
 export function createLabScene(canvas, profile) {
   const quality = Object.assign(

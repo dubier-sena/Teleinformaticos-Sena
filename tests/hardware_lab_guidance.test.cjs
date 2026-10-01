@@ -96,6 +96,9 @@ test("GD-8 fases del diagnostico: observar -> diagnosticar -> reparar -> comprob
   assert.match(G.whatToDoDiagnosis({ checks: 0, actions: 0 }), /^Fase 1 de 4 · Observar: /);
   assert.match(G.whatToDoDiagnosis({ checks: 1, actions: 0 }), /tócala en el equipo/);
   assert.match(G.whatToDoDiagnosis({ checks: 1, actions: 0, pose: { label: "Preparar para X" } }), /^Pulsa «Preparar para X»/);
+  // Con banco de repuestos (portatil) explica Revisar / Cambiar por repuesto; sin el (escritorio), no.
+  assert.match(G.whatToDoDiagnosis({ checks: 1, actions: 2, actionsSinceCheck: 0, spares: true }), /«Revisar».*«Cambiar por repuesto» solo si están averiadas/);
+  assert.doesNotMatch(G.whatToDoDiagnosis({ checks: 1, actions: 2, actionsSinceCheck: 0 }), /repuesto/);
 });
 
 test("GD-9 la pagina carga el modulo y ofrece el boton Ayuda, visible tambien en la banda compacta", () => {

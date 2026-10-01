@@ -7,7 +7,7 @@
  * texto diminuto en el mundo 3D), pero el mesh en escena da inmersion.
  */
 import * as THREE from "./vendor/three.module.min.js";
-import { materialFor } from "./hardware_lab_3d_constants.js?v=20260929_1";
+import { materialFor } from "./hardware_lab_3d_constants.js?v=20261001_2";
 
 const CANVAS_W = 512;
 const CANVAS_H = 340;

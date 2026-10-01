@@ -11,7 +11,7 @@
  * pega a la cara de entrada de las aletas y a la boca del ventilador.
  */
 import * as THREE from "./vendor/three.module.min.js";
-import { materialInstanceFor } from "./hardware_lab_3d_constants.js?v=20260929_1";
+import { materialInstanceFor } from "./hardware_lab_3d_constants.js?v=20261001_2";
 
 // Medidas del CPU y del modulo (hardware_lab_3d_laptop_factory.js).
 const CPU_SIZE = 0.024;

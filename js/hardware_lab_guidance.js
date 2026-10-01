@@ -147,6 +147,8 @@
     if (ctx.pose) return "Pulsa «" + ctx.pose.label + "» en la tarjeta para colocar el equipo en posición de trabajo.";
     var phase = diagnosisPhase(ctx);
     var how = " Para actuar sobre una pieza, tócala en el equipo; si tiene tornillos, toca primero cada tornillo.";
+    // Equipos con banco de repuestos: una pieza retirada se puede revisar y cambiar.
+    if (ctx.spares) how += " Las piezas que retires aparecen en la tarjeta: usa «Revisar» para ver si tienen daño y «Cambiar por repuesto» solo si están averiadas.";
     return "Fase " + (phase.index + 1) + " de " + DIAGNOSIS_PHASES.length + " · " + phase.label + ": " + phase.text + (phase.id === "observar" || ctx.fixed ? "" : how);
   }
 

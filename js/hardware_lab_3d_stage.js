@@ -8,16 +8,16 @@
  * hardware_lab_3d_diagnosis_controller.js reutilizan sin duplicar DOM.
  */
 import * as THREE from "./vendor/three.module.min.js";
-import { createLabScene } from "./hardware_lab_3d_scene.js?v=20260929_1";
-import { chooseQualityProfile, readDeviceEnv } from "./hardware_lab_3d_quality.js?v=20260929_1";
-import { createCameraRig, frameBoxInRect, padFocusBox, CAMERA_MIN_WORLD_Y } from "./hardware_lab_3d_camera.js?v=20260929_1";
-import { createInteractionLayer, worldToScreen, visibleLocalBox } from "./hardware_lab_3d_interactions.js?v=20260929_1";
-import { rect as uiRect, area as uiArea, cardCandidates, chooseSlot, coverRatio, chooseFeedbackSpot, chooseDockSpot, safeViewRect, framingVerdict } from "./hardware_lab_3d_ui_layout.js?v=20260929_1";
-import { TweenGroup } from "./hardware_lab_3d_tween.js?v=20260929_1";
-import { createRig } from "./hardware_lab_3d_rig.js?v=20260929_1";
-import { createScrewController } from "./hardware_lab_3d_screws.js?v=20260929_1";
-import { createExplodeController } from "./hardware_lab_3d_explode.js?v=20260929_1";
-import { HardwareLabAudio } from "./hardware_lab_3d_audio.js?v=20260929_1";
+import { createLabScene } from "./hardware_lab_3d_scene.js?v=20261001_2";
+import { chooseQualityProfile, readDeviceEnv } from "./hardware_lab_3d_quality.js?v=20261001_2";
+import { createCameraRig, frameBoxInRect, padFocusBox, CAMERA_MIN_WORLD_Y } from "./hardware_lab_3d_camera.js?v=20261001_2";
+import { createInteractionLayer, worldToScreen, visibleLocalBox } from "./hardware_lab_3d_interactions.js?v=20261001_2";
+import { rect as uiRect, area as uiArea, cardCandidates, chooseSlot, coverRatio, chooseFeedbackSpot, chooseDockSpot, safeViewRect, framingVerdict } from "./hardware_lab_3d_ui_layout.js?v=20261001_2";
+import { TweenGroup } from "./hardware_lab_3d_tween.js?v=20261001_2";
+import { createRig } from "./hardware_lab_3d_rig.js?v=20261001_2";
+import { createScrewController } from "./hardware_lab_3d_screws.js?v=20261001_2";
+import { createExplodeController } from "./hardware_lab_3d_explode.js?v=20261001_2";
+import { HardwareLabAudio } from "./hardware_lab_3d_audio.js?v=20261001_2";
 
 const VIEW_ICONS = {
   front: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="5" width="14" height="14" rx="1"/></svg>',

@@ -7,8 +7,8 @@
  * hardware_lab_3d_rig.js no tenga que adivinar coordenadas.
  */
 import * as THREE from "./vendor/three.module.min.js";
-import { materialFor } from "./hardware_lab_3d_constants.js?v=20260929_1";
-import { buildFan } from "./hardware_lab_3d_parts_factory.js?v=20260929_1";
+import { materialFor } from "./hardware_lab_3d_constants.js?v=20261001_2";
+import { buildFan } from "./hardware_lab_3d_parts_factory.js?v=20261001_2";
 
 function box(w, h, d, kind, overrides) {
   return new THREE.Mesh(new THREE.BoxGeometry(w, h, d), materialFor(kind, overrides));
@@ -526,4 +526,4 @@ export {
   buildLaptopLid,
   buildLaptopBattery,
   buildLaptopMotherboard,
-} from "./hardware_lab_3d_laptop_factory.js?v=20260929_1";
+} from "./hardware_lab_3d_laptop_factory.js?v=20261001_2";

@@ -10,7 +10,7 @@
  * dos mallas propias (hijas, con nombre) y las quita al limpiar.
  */
 import * as THREE from "./vendor/three.module.min.js";
-import { visibleLocalBox } from "./hardware_lab_3d_interactions.js?v=20260929_1";
+import { visibleLocalBox } from "./hardware_lab_3d_interactions.js?v=20261001_2";
 
 const MARK_NAME = "hwlab-damage-mark";
 

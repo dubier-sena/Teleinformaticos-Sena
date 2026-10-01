@@ -8,8 +8,8 @@
  */
 import * as THREE from "./vendor/three.module.min.js";
 import { OrbitControls } from "./vendor/OrbitControls.js";
-import { Easing, prefersReducedMotion } from "./hardware_lab_3d_tween.js?v=20260929_1";
-import { TABLE } from "./hardware_lab_3d_constants.js?v=20260929_1";
+import { Easing, prefersReducedMotion } from "./hardware_lab_3d_tween.js?v=20261001_2";
+import { TABLE } from "./hardware_lab_3d_constants.js?v=20261001_2";
 
 // ── Limite fisico inferior de la camara (sep-26) ────────────────────────────
 // Medido: con el maxPolarAngle FIJO del portatil (0.97*PI, pensado para la

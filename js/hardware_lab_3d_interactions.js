@@ -13,9 +13,9 @@
  * material. El contorno + un leve escalado evita ese problema por completo.
  */
 import * as THREE from "./vendor/three.module.min.js";
-import { animateObject3D, Easing } from "./hardware_lab_3d_tween.js?v=20260929_1";
-import { ACCENT, isHitbox } from "./hardware_lab_3d_constants.js?v=20260929_1";
-import { pickTolerancePx, ringOffsets, choosePick } from "./hardware_lab_3d_pick_policy.js?v=20260929_1";
+import { animateObject3D, Easing } from "./hardware_lab_3d_tween.js?v=20261001_2";
+import { ACCENT, isHitbox } from "./hardware_lab_3d_constants.js?v=20261001_2";
+import { pickTolerancePx, ringOffsets, choosePick } from "./hardware_lab_3d_pick_policy.js?v=20261001_2";
 
 /**
  * Caja de la GEOMETRIA VISIBLE de una pieza en su propio espacio local

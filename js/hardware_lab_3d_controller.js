@@ -15,10 +15,10 @@
  * item 23) y la llave de almacenamiento, que aqui SI se guarda por separado
  * (storageMode) para que evaluacion no pise el progreso de practica libre.
  */
-import { createDesktopLayout } from "./hardware_lab_3d_layout_desktop.js?v=20260929_1";
-import { createLaptopLayout } from "./hardware_lab_3d_layout_laptop.js?v=20260929_1";
-import { HardwareLabAudio } from "./hardware_lab_3d_audio.js?v=20260929_1";
-import { applyThermalLook } from "./hardware_lab_3d_thermal_look.js?v=20260929_1";
+import { createDesktopLayout } from "./hardware_lab_3d_layout_desktop.js?v=20261001_2";
+import { createLaptopLayout } from "./hardware_lab_3d_layout_laptop.js?v=20261001_2";
+import { HardwareLabAudio } from "./hardware_lab_3d_audio.js?v=20261001_2";
+import { applyThermalLook } from "./hardware_lab_3d_thermal_look.js?v=20261001_2";
 
 const TITLES = {
   learn: "Aprender componentes",

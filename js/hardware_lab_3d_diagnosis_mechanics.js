@@ -20,7 +20,7 @@
  * se refleja en el 3D (hardware_lab_3d_thermal_look.js) y se ofrecen las
  * tareas cuando el aprendiz ya saco el modulo, sin ordenarlas por el estado.
  */
-import { applyThermalLook } from "./hardware_lab_3d_thermal_look.js?v=20260929_1";
+import { applyThermalLook } from "./hardware_lab_3d_thermal_look.js?v=20261001_2";
 
 export function createLaptopDiagnosisMechanics({ stage, getSession, setSession, getEquipmentData, onChanged, onRender, onPoseStart }) {
   let neededPreset = null;
