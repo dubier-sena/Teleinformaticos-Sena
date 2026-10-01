@@ -40,13 +40,25 @@
     return m + " min " + (r < 10 ? "0" : "") + r + " s";
   }
 
+  // Explica POR QUE hay intentos guardados en este equipo sin enviar. Nunca se
+  // pierden: siguen en la cola hasta que el servidor confirma cada uno.
+  function pendingHtml(p) {
+    if (!p || !p.total) return "";
+    var parts = [];
+    if (p.identidad) parts.push("<strong>" + p.identidad + "</strong> no se enviaron porque la sesión en la nube de este navegador no corresponde a tu usuario. Cierra sesión y vuelve a entrar con tu cuenta en este mismo equipo.");
+    if (p.noAceptados) parts.push("<strong>" + p.noAceptados + "</strong> todavía no fueron aceptados por el servidor (tu cuenta aún no está habilitada para el registro). Avísale a tu instructor; se enviarán solos cuando quede habilitada.");
+    if (p.sinConexion) parts.push("<strong>" + p.sinConexion + "</strong> esperan conexión o sesión en la nube: se enviarán solos.");
+    // Sin clases nuevas: la hoja de estilos del laboratorio va versionada con el release 3D.
+    return '<div role="status"><p><strong>Intentos guardados en este equipo, pendientes de enviar: ' + p.total + "</strong>. No se pierden mientras no borres los datos de este navegador.</p><ul class=\"hwlab-muted\"><li>" + parts.join("</li><li>") + "</li></ul></div>";
+  }
+
   function render(host, res) {
     var Att = A();
     var docs = (res && res.docs) || [];
     var pend = Att.pendingCount();
+    var pendInfo = typeof Att.pendingSummary === "function" ? Att.pendingSummary() : { total: pend, sinConexion: pend, noAceptados: 0, identidad: 0 };
     if (res.status !== "ok" && !docs.length) {
-      host.innerHTML = '<p class="hwlab-muted">No se pudo consultar tu progreso ahora (sin conexión o sin sesión en la nube). ' +
-        (pend ? "Tienes " + pend + " intento(s) guardado(s) en este equipo, pendientes de enviar: se enviarán solos al volver la conexión." : "") + "</p>";
+      host.innerHTML = '<p class="hwlab-muted">No se pudo consultar tu progreso ahora (sin conexión o sin sesión en la nube).</p>' + pendingHtml(pendInfo);
       return;
     }
     var sum = Att.summarize(docs);
@@ -55,8 +67,7 @@
       "<p><strong>Mejor puntaje:</strong> " + (sum.mejor == null ? "—" : Att.formatScore(sum.mejor) + "/100") + "</p>" +
       "<p><strong>Último puntaje:</strong> " + (sum.ultimo == null ? "—" : Att.formatScore(sum.ultimo) + "/100") + "</p>" +
       "<p><strong>Actividades con al menos un intento completado:</strong> " + sum.progreso.completadas + " de " + sum.progreso.total + "</p>" +
-      (pend ? "<p><strong>Pendientes de enviar desde este equipo:</strong> " + pend + "</p>" : "") +
-      "</div>";
+      "</div>" + pendingHtml(pendInfo);
     html += '<div class="hwlab-progress__table-wrap"><table class="hwlab-progress__table"><caption>Estado por actividad</caption><thead><tr><th scope="col">Equipo</th><th scope="col">Actividad</th><th scope="col">Estado</th><th scope="col">Intentos</th><th scope="col">Mejor</th><th scope="col">Último</th></tr></thead><tbody>';
     Object.keys(Att.ACTIVITIES_BY_EQUIPMENT).forEach(function (eq) {
       Att.ACTIVITIES_BY_EQUIPMENT[eq].forEach(function (act) {
@@ -68,7 +79,7 @@
     });
     html += "</tbody></table></div>";
     if (!docs.length) {
-      html += '<p class="hwlab-muted">Todavía no hay intentos registrados. Los intentos que hiciste antes del registro centralizado pueden no aparecer: <strong>sin registros no significa que no hayas practicado</strong>.</p>';
+      html += '<p class="hwlab-muted">Todavía no hay intentos sincronizados. Los intentos que hiciste antes del registro centralizado, o desde otro equipo, pueden no aparecer: <strong>sin intentos sincronizados no significa que no hayas practicado</strong>.</p>';
     } else {
       html += '<div class="hwlab-progress__table-wrap"><table class="hwlab-progress__table"><caption>Mi historial (más reciente primero)</caption><thead><tr>' +
         '<th scope="col">Fecha</th><th scope="col">Equipo</th><th scope="col">Práctica</th><th scope="col">Intento</th><th scope="col">Puntaje /100</th><th scope="col">Rúbrica</th><th scope="col">Estado</th><th scope="col">Pistas</th><th scope="col">Errores</th><th scope="col">Duración</th><th scope="col">Origen</th>' +

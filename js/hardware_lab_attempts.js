@@ -189,20 +189,57 @@
     return writeJson(store, key, q);
   }
 
+  // ── Identidad (LOOP seguimiento, 2026-10-01) ─────────────────────────────
+  // Un intento solo se envia cuando la sesion de Firebase de ESTE navegador es,
+  // sin ambiguedad, la del mismo aprendiz de la sesion del portal. El uid con
+  // el que se firma el documento sale de Firebase Auth, asi que hay que
+  // demostrar que ese uid es del usuario de la sesion:
+  //   - el correo sintetico de Firebase debe ser {usernameKey}[.vN]@sena-portal.local;
+  //   - si el perfil local trae uid, debe ser el mismo uid de Firebase.
+  // No basta el nombre visible, el usuario, la ficha ni lo que diga
+  // localStorage. Si no coincide, el intento se queda en la cola (recuperable)
+  // y NO se llama a la red: se enviara cuando la identidad sea la correcta.
+  var EMAIL_DOMAIN = "@sena-portal.local";
+  function emailMatchesUser(email, usernameKey) {
+    var e = String(email || "").trim().toLowerCase();
+    var k = String(usernameKey || "").trim().toLowerCase();
+    if (!e || !k || e.slice(-EMAIL_DOMAIN.length) !== EMAIL_DOMAIN) return false;
+    var local = e.slice(0, e.length - EMAIL_DOMAIN.length);
+    if (local === k) return true;
+    return local.indexOf(k + ".v") === 0 && /^[1-9][0-9]*$/.test(local.slice(k.length + 2));
+  }
+
+  /** identity = { uid, usernameKey, email, expectedUid } -> { ok, motivo } */
+  function checkIdentity(identity) {
+    var id = identity || {};
+    if (!id.usernameKey) return { ok: false, motivo: "sin_usuario" };
+    if (!id.uid) return { ok: false, motivo: "sin_sesion_nube" };
+    if (!id.email) return { ok: false, motivo: "correo_no_verificable" };
+    if (!emailMatchesUser(id.email, id.usernameKey)) return { ok: false, motivo: "sesion_de_otro_usuario" };
+    if (id.expectedUid && id.expectedUid !== id.uid) return { ok: false, motivo: "uid_distinto_al_perfil" };
+    return { ok: true, motivo: null };
+  }
+
   /**
-   * Sincroniza la cola. `identity` = { uid, usernameKey, ficha }. Los pendientes
-   * de OTRO usernameKey no se tocan (no se envian con la identidad actual).
-   * -> { created, exists, pending, rejected }
+   * Sincroniza la cola. `identity` = { uid, usernameKey, ficha, email,
+   * expectedUid }. Los pendientes de OTRO usernameKey no se tocan, y nada se
+   * envia si la identidad de Firebase no es la del usuario de la sesion.
+   * -> { created, exists, pending, rejected, identidad }
    */
   async function flush(deps) {
-    var out = { created: 0, exists: 0, pending: 0, rejected: 0 };
+    var out = { created: 0, exists: 0, pending: 0, rejected: 0, identidad: 0 };
     var store = deps.store, key = deps.key, db = deps.db, id = deps.identity || {};
     if (!store || !key) return out;
+    var email = null;
+    try { email = await Promise.resolve(typeof id.email === "function" ? id.email() : id.email); } catch (e) { email = null; }
+    id = Object.assign({}, id, { email: email });
+    var idc = checkIdentity(id);
     var q = readJson(store, key, {});
     var keys = Object.keys(q);
     for (var i = 0; i < keys.length; i++) {
       var item = q[keys[i]];
       if (!item || item.usernameKey !== id.usernameKey || !id.uid || !db || typeof db.cloudCreateHwlabAttempt !== "function") { out.pending++; continue; }
+      if (!idc.ok) { item.lastError = "identidad " + idc.motivo; out.identidad++; continue; }
       var doc = buildAttemptDoc(item.session, {
         uid: id.uid, usernameKey: item.usernameKey, ficha: item.ficha != null ? item.ficha : id.ficha,
         equipo: item.equipo, practica: item.practica, nonce: item.nonce,
@@ -301,7 +338,12 @@
       auth: auth,
       store: root.localStorage || null,
       db: root._firebaseDb || null,
-      identity: { uid: uid, usernameKey: usernameKey, ficha: user && user.ficha != null ? String(user.ficha) : null },
+      identity: {
+        uid: uid, usernameKey: usernameKey, ficha: user && user.ficha != null ? String(user.ficha) : null,
+        // Correo de la sesion de Firebase (se resuelve al sincronizar) y uid que el perfil local declara, si lo trae.
+        email: function () { return bridge && typeof bridge.getCurrentUserEmail === "function" ? bridge.getCurrentUserEmail() : null; },
+        expectedUid: user && user.uid ? String(user.uid) : null,
+      },
     };
   }
 
@@ -392,6 +434,23 @@
     return key ? Object.keys(readJson(d.store, key, {})).length : 0;
   }
 
+  /** Pendientes de este usuario en este equipo, por motivo del ultimo intento de envio. */
+  function pendingSummary() {
+    var out = { total: 0, sinConexion: 0, noAceptados: 0, identidad: 0 };
+    var d = browserDeps();
+    var key = queueStoreKey(d.auth, d.identity.usernameKey);
+    if (!key) return out;
+    var q = readJson(d.store, key, {});
+    Object.keys(q).forEach(function (k) {
+      var e = String((q[k] && q[k].lastError) || "");
+      out.total++;
+      if (e.indexOf("identidad") === 0) out.identidad++;
+      else if (e.indexOf("denied") === 0 || e.indexOf("rejected") === 0 || e.indexOf("invalid") === 0) out.noAceptados++;
+      else out.sinConexion++;
+    });
+    return out;
+  }
+
   // ── Resumen para paneles (puro; nunca reemplaza el historial) ────────────
   var ACTIVITIES_BY_EQUIPMENT = {
     desktop: ["ensamble", "desensamble", "diagnostico"],
@@ -446,7 +505,7 @@
 
   /** Estado legible de una celda (texto, no solo color). */
   function cellStatus(cell) {
-    if (!cell) return { code: "sin_registros", label: "Sin registros" };
+    if (!cell) return { code: "sin_registros", label: "Sin intentos sincronizados" };
     if (cell.completados === 0) return { code: "en_progreso", label: "En progreso" };
     if (cell.parcial && cell.mejor == null) return { code: "historico_parcial", label: "Histórico parcial" };
     return cell.aprobado ? { code: "aprobado", label: "Aprobado" } : { code: "por_mejorar", label: "Por mejorar" };
@@ -475,6 +534,9 @@
     flushNow: flushNow,
     loadOwnAttempts: loadOwnAttempts,
     pendingCount: pendingCount,
+    pendingSummary: pendingSummary,
+    checkIdentity: checkIdentity,
+    emailMatchesUser: emailMatchesUser,
     queueStoreKey: queueStoreKey,
   };
 

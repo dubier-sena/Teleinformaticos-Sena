@@ -38,7 +38,8 @@ function memDb() {
     },
   };
 }
-const ID = { uid: "UIDalumnoA0000000000000000001", usernameKey: "alumno.a", ficha: "3441942" };
+// Desde 2026-10-01 la cola exige identidad verificable: el correo de Firebase debe ser el del usuario de la sesion.
+const ID = { uid: "UIDalumnoA0000000000000000001", usernameKey: "alumno.a", ficha: "3441942", email: "alumno.a@sena-portal.local" };
 const QKEY = auth.getStudentStorageKey(ID.usernameKey, "hwlab-attempts-pending-v1", { area: "app" });
 
 function finishedSession(score, max, extra) {
@@ -137,7 +138,7 @@ test("HIST-1. diagnostico 60 -> 80 -> 100: 3 documentos, mejor 100, ultimo 100, 
   assert.deepEqual(sum.historial.map((a) => a.rawScore), [60, 80, 100]);
   assert.equal(sum.actividades["desktop/diagnostico"].intentos, 3);
   assert.equal(Att.cellStatus(sum.actividades["desktop/diagnostico"]).label, "Aprobado");
-  assert.equal(Att.cellStatus(undefined).label, "Sin registros");
+  assert.equal(Att.cellStatus(undefined).label, "Sin intentos sincronizados");
 });
 
 test("IDEM-1. mismo intento: doble clic, recarga y reconexion -> 1 documento", async () => {

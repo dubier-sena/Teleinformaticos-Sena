@@ -112,7 +112,7 @@
       '<input type="search" id="hwtrack-text" placeholder="Buscar aprendiz" value="' + esc(st.filtros.texto) + '" aria-label="Buscar aprendiz">' +
       '<select id="hwtrack-equipo" aria-label="Equipo"><option value="">Todos los equipos</option><option value="desktop"' + (st.filtros.equipo === "desktop" ? " selected" : "") + '>PC de escritorio</option><option value="laptop"' + (st.filtros.equipo === "laptop" ? " selected" : "") + ">Portátil</option></select>" +
       '<select id="hwtrack-actividad" aria-label="Actividad"><option value="">Todas las actividades</option>' + ACTS.map(function (a) { return '<option value="' + a + '"' + (st.filtros.actividad === a ? " selected" : "") + ">" + ACTIVIDAD[a] + "</option>"; }).join("") + "</select>" +
-      '<select id="hwtrack-estado" aria-label="Estado"><option value="">Cualquier estado</option><option value="aprobado"' + (st.filtros.estado === "aprobado" ? " selected" : "") + '>Con algún aprobado</option><option value="por_mejorar"' + (st.filtros.estado === "por_mejorar" ? " selected" : "") + '>Con algún "por mejorar"</option><option value="parcial"' + (st.filtros.estado === "parcial" ? " selected" : "") + '>Con histórico parcial</option><option value="sin_registros"' + (st.filtros.estado === "sin_registros" ? " selected" : "") + ">Sin registros</option></select>" +
+      '<select id="hwtrack-estado" aria-label="Estado"><option value="">Cualquier estado</option><option value="aprobado"' + (st.filtros.estado === "aprobado" ? " selected" : "") + '>Con algún aprobado</option><option value="por_mejorar"' + (st.filtros.estado === "por_mejorar" ? " selected" : "") + '>Con algún "por mejorar"</option><option value="parcial"' + (st.filtros.estado === "parcial" ? " selected" : "") + '>Con histórico parcial</option><option value="sin_registros"' + (st.filtros.estado === "sin_registros" ? " selected" : "") + ">Sin intentos sincronizados</option></select>" +
       '<button type="button" class="admin-button admin-button--ghost" id="hwtrack-export"' + (st.attempts ? "" : " disabled") + ">Exportar (CSV para Excel)</button>" +
       "</div>";
     if (st.loading) html += '<p class="activities-empty">Consultando intentos de la ficha…</p>';
@@ -121,7 +121,7 @@
     else {
       var built = buildRows(st.ficha, st.attempts);
       html += '<p class="hwtrack-meta">Lecturas de Firestore de esta consulta: <strong>' + st.lastReads + "</strong> (" + st.attempts.length + " intento(s)); acumuladas en esta sesión del panel: " + st.totalReads +
-        ". «Sin registros» significa que no hay intentos registrados, <strong>no</strong> que el aprendiz no haya practicado.</p>";
+        ". «Sin intentos sincronizados» significa que no ha llegado ningún intento al registro central, <strong>no</strong> que el aprendiz no haya realizado la actividad: puede haber intentos guardados solo en su navegador.</p>";
       html += '<div class="admin-table-wrap"><table class="admin-table hwtrack-table"><thead><tr><th scope="col">Aprendiz</th>' + ACTS.map(function (a) { return '<th scope="col">' + ACTIVIDAD[a] + "</th>"; }).join("") +
         '<th scope="col">Intentos</th><th scope="col">Mejor</th><th scope="col">Último</th><th scope="col">Progreso</th><th scope="col"></th></tr></thead><tbody>';
       built.rows.filter(passesFilters).forEach(function (r) {
@@ -169,7 +169,7 @@
             (a.pistas == null ? "—" : a.pistas) + "</td><td>" + (a.errores == null ? "—" : a.errores) + "</td><td>" + esc(dur(a.duracion)) + "</td><td>" + esc(a.versionSimulador || "desconocida") + "</td><td>" + esc(ORIGEN[a.origen] || a.origen) + (a.fuente ? " · " + esc(a.fuente) : "") + "</td><td>" +
             esc(a.ficha || "—") + (a.ficha && String(a.ficha) !== String(r.user.ficha) ? ' <span class="hwtrack-warn">≠ perfil</span>' : "") + "</td></tr>";
         }).join("") + "</tbody></table></div>"
-        : "<p>Sin registros en el sistema centralizado. Esto no significa que no haya practicado (los intentos anteriores al registro pueden estar solo en su navegador).</p>") +
+        : "<p>Sin intentos sincronizados en el registro central. Esto no significa que no haya realizado la actividad: los intentos pueden estar guardados solo en el navegador donde practicó, pendientes de enviar.</p>") +
       "</div>";
   }
 
@@ -183,7 +183,7 @@
     built.rows.forEach(function (r) {
       var counter = {};
       if (!r.attempts.length) {
-        lines.push([r.user.ficha, r.user.fullName || keyOf(r.user), "", "", "", "", "", "", "", "", "", "Sin registros", "", 0, "", "", r.sum.progreso.completadas + "/" + r.sum.progreso.total, "", "", ""].map(csvCell).join(";"));
+        lines.push([r.user.ficha, r.user.fullName || keyOf(r.user), "", "", "", "", "", "", "", "", "", "Sin intentos sincronizados", "", 0, "", "", r.sum.progreso.completadas + "/" + r.sum.progreso.total, "", "", ""].map(csvCell).join(";"));
       }
       r.sum.historial.forEach(function (a) {
         var k = a.equipo + "/" + a.practica; counter[k] = (counter[k] || 0) + 1;
