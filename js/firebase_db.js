@@ -1508,12 +1508,16 @@
       // Firebase no esta activa (ver resolveUidForScope). Update de un solo
       // campo (fsUpdateField) para no pisar el resto del perfil. Best-effort:
       // si falla, el proximo login lo reintenta.
-      fsUpdateField(COL_USERS, usernameKey, "uid", uid).catch(function () {});
+      var uidStamp = fsUpdateField(COL_USERS, usernameKey, "uid", uid).catch(function () { return false; });
     }
-    return fsPatch(COL_USER_INDEX, uid, {
+    var saved = await fsPatch(COL_USER_INDEX, uid, {
       ficha:     String(ficha),
       updatedAt: new Date().toISOString(),
     });
+    // La promesa devuelta cubre TAMBIEN el uid del perfil: el login la espera
+    // antes de recargar la pagina (ver settlePostLoginWrites en portal_auth.js).
+    if (uidStamp) await uidStamp;
+    return saved;
   }
 
   // ── Hash de contrasena (coleccion paralela con rules estrictas) ───────────

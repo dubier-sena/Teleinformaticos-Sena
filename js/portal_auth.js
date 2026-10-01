@@ -3663,6 +3663,33 @@ window.portalAuth = {
     } catch (_) { /* sin cache local, fallara el login local */ }
   }
 
+  // Escrituras a la nube posteriores al login (indice uid -> ficha, uid del
+  // perfil, hash). index_auth.js recarga la pagina en cuanto loginStudent /
+  // registerStudent resuelven, y la recarga descarta las peticiones que aun
+  // no salieron: lanzarlas sin esperar las perdia casi siempre (2026-10-01:
+  // 195 cuentas con login en Firebase Auth y sin sena_portal_user_index).
+  // Se esperan con tope, para que un login sin red no se quede colgado; si el
+  // tope vence, el proximo login las reintenta (siguen siendo best-effort).
+  const POST_LOGIN_WRITES_MAX_WAIT_MS = 4000;
+
+  function startUserIndexWrite(fichaVal, normalizedKey) {
+    try {
+      const dbApi = window._firebaseDb;
+      if (dbApi && typeof dbApi.cloudSaveUserIndex === "function" && fichaVal) {
+        return dbApi.cloudSaveUserIndex(fichaVal, normalizedKey);
+      }
+    } catch (_) { /* indice es best-effort */ }
+    return null;
+  }
+
+  function settlePostLoginWrites(pending) {
+    const list = (pending || []).filter(Boolean).map((p) => Promise.resolve(p).catch(() => false));
+    if (!list.length) return Promise.resolve();
+    let timer = null;
+    const cap = new Promise((resolve) => { timer = setTimeout(resolve, POST_LOGIN_WRITES_MAX_WAIT_MS); });
+    return Promise.race([Promise.all(list), cap]).then(() => { clearTimeout(timer); });
+  }
+
   // ── Engancha loginStudent ──────────────────────────────────────────────
   // index_auth.js invoca auth.loginStudent({username, password}).
   // Flujo:
@@ -3699,16 +3726,12 @@ window.portalAuth = {
         // Sincronizar el hash a la coleccion paralela con rules estrictas
         // (sena_portal_user_auth). Asi cuando este aprendiz entre desde otro
         // dispositivo, el hash queda disponible para verificacion local.
-        syncUserAuthHashAfterLogin(normalizedKey, password);
         // Indice uid -> ficha (lo usa la regla `list` de sena_portal_users
         // para verificar la ficha del solicitante sin parsear el email).
-        try {
-          const dbApi = window._firebaseDb;
-          const fichaVal = (result && result.user && result.user.ficha) || "";
-          if (dbApi && typeof dbApi.cloudSaveUserIndex === "function" && fichaVal) {
-            dbApi.cloudSaveUserIndex(fichaVal, normalizedKey);
-          }
-        } catch (_) { /* indice es best-effort */ }
+        await settlePostLoginWrites([
+          syncUserAuthHashAfterLogin(normalizedKey, password),
+          startUserIndexWrite((result && result.user && result.user.ficha) || "", normalizedKey),
+        ]);
       }
       return result;
     }
@@ -3760,19 +3783,15 @@ window.portalAuth = {
 
     // Sincronizar el hash a sena_portal_user_auth (rules estrictas) para
     // que cualquier dispositivo futuro tenga el hash actual disponible.
-    syncUserAuthHashAfterLogin(normalizedKey, password);
-
     // Indice uid -> ficha (necesario para la regla list de sena_portal_users).
-    try {
-      const dbApi = window._firebaseDb;
-      const fichaVal = (cloudUser && cloudUser.ficha) || "";
-      if (dbApi && typeof dbApi.cloudSaveUserIndex === "function" && fichaVal) {
-        dbApi.cloudSaveUserIndex(fichaVal, normalizedKey);
-      }
-    } catch (_) { /* indice es best-effort */ }
+    const postLoginWrites = [
+      syncUserAuthHashAfterLogin(normalizedKey, password),
+      startUserIndexWrite((cloudUser && cloudUser.ficha) || "", normalizedKey),
+    ];
 
     // Reintentar el login local: ahora si encontrara el hash en localStorage.
     result = await prevLoginStudent.call(auth, data);
+    await settlePostLoginWrites(postLoginWrites);
     return result;
   };
 
@@ -3838,14 +3857,10 @@ window.portalAuth = {
         (fb.created ? " (cuenta creada)" : "")
       );
       // Mismo post-proceso que loginStudent: hash en coleccion estricta + indice ficha.
-      syncUserAuthHashAfterLogin(normalizedKey, password);
-      try {
-        const dbApi = window._firebaseDb;
-        const fichaVal = (result.user && result.user.ficha) || "";
-        if (dbApi && typeof dbApi.cloudSaveUserIndex === "function" && fichaVal) {
-          dbApi.cloudSaveUserIndex(fichaVal, normalizedKey);
-        }
-      } catch (_) { /* indice best-effort */ }
+      await settlePostLoginWrites([
+        syncUserAuthHashAfterLogin(normalizedKey, password),
+        startUserIndexWrite((result.user && result.user.ficha) || "", normalizedKey),
+      ]);
       return result;
     };
   }
