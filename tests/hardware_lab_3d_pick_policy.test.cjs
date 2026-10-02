@@ -110,3 +110,15 @@ test("PK-12 tocar la pieza en vez de sus tornillos es un aviso neutro, no un err
   assert.match(mech.slice(j - 200, j), /tone: "info"/);
   assert.match(read("js/hardware_lab_3d_stage.js"), /pick\.reason === "ambiguous"\) showFeedback\("Tocaste entre dos piezas\./);
 });
+
+test("PK-13 objetivos diminutos: ademas del anillo se mira el centro en pantalla de cada objetivo esperado", () => {
+  const src = read("js/hardware_lab_3d_interactions.js");
+  const i = src.indexOf("function pickAt(");
+  const body = src.slice(i, src.indexOf("function setPickExpectation", i));
+  assert.match(body, /registry\.forEach\(\(meta, root\) => \{\s*\n\s*if \(root === exact \|\| !root\.visible \|\| !expected\(root, exact\)\) return;/);
+  assert.match(body, /if \(dist > tolerance\) return;/, "nunca mas alla del radio de tolerancia: sin hitbox gigante");
+  assert.match(body, /if \(cast\(Math\.round\(cx\), Math\.round\(cy\)\) === root\) near\.push\(\{ key: root, dist \}\);/, "solo si el objetivo esta a la vista");
+  // Con el candidato del centro, la politica elige el objetivo esperado aunque el anillo no lo tocara.
+  const r = P.choosePick({ exact: "tapa", near: [{ key: "tapa", dist: 4.5 }, { key: "tornillo", dist: 6 }], expected: (k) => k === "tornillo", nearestOnEmpty: false });
+  assert.deepStrictEqual(r, { key: "tornillo", assisted: true, reason: "snap" });
+});

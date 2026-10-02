@@ -794,6 +794,12 @@ export function createDiagnosisController(stage) {
   }
 
   function onHelp() {
+    // Con la pregunta pendiente, lo que toca es responderla (antes la ayuda
+    // hablaba de abrir el equipo, que en ese momento esta bloqueado).
+    if (Engine().pendingQuestion(session)) {
+      stage.showFeedback("Hay una pregunta pendiente: elige en la tarjeta el subsistema que explica el síntoma que observaste. Tomarte tu tiempo no resta puntos.", "info");
+      return;
+    }
     stage.showFeedback(window.HardwareLab.Guidance.whatToDoDiagnosis(phaseContext()), "info");
   }
 

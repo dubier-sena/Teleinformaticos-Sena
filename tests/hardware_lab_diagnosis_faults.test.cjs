@@ -358,6 +358,10 @@ test("PQ-3 la pregunta nunca queda oculta: accion obligatoria, aviso persistente
   assert.match(read("css/page_hardware_lab.css"), /\.hwlab-card:has\(\.hwlab-question\) \{ max-height: 80%; z-index: 35; \}/);
   assert.match(ctl, /<p data-card-summary="Pregunta">/);
   assert.match(ctl, /if \(meta && \(meta\.kind === "screw" \|\| meta\.partId\) && questionBlocks\(\)\) return;/);
+  // La Ayuda, con pregunta pendiente, orienta a responderla y no revela la respuesta.
+  const help = ctl.slice(ctl.indexOf("function onHelp()"), ctl.indexOf("function renderInfoPanel()"));
+  assert.match(help, /if \(Engine\(\)\.pendingQuestion\(session\)\) \{\s*\n\s*stage\.showFeedback\("Hay una pregunta pendiente:[^"]+", "info"\);\s*\n\s*return;/);
+  assert.doesNotMatch(help, /subsystemOf|correct/, "la ayuda no consulta la respuesta");
   const block = ctl.slice(ctl.indexOf("function questionBlocks()"), ctl.indexOf("function questionHtml"));
   assert.match(block, /stage\.showFeedback\("Pregunta pendiente:[^"]+", "info"\);/);
   assert.doesNotMatch(block, /recordError|"error"/, "avisar de la pregunta no penaliza");

@@ -221,10 +221,30 @@ export function createInteractionLayer({ scene, camera, renderer, tweenGroup, on
     const expected = typeof rule.expected === "function" ? (root, exactRoot) => !!rule.expected(metaOf(root), metaOf(exactRoot)) : null;
     // El pixel exacto ya basta: no hace falta muestrear alrededor.
     if (exact && (!expected || expected(exact, exact))) return { root: exact, assisted: false, reason: "exact", exact };
+    const tolerance = pickTolerancePx(pointerType);
     const near = [];
-    for (const o of ringOffsets(pickTolerancePx(pointerType))) {
+    for (const o of ringOffsets(tolerance)) {
       const root = cast(clientX + o.dx, clientY + o.dy);
       if (root) near.push({ key: root, dist: o.dist });
+    }
+    // Objetivos DIMINUTOS (cierre prepublicacion, 2026-10-02): en un telefono
+    // de 320 px un tornillo mide 3-4 px y se colaba entre los rayos del anillo
+    // (medido con toque real: a 3, 6 y 14 px no lo encontraba, a 10 px si).
+    // Para cada objetivo que el paso espera se mira ademas su CENTRO en
+    // pantalla: si esta dentro del radio y a la vista, cuenta como candidato.
+    if (expected) {
+      const center = new THREE.Vector3();
+      registry.forEach((meta, root) => {
+        if (root === exact || !root.visible || !expected(root, exact)) return;
+        root.getWorldPosition(center).project(camera);
+        if (center.z > 1) return;
+        const cx = rect.left + ((center.x + 1) / 2) * rect.width;
+        const cy = rect.top + ((1 - center.y) / 2) * rect.height;
+        const dist = Math.hypot(cx - clientX, cy - clientY);
+        if (dist > tolerance) return;
+        // A la vista: lo primero que hay bajo su centro es el propio objetivo.
+        if (cast(Math.round(cx), Math.round(cy)) === root) near.push({ key: root, dist });
+      });
     }
     const pick = choosePick({ exact, near, expected, nearestOnEmpty: rule.nearestOnEmpty !== false });
     return { root: pick.key, assisted: pick.assisted, reason: pick.reason, exact };
