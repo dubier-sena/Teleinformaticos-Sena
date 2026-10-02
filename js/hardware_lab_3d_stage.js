@@ -1419,7 +1419,12 @@ export function createStage() {
     const note = document.getElementById("hwlab-card-pending");
     if (!card) return;
     const blocking = panel.querySelector(BLOCKING_ACTION);
-    if (panel.querySelector(MAIN_ACTION)) card.setAttribute("data-pending", "true"); else card.removeAttribute("data-pending");
+    // Solo una accion que BLOQUEA el avance mantiene su boton con la tarjeta
+    // contraida. "Encender y comprobar" no bloquea: contraer la tarjeta la
+    // deja en una sola linea y devuelve la escena al aprendiz (en 320x568 la
+    // banda con ese boton dejaba ~100 px de escena y no se alcanzaban los
+    // tornillos; medido con clic real).
+    if (blocking) card.setAttribute("data-pending", "true"); else card.removeAttribute("data-pending");
     if (!note) return;
     // Un modo puede declarar su propio texto (diagnostico: la fase actual).
     const declared = panel.querySelector("[data-pending-text]");

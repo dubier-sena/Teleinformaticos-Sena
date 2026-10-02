@@ -39,7 +39,7 @@ test("PA-3 la accion obligatoria no se oculta con la tarjeta contraida", () => {
 
 test("PA-4 el escenario marca data-pending y muestra el aviso de accion pendiente", () => {
   assert.match(html, /id="hwlab-card-pending"[^>]*role="status"[^>]*hidden/);
-  assert.match(stage, /card\.setAttribute\("data-pending", "true"\)/);
+  assert.match(stage, /if \(blocking\) card\.setAttribute\("data-pending", "true"\); else card\.removeAttribute\("data-pending"\);/, "solo lo que bloquea mantiene su boton con la tarjeta contraida");
   assert.match(stage, /function syncPendingAction\(panel\)/);
   assert.match(stage, /syncPendingAction\(panel\);\s*\n\s*const hasAction/);
   // Toda accion que el CSS mantiene visible esta en la lista del escenario.
