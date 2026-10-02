@@ -1083,6 +1083,13 @@ details.hwlab-thermal[open] > .hwlab-thermal__summary::before { transform: rotat
   .hwlab-feedback { bottom: calc(var(--hwlab-gap) + var(--hwlab-history-bar) + 64px + var(--hwlab-history-extra, 0px)); }
 }
 
+/* Un grupo del dock que el aprendiz ACABA de abrir queda por encima de la
+   tarjeta de instrucciones (ambos flotan en z 20 y la tarjeta va despues en
+   el documento). En telefonos de poca altura la banda de la tarjeta tapaba
+   los botones de "Posicion": 4 de 5 en 320x568 y 1 de 5 en 360x640 (medido
+   con toque real, cierre prepublicacion 2026-10-02). */
+.hwlab-dock:has(.hwlab-dock__group[data-open]) { z-index: 36; }
+
 /* Posiciones tecnicas del portatil (sep-26) */
 .hwlab-pose-status {
   margin: 4px 2px 0;

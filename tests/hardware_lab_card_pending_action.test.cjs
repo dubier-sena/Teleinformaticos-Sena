@@ -61,3 +61,10 @@ test("PA-6 objetivos tactiles de al menos 44 px", () => {
   for (const sel of [".hwlab-card__more", ".hwlab-card__toggle", ".hwlab-history__toggle", "#hwlab-restart-btn", ".hwlab-card__body .c-btn"]) assert.ok(block.includes(sel), sel);
   assert.match(block, /min-height: var\(--hit-target-min\)/);
 });
+
+test("PA-7 un grupo del dock abierto queda por encima de la tarjeta (no tapa sus botones)", () => {
+  assert.match(css, /\.hwlab-dock:has\(\.hwlab-dock__group\[data-open\]\) \{ z-index: 36; \}/);
+  // Por encima tambien de la tarjeta con pregunta (z 35 en telefono) y de la tarjeta normal (z 20).
+  assert.match(css, /\.hwlab-card:has\(\.hwlab-question\) \{ max-height: 80%; z-index: 35; \}/);
+  assert.match(stage, /g\.removeAttribute\("data-open"\)/, "el escenario marca el grupo abierto con data-open");
+});
