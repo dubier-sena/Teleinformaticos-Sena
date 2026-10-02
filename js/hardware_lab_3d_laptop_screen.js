@@ -27,6 +27,7 @@ const STATES = {
   "no-power": { powered: false, image: false, kind: "off" },
   "no-post": { powered: true, image: false, kind: "black", note: "Enciende · sin imagen" },
   "no-image": { powered: true, image: false, kind: "black", note: "Arranca · sin imagen" },
+  crash: { powered: true, image: true, kind: "text", bg: "#0a3a8c", lines: ["El equipo se detuvo por", "un error y se va a reiniciar.", "", "Esto se repite durante el uso."] },
   "no-boot": { powered: true, image: true, kind: "text", lines: ["No se encontró un dispositivo", "de arranque.", "", "Revise el almacenamiento y", "reinicie el equipo."] },
   desktop: { powered: true, image: true, kind: "desktop", banner: null, title: "Sistema iniciado", ok: true },
   "wifi-fail": { powered: true, image: true, kind: "desktop", wifi: "fail", title: "Sin redes Wi-Fi", banner: "No hay conexión inalámbrica" },
@@ -160,7 +161,7 @@ export function drawScreen(ctx, stateId, progress) {
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
   } else if (m.kind === "text") {
-    ctx.fillStyle = "#000000";
+    ctx.fillStyle = m.bg || "#000000";
     ctx.fillRect(0, 0, W, H);
     ctx.fillStyle = "#e6e6e6";
     ctx.font = "bold 34px monospace";
@@ -198,6 +199,17 @@ export function createLaptopScreen({ root, keepAwake }) {
   const original = mesh.material;
   mesh.material = [edge, edge, edge, lit, edge, edge];
 
+  // LED de encendido en el borde inferior del marco: verde con el equipo
+  // encendido, apagado si no hay energia. Se ve tambien con la pantalla negra
+  // (asi se distingue "encendido sin imagen" de "apagado").
+  const led = new THREE.Mesh(new THREE.CircleGeometry(0.0016, 12), new THREE.MeshBasicMaterial({ color: 0x1a2a1f, toneMapped: false, side: THREE.DoubleSide }));
+  led.name = "laptop-power-led";
+  led.rotation.x = Math.PI / 2;
+  led.position.set(mesh.position.x + mesh.scale.x * 0.44, mesh.position.y - 0.0006, mesh.position.z - mesh.scale.z / 2 - 0.0045);
+  led.raycast = () => {};
+  if (mesh.parent) mesh.parent.add(led);
+  const setLed = (on) => { led.material.color.setHex(on ? 0x35e07a : 0x1a2a1f); };
+
   let state = "off";
   let timers = [];
   let raf = 0;
@@ -218,7 +230,9 @@ export function createLaptopScreen({ root, keepAwake }) {
 
   function setState(id) {
     clearTimers();
-    state = screenModel(id).id;
+    const m = screenModel(id);
+    state = m.id;
+    setLed(m.powered);
     paint(state);
   }
 
@@ -232,39 +246,44 @@ export function createLaptopScreen({ root, keepAwake }) {
     const m = screenModel(resultId);
     const reduced = !!opts.instant;
     return new Promise((resolve) => {
-      const finish = () => { state = m.id; paint(m.id); resolve(m); };
+      const finish = () => { state = m.id; setLed(m.powered); paint(m.id); resolve(m); };
       if (reduced || !m.powered) { finish(); return; }
-      // Sin imagen: la retroiluminacion enciende y no pasa nada mas.
-      if (!m.image) {
-        paint(m.id);
-        timers.push(setTimeout(finish, 900));
-        return;
-      }
-      if (m.kind === "text") {
+      // 1) LED de encendido; 2) retroiluminacion (pantalla negra iluminada).
+      setLed(true);
+      paint("off");
+      timers.push(setTimeout(() => {
         paint("no-post");
-        timers.push(setTimeout(finish, 700));
-        return;
-      }
-      const t0 = performance.now();
-      const dur = 1300;
-      const step = () => {
-        const p = (performance.now() - t0) / dur;
-        if (p >= 1) { finish(); return; }
-        paint("boot", p);
-        raf = requestAnimationFrame(step);
-      };
-      step();
+        // Sin imagen: la retroiluminacion enciende y no pasa nada mas.
+        if (!m.image) { timers.push(setTimeout(finish, 700)); return; }
+        // Mensaje de arranque del propio equipo (sin sistema operativo).
+        if (m.kind === "text") { timers.push(setTimeout(finish, 500)); return; }
+        // 3) Arranque; 4) resultado (escritorio, con el aviso si algo falla).
+        timers.push(setTimeout(() => {
+          const t0 = performance.now();
+          const dur = 1000;
+          const step = () => {
+            const p = (performance.now() - t0) / dur;
+            if (p >= 1) { finish(); return; }
+            paint("boot", p);
+            raf = requestAnimationFrame(step);
+          };
+          step();
+        }, 300));
+      }, 250));
     });
   }
 
   function dispose() {
     clearTimers();
     mesh.material = original;
+    if (led.parent) led.parent.remove(led);
+    led.geometry.dispose();
+    led.material.dispose();
     texture.dispose();
     lit.dispose();
     edge.dispose();
   }
 
   paint("off");
-  return { setState, powerOn, dispose, get state() { return state; }, canvas };
+  return { setState, powerOn, dispose, get state() { return state; }, get ledOn() { return led.material.color.getHex() === 0x35e07a; }, canvas };
 }

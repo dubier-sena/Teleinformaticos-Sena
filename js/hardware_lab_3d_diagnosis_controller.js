@@ -301,6 +301,7 @@ export function createDiagnosisController(stage) {
     document.getElementById("hwlab-restart-btn").onclick = restartCase;
 
     offClick = stage.interactions.onClick((root, meta) => {
+      if (meta && (meta.kind === "screw" || meta.partId) && questionBlocks()) return;
       if (meta && meta.kind === "screw") {
         screenOff();
         if (mech) mech.handleScrewClick(meta.screwId);
@@ -412,6 +413,7 @@ export function createDiagnosisController(stage) {
   }
 
   function onThermalTask(taskId, amount) {
+    if (questionBlocks()) return;
     const result = Engine().applyThermalTask(equipmentData, session, taskId, { amount });
     session = result.session;
     stage.showFeedback(result.message, result.level);
@@ -524,19 +526,28 @@ export function createDiagnosisController(stage) {
     });
   }
 
-  /** Resumen de la evaluacion: que se logro, con palabras (no solo barras). */
+  /** Informe de la evaluacion: que se logro, con palabras (no solo barras).
+   *  No muestra datos internos del motor: solo lo que el aprendiz hizo. */
   function evaluationSummaryHtml(result) {
     const names = (ids) => ids.map((id) => (getPart(id) ? getPart(id).name : id)).join(", ");
+    const min = Math.floor(result.durationSeconds / 60), sec = result.durationSeconds % 60;
+    const innecesarias = (result.trace && result.trace.extraParts) || [];
     const rows = [
-      ["Escenario", caseDef.name],
-      ["Fallas corregidas", result.faultsFixed + " de " + result.faultsTotal],
-      ["Equipo entregado funcionando", result.diagnosisCorrect ? "Sí" : "No"],
-      ["Componentes cambiados", result.replacedParts.length ? names(result.replacedParts) : "Ninguno"],
-      ["Sustituciones no justificadas", result.unjustifiedReplacements.length ? names(result.unjustifiedReplacements) + " (el componente no estaba averiado)" : "Ninguna"],
+      ["Orden", caseDef.name],
+      ["Estado final del equipo", result.diagnosisCorrect ? "Entregado funcionando y comprobado" : "Entregado SIN terminar: " + (result.faultsFixed ? "quedan problemas por corregir" : "ningún problema corregido")],
+      ["Problemas corregidos", result.faultsFixed + " de " + result.faultsTotal],
+      ["Tiempo", min + " min " + (sec < 10 ? "0" : "") + sec + " s (no afecta la nota)"],
+      ["Comprobaciones de encendido", String(result.checks)],
+      ["Componentes intervenidos", result.handledParts.length ? names(result.handledParts) : "Ninguno"],
+      ["Componentes reemplazados", result.replacedParts.length ? names(result.replacedParts) : "Ninguno"],
+      ["Sustituciones no justificadas", result.unjustifiedReplacements.length ? names(result.unjustifiedReplacements) + " (no estaban averiados)" : "Ninguna"],
+      ["Intervenciones innecesarias", innecesarias.length ? names(innecesarias) : "Ninguna"],
       ["Errores de procedimiento", String(result.errors)],
+      ["Pistas", "No disponibles en la evaluación"],
+      ["Reinicios", "No disponibles en la evaluación"],
     ];
     return (
-      '<div class="hwlab-result-explanation"><h4>Resumen de la evaluación</h4>' +
+      '<div class="hwlab-result-explanation"><h4>Informe de la evaluación</h4>' +
       rows.map(([label, value]) => `<p><strong>${esc(label)}:</strong> ${esc(value)}</p>`).join("") +
       "</div>"
     );
@@ -570,7 +581,11 @@ export function createDiagnosisController(stage) {
         // "La falla sigue" (error) frente a "corregida, pero el equipo no esta
         // listo para encender" (advertencia): no se revela que falta.
         const notReady = result.outcome === "not-ready";
-        stage.showFeedback(result.message, notReady ? "warning" : "error");
+        // Con pregunta pendiente el sintoma ya va DENTRO de la pregunta: un
+        // aviso duplicado solo estorbaba (en el telefono quedaba detras de la
+        // barra inferior). Se deja un aviso breve que apunta a la tarjeta.
+        if (Engine().pendingQuestion(session)) stage.showFeedback("Observa la pantalla del equipo y responde la pregunta de la tarjeta.", "info", { transient: true });
+        else stage.showFeedback(result.message, notReady ? "warning" : "error");
         stage.pushActionLog(notReady ? "Encendido: equipo sin terminar de armar" : "Encendido: sigue con falla", "error");
       }
       renderInfoPanel();
@@ -580,15 +595,50 @@ export function createDiagnosisController(stage) {
     if (screen && result.outcome !== "not-ready") {
       checking = true;
       stage.cameraRig.goToView("front");
-      screen.powerOn(result.screen).then(show);
+      const reduced = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+      screen.powerOn(result.screen, { instant: reduced }).then(show);
       renderInfoPanel();
       return;
     }
     show();
   }
 
+  // ── Pregunta de diagnostico (obligatoria, nunca oculta) ──────────────────
+  /** Hay pregunta pendiente: se avisa (sin penalizar) y no se actua sobre el equipo. */
+  function questionBlocks() {
+    if (!Engine().pendingQuestion(session)) return false;
+    stage.showFeedback("Pregunta pendiente: responde en la tarjeta qué subsistema explica el síntoma para continuar.", "info");
+    renderInfoPanel();
+    return true;
+  }
+
+  function questionHtml(q) {
+    return (
+      '<div class="hwlab-info-block hwlab-question">' +
+      "<h3>Pregunta de diagnóstico</h3>" +
+      '<p data-card-summary="Pregunta">¿Qué subsistema explica el síntoma que acabas de observar?</p>' +
+      // El sintoma viaja DENTRO del bloque obligatorio: se lee tambien en la
+      // banda compacta del telefono, donde la tarjeta tapa parte de la pantalla.
+      '<div class="hwlab-question__body" data-required-action data-pending-text="PREGUNTA PENDIENTE: responde para continuar.">' +
+      `<p class="hwlab-question__symptom">Síntoma observado: ${esc(visibleSymptom())}</p>` +
+      '<div class="hwlab-question__options">' +
+      q.options.map((o) => `<button type="button" class="c-btn c-btn--secondary c-btn--sm" data-diag-answer="${esc(o.id)}">${esc(o.label)}</button>`).join("") +
+      "</div></div></div>"
+    );
+  }
+
+  function onAnswer(subsystemId) {
+    const r = Engine().answerDiagnosis(session, subsystemId);
+    session = r.session;
+    stage.showFeedback(r.message, !r.ok ? "info" : session.evaluation ? "info" : r.correct ? "success" : "warning");
+    if (r.ok) stage.pushActionLog("Diagnóstico formulado", session.evaluation ? undefined : r.correct ? "success" : undefined);
+    persist();
+    renderInfoPanel();
+  }
+
   // ── Revisar y cambiar componentes (fase G) ───────────────────────────────
   function onInspect(partId) {
+    if (questionBlocks()) return;
     const r = Engine().inspectPart(equipmentData, session, partId);
     session = r.session;
     stage.showFeedback(r.message, !r.ok ? "info" : r.damaged ? "warning" : "info");
@@ -601,6 +651,7 @@ export function createDiagnosisController(stage) {
   }
 
   function onReplace(partId) {
+    if (questionBlocks()) return;
     const r = Engine().replacePart(equipmentData, session, partId);
     session = r.session;
     stage.showFeedback(r.message, r.ok ? "success" : "info");
@@ -750,8 +801,13 @@ export function createDiagnosisController(stage) {
     const lines = computeMonitorLines(CoreEngine().isCaseOpen(equipmentData, session));
     const symptom = visibleSymptom();
     const phase = window.HardwareLab.Guidance.diagnosisPhase(phaseContext());
+    const question = checking ? null : Engine().pendingQuestion(session);
     // data-card-summary: el sintoma es lo que se ve en la banda compacta (movil).
-    const html =
+    const html = question ? questionHtml(question) +
+      `<div class="hwlab-info-block"><h3>${equipmentId === "laptop" ? "Estado del equipo" : "Monitor de diagnóstico"}</h3>` +
+      '<div class="hwlab-monitor-readout">' +
+      lines.map((l) => `<div class="row"><span class="label">${esc(l.label)}</span><span class="value--${l.tone}">${esc(l.value)}</span></div>`).join("") +
+      "</div></div>" :
       '<div class="hwlab-info-block">' +
       "<h3>&#129517; Síntoma reportado</h3>" +
       `<p data-card-summary="Síntoma">${esc(symptom)}</p>` +
@@ -773,6 +829,7 @@ export function createDiagnosisController(stage) {
     document.querySelectorAll("[data-diag-replace]").forEach((b) => { b.onclick = () => onReplace(b.getAttribute("data-diag-replace")); });
     const deliver = document.getElementById("hwlab-eval-deliver-btn");
     if (deliver) deliver.onclick = onDeliver;
+    document.querySelectorAll("[data-diag-answer]").forEach((b) => { b.onclick = () => onAnswer(b.getAttribute("data-diag-answer")); });
     if (mech) {
       mech.wirePrepareButton();
       mech.wireThermalSection(onThermalTask);

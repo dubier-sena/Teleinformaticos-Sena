@@ -294,7 +294,11 @@ test("PT-1 cada pantalla que usa un caso existe; sin imagen = equipo encendido s
 
 test("PT-2 el controlador enciende la pantalla al comprobar y la apaga cuando el aprendiz vuelve a trabajar", () => {
   const ctl = read("js/hardware_lab_3d_diagnosis_controller.js");
-  assert.match(ctl, /screen\.powerOn\(result\.screen\)\.then\(show\);/);
+  assert.match(ctl, /screen\.powerOn\(result\.screen, \{ instant: reduced \}\)\.then\(show\);/);
+  assert.match(ctl, /prefers-reduced-motion: reduce/);
+  const scr = read("js/hardware_lab_3d_laptop_screen.js");
+  assert.match(scr, /led\.name = "laptop-power-led";/);
+  assert.match(scr, /const finish = \(\) => \{ state = m\.id; setLed\(m\.powered\); paint\(m\.id\); resolve\(m\); \};/);
   assert.match(ctl, /stage\.cameraRig\.goToView\("front"\);/);
   assert.match(ctl, /onPoseStart: screenOff,/);
   assert.match(ctl, /function handlePartClick\(partId\) \{\s*\n\s*const part = getPart\(partId\);\s*\n\s*if \(!part\) return;\s*\n\s*screenOff\(\);/);
@@ -303,115 +307,243 @@ test("PT-2 el controlador enciende la pantalla al comprobar y la apaga cuando el
   assert.match(ctl, /if \(equipmentId !== "laptop"\) return;\s*\n\s*const root = stage\.currentRig\.getObject3D\("screen-assembly"\);/);
 });
 
+// ── Pregunta de diagnostico ─────────────────────────────────────────────────
+test("PQ-1 tras observar una falla hay una pregunta pendiente; responderla la cierra; no hay pregunta sin observar", () => {
+  let s = sessionFor("laptop-case-10", "screen-and-wifi");
+  assert.equal(Diag.pendingQuestion(s), null, "sin encender no hay pregunta");
+  s = power(s).session;
+  const q = Diag.pendingQuestion(s);
+  assert.equal(q.stage, 0);
+  assert.equal(q.options.length, 7);
+  assert.equal(new Set(q.options.map((o) => o.id)).size, 7);
+  const e0 = s.errors;
+  const bad = Diag.answerDiagnosis(s, "no-existe");
+  assert.equal(bad.ok, false);
+  const r = Diag.answerDiagnosis(s, "imagen");
+  assert.equal(r.ok, true);
+  assert.equal(r.correct, true);
+  assert.match(r.message, /^Buena hipótesis/);
+  assert.equal(r.session.errors, e0, "responder nunca cuenta como error");
+  assert.equal(Diag.pendingQuestion(r.session), null);
+  assert.equal(Diag.answerDiagnosis(r.session, "red").ok, false, "no se responde dos veces la misma");
+  // Segunda etapa: nueva observacion, nueva pregunta.
+  let x = open(r.session);
+  x = close(put(take(x, "cable-screen-flex"), "cable-screen-flex"));
+  x = power(x).session;
+  assert.equal(Diag.pendingQuestion(x).stage, 1);
+  const w = Diag.answerDiagnosis(x, "memoria");
+  assert.equal(w.correct, false);
+  assert.match(w.message, /no explica bien el síntoma/);
+  assert.doesNotMatch(w.message, /inalámbrica|Wi-Fi/i, "no revela la respuesta");
+});
+
+test("PQ-2 cada etapa de cada caso y escenario del portatil tiene un subsistema entre las opciones", () => {
+  const ids = Diag.SUBSYSTEMS.map((o) => o.id);
+  Cases.casesFor("laptop").concat(Cases.evaluationScenarios("laptop")).forEach((c) => {
+    (c.faultPool || [c.fault]).forEach((f, i) => {
+      const s = c.faultPool ? Diag.createDiagnosisSession(LAPTOP, c, { rng: () => (i + 0.5) / c.faultPool.length }) : Diag.createDiagnosisSession(LAPTOP, c);
+      s.stages.forEach((st) => assert.ok(ids.includes(Diag.subsystemOf(st)), c.id + "@" + (f.variantId || "base") + ": " + st.screen));
+    });
+  });
+  // El escritorio no tiene etapas con pantalla: nunca pregunta.
+  const d = Diag.createDiagnosisSession(H.DataDesktop.DESKTOP_EQUIPMENT, Cases.getCase("desktop", "caso-02"));
+  assert.equal(Diag.pendingQuestion(Diag.checkPowerOn(H.DataDesktop.DESKTOP_EQUIPMENT, d).session), null);
+});
+
+test("PQ-3 la pregunta nunca queda oculta: accion obligatoria, aviso persistente y bloqueo sin penalizacion", () => {
+  const ctl = read("js/hardware_lab_3d_diagnosis_controller.js");
+  assert.match(ctl, /data-required-action data-pending-text="PREGUNTA PENDIENTE: responde para continuar\."/);
+  assert.match(ctl, /class="hwlab-question__body" data-required-action[^>]*>' \+\s*\n\s*`<p class="hwlab-question__symptom">Síntoma observado:/, "el sintoma se lee dentro del bloque obligatorio (banda compacta)");
+  assert.match(read("css/page_hardware_lab.css"), /\.hwlab-hud-top__actions \[hidden\] \{ display: none !important; \}/, "pista y reinicio ocultos de verdad en Aprender y en la evaluacion");
+  assert.match(read("css/page_hardware_lab.css"), /\.hwlab-card:has\(\.hwlab-question\) \{ max-height: 80%; \}/);
+  assert.match(ctl, /<p data-card-summary="Pregunta">/);
+  assert.match(ctl, /if \(meta && \(meta\.kind === "screw" \|\| meta\.partId\) && questionBlocks\(\)\) return;/);
+  const block = ctl.slice(ctl.indexOf("function questionBlocks()"), ctl.indexOf("function questionHtml"));
+  assert.match(block, /stage\.showFeedback\("Pregunta pendiente:[^"]+", "info"\);/);
+  assert.doesNotMatch(block, /recordError|"error"/, "avisar de la pregunta no penaliza");
+  ["onInspect", "onReplace", "onThermalTask"].forEach((fn) => assert.match(ctl, new RegExp("function " + fn + "\\([^)]*\\) \\{\\s*\\n\\s*if \\(questionBlocks\\(\\)\\) return;")));
+  const css = read("css/page_hardware_lab.css");
+  assert.match(css, /:not\(\[data-required-action\]\) \{ display: none; \}/, "la banda compacta conserva la pregunta");
+  assert.match(css, /\.hwlab-question__options \.c-btn \{ min-height: var\(--hit-target-min\);/);
+  const stage = read("js/hardware_lab_3d_stage.js");
+  assert.match(stage, /const BLOCKING_ACTION = "[^"]*\[data-required-action\]"/);
+});
+
+test("PQ-4 la pregunta no cambia la nota de los casos de practica", () => {
+  let s = sessionFor("laptop-case-09", "ram-damaged");
+  s = power(s).session;
+  s = Diag.answerDiagnosis(s, "red").session; // hipotesis equivocada
+  s = take(open(s), "ram");
+  s = close(put(Diag.replacePart(LAPTOP, s, "ram").session, "ram"));
+  const r = power(s);
+  assert.equal(r.fixed, true);
+  assert.equal(finish(r.session).score, 100);
+});
+
 // ── Evaluacion ──────────────────────────────────────────────────────────────
-test("EV-1 banco de 6 escenarios independientes, sin pistas, fuera del menu de casos", () => {
+function evalSession(id, variantId) {
+  const c = Cases.getCase("laptop", id);
+  const i = c.faultPool.findIndex((f) => f.variantId === variantId);
+  assert.ok(i >= 0, id + "@" + variantId);
+  return Diag.createDiagnosisSession(LAPTOP, c, { rng: () => (i + 0.5) / c.faultPool.length, now: "2026-10-01T10:00:00.000Z" });
+}
+const cooler = (s) => take(take(s, "cable-cpu-fan-laptop"), "cooler");
+const coolerBack = (s) => put(put(s, "cooler"), "cable-cpu-fan-laptop");
+const dust = (s) => thermal(thermal(s, "brush"), "air");
+const paste = (s) => thermal(thermal(thermal(s, "scrape"), "alcohol"), "apply", "adecuada");
+
+test("EV-1 banco de exactamente 6 ordenes de servicio: temas E1-E6, sin pistas, fuera del menu, con mantenimiento + falla", () => {
   const sc = Cases.evaluationScenarios("laptop");
   same(sc.map((c) => c.id), ["eval-e1", "eval-e2", "eval-e3", "eval-e4", "eval-e5", "eval-e6"]);
+  same(sc.map((c) => c.name.replace(/^Orden de servicio E\d · /, "")), ["Sobrecalentamiento", "Rendimiento y arranque", "Inestabilidad", "Dispositivo de entrada", "Imagen y pantalla", "Varios problemas"]);
   assert.equal(Cases.evaluationScenarios("desktop").length, 0, "la evaluacion del escritorio no cambia");
   const menu = Cases.casesFor("laptop").map((c) => c.id);
+  // Firma de cada intento posible de los casos de practica (condiciones + mantenimiento).
+  const sig = (s) => JSON.stringify([Diag.conditionList(s.fixCondition).map((x) => x.type + ":" + (x.partId || "")).sort(), s.thermal && [s.thermal.dust, s.thermal.paste]]);
+  const practice = new Set();
+  Cases.casesFor("laptop").forEach((c) => (c.faultPool || [c.fault]).forEach((f, i) => practice.add(sig(c.faultPool ? Diag.createDiagnosisSession(LAPTOP, c, { rng: () => (i + 0.5) / c.faultPool.length }) : Diag.createDiagnosisSession(LAPTOP, c)))));
   sc.forEach((c) => {
     assert.ok(!menu.includes(c.id));
     assert.equal(c.evaluation, true);
     assert.equal(c.hints.length, 0);
     assert.ok(c.faultPool.length >= 2, c.id + ": al menos dos variantes");
     assert.equal(Cases.getCase("laptop", c.id), c);
-    assert.doesNotMatch(c.symptom, /\b(ram|ssd|flex|antena|tarjeta|pasta|polvo|ventilador|bater[ií]a)\b/i, c.id + ": la orden de servicio no nombra la pieza");
+    assert.doesNotMatch(c.symptom, /\b(ram|ssd|flex|antena|tarjeta|pasta|polvo|ventilador|bater[ií]a|memoria|teclado|touchpad|panel táctil)\b/i, c.id + ": la orden no nombra la pieza");
     c.faultPool.forEach((f, i) => {
       const s = Diag.createDiagnosisSession(LAPTOP, c, { rng: () => (i + 0.5) / c.faultPool.length });
       assert.equal(s.evaluation, true);
       assert.equal(s.hints.max, 0);
       assert.equal(Diag.useHint(s, c).ok, false);
       assert.ok(Diag.variantOf(c, s), "el repaso encuentra la variante");
+      // Mantenimiento pendiente en TODAS (polvo o pasta) y una condicion termica entre las etapas.
+      assert.ok(s.thermal.dust === "dirty" || s.thermal.paste === "old", f.variantId + ": mantenimiento pendiente");
+      assert.ok(Diag.conditionList(s.fixCondition).some((x) => x.type === "thermalReady"), f.variantId);
+      assert.ok(!practice.has(sig(s)), f.variantId + ": no repite ningun caso de practica");
+      Diag.conditionList(s.fixCondition).forEach((x) => { if (x.partId) { assert.ok(LAPTOP.parts[x.partId], x.partId); assert.ok(f.relevantPartIds.includes(x.partId), f.variantId + ": " + x.partId); } if (x.type === "replaced") assert.ok(LAPTOP.spares.includes(x.partId), "repuesto de " + x.partId); });
+      s.stages.forEach((st) => { assert.ok(st.screen); if (st.fixCondition.type === "replaced") assert.ok(st.finding && st.finding.length > 30, f.variantId + ": hallazgo"); });
     });
   });
+  // E6: dos fallas ademas del mantenimiento; las demas, una falla (o solo termico en E1) + mantenimiento.
+  Cases.getCase("laptop", "eval-e6").faultPool.forEach((f) => assert.equal(f.faults.length, 3, f.variantId));
   // Cubre los cuatro tipos de trabajo.
   const tipos = new Set();
-  sc.forEach((c) => c.faultPool.forEach((f) => { Diag.conditionList(f.fixCondition).forEach((x) => tipos.add(x.type)); if (f.faults) tipos.add("doble"); }));
-  ["reseated", "replaced", "thermalReady", "doble"].forEach((t) => assert.ok(tipos.has(t), t));
+  sc.forEach((c) => c.faultPool.forEach((f) => Diag.conditionList(f.fixCondition).forEach((x) => tipos.add(x.type))));
+  ["reseated", "replaced", "thermalReady"].forEach((t) => assert.ok(tipos.has(t), t));
 });
 
-test("EV-2 rubrica 30/25/25/10 = 90: escenario resuelto limpio = 90/90 = 100 normalizado", () => {
+test("EV-2 rubrica 30/25/25/10 = 90: orden resuelta limpia = 90/90 = 100 normalizado, y el documento del intento", () => {
   same(Diag.EVALUATION_MAX, { diagnostico: 30, procedimiento: 25, reparacion: 25, herramientas: 10 });
-  const c = Cases.getCase("laptop", "eval-e1");
-  let s = Diag.createDiagnosisSession(LAPTOP, c, { rng: () => 0, now: "2026-10-01T10:00:00.000Z" });
-  s = close(put(take(open(s), "ram"), "ram"));
-  const r = power(s);
+  let s = evalSession("eval-e3", "e3-ram-loose-and-paste");
+  let r = power(s);
+  assert.equal(r.screen, "crash");
+  s = Diag.answerDiagnosis(r.session, "memoria").session;
+  s = open(s);
+  s = put(take(s, "ram"), "ram");
+  // Mantenimiento en la misma apertura (la orden lo pide): no hace falta abrir dos veces.
+  s = coolerBack(paste(cooler(s)));
+  r = power(close(s));
   assert.equal(r.fixed, true);
-  const res = finish(r.session);
+  const done = Diag.finish(r.session, { equipmentData: LAPTOP, now: "2026-10-01T10:20:00.000Z" });
+  const res = done.result;
   assert.equal(res.evaluation, true);
   same(Object.keys(res.breakdown), ["diagnostico", "procedimiento", "reparacion", "herramientas", "total"]);
   assert.equal(res.score, 90);
   assert.equal(res.status, "APROBADO");
-  const doc = Att.buildAttemptDoc(Object.assign(Diag.serialize(Diag.finish(r.session, { equipmentData: LAPTOP, now: "2026-10-01T10:20:00.000Z" })), {}), { uid: "U", usernameKey: "ana", ficha: "3441939", equipo: "laptop", practica: "diagnosis-eval-e1", nonce: "abcd1234", origen: "new" });
-  assert.equal(doc.actividad, "diagnostico");
-  assert.equal(doc.modo, "evaluacion");
-  assert.equal(doc.caso, "eval-e1");
-  assert.equal(doc.rawScore, 90);
-  assert.equal(doc.rawMaxScore, 90);
-  assert.equal(doc.normalizedScore, 100);
-  assert.equal(doc.estado, "APROBADO");
-  assert.match(doc.attemptId, /^U__laptop__diagnosis-eval-e1__\d+__abcd1234$/);
+  assert.equal(res.checks, 2);
+  same(res.handledParts, ["bottom-cover", "cable-battery", "ram", "cable-cpu-fan-laptop", "cooler"]);
+  assert.equal(res.durationSeconds, 1200);
+  const doc = Att.buildAttemptDoc(Diag.serialize(done), { uid: "U", usernameKey: "ana", ficha: "3441939", equipo: "laptop", practica: "diagnosis-eval-e3", nonce: "abcd1234", origen: "new" });
+  same([doc.actividad, doc.modo, doc.caso, doc.rawScore, doc.rawMaxScore, doc.normalizedScore, doc.estado], ["diagnostico", "evaluacion", "eval-e3", 90, 90, 100, "APROBADO"]);
+  assert.match(doc.attemptId, /^U__laptop__diagnosis-eval-e3__\d+__abcd1234$/);
 });
 
 test("EV-3 el documento del intento solo usa campos que las reglas actuales admiten", () => {
   const rules = read("firestore.rules");
   const allowed = rules.slice(rules.indexOf("function hwlabAttemptValid"), rules.indexOf("match /sena_portal_hwlab_attempts")).match(/'([A-Za-z]+)'/g).map((x) => x.replace(/'/g, ""));
-  const c = Cases.getCase("laptop", "eval-e5");
-  const s = Diag.createDiagnosisSession(LAPTOP, c, { rng: () => 0, now: "2026-10-01T10:00:00.000Z" });
+  const s = evalSession("eval-e6", "e6-wifi-antenna-battery-dust");
   const done = Diag.serialize(Diag.finish(s, { equipmentData: LAPTOP, now: "2026-10-01T10:05:00.000Z" }));
-  const doc = Att.buildAttemptDoc(done, { uid: "U", usernameKey: "ana", ficha: "3441939", equipo: "laptop", practica: "diagnosis-eval-e5", nonce: "abcd1234", origen: "new" });
+  const doc = Att.buildAttemptDoc(done, { uid: "U", usernameKey: "ana", ficha: "3441939", equipo: "laptop", practica: "diagnosis-eval-e6", nonce: "abcd1234", origen: "new" });
   Object.keys(doc).forEach((k) => assert.ok(allowed.includes(k), "campo fuera de las reglas: " + k));
-  assert.ok(allowed.includes("actividad") && /d\.actividad in \['ensamble', 'desensamble', 'mantenimiento', 'diagnostico'\]/.test(rules));
+  assert.ok(/d\.actividad in \['ensamble', 'desensamble', 'mantenimiento', 'diagnostico'\]/.test(rules));
   assert.match(rules, /attemptId\.matches\('\^' \+ d\.uid \+ '__\(desktop\|laptop\)__\[a-z0-9-\]\+__/);
   assert.ok(doc.rawMaxScore <= 100 && doc.rawScore >= 0);
 });
 
-test("EV-4 entrega sin resolver: nota parcial por lo logrado, nunca aprobado sin reparar", () => {
-  const c = Cases.getCase("laptop", "eval-e5");
-  const i = c.faultPool.findIndex((f) => f.variantId === "laptop-case-10:screen-and-wifi");
-  let s = Diag.createDiagnosisSession(LAPTOP, c, { rng: () => (i + 0.5) / c.faultPool.length, now: "2026-10-01T10:00:00.000Z" });
-  // Entrega inmediata, sin haber hecho nada: 0 puntos (no hay puntos "gratis").
-  let res = finish(s);
-  same([res.breakdown.diagnostico.value, res.breakdown.procedimiento.value, res.breakdown.reparacion.value, res.breakdown.herramientas.value], [0, 0, 0, 0]);
+test("EV-4 E6: solo A no aprueba, solo B no aprueba, A+B sin mantenimiento no aprueba, todo si; entrega parcial = nota parcial", () => {
+  const base = evalSession("eval-e6", "e6-wifi-antenna-battery-dust");
+  // Entrega inmediata, sin haber hecho nada: 0 puntos.
+  let res = finish(base);
   assert.equal(res.score, 0);
   assert.equal(res.status, "POR MEJORAR");
-  // Abrio de forma segura pero no corrigio nada: 40 % de procedimiento y herramientas.
-  res = finish(open(s));
-  same([res.breakdown.diagnostico.value, res.breakdown.procedimiento.value, res.breakdown.reparacion.value, res.breakdown.herramientas.value], [0, 10, 0, 4]);
-  // Una de dos fallas corregida y el equipo armado, sin comprobar la segunda.
-  s = close(put(take(open(s), "cable-screen-flex"), "cable-screen-flex"));
-  const r = power(s);
+  const fixA = (s) => put(take(s, "wifi-antenna-2"), "wifi-antenna-2");
+  const fixB = (s) => { s = take(s, "battery"); return put(Diag.replacePart(LAPTOP, s, "battery").session, "battery"); };
+  // Solo A.
+  let r = power(close(fixA(open(base))));
+  assert.equal(r.fixed, false);
+  assert.equal(r.screen, "battery-fail", "aparece el sintoma de la siguiente falla");
+  assert.equal(r.stagesFixed, 1);
   res = finish(r.session);
-  assert.equal(res.faultsFixed, 1);
-  same([res.breakdown.diagnostico.value, res.breakdown.procedimiento.value, res.breakdown.reparacion.value, res.breakdown.herramientas.value], [15, 19, 8, 8]);
-  assert.equal(res.score, 50);
   assert.equal(res.status, "POR MEJORAR");
+  // Solo B.
+  r = power(close(fixB(open(base))));
+  assert.equal(r.fixed, false);
+  assert.equal(r.screen, "wifi-weak");
+  assert.equal(finish(r.session).status, "POR MEJORAR");
+  // A + B, sin el mantenimiento: el equipo sigue calentandose.
+  r = power(close(fixB(fixA(open(base)))));
+  assert.equal(r.fixed, false);
+  assert.equal(r.screen, "overheat");
+  assert.equal(r.stagesFixed, 2);
+  res = finish(r.session);
+  same([res.faultsFixed, res.faultsTotal], [2, 3]);
+  assert.equal(res.status, "POR MEJORAR", "dos de tres problemas no bastan");
+  // Todo.
+  r = power(close(coolerBack(dust(cooler(fixB(fixA(open(base))))))));
+  assert.equal(r.fixed, true);
+  res = finish(r.session);
+  assert.equal(res.score, 90);
+  assert.equal(res.status, "APROBADO");
+  same(res.replacedParts, ["battery"]);
+  // Abrio de forma segura pero no corrigio nada: 40 % de procedimiento y herramientas.
+  res = finish(open(base));
+  same([res.breakdown.diagnostico.value, res.breakdown.procedimiento.value, res.breakdown.reparacion.value, res.breakdown.herramientas.value], [0, 10, 0, 4]);
 });
 
-test("EV-5 la evaluacion penaliza cambiar componentes sanos y los errores de procedimiento", () => {
-  const c = Cases.getCase("laptop", "eval-e2");
-  const i = c.faultPool.findIndex((f) => f.variantId === "laptop-case-09:ram-damaged");
-  let s = open(Diag.createDiagnosisSession(LAPTOP, c, { rng: () => (i + 0.5) / c.faultPool.length, now: "2026-10-01T10:00:00.000Z" }));
+test("EV-5 la evaluacion penaliza cambiar componentes sanos, una hipotesis equivocada y el procedimiento inseguro", () => {
+  // Sustitucion no justificada.
+  let s = open(evalSession("eval-e2", "e2-ssd-damaged-and-dust"));
+  s = take(s, "ram");
+  s = put(Diag.replacePart(LAPTOP, s, "ram").session, "ram");
   s = take(s, "ssd-m2");
   s = put(Diag.replacePart(LAPTOP, s, "ssd-m2").session, "ssd-m2");
-  s = take(s, "ram");
-  s = close(put(Diag.replacePart(LAPTOP, s, "ram").session, "ram"));
-  const r = power(s);
+  let r = power(close(coolerBack(dust(cooler(s)))));
   assert.equal(r.fixed, true);
   let res = finish(r.session);
   assert.equal(res.breakdown.diagnostico.value, 20, "30 - 10 por la sustitucion no justificada");
-  assert.equal(res.breakdown.reparacion.value, 25);
+  same(res.unjustifiedReplacements, ["ram"]);
   assert.equal(res.score, 80);
+  // Hipotesis equivocada en la pregunta de diagnostico: esa falla vale el 60 %.
+  s = power(evalSession("eval-e2", "e2-ssd-loose-and-dust")).session;
+  s = Diag.answerDiagnosis(s, "memoria").session;
+  assert.match(Diag.answerDiagnosis(power(evalSession("eval-e2", "e2-ssd-loose-and-dust")).session, "memoria").message, /^Diagnóstico registrado/, "la evaluacion no dice si acerto");
+  s = open(s);
+  s = put(take(s, "ssd-m2"), "ssd-m2");
+  r = power(close(coolerBack(dust(cooler(s)))));
+  assert.equal(r.fixed, true);
+  res = finish(r.session);
+  assert.equal(res.breakdown.diagnostico.value, 24, "30 x (0,6 + 1) / 2");
+  // Identifico bien pero no reparo: 30 % de esa falla.
+  s = Diag.answerDiagnosis(power(evalSession("eval-e2", "e2-ssd-loose-and-dust")).session, "almacenamiento").session;
+  assert.equal(Diag.computeEvaluationBreakdown(LAPTOP, s).diagnostico.value, 5, "30 x 0,3 / 2 = 4,5 -> 5");
   // Procedimiento inseguro: tocar un componente con la bateria conectada.
-  let u = take(Diag.createDiagnosisSession(LAPTOP, c, { rng: () => (i + 0.5) / c.faultPool.length }), "bottom-cover");
+  const u = take(evalSession("eval-e3", "e3-ram-damaged-and-paste"), "bottom-cover");
   const inseguro = act(u, "ram", "remove");
   assert.equal(inseguro.ok, false);
   assert.equal(inseguro.session.errorsByType.unsafe, 1);
-  // (25 - 3) al cerrar el escenario resuelto; aqui, sin reparar ni abrir con seguridad, aun no cuenta.
   assert.equal(Diag.computeEvaluationBreakdown(LAPTOP, Object.assign({}, inseguro.session, { fixed: true })).procedimiento.value, 22);
 });
 
-test("EV-6 asignacion al azar persistente y arranque desde 'Evaluacion' solo en el portatil", () => {
+test("EV-6 asignacion al azar persistente, informe completo y arranque desde 'Evaluacion' solo en el portatil", () => {
   const ctl = read("js/hardware_lab_3d_diagnosis_controller.js");
   assert.match(ctl, /const EVAL_ASSIGN_MODE = "evaluation-assignment";/);
   assert.match(ctl, /if \(saved\.current && all\.indexOf\(saved\.current\) !== -1\) return saved\.current;/, "recargar no cambia el escenario");
@@ -420,11 +552,38 @@ test("EV-6 asignacion al azar persistente y arranque desde 'Evaluacion' solo en 
   assert.match(ctl, /document\.getElementById\("hwlab-hint-btn"\)\.hidden = evaluationMode;/);
   assert.match(ctl, /document\.getElementById\("hwlab-restart-btn"\)\.hidden = evaluationMode;/);
   assert.match(ctl, /A\.recordFinished\(\{ session: done, equipo: equipmentId, practica: storageModeFor\(caseDef\.id\) \}\);/);
+  ["Estado final del equipo", "Problemas corregidos", "Tiempo", "Comprobaciones de encendido", "Componentes intervenidos", "Componentes reemplazados", "Sustituciones no justificadas", "Intervenciones innecesarias", "Errores de procedimiento", "Pistas", "Reinicios"].forEach((label) => assert.ok(ctl.includes('["' + label + '"'), "informe: " + label));
   const boot = read("js/hardware_lab_3d_bootstrap.js");
   assert.match(boot, /equipmentId === "laptop"\s*\n\s*\? \{ mode: "evaluation",[^\n]*serviceOrder: true \}\s*\n\s*: \{ mode: "evaluation",[^\n]*needsDirection: true \},/);
   assert.match(boot, /if \(opt\.serviceOrder\) \{[\s\S]{0,160}diagnosisController\.startEvaluation\(selectedEquipmentId\);/);
-  // Los intentos de evaluacion del desensamble/ensamble anteriores siguen siendo validos en el seguimiento.
   same(Att.describePractice("disassembly-evaluation"), { actividad: "desensamble", modo: "evaluacion", caso: null });
   same(Att.describePractice("diagnosis-eval-e3"), { actividad: "diagnostico", modo: "evaluacion", caso: "eval-e3" });
   same(Att.describePractice("diagnosis-laptop-case-09"), { actividad: "diagnostico", modo: "diagnostico", caso: "laptop-case-09" });
+});
+
+test("EV-7 azar sin sesgo evidente: las 6 ordenes salen y ninguna se repite antes de completar la vuelta", () => {
+  // Misma logica que el controlador, con un almacen en memoria (la funcion vive en el modulo 3D).
+  const ctl = read("js/hardware_lab_3d_diagnosis_controller.js");
+  const src = ctl.slice(ctl.indexOf("function assignedScenario(rng)"), ctl.indexOf("function startEvaluation"));
+  const all = Cases.evaluationScenarios("laptop").map((c) => c.id);
+  let store = null;
+  const env = { window: { HardwareLab: { DiagnosisCases: { evaluationScenarios: () => all.map((id) => ({ id })) } } }, Storage: () => ({ loadLocal: () => store, persist: (e, m, v) => { store = JSON.parse(JSON.stringify(v)); } }), equipmentId: "laptop", EVAL_ASSIGN_MODE: "x", Math };
+  const fns = new Function("window", "Storage", "equipmentId", "EVAL_ASSIGN_MODE", src + "; return { assignedScenario, closeAssignedScenario };")(env.window, env.Storage, env.equipmentId, env.EVAL_ASSIGN_MODE);
+  let seed = 7;
+  const rng = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
+  const counts = {};
+  for (let round = 0; round < 50; round++) {
+    const seen = [];
+    for (let k = 0; k < 6; k++) {
+      const id = fns.assignedScenario(rng);
+      assert.equal(fns.assignedScenario(rng), id, "sin entregar, la asignacion no cambia");
+      assert.ok(!seen.includes(id), "repite " + id + " dentro de la vuelta");
+      seen.push(id);
+      if (k === 0) counts[id] = (counts[id] || 0) + 1;
+      fns.closeAssignedScenario(id);
+    }
+    same(seen.slice().sort(), all);
+  }
+  // Primera orden de cada vuelta: las 6 aparecen (50 vueltas; esperado ~8 cada una).
+  all.forEach((id) => assert.ok((counts[id] || 0) >= 2, id + " casi nunca sale primera: " + JSON.stringify(counts)));
 });

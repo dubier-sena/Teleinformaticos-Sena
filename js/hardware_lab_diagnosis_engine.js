@@ -170,6 +170,7 @@
       replaced: {},
       unjustifiedReplacements: [],
       inspectedPartIds: [],
+      hypotheses: [],
       screenFixed: (fault.screen && fault.screen.fixed) || null,
       thermalVariant: fault.thermalVariant || null,
       evaluation: !!caseDef.evaluation,
@@ -368,7 +369,7 @@
    * Es una inferencia por acciones (no hay un control para declarar la
    * hipotesis): se informa como tal.
    */
-  var NEEDED_THERMAL_TASKS = { dust: ["brush", "air"], paste: ["scrape", "alcohol", "apply"] };
+  var NEEDED_THERMAL_TASKS = { dust: ["brush", "air"], paste: ["scrape", "alcohol", "apply"], both: ["brush", "air", "scrape", "alcohol", "apply"] };
   function minimalParts(equipmentData, session) {
     var need = {};
     (EXTRA_ACCESS_BY_EQUIPMENT[equipmentData.id] || []).forEach(function (id) { need[id] = true; });
@@ -537,6 +538,63 @@
     if (outcome === "not-ready") return "off";
     var st = pendingStage(equipmentData, session);
     return (st && st.screen) || "no-post";
+  }
+
+  // ── Pregunta de diagnostico (LOOP portatil, oct-1) ────────────────────────
+  // Despues de OBSERVAR una falla al encender, el aprendiz FORMULA su
+  // diagnostico: que subsistema explica el sintoma. Es la unica pregunta
+  // obligatoria del laboratorio y la interfaz nunca la esconde. En los casos
+  // de practica no puntua (ensena: dice si acerto); en la evaluacion cuenta
+  // dentro de "Diagnostico" y la respuesta no se califica en pantalla.
+  var SUBSYSTEMS = [
+    { id: "energia", label: "Batería y energía" },
+    { id: "memoria", label: "Memoria RAM" },
+    { id: "almacenamiento", label: "Almacenamiento" },
+    { id: "imagen", label: "Pantalla e imagen" },
+    { id: "entrada", label: "Teclado y panel táctil" },
+    { id: "red", label: "Red inalámbrica" },
+    { id: "refrigeracion", label: "Refrigeración" },
+  ];
+  var SCREEN_SUBSYSTEM = {
+    "no-post": "memoria", crash: "memoria", "no-boot": "almacenamiento", "no-image": "imagen",
+    "keyboard-fail": "entrada", "touchpad-fail": "entrada", "wifi-fail": "red", "wifi-weak": "red",
+    overheat: "refrigeracion", "battery-fail": "energia",
+  };
+
+  function subsystemOf(stage) {
+    return (stage && (stage.subsystem || SCREEN_SUBSYSTEM[stage.screen])) || null;
+  }
+
+  /** Pregunta pendiente: { stage, options } tras observar una falla aun sin hipotesis, o null. */
+  function pendingQuestion(session) {
+    var st = stagesOf(session);
+    var log = session.actionLog || [];
+    for (var i = log.length - 1; i >= 0; i--) {
+      var e = log[i];
+      if (e.type !== "power-on-check") continue;
+      if (e.outcome !== "fault" || e.stage == null || !subsystemOf(st[e.stage])) return null;
+      var answered = (session.hypotheses || []).some(function (h) { return h.stage === e.stage; });
+      return answered ? null : { stage: e.stage, options: SUBSYSTEMS };
+    }
+    return null;
+  }
+
+  function answerDiagnosis(session, subsystemId) {
+    var q = pendingQuestion(session);
+    if (!q) return { ok: false, message: "No hay una pregunta pendiente.", session: session };
+    var option = SUBSYSTEMS.filter(function (o) { return o.id === subsystemId; })[0];
+    if (!option) return { ok: false, message: "Elige una de las opciones.", session: session };
+    var correct = subsystemOf(stagesOf(session)[q.stage]) === subsystemId;
+    var updated = Object.assign({}, session, {
+      hypotheses: (session.hypotheses || []).concat([{ stage: q.stage, answer: subsystemId, correct: correct }]),
+    });
+    updated = logAction(updated, { type: "hypothesis", stage: q.stage, answer: subsystemId, ok: correct });
+    var message = session.evaluation
+      ? "Diagnóstico registrado: " + option.label + ". Continúa con la revisión."
+      : correct
+      ? "Buena hipótesis: el síntoma apunta a " + option.label + ". Ahora compruébala en el equipo."
+      : "Ese subsistema no explica bien el síntoma. Vuelve a leerlo: fíjate en qué funciona y qué no. Puedes continuar.";
+    return { ok: true, correct: correct, message: message, session: updated };
   }
 
   // ── Revisar y sustituir componentes (LOOP portatil, fase G) ───────────────
@@ -743,9 +801,11 @@
   // las practicas. Es una rubrica NUEVA para una actividad nueva: la de los
   // casos de practica (arriba) no cambia. Se evalua conocimiento y
   // procedimiento, no punteria ni velocidad: no hay categoria de tiempo.
-  //   Diagnostico: proporcional a las fallas corregidas; resta cambiar
-  //     componentes sanos (-10 c/u) y acertar desmontando otros subsistemas
-  //     sin necesidad (-5).
+  //   Diagnostico: por cada falla, credito completo si se corrige (60 % si
+  //     antes se declaro un subsistema equivocado en la pregunta de
+  //     diagnostico) y 30 % si solo se identifico. Resta cambiar componentes
+  //     sanos (-10 c/u) y acertar desmontando otros subsistemas sin necesidad
+  //     (-5).
   //   Reparacion: completa solo si TODAS las fallas quedan corregidas y el
   //     equipo se entrega armado y comprobado; si no, parcial por falla.
   //   Procedimiento y herramientas se GANAN trabajando: entregar sin haber
@@ -760,7 +820,16 @@
     var ratio = progress.total ? progress.fixed / progress.total : 0;
     var trace = diagnosisTrace(equipmentData, session);
     var unjustified = (session.unjustifiedReplacements || []).length;
-    var diagnostico = Math.round(EVALUATION_MAX.diagnostico * ratio) - unjustified * 10 - (trace.repairedWithoutDiagnosis && !unjustified ? 5 : 0);
+    // Por falla: corregida = credito completo (60 % si antes declaro un
+    // subsistema equivocado); sin corregir pero bien identificada = 30 %.
+    var stages = stagesOf(session);
+    var credit = stages.reduce(function (sum, st, idx) {
+      var fixedStage = conditionMet(equipmentData, session, st.fixCondition);
+      var hyp = (session.hypotheses || []).filter(function (h) { return h.stage === idx; })[0];
+      if (fixedStage) return sum + (hyp && !hyp.correct ? 0.6 : 1);
+      return sum + (hyp && hyp.correct ? 0.3 : 0);
+    }, 0) / (stages.length || 1);
+    var diagnostico = Math.round(EVALUATION_MAX.diagnostico * credit) - unjustified * 10 - (trace.repairedWithoutDiagnosis && !unjustified ? 5 : 0);
     diagnostico = Math.max(0, Math.min(EVALUATION_MAX.diagnostico, diagnostico));
     var powerPart = POWER_SOURCE_PART_BY_EQUIPMENT[equipmentData.id];
     var openedSafely = !powerPart || (session.actionLog || []).some(function (a) {
@@ -780,6 +849,15 @@
       herramientas: { value: herramientas, max: EVALUATION_MAX.herramientas },
       total: diagnostico + procedimiento + reparacion + herramientas,
     };
+  }
+
+  /** Piezas que el aprendiz retiro o desconecto durante el intento (sin repetir). */
+  function handledParts(session) {
+    var out = [];
+    (session.actionLog || []).forEach(function (e) {
+      if (e.type === "action" && e.ok && (e.action === "remove" || e.action === "disconnect") && out.indexOf(e.partId) === -1) out.push(e.partId);
+    });
+    return out;
   }
 
   function finish(session, options) {
@@ -803,6 +881,9 @@
       unnecessaryParts: session.unnecessaryPartIds.length,
       replacedParts: Object.keys(session.replaced || {}),
       unjustifiedReplacements: (session.unjustifiedReplacements || []).slice(),
+      checks: session.checkAttempts || 0,
+      handledParts: handledParts(session),
+      hypotheses: (session.hypotheses || []).map(function (h) { return { stage: h.stage, answer: h.answer, correct: h.correct }; }),
       breakdown: breakdown,
       score: breakdown.total,
       status: (breakdown.total * 100) / rawMax >= PASS_THRESHOLD ? "APROBADO" : "POR MEJORAR",
@@ -827,6 +908,7 @@
       replaced: session.replaced || {},
       unjustifiedReplacements: session.unjustifiedReplacements || [],
       inspectedPartIds: session.inspectedPartIds || [],
+      hypotheses: session.hypotheses || [],
       screenFixed: session.screenFixed || null,
       thermalVariant: session.thermalVariant || null,
       evaluation: !!session.evaluation,
@@ -874,6 +956,11 @@
     observedSymptom: observedSymptom,
     isDamaged: isDamaged,
     removedParts: removedParts,
+    SUBSYSTEMS: SUBSYSTEMS,
+    subsystemOf: subsystemOf,
+    pendingQuestion: pendingQuestion,
+    answerDiagnosis: answerDiagnosis,
+    handledParts: handledParts,
     inspectPart: inspectPart,
     replacePart: replacePart,
     createDiagnosisSession: createDiagnosisSession,

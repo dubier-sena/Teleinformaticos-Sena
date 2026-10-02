@@ -984,13 +984,50 @@
     });
   });
 
-  // ── Banco de EVALUACION del portatil (fase J) ─────────────────────────────
-  // Seis escenarios independientes de los casos de practica: el aprendiz
-  // recibe uno al azar (queda asignado hasta terminarlo, recargar no lo
-  // cambia). Sin pistas. No aparecen en el menu de casos. Combinan lo que el
-  // laboratorio ensena: conexion floja, mantenimiento, componente averiado y
-  // falla doble. El enunciado nunca nombra la pieza.
-  function evalScenario(n, name, symptom, faultPool) {
+  // ── Banco de EVALUACION del portatil (fases J-K) ──────────────────────────
+  // Seis ORDENES DE SERVICIO, independientes de los casos de practica: ninguna
+  // repite un caso. Todas integran mantenimiento + diagnostico + intervencion
+  // + comprobacion: cada orden trae al menos una falla Y un mantenimiento
+  // termico pendiente (polvo o pasta), como un equipo real que llega al
+  // taller. La orden E6 trae DOS fallas ademas del mantenimiento. El aprendiz
+  // recibe una al azar (queda asignada hasta entregarla), sin pistas, y solo
+  // ve la orden de servicio, lo que el equipo muestra al encender y el equipo.
+  // Las averias y los textos del repaso reutilizan las definiciones de arriba
+  // (una sola fuente de verdad); lo nuevo es la COMBINACION.
+  var RAM_UNSTABLE = "El sistema inicia, pero al poco tiempo se detiene con una pantalla de error y se reinicia solo.";
+  var TOUCHPAD_SYMPTOM = "El sistema funciona, pero el puntero no se mueve con el panel táctil.";
+  var MAINT = {
+    dust: { thermal: { dust: "dirty", paste: "new", amount: "adecuada" }, thermalVariant: "dust", text: "había polvo acumulado en las aletas y el ventilador", fix: "limpiar la refrigeración con brocha y aire comprimido" },
+    paste: { thermal: { dust: "clean", paste: "old" }, thermalVariant: "paste", text: "la pasta térmica estaba vieja y reseca", fix: "retirar la pasta vieja, limpiar con alcohol y aplicar pasta nueva en la cantidad adecuada" },
+    both: { thermal: { dust: "dirty", paste: "old" }, thermalVariant: "both", text: "había polvo acumulado y la pasta térmica estaba reseca", fix: "limpiar el polvo y renovar la pasta térmica" },
+  };
+  var THERMAL_STAGE = { fixCondition: { type: "thermalReady" }, screen: { broken: "overheat" }, symptomBroken: THERMAL_BROKEN };
+  function damagedStage(partId, screen, symptomBroken, finding) {
+    return { fixCondition: { type: "replaced", partId: partId }, screen: { broken: screen }, symptomBroken: symptomBroken, finding: finding };
+  }
+  /** Variante de una orden: fallas (en el orden en que se observan) + mantenimiento. */
+  function order(variantId, faults, maint, relevant, overrides, what, how) {
+    var m = MAINT[maint];
+    return {
+      variantId: variantId,
+      overrides: overrides,
+      thermal: m.thermal,
+      thermalVariant: m.thermalVariant,
+      relevantPartIds: THERMAL_RELEVANT.concat(relevant),
+      faults: faults.concat([THERMAL_STAGE]),
+      screen: { fixed: "desktop" },
+      symptomBroken: faults.length ? faults[0].symptomBroken : THERMAL_BROKEN,
+      symptomFixed: ALL_OK,
+      explanation: {
+        whatWasHappening: "En este intento " + what + "; además, " + m.text + ".",
+        howToFix: "Con la batería desconectada: " + how + "; y, como mantenimiento, " + m.fix + ".",
+      },
+    };
+  }
+  function evalScenario(n, name, symptom, faultPool, howToDiagnose) {
+    faultPool.forEach(function (f) {
+      f.fixCondition = { type: "all", conditions: f.faults.map(function (x) { return x.fixCondition; }) };
+    });
     return {
       id: "eval-e" + n,
       equipmentId: "laptop",
@@ -1004,47 +1041,73 @@
       faultPool: faultPool,
       hints: [],
       explanation: {
-        howToDiagnose:
-          "Método: reproducir la falla, describir qué funciona y qué no, decidir el subsistema, intervenir lo mínimo necesario, comprobar después de cada reparación y entregar el equipo armado.",
+        howToDiagnose: howToDiagnose,
+        prevention: "Toda orden de servicio se cierra con el equipo limpio, armado y comprobado: el mantenimiento preventivo forma parte de la reparación.",
       },
     };
   }
-  function variantFrom(caseId, variantId) {
-    var c = LAPTOP_CASES.find(function (x) { return x.id === caseId; });
-    var f = (c.faultPool || [c.fault]).find(function (x) { return !variantId || x.variantId === variantId; });
-    return Object.assign({}, f, {
-      variantId: caseId + (f.variantId ? ":" + f.variantId : ""),
-      explanation: Object.assign({}, c.explanation, f.explanation || {}),
-    });
-  }
-  var EVAL_INTRO = "Evaluación. Un usuario entrega este portátil con una orden de servicio: ";
+  var ORDER = "Orden de servicio. El usuario reporta: ";
   var EVALUATION_SCENARIOS = [
-    evalScenario(1, "Orden de servicio A", EVAL_INTRO + "«Lo prendo y no hace nada más».", [
-      variantFrom("laptop-case-01"),
-      variantFrom("laptop-case-05"),
-    ]),
-    evalScenario(2, "Orden de servicio B", EVAL_INTRO + "«Ya lo revisaron y sigue igual, no arranca».", [
-      variantFrom("laptop-case-09", "ram-damaged"),
-      variantFrom("laptop-case-09", "ssd-damaged"),
-    ]),
-    evalScenario(3, "Orden de servicio C", EVAL_INTRO + "«No me deja conectar a internet sin cable».", [
-      variantFrom("laptop-case-06", "wifi-card"),
-      variantFrom("laptop-case-06", "wifi-antenna-2"),
-      variantFrom("laptop-case-09", "wifi-damaged"),
-    ]),
-    evalScenario(4, "Orden de servicio D", EVAL_INTRO + "«Se pone lentísimo y quema».", [
-      variantFrom("laptop-case-07", "dust"),
-      variantFrom("laptop-case-07", "paste"),
-      variantFrom("laptop-case-07", "fan-cable"),
-    ]),
-    evalScenario(5, "Orden de servicio E", EVAL_INTRO + "«Se me cayó y quedó fallando de varias cosas».", [
-      variantFrom("laptop-case-10", "screen-and-wifi"),
-      variantFrom("laptop-case-10", "keyboard-and-fan"),
-    ]),
-    evalScenario(6, "Orden de servicio F", EVAL_INTRO + "«Estuvo guardado un año y ya no sirve».", [
-      variantFrom("laptop-case-11", "ram-damaged-and-dust"),
-      variantFrom("laptop-case-11", "battery-damaged-and-screen"),
-    ]),
+    evalScenario(1, "Orden de servicio E1 · Sobrecalentamiento",
+      ORDER + "«El portátil se calienta demasiado y después de un tiempo presenta problemas de funcionamiento».",
+      [
+        order("e1-fan-and-dust", [loose("cable-cpu-fan-laptop", "overheat", THERMAL_BROKEN)], "dust", [], [{ partId: "cable-cpu-fan-laptop", present: true }],
+          "el conector del ventilador estaba mal asentado (el ventilador no giraba)", "reconectar a fondo el conector del ventilador"),
+        order("e1-dust-and-paste", [], "both", [], [],
+          "la refrigeración no tenía ninguna pieza suelta: el problema era solo de mantenimiento", "retirar el módulo de refrigeración"),
+      ],
+      "El equipo arranca pero no evacua el calor: se revisa toda la cadena térmica, de lo más simple a lo más laborioso (conexión del ventilador, polvo, pasta), y se comprueba después de cada intervención."),
+    evalScenario(2, "Orden de servicio E2 · Rendimiento y arranque",
+      ORDER + "«El equipo está muy lento y en ocasiones presenta problemas durante el inicio».",
+      [
+        order("e2-ssd-loose-and-dust", [loose("ssd-m2", "no-boot", NOBOOT_SYMPTOM)], "dust", ["ssd-m2"], [{ partId: "ssd-m2", present: true }],
+          "el SSD M.2 estaba mal asentado (a veces el equipo no encontraba desde dónde arrancar)", "reasentar el SSD M.2 y fijarlo con su tornillo"),
+        order("e2-ssd-damaged-and-dust", [damagedStage("ssd-m2", "no-boot", NOBOOT_SYMPTOM, DAMAGED.ssd.finding)], "dust", ["ssd-m2"], [],
+          "el SSD M.2 estaba averiado", "retirar el SSD, revisarlo y cambiarlo por el repuesto"),
+      ],
+      "Hay dos quejas distintas: el arranque (almacenamiento) y la lentitud (temperatura). Se resuelve primero lo que impide arrancar y, con el equipo ya funcionando, se observa de nuevo."),
+    evalScenario(3, "Orden de servicio E3 · Inestabilidad",
+      ORDER + "«El portátil enciende, pero durante el uso presenta fallos o comportamiento inestable».",
+      [
+        order("e3-ram-loose-and-paste", [loose("ram", "crash", RAM_UNSTABLE)], "paste", ["ram"], [{ partId: "ram", present: true }],
+          "el módulo de memoria RAM estaba mal asentado (el sistema se detenía con errores)", "reasentar la memoria RAM hasta que las pestañas la aseguren"),
+        order("e3-ram-damaged-and-paste", [damagedStage("ram", "crash", RAM_UNSTABLE, DAMAGED.ram.finding)], "paste", ["ram"], [],
+          "el módulo de memoria RAM estaba averiado", "retirar la memoria, revisarla y cambiarla por el repuesto"),
+      ],
+      "Un equipo que arranca y luego se detiene con errores apunta a la memoria; si después de corregirla sigue fallando con el uso, se revisa la temperatura."),
+    evalScenario(4, "Orden de servicio E4 · Dispositivo de entrada",
+      ORDER + "«El equipo funciona, pero uno de sus dispositivos presenta problemas».",
+      [
+        order("e4-keyboard-flex-loose-and-dust", [loose("cable-keyboard-flex", "keyboard-fail", KEYBOARD_SYMPTOM)], "dust", ["cable-keyboard-flex"], [{ partId: "cable-keyboard-flex", present: true }],
+          "el cable flex del teclado estaba mal asentado", "reasentar el flex del teclado con la herramienta plástica"),
+        order("e4-keyboard-flex-damaged-and-dust", [damagedStage("cable-keyboard-flex", "keyboard-fail", KEYBOARD_SYMPTOM, "El cable flex tiene un pliegue marcado y varias pistas cortadas cerca del conector: está averiado.")], "dust", ["cable-keyboard-flex"], [],
+          "el cable flex del teclado estaba averiado (pistas cortadas)", "desconectar el flex del teclado, revisarlo y cambiarlo por el repuesto"),
+        order("e4-touchpad-damaged-and-dust", [damagedStage("touchpad", "touchpad-fail", TOUCHPAD_SYMPTOM, "La placa del panel táctil tiene corrosión en el conector y un componente desprendido: está averiado.")], "dust", ["touchpad", "cable-touchpad-flex"], [],
+          "el panel táctil estaba averiado", "desconectar su flex, retirar el panel táctil, revisarlo y cambiarlo por el repuesto"),
+      ],
+      "Con un dispositivo de entrada que no responde se distingue, en este orden: la conexión (reasentar), el cable flex (revisarlo) y el propio dispositivo (revisarlo). Solo se cambia lo que muestra daño."),
+    evalScenario(5, "Orden de servicio E5 · Imagen y pantalla",
+      ORDER + "«El portátil presenta problemas de imagen. Solicito revisión y mantenimiento».",
+      [
+        order("e5-screen-flex-loose-and-dust", [loose("cable-screen-flex", "no-image", NOIMAGE_SYMPTOM)], "dust", ["cable-screen-flex"], [{ partId: "cable-screen-flex", present: true }],
+          "el cable flex de la pantalla estaba mal asentado", "reasentar el flex de pantalla en su conector"),
+        order("e5-screen-flex-damaged-and-paste", [damagedStage("cable-screen-flex", "no-image", NOIMAGE_SYMPTOM, "El cable de pantalla está pellizcado junto a la bisagra y tiene el aislamiento roto: está averiado.")], "paste", ["cable-screen-flex"], [],
+          "el cable flex de la pantalla estaba averiado (pellizcado en la bisagra)", "desconectar el flex de pantalla, revisarlo y cambiarlo por el repuesto"),
+      ],
+      "Si el equipo arranca (hay sonido y actividad) pero no hay imagen, se revisa el camino de la señal de vídeo antes de pensar en la pantalla: conexión, cable y, solo al final, el panel."),
+    evalScenario(6, "Orden de servicio E6 · Varios problemas",
+      ORDER + "«El equipo presenta varios problemas. Realice mantenimiento, diagnóstico y reparación».",
+      [
+        order("e6-wifi-antenna-battery-dust",
+          [loose("wifi-antenna-2", "wifi-weak", WIFI_BROKEN), damagedStage("battery", "battery-fail", BATTERY_SYMPTOM, DAMAGED.battery.finding)], "dust",
+          ["wifi-card", "wifi-antenna-1", "wifi-antenna-2", "battery"], [{ partId: "wifi-antenna-2", present: true }],
+          "la antena Wi-Fi auxiliar estaba suelta y la batería estaba hinchada", "reconectar la antena auxiliar y cambiar la batería por el repuesto"),
+        order("e6-wifi-card-touchpad-paste",
+          [damagedStage("wifi-card", "wifi-fail", DAMAGED.wifi.symptomBroken, DAMAGED.wifi.finding), loose("cable-touchpad-flex", "touchpad-fail", TOUCHPAD_SYMPTOM)], "paste",
+          ["wifi-card", "wifi-antenna-1", "wifi-antenna-2", "cable-touchpad-flex"], [{ partId: "cable-touchpad-flex", present: true }],
+          "la tarjeta Wi-Fi estaba averiada y el cable flex del panel táctil estaba mal asentado", "cambiar la tarjeta Wi-Fi por el repuesto y reasentar el flex del panel táctil"),
+      ],
+      "Con varios problemas se trabaja uno a la vez y se vuelve a encender después de cada reparación: el equipo muestra lo que todavía falla. No se entrega hasta una comprobación completa sin avisos."),
   ];
 
   var ALL_CASES = CASES.concat(LAPTOP_CASES);

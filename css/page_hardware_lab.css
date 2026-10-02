@@ -1156,6 +1156,26 @@ details.hwlab-thermal[open] > .hwlab-thermal__summary::before { transform: rotat
 .hwlab-phases__text { margin: 0 0 8px; font-size: var(--font-size-sm); color: var(--hwlab-text); }
 @media (max-width: 360px) { .hwlab-card__body .hwlab-phases { font-size: 11px; gap: 2px; } }
 
+/* Botones de la barra superior ocultos por el modo (pista y reinicio en
+   "Aprender" y en la evaluacion): el atributo [hidden] perdia contra el
+   display de .c-btn / .hwlab-icon-btn y el boton seguia a la vista y pulsable
+   (medido con captura real: "Reiniciar" visible en la evaluacion). */
+.hwlab-hud-top__actions [hidden] { display: none !important; }
+
+/* La pregunta obligatoria se ve COMPLETA: en el telefono la tarjeta puede
+   crecer mas que el 42 % habitual mientras haya una accion obligatoria con
+   varias opciones (con 7 opciones la ultima quedaba cortada). */
+@media (max-width: 600px) {
+  .hwlab-card:has(.hwlab-question) { max-height: 80%; }
+}
+
+/* Pregunta de diagnostico: opciones grandes, legibles y siempre a la vista
+   (tambien en la banda compacta del telefono: [data-required-action]). */
+.hwlab-question__symptom { margin: 0 0 8px; font-size: var(--font-size-sm); color: var(--hwlab-text); }
+.hwlab-question__options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.hwlab-question__options .c-btn { min-height: var(--hit-target-min); white-space: normal; line-height: 1.2; padding-inline: 6px; }
+@media (max-width: 340px) { .hwlab-question__options { grid-template-columns: 1fr; } }
+
 /* Piezas retiradas: revisar / cambiar por repuesto (fase G). */
 .hwlab-removed { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
 .hwlab-removed li { display: grid; gap: 6px; padding: 8px; border: 1px solid var(--hwlab-border); border-radius: 8px; }
