@@ -355,7 +355,7 @@ test("PQ-3 la pregunta nunca queda oculta: accion obligatoria, aviso persistente
   assert.match(ctl, /data-required-action data-pending-text="PREGUNTA PENDIENTE: responde para continuar\."/);
   assert.match(ctl, /class="hwlab-question__body" data-required-action[^>]*>' \+\s*\n\s*`<p class="hwlab-question__symptom">Síntoma observado:/, "el sintoma se lee dentro del bloque obligatorio (banda compacta)");
   assert.match(read("css/page_hardware_lab.css"), /\.hwlab-hud-top__actions \[hidden\] \{ display: none !important; \}/, "pista y reinicio ocultos de verdad en Aprender y en la evaluacion");
-  assert.match(read("css/page_hardware_lab.css"), /\.hwlab-card:has\(\.hwlab-question\) \{ max-height: 80%; \}/);
+  assert.match(read("css/page_hardware_lab.css"), /\.hwlab-card:has\(\.hwlab-question\) \{ max-height: 80%; z-index: 35; \}/);
   assert.match(ctl, /<p data-card-summary="Pregunta">/);
   assert.match(ctl, /if \(meta && \(meta\.kind === "screw" \|\| meta\.partId\) && questionBlocks\(\)\) return;/);
   const block = ctl.slice(ctl.indexOf("function questionBlocks()"), ctl.indexOf("function questionHtml"));
@@ -367,6 +367,8 @@ test("PQ-3 la pregunta nunca queda oculta: accion obligatoria, aviso persistente
   assert.match(css, /\.hwlab-question__options \.c-btn \{ min-height: var\(--hit-target-min\);/);
   const stage = read("js/hardware_lab_3d_stage.js");
   assert.match(stage, /const BLOCKING_ACTION = "[^"]*\[data-required-action\]"/);
+  assert.match(stage, /card\.style\.top = Math\.max\(gap, pr\.top - sceneR\.top\) \+ "px";/, "la tarjeta nunca sale por encima de la escena");
+  assert.match(stage, /schedulePlaceCard\(hadBlocking !== hasBlocking \? 0 : CAMERA_SETTLE_MS\);/);
 });
 
 test("PQ-4 la pregunta no cambia la nota de los casos de practica", () => {

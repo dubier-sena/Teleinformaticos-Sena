@@ -1113,7 +1113,10 @@ export function createStage() {
     card.setAttribute("data-slot", pick.slot);
     const pr = pick.rect;
     card.style.left = (pr.left - sceneR.left) + "px";
-    card.style.top = (pr.top - sceneR.top) + "px";
+    // Nunca por encima de la escena: una banda alta (la pregunta de diagnostico
+    // en un telefono pequeno) anclada abajo salia por arriba y la barra
+    // superior tapaba sus botones (medido en 360x640).
+    card.style.top = Math.max(gap, pr.top - sceneR.top) + "px";
     card.style.right = "auto";
     card.style.bottom = "auto";
     card.style.width = (pr.right - pr.left) + "px";
@@ -1386,9 +1389,13 @@ export function createStage() {
 
   function setInfoPanel(html) {
     const panel = document.getElementById("hwlab-info-panel");
+    const hadBlocking = !!(panel && panel.querySelector(BLOCKING_ACTION));
     if (panel) panel.innerHTML = html;
     updateCardSummary();
-    schedulePlaceCard(CAMERA_SETTLE_MS);
+    // Si aparece o desaparece una accion obligatoria la tarjeta cambia mucho
+    // de alto: se recoloca ya, sin esperar a que la camara se asiente.
+    const hasBlocking = !!(panel && panel.querySelector(BLOCKING_ACTION));
+    schedulePlaceCard(hadBlocking !== hasBlocking ? 0 : CAMERA_SETTLE_MS);
   }
 
   /** El control dice lo que HARA: una banda compacta se "muestra", una tarjeta desplegada se "contrae". */

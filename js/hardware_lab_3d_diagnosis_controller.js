@@ -616,7 +616,7 @@ export function createDiagnosisController(stage) {
     return (
       '<div class="hwlab-info-block hwlab-question">' +
       "<h3>Pregunta de diagnóstico</h3>" +
-      '<p data-card-summary="Pregunta">¿Qué subsistema explica el síntoma que acabas de observar?</p>' +
+      '<p data-card-summary="Pregunta">¿Qué subsistema falla?</p>' +
       // El sintoma viaja DENTRO del bloque obligatorio: se lee tambien en la
       // banda compacta del telefono, donde la tarjeta tapa parte de la pantalla.
       '<div class="hwlab-question__body" data-required-action data-pending-text="PREGUNTA PENDIENTE: responde para continuar.">' +
