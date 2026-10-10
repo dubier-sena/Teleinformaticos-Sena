@@ -1,47 +1,43 @@
-# Laboratorio Virtual 3D V6 — candidato para piloto
+# Laboratorio Virtual 3D V6 — integración en el portal principal
 
-Preparación del 10 de octubre de 2026. Rama prevista: `loop-portatil-v6-cloud-20261009`.
-Base publicada conservada: `204dc4076b236516cf6c8d145625e9e5f67265a9`.
+10 de octubre de 2026. La autorización vigente integra V6 en `main` del proyecto **Teleinformaticos-Sena** y utiliza su procedimiento existente de GitHub Pages. Sustituye la instrucción anterior de mantener una rama y preparar un piloto separado. No se crea otro portal, proyecto, rama ni servicio.
 
-Este candidato incorpora el laboratorio existente, sus mejoras de portátil acumuladas y el adaptador Firebase V6. Las mejoras locales anteriores eran dependencias sin commit sobre la base publicada; por eso el commit contiene el candidato completo, no solamente los archivos cuyo nombre termina en V6. No incorpora el árbol de guardado pausado. Las copias V3/V4/V5 permanecen intactas.
+## Alcance disponible
 
-## Alcance de esta operación
+Se incorpora el candidato V6 existente: portátil Standard/Gamer, mejoras de cámara/geometría/interacción/diagnóstico y persistencia local. Se conservan las funcionalidades del portal y del escritorio. Las copias históricas V3/V4/V5 y el árbol de guardado pausado no forman parte de esta operación y permanecen intactos.
 
-Se autoriza commit y subida a una rama independiente. No se autoriza fusionar con `main`, sustituir el laboratorio vigente, activar Firebase real, modificar reglas publicadas ni escribir calificaciones. Esta rama no constituye un piloto desplegado y no acredita validación definitiva.
+**La sincronización remota V6 no está habilitada.** Su adaptador Firebase y sus contratos están probados en emuladores; el cliente solo permite su activación explícita en un entorno loopback de emuladores. No existe un gateway V6 remoto configurado. El progreso local no implica recuperación entre equipos ni seguimiento remoto del instructor.
 
-El workflow existente despliega GitHub Pages exclusivamente mediante push a `main`. Publicar esta rama no ejecuta ese despliegue. No se han añadido workflows ni modificado la configuración de Pages.
+No se modifica la configuración Firebase vigente, la autenticación del portal, las reglas publicadas ni las calificaciones existentes. No se provisionan permisos ni cuentas reales. Cualquier futura activación del adaptador exige autorización separada y configuración de backend; no se realiza durante esta publicación estática.
 
-## Validación automatizada
+## Dirección y procedimiento de publicación
 
-- Suite Node: 2.191 pruebas, 2.178 PASS, 0 FAIL, 12 SKIP y 1 TODO previos.
-- Auth/Firestore Emulator Suite: 20/20 PASS en `demo-hwlab-v6`, con cuentas ficticias y puertos loopback.
-- Gitleaks 8.21.2 y comprobaciones propias de secretos sobre el contenido preparado para Git: sin secretos nuevos detectados. La configuración web pública Firebase preexistente no es una credencial Admin.
-- Revisión independiente previa: sin hallazgos accionables abiertos en su alcance; no equivale a una validación gráfica completa.
+Dirección habitual:
+https://dubier-sena.github.io/Teleinformaticos-Sena/laboratorio-virtual-hardware.html
 
-Los dos ajustes de preparación afectan únicamente pruebas: contraseña aleatoria para cada usuario de emulador y hashes de referencia para comprobar archivos protegidos sin depender de una carpeta V5 hermana. No se desactivó el detector de secretos.
+El acceso conserva las restricciones del portal: cuenta existente autorizada. Sin sesión puede redirigir al inicio; no se han añadido contraseñas de demostración, accesos públicos ni bypass de autenticación en el sitio publicado.
 
-Repetir la suite desde la raíz del clon: `node --test tests/*.test.cjs` (Node 22 o posterior). Los 12 SKIP y el TODO son limitaciones/deuda anteriores, no validaciones aprobadas.
+`main` se publica mediante `.github/workflows/ci.yml`: suite Node, escaneo de secretos, smoke de navegador y build Windows deben terminar correctamente antes del job de GitHub Pages. No se omiten jobs ni se despliegan reglas, Apps Script o funciones Firebase.
 
-Para reproducir emuladores con los scripts actuales en macOS ARM64, colocar el clon en `<workspace>/work/portatil-v6-cloud-20261009`, ejecutar `python3 v6/emulators/prepare-local.py` y después `python3 v6/emulators/run-local.py`. Las dependencias portátiles se guardan en `<workspace>/.runtime-v6`; el lanzador reutiliza la CLI Firebase disponible en `/usr/local/bin/firebase`. No instalar ni ejecutar contra un projectId real. El benchmark comparativo histórico requiere la copia V5 hermana y no mide FPS ni latencia de Firestore.
+La prueba de migración usa una fixture de los tres módulos exactos de la base `204dc4076b236516cf6c8d145625e9e5f67265a9`, protegida por SHA-256. Así conserva la comprobación del legado sin cambiar el checkout superficial del workflow existente. El smoke incluye el laboratorio, comprueba que V6 cloud esté desactivado y bloquea peticiones HTTPS externas durante las sesiones ficticias locales, sin contactar APIs de producción.
 
-## Piloto detenido: requisitos que deben aprobarse
+## Reproducción de pruebas
 
-No se publica un enlace porque el alojamiento existente sirve el portal vigente y el adaptador V6 solo admite emuladores en loopback. Subir estos archivos a otra URL sin preparar su ejecución no aislaría automáticamente la autenticación y las escrituras históricas del portal.
+- Suite: `node --test tests/*.test.cjs` con Node 22 o posterior.
+- Smoke: `node tools/smoke_test.mjs` con Chrome/Chromium instalado. Usa un perfil temporal propio; no requiere extensiones ni el perfil del usuario.
+- Emuladores: en el layout `<workspace>/work/portatil-v6-cloud-20261009`, ejecutar `python3 v6/emulators/prepare-local.py` y `python3 v6/emulators/run-local.py`. Los scripts actuales están preparados para macOS ARM64, usan dependencias locales y la CLI existente `/usr/local/bin/firebase`; solo aceptan el proyecto ficticio de pruebas.
+- Build de páginas: `tools/build-generated-pages.ps1` en Windows, ejecutado por el job existente.
 
-1. Elegir un origen HTTPS de piloto separado del alojamiento actual y un mecanismo de acceso acotado, sin cambiar el sitio de los aprendices.
-2. Aprobar dónde ejecutar el gateway V6 y sus límites de origen, acceso y operación. El servidor incluido es local de pruebas; no desplegar el servidor de fixtures como si fuera un servicio real.
-3. Definir el backend de pruebas aislado. Si requiere configurar Firebase real, dominios de Auth, credenciales de servidor o reglas, presentar y autorizar esos cambios antes de ejecutarlos. Mantener las credenciales fuera del cliente y de Git.
-4. Aprobar una configuración de piloto que impida tanto las escrituras V6 como las rutas históricas hacia datos y calificaciones de producción. No crear otra autenticación ni cuentas nuevas de producción.
-5. Si se autoriza posteriormente la identidad existente del portal, provisionar explícitamente permisos V6 para los UID y las fichas vigentes. Los checkpoints, las finalizaciones propuestas y las notas oficiales deben seguir separados.
+La validación anterior del candidato tenía 2.178 PASS, 0 FAIL, 12 SKIP y 1 TODO en Node y 20/20 PASS en emuladores. La ejecución específica de esta integración y el resultado del despliegue deben consultarse en GitHub Actions y en el informe de entrega. Un PASS automatizado no equivale a validación funcional/gráfica definitiva.
 
-Hasta entonces, no utilizar cuentas reales de aprendices en una copia alojada de esta rama. No hay un piloto remoto listo ni una promesa de sincronización entre equipos reales.
+## Disponibilidad para Claude y pruebas posteriores
 
-## Pruebas posteriores con aprendices
+Claude puede revisar `main`, los tests y este documento, y utilizar la dirección habitual con una sesión del portal que el usuario autorice. No se entregan credenciales, se crean cuentas ni se autoriza modificar notas o datos de producción. Para pruebas automáticas que escriban progreso remoto, utilizar exclusivamente los emuladores.
 
-Fichas previstas: **3441939, 3441942, 3441944 y 3441950**. Son planificación; no se han habilitado permisos ni modificado datos de esas fichas.
+Fichas previstas: **3441939, 3441942, 3441944 y 3441950**. Esta lista no habilita permisos nuevos ni modifica sus datos.
 
-Pendientes: acceso del portal, Standard/Gamer con y sin recarga, recuperación entre equipos, cierre completo de navegador, cámara/componentes/cables/colisiones, viewports 390/768/1024/1440, FPS/carga/memoria, concurrencia y seguimiento académico aislado.
+Pendientes de validación completa: flujo real del aprendiz, Standard/Gamer con y sin recarga, cierre/reapertura de navegador, recuperación visual, interacción/cámara/cables/colisiones, viewports 390/768/1024/1440 y rendimiento gráfico. La recuperación entre equipos, sincronización, permisos remotos y seguimiento V6 del instructor requieren primero habilitación del backend autorizada; no se presentan como operativos en GitHub Pages.
 
-Registrar cada incidencia en `INCIDENCIAS_PILOTO.csv` con un identificador de participante de prueba, pasos breves, esperado, observado, navegador/viewport y evidencia anonimizada. No incluir nombres, documentos, contraseñas, tokens ni calificaciones reales. El registro está vacío porque estas pruebas todavía no se han realizado.
+El CSV existente `INCIDENCIAS_PILOTO.csv` se conserva como registro vacío de incidencias de validación; su nombre histórico no supone un piloto separado. Registrar pasos, resultado esperado/observado, navegador, viewport y evidencia anonimizada. No registrar nombres, documentos, contraseñas, tokens ni calificaciones reales.
 
-Esta operación termina tras verificar el commit remoto y entregar el informe. Las correcciones derivadas de las pruebas posteriores requerirán una nueva instrucción; no se aplican cambios adicionales automáticamente.
+**V6 no se declara validada definitivamente.** Los informes de respaldo y operaciones se conservan fuera del código publicado. Las correcciones posteriores se realizarán según las pruebas y las instrucciones del usuario.

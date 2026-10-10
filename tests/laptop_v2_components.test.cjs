@@ -43,8 +43,12 @@ test('V2: new service parts have independent selectable geometry, tray/reset and
 });
 
 test('V2: every legacy guided boundary resumes and completes without errors or lost records',()=>{
- const{execFileSync}=require('node:child_process');const ctx={window:{},console};vm.createContext(ctx);
- for(const f of ['tools','data_laptop','engine'])vm.runInContext(execFileSync('git',['show','204dc4076b236516cf6c8d145625e9e5f67265a9:js/hardware_lab_'+f+'.js'],{cwd:ROOT,encoding:'utf8'}),ctx);
+ // Exact sources from the published baseline; runnable in the existing shallow CI checkout.
+ const raw=fs.readFileSync(path.join(__dirname,'fixtures/hardware_lab_legacy_204dc407.json'));
+ assert.equal(require('node:crypto').createHash('sha256').update(raw).digest('hex'),'880705cf354b8b8a0b0805a2ac6f7107e74facd65720214d593041a12bf0b288');
+ const baseline=JSON.parse(raw);assert.equal(baseline.commit,'204dc4076b236516cf6c8d145625e9e5f67265a9');
+ const ctx={window:{},console};vm.createContext(ctx);
+ for(const f of ['tools','data_laptop','engine'])vm.runInContext(baseline.sources[f],ctx);
  const old=ctx.window.HardwareLab,O=old.Engine,OD=old.DataLaptop.LAPTOP_EQUIPMENT;
  function advance(engine,data,s){const step=engine.currentStep(s);const r=step.kind==='safety'?engine.attemptSafetyStep(s,step.id):engine.attemptAction(data,s,{...step,toolId:data.parts[step.partId].tool||'hands'});assert.ok(r.ok,r.message);assert.notEqual(r.session.stepIndex,s.stepIndex);return r.session}
  for(const mode of ['disassembly-guided','assembly-guided','maintenance-guided']){

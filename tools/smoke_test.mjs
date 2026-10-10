@@ -184,6 +184,13 @@ const GUEST_SEED = `localStorage.clear();`;
 
 const PAGES = [
   { label: "index.html (invitado)", url: "/index.html", seed: GUEST_SEED },
+  {
+    label: "laboratorio-virtual-hardware.html (V6, sesion simulada, nube desactivada)",
+    url: "/laboratorio-virtual-hardware.html",
+    seed: STUDENT_SEED,
+    expectGlobals: ["HardwareLab.Engine", "HardwareLab.CheckpointsV5", "HardwareLab.FirebaseV6"],
+    expectInactiveV6: true,
+  },
   { label: "panel-administrativo-usuarios.html (admin simulado)", url: "/panel-administrativo-usuarios.html", seed: ADMIN_SEED },
   { label: "pages/auxiliares/talleres-refuerzo.html (aprendiz simulado)", url: "/pages/auxiliares/talleres-refuerzo.html", seed: STUDENT_SEED },
   {
@@ -215,7 +222,7 @@ const PAGES = [
   },
 ];
 
-async function checkPage(ws, base, { label, url, seed, expectGlobals }) {
+async function checkPage(ws, base, { label, url, seed, expectGlobals, expectInactiveV6 }) {
   const consoleErrors = [];
   const failedRequests = [];
 
@@ -264,6 +271,12 @@ async function checkPage(ws, base, { label, url, seed, expectGlobals }) {
       if (type === "undefined") missingGlobals.push(name);
     }
   }
+  if (expectInactiveV6) {
+    const result = await send(ws, "Runtime.evaluate", {
+      expression: "window.PORTAL_FIREBASE_CONFIG?.hardwareLabV6?.enabled !== true && window.HardwareLab?.FirebaseV6?.transport({uid:'smoke-test'}) === null",
+    });
+    if (result?.result?.value !== true) missingGlobals.push("V6 cloud must remain disabled");
+  }
 
   return { label, url, consoleErrors, failedRequests, missingGlobals };
 }
@@ -281,6 +294,9 @@ async function main() {
     const ws = await connect(target.webSocketDebuggerUrl);
     await send(ws, "Runtime.enable");
     await send(ws, "Network.enable");
+    // Fixtures locales: no contactar APIs, Auth o Apps Script de produccion.
+    // El servidor bajo prueba y todos sus modulos se sirven por HTTP loopback.
+    await send(ws, "Network.setBlockedURLs", { urls: ["https://*"] });
     await send(ws, "Page.enable");
 
     const results = [];
