@@ -578,6 +578,32 @@
     },
   };
 
+  // Independent left/right audio harnesses, removable from rubber cradles.
+  ["left", "right"].forEach(function (side) {
+    var label = side === "left" ? "izquierdo" : "derecho";
+    var speaker = "speaker-" + side, cable = "cable-speaker-" + side;
+    PARTS[speaker] = {
+      id: speaker, kind: "component", name: "Altavoz " + label,
+      category: "salida", location: "internal", zone: "power", tool: "hands", icon: "◉",
+      removeRequires: ["cable-battery", "battery", cable], installRequires: ["motherboard"],
+      removeInstructions: ["Con la batería retirada, desconecta el mazo de este altavoz.", "Libera sus apoyos de goma y levanta el módulo sin presionar el cono."],
+      installInstructions: ["Asienta el altavoz en sus apoyos de goma de la esquina delantera.", "Conecta su mazo polarizado antes de instalar y conectar la batería."],
+      info: {function: "Convierte la señal de audio amplificada en sonido; forma el par estéreo.", characteristics: "Módulo de 4 Ω con cámara acústica y apoyos antivibración.", location: "Esquina delantera del chasis, a un lado de la batería.", connectionType: "Cable de dos conductores y conector polarizado a SPK L/R.", precautions: "No presiones el diafragma ni tires de los hilos.", compatibility: "Forma y polaridad específicas del equipo didáctico.", commonErrors: "Cable pellizcado, conector suelto o apoyo fuera de su alojamiento."}
+    };
+    PARTS[cable] = {
+      id: cable, kind: "cable", name: "Cable del altavoz " + label,
+      category: "cableado", location: "internal", zone: "power", tool: "hands", icon: "↔",
+      removeRequires: ["cable-battery", "battery"], installRequires: ["motherboard", speaker],
+      removeInstructions: ["Sujeta la carcasa del conector, no los hilos.", "Desconecta ambos extremos y libera el mazo de las guías laterales."],
+      installInstructions: ["Conecta SPK L/R y el altavoz respetando la polaridad.", "Acomoda el mazo en la guía lateral, fuera de la bahía de batería."],
+      info: {function: "Lleva la señal de audio de la placa al altavoz " + label + ".", characteristics: "Par aislado de dos conductores con conectores polarizados.", location: "Canal lateral entre la placa y la esquina delantera.", connectionType: "SPK L/R; extracción por el cuerpo del conector.", precautions: "Batería retirada y sin alimentación antes de manipularlo.", compatibility: "Conector y longitud específicos de este modelo genérico.", commonErrors: "Tirar de los cables o aprisionarlos bajo el pack de batería."}
+    };
+    PARTS.motherboard.removeRequires.push(speaker, cable);
+    PARTS.battery.installRequires.push(speaker, cable);
+    PARTS[speaker].installAbsent = ["cable-battery", "battery"];
+    PARTS[cable].installAbsent = ["cable-battery", "battery"];
+  });
+
   var SAFETY_STEPS = [
     {
       id: "safety-power-off",
@@ -659,6 +685,10 @@
     { kind: "action", action: "remove", partId: "bottom-cover" },
     { kind: "action", action: "disconnect", partId: "cable-battery" },
     { kind: "action", action: "remove", partId: "battery" },
+    { kind: "action", action: "disconnect", partId: "cable-speaker-left" },
+    { kind: "action", action: "remove", partId: "speaker-left" },
+    { kind: "action", action: "disconnect", partId: "cable-speaker-right" },
+    { kind: "action", action: "remove", partId: "speaker-right" },
     { kind: "action", action: "remove", partId: "ram" },
     { kind: "action", action: "remove", partId: "ssd-m2" },
     { kind: "action", action: "disconnect", partId: "cable-cpu-fan-laptop" },
@@ -692,6 +722,10 @@
     { kind: "action", action: "install", partId: "wifi-card" },
     { kind: "action", action: "connect", partId: "wifi-antenna-1" },
     { kind: "action", action: "connect", partId: "wifi-antenna-2" },
+    { kind: "action", action: "install", partId: "speaker-right" },
+    { kind: "action", action: "connect", partId: "cable-speaker-right" },
+    { kind: "action", action: "install", partId: "speaker-left" },
+    { kind: "action", action: "connect", partId: "cable-speaker-left" },
     { kind: "action", action: "install", partId: "battery" },
     { kind: "action", action: "connect", partId: "cable-battery" },
     { kind: "action", action: "install", partId: "bottom-cover" },
@@ -717,6 +751,8 @@
     name: "Computador portatil",
     icon: "\u{1F4BB}",
     parts: PARTS,
+    // Audio was decorative in the published version; retain existing sessions.
+    sessionAddedParts: ["speaker-left", "speaker-right", "cable-speaker-left", "cable-speaker-right"],
     caseGatePartId: "bottom-cover",
     caseOpenActionLabel: "retirar la tapa inferior del portatil",
     closedLabel: "Portatil cerrado",

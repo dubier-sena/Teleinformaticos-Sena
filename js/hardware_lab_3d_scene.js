@@ -7,7 +7,7 @@
  * interacciones se enganchen al loop de render sin acoplarse entre si.
  */
 import * as THREE from "./vendor/three.module.min.js";
-import { TABLE } from "./hardware_lab_3d_constants.js?v=20261001_2";
+import { TABLE } from "./hardware_lab_3d_constants.js?v=20261009_1";
 
 export function createLabScene(canvas, profile) {
   const quality = Object.assign(
@@ -49,7 +49,9 @@ export function createLabScene(canvas, profile) {
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.15;
 
-  buildLighting(scene, quality);
+  const lighting = buildLighting(scene, quality);
+  const originalQuality = { ...quality };
+  let laptopMode = false;
   buildEnvironment(scene);
   const envRenderTarget = buildEnvironmentLighting(renderer, scene);
 
@@ -82,6 +84,17 @@ export function createLabScene(canvas, profile) {
     if (until > awakeUntil) awakeUntil = until;
     if (!opts || opts.shadows !== false) shadowsDirtyUntil = Math.max(shadowsDirtyUntil, until);
   }
+  function setEquipment(equipmentId) {
+    laptopMode = equipmentId === "laptop";
+    Object.assign(quality, originalQuality);
+    if (laptopMode) { quality.shadowsOnDemand = true; quality.idleFps = 0; quality.shadowType = "pcf"; }
+    renderer.shadowMap.autoUpdate = !quality.shadowsOnDemand;
+    renderer.shadowMap.type = laptopMode ? THREE.PCFShadowMap : (quality.shadowType === "pcf" ? THREE.PCFShadowMap : THREE.VSMShadowMap);
+    renderer.toneMappingExposure = laptopMode ? .92 : 1.15;
+    const powers = laptopMode ? [1.3,3.0,1.05,.75,1.2] : [2.4,5.5,1.5,1.6,6];
+    [lighting.hemi,lighting.key,lighting.fill,lighting.top,lighting.rim].forEach((l,i)=>l.intensity=powers[i]);
+    keepAwake(1500);
+  }
   function cameraMoved() {
     const e = camera.matrixWorld.elements;
     let moved = false;
@@ -96,6 +109,7 @@ export function createLabScene(canvas, profile) {
     camera.updateMatrixWorld();
     if (cameraMoved()) keepAwake(350, { shadows: false });
     const t = now();
+    if (t >= awakeUntil && quality.idleFps === 0) return;
     if (t >= awakeUntil && t - lastRender < 1000 / quality.idleFps) return;
     if (quality.shadowsOnDemand) {
       const dirty = t < shadowsDirtyUntil;
@@ -144,6 +158,8 @@ export function createLabScene(canvas, profile) {
     document.removeEventListener("click", wakeAll, true);
     document.removeEventListener("keydown", wakeAll, true);
     document.removeEventListener("visibilitychange", wakeAll);
+    ["pointerdown", "pointermove", "wheel", "touchmove"].forEach(type => canvas.removeEventListener(type, wakeView));
+    canvas.removeEventListener("pointerup", wakeAll);
     resizeObserver.disconnect();
     renderer.setAnimationLoop(null);
     scene.traverse((node) => {
@@ -166,6 +182,7 @@ export function createLabScene(canvas, profile) {
     camera,
     renderer,
     onTick,
+    setEquipment,
     keepAwake,
     stats,
     quality,

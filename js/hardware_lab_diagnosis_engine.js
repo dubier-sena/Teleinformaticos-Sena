@@ -153,6 +153,15 @@
       : fault.fixCondition;
 
     return {
+      advanced: !!(caseDef.advanced || opts.advanced),
+      maintenanceRequired: !!caseDef.maintenanceRequired,
+      profileId: equipmentData.profileId || (equipmentData.id === "laptop" ? "standard" : null),
+      workEvidence: { removed: {}, reseated: {}, worked: false, isolated: false },
+      hardwareRevision: 0,
+      instrumentRecords: [],
+      verificationTools: caseDef.workflow ? caseDef.workflow.evidence.slice() : [],
+      verificationTargets: equipmentData.diagnosticChannels ? {ram:equipmentData.diagnosticChannels.ram,smart:equipmentData.diagnosticChannels.ssd} : {},
+      powerState: "apagado",
       caseId: caseDef.id,
       equipmentId: equipmentData.id,
       level: caseDef.level,
@@ -321,7 +330,7 @@
     }
     var r = getThermal().applyTask(session.thermal, taskId, {
       coolerInstalled: session.parts.cooler !== false,
-      cpuInstalled: session.parts.cpu !== false,
+      cpuInstalled: equipmentData.capabilities && equipmentData.capabilities.solderedCPU ? session.parts.motherboard !== false : session.parts.cpu !== false,
     }, opts);
     var updated = Object.assign({}, session, { thermal: r.state });
     if (r.level === "error") {
@@ -384,6 +393,7 @@
       if (cond.type === "reseated" || cond.type === "stateEquals" || cond.type === "replaced") add(cond.partId);
       if (cond.type === "thermalReady") add("cooler");
     });
+    if(session.maintenanceRequired)add("cooler");
     return need;
   }
   function diagnosisTrace(equipmentData, session) {
@@ -394,7 +404,7 @@
       if (e.type === "action" && (e.action === "remove" || e.action === "disconnect") && touched.indexOf(e.partId) === -1) touched.push(e.partId);
       if ((e.type === "thermal" || e.type === "thermal-noop") && tasks.indexOf(e.task) === -1) tasks.push(e.task);
     });
-    var hasThermalCond = conditionList(session.fixCondition).some(function (c) { return c.type === "thermalReady"; });
+    var hasThermalCond = session.maintenanceRequired || conditionList(session.fixCondition).some(function (c) { return c.type === "thermalReady"; });
     var variantKey = !hasThermalCond ? null : session.thermalVariant || (session.variantId ? String(session.variantId).split(":").pop() : null);
     var neededTasks = NEEDED_THERMAL_TASKS[variantKey] || [];
     var extraParts = touched.filter(function (id) { return !need[id]; });
@@ -433,11 +443,27 @@
   function logAction(session, entry) {
     var actionLog = session.actionLog.concat([Object.assign({ ts: new Date().toISOString() }, entry)]);
     if (actionLog.length > 200) actionLog = actionLog.slice(actionLog.length - 200);
-    return Object.assign({}, session, { actionLog: actionLog });
+    var update = { actionLog: actionLog };
+    if (session.advanced && entry.ok && ["action", "thermal", "replace"].indexOf(entry.type) !== -1) {
+      var evidence = session.workEvidence || {removed:{},reseated:{},worked:false,isolated:false};
+      update.workEvidence = {removed:Object.assign({},evidence.removed),reseated:Object.assign({},evidence.reseated),worked:evidence.worked,isolated:evidence.isolated};
+      if(entry.type === "action") {
+        var work=update.workEvidence;
+        work.worked=true;
+        if(entry.action === "remove" || entry.action === "disconnect")work.removed[entry.partId]=true;
+        else if(work.removed[entry.partId])work.reseated[entry.partId]=true;
+        if(entry.partId === POWER_SOURCE_PART_BY_EQUIPMENT[session.equipmentId] && entry.action === "disconnect")work.isolated=true;
+      }
+      update.hardwareRevision = (session.hardwareRevision || 0) + 1;
+      update.fixed = false;
+      update.powerState = "apagado";
+    }
+    return Object.assign({}, session, update);
   }
 
   // ── Condicion de arreglo: por estado o por "reasiento" (remover+instalar) ─
   function hasReseated(session, partId) {
+    if(session.advanced && session.workEvidence && session.workEvidence.reseated[partId])return true;
     var removedAt = -1;
     for (var i = 0; i < session.actionLog.length; i++) {
       var e = session.actionLog[i];
@@ -500,7 +526,7 @@
   }
 
   function isFixConditionMet(equipmentData, session) {
-    return conditionMet(equipmentData, session, session.fixCondition);
+    return conditionMet(equipmentData, session, session.fixCondition) && (!session.maintenanceRequired || getThermal().isReady(session.thermal));
   }
 
   /** Etapas de la falla (sesiones anteriores a las fallas dobles: una sola). */
@@ -527,7 +553,7 @@
     var st = stagesOf(session);
     for (var i = session.actionLog.length - 1; i >= 0; i--) {
       var e = session.actionLog[i];
-      if (e.type === "power-on-check") return (st[e.stage] && st[e.stage].symptomBroken) || session.symptomBroken;
+      if (e.type === "power-on-check") return e.observation || (st[e.stage] && st[e.stage].symptomBroken) || session.symptomBroken;
     }
     return (st[0] && st[0].symptomBroken) || session.symptomBroken;
   }
@@ -556,6 +582,7 @@
     { id: "refrigeracion", label: "Refrigeración" },
   ];
   var SCREEN_SUBSYSTEM = {
+    "storage-secondary": "almacenamiento",
     "no-post": "memoria", crash: "memoria", "no-boot": "almacenamiento", "no-image": "imagen",
     "keyboard-fail": "entrada", "touchpad-fail": "entrada", "wifi-fail": "red", "wifi-weak": "red",
     overheat: "refrigeracion", "battery-fail": "energia",
@@ -635,7 +662,7 @@
     var finding = replaced
       ? "Es el repuesto nuevo: sin uso y en buen estado."
       : damaged
-      ? findingFor(session, partId) || DAMAGED_FINDING
+      ? findingFor(session, partId) || (session.advanced ? "Sin daño visual concluyente. Contrasta el funcionamiento con los instrumentos antes de decidir." : DAMAGED_FINDING)
       : HEALTHY_FINDING;
     var updated = logAction(session, { type: "inspect", partId: partId, damaged: damaged, ok: true });
     if ((updated.inspectedPartIds || []).indexOf(partId) === -1) {
@@ -717,16 +744,20 @@
   function checkPowerOn(equipmentData, session, external) {
     var faultFixed = isFixConditionMet(equipmentData, session);
     var readiness = equipmentReadyForPowerTest(equipmentData, session, external);
-    var fixed = faultFixed && readiness.ready;
+    var observation = session.advanced && root.HardwareLab.DiagnosticsV3 ? root.HardwareLab.DiagnosticsV3.hardware(equipmentData,session,api) : null;
+    var verified = !session.advanced || !root.HardwareLab.DiagnosticsV3 || root.HardwareLab.DiagnosticsV3.verified(session);
+    var fixed = faultFixed && readiness.ready && verified && (!observation || observation.state === "funcional");
     var outcome = fixed ? "fixed" : faultFixed ? "not-ready" : "fault";
     var updated = Object.assign({}, session, {
+      powerState: observation ? observation.state : session.powerState,
+      lastScrewsSecured: readiness.screwsSecured,
       checkAttempts: session.checkAttempts + 1,
       fixed: fixed,
     });
     var stage = pendingStage(equipmentData, session);
     // Que etapa se OBSERVO en esta comprobacion: el sintoma visible no cambia
     // hasta que el aprendiz vuelve a encender (reparar no lo revela).
-    updated = logAction(updated, { type: "power-on-check", ok: fixed, outcome: outcome, stage: stage ? stagesOf(session).indexOf(stage) : null });
+    updated = logAction(updated, { type: "power-on-check", ok: fixed, outcome: outcome, stage: stage && (!observation || observation.screen === stage.screen) ? stagesOf(session).indexOf(stage) : null, observation: observation ? observation.message : null });
     var progress = stageProgress(equipmentData, session);
     var broken = (stage && stage.symptomBroken) || updated.symptomBroken;
     // Falla doble con una parte ya corregida: se dice que algo mejoro, sin
@@ -734,10 +765,10 @@
     if (!faultFixed && progress.total > 1 && progress.fixed > 0) {
       broken = "Una de las fallas quedó corregida, pero el equipo todavía no funciona bien. " + broken;
     }
-    var message = fixed ? updated.symptomFixed : outcome === "not-ready" ? NOT_READY_MESSAGE : broken;
+    var message = fixed ? updated.symptomFixed : faultFixed && readiness.ready && !verified ? "El montaje responde. Repite los instrumentos de la orden después de la reparación y vuelve a comprobar para cerrar la verificación." : observation ? observation.message : outcome === "not-ready" ? NOT_READY_MESSAGE : broken;
     return {
       fixed: fixed, faultFixed: faultFixed, ready: readiness.ready, outcome: outcome, message: message,
-      screen: screenStateFor(equipmentData, session, outcome), stagesFixed: progress.fixed, stagesTotal: progress.total, session: updated,
+      screen: observation ? observation.screen : screenStateFor(equipmentData, session, outcome), stagesFixed: progress.fixed, stagesTotal: progress.total, session: updated,
     };
   }
 
@@ -815,6 +846,7 @@
   var EVALUATION_MAX = { diagnostico: 30, procedimiento: 25, reparacion: 25, herramientas: 10 };
 
   function computeEvaluationBreakdown(equipmentData, session) {
+    if(session.advanced && root.HardwareLab.DiagnosticsV3) return root.HardwareLab.DiagnosticsV3.score(equipmentData,session,api);
     var e = session.errorsByType || {};
     var progress = stageProgress(equipmentData, session);
     var ratio = progress.total ? progress.fixed / progress.total : 0;
@@ -853,7 +885,7 @@
 
   /** Piezas que el aprendiz retiro o desconecto durante el intento (sin repetir). */
   function handledParts(session) {
-    var out = [];
+    var out = session.advanced && session.workEvidence ? Object.keys(session.workEvidence.removed) : [];
     (session.actionLog || []).forEach(function (e) {
       if (e.type === "action" && e.ok && (e.action === "remove" || e.action === "disconnect") && out.indexOf(e.partId) === -1) out.push(e.partId);
     });
@@ -866,9 +898,10 @@
     var durationSeconds = Math.max(0, Math.round((Date.parse(finishedAt) - Date.parse(session.startedAt)) / 1000));
     var isEvaluation = !!(session.evaluation && opts.equipmentData);
     var breakdown = isEvaluation ? computeEvaluationBreakdown(opts.equipmentData, session) : computeScoreBreakdown(session);
-    var rawMax = isEvaluation ? 90 : 100;
+    var rawMax = isEvaluation && !session.advanced ? 90 : 100;
     var progress = opts.equipmentData ? stageProgress(opts.equipmentData, session) : null;
     var result = {
+      rawMax: rawMax,
       caseId: session.caseId,
       evaluation: isEvaluation,
       faultsFixed: progress ? progress.fixed : null,
@@ -886,7 +919,7 @@
       hypotheses: (session.hypotheses || []).map(function (h) { return { stage: h.stage, answer: h.answer, correct: h.correct }; }),
       breakdown: breakdown,
       score: breakdown.total,
-      status: (breakdown.total * 100) / rawMax >= PASS_THRESHOLD ? "APROBADO" : "POR MEJORAR",
+      status: (breakdown.total * 100) / rawMax >= PASS_THRESHOLD && (!session.advanced || session.fixed) ? "APROBADO" : "POR MEJORAR",
     };
     return Object.assign({}, session, { finishedAt: finishedAt, result: result });
   }
@@ -894,6 +927,16 @@
   // ── Serializacion ──────────────────────────────────────────────────────────
   function serialize(session) {
     return {
+      advanced: !!session.advanced,
+      maintenanceRequired: !!session.maintenanceRequired,
+      profileId: session.profileId || null,
+      workEvidence: session.workEvidence || null,
+      hardwareRevision: session.hardwareRevision || 0,
+      instrumentRecords: session.instrumentRecords || [],
+      verificationTools: session.verificationTools || [],
+      verificationTargets: session.verificationTargets || {},
+      powerState: session.powerState || "apagado",
+      lastScrewsSecured: session.lastScrewsSecured,
       caseId: session.caseId,
       equipmentId: session.equipmentId,
       level: session.level,
@@ -927,8 +970,16 @@
     };
   }
 
-  function deserialize(data) {
-    return Object.assign({}, data);
+  function deserialize(data, equipmentData) {
+    var restored = Object.assign({}, data);
+    var equipment = equipmentData || (data.equipmentId === "laptop" && root.HardwareLab.DataLaptop && root.HardwareLab.DataLaptop.LAPTOP_EQUIPMENT);
+    if(equipment && equipment.sessionAddedParts) {
+      restored.parts = Object.assign({}, data.parts);
+      equipment.sessionAddedParts.forEach(function(id){
+        if(!Object.prototype.hasOwnProperty.call(restored.parts,id))restored.parts[id]=restored.parts.motherboard !== false;
+      });
+    }
+    return restored;
   }
 
   var api = {

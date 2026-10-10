@@ -1,0 +1,7 @@
+{
+  "name": "sena-hwlab-v6-adapter",
+  "private": true,
+  "description": "Server adapter for the existing SENA hardware laboratory; local emulator validation only",
+  "dependencies": {"firebase-admin": "13.6.0"},
+  "engines": {"node": ">=20"}
+}

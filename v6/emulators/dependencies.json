@@ -1,0 +1,20 @@
+{
+  "platform": "darwin-arm64",
+  "java": {
+    "version": "21.0.12+101.0.LTS",
+    "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.12.1%2B1/OpenJDK21U-jre_aarch64_mac_hotspot_21.0.12.1_1.tar.gz",
+    "sha256": "dec50fc6f9fcd4fe3ae8cabf5a5fa68f6afc48841f7698e468e9aa5d54beed84"
+  },
+  "firestore": {
+    "version": "1.21.0",
+    "url": "https://storage.googleapis.com/firebase-preview-drop/emulator/cloud-firestore-emulator-v1.21.0.jar",
+    "sha256": "c3d3680a89d946a90a027365ea14c26c6472a162bcf37f099bbb1ebd66d25e8e",
+    "filename": "cloud-firestore-emulator-v1.21.0.jar"
+  },
+  "firebaseAdmin": "13.6.0",
+  "firebaseCLI": "15.22.2",
+  "firebaseCLIPath": "/usr/local/bin/firebase",
+  "node": "24.16.0",
+  "runtimeDirectory": "<workspace>/.runtime-v6",
+  "globalChanges": false
+}

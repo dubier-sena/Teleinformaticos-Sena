@@ -8,8 +8,9 @@
  */
 import * as THREE from "./vendor/three.module.min.js";
 import { OrbitControls } from "./vendor/OrbitControls.js";
-import { Easing, prefersReducedMotion } from "./hardware_lab_3d_tween.js?v=20261001_2";
-import { TABLE } from "./hardware_lab_3d_constants.js?v=20261001_2";
+import { Easing, prefersReducedMotion } from "./hardware_lab_3d_tween.js?v=20261009_1";
+import { visibleLocalBox } from "./hardware_lab_3d_interactions.js?v=20261009_1";
+import { TABLE } from "./hardware_lab_3d_constants.js?v=20261009_1";
 
 // ── Limite fisico inferior de la camara (sep-26) ────────────────────────────
 // Medido: con el maxPolarAngle FIJO del portatil (0.97*PI, pensado para la
@@ -132,6 +133,24 @@ export function padFocusBox(pieceBox) {
 
 export function createCameraRig({ camera, renderer, tweenGroup, onTick }) {
   const controls = new OrbitControls(camera, renderer.domElement);
+  let laptopFree = false, barrier = null;
+  const previousCamera = camera.position.clone();
+  const originalNear = camera.near;
+  function setLaptopFree(enabled, cameraBarrier = null) {
+    laptopFree = !!enabled;
+    if (barrier) barrier.dispose();
+    barrier = cameraBarrier;
+    controls.minAzimuthAngle = -Infinity; controls.maxAzimuthAngle = Infinity;
+    controls.minPolarAngle = enabled ? .001 : 0;
+    controls.minDistance = enabled ? .008 : .18;
+    controls.enablePan = true; controls.screenSpacePanning = true;
+    controls.mouseButtons.RIGHT = THREE.MOUSE.PAN;
+    controls.touches.ONE = THREE.TOUCH.ROTATE; controls.touches.TWO = THREE.TOUCH.DOLLY_PAN;
+    controls.zoomToCursor = !!enabled;
+    camera.near = enabled ? .0005 : originalNear; camera.updateProjectionMatrix();
+    basePolarMax = enabled ? Math.PI - .001 : (viewFromBelow ? Math.PI*.97 : Math.PI*.495);
+    previousCamera.copy(camera.position);
+  }
   controls.enableDamping = true;
   controls.dampingFactor = 0.09;
   controls.minDistance = 0.18;
@@ -191,7 +210,7 @@ export function createCameraRig({ camera, renderer, tweenGroup, onTick }) {
       // "correjia" sola de vuelta arriba un frame despues de terminar el
       // vuelo. Se relaja solo para el portatil (ver hardware_lab_3d_stage.js);
       // el escritorio conserva el limite original sin cambios.
-      basePolarMax = viewFromBelow ? Math.PI * 0.97 : Math.PI * 0.495;
+      basePolarMax = laptopFree ? Math.PI - .001 : viewFromBelow ? Math.PI * 0.97 : Math.PI * 0.495;
       controls.maxPolarAngle = basePolarMax;
     }
   }
@@ -208,6 +227,8 @@ export function createCameraRig({ camera, renderer, tweenGroup, onTick }) {
     if (flightActive) cancelFlight();
   }
   renderer.domElement.addEventListener("pointerdown", onPointerDownDuringFlight, { passive: true });
+  renderer.domElement.addEventListener("wheel", onPointerDownDuringFlight, { passive: true });
+  renderer.domElement.addEventListener("touchstart", onPointerDownDuringFlight, { passive: true });
 
   /** Limite de la mesa ANTES de que OrbitControls aplique la orbita. */
   function applyTableLimit() {
@@ -227,13 +248,15 @@ export function createCameraRig({ camera, renderer, tweenGroup, onTick }) {
     // multiplica despues), asi que alejar con la camara en el limite podia
     // dejarla por debajo. Se corrige conservando distancia y acimut.
     if (clampCameraAboveY(camera.position, controls.target)) camera.lookAt(controls.target);
+    if (laptopFree && barrier && barrier.constrain(previousCamera,camera.position)) camera.lookAt(controls.target);
+    previousCamera.copy(camera.position);
   });
 
   function flyTo(position, target, opts = {}) {
     cancelFlight();
     flightActive = true;
     controls.enabled = false;
-    const duration = prefersReducedMotion() ? 0 : opts.duration != null ? opts.duration : 1.05;
+    const duration = prefersReducedMotion() ? 0 : opts.duration != null ? opts.duration : laptopFree ? .38 : 1.05;
     const startPos = camera.position.clone();
     const startTarget = controls.target.clone();
     const easing = Easing.easeInOutCubic;
@@ -455,6 +478,12 @@ export function createCameraRig({ camera, renderer, tweenGroup, onTick }) {
 
   /** Acerca la camara suavemente a un objeto especifico (item 5: RAM, CPU, discos...). */
   function focusOnObject(object3d, opts = {}) {
+    if (laptopFree) {
+      const box = visibleLocalBox(object3d).applyMatrix4(object3d.matrixWorld);
+      const direction = camera.position.clone().sub(controls.target).normalize();
+      const frame = frameBoxInRect({box,dir:direction,fovY:camera.fov,aspect:camera.aspect,ndcRect:[-.78,.78,-.72,.72],minDist:.012});
+      flyTo(frame.pos,frame.target,opts);return;
+    }
     flyToBox(new THREE.Box3().setFromObject(object3d), opts);
   }
 
@@ -492,6 +521,9 @@ export function createCameraRig({ camera, renderer, tweenGroup, onTick }) {
   function dispose() {
     offTick();
     renderer.domElement.removeEventListener("pointerdown", onPointerDownDuringFlight);
+    renderer.domElement.removeEventListener("wheel", onPointerDownDuringFlight);
+    renderer.domElement.removeEventListener("touchstart", onPointerDownDuringFlight);
+    if(barrier)barrier.dispose();
     controls.dispose();
   }
 
@@ -508,6 +540,9 @@ export function createCameraRig({ camera, renderer, tweenGroup, onTick }) {
 
   return {
     controls,
+    setLaptopFree,
+    get laptopFree() { return laptopFree; },
+    cancelFlight,
     setRigBounds,
     setBelowFrameProvider,
     setInteriorProvider,

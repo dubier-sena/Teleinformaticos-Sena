@@ -11,7 +11,7 @@
  * pega a la cara de entrada de las aletas y a la boca del ventilador.
  */
 import * as THREE from "./vendor/three.module.min.js";
-import { materialInstanceFor } from "./hardware_lab_3d_constants.js?v=20261001_2";
+import { materialInstanceFor } from "./hardware_lab_3d_constants.js?v=20261009_1";
 
 // Medidas del CPU y del modulo (hardware_lab_3d_laptop_factory.js).
 const CPU_SIZE = 0.024;
@@ -118,6 +118,10 @@ export function ensureThermalMeshes(cpuRoot, coolerRoot) {
  * del CPU queda tapada (la interfaz la representa la pasta del bloque de cobre).
  */
 export function applyThermalLook(cpuRoot, coolerRoot, state, { coolerInstalled } = {}) {
+  if(Array.isArray(cpuRoot)) {
+    cpuRoot.forEach((chip,i)=>applyThermalLook(chip,i===0?coolerRoot:null,state,{coolerInstalled}));
+    return;
+  }
   ensureThermalMeshes(cpuRoot, coolerRoot);
   const s = state || {};
   if (cpuRoot) {
@@ -141,14 +145,15 @@ export function applyThermalLook(cpuRoot, coolerRoot, state, { coolerInstalled }
   if (coolerRoot) {
     // Cara de contacto del bloque de cobre: pasta vieja/restos hasta limpiarla,
     // limpia despues y pasta fresca repartida una vez montado con pasta nueva.
-    const contact = coolerRoot.getObjectByName("cooler-contact-paste");
-    if (contact) {
+    coolerRoot.traverse(contact => {
+    if (contact.name === "cooler-contact-paste") {
       contact.visible = s.paste !== "clean" && !(s.paste === "new" && !coolerInstalled);
       if (contact.visible) {
         if (!contact.userData.ownMaterial) { contact.material = contact.material.clone(); contact.userData.ownMaterial = true; }
         setLook(contact, s.paste === "old" ? LOOK.old : s.paste === "residue" ? LOOK.residue : LOOK.fresh);
       }
     }
+    });
     const dust = coolerRoot.getObjectByName("thermal-dust");
     dust.visible = s.dust === "dirty" || s.dust === "loose";
     if (dust.visible) dust.children.forEach((m) => setLook(m, s.dust === "dirty" ? LOOK.dustDirty : LOOK.dustLoose));

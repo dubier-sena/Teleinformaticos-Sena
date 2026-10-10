@@ -8,16 +8,17 @@
  * hardware_lab_3d_diagnosis_controller.js reutilizan sin duplicar DOM.
  */
 import * as THREE from "./vendor/three.module.min.js";
-import { createLabScene } from "./hardware_lab_3d_scene.js?v=20261001_2";
-import { chooseQualityProfile, readDeviceEnv } from "./hardware_lab_3d_quality.js?v=20261001_2";
-import { createCameraRig, frameBoxInRect, padFocusBox, CAMERA_MIN_WORLD_Y } from "./hardware_lab_3d_camera.js?v=20261001_2";
-import { createInteractionLayer, worldToScreen, visibleLocalBox } from "./hardware_lab_3d_interactions.js?v=20261001_2";
-import { rect as uiRect, area as uiArea, cardCandidates, chooseSlot, coverRatio, chooseFeedbackSpot, chooseDockSpot, safeViewRect, framingVerdict } from "./hardware_lab_3d_ui_layout.js?v=20261001_2";
-import { TweenGroup } from "./hardware_lab_3d_tween.js?v=20261001_2";
-import { createRig } from "./hardware_lab_3d_rig.js?v=20261001_2";
-import { createScrewController } from "./hardware_lab_3d_screws.js?v=20261001_2";
-import { createExplodeController } from "./hardware_lab_3d_explode.js?v=20261001_2";
-import { HardwareLabAudio } from "./hardware_lab_3d_audio.js?v=20261001_2";
+import { createCameraBarrier } from "./hardware_lab_3d_camera_collision.js?v=20261009_1";
+import { createLabScene } from "./hardware_lab_3d_scene.js?v=20261009_1";
+import { chooseQualityProfile, readDeviceEnv } from "./hardware_lab_3d_quality.js?v=20261009_1";
+import { createCameraRig, frameBoxInRect, padFocusBox, CAMERA_MIN_WORLD_Y } from "./hardware_lab_3d_camera.js?v=20261009_1";
+import { createInteractionLayer, worldToScreen, visibleLocalBox } from "./hardware_lab_3d_interactions.js?v=20261009_1";
+import { rect as uiRect, area as uiArea, cardCandidates, chooseSlot, coverRatio, chooseFeedbackSpot, chooseDockSpot, safeViewRect, framingVerdict } from "./hardware_lab_3d_ui_layout.js?v=20261009_1";
+import { TweenGroup } from "./hardware_lab_3d_tween.js?v=20261009_1";
+import { createRig } from "./hardware_lab_3d_rig.js?v=20261009_1";
+import { createScrewController } from "./hardware_lab_3d_screws.js?v=20261009_1";
+import { createExplodeController } from "./hardware_lab_3d_explode.js?v=20261009_1";
+import { HardwareLabAudio } from "./hardware_lab_3d_audio.js?v=20261009_1";
 
 const VIEW_ICONS = {
   front: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="5" width="14" height="14" rx="1"/></svg>',
@@ -45,6 +46,10 @@ const POSE_ICONS = {
 // propia, usa bateria en su lugar). Los ids ausentes en un momento dado de
 // la practica (pieza ya retirada) se ignoran solos via focusOnObjects().
 const FOCUS_ICONS = {
+  memory: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="9" rx="1"/><path d="M7 10h3v3H7zM14 10h3v3h-3zM5 16v3M9 16v3M15 16v3M19 16v3"/></svg>',
+  wireless: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8a14 14 0 0118 0M6 12a9 9 0 0112 0M9 16a4 4 0 016 0"/><circle cx="12" cy="20" r="1"/></svg>',
+  audio: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4zM16 8a6 6 0 010 8M19 5a10 10 0 010 14"/></svg>',
+  connectors: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3v4M16 3v4M6 7h12v4a6 6 0 01-12 0zM12 17v5"/></svg>',
   motherboard: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="1"/><rect x="9" y="9" width="6" height="6"/><path d="M9 4v2M15 4v2M9 18v2M15 18v2M4 9h2M4 15h2M18 9h2M18 15h2"/></svg>',
   storage: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="10" rx="1"/><path d="M7 11h6M17 12h.01"/></svg>',
   cooling: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2"/><path d="M12 10c0-4 1-6 4-6s2 5-2 7M14 12c4 0 6 1 6 4s-5 2-7-2M12 14c0 4-1 6-4 6s-2-5 2-7M10 12c-4 0-6-1-6-4s5-2 7 2"/></svg>',
@@ -59,9 +64,13 @@ const FOCUS_PRESETS = {
     { key: "power", label: "Energía", partIds: ["psu", "cable-atx", "cable-cpu-eps"] },
   ],
   laptop: [
+    { key: "memory", label: "RAM", partIds: ["ram", "ram-b"] },
+    { key: "wireless", label: "Wi-Fi", partIds: ["wifi-card", "wifi-antenna-1"] },
+    { key: "audio", label: "Audio L/R", partIds: ["speaker-left", "speaker-right"] },
+    { key: "connectors", label: "Conectores", partIds: ["cable-keyboard-flex", "cable-touchpad-flex"] },
     { key: "motherboard", label: "Placa base", partIds: ["motherboard"] },
-    { key: "storage", label: "Almacenamiento", partIds: ["ssd-m2"] },
-    { key: "cooling", label: "Refrigeración", partIds: ["cooler", "cable-cpu-fan-laptop"] },
+    { key: "storage", label: "Almacenamiento", partIds: ["ssd-m2", "ssd-m2-b"] },
+    { key: "cooling", label: "Refrigeración", partIds: ["cooler", "cable-cpu-fan-laptop", "cable-gpu-fan", "fan-cpu", "fan-gpu"] },
     { key: "power", label: "Batería", partIds: ["battery", "cable-battery"] },
   ],
 };
@@ -129,6 +138,59 @@ export function createStage() {
   // tarea actual (Vista de trabajo contextual) y se entera de las transiciones.
   let poseHooks = {};
 
+  function showSelectionState(state, label) {
+    const container=document.getElementById("hwlab-stage");
+    if(!container || container.dataset.equipment !== "laptop")return;
+    let badge=document.getElementById("hwlab-selection-state");
+    if(!badge){badge=document.createElement("output");badge.id="hwlab-selection-state";badge.setAttribute("aria-live","polite");document.getElementById("hwlab-scene").appendChild(badge)}
+    const words={available:"Disponible",target:"Objetivo",hover:"Explorar",touch:"Toque",selected:"Seleccionado",correct:"Correcto",incorrect:"Revisa la acción",blocked:"Bloqueado"};
+    badge.dataset.state=state;badge.textContent=label ? words[state]+" · "+label : "";badge.hidden=!label;
+  }
+  let inspection = false, inspectionCatalog = {}, inspectionPrevious = null;
+  let inspectionLocked = () => false, rigCleanup = null;
+  function releaseRigResources() { if(rigCleanup){const fn=rigCleanup;rigCleanup=null;fn();} }
+  function isFreeCamera() { return !!(cameraRig && cameraRig.laptopFree); }
+  function canAccessSide(access) {
+    if (!currentRig || !access) return true;
+    if (!isFreeCamera()) return currentRig.poseAllows(access);
+    // Free-camera picks already require a visible opaque surface. A global
+    // top/bottom gate would wrongly reject a loose part or screw in the tray.
+    // Physical assembly, battery and fastener dependencies remain in the engine.
+    return true;
+  }
+  function setInspectionCatalog(parts) { inspectionCatalog = parts || {}; }
+  function setInspectionMode(value) {
+    if(value && (!isFreeCamera() || poseBusy() || inspectionLocked()))return false;
+    if(inspection===!!value)return true;
+    interactions.cancelPendingTap();
+    const card=document.getElementById("hwlab-card");
+    if(value){
+      const protectedNodes=[card,...["hwlab-hint-btn","hwlab-restart-btn","hwlab-back-to-intro","hwlab-pose-panel","hwlab-explode-btn"].map(id=>document.getElementById(id))].filter(Boolean);
+      inspectionPrevious={selected:interactions.selected,nodes:protectedNodes.map(node=>({node,inert:node.inert}))};
+      protectedNodes.forEach(node=>{node.inert=true;});
+    } else {
+      inspectionPrevious?.nodes.forEach(({node,inert})=>{node.inert=inert;});
+      closePartModal();interactions.setSelected(inspectionPrevious?.selected || null);inspectionPrevious=null;
+    }
+    inspection=!!value;
+    document.getElementById("hwlab-stage").classList.toggle("is-inspecting",inspection);
+    const button=document.getElementById("hwlab-inspect-btn");if(button){button.setAttribute("aria-pressed",String(inspection));button.textContent=inspection?"Salir de inspección":"Modo inspección";}
+    const note=document.getElementById("hwlab-inspect-note");if(note)note.hidden=!inspection;
+    sceneApi.keepAwake(400);return true;
+  }
+  function renderFreeCameraControls(enabled) {
+    let panel=document.getElementById("hwlab-free-camera");
+    if(!panel){
+      panel=document.createElement("div");panel.id="hwlab-free-camera";
+      panel.innerHTML='<button type="button" id="hwlab-center-btn">Centrar portátil</button><button type="button" id="hwlab-inspect-btn" aria-pressed="false">Modo inspección</button><p>Arrastra para girar · rueda o pellizco para acercar · botón derecho o dos dedos para desplazar · doble clic/toque para enfocar</p>';
+      document.getElementById("hwlab-display-items").appendChild(panel);
+      panel.querySelector('#hwlab-center-btn').onclick=()=>{refreshRigBounds();cameraRig.goToView('overview');};
+      panel.querySelector('#hwlab-inspect-btn').onclick=()=>setInspectionMode(!inspection);
+      const note=document.createElement('p');note.id='hwlab-inspect-note';note.hidden=true;note.textContent='Inspección: explora y consulta fichas. La práctica está protegida.';document.getElementById('hwlab-scene').appendChild(note);
+    }
+    panel.hidden=!enabled;
+  }
+
   function ensureSceneReady() {
     if (sceneApi) return sceneApi.supported;
     const canvas = document.getElementById("hwlab-canvas");
@@ -151,12 +213,23 @@ export function createStage() {
     cameraRig = createCameraRig({ camera: sceneApi.camera, renderer: sceneApi.renderer, tweenGroup, onTick: sceneApi.onTick });
     interactions = createInteractionLayer({ scene: sceneApi.scene, camera: sceneApi.camera, renderer: sceneApi.renderer, tweenGroup, onTick: sceneApi.onTick });
     explodeCtl = createExplodeController({ tweenGroup });
+    interactions.onFocus(root=>{if(isFreeCamera()){cameraRig.focusOnObject(root);sceneApi.keepAwake(700);}});
+    interactions.setClickGuard((root,meta)=>{
+      if(!inspection)return true;
+      const part=meta && inspectionCatalog[meta.partId || currentScrews?.get(meta.screwId)?.partId];
+      if(part)openPartModal(part);
+      return false;
+    });
     // Toque entre dos piezas (Fase C): no se adivina ni se penaliza; se explica.
     interactions.onClick((root, meta, event, pick) => {
       if (!root && pick && pick.reason === "ambiguous") showFeedback("Tocaste entre dos piezas. Acerca la cámara o toca el centro de la pieza que quieres.", "info", { transient: true });
     });
 
+    interactions.onClick((root, meta, event) => {
+      showSelectionState(event.pointerType === "touch" ? "touch" : "selected", meta && meta.label);
+    });
     interactions.onHover((root, meta) => {
+      if (!interactions.selected) showSelectionState("available", meta && meta.label);
       const tip = document.getElementById("hwlab-tooltip");
       if (!tip) return;
       // Los tornillos tambien tienen nombre propio (kind "screw", sin partId):
@@ -467,7 +540,12 @@ export function createStage() {
         // sentia casi igual de alejado que la vista "General" (confirmado con
         // clic real) -- 2.3 deja el grupo notablemente mas cerca sin llegar a
         // recortar piezas del encuadre.
-        cameraRig.focusOnObjects(objects, { distanceFactor: 2.3 });
+        // Fit the whole group in the narrower frustum dimension on phones.
+        // A fixed 2.3 radius clipped the two speakers at opposite edges.
+        const camera = sceneApi.camera;
+        const halfAngle = Math.atan(Math.tan(camera.fov * Math.PI / 360) * Math.min(1, camera.aspect));
+        const distanceFactor = equipmentId === "laptop" ? Math.max(2.3, 1.12 / Math.sin(halfAngle)) : 2.3;
+        cameraRig.focusOnObjects(objects, { distanceFactor });
         schedulePlaceCard(CAMERA_SETTLE_MS);
       });
     });
@@ -524,6 +602,8 @@ export function createStage() {
   }
 
   function hideStage() {
+    setInspectionMode(false);
+    releaseRigResources();
     const intro = document.getElementById("hwlab-intro");
     const stage = document.getElementById("hwlab-stage");
     if (stage) stage.hidden = true;
@@ -534,13 +614,24 @@ export function createStage() {
   }
 
   function loadRig(layout, equipmentId) {
+    setInspectionMode(false); inspectionCatalog={};
+    releaseRigResources();inspectionLocked=()=>false;
     // Cada practica fija su propia politica de encuadre (la diagnostica no usa ninguna).
     framingPolicy = null;
     frameState = { key: null, done: true };
+    if (currentRig && currentRig.root.name === "hwlab-rig-laptop") tweenGroup.clear();
+    if (currentScrews && currentScrews.dispose) currentScrews.dispose();
     if (currentRig) currentRig.dispose();
     if (interactions) interactions.clearInteractives();
     if (explodeCtl && explodeCtl.isExploded) explodeCtl.collapse({ duration: 0 });
+    sceneApi.setEquipment(equipmentId);
+    interactions.setLaptopMode(equipmentId === "laptop");
+    interactions.setFreeGestures(equipmentId === "laptop");
+    renderFreeCameraControls(equipmentId === "laptop");
+    document.getElementById("hwlab-stage").dataset.equipment = equipmentId;
+    const badge=document.getElementById("hwlab-selection-state"); if(badge)badge.hidden=true;
     currentRig = createRig({ scene: sceneApi.scene, interactions, tweenGroup, layout, equipmentId });
+    cameraRig.setLaptopFree(equipmentId === "laptop", equipmentId === "laptop" ? createCameraBarrier(currentRig.root) : null);
     currentScrews = null;
     if (currentRig.screwEntries && currentRig.screwEntries.length) {
       currentScrews = createScrewController({
@@ -826,6 +917,7 @@ export function createStage() {
   }
 
   function focusOnPart(partId) {
+    if(isFreeCamera())return;
     // Practica guiada: la camara no persigue cada pieza clicada (antes se
     // acercaba a 0,22 m de la pieza RECIEN RETIRADA y el objetivo siguiente
     // quedaba fuera de cuadro: antena Wi-Fi al 24 %, cable del ventilador al
@@ -864,6 +956,7 @@ export function createStage() {
   }
 
   function framingActive() {
+    if(isFreeCamera())return false;
     return !!(framingPolicy && framingPolicy.active && framingPolicy.active());
   }
 
@@ -1266,6 +1359,11 @@ export function createStage() {
     const el = document.getElementById("hwlab-feedback");
     if (!el) return;
     const kind = FEEDBACK_ICONS[tone] ? tone : "info";
+    if (interactions && interactions.selected && didacticEquipmentId === "laptop") {
+      const state = opts.selectionState || (kind === "success" ? "correct" : kind === "warning" ? "blocked" : kind === "error" ? "incorrect" : "selected");
+      interactions.setSelectionState(state);
+      showSelectionState(state, (interactions.getMeta(interactions.selected) || {}).label);
+    }
     const rank = FEEDBACK_RANK[kind];
     const now = (typeof performance !== "undefined" ? performance.now() : Date.now());
     if (!el.hidden && rank < feedbackShown.rank && now - feedbackShown.at < 250) return 0;
@@ -1353,8 +1451,9 @@ export function createStage() {
   function pointAtPart(partId) {
     const obj = currentRig && currentRig.getObject3D(partId);
     if (!obj || !obj.visible) return false;
-    if (interactions) interactions.setSelected(obj);
-    focusOnPart(partId);
+    if (interactions) interactions.setSelected(obj, "target");
+    showSelectionState("target", (interactions.getMeta(obj) || {}).label);
+    if(isFreeCamera()) cameraRig.focusOnObject(obj); else focusOnPart(partId);
     return true;
   }
 
@@ -1368,18 +1467,20 @@ export function createStage() {
     }
   }
 
-  function startTimer(startedAtIso) {
+  function startTimer(startedAtIso, finishedAtIso) {
     stopTimer();
     const startedAt = startedAtIso ? Date.parse(startedAtIso) : Date.now();
+    const finishedAt = finishedAtIso ? Date.parse(finishedAtIso) : NaN;
+    const frozen = Number.isFinite(finishedAt) && finishedAt >= startedAt;
     const timerEl = document.getElementById("hwlab-timer");
     function tick() {
-      const elapsed = Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
+      const elapsed = Math.max(0, Math.floor(((frozen ? finishedAt : Date.now()) - startedAt) / 1000));
       const m = String(Math.floor(elapsed / 60)).padStart(2, "0");
       const s = String(elapsed % 60).padStart(2, "0");
       if (timerEl) timerEl.textContent = m + ":" + s;
     }
     tick();
-    timerInterval = setInterval(tick, 1000);
+    if (!frozen) timerInterval = setInterval(tick, 1000);
   }
 
   function stopTimer() {
@@ -1557,6 +1658,13 @@ export function createStage() {
 
   return {
     showStage,
+    isFreeCamera,
+    canAccessSide,
+    setInspectionMode,
+    setInspectionCatalog,
+    setInspectionLock: fn => { inspectionLocked=fn || (()=>false); },
+    setRigCleanup: fn => { rigCleanup=fn; },
+    get isInspecting() { return inspection; },
     hideStage,
     loadRig,
     focusOnPart,

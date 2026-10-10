@@ -9,7 +9,7 @@
  * "RAM 2", solo sabe construir "una memoria RAM".
  */
 import * as THREE from "./vendor/three.module.min.js";
-import { materialFor, materialInstanceFor, markAsHitbox } from "./hardware_lab_3d_constants.js?v=20261001_2";
+import { materialFor, materialInstanceFor, markAsHitbox } from "./hardware_lab_3d_constants.js?v=20261009_1";
 
 function box(w, h, d, kind, overrides) {
   const geo = new THREE.BoxGeometry(w, h, d);
@@ -560,9 +560,9 @@ export function buildCable(kind, fromLocal, toLocal, opts = {}) {
   }
   group.add(tube);
 
-  const plugSize = kind === "atx24" ? 0.02 : kind === "eps" ? 0.014 : kind === "sata" ? 0.01
+  const plugSize = opts.plugSize || (kind === "atx24" ? 0.02 : kind === "eps" ? 0.014 : kind === "sata" ? 0.01
     : (kind === "antenna-main" || kind === "antenna-aux") ? 0.0028
-    : (kind === "flex" || kind === "display") ? 0.005 : 0.006;
+    : (kind === "flex" || kind === "display") ? 0.005 : 0.006);
   // Enchufe de una cinta: tan ancho como la cinta (un ZIF abarca todo el flex).
   const plugW = opts.flat ? Math.max(plugSize, ribbonWidth + 0.001) : plugSize;
   [fromLocal, toLocal].forEach((pt, i) => {

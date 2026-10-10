@@ -44,7 +44,7 @@ function feedbackHarness({ cover = 0 } = {}) {
   };
   const api = new Function(
     "document", "placeFeedback", "HardwareLabAudio", "performance", "setTimeout", "clearTimeout",
-    "let feedbackTimer = null;\n" + stage.slice(start, end) + "\nreturn { showFeedback, endTransientFeedback };"
+    "let feedbackTimer = null; const interactions = null;\n" + stage.slice(start, end) + "\nreturn { showFeedback, endTransientFeedback };"
   )(
     { getElementById: (id) => (id === "hwlab-feedback" ? el : null) },
     () => cover,

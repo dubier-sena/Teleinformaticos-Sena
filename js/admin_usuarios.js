@@ -4807,6 +4807,17 @@
     const confirmed = await confirmAdminAction(`${nextActive ? "Activar" : "Desactivar"} a ${user?.fullName || usernameKey}?`);
     if (!confirmed) return;
     window.portalSaveStatus?.saving(nextActive ? "Activando..." : "Desactivando...");
+    // V6: withdraw the protected grant before a portal deactivation. Preserve
+    // updateStudentStatus's synchronous API and the existing confirmation flow.
+    if (!nextActive && window.PORTAL_FIREBASE_CONFIG?.hardwareLabV6?.enabled) {
+      try {
+        await window.HardwareLab.FirebaseV6.revokeAccess(usernameKey);
+      } catch (_) {
+        window.portalSaveStatus?.error("No se pudo proteger el acceso del laboratorio.");
+        setFeedback("No se desactivó la cuenta. Reintenta para revocar también el acceso del laboratorio.", "error");
+        return;
+      }
+    }
     const result = auth.updateStudentStatus(usernameKey, nextActive);
     if (!result.ok) {
       window.portalSaveStatus?.error(result.message || "Error");

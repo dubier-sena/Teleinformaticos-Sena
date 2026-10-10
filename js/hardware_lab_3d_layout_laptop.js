@@ -45,7 +45,7 @@ import {
   buildLaptopLid,
   buildLaptopMotherboard,
   buildLaptopServiceStand,
-} from "./hardware_lab_3d_laptop_factory.js?v=20261001_2";
+} from "./hardware_lab_3d_laptop_factory.js?v=20261009_1";
 
 const AXIS_Y = [0, 1, 0];
 const AXIS_NEG_Y = [0, -1, 0];
@@ -72,6 +72,10 @@ const TRAY_SLOTS = {
   "ssd-m2": { x: 0.785, z: 0.30 },
   "wifi-card": { x: 0.16, z: 0.42 },
   cpu: { x: 0.22, z: 0.42 },
+  "speaker-left": { x: .55, z: .54 },
+  "speaker-right": { x: .63, z: .54 },
+  "cable-speaker-left": { x: .80, z: .58 },
+  "cable-speaker-right": { x: 1.02, z: .58 },
   "cable-battery": { x: 0.30, z: 0.42 },
   "cable-cpu-fan-laptop": { x: 0.38, z: 0.42 },
   "cable-keyboard-flex": { x: 0.44, z: 0.42 },
@@ -88,14 +92,14 @@ const at = (anchor, dx, dy, dz) => anchor.clone().add(v(dx, dy, dz));
 // por debajo, en vez de quedar metido dentro de el.
 const PLUG_HALF = { power: 0.0021, flex: 0.00175, display: 0.00175, antenna: 0.00098 };
 
-export function createLaptopLayout() {
+export function createLaptopLayout(options = {}) {
   let baseDims = null;
 
   const structure = [
     {
       id: "base",
       build: () => {
-        const built = buildLaptopBase();
+        const built = buildLaptopBase(options.base);
         baseDims = built.dims;
         return built;
       },
@@ -118,7 +122,7 @@ export function createLaptopLayout() {
       partId: "bottom-cover",
       tier: 3,
       // Sin tornillos decorativos: los pone el sistema interactivo (ver SCREWS).
-      build: () => buildLaptopBottomCover(baseDims, { serviceScrews: false }),
+      build: () => buildLaptopBottomCover(baseDims, { ...options.cover, serviceScrews: false }),
       mount: (a) => a.base.bottomCoverCenter.clone(),
       detachAxis: AXIS_NEG_Y,
     },
@@ -345,6 +349,21 @@ export function createLaptopLayout() {
       tier: 3,
     },
   };
+
+  for (const [side, sign] of [["left", -1], ["right", 1]]) {
+    components["speaker-" + side] = {
+      kind: "laptop-speaker", buildOpts: { side },
+      mount: () => v(sign * .135, .0057, .084),
+      trayRotationEuler: [Math.PI, 0, 0], detachAxis: AXIS_NEG_Y, tier: 1,
+    };
+    components["cable-speaker-" + side] = {
+      kind: "cable", cableKind: "power", detachAxis: AXIS_NEG_Y, tier: 3,
+      from: a => at(mbOf(a)[side === "left" ? "speakerLeft" : "speakerRight"], 0, -.0014, 0),
+      to: () => v(sign * .121, .000975, .079),
+      waypoints: () => [v(sign*.124,.010,-.015),v(sign*.124,.010,.040),v(sign*.124,.009,.072)],
+      buildOpts: { radius: .00065, hitRadius: .0025, plugSize: .0035, clipsAt: [.3,.65] },
+    };
+  }
 
   // Los PUERTOS EXTERNOS no son componentes retirables: van soldados a la
   // placa y su boca forma parte de la pared del chasis. Se dibujan dentro de

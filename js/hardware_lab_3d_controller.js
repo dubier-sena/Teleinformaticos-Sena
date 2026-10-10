@@ -1,3 +1,4 @@
+import {createCheckpointStorage, activateCheckpoint, releaseCheckpoint, recoveredNotice, confirmRestart} from './hardware_lab_3d_checkpoint.js?v=20261009_1';
 /* js/hardware_lab_3d_controller.js
  *
  * Controlador de "Aprender componentes" + las 4 practicas de
@@ -15,10 +16,11 @@
  * item 23) y la llave de almacenamiento, que aqui SI se guarda por separado
  * (storageMode) para que evaluacion no pise el progreso de practica libre.
  */
-import { createDesktopLayout } from "./hardware_lab_3d_layout_desktop.js?v=20261001_2";
-import { createLaptopLayout } from "./hardware_lab_3d_layout_laptop.js?v=20261001_2";
-import { HardwareLabAudio } from "./hardware_lab_3d_audio.js?v=20261001_2";
-import { applyThermalLook } from "./hardware_lab_3d_thermal_look.js?v=20261001_2";
+import { createDesktopLayout } from "./hardware_lab_3d_layout_desktop.js?v=20261009_1";
+import { createProfileLayout } from "./hardware_lab_3d_laptop_profiles.js?v=20261009_1";
+import { createLaptopLayout } from "./hardware_lab_3d_layout_laptop.js?v=20261009_1";
+import { HardwareLabAudio } from "./hardware_lab_3d_audio.js?v=20261009_1";
+import { applyThermalLook } from "./hardware_lab_3d_thermal_look.js?v=20261009_1";
 
 const TITLES = {
   learn: "Aprender componentes",
@@ -38,6 +40,8 @@ function esc(value) {
 }
 
 export function createAssemblyController(stage) {
+  let profileId = "standard";
+  let checkpointStore = null;
   let equipmentData = null;
   let equipmentId = null;
   let session = null;
@@ -73,16 +77,17 @@ export function createAssemblyController(stage) {
   // un nonce unico (id de su intento); una sesion guardada sin nonce es
   // anterior al sistema y conserva el id determinista "legacy".
   function Attempts() {
-    return window.HardwareLab.Attempts || null;
+    return equipmentId === "laptop" ? null : window.HardwareLab.Attempts || null;
   }
   function freshSession(opts) {
     const s = Engine().createSession(equipmentData, engineMode, opts);
+    if (equipmentId === "laptop" && window.HardwareLab.CheckpointsV5) s.attemptNonce = window.HardwareLab.CheckpointsV5.newAttemptId();
     const A = Attempts();
     return A ? Object.assign({}, s, { attemptNonce: A.makeNonce() }) : s;
   }
 
   function Storage() {
-    return window.HardwareLab.Storage;
+    return checkpointStore || window.HardwareLab.Storage;
   }
   function Tools() {
     return window.HardwareLab.Tools;
@@ -92,11 +97,11 @@ export function createAssemblyController(stage) {
   }
 
   function layoutFor(id) {
-    return id === "laptop" ? createLaptopLayout() : createDesktopLayout();
+    return id === "laptop" ? createProfileLayout(profileId) : createDesktopLayout();
   }
 
   function equipmentDataFor(id) {
-    return id === "laptop" ? window.HardwareLab.DataLaptop.LAPTOP_EQUIPMENT : window.HardwareLab.DataDesktop.DESKTOP_EQUIPMENT;
+    return id === "laptop" ? (window.HardwareLab.LaptopProfiles?.get(profileId).equipment || window.HardwareLab.DataLaptop.LAPTOP_EQUIPMENT) : window.HardwareLab.DataDesktop.DESKTOP_EQUIPMENT;
   }
 
   /** Herramienta que usa la pieza (metadato educativo, no un paso previo que el aprendiz deba elegir). */
@@ -117,7 +122,11 @@ export function createAssemblyController(stage) {
     );
   }
 
-  function start(id, mode, dir) {
+  function start(id, mode, dir, model = "standard") {
+    if(persistTimer){clearTimeout(persistTimer);persistTimer=null;}
+    releaseCheckpoint(checkpointStore);
+    profileId=id === "laptop" ? model : "standard";
+    checkpointStore = id === "laptop" && mode !== "learn" ? createCheckpointStorage(profileId) : null;
     equipmentId = id;
     equipmentData = equipmentDataFor(id);
     isLearn = mode === "learn";
@@ -128,6 +137,10 @@ export function createAssemblyController(stage) {
 
     if (!stage.showStage()) return;
     const rig = stage.loadRig(layoutFor(id), id);
+    stage.setInspectionCatalog(equipmentData.parts);
+    const ownedCheckpoint = checkpointStore;
+    stage.setRigCleanup(()=>{releaseCheckpoint(ownedCheckpoint);if(offClick){offClick();offClick=null;}});
+
     neededPreset = null;
     setupPoseHooks();
 
@@ -204,6 +217,10 @@ export function createAssemblyController(stage) {
         "<p>Gira el equipo, acercate y haz clic en cualquier componente para ver su ficha tecnica completa: funcion, ubicacion, tipo de conexion, precauciones y fallas frecuentes. El gabinete ya esta abierto para que puedas ver tambien las piezas internas.</p></div>"
     );
 
+    if (equipmentId === "laptop") {
+      rig.setPose(rig.presetPose("internal"), { animate: false });
+      stage.refreshRigBounds(); stage.frameWorkView("internal", {duration:0}); stage.renderPoseStatus();
+    }
     document.getElementById("hwlab-explode-btn").onclick = () => stage.toggleExplode();
     document.getElementById("hwlab-back-to-intro").onclick = backToIntro;
     document.getElementById("hwlab-hint-btn").hidden = true;
@@ -223,7 +240,9 @@ export function createAssemblyController(stage) {
   }
 
   // ── PRACTICAS DE ENSAMBLE/DESENSAMBLE ────────────────────────────────────
-  function startPractice(rig) {
+  async function startPractice(rig) {
+    const ownedStore = checkpointStore;
+    if (!(await activateCheckpoint(ownedStore)) || checkpointStore !== ownedStore || stage.currentRig !== rig) return;
     document.getElementById("hwlab-hint-btn").hidden = false;
     document.getElementById("hwlab-restart-btn").hidden = false;
     document.getElementById("hwlab-timer").parentElement.hidden = false;
@@ -249,28 +268,31 @@ export function createAssemblyController(stage) {
     });
 
     stage.setModeTitle(TITLES[practiceMode], equipmentData.name + (direction ? " - " + (direction === "assembly" ? "Ensamble" : "Desensamble") : ""));
-    stage.startTimer(session.startedAt);
+    stage.startTimer(session.startedAt, checkpointStore && session.result ? session.finishedAt : undefined);
     stage.clearActionLog();
-    stage.setHintUi(session.hints.used, session.hints.max, onHint);
+    stage.setHintUi(session.hints.used, checkpointStore && session.result ? 0 : session.hints.max, checkpointStore && session.result ? null : onHint);
 
     document.getElementById("hwlab-explode-btn").onclick = () => stage.toggleExplode();
     document.getElementById("hwlab-back-to-intro").onclick = backToIntro;
+    document.getElementById("hwlab-restart-btn").textContent = "Reiniciar";
     document.getElementById("hwlab-restart-btn").onclick = () => {
+      if (checkpointStore && !confirmRestart()) return;
       session = freshSession({ maxHints });
       neededPreset = null;
       resetPose();
       rig.syncFromSessionParts(session.parts);
       resetThermal(null);
       setupScrews(session.parts, { assembly: direction === "assembly" || engineMode === "assembly-guided" });
-      stage.startTimer(session.startedAt);
+      stage.startTimer(session.startedAt, checkpointStore && session.result ? session.finishedAt : undefined);
       stage.clearActionLog();
-      stage.setHintUi(session.hints.used, session.hints.max, onHint);
+      stage.setHintUi(session.hints.used, checkpointStore && session.result ? 0 : session.hints.max, checkpointStore && session.result ? null : onHint);
       renderInfoPanel();
       // Encontrado con clic real: faltaba aqui (a diferencia del arranque
       // inicial de la practica, linea ~199, que si la llama) -- "Reiniciar"
       // devolvia las piezas a su sitio pero el contador "Paso X/Y" y el de
       // errores se quedaban mostrando los numeros de ANTES del reinicio.
       refreshStats();
+      if (checkpointStore) persist();
     };
 
     offClick = stage.interactions.onClick((root, meta) => {
@@ -308,7 +330,9 @@ export function createAssemblyController(stage) {
 
     renderInfoPanel();
     refreshStats();
-    maybeFinish();
+    recoveredNotice(checkpointStore, saved);
+    if (checkpointStore) { if (session.result) stage.stopTimer(); persist(); }
+    if (!checkpointStore || !session.result) maybeFinish();
   }
 
   function getPart(partId) {
@@ -396,6 +420,7 @@ export function createAssemblyController(stage) {
   /** Mensaje (sin castigo) cuando la operacion es correcta pero el portatil
    *  no esta en la orientacion que la permite fisicamente. */
   function poseBlockMessage(req, what) {
+    if(stage.isFreeCamera && stage.isFreeCamera()) return "Gira la cámara hacia la cara de trabajo para " + what + ". La vista de trabajo es un atajo opcional.";
     if (req.access === "interior") {
       return "Para " + what + " el portatil tiene que estar boca abajo, con el interior hacia arriba. Usa \"Preparar para " +
         presetLabel(req.preset).toLowerCase() + "\" o \"Vista de trabajo\".";
@@ -407,6 +432,7 @@ export function createAssemblyController(stage) {
   /** Bloque del panel con la posicion de trabajo que pide la tarea. */
   function poseSectionHtml() {
     if (!hasPose() || !session) return "";
+    if (stage.isFreeCamera && stage.isFreeCamera()) return '<p class="hwlab-muted">Cámara libre: gira hacia la cara de trabajo. Los enfoques y la vista de trabajo son ayudas opcionales.</p>';
     const r = rig3d();
     const name = contextualPreset();
     if (!name) return "";
@@ -501,7 +527,7 @@ export function createAssemblyController(stage) {
       const r = rig3d();
       const first = screws().forPart(partId)[0];
       const access = first ? r.screwAccess(first.id) : null;
-      if (access && !r.poseAllows(access)) {
+      if (access && !(stage.canAccessSide ? stage.canAccessSide(access) : r.poseAllows(access))) {
         neededPreset = r.workPresetFor(partId, access);
         setTimeout(renderInfoPanel, 0);
         return { ok: false, reason: poseBlockMessage({ access, preset: neededPreset }, "trabajar este tornillo") };
@@ -580,6 +606,7 @@ export function createAssemblyController(stage) {
   }
 
   function handleScrewClick(screwId) {
+    if (checkpointStore && session?.result) return;
     const ctl = screws();
     if (!ctl) return;
     const before = ctl.get(screwId);
@@ -599,6 +626,7 @@ export function createAssemblyController(stage) {
   }
 
   function handlePartClick(partId) {
+    if (checkpointStore && session?.result) return;
     const part = getPart(partId);
     if (!part) return;
     // En modos abiertos el panel explica YA la herramienta de la pieza tocada,
@@ -614,7 +642,7 @@ export function createAssemblyController(stage) {
     if (thermal && partId === "cooler" && action === "install" && actionWouldBeValid(partId, action)) {
       const gate = Thermal().coolerInstallGate(thermal);
       if (!gate.ok) {
-        stage.showFeedback(gate.reason, "info");
+        stage.showFeedback(gate.reason, "info", { selectionState: "blocked" });
         stage.pushActionLog("Disipador sin montar: preparar la pasta térmica", "error");
         renderInfoPanel();
         return;
@@ -633,7 +661,7 @@ export function createAssemblyController(stage) {
         stage.showFeedback(
           (n === 1 ? "Falta 1 tornillo" : "Faltan " + n + " tornillos") + " por retirar en " + part.name +
             ". Toca cada tornillo marcado para retirarlo.",
-          "info"
+          "info", { selectionState: "blocked" }
         );
         stage.pushActionLog(part.name + ": faltan tornillos por retirar");
         return;
@@ -646,7 +674,7 @@ export function createAssemblyController(stage) {
           const p = getPart(pending);
           stage.showFeedback(
             "Antes de continuar, asegura " + (p ? p.name : pending) + " con sus tornillos.",
-            "info"
+            "info", { selectionState: "blocked" }
           );
           return;
         }
@@ -659,10 +687,10 @@ export function createAssemblyController(stage) {
         return;
       }
       const access = r.partAccess(partId);
-      if (access && !r.poseAllows(access) && actionWouldBeValid(partId, action)) {
+      if (access && !(stage.canAccessSide ? stage.canAccessSide(access) : r.poseAllows(access)) && actionWouldBeValid(partId, action)) {
         neededPreset = r.workPresetFor(partId, access);
         const verb = (Engine().ACTION_LABELS[action] || { verb: "operar" }).verb.toLowerCase();
-        stage.showFeedback(poseBlockMessage({ access, preset: neededPreset }, verb + " " + part.name), "info");
+        stage.showFeedback(poseBlockMessage({ access, preset: neededPreset }, verb + " " + part.name), "info", { selectionState: "blocked" });
         renderInfoPanel();
         return;
       }
@@ -671,6 +699,7 @@ export function createAssemblyController(stage) {
     // La herramienta es CONTEXTUAL: el aprendiz elige la pieza y la accion, y
     // el laboratorio usa la que esa pieza requiere (se explica en el panel).
     const result = Engine().attemptAction(equipmentData, session, { partId, action, toolId: contextualToolId(part) });
+    const blocked = !result.ok && ["blocked", "caseClosed", "safetyPending"].some(key => (result.session.errorsByType[key] || 0) > (session.errorsByType[key] || 0));
     session = result.session;
     if (result.ok) {
       const nowPresent = session.parts[partId];
@@ -698,7 +727,7 @@ export function createAssemblyController(stage) {
       stage.showFeedback(result.message, "success");
       stage.pushActionLog(part.name + " " + (nowPresent ? "✓" : "✗"), "success");
     } else {
-      stage.showFeedback(result.message, "error");
+      stage.showFeedback(result.message, "error", { selectionState: blocked ? "blocked" : "incorrect" });
       stage.pushActionLog(part.name + ": bloqueado", "error");
     }
     refreshThermalLook();
@@ -720,18 +749,18 @@ export function createAssemblyController(stage) {
   function refreshThermalLook() {
     const r = rig3d();
     if (!thermal || !r) return;
-    applyThermalLook(r.getObject3D("cpu"), r.getObject3D("cooler"), thermal, { coolerInstalled: !!session.parts.cooler });
+    applyThermalLook(r.thermalTargets.length ? r.thermalTargets.map(name=>r.root.getObjectByName(name)) : r.getObject3D("cpu"), r.getObject3D("cooler"), thermal, { coolerInstalled: !!session.parts.cooler });
   }
 
   function thermalContext() {
-    return { coolerInstalled: !!session.parts.cooler, cpuInstalled: !!session.parts.cpu };
+    return { coolerInstalled: !!session.parts.cooler, cpuInstalled: equipmentData.capabilities?.solderedCPU ? !!session.parts.motherboard : !!session.parts.cpu };
   }
 
   /** Solo cuando el modulo esta FUERA y queda algo que hacer o comprobar. */
   let thermalOpen = false; // el aprendiz abrio a mano el mantenimiento opcional
   function thermalPanelVisible() {
     if (!thermal || !session || Engine().isFinished(session) || session.parts.cooler) return false;
-    return !!session.parts.cpu || thermal.dust !== "clean";
+    return thermalContext().cpuInstalled || thermal.dust !== "clean";
   }
 
   function thermalTaskButton(taskId, label, extra) {
@@ -751,14 +780,15 @@ export function createAssemblyController(stage) {
     // apoyo y va plegado (el aprendiz puede abrirlo; nada cambia en la logica).
     const step = session.kind === "guided" ? Engine().currentStep(session) : null;
     const required = (isAssemblyPractice() || isMaintenance()) && (!step || (step.kind === "action" && step.partId === "cooler"));
-    const title = "Mantenimiento de la refrigeración";
+    const title = profileId === "gaming" ? "Mantenimiento de CPU y GPU" : "Mantenimiento de la refrigeración";
     let html = required
       ? `<div class="hwlab-thermal" data-required="true"><h3>${title}</h3>`
       : `<details class="hwlab-thermal" id="hwlab-thermal-details"${thermalOpen ? " open" : ""}><summary class="hwlab-thermal__summary">${title}</summary>`;
+    if(profileId === "gaming")html += `<p class="hwlab-muted">Cada tarea se aplica a las dos superficies CPU/GPU y a ambos radiadores. Los chips permanecen soldados a la placa.</p>`;
     html += `<p class="hwlab-muted">Aletas y ventilador: <strong>${esc(d.dust)}</strong>${d.dustClean ? " &#9989;" : ""}</p>`;
-    if (session.parts.cpu) html += `<p class="hwlab-muted">Pasta térmica: <strong>${esc(d.paste)}</strong>${d.pasteReady ? " &#9989;" : ""}</p>`;
+    if (thermalContext().cpuInstalled) html += `<p class="hwlab-muted">Pasta térmica: <strong>${esc(d.paste)}</strong>${d.pasteReady ? " &#9989;" : ""}</p>`;
     if (!d.dustClean) html += thermalTaskButton("brush", T.brush.label) + thermalTaskButton("air", T.air.label);
-    if (session.parts.cpu && !d.pasteReady) {
+    if (thermalContext().cpuInstalled && !d.pasteReady) {
       if (thermal.paste === "old") html += thermalTaskButton("scrape", T.scrape.label);
       if (thermal.paste === "old" || thermal.paste === "residue" || thermal.paste === "new") html += thermalTaskButton("alcohol", T.alcohol.label);
       if (thermal.paste !== "new") {
@@ -772,6 +802,7 @@ export function createAssemblyController(stage) {
   }
 
   function onThermalTask(taskId, amount) {
+    if (checkpointStore && session?.result) return;
     const r = Thermal().applyTask(thermal, taskId, thermalContext(), { amount });
     thermal = r.state;
     stage.showFeedback(r.message, r.level);
@@ -805,10 +836,11 @@ export function createAssemblyController(stage) {
   }
 
   function onHint() {
+    if (checkpointStore && session?.result) return;
     const before = session.hints.used;
     const result = Engine().useHint(session);
     session = result.session;
-    stage.setHintUi(session.hints.used, session.hints.max, onHint);
+    stage.setHintUi(session.hints.used, checkpointStore && session.result ? 0 : session.hints.max, checkpointStore && session.result ? null : onHint);
     let message = result.message;
     if (result.ok && session.hints.used > before) {
       // La pista cuesta lo mismo que siempre (-3 en procedimiento); antes se
@@ -893,6 +925,7 @@ export function createAssemblyController(stage) {
   }
 
   function attemptSafety(stepId) {
+    if (checkpointStore && session?.result) return;
     const result = Engine().attemptSafetyStep(session, stepId);
     session = result.session;
     stage.showFeedback(result.message, result.ok ? "success" : "error");
@@ -1038,18 +1071,20 @@ export function createAssemblyController(stage) {
   }
 
   function persist() {
+    if (checkpointStore && !session.result && Engine().isFinished(session) && !partWithPendingScrews(null)) maybeFinish();
     if (persistTimer) clearTimeout(persistTimer);
-    persistTimer = setTimeout(() => {
-      const payload = Engine().serialize(session);
-      if (session.attemptNonce) payload.attemptNonce = session.attemptNonce;
-      const screwCtl = screws();
-      if (screwCtl) payload.screws = screwCtl.getState();
-      if (thermal) payload.thermal = thermal;
-      Storage().persist(equipmentId, storageMode, payload);
-    }, 500);
+    const payload = Engine().serialize(session);
+    if (session.attemptNonce) payload.attemptNonce = session.attemptNonce;
+    const screwCtl = screws();
+    if (screwCtl) payload.screws = screwCtl.getState();
+    if (thermal) payload.thermal = thermal;
+    const storage=Storage(), owner=equipmentId, mode=storageMode;
+    if (checkpointStore) return storage.persist(owner,mode,payload);
+    persistTimer = setTimeout(() => storage.persist(owner,mode,payload), 500);
   }
 
   function maybeFinish() {
+    if (checkpointStore && session.result) return;
     if (!Engine().isFinished(session)) return;
     // Item 11: un equipo con tornillos sueltos NO esta armado. El motor no
     // conoce los tornillos (es agnostico del equipo), asi que el cierre de la
@@ -1066,7 +1101,7 @@ export function createAssemblyController(stage) {
     }
     // Ensamble: el equipo termina como empezo -- derecho y abierto (pose
     // inicial aprobada). No se castiga: solo se retiene el cierre.
-    if (hasPose() && reassembling() && !rig3d().isAtPreset("open")) {
+    if (hasPose() && reassembling() && !(stage.isFreeCamera && stage.isFreeCamera()) && !rig3d().isAtPreset("open")) {
       stage.showFeedback("Ya está armado: vuelve a ponerlo derecho y abre la pantalla para terminar (\"Dejar el portátil abierto\").", "info");
       renderInfoPanel();
       return;
@@ -1074,6 +1109,7 @@ export function createAssemblyController(stage) {
     stage.stopTimer();
     const finished = Engine().finish(session);
     session = finished;
+    if (checkpointStore) stage.setHintUi(session.hints.used, 0, null);
     // Cada intento terminado queda en el historial central (cola local si no
     // hay red). Nunca bloquea ni cambia el resultado mostrado.
     if (Attempts()) {
@@ -1084,16 +1120,19 @@ export function createAssemblyController(stage) {
     stage.openResultModal(finished.result, {
       extraHtml: equipmentCheckHtml(),
       onRetry: () => {
+        if (checkpointStore && !confirmRestart()) return;
         session = freshSession({ maxHints: session.hints.max });
         neededPreset = null;
         resetPose();
         stage.currentRig.syncFromSessionParts(session.parts);
         resetThermal(null);
         setupScrews(session.parts, { assembly: isAssemblyPractice() });
-        stage.startTimer(session.startedAt);
+        stage.startTimer(session.startedAt, checkpointStore && session.result ? session.finishedAt : undefined);
         stage.clearActionLog();
+        if (checkpointStore) stage.setHintUi(session.hints.used, session.hints.max, onHint);
         renderInfoPanel();
         refreshStats();
+        if (checkpointStore) persist();
       },
       onMenu: backToIntro,
     });

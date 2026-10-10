@@ -1237,3 +1237,87 @@ details.hwlab-thermal[open] > .hwlab-thermal__summary::before { transform: rotat
   .hwlab-card__body .hwlab-thermal button { min-height: var(--hit-target-min); }
   .hwlab-card__toggle { width: var(--hit-target-min); }
 }
+
+/* Portátil V2: touch-safe controls and an always reachable required question. */
+#hwlab-stage[data-equipment="laptop"] { --laptop-focus: #67e8f9; }
+#hwlab-stage[data-equipment="laptop"] button:focus-visible { outline: 3px solid var(--laptop-focus); outline-offset: 3px; }
+#hwlab-stage[data-equipment="laptop"] .hwlab-dock__grid { gap: 8px; }
+#hwlab-stage[data-equipment="laptop"] .hwlab-dock__btn { min-width: 44px; min-height: 44px; touch-action: manipulation; }
+#hwlab-stage[data-equipment="laptop"] .hwlab-question__options { gap: 8px; }
+#hwlab-stage[data-equipment="laptop"] .hwlab-question__options .c-btn { min-height: 48px; padding: 10px 12px; font-size: 14px; line-height: 1.4; text-align: left; }
+#hwlab-stage[data-equipment="laptop"] .hwlab-question__symptom { display: block; overflow: visible; font-size: 14px; line-height: 1.5; margin-bottom: 12px; }
+#hwlab-stage[data-equipment="laptop"] .hwlab-card:has(.hwlab-question) { border: 1px solid #38bdf8; }
+#hwlab-stage[data-equipment="laptop"] .hwlab-question > h3 { display: block !important; font-size: 16px; }
+#hwlab-selection-state { position: absolute; top: 12px; right: 12px; max-width: min(330px, 60%); padding: 8px 12px; border: 1px solid #67e8f9; border-radius: 8px; background: #101923ee; color: #e5f5ff; font-size: 13px; line-height: 1.4; pointer-events: none; z-index: 8; }
+#hwlab-selection-state[data-state="correct"] { border-color: #4ade80; }
+#hwlab-selection-state[data-state="incorrect"] { border-color: #fb7185; }
+#hwlab-selection-state[data-state="blocked"] { border-color: #fbbf24; }
+#hwlab-stage:not([data-equipment="laptop"]) #hwlab-selection-state { display: none; }
+@media (max-width: 600px) {
+  #hwlab-stage[data-equipment="laptop"] .hwlab-question__options { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  #hwlab-stage[data-equipment="laptop"] .hwlab-card:has(.hwlab-question) .hwlab-card__body { overflow-y: auto; overscroll-behavior: contain; max-height: 58dvh; }
+  #hwlab-stage[data-equipment="laptop"] .hwlab-dock__items { max-height: 45dvh; overflow-y: auto; }
+  #hwlab-selection-state { top: 8px; right: 8px; max-width: 65%; font-size: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #hwlab-stage[data-equipment="laptop"] *, #hwlab-stage[data-equipment="laptop"] *::before { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+/* Named focus targets stay legible without relying on hover tooltips. */
+#hwlab-stage[data-equipment="laptop"] #hwlab-focus-buttons { grid-template-columns: repeat(2, 90px); }
+#hwlab-stage[data-equipment="laptop"] #hwlab-focus-buttons .hwlab-dock__btn { width: 90px; height: auto; min-height: 52px; flex-direction: column; gap: 4px; }
+#hwlab-stage[data-equipment="laptop"] #hwlab-focus-buttons .hwlab-dock__label { display: block; position: static; width: auto; height: auto; overflow: visible; clip: auto; font-size: 10px; line-height: 1.2; white-space: normal; }
+/* Laptop V3: exploration controls are optional, inspection protects actions. */
+#hwlab-free-camera { width: 188px; display: grid; gap: 8px; margin-top: 8px; }
+#hwlab-free-camera[hidden] { display: none; }
+#hwlab-free-camera button { padding: 8px; min-height: 44px; border: 1px solid #526b7b; border-radius: 8px; background: #172732; color: #e7f6ff; font: inherit; font-size: 13px; }
+#hwlab-free-camera button[aria-pressed="true"] { border-color: #67e8f9; background: #16485a; }
+#hwlab-free-camera p { font-size: 11px; line-height: 1.5; margin: 2px 0; color: #bbccd5; }
+#hwlab-inspect-note { position: absolute; left: 12px; right: 12px; bottom: 116px; z-index: 25; padding: 10px; border: 1px solid #67e8f9; border-radius: 8px; background: #112732ee; color: #d6f9ff; font-size: 13px; pointer-events: none; }
+#hwlab-stage.is-inspecting #hwlab-card { opacity: .55; }
+
+/* Free-camera laptop: optional controls stay compact at every size. */
+@media (min-width: 901px) and (min-height: 701px) {
+  #hwlab-stage[data-equipment="laptop"] .hwlab-dock { --hwlab-dock-compact: 1; flex-direction: row; gap: 6px; }
+  #hwlab-stage[data-equipment="laptop"] .hwlab-dock__group { padding: 3px; }
+  /* Crece hasta el ancho de su nombre ("Visualización" no cabia en 52 px). */
+  #hwlab-stage[data-equipment="laptop"] .hwlab-dock__toggle { display: inline-flex; width: auto; min-width: 52px; padding: 0 6px; height: 48px; }
+  #hwlab-stage[data-equipment="laptop"] .hwlab-dock__toggle-label {
+    position: static; width: auto; height: auto; overflow: visible; clip: auto;
+    font-size: 10px; line-height: 1; color: var(--hwlab-text-soft);
+  }
+  #hwlab-stage[data-equipment="laptop"] .hwlab-dock__group[data-open] .hwlab-dock__toggle { color: var(--hwlab-accent); border-color: var(--hwlab-accent); }
+  #hwlab-stage[data-equipment="laptop"] .hwlab-dock__items {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 30;
+    padding: 8px;
+    background: var(--hwlab-float-bg);
+    border: 1px solid var(--hwlab-border-strong);
+    border-radius: 10px;
+    box-shadow: var(--shadow-lg);
+  }
+  #hwlab-stage[data-equipment="laptop"] .hwlab-dock__group[data-open] .hwlab-dock__items { display: block; }
+  /* En tactil el texto no depende del hover: etiqueta visible bajo el icono. */
+  #hwlab-stage[data-equipment="laptop"] .hwlab-dock__items .hwlab-dock__grid { grid-template-columns: repeat(3, 64px); }
+  #hwlab-stage[data-equipment="laptop"] .hwlab-dock__items .hwlab-dock__btn { width: 64px; height: 52px; }
+  #hwlab-stage[data-equipment="laptop"] .hwlab-dock__items .hwlab-dock__label {
+    position: static; width: auto; height: auto; overflow: visible; clip: auto;
+    font-size: 10px; line-height: 1.1; color: inherit; white-space: normal; text-align: center;
+  }
+  #hwlab-stage[data-equipment="laptop"] .hwlab-dock [data-tip]:hover::after { display: none; }
+}
+#hwlab-stage[data-equipment="laptop"] .hwlab-dock__items { max-height: min(460px, calc(100vh - 250px)); overflow-y: auto; }
+
+/* Local evidence tools, scoped to the new laptop diagnosis. */
+.hwlab-instruments { margin-top: 12px; border-top: 1px solid #3f5666; padding-top: 10px; }
+.hwlab-instruments summary { min-height: 44px; cursor: pointer; font-weight: 600; }
+.hwlab-instruments__tools { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
+.hwlab-instruments__tools button { min-height: 48px; padding: 8px; border: 1px solid #526b7b; border-radius: 8px; background: #172732; color: #e7f6ff; font: inherit; font-size: 12px; }
+.hwlab-instruments output { display: block; padding: 12px 0; font-size: 13px; line-height: 1.5; }
+.hwlab-instruments output ul { padding-left: 18px; }
+
+/* Local recovery notice remains outside the canvas and never blocks controls. */
+.hwlab-checkpoint-notice { margin:0; padding:7px 14px; font-size:12px; line-height:1.4; color:#bcebd8; background:#122c28; flex-shrink:0; }
+.hwlab-checkpoint-notice[data-warning="true"] { color:#ffe5ad; background:#3b2c12; }

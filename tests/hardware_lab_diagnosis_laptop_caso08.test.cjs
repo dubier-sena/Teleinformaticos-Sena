@@ -126,7 +126,7 @@ test("C8-C. la variante se conserva al guardar y volver a cargar la sesion", () 
   same(back.fixCondition, s.fixCondition);
   same(back.parts, s.parts);
   // El controlador reanuda la sesion guardada (sin resultado) en vez de crear otra.
-  assert.match(read("js/hardware_lab_3d_diagnosis_controller.js"), /session = saved && !saved\.result \? Object\.assign\(\{\}, saved\) : createSession\(\);/);
+  assert.match(read("js/hardware_lab_3d_diagnosis_controller.js"), /session = restoreSaved \? Engine\(\)\.deserialize\(saved,equipmentData\) : createSession\(\);/);
 });
 
 test("C8-D. reiniciar puede cambiar la condicion (Math.random real del producto)", () => {

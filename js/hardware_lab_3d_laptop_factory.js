@@ -22,7 +22,7 @@
  * materiales de aqui son propios y se generan proceduralmente.
  */
 import * as THREE from "./vendor/three.module.min.js";
-import { materialFor, materialInstanceFor } from "./hardware_lab_3d_constants.js?v=20261001_2";
+import { materialFor, materialInstanceFor } from "./hardware_lab_3d_constants.js?v=20261009_1";
 import {
   batteryLabelTexture,
   chipMarkingTexture,
@@ -33,7 +33,9 @@ import {
   shieldLidTexture,
   silkTextTexture,
   smdPassiveTexture,
-} from "./hardware_lab_3d_textures.js?v=20261001_2";
+} from "./hardware_lab_3d_textures.js?v=20261009_1";
+
+import { laptopPcbSurface } from "./hardware_lab_3d_laptop_surfaces.js?v=20261009_1";
 
 // ── Medidas maestras del equipo ───────────────────────────────────────────
 //
@@ -384,24 +386,22 @@ export function buildLaptopBase(opts = {}) {
   // Paredes. La trasera se parte en 3 tramos para dejar el hueco real de la
   // salida de aire del disipador (izquierda) en vez de pintar una rejilla
   // decorativa pegada por fuera.
-  const ventW = w * 0.22, ventX = -w * 0.26;
-  const backLeftW = (ventX - ventW / 2) - (-w / 2);
-  put(group, box(backLeftW, h, wall, "aluminum", { color: LAPTOP_SHELL.wall }), -w / 2 + backLeftW / 2, h / 2, -d / 2 + wall / 2);
-  const backRightStart = ventX + ventW / 2;
-  const backRightW = w / 2 - backRightStart;
-  put(group, box(backRightW, h, wall, "aluminum", { color: LAPTOP_SHELL.wall }), backRightStart + backRightW / 2, h / 2, -d / 2 + wall / 2);
-  // Dintel sobre el hueco de ventilacion (la pared no desaparece del todo).
-  put(group, box(ventW, h * 0.28, wall, "aluminum", { color: LAPTOP_SHELL.wall }), ventX, h - h * 0.14, -d / 2 + wall / 2);
-
+  const vents = opts.vents || [{x:-w*.26,width:w*.22}];
+  let backStart=-w/2;
+  for(const vent of vents.slice().sort((a,b)=>a.x-b.x)){
+    const edge=vent.x-vent.width/2;
+    if(edge>backStart)put(group,box(edge-backStart,h,wall,"aluminum",{color:LAPTOP_SHELL.wall}),(edge+backStart)/2,h/2,-d/2+wall/2);
+    put(group,box(vent.width,h*.28,wall,"aluminum",{color:LAPTOP_SHELL.wall}),vent.x,h-h*.14,-d/2+wall/2);
+    for(let i=0;i<9;i++){
+      const slat=box(.0012,h*.55,.0016,"plasticDark",{color:0x0e0f11});
+      put(group,slat,vent.x-vent.width/2+(vent.width/9)*(i+.5),h*.34,-d/2+wall/2);
+    }
+    backStart=vent.x+vent.width/2;
+  }
+  if(backStart<w/2)put(group,box(w/2-backStart,h,wall,"aluminum",{color:LAPTOP_SHELL.wall}),(backStart+w/2)/2,h/2,-d/2+wall/2);
   put(group, box(w, h, wall, "aluminum", { color: LAPTOP_SHELL.wall }), 0, h / 2, d / 2 - wall / 2);
   put(group, box(wall, h, d, "aluminum", { color: LAPTOP_SHELL.wall }), -w / 2 + wall / 2, h / 2, 0);
   put(group, box(wall, h, d, "aluminum", { color: LAPTOP_SHELL.wall }), w / 2 - wall / 2, h / 2, 0);
-
-  // Rejilla de la salida de aire: laminas verticales dentro del hueco.
-  for (let i = 0; i < 9; i++) {
-    const slat = box(0.0012, h * 0.55, 0.0016, "plasticDark", { color: 0x0e0f11 });
-    put(group, slat, ventX - ventW / 2 + (ventW / 9) * (i + 0.5), h * 0.34, -d / 2 + wall / 2);
-  }
 
   // Torres (bosses) de los tornillos de la tapa inferior: columnas que bajan
   // del reposamanos hasta la tapa. Solo en el perimetro: una columna en el
@@ -410,7 +410,7 @@ export function buildLaptopBase(opts = {}) {
   const deckBottom = h - LAPTOP.deckThickness;
   // Moldeadas con el chasis (su mismo color: en metal claro se leian como
   // tubos blancos sueltos) y con el inserto roscado de laton a la vista.
-  LAPTOP_COVER_SCREWS.forEach(([x, z]) => {
+  (opts.coverScrews || LAPTOP_COVER_SCREWS).forEach(([x, z]) => {
     const colH = deckBottom - rim;
     const t = new THREE.Mesh(cyl(0.0026, 0.0032, colH, 12), materialFor("aluminum", { color: LAPTOP_SHELL.wall }));
     put(group, t, x, rim + colH / 2, z);
@@ -424,15 +424,14 @@ export function buildLaptopBase(opts = {}) {
   // bateria sale por abajo, asi que la oreja se separa de la torre sin
   // engancharse). Fuera del pack: el tornillo ya no lo atraviesa.
   const batteryScrewZ = d * 0.22 + LAPTOP_BATTERY_SCREW_DZ;
-  [-1, 1].forEach((s) => {
-    const x = s * LAPTOP_BATTERY_SCREW_X;
-    const y0 = LAPTOP_BATTERY_EAR_TOP_Y;
+  const batterySupports=opts.batterySupports || [-1,1].map(s=>[s*LAPTOP_BATTERY_SCREW_X,batteryScrewZ,LAPTOP_BATTERY_EAR_TOP_Y]);
+  batterySupports.forEach(([x,z,y0]) => {
     const colH = deckBottom - y0;
     const t = new THREE.Mesh(cyl(0.0026, 0.0032, colH, 12), materialFor("aluminum", { color: LAPTOP_SHELL.wall }));
     t.name = "battery-tower";
-    put(group, t, x, y0 + colH / 2, batteryScrewZ);
-    put(group, new THREE.Mesh(cyl(0.0017, 0.0017, 0.0005, 12), materialFor("goldPin", { color: 0xb08d4a, roughness: 0.42, metalness: 0.72 })), x, y0 + 0.00025, batteryScrewZ);
-    put(group, new THREE.Mesh(cyl(0.0012, 0.0012, 0.0006, 8), materialFor("plasticBlack")), x, y0 + 0.0003, batteryScrewZ);
+    put(group, t, x, y0 + colH / 2, z);
+    put(group, new THREE.Mesh(cyl(0.0017, 0.0017, 0.0005, 12), materialFor("goldPin", { color: 0xb08d4a, roughness: 0.42, metalness: 0.72 })), x, y0 + 0.00025, z);
+    put(group, new THREE.Mesh(cyl(0.0012, 0.0012, 0.0006, 8), materialFor("plasticBlack")), x, y0 + 0.0003, z);
   });
 
   // Soportes del teclado (sep-2026): una pletina por lado, atornillada a la
@@ -495,15 +494,6 @@ export function buildLaptopBase(opts = {}) {
     const outer = box(bx1 - HINGE_LEAF_X0, outerH, 0.010, "metalSteel", bracketLook);
     outer.name = "hinge-bracket";
     put(group, outer, s * (HINGE_LEAF_X0 + bx1) / 2, HINGE_BRACKET_BOTTOM_Y + outerH / 2, bz);
-  });
-
-  // Altavoces en las esquinas delanteras, a los lados de la bateria.
-  [-0.135, 0.135].forEach((x) => {
-    const spk = box(0.044, 0.005, 0.016, "plasticDark");
-    put(group, spk, x, rim + 0.0025 + 0.0002, d * 0.365);
-    // Rejilla en la cara inferior: es la que se ve al retirar la tapa.
-    const grille = box(0.036, 0.0003, 0.010, "plasticBlack", { color: 0x0b0c0e });
-    put(group, grille, x, rim + 0.0002 - 0.00015, d * 0.365);
   });
 
   // Reposamanos / top case: la superficie superior del chasis, con los dos
@@ -592,7 +582,7 @@ export function buildLaptopBase(opts = {}) {
       keyboardMount: new THREE.Vector3(0, h - 0.0022, -d * 0.10),
       touchpadMount: new THREE.Vector3(0, h - 0.0004, d * 0.335),
       bottomCoverCenter: new THREE.Vector3(0, -0.0013, 0),
-      ventOut: new THREE.Vector3(ventX, h * 0.34, -d / 2),
+      ventOut: new THREE.Vector3(vents[0].x, h * 0.34, -d / 2),
     },
   };
 }
@@ -645,11 +635,11 @@ export function buildLaptopBottomCover(dims, opts = {}) {
   // x -85, z -80 mm del cuerpo base). En la fase 2 quedaba desplazada 20 mm
   // del ventilador, sin sentido fisico.
   const holes = [];
-  for (let i = 0; i < 7; i++) {
-    for (let j = 0; j < 7; j++) {
-      const hx = -0.100 + i * 0.005, hz = -0.095 + j * 0.005;
-      if (Math.hypot(hx + 0.085, hz + 0.080) > 0.018) continue;   // circular
-      holes.push({ x: hx, y: 0, z: hz, w: 0.0026, h: 0.0024, d: 0.0026 });
+  for(const [cx,cz] of (opts.intakeCenters || [[-.085,-.080]])){
+    for(let i=0;i<7;i++)for(let j=0;j<7;j++){
+      const hx=cx-.015+i*.005,hz=cz-.015+j*.005;
+      if(Math.hypot(hx-cx,hz-cz)>.018)continue;
+      holes.push({x:hx,y:0,z:hz,w:.0026,h:.0024,d:.0026});
     }
   }
   group.add(instancedBoxes(holes, "plasticBlack"));
@@ -1065,6 +1055,8 @@ export function buildLaptopMotherboard(opts = {}) {
   // lo que lo identifica: pestaña de cierre marron del ZIF, ranuras de los
   // contactos, pestañas de soldadura, carcasa metalica del eDP.
   const conn = {
+    speakerLeft: [-0.098, -0.030, 0.005, 0.0024, 0.004],
+    speakerRight: [0.125, -0.030, 0.005, 0.0024, 0.004],
     battery: [0.048, -0.033, 0.014, 0.0030, 0.006],
     fan: [-0.080, -0.036, 0.005, 0.0028, 0.004],
     kb: [-0.018, -0.032, 0.028, 0.0022, 0.004],
@@ -1095,6 +1087,8 @@ export function buildLaptopMotherboard(opts = {}) {
     }
     occupy(x, z, cw + 0.002, cd);
   });
+  silk(-0.098, -0.030, 0.005, 0.004, "SPK L", -0.108, -0.028);
+  silk(0.125, -0.030, 0.005, 0.004, "SPK R", 0.130, -0.028);
   silk(conn.battery[0], conn.battery[1], 0.014, 0.006, "JBAT1", conn.battery[0] + 0.0082, conn.battery[1] + 0.0032);
   silk(conn.fan[0], conn.fan[1], 0.005, 0.004, "JFAN1", conn.fan[0] + 0.0036, conn.fan[1] + 0.0022);
   silk(conn.kb[0], conn.kb[1], 0.028, 0.004, "JKB1", conn.kb[0] - 0.0140, conn.kb[1] - 0.0034);
@@ -1189,7 +1183,10 @@ export function buildLaptopMotherboard(opts = {}) {
   if (slots.length) group.add(instancedBoxes(slots, "plasticBlack", K.slot));
 
   // Textura de placa + serigrafia REAL de lo montado.
-  board.material.map = laptopBoardTexture("laptop-mb-v2", { width: w, depth: d, marks });
+  board.material.map = laptopPcbSurface(laptopBoardTexture("laptop-mb-v2", { width: w, depth: d, marks }), {width:w, depth:d, marks});
+  board.material.color.setHex(0xffffff);
+  board.material.roughness = .76;
+  board.material.metalness = .12;
   board.material.needsUpdate = true;
 
   setShadow(group);
@@ -1208,6 +1205,8 @@ export function buildLaptopMotherboard(opts = {}) {
       m2Slot: A(m2[0], m2[1]),
       wifiSlot: A(wifi[0], wifi[1]),
       // Conectores: punto en su cara inferior (donde entra el enchufe).
+      speakerLeft: A(-0.098, -0.030, 0.0024),
+      speakerRight: A(0.125, -0.030, 0.0024),
       batteryConnector: A(conn.battery[0], conn.battery[1], conn.battery[3]),
       fanHeader: A(conn.fan[0], conn.fan[1], conn.fan[3]),
       keyboardFpc: A(conn.kb[0], conn.kb[1], conn.kb[3]),
@@ -1264,10 +1263,10 @@ export function buildLaptopCpu(opts = {}) {
 // Valores elegidos midiendo la luminancia de capturas con la luz de la escena
 // (compartida con el escritorio, que no se toca).
 const THERMAL_LOOK = {
-  plate: { color: 0xc98446, roughness: 0.3, metalness: 0.72 },
-  pipe: { color: 0xa45a2c, roughness: 0.44, metalness: 0.62 },
+  plate: { color: 0xb56a42, roughness: 0.34, metalness: 0.85, envMapIntensity: .65 },
+  pipe: { color: 0xa8502a, roughness: 0.38, metalness: 0.8, envMapIntensity: .65 },
   solder: { color: 0x9d9a92, roughness: 0.42, metalness: 0.6 },
-  bracket: { color: 0x5d636b, roughness: 0.46, metalness: 0.6 },
+  bracket: { color: 0x303942, roughness: 0.48, metalness: 0.72 },
   fanBody: { color: 0x121316, roughness: 0.68, metalness: 0.04, envMapIntensity: 0.35 },
   fanCover: { color: 0x7a8088, roughness: 0.5, metalness: 0.5 },
   blades: { color: 0x1d1f23, roughness: 0.58, metalness: 0.04, envMapIntensity: 0.4 },
@@ -1507,7 +1506,10 @@ export function buildLaptopCooler(opts = {}) {
     seg(0.0071, 0.0118, a0, a0 + 0.12);
     seg(0.0118, 0.0158, a0 + 0.12, a0 + 0.30);
   }
-  g.add(instancedBoxes(blades, "fanBlade", T.blades));
+  const impeller=instancedBoxes(blades, "fanBlade", T.blades);
+  impeller.name="laptop-fan-rotor";
+  impeller.userData.rotorCenter=[fx,fz];
+  g.add(impeller);
 
   // Soporte del motor en la boca de admision: disco central y 3 radios en el
   // plano del fondo, con la etiqueta del ventilador en el disco.
@@ -2344,4 +2346,43 @@ function computeEdgePivotPose(t, opts) {
     position.addScaledVector(dir, opts.travel * slideT);
   }
   return { position, quaternion, angle };
+}
+
+/** Audio service module. Retained by elastomer cradles, not extra screws. */
+export function buildLaptopSpeaker({ side = "left" } = {}) {
+  const g = new THREE.Group(); g.name = "laptop-speaker-" + side;
+  put(g, box(.040, .0044, .014, "plasticBlack", {color:0x101318, roughness:.86, metalness:0}), 0, 0, 0);
+  const driver = new THREE.Mesh(cyl(.0054, .006, .0010, 24), materialFor("rubberBlack"));
+  put(g, driver, 0, -.0024, 0);
+  const cone = new THREE.Mesh(cyl(.0037, .005, .0006, 24), materialFor("plasticDark", {color:0x353d46, roughness:.62,metalness:.04}));
+  put(g, cone, 0, -.0031, 0);
+  const cap = new THREE.Mesh(cyl(.002, .002, .0004, 20), materialFor("metalSteel", {roughness:.5}));
+  put(g, cap, 0, -.0035, 0);
+  for(const x of [-.018,.018]) put(g, new THREE.Mesh(cyl(.0021,.0021,.005,12),materialFor("rubberBlack")),x,0,0);
+  const sign=side==='left'?1:-1;
+  put(g,box(.004,.002,.003,'connectorIvory'),sign*.014,-.0025,-.005);
+  const seal=instancedBoxes(Array.from({length:7},(_,i)=>({x:-.006+i*.002,y:-.0039,z:0,w:.00045,h:.0002,d:.010})),"plasticBlack");
+  seal.name='speaker-guard'; g.add(seal);
+  put(g,decal(.010,.006,silkTextTexture(side==='left'?'L  4Ω':'R  4Ω')),-sign*.011,-.00225,0);
+  setShadow(g);noShadowForTiny(g);return g;
+}
+
+/** Batch only anonymous, static unit boxes; semantic meshes remain addressable. */
+export function batchLaptopBoxes(root) {
+  const parents=[];root.traverse(n=>{if(n.children.length)parents.push(n)});
+  for(const parent of parents){
+    const buckets=new Map();
+    for(const m of [...parent.children]){
+      if(!m.isMesh||m.isInstancedMesh||m.name||m.geometry!==unitBox()||!m.visible)continue;
+      const key=m.material.uuid+':'+m.castShadow+':'+m.receiveShadow;
+      if(!buckets.has(key))buckets.set(key,[]);buckets.get(key).push(m);
+    }
+    for(const meshes of buckets.values()){
+      if(meshes.length<3)continue;
+      const batch=new THREE.InstancedMesh(unitBox(),meshes[0].material,meshes.length);
+      batch.name='laptop-static-detail';batch.castShadow=meshes[0].castShadow;batch.receiveShadow=meshes[0].receiveShadow;
+      meshes.forEach((m,i)=>{m.updateMatrix();batch.setMatrixAt(i,m.matrix);parent.remove(m)});
+      batch.computeBoundingBox();batch.computeBoundingSphere();parent.add(batch);
+    }
+  }
 }

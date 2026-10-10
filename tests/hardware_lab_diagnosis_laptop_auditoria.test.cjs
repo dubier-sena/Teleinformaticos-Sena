@@ -169,7 +169,7 @@ test("REL-1. diagnostico habilitado SOLO para escritorio y portatil; 11 casos de
   assert.equal(Cases.casesFor("laptop").length, 11);
   assert.equal(Cases.casesFor("desktop").length, 10);
   // La entrada al diagnostico pasa el equipo elegido al menu de casos.
-  assert.match(boot, /diagnosisController\.showCaseMenu\(selectedEquipmentId\)/);
+  assert.match(boot, /diagnosisController\.showCaseMenu\(selectedEquipmentId(?:,selectedProfileId)?\)/);
 });
 
 test("REL-2. cache-bust: TODOS los imports internos de los modulos 3D llevan la misma version de release; vendor sin version", () => {

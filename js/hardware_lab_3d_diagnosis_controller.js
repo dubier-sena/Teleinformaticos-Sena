@@ -1,3 +1,4 @@
+import {createCheckpointStorage, activateCheckpoint, releaseCheckpoint, recoveredNotice, confirmRestart} from './hardware_lab_3d_checkpoint.js?v=20261009_1';
 /* js/hardware_lab_3d_diagnosis_controller.js
  *
  * Controlador de "Diagnostico y reparacion" para ESCRITORIO y PORTATIL
@@ -10,14 +11,15 @@
  * Diagnostico es un modo ABIERTO: no hay encuadre automatico de la pieza
  * (revelaria la falla); el aprendiz inspecciona con los controles normales.
  */
-import { createDesktopLayout } from "./hardware_lab_3d_layout_desktop.js?v=20261001_2";
-import { createLaptopLayout } from "./hardware_lab_3d_layout_laptop.js?v=20261001_2";
-import { createDiagnosticMonitor } from "./hardware_lab_3d_monitor.js?v=20261001_2";
-import { createLaptopDiagnosisMechanics } from "./hardware_lab_3d_diagnosis_mechanics.js?v=20261001_2";
-import { ZONES } from "./hardware_lab_3d_constants.js?v=20261001_2";
-import { HardwareLabAudio } from "./hardware_lab_3d_audio.js?v=20261001_2";
-import { createLaptopScreen } from "./hardware_lab_3d_laptop_screen.js?v=20261001_2";
-import { applyDamageLook, clearDamageLook } from "./hardware_lab_3d_damage_look.js?v=20261001_2";
+import { createDesktopLayout } from "./hardware_lab_3d_layout_desktop.js?v=20261009_1";
+import { createProfileLayout } from "./hardware_lab_3d_laptop_profiles.js?v=20261009_1";
+import { createLaptopLayout } from "./hardware_lab_3d_layout_laptop.js?v=20261009_1";
+import { createDiagnosticMonitor } from "./hardware_lab_3d_monitor.js?v=20261009_1";
+import { createLaptopDiagnosisMechanics } from "./hardware_lab_3d_diagnosis_mechanics.js?v=20261009_1";
+import { ZONES } from "./hardware_lab_3d_constants.js?v=20261009_1";
+import { HardwareLabAudio } from "./hardware_lab_3d_audio.js?v=20261009_1";
+import { createLaptopScreen } from "./hardware_lab_3d_laptop_screen.js?v=20261009_1";
+import { applyDamageLook, clearDamageLook } from "./hardware_lab_3d_damage_look.js?v=20261009_1";
 
 function esc(value) {
   return String(value == null ? "" : value)
@@ -69,6 +71,8 @@ const MISSEAT_CARRIES = { "wifi-card": ["wifi-antenna-1", "wifi-antenna-2"] };
 
 export function createDiagnosisController(stage) {
   let equipmentId = "desktop";
+  let checkpointStore = null;
+  let profileId = "standard";
   let equipmentData = null;
   let session = null;
   let caseDef = null;
@@ -80,6 +84,10 @@ export function createDiagnosisController(stage) {
   let checking = false;
   // Evaluacion del portatil (fases J-K): escenario asignado al azar.
   let evaluationMode = false;
+  let caseGeneration = 0;
+  let powerPhase = "apagado";
+  let offVentilation = null;
+  let rotors = [];
   let deliverArmed = false;
 
   function Engine() {
@@ -89,10 +97,10 @@ export function createDiagnosisController(stage) {
     return window.HardwareLab.Engine;
   }
   function Storage() {
-    return window.HardwareLab.Storage;
+    return checkpointStore || window.HardwareLab.Storage;
   }
   function Cases() {
-    return window.HardwareLab.DiagnosisCases.casesFor(equipmentId);
+    return window.HardwareLab.DiagnosisCases.casesFor(equipmentId,profileId);
   }
 
   // La clave ya lleva el equipo (hwlab_<equipo>_diagnosis_<caso>): escritorio
@@ -139,8 +147,10 @@ export function createDiagnosisController(stage) {
   // Igual que el paso "direccion": se agrega DEBAJO de equipo+practica, sin
   // ocultarlos (el aprendiz ve su recorrido completo, mismo patron que
   // hardware_lab_3d_bootstrap.js usa para practica libre/evaluacion).
-  function showCaseMenu(forEquipmentId) {
+  function showCaseMenu(forEquipmentId, model = profileId) {
+    profileId=forEquipmentId === "desktop" ? "standard" : model;
     if (forEquipmentId && EQUIPMENT[forEquipmentId]) equipmentId = forEquipmentId;
+    checkpointStore = equipmentId === "laptop" ? createCheckpointStorage(profileId) : null;
     const directionGroup = document.getElementById("hwlab-direction-group");
     if (directionGroup) directionGroup.hidden = true;
     const group = document.getElementById("hwlab-diag-case-group");
@@ -149,9 +159,10 @@ export function createDiagnosisController(stage) {
   }
 
   function createSession() {
-    const s = Engine().createDiagnosisSession(equipmentData, caseDef);
+    const s = Engine().createDiagnosisSession(equipmentData, caseDef, {advanced: equipmentId === "laptop"});
     // Seguimiento academico: nonce del intento (ver hardware_lab_attempts.js).
-    const A = window.HardwareLab.Attempts;
+    if (equipmentId === "laptop" && window.HardwareLab.CheckpointsV5) s.attemptNonce = window.HardwareLab.CheckpointsV5.newAttemptId();
+    const A = equipmentId === "laptop" ? null : window.HardwareLab.Attempts;
     return A ? Object.assign({}, s, { attemptNonce: A.makeNonce() }) : s;
   }
 
@@ -176,7 +187,8 @@ export function createDiagnosisController(stage) {
     (session.damagedPartIds || []).forEach((id) => {
       const obj = stage.currentRig.getObject3D(id);
       if (!obj) return;
-      const show = session.parts[id] === false && Engine().isDamaged(session, id);
+      const visual = !session.advanced || Engine().stagesOf(session).some(st=>st.finding && st.fixCondition.partId === id);
+      const show = visual && session.parts[id] === false && Engine().isDamaged(session, id);
       if (show) applyDamageLook(obj);
       else clearDamageLook(obj);
     });
@@ -189,10 +201,29 @@ export function createDiagnosisController(stage) {
     if (equipmentId !== "laptop") return;
     const root = stage.currentRig.getObject3D("screen-assembly");
     screen = createLaptopScreen({ root, keepAwake: stage.sceneApi.keepAwake });
+    if(offVentilation)offVentilation();rotors=[];
+    stage.currentRig.root.traverse(obj=>{if(obj.name==="laptop-fan-rotor")rotors.push(obj);});
+    offVentilation=stage.sceneApi.onTick(dt=>{
+      if(!session?.advanced || powerPhase==="apagado" || !rotors.length)return;
+      const reduced=window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+      if(reduced)return;
+      rotors.forEach((obj,index)=>{
+        if(!window.HardwareLab.DiagnosticsV3.fanRPM(equipmentData,session,Engine(),index))return;
+        const a=obj.rotation.y+dt*14,[x,z]=obj.userData.rotorCenter;
+        obj.rotation.y=a;obj.position.x=x-x*Math.cos(a)-z*Math.sin(a);obj.position.z=z+x*Math.sin(a)-z*Math.cos(a);
+        stage.sceneApi.keepAwake(150,{shadows:false});
+      });
+    });
   }
   /** El aprendiz vuelve a trabajar en el equipo: se apaga. */
   function screenOff() {
-    if (screen && screen.state !== "off") screen.setState("off");
+    if (checkpointStore && session?.result) return;
+    const cancelled=checking;
+    if(cancelled){caseGeneration++;checking=false;}
+    powerPhase="apagado";
+    if(session && session.advanced)session=Object.assign({},session,{powerState:"apagado",fixed:false});
+    if (screen && (cancelled || screen.state !== "off")) screen.setState("off");
+    if(cancelled)renderInfoPanel();
   }
 
   // ── Evaluacion: escenario asignado (fases J-K) ───────────────────────────
@@ -201,24 +232,34 @@ export function createDiagnosisController(stage) {
   // ASIGNADO hasta entregarlo: recargar la pagina no lo cambia.
   const EVAL_ASSIGN_MODE = "evaluation-assignment";
   function assignedScenario(rng) {
-    const all = window.HardwareLab.DiagnosisCases.evaluationScenarios(equipmentId).map((c) => c.id);
+    const all = window.HardwareLab.DiagnosisCases.evaluationScenarios(equipmentId, {advanced: equipmentId === "laptop",profileId: typeof profileId === "undefined" ? "standard" : profileId}).map((c) => c.id);
     if (!all.length) return null;
     const saved = Storage().loadLocal(equipmentId, EVAL_ASSIGN_MODE) || {};
     if (saved.current && all.indexOf(saved.current) !== -1) return saved.current;
+    const assigned=saved.current && window.HardwareLab.DiagnosisCases.getCase(equipmentId,saved.current,profileId);
+    if (assigned && assigned.evaluation) return saved.current;
     let done = (saved.done || []).filter((id) => all.indexOf(id) !== -1);
     let pool = all.filter((id) => done.indexOf(id) === -1);
     if (!pool.length) { done = []; pool = all.filter((id) => id !== saved.last || all.length === 1); }
     const current = pool[Math.floor((rng || Math.random)() * pool.length)];
-    Storage().persist(equipmentId, EVAL_ASSIGN_MODE, { current, done, last: saved.last || null });
+    const assignment = { current, done, last: saved.last || null };
+    if (checkpointStore) assignment.attemptNonce = window.HardwareLab.CheckpointsV5.newAttemptId();
+    if (Storage().persist(equipmentId, EVAL_ASSIGN_MODE, assignment) === false && checkpointStore) return null;
     return current;
   }
-  function closeAssignedScenario(id) {
+  function closeAssignedScenario(id, keepCurrent = false) {
     const saved = Storage().loadLocal(equipmentId, EVAL_ASSIGN_MODE) || {};
     const done = (saved.done || []).filter((x) => x !== id).concat([id]);
-    Storage().persist(equipmentId, EVAL_ASSIGN_MODE, { current: null, done, last: id });
+    Storage().persist(equipmentId, EVAL_ASSIGN_MODE, { current: keepCurrent ? id : null, done, last: id, ...(keepCurrent && saved.attemptNonce ? {attemptNonce: saved.attemptNonce} : {}) });
   }
-  function startEvaluation(forEquipmentId) {
+  function startEvaluation(forEquipmentId, model = profileId) {
+    return startEvaluationWithLease(forEquipmentId, model);
+  }
+  async function startEvaluationWithLease(forEquipmentId, model) {
+    profileId=forEquipmentId === "desktop" ? "standard" : model;
     if (forEquipmentId && EQUIPMENT[forEquipmentId]) equipmentId = forEquipmentId;
+    checkpointStore = equipmentId === "laptop" ? createCheckpointStorage(profileId) : null;
+    if (checkpointStore && !(await activateCheckpoint(checkpointStore))) return false;
     const id = assignedScenario();
     if (!id) return false;
     startCase(id, { evaluation: true });
@@ -226,18 +267,27 @@ export function createDiagnosisController(stage) {
   }
 
   // ── Caso en curso (escena 3D compartida) ──────────────────────────────────
-  function startCase(caseId, opts) {
+  async function startCase(caseId, opts) {
+    caseGeneration++; powerPhase="apagado";
+    if(screen){screen.dispose();screen=null;}
     evaluationMode = !!(opts && opts.evaluation);
     deliverArmed = false;
     checking = false;
-    caseDef = evaluationMode ? window.HardwareLab.DiagnosisCases.getCase(equipmentId, caseId) : Cases().find((c) => c.id === caseId);
+    caseDef = evaluationMode ? window.HardwareLab.DiagnosisCases.getCase(equipmentId, caseId, profileId) : Cases().find((c) => c.id === caseId);
     if (!caseDef) return;
+    checkpointStore = equipmentId === "laptop" ? createCheckpointStorage(profileId) : null;
     const eq = EQUIPMENT[equipmentId];
-    equipmentData = eq.data();
+    equipmentData = equipmentId === "laptop" && window.HardwareLab.LaptopProfiles ? window.HardwareLab.LaptopProfiles.get(profileId).equipment : eq.data();
 
     if (!stage.showStage()) return;
-    stage.loadRig(eq.layout(), equipmentId);
+    stage.loadRig(equipmentId === "laptop" ? createProfileLayout(profileId) : eq.layout(), equipmentId);
+    stage.setInspectionCatalog(equipmentData.parts);
+    if(stage.setInspectionLock)stage.setInspectionLock(()=>checking);
+    const ownedCheckpoint = checkpointStore;
+    if(stage.setRigCleanup)stage.setRigCleanup(()=>{releaseCheckpoint(ownedCheckpoint);if(offClick){offClick();offClick=null;}caseGeneration++;checking=false;if(screen){screen.dispose();screen=null;}if(offVentilation){offVentilation();offVentilation=null;}rotors=[];});
 
+    const startingGeneration = caseGeneration;
+    if (!(await activateCheckpoint(checkpointStore)) || startingGeneration !== caseGeneration) return;
     if (offClick) {
       offClick();
       offClick = null;
@@ -256,7 +306,13 @@ export function createDiagnosisController(stage) {
     }
 
     const saved = Storage().loadLocal(equipmentId, storageModeFor(caseId));
-    session = saved && !saved.result ? Object.assign({}, saved) : createSession();
+    const assignment = evaluationMode && checkpointStore ? Storage().loadLocal(equipmentId, EVAL_ASSIGN_MODE) : null;
+    // A repeated case is a new order only when its persisted assignment has
+    // a new identity. F5 keeps the same assignment, including completed work.
+    const sameOrder = !assignment?.attemptNonce || saved?.attemptNonce === assignment.attemptNonce;
+    const restoreSaved = saved && sameOrder && (checkpointStore || !saved.result);
+    session = restoreSaved ? Engine().deserialize(saved,equipmentData) : createSession();
+    if (!restoreSaved && assignment?.attemptNonce) session.attemptNonce = assignment.attemptNonce;
     // Sesion guardada antes de la Fase C (sin estado termico): refrigeracion en buen estado.
     if (!session.thermal && Engine().hasThermal(equipmentData)) {
       session = Object.assign({}, session, { thermal: window.HardwareLab.Thermal.createThermalState("serviced") });
@@ -278,29 +334,38 @@ export function createDiagnosisController(stage) {
               refreshStats();
             },
             onRender: renderInfoPanel,
-            onPoseStart: screenOff,
+            onPoseStart: () => {screenOff(); if (checkpointStore) persist();},
           })
         : null;
-    if (mech) mech.setup(saved && !saved.result ? saved.screws : null);
+    if (mech) mech.setup(restoreSaved ? saved.screws : null);
     applyMisseat();
     mountScreen();
+    if (restoreSaved && checkpointStore && screen && session.powerState !== "apagado") {
+      powerPhase = session.powerState;
+      screen.setState(window.HardwareLab.DiagnosticsV3.hardware(equipmentData, session, Engine()).screen);
+    }
     refreshDamageLook();
 
     if (stage.resetCardExpansion) stage.resetCardExpansion();
     stage.setModeTitle(evaluationMode ? "Evaluación" : "Diagnóstico - Caso " + caseDef.number, caseDef.name);
-    stage.startTimer(session.startedAt);
+    stage.startTimer(session.startedAt, checkpointStore && session.result ? session.finishedAt : undefined);
     stage.clearActionLog();
     stage.setHintUi(session.hints.used, session.hints.max, onHint);
     // Evaluacion: sin pistas y sin reinicio (se entrega y se empieza otra).
     document.getElementById("hwlab-hint-btn").hidden = evaluationMode;
-    document.getElementById("hwlab-restart-btn").hidden = evaluationMode;
+    document.getElementById("hwlab-restart-btn").hidden = evaluationMode && !session.result;
+    document.getElementById("hwlab-restart-btn").textContent = evaluationMode ? "Otra orden de servicio" : "Reiniciar";
     document.getElementById("hwlab-timer").parentElement.hidden = false;
 
     document.getElementById("hwlab-explode-btn").onclick = () => stage.toggleExplode();
     document.getElementById("hwlab-back-to-intro").onclick = backToCaseMenu;
-    document.getElementById("hwlab-restart-btn").onclick = restartCase;
+    document.getElementById("hwlab-restart-btn").onclick = () => {
+      if (evaluationMode && checkpointStore && session.result) nextEvaluation();
+      else restartCase();
+    };
 
     offClick = stage.interactions.onClick((root, meta) => {
+      if (checkpointStore && session.result) return;
       if (meta && (meta.kind === "screw" || meta.partId) && questionBlocks()) return;
       if (meta && meta.kind === "screw") {
         screenOff();
@@ -326,9 +391,20 @@ export function createDiagnosisController(stage) {
     updateMonitor();
     renderInfoPanel();
     refreshStats();
+    recoveredNotice(checkpointStore, saved);
+    if (checkpointStore) { if (session.result) stage.stopTimer(); persist(); }
+  }
+
+  function nextEvaluation() {
+    if (checkpointStore && !confirmRestart()) return;
+    const previous = Storage().loadLocal(equipmentId, EVAL_ASSIGN_MODE) || {};
+    if (Storage().persist(equipmentId, EVAL_ASSIGN_MODE, {current:null,done:previous.done || [],last:caseDef.id}) === false && checkpointStore) return;
+    startEvaluation(equipmentId);
   }
 
   function restartCase() {
+    if (checkpointStore && !confirmRestart()) return;
+    caseGeneration++;powerPhase="apagado";
     session = createSession();
     stage.currentRig.syncFromSessionParts(session.parts);
     // Mecanica, desalineado y refrigeracion salen de la sesion NUEVA (otra
@@ -340,7 +416,7 @@ export function createDiagnosisController(stage) {
     checking = false;
     if (screen) screen.setState("off");
     if (stage.resetCardExpansion) stage.resetCardExpansion();
-    stage.startTimer(session.startedAt);
+    stage.startTimer(session.startedAt, checkpointStore && session.result ? session.finishedAt : undefined);
     stage.clearActionLog();
     stage.setHintUi(session.hints.used, session.hints.max, onHint);
     updateMonitor();
@@ -349,6 +425,7 @@ export function createDiagnosisController(stage) {
     // contador de errores se quedaba mostrando el numero de ANTES del
     // reinicio.
     refreshStats();
+    if (checkpointStore) persist();
   }
 
   function getPart(partId) {
@@ -364,6 +441,7 @@ export function createDiagnosisController(stage) {
   }
 
   function handlePartClick(partId) {
+    if (checkpointStore && session.result) return;
     const part = getPart(partId);
     if (!part) return;
     screenOff();
@@ -414,6 +492,7 @@ export function createDiagnosisController(stage) {
 
   function onThermalTask(taskId, amount) {
     if (questionBlocks()) return;
+    if (checkpointStore && session.result) return;
     const result = Engine().applyThermalTask(equipmentData, session, taskId, { amount });
     session = result.session;
     stage.showFeedback(result.message, result.level);
@@ -429,6 +508,7 @@ export function createDiagnosisController(stage) {
   }
 
   function onHint() {
+    if (checkpointStore && session.result) return;
     const result = Engine().useHint(session, caseDef);
     session = result.session;
     stage.setHintUi(session.hints.used, session.hints.max, onHint);
@@ -502,24 +582,25 @@ export function createDiagnosisController(stage) {
 
   /** Cierra el intento (falla corregida o evaluacion entregada) y muestra el resultado. */
   function concludeSession() {
+    if (checkpointStore && session.result) return;
     stage.stopTimer();
     const finished = Engine().finish(session, { equipmentData });
     // Traza de identificacion (dato; no cambia la nota de los casos).
     finished.result.trace = Engine().diagnosisTrace(equipmentData, session);
     session = finished;
     persist();
-    const A = window.HardwareLab.Attempts;
+    const A = equipmentId === "laptop" ? null : window.HardwareLab.Attempts;
     if (A) {
       const done = Object.assign(Engine().serialize(finished), { attemptNonce: finished.attemptNonce });
       A.recordFinished({ session: done, equipo: equipmentId, practica: storageModeFor(caseDef.id) });
     }
     const wasEvaluation = evaluationMode;
-    if (wasEvaluation) closeAssignedScenario(caseDef.id);
+    if (wasEvaluation) closeAssignedScenario(caseDef.id, !!checkpointStore);
     stage.openResultModal(finished.result, {
       extraHtml: (wasEvaluation ? evaluationSummaryHtml(finished.result) : "") + buildExplanationHtml(),
       retryLabel: wasEvaluation ? "Otra orden de servicio" : null,
       onRetry: () => {
-        if (wasEvaluation) startEvaluation(equipmentId);
+        if (wasEvaluation) { if (checkpointStore) nextEvaluation(); else startEvaluation(equipmentId); }
         else restartCase();
       },
       onMenu: backToCaseMenu,
@@ -554,6 +635,7 @@ export function createDiagnosisController(stage) {
   }
 
   function checkPowerOn() {
+    if (checkpointStore && session.result) return;
     if (checking) return;
     // Portatil: se enciende en su posicion normal (derecho y abierto). Es una
     // indicacion, no un intento de comprobacion: no se registra ni penaliza.
@@ -566,12 +648,15 @@ export function createDiagnosisController(stage) {
       }
     }
     deliverArmed = false;
+    const generation=caseGeneration;
     const result = Engine().checkPowerOn(equipmentData, session, { screwsSecured: mech ? mech.screwsSecured() : true });
     session = result.session;
     if (monitor && EQUIPMENT[equipmentId].monitor3d) monitor.setPowered(true);
     updateMonitor();
     persist();
     const show = () => {
+      if(generation!==caseGeneration)return;
+      powerPhase=session.powerState || "apagado";
       checking = false;
       if (result.fixed) {
         stage.showFeedback(result.message, "success");
@@ -592,11 +677,13 @@ export function createDiagnosisController(stage) {
     };
     // Portatil (Fase F): la pantalla del equipo muestra lo que pasa al
     // encender; el aviso llega cuando el aprendiz ya lo vio.
-    if (screen && result.outcome !== "not-ready") {
+    if (screen && (session.advanced || result.outcome !== "not-ready")) {
       checking = true;
-      stage.cameraRig.goToView("front");
+      if (!(stage.isFreeCamera && stage.isFreeCamera())) stage.cameraRig.goToView("front");
       const reduced = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-      screen.powerOn(result.screen, { instant: reduced }).then(show);
+      powerPhase="encendiendo";
+      if(session.advanced) screen.powerOn(result.screen, { instant: reduced, onPhase: value=>{if(generation===caseGeneration){powerPhase=value;renderInfoPanel();}} }).then(show);
+      else screen.powerOn(result.screen, { instant: reduced }).then(show);
       renderInfoPanel();
       return;
     }
@@ -628,6 +715,7 @@ export function createDiagnosisController(stage) {
   }
 
   function onAnswer(subsystemId) {
+    if (checkpointStore && session.result) return;
     const r = Engine().answerDiagnosis(session, subsystemId);
     session = r.session;
     stage.showFeedback(r.message, !r.ok ? "info" : session.evaluation ? "info" : r.correct ? "success" : "warning");
@@ -639,6 +727,7 @@ export function createDiagnosisController(stage) {
   // ── Revisar y cambiar componentes (fase G) ───────────────────────────────
   function onInspect(partId) {
     if (questionBlocks()) return;
+    if (checkpointStore && session.result) return;
     const r = Engine().inspectPart(equipmentData, session, partId);
     session = r.session;
     stage.showFeedback(r.message, !r.ok ? "info" : r.damaged ? "warning" : "info");
@@ -652,6 +741,7 @@ export function createDiagnosisController(stage) {
 
   function onReplace(partId) {
     if (questionBlocks()) return;
+    if (checkpointStore && session.result) return;
     const r = Engine().replacePart(equipmentData, session, partId);
     session = r.session;
     stage.showFeedback(r.message, r.ok ? "success" : "info");
@@ -697,6 +787,7 @@ export function createDiagnosisController(stage) {
   }
 
   function onDeliver() {
+    if (checkpointStore && session.result) return;
     if (!deliverArmed) {
       deliverArmed = true;
       renderInfoPanel();
@@ -754,7 +845,7 @@ export function createDiagnosisController(stage) {
     // Observaciones del caso (lo que el usuario reporta y se ve al usar el
     // equipo): genericas, nunca el nombre de la pieza responsable.
     const obs = (caseDef && caseDef.observations && (session.fixed ? caseDef.observations.fixed : caseDef.observations.broken)) || [];
-    return obs.concat([
+    return obs.concat(session.advanced ? [{label:"POWER",value:powerPhase,tone:powerPhase==="funcional"?"ok":"neutral"}] : [], [
       { label: "TAPA INFERIOR", value: cover ? "Cerrada" : "Abierta", tone: "neutral" },
       { label: "BATERÍA", value: battery ? "Conectada" : "Desconectada", tone: battery ? "ok" : "warn" },
       { label: "TORNILLOS SUELTOS", value: String(loose), tone: loose > 0 ? "warn" : "ok" },
@@ -803,6 +894,30 @@ export function createDiagnosisController(stage) {
     stage.showFeedback(window.HardwareLab.Guidance.whatToDoDiagnosis(phaseContext()), "info");
   }
 
+  function instrumentsHtml() {
+    if(!session.advanced)return "";
+    const records=session.instrumentRecords || [];
+    const channels=window.HardwareLab.DiagnosticsV3.channels(equipmentData);
+    const tools=window.HardwareLab.DiagnosticsV3.TOOLS.flatMap(t=>{
+      const ids=t.id==='ram'?channels.ram:t.id==='smart'?channels.ssd:[];
+      return ids.length>1?ids.map(id=>({...t,target:id,label:t.label+' · '+equipmentData.parts[id].name})):[t];
+    });
+    const last=records[records.length-1];
+    return '<details class="hwlab-instruments"'+(last?' open':'')+'><summary>Instrumentos y evidencias</summary>'+
+      '<p class="hwlab-muted">Mediciones didácticas simuladas. La memoria usa un banco autónomo; el resto se contrasta con el montaje y el encendido. Ninguna prueba repara el equipo.</p>'+
+      '<div class="hwlab-instruments__tools">'+tools.map(t=>'<button type="button" data-instrument="'+t.id+'"'+(t.target?' data-channel="'+t.target+'"':'')+(checking?' disabled':'')+'>'+esc(t.label)+'</button>').join('')+'</div>'+
+      (last?'<output aria-live="polite"><strong>'+esc(tools.find(t=>t.id===last.tool && (t.target||null)===(last.target||null))?.label||last.tool)+'</strong><ul>'+last.lines.map(line=>'<li>'+esc(line)+'</li>').join('')+'</ul></output>':'')+
+      '<p class="hwlab-muted">'+records.length+' pruebas registradas. Registra una hipótesis, contrasta y repite las pruebas tras reparar.</p></details>';
+  }
+  function onInstrument(id, target) {
+    if (checkpointStore && session.result) return;
+    if(checking || stage.isInspecting)return;
+    const result=window.HardwareLab.DiagnosticsV3.run(equipmentData,session,id,Engine(),target);
+    session=result.session;
+    if(result.ok)stage.pushActionLog('Prueba: '+window.HardwareLab.DiagnosticsV3.TOOLS.find(t=>t.id===id).label);
+    persist();renderInfoPanel();
+  }
+
   function renderInfoPanel() {
     const lines = computeMonitorLines(CoreEngine().isCaseOpen(equipmentData, session));
     const symptom = visibleSymptom();
@@ -828,7 +943,8 @@ export function createDiagnosisController(stage) {
       lines.map((l) => `<div class="row"><span class="label">${esc(l.label)}</span><span class="value--${l.tone}">${esc(l.value)}</span></div>`).join("") +
       "</div></div>" +
       deliverHtml();
-    stage.setInfoPanel(html);
+    stage.setInfoPanel(html + instrumentsHtml());
+    document.querySelectorAll("[data-instrument]").forEach(b=>{b.onclick=()=>onInstrument(b.dataset.instrument,b.dataset.channel);});
     const btn = document.getElementById("hwlab-power-check-btn");
     if (btn) { btn.onclick = checkPowerOn; btn.disabled = checking; }
     document.querySelectorAll("[data-diag-inspect]").forEach((b) => { b.onclick = () => onInspect(b.getAttribute("data-diag-inspect")); });

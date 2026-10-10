@@ -13,9 +13,9 @@
  * material. El contorno + un leve escalado evita ese problema por completo.
  */
 import * as THREE from "./vendor/three.module.min.js";
-import { animateObject3D, Easing } from "./hardware_lab_3d_tween.js?v=20261001_2";
-import { ACCENT, isHitbox } from "./hardware_lab_3d_constants.js?v=20261001_2";
-import { pickTolerancePx, ringOffsets, choosePick } from "./hardware_lab_3d_pick_policy.js?v=20261001_2";
+import { animateObject3D, Easing } from "./hardware_lab_3d_tween.js?v=20261009_1";
+import { ACCENT, isHitbox } from "./hardware_lab_3d_constants.js?v=20261009_1";
+import { pickTolerancePx, ringOffsets, choosePick } from "./hardware_lab_3d_pick_policy.js?v=20261009_1";
 
 /**
  * Caja de la GEOMETRIA VISIBLE de una pieza en su propio espacio local
@@ -118,13 +118,56 @@ export function createInteractionLayer({ scene, camera, renderer, tweenGroup, on
   // hasta 55 % de los rayos). Opcional: si nadie registra oclusores (el
   // escritorio no lo hace) el comportamiento es exactamente el de siempre.
   const occluders = new Set();
+  let laptopMode = false, pointerDirty = true;
+  const targets = [], hits = [], lastCamera = new Float64Array(16);
+  const lastProjection = new Float64Array(16);
+  let pointerClient = null, lastRect = null, wasAnimating = false;
+  const outlines = new Map();
+  const offsetCache = new Map();
+  const STATE_COLORS = { available: 0x93c5fd, target: 0x60a5fa, hover: 0x22d3ee, touch: 0xc4b5fd, selected: 0xf8fafc, correct: 0x4ade80, incorrect: 0xfb7185, blocked: 0xfbbf24 };
+  function rebuildTargets() { targets.length=0; registry.forEach((_,r)=>targets.push(r));occluders.forEach(r=>targets.push(r));pointerDirty=true; }
+  function setLaptopMode(value) { clearSelection();setHovered(null);laptopMode=!!value;pointerDirty=true; }
+  function removeOutlines(root) {
+    const cached=outlines.get(root);if(!cached)return;
+    for(const line of cached.values()){root.remove(line);line.geometry.dispose();line.material.dispose()}
+    outlines.delete(root);
+  }
+  function outlineFor(root, role, color) {
+    if(!laptopMode)return buildOutline(root,color);
+    let cache=outlines.get(root);if(!cache){cache=new Map();outlines.set(root,cache)}
+    let line=cache.get(role);
+    if(!line){line=buildOutline(root,color);cache.set(role,line)}
+    line.material.color.setHex(color);return line;
+  }
+  function detachOutline(root, name) {
+    const line=root.getObjectByName(name);if(!line)return;
+    root.remove(line);
+    if(!laptopMode){line.geometry.dispose();line.material.dispose()}
+  }
+  function setSelectionState(state) {
+    if(!laptopMode||!selectedRoot)return;
+    const line=selectedRoot.getObjectByName('hwlab-outline-select');
+    if(line)line.material.color.setHex(STATE_COLORS[state]||STATE_COLORS.selected);
+    selectedRoot.userData.selectionState=state;
+  }
 
   let hoveredRoot = null;
   let selectedRoot = null;
   let enabled = true;
   let downPos = null;
+  const activePointers = new Set();
+  let multiTouch = false;
   let hoverListeners = [];
-  let clickListeners = [];
+  let clickListeners = [], focusListeners = [];
+  let freeGestures = false, clickGuard = null, pendingTap = null, tapTimer = null, dragged = false;
+  function cancelTap() { if(tapTimer)clearTimeout(tapTimer);tapTimer=null;pendingTap=null; }
+  function setFreeGestures(value) { cancelTap();freeGestures=!!value; }
+  function setClickGuard(fn) { clickGuard=fn; }
+  function onFocus(fn) { focusListeners.push(fn);return()=>{focusListeners=focusListeners.filter(f=>f!==fn)}; }
+  function dispatchClick(root,meta,event,pick) {
+    if(clickGuard && clickGuard(root,meta,event,pick)===false)return;
+    clickListeners.forEach((fn) => fn(root, meta, event, pick));
+  }
   // Seleccion tolerante (Fase C): el modo activo declara que objetivos espera
   // el paso actual. null = no espera nada concreto (explorar, diagnostico).
   let pickExpectation = null;
@@ -140,6 +183,7 @@ export function createInteractionLayer({ scene, camera, renderer, tweenGroup, on
       if (n.isMesh) meshToRoot.set(n, object3d);
     });
     object3d.userData.hwlabInteractive = true;
+    rebuildTargets();
   }
 
   function unregisterInteractive(object3d) {
@@ -149,6 +193,8 @@ export function createInteractionLayer({ scene, camera, renderer, tweenGroup, on
     });
     if (hoveredRoot === object3d) setHovered(null);
     if (selectedRoot === object3d) setSelected(null);
+    removeOutlines(object3d);
+    rebuildTargets();
   }
 
   /** Metadatos (partId/kind/label) registrados para un root -- reusa lo que
@@ -159,18 +205,22 @@ export function createInteractionLayer({ scene, camera, renderer, tweenGroup, on
   }
 
   function registerOccluder(object3d) {
-    occluders.add(object3d);
+    occluders.add(object3d); rebuildTargets();
   }
 
   function unregisterOccluder(object3d) {
-    occluders.delete(object3d);
+    occluders.delete(object3d); rebuildTargets();
   }
 
   function clearInteractives() {
+    cancelTap();
+    setHovered(null); setSelected(null);
+    for (const root of outlines.keys()) removeOutlines(root);
     registry.clear();
     meshToRoot.clear();
     occluders.clear();
     pickExpectation = null;
+    rebuildTargets();
     setHovered(null);
     setSelected(null);
   }
@@ -180,6 +230,8 @@ export function createInteractionLayer({ scene, camera, renderer, tweenGroup, on
   }
 
   function updatePointer(event) {
+    pointerDirty = true;
+    pointerClient = { clientX: event.clientX, clientY: event.clientY };
     const rect = el.getBoundingClientRect();
     pointerNdc.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
     pointerNdc.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
@@ -187,11 +239,27 @@ export function createInteractionLayer({ scene, camera, renderer, tweenGroup, on
 
   function raycastRoot(ndc) {
     raycaster.setFromCamera(ndc || pointerNdc, camera);
-    const targets = Array.from(registry.keys());
-    occluders.forEach((o) => targets.push(o));
-    const hits = raycaster.intersectObjects(targets, true);
+    hits.length = 0;
+    raycaster.intersectObjects(targets, true, hits);
+    // In free orbit a proxy may protrude through another component. Respect
+    // the first opaque visual surface; assistance samples nearby visible rays.
+    if(freeGestures){
+      for(const hit of hits){
+        if(!hit.object.isMesh || isHitbox(hit.object))continue;
+        const material=hit.object.material;
+        if(material && !Array.isArray(material) && material.transparent && material.opacity===0)continue;
+        let visible=true;for(let n=hit.object;n;n=n.parent)if(!n.visible){visible=false;break}
+        if(!visible)continue;
+        const visualRoot=findRoot(hit.object);
+        if(visualRoot)return visualRoot;
+        if(isUnderOccluder(hit.object))return null;
+      }
+      return null;
+    }
     for (const hit of hits) {
       if (!hit.object.isMesh) continue;
+      let shown = true; for(let n=isHitbox(hit.object)?hit.object.parent:hit.object;n;n=n.parent) if(!n.visible){shown=false;break}
+      if(!shown)continue;
       const root = findRoot(hit.object);
       if (root) return root;
       // Primer impacto en un oclusor visible: la pieza de detras no se ve,
@@ -221,9 +289,10 @@ export function createInteractionLayer({ scene, camera, renderer, tweenGroup, on
     const expected = typeof rule.expected === "function" ? (root, exactRoot) => !!rule.expected(metaOf(root), metaOf(exactRoot)) : null;
     // El pixel exacto ya basta: no hace falta muestrear alrededor.
     if (exact && (!expected || expected(exact, exact))) return { root: exact, assisted: false, reason: "exact", exact };
-    const tolerance = pickTolerancePx(pointerType);
+    const tolerance = laptopMode && pointerType === "touch" ? 24 : pickTolerancePx(pointerType);
     const near = [];
-    for (const o of ringOffsets(tolerance)) {
+    if(!offsetCache.has(tolerance)) offsetCache.set(tolerance, ringOffsets(tolerance));
+    for (const o of offsetCache.get(tolerance)) {
       const root = cast(clientX + o.dx, clientY + o.dy);
       if (root) near.push({ key: root, dist: o.dist });
     }
@@ -280,7 +349,16 @@ export function createInteractionLayer({ scene, camera, renderer, tweenGroup, on
       Math.max(size.y, 0.004) * 1.08,
       Math.max(size.z, 0.004) * 1.08
     );
-    const edges = new THREE.EdgesGeometry(geo);
+    let edges;
+    if(laptopMode){
+      const p=geo.parameters, positions=[];
+      for(const x of [-1,1])for(const y of [-1,1])for(const z of [-1,1]){
+        const corner=[x*p.width/2,y*p.height/2,z*p.depth/2];
+        for(let axis=0;axis<3;axis++){const end=corner.slice();end[axis]*=.64;positions.push(...corner,...end)}
+      }
+      edges=new THREE.BufferGeometry();edges.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+    }else edges = new THREE.EdgesGeometry(geo);
+    geo.dispose();
     const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color, linewidth: 1.5 }));
     line.position.copy(center);
     line.name = "hwlab-outline";
@@ -291,9 +369,8 @@ export function createInteractionLayer({ scene, camera, renderer, tweenGroup, on
   function setHovered(root) {
     if (hoveredRoot === root) return;
     if (hoveredRoot) {
-      const old = hoveredRoot.getObjectByName("hwlab-outline-hover");
-      if (old) hoveredRoot.remove(old);
-      if (hoveredRoot !== selectedRoot) {
+      detachOutline(hoveredRoot, "hwlab-outline-hover");
+      if (!laptopMode && hoveredRoot !== selectedRoot) {
         animateObject3D(tweenGroup, hoveredRoot, {
           scale: new THREE.Vector3(1, 1, 1),
           duration: 0.18,
@@ -304,10 +381,10 @@ export function createInteractionLayer({ scene, camera, renderer, tweenGroup, on
     }
     hoveredRoot = root;
     if (hoveredRoot) {
-      const outline = buildOutline(hoveredRoot, ACCENT.highlight);
+      const outline = outlineFor(hoveredRoot, "hover", laptopMode ? STATE_COLORS.hover : ACCENT.highlight);
       outline.name = "hwlab-outline-hover";
       hoveredRoot.add(outline);
-      if (hoveredRoot !== selectedRoot) {
+      if (!laptopMode && hoveredRoot !== selectedRoot) {
         animateObject3D(tweenGroup, hoveredRoot, {
           scale: new THREE.Vector3(1.035, 1.035, 1.035),
           duration: 0.18,
@@ -323,24 +400,25 @@ export function createInteractionLayer({ scene, camera, renderer, tweenGroup, on
     hoverListeners.forEach((fn) => fn(hoveredRoot, meta));
   }
 
-  function setSelected(root) {
+  function setSelected(root, state = "selected") {
+    if (selectedRoot === root) { setSelectionState(state); return; }
     if (selectedRoot) {
-      const old = selectedRoot.getObjectByName("hwlab-outline-select");
-      if (old) selectedRoot.remove(old);
-      clearSelectGlow(selectedRoot);
-      if (selectedRoot !== hoveredRoot) {
+      detachOutline(selectedRoot, "hwlab-outline-select");
+      if (!laptopMode) clearSelectGlow(selectedRoot);
+      if (!laptopMode && selectedRoot !== hoveredRoot) {
         animateObject3D(tweenGroup, selectedRoot, { scale: new THREE.Vector3(1, 1, 1), duration: 0.18, targetKey: hoverScaleKey(selectedRoot) });
       }
     }
     selectedRoot = root;
     if (selectedRoot) {
-      const outline = buildOutline(selectedRoot, ACCENT.select);
+      const outline = outlineFor(selectedRoot, "select", laptopMode ? STATE_COLORS[state] : ACCENT.select);
       outline.name = "hwlab-outline-select";
       selectedRoot.add(outline);
       // Intensidad baja a proposito (item 5: "emissive SUAVE"): debe leerse
       // como una pieza "encendida/activa", no como una luz propia que
       // compita con la iluminacion real de la escena.
-      setSelectGlow(selectedRoot, ACCENT.select, 0.35);
+      if (!laptopMode) setSelectGlow(selectedRoot, ACCENT.select, 0.35);
+      else setSelectionState(state);
     }
   }
 
@@ -353,43 +431,89 @@ export function createInteractionLayer({ scene, camera, renderer, tweenGroup, on
   }
 
   function onPointerMove(event) {
+    if(freeGestures && downPos && Math.hypot(event.clientX-downPos.x,event.clientY-downPos.y)>CLICK_MOVE_THRESHOLD){dragged=true;cancelTap();}
     if (!enabled) return;
     notePointerType(event);
     updatePointer(event);
   }
 
   function onPointerDown(event) {
+    if (laptopMode && (!enabled || (event.button != null && event.button !== 0))) {
+      if(freeGestures){cancelTap();downPos=null;}
+      return;
+    }
+    activePointers.add(event.pointerId);
+    if (activePointers.size > 1) { multiTouch = true; if(freeGestures)cancelTap(); }
+    dragged=false;
     notePointerType(event);
     downPos = { x: event.clientX, y: event.clientY };
   }
 
   function onPointerUp(event) {
+    activePointers.delete(event.pointerId);
+    if (laptopMode && multiTouch) { downPos=null; if (!activePointers.size) multiTouch=false; return; }
     if (!enabled || !downPos) return;
     const dx = event.clientX - downPos.x;
     const dy = event.clientY - downPos.y;
     downPos = null;
-    if (Math.hypot(dx, dy) > CLICK_MOVE_THRESHOLD) return; // fue arrastre de camara, no clic
+    if ((freeGestures && dragged) || Math.hypot(dx, dy) > CLICK_MOVE_THRESHOLD) return; // fue arrastre de camara, no clic
     updatePointer(event);
     const pick = pickAt(event.clientX, event.clientY, event.pointerType || "mouse");
     const root = pick.root;
-    setSelected(root);
+    setSelected(root, event.pointerType === "touch" ? "touch" : "selected");
     const meta = root ? registry.get(root) : null;
-    clickListeners.forEach((fn) => fn(root, meta, event, pick));
+    if (!freeGestures) { dispatchClick(root,meta,event,pick); return; }
+    const now=performance.now();
+    if(pendingTap && pendingTap.root===root && now-pendingTap.at<300 && Math.hypot(event.clientX-pendingTap.x,event.clientY-pendingTap.y)<24){
+      cancelTap();if(root)focusListeners.forEach(fn=>fn(root,meta,event));return;
+    }
+    cancelTap();pendingTap={root,at:now,x:event.clientX,y:event.clientY};
+    tapTimer=setTimeout(()=>{pendingTap=null;tapTimer=null;dispatchClick(root,meta,event,pick)},300);
   }
 
   el.addEventListener("pointermove", onPointerMove, { passive: true });
   el.addEventListener("pointerdown", onPointerDown, { passive: true });
   el.addEventListener("pointerup", onPointerUp, { passive: true });
-  el.addEventListener("pointerleave", () => setHovered(null));
+  const onLeave = event => {
+    // Touch emits leave AFTER up even for a stationary tap. Keep that tap;
+    // cancel only an unfinished drag leaving the canvas.
+    if (activePointers.has(event.pointerId) && freeGestures) cancelTap();
+    activePointers.delete(event.pointerId);
+    if (!activePointers.size) { multiTouch=false; downPos=null; }
+    pointerClient=null;pointerNdc.set(2,2);pointerDirty=true;setHovered(null);
+  };
+  const onCancel = event => { if(freeGestures)cancelTap();activePointers.delete(event.pointerId); if(!activePointers.size)multiTouch=false; downPos=null; };
+  el.addEventListener("pointerleave", onLeave);
+  el.addEventListener("pointercancel", onCancel);
+  const onWheel = () => { if(freeGestures){dragged=true;cancelTap();} };
+  el.addEventListener("wheel", onWheel, {passive:true});
 
   const offTick = onTick(() => {
     if (!enabled || !registry.size || lastPointerType !== "mouse") return;
+    if(laptopMode){
+      const animating = !!tweenGroup.activeCount;
+      let changed = pointerDirty || animating || wasAnimating;
+      wasAnimating = animating;
+      const matrix=camera.matrixWorld.elements;
+      for(let i=0;i<16;i++)if(matrix[i]!==lastCamera[i]){changed=true;lastCamera[i]=matrix[i]}
+      const projection = camera.projectionMatrix.elements;
+      for (let i = 0; i < 16; i++) if (projection[i] !== lastProjection[i]) {
+        changed = true; lastProjection[i] = projection[i];
+      }
+      const rect = el.getBoundingClientRect();
+      if (!lastRect || rect.left !== lastRect.left || rect.top !== lastRect.top || rect.width !== lastRect.width || rect.height !== lastRect.height) {
+        lastRect = { left: rect.left, top: rect.top, width: rect.width, height: rect.height };
+        if (pointerClient) updatePointer(pointerClient);
+        changed = true;
+      }
+      if(!changed)return;pointerDirty=false;
+    }
     const root = raycastRoot();
     setHovered(root);
   });
 
   function setEnabled(value) {
-    enabled = value;
+    enabled = value; pointerDirty=true;
     if (!value) setHovered(null);
   }
 
@@ -415,10 +539,20 @@ export function createInteractionLayer({ scene, camera, renderer, tweenGroup, on
     el.removeEventListener("pointermove", onPointerMove);
     el.removeEventListener("pointerdown", onPointerDown);
     el.removeEventListener("pointerup", onPointerUp);
+    el.removeEventListener("pointerleave", onLeave);
+    el.removeEventListener("pointercancel", onCancel);
+    el.removeEventListener("wheel", onWheel);
     clearInteractives();
+    hoverListeners=[];clickListeners=[];focusListeners=[];clickGuard=null;
   }
 
   return {
+    setLaptopMode,
+    setFreeGestures,
+    cancelPendingTap: cancelTap,
+    setClickGuard,
+    onFocus,
+    setSelectionState,
     registerInteractive,
     unregisterInteractive,
     registerOccluder,

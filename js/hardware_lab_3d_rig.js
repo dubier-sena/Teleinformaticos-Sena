@@ -38,12 +38,14 @@
  * `true` la instala (misma logica que hardware_lab_engine.js).
  */
 import * as THREE from "./vendor/three.module.min.js";
-import { animateObject3D, animateValue, Easing } from "./hardware_lab_3d_tween.js?v=20261001_2";
-import { TABLE, ZONES } from "./hardware_lab_3d_constants.js?v=20261001_2";
-import * as PartsFactory from "./hardware_lab_3d_parts_factory.js?v=20261001_2";
-import * as LaptopFactory from "./hardware_lab_3d_laptop_factory.js?v=20261001_2";
-import { computeM2Pose, computeSoDimmPose } from "./hardware_lab_3d_laptop_factory.js?v=20261001_2";
-import { buildServiceScrew, buildScrewDish } from "./hardware_lab_3d_screws.js?v=20261001_2";
+import { animateObject3D, animateValue, Easing } from "./hardware_lab_3d_tween.js?v=20261009_1";
+import { TABLE, ZONES } from "./hardware_lab_3d_constants.js?v=20261009_1";
+import * as PartsFactory from "./hardware_lab_3d_parts_factory.js?v=20261009_1";
+import * as LaptopFactory from "./hardware_lab_3d_laptop_factory.js?v=20261009_1";
+import { computeM2Pose, computeSoDimmPose } from "./hardware_lab_3d_laptop_factory.js?v=20261009_1";
+import { buildServiceScrew, buildScrewDish } from "./hardware_lab_3d_screws.js?v=20261009_1";
+
+import { applyLaptopFinishes } from "./hardware_lab_3d_laptop_surfaces.js?v=20261009_1";
 
 // Recorridos de montaje propios (portatil): pieza que pivota sobre su borde de
 // contactos en vez de salir recta. Ver hardware_lab_3d_laptop_factory.js.
@@ -75,6 +77,7 @@ const KIND_BUILDERS = {
   "laptop-sodimm": (opts) => LaptopFactory.buildSoDimm(opts),
   "laptop-m2-ssd": (opts) => LaptopFactory.buildM2Ssd(opts),
   "laptop-wifi-card": (opts) => LaptopFactory.buildWifiCard(opts),
+  "laptop-speaker": (opts) => LaptopFactory.buildLaptopSpeaker(opts),
   "laptop-battery": (opts) => LaptopFactory.buildLaptopBattery(opts),
 };
 
@@ -97,7 +100,8 @@ function mapAnchors(rawAnchors, origin) {
 /** Nombre visible de una pieza (ficha de datos, ver hardware_lab_data_desktop.js/_laptop.js),
  * usado para el tooltip de hover (item 8: "nombre claramente visible"). Sin
  * esto el tooltip mostraba el id interno crudo ("gpu", "side-panel"). */
-function partDisplayName(equipmentId, partId) {
+function partDisplayName(equipmentId, partId, catalog) {
+  if(catalog && catalog[partId])return catalog[partId].name;
   // Sin navegador (tests de geometria en Node) no hay catalogo de datos: el
   // id crudo es una etiqueta valida y evita romper la construccion del rig.
   if (typeof window === "undefined") return partId;
@@ -175,6 +179,7 @@ export function createRig({ scene, interactions, tweenGroup, layout, equipmentId
     if (entry.rotationEuler) {
       built.group.rotation.set(entry.rotationEuler[0], entry.rotationEuler[1], entry.rotationEuler[2]);
     }
+    if (equipmentId === "laptop") LaptopFactory.batchLaptopBoxes(built.group);
     root.add(built.group);
     structuralGroups[entry.id] = built.group;
     // Portatil (fase 3): el cuerpo base (reposamanos, paredes, bisagras) no es
@@ -235,11 +240,12 @@ export function createRig({ scene, interactions, tweenGroup, layout, equipmentId
       position = new THREE.Vector3(0, 0, 0);
     } else {
       const builder = KIND_BUILDERS[cfg.kind] || KIND_BUILDERS.generic;
-      object3d = builder(cfg.buildOpts || {});
+      object3d = cfg.build ? cfg.build(cfg.buildOpts || {}) : builder(cfg.buildOpts || {});
       position = cfg.mount(anchors);
       object3d.position.copy(position);
     }
     if (cfg.rotationEuler) object3d.rotation.set(cfg.rotationEuler[0], cfg.rotationEuler[1], cfg.rotationEuler[2]);
+    if (equipmentId === "laptop") LaptopFactory.batchLaptopBoxes(object3d);
     root.add(object3d);
     registerTogglablePart(partId, object3d, {
       kind: cfg.kind,
@@ -307,7 +313,7 @@ export function createRig({ scene, interactions, tweenGroup, layout, equipmentId
         partId: decl.partId,
         bearsOn: decl.bearsOn || "part",
         label: decl.label || decl.id,
-        partName: partDisplayName(equipmentId, decl.partId),
+        partName: partDisplayName(equipmentId, decl.partId, layout.partCatalog),
         object3d,
         homePosition: position.clone(),
         outDir,
@@ -327,7 +333,7 @@ export function createRig({ scene, interactions, tweenGroup, layout, equipmentId
     object3d.userData.partId = partId;
     partEntries.set(partId, Object.assign({ object3d, present: true }, meta));
     if (interactions) {
-      interactions.registerInteractive(object3d, { partId, kind: "part", label: partDisplayName(equipmentId, partId) });
+      interactions.registerInteractive(object3d, { partId, kind: "part", label: partDisplayName(equipmentId, partId, layout.partCatalog) });
     }
   }
 
@@ -1057,21 +1063,28 @@ export function createRig({ scene, interactions, tweenGroup, layout, equipmentId
     if (interactions && interactions.unregisterOccluder) {
       Object.values(structuralGroups).forEach((g) => interactions.unregisterOccluder(g));
     }
+    const disposed = new Set();
+    const release = resource => { if(resource && !disposed.has(resource)){disposed.add(resource);resource.dispose()} };
     [root, trayGroup].concat(decorGroup ? [decorGroup] : []).concat(screwGroup ? [screwGroup] : []).concat(dishGroup ? [dishGroup] : []).forEach((g) => {
       scene.remove(g);
       g.traverse((n) => {
-        if (n.geometry) n.geometry.dispose();
+        // Instance attributes belong to the object, not its shared geometry.
+        if (n.isInstancedMesh) release(n);
+        release(n.geometry);
         if (n.material) {
           const mats = Array.isArray(n.material) ? n.material : [n.material];
           mats.forEach((m) => {
-            if (m.map) m.map.dispose();
-            m.dispose();
+            for(const value of Object.values(m)) if(value && value.isTexture) release(value);
+            release(m);
           });
         }
       });
     });
+    poseListeners.length = 0;
     partEntries.clear();
   }
+
+  if (equipmentId === "laptop") applyLaptopFinishes(root);
 
   return {
     root,
@@ -1107,6 +1120,8 @@ export function createRig({ scene, interactions, tweenGroup, layout, equipmentId
     syncFromSessionParts,
     setMisseated,
     homeOffset,
+    thermalTargets: layout.thermalTargets || [],
+    profileId: layout.profileId || (equipmentId === "laptop" ? "standard" : null),
     getObject3D,
     getBoundsWorld,
     getBoundsBoxWorld,

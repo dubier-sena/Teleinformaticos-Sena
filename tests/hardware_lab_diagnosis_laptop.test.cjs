@@ -209,7 +209,7 @@ test("L06. controlador y bootstrap: multiequipo, sin encuadre automatico y la ta
   assert.match(boot, /available: equipmentId === "desktop" \|\| equipmentId === "laptop",/, "diagnostico disponible para escritorio y portatil");
   assert.match(boot, /"11 casos de diagnóstico: conexiones, mantenimiento, componentes averiados y fallas dobles\."/);
   assert.doesNotMatch(boot, /Próximamente para portátil/);
-  assert.match(boot, /diagnosisController\.showCaseMenu\(selectedEquipmentId\)/);
+  assert.match(boot, /diagnosisController\.showCaseMenu\(selectedEquipmentId(?:,selectedProfileId)?\)/);
   assert.match(ctl, /Storage\(\)\.persist\(equipmentId, storageModeFor\(caseDef\.id\), data\)/);
   assert.doesNotMatch(ctl, /loadLocal\("desktop"|persist\("desktop"|DESKTOP_EQUIPMENT;\n\s+if \(!stage/);
   assert.doesNotMatch(ctl, /setFramingPolicy/, "diagnostico no encuadra la pieza de la falla");

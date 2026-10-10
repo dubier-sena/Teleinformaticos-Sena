@@ -300,8 +300,8 @@ test("PT-2 el controlador enciende la pantalla al comprobar y la apaga cuando el
   assert.match(scr, /led\.name = "laptop-power-led";/);
   assert.match(scr, /const finish = \(\) => \{ state = m\.id; setLed\(m\.powered\); paint\(m\.id\); resolve\(m\); \};/);
   assert.match(ctl, /stage\.cameraRig\.goToView\("front"\);/);
-  assert.match(ctl, /onPoseStart: screenOff,/);
-  assert.match(ctl, /function handlePartClick\(partId\) \{\s*\n\s*const part = getPart\(partId\);\s*\n\s*if \(!part\) return;\s*\n\s*screenOff\(\);/);
+  assert.match(ctl, /onPoseStart: \(\) => \{screenOff\(\); if \(checkpointStore\) persist\(\);\},/);
+  assert.match(ctl, /function handlePartClick\(partId\) \{\s*\n\s*if \(checkpointStore && session\.result\) return;\s*\n\s*const part = getPart\(partId\);\s*\n\s*if \(!part\) return;\s*\n\s*screenOff\(\);/);
   assert.match(ctl, /if \(btn\) \{ btn\.onclick = checkPowerOn; btn\.disabled = checking; \}/);
   // Solo el portatil; el escritorio conserva su monitor externo.
   assert.match(ctl, /if \(equipmentId !== "laptop"\) return;\s*\n\s*const root = stage\.currentRig\.getObject3D\("screen-assembly"\);/);
@@ -554,14 +554,14 @@ test("EV-6 asignacion al azar persistente, informe completo y arranque desde 'Ev
   assert.match(ctl, /const EVAL_ASSIGN_MODE = "evaluation-assignment";/);
   assert.match(ctl, /if \(saved\.current && all\.indexOf\(saved\.current\) !== -1\) return saved\.current;/, "recargar no cambia el escenario");
   assert.match(ctl, /let pool = all\.filter\(\(id\) => done\.indexOf\(id\) === -1\);/, "no repite hasta completar la vuelta");
-  assert.match(ctl, /if \(wasEvaluation\) closeAssignedScenario\(caseDef\.id\);/);
+  assert.match(ctl, /if \(wasEvaluation\) closeAssignedScenario\(caseDef\.id, !!checkpointStore\);/);
   assert.match(ctl, /document\.getElementById\("hwlab-hint-btn"\)\.hidden = evaluationMode;/);
-  assert.match(ctl, /document\.getElementById\("hwlab-restart-btn"\)\.hidden = evaluationMode;/);
+  assert.match(ctl, /document\.getElementById\("hwlab-restart-btn"\)\.hidden = evaluationMode && !session\.result;/);
   assert.match(ctl, /A\.recordFinished\(\{ session: done, equipo: equipmentId, practica: storageModeFor\(caseDef\.id\) \}\);/);
   ["Estado final del equipo", "Problemas corregidos", "Tiempo", "Comprobaciones de encendido", "Componentes intervenidos", "Componentes reemplazados", "Sustituciones no justificadas", "Intervenciones innecesarias", "Errores de procedimiento", "Pistas", "Reinicios"].forEach((label) => assert.ok(ctl.includes('["' + label + '"'), "informe: " + label));
   const boot = read("js/hardware_lab_3d_bootstrap.js");
   assert.match(boot, /equipmentId === "laptop"\s*\n\s*\? \{ mode: "evaluation",[^\n]*serviceOrder: true \}\s*\n\s*: \{ mode: "evaluation",[^\n]*needsDirection: true \},/);
-  assert.match(boot, /if \(opt\.serviceOrder\) \{[\s\S]{0,160}diagnosisController\.startEvaluation\(selectedEquipmentId\);/);
+  assert.match(boot, /if \(opt\.serviceOrder\) \{[\s\S]{0,160}diagnosisController\.startEvaluation\(selectedEquipmentId(?:,selectedProfileId)?\);/);
   same(Att.describePractice("disassembly-evaluation"), { actividad: "desensamble", modo: "evaluacion", caso: null });
   same(Att.describePractice("diagnosis-eval-e3"), { actividad: "diagnostico", modo: "evaluacion", caso: "eval-e3" });
   same(Att.describePractice("diagnosis-laptop-case-09"), { actividad: "diagnostico", modo: "diagnostico", caso: "laptop-case-09" });
@@ -574,7 +574,7 @@ test("EV-7 azar sin sesgo evidente: las 6 ordenes salen y ninguna se repite ante
   const all = Cases.evaluationScenarios("laptop").map((c) => c.id);
   let store = null;
   const env = { window: { HardwareLab: { DiagnosisCases: { evaluationScenarios: () => all.map((id) => ({ id })) } } }, Storage: () => ({ loadLocal: () => store, persist: (e, m, v) => { store = JSON.parse(JSON.stringify(v)); } }), equipmentId: "laptop", EVAL_ASSIGN_MODE: "x", Math };
-  const fns = new Function("window", "Storage", "equipmentId", "EVAL_ASSIGN_MODE", src + "; return { assignedScenario, closeAssignedScenario };")(env.window, env.Storage, env.equipmentId, env.EVAL_ASSIGN_MODE);
+  const fns = new Function("window", "Storage", "equipmentId", "EVAL_ASSIGN_MODE", "checkpointStore", src + "; return { assignedScenario, closeAssignedScenario };")(env.window, env.Storage, env.equipmentId, env.EVAL_ASSIGN_MODE, null);
   let seed = 7;
   const rng = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
   const counts = {};

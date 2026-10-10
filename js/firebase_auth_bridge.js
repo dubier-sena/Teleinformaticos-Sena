@@ -118,6 +118,21 @@
 
       try {
         var cfg = getConfig();
+        // V6 test capability: the existing bridge/session talks to Auth Emulator.
+        // Never redirect a real project, or silently reuse a real Firebase app.
+        var v6 = cfg.hardwareLabV6;
+        var authEmulator = null;
+        if (v6 && v6.enabled === true) {
+          if (v6.mode !== "emulator" || !/^demo-[a-z0-9-]+$/.test(cfg.projectId)
+              || !/^127\.0\.0\.1:[1-9][0-9]{3,4}$/.test(v6.authEmulatorHost || "")) {
+            throw new Error("V6 Firebase activation is limited to local emulators");
+          }
+          authEmulator = "http://" + v6.authEmulatorHost;
+          if (window.firebase.apps && window.firebase.apps.length
+              && window.firebase.app().options.projectId !== cfg.projectId) {
+            throw new Error("V6 cannot reuse a Firebase app from another project");
+          }
+        }
         var appConfig = {
           apiKey: cfg.apiKey,
           authDomain: cfg.projectId + ".firebaseapp.com",
@@ -127,6 +142,7 @@
           ? window.firebase.app()
           : window.firebase.initializeApp(appConfig);
         firebaseAuth = window.firebase.auth(firebaseApp);
+        if (authEmulator) firebaseAuth.useEmulator(authEmulator, { disableWarnings: true });
         try {
           // Sesion persistente entre cierres del navegador. Default ya es LOCAL,
           // pero lo dejamos explicito para no depender del default.

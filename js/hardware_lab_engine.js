@@ -123,6 +123,7 @@
 
     var session = {
       equipmentId: equipmentData.id,
+      profileId: equipmentData.profileId || (equipmentData.id === "laptop" ? "standard" : null),
       mode: mode,
       kind: kind,
       direction: direction,
@@ -214,6 +215,11 @@
     // remove/disconnect exige que los ids requeridos esten AUSENTES (false);
     // install/connect exige que esten PRESENTES (true).
     var expected = action === "remove" || action === "disconnect" ? false : true;
+    // Optional service access constraints; legacy equipment has none.
+    if (expected && part.installAbsent) {
+      var occupied = part.installAbsent.filter(function (id) { return session.parts[id] !== false; });
+      if (occupied.length) return { ok: false, missing: occupied, expected: false };
+    }
     var missing = requiredIds.filter(function (id) {
       return session.parts[id] !== expected;
     });
@@ -511,6 +517,7 @@
     var normalizedScore = (breakdown.total * 100) / rawMaxScore; // sin redondear
     var result = {
       equipmentId: session.equipmentId,
+      profileId: session.profileId || null,
       mode: session.mode,
       totalSteps: totalStepsFor(session),
       errors: session.errors,
@@ -534,6 +541,7 @@
   function serialize(session) {
     return {
       equipmentId: session.equipmentId,
+      profileId: session.profileId || null,
       mode: session.mode,
       kind: session.kind,
       direction: session.direction,
@@ -555,6 +563,34 @@
     var direction = data.direction || modeDirection(data.mode);
     var sequence = equipmentData.sequences[direction];
     var restored = Object.assign({}, data, { sequence: sequence, direction: direction });
+    // Data-only compatibility for parts that used to be decorative. No storage
+    // writes, score changes or synthetic action-log entries are introduced.
+    var added = equipmentData.sessionAddedParts || [];
+    var missing = added.filter(function (id) {
+      return !Object.prototype.hasOwnProperty.call(data.parts || {}, id);
+    });
+    if (missing.length) {
+      restored.parts = Object.assign({}, data.parts);
+      var legacySequence = sequence.filter(function (step) { return missing.indexOf(step.partId) === -1; });
+      var legacyStep = legacySequence[data.stepIndex || 0];
+      if (restored.kind !== "open") {
+        restored.stepIndex = legacyStep ? sequence.indexOf(legacyStep) : sequence.length;
+      }
+      missing.forEach(function (id) {
+        var present = direction !== "assembly";
+        if (restored.kind === "open") {
+          // Preserve the physical boundary of old open sessions: audio cannot
+          // remain on a removed board, or be absent under an installed battery.
+          if (restored.parts.motherboard === false) present = false;
+          else if (restored.parts.battery === true) present = true;
+        } else {
+          sequence.slice(0, restored.stepIndex).forEach(function (step) {
+            if (step.partId === id && step.kind === "action") present = ACTION_TARGET_PRESENT[step.action];
+          });
+        }
+        restored.parts[id] = present;
+      });
+    }
     if (!restored.errorsByType) restored.errorsByType = emptyErrorCounts();
     if (!restored.hints) restored.hints = { used: 0, max: 3 };
     if (restored.kind === "open") {

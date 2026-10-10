@@ -5,9 +5,9 @@
  * corresponda. Unico <script type="module"> de la pagina: todo lo demas se
  * resuelve via import (ver laboratorio-virtual-hardware.html).
  */
-import { createStage } from "./hardware_lab_3d_stage.js?v=20261001_2";
-import { createAssemblyController } from "./hardware_lab_3d_controller.js?v=20261001_2";
-import { createDiagnosisController } from "./hardware_lab_3d_diagnosis_controller.js?v=20261001_2";
+import { createStage } from "./hardware_lab_3d_stage.js?v=20261009_1";
+import { createAssemblyController } from "./hardware_lab_3d_controller.js?v=20261009_1";
+import { createDiagnosisController } from "./hardware_lab_3d_diagnosis_controller.js?v=20261009_1";
 
 const ICONS = {
   desktop: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="11" rx="1"/><path d="M9 20h6M12 15v5"/></svg>',
@@ -97,6 +97,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const diagnosisController = createDiagnosisController(stage);
 
   let selectedEquipmentId = null;
+  let selectedProfileId = "standard";
   let selectedPracticeMode = null;
 
   function renderEquipmentGrid() {
@@ -127,7 +128,14 @@ document.addEventListener("DOMContentLoaded", () => {
     selectedEquipmentId = id;
     selectedPracticeMode = null;
     document.querySelectorAll("[data-equipment]").forEach((b) => b.classList.toggle("is-selected", b.getAttribute("data-equipment") === id));
-    renderPracticeGrid();
+    selectedProfileId="standard";
+    const models=document.getElementById("hwlab-model-group");models.hidden=id!=="laptop";
+    for(const key of ["practice","direction","diag-case"])document.getElementById("hwlab-"+key+"-group").hidden=true;
+    if(id === "laptop") {
+      const grid=document.getElementById("hwlab-model-grid");
+      grid.innerHTML=window.HardwareLab.LaptopProfiles.list().map(p=>`<button type="button" class="hwlab-option" data-model="${esc(p.id)}"><span class="hwlab-option__title">${esc(p.name)}</span><span class="hwlab-option__desc">${esc(p.description)}</span></button>`).join("");
+      grid.querySelectorAll('[data-model]').forEach(btn=>btn.onclick=()=>{selectedProfileId=btn.dataset.model;grid.querySelectorAll('[data-model]').forEach(b=>b.classList.toggle('is-selected',b===btn));renderPracticeGrid();});
+    } else renderPracticeGrid();
   }
 
   function selectPractice(mode) {
@@ -143,19 +151,19 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("hwlab-direction-group").hidden = true;
     if (opt.serviceOrder) {
       document.getElementById("hwlab-diag-case-group").hidden = true;
-      diagnosisController.startEvaluation(selectedEquipmentId);
+      diagnosisController.startEvaluation(selectedEquipmentId,selectedProfileId);
       return;
     }
     if (mode === "diagnosis") {
-      diagnosisController.showCaseMenu(selectedEquipmentId);
+      diagnosisController.showCaseMenu(selectedEquipmentId,selectedProfileId);
       return;
     }
     document.getElementById("hwlab-diag-case-group").hidden = true;
-    assemblyController.start(selectedEquipmentId, mode);
+    assemblyController.start(selectedEquipmentId, mode,undefined,selectedProfileId);
   }
 
   function selectDirection(direction) {
-    assemblyController.start(selectedEquipmentId, selectedPracticeMode, direction);
+    assemblyController.start(selectedEquipmentId, selectedPracticeMode, direction,selectedProfileId);
   }
 
   const equipmentGrid = document.getElementById("hwlab-equipment-grid");

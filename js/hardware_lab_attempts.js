@@ -147,7 +147,7 @@
       rawMaxScore: rawMaxScore,
       normalizedScore: norm.normalizedScore,
       normalizedMaxScore: norm.normalizedMaxScore,
-      estado: norm.estado,
+      estado: s.advanced && r && r.diagnosisCorrect === false ? "POR MEJORAR" : norm.estado,
       // Estado que mostraba el sistema ANTIGUO (umbral 70 sobre el bruto):
       // solo en historicos; en intentos nuevos el estado vigente es "estado".
       estadoLegacy: ctx.origen === "new" ? null : (r && typeof r.status === "string" ? r.status : null),

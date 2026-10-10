@@ -20,7 +20,7 @@
  * se refleja en el 3D (hardware_lab_3d_thermal_look.js) y se ofrecen las
  * tareas cuando el aprendiz ya saco el modulo, sin ordenarlas por el estado.
  */
-import { applyThermalLook } from "./hardware_lab_3d_thermal_look.js?v=20261001_2";
+import { applyThermalLook } from "./hardware_lab_3d_thermal_look.js?v=20261009_1";
 
 export function createLaptopDiagnosisMechanics({ stage, getSession, setSession, getEquipmentData, onChanged, onRender, onPoseStart }) {
   let neededPreset = null;
@@ -41,6 +41,7 @@ export function createLaptopDiagnosisMechanics({ stage, getSession, setSession, 
   }
 
   function poseBlockMessage(access, preset, what) {
+    if(stage.isFreeCamera && stage.isFreeCamera()) return "Gira la cámara hacia la cara de trabajo para " + what + ". Los presets son opcionales.";
     if (access === "interior") {
       return "Para " + what + " el portátil tiene que estar boca abajo, con el interior hacia arriba. Usa \"Preparar para " +
         presetLabel(preset).toLowerCase() + "\" o \"Vista de trabajo\".";
@@ -100,7 +101,7 @@ export function createLaptopDiagnosisMechanics({ stage, getSession, setSession, 
     if (r.isPoseAnimating()) return { ok: false, reason: "Espera a que el portátil termine de moverse." };
     const first = ctl().forPart(partId)[0];
     const access = first ? r.screwAccess(first.id) : null;
-    if (access && !r.poseAllows(access)) {
+    if (access && !(stage.canAccessSide ? stage.canAccessSide(access) : r.poseAllows(access))) {
       neededPreset = r.workPresetFor(partId, access);
       setTimeout(onRender, 0);
       return { ok: false, reason: poseBlockMessage(access, neededPreset, "trabajar este tornillo") };
@@ -162,7 +163,7 @@ export function createLaptopDiagnosisMechanics({ stage, getSession, setSession, 
     const r = rig();
     const session = getSession();
     if (!r || !session || !session.thermal) return;
-    applyThermalLook(r.getObject3D("cpu"), r.getObject3D("cooler"), session.thermal, { coolerInstalled: session.parts.cooler !== false });
+    applyThermalLook(r.thermalTargets.length ? r.thermalTargets.map(name=>r.root.getObjectByName(name)) : r.getObject3D("cpu"), r.getObject3D("cooler"), session.thermal, { coolerInstalled: session.parts.cooler !== false });
   }
 
   function thermalTaskButton(taskId, label, amount, esc) {
@@ -237,7 +238,7 @@ export function createLaptopDiagnosisMechanics({ stage, getSession, setSession, 
     const r = rig();
     if (r.isPoseAnimating()) return { ok: false, tone: "info", message: "Espera a que el portátil termine de moverse." };
     const access = r.partAccess(partId);
-    if (access && !r.poseAllows(access) && actionWouldBeValid(partId, action)) {
+    if (access && !(stage.canAccessSide ? stage.canAccessSide(access) : r.poseAllows(access)) && actionWouldBeValid(partId, action)) {
       neededPreset = r.workPresetFor(partId, access);
       const verb = (Core().ACTION_LABELS[action] || { verb: "operar" }).verb.toLowerCase();
       return { ok: false, tone: "info", message: poseBlockMessage(access, neededPreset, verb + " " + part.name) };
@@ -278,7 +279,7 @@ export function createLaptopDiagnosisMechanics({ stage, getSession, setSession, 
   function powerPosition() {
     const r = rig();
     if (r.isPoseAnimating()) return { ok: false, reason: "Espera a que el portátil termine de moverse." };
-    if (!r.isAtPreset("open")) {
+    if (!(stage.isFreeCamera && stage.isFreeCamera()) && !r.isAtPreset("open")) {
       neededPreset = "open";
       return { ok: false, reason: "Para encender y comprobar, deja el portátil derecho y con la pantalla abierta (posición normal)." };
     }
@@ -287,6 +288,7 @@ export function createLaptopDiagnosisMechanics({ stage, getSession, setSession, 
 
   function poseSectionHtml(esc) {
     if (!neededPreset) return "";
+    if(stage.isFreeCamera && stage.isFreeCamera()) return '<p class="hwlab-muted">Gira la cámara para acceder a la cara de trabajo. Puedes usar los enfoques como ayuda.</p>';
     const r = rig();
     const ok = r.isAtPreset(neededPreset);
     const label = presetLabel(neededPreset);

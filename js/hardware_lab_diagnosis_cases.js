@@ -1110,26 +1110,70 @@
       "Con varios problemas se trabaja uno a la vez y se vuelve a encender después de cada reparación: el equipo muestra lo que todavía falla. No se entrega hasta una comprobación completa sin avisos."),
   ];
 
+  // V3 bank: six new work orders. Preventive maintenance is an independent
+  // delivery requirement, not counted as an extra hidden hardware fault.
+  function advancedOrder(n,name,context,symptom,faults,evidence) {
+    var f={variantId:"v3-standard-"+n,overrides:[],faults:faults,
+      fixCondition:{type:"all",conditions:faults.map(function(x){return x.fixCondition;})},
+      thermal:{dust:"dirty",paste:"old"},thermalVariant:"both",
+      relevantPartIds:Array.from(new Set(THERMAL_RELEVANT.concat(["wifi-antenna-1","wifi-antenna-2"],faults.map(function(x){return x.fixCondition.partId;})))),
+      screen:{fixed:"desktop"},symptomBroken:symptom,symptomFixed:ALL_OK,
+      explanation:{whatWasHappening:context,howToFix:"Contrastar las mediciones, intervenir los componentes implicados y renovar la interfaz térmica; volver a montar y verificar."}};
+    return {id:"eval-v3-s"+n,equipmentId:"laptop",profileId:"standard",number:n,name:name,level:"evaluacion",evaluation:true,advanced:true,maintenanceRequired:true,
+      requiresCaseOpenHint:true,revealSymptomOnCheck:true,symptom:"Orden de servicio: "+context+" "+symptom,
+      fault:f,hints:[],workflow:{context:context,symptom:symptom,objective:"Diagnosticar, realizar mantenimiento completo y entregar el equipo verificado.",
+      evidence:evidence,validActions:faults.map(function(x){return x.fixCondition;}),maintenance:["brush","air","scrape","alcohol","apply"],faultCount:faults.length,
+      solution:faults.map(function(x){return x.fixCondition;}),verification:["Repetir pruebas implicadas","Confirmar temperatura bajo carga","Cerrar con todos los tornillos","Encender y comprobar"]},
+      explanation:{howToDiagnose:"Registrar una hipótesis y contrastarla con mediciones antes de sustituir. Las fallas simultáneas se verifican por separado.",prevention:"Mantener ventilación limpia, conectores firmes y una interfaz térmica correcta."}};
+  }
+  var ADVANCED_EVALUATIONS = [
+    advancedOrder(1,"Servicio S1 · Reinicios y archivos inaccesibles","Un aula recibió el equipo después de un traslado.","El arranque se interrumpe y se reportaron errores de lectura.",[
+      damagedStage("ram","no-post","El POST se detiene con un patrón de memoria.",null),
+      damagedStage("ssd-m2","no-boot","El firmware detecta la unidad pero no completa la lectura de arranque.",null)
+    ],["ram","smart","temperature"]),
+    advancedOrder(2,"Servicio S2 · Carga y conexión remota","El equipo se usa en sesiones remotas prolongadas.","Se ralentiza con carga y pierde la conexión lejos del punto de acceso.",[
+      damagedStage("cooler","overheat","La temperatura sube y el ventilador no responde a la orden de giro.",null),
+      loose("wifi-antenna-2","wifi-weak","La interfaz existe pero el enlace pierde paquetes.")
+    ],["temperature","wifi"]),
+    advancedOrder(3,"Servicio S3 · Autonomía e imagen","El usuario solicita recuperar la movilidad del equipo.","La autonomía es muy corta y la pantalla a veces no muestra imagen.",[
+      loose("cable-screen-flex","no-image","Hay actividad de arranque, pero el panel permanece sin imagen."),
+      damagedStage("battery","battery-fail","El indicador cae rápidamente incluso después de cargar.","La envoltura presenta abombamiento: no presionar ni perforar; retirar de servicio.")
+    ],["display","battery","temperature"]),
+    advancedOrder(4,"Servicio S4 · Lectura sostenida","Una biblioteca solicita mantenimiento tras uso intensivo.","La carga de archivos se detiene y el sistema vuelve al firmware.",[
+      damagedStage("ssd-m2","no-boot","La prueba de lectura no finaliza; el sistema no arranca.",null)
+    ],["smart","temperature"]),
+    advancedOrder(5,"Servicio S5 · Inicio intermitente","El equipo dejó de arrancar de forma fiable después de transportarlo.","El indicador enciende, pero el POST se interrumpe.",[
+      loose("ram","no-post","El POST informa discrepancias durante la inicialización de memoria.")
+    ],["ram","temperature"]),
+    advancedOrder(6,"Servicio S6 · Red no disponible","Un equipo de préstamo volvió sin conexión inalámbrica.","El sistema inicia, pero no enumera la interfaz inalámbrica.",[
+      damagedStage("wifi-card","wifi-fail","La interfaz no responde al controlador de diagnóstico.",null)
+    ],["wifi","temperature"]),
+  ];
+
   var ALL_CASES = CASES.concat(LAPTOP_CASES);
 
   /** Casos de un equipo (los antiguos, sin equipmentId, son de escritorio). */
-  function casesFor(equipmentId) {
+  var profileBanks = {};
+  function casesFor(equipmentId, profileId) {
+    if(equipmentId === "laptop" && profileBanks[profileId])return profileBanks[profileId].cases;
     return ALL_CASES.filter(function (c) {
       return (c.equipmentId || "desktop") === equipmentId;
     });
   }
 
   /** Escenarios de evaluacion de un equipo (hoy solo el portatil). */
-  function evaluationScenarios(equipmentId) {
-    return EVALUATION_SCENARIOS.filter(function (c) {
+  function evaluationScenarios(equipmentId, options) {
+    if(equipmentId === "laptop" && options && profileBanks[options.profileId])return profileBanks[options.profileId].evaluations;
+    return (options && options.advanced ? ADVANCED_EVALUATIONS : EVALUATION_SCENARIOS).filter(function (c) {
       return c.equipmentId === equipmentId;
     });
   }
 
   /** Caso de practica o escenario de evaluacion por id. */
-  function getCase(equipmentId, caseId) {
+  function getCase(equipmentId, caseId, profileId) {
+    if(equipmentId === "laptop" && profileBanks[profileId])return profileBanks[profileId].cases.concat(profileBanks[profileId].evaluations).find(function(c){return c.id===caseId;})||null;
     return (
-      casesFor(equipmentId).concat(evaluationScenarios(equipmentId)).find(function (c) {
+      casesFor(equipmentId).concat(evaluationScenarios(equipmentId), evaluationScenarios(equipmentId, {advanced:true})).find(function (c) {
         return c.id === caseId;
       }) || null
     );
@@ -1137,7 +1181,7 @@
 
   // CASES se mantiene como la lista del ESCRITORIO (compatibilidad con quien ya
   // la usa). La lista completa, por equipo, se obtiene con casesFor/ALL_CASES.
-  var api = { CASES: CASES, LAPTOP_CASES: LAPTOP_CASES, ALL_CASES: ALL_CASES, EVALUATION_SCENARIOS: EVALUATION_SCENARIOS, casesFor: casesFor, evaluationScenarios: evaluationScenarios, getCase: getCase };
+  var api = { registerProfileBank: function(id,bank){if(!id||profileBanks[id])throw Error("Banco de perfil duplicado");profileBanks[id]=bank;}, ADVANCED_EVALUATIONS: ADVANCED_EVALUATIONS, CASES: CASES, LAPTOP_CASES: LAPTOP_CASES, ALL_CASES: ALL_CASES, EVALUATION_SCENARIOS: EVALUATION_SCENARIOS, casesFor: casesFor, evaluationScenarios: evaluationScenarios, getCase: getCase };
 
   root.HardwareLab = root.HardwareLab || {};
   root.HardwareLab.DiagnosisCases = api;

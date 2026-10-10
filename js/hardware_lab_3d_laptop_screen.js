@@ -30,6 +30,7 @@ const STATES = {
   crash: { powered: true, image: true, kind: "text", bg: "#0a3a8c", lines: ["El equipo se detuvo por", "un error y se va a reiniciar.", "", "Esto se repite durante el uso."] },
   "no-boot": { powered: true, image: true, kind: "text", lines: ["No se encontró un dispositivo", "de arranque.", "", "Revise el almacenamiento y", "reinicie el equipo."] },
   desktop: { powered: true, image: true, kind: "desktop", banner: null, title: "Sistema iniciado", ok: true },
+  "storage-secondary": { powered: true, image: true, kind: "desktop", title: "Sistema iniciado", banner: "Volumen de datos no detectado" },
   "wifi-fail": { powered: true, image: true, kind: "desktop", wifi: "fail", title: "Sin redes Wi-Fi", banner: "No hay conexión inalámbrica" },
   "wifi-weak": { powered: true, image: true, kind: "desktop", wifi: "weak", title: "Señal Wi-Fi muy débil", banner: "Conexión inestable" },
   overheat: { powered: true, image: true, kind: "desktop", temp: "hot", title: "Temperatura muy alta", banner: "97 °C · rendimiento reducido" },
@@ -213,6 +214,7 @@ export function createLaptopScreen({ root, keepAwake }) {
   let state = "off";
   let timers = [];
   let raf = 0;
+  let cancelPending = null;
   const wake = () => { if (keepAwake) keepAwake(600, { shadows: false }); };
 
   function paint(id, progress) {
@@ -222,6 +224,7 @@ export function createLaptopScreen({ root, keepAwake }) {
   }
 
   function clearTimers() {
+    if(cancelPending){const done=cancelPending;cancelPending=null;done({cancelled:true});}
     timers.forEach(clearTimeout);
     timers = [];
     if (raf) cancelAnimationFrame(raf);
@@ -245,13 +248,17 @@ export function createLaptopScreen({ root, keepAwake }) {
     clearTimers();
     const m = screenModel(resultId);
     const reduced = !!opts.instant;
-    return new Promise((resolve) => {
+    return new Promise((complete) => {
+      const resolve = value => { cancelPending=null;complete(value); };
+      cancelPending=resolve;
       const finish = () => { state = m.id; setLed(m.powered); paint(m.id); resolve(m); };
       if (reduced || !m.powered) { finish(); return; }
       // 1) LED de encendido; 2) retroiluminacion (pantalla negra iluminada).
       setLed(true);
+      if(opts.onPhase)opts.onPhase("encendiendo");
       paint("off");
       timers.push(setTimeout(() => {
+        if(opts.onPhase)opts.onPhase("POST");
         paint("no-post");
         // Sin imagen: la retroiluminacion enciende y no pasa nada mas.
         if (!m.image) { timers.push(setTimeout(finish, 700)); return; }
