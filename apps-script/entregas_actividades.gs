@@ -178,6 +178,14 @@ function doPost(e) {
     if (action === "agreement") {
       // Fase 2: ni siquiera lee payload.ficha -- el destino sale UNICAMENTE
       // del perfil ya verificado arriba, nunca de lo que reclame el cliente.
+      // 2026-10-28: el acuerdo contiene cedulas de TODO el grupo. Una cuenta nueva puede crear su propio perfil
+      // con cualquier ficha; por eso solo se entrega a perfiles con el nombre VALIDADO por el administrador.
+      if (["oficial", "duplicado_diferenciado"].indexOf(String(verifiedProfile.validacionNombre || "")) === -1) {
+        return jsonResponse({
+          ok: false,
+          message: "Tu perfil esta pendiente de validacion por el instructor. El acuerdo estara disponible cuando quede validado.",
+        });
+      }
       return handleFetchAgreementDocument(verifiedProfile.ficha);
     }
     return handleUploadDelivery(payload);
@@ -873,7 +881,10 @@ function fetchVerifiedProfile(idToken, email) {
     var fields = body.fields || {};
     var ficha = fields.ficha && typeof fields.ficha.stringValue === "string" ? fields.ficha.stringValue : "";
     var fullName = fields.fullName && typeof fields.fullName.stringValue === "string" ? fields.fullName.stringValue : "";
-    var result = { usernameKey: usernameKey, ficha: ficha, fullName: fullName };
+    // 2026-10-28: la validacion del nombre (escrita SOLO por el administrador cuando las reglas candidatas
+    // bloquean ese campo al aprendiz) decide si el perfil es una identidad academica confirmada.
+    var validacionNombre = fields.validacionNombre && typeof fields.validacionNombre.stringValue === "string" ? fields.validacionNombre.stringValue : "";
+    var result = { usernameKey: usernameKey, ficha: ficha, fullName: fullName, validacionNombre: validacionNombre };
     if (ficha || fullName) {
       cache.put(cacheKey, JSON.stringify(result), 600); // 10 min
     }

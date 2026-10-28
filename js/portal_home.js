@@ -30,14 +30,14 @@
   //    activity_standard.js ya haya corrido.
   var STUDENT_ONLY_SCRIPTS = [
     "js/activity_standard.js?v=20260822_1",
-    "js/guide_declarations.js?v=20260922_2",
-    "js/activity_grades.js?v=20260915_1",
-    "js/activity_deadlines.js?v=20260717_2",
+    "js/guide_declarations.js?v=20261028_1",
+    "js/activity_grades.js?v=20261028_1",
+    "js/activity_deadlines.js?v=20261028_1",
     "js/productive_stage_store.js?v=20260825_2",
     "js/productive_stage_deadlines.js?v=20260824_1",
-    "js/academic_agenda.js?v=20260824_1",
-    "js/academic_agenda_context.js?v=20260824_1",
-    "js/student_summary.js?v=20260825_1",
+    "js/academic_agenda.js?v=20261028_1",
+    "js/academic_agenda_context.js?v=20261028_1",
+    "js/student_summary.js?v=20261028_1",
   ];
   var _studentModulesPromise = null;
   function ensureStudentModulesLoaded() {
@@ -137,7 +137,14 @@
     return { cls: "todo", label: "Por iniciar", cta: "Abrir guía", secondary: false };
   }
 
-  function guideNumber(title, index) {
+  // Numero visible de la guia. El Taller Integrador y la Practica de Python no
+  // tienen numero: antes caian en "index + 1" y aparentaban ser otra guia.
+  function guideNumber(title, index, file) {
+    if (file && typeof auth.getGuideKind === "function") {
+      var kind = auth.getGuideKind(file);
+      if (kind === "taller") return "TI";
+      if (kind === "python") return "Py";
+    }
     var match = String(title || "").match(/gu[ií]a\s*(\d+)/i);
     return match ? match[1] : String(index + 1);
   }
@@ -250,6 +257,46 @@
   // sigue siendo 0 lecturas. El % oficial llega aparte: firebase_db restaura
   // el progreso al cargar y dispara "portal-student-restored" (re-render).
   var hydrateTriedFiles = {};
+
+  // Optimizacion 2026-10-28 (cache NEGATIVA): una guia que el aprendiz aun no
+  // empezo no tiene documento en la nube, asi que nunca obtenia copia local y
+  // se volvia a consultar en CADA visita al inicio (unas 47 llamadas a la
+  // replica de Apps Script por visita). Ahora se consulta UNA vez con la
+  // lectura detallada en lote (cloudReadGuideDataDetailed: 1-2 batchGet que
+  // distinguen "no existe" de "no se pudo consultar") y solo un "missing"
+  // CONFIRMADO se recuerda durante HOME_NO_CLOUD_TTL_MS. Un error, una cuota
+  // agotada o una respuesta parcial NO se recuerdan: se reintenta en la
+  // siguiente visita. Abrir la guia siempre la hidrata por su cuenta.
+  // Intercambio medido: la 1a comprobacion cuesta ~4 lecturas por guia sin
+  // copia (1-2 peticiones) en vez de ~4 llamadas a Apps Script por guia en
+  // CADA visita; Apps Script es el cuello de botella con muchos aprendices.
+  var HOME_NO_CLOUD_TTL_MS = 12 * 60 * 60 * 1000;
+  function noCloudStoreKey(usernameKey) { return "sena_portal_home_sin_nube_v1:" + usernameKey; }
+  function readNoCloud(usernameKey) {
+    try {
+      var parsed = JSON.parse(localStorage.getItem(noCloudStoreKey(usernameKey)) || "{}");
+      return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+    } catch (e) { return {}; }
+  }
+  function writeNoCloud(usernameKey, map) {
+    try { localStorage.setItem(noCloudStoreKey(usernameKey), JSON.stringify(map)); } catch (e) { /* no critico */ }
+  }
+  function storeHydratedState(storageKey, snapshot) {
+    var state = snapshot && typeof snapshot.state === "object" && snapshot.state
+      ? snapshot.state
+      : (snapshot && typeof snapshot.data === "object" && snapshot.data ? snapshot.data : null);
+    if (!state || !Object.keys(state).length) return false;
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(state));
+      // El __meta con updatedAt preserva el LWW de la guia al abrirla luego.
+      localStorage.setItem(storageKey + "__meta", JSON.stringify({
+        updatedAt: (snapshot && snapshot.updatedAt) || state.updatedAt || new Date().toISOString(),
+        updatedBy: "home-hydrate",
+      }));
+      return true;
+    } catch (e) { return false; /* almacenamiento lleno: la guia hidratara al abrirse */ }
+  }
+
   async function hydrateMissingGuideStates(user, files) {
     var db = window._firebaseDb;
     var std = window.ActivityStandard;
@@ -259,8 +306,10 @@
     var usernameKey = user.usernameKey || user.username;
     if (!usernameKey) return false;
     var scope = "student:" + usernameKey;
-    var changed = false;
-    await Promise.all((files || []).map(async function (file) {
+    var now = Date.now();
+    var noCloud = readNoCloud(usernameKey);
+    var targets = [];
+    (files || []).forEach(function (file) {
       if (hydrateTriedFiles[file]) return;
       hydrateTriedFiles[file] = true;
       var stateKey = REAL_STATE_KEY_ALIASES[file] ||
@@ -268,22 +317,40 @@
       if (!stateKey) return;
       var storageKey = auth.getStudentStorageKey(usernameKey, stateKey, { area: "guide-data" });
       try { if (localStorage.getItem(storageKey)) return; } catch (e) { return; }
+      var seenAt = Number(noCloud[file]) || 0;
+      if (seenAt && (now - seenAt) < HOME_NO_CLOUD_TTL_MS) return;
       var cloudFile = typeof db.guideDataFileName === "function" ? db.guideDataFileName(file) : file;
-      var snapshot = null;
-      try { snapshot = await db.cloudGetGuideData(scope, cloudFile); } catch (e) { return; }
-      var state = snapshot && typeof snapshot.state === "object" && snapshot.state
-        ? snapshot.state
-        : (snapshot && typeof snapshot.data === "object" && snapshot.data ? snapshot.data : null);
-      if (!state || !Object.keys(state).length) return;
+      targets.push({ file: file, storageKey: storageKey, cloudFile: cloudFile });
+    });
+    if (!targets.length) return false;
+    var changed = false;
+
+    if (typeof db.cloudReadGuideDataDetailed === "function") {
+      var result = null;
       try {
-        localStorage.setItem(storageKey, JSON.stringify(state));
-        // El __meta con updatedAt preserva el LWW de la guia al abrirla luego.
-        localStorage.setItem(storageKey + "__meta", JSON.stringify({
-          updatedAt: (snapshot && snapshot.updatedAt) || state.updatedAt || new Date().toISOString(),
-          updatedBy: "home-hydrate",
-        }));
-        changed = true;
-      } catch (e) { /* almacenamiento lleno: la guia hidratara al abrirse */ }
+        result = await db.cloudReadGuideDataDetailed(scope, targets.map(function (t) { return t.cloudFile; }), { skipDrive: true });
+      } catch (e) { result = null; }
+      if (!result || !result.files) return false;   // sin respuesta: nada se recuerda
+      targets.forEach(function (t) {
+        var entry = result.files[t.cloudFile];
+        if (!entry) return;
+        if (entry.status === "found") {
+          if (storeHydratedState(t.storageKey, entry.data)) changed = true;
+          delete noCloud[t.file];
+        } else if (entry.status === "missing") {
+          noCloud[t.file] = now;       // SOLO "no existe" confirmado
+        }
+        // partial / unverified / offline / quota / denied / error: no se recuerda
+      });
+      writeNoCloud(usernameKey, noCloud);
+      return changed;
+    }
+
+    // firebase_db.js antiguo (sin lectura detallada): comportamiento anterior.
+    await Promise.all(targets.map(async function (t) {
+      var snapshot = null;
+      try { snapshot = await db.cloudGetGuideData(scope, t.cloudFile); } catch (e) { return; }
+      if (storeHydratedState(t.storageKey, snapshot)) changed = true;
     }));
     return changed;
   }
@@ -392,16 +459,17 @@
           : { percent: 0 };
         var percent = Math.max(0, Math.min(100, Math.round((progress && progress.percent) || 0)));
         var title = typeof auth.getGuideTitle === "function" ? auth.getGuideTitle(file) : file;
+        var shortName = typeof auth.getGuideShortName === "function" ? auth.getGuideShortName(file) : title;
         var href = typeof auth.getGuideHref === "function" ? auth.getGuideHref(file) : "guia.html?g=" + encodeURIComponent(file);
         var st = estadoFor(percent);
         var pending = pendingActivitiesFor(file, key);
         return (
           '<article class="guide">' +
           '<div class="guide__top">' +
-          '<div class="guide__num">' + esc(guideNumber(title, index)) + "</div>" +
+          '<div class="guide__num">' + esc(guideNumber(title, index, file)) + "</div>" +
           '<span class="estado ' + st.cls + '">' + st.label + "</span>" +
           "</div>" +
-          '<h4 class="guide__title">' + esc(title) + "</h4>" +
+          '<h4 class="guide__title" title="' + esc(title) + '">' + esc(shortName) + "</h4>" +
           '<div class="guide__pbar"><div class="guide__pfill" style="width:' + percent + '%"></div></div>' +
           '<div class="guide__pmeta"><span>Avance</span><span>' + percent + "%</span></div>" +
           deadlineBadge(file) +

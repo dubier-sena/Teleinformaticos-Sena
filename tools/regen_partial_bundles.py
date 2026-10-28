@@ -41,6 +41,11 @@ ALL_PAIRS = [
     ("partials/taller-integrador-jfk-content.html", "partials/taller-integrador-jfk-bundle.js"),
     ("partials/taller-integrador-sb-content.html", "partials/taller-integrador-sb-bundle.js"),
     ("partials/taller-integrador-sb11-content.html", "partials/taller-integrador-sb11-bundle.js"),
+    ("partials/guia-07-mantenimiento-integral-content.html", "partials/guia-07-mantenimiento-integral-bundle.js"),
+    ("partials/guia-08-verificar-operacion-content.html", "partials/guia-08-verificar-operacion-bundle.js"),
+    ("partials/sb10-guia-05-preparar-mantenimiento-content.html", "partials/sb10-guia-05-preparar-mantenimiento-bundle.js"),
+    ("partials/sb10-guia-06-mantenimiento-integral-content.html", "partials/sb10-guia-06-mantenimiento-integral-bundle.js"),
+    ("partials/sb10-guia-07-verificar-operacion-content.html", "partials/sb10-guia-07-verificar-operacion-bundle.js"),
 ]
 
 BROKEN_PAIRS = [

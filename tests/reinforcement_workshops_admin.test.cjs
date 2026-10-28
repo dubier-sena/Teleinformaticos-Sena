@@ -32,11 +32,17 @@ test("asignación múltiple: recorre los aprendices marcados, crea un taller por
   const fn = admin.match(/function handleAssignWorkshop\(\) \{[\s\S]*?\n  \}/);
   assert.ok(fn, "handleAssignWorkshop debe existir");
   assert.match(fn[0], /getSelectedWorkshopLearners\(\)/);
-  assert.match(fn[0], /usernameKeys\.forEach/);
-  assert.match(fn[0], /mgr\.createWorkshop\(usernameKey, \{/);
+  assert.match(fn[0], /usernameKeys\.map\(\(usernameKey\) => mgr\.createWorkshop\(usernameKey, \{/);
   assert.match(fn[0], /action: "taller-asignar"/);
-  // Guard anti-duplicados: no vuelve a asignar a quien ya tenga un taller activo del mismo tipo.
-  assert.match(fn[0], /resultado !== "A" && w\.resultado !== "D"/);
+  // Guard anti-duplicados (2026-10-27): ya no se decide con el cache local
+  // (vacio tras una lectura fallida) sino en la NUBE, dentro de la escritura
+  // condicionada: createWorkshop manda uniqueActive y applyRecordListOp lo
+  // rechaza con "duplicate-active" si hay uno sin cerrar.
+  assert.match(fn[0], /r\.opOutcome === "duplicate-active"/);
+  const core = read("js/reinforcement_workshops.js");
+  assert.match(core, /uniqueActive: workshop\.workshopKey \? \{ field: "workshopKey", value: workshop\.workshopKey \}/);
+  const db = read("js/firebase_db.js");
+  assert.match(db, /rec\.resultado !== "A" && rec\.resultado !== "D"/);
 });
 
 test("regresión: usa getCurrentSession (no el getSession inexistente)", () => {

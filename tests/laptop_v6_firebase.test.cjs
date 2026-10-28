@@ -17,7 +17,24 @@ test('V6 gateway and rule extension do not alter legacy published rules or acade
  const baseline={
   'firestore.rules':'07fb3f9a515a9efe72f93c2918a24a97539ee43d9f84bde870d5ebfc1a903b3b',
   'js/firebase-config.js':'3f35ef06ddf9d128807312fbbf63622afe3ae46203cb92fabf7d9193c8a45f22',
-  'js/firebase_db.js':'f17b2d24a0cb110b8d6ec95f00e49e6985d085e5add46caf9ebe87572f067e06',
+  // 2026-10-22, owner-approved admin panel package (7 improvements): read-only
+  // additions (cloudReadGuideDataDetailed, cloudListAllGuideDataDocs,
+  // cloudListGuideDataSince, getGuideStatesFromLastListing) plus the progress
+  // fallback and literal batchGet names. Every Hardware Lab member
+  // (fsGetStrict, COL_HWLAB_ATTEMPTS, cloudCreateHwlabAttempt,
+  // cloudQueryHwlabAttempts, cloudGetGuideData) was verified byte-identical.
+  // Previous V5 baseline: f17b2d24a0cb110b8d6ec95f00e49e6985d085e5add46caf9ebe87572f067e06
+  // 2026-10-27, critical grades fix: additive strict grade/comment-bank functions and an
+  // optional updateMask in fsPatchStrict. Hardware Lab members unchanged.
+  // Previous package baseline: 821e35de98c55dba2b193c6218e872706815de67b6f4ef8f4f58a7c525b685c5
+  // 2026-10-28, Firebase consumption optimizations (incremental guide listing, uid/progress
+  // memo, unchanged-progress skip). Hardware Lab members unchanged.
+  // 2026-10-27 (2), data-protection fix: strict record-list engine for improvement plans and
+  // reinforcement workshops + field-masked answers writes. Hardware Lab members unchanged.
+  // Previous baseline: 4898303532dfd24631d1553f85a07ea4aaf40e5806e458c4bf05249794cf58a8
+  // 2026-10-28 (candidata unica): listing uses server readTime + writer-lag window, IndexedDB
+  // copy limited to the admin uid and cleared on logout. Hardware Lab members unchanged.
+  'js/firebase_db.js':'cfaad28342603be8c810ab1961ede840dd22b09f846ce2f28d3fc18649f9faed',
   'js/hardware_lab_attempts.js':'1e36582624b3b37c2b33afb7f8c592c75ce35d22eae367d100600b2b7ee9b024',
   'js/admin_hwlab_tracking.js':'a1a4aa6e67a888a48c82a7072894f03fab68d3b7decaaeb3aeb467f388ee57f0'
  };
@@ -49,6 +66,6 @@ test('V6 Firebase adapter refuses mismatched portal/Auth/Firestore projects',asy
 test('V6 existing panel withdraws grant before synchronous deactivation and stops on failure',async()=>{
  const source=fs.readFileSync(path.join(root,'js/admin_usuarios.js'),'utf8');const start=source.indexOf('  async function handleToggleLearner('),end=source.indexOf('  async function handleDeadlineSubmit(',start);assert.ok(start>=0&&end>start);
  for(const enabled of [false,true])for(const success of [false,true]){
-  const calls=[],context={window:{PORTAL_FIREBASE_CONFIG:{hardwareLabV6:{enabled}},HardwareLab:{FirebaseV6:{revokeAccess:async()=>{calls.push('revoke');if(!success)throw Error('offline');}}},portalSaveStatus:{saving(){},error(){},saved(){}}},getUser:()=>({fullName:'Ficticio'}),confirmAdminAction:async()=>true,auth:{updateStudentStatus:()=>{calls.push('deactivate');return{ok:true}}},setFeedback(){},recordAdminAuditAction(){},loadUsers:async()=>{}};vm.createContext(context);vm.runInContext(source.slice(start,end),context);await context.handleToggleLearner({dataset:{toggleLearner:'test',nextActive:'false'}});assert.deepEqual(calls,enabled?(success?['revoke','deactivate']:['revoke']):['deactivate']);
+  const calls=[],context={window:{PORTAL_FIREBASE_CONFIG:{hardwareLabV6:{enabled}},HardwareLab:{FirebaseV6:{revokeAccess:async()=>{calls.push('revoke');if(!success)throw Error('offline');}}},portalSaveStatus:{saving(){},error(){},saved(){}}},getUser:()=>({fullName:'Ficticio'}),confirmAdminAction:async()=>true,auth:{updateStudentStatus:()=>{calls.push('deactivate');return{ok:true}}},setFeedback(){},recordAdminAuditAction(){},loadUsers:async()=>{},patchLearnersFromLocal:async()=>{}};vm.createContext(context);vm.runInContext(source.slice(start,end),context);await context.handleToggleLearner({dataset:{toggleLearner:'test',nextActive:'false'}});assert.deepEqual(calls,enabled?(success?['revoke','deactivate']:['revoke']):['deactivate']);
  }
 });

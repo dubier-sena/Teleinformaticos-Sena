@@ -94,6 +94,15 @@
   }
 
   function getGuideMenuLabel(auth, fileName) {
+    // Catalogo central (portal_auth.js, 2026-10-22): mismo nombre corto y
+    // numeracion en menu, inicio y panel. NAV_GUIDE_SHORT_NAMES queda solo como
+    // respaldo si portal_auth.js no expone el catalogo.
+    if (auth && typeof auth.getGuideDisplayLabel === "function") {
+      try {
+        var label = String(auth.getGuideDisplayLabel(fileName) || "");
+        if (label && label !== fileName) return label;
+      } catch (e) {}
+    }
     var title = "";
     try { title = String(auth.getGuideTitle(fileName) || ""); } catch (e) {}
     var numberMatch = title.match(/^Gu[ií]a\s+(\d+)/i);

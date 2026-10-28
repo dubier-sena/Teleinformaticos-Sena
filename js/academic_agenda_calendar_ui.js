@@ -38,7 +38,8 @@
 
   var STATUS_CLASS = {
     "pending": "pending", "due-today": "soon", "due-tomorrow": "soon", "overdue": "overdue",
-    "delivered": "done", "no-deadline": "pending",
+    "delivered": "done", "no-deadline": "pending", "deadline-passed": "pending",
+    "taught": "done", "recovered": "done", "partial": "pending", "unplanned": "pending",
     "scheduled": "scheduled", "cancelled": "cancelled", "rescheduled": "rescheduled",
   };
 
@@ -79,7 +80,7 @@
     var titleAttr = escapeHtml(opts.timeRange ? event.title + " · " + opts.timeRange : event.title);
     return (
       '<button type="button" class="aac-chip aac-chip--' + statusClassOf(event) + (extraClass ? " " + extraClass : "") +
-        (isManual ? " aac-chip--manual" : "") + '" data-event-id="' + escapeHtml(event.id) + '" title="' + titleAttr + '">' +
+        (isManual ? " aac-chip--manual" : "") + '" data-identity="' + escapeHtml(event.ficha || '') + '" data-event-id="' + escapeHtml(event.id) + '" title="' + titleAttr + '">' +
         '<span class="aac-chip__ico">' + meta.icon + "</span>" +
         '<span class="aac-chip__label">' + escapeHtml(event.title) + "</span>" +
         (timeLabel ? '<span class="aac-chip__time">' + timeLabel + "</span>" : "") +

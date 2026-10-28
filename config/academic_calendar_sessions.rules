@@ -1,0 +1,139 @@
+    match /sena_portal_calendar_curriculum/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+    // Included by the calendar candidate builder, never deployed independently.
+    // 2026-10-28: sin documentos de asignación; edita solo el administrador (rol en sena_portal_roles).
+    function calEditor(ficha) {
+      return isAdmin();
+    }
+    function calDate(d, year) {
+      let y = int(year);
+      return d.matches('^'+year+'-((01|03|05|07|08|10|12)-(0[1-9]|[12][0-9]|3[01])|(04|06|09|11)-(0[1-9]|[12][0-9]|30)|02-(0[1-9]|1[0-9]|2[0-8]))$')
+        || (d == year+'-02-29' && (y % 400 == 0 || (y % 4 == 0 && y % 100 != 0)));
+    }
+    function calMinutes(t) { return int(t.split(':')[0]) * 60 + int(t.split(':')[1]); }
+    function calBlock(b) {
+      return b is map && b.keys().hasOnly(['start','end']) && b.keys().hasAll(['start','end'])
+        && b.start.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$')
+        && b.end.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$') && b.start < b.end;
+    }
+    function calPart(bs, i) {
+      let b = bs.size() > i ? bs[i] : {'start':'00:00','end':'00:00'};
+      let start = b.start.split(':');
+      let end = b.end.split(':');
+      return bs.size() <= i ? 0 :
+        (b.keys().hasOnly(['start','end']) && b.start.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$')
+         && b.end.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$') && b.start < b.end
+         && (i == 0 || b.start >= bs[i-1].end)
+         ? int(end[0])*60+int(end[1])-int(start[0])*60-int(start[1]) : -10000);
+    }
+    function calSession(d, ficha, year, id) {
+      return d.keys().hasOnly(['id','ficha','year','date','originalDate','blocks','plannedMinutes','actualMinutes','status','activity','evidence','dueDate','curriculum','sourceStatuses','origin','protected','revision','mutationId','updatedBy'])
+        && d.id == id && id.matches('^[a-zA-Z0-9_-]{1,120}$') && d.ficha == ficha
+        && d.year == int(year) && d.year >= 2020 && d.year <= 2100
+        && d.status in ['Programada','Realizada','Suspendida','Parcial','Reprogramada','Activa','Impartida','Cancelada','Recuperada','Sin programación','Estados mixtos — revisar']
+        && calPublic(d)
+        && (d.curriculum == {'id':'','competencyCode':'','competency':'','rap':'','order':'','source':''}
+          || (d.curriculum.id is string && d.curriculum == get(/databases/$(database)/documents/sena_portal_calendar_curriculum/$(d.curriculum.id)).data.value && ficha in get(/databases/$(database)/documents/sena_portal_calendar_curriculum/$(d.curriculum.id)).data.fichas))
+        && d.sourceStatuses is list && d.origin in ['new','legacy'] && d.protected is bool && d.revision is int
+        && d.updatedBy == request.auth.uid && d.mutationId is string && d.mutationId.size() > 0;
+    }
+    // Sessions are readable by the learner: only class content, evidence to deliver and its deadline.
+    // Internal observations live in notes/{id}; reasons, actors and times live in audit. Both are editor-only.
+    function calPublic(d) {
+      return d.activity is string && d.activity.size() <= 4000
+        && d.evidence is string && d.evidence.size() <= 4000 && d.dueDate is string;
+    }
+    function calTiming(d,year) {
+      return true
+        && calDate(d.date, year) && calDate(d.originalDate, year)
+        && d.blocks is list && d.blocks.size() > 0 && d.blocks.size() <= 6
+        && d.plannedMinutes > 0 && d.plannedMinutes <= 1440 && d.plannedMinutes == calPart(d.blocks,0)+calPart(d.blocks,1)+calPart(d.blocks,2)+calPart(d.blocks,3)+calPart(d.blocks,4)+calPart(d.blocks,5)
+        && (d.actualMinutes == null || (d.actualMinutes is int && d.actualMinutes >= 0 && d.actualMinutes <= d.plannedMinutes))
+        && (d.status != 'Realizada' || d.actualMinutes == null || d.actualMinutes == d.plannedMinutes)
+        && (d.status != 'Parcial' || (d.actualMinutes is int && d.actualMinutes > 0 && d.actualMinutes < d.plannedMinutes) || (d.origin == 'legacy' && d.actualMinutes == null))
+        && (!(d.status in ['Programada','Suspendida','Reprogramada']) || d.actualMinutes == null || d.actualMinutes == 0)
+        && (d.dueDate == '' || (calDate(d.dueDate, year) && d.dueDate >= d.date));
+    }
+    function calUpdate(d) {
+      return calPublic(d) && d.updatedBy == request.auth.uid && d.mutationId is string && d.mutationId.size() > 0;
+    }
+    function calDay(ficha,year,id,d) {
+      return getAfter(/databases/$(database)/documents/sena_portal_calendar_fichas/$(ficha)/years/$(year)/days/$(d.date)).data.sessionId == id;
+    }
+    match /sena_portal_calendar_fichas/{ficha}/years/{year}/days/{date} {
+      allow get, list: if signedIn() && calendarAssigned(ficha);
+      allow create: if calEditor(ficha) && request.resource.data.keys().hasOnly(['sessionId'])
+        && getAfter(/databases/$(database)/documents/sena_portal_calendar_fichas/$(ficha)/years/$(year)/sessions/$(request.resource.data.sessionId)).data.date == date;
+      allow update: if false;
+      allow delete: if calEditor(ficha)
+        && get(/databases/$(database)/documents/sena_portal_calendar_fichas/$(ficha)/years/$(year)/sessions/$(resource.data.sessionId)).data.date == date
+        && getAfter(/databases/$(database)/documents/sena_portal_calendar_fichas/$(ficha)/years/$(year)/sessions/$(resource.data.sessionId)).data.date != date;
+    }
+    // Every session write carries, in the same commit, its append-only receipt and its internal note.
+    function calReceipt(ficha,year,id,d,before) {
+      let p = /databases/$(database)/documents/sena_portal_calendar_fichas/$(ficha)/years/$(year)/sessions/$(id)/audit/$(string(d.revision));
+      let a = getAfter(p).data;
+      let n = getAfter(/databases/$(database)/documents/sena_portal_calendar_fichas/$(ficha)/years/$(year)/notes/$(id)).data;
+      return !exists(p) && a.revision == d.revision && a.actor == request.auth.uid
+        && a.mutationId == d.mutationId && a.before == before && a.after == d
+        && n.revision == d.revision && n.observation == a.notesAfter;
+    }
+    function calAudit(ficha,year,id,a) {
+      let n = /databases/$(database)/documents/sena_portal_calendar_fichas/$(ficha)/years/$(year)/notes/$(id);
+      return a.keys().hasOnly(['revision','actor','reason','mutationId','before','after','notesBefore','notesAfter','at'])
+        && a.reason is string && a.reason.size() > 0 && a.reason.size() <= 2000
+        && a.notesAfter is string && a.notesAfter.size() <= 8000
+        && a.notesBefore == (exists(n) ? get(n).data.observation : '')
+        && (a.revision == 0 ? !('at' in a) : a.at == request.time);
+    }
+    match /sena_portal_calendar_fichas/{ficha}/years/{year}/notes/{id} {
+      allow get, list: if calEditor(ficha);
+      allow create: if calNote(ficha,year,id,request.resource.data);
+      allow update: if calNote(ficha,year,id,request.resource.data) && request.resource.data.revision > resource.data.revision;
+      allow delete: if false;
+    }
+    function calNote(ficha,year,id,n) {
+      return calEditor(ficha) && n.keys().hasOnly(['sessionId','revision','observation']) && n.sessionId == id
+        && n.observation is string && n.observation.size() <= 8000
+        && getAfter(/databases/$(database)/documents/sena_portal_calendar_fichas/$(ficha)/years/$(year)/sessions/$(id)).data.revision == n.revision
+        && getAfter(/databases/$(database)/documents/sena_portal_calendar_fichas/$(ficha)/years/$(year)/sessions/$(id)/audit/$(string(n.revision))).data.notesAfter == n.observation;
+    }
+    match /sena_portal_calendar_fichas/{ficha}/years/{year}/sessions/{id} {
+      allow get, list: if signedIn() && calendarAssigned(ficha);
+      allow create: if request.resource.data.origin == 'new' && calEditor(ficha) && calSession(request.resource.data,ficha,year,id) && request.resource.data.protected == false
+        && request.resource.data.sourceStatuses == [] && request.resource.data.status == 'Programada' && request.resource.data.revision == 1
+        && request.resource.data.originalDate == request.resource.data.date
+        && calDay(ficha,year,id,request.resource.data)
+        && calReceipt(ficha,year,id,request.resource.data,null);
+      // Initial historical provisioning is a separate, reviewed administrator operation.
+      allow create: if request.resource.data.origin == 'legacy' && isAdmin() && calEditor(ficha) && calSession(request.resource.data,ficha,year,id)
+        && request.resource.data.revision == 0 && calDay(ficha,year,id,request.resource.data)
+        && calReceipt(ficha,year,id,request.resource.data,null);
+      // Owner decision 2026-10-21: taught and historical classes may be corrected (date, hours, activity,
+      // evidence, internal note) with an audited reason; their state and original sources stay immutable.
+      allow update: if calEditor(ficha) && calUpdate(request.resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['date','blocks','plannedMinutes','actualMinutes','status','activity','evidence','dueDate','revision','mutationId','updatedBy'])
+        && (request.resource.data.status == resource.data.status
+          || (resource.data.protected == false && !(resource.data.status in ['Realizada','Impartida'])
+            && request.resource.data.status in ['Programada','Realizada','Suspendida','Parcial','Reprogramada']))
+        && request.resource.data.revision == resource.data.revision + 1
+        && request.resource.data.mutationId != resource.data.mutationId
+        && calDay(ficha,year,id,request.resource.data)
+        // A rescheduled class must release its previous day in the same commit.
+        && (request.resource.data.date == resource.data.date
+          || !existsAfter(/databases/$(database)/documents/sena_portal_calendar_fichas/$(ficha)/years/$(year)/days/$(resource.data.date)))
+        && calReceipt(ficha,year,id,request.resource.data,resource.data);
+      allow delete: if false;
+      match /audit/{revision} {
+        allow get, list: if calEditor(ficha);
+        allow create: if calEditor(ficha) && calTiming(request.resource.data.after,year) && calAudit(ficha,year,id,request.resource.data)
+          && getAfter(/databases/$(database)/documents/sena_portal_calendar_fichas/$(ficha)/years/$(year)/sessions/$(id)).data == request.resource.data.after
+          && request.resource.data.after.revision == int(revision)
+          && request.resource.data.actor == request.auth.uid
+          && (!exists(/databases/$(database)/documents/sena_portal_calendar_fichas/$(ficha)/years/$(year)/sessions/$(id))
+            || get(/databases/$(database)/documents/sena_portal_calendar_fichas/$(ficha)/years/$(year)/sessions/$(id)).data.revision < int(revision));
+        allow update, delete: if false;
+      }
+    }

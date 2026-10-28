@@ -80,15 +80,66 @@
     var db = window._firebaseDb;
     return db && typeof db.cloudGetImprovementPlans === "function" ? db : null;
   }
+
+  // Lectura para el APRENDIZ (solo pinta banners). Devuelve la lista, o null
+  // si NO se pudo leer -- el llamador conserva el cache en vez de vaciarlo.
+  // cloudGetImprovementPlans devuelve [] tambien ante un error, asi que se
+  // usa la lectura estricta; si esa falla, la de cloudGetImprovementPlans
+  // (con respaldo de Drive) solo se acepta cuando trae registros.
   function fetchPlansFromCloud(usernameKey) {
     var db = plansCloudDb();
     if (!db) return Promise.resolve(null);
-    return Promise.resolve(db.cloudGetImprovementPlans(usernameKey)).catch(function () { return null; });
+    var legacy = function () {
+      return Promise.resolve(db.cloudGetImprovementPlans(usernameKey)).then(function (list) {
+        return Array.isArray(list) && list.length ? list : null;
+      });
+    };
+    var read = typeof db.cloudGetImprovementPlansStrict === "function"
+      ? Promise.resolve(db.cloudGetImprovementPlansStrict(usernameKey)).then(function (r) {
+          if (r && (r.status === "found" || r.status === "missing")) return r.list || [];
+          return legacy();
+        })
+      : legacy();
+    return read.catch(function () { return null; });
   }
-  function savePlansToCloud(usernameKey, plans) {
-    var db = plansCloudDb();
-    if (!db || typeof db.cloudSaveImprovementPlans !== "function") return;
-    Promise.resolve(db.cloudSaveImprovementPlans(usernameKey, plans)).catch(function () {});
+
+  // ── Escritura (panel admin) ──────────────────────────────────────────────────
+  // Antes: cada cambio guardaba la lista local COMPLETA y cloudSaveImprovementPlans
+  // la reemplazaba en la nube. Si la lectura habia fallado, esa lista estaba
+  // vacia y un plan nuevo borraba los demas planes del aprendiz (2026-10-27).
+  // Ahora cada cambio es una OPERACION por id (crear / modificar / cambiar
+  // fecha / eliminar) que firebase_db.createRecordListSync aplica sobre una
+  // lectura fresca y verificada, con precondicion de version. Una eliminacion
+  // solo ocurre cuando el instructor la pide (operacion "delete" con ese id).
+  var _plansSync = null;
+  function plansSync() {
+    if (_plansSync) return _plansSync;
+    var db = window._firebaseDb;
+    if (!db || typeof db.createRecordListSync !== "function") return null;
+    _plansSync = db.createRecordListSync({
+      collection: "sena_portal_improvement_plans",
+      field: "plans",
+      pendingStorageKey: "sena_portal_improvement_plans_pending_ops_v1",
+      eventName: "improvement-plans-sync-status",
+      getCacheKey: getPlansKey,
+    });
+    return _plansSync;
+  }
+
+  function unsupportedResult() {
+    return {
+      ok: false,
+      status: "unsupported",
+      reason: "no-strict-api",
+      message: "El modulo de la nube esta desactualizado. Recargue la pagina (Ctrl+F5).",
+      pending: 0,
+    };
+  }
+
+  function queuePlanOp(usernameKey, op) {
+    var sync = plansSync();
+    if (!sync) return Promise.resolve(unsupportedResult());
+    return sync.queue(usernameKey, op);
   }
 
   function getStudentPlans(usernameKey) {
@@ -98,72 +149,72 @@
     return Array.isArray(arr) ? arr : [];
   }
 
-  // Escribe local + nube (lo invoca el admin; rule isAdmin lo autoriza).
+  // Compatibilidad: ya NO reemplaza la lista de la nube; solo cachea local.
   function setStudentPlans(usernameKey, plans) {
     var key = getPlansKey(usernameKey);
     if (!key) return;
-    var arr = Array.isArray(plans) ? plans : [];
-    localStorage.setItem(key, JSON.stringify(arr));
-    savePlansToCloud(usernameKey, arr);
+    localStorage.setItem(key, JSON.stringify(Array.isArray(plans) ? plans : []));
   }
 
   // ── Operaciones del admin ────────────────────────────────────────────────────
+  // Todas devuelven Promise<{ ok, status, reason, message, pending, opOutcome }>.
+  // opOutcome "missing": el registro ya no existe (lo elimino otro equipo).
   function createPlan(usernameKey, opts) {
-    if (!usernameKey) return null;
-    var plans = getStudentPlans(usernameKey);
+    if (!usernameKey) return Promise.resolve({ ok: false, status: "aborted", reason: "invalid-args", message: "Falta el aprendiz." });
     var plan = makePlan(opts);
-    plans.push(plan);
-    setStudentPlans(usernameKey, plans);
-    return plan;
+    return queuePlanOp(usernameKey, { type: "create", record: plan }).then(function (r) {
+      return Object.assign({}, r, { record: plan });
+    });
   }
 
   function updatePlanDeadline(usernameKey, planId, nuevaFecha) {
-    var plans = getStudentPlans(usernameKey);
-    var i = plans.findIndex(function (p) { return p.id === planId; });
-    if (i === -1) return null;
-    plans[i] = applyDeadlineChange(plans[i], nuevaFecha);
-    setStudentPlans(usernameKey, plans);
-    return plans[i];
+    return queuePlanOp(usernameKey, { type: "deadline", id: planId, fecha: nuevaFecha || "", cambiadoEn: new Date().toISOString() });
   }
 
   function setPlanResult(usernameKey, planId, grade) {
-    var plans = getStudentPlans(usernameKey);
-    var i = plans.findIndex(function (p) { return p.id === planId; });
-    if (i === -1) return null;
-    plans[i] = Object.assign({}, plans[i], {
-      resultado: grade === "A" || grade === "D" ? grade : "",
-      resultadoEn: new Date().toISOString(),
+    return queuePlanOp(usernameKey, {
+      type: "patch",
+      id: planId,
+      set: { resultado: grade === "A" || grade === "D" ? grade : "", resultadoEn: new Date().toISOString() },
     });
-    setStudentPlans(usernameKey, plans);
-    return plans[i];
   }
 
   // Marca el plan como entregado y registra la fecha (la usa el Word: "Fecha de entrega").
   function markPlanDelivered(usernameKey, planId, fechaISO, archivo) {
-    var plans = getStudentPlans(usernameKey);
-    var i = plans.findIndex(function (p) { return p.id === planId; });
-    if (i === -1) return null;
-    plans[i] = Object.assign({}, plans[i], {
-      entrega: { entregadoEn: fechaISO || new Date().toISOString(), archivo: archivo || "" },
+    return queuePlanOp(usernameKey, {
+      type: "patch",
+      id: planId,
+      set: { entrega: { entregadoEn: fechaISO || new Date().toISOString(), archivo: archivo || "" } },
     });
-    setStudentPlans(usernameKey, plans);
-    return plans[i];
   }
 
+  // Eliminacion LEGITIMA: solo la pide el instructor, por id.
   function deletePlan(usernameKey, planId) {
-    var plans = getStudentPlans(usernameKey).filter(function (p) { return p.id !== planId; });
-    setStudentPlans(usernameKey, plans);
+    return queuePlanOp(usernameKey, { type: "delete", id: planId });
   }
 
-  // Trae del cloud y cachea local (para el admin al abrir el panel).
+  // Panel admin: lectura estricta. -> Promise<{ status, list, reason, message }>
+  // status "error": no se pudo leer; list es null y el cache NO se toca.
+  function refreshStudentPlansFromCloud(usernameKey) {
+    var sync = plansSync();
+    if (!sync) return Promise.resolve({ status: "error", list: null, reason: "no-strict-api", message: unsupportedResult().message });
+    return sync.refresh(usernameKey);
+  }
+
+  // Compatibilidad: devuelve la lista leida, o el cache si la lectura fallo.
   async function syncStudentPlansFromCloud(usernameKey) {
-    var cloud = await fetchPlansFromCloud(usernameKey);
-    if (Array.isArray(cloud)) {
-      var key = getPlansKey(usernameKey);
-      if (key) localStorage.setItem(key, JSON.stringify(cloud));
-      return cloud;
-    }
-    return getStudentPlans(usernameKey);
+    var r = await refreshStudentPlansFromCloud(usernameKey);
+    return r && r.list ? r.list : getStudentPlans(usernameKey);
+  }
+
+  function retryPendingPlansSync(usernameKey) {
+    var sync = plansSync();
+    return sync ? sync.retry(usernameKey) : Promise.resolve([unsupportedResult()]);
+  }
+
+  function getPendingPlansCount(usernameKey) {
+    var sync = plansSync();
+    return sync ? sync.pendingCount(usernameKey) : 0;
   }
 
   // ── Lectura para el aprendiz activo ──────────────────────────────────────────
@@ -309,6 +360,9 @@
       markPlanDelivered: markPlanDelivered,
       deletePlan: deletePlan,
       syncStudentPlansFromCloud: syncStudentPlansFromCloud,
+      refreshStudentPlansFromCloud: refreshStudentPlansFromCloud,
+      retryPendingPlansSync: retryPendingPlansSync,
+      getPendingPlansCount: getPendingPlansCount,
       getMyPlans: getMyPlans,
       getMyPlanForActivity: getMyPlanForActivity,
       renderMyPlanBannersForFamily: renderMyPlanBannersForFamily,

@@ -37,6 +37,10 @@
 
   var CALENDAR_STATUS = {
     SCHEDULED: "scheduled",
+    TAUGHT: "taught",
+    PARTIAL: "partial",
+    UNPLANNED: "unplanned",
+    RECOVERED: "recovered",
     CANCELLED: "cancelled",
     RESCHEDULED: "rescheduled",
   };
@@ -135,13 +139,17 @@
       if (!ctx.institucionShort && !ctx.grupo) return; // modo admin sin filtro: el llamador debe iterar por ficha
 
       var estado = String(override.estado || record.defE || "Activa").toLowerCase();
-      var obs = (override.obs === "" || override.obs == null) ? (record.defO || "") : override.obs;
+      var obs = override.obs == null ? (record.defO || "") : override.obs;
       var horario = override.horario || record.horario;
       var tema = override.act && override.act.nombre ? String(override.act.nombre) : "";
 
       var status = CALENDAR_STATUS.SCHEDULED;
       if (estado === "cancelada") status = CALENDAR_STATUS.CANCELLED;
-      else if (estado === "recuperada") status = CALENDAR_STATUS.RESCHEDULED;
+      else if (estado === "recuperada") status = CALENDAR_STATUS.RECOVERED;
+      else if (estado === "impartida" || estado === "realizada") status = CALENDAR_STATUS.TAUGHT;
+      else if (estado === "parcial") status = CALENDAR_STATUS.PARTIAL;
+      else if (estado === "sin programación") status = CALENDAR_STATUS.UNPLANNED;
+      else if (estado === "reprogramada") status = CALENDAR_STATUS.RESCHEDULED;
 
       var slots = mappedType === TYPE.CLASE ? parseHorarioSlots(record.fecha, horario) : [{ allDay: true, startAt: "", endAt: "" }];
       slots.forEach(function (slot, index) {

@@ -317,15 +317,26 @@
     }
   }
 
+  // Optimizacion 2026-10-28: la pagina pedia las fechas dos veces seguidas
+  // (al iniciar y al terminar de hidratar). Si la nube respondio hace menos de
+  // CLOUD_REUSE_MS, se reutiliza esa respuesta. Solo se reutiliza una lectura
+  // EXITOSA de la nube; si fallo, la siguiente llamada vuelve a consultar.
+  const CLOUD_REUSE_MS = 15000;
+  let lastCloudLoadAt = 0;
+
   async function loadPolicies(force) {
     if (!force && loadingPromise) {
       return loadingPromise;
+    }
+    if (!force && cachedSnapshot && lastCloudLoadAt && (Date.now() - lastCloudLoadAt) < CLOUD_REUSE_MS) {
+      return cloneSnapshot(cachedSnapshot);
     }
 
     loadingPromise = Promise.all([
       Promise.resolve(readLocalSnapshot()),
       readCloudSnapshot(force),
     ]).then(([localSnapshot, cloudSnapshot]) => {
+      lastCloudLoadAt = cloudSnapshot ? Date.now() : 0;
       const winner =
         cloudSnapshot && snapshotTime(cloudSnapshot) >= snapshotTime(localSnapshot)
           ? cloudSnapshot

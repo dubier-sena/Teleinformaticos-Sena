@@ -426,11 +426,12 @@ test("modulo Notas: entrada manual de calificaciones (guarda al instante en Fire
   assert.match(gradeHandler[0], /recordAdminAuditAction\(\{[\s\S]*action: "grade-change"/);
   // UI: filtros ficha/guia + grilla con selects A/D, prellenada desde Firestore.
   assert.match(adminScript, /function renderGrades\(\)/);
-  assert.match(adminScript, /async function renderGradesGrid\(\)/);
+  assert.match(adminScript, /async function renderGradesGrid\((?:opts = \{\})?\)/);
   assert.match(adminScript, /id="grades-ficha-filter"/);
   assert.match(adminScript, /id="grades-guide-filter"/);
   assert.match(adminScript, /class="grade-select"/);
-  assert.match(adminScript, /db\.cloudGetGrades\(user\.usernameKey\)/);
+  // Prellenado con lectura ESTRICTA (2026-10-27): una lectura fallida no se toma por "sin notas".
+  assert.match(adminScript, /gradesManager\.refreshStudentGradesFromCloud\(user\.usernameKey\)/);
   assert.match(adminScript, /opt\("A", "Aprobado"\)/);
   assert.match(adminScript, /opt\("D", "No aprobado"\)/);
   // Avance de evaluacion INSTANTANEO en la grilla: columna "Aprobadas" + recalculo al togglear.
@@ -482,11 +483,12 @@ test("calificar en bloque con Excel (2026-07-22): descarga/sube por Usuario, no 
   assert.match(transformSrc, /if \(!raw\) return; \/\/ celda vacia: no se toca/);
   // Solo A/D validos; el resto se reporta como invalido en vez de guardarse.
   assert.match(transformSrc, /raw === "A" \|\| raw === "D"/);
-  // Reutiliza el mismo mecanismo que calificar a mano: setStudentGrades (no
-  // setStudentActivityGrade en loop, para 1 escritura por aprendiz en vez de
-  // 1 por celda) + solucion del banco al aprobar + confirmacion antes de aplicar.
-  assert.match(uploadFn[0], /gradesManager\.setAllStudentGrades\(usernameKey, all\)/);
-  assert.match(uploadFn[0], /gradesManager\.setStudentGrades\(usernameKey, guideFamily, familyGrades\)/);
+  // Una escritura por aprendiz con SOLO las actividades del Excel, aplicada
+  // sobre una lectura estricta de la nube (2026-10-27): ya no se lee con
+  // cloudGetGrades (que devuelve {} ante un error) ni se reemplaza la familia.
+  assert.match(uploadFn[0], /gradesManager\.applyStudentGradeChanges\(usernameKey, guideFamily, set, del\)/);
+  assert.doesNotMatch(uploadFn[0], /cloudGetGrades\(/);
+  assert.doesNotMatch(uploadFn[0], /setAllStudentGrades/);
   assert.match(uploadFn[0], /lookupBankSolution\(guideFamily, actId\)/);
   assert.match(uploadFn[0], /applyApprovedSolutionToStudentCloud\(usernameKey, guideFamily, solutionsToApply\)/);
   assert.match(uploadFn[0], /await confirmAdminAction\(/);

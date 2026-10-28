@@ -99,8 +99,14 @@ function countInlineSurface() {
 // guide_runtime_loader.js = +6 scriptBlocks. Y 6 paginas de quiz nuevas
 // copiadas de las de Santa Barbara 10, con sus mismos style="..." = +4
 // styleAttrs. No es superficie nueva: es el patron existente en 6 paginas mas.
+// scriptBlocks 69 -> 79 (2026-10-22, guias de mantenimiento 220501001: Kennedy
+// Guia 7/8 y Santa Barbara Guia 5/6/7): 10 paginas nuevas (10A/10B x 5), cada
+// una con el mismo unico <script> inline window.__PAGE_CONTEXT__ = {...} de toda
+// guia que usa page_runtime_loader.js (mismo patron que la Guia 6) = +10. Los
+// partials nuevos NO suman atributos style="...": usan las clases u-* de
+// css/guia_template.css, asi que styleAttrs no cambia.
 const BASELINE = {
-  scriptBlocks: 69,
+  scriptBlocks: 79,
   styleAttrs: 2830,
   styleTags: 23,
 };

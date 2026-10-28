@@ -4633,3 +4633,36 @@ body.sb-hidden .btn-sb-expand {
 .avance-table .estado--ok { color: #1b5e20; font-weight: 800; white-space: nowrap; }
 .avance-table .estado--pend { color: #8b959e; white-space: nowrap; }
 .avance-table .estado--mal { color: #a13029; font-weight: 800; white-space: nowrap; }
+
+/* ── Utilidades de espaciado y avisos (2026-10-22) ─────────────────────────
+   Las usan los partials generados de las guias de mantenimiento (Kennedy 7/8,
+   Santa Barbara 5/6/7) en lugar de atributos style="..." inline (ratchet de
+   CSP en tests/csp_hardening.test.cjs). Mismos valores que los style inline
+   que ya usa la Guia 6. */
+.u-mt-10 { margin-top: 10px; }
+.u-mt-12 { margin-top: 12px; }
+.u-mt-14 { margin-top: 14px; }
+.u-mt-16 { margin-top: 16px; }
+.u-mb-16 { margin-bottom: 16px; }
+.u-w-30 { width: 30%; }
+.u-note-0 { margin-top: 0; font-size: .9rem; }
+.u-help-note { margin-top: 0; font-size: .82rem; opacity: .8; }
+.u-steps { padding-left: 1.4rem; margin: 0; line-height: 1.7; }
+.u-steps-top { padding-left: 1.4rem; margin: 6px 0 0; line-height: 1.7; }
+.u-refs { padding-left: 1.4rem; line-height: 1.8; }
+.u-hidden { display: none; }
+.u-bg-green { background: #e8f5e9; }
+.u-bg-blue { background: #e3f2fd; }
+.u-bg-orange { background: #fff3e0; }
+.u-bg-purple { background: #ede7f6; }
+.u-bg-teal { background: #e0f2f1; }
+.activity-saved-notice.u-saved {
+  display: none;
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: #e8f5e9;
+  border-left: 4px solid #2e7d32;
+  border-radius: 6px;
+  color: #1b5e20;
+  font-size: 0.88rem;
+}

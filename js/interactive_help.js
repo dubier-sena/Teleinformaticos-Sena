@@ -27,6 +27,24 @@
   }
   window.__INTERACTIVE_HELP_LOADED__ = true;
 
+  // Hoja de estilos del componente: el partial de Redes RAP01 la trae embebida,
+  // pero RAP02/RAP03 no. Si el documento no la tiene, se enlaza
+  // css/interactive_help.css relativo a la ubicacion de este script.
+  var SCRIPT_SRC = (document.currentScript && document.currentScript.src) || "";
+
+  function ensureStyles() {
+    if (document.querySelector("style[data-ihelp-inline], link[data-ihelp-css]")) {
+      return;
+    }
+    var link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = SCRIPT_SRC
+      ? SCRIPT_SRC.replace(/js\/interactive_help\.js(\?[^#]*)?$/, "css/interactive_help.css")
+      : "css/interactive_help.css";
+    link.setAttribute("data-ihelp-css", "true");
+    document.head.appendChild(link);
+  }
+
   var panelEl = null;
   var backdropEl = null;
   var titleEl = null;
@@ -34,6 +52,7 @@
   var lastTrigger = null;
 
   function ensurePanel() {
+    ensureStyles();
     if (panelEl && document.body.contains(panelEl)) {
       return;
     }

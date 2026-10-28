@@ -53,7 +53,13 @@
     "overdue": { label: "Vencida", cls: "overdue" },
     "delivered": { label: "Entregada", cls: "done" },
     "no-deadline": { label: "Sin fecha límite", cls: "pending" },
+    // Entregas manuales del calendario seguro: no se sabe si ya se entregó, nunca se marca "Vencida".
+    "deadline-passed": { label: "Plazo finalizado", cls: "pending" },
     // Calendario (ver academicAgenda.CALENDAR_STATUS)
+    "taught": { label: "✓ Impartida", cls: "done" },
+    "recovered": { label: "✓ Recuperada", cls: "done" },
+    "partial": { label: "Parcial", cls: "pending" },
+    "unplanned": { label: "Sin programación", cls: "pending" },
     "scheduled": { label: "Programada", cls: "scheduled" },
     "cancelled": { label: "Cancelada", cls: "cancelled" },
     "rescheduled": { label: "Reprogramada", cls: "rescheduled" },
@@ -61,6 +67,8 @@
 
   var SOURCE_LABEL = {
     "calendar": "Calendario académico",
+    "calendar-cloud": "Calendario autorizado · Firestore",
+    "planner": "Borrador local de revisión",
     "guide-deadline": "Guía",
     "productive-stage-deadline": "Etapa Productiva",
     "productive-stage-document": "Etapa Productiva",
@@ -119,7 +127,7 @@
       : "";
 
     return (
-      '<article class="agenda-card" data-status="' + escapeHtml(event.status) + '" data-type="' + escapeHtml(event.type) + '">' +
+      '<article class="agenda-card" data-identity="' + escapeHtml(event.ficha || '') + '" data-status="' + escapeHtml(event.status) + '" data-type="' + escapeHtml(event.type) + '">' +
         '<header class="agenda-card__head">' +
           '<span class="agenda-card__type">' + typeMeta.icon + " " + escapeHtml(typeMeta.label) + "</span>" +
           '<span class="agenda-status agenda-status--' + escapeHtml(statusMeta.cls) + '">' + escapeHtml(statusMeta.label) + "</span>" +
@@ -175,11 +183,69 @@
     }
   }
 
-  async function loadAndRender() {
+  async function secureDeliverables(attestedFicha) {
+    if (!window.academicAgendaContext || !window.academicAgenda) return {events: []};
+    try {
+      var input = await window.academicAgendaContext.resolveStudentAgendaContext();
+      if (!input || String(input.context.ficha) !== String(attestedFicha)) return {events: []};
+      var result = window.academicAgenda.buildAcademicAgenda(input);
+      // Las clases del documento global quedan fuera: las únicas clases son las sesiones de Firestore.
+      return {context: input.context, events: (result.events || []).filter(function (e) { return e.type !== "CLASE"; })};
+    } catch (e) { return {events: []}; }
+  }
+
+  async function loadAndRender(forceFull) {
     var rootEl = byId("sc-list");
     var statusEl = byId("sc-status");
     if (!rootEl) return;
 
+    // Secure calendar mode has no fallback to a global document, Drive or a local draft.
+    if (window.SENA_CALENDAR_FIRESTORE?.enabled && window.academicCalendarConnection) {
+      state.events = []; renderCurrentView();
+      try {
+        var cloud = window.academicCalendarConnection(), principal = await cloud.principal();
+        if (principal.role !== 'aprendiz' || principal.fichas.length !== 1) throw new Error('Se requiere una asignación de aprendiz válida.');
+        var year = Number(new URL(location.href).searchParams.get('year') || new Date().getFullYear());
+        // Copia local por cuenta/ficha/año: solo se piden las sesiones nuevas o modificadas
+        // (revision > 0). «Actualizar» fuerza la lectura completa.
+        var listed = cloud.listCached
+          ? await cloud.listCached(principal.fichas[0], year, {storage: window.localStorage, force: !!forceFull})
+          : {docs: await cloud.list(principal.fichas[0], year), source: 'full'};
+        var documents = listed.docs;
+        state.context = {ficha:principal.fichas[0],institucionShort:'Asignación verificada',grupo:''};
+        state.events = window.academicCalendarCloud.agenda(documents.map(d=>d.data));
+        // Candidata 2026-10-28: las clases se muestran en cuanto llegan; las entregas (fuentes más
+        // lentas) se agregan después, sin dejar la agenda vacía mientras tanto.
+        if(state.events.length)state.referenceDate = new Date(state.events[0].date+'T12:00:00-05:00');
+        renderHeaderMeta(state.context,window.SENA_CALENDAR_FIRESTORE.emulatorHost?'Aprendiz ficticio · emulador':'Aprendiz');
+        renderCurrentView();
+        if(statusEl)statusEl.textContent=state.events.length+' bloques · Firestore · cargando entregas…';
+        // Entregas de guías, bitácoras y documentos siguen viniendo de sus fuentes propias; solo
+        // se agregan si la ficha de la sesión del portal coincide con la asignación administrada.
+        var extra = await secureDeliverables(principal.fichas[0]);
+        if (extra.context) state.context = Object.assign({}, extra.context, {ficha: principal.fichas[0]});
+        state.events = state.events.concat(extra.events);
+        if(state.events.length)state.referenceDate = new Date(state.events[0].date+'T12:00:00-05:00');
+        renderHeaderMeta(state.context,window.SENA_CALENDAR_FIRESTORE.emulatorHost?'Aprendiz ficticio · emulador':'Aprendiz');
+        renderCurrentView();
+        if(statusEl)statusEl.textContent=state.events.length+' bloques · Firestore · solo lectura';
+      } catch(error) { state.events=[]; renderCurrentView(); renderMessage(rootEl,'Calendario no disponible',error.message,'warn'); }
+      return;
+    }
+
+    // This explicit fixture path is injected only by the loopback preview server.
+    // Production keeps the authenticated context below and never reads the planner draft.
+    if (['127.0.0.1','localhost'].includes(location.hostname) && window.academicPlannerStudentPreview) {
+      try {
+        var local = window.academicPlannerStudentPreview.load();
+        state.context = local.context; state.events = local.events;
+        state.referenceDate = new Date(local.date + 'T12:00:00-05:00');
+        renderHeaderMeta(local.context, 'Aprendiz ficticio · solo revisión local');
+        renderCurrentView();
+        if (statusEl) statusEl.textContent = 'Datos de prueba · ' + local.year + ' · solo lectura';
+      } catch (error) { renderMessage(rootEl, 'Vista local no disponible', error.message, 'warn'); }
+      return;
+    }
     var auth = window.portalAuth;
     var session = auth && typeof auth.getCurrentSession === "function" ? auth.getCurrentSession() : null;
     if (!session || session.role !== "student" || !session.user) {
@@ -266,6 +332,7 @@
       renderList();
     }
     renderNav();
+    if (window.academicPlannerStudentPreview) window.academicPlannerStudentPreview.decorate();
   }
 
   function renderList() {
@@ -275,7 +342,12 @@
       rootEl.innerHTML = '<div class="empty-state"><h3>Sin eventos próximos</h3><p>No hay clases, entregas ni pendientes registrados para tu ficha por ahora.</p></div>';
       return;
     }
-    rootEl.innerHTML = state.events.map(renderCard).join("");
+    var seen = new Set();
+    rootEl.innerHTML = state.events.filter(function(event) {
+      if (!event.sessionId) return true;
+      if (seen.has(event.sessionId)) return false;
+      seen.add(event.sessionId); return true;
+    }).map(renderCard).join("");
   }
 
   function renderNav() {
@@ -387,7 +459,7 @@
   function bootstrap() {
     if (window.agendaViewPreference) state.view = window.agendaViewPreference.getPreferredView();
     var btnReload = byId("sc-reload");
-    if (btnReload) btnReload.addEventListener("click", function () { loadAndRender(); });
+    if (btnReload) btnReload.addEventListener("click", function () { loadAndRender(true); });
     var dayDetailClose = byId("sc-day-detail-close");
     if (dayDetailClose) dayDetailClose.addEventListener("click", closeDayDetailModal);
     loadAndRender();

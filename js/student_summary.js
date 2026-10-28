@@ -253,6 +253,23 @@
 
   // ── Carga para el Home: 1 lectura remota (si hay uid) + reconstruccion
   //    automatica si no existe ninguna copia en ningun lado ────────────────
+  // Optimizacion 2026-10-28: el inicio pinta dos veces (al cargar y tras
+  // "portal-student-restored") y cada vez leia el resumen. Se comparte la
+  // lectura durante SUMMARY_REUSE_MS; un fallo o null no se reutiliza.
+  var SUMMARY_REUSE_MS = 15000;
+  var summaryMemo = null;
+  function readSummaryOnce(dbApi, uid) {
+    if (summaryMemo && summaryMemo.uid === uid && (summaryMemo.pending || (Date.now() - summaryMemo.at) < SUMMARY_REUSE_MS)) return summaryMemo.promise;
+    var entry = { uid: uid, pending: true, at: 0, promise: null };
+    entry.promise = Promise.resolve(dbApi.cloudGetStudentSummary(uid)).then(function (r) {
+      entry.pending = false; entry.at = Date.now();
+      if (!r) summaryMemo = null;
+      return r;
+    }, function (e) { summaryMemo = null; throw e; });
+    summaryMemo = entry;
+    return entry.promise;
+  }
+
   async function loadStudentSummaryForHome(session) {
     var user = (session && session.user) || {};
     var usernameKey = user.usernameKey || user.username;
@@ -264,7 +281,7 @@
     var remote = null;
     if (uid && dbApi && typeof dbApi.cloudGetStudentSummary === "function") {
       try {
-        remote = await dbApi.cloudGetStudentSummary(uid);
+        remote = await readSummaryOnce(dbApi, uid);
       } catch (e) {
         remote = null;
       }

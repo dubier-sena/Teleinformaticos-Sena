@@ -842,6 +842,13 @@ function authorizeRequest(opts) {
   var actorKey = actor.base;
   if (!actorKey) return { ok: false, message: "Sin identidad valida en el token." };
 
+  // Calendar reads use Firestore with attested ficha assignment. No Drive bypass.
+  if (collection === "sena_portal_calendar" ||
+      collection === "sena_portal_calendar_assignments" ||
+      collection === "sena_portal_calendar_fichas" ||
+      (collection === "sena_portal_progress" && docId.indexOf("__calendar__:") === 0)) {
+    return { ok: false, message: "Calendario restringido: consultar la vista autorizada por ficha en Firestore." };
+  }
   if (action === "list") {
     if (LIST_ADMIN_ONLY_COLLECTIONS[collection]) {
       return { ok: false, message: "Listado restringido al administrador." };

@@ -17,33 +17,33 @@
 <link rel="stylesheet" href="css/site_tokens.css?v=20260617_1">
 <link rel="stylesheet" href="css/components.css?v=20260617_1">
 <link rel="stylesheet" href="css/shared_shell.css?v=20260923_3">
-<link rel="stylesheet" href="css/page_admin.css?v=20261001_2">
+<link rel="stylesheet" href="css/page_admin.css?v=20261028_1">
 <script src="js/shared_utils.js?v=20260615_2"></script>
 <script src="js/global_error_handler.js?v=20260710_1"></script>
-<script src="js/portal_auth.js?v=20261001_1"></script>
+<script src="js/portal_auth.js?v=20261028_1"></script>
 <script src="js/firebase-config.js?v=20260527_3"></script>
 <script defer src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
 <script defer src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
 <script src="js/firebase_auth_bridge.js?v=20261009_1"></script>
 <script src="js/guide_merge_utils.js?v=20260823_1"></script>
-<script src="js/firebase_db.js?v=20261001_1"></script>
+<script src="js/firebase_db.js?v=20261028_1"></script>
 <script defer src="js/hardware_lab_firebase_v6.js?v=20261009_1"></script>
 <script src="js/project_integrations.js?v=20260823_1"></script>
 <script src="js/drive_db.js?v=20260922_1"></script>
 <script defer src="js/firebase_status_banner.js?v=20260923_1"></script>
 <script defer src="js/save_status.js?v=20260822_1"></script>
 <script src="js/activity_standard.js?v=20260827_1"></script>
-<script src="js/guide_declarations.js?v=20260922_2"></script>
-<script src="js/activity_deadlines.js?v=20260717_2"></script>
-<script src="js/activity_grades.js?v=20260915_1"></script>
-<script src="js/improvement_plans.js?v=20260624_1"></script>
+<script src="js/guide_declarations.js?v=20261028_1"></script>
+<script src="js/activity_deadlines.js?v=20261028_1"></script>
+<script src="js/activity_grades.js?v=20261028_1"></script>
+<script src="js/improvement_plans.js?v=20261028_1"></script>
 <script src="js/improvement_activities_bank.js?v=20260715_1"></script>
-<script src="js/reinforcement_workshops.js?v=20260821_1"></script>
+<script src="js/reinforcement_workshops.js?v=20261028_1"></script>
 <!-- Catalogo central de material de apoyo en Drive + resolvedor de enlaces (migracion 2026-09-21). -->
 <script src="data/material_apoyo_drive.js?v=20260921_1"></script>
 <script src="js/material_apoyo_links.js?v=20260921_1"></script>
 <script src="js/reinforcement_workshops_catalog.js?v=20260921_1"></script>
-<script defer src="js/shared_shell.js?v=20260927_1"></script>
+<script defer src="js/shared_shell.js?v=20261028_1"></script>
 <script src="js/access_guard_admin.js?v=20260823_1"></script>
 </head>
 <body class="app-shell app-shell--admin">
@@ -274,7 +274,7 @@
           <div class="admin-panel__header">
             <div>
               <h2>Seguimiento de respuestas</h2>
-              <p>Consulta de respuestas guardadas cuando existe integracion de lectura para la guia.</p>
+              <p>Seleccione ficha y aprendiz (y, si desea, una guia) y pulse «Consultar respuestas». Solo se consulta en la nube el aprendiz seleccionado.</p>
             </div>
           </div>
           <div class="admin-toolbar">
@@ -291,7 +291,10 @@
               <option value="reabierta">Reabiertas</option>
             </select>
             <input id="responses-search" type="search" placeholder="Buscar aprendiz">
+            <button class="admin-button" type="button" id="responses-consult">Consultar respuestas</button>
+            <button class="admin-button admin-button--ghost" type="button" id="responses-refresh">Actualizar desde la nube</button>
           </div>
+          <div id="responses-consult-status" class="learner-consult-status" role="status" aria-live="polite"></div>
           <div class="admin-table-wrap" id="responses-table"></div>
         </div>
       </section>
@@ -301,12 +304,25 @@
           <div class="admin-panel__header">
             <div>
               <h2>Seguimiento de entregas</h2>
-              <p>Registros locales de entregas a Drive o estado guardado en actividades estandar.</p>
+              <p>Seleccione ficha y aprendiz (y, si desea, una guia) y pulse «Consultar entregas». Solo se consulta en la nube el aprendiz seleccionado.</p>
             </div>
           </div>
           <div class="admin-toolbar">
             <select id="deliveries-ficha-filter"></select>
-            <input id="deliveries-search" type="search" placeholder="Buscar archivo o aprendiz">
+            <input id="deliveries-learner-search" type="search" placeholder="Buscar aprendiz" aria-label="Buscar aprendiz por nombre">
+            <select id="deliveries-learner-filter" aria-label="Aprendiz"></select>
+            <select id="deliveries-guide-filter" aria-label="Guia"></select>
+            <input id="deliveries-search" type="search" placeholder="Buscar archivo o actividad">
+            <label class="toolbar-select" for="deliveries-period">
+              <span>Periodo</span>
+              <select id="deliveries-period">
+                <option value="">Sin filtro de fecha</option>
+                <option value="7">Ultimos 7 dias</option>
+                <option value="30">Ultimos 30 dias</option>
+                <option value="90">Ultimos 90 dias</option>
+                <option value="custom">Personalizado</option>
+              </select>
+            </label>
             <label class="toolbar-select" for="deliveries-from">
               <span>Desde</span>
               <input id="deliveries-from" type="date">
@@ -315,8 +331,11 @@
               <span>Hasta</span>
               <input id="deliveries-to" type="date">
             </label>
+            <button class="admin-button" type="button" id="deliveries-consult">Consultar entregas</button>
+            <button class="admin-button admin-button--ghost" type="button" id="deliveries-refresh">Actualizar desde la nube</button>
             <button class="admin-button admin-button--ghost" type="button" id="deliveries-export-csv">Exportar CSV</button>
           </div>
+          <div id="deliveries-consult-status" class="learner-consult-status" role="status" aria-live="polite"></div>
           <div class="admin-table-wrap" id="deliveries-table"></div>
         </div>
       </section>
@@ -442,14 +461,14 @@
   <script src="js/redes_quiz_unlock.js?v=20260422_1"></script>
   <script src="js/admin_confirmations.js?v=20260505_1"></script>
   <script src="js/admin_audit.js?v=20260702_1"></script>
-  <script src="js/admin_deadlines.js?v=20260615_1"></script>
+  <script src="js/admin_deadlines.js?v=20261028_1"></script>
   <script src="js/admin_redes.js?v=20260615_1"></script>
   <script src="js/export_styles.js?v=20260517_1"></script>
   <script src="js/admin_export.js?v=20260615_1"></script>
   <script src="js/admin_activities.js?v=20260615_1"></script>
   <script src="js/admin_guide6.js?v=20260615_1"></script>
   <script src="js/admin_progress.js?v=20260615_1"></script>
-  <script src="js/admin_habilitacion.js?v=20260725_1"></script>
+  <script src="js/admin_habilitacion.js?v=20261028_1"></script>
   <script src="js/name_audit.js?v=20260630_1"></script>
   <script src="js/admin_grades_excel_transform.js?v=20260824_1"></script>
   <!-- Fase 12 (rendimiento): xlsx.full.min.js (~930 KB, la libreria mas
@@ -460,6 +479,6 @@
   <script src="js/admin_hardware_lab.js?v=20261009_1"></script>
   <script src="js/hardware_lab_attempts.js?v=20261009_1"></script>
   <script src="js/admin_hwlab_tracking.js?v=20261001_2"></script>
-  <script src="js/admin_usuarios.js?v=20261010_1"></script>
+  <script src="js/admin_usuarios.js?v=20261028_1"></script>
 </body>
 </html>

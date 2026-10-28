@@ -54,11 +54,16 @@ test("limite de segmento: 'juan' NO calza con 'juana'", () => {
   assert.strictEqual(authz({ action: "get", collection: "sena_portal_progress", docId: "juana", email: as("juana") }).ok, true);
 });
 
-test("calendario: lectura compartida, escritura solo admin", () => {
-  assert.strictEqual(authz({ action: "get", collection: "sena_portal_calendar", docId: "academico-2026", email: as("juan") }).ok, true);
+// Activacion coordinada del calendario por ficha (2026-10-28): la replica de Drive ya NO sirve el
+// calendario a aprendices (era un bypass de las reglas por ficha). El admin conserva la lectura.
+test("calendario: el aprendiz no lo lee por Drive; escritura solo admin; el admin sigue leyendo", () => {
+  assert.strictEqual(authz({ action: "get", collection: "sena_portal_calendar", docId: "academico-2026", email: as("juan") }).ok, false);
+  assert.strictEqual(authz({ action: "get", collection: "sena_portal_calendar_fichas", docId: "3441939", email: as("juan") }).ok, false);
+  assert.strictEqual(authz({ action: "get", collection: "sena_portal_calendar_assignments", docId: "uid-x", email: as("juan") }).ok, false);
+  assert.strictEqual(authz({ action: "get", collection: "sena_portal_calendar", docId: "academico-2026", email: "dubier@sena-portal.local" }).ok, true);
   assert.strictEqual(authz({ action: "set", collection: "sena_portal_calendar", docId: "academico-2026", email: as("juan") }).ok, false);
   // respaldo del calendario dentro de progress
-  assert.strictEqual(authz({ action: "get", collection: "sena_portal_progress", docId: "__calendar__:academico-2026", email: as("juan") }).ok, true);
+  assert.strictEqual(authz({ action: "get", collection: "sena_portal_progress", docId: "__calendar__:academico-2026", email: as("juan") }).ok, false);
   assert.strictEqual(authz({ action: "set", collection: "sena_portal_progress", docId: "__calendar__:academico-2026", email: as("juan") }).ok, false);
 });
 

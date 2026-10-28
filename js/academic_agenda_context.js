@@ -211,6 +211,9 @@
   }
 
   async function loadCalendarOverrides() {
+    // Calendario seguro (Firestore por ficha): las clases llegan de las sesiones autorizadas.
+    // El documento global de todas las fichas no se consulta (ni por Firestore ni por la replica Drive).
+    if (window.SENA_CALENDAR_FIRESTORE && window.SENA_CALENDAR_FIRESTORE.enabled) return {};
     var dbApi = db();
     if (!dbApi || typeof dbApi.cloudGetCalendar !== "function") return {};
     var snapshot = await withTimeout(

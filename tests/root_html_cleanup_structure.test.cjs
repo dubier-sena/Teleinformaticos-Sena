@@ -9,6 +9,10 @@ const AUX_ROOT = path.join(REPO_ROOT, "pages", "auxiliares");
 const EXPECTED_ROOT_HTML = [
   "calendario-academico-2026.html",
   "calendario-administrativo-agenda.html",
+  "calendario-planificador-local.html",
+  // Candidata 2026-10-28: ruta del instructor del calendario por ficha; solo existe tras la
+  // activacion coordinada (commit de activacion, junto con js/academic_calendar_release_config.js).
+  ...(fs.existsSync(path.join(__dirname, "..", "js", "academic_calendar_release_config.js")) ? ["calendario-academico-sesiones.html"] : []),
   "etapa-productiva-admin.html",
   "etapa-productiva-estudiante.html",
   "guia.html",

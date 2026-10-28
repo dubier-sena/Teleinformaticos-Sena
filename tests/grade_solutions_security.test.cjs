@@ -62,5 +62,5 @@ test("activity_grades: el setter del admin embebe la solucion solo cuando la not
   const fn = ag.match(/function setStudentActivityGradeAndSolution\([\s\S]*?\n  \}/);
   assert.ok(fn, "setStudentActivityGradeAndSolution debe existir");
   assert.match(fn[0], /grade === "A" && solutionObj/);
-  assert.match(fn[0], /delete all\[guideFamily\]\[solKey\]/); // sin A => limpia la solucion
+  assert.match(fn[0], /del\.push\(solKey\)/); // sin A => limpia la solucion
 });

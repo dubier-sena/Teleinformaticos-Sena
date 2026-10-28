@@ -108,6 +108,14 @@
     return document.getElementById(id);
   }
 
+  // Candidata 2026-10-28 (normalizacion de guias): nombre corto uniforme para
+  // MOSTRAR (selectores, tablas, avisos, exportaciones del panel). Los datos
+  // guardados y los nombres de archivo de Drive siguen usando getGuideTitle.
+  function guideLabel(fileName) {
+    const label = typeof auth.getGuideDisplayLabel === "function" ? auth.getGuideDisplayLabel(fileName) : "";
+    return label || auth.getGuideTitle(fileName) || fileName;
+  }
+
   function escapeHtml(value) {
     var u = window.portalUtils;
     if (u && typeof u.escapeHtml === "function") return u.escapeHtml(value);
@@ -161,15 +169,6 @@
     if (!storageKey) return {};
     if (_guideDataMem.has(storageKey)) return _guideDataMem.get(storageKey).meta || {};
     return readJson(localStorage.getItem(`${storageKey}__meta`), {});
-  }
-
-  // Edicion puntual del admin sobre UN aprendiz (reabrir entrega / habilitar):
-  // actualiza la memoria y persiste best-effort (no rompe si localStorage esta lleno).
-  function writeGuideDataLocal(storageKey, state, meta) {
-    if (!storageKey) return;
-    guideDataCacheSet(storageKey, state, meta);
-    safeSetLocalAdmin(storageKey, JSON.stringify(state || {}));
-    if (meta) safeSetLocalAdmin(`${storageKey}__meta`, JSON.stringify(meta));
   }
 
   // Purga (una vez por carga) los estados de guia de aprendices que sesiones
@@ -287,7 +286,7 @@
     const files = ficha ? getGuidesForFicha(ficha) : getAllGuideFiles();
     const first = includeAll ? '<option value="">Todas las guias</option>' : '<option value="">Selecciona guia</option>';
     return first + files.map((fileName) =>
-      `<option value="${escapeHtml(fileName)}"${fileName === selected ? " selected" : ""}>${escapeHtml(auth.getGuideTitle(fileName))}</option>`
+      `<option value="${escapeHtml(fileName)}"${fileName === selected ? " selected" : ""}>${escapeHtml(guideLabel(fileName))}</option>`
     ).join("");
   }
 
@@ -395,8 +394,10 @@
         <progress value="${row.average}" max="100">${row.average}%</progress>
       </div>
     `).join("") || '<p class="admin-empty">No hay fichas configuradas.</p>';
+    // "Entregas recientes" ya NO hidrata a todos los aprendices al abrir el
+    // panel (antes: aprendices x guias lecturas + una consulta a Drive por
+    // documento ausente). Se consulta bajo demanda (ver consultRecentDeliveries).
     renderRecentDeliveries();
-    maybeAutoHydrateDashboard();
   }
 
   function formatRelativeOrDate(iso) {
@@ -419,31 +420,227 @@
     return rows.slice(0, limit || 8);
   }
 
-  // Tarjeta "Entregas recientes" del dashboard: lo primero que ve el admin al
-  // iniciar sesion, para saber que aprendices han entregado trabajos. Los datos
-  // se bajan una vez por sesion (ensureGuideStatesHydrated en loadUsers).
+  // ── Tarjeta "Entregas recientes" (consulta bajo demanda, 2026-10-22) ──────
+  // Antes: al abrir el panel se descargaba el estado de TODOS los aprendices x
+  // TODAS sus guias (ensureGuideStatesHydrated) para mostrar 8 lineas. Ahora:
+  // ficha -> periodo -> "Consultar entregas recientes". La consulta pide solo
+  // los documentos de guia ACTUALIZADOS en el periodo (consulta por rango sobre
+  // updatedAt, _firebaseDb.cloudListGuideDataSince): se cobran solo esos
+  // documentos y no se consulta Drive. La ficha se filtra en memoria (cambiarla
+  // no consulta). Cache en memoria por sesion de admin y periodo, 10 minutos;
+  // "Actualizar" fuerza la relectura. Nada se guarda en localStorage.
+  const RECENT_PERIODS = [7, 30, 90];
+  const RECENT_TTL_MS = 10 * 60 * 1000;
+  const RECENT_MARGIN_MS = 24 * 60 * 60 * 1000; // tolerancia de relojes desfasados
+  const recentDeliveries = { ficha: "", days: 7, session: "", cache: new Map(), inflight: null };
+
+  const RECENT_MESSAGES = {
+    waiting: "Elija la ficha y el período y pulse «Consultar entregas recientes».",
+    loading: "Consultando entregas recientes…",
+    none: "No hay entregas registradas en este período.",
+    offline: "No fue posible conectar con la nube. Verifique su conexión e intente nuevamente.",
+    denied: "No tiene autorización para consultar esta información.",
+    quota: "Se alcanzó el límite diario de consultas de la nube. No se harán más intentos automáticos; intente de nuevo más tarde.",
+    incomplete: "No fue posible recuperar toda la información. Algunas entregas podrían no aparecer.",
+    service: "Ocurrió un problema al consultar la información. Intente nuevamente.",
+  };
+
+  function recentMessage(status) {
+    if (RECENT_MESSAGES[status]) return RECENT_MESSAGES[status];
+    return RECENT_MESSAGES.service + (status === "timeout" ? " (tiempo de espera agotado)" : "");
+  }
+
+  function ensureRecentSession() {
+    const key = habSessionKey();
+    if (key !== recentDeliveries.session) {
+      recentDeliveries.cache.clear();
+      recentDeliveries.session = key;
+    }
+  }
+
+  function invalidateRecentDeliveries() {
+    recentDeliveries.cache.clear();
+  }
+
+  function cloudKeyOf(name) {
+    return String(name || "").replace(/\./g, "_").replace(/[^a-z0-9_-]/gi, "_");
+  }
+
+  // Documentos -> entregas. Atribuye cada documento a su aprendiz por el campo
+  // scopeKey ("student:{usernameKey}") que escribe cada guardado, o por el id
+  // legado; y a su guia, entre las guias de la ficha del aprendiz, por el
+  // nombre de documento. Fecha: la registrada en la entrega (submittedAt, o su
+  // updatedAt); sin fecha registrada no se le asigna ninguna.
+  function deliveriesFromGuideDocs(docs) {
+    const byKey = new Map((state.users || []).map((u) => [u.usernameKey, u]));
+    const bySafe = new Map((state.users || []).map((u) => [String(u.usernameKey).replace(/[^a-z0-9:_-]/gi, "_"), u]));
+    const hab = window.adminHabilitacion;
+    const guideKeyCache = new Map();
+    const keysOf = (pageFile) => {
+      if (!guideKeyCache.has(pageFile)) {
+        const names = hab && typeof hab.getCloudFileNamesForGuide === "function"
+          ? hab.getCloudFileNamesForGuide(pageFile)
+          : [getGuideCloudConfig(pageFile)?.cloudFileName || pageFile];
+        guideKeyCache.set(pageFile, new Set(names.concat([pageFile]).map(cloudKeyOf)));
+      }
+      return guideKeyCache.get(pageFile);
+    };
+    const latest = new Map();
+    let undated = 0;
+    (docs || []).forEach((doc) => {
+      const docId = String(doc._docId || "");
+      let user = null;
+      const scope = String(doc.scopeKey || "");
+      if (scope.indexOf("student:") === 0) user = byKey.get(scope.slice(8)) || bySafe.get(scope.slice(8).replace(/[^a-z0-9:_-]/gi, "_"));
+      if (!user) {
+        const m = docId.match(/^__guide_data__:student:([^:]+):/);
+        if (m) user = bySafe.get(m[1]) || null;
+      }
+      if (!user) return;
+      const fileKey = docId.split(":").pop();
+      const pageFile = getGuidesForFicha(user.ficha).find((g) => keysOf(g).has(fileKey));
+      if (!pageFile) return;
+      let snapshot = null;
+      try { snapshot = typeof doc.snapshotJson === "string" ? JSON.parse(doc.snapshotJson) : doc; } catch (_) { snapshot = null; }
+      const st = snapshot && (snapshot.state || snapshot.data);
+      if (!st || typeof st !== "object") return;
+      Object.keys(st).forEach((key) => {
+        const value = st[key];
+        if (!/-delivery$/.test(key) || !value || typeof value !== "object") return;
+        const submittedAt = String(value.submittedAt || value.updatedAt || "");
+        if (!submittedAt) { undated += 1; return; }
+        const activityId = key.replace(/-delivery$/, "");
+        const id = `${user.usernameKey}|${pageFile}|${activityId}`;
+        const prev = latest.get(id);
+        if (!prev || submittedAt > prev.submittedAt) {
+          latest.set(id, { user, fileName: pageFile, activityId, submittedAt, savedFileName: value.savedFileName || "", driveUrl: value.driveUrl || "" });
+        }
+      });
+    });
+    return { rows: Array.from(latest.values()), undated };
+  }
+
+  async function consultRecentDeliveries(options = {}) {
+    ensureRecentSession();
+    const days = recentDeliveries.days;
+    const cached = recentDeliveries.cache.get(days);
+    if (!options.force && cached && cached.status !== "loading" && (Date.now() - cached.fetchedAt) < RECENT_TTL_MS && cached.status === "ok") {
+      renderRecentDeliveries();
+      return cached;
+    }
+    if (recentDeliveries.inflight) return recentDeliveries.inflight; // doble clic
+    const db = window._firebaseDb;
+    const previous = cached && cached.rows ? cached : null;
+    recentDeliveries.cache.set(days, Object.assign({}, previous || {}, { status: "loading" }));
+    renderRecentDeliveries();
+    const run = (async () => {
+      let entry;
+      if (!hasAdminPanelAccess()) {
+        entry = { status: "denied" };
+      } else if (!db || typeof db.cloudListGuideDataSince !== "function") {
+        entry = { status: "error" };
+      } else {
+        const startedAt = Date.now();
+        const since = new Date(Date.now() - days * 86400000 - RECENT_MARGIN_MS).toISOString();
+        const result = await db.cloudListGuideDataSince(since);
+        const mapped = deliveriesFromGuideDocs(result.docs || []);
+        entry = {
+          status: result.status,
+          rows: mapped.rows,
+          undated: mapped.undated,
+          docs: (result.docs || []).length,
+          stats: result.stats,
+          ms: Date.now() - startedAt,
+        };
+      }
+      entry.fetchedAt = Date.now();
+      // Ante un fallo sin datos nuevos se conserva lo anterior, marcado.
+      if (entry.status !== "ok" && !(entry.rows && entry.rows.length) && previous) {
+        entry = Object.assign({}, previous, { status: entry.status, stale: true, fetchedAt: previous.fetchedAt });
+      }
+      recentDeliveries.cache.set(days, entry);
+      return entry;
+    })();
+    recentDeliveries.inflight = run;
+    try {
+      return await run;
+    } finally {
+      recentDeliveries.inflight = null;
+      if (state.activeModule === "dashboard") renderRecentDeliveries();
+    }
+  }
+
   function renderRecentDeliveries() {
     const host = byId("dashboard-deliveries");
     if (!host) return;
-    if (!guideStatesHydrated) {
-      host.innerHTML = '<p class="response-status">Cargando entregas recientes...</p>';
-      return;
-    }
-    const rows = getRecentDeliveries(8);
-    if (!rows.length) {
-      host.innerHTML = '<p class="admin-empty">Aun no hay entregas registradas. Apareceran aqui cuando los aprendices entreguen trabajos.</p>';
-      return;
-    }
-    host.innerHTML = rows.map((d) => {
-      const name = escapeHtml((d.user && d.user.fullName) || (d.user && d.user.usernameKey) || "Aprendiz");
-      const guide = escapeHtml(auth.getGuideTitle(d.fileName) || d.fileName || "");
-      const act = escapeHtml(d.activityId || "");
-      const when = escapeHtml(formatRelativeOrDate(d.submittedAt));
-      return `<div class="delivery-line">
-        <div class="delivery-line__main"><strong>${name}</strong><span class="admin-muted"> &middot; ${guide}${act ? " &middot; " + act : ""}</span></div>
-        <span class="delivery-line__when">${when}</span>
+    ensureRecentSession();
+    const fichas = [...new Set((state.users || []).map((u) => String(u.ficha || "")).filter(Boolean))].sort();
+    if (recentDeliveries.ficha && !fichas.includes(recentDeliveries.ficha)) recentDeliveries.ficha = "";
+    const entry = recentDeliveries.cache.get(recentDeliveries.days) || null;
+    const loading = entry && entry.status === "loading";
+    const controls = `
+      <div class="recent-deliveries__filters">
+        <label>Ficha
+          <select id="recent-ficha">
+            <option value="">Todas las fichas</option>
+            ${fichas.map((f) => `<option value="${escapeHtml(f)}"${recentDeliveries.ficha === f ? " selected" : ""}>${escapeHtml(f)}</option>`).join("")}
+          </select>
+        </label>
+        <label>Período
+          <select id="recent-period">
+            ${RECENT_PERIODS.map((d) => `<option value="${d}"${recentDeliveries.days === d ? " selected" : ""}>Últimos ${d} días</option>`).join("")}
+          </select>
+        </label>
+        <button class="admin-button" type="button" id="recent-consult"${loading ? " disabled" : ""}>Consultar entregas recientes</button>
+        ${entry && entry.fetchedAt ? `<button class="admin-button admin-button--ghost" type="button" id="recent-refresh"${loading ? " disabled" : ""}>Actualizar</button>` : ""}
       </div>`;
-    }).join("");
+    let body = "";
+    if (!entry) {
+      body = `<p class="admin-empty" id="recent-message">${escapeHtml(RECENT_MESSAGES.waiting)}</p>`;
+    } else if (loading && !(entry.rows && entry.rows.length)) {
+      body = `<p class="response-status" id="recent-message">${escapeHtml(RECENT_MESSAGES.loading)}</p>`;
+    } else {
+      const since = new Date(Date.now() - recentDeliveries.days * 86400000).toISOString();
+      const rows = (entry.rows || [])
+        .filter((d) => !recentDeliveries.ficha || String(d.user.ficha) === recentDeliveries.ficha)
+        .filter((d) => d.submittedAt >= since)
+        .sort((a, b) => String(b.submittedAt).localeCompare(String(a.submittedAt)));
+      const notices = [];
+      if (loading) notices.push(RECENT_MESSAGES.loading);
+      else if (entry.status !== "ok") {
+        notices.push(recentMessage(entry.status) + (entry.stale ? " Se muestra la última información recuperada, que podría estar desactualizada." : ""));
+      } else if (Date.now() - entry.fetchedAt >= RECENT_TTL_MS) {
+        notices.push("Esta información se consultó hace más de 10 minutos. Pulse «Actualizar» para traerla de nuevo.");
+      }
+      const when = entry.fetchedAt ? new Date(entry.fetchedAt).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" }) : "";
+      const summary = entry.status === "ok" || rows.length
+        ? `<p class="admin-muted" id="recent-summary">${rows.length} entrega${rows.length !== 1 ? "s" : ""} en el período${recentDeliveries.ficha ? ` (ficha ${escapeHtml(recentDeliveries.ficha)})` : ""}. Consultado a las ${escapeHtml(when)}.</p>`
+        : "";
+      const list = rows.slice(0, 8).map((d) => {
+        const name = escapeHtml((d.user && d.user.fullName) || (d.user && d.user.usernameKey) || "Aprendiz");
+        const guide = escapeHtml(guideLabel(d.fileName) || d.fileName || "");
+        const act = escapeHtml(d.activityId || "");
+        return `<div class="delivery-line">
+          <div class="delivery-line__main"><strong>${name}</strong><span class="admin-muted"> &middot; ${guide}${act ? " &middot; " + act : ""}</span></div>
+          <span class="delivery-line__when">${escapeHtml(formatRelativeOrDate(d.submittedAt))}</span>
+        </div>`;
+      }).join("");
+      const empty = !rows.length && entry.status === "ok" && !loading
+        ? `<p class="admin-empty" id="recent-message">${escapeHtml(RECENT_MESSAGES.none)}</p>`
+        : (!rows.length && entry.status !== "ok" && !loading ? "" : "");
+      body = notices.map((n) => `<p class="c-alert ${entry.status === "incomplete" ? "c-alert--warning" : (entry.status === "ok" || loading ? "c-alert--info" : "c-alert--danger")}" id="recent-notice">${escapeHtml(n)}</p>`).join("") + summary + list + empty;
+    }
+    host.innerHTML = controls + `<div id="recent-body" role="status" aria-live="polite">${body}</div>`;
+    host.querySelector("#recent-ficha")?.addEventListener("change", (event) => {
+      recentDeliveries.ficha = event.target.value || "";
+      renderRecentDeliveries(); // filtro en memoria: no consulta
+    });
+    host.querySelector("#recent-period")?.addEventListener("change", (event) => {
+      recentDeliveries.days = Number(event.target.value) || 7;
+      renderRecentDeliveries(); // muestra lo ya consultado de ese periodo, sin consultar
+    });
+    host.querySelector("#recent-consult")?.addEventListener("click", () => { void consultRecentDeliveries(); });
+    host.querySelector("#recent-refresh")?.addEventListener("click", () => { void consultRecentDeliveries({ force: true }); });
   }
 
   function getFilteredUsers() {
@@ -602,7 +799,7 @@
       (info.guias || []).map((fileName) => `
         <tr>
           <td>${escapeHtml(ficha)}<br><span class="admin-muted">Grupo ${escapeHtml(info.grupo)}</span></td>
-          <td><strong>${escapeHtml(auth.getGuideTitle(fileName))}</strong><br><span class="admin-muted">${escapeHtml(fileName)}</span></td>
+          <td><strong>${escapeHtml(guideLabel(fileName))}</strong><br><span class="admin-muted">${escapeHtml(fileName)}</span></td>
           <td>${(deadlineManager?.getActivitiesForGuide?.(fileName) || []).length}</td>
           <td><span class="admin-status admin-status--active">Habilitada</span></td>
           <td><a class="admin-button admin-button--ghost" href="${escapeHtml(guideHref(fileName, ficha))}">Abrir guia</a></td>
@@ -902,7 +1099,7 @@
           return `
             <tr>
               <td>${escapeHtml(ficha)}<br><span class="admin-muted">Grupo ${escapeHtml(info.grupo)}</span></td>
-              <td>${escapeHtml(auth.getGuideTitle(fileName))}</td>
+              <td>${escapeHtml(guideLabel(fileName))}</td>
               <td>${escapeHtml(activity.label)}</td>
               <td>${escapeHtml(policy?.dueAt ? deadlineManager.formatDueAt(policy.dueAt) : "Sin fecha")}</td>
               <td><span class="admin-status ${evaluation?.state === "closed" ? "admin-status--danger" : policy ? "admin-status--safe" : "admin-status--warn"}">${escapeHtml(label)}</span></td>
@@ -1053,144 +1250,212 @@
     return { cloudFileName, stateKey, pageFile: fileName };
   }
 
-  // ── Hidratacion del guide_state de los aprendices al localStorage del admin ──
-  // La tabla "Respuestas" y el modulo "Entregas" leen con readStudentGuideState
-  // (localStorage del admin), vacio cuando el aprendiz guardo en otro equipo. Para
-  // mostrar datos cross-device SIN disparar N×M lecturas por render, bajamos el
-  // guide_state de cada aprendiz UNA vez por sesion (al abrir esos modulos) y lo
-  // cacheamos en localStorage. Reusa el mismo doc que lee "ver respuestas".
-  let guideStatesHydrated = false;
-
-  async function runWithConcurrency(items, limit, worker) {
-    const queue = items.slice();
-    const runners = [];
-    for (let i = 0; i < Math.max(1, limit); i++) {
-      runners.push((async () => {
-        while (queue.length) {
-          await worker(queue.shift());
-        }
-      })());
-    }
-    await Promise.all(runners);
-  }
-
-  // Tarjeta "Entregas recientes" del dashboard: debe auto-hidratarse al iniciar
-  // sesion (para que el admin vea alertas frescas sin entrar antes a Respuestas
-  // o Entregas), pero sin repetir el barrido pesado (N aprendices x M guias)
-  // cada vez que se abre/recarga el panel -- eso fue justo lo que ae86612 evito.
-  // Se guarda la marca de tiempo en localStorage (sobrevive recargas) y se
-  // limita a una vez cada 30 minutos por navegador.
+  // Clave antigua del limite de la hidratacion completa (ya no existe); se
+  // conserva solo para que "Actualizar datos" limpie el valor que quede.
   const DASHBOARD_HYDRATE_THROTTLE_KEY = "sena_admin_dashboard_hydrate_last_v1";
-  const DASHBOARD_HYDRATE_THROTTLE_MS = 30 * 60 * 1000;
 
-  function markDashboardHydrateNow() {
-    try { localStorage.setItem(DASHBOARD_HYDRATE_THROTTLE_KEY, String(Date.now())); } catch (_) { /* sin localStorage */ }
-  }
+  // ── Respuestas y Entregas: consulta SELECTIVA por aprendiz (2026-10-22) ──
+  // Antes, al abrir Respuestas o Entregas se descargaba el estado de TODOS los
+  // aprendices x TODAS sus guias (ensureGuideStatesHydrated: perfil + hasta 4
+  // GET por guia y una consulta a Drive por documento ausente; ~8000 lecturas y
+  // ~3500 llamadas a Apps Script con 159 aprendices). Ahora el flujo es
+  // ficha -> aprendiz -> guia (opcional) -> "Consultar": solo ese aprendiz y
+  // esas guias, con _firebaseDb.cloudReadGuideDataDetailed (2-3 peticiones
+  // batchGet y el motivo real de cada fallo). Lo traido va a la MISMA cache en
+  // memoria que leen las tablas, "Ver" y la exportacion (guideDataCacheSet), sin
+  // pisar ediciones locales mas nuevas (pickLatestSnapshot). Cache por sesion
+  // de admin + aprendiz + guia, 10 minutos; "Actualizar" relee.
+  const LEARNER_TTL_MS = 10 * 60 * 1000;
+  const learnerConsult = { session: "", pairs: new Map(), inflight: new Map(), status: { respuestas: null, entregas: null } };
+  const LEARNER_STATUS_RANK = { ok: 0, incomplete: 1, timeout: 2, unavailable: 2, error: 2, offline: 3, quota: 4, denied: 5 };
 
-  function isDashboardHydrateThrottled() {
-    try {
-      const last = Number(localStorage.getItem(DASHBOARD_HYDRATE_THROTTLE_KEY)) || 0;
-      return (Date.now() - last) < DASHBOARD_HYDRATE_THROTTLE_MS;
-    } catch (_) {
-      return false;
+  function ensureLearnerSession() {
+    const key = habSessionKey();
+    if (key !== learnerConsult.session) {
+      learnerConsult.pairs.clear();
+      learnerConsult.inflight.clear();
+      learnerConsult.status = { respuestas: null, entregas: null };
+      learnerConsult.session = key;
     }
   }
 
-  function maybeAutoHydrateDashboard() {
-    if (state.activeModule !== "dashboard") return;
-    if (guideStatesHydrated || isDashboardHydrateThrottled()) return;
-    ensureGuideStatesHydrated()
-      .then((changed) => {
-        if (state.activeModule === "dashboard" && changed) renderRecentDeliveries();
-      })
-      .catch(() => {});
+  function learnerPairKey(usernameKey, fileName) {
+    return `${usernameKey}|${fileName}`;
   }
 
-  async function ensureGuideStatesHydrated() {
-    if (guideStatesHydrated) return false;
-    // Recupera la cuota de localStorage que sesiones anteriores llenaron con el
-    // guide-data de aprendices (ahora se cachea en memoria, ver helpers arriba).
-    purgeStudentGuideDataFromLocal();
+  // Guia de un aprendiz ya consultada en esta sesion (vigente o no).
+  function getLearnerPair(usernameKey, fileName) {
+    ensureLearnerSession();
+    return learnerConsult.pairs.get(learnerPairKey(usernameKey, fileName)) || null;
+  }
+
+  function markLearnerPairStale(usernameKey, fileName) {
+    const pair = learnerConsult.pairs.get(learnerPairKey(usernameKey, fileName));
+    if (pair) pair.stale = true;
+  }
+
+  function cloudNamesForGuide(fileName) {
+    const hab = window.adminHabilitacion;
+    if (hab && typeof hab.getCloudFileNamesForGuide === "function") return hab.getCloudFileNamesForGuide(fileName);
+    const config = getGuideCloudConfig(fileName);
+    return [config?.cloudFileName || fileName];
+  }
+
+  // Consulta (solo lectura) las guias `files` de UN aprendiz.
+  // -> { status, consulted, fromCache, stats }
+  async function consultLearnerGuides(user, files, options = {}) {
+    ensureLearnerSession();
     const db = window._firebaseDb;
-    if (!db || typeof db.cloudGetGuideData !== "function" || typeof auth.getStudentStorageKey !== "function") {
-      guideStatesHydrated = true; // sin nube no hay nada que bajar; no reintentar cada render
-      markDashboardHydrateNow();
-      return false;
-    }
-    // Si el admin entra a Respuestas/Entregas ANTES de que loadUsers() termine
-    // (carrera con la carga inicial), state.users aun esta vacio: NO hay nada
-    // que hidratar todavia. Sin este check, la corrida vacia igual marcaba
-    // guideStatesHydrated=true para siempre y ya NUNCA se reintentaba en la
-    // sesion, aunque los aprendices se cargaran un instante despues.
-    if (!(state.users || []).length) return false;
-    const tasks = [];
-    (state.users || []).forEach((user) => {
-      if (!user || !user.usernameKey) return;
-      getGuidesForFicha(user.ficha).forEach((fileName) => {
-        const config = getGuideCloudConfig(fileName);
-        const stateKey = getGuideStateKey(fileName);
-        if (!config || !config.cloudFileName || !stateKey) return;
-        tasks.push({ usernameKey: user.usernameKey, fileName, cloudFileName: config.cloudFileName, stateKey });
+    if (!user || !user.usernameKey) return { status: "error", consulted: 0, fromCache: 0 };
+    if (!hasAdminPanelAccess()) return { status: "denied", consulted: 0, fromCache: 0 };
+    if (!db || typeof db.cloudReadGuideDataDetailed !== "function") return { status: "error", consulted: 0, fromCache: 0 };
+    const now = Date.now();
+    let fromCache = 0;
+    const targets = [];
+    (files || []).forEach((fileName) => {
+      const stateKey = getGuideStateKey(fileName);
+      if (!stateKey) return;
+      const pair = learnerConsult.pairs.get(learnerPairKey(user.usernameKey, fileName));
+      if (!options.force && pair && pair.status === "ok" && !pair.stale && (now - pair.at) < LEARNER_TTL_MS) {
+        fromCache += 1;
+        return;
+      }
+      targets.push({ fileName, stateKey, names: cloudNamesForGuide(fileName) });
+    });
+    if (!targets.length) return { status: "ok", consulted: 0, fromCache };
+    const names = [...new Set(targets.flatMap((t) => t.names))].sort();
+    const inflightKey = `${user.usernameKey}|${names.join(",")}`;
+    if (learnerConsult.inflight.has(inflightKey)) return learnerConsult.inflight.get(inflightKey); // doble clic
+    const run = (async () => {
+      const promotionDone = typeof db.isDrivePromotionDone === "function" && db.isDrivePromotionDone();
+      const detailed = await db.cloudReadGuideDataDetailed(getStudentCloudScope(user.usernameKey), names, { skipDrive: promotionDone });
+      const fetchedAt = Date.now();
+      const statuses = [];
+      targets.forEach((t) => {
+        let fileStatus = "ok";
+        const docs = [];
+        t.names.forEach((name) => {
+          const r = (detailed.files || {})[name] || { status: detailed.status, data: null };
+          if (r.data && typeof r.data === "object") docs.push(r.data);
+          if (r.status === "found" || r.status === "missing") return;
+          const st = r.status === "partial" || r.status === "unverified" ? "incomplete" : (LEARNER_STATUS_RANK[r.status] ? r.status : "error");
+          if ((LEARNER_STATUS_RANK[st] || 0) > (LEARNER_STATUS_RANK[fileStatus] || 0)) fileStatus = st;
+        });
+        statuses.push(docs.length ? (fileStatus === "ok" ? "ok" : "incomplete") : fileStatus);
+        if (docs.length) {
+          // Documento principal primero: gana los conflictos de campo.
+          const state = {};
+          let updatedAt = "";
+          docs.slice().reverse().forEach((snap) => {
+            const st = snap.state && typeof snap.state === "object" ? snap.state : (snap.data && typeof snap.data === "object" ? snap.data : null);
+            if (st) Object.assign(state, st);
+            if (String(snap.updatedAt || "") > updatedAt) updatedAt = String(snap.updatedAt || "");
+          });
+          const storageKey = auth.getStudentStorageKey(user.usernameKey, t.stateKey, { area: "guide-data" });
+          const localState = readGuideDataState(storageKey);
+          const localMeta = readGuideDataMeta(storageKey);
+          const latest = pickLatestSnapshot(
+            { state, updatedAt, updatedBy: "cloud" },
+            localState ? { state: localState, updatedAt: localMeta?.updatedAt || "" } : null
+          );
+          if (latest && latest.state && typeof latest.state === "object") {
+            guideDataCacheSet(storageKey, latest.state, latest.updatedAt ? { updatedAt: latest.updatedAt, updatedBy: latest.updatedBy || "cloud" } : {});
+          }
+        }
+        if (!docs.length && fileStatus === "ok") {
+          // La nube CONFIRMA que no hay documento: lo que hubiera en memoria
+          // de una lectura anterior (p. ej. el listado general) ya no vale.
+          // Se conservan solo las ediciones locales del admin (habilitar /
+          // reabrir), que se guardan con updatedBy "admin-...".
+          const storageKey = auth.getStudentStorageKey(user.usernameKey, t.stateKey, { area: "guide-data" });
+          const localMeta = readGuideDataMeta(storageKey);
+          if (!/^admin-/.test(String(localMeta?.updatedBy || ""))) {
+            guideDataCacheSet(storageKey, {}, { updatedAt: "", updatedBy: "cloud-missing" });
+          }
+        }
+        const prev = learnerConsult.pairs.get(learnerPairKey(user.usernameKey, t.fileName));
+        learnerConsult.pairs.set(learnerPairKey(user.usernameKey, t.fileName), {
+          status: docs.length ? (fileStatus === "ok" ? "ok" : "incomplete") : fileStatus,
+          // Un fallo sin datos conserva la hora de la ultima lectura valida.
+          at: !docs.length && fileStatus !== "ok" && prev ? prev.at : fetchedAt,
+          stale: false,
+          failed: !docs.length && fileStatus !== "ok",
+        });
       });
-    });
-    let changed = false;
-    await runWithConcurrency(tasks, 6, async (task) => {
-      if (!task) return;
-      try {
-        // NO se usa skipDriveOn404 aqui: verificado en vivo (jul-9) que un 404
-        // de Firestore NO es un miss real -- el guide-state de sena_portal_guide_state
-        // es una coleccion Drive-primaria para lecturas de aprendices (ver
-        // DRIVE_PRIMARY_COLLECTIONS en firebase_db.js), asi que Firestore
-        // frecuentemente esta vacio/desactualizado aunque el aprendiz SI haya
-        // guardado (confirmado: el boton "Ver" puntual, que si prueba Drive,
-        // mostraba la respuesta real mientras la tabla masiva marcaba
-        // "sin-respuesta" para las 3 fichas de caso). Se prefiere exactitud
-        // sobre velocidad -- este barrido es soporte de documentacion oficial.
-        // EXCEPCION: si la recuperacion Drive→Firestore ya corrio en este
-        // navegador (boton "Recuperar datos de Drive" / backfillFromDrive),
-        // Firestore vuelve a ser fuente completa y un 404 SI es un miss real:
-        // se salta el viaje a Drive (10-25s por doc bajo carga) y el barrido
-        // pasa de minutos a segundos.
-        const promotionDone = typeof db.isDrivePromotionDone === "function" && db.isDrivePromotionDone();
-        const cloudSnapshot = await db.cloudGetGuideData(
-          getStudentCloudScope(task.usernameKey),
-          task.cloudFileName,
-          promotionDone ? { skipDriveOn404: true } : undefined
-        );
-        if (!cloudSnapshot) return;
-        const storageKey = auth.getStudentStorageKey(task.usernameKey, task.stateKey, { area: "guide-data" });
-        const localState = readGuideDataState(storageKey);
-        const localMeta = readGuideDataMeta(storageKey);
-        // pickLatestSnapshot prefiere la nube solo si es >= que lo local (por updatedAt),
-        // asi no pisa una edicion local mas nueva del admin (p.ej. reabrir entrega).
-        const latest = pickLatestSnapshot(
-          cloudSnapshot,
-          localState ? { state: localState, updatedAt: localMeta?.updatedAt || "" } : null
-        );
-        if (!latest || !latest.state || typeof latest.state !== "object") return;
-        // Cache EN MEMORIA (no localStorage): evita llenar la cuota del navegador.
-        guideDataCacheSet(storageKey, latest.state, latest.updatedAt
-          ? { updatedAt: latest.updatedAt, updatedBy: latest.updatedBy || "cloud" }
-          : {});
-        changed = true;
-      } catch (_) { /* una guia que falle no debe romper la hidratacion del resto */ }
-    });
-    guideStatesHydrated = true;
-    markDashboardHydrateNow();
-    return changed;
+      const recovered = statuses.some((s) => s === "ok" || s === "incomplete");
+      const allOk = statuses.every((s) => s === "ok");
+      const status = allOk ? "ok" : (recovered ? "incomplete" : statuses.reduce((a, b) => ((LEARNER_STATUS_RANK[b] || 0) > (LEARNER_STATUS_RANK[a] || 0) ? b : a), "ok"));
+      return { status, consulted: targets.length, fromCache, stats: detailed.stats || null };
+    })();
+    learnerConsult.inflight.set(inflightKey, run);
+    try {
+      return await run;
+    } catch (err) {
+      console.warn("[admin] consulta selectiva fallo:", err);
+      return { status: "error", consulted: 0, fromCache };
+    } finally {
+      learnerConsult.inflight.delete(inflightKey);
+    }
   }
 
-  async function patchGuideCloudState(usernameKey, fileName, patch) {
+  const LEARNER_MESSAGES = {
+    offline: "No fue posible conectar con la nube. Verifique su conexión e intente nuevamente.",
+    denied: "No tiene autorización para consultar esta información.",
+    quota: "Se alcanzó el límite diario de consultas de la nube. No se harán más intentos automáticos; intente de nuevo más tarde.",
+    incomplete: "No fue posible recuperar toda la información. Algunos resultados podrían no aparecer.",
+    service: "Ocurrió un problema al consultar la información. Intente nuevamente.",
+  };
+
+  function learnerStatusMessage(status) {
+    if (LEARNER_MESSAGES[status]) return LEARNER_MESSAGES[status];
+    return LEARNER_MESSAGES.service + (status === "timeout" ? " (tiempo de espera agotado)" : "");
+  }
+
+  // Indicadores del dashboard y Reportes: necesitan TODOS los aprendices. Se
+  // alimentan del listado de documentos de guia que la carga de la lista de
+  // aprendices YA descargo para calcular el progreso (0 lecturas adicionales).
+  // No sustituye a lo consultado por aprendiz (que es mas reciente).
+  let lastListingHydratedAt = 0;
+  function hydrateFromLastListing() {
+    const db = window._firebaseDb;
+    const listing = db && typeof db.getGuideStatesFromLastListing === "function"
+      ? db.getGuideStatesFromLastListing(state.users || [], (ficha) => getGuidesForFicha(ficha))
+      : null;
+    if (!listing || listing.at === lastListingHydratedAt) return false;
+    listing.entries.forEach((entry) => {
+      const stateKey = getGuideStateKey(entry.fileName);
+      if (!stateKey) return;
+      const storageKey = auth.getStudentStorageKey(entry.usernameKey, stateKey, { area: "guide-data" });
+      const localState = readGuideDataState(storageKey);
+      const localMeta = readGuideDataMeta(storageKey);
+      const latest = pickLatestSnapshot(
+        { state: entry.state, updatedAt: entry.updatedAt, updatedBy: "listado" },
+        localState ? { state: localState, updatedAt: localMeta?.updatedAt || "" } : null
+      );
+      if (latest && latest.state && typeof latest.state === "object") {
+        guideDataCacheSet(storageKey, latest.state, latest.updatedAt ? { updatedAt: latest.updatedAt, updatedBy: latest.updatedBy || "listado" } : {});
+      }
+    });
+    lastListingHydratedAt = listing.at;
+    return true;
+  }
+
+  // options.cloudFileName: escribir en un documento distinto del principal
+  // (habilitacion de un candado que vive en un documento adicional de la guia).
+  async function patchGuideCloudState(usernameKey, fileName, patch, options = {}) {
     const db = window._firebaseDb;
     const config = getGuideCloudConfig(fileName);
     if (!usernameKey || !config || !db || typeof db.cloudGetGuideData !== "function" || typeof db.cloudSaveGuideData !== "function") {
       return false;
     }
+    const cloudFileName = options.cloudFileName || config.cloudFileName;
     const scopeKey = getStudentCloudScope(usernameKey);
-    const current = await db.cloudGetGuideData(scopeKey, config.cloudFileName).catch(() => null);
+    // Cambian datos del aprendiz: lo consultado de "Entregas recientes" deja de ser vigente.
+    invalidateRecentDeliveries();
+    const current = await db.cloudGetGuideData(scopeKey, cloudFileName).catch(() => null);
     const currentState = current?.state && typeof current.state === "object" ? current.state : {};
     const updatedAt = new Date().toISOString();
-    return db.cloudSaveGuideData(scopeKey, config.cloudFileName, {
+    return db.cloudSaveGuideData(scopeKey, cloudFileName, {
       ...(current && typeof current === "object" ? current : {}),
       state: { ...currentState, ...(patch?.state || {}) },
       updatedAt,
@@ -1388,7 +1653,7 @@
     return {
       user,
       fileName,
-      guideTitle: auth.getGuideTitle(fileName),
+      guideTitle: guideLabel(fileName),
       activityId,
       activityLabel: activity.label,
       guideState,
@@ -1504,7 +1769,53 @@
     };
   }
 
+  // Opciones de aprendiz de una ficha, filtradas LOCALMENTE por nombre. El
+  // valor es el usernameKey (identificador real), nunca el nombre.
+  function learnerOptionsHtml(ficha, selected, search, placeholder) {
+    const term = normalizeText(search || "");
+    const learners = getUsersForFicha(ficha)
+      .slice()
+      .sort((x, y) => String(x.fullName || "").localeCompare(String(y.fullName || ""), "es"))
+      .filter((u) => !term || normalizeText(`${u.fullName} ${u.username || ""}`).includes(term) || u.usernameKey === selected);
+    const head = !ficha
+      ? '<option value="">Primero seleccione una ficha</option>'
+      : `<option value="">${term && !learners.length ? "Ningun aprendiz coincide" : escapeHtml(placeholder)} (${learners.length})</option>`;
+    return head + learners.map((u) =>
+      `<option value="${escapeHtml(u.usernameKey)}"${u.usernameKey === selected ? " selected" : ""}>${escapeHtml(u.fullName || u.usernameKey)}</option>`
+    ).join("");
+  }
+
+  function selectedLearner(ficha, learner) {
+    if (!ficha || !learner) return null;
+    return state.users.find((u) => u.usernameKey === learner && String(u.ficha) === String(ficha)) || null;
+  }
+
+  // Estado de la consulta del modulo para la seleccion actual (o null).
+  function moduleConsultEntry(module, key) {
+    const entry = learnerConsult.status[module];
+    return entry && entry.key === key ? entry : null;
+  }
+
+  // Avisos comunes: consulta en curso, fallo, incompleta, informacion vencida.
+  function learnerNoticesHtml(entry, user, guides) {
+    const notes = [];
+    const pairs = guides.map((g) => getLearnerPair(user.usernameKey, g)).filter(Boolean);
+    if (entry && entry.status === "loading") notes.push(["info", "Consultando la información del aprendiz seleccionado…"]);
+    else if (entry && entry.status && entry.status !== "ok") {
+      const hasData = pairs.some((p) => !p.failed);
+      notes.push([entry.status === "incomplete" ? "warning" : "danger",
+        learnerStatusMessage(entry.status) + (hasData && entry.status !== "incomplete" ? " Se muestra la última información recuperada, que podría estar desactualizada." : "")]);
+    } else if (pairs.some((p) => p.stale || (Date.now() - p.at) >= LEARNER_TTL_MS)) {
+      notes.push(["warning", "Parte de esta información se consultó hace más de 10 minutos o cambió después. Pulse «Actualizar desde la nube» para traerla de nuevo."]);
+    }
+    if (pairs.length && pairs.length < guides.length && !(entry && entry.status === "loading")) {
+      notes.push(["info", "Solo se muestran las guías ya consultadas de este aprendiz."]);
+    }
+    return notes.map(([tone, text]) => `<p class="c-alert c-alert--${tone}">${escapeHtml(text)}</p>`).join("");
+  }
+
   function renderResponses() {
+    ensureLearnerSession();
     const ficha = state.filters.responsesFicha || "";
     const guide = state.filters.responsesGuide || "";
     const learner = state.filters.responsesLearner || "";
@@ -1512,12 +1823,8 @@
     const statusFilter = state.filters.responsesStatus || "";
     byId("responses-ficha-filter").innerHTML = getFichaOptions(ficha, true);
     byId("responses-guide-filter").innerHTML = getGuideOptionsForFicha(ficha, guide, true);
-    const learnersForFilter = state.users.filter((user) => !ficha || String(user.ficha) === ficha);
-    byId("responses-learner-filter").innerHTML =
-      '<option value="">Todos los aprendices</option>' +
-      learnersForFilter.map((user) =>
-        `<option value="${escapeHtml(user.usernameKey)}"${learner === user.usernameKey ? " selected" : ""}>${escapeHtml(user.fullName)}</option>`
-      ).join("");
+    // Busqueda LOCAL de aprendiz: filtra las opciones, nunca consulta la nube.
+    byId("responses-learner-filter").innerHTML = learnerOptionsHtml(ficha, learner, state.filters.responsesText, "Seleccione un aprendiz");
     const activitiesForFilter = guide ? getResponseActivities(guide) : [];
     byId("responses-activity-filter").innerHTML =
       '<option value="">Todas las actividades</option>' +
@@ -1525,17 +1832,38 @@
         `<option value="${escapeHtml(item.id)}"${activity === item.id ? " selected" : ""}>${escapeHtml(item.label)}</option>`
       ).join("");
     byId("responses-status-filter").value = statusFilter;
-    const text = normalizeText(state.filters.responsesText);
-    const users = state.users.filter((user) =>
-      (!ficha || String(user.ficha) === ficha) &&
-      (!learner || user.usernameKey === learner) &&
-      (!text || normalizeText(`${user.fullName} ${user.username}`).includes(text))
-    );
-    const rows = users.flatMap((user) => {
-      const guides = guide ? [guide] : getGuidesForFicha(user.ficha);
-      return guides.flatMap((fileName) => {
-        const activities = activity ? [getResponseActivity(fileName, activity)] : getResponseActivities(fileName);
-        return activities.map((activityItem) => {
+    const user = selectedLearner(ficha, learner);
+    const key = `${ficha}|${learner}|${guide || "*"}`;
+    const entry = moduleConsultEntry("respuestas", key);
+    const loading = Boolean(entry && entry.status === "loading");
+    ["responses-consult", "responses-refresh"].forEach((id) => { const btn = byId(id); if (btn) btn.disabled = !user || loading; });
+    const statusEl = byId("responses-consult-status");
+    if (statusEl) statusEl.textContent = entry && entry.status === "ok" ? entry.text : "";
+    const table = (body) => `
+      <table class="admin-data-table">
+        <thead><tr><th>Aprendiz</th><th>Ficha</th><th>Guia</th><th>Actividad</th><th>Estado</th><th>Elaboracion</th><th>Actualizacion</th><th>Entrega</th><th>Acciones</th></tr></thead>
+        <tbody>${body}</tbody>
+      </table>`;
+    if (!user) {
+      byId("responses-table").innerHTML = table('<tr><td colspan="9" id="responses-message">Seleccione una ficha y un aprendiz y pulse «Consultar respuestas».</td></tr>');
+      return;
+    }
+    const guides = guide ? [guide] : getGuidesForFicha(user.ficha);
+    // Solo las guias de ESTE aprendiz ya consultadas con datos validos.
+    const consulted = guides.filter((g) => { const p = getLearnerPair(user.usernameKey, g); return p && !p.failed; });
+    const notices = learnerNoticesHtml(entry, user, guides);
+    if (!consulted.length) {
+      const msg = loading
+        ? "Consultando respuestas del aprendiz seleccionado…"
+        : entry && entry.status && entry.status !== "ok"
+          ? learnerStatusMessage(entry.status)
+          : "Pulse «Consultar respuestas» para ver las respuestas de este aprendiz.";
+      byId("responses-table").innerHTML = table(`<tr><td colspan="9" id="responses-message">${escapeHtml(msg)}</td></tr>`);
+      return;
+    }
+    const rows = consulted.flatMap((fileName) => {
+      const activities = activity ? [getResponseActivity(fileName, activity)] : getResponseActivities(fileName);
+      return activities.map((activityItem) => {
           const summary = collectActivityResponses(user, fileName, activityItem.id);
           if (statusFilter && summary.status !== statusFilter) return "";
           const hasAnswers = summary.answeredCount > 0 || stateHasAnswers(summary.delivery);
@@ -1548,7 +1876,7 @@
           <tr>
             <td>${escapeHtml(user.fullName)}<br><span class="admin-muted">${escapeHtml(user.usernameKey)}</span></td>
             <td>${escapeHtml(user.ficha)}</td>
-            <td>${escapeHtml(auth.getGuideTitle(fileName))}</td>
+            <td>${escapeHtml(guideLabel(fileName))}</td>
             <td>${escapeHtml(summary.activityLabel)}</td>
             <td><span class="admin-status ${statusClass}">${escapeHtml(hasAnswers ? summary.status : "sin-respuesta")}</span></td>
             <td>${escapeHtml(formatDate(summary.fechaPrimerGuardado))}</td>
@@ -1560,15 +1888,39 @@
             </td>
           </tr>
         `;
-        });
       });
     }).filter(Boolean).join("");
-    byId("responses-table").innerHTML = `
-      <table class="admin-data-table">
-        <thead><tr><th>Aprendiz</th><th>Ficha</th><th>Guia</th><th>Actividad</th><th>Estado</th><th>Elaboracion</th><th>Actualizacion</th><th>Entrega</th><th>Acciones</th></tr></thead>
-        <tbody>${rows || '<tr><td colspan="9">No hay respuestas visibles con los filtros actuales.</td></tr>'}</tbody>
-      </table>
-    `;
+    byId("responses-table").innerHTML = notices + table(rows || '<tr><td colspan="9" id="responses-message">No hay respuestas que coincidan con los filtros actuales.</td></tr>');
+  }
+
+  // "Consultar"/"Actualizar" de Respuestas y Entregas: solo el aprendiz y las
+  // guias seleccionados. Una consulta identica en curso no se repite.
+  async function consultLearnerModule(module, options = {}) {
+    const isResponses = module === "respuestas";
+    const ficha = (isResponses ? state.filters.responsesFicha : state.filters.deliveriesFicha) || "";
+    const learner = (isResponses ? state.filters.responsesLearner : state.filters.deliveriesLearner) || "";
+    const guide = (isResponses ? state.filters.responsesGuide : state.filters.deliveriesGuide) || "";
+    const user = selectedLearner(ficha, learner);
+    if (!user) return null;
+    const key = `${ficha}|${learner}|${guide || "*"}`;
+    const current = learnerConsult.status[module];
+    if (current && current.key === key && current.status === "loading") return null;
+    const entry = { key, status: "loading", text: "", at: Date.now() };
+    learnerConsult.status[module] = entry;
+    const rerender = () => { if (state.activeModule === module) (isResponses ? renderResponses : renderDeliveries)(); };
+    rerender();
+    const files = guide ? [guide] : getGuidesForFicha(user.ficha);
+    const result = await consultLearnerGuides(user, files, { force: Boolean(options.force) });
+    if (learnerConsult.status[module] !== entry) return result; // la seleccion cambio
+    entry.status = result.status;
+    const when = new Date().toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" });
+    const st = result.stats;
+    entry.text = result.consulted
+      ? `Consultado a las ${when}: ${result.consulted} guia${result.consulted !== 1 ? "s" : ""} de ${user.fullName}` +
+        (st ? ` (${st.firestoreRequests} solicitudes, ${st.firestoreDocs} documentos${st.driveRequests ? `, ${st.driveRequests} a Drive` : ""}).` : ".")
+      : `Consultado a las ${when}: informacion vigente reutilizada, sin nuevas lecturas.`;
+    rerender();
+    return result;
   }
 
   function collectDeliveries() {
@@ -1614,7 +1966,7 @@
           ficha: user.ficha || "",
           grupo: user.grupo || "",
           institucion: user.inst || user.institucion || "",
-          guia: auth.getGuideTitle(fileName),
+          guia: guideLabel(fileName),
           archivoGuia: fileName,
           progreso: Number(guideProgress.percent || 0),
           completadas: Number(guideProgress.completed || 0),
@@ -1797,7 +2149,8 @@
 
     guideState[lockKey] = false;
     guideState[deliveryKey] = deliveryRecord;
-    writeGuideDataLocal(storageKey, guideState, {
+    // Memoria del panel; nada academico a localStorage (igual que "Habilitar").
+    guideDataCacheSet(storageKey, guideState, {
       updatedAt: now,
       updatedBy: `admin-reopen:${adminLabel}`,
       reabierta: true,
@@ -1809,6 +2162,8 @@
     }
 
     await syncReopenedActivityToCloud(usernameKey, fileName, stateKey, activityId, deliveryRecord, now, adminLabel).catch(() => false);
+    // Lo consultado de esta guia ya no es vigente: el aviso invita a actualizar.
+    markLearnerPairStale(usernameKey, fileName);
     recordAudit({
       action: "activity-reopen",
       target: `${usernameKey}:${fileName}:${activityId}`,
@@ -1819,16 +2174,60 @@
   }
 
   function renderDeliveries() {
+    ensureLearnerSession();
     const ficha = state.filters.deliveriesFicha || "";
+    const learner = state.filters.deliveriesLearner || "";
+    const guide = state.filters.deliveriesGuide || "";
     const text = normalizeText(state.filters.deliveriesText);
     const fromIso = state.filters.deliveriesFrom || "";
     const toIso = state.filters.deliveriesTo || "";
     const fromMs = fromIso ? Date.parse(fromIso + "T00:00:00-05:00") : null; // inicio del dia en Bogota
     const toMs = toIso ? Date.parse(toIso + "T23:59:59-05:00") : null;       // fin del dia en Bogota
     byId("deliveries-ficha-filter").innerHTML = getFichaOptions(ficha, true);
+    const learnerSel = byId("deliveries-learner-filter");
+    if (learnerSel) learnerSel.innerHTML = learnerOptionsHtml(ficha, learner, state.filters.deliveriesLearnerSearch, "Seleccione un aprendiz");
+    const guideSel = byId("deliveries-guide-filter");
+    if (guideSel) guideSel.innerHTML = getGuideOptionsForFicha(ficha, guide, true);
+    const periodSel = byId("deliveries-period");
+    if (periodSel) periodSel.value = state.filters.deliveriesPeriod || "";
+    if (byId("deliveries-from")) byId("deliveries-from").value = fromIso;
+    if (byId("deliveries-to")) byId("deliveries-to").value = toIso;
+    const user = selectedLearner(ficha, learner);
+    const key = `${ficha}|${learner}|${guide || "*"}`;
+    const entry = moduleConsultEntry("entregas", key);
+    const loading = Boolean(entry && entry.status === "loading");
+    ["deliveries-consult", "deliveries-refresh"].forEach((id) => { const btn = byId(id); if (btn) btn.disabled = !user || loading; });
+    const statusEl = byId("deliveries-consult-status");
+    if (statusEl) statusEl.textContent = entry && entry.status === "ok" ? entry.text : "";
+    const table = (body) => `
+      <table class="admin-data-table">
+        <thead><tr><th>Archivo</th><th>Aprendiz</th><th>Ficha</th><th>Guia</th><th>Actividad</th><th>Fecha</th><th>Estado</th><th>Acciones</th></tr></thead>
+        <tbody>${body}</tbody>
+      </table>`;
+    if (!user) {
+      state.filteredDeliveries = [];
+      byId("deliveries-table").innerHTML = table('<tr><td colspan="8" id="deliveries-message">Seleccione una ficha y un aprendiz y pulse «Consultar entregas».</td></tr>');
+      return;
+    }
+    const guides = guide ? [guide] : getGuidesForFicha(user.ficha);
+    const consulted = new Set(guides.filter((g) => { const p = getLearnerPair(user.usernameKey, g); return p && !p.failed; }));
+    const notices = learnerNoticesHtml(entry, user, guides);
+    if (!consulted.size) {
+      state.filteredDeliveries = [];
+      const msg = loading
+        ? "Consultando entregas del aprendiz seleccionado…"
+        : entry && entry.status && entry.status !== "ok"
+          ? learnerStatusMessage(entry.status)
+          : "Pulse «Consultar entregas» para ver las entregas de este aprendiz.";
+      byId("deliveries-table").innerHTML = table(`<tr><td colspan="8" id="deliveries-message">${escapeHtml(msg)}</td></tr>`);
+      return;
+    }
+    // El filtro de fechas se aplica DESPUES de la consulta selectiva: las
+    // entregas viven dentro del estado de cada guia (no hay un campo
+    // consultable por fecha de entrega), asi que el periodo no reduce lecturas.
     const deliveries = collectDeliveries().filter((item) => {
-      if (ficha && String(item.user.ficha) !== ficha) return false;
-      if (text && !normalizeText(`${item.user.fullName} ${item.savedFileName} ${item.activityId}`).includes(text)) return false;
+      if (item.user.usernameKey !== user.usernameKey || !consulted.has(item.fileName)) return false;
+      if (text && !normalizeText(`${item.savedFileName} ${item.activityId} ${auth.getGuideTitle(item.fileName)} ${guideLabel(item.fileName)}`).includes(text)) return false;
       const submittedMs = item.submittedAt ? Date.parse(item.submittedAt) : null;
       if (fromMs != null) {
         if (submittedMs == null || isNaN(submittedMs) || submittedMs < fromMs) return false;
@@ -1837,7 +2236,7 @@
         if (submittedMs == null || isNaN(submittedMs) || submittedMs > toMs) return false;
       }
       return true;
-    });
+    }).sort((x, y) => String(y.submittedAt || "").localeCompare(String(x.submittedAt || "")));
     state.filteredDeliveries = deliveries;
     const rows = deliveries.map((item) => {
       const policy = deadlineManager?.getPolicy?.(item.fileName, item.activityId);
@@ -1850,7 +2249,7 @@
           <td>${escapeHtml(item.savedFileName || "Sin nombre")}</td>
           <td>${escapeHtml(item.user.fullName)}</td>
           <td>${escapeHtml(item.user.ficha)}</td>
-          <td>${escapeHtml(auth.getGuideTitle(item.fileName))}</td>
+          <td>${escapeHtml(guideLabel(item.fileName))}</td>
           <td>${escapeHtml(item.activityId)}</td>
           <td>${escapeHtml(formatDate(item.submittedAt))}</td>
           <td><span class="admin-status ${statusClass}">${escapeHtml(statusText)}</span></td>
@@ -1867,12 +2266,23 @@
         </tr>
       `;
     }).join("");
-    byId("deliveries-table").innerHTML = `
-      <table class="admin-data-table">
-        <thead><tr><th>Archivo</th><th>Aprendiz</th><th>Ficha</th><th>Guia</th><th>Actividad</th><th>Fecha</th><th>Estado</th><th>Acciones</th></tr></thead>
-        <tbody>${rows || '<tr><td colspan="8">No hay entregas registradas en los datos locales actuales.</td></tr>'}</tbody>
-      </table>
-    `;
+    const emptyMsg = fromIso || toIso || text
+      ? "El aprendiz no tiene entregas registradas que coincidan con los filtros actuales."
+      : "El aprendiz no tiene entregas registradas en las guías consultadas.";
+    byId("deliveries-table").innerHTML = notices + table(rows || `<tr><td colspan="8" id="deliveries-message">${escapeHtml(emptyMsg)}</td></tr>`);
+  }
+
+  // Periodo predefinido -> rango de fechas (dias calendario en Bogota).
+  function applyDeliveriesPeriod(value) {
+    state.filters.deliveriesPeriod = value || "";
+    if (!value || value === "custom") {
+      if (!value) { state.filters.deliveriesFrom = ""; state.filters.deliveriesTo = ""; }
+      return;
+    }
+    const days = Number(value) || 0;
+    const bogotaDate = (ms) => new Date(ms - 5 * 3600000).toISOString().slice(0, 10);
+    state.filters.deliveriesTo = bogotaDate(Date.now());
+    state.filters.deliveriesFrom = bogotaDate(Date.now() - (days - 1) * 86400000);
   }
 
   // Convierte el array de entregas filtradas a CSV y descarga.
@@ -1915,7 +2325,7 @@
         item.user.inst || "",
         item.user.grupo || "",
         item.fileName || "",
-        auth.getGuideTitle ? auth.getGuideTitle(item.fileName) : "",
+        guideLabel(item.fileName),
         item.activityId || "",
         item.estado || item.status || "",
         submittedISO,
@@ -2026,12 +2436,42 @@
     try { sessionStorage.removeItem(USERS_CACHE_KEY); } catch (_) { /* sin sessionStorage */ }
   }
 
+  // Optimizacion 2026-10-28: tras editar datos, activar/desactivar o corregir
+  // nombres se recargaba la lista COMPLETA (usuarios + progreso de todos +
+  // listado de guias: cientos de lecturas) para cambiar una fila. Ahora se
+  // toma el registro LOCAL que portalAuth ya actualizo con la operacion
+  // exitosa y se actualiza solo esa fila, conservando su progreso (0
+  // lecturas). Si cambio la ficha (cambian sus guias) o no se encuentra el
+  // registro, se recarga todo como antes. La cache de sesion de la lista se
+  // invalida para que una recarga posterior traiga la nube.
+  function patchLearnersFromLocal(usernameKeys) {
+    const localUsers = typeof auth.getUsers === "function" ? (auth.getUsers() || []) : [];
+    let needFull = false;
+    (usernameKeys || []).forEach((key) => {
+      const idx = state.users.findIndex((u) => u.usernameKey === key);
+      const local = localUsers.find((u) => u && u.usernameKey === key);
+      if (idx === -1 || !local) { needFull = true; return; }
+      const current = state.users[idx];
+      if (String(local.ficha || "") !== String(current.ficha || "")) { needFull = true; return; }
+      const profile = Object.assign({}, local);
+      delete profile.passwordHash;
+      delete profile.progress;
+      delete profile.guides;
+      state.users[idx] = Object.assign({}, current, profile, { progress: current.progress });
+    });
+    try { sessionStorage.removeItem(USERS_CACHE_KEY); } catch (_) { /* sin sessionStorage */ }
+    if (needFull || !(usernameKeys || []).length) return loadUsers();
+    renderAll();
+    return Promise.resolve();
+  }
+
   async function loadUsers(options = {}) {
     if (!hasAdminPanelAccess()) {
       window.location.replace("index.html");
       return;
     }
     let fetched = null;
+    let fromCache = false;
     // Solo se LEE el cache cuando se pide explicitamente (carga inicial / recarga).
     // Las mutaciones llaman loadUsers() sin opciones -> siempre bajan fresco.
     if (options.useCache) {
@@ -2039,6 +2479,7 @@
         const cached = JSON.parse(sessionStorage.getItem(USERS_CACHE_KEY) || "null");
         if (cached && Array.isArray(cached.users) && (Date.now() - Number(cached.at)) < USERS_CACHE_TTL_MS) {
           fetched = cached.users;
+          fromCache = true;
         }
       } catch (_) { /* cache corrupto: se ignora y se baja fresco */ }
     }
@@ -2055,12 +2496,32 @@
       ...user,
       progress: progressForUser(user),
     }));
+    // Libera la cuota de localStorage que sesiones anteriores llenaron con el
+    // guide-data de aprendices (ahora se cachea en memoria). Antes lo hacia la
+    // hidratacion completa, que ya no existe.
+    purgeStudentGuideDataFromLocal();
+    // Indicadores del dashboard y Reportes desde el listado ya descargado para
+    // el progreso (0 lecturas adicionales).
+    if (!fromCache) hydrateFromLastListing();
     renderAll();
-    // La hidratacion pesada del guide_state (N aprendices x M guias) no se
-    // repite en cada carga del panel para no acercar la cuota diaria gratis al
-    // limite: al abrir Respuestas/Entregas corre bajo demanda (ver setActiveModule),
-    // y para la tarjeta "Entregas recientes" del dashboard corre sola pero
-    // limitada a una vez cada 30 min por navegador (ver maybeAutoHydrateDashboard).
+    // Si el respaldo de progreso desde datos de guia no se pudo consultar,
+    // los porcentajes de algunas guias pueden estar incompletos: se avisa.
+    const progressLoad = window._firebaseDb?.getLastStudentsProgressLoad?.();
+    if (!fromCache && progressLoad && progressLoad.status && progressLoad.status !== "ok") {
+      setFeedback(
+        progressLoad.status === "quota"
+          ? "Se alcanzó el límite diario de consultas de la nube: algunos porcentajes de avance podrían estar incompletos. Intente más tarde con «Actualizar datos»."
+          : "No fue posible recuperar todos los datos de las guías: algunos porcentajes de avance podrían estar incompletos.",
+        "warning"
+      );
+    }
+    // Habilitacion no forma parte de renderAll: si el admin ya esta en el
+    // modulo cuando llegan los aprendices, se pinta y arranca su carga.
+    if (state.activeModule === "habilitacion") renderHabilitacionPanel();
+    // La hidratacion pesada del guide_state (N aprendices x M guias) ya no corre
+    // al cargar el panel: al abrir Respuestas/Entregas corre bajo demanda (ver
+    // setActiveModule) y "Entregas recientes" consulta solo lo actualizado en
+    // el periodo elegido, al pulsar su boton (ver consultRecentDeliveries).
     if (!state.users.length) {
       setFeedback(
         "No hay aprendices cargados en este navegador. Inicia sesion admin real, configura Firebase o crea/importa aprendices para ver respuestas, entregas y reportes completos.",
@@ -2229,19 +2690,10 @@
     if (moduleName === "laboratorio") {
       renderHardwareLabPanel();
     }
-    // Respuestas/Entregas leen el localStorage del admin; al abrir el modulo
-    // bajamos UNA vez el guide_state de la nube y re-renderizamos para mostrar
-    // datos cross-device (aprendices que guardaron en otro equipo).
-    if (moduleName === "respuestas" || moduleName === "entregas") {
-      const rerender = moduleName === "respuestas" ? renderResponses : renderDeliveries;
-      setFeedback("Sincronizando datos de los aprendices desde la nube...", "info");
-      ensureGuideStatesHydrated()
-        .then((changed) => {
-          if (state.activeModule === moduleName && changed) rerender();
-          setFeedback("", "info");
-        })
-        .catch(() => setFeedback("", "info"));
-    }
+    // Respuestas/Entregas: abrir el modulo NO consulta la nube (consulta
+    // selectiva por aprendiz con su boton, ver consultLearnerGuides).
+    if (moduleName === "respuestas") renderResponses();
+    if (moduleName === "entregas") renderDeliveries();
     if (tab === "auditoria") {
       renderAuditPanel();
       window.requestAnimationFrame(() => {
@@ -2335,6 +2787,122 @@
     }
   }
 
+  // ── Habilitacion: consulta SELECTIVA (auditoria 2026-10-22, 2a etapa) ─────
+  // Flujo: ficha -> aprendiz -> guia (opcional) -> "Consultar actividades".
+  // Entrar al modulo, elegir ficha/aprendiz/guia, escribir en los buscadores o
+  // volver a dibujar el panel NO consultan la nube. Solo consultan "Consultar
+  // actividades" (reutiliza lo ya consultado y vigente) y "Cargar estado desde
+  // la nube" (fuerza la relectura de esa misma seleccion), y siempre solo el
+  // aprendiz seleccionado. Reemplaza a la carga automatica por ficha anterior
+  // (aprendices x guias x ~5 lecturas cada vez que se abria una ficha).
+  const HAB_FICHA_PREF_KEY = "sena_portal_admin_hab_ficha_v1";
+  const habConsult = { seq: 0, current: null }; // current: { key, status, text, at, token }
+  // Al salir de la pagina (cerrar sesion, navegar, cache de retroceso del
+  // navegador) no queda informacion academica consultada en memoria.
+  window.addEventListener("pagehide", () => {
+    habConsult.current = null;
+    window.adminHabilitacion?.clearCache?.();
+    recentDeliveries.cache.clear();
+    learnerConsult.pairs.clear();
+    learnerConsult.status = { respuestas: null, entregas: null };
+  });
+
+  function getHabilitacionFilters() {
+    if (!state.habilitacionFilters) {
+      let ficha = "";
+      try { ficha = localStorage.getItem(HAB_FICHA_PREF_KEY) || ""; } catch (_) { /* sin localStorage */ }
+      state.habilitacionFilters = { ficha, learnerSearch: "", learner: "", guide: "", activity: "" };
+    }
+    return state.habilitacionFilters;
+  }
+
+  function rememberHabilitacionFicha(ficha) {
+    try {
+      if (ficha) localStorage.setItem(HAB_FICHA_PREF_KEY, ficha);
+      else localStorage.removeItem(HAB_FICHA_PREF_KEY);
+    } catch (_) { /* preferencia opcional */ }
+  }
+
+  // Identifica la sesion de admin: la cache del modulo se descarta si cambia.
+  function habSessionKey() {
+    const session = auth?.getCurrentSession?.();
+    if (!session) return "";
+    return [session.role || "", session.usernameKey || session.user?.usernameKey || "", session.loggedAt || ""].join("|");
+  }
+
+  function habSelectionKey(filters) {
+    return [filters.ficha || "", filters.learner || "", filters.guide || "*"].join("|");
+  }
+
+  function habSelectedLearner(filters) {
+    if (!filters.ficha || !filters.learner) return null;
+    return (state.users || []).find((u) => u.usernameKey === filters.learner && String(u.ficha) === String(filters.ficha)) || null;
+  }
+
+  function habSelectedGuides(filters) {
+    const guides = filters.ficha && typeof auth.getGuidesForFicha === "function" ? auth.getGuidesForFicha(filters.ficha) : [];
+    return filters.guide && guides.includes(filters.guide) ? [filters.guide] : guides;
+  }
+
+  function habDeps(extra) {
+    return Object.assign({
+      auth,
+      deadlineManager: window.activityDeadlineManager,
+      readJson: readJsonSafe,
+      getUnlockActivitiesForGuide,
+      getGuideActivityStateKey,
+      sessionKey: habSessionKey(),
+    }, extra || {});
+  }
+
+  function habStatusText(result, startedAt) {
+    if (!result) return "";
+    const when = new Date().toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" });
+    const s = result.stats;
+    const detail = s
+      ? ` ${s.firestoreRequests} solicitud${s.firestoreRequests !== 1 ? "es" : ""} a Firestore (${s.firestoreDocs} documentos)` +
+        (s.driveRequests ? `, ${s.driveRequests} a la réplica de Drive` : "") + `, ${Math.round((Date.now() - startedAt) / 100) / 10} s.`
+      : "";
+    if (!result.consulted) return `Consultado a las ${when}: información vigente reutilizada, sin nuevas lecturas.`;
+    return `Consultado a las ${when}: ${result.consulted} guía${result.consulted !== 1 ? "s" : ""} del aprendiz.${detail}`;
+  }
+
+  // Consulta (solo lectura) la seleccion actual. Sin bucles: solo la invocan
+  // los dos botones y la confirmacion posterior a "Habilitar"; una consulta
+  // identica en curso no se duplica (doble clic).
+  async function consultHabilitacionSelection(options = {}) {
+    const hab = window.adminHabilitacion;
+    const filters = getHabilitacionFilters();
+    const learner = habSelectedLearner(filters);
+    if (!hab || typeof hab.consultLearner !== "function" || !learner) return null;
+    const key = habSelectionKey(filters);
+    if (habConsult.current && habConsult.current.key === key && habConsult.current.status === "loading") return null;
+    const token = ++habConsult.seq;
+    const entry = { key, status: "loading", text: "Consultando actividades del aprendiz seleccionado…", at: Date.now(), token };
+    habConsult.current = entry;
+    if (state.activeModule === "habilitacion") renderHabilitacionPanel();
+
+    let result;
+    if (!hasAdminPanelAccess()) {
+      result = { status: "denied", consulted: 0 };
+    } else {
+      const db = window._firebaseDb;
+      const promotionDone = Boolean(db && typeof db.isDrivePromotionDone === "function" && db.isDrivePromotionDone());
+      result = await hab.consultLearner(learner, options.guides || habSelectedGuides(filters), habDeps({
+        force: Boolean(options.force),
+        // Igual criterio que ensureGuideStatesHydrated: si la recuperacion
+        // Drive->Firestore ya corrio, un documento ausente no se busca en Drive.
+        skipDrive: promotionDone,
+      }));
+    }
+    // Resultado de una seleccion que ya cambio: queda en cache, no se pinta.
+    if (habConsult.current !== entry) return result;
+    entry.status = result?.status || "error";
+    entry.text = entry.status === "ok" ? habStatusText(result, entry.at) : "";
+    if (state.activeModule === "habilitacion") renderHabilitacionPanel();
+    return result;
+  }
+
   function renderHabilitacionPanel() {
     const host = byId("habilitacion-host");
     if (!host) return;
@@ -2343,15 +2911,17 @@
       host.innerHTML = '<p class="activities-empty">Modulo adminHabilitacion no esta disponible.</p>';
       return;
     }
-    const deps = {
-      auth,
-      deadlineManager: window.activityDeadlineManager,
-      readJson: readJsonSafe,
-      getUnlockActivitiesForGuide,
-      getGuideActivityStateKey,
-      filters: state.habilitacionFilters || {},
-    };
-    host.innerHTML = hab.buildHabilitacionPanel(state.users || [], deps);
+    const filters = getHabilitacionFilters();
+    // Ficha recordada que ya no existe en la lista de aprendices.
+    if (filters.ficha && (state.users || []).length && !(state.users || []).some((u) => String(u.ficha) === filters.ficha)) {
+      Object.assign(filters, { ficha: "", learner: "", learnerSearch: "", guide: "" });
+      rememberHabilitacionFicha("");
+    }
+    const current = habConsult.current && habConsult.current.key === habSelectionKey(filters) ? habConsult.current : null;
+    host.innerHTML = hab.buildHabilitacionPanel(state.users || [], habDeps({
+      filters,
+      consult: current ? { status: current.status, text: current.text, at: current.at } : null,
+    }));
     bindHabilitacionHandlers();
   }
 
@@ -2359,139 +2929,58 @@
     const host = byId("habilitacion-host");
     if (!host) return;
 
-    // Filtros (live)
-    const onFilter = () => {
-      const fichaValue = host.querySelector("#hab-filter-ficha")?.value || "";
-      state.habilitacionFilters = {
-        name: host.querySelector("#hab-filter-name")?.value || "",
-        ficha: fichaValue,
-        guide: host.querySelector("#hab-filter-guide")?.value || "",
-        activity: host.querySelector("#hab-filter-activity")?.value || "",
-      };
+    // Selectores: actualizan la seleccion y vuelven a dibujar; NUNCA consultan.
+    const onSelect = () => {
+      const filters = getHabilitacionFilters();
+      const ficha = host.querySelector("#hab-filter-ficha")?.value || "";
+      let learner = host.querySelector("#hab-filter-learner")?.value || "";
+      let guide = host.querySelector("#hab-filter-guide")?.value || "";
+      let learnerSearch = filters.learnerSearch || "";
+      if (ficha !== filters.ficha) {
+        // Otra ficha: el aprendiz y la guia anteriores no aplican.
+        learner = "";
+        learnerSearch = "";
+        const allowed = ficha && typeof auth.getGuidesForFicha === "function" ? auth.getGuidesForFicha(ficha) : [];
+        if (!allowed.includes(guide)) guide = "";
+        rememberHabilitacionFicha(ficha);
+      }
+      Object.assign(filters, { ficha, learner, guide, learnerSearch });
       renderHabilitacionPanel();
-      maybeAutoSyncHabilitacionFicha(fichaValue);
     };
-    host.querySelector("#hab-filter-name")?.addEventListener("input", debounce(onFilter, 250));
-    host.querySelector("#hab-filter-ficha")?.addEventListener("change", onFilter);
-    host.querySelector("#hab-filter-guide")?.addEventListener("change", onFilter);
-    host.querySelector("#hab-filter-activity")?.addEventListener("input", debounce(onFilter, 250));
+    host.querySelector("#hab-filter-ficha")?.addEventListener("change", onSelect);
+    host.querySelector("#hab-filter-learner")?.addEventListener("change", onSelect);
+    host.querySelector("#hab-filter-guide")?.addEventListener("change", onSelect);
 
-    // Botones "Habilitar"
+    // Buscador de aprendiz: filtra LOCALMENTE las opciones del selector, sin
+    // volver a dibujar el panel (el foco y el cursor no se pierden).
+    host.querySelector("#hab-learner-search")?.addEventListener("input", (event) => {
+      const filters = getHabilitacionFilters();
+      filters.learnerSearch = event.target.value || "";
+      const select = host.querySelector("#hab-filter-learner");
+      if (select && window.adminHabilitacion?.buildLearnerOptionsHtml) {
+        select.innerHTML = window.adminHabilitacion.buildLearnerOptionsHtml(state.users || [], filters.ficha, filters.learnerSearch, filters.learner);
+      }
+    });
+
+    // Filtro de actividad: local sobre lo ya consultado; conserva el foco.
+    host.querySelector("#hab-filter-activity")?.addEventListener("input", debounce((event) => {
+      const filters = getHabilitacionFilters();
+      filters.activity = event.target.value || "";
+      const caret = event.target.selectionStart;
+      renderHabilitacionPanel();
+      const input = byId("habilitacion-host")?.querySelector("#hab-filter-activity");
+      if (input) {
+        input.focus();
+        try { input.setSelectionRange(caret, caret); } catch (_) { /* sin seleccion */ }
+      }
+    }, 250));
+
     host.querySelectorAll("[data-hab-unlock]").forEach((button) => {
       button.addEventListener("click", () => handleUnlockClick(button));
     });
 
-    // Boton "Cargar estado desde la nube"
-    const cloudBtn = host.querySelector("#hab-cloud-sync");
-    if (cloudBtn) {
-      cloudBtn.addEventListener("click", () => handleHabilitacionCloudSync(cloudBtn));
-    }
-  }
-
-  // Bloque G: dispara pullCloudStateForUsers automaticamente al seleccionar
-  // una ficha (throttlado 10 min por ficha, ver adminHabilitacion.shouldAutoSyncFicha),
-  // sin la confirmacion ni el bloqueo de boton del sync manual -- corre en
-  // segundo plano mientras la tabla ya renderizada (con lo que hubiera en
-  // localStorage) sigue usable. Objetivo: "abre -> selecciona ficha -> aparecen
-  // los aprendices reales" sin que el admin tenga que acordarse de un boton.
-  function maybeAutoSyncHabilitacionFicha(ficha) {
-    const hab = window.adminHabilitacion;
-    const fichaKey = String(ficha || "").trim();
-    if (!fichaKey) return; // "todas las fichas": solo manual (costo de lecturas)
-    if (!hab || typeof hab.pullCloudStateForUsers !== "function" || typeof hab.shouldAutoSyncFicha !== "function") return;
-    if (!hab.shouldAutoSyncFicha(fichaKey)) return;
-    const users = (state.users || []).filter((u) => String(u.ficha) === fichaKey);
-    if (!users.length) return;
-
-    const host = byId("habilitacion-host");
-    const statusEl = host?.querySelector("#hab-cloud-sync-status");
-    if (statusEl) statusEl.textContent = "Actualizando desde la nube en segundo plano...";
-
-    hab.pullCloudStateForUsers(users, {
-      auth,
-      getGuideActivityStateKey,
-      onProgress: ({ idx, total }) => {
-        if (statusEl) statusEl.textContent = `Actualizando desde la nube (${idx}/${total})...`;
-      },
-    }).then((result) => {
-      hab.markFichaAutoSynced(fichaKey);
-      if (statusEl) {
-        statusEl.textContent = result && result.merged
-          ? `Actualizado desde la nube (${result.merged} estados de ${result.fetched} consultados).`
-          : "Sin cambios nuevos desde la nube.";
-      }
-      // Solo re-renderiza si el admin sigue viendo esta misma ficha (evita
-      // pisar la vista si ya cambio de filtro mientras esto corria en segundo plano).
-      if ((state.habilitacionFilters || {}).ficha === fichaKey) {
-        renderHabilitacionPanel();
-      }
-    }).catch((err) => {
-      console.error("[admin] auto-sync habilitacion fallo:", err);
-      if (statusEl) statusEl.textContent = "No se pudo actualizar automaticamente desde la nube (puedes reintentar con el boton de arriba).";
-    });
-  }
-
-  async function handleHabilitacionCloudSync(button) {
-    const hab = window.adminHabilitacion;
-    if (!hab || typeof hab.pullCloudStateForUsers !== "function") {
-      window.portalAlert("El modulo de habilitacion no esta cargado.", { type: "error" });
-      return;
-    }
-    const host = byId("habilitacion-host");
-    const statusEl = host?.querySelector("#hab-cloud-sync-status");
-    const filters = state.habilitacionFilters || {};
-    const fichaFilter = String(filters.ficha || "").trim();
-    const users = (state.users || []).filter((u) => {
-      if (fichaFilter && String(u.ficha) !== fichaFilter) return false;
-      return true;
-    });
-    if (!users.length) {
-      window.portalAlert("No hay aprendices en el filtro actual.", { type: "warning" });
-      return;
-    }
-    // Confirmacion con estimacion de costo de lecturas
-    const guideCount = typeof auth.getGuidesForFicha === "function"
-      ? (auth.getGuidesForFicha(users[0]?.ficha) || []).length
-      : 0;
-    const estimated = users.length * Math.max(1, guideCount);
-    const fichaLabel = fichaFilter ? `ficha ${fichaFilter}` : "TODAS las fichas";
-    const confirmed = await confirmAdminAction(
-      `Traer estado desde Firestore para ${users.length} aprendices de ${fichaLabel}.\n` +
-      `Aproximadamente ${estimated} lecturas de Firestore.\n\n` +
-      `Continuar?`
-    );
-    if (!confirmed) return;
-
-    button.disabled = true;
-    const originalLabel = button.innerHTML;
-    button.innerHTML = "&#9203; Sincronizando&hellip;";
-    if (statusEl) statusEl.textContent = "Iniciando sincronizacion&hellip;";
-
-    try {
-      const result = await hab.pullCloudStateForUsers(users, {
-        auth,
-        getGuideActivityStateKey,
-        onProgress: ({ idx, total, fullName, pageFile }) => {
-          if (statusEl) {
-            statusEl.textContent = `Sincronizando ${idx}/${total}: ${fullName} - ${pageFile}`;
-          }
-        },
-      });
-      if (statusEl) {
-        statusEl.textContent =
-          `Sincronizacion terminada. ${result.merged} estados actualizados, ` +
-          `${result.fetched} lecturas, ${result.errors} errores. Refrescando lista...`;
-      }
-      // Re-render con los nuevos estados ya en localStorage
-      renderHabilitacionPanel();
-    } catch (err) {
-      console.error("[admin] cloud sync failed:", err);
-      if (statusEl) statusEl.textContent = "Error: " + (err?.message || "error desconocido");
-      window.portalAlert("No se pudo sincronizar: " + (err?.message || "error"), { type: "error" });
-    } finally {
-      button.disabled = false;
-      button.innerHTML = originalLabel;
-    }
+    host.querySelector("#hab-consult")?.addEventListener("click", () => { void consultHabilitacionSelection(); });
+    host.querySelector("#hab-cloud-sync")?.addEventListener("click", () => { void consultHabilitacionSelection({ force: true }); });
   }
 
   function debounce(fn, ms) {
@@ -2542,17 +3031,33 @@
       nextState.reabierta = true;
       nextState.permiteEdicion = true;
       nextState.updatedAt = new Date().toISOString();
-      writeGuideDataLocal(storageKey, nextState, { updatedAt: nextState.updatedAt, updatedBy: "admin-activity-unlock" });
-      await patchGuideCloudState(usernameKey, guideFile, {
+      const unlockPatch = (extra) => patchGuideCloudState(usernameKey, guideFile, {
         state: lockKeys.reduce((acc, key) => {
           if (/-locked$/.test(key)) acc[key] = false;
           return acc;
-        }, {
-          reabierta: true,
-          permiteEdicion: true,
-        }),
+        }, { reabierta: true, permiteEdicion: true }),
         updatedBy: `admin-activity-unlock:${activity.id}`,
-      });
+      }, extra);
+      // La habilitacion solo cuenta como hecha si la nube confirma la
+      // escritura (antes el resultado se ignoraba: un fallo se veia como exito).
+      const savedPrimary = await unlockPatch();
+      if (!savedPrimary) throw new Error("la nube no confirmó el cambio; intente nuevamente");
+      // Memoria del panel (Respuestas/Entregas); nada academico a localStorage.
+      guideDataCacheSet(storageKey, nextState, { updatedAt: nextState.updatedAt, updatedBy: "admin-activity-unlock" });
+      // Candados que viven en un documento ADICIONAL de la guia (p. ej. la
+      // Guia 10 Redes RAP01 de Kennedy guarda la guia con su nombre crudo y el
+      // quiz en el alias jfk_): se habilitan tambien en ese documento.
+      const primaryCloudFile = getGuideCloudConfig(guideFile)?.cloudFileName || "";
+      const lockSources = String(button.dataset.habLockSources || "").split(",").filter(Boolean);
+      for (const cloudFileName of lockSources) {
+        if (cloudFileName === primaryCloudFile) continue;
+        const savedExtra = await unlockPatch({ cloudFileName });
+        if (!savedExtra) throw new Error("la nube no confirmó el cambio en el documento adicional; intente nuevamente");
+      }
+      // Lo consultado antes ya no es vigente: se descarta y se vuelve a leer
+      // SOLO esta guia de este aprendiz (confirma el cambio en la nube).
+      window.adminHabilitacion?.clearLockKeys?.(storageKey, lockKeys, nextState.updatedAt);
+      window.adminHabilitacion?.invalidate?.(storageKey);
 
       // Registrar en el log especifico de habilitaciones
       window.adminHabilitacion?.recordUnlock({
@@ -2572,11 +3077,11 @@
         detail: activityLabel + (motivo ? " · Motivo: " + motivo : ""),
       });
 
-      // Refrescar usuarios desde portalAuth para que el siguiente render no
-      // muestre la actividad como bloqueada.
-      if (typeof auth.fetchStudentsWithProgress === "function") {
-        try { state.users = await auth.fetchStudentsWithProgress(); } catch (_) {}
-      }
+      // Antes aqui se recargaba la lista COMPLETA de aprendices con progreso
+      // (fetchStudentsWithProgress: miles de lecturas por cada habilitacion).
+      // Basta con releer la guia habilitada de este aprendiz; la lista de
+      // aprendices y la seleccion se conservan.
+      await consultHabilitacionSelection({ force: true, guides: [guideFile] });
       renderHabilitacionPanel();
       window.portalSaveStatus?.saved("Actividad habilitada");
       setFeedback(`Actividad "${activityLabel}" habilitada para ${learnerName}.`, "success");
@@ -2621,7 +3126,7 @@
     const progress = progressForUser(user);
     const guideRows = progress.guides.map((guide) => `
       <tr>
-        <td>${escapeHtml(guide.title || auth.getGuideTitle(guide.fileName))}</td>
+        <td>${escapeHtml(guideLabel(guide.fileName) || guide.title)}</td>
         <td>${escapeHtml(guide.completed)} / ${escapeHtml(guide.total)}</td>
         <td><progress value="${escapeHtml(guide.percent)}" max="100">${escapeHtml(guide.percent)}%</progress></td>
         <td>
@@ -2632,7 +3137,7 @@
               type="button"
               data-reset-guide="${escapeHtml(guide.fileName)}"
               data-reset-user="${escapeHtml(user.usernameKey)}"
-              data-reset-guide-title="${escapeHtml(guide.title || auth.getGuideTitle(guide.fileName))}"
+              data-reset-guide-title="${escapeHtml(guideLabel(guide.fileName) || guide.title)}"
               title="Reiniciar el progreso de esta guia para este aprendiz"
             >Reiniciar</button>
           </div>
@@ -2776,7 +3281,11 @@
     // esta vacio. getGuideCloudConfig resuelve el cloudFileName de la guia y
     // loadGuide6Responses (generico pese al nombre) trae el doc de Firestore.
     const config = getGuideCloudConfig(fileName);
-    if (config) {
+    // Si esta guia de este aprendiz ya se consulto y sigue vigente, se usa lo
+    // que hay en memoria (sin otra lectura a la nube).
+    const pair = getLearnerPair(usernameKey, fileName);
+    const fresh = Boolean(pair && pair.status === "ok" && !pair.stale && (Date.now() - pair.at) < LEARNER_TTL_MS);
+    if (config && !fresh) {
       config.pageFile = fileName;
       openModal(
         "Respuestas por actividad",
@@ -3062,13 +3571,22 @@
     // Toast visible abajo-derecha: el #admin-feedback queda fuera de pantalla en esta
     // vista, asi que el admin no veia ninguna confirmacion de guardado.
     window.portalSaveStatus?.saving("Guardando calificacion...");
+    markGradeCellSync(select, "saving");
+    // La promesa resuelve con el resultado REAL en la nube (lectura verificada +
+    // escritura condicionada, ver activity_grades.js). Antes era
+    // fire-and-forget y se anunciaba "Calificacion guardada." aunque la
+    // escritura fallara.
+    let saveResult;
     try {
-      gradesManager.setStudentActivityGradeAndSolution(usernameKey, guideFamily, activityId, nextGrade, solution);
+      saveResult = await gradesManager.setStudentActivityGradeAndSolution(usernameKey, guideFamily, activityId, nextGrade, solution);
     } catch (err) {
-      window.portalSaveStatus?.error("Error al guardar la calificacion.");
-      setFeedback("Error al guardar la calificacion: " + (err && err.message ? err.message : err), "error");
+      saveResult = { ok: false, status: "write-failed", message: err && err.message ? err.message : String(err) };
+    }
+    if (!saveResult || !saveResult.ok) {
+      reportGradeSaveFailure(select, saveResult);
       return;
     }
+    markGradeCellSync(select, "");
     select.dataset.previousGrade = nextGrade;
 
     // Controles de comentario: visibles con CUALQUIER nota (A o D). Al quitar la
@@ -3090,7 +3608,7 @@
       obsInput.hidden = !nextGrade;
       if (!nextGrade) {
         obsInput.value = "";
-        try { gradesManager.setStudentActivityObservation(usernameKey, guideFamily, activityId, ""); } catch (e) { /* no critico */ }
+        try { await gradesManager.setStudentActivityObservation(usernameKey, guideFamily, activityId, ""); } catch (e) { /* no critico */ }
       }
     }
 
@@ -3149,7 +3667,7 @@
   // Guarda la observacion escrita/insertada. Es el UNICO camino de guardado
   // (insertar del banco tambien pasa por aqui), asi que el texto siempre queda
   // tal cual lo dejo el instructor, lo haya elegido o escrito a mano.
-  function saveGradeObservation(input) {
+  async function saveGradeObservation(input) {
     const usernameKey = input.dataset.gradeUser || "";
     const guideFamily = input.dataset.gradeFamily || "";
     const activityId = input.dataset.gradeActivity || "";
@@ -3157,13 +3675,46 @@
     if (!gradesManager || !usernameKey || !guideFamily || !activityId) return;
     const message = String(input.value || "").trim();
     window.portalSaveStatus?.saving("Guardando observacion...");
+    let result;
     try {
-      gradesManager.setStudentActivityObservation(usernameKey, guideFamily, activityId, message);
-      window.portalSaveStatus?.saved(message ? "Observacion guardada." : "Observacion borrada.");
+      result = await gradesManager.setStudentActivityObservation(usernameKey, guideFamily, activityId, message);
     } catch (err) {
-      window.portalSaveStatus?.error("Error al guardar la observacion.");
-      setFeedback("Error al guardar la observacion: " + (err && err.message ? err.message : err), "error");
+      result = { ok: false, status: "write-failed", message: err && err.message ? err.message : String(err) };
     }
+    if (result && result.ok) {
+      window.portalSaveStatus?.saved(message ? "Observacion guardada." : "Observacion borrada.");
+      return;
+    }
+    const why = (result && result.message) || "No se pudo confirmar el guardado en la nube.";
+    window.portalSaveStatus?.error("La observacion NO se guardo en la nube.");
+    setFeedback("La observacion NO se guardo en la nube: " + why + pendingGradesSuffix(result), "error");
+  }
+
+  // Estado visual de una celda mientras su nota no este confirmada en la nube.
+  function markGradeCellSync(select, stateName) {
+    const cell = select && select.closest ? select.closest(".grade-cell") : null;
+    if (!cell) return;
+    if (stateName) cell.dataset.syncState = stateName;
+    else delete cell.dataset.syncState;
+    if (stateName === "pending") cell.title = "Calificacion pendiente: aun NO esta guardada en la nube.";
+    else cell.removeAttribute("title");
+  }
+
+  function pendingGradesSuffix(result) {
+    return result && result.pending
+      ? " El cambio quedo pendiente en este equipo y se reintentara automaticamente; no se mostrara como guardado hasta confirmarlo."
+      : "";
+  }
+
+  const GRADE_ROW_PENDING_MARKUP = '<span class="grade-row-pending">&#9888; Cambios sin guardar</span>';
+
+  function reportGradeSaveFailure(select, result) {
+    const why = (result && result.message) || "No se pudo confirmar el guardado en la nube.";
+    markGradeCellSync(select, result && result.pending ? "pending" : "error");
+    const nameCell = select.closest("tr[data-grade-row]")?.querySelector("td:first-child");
+    if (nameCell && !nameCell.querySelector(".grade-row-pending")) nameCell.insertAdjacentHTML("beforeend", GRADE_ROW_PENDING_MARKUP);
+    window.portalSaveStatus?.error("La calificacion NO se guardo en la nube.");
+    setFeedback("La calificacion NO se guardo en la nube: " + why + pendingGradesSuffix(result), "error");
   }
 
   // Importa el banco-semilla (grade_solutions_bank.json) a Firestore (solo admin).
@@ -3223,8 +3774,9 @@
     const setStatus = (msg) => { if (statusEl) statusEl.textContent = msg; };
     const db = window._firebaseDb;
     const gradesManager = window.activityGradesManager;
-    if (!db || typeof db.cloudGetGrades !== "function" || !gradesManager ||
-        typeof gradesManager.embedStudentActivitySolution !== "function") {
+    if (!db || typeof db.cloudGetGradesStrict !== "function" || !gradesManager ||
+        typeof gradesManager.embedStudentActivitySolution !== "function" ||
+        typeof gradesManager.refreshStudentGradesFromCloud !== "function") {
       setStatus("Firestore o el modulo de notas no estan disponibles.");
       return;
     }
@@ -3242,24 +3794,32 @@
       setStatus(`Revisando ${students.length} aprendices...`);
       let learners = 0, embedded = 0, fieldsFilled = 0, failures = 0;
       for (const user of students) {
-        let all = null;
-        try { all = await db.cloudGetGrades(user.usernameKey); } catch (_) { failures++; continue; }
-        if (!all || typeof all !== "object") continue;
-        // Sincroniza el cache local ANTES de re-guardar: saveGradesToCloud reemplaza
-        // el doc completo (mismo cuidado que renderGradesGrid).
-        gradesManager.setAllStudentGrades?.(user.usernameKey, all);
+        // Lectura estricta: si falla, este aprendiz se salta SIN tocar su
+        // cache ni escribir nada (antes: {} -> cache vaciado -> la siguiente
+        // nota reemplazaba en la nube todas sus notas).
+        let read = null;
+        try { read = await gradesManager.refreshStudentGradesFromCloud(user.usernameKey); } catch (_) { read = null; }
+        if (!read || (read.status !== "found" && read.status !== "missing")) { failures++; continue; }
+        const all = read.grades || {};
         const updates = computeSolutionResyncUpdates(all, lookupBankSolution);
         if (!updates.length) continue;
         learners += 1;
         const fieldsByFamily = {};
+        let queuedEmbeds = 0;
         for (const up of updates) {
           try {
             if (up.needsEmbed) {
               const ok = gradesManager.embedStudentActivitySolution(user.usernameKey, up.family, up.activityId, up.solution);
-              if (ok) embedded += 1;
+              if (ok) queuedEmbeds += 1;
             }
             fieldsByFamily[up.family] = Object.assign(fieldsByFamily[up.family] || {}, up.solution);
           } catch (_) { failures++; }
+        }
+        if (queuedEmbeds) {
+          // Solo se cuentan (y se aplican a la guia) si la nube CONFIRMA la escritura.
+          const synced = await gradesManager.flushGradesCloudSync(user.usernameKey);
+          if (!synced || !synced.ok) { failures++; continue; }
+          embedded += queuedEmbeds;
         }
         // Una sola escritura de campos por guia: fusiona las soluciones de todas
         // las actividades "A" de la familia; en la nube solo se llenan los campos
@@ -3408,34 +3968,62 @@
   }
 
   let _gradeComments = null;
-  let _gradeCommentsLoaded = false;  // true SOLO tras una lectura exitosa a Firestore
+  let _gradeCommentsLoaded = false;  // true SOLO tras una lectura CONFIRMADA de Firestore
+  // Precondicion de la proxima escritura: la version leida (updateTime) o
+  // "el banco aun no existe". Sin ella no se escribe.
+  let _gradeCommentsPrecondition = null;
+  let _gradeCommentsLoadError = "";
+  // 403 = la regla de sena_portal_grade_comments no esta desplegada (ruleset
+  // 00ffe530): no se reintenta en cada repintado de la grilla durante la sesion.
+  let _gradeCommentsDenied = false;
 
   // Carga el banco una vez por sesion. Si esta COMPLETAMENTE vacio, lo siembra
   // con GRADE_COMMENT_SEEDS y lo persiste. Si ya tiene algo (aunque sea un solo
   // comentario del instructor) NO se siembra ni se sobrescribe nada.
-  // Un fallo de red NO marca el banco como cargado: sin eso, un token que aun no
-  // estaba listo dejaba el banco vacio en silencio el resto de la sesion -- y
-  // peor, la siembra se habria disparado sobre un banco que en realidad si tenia
-  // datos, duplicandolo todo en la nube.
+  // Un fallo de lectura NO marca el banco como cargado ni lo siembra:
+  // cloudGetGradeComments devuelve [] tambien cuando la lectura falla, y antes
+  // ese [] se tomaba por "banco vacio" -> se sembraba y se REEMPLAZABAN en la
+  // nube los comentarios reales del instructor. Ahora se usa la lectura
+  // estricta (found / missing / error) y toda escritura lleva precondicion.
   async function ensureGradeCommentsBank(force) {
     if (_gradeCommentsLoaded && !force) return _gradeComments;
+    if (_gradeCommentsDenied && !force) return _gradeComments;
     const db = window._firebaseDb;
-    if (!db || typeof db.cloudGetGradeComments !== "function") {
+    if (!db || typeof db.cloudGetGradeCommentsStrict !== "function") {
       _gradeComments = _gradeComments || dedupeGradeComments(GRADE_COMMENT_SEEDS);
       return _gradeComments;   // sin nube: semillas en memoria, sin persistir
     }
     let remote = null;
     try {
-      remote = await db.cloudGetGradeComments();
-      _gradeCommentsLoaded = true;
+      remote = await db.cloudGetGradeCommentsStrict();
     } catch (_) {
+      remote = { status: "error", reason: "exception" };
+    }
+    if (!remote || (remote.status !== "found" && remote.status !== "missing")) {
+      if (remote && (remote.reason === "http-403" || remote.reason === "http-401")) {
+        // Sin permiso en las reglas desplegadas: las frases base quedan
+        // disponibles SOLO en memoria para insertarlas en la observacion (la
+        // observacion se guarda en el doc de notas, que si tiene regla); el
+        // banco no se puede editar ni sembrar.
+        _gradeCommentsDenied = true;
+        _gradeCommentsLoadError = "El banco de comentarios no esta habilitado en las reglas de Firestore desplegadas; se muestran las frases base (no se pueden editar).";
+        _gradeComments = _gradeComments && _gradeComments.length ? _gradeComments : dedupeGradeComments(GRADE_COMMENT_SEEDS);
+        return _gradeComments;
+      }
+      _gradeCommentsLoadError = "No se pudo leer el banco de comentarios de la nube; no se puede modificar hasta que vuelva la conexion.";
       _gradeComments = _gradeComments || [];
       return _gradeComments;   // transitorio: se reintenta en la proxima lectura
     }
-    const clean = dedupeGradeComments(remote);
+    _gradeCommentsLoaded = true;
+    _gradeCommentsLoadError = "";
+    _gradeCommentsPrecondition = remote.status === "found"
+      ? { expectedUpdateTime: remote.updateTime }
+      : { mustNotExist: true };
+    const clean = dedupeGradeComments(remote.comments);
     if (!clean.length) {
-      _gradeComments = dedupeGradeComments(GRADE_COMMENT_SEEDS);
-      try { await db.cloudSaveGradeComments(_gradeComments); } catch (_) { /* se reintenta al proximo cambio */ }
+      const seeds = dedupeGradeComments(GRADE_COMMENT_SEEDS);
+      _gradeComments = seeds;
+      try { await writeGradeCommentsBank(seeds); } catch (_) { /* se reintenta al proximo cambio */ }
     } else {
       _gradeComments = clean;
     }
@@ -3446,11 +4034,46 @@
     return Array.isArray(_gradeComments) ? _gradeComments : [];
   }
 
-  async function saveGradeCommentsBank(list) {
-    _gradeComments = dedupeGradeComments(list);
+  // Escritura condicionada a la version leida. Lanza un Error con un mensaje
+  // para el instructor si no se pudo confirmar el guardado.
+  async function writeGradeCommentsBank(list) {
     const db = window._firebaseDb;
-    if (db && typeof db.cloudSaveGradeComments === "function") {
-      await db.cloudSaveGradeComments(_gradeComments);
+    if (!db || typeof db.cloudSaveGradeCommentsStrict !== "function") {
+      throw new Error("el modulo de la nube esta desactualizado; recargue la pagina");
+    }
+    if (!_gradeCommentsLoaded || !_gradeCommentsPrecondition) {
+      throw new Error(_gradeCommentsLoadError || "el banco no se ha leido de la nube todavia");
+    }
+    const result = await db.cloudSaveGradeCommentsStrict(list, _gradeCommentsPrecondition);
+    if (result && result.status === "ok" && result.updateTime) {
+      _gradeCommentsPrecondition = { expectedUpdateTime: result.updateTime };
+      return list;
+    }
+    if (result && result.status === "ok") {
+      // Guardado, pero sin version nueva: la proxima escritura exige releer.
+      _gradeCommentsLoaded = false;
+      return list;
+    }
+    if (result && result.status === "conflict") {
+      _gradeCommentsLoaded = false;
+      const err = new Error("el banco fue modificado desde otro equipo; se recargo, repita el cambio");
+      err.code = "conflict";
+      throw err;
+    }
+    const describe = window.activityGradesManager?.describeGradesSyncFailure;
+    throw new Error(describe ? describe({ status: "write-failed", reason: result && result.reason }) : "no se pudo guardar en la nube");
+  }
+
+  async function saveGradeCommentsBank(list) {
+    const previous = getGradeComments();
+    _gradeComments = dedupeGradeComments(list);
+    try {
+      await writeGradeCommentsBank(_gradeComments);
+    } catch (err) {
+      // No se confirmo: se vuelve a lo que habia (no se finge un guardado).
+      _gradeComments = previous;
+      if (err && err.code === "conflict") await ensureGradeCommentsBank(true).catch(() => null);
+      throw err;
     }
     return _gradeComments;
   }
@@ -3559,6 +4182,7 @@
     byId("grades-excel-download-btn")?.addEventListener("click", handleGradesExcelDownload);
     byId("grades-excel-upload-btn")?.addEventListener("click", handleGradesExcelUpload);
     byId("grade-comment-add")?.addEventListener("click", handleGradeCommentAdd);
+    bindGradesSyncListener();
   }
 
   // ── Banco de comentarios: lista + alta/edicion/borrado ──────────────────────
@@ -3577,6 +4201,9 @@
           <button type="button" class="btn secondary grade-comment-delete" data-comment-id="${escapeHtml(c.id)}">Eliminar</button>
         </li>`).join("")
       : '<li class="admin-muted">El banco esta vacio.</li>';
+    // Si el banco no se pudo leer (o no tiene permiso), se dice aqui mismo:
+    // la lista que se ve no es el banco de la nube.
+    if (!_gradeCommentsLoaded && _gradeCommentsLoadError) setCommentStatus(_gradeCommentsLoadError);
   }
 
   function setCommentStatus(msg) {
@@ -3606,12 +4233,15 @@
     const sync = saveGradeCommentsBank(next);   // actualiza _gradeComments de inmediato
     renderGradeCommentBank();
     refreshGradeCommentSelects();
-    setCommentStatus(okMsg);
+    setCommentStatus("Guardando en la nube...");
     try {
       await sync;
+      setCommentStatus(okMsg);
     } catch (err) {
-      setCommentStatus("Guardado local, pero fallo la sincronizacion a la nube: "
-        + (err && err.message ? err.message : err));
+      // saveGradeCommentsBank ya restauro el banco anterior: se repinta.
+      renderGradeCommentBank();
+      refreshGradeCommentSelects();
+      setCommentStatus("NO se guardo el cambio: " + (err && err.message ? err.message : err));
     }
   }
 
@@ -3660,7 +4290,11 @@
     await persistGradeCommentBank(next, "Comentario eliminado.");
   }
 
-  async function renderGradesGrid() {
+  // Reutilizacion de lecturas verificadas al cambiar de guia/ficha (ver
+  // refreshStudentGradesFromCloud). "Volver a leer" y "Reintentar ahora" leen
+  // siempre de la nube (opts.fresh).
+  const GRADES_GRID_REUSE_MS = 2 * 60 * 1000;
+  async function renderGradesGrid(opts = {}) {
     const grid = byId("grades-grid");
     if (!grid) return;
     const ficha = byId("grades-ficha-filter")?.value || "";
@@ -3683,28 +4317,30 @@
     await ensureGradeCommentsBank().catch(() => null);
     renderGradeCommentBank();
     // Trae las notas de cada aprendiz desde Firestore (en paralelo) para prellenar.
-    const db = window._firebaseDb;
+    // Lectura ESTRICTA: antes cloudGetGrades devolvia {} tambien cuando la
+    // lectura fallaba, la grilla lo copiaba al cache local y la siguiente nota
+    // reemplazaba en la nube TODAS las notas del aprendiz (hallazgo critico
+    // 2026-10-23). Ahora una fila cuya lectura fallo se muestra BLOQUEADA (sin
+    // selects editables) y su cache no se toca. Las escrituras, ademas, ya no
+    // dependen del cache: activity_grades.js relee la nube y aplica solo el
+    // cambio de la actividad, con precondicion de version.
+    const gradesManager = window.activityGradesManager;
     const gradesByUser = {};
+    const unreadable = {};
     await Promise.all(students.map(async (user) => {
-      let g = {};
-      if (db && typeof db.cloudGetGrades === "function") {
-        try {
-          const all = await db.cloudGetGrades(user.usernameKey);
-          // Sincroniza el cache local con el doc COMPLETO de la nube antes de leer la
-          // familia actual. Sin esto, un edit posterior (setStudentActivityGradeAndSolution)
-          // lee un cache local desactualizado/incompleto (p. ej. de otro equipo) y al
-          // guardar hace un reemplazo completo del doc en la nube, borrando notas de otras
-          // guias (o de esta misma) que nunca llegaron a este localStorage.
-          if (all && window.activityGradesManager && window.activityGradesManager.setAllStudentGrades) {
-            window.activityGradesManager.setAllStudentGrades(user.usernameKey, all);
-          }
-          g = (all && all[guideFamily]) || {};
-        } catch (_) { /* sin nube: cae a cache local */ }
+      let r = null;
+      try {
+        r = gradesManager && typeof gradesManager.refreshStudentGradesFromCloud === "function"
+          ? await gradesManager.refreshStudentGradesFromCloud(user.usernameKey, { maxAgeMs: opts.fresh ? 0 : GRADES_GRID_REUSE_MS })
+          : { status: "error", reason: "no-strict-api", message: "El modulo de notas esta desactualizado. Recargue la pagina." };
+      } catch (_) {
+        r = { status: "error", reason: "exception", message: "No se pudieron leer las notas actuales del aprendiz." };
       }
-      if (!Object.keys(g).length && window.activityGradesManager) {
-        g = window.activityGradesManager.getStudentGrades(user.usernameKey, guideFamily) || {};
+      if (r && (r.status === "found" || r.status === "missing")) {
+        gradesByUser[user.usernameKey] = (r.grades && r.grades[guideFamily]) || {};
+      } else {
+        unreadable[user.usernameKey] = (r && r.message) || "No se pudieron leer las notas actuales del aprendiz.";
       }
-      gradesByUser[user.usernameKey] = g;
     }));
     const head = "<th>Aprendiz</th>" + activities.map((a) => `<th>${escapeHtml(a.label)}</th>`).join("") + "<th>Aprobadas</th>";
     // resolveGradeValue cae a aliasIds: una fila fusionada (ej. matriz322+fichaCaso)
@@ -3713,17 +4349,83 @@
     const resolveGrade = (window.activityGradesManager && window.activityGradesManager.resolveGradeValue)
       || ((g, a) => g[a.id]);
     const rows = students.map((user) => {
+      if (unreadable[user.usernameKey]) {
+        return `<tr data-grade-row="${escapeHtml(user.usernameKey)}" data-grade-unreadable="true">`
+          + `<td>${escapeHtml(user.fullName)}</td>`
+          + `<td colspan="${activities.length}" class="grades-row-error" role="alert"><div class="row-error__msg">`
+          + `No se pudieron leer sus calificaciones: ${escapeHtml(unreadable[user.usernameKey])} `
+          + `No se puede calificar a este aprendiz hasta leerlas (para no borrar notas existentes).</div></td>`
+          + `<td class="grades-approved-cell">—</td></tr>`;
+      }
       const g = gradesByUser[user.usernameKey] || {};
-      const cells = activities.map((a) =>
-        `<td>${gradeSelectMarkup(user.usernameKey, guideFamily, a.id, resolveGrade(g, a), g[a.id + ":obs"])}</td>`
-      ).join("");
+      const pendingActs = (gradesManager && typeof gradesManager.getPendingGradeActivities === "function"
+        ? gradesManager.getPendingGradeActivities(user.usernameKey)[guideFamily] : null) || {};
+      const cells = activities.map((a) => {
+        const markup = gradeSelectMarkup(user.usernameKey, guideFamily, a.id, resolveGrade(g, a), g[a.id + ":obs"]);
+        return `<td>${pendingActs[a.id]
+          ? markup.replace('<div class="grade-cell">', '<div class="grade-cell" data-sync-state="pending" title="Calificacion pendiente: aun NO esta guardada en la nube.">')
+          : markup}</td>`;
+      }).join("");
       const approved = activities.filter((a) => resolveGrade(g, a) === "A").length;
-      return `<tr data-grade-row="${escapeHtml(user.usernameKey)}"><td>${escapeHtml(user.fullName)}</td>${cells}`
+      const rowPending = Object.keys(pendingActs).length ? GRADE_ROW_PENDING_MARKUP : "";
+      return `<tr data-grade-row="${escapeHtml(user.usernameKey)}"><td>${escapeHtml(user.fullName)}${rowPending}</td>${cells}`
         + `<td class="grades-approved-cell">${approvalCellText(approved, activities.length)}</td></tr>`;
     }).join("");
     const scrollHintEl = byId("grades-scroll-hint");
     if (scrollHintEl) scrollHintEl.hidden = activities.length <= 5;
-    grid.innerHTML = `<table class="admin-data-table grades-table"><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table>`;
+    const unreadableCount = Object.keys(unreadable).length;
+    const pendingCount = gradesManager && typeof gradesManager.getPendingGradesCount === "function"
+      ? gradesManager.getPendingGradesCount() : 0;
+    const notices = [];
+    if (unreadableCount) {
+      notices.push(`<p class="c-alert c-alert--danger grades-read-alert" role="alert">No se pudieron leer las calificaciones de ${unreadableCount} aprendiz(es). `
+        + `Sus filas quedan bloqueadas para no reemplazar notas existentes. `
+        + `<button type="button" class="btn secondary" data-grades-reload>Volver a leer</button></p>`);
+    }
+    if (pendingCount) {
+      notices.push(`<p class="c-alert c-alert--warning grades-pending-alert" role="status">Hay ${pendingCount} cambio(s) de calificacion pendientes de guardar en la nube desde este equipo. `
+        + `<button type="button" class="btn secondary" data-grades-retry>Reintentar ahora</button></p>`);
+    }
+    grid.innerHTML = notices.join("")
+      + `<table class="admin-data-table grades-table"><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table>`;
+    bindGradesGridNotices(grid);
+  }
+
+  function bindGradesGridNotices(grid) {
+    grid.querySelector("[data-grades-reload]")?.addEventListener("click", () => renderGradesGrid({ fresh: true }));
+    grid.querySelector("[data-grades-retry]")?.addEventListener("click", async (event) => {
+      const btn = event.currentTarget;
+      btn.disabled = true;
+      const results = await window.activityGradesManager?.retryPendingGradesSync?.().catch(() => []);
+      const failed = (results || []).filter((r) => r && !r.ok);
+      if (failed.length) {
+        setFeedback("Siguen pendientes " + failed.length + " aprendiz(es): " + (failed[0].message || ""), "error");
+        window.portalSaveStatus?.error("Calificaciones pendientes sin guardar.");
+      } else {
+        window.portalSaveStatus?.saved("Calificaciones pendientes guardadas.");
+      }
+      renderGradesGrid({ fresh: true });
+    });
+  }
+
+  // Un reintento automatico (activity_grades.js) que por fin guarda una nota
+  // pendiente actualiza la celda y lo informa; uno que falla lo deja marcado.
+  let gradesSyncListenerBound = false;
+  function bindGradesSyncListener() {
+    if (gradesSyncListenerBound || typeof window.addEventListener !== "function") return;
+    gradesSyncListenerBound = true;
+    window.addEventListener("grades-sync-status", (event) => {
+      const detail = event && event.detail;
+      if (!detail || !detail.result || !detail.usernameKey) return;
+      const row = document.querySelector(`#grades-grid tr[data-grade-row="${CSS.escape(detail.usernameKey)}"]`);
+      if (detail.result.ok && !detail.result.pending) {
+        row?.querySelectorAll('.grade-cell[data-sync-state="pending"]').forEach((cell) => {
+          delete cell.dataset.syncState;
+          cell.removeAttribute("title");
+        });
+        row?.querySelector(".grade-row-pending")?.remove();
+      }
+    });
   }
 
   // ── Calificar en bloque con Excel ────────────────────────────────────────────
@@ -3753,22 +4455,30 @@
     const students = getUsersForFicha(ficha).filter((u) => !isInactive(u));
     if (!students.length) { setStatus("No hay aprendices activos en esta ficha."); return; }
     setStatus("Generando Excel...");
-    const db = window._firebaseDb;
-    const resolveGrade = (window.activityGradesManager && window.activityGradesManager.resolveGradeValue) || ((g, a) => g[a.id]);
+    const gradesManager = window.activityGradesManager;
+    const resolveGrade = (gradesManager && gradesManager.resolveGradeValue) || ((g, a) => g[a.id]);
     const gradesByUser = {};
+    const unreadable = [];
+    // Lectura estricta: un aprendiz cuya lectura falla NO sale "en blanco y 0 %"
+    // (eso parecia una ausencia real de notas). Si alguno falla, no se genera.
     await Promise.all(students.map(async (user) => {
-      let g = {};
-      if (db && typeof db.cloudGetGrades === "function") {
-        try {
-          const all = await db.cloudGetGrades(user.usernameKey);
-          g = (all && all[guideFamily]) || {};
-        } catch (_) { /* cae a cache local */ }
+      let r = null;
+      try {
+        r = gradesManager && typeof gradesManager.refreshStudentGradesFromCloud === "function"
+          ? await gradesManager.refreshStudentGradesFromCloud(user.usernameKey)
+          : null;
+      } catch (_) { r = null; }
+      if (r && (r.status === "found" || r.status === "missing")) {
+        gradesByUser[user.usernameKey] = (r.grades && r.grades[guideFamily]) || {};
+      } else {
+        unreadable.push(user.fullName || user.usernameKey);
       }
-      if (!Object.keys(g).length && window.activityGradesManager) {
-        g = window.activityGradesManager.getStudentGrades(user.usernameKey, guideFamily) || {};
-      }
-      gradesByUser[user.usernameKey] = g;
     }));
+    if (unreadable.length) {
+      setStatus(`No se genero el Excel: no se pudieron leer las calificaciones de ${unreadable.length} aprendiz(es) `
+        + `(${unreadable.slice(0, 3).join(", ")}${unreadable.length > 3 ? "..." : ""}). Intente de nuevo cuando vuelva la conexion.`);
+      return;
+    }
     // Nombre completo primero (lo que el instructor reconoce a simple vista);
     // Usuario queda visible pero en segundo lugar -- sigue siendo la llave real
     // de emparejamiento al subir, sin importar el orden de las columnas.
@@ -3886,37 +4596,52 @@
 
     const gradesManager = window.activityGradesManager;
     const db = window._firebaseDb;
-    if (!gradesManager || !db) { setStatus("El modulo de notas o Firestore no estan disponibles."); return; }
+    if (!gradesManager || !db || typeof gradesManager.applyStudentGradeChanges !== "function") {
+      setStatus("El modulo de notas o Firestore no estan disponibles (recargue la pagina).");
+      return;
+    }
     const btn = byId("grades-excel-upload-btn");
     if (btn) btn.disabled = true;
     setStatus(`Aplicando calificaciones a ${parsedRows.length} aprendices...`);
     await ensureGradeSolutionsBank();
 
     let studentsUpdated = 0, fieldsFilled = 0, failures = 0;
+    const failureReasons = [];
     try {
       for (const { usernameKey, grades } of parsedRows) {
         try {
-          const all = await db.cloudGetGrades(usernameKey);
-          // Sincroniza el cache local con el doc COMPLETO ANTES de escribir: setStudentGrades
-          // reemplaza la familia completa a partir del cache local, y sin este paso un cache
-          // desactualizado (de otro equipo) borraria notas de otras guias al guardar (mismo
-          // cuidado que renderGradesGrid y handleSolutionResync).
-          if (all && gradesManager.setAllStudentGrades) gradesManager.setAllStudentGrades(usernameKey, all);
-          const familyGrades = Object.assign({}, (all && all[guideFamily]) || {});
+          // Solo se envian las actividades escritas en el Excel, como cambios
+          // puntuales: activity_grades.js relee la nube de forma estricta y los
+          // aplica con precondicion de version. Si la lectura falla no se
+          // escribe nada (antes: cloudGetGrades -> {} y la familia completa se
+          // reemplazaba solo con lo del Excel, borrando lo demas).
+          const nowIso = new Date().toISOString();
+          const set = {};
+          const del = [];
           const solutionsToApply = {};
+          const hasSolution = {};
           Object.keys(grades).forEach((actId) => {
             const grade = grades[actId];
-            familyGrades[actId] = grade;
-            familyGrades[actId + ":gradedAt"] = new Date().toISOString();
-            if (grade === "A") {
-              const solution = lookupBankSolution(guideFamily, actId);
-              if (solution) {
-                familyGrades[actId + ":solution"] = solution;
-                Object.assign(solutionsToApply, solution);
-              }
+            set[actId] = grade;
+            set[actId + ":gradedAt"] = nowIso;
+            const solution = grade === "A" ? lookupBankSolution(guideFamily, actId) : null;
+            if (solution) {
+              set[actId + ":solution"] = solution;
+              Object.assign(solutionsToApply, solution);
+              hasSolution[actId] = true;
+            } else if (grade !== "A") {
+              del.push(actId + ":solution");   // igual que a mano: sin "A" no hay solucion embebida
             }
           });
-          gradesManager.setStudentGrades(usernameKey, guideFamily, familyGrades);
+          const pendingSave = gradesManager.applyStudentGradeChanges(usernameKey, guideFamily, set, del);
+          gradesManager.flushGradesCloudSync(usernameKey);   // sin esperar el debounce de la grilla
+          const saved = await pendingSave;
+          if (!saved || !saved.ok) {
+            failures += 1;
+            failureReasons.push((saved && saved.message) || "no se pudo confirmar el guardado");
+            setStatus(`... ${studentsUpdated}/${parsedRows.length} aprendices aplicados`);
+            continue;
+          }
           if (Object.keys(solutionsToApply).length) {
             try {
               const applied = await applyApprovedSolutionToStudentCloud(usernameKey, guideFamily, solutionsToApply);
@@ -3931,7 +4656,7 @@
           const fileNameForFallback = resolveStudentGuideFileForFamily(usernameKey, guideFamily);
           for (const actId of Object.keys(grades)) {
             if (grades[actId] !== "A") continue;
-            const hasOwnSolution = Boolean(familyGrades[actId + ":solution"]);
+            const hasOwnSolution = Boolean(hasSolution[actId]);
             if (hasOwnSolution && !isDeclaredFileType(fileNameForFallback, actId)) continue;
             try { await applyDeliveryFallbackToStudentCloud(usernameKey, guideFamily, actId); } catch (_) { /* no critico */ }
           }
@@ -3949,7 +4674,7 @@
       `Listo: ${studentsUpdated} aprendices actualizados (${totalCells} calificaciones), ${fieldsFilled} campos de respuesta rellenados.`
       + (unmatched.length ? ` ${unmatched.length} filas sin coincidencia (revisa la columna Usuario).` : "")
       + (invalidCells.length ? ` ${invalidCells.length} celdas ignoradas por valor invalido.` : "")
-      + (failures ? ` ${failures} errores.` : "")
+      + (failures ? ` ${failures} aprendices NO se guardaron en la nube (${failureReasons[0] || "error"}); sus cambios quedaron pendientes en este equipo.` : "")
     );
     if (fileInput) fileInput.value = "";
     renderGradesGrid();
@@ -4279,7 +5004,8 @@
     byId("mejora-actividad")?.addEventListener("change", fillPlanDescription);
     byId("mejora-asignar")?.addEventListener("click", handleAssignPlan);
     byId("mejora-filtro-ficha")?.addEventListener("change", renderPlansGrid);
-    byId("mejora-filtro-estado")?.addEventListener("change", renderPlansGrid);
+    // Filtrar por estado no vuelve a consultar la nube: repinta lo ya leido.
+    byId("mejora-filtro-estado")?.addEventListener("change", paintPlansGrid);
     byId("mejora-grid")?.addEventListener("click", handlePlanGridClick);
     renderPlansGrid();
   }
@@ -4337,7 +5063,51 @@
       + "evidencia completa.";
   }
 
-  function handleAssignPlan() {
+  // Resultado REAL de una operacion de planes/talleres (2026-10-27): el
+  // mensaje de exito solo aparece cuando la nube confirma; si no, se dice que
+  // NO se guardo, por que, y si quedo pendiente en este equipo.
+  function describeRecordOpResult(result, okMsg, kind) {
+    if (result && result.ok) {
+      if (result.opOutcome === "missing") return { ok: false, text: `El ${kind} ya no existe en la nube (se elimino desde otro equipo). No se cambio nada.` };
+      if (result.opOutcome === "duplicate-active") return { ok: false, text: `El aprendiz ya tiene un ${kind} de este tipo sin cerrar. No se creo otro.` };
+      return { ok: true, text: okMsg };
+    }
+    const why = (result && result.message) || "No se pudo confirmar el guardado en la nube.";
+    const pend = result && result.pending
+      ? " El cambio quedo pendiente en este equipo y se reintentara; no se mostrara como guardado hasta confirmarlo."
+      : "";
+    return { ok: false, text: `NO se guardo en la nube: ${why}${pend}` };
+  }
+
+  function announceRecordOp(described, setStatus) {
+    if (setStatus) setStatus(described.text);
+    if (described.ok) {
+      window.portalSaveStatus?.saved(described.text);
+      setFeedback(described.text, "success");
+    } else {
+      window.portalSaveStatus?.error(described.text);
+      setFeedback(described.text, "error");
+    }
+  }
+
+  // Avisos de lectura fallida / cambios pendientes encima de una tabla.
+  function recordGridNotices(unreadableCount, pendingCount, noun) {
+    const out = [];
+    if (unreadableCount) {
+      out.push(`<p class="c-alert c-alert--danger records-read-alert" role="alert">No se pudieron leer los ${noun} de ${unreadableCount} aprendiz(es). `
+        + `Sus registros no se muestran para no confundir datos viejos con los reales. `
+        + `<button type="button" class="btn secondary" data-records-reload>Volver a leer</button></p>`);
+    }
+    if (pendingCount) {
+      out.push(`<p class="c-alert c-alert--warning records-pending-alert" role="status">Hay ${pendingCount} cambio(s) de ${noun} pendientes de guardar en la nube desde este equipo. `
+        + `<button type="button" class="btn secondary" data-records-retry>Reintentar ahora</button></p>`);
+    }
+    return out.join("");
+  }
+
+  let _plansUnreadable = {};   // { usernameKey: mensaje } cuya lectura fallo
+
+  async function handleAssignPlan() {
     const mgr = window.improvementPlans;
     const usernameKey = byId("mejora-aprendiz")?.value || "";
     const family = byId("mejora-guia")?.value || "";
@@ -4351,40 +5121,84 @@
     if (!mgr || !usernameKey || !family || !activityId) { setStatus("Completa ficha, aprendiz, guia y actividad."); return; }
     if (!fechaLimite) { setStatus("Indica la fecha limite."); return; }
     const session = window.portalAuth?.getSession?.();
-    mgr.createPlan(usernameKey, { family, activityId, activityLabel, descripcion, motivo, fechaLimite, asignadoPor: (session && session.usernameKey) || "admin" });
-    recordAdminAuditAction({ action: "mejoramiento-asignar", target: `${usernameKey}:${family}:${activityId}`, detail: fechaLimite });
-    setStatus("Plan asignado.");
-    renderPlansGrid();
+    const btn = byId("mejora-asignar");
+    if (btn) btn.disabled = true;
+    setStatus("Guardando en la nube...");
+    window.portalSaveStatus?.saving("Guardando plan...");
+    let result;
+    try {
+      result = await mgr.createPlan(usernameKey, { family, activityId, activityLabel, descripcion, motivo, fechaLimite, asignadoPor: (session && session.usernameKey) || "admin" });
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+    if (result && result.ok) recordAdminAuditAction({ action: "mejoramiento-asignar", target: `${usernameKey}:${family}:${activityId}`, detail: fechaLimite });
+    announceRecordOp(describeRecordOpResult(result, "Plan asignado y guardado en la nube.", "plan"), setStatus);
+    refreshPlansRowsFromCache(usernameKey);
   }
 
+  // Lee de la nube (lectura estricta) los planes de la ficha elegida y pinta.
   async function renderPlansGrid() {
     const grid = byId("mejora-grid");
     if (!grid) return;
     const ficha = byId("mejora-filtro-ficha")?.value || "";
-    const estado = byId("mejora-filtro-estado")?.value || "";
     const mgr = window.improvementPlans;
     if (!ficha || !mgr) { grid.innerHTML = '<p class="admin-muted">Selecciona una ficha.</p>'; return; }
     grid.innerHTML = '<p class="response-status">Cargando planes desde la nube...</p>';
     const users = getUsersForFicha(ficha);
     _plansByUser = {};
+    _plansUnreadable = {};
     await Promise.all(users.map(async (u) => {
-      let plans = [];
-      try { plans = await mgr.syncStudentPlansFromCloud(u.usernameKey); }
-      catch (_) { plans = mgr.getStudentPlans(u.usernameKey); }
-      _plansByUser[u.usernameKey] = { user: u, plans: plans || [] };
+      let r = null;
+      try {
+        r = typeof mgr.refreshStudentPlansFromCloud === "function"
+          ? await mgr.refreshStudentPlansFromCloud(u.usernameKey)
+          : { status: "error", message: "El modulo de planes esta desactualizado. Recargue la pagina." };
+      } catch (_) { r = { status: "error", message: "No se pudieron leer los planes." }; }
+      if (r && (r.status === "found" || r.status === "missing")) {
+        _plansByUser[u.usernameKey] = { user: u, plans: r.list || [] };
+      } else {
+        _plansByUser[u.usernameKey] = { user: u, plans: [] };
+        _plansUnreadable[u.usernameKey] = (r && r.message) || "No se pudieron leer los planes.";
+      }
     }));
+    paintPlansGrid();
+  }
+
+  // Tras una accion se repinta desde el cache que la cola dejo CONFIRMADO
+  // (mas lo pendiente), sin volver a leer a toda la ficha: 0 lecturas extra.
+  function refreshPlansRowsFromCache(usernameKey) {
+    const mgr = window.improvementPlans;
+    const entry = _plansByUser[usernameKey];
+    if (mgr && entry && !_plansUnreadable[usernameKey]) entry.plans = mgr.getStudentPlans(usernameKey);
+    paintPlansGrid();
+  }
+
+  function paintPlansGrid() {
+    const grid = byId("mejora-grid");
+    const mgr = window.improvementPlans;
+    if (!grid || !mgr) return;
+    const ficha = byId("mejora-filtro-ficha")?.value || "";
+    if (!ficha) { grid.innerHTML = '<p class="admin-muted">Selecciona una ficha.</p>'; return; }
+    const estado = byId("mejora-filtro-estado")?.value || "";
     const now = Date.now();
     const rows = [];
-    users.forEach((u) => {
-      (_plansByUser[u.usernameKey]?.plans || []).forEach((p) => {
+    Object.values(_plansByUser).forEach(({ user, plans }) => {
+      if (_plansUnreadable[user.usernameKey]) {
+        rows.push(`<tr data-plan-user="${escapeHtml(user.usernameKey)}" data-records-unreadable="true">`
+          + `<td colspan="7" class="records-row-error" role="alert"><div class="row-error__msg"><strong>${escapeHtml(user.fullName)}</strong>: no se pudieron leer sus planes. ${escapeHtml(_plansUnreadable[user.usernameKey])}</div></td></tr>`);
+        return;
+      }
+      (plans || []).forEach((p) => {
         const st = mgr.derivePlanStatus(p, now);
         if (estado && st !== estado) return;
-        rows.push(planRowMarkup(u, p, st));
+        rows.push(planRowMarkup(user, p, st));
       });
     });
-    grid.innerHTML = rows.length
+    const pendingCount = typeof mgr.getPendingPlansCount === "function" ? mgr.getPendingPlansCount() : 0;
+    const notices = recordGridNotices(Object.keys(_plansUnreadable).length, pendingCount, "planes");
+    grid.innerHTML = notices + (rows.length
       ? `<table class="admin-data-table mejora-table"><thead><tr><th>Aprendiz</th><th>Actividad</th><th>Motivo</th><th>Asignado</th><th>Fecha limite</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>${rows.join("")}</tbody></table>`
-      : '<p class="admin-muted">No hay planes para esta ficha/estado.</p>';
+      : '<p class="admin-muted">No hay planes para esta ficha/estado.</p>');
   }
 
   function planRowMarkup(user, plan, status) {
@@ -4407,7 +5221,17 @@
     </tr>`;
   }
 
-  function handlePlanGridClick(event) {
+  async function handlePlanGridClick(event) {
+    if (event.target.closest("[data-records-reload]")) { renderPlansGrid(); return; }
+    if (event.target.closest("[data-records-retry]")) {
+      const results = await window.improvementPlans?.retryPendingPlansSync?.().catch(() => []);
+      const failed = (results || []).filter((r) => r && !r.ok);
+      announceRecordOp(failed.length
+        ? { ok: false, text: `Siguen pendientes cambios de ${failed.length} aprendiz(es): ${failed[0].message || ""}` }
+        : { ok: true, text: "Cambios pendientes de planes guardados en la nube." });
+      renderPlansGrid();
+      return;
+    }
     const btn = event.target.closest("[data-plan-action]");
     if (!btn) return;
     const row = btn.closest("tr[data-plan-id]");
@@ -4419,30 +5243,40 @@
     const entry = _plansByUser[usernameKey];
     const plan = entry && entry.plans.find((p) => p.id === planId);
     if (!mgr || !plan) return;
+    if (action === "word") { exportPlanWord(entry.user, plan); return; }
+    let result = null;
+    let okMsg = "";
+    let audit = null;
     if (action === "fecha") {
       const nueva = window.prompt("Nueva fecha limite (AAAA-MM-DD):", plan.fechaLimite || "");
       if (nueva == null) return;
-      mgr.updatePlanDeadline(usernameKey, planId, String(nueva).trim());
-      recordAdminAuditAction({ action: "mejoramiento-fecha", target: `${usernameKey}:${planId}`, detail: String(nueva).trim() });
-      renderPlansGrid();
-    } else if (action === "word") {
-      exportPlanWord(entry.user, plan);
+      window.portalSaveStatus?.saving("Guardando fecha...");
+      result = await mgr.updatePlanDeadline(usernameKey, planId, String(nueva).trim());
+      okMsg = "Fecha del plan guardada en la nube.";
+      audit = { action: "mejoramiento-fecha", target: `${usernameKey}:${planId}`, detail: String(nueva).trim() };
     } else if (action === "entregada") {
-      mgr.markPlanDelivered(usernameKey, planId);   // registra la fecha de entrega (Word)
-      recordAdminAuditAction({ action: "mejoramiento-entregada", target: `${usernameKey}:${planId}`, detail: plan.activityId });
-      renderPlansGrid();
+      window.portalSaveStatus?.saving("Guardando entrega...");
+      result = await mgr.markPlanDelivered(usernameKey, planId);   // registra la fecha de entrega (Word)
+      okMsg = "Entrega del plan registrada en la nube.";
+      audit = { action: "mejoramiento-entregada", target: `${usernameKey}:${planId}`, detail: plan.activityId };
     } else if (action === "superado" || action === "nosuperado") {
-      mgr.setPlanResult(usernameKey, planId, action === "superado" ? "A" : "D");
-      recordAdminAuditAction({ action: "mejoramiento-resultado", target: `${usernameKey}:${planId}`, detail: action === "superado" ? "A" : "D" });
-      renderPlansGrid();
+      window.portalSaveStatus?.saving("Guardando resultado...");
+      result = await mgr.setPlanResult(usernameKey, planId, action === "superado" ? "A" : "D");
+      okMsg = "Resultado del plan guardado en la nube.";
+      audit = { action: "mejoramiento-resultado", target: `${usernameKey}:${planId}`, detail: action === "superado" ? "A" : "D" };
     } else if (action === "eliminar") {
-      confirmAdminAction("Eliminar este plan de mejoramiento?").then((ok) => {
-        if (!ok) return;
-        mgr.deletePlan(usernameKey, planId);
-        recordAdminAuditAction({ action: "mejoramiento-eliminar", target: `${usernameKey}:${planId}`, detail: plan.activityId });
-        renderPlansGrid();
-      });
+      const ok = await confirmAdminAction("Eliminar este plan de mejoramiento?");
+      if (!ok) return;
+      window.portalSaveStatus?.saving("Eliminando plan...");
+      result = await mgr.deletePlan(usernameKey, planId);
+      okMsg = "Plan eliminado en la nube.";
+      audit = { action: "mejoramiento-eliminar", target: `${usernameKey}:${planId}`, detail: plan.activityId };
+    } else {
+      return;
     }
+    if (result && result.ok && audit) recordAdminAuditAction(audit);
+    announceRecordOp(describeRecordOpResult(result, okMsg, "plan"));
+    refreshPlansRowsFromCache(usernameKey);
   }
 
   // Exporta el plan a Word con encabezado institucional SENA + Motivo y las dos fechas.
@@ -4541,7 +5375,8 @@
     byId("taller-roster-list")?.addEventListener("change", updateWorkshopRosterCounter);
     byId("taller-asignar")?.addEventListener("click", handleAssignWorkshop);
     byId("taller-filtro-ficha")?.addEventListener("change", renderWorkshopsGrid);
-    byId("taller-filtro-estado")?.addEventListener("change", renderWorkshopsGrid);
+    // Filtrar por estado no vuelve a consultar la nube: repinta lo ya leido.
+    byId("taller-filtro-estado")?.addEventListener("change", paintWorkshopsGrid);
     byId("taller-grid")?.addEventListener("click", handleWorkshopGridClick);
     renderWorkshopsGrid();
   }
@@ -4593,7 +5428,9 @@
     fechaEl.value = fecha.toISOString().slice(0, 10);
   }
 
-  function handleAssignWorkshop() {
+  let _workshopsUnreadable = {};   // { usernameKey: mensaje } cuya lectura fallo
+
+  async function handleAssignWorkshop() {
     const mgr = window.reinforcementWorkshops;
     const catalog = window.reinforcementWorkshopsCatalog || {};
     const workshopKey = byId("taller-taller")?.value || "";
@@ -4606,53 +5443,98 @@
     if (!fechaLimite) { setStatus("Indica la fecha limite."); return; }
     const session = auth.getCurrentSession();
     const asignadoPor = (session && session.usernameKey) || "admin";
-    // Guard anti-duplicados: con varios aprendices marcados a la vez, un doble
-    // clic en "Asignar" no debe crear registros repetidos para quien ya tenga
-    // un taller de este tipo sin cerrar.
+    const btn = byId("taller-asignar");
+    if (btn) btn.disabled = true;
+    setStatus(`Guardando en la nube (${usernameKeys.length} aprendices)...`);
+    window.portalSaveStatus?.saving("Asignando taller...");
+    // Guard anti-duplicados: lo decide la NUBE dentro de la misma escritura
+    // condicionada (opOutcome "duplicate-active"), no el cache de este equipo,
+    // asi un doble clic o un cache vacio no crean registros repetidos.
     let asignados = 0;
     let yaActivos = 0;
-    usernameKeys.forEach((usernameKey) => {
-      const existentes = mgr.getStudentWorkshops(usernameKey);
-      const yaTiene = existentes.some((w) => w.workshopKey === workshopKey && w.resultado !== "A" && w.resultado !== "D");
-      if (yaTiene) { yaActivos += 1; return; }
-      mgr.createWorkshop(usernameKey, {
+    const fallidos = [];
+    try {
+      const results = await Promise.all(usernameKeys.map((usernameKey) => mgr.createWorkshop(usernameKey, {
         workshopKey, title: entry.title, fileUrl: entry.fileUrl, motivo, fechaLimite, asignadoPor,
+      })));
+      results.forEach((r) => {
+        if (r && r.ok && r.opOutcome === "duplicate-active") yaActivos += 1;
+        else if (r && r.ok) asignados += 1;
+        else fallidos.push((r && r.message) || "error");
       });
-      asignados += 1;
-    });
-    recordAdminAuditAction({ action: "taller-asignar", target: workshopKey, detail: `${asignados} aprendices` });
-    setStatus(`Asignado a ${asignados}.` + (yaActivos ? ` ${yaActivos} ya tenian un taller activo de este tipo.` : ""));
-    renderWorkshopsGrid();
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+    if (asignados) recordAdminAuditAction({ action: "taller-asignar", target: workshopKey, detail: `${asignados} aprendices` });
+    const text = `Asignado y guardado en la nube para ${asignados}.`
+      + (yaActivos ? ` ${yaActivos} ya tenian un taller activo de este tipo.` : "")
+      + (fallidos.length ? ` ${fallidos.length} NO se guardaron en la nube (${fallidos[0]}); quedaron pendientes en este equipo.` : "");
+    announceRecordOp({ ok: !fallidos.length, text }, setStatus);
+    usernameKeys.forEach((u) => refreshWorkshopRowsFromCache(u, true));
+    paintWorkshopsGrid();
   }
 
   async function renderWorkshopsGrid() {
     const grid = byId("taller-grid");
     if (!grid) return;
     const ficha = byId("taller-filtro-ficha")?.value || "";
-    const estado = byId("taller-filtro-estado")?.value || "";
     const mgr = window.reinforcementWorkshops;
     if (!ficha || !mgr) { grid.innerHTML = '<p class="admin-muted">Selecciona una ficha.</p>'; return; }
     grid.innerHTML = '<p class="response-status">Cargando talleres desde la nube...</p>';
     const users = getUsersForFicha(ficha);
     _workshopsByUser = {};
+    _workshopsUnreadable = {};
     await Promise.all(users.map(async (u) => {
-      let workshops = [];
-      try { workshops = await mgr.syncStudentWorkshopsFromCloud(u.usernameKey); }
-      catch (_) { workshops = mgr.getStudentWorkshops(u.usernameKey); }
-      _workshopsByUser[u.usernameKey] = { user: u, workshops: workshops || [] };
+      let r = null;
+      try {
+        r = typeof mgr.refreshStudentWorkshopsFromCloud === "function"
+          ? await mgr.refreshStudentWorkshopsFromCloud(u.usernameKey)
+          : { status: "error", message: "El modulo de talleres esta desactualizado. Recargue la pagina." };
+      } catch (_) { r = { status: "error", message: "No se pudieron leer los talleres." }; }
+      if (r && (r.status === "found" || r.status === "missing")) {
+        _workshopsByUser[u.usernameKey] = { user: u, workshops: r.list || [] };
+      } else {
+        _workshopsByUser[u.usernameKey] = { user: u, workshops: [] };
+        _workshopsUnreadable[u.usernameKey] = (r && r.message) || "No se pudieron leer los talleres.";
+      }
     }));
+    paintWorkshopsGrid();
+  }
+
+  // 0 lecturas extra tras una accion: se repinta desde el cache confirmado.
+  function refreshWorkshopRowsFromCache(usernameKey, skipPaint) {
+    const mgr = window.reinforcementWorkshops;
+    const entry = _workshopsByUser[usernameKey];
+    if (mgr && entry && !_workshopsUnreadable[usernameKey]) entry.workshops = mgr.getStudentWorkshops(usernameKey);
+    if (!skipPaint) paintWorkshopsGrid();
+  }
+
+  function paintWorkshopsGrid() {
+    const grid = byId("taller-grid");
+    const mgr = window.reinforcementWorkshops;
+    if (!grid || !mgr) return;
+    const ficha = byId("taller-filtro-ficha")?.value || "";
+    if (!ficha) { grid.innerHTML = '<p class="admin-muted">Selecciona una ficha.</p>'; return; }
+    const estado = byId("taller-filtro-estado")?.value || "";
     const now = Date.now();
     const rows = [];
-    users.forEach((u) => {
-      (_workshopsByUser[u.usernameKey]?.workshops || []).forEach((w) => {
+    Object.values(_workshopsByUser).forEach(({ user, workshops }) => {
+      if (_workshopsUnreadable[user.usernameKey]) {
+        rows.push(`<tr data-workshop-user="${escapeHtml(user.usernameKey)}" data-records-unreadable="true">`
+          + `<td colspan="6" class="records-row-error" role="alert"><div class="row-error__msg"><strong>${escapeHtml(user.fullName)}</strong>: no se pudieron leer sus talleres. ${escapeHtml(_workshopsUnreadable[user.usernameKey])}</div></td></tr>`);
+        return;
+      }
+      (workshops || []).forEach((w) => {
         const st = mgr.deriveWorkshopStatus(w, now);
         if (estado && st !== estado) return;
-        rows.push(workshopRowMarkup(u, w, st));
+        rows.push(workshopRowMarkup(user, w, st));
       });
     });
-    grid.innerHTML = rows.length
+    const pendingCount = typeof mgr.getPendingWorkshopsCount === "function" ? mgr.getPendingWorkshopsCount() : 0;
+    const notices = recordGridNotices(Object.keys(_workshopsUnreadable).length, pendingCount, "talleres");
+    grid.innerHTML = notices + (rows.length
       ? `<table class="admin-data-table taller-table"><thead><tr><th>Aprendiz</th><th>Taller</th><th>Asignado</th><th>Fecha limite</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>${rows.join("")}</tbody></table>`
-      : '<p class="admin-muted">No hay talleres para esta ficha/estado.</p>';
+      : '<p class="admin-muted">No hay talleres para esta ficha/estado.</p>');
   }
 
   function workshopRowMarkup(user, workshop, status) {
@@ -4691,11 +5573,21 @@
 
     openModal(`Respuestas — ${workshop.title || workshop.workshopKey}`, user.fullName, '<p class="admin-muted">Cargando respuestas desde la nube...</p>');
 
+    // Lectura estricta: si falla NO se muestra "(sin respuesta)" como si el
+    // aprendiz no hubiera escrito nada.
     let respuestas = {};
+    let read = null;
     try {
-      const all = await mgr.syncStudentAnswersFromCloud(usernameKey);
-      respuestas = (all && all[workshop.id]) || {};
-    } catch (_) { respuestas = {}; }
+      read = typeof mgr.refreshStudentAnswersFromCloud === "function"
+        ? await mgr.refreshStudentAnswersFromCloud(usernameKey)
+        : { status: "found", answers: await mgr.syncStudentAnswersFromCloud(usernameKey) };
+    } catch (_) { read = { status: "error", message: "No se pudieron leer las respuestas." }; }
+    if (!read || (read.status !== "found" && read.status !== "missing")) {
+      openModal(`Respuestas — ${workshop.title || workshop.workshopKey}`, user.fullName,
+        `<p class="c-alert c-alert--danger" role="alert">No se pudieron leer las respuestas del aprendiz: ${escapeHtml((read && read.message) || "error de lectura")} Intente de nuevo.</p>`);
+      return;
+    }
+    respuestas = ((read.answers || {})[workshop.id]) || {};
 
     const prefix = tallerSafeId(workshop.id) + "__";
     const rows = [];
@@ -4713,7 +5605,17 @@
     openModal(`Respuestas — ${workshop.title || workshop.workshopKey}`, user.fullName, rows.join("") || '<p class="admin-muted">El aprendiz aun no ha guardado ninguna respuesta.</p>');
   }
 
-  function handleWorkshopGridClick(event) {
+  async function handleWorkshopGridClick(event) {
+    if (event.target.closest("[data-records-reload]")) { renderWorkshopsGrid(); return; }
+    if (event.target.closest("[data-records-retry]")) {
+      const results = await window.reinforcementWorkshops?.retryPendingWorkshopsSync?.().catch(() => []);
+      const failed = (results || []).filter((r) => r && !r.ok);
+      announceRecordOp(failed.length
+        ? { ok: false, text: `Siguen pendientes cambios de ${failed.length} aprendiz(es): ${failed[0].message || ""}` }
+        : { ok: true, text: "Cambios pendientes de talleres guardados en la nube." });
+      renderWorkshopsGrid();
+      return;
+    }
     const btn = event.target.closest("[data-workshop-action]");
     if (!btn) return;
     const row = btn.closest("tr[data-workshop-id]");
@@ -4725,30 +5627,40 @@
     const entry = _workshopsByUser[usernameKey];
     const workshop = entry && entry.workshops.find((w) => w.id === workshopId);
     if (!mgr || !workshop) return;
-    if (action === "respuestas") {
-      showWorkshopAnswers(usernameKey, entry.user, workshop);
-    } else if (action === "fecha") {
+    if (action === "respuestas") { showWorkshopAnswers(usernameKey, entry.user, workshop); return; }
+    let result = null;
+    let okMsg = "";
+    let audit = null;
+    if (action === "fecha") {
       const nueva = window.prompt("Nueva fecha limite (AAAA-MM-DD):", workshop.fechaLimite || "");
       if (nueva == null) return;
-      mgr.updateWorkshopDeadline(usernameKey, workshopId, String(nueva).trim());
-      recordAdminAuditAction({ action: "taller-fecha", target: `${usernameKey}:${workshopId}`, detail: String(nueva).trim() });
-      renderWorkshopsGrid();
+      window.portalSaveStatus?.saving("Guardando fecha...");
+      result = await mgr.updateWorkshopDeadline(usernameKey, workshopId, String(nueva).trim());
+      okMsg = "Fecha del taller guardada en la nube.";
+      audit = { action: "taller-fecha", target: `${usernameKey}:${workshopId}`, detail: String(nueva).trim() };
     } else if (action === "entregada") {
-      mgr.markWorkshopDelivered(usernameKey, workshopId);
-      recordAdminAuditAction({ action: "taller-entregada", target: `${usernameKey}:${workshopId}`, detail: workshop.workshopKey });
-      renderWorkshopsGrid();
+      window.portalSaveStatus?.saving("Guardando entrega...");
+      result = await mgr.markWorkshopDelivered(usernameKey, workshopId);
+      okMsg = "Entrega del taller registrada en la nube.";
+      audit = { action: "taller-entregada", target: `${usernameKey}:${workshopId}`, detail: workshop.workshopKey };
     } else if (action === "superado" || action === "nosuperado") {
-      mgr.setWorkshopResult(usernameKey, workshopId, action === "superado" ? "A" : "D");
-      recordAdminAuditAction({ action: "taller-resultado", target: `${usernameKey}:${workshopId}`, detail: action === "superado" ? "A" : "D" });
-      renderWorkshopsGrid();
+      window.portalSaveStatus?.saving("Guardando resultado...");
+      result = await mgr.setWorkshopResult(usernameKey, workshopId, action === "superado" ? "A" : "D");
+      okMsg = "Resultado del taller guardado en la nube.";
+      audit = { action: "taller-resultado", target: `${usernameKey}:${workshopId}`, detail: action === "superado" ? "A" : "D" };
     } else if (action === "eliminar") {
-      confirmAdminAction("Eliminar este taller de refuerzo?").then((ok) => {
-        if (!ok) return;
-        mgr.deleteWorkshop(usernameKey, workshopId);
-        recordAdminAuditAction({ action: "taller-eliminar", target: `${usernameKey}:${workshopId}`, detail: workshop.workshopKey });
-        renderWorkshopsGrid();
-      });
+      const ok = await confirmAdminAction("Eliminar este taller de refuerzo?");
+      if (!ok) return;
+      window.portalSaveStatus?.saving("Eliminando taller...");
+      result = await mgr.deleteWorkshop(usernameKey, workshopId);
+      okMsg = "Taller eliminado en la nube.";
+      audit = { action: "taller-eliminar", target: `${usernameKey}:${workshopId}`, detail: workshop.workshopKey };
+    } else {
+      return;
     }
+    if (result && result.ok && audit) recordAdminAuditAction(audit);
+    announceRecordOp(describeRecordOpResult(result, okMsg, "taller"));
+    refreshWorkshopRowsFromCache(usernameKey);
   }
 
   function renderUsers() {
@@ -4793,7 +5705,7 @@
     closeModal();
     window.portalSaveStatus?.saved("Aprendiz actualizado");
     setFeedback("Aprendiz actualizado.", "success");
-    await loadUsers();
+    await patchLearnersFromLocal([usernameKey]);
   }
 
   async function handleResetGuide(button) {
@@ -4827,7 +5739,7 @@
     recordAdminAuditAction({ action: "student-status", target: usernameKey, detail: nextActive ? "active" : "inactive" });
     window.portalSaveStatus?.saved(nextActive ? "Aprendiz activado" : "Aprendiz desactivado");
     setFeedback("Estado actualizado.", "success");
-    await loadUsers();
+    await patchLearnersFromLocal([usernameKey]);
   }
 
   async function handleDeadlineSubmit(form) {
@@ -4884,7 +5796,7 @@
       setFeedback("La guia seleccionada no tiene actividades configuradas.", "error");
       return;
     }
-    const guideTitle = auth.getGuideTitle?.(guide) || guide;
+    const guideTitle = guideLabel(guide);
     const confirmed = await confirmAdminAction(
       `Aplicar la misma fecha a las ${activities.length} actividades de "${guideTitle}"?`
     );
@@ -4927,7 +5839,7 @@
       setFeedback("La guia seleccionada no tiene actividades configuradas.", "error");
       return;
     }
-    const guideTitle = auth.getGuideTitle?.(guide) || guide;
+    const guideTitle = guideLabel(guide);
     const confirmed = await confirmAdminAction(
       `Quitar la fecha de entrega de las ${activities.length} actividades de "${guideTitle}"?`
     );
@@ -5095,14 +6007,15 @@
     if (!confirmed) return;
     window.portalSaveStatus?.saving("Actualizando nombres...");
     let ok = 0; let fail = 0; let pending = 0;
+    const touched = [];
     for (const item of nameAuditResult.sure.slice()) {
       const res = await applyOneAuditName(item.user, item.official);
-      if (res && res.ok) { ok++; if (res.pendingSync) pending++; } else fail++;
+      if (res && res.ok) { ok++; if (res.pendingSync) pending++; touched.push(item.user && item.user.usernameKey); } else fail++;
     }
     window.portalSaveStatus?.saved(`${ok} actualizados`);
     const pendingMsg = pending ? ` ${pending} con sincronizacion a la nube pendiente (recarga para verificar).` : "";
     setFeedback(`Nombres actualizados: ${ok}.${fail ? ` Errores: ${fail}.` : ""}${pendingMsg}`, fail ? "error" : "success");
-    await loadUsers();
+    await patchLearnersFromLocal(touched.filter(Boolean));
     recomputeNameAudit();
   }
 
@@ -5126,7 +6039,8 @@
       window.portalSaveStatus?.error((res && res.message) || "Error al actualizar");
       setFeedback((res && res.message) || "No fue posible actualizar el nombre.", "error");
     }
-    await loadUsers();
+    // Solo se cambio (o no) un aprendiz: si fallo, no hay nada que repintar.
+    await (res && res.ok ? patchLearnersFromLocal([cand.usernameKey]) : Promise.resolve());
     recomputeNameAudit();
   }
 
@@ -5140,7 +6054,7 @@
       button.addEventListener("click", () => setActiveModule(button.dataset.jumpModule));
     });
     byId("refresh-users")?.addEventListener("click", () => {
-      guideStatesHydrated = false;
+      window._firebaseDb?.forceNextStudentsProgressListing?.();
       try { localStorage.removeItem(DASHBOARD_HYDRATE_THROTTLE_KEY); } catch (_) { /* sin localStorage */ }
       loadUsers();
     });
@@ -5183,6 +6097,11 @@
       state.filters.responsesLearner = event.target.value;
       renderResponses();
     });
+    // Consultas SOLO con los botones (navegar y filtrar no consultan la nube).
+    byId("responses-consult")?.addEventListener("click", () => { void consultLearnerModule("respuestas"); });
+    byId("responses-refresh")?.addEventListener("click", () => { void consultLearnerModule("respuestas", { force: true }); });
+    byId("deliveries-consult")?.addEventListener("click", () => { void consultLearnerModule("entregas"); });
+    byId("deliveries-refresh")?.addEventListener("click", () => { void consultLearnerModule("entregas", { force: true }); });
     byId("responses-guide-filter")?.addEventListener("change", (event) => {
       state.filters.responsesGuide = event.target.value;
       state.filters.responsesActivity = "";
@@ -5197,11 +6116,36 @@
       renderResponses();
     });
     byId("responses-search")?.addEventListener("input", (event) => {
+      // Solo filtra las opciones de aprendiz (local): no redibuja la tabla
+      // ni consulta, y el foco se conserva.
       state.filters.responsesText = event.target.value;
-      renderResponses();
+      const sel = byId("responses-learner-filter");
+      if (sel) sel.innerHTML = learnerOptionsHtml(state.filters.responsesFicha || "", state.filters.responsesLearner || "", state.filters.responsesText, "Seleccione un aprendiz");
     });
     byId("deliveries-ficha-filter")?.addEventListener("change", (event) => {
       state.filters.deliveriesFicha = event.target.value;
+      // Otra ficha: aprendiz, guia y busqueda anteriores no aplican.
+      state.filters.deliveriesLearner = "";
+      state.filters.deliveriesGuide = "";
+      state.filters.deliveriesLearnerSearch = "";
+      if (byId("deliveries-learner-search")) byId("deliveries-learner-search").value = "";
+      renderDeliveries();
+    });
+    byId("deliveries-learner-search")?.addEventListener("input", (event) => {
+      state.filters.deliveriesLearnerSearch = event.target.value;
+      const sel = byId("deliveries-learner-filter");
+      if (sel) sel.innerHTML = learnerOptionsHtml(state.filters.deliveriesFicha || "", state.filters.deliveriesLearner || "", state.filters.deliveriesLearnerSearch, "Seleccione un aprendiz");
+    });
+    byId("deliveries-learner-filter")?.addEventListener("change", (event) => {
+      state.filters.deliveriesLearner = event.target.value;
+      renderDeliveries();
+    });
+    byId("deliveries-guide-filter")?.addEventListener("change", (event) => {
+      state.filters.deliveriesGuide = event.target.value;
+      renderDeliveries();
+    });
+    byId("deliveries-period")?.addEventListener("change", (event) => {
+      applyDeliveriesPeriod(event.target.value);
       renderDeliveries();
     });
     byId("deliveries-search")?.addEventListener("input", (event) => {
@@ -5210,10 +6154,12 @@
     });
     byId("deliveries-from")?.addEventListener("change", (event) => {
       state.filters.deliveriesFrom = event.target.value;
+      state.filters.deliveriesPeriod = "custom";
       renderDeliveries();
     });
     byId("deliveries-to")?.addEventListener("change", (event) => {
       state.filters.deliveriesTo = event.target.value;
+      state.filters.deliveriesPeriod = "custom";
       renderDeliveries();
     });
     byId("deliveries-export-csv")?.addEventListener("click", () => {

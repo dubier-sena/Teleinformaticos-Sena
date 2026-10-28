@@ -64,32 +64,34 @@ const guideLinks = (root) => root.querySelectorAll("a[data-guide-file]");
 const linkFiles = (root) => guideLinks(root).map((a) => a.getAttribute("data-guide-file"));
 const linkLabels = (root) => guideLinks(root).map((a) => a.textContent);
 
-// Orden visual aprobado por ficha (el ya publicado): identico a FICHA_MAP salvo
-// Practica de Python, que va al final. FICHA_MAP NO se reordena.
+// Orden visual aprobado por ficha (2026-10-22): guias numeradas en orden
+// numerico, despues Taller Integrador y al final Practica de Python, con los
+// nombres cortos del catalogo central (portal_auth.js). FICHA_MAP NO se reordena:
+// el orden es solo de presentacion (getGuidesForFicha / sortGuidesForDisplay).
 const EXPECTED = {
   "3441939": {
     heading: "Kennedy · Grado 10 · 10A",
-    labels: ["Guía 1 — Inducción", "Guía 2 — Herramientas", "Guía 3 — Planificar", "Guía 4 — Ciberseguridad", "Guía 5 — Documentar la gestión", "Guía 6 — Mantener equipos", "Guía 10 — Redes RAP01", "Guía 11 — Redes RAP02", "Guía 12 — Redes RAP03", "Taller Integrador", "Práctica de Python"],
+    labels: ["Guía 1 — Inducción", "Guía 2 — Caracterizar herramientas informáticas", "Guía 3 — Implementar componentes", "Guía 4 — Planificar información de ciberseguridad", "Guía 5 — Documentar gestión de información", "Guía 6 — Preparar mantenimiento", "Guía 7 — Realizar mantenimiento integral", "Guía 8 — Verificar operación del sistema", "Guía 10 — Definir parámetros de red", "Guía 11 — Comprobar conectividad de red", "Guía 12 — Documentar acciones de red", "Taller Integrador", "Práctica de Python"],
   },
   "3441942": {
     heading: "Kennedy · Grado 10 · 10B",
-    labels: ["Guía 1 — Inducción", "Guía 2 — Herramientas", "Guía 3 — Planificar", "Guía 4 — Ciberseguridad", "Guía 5 — Documentar la gestión", "Guía 6 — Mantener equipos", "Guía 10 — Redes RAP01", "Guía 11 — Redes RAP02", "Guía 12 — Redes RAP03", "Taller Integrador", "Práctica de Python"],
+    labels: ["Guía 1 — Inducción", "Guía 2 — Caracterizar herramientas informáticas", "Guía 3 — Implementar componentes", "Guía 4 — Planificar información de ciberseguridad", "Guía 5 — Documentar gestión de información", "Guía 6 — Preparar mantenimiento", "Guía 7 — Realizar mantenimiento integral", "Guía 8 — Verificar operación del sistema", "Guía 10 — Definir parámetros de red", "Guía 11 — Comprobar conectividad de red", "Guía 12 — Documentar acciones de red", "Taller Integrador", "Práctica de Python"],
   },
   "3441944": {
     heading: "Santa Bárbara · Grado 10 · 10A",
-    labels: ["Guía 1 — Inducción", "Guía 2 — Redes RAP01", "Guía 3 — Redes RAP02", "Guía 4 — Redes RAP03", "Taller Integrador", "Práctica de Python"],
+    labels: ["Guía 1 — Inducción", "Guía 2 — Definir parámetros de red", "Guía 3 — Comprobar conectividad de red", "Guía 4 — Documentar acciones de red", "Guía 5 — Preparar mantenimiento", "Guía 6 — Realizar mantenimiento integral", "Guía 7 — Verificar operación del sistema", "Taller Integrador", "Práctica de Python"],
   },
   "3441950": {
     heading: "Santa Bárbara · Grado 10 · 10B",
-    labels: ["Guía 1 — Inducción", "Guía 2 — Redes RAP01", "Guía 3 — Redes RAP02", "Guía 4 — Redes RAP03", "Taller Integrador", "Práctica de Python"],
+    labels: ["Guía 1 — Inducción", "Guía 2 — Definir parámetros de red", "Guía 3 — Comprobar conectividad de red", "Guía 4 — Documentar acciones de red", "Guía 5 — Preparar mantenimiento", "Guía 6 — Realizar mantenimiento integral", "Guía 7 — Verificar operación del sistema", "Taller Integrador", "Práctica de Python"],
   },
   "3168850": {
     heading: "Santa Bárbara · Grado 11 · 11A",
-    labels: ["Guía 5 — Herramientas", "Guía 6 — Implementar componentes", "Guía 7 — Ciberseguridad", "Guía 8 — Documentar la gestión", "Taller Integrador", "Guía 9 — Redes RAP01", "Guía 10 — Redes RAP02", "Guía 11 — Redes RAP03", "Práctica de Python"],
+    labels: ["Guía 5 — Caracterizar herramientas informáticas", "Guía 6 — Implementar componentes", "Guía 7 — Planificar información de ciberseguridad", "Guía 8 — Documentar gestión de información", "Guía 9 — Definir parámetros de red", "Guía 10 — Comprobar conectividad de red", "Guía 11 — Documentar acciones de red", "Taller Integrador", "Práctica de Python"],
   },
   "3168852": {
     heading: "Santa Bárbara · Grado 11 · 11B",
-    labels: ["Guía 5 — Herramientas", "Guía 6 — Implementar componentes", "Guía 7 — Ciberseguridad", "Guía 8 — Documentar la gestión", "Taller Integrador", "Guía 9 — Redes RAP01", "Guía 10 — Redes RAP02", "Guía 11 — Redes RAP03", "Práctica de Python"],
+    labels: ["Guía 5 — Caracterizar herramientas informáticas", "Guía 6 — Implementar componentes", "Guía 7 — Planificar información de ciberseguridad", "Guía 8 — Documentar gestión de información", "Guía 9 — Definir parámetros de red", "Guía 10 — Comprobar conectividad de red", "Guía 11 — Documentar acciones de red", "Taller Integrador", "Práctica de Python"],
   },
 };
 // Orden explicito: Object.keys() ordena numericamente las claves de ficha.
@@ -106,11 +108,14 @@ test("shared_shell.js ya no tiene una lista manual de guias (se genera desde FIC
   assert.match(shell, /getGuideHref\(/);
 });
 
-test("FICHA_MAP NO se reordeno: Python sigue antes del Taller en Santa Barbara", () => {
+test("FICHA_MAP NO se reordeno (Python sigue antes del Taller en Santa Barbara); la presentacion si ordena", () => {
   const { ctx } = bootNavbar(null);
   for (const [ficha, taller] of [["3441944", "santa-barbara-10a-guia-04-taller-integrador.html"], ["3168850", "grupo-11a-guia-09-taller-integrador.html"]]) {
-    const guias = Array.from(ctx.portalAuth.getGuidesForFicha(ficha));
+    const guias = Array.from(ctx.portalAuth.FICHA_MAP[ficha].guias);
     assert.ok(guias.indexOf(PYTHON) < guias.indexOf(taller), `FICHA_MAP ${ficha} fue reordenado`);
+    const shown = Array.from(ctx.portalAuth.getGuidesForFicha(ficha));
+    assert.ok(shown.indexOf(taller) < shown.indexOf(PYTHON), `presentacion ${ficha}: el Taller debe ir antes de Python`);
+    assert.equal(shown[shown.length - 1], PYTHON, `presentacion ${ficha}: Python al final`);
   }
 });
 

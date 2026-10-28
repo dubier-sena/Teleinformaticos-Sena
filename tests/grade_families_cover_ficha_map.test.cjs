@@ -160,9 +160,24 @@ ORDERS.forEach(({ label, declarationsFirst }) => {
       assert.equal(mgr.GUIDE_FAMILY_BY_FILE[file], esperado[file],
         `${file} debe calificarse bajo la familia ya existente ${esperado[file]}`);
     });
-    // Ninguna familia nueva: el catalogo debe seguir teniendo las mismas 17.
-    assert.equal(Object.keys(mgr.GRADE_CATALOG).length, 17,
-      "no se deben crear familias nuevas para las guias de Kennedy (reusan las de Santa Barbara)");
+    // Ninguna familia duplicada por institucion. 17 -> 19 (2026-10-22): las dos
+    // familias nuevas son RAP nuevos de mantenimiento (RAP 02 y RAP 03 de
+    // 220501001), cada una COMPARTIDA por Kennedy y Santa Barbara; el RAP 01 de
+    // Santa Barbara reusa la familia de la Guia 6 de Kennedy.
+    assert.equal(Object.keys(mgr.GRADE_CATALOG).length, 19,
+      "no se deben crear familias por institucion: un mismo RAP comparte familia");
+    const mant = {
+      "grupo-10a-guia-06-mantener-equipos.html": "guia-06-mantener-equipos",
+      "santa-barbara-10a-guia-05-preparar-mantenimiento.html": "guia-06-mantener-equipos",
+      "santa-barbara-10b-guia-05-preparar-mantenimiento.html": "guia-06-mantener-equipos",
+      "grupo-10a-guia-07-mantenimiento-integral.html": "guia-mant-rap02",
+      "santa-barbara-10b-guia-06-mantenimiento-integral.html": "guia-mant-rap02",
+      "grupo-10b-guia-08-verificar-operacion.html": "guia-mant-rap03",
+      "santa-barbara-10a-guia-07-verificar-operacion.html": "guia-mant-rap03",
+    };
+    Object.keys(mant).forEach((file) => {
+      assert.equal(mgr.GUIDE_FAMILY_BY_FILE[file], mant[file], `${file} debe compartir la familia ${mant[file]}`);
+    });
   });
 });
 

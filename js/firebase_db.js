@@ -1068,7 +1068,12 @@
   // escrituras" y detectar conflictos con la precondicion de Firestore.
 
   // -> { status: "found"|"missing"|"error", data, updateTime }
-  async function fsGetStrict(collection, docId) {
+  // opts.noCooldown: un 401/403 de ESTA lectura no activa la pausa global de
+  // 60 s (markFirestoreRejection). Para colecciones cuya regla puede no estar
+  // desplegada (banco de comentarios): su 403 no significa que la sesion este
+  // rota y no debe dejar al resto del panel sin Firestore.
+  async function fsGetStrict(collection, docId, opts) {
+    var noCooldown = Boolean(opts && opts.noCooldown);
     if (!(await canCallFirestore(collection, false, { firestoreFirst: true }))) {
       return { status: "error", data: null, updateTime: "", reason: "unavailable" };
     }
@@ -1084,7 +1089,7 @@
         return { status: "missing", data: null, updateTime: "" };
       }
       if (!res.ok) {
-        if (isAuthRejection(res.status)) markFirestoreRejection();
+        if (isAuthRejection(res.status) && !noCooldown) markFirestoreRejection();
         return { status: "error", data: null, updateTime: "", reason: "http-" + res.status };
       }
       var payload = await res.json();
@@ -1112,21 +1117,39 @@
   // PATCH solo-Firestore con precondicion OBLIGATORIA:
   //   opts.expectedUpdateTime -> el documento no cambio desde que se leyo;
   //   opts.mustNotExist       -> el documento todavia no existe.
+  // opts.updateMask (opcional): lista de rutas de campo de PRIMER nivel o
+  // anidadas (p.ej. ["usernameKey", "grades.`guia-02`"]) -- solo esas rutas se
+  // reemplazan y el resto del documento queda intacto en el servidor. Sin
+  // ella el PATCH reemplaza el documento completo, como antes.
   // -> { status: "ok"|"conflict"|"error", updateTime }
   // "error" es AMBIGUO a proposito (p.ej. timeout: Firestore pudo haber
   // aplicado la escritura igual) -- el llamador debe verificar releyendo.
   async function fsPatchStrict(collection, docId, data, opts) {
     var expectedUpdateTime = opts && opts.expectedUpdateTime;
     var mustNotExist = Boolean(opts && opts.mustNotExist);
-    if (!expectedUpdateTime && !mustNotExist) {
+    var updateMask = opts && Array.isArray(opts.updateMask) ? opts.updateMask : null;
+    // opts.maskOnly: escritura SIN precondicion, permitida solo con updateMask.
+    // Es segura cuando cada ruta de la mascara es un dato que este cliente
+    // acaba de cambiar (p.ej. un campo de respuesta): no depende de ninguna
+    // lectura previa y no toca nada fuera de la mascara.
+    var maskOnly = Boolean(opts && opts.maskOnly && updateMask && updateMask.length);
+    if (!expectedUpdateTime && !mustNotExist && !maskOnly) {
       return { status: "error", updateTime: "", reason: "missing-precondition" };
     }
-    if (shouldBlockCloudWrites() || !(await canCallFirestore(collection, true))) {
+    if (shouldBlockCloudWrites()) {
+      return { status: "error", updateTime: "", reason: "write-budget" };
+    }
+    if (!(await canCallFirestore(collection, true))) {
       return { status: "error", updateTime: "", reason: "unavailable" };
     }
     var precondition = expectedUpdateTime
       ? "currentDocument.updateTime=" + encodeURIComponent(expectedUpdateTime)
-      : "currentDocument.exists=false";
+      : (mustNotExist ? "currentDocument.exists=false" : "");
+    if (updateMask && updateMask.length) {
+      precondition += updateMask.map(function (fieldPath) {
+        return "&updateMask.fieldPaths=" + encodeURIComponent(fieldPath);
+      }).join("");
+    }
     try {
       var res = await fetchWithTimeout(
         docUrl(collection, docId, precondition),
@@ -1142,13 +1165,80 @@
         markFirestoreSuccess();
         var written = null;
         try { written = await res.json(); } catch (_) { written = null; }
-        backupWriteToDrive(collection, docId, data);
+        // Con updateMask `data` es solo un FRAGMENTO: el respaldo de Drive usa
+        // "set" (reemplaza la copia), asi que enviarlo la dejaria incompleta.
+        if (!(updateMask && updateMask.length)) backupWriteToDrive(collection, docId, data);
         return { status: "ok", updateTime: (written && written.updateTime) || "" };
       }
       if ((res.status === 400 || res.status === 409 || res.status === 412) && (await isStrictPreconditionConflict(res))) {
         return { status: "conflict", updateTime: "" };
       }
       if (isAuthRejection(res.status)) markFirestoreRejection();
+      return { status: "error", updateTime: "", reason: "http-" + res.status };
+    } catch (e) {
+      return { status: "error", updateTime: "", reason: "network" };
+    }
+  }
+
+  // Escritura condicionada via :commit (2026-10-27). Misma interfaz que
+  // fsPatchStrict pero con la precondicion en el CUERPO de la escritura:
+  //   currentDocument.updateTime / currentDocument.exists=false.
+  // Motivo: el emulador oficial de Firestore (v1.21) IGNORA la precondicion
+  // cuando viaja como parametro de la URL de un PATCH (la lee como "version
+  // 0" y rechaza toda escritura sobre un documento existente), mientras que en
+  // :commit la respeta. :commit es el mecanismo canonico que usan los SDK, asi
+  // que se comporta igual en el emulador y en produccion y se puede verificar.
+  // opts.updateMask: rutas a escribir (el resto del documento no se toca).
+  // opts.backupData: documento COMPLETO para el respaldo en Drive (que usa
+  //   "set" y reemplaza la copia); sin el, una escritura parcial no se respalda.
+  // opts.noCooldown: un 401/403 no activa la pausa global.
+  // -> { status: "ok"|"conflict"|"error", updateTime, reason }
+  async function fsCommitStrict(collection, docId, data, opts) {
+    var expectedUpdateTime = opts && opts.expectedUpdateTime;
+    var mustNotExist = Boolean(opts && opts.mustNotExist);
+    var updateMask = opts && Array.isArray(opts.updateMask) ? opts.updateMask : null;
+    var noCooldown = Boolean(opts && opts.noCooldown);
+    if (!expectedUpdateTime && !mustNotExist) {
+      return { status: "error", updateTime: "", reason: "missing-precondition" };
+    }
+    if (shouldBlockCloudWrites()) {
+      return { status: "error", updateTime: "", reason: "write-budget" };
+    }
+    if (!(await canCallFirestore(collection, true))) {
+      return { status: "error", updateTime: "", reason: "unavailable" };
+    }
+    var write = {
+      update: {
+        name: "projects/" + FIREBASE_PROJECT_ID + "/databases/(default)/documents/" + collection + "/" + docId,
+        fields: toFsDoc(data).fields,
+      },
+      currentDocument: expectedUpdateTime ? { updateTime: expectedUpdateTime } : { exists: false },
+    };
+    if (updateMask && updateMask.length) write.updateMask = { fieldPaths: updateMask };
+    try {
+      var res = await fetchWithTimeout(
+        BASE_URL + ":commit?key=" + FIREBASE_API_KEY,
+        {
+          method: "POST",
+          headers: await authHeaders({ "Content-Type": "application/json" }),
+          body: JSON.stringify({ writes: [write] }),
+        },
+        API_TIMEOUT_MS
+      );
+      if (res.ok) {
+        registerFirestoreOperation("write", 1);
+        markFirestoreSuccess();
+        var committed = null;
+        try { committed = await res.json(); } catch (_) { committed = null; }
+        var backup = opts && opts.backupData ? opts.backupData : (updateMask && updateMask.length ? null : data);
+        if (backup) backupWriteToDrive(collection, docId, backup);
+        var wr = committed && committed.writeResults && committed.writeResults[0];
+        return { status: "ok", updateTime: (wr && wr.updateTime) || (committed && committed.commitTime) || "", reason: "" };
+      }
+      if ((res.status === 400 || res.status === 409 || res.status === 412) && (await isStrictPreconditionConflict(res))) {
+        return { status: "conflict", updateTime: "", reason: "conflict" };
+      }
+      if (isAuthRejection(res.status) && !noCooldown) markFirestoreRejection();
       return { status: "error", updateTime: "", reason: "http-" + res.status };
     } catch (e) {
       return { status: "error", updateTime: "", reason: "network" };
@@ -1306,9 +1396,14 @@
     }
     var batchUrl = "https://firestore.googleapis.com/v1/projects/" +
       FIREBASE_PROJECT_ID + "/databases/(default)/documents:batchGet?key=" + FIREBASE_API_KEY;
+    // Nombre LITERAL (sin encodeURIComponent): en el cuerpo de batchGet un
+    // ":" codificado como "%3A" hace que Firestore busque OTRO documento y lo
+    // reporte "missing" (comprobado en produccion 2026-10-22). Asi los
+    // documentos __guide_data__:student:... nunca se encontraban, aunque cada
+    // uno contaba como lectura.
     var docPaths = docIds.map(function (id) {
       return "projects/" + FIREBASE_PROJECT_ID +
-        "/databases/(default)/documents/" + collection + "/" + encodeURIComponent(id);
+        "/databases/(default)/documents/" + collection + "/" + id;
     });
     try {
       var res = await fetchWithTimeout(
@@ -1574,6 +1669,11 @@
   }
 
   // Solo el admin puede escribir (rule isAdmin()). Reemplaza el doc completo.
+  // NO usar para calificar: cloudGetGrades devuelve {} tambien cuando la
+  // lectura FALLA, y un reemplazo completo construido sobre ese {} borra en la
+  // nube las notas de todas las demas guias del aprendiz (hallazgo 2026-10-23,
+  // memory/respaldos/guias-2026-10-23/hallazgos). El panel usa
+  // cloudUpdateGradesStrict; esta se conserva por compatibilidad.
   async function cloudSaveGrades(usernameKey, grades) {
     if (!usernameKey) return false;
     return fsPatch(COL_GRADES, usernameKey, {
@@ -1581,6 +1681,86 @@
       grades: grades && typeof grades === "object" ? grades : {},
       updatedAt: new Date().toISOString(),
     });
+  }
+
+  function isPlainGradesObject(value) {
+    return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+  }
+
+  // Lectura ESTRICTA de notas: distingue "el aprendiz no tiene notas todavia"
+  // (missing) de "no se pudo leer" (error). Un documento que existe pero cuyo
+  // mapa `grades` falta o no es un objeto (o alguna familia no es un objeto)
+  // se trata como error "incomplete": no se sabe que habia y escribir encima
+  // podria borrar algo.
+  // -> { status: "found"|"missing"|"error", grades, updateTime, reason }
+  async function cloudGetGradesStrict(usernameKey) {
+    if (!usernameKey) return { status: "error", grades: null, updateTime: "", reason: "missing-user" };
+    var r = await fsGetStrict(COL_GRADES, usernameKey);
+    if (r.status === "missing") return { status: "missing", grades: {}, updateTime: "", reason: "" };
+    if (r.status !== "found") return { status: "error", grades: null, updateTime: "", reason: r.reason || "unknown" };
+    var grades = r.data && r.data.grades;
+    var complete = isPlainGradesObject(grades) && Object.keys(grades).every(function (family) {
+      return isPlainGradesObject(grades[family]);
+    });
+    if (!complete || !r.updateTime) {
+      return { status: "error", grades: null, updateTime: "", reason: "incomplete" };
+    }
+    return { status: "found", grades: grades, updateTime: r.updateTime, reason: "" };
+  }
+
+  // Leer -> `mutate` -> escribir con precondicion, para calificar UNA o pocas
+  // actividades. Mismas invariantes que cloudUpdateCalendarStrict:
+  //   * lectura fallida/incompleta => CERO escrituras ("read-failed");
+  //   * conflicto (otro equipo/pestaña escribio en medio) => se relee y se
+  //     vuelve a aplicar `mutate` sobre la version nueva, max STRICT_MAX_ATTEMPTS;
+  //   * `mutate(grades)` recibe una COPIA del mapa leido y devuelve
+  //     { grades, families: [familias que cambio] } o { abort: "motivo" }.
+  // Solo se envian las familias que `mutate` declara cambiadas (updateMask):
+  // aunque algo saliera mal, las demas guias del aprendiz no viajan en la
+  // escritura y no pueden quedar borradas.
+  // -> { ok, status: "saved"|"read-failed"|"write-failed"|"conflict-exhausted"|"aborted", grades, reason }
+  async function cloudUpdateGradesStrict(usernameKey, mutate) {
+    if (!usernameKey || typeof mutate !== "function") return { ok: false, status: "aborted", grades: null, reason: "invalid-args" };
+    for (var attempt = 1; attempt <= STRICT_MAX_ATTEMPTS; attempt++) {
+      var current = await cloudGetGradesStrict(usernameKey);
+      if (current.status === "error") return { ok: false, status: "read-failed", grades: null, reason: current.reason };
+      var next = mutate(JSON.parse(JSON.stringify(current.grades || {})));
+      if (!next || next.abort) return { ok: false, status: "aborted", grades: null, reason: next && next.abort };
+      var families = (Array.isArray(next.families) ? next.families : []).filter(function (family, i, all) {
+        return family && all.indexOf(family) === i;
+      });
+      if (!families.length) return { ok: true, status: "saved", grades: current.grades, reason: "no-changes" };
+      var changed = {};
+      for (var i = 0; i < families.length; i++) {
+        var familyGrades = next.grades && next.grades[families[i]];
+        if (!isPlainGradesObject(familyGrades)) return { ok: false, status: "aborted", grades: null, reason: "invalid-family" };
+        changed[families[i]] = familyGrades;
+      }
+      var nowIso = new Date().toISOString();
+      var merged = Object.assign({}, current.grades || {}, changed);
+      var written = await fsCommitStrict(
+        COL_GRADES,
+        usernameKey,
+        { usernameKey: usernameKey, grades: changed, updatedAt: nowIso },
+        Object.assign(
+          current.status === "found" ? { expectedUpdateTime: current.updateTime } : { mustNotExist: true },
+          {
+            updateMask: ["usernameKey", "updatedAt"].concat(families.map(function (family) {
+              return "grades." + escapeFirestoreFieldPath(family);
+            })),
+            // El respaldo de Drive reemplaza su copia: se le manda el documento
+            // COMPLETO ya fusionado, nunca solo las familias enviadas.
+            backupData: { usernameKey: usernameKey, grades: merged, updatedAt: nowIso },
+          }
+        )
+      );
+      if (written.status === "ok") {
+        return { ok: true, status: "saved", grades: merged, reason: "" };
+      }
+      if (written.status === "error") return { ok: false, status: "write-failed", grades: null, reason: written.reason || "unknown" };
+      if (attempt < STRICT_MAX_ATTEMPTS) await strictRetryDelay(attempt);
+    }
+    return { ok: false, status: "conflict-exhausted", grades: null, reason: "conflict" };
   }
 
   // ── Autorizacion de uso de firma (evidencia de consentimiento) ────────────
@@ -1657,6 +1837,34 @@
     });
   }
 
+  // Variantes ESTRICTAS del banco de comentarios: cloudGetGradeComments
+  // devuelve [] tambien cuando la lectura falla, y el panel interpretaba ese
+  // [] como "banco vacio" -> lo sembraba y REEMPLAZABA en la nube los
+  // comentarios reales del instructor.
+  // -> { status: "found"|"missing"|"error", comments, updateTime, reason }
+  async function cloudGetGradeCommentsStrict() {
+    // noCooldown: en el ruleset desplegado 00ffe530 esta coleccion NO tiene
+    // regla (cae en el cierre total) y responde 403; ese 403 no debe dejar al
+    // resto del panel (las notas) sin Firestore durante 60 s.
+    var r = await fsGetStrict(COL_GRADE_COMMENTS, "bank", { noCooldown: true });
+    if (r.status === "missing") return { status: "missing", comments: [], updateTime: "", reason: "" };
+    if (r.status !== "found") return { status: "error", comments: null, updateTime: "", reason: r.reason || "unknown" };
+    if (!r.data || !Array.isArray(r.data.comments) || !r.updateTime) {
+      return { status: "error", comments: null, updateTime: "", reason: "incomplete" };
+    }
+    return { status: "found", comments: r.data.comments, updateTime: r.updateTime, reason: "" };
+  }
+
+  // Escritura condicionada a la version leida (expectedUpdateTime) o a que el
+  // banco aun no exista (mustNotExist). -> { status: "ok"|"conflict"|"error", updateTime, reason }
+  async function cloudSaveGradeCommentsStrict(comments, precondition) {
+    if (!Array.isArray(comments)) return { status: "error", updateTime: "", reason: "invalid-args" };
+    return fsCommitStrict(COL_GRADE_COMMENTS, "bank", {
+      comments: comments,
+      updatedAt: new Date().toISOString(),
+    }, Object.assign({}, precondition || {}, { noCooldown: true }));
+  }
+
   // ── Planes de mejoramiento (admin escribe; aprendiz lee solo el suyo) ─────
   // Doc por aprendiz: { usernameKey, plans: [...], updatedAt }.
   async function cloudGetImprovementPlans(usernameKey) {
@@ -1710,11 +1918,407 @@
     });
   }
 
+  // ── Listas de registros por id: planes de mejoramiento y talleres (2026-10-27) ──
+  // Mismo defecto que tenian las notas: cloudGetImprovementPlans /
+  // cloudGetReinforcementWorkshops devuelven [] tambien cuando la lectura FALLA;
+  // el modulo copiaba ese [] al cache y el siguiente cambio REEMPLAZABA la lista
+  // de la nube con lo que este equipo tuviera, borrando los demas registros.
+  // Aqui: lectura estricta (found / missing / error) y escritura
+  // leer -> aplicar SOLO las operaciones por id -> escribir con precondicion.
+  // La lista es un unico campo array de Firestore, asi que cambiar un registro
+  // exige reescribir el campo; pero se reescribe sobre la version recien leida,
+  // condicionado a esa version, y se rechaza si desaparece cualquier id que la
+  // operacion no elimino explicitamente.
+  function isRecordObject(value) {
+    return Boolean(value) && typeof value === "object" && !Array.isArray(value) &&
+      typeof value.id === "string" && value.id.length > 0;
+  }
+
+  // -> { status: "found"|"missing"|"error", list, updateTime, reason }
+  async function cloudGetRecordListStrict(collection, docId, field) {
+    if (!docId) return { status: "error", list: null, updateTime: "", reason: "missing-user" };
+    var r = await fsGetStrict(collection, docId);
+    if (r.status === "missing") return { status: "missing", list: [], updateTime: "", reason: "" };
+    if (r.status !== "found") return { status: "error", list: null, updateTime: "", reason: r.reason || "unknown" };
+    var list = r.data && r.data[field];
+    if (!Array.isArray(list) || !list.every(isRecordObject) || !r.updateTime) {
+      return { status: "error", list: null, updateTime: "", reason: "incomplete" };
+    }
+    return { status: "found", list: list, updateTime: r.updateTime, reason: "" };
+  }
+
+  // `mutate(copia)` devuelve { list, removedIds } o { abort: "motivo" }.
+  // -> { ok, status: "saved"|"read-failed"|"write-failed"|"conflict-exhausted"|"aborted", list, reason }
+  async function cloudUpdateRecordListStrict(collection, docId, field, mutate) {
+    if (!docId || typeof mutate !== "function") return { ok: false, status: "aborted", list: null, reason: "invalid-args" };
+    for (var attempt = 1; attempt <= STRICT_MAX_ATTEMPTS; attempt++) {
+      var current = await cloudGetRecordListStrict(collection, docId, field);
+      if (current.status === "error") return { ok: false, status: "read-failed", list: null, reason: current.reason };
+      var before = current.list || [];
+      var next = mutate(JSON.parse(JSON.stringify(before)));
+      if (!next || next.abort) return { ok: false, status: "aborted", list: null, reason: (next && next.abort) || "aborted" };
+      var list = next.list;
+      if (!Array.isArray(list) || !list.every(isRecordObject)) return { ok: false, status: "aborted", list: null, reason: "invalid-list" };
+      var removed = Array.isArray(next.removedIds) ? next.removedIds : [];
+      var kept = {};
+      list.forEach(function (rec) { kept[rec.id] = true; });
+      var lost = before.filter(function (rec) { return !kept[rec.id] && removed.indexOf(rec.id) === -1; });
+      if (lost.length) return { ok: false, status: "aborted", list: null, reason: "integrity" };
+      if (JSON.stringify(list) === JSON.stringify(before)) {
+        return { ok: true, status: "saved", list: before, reason: "no-changes" };
+      }
+      var data = { usernameKey: docId, updatedAt: new Date().toISOString() };
+      data[field] = list;
+      var written = await fsCommitStrict(
+        collection,
+        docId,
+        data,
+        Object.assign(
+          current.status === "found" ? { expectedUpdateTime: current.updateTime } : { mustNotExist: true },
+          { updateMask: [field, "usernameKey", "updatedAt"], backupData: data }
+        )
+      );
+      if (written.status === "ok") return { ok: true, status: "saved", list: list, reason: "" };
+      if (written.status === "error") return { ok: false, status: "write-failed", list: null, reason: written.reason || "unknown" };
+      if (attempt < STRICT_MAX_ATTEMPTS) await strictRetryDelay(attempt);
+    }
+    return { ok: false, status: "conflict-exhausted", list: null, reason: "conflict" };
+  }
+
+  // Operaciones por registro. Todas son IDEMPOTENTES: reenviar una operacion
+  // cuya escritura si se aplico (p.ej. respuesta perdida por tiempo agotado)
+  // no duplica el registro ni la entrada del historial de fechas.
+  //   { type: "create", record, uniqueActive: { field, value } }
+  //   { type: "patch", id, set: { campo: valor } }
+  //   { type: "deadline", id, fecha, cambiadoEn }
+  //   { type: "delete", id }
+  // -> { list, removedIds, outcome: "applied"|"exists"|"missing"|"duplicate-active" }
+  function applyRecordListOp(list, op) {
+    var out = list.slice();
+    var idx = -1;
+    var targetId = op.type === "create" ? (op.record && op.record.id) : op.id;
+    for (var i = 0; i < out.length; i++) { if (out[i].id === targetId) { idx = i; break; } }
+    if (op.type === "create") {
+      if (idx !== -1) return { list: out, removedIds: [], outcome: "exists" };
+      var unique = op.uniqueActive;
+      if (unique && unique.field && out.some(function (rec) {
+        return rec[unique.field] === unique.value && rec.resultado !== "A" && rec.resultado !== "D";
+      })) {
+        return { list: out, removedIds: [], outcome: "duplicate-active" };
+      }
+      out.push(JSON.parse(JSON.stringify(op.record)));
+      return { list: out, removedIds: [], outcome: "applied" };
+    }
+    if (op.type === "delete") {
+      if (idx === -1) return { list: out, removedIds: [], outcome: "missing" };
+      out.splice(idx, 1);
+      return { list: out, removedIds: [targetId], outcome: "applied" };
+    }
+    if (idx === -1) return { list: out, removedIds: [], outcome: "missing" };
+    var rec = Object.assign({}, out[idx]);
+    if (op.type === "patch") {
+      Object.keys(op.set || {}).forEach(function (k) { if (k !== "id") rec[k] = op.set[k]; });
+    } else if (op.type === "deadline") {
+      rec.fechaLimite = op.fecha || "";
+      var hist = Array.isArray(rec.historialFechas) ? rec.historialFechas.slice() : [];
+      var seen = hist.some(function (h) { return h && h.fecha === (op.fecha || "") && h.cambiadoEn === op.cambiadoEn; });
+      if (!seen) hist.push({ fecha: op.fecha || "", cambiadoEn: op.cambiadoEn });
+      rec.historialFechas = hist;
+      if (rec.estado === "vencido") rec.estado = "asignado";
+    } else {
+      return { list: out, removedIds: [], outcome: "missing" };
+    }
+    out[idx] = rec;
+    return { list: out, removedIds: [], outcome: "applied" };
+  }
+
+  function describeCloudWriteFailure(result) {
+    var reason = String((result && result.reason) || "");
+    var status = String((result && result.status) || "");
+    if (status === "unsupported") return "El modulo de la nube esta desactualizado. Recargue la pagina (Ctrl+F5).";
+    if (status === "conflict-exhausted") return "Otro equipo esta modificando estos registros al mismo tiempo.";
+    if (reason === "integrity") return "El cambio habria eliminado registros que no se pidio eliminar; no se escribio nada.";
+    if (reason === "incomplete") return "Los registros guardados en la nube llegaron incompletos; no se escribio nada para no perder informacion.";
+    if (reason === "http-429") return "La cuota diaria de Firestore esta agotada.";
+    if (reason === "write-budget") return "Se alcanzo el limite diario de escrituras de este equipo.";
+    if (reason === "http-401" || reason === "http-403") return "Firestore rechazo el permiso (la sesion no esta autorizada o expiro).";
+    if (reason === "network") return "No hay conexion con Firestore.";
+    if (/^http-5\d\d$/.test(reason) || reason === "http-408") return "El servidor de Firestore no respondio (falla temporal del servicio).";
+    if (reason === "unavailable") return "Firestore no esta disponible (sin sesion en la nube o en pausa tras errores).";
+    if (status === "read-failed") return "No se pudieron leer los registros actuales del aprendiz.";
+    return "No se pudo confirmar el guardado en la nube.";
+  }
+
+  var RECORD_LIST_RETRY_DELAYS_MS = [15000, 30000, 60000, 120000, 300000];
+  // Reintentos AUTOMATICOS por aprendiz antes de esperar a una accion del
+  // usuario (boton, evento online o nuevo cambio): acota el consumo de cuota.
+  var RECORD_LIST_MAX_AUTO_RETRIES = 8;
+
+  // Cola persistida de operaciones por registro para un modulo (planes o
+  // talleres). config: { collection, field, pendingStorageKey, eventName,
+  // getCacheKey(usernameKey) }. Mismas garantias que la cola de notas
+  // (activity_grades.js): lectura fallida = cero escrituras, resultado REAL
+  // para la interfaz, reintento con espera creciente y sin duplicados.
+  function createRecordListSync(config) {
+    var cfg = config || {};
+    var inFlight = {};
+    var waiters = {};
+    var retryTimers = {};
+    var retryAttempts = {};
+    var seq = 0;
+
+    function loadPending() {
+      try {
+        var raw = window.localStorage.getItem(cfg.pendingStorageKey);
+        var parsed = raw ? JSON.parse(raw) : {};
+        return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+      } catch (e) { return {}; }
+    }
+    var pending = loadPending();
+
+    function persistPending() {
+      var clean = {};
+      Object.keys(pending).forEach(function (user) {
+        if (pending[user] && pending[user].length) clean[user] = pending[user];
+      });
+      pending = clean;
+      try {
+        if (Object.keys(clean).length) window.localStorage.setItem(cfg.pendingStorageKey, JSON.stringify(clean));
+        else window.localStorage.removeItem(cfg.pendingStorageKey);
+      } catch (e) { /* sin almacenamiento: la cola sigue en memoria */ }
+    }
+
+    function readCache(usernameKey) {
+      var key = cfg.getCacheKey(usernameKey);
+      if (!key) return [];
+      try {
+        var arr = JSON.parse(window.localStorage.getItem(key) || "[]");
+        return Array.isArray(arr) ? arr : [];
+      } catch (e) { return []; }
+    }
+
+    function writeCache(usernameKey, list) {
+      var key = cfg.getCacheKey(usernameKey);
+      if (!key) return;
+      try { window.localStorage.setItem(key, JSON.stringify(list || [])); } catch (e) { /* no critico */ }
+    }
+
+    function withPending(usernameKey, list) {
+      var out = (list || []).slice();
+      (pending[usernameKey] || []).forEach(function (op) { out = applyRecordListOp(out, op).list; });
+      return out;
+    }
+
+    function emit(detail) {
+      if (typeof window.dispatchEvent !== "function" || typeof CustomEvent !== "function" || !cfg.eventName) return;
+      try { window.dispatchEvent(new CustomEvent(cfg.eventName, { detail: detail })); } catch (e) { /* no critico */ }
+    }
+
+    function settle(ops, outcome, perOp) {
+      ops.forEach(function (op) {
+        var list = waiters[op.opId] || [];
+        delete waiters[op.opId];
+        var result = Object.assign({}, outcome, { opOutcome: (perOp && perOp[op.opId]) || outcome.opOutcome || "" });
+        list.forEach(function (resolve) { resolve(result); });
+      });
+    }
+
+    function isRetryable(result) {
+      if (!result || result.status === "aborted" || result.status === "unsupported") return false;
+      return result.reason !== "incomplete" && result.reason !== "integrity";
+    }
+
+    function scheduleRetry(usernameKey) {
+      if (retryTimers[usernameKey]) return;
+      var attempt = retryAttempts[usernameKey] || 0;
+      if (attempt >= RECORD_LIST_MAX_AUTO_RETRIES) return;
+      var delay = RECORD_LIST_RETRY_DELAYS_MS[Math.min(attempt, RECORD_LIST_RETRY_DELAYS_MS.length - 1)];
+      retryAttempts[usernameKey] = attempt + 1;
+      if (typeof window.setTimeout !== "function") return;
+      retryTimers[usernameKey] = window.setTimeout(function () {
+        retryTimers[usernameKey] = null;
+        flush(usernameKey);
+      }, delay);
+    }
+
+    // -> Promise<{ ok, status, reason, message, pending }>
+    function flush(usernameKey) {
+      var ops = (pending[usernameKey] || []).slice();
+      if (!ops.length) return Promise.resolve({ ok: true, status: "saved", reason: "no-changes", message: "", pending: 0 });
+      if (inFlight[usernameKey]) return inFlight[usernameKey];
+      var perOp = {};
+      var run = cloudUpdateRecordListStrict(cfg.collection, usernameKey, cfg.field, function (list) {
+        var current = list;
+        var removedIds = [];
+        ops.forEach(function (op) {
+          var applied = applyRecordListOp(current, op);
+          current = applied.list;
+          removedIds = removedIds.concat(applied.removedIds);
+          perOp[op.opId] = applied.outcome;
+        });
+        return { list: current, removedIds: removedIds };
+      })
+        .catch(function () { return { ok: false, status: "write-failed", reason: "exception" }; })
+        .then(function (result) {
+          inFlight[usernameKey] = null;
+          var outcome = { ok: Boolean(result && result.ok), status: (result && result.status) || "write-failed", reason: (result && result.reason) || "" };
+          if (outcome.ok) {
+            var sent = ops.map(function (op) { return op.opId; });
+            pending[usernameKey] = (pending[usernameKey] || []).filter(function (op) { return sent.indexOf(op.opId) === -1; });
+            persistPending();
+            retryAttempts[usernameKey] = 0;
+            writeCache(usernameKey, withPending(usernameKey, result.list || []));
+            outcome.message = "";
+          } else {
+            outcome.message = describeCloudWriteFailure(outcome);
+            if (isRetryable(outcome)) scheduleRetry(usernameKey);
+          }
+          outcome.pending = (pending[usernameKey] || []).length;
+          settle(ops, outcome, outcome.ok ? perOp : null);
+          // Operaciones encoladas MIENTRAS esta escritura estaba en vuelo: si
+          // fallo, se informa ya (quedan pendientes) en vez de dejar a la
+          // interfaz esperando hasta el proximo reintento.
+          if (!outcome.ok) settle(pending[usernameKey] || [], outcome, null);
+          emit({ usernameKey: usernameKey, result: outcome });
+          if (outcome.ok && outcome.pending) flush(usernameKey);
+          return outcome;
+        });
+      inFlight[usernameKey] = run;
+      return run;
+    }
+
+    // Encola, refleja en el cache (vista inmediata) y envia. -> Promise del resultado REAL.
+    function queue(usernameKey, op) {
+      if (!usernameKey || !op || !op.type) {
+        return Promise.resolve({ ok: false, status: "aborted", reason: "invalid-args", message: "Faltan datos del aprendiz.", pending: 0 });
+      }
+      seq += 1;
+      var entry = Object.assign({}, op, { opId: Date.now().toString(36) + "-" + seq, at: new Date().toISOString() });
+      if (!pending[usernameKey]) pending[usernameKey] = [];
+      pending[usernameKey].push(entry);
+      persistPending();
+      writeCache(usernameKey, applyRecordListOp(readCache(usernameKey), entry).list);
+      var done = new Promise(function (resolve) { waiters[entry.opId] = [resolve]; });
+      flush(usernameKey);
+      return done;
+    }
+
+    function retry(usernameKey) {
+      var users = usernameKey ? [usernameKey] : Object.keys(pending);
+      return Promise.all(users.map(function (user) {
+        if (retryTimers[user]) { window.clearTimeout(retryTimers[user]); retryTimers[user] = null; }
+        retryAttempts[user] = 0;
+        return flush(user);
+      }));
+    }
+
+    function pendingCount(usernameKey) {
+      if (usernameKey) return (pending[usernameKey] || []).length;
+      return Object.keys(pending).reduce(function (n, user) { return n + pending[user].length; }, 0);
+    }
+
+    // Lectura estricta para pintar el panel. Solo found/missing tocan el cache.
+    // -> Promise<{ status, list, reason, message }>
+    function refresh(usernameKey) {
+      return cloudGetRecordListStrict(cfg.collection, usernameKey, cfg.field)
+        .catch(function () { return { status: "error", reason: "exception" }; })
+        .then(function (r) {
+          if (r && (r.status === "found" || r.status === "missing")) {
+            var view = withPending(usernameKey, r.list || []);
+            writeCache(usernameKey, view);
+            return { status: r.status, list: view, reason: "", message: "" };
+          }
+          var failed = { status: "error", list: null, reason: (r && r.reason) || "unknown" };
+          failed.message = describeCloudWriteFailure({ status: "read-failed", reason: failed.reason });
+          return failed;
+        });
+    }
+
+    if (typeof window.addEventListener === "function") {
+      window.addEventListener("online", function () { if (pendingCount()) retry(); });
+    }
+
+    return {
+      queue: queue,
+      flush: flush,
+      retry: retry,
+      pendingCount: pendingCount,
+      refresh: refresh,
+      readCache: readCache,
+    };
+  }
+
+  function cloudGetImprovementPlansStrict(usernameKey) {
+    return cloudGetRecordListStrict(COL_IMPROVEMENT_PLANS, usernameKey, "plans");
+  }
+  function cloudGetReinforcementWorkshopsStrict(usernameKey) {
+    return cloudGetRecordListStrict(COL_REINFORCEMENT_WORKSHOPS, usernameKey, "workshops");
+  }
+
+  // Respuestas de talleres (las escribe el APRENDIZ). Lectura estricta:
+  // -> { status: "found"|"missing"|"error", answers, reason }
+  async function cloudGetReinforcementAnswersStrict(usernameKey) {
+    if (!usernameKey) return { status: "error", answers: null, reason: "missing-user" };
+    var r = await fsGetStrict(COL_REINFORCEMENT_ANSWERS, usernameKey);
+    if (r.status === "missing") return { status: "missing", answers: {}, reason: "" };
+    if (r.status !== "found") return { status: "error", answers: null, reason: r.reason || "unknown" };
+    var answers = r.data && r.data.answers;
+    if (!answers || typeof answers !== "object" || Array.isArray(answers)) {
+      return { status: "error", answers: null, reason: "incomplete" };
+    }
+    return { status: "found", answers: answers, reason: "" };
+  }
+
+  // Escribe SOLO los campos de respuesta que cambiaron en UN taller
+  // (answers.<taller>.<campo>), sin lectura previa: no puede borrar respuestas
+  // de otros talleres ni campos que este equipo no toco, aunque su cache este
+  // vacio o desactualizado. `changes` = { campo: valor }; `removedKeys` = campos
+  // que el aprendiz elimino. -> { status: "ok"|"error", reason }
+  async function cloudSaveReinforcementAnswerFields(usernameKey, workshopId, changes, removedKeys) {
+    if (!usernameKey || !workshopId) return { status: "error", reason: "invalid-args" };
+    var set = changes && typeof changes === "object" ? changes : {};
+    var removed = Array.isArray(removedKeys) ? removedKeys : [];
+    var keys = Object.keys(set);
+    if (!keys.length && !removed.length) return { status: "ok", reason: "no-changes" };
+    var answers = {};
+    answers[workshopId] = set;
+    var base = "answers." + escapeFirestoreFieldPath(workshopId) + ".";
+    var mask = ["usernameKey", "updatedAt"].concat(keys.concat(removed).map(function (k) {
+      return base + escapeFirestoreFieldPath(k);
+    }));
+    return fsPatchStrict(COL_REINFORCEMENT_ANSWERS, usernameKey, {
+      usernameKey: usernameKey,
+      answers: answers,
+      updatedAt: new Date().toISOString(),
+    }, { maskOnly: true, updateMask: mask });
+  }
+
+  // Optimizacion 2026-10-28: valor de progreso CONFIRMADO en la nube por
+  // aprendiz+guia durante esta carga de pagina (lo que leyo
+  // restoreStudentFromCloud o lo ultimo que se escribio con exito). La guia
+  // llama writeGuideProgress al abrirse y tras cada guardado; si el avance no
+  // cambio respecto a la nube, ya no se escribe. Una guia SIN dato conocido
+  // (lectura fallida, doc ausente, aun no leido) se escribe como siempre: la
+  // duda solo puede llevar a escribir, nunca a omitir un cambio.
+  var _cloudProgressKnown = {};
+  function rememberCloudProgress(usernameKey, key, entry) {
+    if (!usernameKey || !key || !entry) return;
+    var total = Number(entry.total);
+    if (!Number.isFinite(total) || total <= 0) return;
+    _cloudProgressKnown[usernameKey + "|" + key] = { completed: Number(entry.completed) || 0, total: total };
+  }
+  function cloudProgressUnchanged(usernameKey, key, completed, total) {
+    var known = _cloudProgressKnown[usernameKey + "|" + key];
+    return Boolean(known) && known.completed === completed && known.total === total;
+  }
+
   // Guarda el progreso de UNA guia sin borrar el de las demas (updateMask).
   async function cloudSaveProgressEntry(usernameKey, fileName, entry) {
     if (!usernameKey || !fileName) return false;
     var key = fileNameToKey(fileName);
-    return fsUpdateField(COL_PROGRESS, usernameKey, key, entry);
+    var ok = await fsUpdateField(COL_PROGRESS, usernameKey, key, entry);
+    if (ok === true) rememberCloudProgress(usernameKey, key, entry);
+    return ok;
   }
 
   // Pone a cero el progreso de una guia concreta.
@@ -2049,14 +2653,26 @@
   // cada login (ver cloudSaveUserIndex). Si el aprendiz aun no inicio sesion
   // desde que existe ese campo, no hay uid que resolver -- el llamador debe
   // seguir usando el esquema legado para ese caso (transicion, no un error).
+  // Optimizacion 2026-10-28: solo los scopes de APRENDIZ tienen dueno con UID.
+  // Antes, un scope compartido como "admin:activity-deadlines" se tomaba como
+  // usernameKey y se leia users/admin:activity-deadlines (documento que no
+  // existe) en CADA pagina. Y el UID resuelto de un aprendiz se recuerda
+  // durante la carga de la pagina (solo resultados positivos: un fallo o un
+  // perfil sin uid se vuelve a consultar, nunca se toma como "no tiene uid").
+  var _scopeUidCache = {};
   async function resolveUidForScope(scopeKey) {
+    var raw = String(scopeKey || "");
+    if (raw.indexOf(":") !== -1 && raw.indexOf("student:") !== 0) return "";
     var usernameKey = scopeUsernameKey(scopeKey);
     if (!usernameKey) return "";
     var uid = getBridgeCurrentUid();
     if (uid && currentSessionUsernameKey() === usernameKey) return uid;
+    if (_scopeUidCache[usernameKey]) return _scopeUidCache[usernameKey];
     try {
       var profile = await cloudGetUser(usernameKey);
-      return (profile && profile.uid) || "";
+      var resolved = (profile && profile.uid) || "";
+      if (resolved) _scopeUidCache[usernameKey] = resolved;
+      return resolved;
     } catch (e) {
       return "";
     }
@@ -2224,6 +2840,512 @@
     return readSnapshotPayload(doc);
   }
 
+  // ── Lectura DETALLADA de varias guias de UN aprendiz (2026-10-22) ──────────
+  // cloudGetGuideData devuelve null tanto si el documento no existe como si la
+  // lectura fallo (sin red, 403, tiempo agotado, Firestore caido): sus
+  // llamadores dependen de ese contrato y NO se cambia. Esta funcion
+  // complementaria la usa el panel de habilitacion para no confundir "no hay
+  // actividades" con "no se pudo consultar". Solo lectura.
+  //
+  // Lee los MISMOS documentos que readGuideStateDoc (legado por usernameKey y
+  // nuevo por UID; progress y, si falta, guide_state) y los combina igual
+  // (mergeLegacyAndUidGuideStateDocs), pero agrupados en peticiones batchGet:
+  // 2-3 peticiones para todas las guias pedidas en vez de hasta 5 por guia
+  // (perfil + 4 documentos), y el perfil del aprendiz (para su UID) se lee una
+  // sola vez por sesion. Las lecturas facturadas no aumentan: guide_state solo
+  // se pide para los duenos cuyo documento de progress no existe.
+  //
+  // -> { status: "ok"|"incomplete"|"offline"|"denied"|"timeout"|"unavailable"|"error",
+  //      reason, files: { [fileName]: { status: "found"|"missing"|"partial"|"unverified"|<error>,
+  //                                     data, source: "firestore"|"drive"|"" } },
+  //      stats: { firestoreRequests, firestoreDocs, driveRequests, ms } }
+  var _detailedUidCache = new Map(); // usernameKey -> uid (de su perfil)
+
+  function _detailedHttpStatusClass(status) {
+    if (status === 401 || status === 403) return "denied";
+    if (status === 408 || status === 504) return "timeout";
+    // 429 = RESOURCE_EXHAUSTED: cuota diaria agotada (plan Spark). Estado
+    // propio: no se reintenta automaticamente y se informa como tal.
+    if (status === 429) return "quota";
+    if (status === 500 || status === 502 || status === 503) return "unavailable";
+    return "error";
+  }
+
+  function _detailedFetchErrorClass(err) {
+    if (err && err.name === "AbortError") return "timeout";
+    return "offline"; // fetch solo lanza ante un fallo de red (TypeError)
+  }
+
+  async function _detailedPreflight() {
+    if (!isConfigured) return { status: "error", reason: "not-configured" };
+    if (typeof navigator !== "undefined" && navigator.onLine === false) return { status: "offline", reason: "navigator-offline" };
+    if (isFirestoreInCooldown()) return { status: "unavailable", reason: "cooldown" };
+    if (getFirestoreBudgetStatus().levels.read === "block") return { status: "quota", reason: "budget-block" };
+    if (!window.portalFirebaseAuth) return { status: "denied", reason: "no-auth-bridge" };
+    await ensureAuthHydrated();
+    if (!getBridgeCurrentUid()) return { status: "denied", reason: "no-session" };
+    return null;
+  }
+
+  // Un batchGet de documentos de cualquier coleccion. -> { status, docs: Map(path -> doc|null) }
+  async function _detailedBatchGet(paths, stats) {
+    var docs = new Map();
+    if (!paths.length) return { status: "ok", docs: docs };
+    var root = "projects/" + FIREBASE_PROJECT_ID + "/databases/(default)/documents/";
+    var url = "https://firestore.googleapis.com/v1/" + root.replace(/\/$/, "") + ":batchGet?key=" + FIREBASE_API_KEY;
+    for (var start = 0; start < paths.length; start += BATCH_GET_CHUNK_SIZE) {
+      var chunk = paths.slice(start, start + BATCH_GET_CHUNK_SIZE);
+      stats.firestoreRequests += 1;
+      stats.firestoreDocs += chunk.length;
+      var res;
+      try {
+        res = await fetchWithTimeout(url, {
+          method: "POST",
+          cache: "no-store",
+          headers: await authHeaders({ "Content-Type": "application/json" }),
+          body: JSON.stringify({
+            // SIN encodeURIComponent: en el cuerpo de batchGet el nombre va
+            // literal. Codificado ("%3A" en vez de ":"), Firestore busca otro
+            // documento y lo reporta "missing" (comprobado en produccion,
+            // lectura 2026-10-22).
+            documents: chunk.map(function (p) { return root + p.collection + "/" + p.docId; }),
+          }),
+        }, API_TIMEOUT_MS);
+      } catch (e) {
+        return { status: _detailedFetchErrorClass(e), reason: "network", docs: docs };
+      }
+      if (!res.ok) {
+        if (isAuthRejection(res.status)) markFirestoreRejection();
+        return { status: _detailedHttpStatusClass(res.status), reason: "http-" + res.status, docs: docs };
+      }
+      var body;
+      try { body = await res.json(); } catch (e) { return { status: "error", reason: "bad-json", docs: docs }; }
+      if (!Array.isArray(body)) return { status: "error", reason: "bad-response", docs: docs };
+      registerFirestoreOperation("read", chunk.length);
+      markFirestoreSuccess();
+      body.forEach(function (item) {
+        var name = (item && (item.found ? item.found.name : item.missing)) || "";
+        var idx = name.indexOf("/documents/");
+        if (idx === -1) return;
+        var rel = name.slice(idx + "/documents/".length);
+        var slash = rel.indexOf("/");
+        var key = rel.slice(0, slash) + "/" + rel.slice(slash + 1);
+        docs.set(key, item.found ? fromFsDoc(item.found) : null);
+      });
+    }
+    return { status: "ok", docs: docs };
+  }
+
+  async function cloudReadGuideDataDetailed(scopeKey, fileNames, opts) {
+    opts = opts || {};
+    var startedAt = Date.now();
+    var stats = { firestoreRequests: 0, firestoreDocs: 0, driveRequests: 0, ms: 0 };
+    var files = [];
+    (Array.isArray(fileNames) ? fileNames : [fileNames]).forEach(function (f) {
+      if (f && files.indexOf(f) === -1) files.push(f);
+    });
+    var out = { status: "ok", reason: "", files: {}, stats: stats };
+    if (!scopeKey || !files.length) return out;
+
+    var pre = await _detailedPreflight();
+    if (pre) {
+      out.status = pre.status;
+      out.reason = pre.reason;
+      files.forEach(function (f) { out.files[f] = { status: pre.status, data: null, source: "" }; });
+      stats.ms = Date.now() - startedAt;
+      return out;
+    }
+
+    var usernameKey = scopeUsernameKey(scopeKey);
+    var uid = typeof opts.uid === "string" && opts.uid ? opts.uid : (_detailedUidCache.get(usernameKey) || "");
+    if (!uid && usernameKey && currentSessionUsernameKey() === usernameKey) uid = getBridgeCurrentUid() || "";
+    var needProfile = !uid && Boolean(usernameKey);
+
+    // Cada dueno (legado / uid) de cada guia avanza: progress -> guide_state.
+    var COLS = [COL_PROGRESS, COL_GUIDE_STATE];
+    var lookups = [];
+    function addOwner(owner, ownerScope) {
+      files.forEach(function (file) {
+        lookups.push({ file: file, owner: owner, docId: guideStateDocId(GUIDE_DATA_FALLBACK_PREFIX, ownerScope, file), step: 0, doc: null, done: false, failed: "" });
+      });
+    }
+    addOwner("legacy", scopeKey);
+    if (uid) addOwner("uid", "uid:" + uid);
+
+    var failure = null;
+    for (var round = 0; round < 4; round++) {
+      var pending = lookups.filter(function (l) { return !l.done && !l.failed; });
+      var paths = pending.map(function (l) { return { collection: COLS[l.step], docId: l.docId }; });
+      var profilePath = needProfile ? { collection: COL_USERS, docId: usernameKey } : null;
+      if (profilePath) paths.push(profilePath);
+      if (!paths.length) break;
+      var batch = await _detailedBatchGet(paths, stats);
+      if (batch.status !== "ok") {
+        failure = { status: batch.status, reason: batch.reason };
+        pending.forEach(function (l) { l.failed = batch.status; });
+        break;
+      }
+      pending.forEach(function (l) {
+        var doc = batch.docs.get(COLS[l.step] + "/" + l.docId);
+        if (doc) { l.doc = doc; l.done = true; return; }
+        l.step += 1;
+        if (l.step >= COLS.length) l.done = true;
+      });
+      if (profilePath) {
+        needProfile = false;
+        var profile = batch.docs.get(COL_USERS + "/" + usernameKey);
+        if (profile && profile.uid) {
+          uid = String(profile.uid);
+          _detailedUidCache.set(usernameKey, uid);
+          addOwner("uid", "uid:" + uid);
+        }
+      }
+    }
+
+    var driveChecks = [];
+    files.forEach(function (file) {
+      var mine = lookups.filter(function (l) { return l.file === file; });
+      var legacy = mine.find(function (l) { return l.owner === "legacy"; }) || {};
+      var own = mine.find(function (l) { return l.owner === "uid"; }) || {};
+      var failed = mine.find(function (l) { return l.failed; });
+      var merged = mergeLegacyAndUidGuideStateDocs(legacy.doc || null, own.doc || null);
+      var data = merged ? readSnapshotPayload(merged) : null;
+      var entry = { status: "missing", data: data, source: data ? "firestore" : "" };
+      if (failed) entry.status = data ? "partial" : failed.failed;
+      else if (data) entry.status = "found";
+      out.files[file] = entry;
+      // Un documento ausente en Firestore solo puede estar en la replica de
+      // Drive si una escritura cayo alli y aun no se promovio: una consulta
+      // (al documento al que escribe saveGuideStateDoc), no cuatro.
+      if (entry.status === "missing" && !opts.skipDrive && isDriveFallbackEnabled()) {
+        driveChecks.push({ file: file, docId: guideStateDocId(GUIDE_DATA_FALLBACK_PREFIX, uid ? "uid:" + uid : scopeKey, file) });
+      }
+    });
+
+    var queue = driveChecks.slice();
+    var runners = [];
+    for (var r = 0; r < Math.min(3, queue.length); r++) {
+      runners.push((async function () {
+        while (queue.length) {
+          var check = queue.shift();
+          stats.driveRequests += 1;
+          var replica = await driveFallbackGetDetailed(COL_PROGRESS, check.docId);
+          var entry = out.files[check.file];
+          if (replica.status === "found" && replica.data) {
+            entry.status = "found";
+            entry.data = readSnapshotPayload(replica.data);
+            entry.source = "drive";
+          } else if (replica.status === "unavailable") {
+            entry.status = "unverified"; // Firestore: no existe; Drive: no respondio
+          }
+        }
+      })());
+    }
+    await Promise.all(runners);
+
+    var statuses = files.map(function (f) { return out.files[f].status; });
+    var complete = statuses.filter(function (s) { return s === "found" || s === "missing"; }).length;
+    if (complete === files.length) {
+      out.status = "ok";
+    } else if (failure && complete === 0 && statuses.every(function (s) { return s === failure.status; })) {
+      out.status = failure.status;
+      out.reason = failure.reason;
+    } else {
+      out.status = "incomplete";
+      out.reason = failure ? failure.status : "drive-unavailable";
+    }
+    stats.ms = Date.now() - startedAt;
+    return out;
+  }
+
+  // ── Consultas por rango (runQuery) con resultado DETALLADO (2026-10-22) ──────
+  // Solo se cobran los documentos devueltos. Paginado por cursor; detiene la
+  // paginacion ante el primer fallo y lo clasifica (offline/denied/quota/...).
+  // -> { status, reason, docs: [doc con _docId/_updateTime], stats }
+  var RUN_QUERY_PAGE_SIZE = 300;
+  async function _detailedRunQuery(collection, where, orderBy, stats, maxDocs) {
+    var url = "https://firestore.googleapis.com/v1/projects/" + FIREBASE_PROJECT_ID +
+      "/databases/(default)/documents:runQuery?key=" + FIREBASE_API_KEY;
+    var docs = [];
+    var cursor = null;
+    var readTime = 0;
+    var limit = Math.max(1, Number(maxDocs) || 5000);
+    while (docs.length < limit) {
+      var query = { from: [{ collectionId: collection }], orderBy: orderBy, limit: RUN_QUERY_PAGE_SIZE };
+      if (where) query.where = where;
+      if (cursor) query.startAt = { values: cursor, before: false };
+      stats.firestoreRequests += 1;
+      var res;
+      try {
+        res = await fetchWithTimeout(url, {
+          method: "POST",
+          cache: "no-store",
+          headers: await authHeaders({ "Content-Type": "application/json" }),
+          body: JSON.stringify({ structuredQuery: query }),
+        }, API_TIMEOUT_MS);
+      } catch (e) {
+        return { status: _detailedFetchErrorClass(e), reason: "network", docs: docs, stats: stats };
+      }
+      if (!res.ok) {
+        if (isAuthRejection(res.status)) markFirestoreRejection();
+        return { status: _detailedHttpStatusClass(res.status), reason: "http-" + res.status, docs: docs, stats: stats };
+      }
+      var body;
+      try { body = await res.json(); } catch (e) { return { status: "error", reason: "bad-json", docs: docs, stats: stats }; }
+      if (!Array.isArray(body)) return { status: "error", reason: "bad-response", docs: docs, stats: stats };
+      var page = body.filter(function (item) { return item && item.document; }).map(function (item) { return item.document; });
+      body.forEach(function (item) {
+        var rt = item && item.readTime ? Date.parse(item.readTime) : NaN;
+        if (!isNaN(rt)) {
+          noteServerTime(rt);
+          if (!readTime || rt < readTime) readTime = rt;
+        }
+      });
+      // Una consulta sin resultados se cobra como 1 lectura.
+      registerFirestoreOperation("read", Math.max(1, page.length));
+      stats.firestoreDocs += page.length;
+      markFirestoreSuccess();
+      page.forEach(function (raw) { docs.push(fromFsDoc(raw) || { _docId: String(raw.name || "").split("/").pop(), _docName: raw.name }); });
+      if (page.length < RUN_QUERY_PAGE_SIZE) break;
+      var last = page[page.length - 1];
+      cursor = orderBy.map(function (o) {
+        if (o.field.fieldPath === "__name__") return { referenceValue: last.name };
+        var v = last.fields && last.fields[o.field.fieldPath];
+        return v || { nullValue: null };
+      });
+    }
+    return { status: "ok", reason: "", docs: docs, stats: stats, readTime: readTime };
+  }
+
+  function _guideDataNameRange(collection) {
+    var root = "projects/" + FIREBASE_PROJECT_ID + "/databases/(default)/documents/" + collection + "/";
+    return { compositeFilter: { op: "AND", filters: [
+      { fieldFilter: { field: { fieldPath: "__name__" }, op: "GREATER_THAN_OR_EQUAL", value: { referenceValue: root + GUIDE_DATA_FALLBACK_PREFIX } } },
+      // ";" es el caracter siguiente a ":" -> rango exacto del prefijo.
+      { fieldFilter: { field: { fieldPath: "__name__" }, op: "LESS_THAN", value: { referenceValue: root + GUIDE_DATA_FALLBACK_PREFIX.slice(0, -1) + ";" } } },
+    ] } };
+  }
+
+  // Todos los documentos __guide_data__ EXISTENTES de progress y guide_state
+  // (solo admin). Para el progreso de la lista de aprendices: cuesta una
+  // lectura por documento existente, en vez de pedir por nombre todas las
+  // combinaciones aprendiz x guia x dueno (casi todas inexistentes, igual
+  // cobradas). -> { status, reason, docs: { progress: Map, guideState: Map }, stats }
+  // El listado se reutiliza en memoria (no en localStorage) durante
+  // GUIDE_DATA_LISTING_TTL_MS: cada mutacion del panel (editar aprendiz,
+  // calificar...) recarga la lista de aprendices y no debe volver a leer los
+  // ~1000 documentos de guia, que esas acciones no cambian. Se invalida al
+  // guardar cualquier dato de guia (cloudSaveGuideData) y con "Actualizar
+  // datos" (opts.force). Solo se reutiliza un listado completo (status ok).
+  var GUIDE_DATA_LISTING_TTL_MS = 4 * 60 * 1000;
+  // Optimizacion 2026-10-28: el listado de documentos de guia (unas 1080
+  // lecturas y ~4,5 MB con 180 aprendices) se repetia en CADA apertura del
+  // panel y de la agenda. Ahora:
+  //   * se conserva en memoria y en IndexedDB de este navegador (clave por
+  //     proyecto + admin), con la hora de INICIO de la consulta;
+  //   * las aperturas siguientes piden solo lo cambiado desde entonces
+  //     (cloudListGuideDataSince, menos GUIDE_DATA_DELTA_SKEW_MS de margen por
+  //     relojes de los equipos) y lo fusionan por id;
+  //   * cada GUIDE_DATA_LISTING_FULL_TTL_MS, con "Actualizar datos" (force) o
+  //     si la consulta incremental falla, se vuelve al listado completo.
+  // Los documentos de guia nunca se borran, asi que la fusion no deja
+  // "fantasmas". Limite conocido: updatedAt lo pone el equipo que escribe; un
+  // equipo con el reloj muy atrasado puede tardar hasta el proximo listado
+  // completo en reflejarse (solo afecta al % de respaldo e indicadores del
+  // panel, nunca a notas ni guardados).
+  var _guideDataListing = null; // { at, fullAt, result }
+  var _guideDataListingDirty = false;
+  var GUIDE_DATA_LISTING_FULL_TTL_MS = 90 * 60 * 1000;
+  var GUIDE_DATA_DELTA_SKEW_MS = 30 * 60 * 1000;
+  // Candidata 2026-10-28 (riesgo A de la auditoria): `updatedAt` lo pone el
+  // equipo que escribe. El panel ya no confia en su propio reloj: la ventana
+  // se calcula con la hora del servidor (readTime de runQuery) y se amplia con
+  // el mayor retraso observado entre updatedAt y updateTime (hora real del
+  // servidor) en los documentos escritos durante las ultimas 24 h (reloj
+  // atrasado, o una promocion Drive->Firestore de un guardado viejo). El
+  // margen extra se limita a 24 h; lo que quede fuera lo recoge el listado
+  // completo de cada GUIDE_DATA_LISTING_FULL_TTL_MS, igual que antes.
+  var GUIDE_DATA_MAX_WRITER_LAG_MS = 24 * 60 * 60 * 1000;
+  // Riesgo B: la copia en IndexedDB caduca a las 12 h, solo la usa una sesion
+  // admin con uid y se borra al cerrar sesion o al entrar sin sesion admin.
+  var LISTING_IDB_MAX_AGE_MS = 12 * 60 * 60 * 1000;
+  var _serverSkewMs = null;
+  function noteServerTime(serverMs) { _serverSkewMs = serverMs - Date.now(); }
+  function serverNowMs() { return Date.now() + (_serverSkewMs || 0); }
+  // Edad en hora del servidor; un valor del futuro (reloj movido) cuenta como caducado.
+  function listingAgeMs(t) {
+    var a = serverNowMs() - Number(t || 0);
+    return a < -5 * 60 * 1000 ? Infinity : Math.max(0, a);
+  }
+  function writerLagOf(docs) {
+    var lag = 0;
+    var recentFrom = serverNowMs() - GUIDE_DATA_MAX_WRITER_LAG_MS;
+    docs.forEach(function (d) {
+      var u = d && d._updateTime ? Date.parse(d._updateTime) : NaN;
+      var w = d && d.updatedAt ? Date.parse(d.updatedAt) : NaN;
+      if (!isNaN(u) && !isNaN(w) && u >= recentFrom && u - w > lag) lag = u - w;
+    });
+    return Math.min(lag, GUIDE_DATA_MAX_WRITER_LAG_MS);
+  }
+  function isMapLike(m) { return Object.prototype.toString.call(m) === "[object Map]"; }
+  function mapValues(m) { var out = []; m.forEach(function (v) { out.push(v); }); return out; }
+  function invalidateGuideDataListing() { _guideDataListingDirty = true; }
+
+  var LISTING_IDB_NAME = "sena_portal_admin_cache_v1";
+  var LISTING_IDB_STORE = "listados";
+  function listingIdbKey() {
+    var uid = getBridgeCurrentUid() || "";
+    return uid ? "guias:" + FIREBASE_PROJECT_ID + ":" + uid : "";
+  }
+  function listingIdb(mode, value) {
+    return new Promise(function (resolve) {
+      var done = false;
+      function finish(v) { if (!done) { done = true; resolve(v); } }
+      try {
+        if (typeof indexedDB === "undefined" || !indexedDB) return finish(null);
+        if (!isCurrentUserAdmin() || !listingIdbKey()) return finish(null);
+        window.setTimeout(function () { finish(null); }, 2000);
+        var req = indexedDB.open(LISTING_IDB_NAME, 1);
+        req.onupgradeneeded = function () { try { req.result.createObjectStore(LISTING_IDB_STORE); } catch (e) {} };
+        req.onerror = function () { finish(null); };
+        req.onblocked = function () { finish(null); };
+        req.onsuccess = function () {
+          try {
+            var dbh = req.result;
+            var tx = dbh.transaction(LISTING_IDB_STORE, mode === "put" ? "readwrite" : "readonly");
+            var store = tx.objectStore(LISTING_IDB_STORE);
+            var op = mode === "put" ? store.put(value, listingIdbKey()) : store.get(listingIdbKey());
+            op.onsuccess = function () { finish(mode === "put" ? true : (op.result || null)); };
+            op.onerror = function () { finish(null); };
+            tx.oncomplete = function () { try { dbh.close(); } catch (e) {} };
+          } catch (e) { finish(null); }
+        };
+      } catch (e) { finish(null); }
+    });
+  }
+  function saveListing(entry) {
+    _guideDataListing = entry;
+    _guideDataListingDirty = false;
+    listingIdb("put", { v: 2, uid: getBridgeCurrentUid() || "", at: entry.at, fullAt: entry.fullAt, writerLagMs: entry.writerLagMs || 0, docs: entry.result.docs }).catch(function () {});
+  }
+  // Borra la copia del listado (memoria + IndexedDB). Se llama al cerrar sesion
+  // y al cargar cualquier pagina sin sesion admin; nunca falla.
+  function clearAdminListingCache() {
+    _guideDataListing = null;
+    _guideDataListingDirty = false;
+    try {
+      if (typeof indexedDB !== "undefined" && indexedDB && indexedDB.deleteDatabase) indexedDB.deleteDatabase(LISTING_IDB_NAME);
+    } catch (e) {}
+  }
+
+  async function cloudListAllGuideDataDocs(opts) {
+    var force = Boolean(opts && opts.force);
+    if (!force && !_guideDataListingDirty && _guideDataListing && listingAgeMs(_guideDataListing.at) < GUIDE_DATA_LISTING_TTL_MS) {
+      var reused = _guideDataListing.result;
+      return { status: reused.status, reason: reused.reason, docs: reused.docs, stats: { firestoreRequests: 0, firestoreDocs: 0, driveRequests: 0, ms: 0 }, reused: true };
+    }
+    var stats = { firestoreRequests: 0, firestoreDocs: 0, driveRequests: 0, ms: 0 };
+    var startedAt = Date.now();
+    var serverStartedAt = serverNowMs();
+    var pre = await _detailedPreflight();
+    if (pre) return { status: pre.status, reason: pre.reason, docs: null, stats: stats };
+
+    // Base para la consulta incremental: memoria o IndexedDB (nunca si force).
+    var base = null;
+    if (!force) {
+      base = _guideDataListing && _guideDataListing.fullAt ? _guideDataListing : null;
+      if (!base) {
+        var stored = await listingIdb("get");
+        if (stored && stored.v === 2 && stored.uid && stored.uid === getBridgeCurrentUid() &&
+            listingAgeMs(stored.fullAt) < LISTING_IDB_MAX_AGE_MS &&
+            stored.docs && isMapLike(stored.docs.progress) && isMapLike(stored.docs.guideState)) {
+          base = { at: stored.at, fullAt: stored.fullAt, writerLagMs: stored.writerLagMs || 0, result: { status: "ok", reason: "", docs: stored.docs } };
+        }
+      }
+    }
+    var baseLag = base ? Math.min(Number(base.writerLagMs) || 0, GUIDE_DATA_MAX_WRITER_LAG_MS) : 0;
+    if (base && base.result && base.result.status === "ok" && base.fullAt &&
+        listingAgeMs(base.fullAt) < GUIDE_DATA_LISTING_FULL_TTL_MS) {
+      var delta = await cloudListGuideDataSince(new Date(base.at - GUIDE_DATA_DELTA_SKEW_MS - baseLag).toISOString());
+      stats.firestoreRequests += (delta.stats && delta.stats.firestoreRequests) || 0;
+      stats.firestoreDocs += (delta.stats && delta.stats.firestoreDocs) || 0;
+      if (delta.status === "ok") {
+        var progress = new Map(base.result.docs.progress);
+        var guideState = new Map(base.result.docs.guideState);
+        delta.docs.forEach(function (d) {
+          var copy = Object.assign({}, d);
+          var target = copy._collection === COL_GUIDE_STATE ? guideState : progress;
+          delete copy._collection;
+          if (copy._docId) target.set(copy._docId, copy);
+        });
+        var merged = { status: "ok", reason: "", docs: { progress: progress, guideState: guideState }, stats: stats, delta: true };
+        stats.ms = Date.now() - startedAt;
+        saveListing({ at: delta.readTime || serverStartedAt, fullAt: base.fullAt, writerLagMs: Math.max(baseLag, writerLagOf(delta.docs)), result: merged });
+        return merged;
+      }
+      // La consulta incremental fallo: se intenta el listado completo (nunca se
+      // devuelve la base sin haberla actualizado).
+    }
+
+    var out = { status: "ok", reason: "", docs: { progress: new Map(), guideState: new Map() }, stats: stats };
+    var pairs = [[COL_PROGRESS, out.docs.progress], [COL_GUIDE_STATE, out.docs.guideState]];
+    var fullReadTime = 0;
+    for (var i = 0; i < pairs.length; i++) {
+      var r = await _detailedRunQuery(pairs[i][0], _guideDataNameRange(pairs[i][0]), [{ field: { fieldPath: "__name__" }, direction: "ASCENDING" }], stats, 20000);
+      r.docs.forEach(function (doc) { if (doc && doc._docId) pairs[i][1].set(doc._docId, doc); });
+      if (r.readTime && (!fullReadTime || r.readTime < fullReadTime)) fullReadTime = r.readTime;
+      if (r.status !== "ok") { out.status = r.status; out.reason = r.reason; break; }
+    }
+    stats.ms = Date.now() - startedAt;
+    if (out.status === "ok") {
+      // Base del proximo incremental: la hora del servidor de la primera consulta.
+      var fullAt = fullReadTime || serverStartedAt;
+      var lag = writerLagOf(mapValues(out.docs.progress).concat(mapValues(out.docs.guideState)));
+      saveListing({ at: fullAt, fullAt: fullAt, writerLagMs: lag, result: out });
+    }
+    return out;
+  }
+
+  // Documentos __guide_data__ actualizados desde `sinceIso` (campo de primer
+  // nivel updatedAt, texto ISO que escriben cloudSaveGuideData y las
+  // escrituras del admin). Indice de un solo campo: lo crea Firestore solo.
+  // Para "Entregas recientes": solo cuesta los documentos que cambiaron.
+  async function cloudListGuideDataSince(sinceIso) {
+    var stats = { firestoreRequests: 0, firestoreDocs: 0, driveRequests: 0, ms: 0 };
+    var startedAt = Date.now();
+    var pre = await _detailedPreflight();
+    if (pre) return { status: pre.status, reason: pre.reason, docs: [], stats: stats };
+    var since = String(sinceIso || "");
+    var docs = [];
+    var status = "ok";
+    var reason = "";
+    var colls = [COL_PROGRESS, COL_GUIDE_STATE];
+    var readTime = 0;
+    for (var i = 0; i < colls.length; i++) {
+      var r = await _detailedRunQuery(
+        colls[i],
+        { fieldFilter: { field: { fieldPath: "updatedAt" }, op: "GREATER_THAN_OR_EQUAL", value: { stringValue: since } } },
+        [{ field: { fieldPath: "updatedAt" }, direction: "DESCENDING" }, { field: { fieldPath: "__name__" }, direction: "DESCENDING" }],
+        stats,
+        5000
+      );
+      if (r.readTime && (!readTime || r.readTime < readTime)) readTime = r.readTime;
+      r.docs.forEach(function (doc) {
+        if (doc && String(doc._docId || "").indexOf(GUIDE_DATA_FALLBACK_PREFIX) === 0) {
+          docs.push(Object.assign({ _collection: colls[i] }, doc));
+        }
+      });
+      if (r.status !== "ok") {
+        // Lo ya recuperado se devuelve, marcado como incompleto.
+        status = docs.length ? "incomplete" : r.status;
+        reason = r.status;
+        break;
+      }
+    }
+    stats.ms = Date.now() - startedAt;
+    return { status: status, reason: reason, docs: docs, stats: stats, readTime: readTime };
+  }
+
   // Lee-combina-escribe SERIALIZADO por documento (scopeKey+fileName): antes,
   // dos llamadas concurrentes a esta funcion para el MISMO doc (dos pestañas,
   // el aprendiz y una escritura del admin, o dos guardados casi simultaneos
@@ -2236,6 +3358,7 @@
   // MISMA llave de documento.
   async function cloudSaveGuideData(scopeKey, fileName, snapshot) {
     if (!scopeKey || !fileName) return false;
+    invalidateGuideDataListing(); // el listado del panel deja de ser vigente
     return withGuideStateWriteQueue(scopeKey, fileName, function () {
       return cloudSaveGuideDataImpl(scopeKey, fileName, snapshot);
     });
@@ -2780,9 +3903,11 @@
     } catch (e) { /* ignorar */ }
   }
 
-  async function restoreStudentFromCloud(usernameKey, ficha) {
+  // knownCloudUser (opcional): el perfil YA leido por quien llama (la
+  // comprobacion de carga de pagina) -- evita leer users/{key} dos veces.
+  async function restoreStudentFromCloud(usernameKey, ficha, knownCloudUser) {
     try {
-      var cloudUser = await cloudGetUser(usernameKey);
+      var cloudUser = knownCloudUser || await cloudGetUser(usernameKey);
       if (!cloudUser) return;
       upsertLocalUser(cloudUser);
 
@@ -2796,6 +3921,10 @@
         if (entry && (Number(entry.completed) > 0 || Number(entry.total) > 0)) {
           writeProgressMeta(usernameKey, fileName, entry);
         }
+        // Solo entradas PRESENTES cuentan como "valor conocido en la nube"
+        // (cloudGetProgress devuelve {} tambien ante un error: la ausencia no
+        // se interpreta como nada).
+        if (entry) rememberCloudProgress(usernameKey, key, entry);
       });
 
       // El home (portal_home.js) se pinta ANTES de que esta restauracion
@@ -2971,6 +4100,8 @@
     window.clearTimeout(progressTimers[timerKey]);
     progressTimers[timerKey] = window.setTimeout(function () {
       delete progressTimers[timerKey];
+      // Sin cambios respecto al valor confirmado en la nube: no se escribe.
+      if (cloudProgressUnchanged(usernameKey, fileNameToKey(fileName), completed, total)) return;
       checkAvailability().then(function (ok) {
         if (!ok) return;
         cloudSaveProgressEntry(usernameKey, fileName, {
@@ -3286,6 +4417,73 @@
   // ── Panel administrativo: listar usuarios con avance ─────────────────────────
   // Lee de Firebase cuando esta disponible. Incluye usuarios que solo esten
   // en localStorage (los sube automaticamente a Firebase).
+  // Estado de la ultima carga de progreso de aprendices (para avisar en el
+  // panel si el respaldo desde datos de guia no se pudo consultar).
+  var lastStudentsProgressLoad = null;
+  var forceNextProgressListing = false; // "Actualizar datos": relee el listado
+  var PROGRESS_CONTROL_KEYS = { reabierta: true, permiteEdicion: true, updatedAt: true, updatedBy: true };
+
+  // Documentos de nube de una guia para derivar su avance: el alias de esta
+  // tabla (guideDataFileName) y, si guide_declarations.js declara otro en
+  // cloudFileNames, tambien ese (p. ej. 10?_guia6mant.html, o el quiz jfk_ de
+  // la Guia 10 RAP01 de Kennedy, cuya guia guarda con el nombre crudo).
+  // usernameKey -> uid de la ultima lista de aprendices (la lista del panel
+  // pasa por sanitizeUser, que descarta el uid).
+  var lastListedUids = {};
+
+  // Estado combinado de UNA guia de UN aprendiz a partir de un listado
+  // (cloudListAllGuideDataDocs): misma semantica que readGuideStateDoc
+  // (progress antes que guide_state; legado + UID) para cada nombre de
+  // documento de la guia; los estados de varios nombres se unen.
+  // -> { state, updatedAt } | null
+  function guideSnapshotFromListing(docs, usernameKey, uid, fileName) {
+    if (!docs) return null;
+    var pick = function (docId) { return docs.progress.get(docId) || docs.guideState.get(docId) || null; };
+    var merged = {};
+    var found = false;
+    var newest = "";
+    guideCloudFileNamesForProgress(fileName).forEach(function (name) {
+      var legacy = pick(guideStateDocId(GUIDE_DATA_FALLBACK_PREFIX, "student:" + usernameKey, name));
+      var uidDoc = uid ? pick(guideStateDocId(GUIDE_DATA_FALLBACK_PREFIX, "uid:" + uid, name)) : null;
+      var doc = mergeLegacyAndUidGuideStateDocs(legacy, uidDoc);
+      var snapshot = doc ? readSnapshotPayload(doc) : null;
+      if (!snapshot || typeof snapshot !== "object") return;
+      var st = snapshot.state && typeof snapshot.state === "object" ? snapshot.state
+        : (snapshot.data && typeof snapshot.data === "object" ? snapshot.data : null);
+      if (!st) return;
+      found = true;
+      Object.assign(merged, st);
+      if (String(snapshot.updatedAt || "") > newest) newest = String(snapshot.updatedAt || "");
+    });
+    return found ? { state: merged, updatedAt: newest } : null;
+  }
+
+  // Estados de guia de TODOS los aprendices a partir del ULTIMO listado ya
+  // descargado para el progreso (0 lecturas). Para los indicadores del
+  // dashboard y Reportes. null si no hay listado en memoria.
+  function getGuideStatesFromLastListing(users, guidesForFicha) {
+    if (!_guideDataListing || !_guideDataListing.result || !_guideDataListing.result.docs) return null;
+    var docs = _guideDataListing.result.docs;
+    var entries = [];
+    (users || []).forEach(function (u) {
+      if (!u || !u.usernameKey) return;
+      (guidesForFicha(u.ficha) || []).forEach(function (fileName) {
+        var snap = guideSnapshotFromListing(docs, u.usernameKey, lastListedUids[u.usernameKey] || "", fileName);
+        if (snap) entries.push({ usernameKey: u.usernameKey, fileName: fileName, state: snap.state, updatedAt: snap.updatedAt });
+      });
+    });
+    return { at: _guideDataListing.at, entries: entries };
+  }
+
+  function guideCloudFileNamesForProgress(fileName) {
+    var names = [guideDataFileName(fileName)];
+    var std = window.ActivityStandard;
+    var cfg = std && typeof std.getConfigForGuide === "function" ? std.getConfigForGuide(fileName) : null;
+    var declared = cfg && cfg.cloudFileNames && cfg.cloudFileNames[fileName];
+    if (declared && names.indexOf(declared) === -1) names.push(declared);
+    return names;
+  }
+
   auth.fetchStudentsWithProgress = async function () {
     var available = await checkAvailability();
     if (!available) return prev.fetchStudentsWithProgress.call(auth);
@@ -3331,52 +4529,61 @@
         }
       });
 
+      // Respaldo de progreso desde los DATOS de la guia, solo para las guias
+      // sin entrada de progreso (total > 0). Correccion 2026-10-22:
+      //   - antes se pedian por nombre (batchGet) todas las combinaciones
+      //     aprendiz x guia, con el nombre codificado: Firestore las reportaba
+      //     TODAS como inexistentes (cada una contaba como lectura) y este
+      //     respaldo nunca encontraba nada;
+      //   - solo se miraba el documento legado (student:...), no el nuevo por
+      //     UID (Fase 5), ni los alias declarados en guide_declarations.js.
+      // Ahora se listan los documentos __guide_data__ que EXISTEN (una lectura
+      // por documento existente) y se combinan como readGuideStateDoc:
+      // progress antes que guide_state; legado + UID con
+      // mergeLegacyAndUidGuideStateDocs.
+      cloudUsers.forEach(function (user) {
+        if (user && user.usernameKey && user.uid) lastListedUids[user.usernameKey] = String(user.uid);
+      });
       var guideDataRequests = [];
       cloudUsers.forEach(function (user) {
         auth.getGuidesForFicha(user.ficha || "").forEach(function (fileName) {
           var progressKey = fileNameToKey(fileName);
           var entry = progressByUser[user.usernameKey] && progressByUser[user.usernameKey][progressKey];
           if (entry && Number(entry.total) > 0) return;
-          guideDataRequests.push({
-            usernameKey: user.usernameKey,
-            fileName: fileName,
-            progressKey: progressKey,
-            docId: guideStateDocId(GUIDE_DATA_FALLBACK_PREFIX, "student:" + user.usernameKey, guideDataFileName(fileName)),
-          });
+          guideDataRequests.push({ user: user, usernameKey: user.usernameKey, fileName: fileName, progressKey: progressKey });
         });
       });
 
+      lastStudentsProgressLoad = { status: "ok", reason: "", guideDataDocs: 0, at: new Date().toISOString() };
       if (guideDataRequests.length) {
-        var guideDataDocIds = guideDataRequests.map(function (item) { return item.docId; });
-        var guideDataDocs = await fsBatchGet(COL_PROGRESS, guideDataDocIds);
-        // Las respuestas del aprendiz pueden quedar en COL_GUIDE_STATE cuando la
-        // escritura con docId compuesto a COL_PROGRESS fue rechazada por reglas
-        // (403). Por eso el admin tambien lee guide_state y lo usa para rellenar
-        // lo que falte. COL_PROGRESS tiene precedencia si trae el documento.
-        var guideStateDocs = await fsBatchGet(COL_GUIDE_STATE, guideDataDocIds);
-        var guideDataByDocId = {};
-        guideDataDocs.forEach(function (doc) {
-          if (doc && doc._docId) {
-            guideDataByDocId[decodeURIComponent(doc._docId)] = doc;
-            guideDataByDocId[doc._docId] = doc;
-          }
-        });
-        guideStateDocs.forEach(function (doc) {
-          if (doc && doc._docId) {
-            var decodedStateId = decodeURIComponent(doc._docId);
-            if (!guideDataByDocId[decodedStateId]) guideDataByDocId[decodedStateId] = doc;
-            if (!guideDataByDocId[doc._docId]) guideDataByDocId[doc._docId] = doc;
-          }
-        });
-        guideDataRequests.forEach(function (item) {
-          var doc = guideDataByDocId[item.docId];
-          var derived = deriveProgressFromGuideDataDoc(item.fileName, doc);
-          if (!derived) return;
-          if (!progressByUser[item.usernameKey]) {
-            progressByUser[item.usernameKey] = {};
-          }
-          progressByUser[item.usernameKey][item.progressKey] = derived;
-        });
+        var listed = await cloudListAllGuideDataDocs({ force: forceNextProgressListing });
+        forceNextProgressListing = false;
+        lastStudentsProgressLoad.status = listed.status;
+        lastStudentsProgressLoad.reason = listed.reason;
+        if (listed.docs) {
+          lastStudentsProgressLoad.guideDataDocs = listed.docs.progress.size + listed.docs.guideState.size;
+          guideDataRequests.forEach(function (item) {
+            var snap = guideSnapshotFromListing(listed.docs, item.usernameKey, item.user.uid || "", item.fileName);
+            if (!snap) return;
+            var states = [snap.state];
+            var newest = snap.updatedAt;
+            var answers = {};
+            states.forEach(function (st) {
+              Object.keys(st).forEach(function (k) {
+                // Candados, metadatos de entrega y banderas del admin NO son
+                // respuestas del aprendiz: no cuentan como avance.
+                if (/-(locked|delivery)$/.test(k) || /^_/.test(k) || PROGRESS_CONTROL_KEYS[k]) return;
+                answers[k] = st[k];
+              });
+            });
+            var derived = deriveProgressFromGuideDataDoc(item.fileName, { snapshotJson: JSON.stringify({ state: answers, updatedAt: newest }) });
+            if (!derived) return;
+            if (!progressByUser[item.usernameKey]) {
+              progressByUser[item.usernameKey] = {};
+            }
+            progressByUser[item.usernameKey][item.progressKey] = derived;
+          });
+        }
       }
 
       // Construir el array final con avance por guia
@@ -3491,7 +4698,7 @@
           } catch (e2) { /* silencioso */ }
         } else {
           // Ya esta en Firebase: restaurar datos al localStorage (cambio de equipo)
-          await restoreStudentFromCloud(usernameKey, ficha);
+          await restoreStudentFromCloud(usernameKey, ficha, cloudUser);
         }
       } else {
         console.info("[firebase_db] Firebase no disponible en carga. Usando datos locales.");
@@ -3761,7 +4968,14 @@
     }
   }
 
+  // Riesgo B: sin sesion admin en esta pagina no debe quedar ningun listado de
+  // respuestas de aprendices en el navegador (cierre de sesion, otra cuenta).
+  try {
+    if (window.portalAuth && typeof window.portalAuth.isAdminSession === "function" && !isCurrentUserAdmin()) clearAdminListingCache();
+  } catch (e) {}
+
   window._firebaseDb = {
+    clearAdminListingCache: clearAdminListingCache,
     cloudCreateHwlabAttempt: cloudCreateHwlabAttempt,
     cloudGetHwlabAttempt: cloudGetHwlabAttempt,
     cloudQueryHwlabAttempts: cloudQueryHwlabAttempts,
@@ -3775,6 +4989,15 @@
     cloudGetCalendar:  cloudGetCalendar,
     cloudSaveCalendar: cloudSaveCalendar,
     cloudGetGuideData: cloudGetGuideData,
+    cloudReadGuideDataDetailed: cloudReadGuideDataDetailed,
+    cloudListAllGuideDataDocs: cloudListAllGuideDataDocs,
+    cloudListGuideDataSince: cloudListGuideDataSince,
+    getLastStudentsProgressLoad: function () { return lastStudentsProgressLoad; },
+    // "Actualizar datos": la proxima carga de la lista vuelve a listar los datos de guia.
+    getGuideStatesFromLastListing: getGuideStatesFromLastListing,
+    forceNextStudentsProgressListing: function () { forceNextProgressListing = true; invalidateGuideDataListing(); },
+    guideStateDocId: guideStateDocId,
+    fileNameToKey: fileNameToKey,
     cloudSaveGuideData: cloudSaveGuideData,
     // Lectura/escritura ESTRICTAS (sin failover a Drive, con precondicion):
     // Agenda "Agregar clase" y registro propio de Etapa Productiva.
@@ -3787,6 +5010,11 @@
     adminMarkActivityDelivered: adminMarkActivityDelivered,
     cloudGetGrades: cloudGetGrades,
     cloudSaveGrades: cloudSaveGrades,
+    // Calificar: lectura estricta + escritura por familia con precondicion.
+    cloudGetGradesStrict: cloudGetGradesStrict,
+    cloudUpdateGradesStrict: cloudUpdateGradesStrict,
+    cloudGetGradeCommentsStrict: cloudGetGradeCommentsStrict,
+    cloudSaveGradeCommentsStrict: cloudSaveGradeCommentsStrict,
     cloudGetSignatureAuth: cloudGetSignatureAuth,
     cloudSaveSignatureAuth: cloudSaveSignatureAuth,
     cloudGetStudentSummary: cloudGetStudentSummary,
@@ -3797,6 +5025,16 @@
     cloudSaveGradeComments: cloudSaveGradeComments,
     cloudGetImprovementPlans: cloudGetImprovementPlans,
     cloudSaveImprovementPlans: cloudSaveImprovementPlans,
+    // Planes y talleres: lectura estricta + cola de operaciones por id (2026-10-27).
+    cloudGetImprovementPlansStrict: cloudGetImprovementPlansStrict,
+    cloudGetReinforcementWorkshopsStrict: cloudGetReinforcementWorkshopsStrict,
+    cloudGetRecordListStrict: cloudGetRecordListStrict,
+    cloudUpdateRecordListStrict: cloudUpdateRecordListStrict,
+    applyRecordListOp: applyRecordListOp,
+    createRecordListSync: createRecordListSync,
+    describeCloudWriteFailure: describeCloudWriteFailure,
+    cloudGetReinforcementAnswersStrict: cloudGetReinforcementAnswersStrict,
+    cloudSaveReinforcementAnswerFields: cloudSaveReinforcementAnswerFields,
     cloudGetReinforcementWorkshops: cloudGetReinforcementWorkshops,
     cloudSaveReinforcementWorkshops: cloudSaveReinforcementWorkshops,
     cloudGetReinforcementAnswers: cloudGetReinforcementAnswers,

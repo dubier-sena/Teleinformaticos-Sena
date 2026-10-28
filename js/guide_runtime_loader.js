@@ -143,6 +143,10 @@
     if (window.MaterialApoyoLinks) {
       window.MaterialApoyoLinks.rewire(root);
     }
+    // Material de apoyo en Drive por plantilla y ficha (data/guide_support_materials.js).
+    if (window.GuideSupportMaterials) {
+      window.GuideSupportMaterials.mount(root, context);
+    }
 
     if (typeof window.initGuiaTemplateShell === "function") {
       window.initGuiaTemplateShell();

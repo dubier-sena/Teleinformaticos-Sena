@@ -44,10 +44,16 @@
   }
 
   var PROGRAM = "Sistemas Teleinformaticos";
-  var COMPETENCIA = "220501121 - Procesar la informacion de acuerdo con las necesidades de la organizacion.";
-  var RAP_INDUCCION = "Induccion al programa Sistemas Teleinformaticos";
-  var RAP_HERRAMIENTAS = "RAP 1 - Operar herramientas informaticas y digitales segun normativa vigente.";
-  var RAP_PLANIFICAR = "RAP 2 - Planificar la informacion de acuerdo con normativa vigente.";
+  // Correccion de metadatos (2026-10-22, Diseno Curricular 233108): la
+  // Induccion es la competencia 240201530, no 220501121; y el RAP 01 de
+  // 220501121 es "Caracterizar...", no "Operar..." (ese es el nombre de la
+  // competencia). Solo cambia el encabezado de exportaciones futuras: ni
+  // stateKey, ni actividades, ni archivos.
+  var COMPETENCIA_INDUCCION = "240201530 - Desarrollo de la induccion.";
+  var COMPETENCIA_HERRAMIENTAS = "220501121 - Operar herramientas informaticas y digitales de acuerdo con protocolos y manuales tecnicos.";
+  var RAP_INDUCCION = "RAP 01 - Identificar la dinamica organizacional del SENA y el rol de la formacion profesional integral de acuerdo con su proyecto de vida y el desarrollo profesional.";
+  var RAP_HERRAMIENTAS = "RAP 01 - Caracterizar herramientas informaticas segun contexto tecnologico de la organizacion.";
+  var RAP_PLANIFICAR = "RAP 02 - Implementar componentes de las herramientas tecnologicas segun procedimientos de la organizacion.";
   // Normalizacion de formato (2026-09-22): decia "RAP 1". El titulo de la propia
   // guia ya usa "RAP 01" y el resto de declaraciones de Redes usan dos digitos.
   // Solo cambia el formato del numero: el texto del RAP es identico.
@@ -63,7 +69,7 @@
     guideTitle: "Guia 1 - Induccion al programa",
     stateKey: "10a_guia",
     program: PROGRAM,
-    competencia: COMPETENCIA,
+    competencia: COMPETENCIA_INDUCCION,
     resultado: RAP_INDUCCION,
     activities: [
       { id: "arbol312",      number: "3.1.2", label: "El Arbol de la Vida",                 shortName: "ArbolVida",   type: "form", fieldPrefixes: ["arbol:"] },
@@ -89,10 +95,10 @@
       "grupo-10b-guia-02-herramientas-informaticas-digitales.html",
     ],
     guideNumber: "2",
-    guideTitle: "Guia 2 - Operar herramientas informaticas y digitales",
+    guideTitle: "Guia 2 - Caracterizar herramientas informaticas",
     stateKey: "guia_interactiva_10a_guia2_html",
     program: PROGRAM,
-    competencia: COMPETENCIA,
+    competencia: COMPETENCIA_HERRAMIENTAS,
     resultado: RAP_HERRAMIENTAS,
     activities: [
       // Actividades 1 y 2 (mision de arranque): juegos de puntaje (sopa de letras /
@@ -456,10 +462,10 @@
       "grupo-11b-guia-05-herramientas-informaticas-digitales.html",
     ],
     guideNumber: "5",
-    guideTitle: "Guia 5 - Operar herramientas informaticas y digitales (Grado 11)",
+    guideTitle: "Guia 5 - Caracterizar herramientas informaticas (Grado 11)",
     stateKey: "guia_interactiva_11a_guia_html",
     program: PROGRAM,
-    competencia: COMPETENCIA,
+    competencia: COMPETENCIA_HERRAMIENTAS,
     resultado: RAP_HERRAMIENTAS,
     activities: [
       { id: "guia5-311", number: "3.1.1", label: "Bitacora o analisis del caso", shortName: "Bitacora",   type: "form", fieldPrefixes: ["bitacora:", "reflexion:"] },
@@ -1467,6 +1473,1002 @@
       },
     ],
   });
+
+// MANT-2026-10-22:START (generado por generar_guias_mantenimiento.py)
+  register({
+    files: [
+      "grupo-10a-guia-07-mantenimiento-integral.html",
+      "grupo-10b-guia-07-mantenimiento-integral.html",
+    ],
+    guideNumber: "7",
+    guideTitle: "Guia 7 - Realizar mantenimiento integral de los sistemas de computo (Grado 10, Kennedy)",
+    stateKey: "guia_interactiva_grupo_10a_guia_07_mantenimiento_integral_html",
+    program: PROGRAM,
+    competencia: COMP_MANTENER_EQUIPOS,
+    resultado: "RAP 02 - Realizar mantenimiento integral de los sistemas de computo segun procedimiento y manuales tecnicos.",
+    activities: [
+      {
+        id: "nogal311", number: "3.1.1", label: "Detectives del mantenimiento: caso Papeleria El Nogal",
+        shortName: "CasoElNogal", type: "form",
+        formFields: ["m2_311_sintomas", "m2_311_causas", "m2_311_disco", "m2_311_bateria", "m2_311_experiencia"],
+        buttonIds: { save: "btnGuardarNogal311", status: "statusNogal311" },
+        wordExport: {
+          contextBox: "Caso Papeleria y Miscelanea El Nogal (San Pablo de Borbur, Boyaca): 3 computadores sin mantenimiento programado. El de facturacion va muy lento, el disco esta casi lleno y hay una bateria de portatil hinchada guardada en un cajon.",
+          sections: [
+            { label: "1. \u00bfQue sintomas del computador de facturacion llaman su atencion? Enumere al menos 3.", storeKey: "m2_311_sintomas" },
+            { label: "2. \u00bfQue posibles causas tecnicas (fisicas o logicas) podrian explicar cada sintoma?", storeKey: "m2_311_causas" },
+            { label: "3. \u00bfQue relacion puede haber entre \"disco casi lleno\" y \"el programa tarda en abrir\"?", storeKey: "m2_311_disco" },
+            { label: "4. \u00bfPor que la bateria hinchada del cajon NO debe desecharse en la basura comun? \u00bfQue harian con ella? (Pista: piensen en el riesgo para las personas y para el ambiente.)", storeKey: "m2_311_bateria" },
+            { label: "5. \u00bfAlguna vez han visto un computador con sintomas parecidos en su casa, colegio o negocio familiar? \u00bfQue paso?", storeKey: "m2_311_experiencia" },
+          ],
+        },
+      },
+      {
+        id: "plenaria312", number: "3.1.2", label: "Socializacion en plenaria",
+        shortName: "Plenaria", type: "form",
+        formFields: ["m2_312_sintoma_grupo", "m2_312_reflexion"],
+        buttonIds: { save: "btnGuardarPlenaria312", status: "statusPlenaria312" },
+        wordExport: {
+          contextBox: "Plenaria grupal sobre el caso El Nogal: sintomas registrados en el tablero y causas agrupadas por tipo (fisicas, logicas o de disposicion de residuos RAEE).",
+          sections: [
+            { label: "1. Sintoma mas preocupante que compartio tu grupo y la causa mas probable", storeKey: "m2_312_sintoma_grupo" },
+            { label: "2. Idea final: \u00bfque relacion encuentra entre \"no hacer mantenimiento integral\" y \"terminar con equipos lentos y residuos sin disponer\"?", storeKey: "m2_312_reflexion" },
+          ],
+        },
+      },
+      {
+        id: "bloqueABC321", number: "3.2.1", label: "Estudio de contenidos de mantenimiento integral (Bloques A, B y C) - Tabla resumen",
+        shortName: "BloqueABC", type: "both",
+        formFields: ["m2_321_reparto", "m2_321_temas", "m2_321_tema_fila", "m2_321_paraque", "m2_321_ejemplo"],
+        buttonIds: { save: "btnGuardarBloqueABC321", status: "statusBloqueABC321" },
+        wordExport: {
+          contextBox: "Estudio en equipo de los 12 temas de mantenimiento integral (Bloque A: hardware, tipos de mantenimiento y CRU; Bloque B: mantenimiento logico; Bloque C: disposicion de RAEE). Entregable de equipo: tabla resumen PDF.",
+          sections: [
+            { label: "1. Reparto del equipo: temas y responsable de cada uno", storeKey: "m2_321_reparto" },
+            { label: "2. Temas que estudiaste tu (4 de los 12 distribuidos en tu equipo)", storeKey: "m2_321_temas" },
+            { label: "3. Tema de tu fila en la tabla resumen", storeKey: "m2_321_tema_fila" },
+            { label: "4. \u00bfPara que sirve?", storeKey: "m2_321_paraque" },
+            { label: "5. Ejemplo aplicado en El Nogal", storeKey: "m2_321_ejemplo" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "jfk7mant-3-2-1",
+          deadlineActivityId: "bloqueABC321",
+          activityTitle: "Tabla resumen de los Bloques A, B y C (BloqueABC_RAP02_[TuNombre]_v1.0.pdf)",
+          description: "Sube a Drive la tabla resumen en PDF construida por el equipo (3 columnas: Tema, Para que sirve, Ejemplo aplicado en El Nogal).",
+          note: "Nombre sugerido: BloqueABC_RAP02_[TuNombre]_v1.0.pdf",
+        },
+      },
+      {
+        id: "inspeccionCru322", number: "3.2.2", label: "Inspeccion externa e identificacion de componentes CRU",
+        shortName: "InspeccionCRU", type: "both",
+        formFields: ["m2_322_hallazgos", "m2_322_cru", "m2_322_conclusion"],
+        buttonIds: { save: "btnGuardarInspeccionCru322", status: "statusInspeccionCru322" },
+        wordExport: {
+          contextBox: "Inspeccion externa (sin abrir el equipo) de un equipo del taller e identificacion de al menos 4 componentes CRU accesibles.",
+          sections: [
+            { label: "1. Hallazgos de la inspeccion externa (carcasa, puertos, cables, ventilacion, ruidos al encender)", storeKey: "m2_322_hallazgos" },
+            { label: "2. Tabla de componentes CRU (minimo 4): componente - ubicacion en el equipo - estado observado", storeKey: "m2_322_cru" },
+            { label: "3. Conclusion (maximo 1 pagina): \u00bfel equipo requiere mantenimiento fisico, logico o ambos? Justifica.", storeKey: "m2_322_conclusion" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "jfk7mant-3-2-2",
+          deadlineActivityId: "inspeccionCru322",
+          activityTitle: "Informe corto de inspeccion y tabla de componentes CRU",
+          description: "Sube a Drive el informe corto de inspeccion (maximo 1 pagina) con la tabla de componentes CRU diligenciada.",
+          note: "Formato: PDF o DOCX.",
+        },
+      },
+      {
+        id: "fisicoCru331", number: "3.3.1", label: "Mantenimiento preventivo fisico CRU y aplicacion de pasta termica",
+        shortName: "MantFisicoCRU", type: "both",
+        formFields: ["m2_331_preparacion", "m2_331_diagnostico", "m2_331_limpieza", "m2_331_pasta", "m2_331_cru", "m2_331_residuos", "m2_331_ficha"],
+        buttonIds: { save: "btnGuardarFisicoCru331", status: "statusFisicoCru331" },
+        wordExport: {
+          contextBox: "Mantenimiento preventivo fisico CRU del equipo de facturacion de El Nogal (o el asignado): limpieza interna/externa, retiro y aplicacion de pasta termica, verificacion de componentes CRU y clasificacion de residuos.",
+          sections: [
+            { label: "1. Preparacion del sitio de trabajo y elementos de proteccion utilizados", storeKey: "m2_331_preparacion" },
+            { label: "2. Diagnostico interno: componentes CRU accesibles identificados", storeKey: "m2_331_diagnostico" },
+            { label: "3. Limpieza interna y externa realizada (herramientas y pasos segun el manual del fabricante)", storeKey: "m2_331_limpieza" },
+            { label: "4. Retiro y aplicacion de pasta termica: procedimiento seguido y observaciones", storeKey: "m2_331_pasta" },
+            { label: "5. Componentes CRU verificados, reemplazados o reubicados (paso a paso)", storeKey: "m2_331_cru" },
+            { label: "6. Clasificacion de los materiales de desecho generados (protocolo RAEE)", storeKey: "m2_331_residuos" },
+            { label: "7. Ficha tecnica: fecha, componentes intervenidos y observaciones", storeKey: "m2_331_ficha" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "jfk7mant-3-3-1",
+          deadlineActivityId: "fisicoCru331",
+          activityTitle: "Ficha tecnica de mantenimiento fisico con registro fotografico",
+          description: "Sube a Drive la ficha tecnica de mantenimiento fisico diligenciada, con registro fotografico del antes/despues.",
+          note: "Formato: PDF o DOCX.",
+        },
+      },
+      {
+        id: "logico332", number: "3.3.2", label: "Mantenimiento logico: sistema operativo y software utilitario",
+        shortName: "MantLogico", type: "both",
+        formFields: ["m2_332_actualizaciones", "m2_332_licencia", "m2_332_utilitario", "m2_332_antivirus", "m2_332_herramienta_so", "m2_332_checklist"],
+        buttonIds: { save: "btnGuardarLogico332", status: "statusLogico332" },
+        wordExport: {
+          contextBox: "Mantenimiento logico del equipo de facturacion de El Nogal: actualizacion del sistema operativo, licenciamiento, software utilitario de diagnostico, antivirus y herramientas del sistema.",
+          sections: [
+            { label: "1. Actualizaciones del sistema operativo: version antes y despues", storeKey: "m2_332_actualizaciones" },
+            { label: "2. Estado y tipo de licenciamiento del sistema operativo (OEM, retail, volumen o codigo abierto)", storeKey: "m2_332_licencia" },
+            { label: "3. Herramienta de software utilitario de diagnostico usada y resultado del reporte", storeKey: "m2_332_utilitario" },
+            { label: "4. Antivirus: estado y actualizacion de la base de datos de definiciones", storeKey: "m2_332_antivirus" },
+            { label: "5. Herramienta incorporada del sistema operativo utilizada y hallazgos", storeKey: "m2_332_herramienta_so" },
+            { label: "6. Checklist: tareas realizadas y nombre de la captura que evidencia cada una", storeKey: "m2_332_checklist" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "jfk7mant-3-3-2",
+          deadlineActivityId: "logico332",
+          activityTitle: "Checklist de mantenimiento logico con capturas de pantalla",
+          description: "Sube a Drive el checklist de mantenimiento logico diligenciado, con capturas de pantalla de cada tarea.",
+          note: "Formato: PDF o DOCX.",
+        },
+      },
+      {
+        id: "integrador341", number: "3.4.1", label: "Laboratorio integrador: mantenimiento integral y disposicion de RAEE",
+        shortName: "LabIntegrador", type: "both",
+        formFields: ["m2_341_estado_inicial", "m2_341_fisico", "m2_341_logico", "m2_341_raee", "m2_341_gestor", "m2_341_verificacion"],
+        buttonIds: { save: "btnGuardarIntegrador341", status: "statusIntegrador341" },
+        wordExport: {
+          contextBox: "Laboratorio integrador sobre el equipo de facturacion de El Nogal: mantenimiento fisico y logico completo, clasificacion de residuos (incluida la bateria danada) y verificacion final.",
+          sections: [
+            { label: "1. Estado inicial del equipo", storeKey: "m2_341_estado_inicial" },
+            { label: "2. Mantenimiento fisico CRU realizado (incluida la pasta termica)", storeKey: "m2_341_fisico" },
+            { label: "3. Mantenimiento logico realizado (sistema operativo, licenciamiento, software utilitario)", storeKey: "m2_341_logico" },
+            { label: "4. Clasificacion de los residuos generados, incluida la bateria danada (Resolucion 1297 de 2010)", storeKey: "m2_341_raee" },
+            { label: "5. Punto o gestor autorizado de recoleccion de RAEE al que se dispondrian los residuos", storeKey: "m2_341_gestor" },
+            { label: "6. Verificacion final del funcionamiento (encendido, aplicaciones basicas, internet)", storeKey: "m2_341_verificacion" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "jfk7mant-3-4-1",
+          deadlineActivityId: "integrador341",
+          activityTitle: "Registro del laboratorio integrador y evidencia de disposicion de RAEE",
+          description: "Sube a Drive el registro del laboratorio integrador (estado inicial, procedimiento fisico y logico, resultados) y la evidencia de la clasificacion/disposicion de RAEE.",
+          note: "Formato: PDF o DOCX.",
+        },
+      },
+      {
+        id: "informeFinal342", number: "3.4.2", label: "Informe tecnico final y sustentacion",
+        shortName: "InformeFinal", type: "both",
+        formFields: ["m2_342_diagnostico", "m2_342_procedimiento", "m2_342_resultados", "m2_342_raee", "m2_342_sustentacion"],
+        buttonIds: { save: "btnGuardarInformeFinal342", status: "statusInformeFinal342" },
+        wordExport: {
+          contextBox: "Informe tecnico final del mantenimiento integral del equipo de El Nogal (diagnostico, procedimiento fisico y logico, resultados y disposicion de RAEE) y sustentacion oral de maximo 10 minutos.",
+          sections: [
+            { label: "1. Diagnostico inicial", storeKey: "m2_342_diagnostico" },
+            { label: "2. Procedimiento fisico y logico realizado", storeKey: "m2_342_procedimiento" },
+            { label: "3. Resultados obtenidos", storeKey: "m2_342_resultados" },
+            { label: "4. Disposicion de RAEE", storeKey: "m2_342_raee" },
+            { label: "5. Puntos clave y recomendaciones para la sustentacion ante el propietario (maximo 10 minutos)", storeKey: "m2_342_sustentacion" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "jfk7mant-3-4-2",
+          deadlineActivityId: "informeFinal342",
+          activityTitle: "Informe tecnico final con anexos (ficha tecnica y checklist)",
+          description: "Sube a Drive el informe tecnico final completo, con la ficha tecnica (3.3.1) y el checklist (3.3.2) como anexos.",
+          note: "Formato: DOCX o PDF.",
+        },
+      },
+    ],
+  });
+
+  register({
+    files: [
+      "grupo-10a-guia-08-verificar-operacion.html",
+      "grupo-10b-guia-08-verificar-operacion.html",
+    ],
+    guideNumber: "8",
+    guideTitle: "Guia 8 - Verificar la operacion del sistema computacional (Grado 10, Kennedy)",
+    stateKey: "guia_interactiva_grupo_10a_guia_08_verificar_operacion_html",
+    program: PROGRAM,
+    competencia: COMP_MANTENER_EQUIPOS,
+    resultado: "RAP 03 - Verificar la operacion del sistema computacional de acuerdo con los procedimientos tecnicos.",
+    activities: [
+      {
+        id: "nogal311", number: "3.1.1", label: "Que le pasa al computador de El Nogal",
+        shortName: "CasoElNogal", type: "form",
+        formFields: ["m3_311_sintomas", "m3_311_componentes", "m3_311_herramientas", "m3_311_registro", "m3_311_normal"],
+        buttonIds: { save: "btnGuardarNogal311", status: "statusNogal311" },
+        wordExport: {
+          contextBox: "Caso Papeleria y Miscelanea El Nogal (San Pablo de Borbur, Boyaca): el equipo de contabilidad tarda en encender, el programa contable se congela, aparece aviso de poco espacio en disco y a veces se reinicia solo.",
+          sections: [
+            { label: "1. \u00bfQue problema presenta el equipo? Enumere al menos tres sintomas.", storeKey: "m3_311_sintomas" },
+            { label: "2. \u00bfQue componentes del computador deben comprobarse (procesador, memoria, almacenamiento, dispositivos, sistema operativo)?", storeKey: "m3_311_componentes" },
+            { label: "3. \u00bfQue herramientas conocen o podrian usarse para comprobar cada componente?", storeKey: "m3_311_herramientas" },
+            { label: "4. \u00bfComo verificarian los resultados? \u00bfQue datos anotarian para no depender de la memoria?", storeKey: "m3_311_registro" },
+            { label: "5. \u00bfComo podrian determinar si lo que observan es una anomalia o un funcionamiento normal?", storeKey: "m3_311_normal" },
+          ],
+        },
+      },
+      {
+        id: "plenaria312", number: "3.1.2", label: "Socializacion en plenaria",
+        shortName: "Plenaria", type: "form",
+        formFields: ["m3_312_sintoma_grupo", "m3_312_reflexion"],
+        buttonIds: { save: "btnGuardarPlenaria312", status: "statusPlenaria312" },
+        wordExport: {
+          contextBox: "Plenaria grupal sobre el caso El Nogal: sintomas registrados en el tablero y agrupados en hardware, software y almacenamiento.",
+          sections: [
+            { label: "1. Sintoma mas preocupante que compartio tu grupo y componente que comprobaria primero", storeKey: "m3_312_sintoma_grupo" },
+            { label: "2. Idea final: \u00bfpor que es mejor verificar con herramientas y datos que \"adivinar\" la falla?", storeKey: "m3_312_reflexion" },
+          ],
+        },
+      },
+      {
+        id: "bloquesABC321", number: "3.2.1", label: "Estudio de contenidos de diagnostico y verificacion (Bloques A, B y C) - Tabla resumen",
+        shortName: "BloquesABC", type: "both",
+        formFields: ["m3_321_reparto", "m3_321_temas", "m3_321_dudas", "m3_321_tema_fila", "m3_321_paraque", "m3_321_ejemplo"],
+        buttonIds: { save: "btnGuardarBloquesABC321", status: "statusBloquesABC321" },
+        wordExport: {
+          contextBox: "Estudio en equipo de los 12 temas de diagnostico y verificacion (Bloque A: diagnostico y verificacion; Bloque B: herramientas e interpretacion; Bloque C: licenciamiento, legalidad y seguridad). Entregable: tabla resumen PDF.",
+          sections: [
+            { label: "1. Reparto del equipo: temas y responsable de cada uno", storeKey: "m3_321_reparto" },
+            { label: "2. Temas que estudiaste tu (4 de los 12)", storeKey: "m3_321_temas" },
+            { label: "3. Una duda por bloque (A, B y C) que llevaste a la sesion", storeKey: "m3_321_dudas" },
+            { label: "4. Tema de tu fila en la tabla resumen", storeKey: "m3_321_tema_fila" },
+            { label: "5. \u00bfPara que sirve en una verificacion?", storeKey: "m3_321_paraque" },
+            { label: "6. Ejemplo con el caso de El Nogal", storeKey: "m3_321_ejemplo" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "jfk8verif-3-2-1",
+          deadlineActivityId: "bloquesABC321",
+          activityTitle: "Tabla resumen de los Bloques A, B y C (BloquesABC_RAP03_[TuNombre]_v1.0.pdf)",
+          description: "Sube a Drive la tabla resumen en PDF construida por el equipo (Tema, Para que sirve en una verificacion, Ejemplo con el caso de El Nogal).",
+          note: "Nombre sugerido: BloquesABC_RAP03_[TuNombre]_v1.0.pdf",
+        },
+      },
+      {
+        id: "protocolo322", number: "3.2.2", label: "Elaboracion del protocolo de verificacion",
+        shortName: "Protocolo", type: "both",
+        formFields: ["m3_322_identificacion", "m3_322_procesador", "m3_322_ram", "m3_322_almacenamiento", "m3_322_dispositivos", "m3_322_rendimiento", "m3_322_proteccion", "m3_322_licenciamiento", "m3_322_seguridad"],
+        buttonIds: { save: "btnGuardarProtocolo322", status: "statusProtocolo322" },
+        wordExport: {
+          contextBox: "Protocolo de verificacion: lista ordenada de comprobaciones (identificacion, procesador, RAM, almacenamiento, dispositivos y controladores, rendimiento, proteccion, licenciamiento y seguridad) con herramienta, dato y criterio de normalidad.",
+          sections: [
+            { label: "1. Identificacion del equipo", storeKey: "m3_322_identificacion" },
+            { label: "2. Procesador", storeKey: "m3_322_procesador" },
+            { label: "3. Memoria RAM", storeKey: "m3_322_ram" },
+            { label: "4. Almacenamiento", storeKey: "m3_322_almacenamiento" },
+            { label: "5. Dispositivos y controladores", storeKey: "m3_322_dispositivos" },
+            { label: "6. Rendimiento", storeKey: "m3_322_rendimiento" },
+            { label: "7. Proteccion", storeKey: "m3_322_proteccion" },
+            { label: "8. Licenciamiento (Configuracion > Sistema > Activacion; sin activadores)", storeKey: "m3_322_licenciamiento" },
+            { label: "9. Fila final de seguridad (autorizacion, trabajo guardado, sin datos personales)", storeKey: "m3_322_seguridad" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "jfk8verif-3-2-2",
+          deadlineActivityId: "protocolo322",
+          activityTitle: "Protocolo de verificacion del equipo",
+          description: "Sube a Drive el protocolo de verificacion revisado por el instructor (comprobaciones, herramientas, datos y criterios).",
+          note: "Formato: PDF o DOCX.",
+        },
+      },
+      {
+        id: "cpuz331", number: "3.3.1", label: "Procesador, memoria y caracteristicas del sistema con CPU-Z",
+        shortName: "CPUZ", type: "both",
+        formFields: ["m3_331_cpu", "m3_331_placa", "m3_331_memoria", "m3_331_modulos", "m3_331_grafica", "m3_331_msinfo", "m3_331_interpretacion"],
+        buttonIds: { save: "btnGuardarCpuz331", status: "statusCpuz331" },
+        wordExport: {
+          contextBox: "Verificacion de procesador, placa base, memoria y grafica con CPU-Z y comparacion con Informacion del sistema (msinfo32). Las practicas no modifican el equipo.",
+          sections: [
+            { label: "1. Procesador: nombre, nucleos e hilos", storeKey: "m3_331_cpu" },
+            { label: "2. Placa base: fabricante, modelo y version de BIOS", storeKey: "m3_331_placa" },
+            { label: "3. Memoria RAM: tipo y tamano", storeKey: "m3_331_memoria" },
+            { label: "4. Modulos de memoria instalados (pestana SPD)", storeKey: "m3_331_modulos" },
+            { label: "5. Tarjeta grafica", storeKey: "m3_331_grafica" },
+            { label: "6. Comparacion con Informacion del sistema (msinfo32): \u00bfCPU-Z y Windows muestran lo mismo?", storeKey: "m3_331_msinfo" },
+            { label: "7. Interpretacion: \u00bfla memoria es suficiente para el programa contable? Posibles anomalias", storeKey: "m3_331_interpretacion" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "jfk8verif-3-3-1",
+          deadlineActivityId: "cpuz331",
+          activityTitle: "Tabla de datos del sistema y capturas de CPU-Z",
+          description: "Sube a Drive la tabla de datos del sistema (valor e interpretacion) con las capturas de CPU-Z.",
+          note: "Formato: PDF o DOCX.",
+        },
+      },
+      {
+        id: "crystal332", number: "3.3.2", label: "Estado del almacenamiento con CrystalDiskInfo",
+        shortName: "CrystalDiskInfo", type: "both",
+        formFields: ["m3_332_disco", "m3_332_salud", "m3_332_horas", "m3_332_espacio", "m3_332_interpretacion", "m3_332_reporte"],
+        buttonIds: { save: "btnGuardarCrystal332", status: "statusCrystal332" },
+        wordExport: {
+          contextBox: "Verificacion del almacenamiento con CrystalDiskInfo (salud S.M.A.R.T., temperatura, horas de uso) y del espacio por unidad. Practica solo de lectura.",
+          sections: [
+            { label: "1. Modelo, capacidad e interfaz del disco", storeKey: "m3_332_disco" },
+            { label: "2. Estado de salud (Bueno, Precaucion o Malo) y temperatura", storeKey: "m3_332_salud" },
+            { label: "3. Horas de encendido y datos de sectores reasignados o pendientes (si aparecen)", storeKey: "m3_332_horas" },
+            { label: "4. Espacio total, libre y usado de cada unidad (Este equipo)", storeKey: "m3_332_espacio" },
+            { label: "5. Interpretacion: \u00bfel disco esta \"lleno\", \"enfermo\", ambos o ninguno?", storeKey: "m3_332_interpretacion" },
+            { label: "6. Nota de reporte al instructor (solo si hubo una alerta)", storeKey: "m3_332_reporte" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "jfk8verif-3-3-2",
+          deadlineActivityId: "crystal332",
+          activityTitle: "Tabla de verificacion del almacenamiento y capturas",
+          description: "Sube a Drive la tabla de verificacion del almacenamiento con las capturas de CrystalDiskInfo y del espacio por unidad.",
+          note: "Formato: PDF o DOCX.",
+        },
+      },
+      {
+        id: "windows333", number: "3.3.3", label: "Dispositivos, rendimiento y memoria con herramientas de Windows",
+        shortName: "HerramientasWindows", type: "both",
+        formFields: ["m3_333_dispositivos", "m3_333_rendimiento", "m3_333_msinfo", "m3_333_proteccion", "m3_333_activacion", "m3_333_memoria_diag", "m3_333_interpretacion"],
+        buttonIds: { save: "btnGuardarWindows333", status: "statusWindows333" },
+        wordExport: {
+          contextBox: "Verificacion con herramientas de Windows: Administrador de dispositivos, Administrador de tareas, Informacion del sistema, Seguridad de Windows, Activacion y Diagnostico de memoria (solo con permiso del instructor).",
+          sections: [
+            { label: "1. Administrador de dispositivos: dispositivos con advertencia (si existen)", storeKey: "m3_333_dispositivos" },
+            { label: "2. Administrador de tareas: uso de CPU, memoria y disco en reposo y con el programa contable abierto; pestana Inicio", storeKey: "m3_333_rendimiento" },
+            { label: "3. Informacion del sistema: version del sistema, BIOS y memoria", storeKey: "m3_333_msinfo" },
+            { label: "4. Seguridad de Windows: estado de la proteccion", storeKey: "m3_333_proteccion" },
+            { label: "5. Activacion: estado de la licencia", storeKey: "m3_333_activacion" },
+            { label: "6. Diagnostico de memoria de Windows (con permiso del instructor): resultado al reiniciar", storeKey: "m3_333_memoria_diag" },
+            { label: "7. Interpretacion (referencia del curso: uso sostenido mayor al 85 % con pocos programas abiertos = posible anomalia)", storeKey: "m3_333_interpretacion" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "jfk8verif-3-3-3",
+          deadlineActivityId: "windows333",
+          activityTitle: "Tabla de verificacion con herramientas de Windows y capturas",
+          description: "Sube a Drive la tabla de verificacion con herramientas de Windows (valor e interpretacion) y las capturas de cada herramienta.",
+          note: "Formato: PDF o DOCX.",
+        },
+      },
+      // La aplica el instructor en clase (sin campos ni entrega en el portal): solo
+      // Aprobado/No aprobado en Calificaciones, mismo patron que reglamento333 (Guia 1).
+      { id: "ie01334", number: "3.3.4", label: "Evaluacion de conocimiento: cuestionario IE-01", shortName: "CuestionarioIE01", type: "form" },
+      {
+        id: "integrador341", number: "3.4.1", label: "Laboratorio integrador: verificacion de la operacion del equipo",
+        shortName: "LabIntegrador", type: "both",
+        formFields: ["m3_341_roles", "m3_341_identificacion", "m3_341_caracteristicas", "m3_341_almacenamiento", "m3_341_memoria_cpu", "m3_341_dispositivos_seguridad", "m3_341_anomalias", "m3_341_estado"],
+        buttonIds: { save: "btnGuardarIntegrador341", status: "statusIntegrador341" },
+        wordExport: {
+          contextBox: "Laboratorio integrador de verificacion de la operacion del equipo asignado: identificacion, CPU-Z, CrystalDiskInfo, Administrador de tareas, dispositivos, proteccion y activacion, anomalias y estado de funcionamiento.",
+          sections: [
+            { label: "1. Roles del equipo y rotacion por herramienta", storeKey: "m3_341_roles" },
+            { label: "2. Identificacion del equipo: marca, modelo, sistema operativo y version; fecha y hora de la prueba", storeKey: "m3_341_identificacion" },
+            { label: "3. Caracteristicas con CPU-Z contrastadas con Informacion del sistema", storeKey: "m3_341_caracteristicas" },
+            { label: "4. Almacenamiento con CrystalDiskInfo: salud, temperatura y espacio libre por unidad", storeKey: "m3_341_almacenamiento" },
+            { label: "5. Memoria y procesador (Administrador de tareas y, con autorizacion, Diagnostico de memoria)", storeKey: "m3_341_memoria_cpu" },
+            { label: "6. Dispositivos y controladores, proteccion de Windows y estado de activacion", storeKey: "m3_341_dispositivos_seguridad" },
+            { label: "7. Posibles anomalias e interpretacion segun los criterios del protocolo", storeKey: "m3_341_anomalias" },
+            { label: "8. Estado de funcionamiento (normal, con observaciones o requiere atencion) y recomendacion segura", storeKey: "m3_341_estado" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "jfk8verif-3-4-1",
+          deadlineActivityId: "integrador341",
+          activityTitle: "Evidencias del laboratorio integrador (carpeta Evidencias_RAP03_[TuNombre])",
+          description: "Sube a Drive las evidencias de las pruebas (capturas y tablas) organizadas en la carpeta Evidencias_RAP03_[TuNombre], comprimidas o en un PDF.",
+          note: "Formato: PDF, DOCX o ZIP.",
+        },
+      },
+      {
+        id: "registro342", number: "3.4.2", label: "Registro de resultados de diagnostico y sustentacion",
+        shortName: "RegistroDiagnostico", type: "both",
+        formFields: ["m3_342_a_identificacion", "m3_342_b_herramientas", "m3_342_c_componentes", "m3_342_d_resultados", "m3_342_e_evidencias", "m3_342_f_interpretacion", "m3_342_g_anomalias", "m3_342_h_conclusion"],
+        buttonIds: { save: "btnGuardarRegistro342", status: "statusRegistro342" },
+        wordExport: {
+          contextBox: "Registro de resultados de diagnostico del sistema computacional (identificacion, herramientas, componentes, resultados, evidencias, interpretacion, anomalias y conclusion) y sustentacion de maximo 8 minutos.",
+          sections: [
+            { label: "a) Identificacion del equipo", storeKey: "m3_342_a_identificacion" },
+            { label: "b) Herramientas utilizadas", storeKey: "m3_342_b_herramientas" },
+            { label: "c) Componentes verificados", storeKey: "m3_342_c_componentes" },
+            { label: "d) Resultados obtenidos", storeKey: "m3_342_d_resultados" },
+            { label: "e) Evidencias de las pruebas (lista de capturas y tablas, sin datos personales)", storeKey: "m3_342_e_evidencias" },
+            { label: "f) Interpretacion tecnica (que significa cada resultado)", storeKey: "m3_342_f_interpretacion" },
+            { label: "g) Anomalias identificadas (o \"no se identificaron\")", storeKey: "m3_342_g_anomalias" },
+            { label: "h) Conclusion del funcionamiento y recomendacion segura", storeKey: "m3_342_h_conclusion" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "jfk8verif-3-4-2",
+          deadlineActivityId: "registro342",
+          activityTitle: "Registro de resultados de diagnostico del sistema computacional",
+          description: "Sube a Drive el registro de resultados de diagnostico (secciones a-h) con las evidencias de las pruebas.",
+          note: "Formato: PDF o DOCX.",
+        },
+      },
+    ],
+  });
+
+  register({
+    files: [
+      "santa-barbara-10a-guia-05-preparar-mantenimiento.html",
+      "santa-barbara-10b-guia-05-preparar-mantenimiento.html",
+    ],
+    guideNumber: "5",
+    guideTitle: "Guia 5 - Preparar el mantenimiento de equipos de computo (Grado 10, Santa Barbara)",
+    stateKey: "guia_interactiva_santa_barbara_10a_guia_05_preparar_mantenimiento_html",
+    program: PROGRAM,
+    competencia: COMP_MANTENER_EQUIPOS,
+    resultado: "RAP 01 - Preparar el mantenimiento de los equipos de computo de acuerdo con procedimientos tecnicos y administrativos.",
+    activities: [
+      {
+        id: "caso311", number: "3.1.1", label: "Detectives del mantenimiento: caso Ferreteria Puerto Real",
+        shortName: "CasoPuertoReal", type: "form",
+        formFields: ["g6mant_311_sintomas", "g6mant_311_causas", "g6mant_311_herramientas", "g6mant_311_precauciones", "g6mant_311_experiencia"],
+        buttonIds: { save: "btnGuardarCaso311", status: "statusCaso311" },
+        wordExport: {
+          contextBox: "Caso Ferreteria y Miscelanea Puerto Real (Puerto Boyaca): 4 computadores sin mantenimiento programado. El de facturacion se calienta, el ventilador suena fuerte y a veces no reconoce el USB del lector de codigo de barras.",
+          sections: [
+            { label: "1. \u00bfQue sintomas del computador de facturacion llaman su atencion? Enumere al menos 3.", storeKey: "g6mant_311_sintomas" },
+            { label: "2. \u00bfQue posibles causas tecnicas podrian explicar cada sintoma?", storeKey: "g6mant_311_causas" },
+            { label: "3. \u00bfQue herramientas o equipos de proteccion creen que necesitaran antes de abrir el computador?", storeKey: "g6mant_311_herramientas" },
+            { label: "4. \u00bfQue precauciones tomarian para no perder informacion ni danar mas el equipo?", storeKey: "g6mant_311_precauciones" },
+            { label: "5. \u00bfAlguna vez han visto un computador con sintomas parecidos en su casa, colegio o negocio familiar? \u00bfQue paso?", storeKey: "g6mant_311_experiencia" },
+          ],
+        },
+      },
+      {
+        id: "plenaria312", number: "3.1.2", label: "Socializacion en plenaria",
+        shortName: "Plenaria", type: "form",
+        formFields: ["g6mant_312_sintoma_grupo", "g6mant_312_reflexion"],
+        buttonIds: { save: "btnGuardarPlenaria312", status: "statusPlenaria312" },
+        wordExport: {
+          contextBox: "Plenaria grupal sobre el caso Ferreteria Puerto Real: sintomas y causas agrupados en el tablero por tipo (mecanicas, electricas, de software, de falta de limpieza).",
+          sections: [
+            { label: "1. Sintoma mas preocupante que compartio tu grupo y la causa mas probable", storeKey: "g6mant_312_sintoma_grupo" },
+            { label: "2. Idea final: \u00bfque relacion encuentra entre \"no hacer mantenimiento preventivo\" y \"terminar haciendo mantenimiento correctivo urgente\"?", storeKey: "g6mant_312_reflexion" },
+          ],
+        },
+      },
+      {
+        id: "bloqueAB321", number: "3.2.1", label: "Estudio de contenidos de mantenimiento (Bloques A y B) - Tabla resumen",
+        shortName: "BloqueAB", type: "both",
+        formFields: ["g6mant_321_reparto", "g6mant_321_temas", "g6mant_321_tema_fila", "g6mant_321_paraque", "g6mant_321_ejemplo"],
+        buttonIds: { save: "btnGuardarBloqueAB321", status: "statusBloqueAB321" },
+        wordExport: {
+          contextBox: "Estudio en equipo de los 7 temas conceptuales de mantenimiento de equipos (Bloques A y B: tipos/diagnostico de mantenimiento; materiales, herramientas y proteccion personal). Entregable de equipo: tabla resumen PDF.",
+          sections: [
+            { label: "1. Reparto del equipo: temas y responsable de cada uno", storeKey: "g6mant_321_reparto" },
+            { label: "2. Temas que estudiaste tu (de los 7 distribuidos en tu equipo)", storeKey: "g6mant_321_temas" },
+            { label: "3. Tema de tu fila en la tabla resumen", storeKey: "g6mant_321_tema_fila" },
+            { label: "4. \u00bfPara que sirve?", storeKey: "g6mant_321_paraque" },
+            { label: "5. Ejemplo aplicado en la Ferreteria Puerto Real", storeKey: "g6mant_321_ejemplo" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "sb5mant-3-2-1",
+          deadlineActivityId: "bloqueAB321",
+          activityTitle: "Tabla resumen de los Bloques A y B (BloqueAB_RAP01_[TuNombre]_v1.0.pdf)",
+          description: "Sube a Drive la tabla resumen en PDF construida por el equipo (3 columnas: Tema, Para que sirve, Ejemplo aplicado en la Ferreteria Puerto Real).",
+          note: "Nombre sugerido: BloqueAB_RAP01_[TuNombre]_v1.0.pdf",
+        },
+      },
+      {
+        id: "inspeccion322", number: "3.2.2", label: "Ejercicio de inspeccion externa de equipos de computo",
+        shortName: "InspeccionExterna", type: "both",
+        formFields: ["g6mant_322_hallazgos", "g6mant_322_conclusion", "g6mant_322_disp_entrada", "g6mant_322_disp_salida", "g6mant_322_disp_almacenamiento"],
+        buttonIds: { save: "btnGuardarInspeccion322", status: "statusInspeccion322" },
+        wordExport: {
+          contextBox: "Inspeccion externa (sin abrir el equipo) de un equipo del taller con el formato de inspeccion, e identificacion de dispositivos de entrada, salida y almacenamiento.",
+          sections: [
+            { label: "1. Que observaron: hallazgos de la inspeccion externa (carcasa, puertos, cables, ventilacion, ruidos, temperatura al tacto)", storeKey: "g6mant_322_hallazgos" },
+            { label: "2. Que concluyen y por que (maximo 1 pagina): \u00bfel equipo requiere mantenimiento preventivo, correctivo o ambos?", storeKey: "g6mant_322_conclusion" },
+            { label: "3. Dispositivo(s) de entrada identificados: definicion breve y ubicacion fisica", storeKey: "g6mant_322_disp_entrada" },
+            { label: "4. Dispositivo(s) de salida identificados: definicion breve y ubicacion fisica", storeKey: "g6mant_322_disp_salida" },
+            { label: "5. Dispositivo(s) de almacenamiento identificados: definicion breve y ubicacion fisica", storeKey: "g6mant_322_disp_almacenamiento" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "sb5mant-3-2-2",
+          deadlineActivityId: "inspeccion322",
+          activityTitle: "Informe de inspeccion externa + tabla de dispositivos",
+          description: "Sube a Drive el informe con el formato de inspeccion externa diligenciado y la tabla de dispositivos de entrada, salida y almacenamiento.",
+          note: "Formato: PDF o DOCX.",
+        },
+      },
+      {
+        id: "analisis331", number: "3.3.1", label: "Consulta y analisis guiado de fallas comunes",
+        shortName: "AnalisisFallas", type: "both",
+        formFields: ["g6mant_331_bloqueC", "g6mant_331_reporte1", "g6mant_331_reporte2", "g6mant_331_recomendacion"],
+        buttonIds: { save: "btnGuardarAnalisis331", status: "statusAnalisis331" },
+        wordExport: {
+          contextBox: "Analisis de dos reportes nuevos de la Ferreteria Puerto Real: equipo de facturacion que se reinicia con el software contable y equipo de bodega que no reconoce la impresora de codigo de barras.",
+          sections: [
+            { label: "1. Estudio del Bloque C: fallas fisicas y logicas, relacion sintoma-causa y priorizacion", storeKey: "g6mant_331_bloqueC" },
+            { label: "2. Reporte 1 (se reinicia con el software contable): tipo de mantenimiento, causas probables y urgencia", storeKey: "g6mant_331_reporte1" },
+            { label: "3. Reporte 2 (no reconoce la impresora de codigo de barras): tipo de mantenimiento, causas probables y urgencia", storeKey: "g6mant_331_reporte2" },
+            { label: "4. Recomendacion tecnica para el propietario (lenguaje claro)", storeKey: "g6mant_331_recomendacion" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "sb5mant-3-3-1",
+          deadlineActivityId: "analisis331",
+          activityTitle: "Documento de analisis tecnico (diagnostico, causas, urgencia, recomendacion)",
+          description: "Sube a Drive el documento de analisis tecnico de los dos reportes, con la recomendacion redactada para el propietario.",
+          note: "Formato: DOCX o PDF.",
+        },
+      },
+      {
+        id: "diagnostico332", number: "3.3.2", label: "Diagnostico tecnico y diligenciamiento de hoja de vida del equipo",
+        shortName: "HojaVida", type: "both",
+        formFields: ["g6mant_332_diagnostico", "g6mant_332_hv_identificacion", "g6mant_332_hv_especificaciones", "g6mant_332_hv_recomendacion"],
+        buttonIds: { save: "btnGuardarDiagnostico332", status: "statusDiagnostico332" },
+        wordExport: {
+          contextBox: "Diagnostico tecnico de un equipo del taller (sin abrirlo) y diligenciamiento de su hoja de vida: identificacion, especificaciones, historial, diagnostico y recomendacion.",
+          sections: [
+            { label: "1. Diagnostico tecnico completo (sin abrir el equipo)", storeKey: "g6mant_332_diagnostico" },
+            { label: "2. Hoja de vida - identificacion del equipo", storeKey: "g6mant_332_hv_identificacion" },
+            { label: "3. Hoja de vida - especificaciones tecnicas e historial de intervencion (si un dato no se puede obtener: \"No determinado\")", storeKey: "g6mant_332_hv_especificaciones" },
+            { label: "4. Hoja de vida - diagnostico actual y recomendacion de mantenimiento", storeKey: "g6mant_332_hv_recomendacion" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "sb5mant-3-3-2",
+          deadlineActivityId: "diagnostico332",
+          activityTitle: "Hoja de vida del equipo diligenciada",
+          description: "Sube a Drive la hoja de vida del equipo diligenciada en su totalidad y firmada por el equipo de trabajo.",
+          note: "Formato: el suministrado por el instructor, en PDF.",
+        },
+      },
+      {
+        id: "hwmonitor341", number: "3.4.1", label: "Laboratorio de monitoreo tecnico con HWMonitor",
+        shortName: "HWMonitor", type: "both",
+        formFields: ["g6mant_341_registros", "g6mant_341_comparativa", "g6mant_341_conclusion"],
+        buttonIds: { save: "btnGuardarHwmonitor341", status: "statusHwmonitor341" },
+        wordExport: {
+          contextBox: "Laboratorio de monitoreo tecnico con HWMonitor durante 3 dias (recien encendido, 30 min de uso normal y 30 min de uso exigente) y tabla comparativa consolidada.",
+          sections: [
+            { label: "1. Registros individuales de los 3 dias (dia, momento, temperatura de la CPU \u00b0C, ventilador RPM)", storeKey: "g6mant_341_registros" },
+            { label: "2. Tabla comparativa consolidada del equipo", storeKey: "g6mant_341_comparativa" },
+            { label: "3. Conclusiones sobre el estado termico y recomendaciones de mantenimiento preventivo", storeKey: "g6mant_341_conclusion" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "sb5mant-3-4-1",
+          deadlineActivityId: "hwmonitor341",
+          activityTitle: "Tabla de registros (3 dias) + tabla comparativa consolidada",
+          description: "Sube a Drive la tabla de registros individuales de 3 dias y la tabla comparativa consolidada con conclusiones.",
+          note: "Formato: XLSX exportado a PDF.",
+        },
+      },
+      {
+        id: "planMantenimiento342", number: "3.4.2", label: "Plan de Mantenimiento Preventivo y sustentacion",
+        shortName: "PlanMantenimiento", type: "both",
+        formFields: ["g6mant_342_cronograma", "g6mant_342_actividades", "g6mant_342_materiales", "g6mant_342_epp", "g6mant_342_responsables"],
+        buttonIds: { save: "btnGuardarPlanMantenimiento342", status: "statusPlanMantenimiento342" },
+        wordExport: {
+          contextBox: "Plan de Mantenimiento Preventivo anual para los 4 equipos de la Ferreteria Puerto Real (actividades, frecuencia, materiales, EPP y responsables) con hojas de vida anexas y sustentacion de maximo 10 minutos.",
+          sections: [
+            { label: "1. Cronograma anual de intervenciones (4 equipos): frecuencia o fecha", storeKey: "g6mant_342_cronograma" },
+            { label: "2. Actividades a realizar en cada visita", storeKey: "g6mant_342_actividades" },
+            { label: "3. Materiales y herramientas necesarias", storeKey: "g6mant_342_materiales" },
+            { label: "4. Elementos de proteccion personal (EPP) requeridos", storeKey: "g6mant_342_epp" },
+            { label: "5. Responsable de cada actividad del plan", storeKey: "g6mant_342_responsables" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "sb5mant-3-4-2",
+          deadlineActivityId: "planMantenimiento342",
+          activityTitle: "Plan de Mantenimiento Preventivo (con hojas de vida como anexos)",
+          description: "Sube a Drive el Plan de Mantenimiento Preventivo completo, con las hojas de vida como anexos.",
+          note: "Formato: DOCX o PDF.",
+        },
+      },
+    ],
+  });
+
+  register({
+    files: [
+      "santa-barbara-10a-guia-06-mantenimiento-integral.html",
+      "santa-barbara-10b-guia-06-mantenimiento-integral.html",
+    ],
+    guideNumber: "6",
+    guideTitle: "Guia 6 - Realizar mantenimiento integral de los sistemas de computo (Grado 10, Santa Barbara)",
+    stateKey: "guia_interactiva_santa_barbara_10a_guia_06_mantenimiento_integral_html",
+    program: PROGRAM,
+    competencia: COMP_MANTENER_EQUIPOS,
+    resultado: "RAP 02 - Realizar mantenimiento integral de los sistemas de computo segun procedimiento y manuales tecnicos.",
+    activities: [
+      {
+        id: "nogal311", number: "3.1.1", label: "Detectives del mantenimiento: caso Papeleria El Nogal",
+        shortName: "CasoElNogal", type: "form",
+        formFields: ["m2_311_sintomas", "m2_311_causas", "m2_311_disco", "m2_311_bateria", "m2_311_experiencia"],
+        buttonIds: { save: "btnGuardarNogal311", status: "statusNogal311" },
+        wordExport: {
+          contextBox: "Caso Papeleria y Miscelanea El Nogal (San Pablo de Borbur, Boyaca): 3 computadores sin mantenimiento programado. El de facturacion va muy lento, el disco esta casi lleno y hay una bateria de portatil hinchada guardada en un cajon.",
+          sections: [
+            { label: "1. \u00bfQue sintomas del computador de facturacion llaman su atencion? Enumere al menos 3.", storeKey: "m2_311_sintomas" },
+            { label: "2. \u00bfQue posibles causas tecnicas (fisicas o logicas) podrian explicar cada sintoma?", storeKey: "m2_311_causas" },
+            { label: "3. \u00bfQue relacion puede haber entre \"disco casi lleno\" y \"el programa tarda en abrir\"?", storeKey: "m2_311_disco" },
+            { label: "4. \u00bfPor que la bateria hinchada del cajon NO debe desecharse en la basura comun? \u00bfQue harian con ella? (Pista: piensen en el riesgo para las personas y para el ambiente.)", storeKey: "m2_311_bateria" },
+            { label: "5. \u00bfAlguna vez han visto un computador con sintomas parecidos en su casa, colegio o negocio familiar? \u00bfQue paso?", storeKey: "m2_311_experiencia" },
+          ],
+        },
+      },
+      {
+        id: "plenaria312", number: "3.1.2", label: "Socializacion en plenaria",
+        shortName: "Plenaria", type: "form",
+        formFields: ["m2_312_sintoma_grupo", "m2_312_reflexion"],
+        buttonIds: { save: "btnGuardarPlenaria312", status: "statusPlenaria312" },
+        wordExport: {
+          contextBox: "Plenaria grupal sobre el caso El Nogal: sintomas registrados en el tablero y causas agrupadas por tipo (fisicas, logicas o de disposicion de residuos RAEE).",
+          sections: [
+            { label: "1. Sintoma mas preocupante que compartio tu grupo y la causa mas probable", storeKey: "m2_312_sintoma_grupo" },
+            { label: "2. Idea final: \u00bfque relacion encuentra entre \"no hacer mantenimiento integral\" y \"terminar con equipos lentos y residuos sin disponer\"?", storeKey: "m2_312_reflexion" },
+          ],
+        },
+      },
+      {
+        id: "bloqueABC321", number: "3.2.1", label: "Estudio de contenidos de mantenimiento integral (Bloques A, B y C) - Tabla resumen",
+        shortName: "BloqueABC", type: "both",
+        formFields: ["m2_321_reparto", "m2_321_temas", "m2_321_tema_fila", "m2_321_paraque", "m2_321_ejemplo"],
+        buttonIds: { save: "btnGuardarBloqueABC321", status: "statusBloqueABC321" },
+        wordExport: {
+          contextBox: "Estudio en equipo de los 12 temas de mantenimiento integral (Bloque A: hardware, tipos de mantenimiento y CRU; Bloque B: mantenimiento logico; Bloque C: disposicion de RAEE). Entregable de equipo: tabla resumen PDF.",
+          sections: [
+            { label: "1. Reparto del equipo: temas y responsable de cada uno", storeKey: "m2_321_reparto" },
+            { label: "2. Temas que estudiaste tu (4 de los 12 distribuidos en tu equipo)", storeKey: "m2_321_temas" },
+            { label: "3. Tema de tu fila en la tabla resumen", storeKey: "m2_321_tema_fila" },
+            { label: "4. \u00bfPara que sirve?", storeKey: "m2_321_paraque" },
+            { label: "5. Ejemplo aplicado en El Nogal", storeKey: "m2_321_ejemplo" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "sb6mant-3-2-1",
+          deadlineActivityId: "bloqueABC321",
+          activityTitle: "Tabla resumen de los Bloques A, B y C (BloqueABC_RAP02_[TuNombre]_v1.0.pdf)",
+          description: "Sube a Drive la tabla resumen en PDF construida por el equipo (3 columnas: Tema, Para que sirve, Ejemplo aplicado en El Nogal).",
+          note: "Nombre sugerido: BloqueABC_RAP02_[TuNombre]_v1.0.pdf",
+        },
+      },
+      {
+        id: "inspeccionCru322", number: "3.2.2", label: "Inspeccion externa e identificacion de componentes CRU",
+        shortName: "InspeccionCRU", type: "both",
+        formFields: ["m2_322_hallazgos", "m2_322_cru", "m2_322_conclusion"],
+        buttonIds: { save: "btnGuardarInspeccionCru322", status: "statusInspeccionCru322" },
+        wordExport: {
+          contextBox: "Inspeccion externa (sin abrir el equipo) de un equipo del taller e identificacion de al menos 4 componentes CRU accesibles.",
+          sections: [
+            { label: "1. Hallazgos de la inspeccion externa (carcasa, puertos, cables, ventilacion, ruidos al encender)", storeKey: "m2_322_hallazgos" },
+            { label: "2. Tabla de componentes CRU (minimo 4): componente - ubicacion en el equipo - estado observado", storeKey: "m2_322_cru" },
+            { label: "3. Conclusion (maximo 1 pagina): \u00bfel equipo requiere mantenimiento fisico, logico o ambos? Justifica.", storeKey: "m2_322_conclusion" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "sb6mant-3-2-2",
+          deadlineActivityId: "inspeccionCru322",
+          activityTitle: "Informe corto de inspeccion y tabla de componentes CRU",
+          description: "Sube a Drive el informe corto de inspeccion (maximo 1 pagina) con la tabla de componentes CRU diligenciada.",
+          note: "Formato: PDF o DOCX.",
+        },
+      },
+      {
+        id: "fisicoCru331", number: "3.3.1", label: "Mantenimiento preventivo fisico CRU y aplicacion de pasta termica",
+        shortName: "MantFisicoCRU", type: "both",
+        formFields: ["m2_331_preparacion", "m2_331_diagnostico", "m2_331_limpieza", "m2_331_pasta", "m2_331_cru", "m2_331_residuos", "m2_331_ficha"],
+        buttonIds: { save: "btnGuardarFisicoCru331", status: "statusFisicoCru331" },
+        wordExport: {
+          contextBox: "Mantenimiento preventivo fisico CRU del equipo de facturacion de El Nogal (o el asignado): limpieza interna/externa, retiro y aplicacion de pasta termica, verificacion de componentes CRU y clasificacion de residuos.",
+          sections: [
+            { label: "1. Preparacion del sitio de trabajo y elementos de proteccion utilizados", storeKey: "m2_331_preparacion" },
+            { label: "2. Diagnostico interno: componentes CRU accesibles identificados", storeKey: "m2_331_diagnostico" },
+            { label: "3. Limpieza interna y externa realizada (herramientas y pasos segun el manual del fabricante)", storeKey: "m2_331_limpieza" },
+            { label: "4. Retiro y aplicacion de pasta termica: procedimiento seguido y observaciones", storeKey: "m2_331_pasta" },
+            { label: "5. Componentes CRU verificados, reemplazados o reubicados (paso a paso)", storeKey: "m2_331_cru" },
+            { label: "6. Clasificacion de los materiales de desecho generados (protocolo RAEE)", storeKey: "m2_331_residuos" },
+            { label: "7. Ficha tecnica: fecha, componentes intervenidos y observaciones", storeKey: "m2_331_ficha" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "sb6mant-3-3-1",
+          deadlineActivityId: "fisicoCru331",
+          activityTitle: "Ficha tecnica de mantenimiento fisico con registro fotografico",
+          description: "Sube a Drive la ficha tecnica de mantenimiento fisico diligenciada, con registro fotografico del antes/despues.",
+          note: "Formato: PDF o DOCX.",
+        },
+      },
+      {
+        id: "logico332", number: "3.3.2", label: "Mantenimiento logico: sistema operativo y software utilitario",
+        shortName: "MantLogico", type: "both",
+        formFields: ["m2_332_actualizaciones", "m2_332_licencia", "m2_332_utilitario", "m2_332_antivirus", "m2_332_herramienta_so", "m2_332_checklist"],
+        buttonIds: { save: "btnGuardarLogico332", status: "statusLogico332" },
+        wordExport: {
+          contextBox: "Mantenimiento logico del equipo de facturacion de El Nogal: actualizacion del sistema operativo, licenciamiento, software utilitario de diagnostico, antivirus y herramientas del sistema.",
+          sections: [
+            { label: "1. Actualizaciones del sistema operativo: version antes y despues", storeKey: "m2_332_actualizaciones" },
+            { label: "2. Estado y tipo de licenciamiento del sistema operativo (OEM, retail, volumen o codigo abierto)", storeKey: "m2_332_licencia" },
+            { label: "3. Herramienta de software utilitario de diagnostico usada y resultado del reporte", storeKey: "m2_332_utilitario" },
+            { label: "4. Antivirus: estado y actualizacion de la base de datos de definiciones", storeKey: "m2_332_antivirus" },
+            { label: "5. Herramienta incorporada del sistema operativo utilizada y hallazgos", storeKey: "m2_332_herramienta_so" },
+            { label: "6. Checklist: tareas realizadas y nombre de la captura que evidencia cada una", storeKey: "m2_332_checklist" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "sb6mant-3-3-2",
+          deadlineActivityId: "logico332",
+          activityTitle: "Checklist de mantenimiento logico con capturas de pantalla",
+          description: "Sube a Drive el checklist de mantenimiento logico diligenciado, con capturas de pantalla de cada tarea.",
+          note: "Formato: PDF o DOCX.",
+        },
+      },
+      {
+        id: "integrador341", number: "3.4.1", label: "Laboratorio integrador: mantenimiento integral y disposicion de RAEE",
+        shortName: "LabIntegrador", type: "both",
+        formFields: ["m2_341_estado_inicial", "m2_341_fisico", "m2_341_logico", "m2_341_raee", "m2_341_gestor", "m2_341_verificacion"],
+        buttonIds: { save: "btnGuardarIntegrador341", status: "statusIntegrador341" },
+        wordExport: {
+          contextBox: "Laboratorio integrador sobre el equipo de facturacion de El Nogal: mantenimiento fisico y logico completo, clasificacion de residuos (incluida la bateria danada) y verificacion final.",
+          sections: [
+            { label: "1. Estado inicial del equipo", storeKey: "m2_341_estado_inicial" },
+            { label: "2. Mantenimiento fisico CRU realizado (incluida la pasta termica)", storeKey: "m2_341_fisico" },
+            { label: "3. Mantenimiento logico realizado (sistema operativo, licenciamiento, software utilitario)", storeKey: "m2_341_logico" },
+            { label: "4. Clasificacion de los residuos generados, incluida la bateria danada (Resolucion 1297 de 2010)", storeKey: "m2_341_raee" },
+            { label: "5. Punto o gestor autorizado de recoleccion de RAEE al que se dispondrian los residuos", storeKey: "m2_341_gestor" },
+            { label: "6. Verificacion final del funcionamiento (encendido, aplicaciones basicas, internet)", storeKey: "m2_341_verificacion" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "sb6mant-3-4-1",
+          deadlineActivityId: "integrador341",
+          activityTitle: "Registro del laboratorio integrador y evidencia de disposicion de RAEE",
+          description: "Sube a Drive el registro del laboratorio integrador (estado inicial, procedimiento fisico y logico, resultados) y la evidencia de la clasificacion/disposicion de RAEE.",
+          note: "Formato: PDF o DOCX.",
+        },
+      },
+      {
+        id: "informeFinal342", number: "3.4.2", label: "Informe tecnico final y sustentacion",
+        shortName: "InformeFinal", type: "both",
+        formFields: ["m2_342_diagnostico", "m2_342_procedimiento", "m2_342_resultados", "m2_342_raee", "m2_342_sustentacion"],
+        buttonIds: { save: "btnGuardarInformeFinal342", status: "statusInformeFinal342" },
+        wordExport: {
+          contextBox: "Informe tecnico final del mantenimiento integral del equipo de El Nogal (diagnostico, procedimiento fisico y logico, resultados y disposicion de RAEE) y sustentacion oral de maximo 10 minutos.",
+          sections: [
+            { label: "1. Diagnostico inicial", storeKey: "m2_342_diagnostico" },
+            { label: "2. Procedimiento fisico y logico realizado", storeKey: "m2_342_procedimiento" },
+            { label: "3. Resultados obtenidos", storeKey: "m2_342_resultados" },
+            { label: "4. Disposicion de RAEE", storeKey: "m2_342_raee" },
+            { label: "5. Puntos clave y recomendaciones para la sustentacion ante el propietario (maximo 10 minutos)", storeKey: "m2_342_sustentacion" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "sb6mant-3-4-2",
+          deadlineActivityId: "informeFinal342",
+          activityTitle: "Informe tecnico final con anexos (ficha tecnica y checklist)",
+          description: "Sube a Drive el informe tecnico final completo, con la ficha tecnica (3.3.1) y el checklist (3.3.2) como anexos.",
+          note: "Formato: DOCX o PDF.",
+        },
+      },
+    ],
+  });
+
+  register({
+    files: [
+      "santa-barbara-10a-guia-07-verificar-operacion.html",
+      "santa-barbara-10b-guia-07-verificar-operacion.html",
+    ],
+    guideNumber: "7",
+    guideTitle: "Guia 7 - Verificar la operacion del sistema computacional (Grado 10, Santa Barbara)",
+    stateKey: "guia_interactiva_santa_barbara_10a_guia_07_verificar_operacion_html",
+    program: PROGRAM,
+    competencia: COMP_MANTENER_EQUIPOS,
+    resultado: "RAP 03 - Verificar la operacion del sistema computacional de acuerdo con los procedimientos tecnicos.",
+    activities: [
+      {
+        id: "nogal311", number: "3.1.1", label: "Que le pasa al computador de El Nogal",
+        shortName: "CasoElNogal", type: "form",
+        formFields: ["m3_311_sintomas", "m3_311_componentes", "m3_311_herramientas", "m3_311_registro", "m3_311_normal"],
+        buttonIds: { save: "btnGuardarNogal311", status: "statusNogal311" },
+        wordExport: {
+          contextBox: "Caso Papeleria y Miscelanea El Nogal (San Pablo de Borbur, Boyaca): el equipo de contabilidad tarda en encender, el programa contable se congela, aparece aviso de poco espacio en disco y a veces se reinicia solo.",
+          sections: [
+            { label: "1. \u00bfQue problema presenta el equipo? Enumere al menos tres sintomas.", storeKey: "m3_311_sintomas" },
+            { label: "2. \u00bfQue componentes del computador deben comprobarse (procesador, memoria, almacenamiento, dispositivos, sistema operativo)?", storeKey: "m3_311_componentes" },
+            { label: "3. \u00bfQue herramientas conocen o podrian usarse para comprobar cada componente?", storeKey: "m3_311_herramientas" },
+            { label: "4. \u00bfComo verificarian los resultados? \u00bfQue datos anotarian para no depender de la memoria?", storeKey: "m3_311_registro" },
+            { label: "5. \u00bfComo podrian determinar si lo que observan es una anomalia o un funcionamiento normal?", storeKey: "m3_311_normal" },
+          ],
+        },
+      },
+      {
+        id: "plenaria312", number: "3.1.2", label: "Socializacion en plenaria",
+        shortName: "Plenaria", type: "form",
+        formFields: ["m3_312_sintoma_grupo", "m3_312_reflexion"],
+        buttonIds: { save: "btnGuardarPlenaria312", status: "statusPlenaria312" },
+        wordExport: {
+          contextBox: "Plenaria grupal sobre el caso El Nogal: sintomas registrados en el tablero y agrupados en hardware, software y almacenamiento.",
+          sections: [
+            { label: "1. Sintoma mas preocupante que compartio tu grupo y componente que comprobaria primero", storeKey: "m3_312_sintoma_grupo" },
+            { label: "2. Idea final: \u00bfpor que es mejor verificar con herramientas y datos que \"adivinar\" la falla?", storeKey: "m3_312_reflexion" },
+          ],
+        },
+      },
+      {
+        id: "bloquesABC321", number: "3.2.1", label: "Estudio de contenidos de diagnostico y verificacion (Bloques A, B y C) - Tabla resumen",
+        shortName: "BloquesABC", type: "both",
+        formFields: ["m3_321_reparto", "m3_321_temas", "m3_321_dudas", "m3_321_tema_fila", "m3_321_paraque", "m3_321_ejemplo"],
+        buttonIds: { save: "btnGuardarBloquesABC321", status: "statusBloquesABC321" },
+        wordExport: {
+          contextBox: "Estudio en equipo de los 12 temas de diagnostico y verificacion (Bloque A: diagnostico y verificacion; Bloque B: herramientas e interpretacion; Bloque C: licenciamiento, legalidad y seguridad). Entregable: tabla resumen PDF.",
+          sections: [
+            { label: "1. Reparto del equipo: temas y responsable de cada uno", storeKey: "m3_321_reparto" },
+            { label: "2. Temas que estudiaste tu (4 de los 12)", storeKey: "m3_321_temas" },
+            { label: "3. Una duda por bloque (A, B y C) que llevaste a la sesion", storeKey: "m3_321_dudas" },
+            { label: "4. Tema de tu fila en la tabla resumen", storeKey: "m3_321_tema_fila" },
+            { label: "5. \u00bfPara que sirve en una verificacion?", storeKey: "m3_321_paraque" },
+            { label: "6. Ejemplo con el caso de El Nogal", storeKey: "m3_321_ejemplo" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "sb7verif-3-2-1",
+          deadlineActivityId: "bloquesABC321",
+          activityTitle: "Tabla resumen de los Bloques A, B y C (BloquesABC_RAP03_[TuNombre]_v1.0.pdf)",
+          description: "Sube a Drive la tabla resumen en PDF construida por el equipo (Tema, Para que sirve en una verificacion, Ejemplo con el caso de El Nogal).",
+          note: "Nombre sugerido: BloquesABC_RAP03_[TuNombre]_v1.0.pdf",
+        },
+      },
+      {
+        id: "protocolo322", number: "3.2.2", label: "Elaboracion del protocolo de verificacion",
+        shortName: "Protocolo", type: "both",
+        formFields: ["m3_322_identificacion", "m3_322_procesador", "m3_322_ram", "m3_322_almacenamiento", "m3_322_dispositivos", "m3_322_rendimiento", "m3_322_proteccion", "m3_322_licenciamiento", "m3_322_seguridad"],
+        buttonIds: { save: "btnGuardarProtocolo322", status: "statusProtocolo322" },
+        wordExport: {
+          contextBox: "Protocolo de verificacion: lista ordenada de comprobaciones (identificacion, procesador, RAM, almacenamiento, dispositivos y controladores, rendimiento, proteccion, licenciamiento y seguridad) con herramienta, dato y criterio de normalidad.",
+          sections: [
+            { label: "1. Identificacion del equipo", storeKey: "m3_322_identificacion" },
+            { label: "2. Procesador", storeKey: "m3_322_procesador" },
+            { label: "3. Memoria RAM", storeKey: "m3_322_ram" },
+            { label: "4. Almacenamiento", storeKey: "m3_322_almacenamiento" },
+            { label: "5. Dispositivos y controladores", storeKey: "m3_322_dispositivos" },
+            { label: "6. Rendimiento", storeKey: "m3_322_rendimiento" },
+            { label: "7. Proteccion", storeKey: "m3_322_proteccion" },
+            { label: "8. Licenciamiento (Configuracion > Sistema > Activacion; sin activadores)", storeKey: "m3_322_licenciamiento" },
+            { label: "9. Fila final de seguridad (autorizacion, trabajo guardado, sin datos personales)", storeKey: "m3_322_seguridad" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "sb7verif-3-2-2",
+          deadlineActivityId: "protocolo322",
+          activityTitle: "Protocolo de verificacion del equipo",
+          description: "Sube a Drive el protocolo de verificacion revisado por el instructor (comprobaciones, herramientas, datos y criterios).",
+          note: "Formato: PDF o DOCX.",
+        },
+      },
+      {
+        id: "cpuz331", number: "3.3.1", label: "Procesador, memoria y caracteristicas del sistema con CPU-Z",
+        shortName: "CPUZ", type: "both",
+        formFields: ["m3_331_cpu", "m3_331_placa", "m3_331_memoria", "m3_331_modulos", "m3_331_grafica", "m3_331_msinfo", "m3_331_interpretacion"],
+        buttonIds: { save: "btnGuardarCpuz331", status: "statusCpuz331" },
+        wordExport: {
+          contextBox: "Verificacion de procesador, placa base, memoria y grafica con CPU-Z y comparacion con Informacion del sistema (msinfo32). Las practicas no modifican el equipo.",
+          sections: [
+            { label: "1. Procesador: nombre, nucleos e hilos", storeKey: "m3_331_cpu" },
+            { label: "2. Placa base: fabricante, modelo y version de BIOS", storeKey: "m3_331_placa" },
+            { label: "3. Memoria RAM: tipo y tamano", storeKey: "m3_331_memoria" },
+            { label: "4. Modulos de memoria instalados (pestana SPD)", storeKey: "m3_331_modulos" },
+            { label: "5. Tarjeta grafica", storeKey: "m3_331_grafica" },
+            { label: "6. Comparacion con Informacion del sistema (msinfo32): \u00bfCPU-Z y Windows muestran lo mismo?", storeKey: "m3_331_msinfo" },
+            { label: "7. Interpretacion: \u00bfla memoria es suficiente para el programa contable? Posibles anomalias", storeKey: "m3_331_interpretacion" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "sb7verif-3-3-1",
+          deadlineActivityId: "cpuz331",
+          activityTitle: "Tabla de datos del sistema y capturas de CPU-Z",
+          description: "Sube a Drive la tabla de datos del sistema (valor e interpretacion) con las capturas de CPU-Z.",
+          note: "Formato: PDF o DOCX.",
+        },
+      },
+      {
+        id: "crystal332", number: "3.3.2", label: "Estado del almacenamiento con CrystalDiskInfo",
+        shortName: "CrystalDiskInfo", type: "both",
+        formFields: ["m3_332_disco", "m3_332_salud", "m3_332_horas", "m3_332_espacio", "m3_332_interpretacion", "m3_332_reporte"],
+        buttonIds: { save: "btnGuardarCrystal332", status: "statusCrystal332" },
+        wordExport: {
+          contextBox: "Verificacion del almacenamiento con CrystalDiskInfo (salud S.M.A.R.T., temperatura, horas de uso) y del espacio por unidad. Practica solo de lectura.",
+          sections: [
+            { label: "1. Modelo, capacidad e interfaz del disco", storeKey: "m3_332_disco" },
+            { label: "2. Estado de salud (Bueno, Precaucion o Malo) y temperatura", storeKey: "m3_332_salud" },
+            { label: "3. Horas de encendido y datos de sectores reasignados o pendientes (si aparecen)", storeKey: "m3_332_horas" },
+            { label: "4. Espacio total, libre y usado de cada unidad (Este equipo)", storeKey: "m3_332_espacio" },
+            { label: "5. Interpretacion: \u00bfel disco esta \"lleno\", \"enfermo\", ambos o ninguno?", storeKey: "m3_332_interpretacion" },
+            { label: "6. Nota de reporte al instructor (solo si hubo una alerta)", storeKey: "m3_332_reporte" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "sb7verif-3-3-2",
+          deadlineActivityId: "crystal332",
+          activityTitle: "Tabla de verificacion del almacenamiento y capturas",
+          description: "Sube a Drive la tabla de verificacion del almacenamiento con las capturas de CrystalDiskInfo y del espacio por unidad.",
+          note: "Formato: PDF o DOCX.",
+        },
+      },
+      {
+        id: "windows333", number: "3.3.3", label: "Dispositivos, rendimiento y memoria con herramientas de Windows",
+        shortName: "HerramientasWindows", type: "both",
+        formFields: ["m3_333_dispositivos", "m3_333_rendimiento", "m3_333_msinfo", "m3_333_proteccion", "m3_333_activacion", "m3_333_memoria_diag", "m3_333_interpretacion"],
+        buttonIds: { save: "btnGuardarWindows333", status: "statusWindows333" },
+        wordExport: {
+          contextBox: "Verificacion con herramientas de Windows: Administrador de dispositivos, Administrador de tareas, Informacion del sistema, Seguridad de Windows, Activacion y Diagnostico de memoria (solo con permiso del instructor).",
+          sections: [
+            { label: "1. Administrador de dispositivos: dispositivos con advertencia (si existen)", storeKey: "m3_333_dispositivos" },
+            { label: "2. Administrador de tareas: uso de CPU, memoria y disco en reposo y con el programa contable abierto; pestana Inicio", storeKey: "m3_333_rendimiento" },
+            { label: "3. Informacion del sistema: version del sistema, BIOS y memoria", storeKey: "m3_333_msinfo" },
+            { label: "4. Seguridad de Windows: estado de la proteccion", storeKey: "m3_333_proteccion" },
+            { label: "5. Activacion: estado de la licencia", storeKey: "m3_333_activacion" },
+            { label: "6. Diagnostico de memoria de Windows (con permiso del instructor): resultado al reiniciar", storeKey: "m3_333_memoria_diag" },
+            { label: "7. Interpretacion (referencia del curso: uso sostenido mayor al 85 % con pocos programas abiertos = posible anomalia)", storeKey: "m3_333_interpretacion" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "sb7verif-3-3-3",
+          deadlineActivityId: "windows333",
+          activityTitle: "Tabla de verificacion con herramientas de Windows y capturas",
+          description: "Sube a Drive la tabla de verificacion con herramientas de Windows (valor e interpretacion) y las capturas de cada herramienta.",
+          note: "Formato: PDF o DOCX.",
+        },
+      },
+      // La aplica el instructor en clase (sin campos ni entrega en el portal): solo
+      // Aprobado/No aprobado en Calificaciones, mismo patron que reglamento333 (Guia 1).
+      { id: "ie01334", number: "3.3.4", label: "Evaluacion de conocimiento: cuestionario IE-01", shortName: "CuestionarioIE01", type: "form" },
+      {
+        id: "integrador341", number: "3.4.1", label: "Laboratorio integrador: verificacion de la operacion del equipo",
+        shortName: "LabIntegrador", type: "both",
+        formFields: ["m3_341_roles", "m3_341_identificacion", "m3_341_caracteristicas", "m3_341_almacenamiento", "m3_341_memoria_cpu", "m3_341_dispositivos_seguridad", "m3_341_anomalias", "m3_341_estado"],
+        buttonIds: { save: "btnGuardarIntegrador341", status: "statusIntegrador341" },
+        wordExport: {
+          contextBox: "Laboratorio integrador de verificacion de la operacion del equipo asignado: identificacion, CPU-Z, CrystalDiskInfo, Administrador de tareas, dispositivos, proteccion y activacion, anomalias y estado de funcionamiento.",
+          sections: [
+            { label: "1. Roles del equipo y rotacion por herramienta", storeKey: "m3_341_roles" },
+            { label: "2. Identificacion del equipo: marca, modelo, sistema operativo y version; fecha y hora de la prueba", storeKey: "m3_341_identificacion" },
+            { label: "3. Caracteristicas con CPU-Z contrastadas con Informacion del sistema", storeKey: "m3_341_caracteristicas" },
+            { label: "4. Almacenamiento con CrystalDiskInfo: salud, temperatura y espacio libre por unidad", storeKey: "m3_341_almacenamiento" },
+            { label: "5. Memoria y procesador (Administrador de tareas y, con autorizacion, Diagnostico de memoria)", storeKey: "m3_341_memoria_cpu" },
+            { label: "6. Dispositivos y controladores, proteccion de Windows y estado de activacion", storeKey: "m3_341_dispositivos_seguridad" },
+            { label: "7. Posibles anomalias e interpretacion segun los criterios del protocolo", storeKey: "m3_341_anomalias" },
+            { label: "8. Estado de funcionamiento (normal, con observaciones o requiere atencion) y recomendacion segura", storeKey: "m3_341_estado" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "sb7verif-3-4-1",
+          deadlineActivityId: "integrador341",
+          activityTitle: "Evidencias del laboratorio integrador (carpeta Evidencias_RAP03_[TuNombre])",
+          description: "Sube a Drive las evidencias de las pruebas (capturas y tablas) organizadas en la carpeta Evidencias_RAP03_[TuNombre], comprimidas o en un PDF.",
+          note: "Formato: PDF, DOCX o ZIP.",
+        },
+      },
+      {
+        id: "registro342", number: "3.4.2", label: "Registro de resultados de diagnostico y sustentacion",
+        shortName: "RegistroDiagnostico", type: "both",
+        formFields: ["m3_342_a_identificacion", "m3_342_b_herramientas", "m3_342_c_componentes", "m3_342_d_resultados", "m3_342_e_evidencias", "m3_342_f_interpretacion", "m3_342_g_anomalias", "m3_342_h_conclusion"],
+        buttonIds: { save: "btnGuardarRegistro342", status: "statusRegistro342" },
+        wordExport: {
+          contextBox: "Registro de resultados de diagnostico del sistema computacional (identificacion, herramientas, componentes, resultados, evidencias, interpretacion, anomalias y conclusion) y sustentacion de maximo 8 minutos.",
+          sections: [
+            { label: "a) Identificacion del equipo", storeKey: "m3_342_a_identificacion" },
+            { label: "b) Herramientas utilizadas", storeKey: "m3_342_b_herramientas" },
+            { label: "c) Componentes verificados", storeKey: "m3_342_c_componentes" },
+            { label: "d) Resultados obtenidos", storeKey: "m3_342_d_resultados" },
+            { label: "e) Evidencias de las pruebas (lista de capturas y tablas, sin datos personales)", storeKey: "m3_342_e_evidencias" },
+            { label: "f) Interpretacion tecnica (que significa cada resultado)", storeKey: "m3_342_f_interpretacion" },
+            { label: "g) Anomalias identificadas (o \"no se identificaron\")", storeKey: "m3_342_g_anomalias" },
+            { label: "h) Conclusion del funcionamiento y recomendacion segura", storeKey: "m3_342_h_conclusion" },
+          ],
+        },
+        driveTarget: {
+          panelKey: "sb7verif-3-4-2",
+          deadlineActivityId: "registro342",
+          activityTitle: "Registro de resultados de diagnostico del sistema computacional",
+          description: "Sube a Drive el registro de resultados de diagnostico (secciones a-h) con las evidencias de las pruebas.",
+          note: "Formato: PDF o DOCX.",
+        },
+      },
+    ],
+  });
+// MANT-2026-10-22:END
 
   // ── Guia 2 (Redes - Santa Barbara) (10A + 10B) ─────────────────────────────
   register({
@@ -2494,7 +3496,7 @@
     guideTitle: "Guia - Practica de Python",
     stateKey: "guia_interactiva_santa_barbara_guia_python_html",
     program: PROGRAM,
-    competencia: "220501121 - Procesar la informacion de acuerdo con las necesidades de la organizacion.",
+    competencia: "Practica complementaria (no corresponde a una competencia del Diseno Curricular 233108).",
     resultado: "Fundamentos de programacion en Python: variables, condicionales y Programacion Orientada a Objetos.",
     activities: [
       {

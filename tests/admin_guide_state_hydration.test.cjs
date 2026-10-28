@@ -7,90 +7,112 @@ const adminScript = fs.readFileSync(
   path.join(__dirname, "..", "js", "admin_usuarios.js"),
   "utf8"
 );
+const html = fs.readFileSync(
+  path.join(__dirname, "..", "panel-administrativo-usuarios.html"),
+  "utf8"
+);
+const slice = (from, to) => adminScript.slice(adminScript.indexOf(from), adminScript.indexOf(to, adminScript.indexOf(from) + 1));
 
-// La tabla "Respuestas" y el modulo "Entregas" leen readStudentGuideState
-// (localStorage del admin). Para mostrar datos cross-device sin N×M lecturas por
-// render, el admin baja el guide_state de cada aprendiz UNA vez por sesion al
-// abrir esos modulos y lo cachea en localStorage.
+// Historia: "Respuestas" y "Entregas" leen readStudentGuideState (cache en
+// memoria del panel). Hasta oct-22 se llenaba con ensureGuideStatesHydrated:
+// TODOS los aprendices x TODAS sus guias al abrir esos modulos (y antes, el
+// dashboard) -- ~8000 lecturas y ~3500 llamadas a Apps Script con 159
+// aprendices. Desde oct-22: consulta SELECTIVA por aprendiz con boton, y los
+// indicadores del dashboard/Reportes salen del listado que la carga de la lista
+// de aprendices ya descargo para el progreso (0 lecturas adicionales).
 
-test("existe la hidratacion perezosa del guide_state al localStorage del admin", () => {
-  assert.match(adminScript, /let guideStatesHydrated = false;/);
-  assert.match(adminScript, /async function ensureGuideStatesHydrated\(\)/);
-  // Reusa el mismo doc de nube que "ver respuestas" y la llave de almacenamiento del aprendiz.
-  // (la llamada es multilinea desde jul-17: agrega la opcion skipDriveOn404
-  // cuando la recuperacion Drive→Firestore ya corrio en este navegador)
-  assert.match(adminScript, /db\.cloudGetGuideData\(\s*getStudentCloudScope\(task\.usernameKey\)/);
-  assert.match(adminScript, /skipDriveOn404: true/);
-  assert.match(adminScript, /isDrivePromotionDone/);
-  assert.match(adminScript, /auth\.getStudentStorageKey\(task\.usernameKey, task\.stateKey, \{ area: "guide-data" \}\)/);
-  assert.match(adminScript, /getGuideCloudConfig\(fileName\)/);
+test("ya no existe la hidratacion completa de todos los aprendices", () => {
+  // Definicion, llamadas y bandera (los comentarios historicos pueden nombrarla).
+  assert.ok(!/async function ensureGuideStatesHydrated|ensureGuideStatesHydrated\(\)|let guideStatesHydrated|runWithConcurrency\(tasks, 6,/.test(adminScript));
 });
 
-test("la hidratacion no pisa ediciones locales mas nuevas (merge por updatedAt)", () => {
-  // pickLatestSnapshot prefiere la nube solo si es >= que lo local.
-  assert.match(adminScript, /pickLatestSnapshot\(\s*cloudSnapshot,/);
+test("abrir Respuestas/Entregas NO consulta la nube", () => {
+  const block = slice('if (moduleName === "respuestas") renderResponses();', "if (tab === \"auditoria\")");
+  assert.match(block, /if \(moduleName === "entregas"\) renderDeliveries\(\);/);
+  assert.doesNotMatch(block, /consultLearner|cloudGetGuideData|cloudReadGuideDataDetailed/);
 });
 
-test("se dispara al abrir Respuestas/Entregas y se re-renderiza", () => {
-  assert.match(adminScript, /moduleName === "respuestas" \|\| moduleName === "entregas"/);
-  assert.match(adminScript, /ensureGuideStatesHydrated\(\)\s*\.then\(\(changed\) =>/);
-  assert.match(adminScript, /if \(state\.activeModule === moduleName && changed\) rerender\(\);/);
+test("consulta selectiva: solo el aprendiz y las guias elegidos, con lectura detallada y criterio de Drive", () => {
+  const fn = slice("async function consultLearnerGuides", "const LEARNER_MESSAGES");
+  assert.match(fn, /db\.cloudReadGuideDataDetailed\(getStudentCloudScope\(user\.usernameKey\), names, \{ skipDrive: promotionDone \}\)/);
+  assert.match(fn, /isDrivePromotionDone/);
+  assert.match(fn, /cloudNamesForGuide|t\.names/);
+  assert.match(fn, /learnerConsult\.inflight\.has\(inflightKey\)/, "doble clic: no duplica");
+  assert.match(fn, /LEARNER_TTL_MS/, "reutiliza lo vigente");
+  assert.match(fn, /hasAdminPanelAccess\(\)/);
 });
 
-test("la hidratacion es una vez por sesion; 'Actualizar datos' la repite", () => {
-  // Cambio (jun-2026): antes se reseteaba el flag en CADA loadUsers; ahora la
-  // hidratacion ocurre UNA vez por sesion (para poblar el dashboard de entregas
-  // sin N×M lecturas por cada accion del admin) y solo se repite al pulsar el
-  // boton "Actualizar datos" (refresh-users), que tambien limpia la marca de
-  // throttle del dashboard para forzar una re-sincronizacion real (jul-27).
-  assert.match(adminScript, /guideStatesHydrated = false;/);
-  assert.match(adminScript, /localStorage\.removeItem\(DASHBOARD_HYDRATE_THROTTLE_KEY\)/);
-  assert.doesNotMatch(adminScript, /guideStatesHydrated = false; \/\/ datos frescos/);
+test("lo consultado no pisa ediciones locales mas nuevas (merge por updatedAt) y vive en MEMORIA", () => {
+  const fn = slice("async function consultLearnerGuides", "const LEARNER_MESSAGES");
+  assert.match(fn, /pickLatestSnapshot\(\s*\{ state, updatedAt, updatedBy: "cloud" \},/);
+  assert.match(fn, /guideDataCacheSet\(storageKey/);
+  assert.doesNotMatch(adminScript, /function writeGuideDataLocal/, "nada academico a localStorage");
 });
 
-test("la hidratacion limita la concurrencia para no saturar la cuota", () => {
-  assert.match(adminScript, /async function runWithConcurrency\(items, limit, worker\)/);
-  assert.match(adminScript, /runWithConcurrency\(tasks, 6,/);
+test("solo los botones consultan; filtros y buscadores no", () => {
+  const consultCalls = adminScript.match(/consultLearnerModule\("(respuestas|entregas)"(, \{ force: true \})?\)/g) || [];
+  assert.strictEqual(consultCalls.length, 4, "Consultar y Actualizar de cada modulo");
+  ["responses-consult", "responses-refresh", "deliveries-consult", "deliveries-refresh"].forEach((id) => {
+    assert.match(html, new RegExp(`id="${id}"`));
+    assert.match(adminScript, new RegExp(`byId\\("${id}"\\)\\?\\.addEventListener\\("click", \\(\\) => \\{ void consultLearnerModule`));
+  });
+  const responsesRender = slice("function renderResponses()", "async function consultLearnerModule");
+  const deliveriesRender = slice("function renderDeliveries()", "function applyDeliveriesPeriod");
+  [responsesRender, deliveriesRender].forEach((r) => assert.doesNotMatch(r, /consultLearner|cloudGet|cloudRead|cloudList/));
+});
+
+test("busqueda de aprendiz local y por identificador real (usernameKey)", () => {
+  const fn = slice("function learnerOptionsHtml", "function selectedLearner");
+  assert.match(fn, /value="\$\{escapeHtml\(u\.usernameKey\)\}"/);
+  assert.match(fn, /normalizeText\(`\$\{u\.fullName\}/);
+  assert.match(html, /id="deliveries-learner-search"/);
+});
+
+test("indicadores del dashboard y Reportes: desde el listado ya descargado (0 lecturas)", () => {
+  const fn = slice("function hydrateFromLastListing()", "\n  }\n");
+  assert.match(fn, /getGuideStatesFromLastListing/);
+  assert.match(fn, /pickLatestSnapshot/);
+  assert.match(adminScript, /if \(!fromCache\) hydrateFromLastListing\(\);/);
+  assert.match(adminScript, /purgeStudentGuideDataFromLocal\(\);\s*\n\s*\/\/ Indicadores/);
+});
+
+test("'Ver' reutiliza lo consultado y vigente; 'Reabrir' lo marca como desactualizado", () => {
+  const ver = slice("async function openResponses", "function exportActivityResponse");
+  assert.match(ver, /const fresh = Boolean\(pair && pair\.status === "ok" && !pair\.stale/);
+  assert.match(ver, /if \(config && !fresh\) \{/);
+  const reopen = slice("async function reopenDeliveredActivity", "function renderDeliveries()");
+  assert.match(reopen, /markLearnerPairStale\(usernameKey, fileName\);/);
+  assert.match(reopen, /guideDataCacheSet\(storageKey, guideState,/);
+});
+
+test("entregas: el periodo filtra DESPUES de la consulta (sin reduccion ficticia de lecturas)", () => {
+  const fn = slice("function renderDeliveries()", "function applyDeliveriesPeriod");
+  assert.match(fn, /El filtro de fechas se aplica DESPUES de la consulta selectiva/);
+  assert.match(html, /<option value="7">Ultimos 7 dias<\/option>/);
+  assert.match(html, /<option value="custom">Personalizado<\/option>/);
+});
+
+test("la cache por aprendiz se limpia al salir y al cambiar de sesion", () => {
+  assert.match(adminScript, /addEventListener\("pagehide"[\s\S]{0,260}learnerConsult\.pairs\.clear\(\)/);
+  assert.match(slice("function ensureLearnerSession()", "function learnerPairKey"), /habSessionKey\(\)/);
 });
 
 test("dashboard: tarjeta 'Entregas recientes' (render existe; se puebla bajo demanda)", () => {
-  const html = fs.readFileSync(
-    path.join(__dirname, "..", "panel-administrativo-usuarios.html"),
-    "utf8"
-  );
-  // UI en el dashboard: tarjeta + contenedor + boton "Ver todas" al modulo Entregas.
   assert.match(html, /<h2>Entregas recientes<\/h2>/);
   assert.match(html, /id="dashboard-deliveries"/);
   assert.match(html, /data-jump-module="entregas">Ver todas/);
-  // Logica: render en el dashboard + orden recientes primero.
   assert.match(adminScript, /function renderRecentDeliveries\(\)/);
   assert.match(adminScript, /renderRecentDeliveries\(\);/);
-  assert.match(adminScript, /function getRecentDeliveries\(limit\)/);
-  assert.match(adminScript, /b\.submittedAt[\s\S]*localeCompare[\s\S]*a\.submittedAt/);
-  // Optimizacion de cuota (jul-2026): loadUsers NO hidrata eager en bloque. Bajar el
-  // guide_state de todos los aprendices costaba cientos de lecturas en CADA carga del
-  // panel y acercaba la cuota diaria gratis al limite. La hidratacion sigue BAJO DEMANDA
-  // al abrir Respuestas/Entregas (ver setActiveModule).
-  assert.doesNotMatch(adminScript, /ensureGuideStatesHydrated\(\)\.then\(\(changed\) => \{ if \(changed\) renderAll\(\); \}\)/);
-  assert.match(adminScript, /guideStatesHydrated = false;/);
 });
 
-test("dashboard: la tarjeta se auto-hidrata sola, limitada por throttle (jul-27)", () => {
-  // Fix (jul-27): la tarjeta quedaba en "Cargando entregas recientes..." para
-  // siempre, porque desde el fix de cuota de jul-2 la hidratacion SOLO corria
-  // al entrar a Respuestas/Entregas, nunca al caer en el Dashboard (la pestana
-  // activa por defecto al iniciar sesion). Ahora el dashboard se auto-hidrata,
-  // pero acotado a una vez cada 30 min por navegador (localStorage) para no
-  // repetir el barrido N aprendices x M guias en cada apertura del panel.
-  assert.match(adminScript, /const DASHBOARD_HYDRATE_THROTTLE_KEY = "sena_admin_dashboard_hydrate_last_v1";/);
-  assert.match(adminScript, /const DASHBOARD_HYDRATE_THROTTLE_MS = 30 \* 60 \* 1000;/);
-  assert.match(adminScript, /function maybeAutoHydrateDashboard\(\)/);
-  assert.match(adminScript, /if \(state\.activeModule !== "dashboard"\) return;/);
-  assert.match(adminScript, /if \(guideStatesHydrated \|\| isDashboardHydrateThrottled\(\)\) return;/);
-  // Se llama desde renderDashboard() (la vista inicial del panel admin).
-  assert.match(adminScript, /renderRecentDeliveries\(\);\s*\n\s*maybeAutoHydrateDashboard\(\);/);
-  // markDashboardHydrateNow() se marca en ambos caminos de exito de
-  // ensureGuideStatesHydrated (con y sin Firebase disponible).
-  assert.match(adminScript, /markDashboardHydrateNow\(\);\s*\n\s*return false;/);
-  assert.match(adminScript, /guideStatesHydrated = true;\s*\n\s*markDashboardHydrateNow\(\);\s*\n\s*return changed;/);
+test("dashboard: 'Entregas recientes' NO hidrata a todos al abrir el panel y nunca queda en 'Cargando' (oct-22)", () => {
+  assert.doesNotMatch(adminScript, /maybeAutoHydrateDashboard/);
+  assert.doesNotMatch(adminScript, /isDashboardHydrateThrottled/);
+  const render = adminScript.slice(adminScript.indexOf("function renderRecentDeliveries()"), adminScript.indexOf("function getFilteredUsers()"));
+  const calls = render.match(/consultRecentDeliveries\(/g) || [];
+  const inClicks = render.match(/addEventListener\("click", \(\) => \{ void consultRecentDeliveries\(/g) || [];
+  assert.strictEqual(calls.length, 2);
+  assert.strictEqual(inClicks.length, 2);
+  assert.match(adminScript, /Elija la ficha y el período y pulse «Consultar entregas recientes»/);
+  assert.match(adminScript, /db\.cloudListGuideDataSince\(since\)/);
 });

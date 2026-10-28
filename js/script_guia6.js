@@ -308,19 +308,19 @@ const supportDocuments = [
 const supportTools = [
   {
     title: "7-Zip",
-    href: "https://drive.google.com/drive/folders/19AY6LsSHM--2VVXp4_Bzzjz2SVyAiSMc?usp=sharing",
-    type: "Drive",
+    href: "https://www.7-zip.org/download.html",
+    type: "Sitio oficial",
     description:
       "Utilidad de compresion y descompresion para organizar evidencias y paquetes de trabajo.",
-    cta: "Abrir en Drive ↗",
+    cta: "Ir a la descarga oficial ↗",
   },
   {
     title: "CPU-Z",
-    href: "https://drive.google.com/drive/folders/19AY6LsSHM--2VVXp4_Bzzjz2SVyAiSMc?usp=sharing",
-    type: "Drive",
+    href: "https://www.cpuid.com/softwares/cpu-z.html",
+    type: "Sitio oficial",
     description:
       "Herramienta de diagnostico para identificar procesador, memoria y componentes del sistema.",
-    cta: "Abrir en Drive ↗",
+    cta: "Ir a la descarga oficial ↗",
   },
   {
     title: "CrystalDiskInfo",
@@ -336,19 +336,19 @@ const supportTools = [
     // funcionara al abrir el portal desde el equipo del instructor. Se sirve
     // desde la misma carpeta de Drive que el resto de instaladores (7-Zip,
     // CPU-Z, CmapTools, VirtualBox).
-    href: "https://drive.google.com/drive/folders/19AY6LsSHM--2VVXp4_Bzzjz2SVyAiSMc?usp=sharing",
-    type: "Drive",
+    href: "https://es.libreoffice.org/descarga/",
+    type: "Sitio oficial",
     description:
       "Suite ofimatica para elaborar documentos tecnicos, tablas y presentaciones de evidencia.",
-    cta: "Abrir en Drive ↗",
+    cta: "Ir a la descarga oficial ↗",
   },
   {
     title: "CmapTools",
-    href: "https://drive.google.com/drive/folders/19AY6LsSHM--2VVXp4_Bzzjz2SVyAiSMc?usp=sharing",
-    type: "Drive",
+    href: "https://cmap.ihmc.us/cmaptools/cmaptools-download/",
+    type: "Sitio oficial",
     description:
       "Aplicacion recomendada para el mapa conceptual solicitado en la guia.",
-    cta: "Abrir en Drive ↗",
+    cta: "Ir a la descarga oficial ↗",
   },
 ];
 

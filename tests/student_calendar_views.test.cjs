@@ -83,7 +83,11 @@ test("calendario-aprendiz.html carga los 4 modulos compartidos de vistas + event
   assert.match(html, /academic_agenda_views\.js/);
   assert.match(html, /academic_agenda_calendar_ui\.js/);
   assert.match(html, /agenda_view_preference\.js/);
-  assert.match(html, /calendario_admin_manual_events\.js/);
+  // Candidata 2026-10-28: con el calendario por ficha ACTIVADO (pagina generada por
+  // tools/academic_calendar_release.cjs) los eventos manuales globales de todas las fichas
+  // NO se cargan (privacidad); sin activar, la agenda vigente los muestra en solo lectura.
+  if (/academic_calendar_release_config\.js/.test(html)) assert.doesNotMatch(html, /calendario_admin_manual_events\.js/);
+  else assert.match(html, /calendario_admin_manual_events\.js/);
 });
 
 test("calendario-aprendiz.html tiene los contenedores de Semana/Mes y el modal de detalle de dia", () => {

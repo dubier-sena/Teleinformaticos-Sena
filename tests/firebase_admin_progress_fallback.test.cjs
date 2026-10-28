@@ -19,7 +19,10 @@ test("firebase admin progress maps batchGet docs by document id and falls back t
   assert.match(source, /progressDocs\.forEach\(function \(doc\)/);
   assert.match(source, /progressByUser\[doc\._docId\]\s*=\s*doc/);
   assert.match(mergeUtils, /function deriveProgressFromGuideDataDoc\(fileName,\s*doc\)/);
-  assert.match(source, /guideDataDocs\.forEach\(function \(doc\)/);
+  // Oct-22: los datos de guia ya no se piden por nombre (batchGet con id
+  // codificado = siempre "missing"); se listan los existentes. Ver
+  // tests/firebase_admin_students_progress.test.cjs (comportamiento).
+  assert.match(source, /var listed = await cloudListAllGuideDataDocs\(\{ force: forceNextProgressListing \}\);/);
   assert.match(source, /progressByUser\[item\.usernameKey\]\[item\.progressKey\]\s*=\s*derived/);
 });
 

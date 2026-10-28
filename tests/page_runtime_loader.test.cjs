@@ -243,6 +243,97 @@ const EXPECTED_CONTEXTS = {
     ficha: "3168852",
     boot: "initTallerIntegrador",
   },
+  "jfk-guia7mant-10a": {
+    "family": "jfk-guia-07-mantenimiento-integral",
+    "pageFile": "grupo-10a-guia-07-mantenimiento-integral.html",
+    "partialPath": "partials/guia-07-mantenimiento-integral-content.html",
+    "inst": "Institucion Educativa Jhon F. Kennedy",
+    "grupo": "10A",
+    "ficha": "3441939",
+    "boot": "initGuiaMantenimiento"
+  },
+  "jfk-guia7mant-10b": {
+    "family": "jfk-guia-07-mantenimiento-integral",
+    "pageFile": "grupo-10b-guia-07-mantenimiento-integral.html",
+    "partialPath": "partials/guia-07-mantenimiento-integral-content.html",
+    "inst": "Institucion Educativa Jhon F. Kennedy",
+    "grupo": "10B",
+    "ficha": "3441942",
+    "boot": "initGuiaMantenimiento"
+  },
+  "jfk-guia8verif-10a": {
+    "family": "jfk-guia-08-verificar-operacion",
+    "pageFile": "grupo-10a-guia-08-verificar-operacion.html",
+    "partialPath": "partials/guia-08-verificar-operacion-content.html",
+    "inst": "Institucion Educativa Jhon F. Kennedy",
+    "grupo": "10A",
+    "ficha": "3441939",
+    "boot": "initGuiaMantenimiento"
+  },
+  "jfk-guia8verif-10b": {
+    "family": "jfk-guia-08-verificar-operacion",
+    "pageFile": "grupo-10b-guia-08-verificar-operacion.html",
+    "partialPath": "partials/guia-08-verificar-operacion-content.html",
+    "inst": "Institucion Educativa Jhon F. Kennedy",
+    "grupo": "10B",
+    "ficha": "3441942",
+    "boot": "initGuiaMantenimiento"
+  },
+  "sb-guia5mant-10a": {
+    "family": "sb10-guia-05-preparar-mantenimiento",
+    "pageFile": "santa-barbara-10a-guia-05-preparar-mantenimiento.html",
+    "partialPath": "partials/sb10-guia-05-preparar-mantenimiento-content.html",
+    "inst": "Institucion Educativa Santa Barbara",
+    "grupo": "10A",
+    "ficha": "3441944",
+    "boot": "initGuiaMantenimiento"
+  },
+  "sb-guia5mant-10b": {
+    "family": "sb10-guia-05-preparar-mantenimiento",
+    "pageFile": "santa-barbara-10b-guia-05-preparar-mantenimiento.html",
+    "partialPath": "partials/sb10-guia-05-preparar-mantenimiento-content.html",
+    "inst": "Institucion Educativa Santa Barbara",
+    "grupo": "10B",
+    "ficha": "3441950",
+    "boot": "initGuiaMantenimiento"
+  },
+  "sb-guia6mantint-10a": {
+    "family": "sb10-guia-06-mantenimiento-integral",
+    "pageFile": "santa-barbara-10a-guia-06-mantenimiento-integral.html",
+    "partialPath": "partials/sb10-guia-06-mantenimiento-integral-content.html",
+    "inst": "Institucion Educativa Santa Barbara",
+    "grupo": "10A",
+    "ficha": "3441944",
+    "boot": "initGuiaMantenimiento"
+  },
+  "sb-guia6mantint-10b": {
+    "family": "sb10-guia-06-mantenimiento-integral",
+    "pageFile": "santa-barbara-10b-guia-06-mantenimiento-integral.html",
+    "partialPath": "partials/sb10-guia-06-mantenimiento-integral-content.html",
+    "inst": "Institucion Educativa Santa Barbara",
+    "grupo": "10B",
+    "ficha": "3441950",
+    "boot": "initGuiaMantenimiento"
+  },
+  "sb-guia7verif-10a": {
+    "family": "sb10-guia-07-verificar-operacion",
+    "pageFile": "santa-barbara-10a-guia-07-verificar-operacion.html",
+    "partialPath": "partials/sb10-guia-07-verificar-operacion-content.html",
+    "inst": "Institucion Educativa Santa Barbara",
+    "grupo": "10A",
+    "ficha": "3441944",
+    "boot": "initGuiaMantenimiento"
+  },
+  "sb-guia7verif-10b": {
+    "family": "sb10-guia-07-verificar-operacion",
+    "pageFile": "santa-barbara-10b-guia-07-verificar-operacion.html",
+    "partialPath": "partials/sb10-guia-07-verificar-operacion-content.html",
+    "inst": "Institucion Educativa Santa Barbara",
+    "grupo": "10B",
+    "ficha": "3441950",
+    "boot": "initGuiaMantenimiento"
+  }
+
 };
 
 const SHARED_HTML = '<section class="runtime-fragment"><button id="runtimeButton"></button></section>';

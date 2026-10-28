@@ -1,0 +1,1169 @@
+<button class="hamburger" onclick="toggleSidebar()" aria-label="Menú">&#9776;</button>
+<button class="btn-sb-expand" onclick="showSidebar()" title="Mostrar barra lateral">&#9776;</button>
+<!-- Generado por herramientas/generar_guias_mantenimiento.py (2026-10-22) desde el PDF original del
+     instructor (competencia 220501001, RAP 03). No editar a mano: editar mant_specs.py y regenerar. -->
+
+<div class="layout app-layout">
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="badge">SENA &middot; FPI</div>
+      <h2>Gu&iacute;a 7 - Verificar la operación del sistema computacional</h2>
+      <p>Sistemas Teleinform&aacute;ticos</p>
+      <button class="btn-sb-collapse" onclick="hideSidebar()" title="Ocultar barra lateral">&#9664;</button>
+    </div>
+
+    <div class="sidebar-ficha u-hidden" id="sb-ficha-ok">
+      <div class="sf-label">Tu grupo</div>
+      <div class="sf-inst" id="sb-inst"></div>
+      <div class="sf-meta" id="sb-grupo-meta"></div>
+      <div class="sf-badge" id="sb-badge"></div>
+    </div>
+    <div class="sidebar-noficha" id="sb-ficha-warn">
+      <a href="index.html">Inicio | Seleccionar grupo / ficha</a>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span>Progreso</span>
+        <span id="progressValue">0%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <p class="progress-note">El avance se guarda localmente en este navegador.</p>
+      <button type="button" class="reset-button" id="resetProgress">Reiniciar respuestas</button>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Informaci&oacute;n</div>
+      <a class="nav-link active" href="#identificacion" onclick="setActive(this)">
+        <span class="icon">&#128203;</span> Identificaci&oacute;n
+      </a>
+      <a class="nav-link" href="#presentacion" onclick="setActive(this)">
+        <span class="icon">&#128075;</span> Presentaci&oacute;n
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Actividades</div>
+      <a class="nav-link" href="#reflexion" onclick="setActive(this)">
+        <span class="icon">&#128172;</span> 3.1 Reflexi&oacute;n Inicial
+        <span class="check">&#10003;</span>
+      </a>
+      <a class="nav-link" href="#contexto" onclick="setActive(this)">
+        <span class="icon">&#128269;</span> 3.2 Contextualizaci&oacute;n
+        <span class="check">&#10003;</span>
+      </a>
+      <a class="nav-link" href="#apropiacion" onclick="setActive(this)">
+        <span class="icon">&#128218;</span> 3.3 Apropiaci&oacute;n
+        <span class="check">&#10003;</span>
+      </a>
+      <a class="nav-link" href="#transferencia" onclick="setActive(this)">
+        <span class="icon">&#128640;</span> 3.4 Transferencia
+        <span class="check">&#10003;</span>
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Recursos</div>
+      <a class="nav-link" href="#control-avance" onclick="setActive(this)"><span class="icon">&#9989;</span> Control de avance</a>
+      <a class="nav-link" href="#materiales" onclick="setActive(this)">
+        <span class="icon">&#128193;</span> Materiales de apoyo
+      </a>
+      <a class="nav-link" href="#evidencias" onclick="setActive(this)">
+        <span class="icon">&#128202;</span> Evidencias
+      </a>
+      <a class="nav-link" href="#glosario" onclick="setActive(this)">
+        <span class="icon">&#128214;</span> Glosario
+      </a>
+      <a class="nav-link" href="#referencias" onclick="setActive(this)">
+        <span class="icon">&#128279;</span> Referencias
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Gu&iacute;a asignada</div>
+      <a class="nav-guide current" id="currentGuideNavLink" href="santa-barbara-10a-guia-07-verificar-operacion.html" data-current-file="santa-barbara-10a-guia-07-verificar-operacion.html">
+        <span class="g-icon">&#128270;</span>
+        <span class="g-info">
+          <span class="g-num">Gu&iacute;a 7</span>
+          <span class="g-name" id="currentGuideNavLabel">Verificar operación del sistema | 10A</span>
+        </span>
+        <span class="g-tag actual">Actual</span>
+      </a>
+    </div>
+
+    <a class="nav-home-link" href="calendario-academico-2026.html">&#128197; <span>Calendario 2026</span></a>
+    <a class="nav-home-link" href="index.html">&#127968; <span>Volver al Inicio</span></a>
+  </nav>
+
+  <div class="main app-main">
+    <div class="topbar">
+      <div class="topbar-title">
+        <strong>Gu&iacute;a 7 - Verificar la operación del sistema computacional</strong>
+      </div>
+      <div class="topbar-meta">
+        <span class="meta-item"><span>&#9201;</span><span>88 horas</span></span>
+        <span class="meta-item"><span>&#128197;</span><span>2026</span></span>
+        <span class="meta-item"><span>&#127979;</span><span id="topbarCampus">Santa Bárbara | Grado 10</span></span>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="hero" id="inicio">
+        <div class="tag">Gu&iacute;a 7 | Fase: Ejecución</div>
+        <h1>Verificar la operación del sistema computacional de acuerdo con los procedimientos técnicos.</h1>
+        <p>En esta guía aprenderás a diferenciar el diagnóstico de hardware del de software, a usar herramientas gratuitas o incluidas en Windows (CPU-Z, CrystalDiskInfo, Administrador de dispositivos, Administrador de tareas, Información del sistema y Diagnóstico de memoria), a interpretar sus resultados y a identificar posibles anomalías aplicando un procedimiento técnico.</p>
+        <div class="hero-meta">
+          <div class="hero-meta-item">&#127963; SENA &mdash; Servicio Nacional de Aprendizaje</div>
+          <div class="hero-meta-item">&#128205; Competencia: Mantener equipos de c&oacute;mputo</div>
+          <div class="hero-meta-item">&#9201; 88 horas</div>
+          <div class="hero-meta-item">&#127891; C&oacute;digo: 233108 &middot; V1</div>
+        </div>
+      </div>
+
+      <div id="control-avance" class="section-title">Tu control de avance</div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon u-bg-green">&#9989;</div>
+            <div><h3>&iquest;Qu&eacute; llevas y qu&eacute; te falta?</h3><p>Se actualiza solo con tus entregas y respuestas guardadas</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div data-act-std-avance><p class="intro-text">Cargando tu avance...</p></div>
+          <div class="gnote gnote--recuerda"><div class="gnote__label">&#128161; Recuerda</div>
+            <p>Esta tabla se marca sola: <strong>Entregada</strong> cuando subes la evidencia a Drive y
+            <strong>Guardada</strong> cuando guardas tus respuestas. Lo que siga en Pendiente es lo que te falta.</p></div>
+        </div>
+      </div>
+
+      <div id="identificacion" class="section-title">Identificaci&oacute;n de la Gu&iacute;a</div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon u-bg-green">&#128203;</div>
+            <div>
+              <h3>Datos del Programa de Formaci&oacute;n</h3>
+              <p>Informaci&oacute;n oficial del programa y la competencia</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="table-scroll">
+            <table class="data-table ident-table">
+              <tbody>
+                <tr><td>Denominaci&oacute;n del Programa</td><td>T&eacute;cnico en Sistemas Teleinform&aacute;ticos</td></tr>
+                <tr><td>C&oacute;digo del Programa</td><td>233108 &middot; V1</td></tr>
+                <tr><td>Nombre del Proyecto Formativo</td><td>Alfabetización Digital, Asesoría Técnica y Ciberseguridad para la Mejora de Actividades Productivas Locales en la Zona de Influencia del CIAS.</td></tr>
+                <tr><td>Fase del Proyecto</td><td>Ejecución</td></tr>
+                <tr><td>Actividad del Proyecto</td><td>Implementar procesos de soporte técnico básico, personalización de herramientas digitales y orientación en ciberseguridad.</td></tr>
+                <tr><td>Competencia</td><td>220501001 — Mantener equipos de cómputo según procedimiento técnico.</td></tr>
+                <tr><td>Resultado de Aprendizaje</td><td>RAP 03 &mdash; Verificar la operación del sistema computacional de acuerdo con los procedimientos técnicos.</td></tr>
+                <tr><td>Duraci&oacute;n</td><td>88 horas</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="presentacion" class="section-title">Presentaci&oacute;n</div>
+      <p class="section-intro">📍 <strong>Empieza por aquí:</strong> conoce de qué trata la guía y qué vas a lograr. Léela completa antes de comenzar las actividades.</p>
+      <div class="gnote gnote--ruta">
+        <div class="gnote__label">🧭 ¿Cómo trabajar esta guía? Paso a paso</div>
+        <ol>
+          <li><strong>Lee la teoría</strong> de las secciones de contextualización antes de resolver las actividades.</li>
+          <li><strong>Resuelve cada actividad</strong> en orden. Escribe tus respuestas en los campos de la guía.</li>
+          <li><strong>Guarda tus respuestas</strong> con el botón de cada actividad. Tu avance queda guardado en este navegador.</li>
+          <li><strong>Entrega las evidencias</strong> que lo pidan con el botón <em>Entregar a Drive</em>. Quedan en la carpeta de tu ficha.</li>
+          <li><strong>Revisa "Tu control de avance"</strong> (arriba): te muestra qué llevas Entregado, Guardado y Pendiente.</li>
+        </ol>
+      </div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon u-bg-blue">&#128075;</div>
+            <div>
+              <h3>Bienvenida a la Gu&iacute;a</h3>
+              <p>Conoce el contexto, el alcance y las metas de este recorrido formativo</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <p class="intro-text">¡Bienvenido, aprendiz! Cuando un computador se vuelve lento, se congela o se reinicia solo, no basta con «adivinar» qué le pasa. Un técnico en sistemas necesita diagnosticar: comprobar con herramientas y con un procedimiento ordenado cómo está funcionando cada parte del equipo, comparar lo que encuentra con lo que debería ser normal y decidir con evidencias si el equipo opera bien o presenta una anomalía. Verificar la operación de un sistema computacional evita cambios innecesarios de piezas, protege la información de las personas y permite entregar un equipo en el que se puede confiar.</p>
+          <p class="intro-text">En esta guía usted desarrollará el RAP 03 de la competencia «Mantener equipos de cómputo según procedimiento técnico». Aprenderá a diferenciar el diagnóstico de hardware (procesador, memoria, almacenamiento, dispositivos) del diagnóstico de software (sistema operativo, programas, controladores, licenciamiento), a usar herramientas gratuitas o incluidas en Windows, como CPU-Z, CrystalDiskInfo, el Administrador de dispositivos, el Administrador de tareas, Información del sistema y el Diagnóstico de memoria de Windows, a interpretar los resultados y a identificar posibles anomalías aplicando un procedimiento técnico. El caso guía es la <strong>Papelería y Miscelánea El Nogal</strong> (San Pablo de Borbur, Boyacá), cuyo equipo de contabilidad presenta un funcionamiento irregular.</p>
+          <p class="intro-text">Trabajará en cuatro momentos: primero reflexionará sobre el caso de El Nogal; luego estudiará los conceptos de diagnóstico y verificación y elaborará un protocolo (una lista ordenada de comprobaciones); después practicará con cada herramienta (preparación, procedimiento, datos, interpretación y evidencia); y finalmente realizará un laboratorio integrador en el que presentará un registro de resultados de diagnóstico del equipo. En esta guía no se repara ni se cambia ninguna pieza: el RAP 03 se trata de comprobar, interpretar y concluir; la documentación formal del mantenimiento corresponde al RAP 04.</p>
+          <div class="info-box u-mt-14">
+            <div class="label">&#128737; Seguridad durante las prácticas, para cuidar los equipos y la información</div>
+            <ol class="u-steps-top">
+          <li>Trabaje solo en los equipos que el instructor le asigne y con su permiso.</li>
+          <li>No abra el equipo ni desconecte nada.</li>
+          <li>No use activadores ni programas de páginas no oficiales.</li>
+          <li>No formatee, no repare discos y no cambie contraseñas.</li>
+          <li>No muestre datos personales en las capturas de pantalla.</li>
+          <li>Si una herramienta muestra una falla, anótela y avise al instructor, sin intentar arreglarla.</li>
+            </ol>
+          </div>
+          <div class="info-box green u-mt-14">
+            <div class="label">&#128204; Lo que necesitas para esta gu&iacute;a</div>
+            <p>Computador con Windows (de los equipos de práctica asignados por el instructor), acceso a internet, las herramientas CPU-Z y CrystalDiskInfo (gratuitas, instaladas o descargadas desde sus sitios oficiales por el instructor), una suite ofimática (LibreOffice o Microsoft Office) para los registros y el material de apoyo suministrado por el instructor. Lea siempre las instrucciones completas y guarde cada evidencia con un nombre descriptivo. <strong>Sin evidencia, no hay evaluaci&oacute;n.</strong></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════ 3.1 · ACTIVIDADES DE REFLEXIÓN INICIAL ═══════════════════════╗ -->
+      <div id="reflexion" class="section-title">3.1 · Actividades de Reflexión Inicial</div>
+      <p class="section-intro">📍 <strong>Fase de reflexión inicial:</strong> activa lo que ya sabes. Aquí no se evalúa el acierto, sino tu participación.</p>
+      <div class="info-box blue u-mb-16">
+        <p>Activar lo que usted ya sabe sobre el funcionamiento de un computador y reconocer que un problema de rendimiento o de almacenamiento debe verificarse con pruebas antes de decidir qué hacer. Metodología pedagógica: aprendizaje basado en problemas (ABP: se aprende resolviendo un caso real), con la técnica activa de lluvia de ideas en equipo. Relación con el RAP: parte de la necesidad de verificar la operación del sistema. Todo el tiempo de reflexión es trabajo directo con el instructor (2 horas).</p>
+      </div>
+      <div class="card open cat-reflexion">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128172;</div>
+            <div>
+              <h3>Actividades de Reflexión Inicial</h3>
+              <p>2 actividades · Duración: 2 horas directas</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <article class="story-card u-mt-16">
+                <h3>&#128187; Caso — Papelería y Miscelánea El Nogal, San Pablo de Borbur (Boyacá)</h3>
+                <p>Una semana después del mantenimiento del equipo de contabilidad, la propietaria llama preocupada: el computador tarda mucho en encender, el programa contable se congela, aparece el aviso de poco espacio en el disco y, a veces, el equipo se reinicia solo. Ella pregunta: ¿el computador está dañado?, ¿hay que comprar otro? Usted será el técnico que verifique, con evidencias, cómo está funcionando realmente el sistema.</p>
+              </article>
+          <!-- ───────── Actividad 3.1.1 ───────── -->
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.1.1</span>
+              <span class="activity-title">«¿Qué le pasa al computador de El Nogal?»</span>
+              <span class="mission-chip">Misión de arranque</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> En grupos de 3 o 4 personas, respondan mediante lluvia de ideas (no es necesario entregar producto escrito). Recursos: tablero y cuaderno o bitácora. Evidencia: participación registrada por el instructor. Duración: 1 hora directa.</p>
+              <article class="notes-card u-mt-16">
+                <h3>Lluvia de ideas en grupo (3 o 4 personas)</h3>
+                <p class="intro-text u-help-note">&#9998; Campos de apoyo del portal para organizar tus respuestas: no reemplazan las instrucciones ni las evidencias de la gu&iacute;a.</p>
+                <p class="intro-text u-note-0">No es necesario entregar un producto escrito por el grupo: registra aquí tus propias respuestas como participante de la discusión.</p>
+                <label>
+                  <span>1. ¿Qué problema presenta el equipo? Enumere al menos tres síntomas.</span>
+                  <textarea rows="4" data-store="m3_311_sintomas" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>2. ¿Qué componentes del computador deben comprobarse (procesador, memoria, almacenamiento, dispositivos, sistema operativo)?</span>
+                  <textarea rows="3" data-store="m3_311_componentes" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>3. ¿Qué herramientas conocen o podrían usarse para comprobar cada componente?</span>
+                  <textarea rows="3" data-store="m3_311_herramientas" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>4. ¿Cómo verificarían los resultados? ¿Qué datos anotarían para no depender de la memoria?</span>
+                  <textarea rows="3" data-store="m3_311_registro" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>5. ¿Cómo podrían determinar si lo que observan es una anomalía o un funcionamiento normal?</span>
+                  <textarea rows="3" data-store="m3_311_normal" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <div class="u-mt-16" id="nogal311DeadlineControls"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarNogal311" class="btn-save-response" onclick="actStd_save_nogal311()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_nogal311()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusNogal311" class="activity-saved-notice u-saved">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+            </div>
+          </div>
+
+          <!-- ───────── Actividad 3.1.2 ───────── -->
+          <div class="activity mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.1.2</span>
+              <span class="activity-title">Socialización en plenaria</span>
+              <span class="mission-chip">Misión de arranque</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> Compartir el síntoma más preocupante y el componente que comprobaría primero, y cerrar con una idea final. Duración: 1 hora directa.</p>
+              <article class="support-card u-mt-16">
+                <h3>Instrucciones</h3>
+                <ol class="u-steps">
+                  <li>Cada grupo comparte en máximo 2 minutos el síntoma más preocupante y el componente que comprobaría primero.</li>
+                  <li>El instructor registra en el tablero los síntomas y los agrupa en: hardware, software y almacenamiento.</li>
+                  <li>Escriba en su bitácora una idea final: ¿por qué es mejor verificar con herramientas y datos que «adivinar» la falla?</li>
+                </ol>
+              </article>
+              <article class="notes-card u-mt-16">
+                <h3>Bitácora de cierre</h3>
+                <p class="intro-text u-help-note">&#9998; Campos de apoyo del portal para organizar tus respuestas: no reemplazan las instrucciones ni las evidencias de la gu&iacute;a.</p>
+                <label>
+                  <span>1. Síntoma más preocupante que compartió tu grupo y componente que comprobaría primero</span>
+                  <textarea rows="3" data-store="m3_312_sintoma_grupo" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>2. Idea final: ¿por qué es mejor verificar con herramientas y datos que «adivinar» la falla?</span>
+                  <textarea rows="4" data-store="m3_312_reflexion" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <div class="u-mt-16" id="plenaria312DeadlineControls"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarPlenaria312" class="btn-save-response" onclick="actStd_save_plenaria312()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_plenaria312()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusPlenaria312" class="activity-saved-notice u-saved">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════ 3.2 · CONTEXTUALIZACIÓN E IDENTIFICACIÓN DE CONOCIMIENTOS ═══════════════════════╗ -->
+      <div id="contexto" class="section-title">3.2 · Contextualización e Identificación de Conocimientos</div>
+      <p class="section-intro">📍 <strong>Fase de contextualización:</strong> aquí están los conceptos que necesitas y construyes tu protocolo de verificación.</p>
+      <div class="info-box blue u-mb-16">
+        <p>Construir la base conceptual sobre diagnóstico y verificación, herramientas, fallas frecuentes, interpretación de resultados, licenciamiento y seguridad, y convertirla en un protocolo de verificación propio. Metodología pedagógica: aprendizaje colaborativo con estudio por bloques temáticos. Relación con el RAP: saberes de protocolos de verificación, licenciamiento y software utilitario.</p>
+      </div>
+      <div class="card open cat-contexto">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128269;</div>
+            <div>
+              <h3>Actividades de Contextualización</h3>
+              <p>2 actividades · Duración: 16 horas (10 directas + 6 independientes)</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <!-- ───────── Actividad 3.2.1 ───────── -->
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.2.1</span>
+              <span class="activity-title">Estudio de contenidos de diagnóstico y verificación (Bloques A, B y C)</span>
+              <span class="mission-chip">Misión diagnóstica</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> Estudiar en equipo de 3 los 12 temas de los Bloques A, B y C y consolidar una tabla resumen en PDF: <code>BloquesABC_RAP03_[TuNombre]_v1.0.pdf</code>. Duración: 4 horas independientes + 6 horas directas.</p>
+              <div class="info-box u-mt-14">
+                <div class="label">&#9200; Trabajo independiente (4 horas, ANTES de la sesión directa)</div>
+                <p>Estudie los temas de los Bloques A, B y C con el material de apoyo y los manuales que indique el instructor. Tome apuntes en su bitácora. Llegue a clase con al menos una duda por bloque.</p>
+              </div>
+              <div class="table-scroll u-mt-12">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th class="u-w-30">Tema (Bloque A — Diagnóstico y verificación del funcionamiento)</th>
+                      <th>&iquest;Qu&eacute; debes aprender?</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>Concepto de diagnóstico y verificación</td><td>Qué es diagnosticar, qué es verificar y para qué sirve comprobar el funcionamiento antes y después de una intervención.</td></tr>
+                    <tr><td>Diagnóstico de hardware</td><td>Qué datos revelan el procesador, la memoria RAM, el almacenamiento y los dispositivos; cómo identificar sus características.</td></tr>
+                    <tr><td>Diagnóstico de software</td><td>Revisión del sistema operativo, controladores, programas de inicio, actualizaciones y estado de la protección.</td></tr>
+                    <tr><td>Fallas frecuentes</td><td>Lentitud, calentamiento, ruidos del disco, disco casi lleno, cierres o reinicios inesperados, dispositivos sin controlador: posibles causas y qué comprobar.</td></tr>
+                    <tr><td>Protocolo de verificación</td><td>Definición, características y función; cómo se elabora: orden de pasos, herramienta, dato por registrar y criterio de normalidad.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="table-scroll u-mt-12">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th class="u-w-30">Tema (Bloque B — Herramientas e interpretación de resultados)</th>
+                      <th>&iquest;Qu&eacute; debes aprender?</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>CPU-Z</td><td>Muestra qué procesador (nombre, núcleos e hilos), placa base, memoria RAM y tarjeta gráfica tiene el equipo, y la versión de su BIOS (el programa básico de la placa).</td></tr>
+                    <tr><td>CrystalDiskInfo y S.M.A.R.T.</td><td>Estado de salud del disco (Bueno, Precaución, Malo), temperatura, horas de uso y datos S.M.A.R.T. (el autodiagnóstico del disco). Los nombres pueden variar según el idioma, la versión y el tipo de disco.</td></tr>
+                    <tr><td>Herramientas de Windows</td><td>Administrador de dispositivos, Administrador de tareas (Rendimiento e Inicio), Información del sistema (msinfo32), Diagnóstico de memoria de Windows y Seguridad de Windows.</td></tr>
+                    <tr><td>Valor normal vs. anomalía</td><td>Comparar el dato obtenido con las especificaciones del equipo y con las otras mediciones. Un dato aislado no basta: se registra, se compara y se interpreta.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="table-scroll u-mt-12">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th class="u-w-30">Tema (Bloque C — Licenciamiento, legalidad y seguridad)</th>
+                      <th>&iquest;Qu&eacute; debes aprender?</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>Licenciamiento de sistemas operativos</td><td>Tipos de licencia: OEM (viene incluida con el computador), retail (se compra por separado), volumen (para muchos equipos de una organización) y código abierto (libre, como Linux). Cómo comprobar el estado de activación: Configuración &gt; Sistema &gt; Activación.</td></tr>
+                    <tr><td>Software legal y seguro</td><td>Riesgos de los activadores y de los programas de páginas no oficiales; alternativas legales (licencia original, versiones de evaluación, software libre); descargar solo de sitios oficiales.</td></tr>
+                    <tr><td>Seguridad durante el diagnóstico</td><td>Pedir autorización, guardar el trabajo, no hacer procedimientos que dañen o borren (formatear, reparar discos, cambiar contraseñas) y proteger los datos personales en las evidencias.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <article class="support-card u-mt-16">
+                <h3>Instrucciones para la sesión directa</h3>
+                <ol class="u-steps">
+                  <li>Forme un equipo de 3 personas. Repartan los 12 temas (5 del Bloque A + 4 del Bloque B + 3 del Bloque C): 4 temas por integrante.</li>
+                  <li>Durante la primera hora, cada integrante explica sus temas al equipo (5 minutos por tema) mientras los demás completan sus apuntes.</li>
+                  <li>En LibreOffice Calc o Google Sheets, construyan una tabla de 3 columnas: «Tema», «¿Para qué sirve en una verificación?» y «Ejemplo con el caso de El Nogal».</li>
+                  <li>El instructor realiza una plenaria de cierre donde cada equipo comparte su fila más importante.</li>
+                  <li>Exporten la tabla a PDF con el nombre <strong>BloquesABC_RAP03_[TuNombre]_v1.0.pdf</strong> y compártanla por el medio indicado por el instructor.</li>
+                </ol>
+              </article>
+              <div class="gnote gnote--entrega u-mt-14"><div class="gnote__label">&#128230; &iquest;Qu&eacute; debes entregar?</div>
+                <p>Tabla resumen de los Bloques A, B y C en PDF (BloquesABC_RAP03_[TuNombre]_v1.0.pdf) y apuntes previos en la bitácora. Esta actividad alimenta la Actividad 3.2.2 y la evaluación de conocimiento IE-01.</p></div>
+              <article class="notes-card u-mt-16">
+                <h3>Registro guiado del aprendiz</h3>
+                <p class="intro-text u-help-note">&#9998; Campos de apoyo del portal para organizar tus respuestas: no reemplazan las instrucciones ni las evidencias de la gu&iacute;a.</p>
+                <label>
+                  <span>1. Reparto del equipo: temas y responsable de cada uno</span>
+                  <textarea rows="4" data-store="m3_321_reparto" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>2. Temas que estudiaste tú (4 de los 12)</span>
+                  <textarea rows="3" data-store="m3_321_temas" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>3. Una duda por bloque (A, B y C) que llevaste a la sesión</span>
+                  <textarea rows="3" data-store="m3_321_dudas" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>4. Tema de tu fila en la tabla resumen</span>
+                  <textarea rows="2" data-store="m3_321_tema_fila" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>5. ¿Para qué sirve en una verificación?</span>
+                  <textarea rows="3" data-store="m3_321_paraque" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>6. Ejemplo con el caso de El Nogal</span>
+                  <textarea rows="4" data-store="m3_321_ejemplo" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <div class="u-mt-16" id="bloquesABC321DeadlineControls"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarBloquesABC321" class="btn-save-response" onclick="actStd_save_bloquesABC321()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_bloquesABC321()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusBloquesABC321" class="activity-saved-notice u-saved">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+
+              <div class="u-mt-16" id="driveDeliveryPanel-bloquesABC321"></div>
+            </div>
+          </div>
+
+          <!-- ───────── Actividad 3.2.2 ───────── -->
+          <div class="activity mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.2.2</span>
+              <span class="activity-title">Elaboración del protocolo de verificación</span>
+              <span class="mission-chip">Misión diagnóstica</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> Construir en equipo un protocolo de verificación de una o dos páginas. Duración: 2 horas independientes + 4 horas directas.</p>
+              <article class="support-card u-mt-16">
+                <h3>Instrucciones — sigue este orden sin saltarte pasos</h3>
+                <ol class="u-steps">
+                  <li>En equipos de máximo 3 integrantes, revisen sus apuntes de la Actividad 3.2.1 y la lista de síntomas del caso de El Nogal.</li>
+                  <li>Construyan un protocolo de verificación de una o dos páginas. Un protocolo es una lista ordenada de comprobaciones: cada fila dice qué se comprueba, con qué herramienta, qué dato se anota y cuándo se considera normal o anomalía. Comprobaciones mínimas: identificar el equipo, procesador, memoria RAM, almacenamiento, dispositivos y controladores, rendimiento, protección y licenciamiento.</li>
+                  <li>Incluyan una fila de licenciamiento: comprobar el estado de activación en Configuración &gt; Sistema &gt; Activación. No se permite usar activadores.</li>
+                  <li>Incluyan una fila final de seguridad: autorización del instructor, trabajo guardado y ausencia de datos personales en las capturas.</li>
+                  <li>Presenten el protocolo al instructor para su revisión; será la guía de trabajo de las etapas 3.3 y 3.4.</li>
+                </ol>
+              </article>
+              <div class="table-scroll u-mt-12">
+                <table class="data-table">
+                  <thead><tr><th>Comprobación</th><th>Herramienta</th><th>Dato por registrar / criterio de normalidad</th></tr></thead>
+                  <tbody>
+                    <tr><td>Memoria RAM instalada (ejemplo)</td><td>CPU-Z (pestaña Memory)</td><td>Anotar tipo y tamaño. Normal: coincide con la ficha técnica del equipo. Anomalía: es menor o distinta de la ficha.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="gnote gnote--entrega u-mt-14"><div class="gnote__label">&#128230; &iquest;Qu&eacute; debes entregar?</div>
+                <p>Protocolo de verificación del equipo (PDF o DOCX), con comprobaciones, herramientas, datos y criterios, revisado por el instructor. Esta actividad prepara las prácticas de la Actividad 3.3.</p></div>
+              <article class="notes-card u-mt-16">
+                <h3>Protocolo de verificación (una fila por comprobación: herramienta — dato por registrar — criterio de normalidad)</h3>
+                <p class="intro-text u-help-note">&#9998; Campos de apoyo del portal para organizar tus respuestas: no reemplazan las instrucciones ni las evidencias de la gu&iacute;a.</p>
+                <label>
+                  <span>1. Identificación del equipo</span>
+                  <textarea rows="2" data-store="m3_322_identificacion" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>2. Procesador</span>
+                  <textarea rows="2" data-store="m3_322_procesador" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>3. Memoria RAM</span>
+                  <textarea rows="2" data-store="m3_322_ram" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>4. Almacenamiento</span>
+                  <textarea rows="2" data-store="m3_322_almacenamiento" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>5. Dispositivos y controladores</span>
+                  <textarea rows="2" data-store="m3_322_dispositivos" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>6. Rendimiento</span>
+                  <textarea rows="2" data-store="m3_322_rendimiento" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>7. Protección</span>
+                  <textarea rows="2" data-store="m3_322_proteccion" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>8. Licenciamiento (Configuración > Sistema > Activación; sin activadores)</span>
+                  <textarea rows="2" data-store="m3_322_licenciamiento" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>9. Fila final de seguridad (autorización, trabajo guardado, sin datos personales)</span>
+                  <textarea rows="2" data-store="m3_322_seguridad" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <div class="u-mt-16" id="protocolo322DeadlineControls"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarProtocolo322" class="btn-save-response" onclick="actStd_save_protocolo322()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_protocolo322()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusProtocolo322" class="activity-saved-notice u-saved">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+
+              <div class="u-mt-16" id="driveDeliveryPanel-protocolo322"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════ 3.3 · ACTIVIDADES DE APROPIACIÓN DEL CONOCIMIENTO ═══════════════════════╗ -->
+      <div id="apropiacion" class="section-title">3.3 · Actividades de Apropiación del Conocimiento</div>
+      <p class="section-intro">📍 <strong>Fase de apropiación:</strong> practicas con cada herramienta. Las prácticas no modifican el equipo.</p>
+      <div class="info-box blue u-mb-16">
+        <p>Practicar la verificación de cada parte del equipo con herramientas de diagnóstico —procesador y memoria, almacenamiento y herramientas de Windows— y aprender a interpretar los datos que entregan. Metodología pedagógica: práctica guiada con aprendizaje entre pares (uno ejecuta la prueba y otro registra los datos; luego intercambian). Relación con el RAP: ejecuta software utilitario y verifica el funcionamiento del equipo según el procedimiento técnico. Las prácticas no modifican el equipo.</p>
+      </div>
+      <div class="card open cat-apropiacion">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128218;</div>
+            <div>
+              <h3>Actividades de Apropiación</h3>
+              <p>4 actividades · Duración: 36 horas (28 directas + 8 independientes)</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <article class="story-card u-mt-16">
+                <h3>&#128187; Caso — Papelería y Miscelánea El Nogal, San Pablo de Borbur (Boyacá)</h3>
+                <p>Una semana después del mantenimiento del equipo de contabilidad, la propietaria llama preocupada: el computador tarda mucho en encender, el programa contable se congela, aparece el aviso de poco espacio en el disco y, a veces, el equipo se reinicia solo. Ella pregunta: ¿el computador está dañado?, ¿hay que comprar otro? Usted será el técnico que verifique, con evidencias, cómo está funcionando realmente el sistema.</p>
+              </article>
+          <!-- ───────── Actividad 3.3.1 ───────── -->
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.3.1</span>
+              <span class="activity-title">Procesador, memoria y características del sistema con CPU-Z</span>
+              <span class="mission-chip">Misión práctica</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> Identificar las características del equipo con CPU-Z e interpretarlas. Duración: 2 horas independientes + 8 horas directas.</p>
+              <div class="info-box u-mt-14">
+                <div class="label">&#9200; Trabajo independiente (2 horas, ANTES de la sesión directa)</div>
+                <p>Lea sobre las pestañas de CPU-Z (CPU, Mainboard, Memory, SPD, Graphics) y escriba en su bitácora qué dato espera encontrar en cada una. Si el instructor lo autoriza, revise la guía y el reporte de ejemplo de HWMonitor del material de apoyo.</p>
+              </div>
+              <article class="support-card u-mt-16">
+                <h3>Instrucciones para la sesión directa</h3>
+                <ol class="u-steps">
+                  <li><strong>Preparación:</strong> encienda el equipo asignado e inicie sesión con el permiso del instructor. Tenga a mano su protocolo (actividad 3.2.2) y cree una carpeta llamada Evidencias_RAP03_[TuNombre] donde guardará todo. No abra el equipo.</li>
+                  <li><strong>Herramienta:</strong> CPU-Z, un programa gratuito que muestra qué componentes tiene el computador (el instructor lo deja instalado o lo descarga del sitio oficial de CPUID). Está en inglés: CPU = procesador, Mainboard = placa base, Memory = memoria RAM, SPD = módulos de memoria, Graphics = tarjeta gráfica. Opcional, solo si el instructor lo tiene disponible: HWMonitor para ver temperaturas (está en el material de apoyo del RAP 01).</li>
+                  <li><strong>Procedimiento</strong> (siga los pasos en orden): A. Abra CPU-Z. B. Pestaña CPU: anote nombre, núcleos e hilos. C. Pestaña Mainboard: anote fabricante, modelo y versión de BIOS. D. Pestaña Memory: anote tipo y tamaño. E. Pestaña SPD: anote cuántos módulos de memoria hay. F. Abra Información del sistema (tecla Windows + R, escriba msinfo32 y Enter) y compare los datos. G. Capture cada pestaña (Windows + Shift + S) y guarde las imágenes en su carpeta.</li>
+                  <li><strong>Datos que debe recopilar:</strong> procesador, núcleos e hilos, placa base y BIOS, tipo y tamaño de la memoria RAM, módulos instalados y tarjeta gráfica. Si usa HWMonitor, las temperaturas en reposo.</li>
+                  <li><strong>Interpretación:</strong> compare cada dato con lo que dice la ficha técnica o el manual del equipo. Pregúntese: ¿la memoria es suficiente para el programa contable? ¿CPU-Z y Windows muestran lo mismo? Si algo no coincide, anótelo como posible anomalía.</li>
+                  <li><strong>Evidencia:</strong> capturas con nombres descriptivos (por ejemplo, CPUZ_CPU_[TuNombre].png) y una tabla de 3 columnas: Dato | Valor observado | Interpretación (normal o posible anomalía), con una línea por dato.</li>
+                </ol>
+              </article>
+              <div class="gnote gnote--entrega u-mt-14"><div class="gnote__label">&#128230; &iquest;Qu&eacute; debes entregar?</div>
+                <p>Tabla de datos del sistema diligenciada (valor e interpretación) y capturas de CPU-Z, en la carpeta de evidencias (PDF o DOCX).</p></div>
+              <article class="notes-card u-mt-16">
+                <h3>Tabla de datos del sistema (Dato — Valor observado — Interpretación)</h3>
+                <p class="intro-text u-help-note">&#9998; Campos de apoyo del portal para organizar tus respuestas: no reemplazan las instrucciones ni las evidencias de la gu&iacute;a.</p>
+                <label>
+                  <span>1. Procesador: nombre, núcleos e hilos</span>
+                  <textarea rows="2" data-store="m3_331_cpu" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>2. Placa base: fabricante, modelo y versión de BIOS</span>
+                  <textarea rows="2" data-store="m3_331_placa" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>3. Memoria RAM: tipo y tamaño</span>
+                  <textarea rows="2" data-store="m3_331_memoria" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>4. Módulos de memoria instalados (pestaña SPD)</span>
+                  <textarea rows="2" data-store="m3_331_modulos" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>5. Tarjeta gráfica</span>
+                  <textarea rows="2" data-store="m3_331_grafica" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>6. Comparación con Información del sistema (msinfo32): ¿CPU-Z y Windows muestran lo mismo?</span>
+                  <textarea rows="3" data-store="m3_331_msinfo" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>7. Interpretación: ¿la memoria es suficiente para el programa contable? Posibles anomalías</span>
+                  <textarea rows="4" data-store="m3_331_interpretacion" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <div class="u-mt-16" id="cpuz331DeadlineControls"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarCpuz331" class="btn-save-response" onclick="actStd_save_cpuz331()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_cpuz331()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusCpuz331" class="activity-saved-notice u-saved">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+
+              <div class="u-mt-16" id="driveDeliveryPanel-cpuz331"></div>
+            </div>
+          </div>
+
+          <!-- ───────── Actividad 3.3.2 ───────── -->
+          <div class="activity mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.3.2</span>
+              <span class="activity-title">Estado del almacenamiento con CrystalDiskInfo</span>
+              <span class="mission-chip">Misión práctica</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> Verificar la salud y el espacio del almacenamiento (práctica solo de lectura). Duración: 3 horas independientes + 8 horas directas.</p>
+              <div class="info-box u-mt-14">
+                <div class="label">&#9200; Trabajo independiente (3 horas, ANTES de la sesión directa)</div>
+                <p>Investigue qué significa S.M.A.R.T., qué indican los estados Bueno, Precaución y Malo de CrystalDiskInfo y por qué un disco «casi lleno» no es lo mismo que un disco «enfermo». Anote tres atributos o datos que consultará (por ejemplo: estado de salud, temperatura, horas de encendido, sectores reasignados o pendientes).</p>
+              </div>
+              <article class="support-card u-mt-16">
+                <h3>Instrucciones para la sesión directa</h3>
+                <ol class="u-steps">
+                  <li><strong>Preparación:</strong> cierre los programas y guarde su trabajo. Con el instructor, identifique el disco del equipo (HDD o SSD) y su capacidad. Esta práctica es solo de lectura: no formatee, no repare ni escriba en el disco.</li>
+                  <li><strong>Herramienta:</strong> CrystalDiskInfo, un programa gratuito que muestra la «salud» de los discos (el instructor lo deja instalado o lo descarga del sitio oficial del autor).</li>
+                  <li><strong>Procedimiento</strong> (siga los pasos en orden): a) Abra CrystalDiskInfo. b) Anote modelo, capacidad e interfaz del disco. c) Anote el estado de salud (Bueno, Precaución o Malo) y la temperatura. d) Anote las horas de encendido y, si aparecen, los datos de sectores reasignados o pendientes. e) Abra el Explorador de archivos &gt; Este equipo y anote el espacio libre de cada unidad. f) Capture la ventana principal de CrystalDiskInfo y la de Este equipo.</li>
+                  <li><strong>Datos que debe recopilar:</strong> modelo y capacidad, estado de salud, temperatura, horas de encendido, datos de sectores (si aparecen) y espacio total, libre y usado.</li>
+                  <li><strong>Interpretación:</strong> Bueno significa que el disco no muestra alertas. Precaución o Malo es una anomalía: avise de inmediato al instructor y no intente repararlo. Un disco casi lleno puede hacer lento el equipo sin estar dañado: «lleno» y «enfermo» no es lo mismo. Los datos pueden variar según el disco; ante una duda, pregunte al instructor.</li>
+                  <li><strong>Evidencia:</strong> capturas de CrystalDiskInfo y del espacio por unidad, y una tabla de 3 columnas (Dato | Valor observado | Interpretación) con una línea por dato. Si hay una alerta: una nota de reporte al instructor, sin intervenir el disco.</li>
+                </ol>
+              </article>
+              <div class="gnote gnote--entrega u-mt-14"><div class="gnote__label">&#128230; &iquest;Qu&eacute; debes entregar?</div>
+                <p>Tabla de verificación del almacenamiento (valor e interpretación) y capturas de CrystalDiskInfo y del espacio por unidad, en la carpeta de evidencias (PDF o DOCX).</p></div>
+              <article class="notes-card u-mt-16">
+                <h3>Tabla de verificación del almacenamiento (Dato — Valor observado — Interpretación)</h3>
+                <p class="intro-text u-help-note">&#9998; Campos de apoyo del portal para organizar tus respuestas: no reemplazan las instrucciones ni las evidencias de la gu&iacute;a.</p>
+                <label>
+                  <span>1. Modelo, capacidad e interfaz del disco</span>
+                  <textarea rows="2" data-store="m3_332_disco" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>2. Estado de salud (Bueno, Precaución o Malo) y temperatura</span>
+                  <textarea rows="2" data-store="m3_332_salud" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>3. Horas de encendido y datos de sectores reasignados o pendientes (si aparecen)</span>
+                  <textarea rows="2" data-store="m3_332_horas" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>4. Espacio total, libre y usado de cada unidad (Este equipo)</span>
+                  <textarea rows="2" data-store="m3_332_espacio" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>5. Interpretación: ¿el disco está «lleno», «enfermo», ambos o ninguno?</span>
+                  <textarea rows="4" data-store="m3_332_interpretacion" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>6. Nota de reporte al instructor (solo si hubo una alerta)</span>
+                  <textarea rows="2" data-store="m3_332_reporte" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <div class="u-mt-16" id="crystal332DeadlineControls"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarCrystal332" class="btn-save-response" onclick="actStd_save_crystal332()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_crystal332()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusCrystal332" class="activity-saved-notice u-saved">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+
+              <div class="u-mt-16" id="driveDeliveryPanel-crystal332"></div>
+            </div>
+          </div>
+
+          <!-- ───────── Actividad 3.3.3 ───────── -->
+          <div class="activity mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.3.3</span>
+              <span class="activity-title">Dispositivos, rendimiento y memoria con herramientas de Windows</span>
+              <span class="mission-chip">Misión práctica</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> Verificar dispositivos, rendimiento, protección, activación y memoria con herramientas de Windows. Duración: 3 horas independientes + 10 horas directas.</p>
+              <div class="info-box u-mt-14">
+                <div class="label">&#9200; Trabajo independiente (3 horas, ANTES de la sesión directa)</div>
+                <p>Repase dónde se abren el Administrador de dispositivos, el Administrador de tareas, Información del sistema y el Diagnóstico de memoria de Windows, y qué dato esperaría ver en cada uno. Escriba una pregunta de verificación para cada herramienta.</p>
+              </div>
+              <article class="support-card u-mt-16">
+                <h3>Instrucciones para la sesión directa</h3>
+                <ol class="u-steps">
+                  <li><strong>Preparación:</strong> guarde y cierre su trabajo. El Diagnóstico de memoria de Windows reinicia el equipo: ejecútelo solo con permiso del instructor y en el equipo de práctica. Siga guardando todo en su carpeta de evidencias.</li>
+                  <li><strong>Herramienta:</strong> Administrador de dispositivos (clic derecho en el botón Inicio); Administrador de tareas (Ctrl + Shift + Esc); Información del sistema (Windows + R, escriba msinfo32); Diagnóstico de memoria de Windows (Windows + R, escriba mdsched); Seguridad de Windows (búsquela en el menú Inicio); y Configuración &gt; Sistema &gt; Activación para ver el estado de la licencia.</li>
+                  <li><strong>Procedimiento</strong> (siga los pasos en orden): a) Administrador de dispositivos: revise si algún dispositivo tiene un símbolo de advertencia. b) Administrador de tareas: observe el uso de CPU, memoria y disco en reposo y con el programa contable abierto; revise la pestaña Inicio. c) Información del sistema: anote la versión del sistema, la BIOS y la memoria. d) Seguridad de Windows: verifique que la protección esté activa. e) Activación: anote el estado. f) Con permiso del instructor, ejecute el Diagnóstico de memoria y anote el resultado al reiniciar.</li>
+                  <li><strong>Datos que debe recopilar:</strong> dispositivos con advertencia (si existen), porcentajes de uso de CPU, memoria y disco, versión del sistema, estado de la protección y de la activación, y resultado del diagnóstico de memoria.</li>
+                  <li><strong>Interpretación:</strong> como referencia de este curso, un uso de memoria o disco mayor al 85 % de forma sostenida y con pocos programas abiertos es una posible anomalía; compare con los datos de 3.3.1 y 3.3.2. Un dispositivo con advertencia indica un problema de controlador: se anota y se reporta. Una activación no válida se anota como hallazgo de licenciamiento; no se corrige con activadores.</li>
+                  <li><strong>Evidencia:</strong> capturas de cada herramienta utilizada y una tabla de 3 columnas (Dato | Valor observado | Interpretación) con una línea por dato.</li>
+                </ol>
+              </article>
+              <div class="gnote gnote--entrega u-mt-14"><div class="gnote__label">&#128230; &iquest;Qu&eacute; debes entregar?</div>
+                <p>Tabla de verificación con herramientas de Windows diligenciada (valor e interpretación) y capturas de cada herramienta, en la carpeta de evidencias (PDF o DOCX).</p></div>
+              <article class="notes-card u-mt-16">
+                <h3>Tabla de verificación con herramientas de Windows (Dato — Valor observado — Interpretación)</h3>
+                <p class="intro-text u-help-note">&#9998; Campos de apoyo del portal para organizar tus respuestas: no reemplazan las instrucciones ni las evidencias de la gu&iacute;a.</p>
+                <label>
+                  <span>1. Administrador de dispositivos: dispositivos con advertencia (si existen)</span>
+                  <textarea rows="2" data-store="m3_333_dispositivos" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>2. Administrador de tareas: uso de CPU, memoria y disco en reposo y con el programa contable abierto; pestaña Inicio</span>
+                  <textarea rows="3" data-store="m3_333_rendimiento" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>3. Información del sistema: versión del sistema, BIOS y memoria</span>
+                  <textarea rows="2" data-store="m3_333_msinfo" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>4. Seguridad de Windows: estado de la protección</span>
+                  <textarea rows="2" data-store="m3_333_proteccion" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>5. Activación: estado de la licencia</span>
+                  <textarea rows="2" data-store="m3_333_activacion" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>6. Diagnóstico de memoria de Windows (con permiso del instructor): resultado al reiniciar</span>
+                  <textarea rows="2" data-store="m3_333_memoria_diag" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>7. Interpretación (referencia del curso: uso sostenido mayor al 85 % con pocos programas abiertos = posible anomalía)</span>
+                  <textarea rows="4" data-store="m3_333_interpretacion" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <div class="u-mt-16" id="windows333DeadlineControls"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarWindows333" class="btn-save-response" onclick="actStd_save_windows333()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_windows333()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusWindows333" class="activity-saved-notice u-saved">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+
+              <div class="u-mt-16" id="driveDeliveryPanel-windows333"></div>
+            </div>
+          </div>
+          <!-- ───────── Actividad 3.3.4 (la aplica el instructor) ───────── -->
+          <div class="activity mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.3.4</span>
+              <span class="activity-title">Evaluación de conocimiento: cuestionario IE-01</span>
+              <span class="mission-chip">Evaluación</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text">El instructor aplica de forma individual el cuestionario IE-01. Tiene 15 preguntas: 10 de selección múltiple (una sola respuesta correcta) y 5 de respuesta corta (escriba las ideas clave con sus propias palabras) sobre diagnóstico, verificación, herramientas, interpretación, licenciamiento y seguridad. Puede consultar su bitácora solo si el instructor lo permite. Relación con el RAP: evidencia de conocimiento. Duración: 2 horas directas.</p>
+              <div class="gnote gnote--entrega u-mt-14"><div class="gnote__label">&#128230; &iquest;Qu&eacute; debes entregar?</div>
+                <p>Cuestionario IE-01 resuelto de forma individual. El instructor lo valora con el instrumento IE-01. Esta actividad se realiza en clase con el instructor: no se responde ni se entrega en el portal.</p></div>
+              <div id="ie01334GradeMount"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════ 3.4 · ACTIVIDADES DE TRANSFERENCIA DEL CONOCIMIENTO ═══════════════════════╗ -->
+      <div id="transferencia" class="section-title">3.4 · Actividades de Transferencia del Conocimiento</div>
+      <p class="section-intro">📍 <strong>Fase de transferencia:</strong> verificas el equipo completo y presentas tu registro de resultados.</p>
+      <div class="info-box blue u-mb-16">
+        <p>Aplicar de forma integral y segura la verificación de la operación de un equipo: identificarlo, ejecutar las herramientas, interpretar los resultados y determinar su estado de funcionamiento, presentando evidencias verificables. Metodología pedagógica: aprendizaje basado en problemas (ABP) con trabajo colaborativo. Relación con el RAP: integra los criterios de evaluación del RAP 03. No se exigen reparaciones ni procedimientos destructivos.</p>
+      </div>
+      <div class="card open cat-transferencia">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128640;</div>
+            <div>
+              <h3>Actividades de Transferencia</h3>
+              <p>2 actividades · Duración: 34 horas (26 directas + 8 independientes)</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <article class="story-card u-mt-16">
+                <h3>&#128187; Caso — Papelería y Miscelánea El Nogal, San Pablo de Borbur (Boyacá)</h3>
+                <p>Una semana después del mantenimiento del equipo de contabilidad, la propietaria llama preocupada: el computador tarda mucho en encender, el programa contable se congela, aparece el aviso de poco espacio en el disco y, a veces, el equipo se reinicia solo. Ella pregunta: ¿el computador está dañado?, ¿hay que comprar otro? Usted será el técnico que verifique, con evidencias, cómo está funcionando realmente el sistema.</p>
+              </article>
+          <!-- ───────── Actividad 3.4.1 ───────── -->
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.4.1</span>
+              <span class="activity-title">Laboratorio integrador: verificación de la operación del equipo</span>
+              <span class="mission-chip">Misión integradora</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> Verificar de forma integral la operación del equipo asignado y reunir evidencias verificables. Duración: 5 horas independientes + 18 horas directas.</p>
+              <div class="info-box u-mt-14">
+                <div class="label">&#9200; Trabajo independiente (5 horas, ANTES de la sesión directa)</div>
+                <p>Repase su protocolo y las tablas de la Actividad 3.3, prepare la carpeta de evidencias y organice el orden en que ejecutará las comprobaciones.</p>
+              </div>
+              <article class="support-card u-mt-16">
+                <h3>Instrucciones para la sesión directa</h3>
+                <ol class="u-steps">
+                  <li>En equipos de máximo 3 integrantes, reciban del instructor el equipo asignado (el del caso u otro equivalente) y confirmen que enciende y permite iniciar sesión, sin abrirlo. Repartan roles: uno ejecuta las pruebas, otro anota los datos y otro captura las pantallas; roten los roles con cada herramienta. El laboratorio se hace en varias sesiones: el instructor indicará qué avance se espera en cada una.</li>
+                  <li>Identifiquen el equipo: marca, modelo, sistema operativo y versión, y registren la fecha y hora de la prueba.</li>
+                  <li>Comprueben sus características con CPU-Z (procesador, placa base, memoria) y contrástenlas con Información del sistema.</li>
+                  <li>Ejecuten CrystalDiskInfo y verifiquen el almacenamiento: estado de salud, temperatura y espacio libre por unidad.</li>
+                  <li>Comprueben la memoria y el procesador con el Administrador de tareas y, con autorización del instructor, con el Diagnóstico de memoria de Windows.</li>
+                  <li>Revisen dispositivos y controladores, protección de Windows y estado de activación.</li>
+                  <li>Identifiquen las posibles anomalías, contrasten los datos entre herramientas e interpreten los resultados con los criterios de su protocolo.</li>
+                  <li>Determinen el estado de funcionamiento del equipo (funciona normalmente, funciona con observaciones o requiere atención) y propongan una recomendación segura, sin intervenir el equipo.</li>
+                  <li>Reúnan las evidencias verificables: capturas legibles, tablas diligenciadas y notas de las pruebas, con nombres descriptivos.</li>
+                </ol>
+              </article>
+              <div class="gnote gnote--entrega u-mt-14"><div class="gnote__label">&#128230; &iquest;Qu&eacute; debes entregar?</div>
+                <p>Evidencias de las pruebas realizadas (capturas y tablas) organizadas en la carpeta Evidencias_RAP03_[TuNombre]. Se valora el desempeño con la lista de chequeo IE-02.</p></div>
+              <article class="notes-card u-mt-16">
+                <h3>Registro del laboratorio integrador</h3>
+                <p class="intro-text u-help-note">&#9998; Campos de apoyo del portal para organizar tus respuestas: no reemplazan las instrucciones ni las evidencias de la gu&iacute;a.</p>
+                <label>
+                  <span>1. Roles del equipo y rotación por herramienta</span>
+                  <textarea rows="2" data-store="m3_341_roles" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>2. Identificación del equipo: marca, modelo, sistema operativo y versión; fecha y hora de la prueba</span>
+                  <textarea rows="3" data-store="m3_341_identificacion" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>3. Características con CPU-Z contrastadas con Información del sistema</span>
+                  <textarea rows="3" data-store="m3_341_caracteristicas" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>4. Almacenamiento con CrystalDiskInfo: salud, temperatura y espacio libre por unidad</span>
+                  <textarea rows="3" data-store="m3_341_almacenamiento" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>5. Memoria y procesador (Administrador de tareas y, con autorización, Diagnóstico de memoria)</span>
+                  <textarea rows="3" data-store="m3_341_memoria_cpu" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>6. Dispositivos y controladores, protección de Windows y estado de activación</span>
+                  <textarea rows="3" data-store="m3_341_dispositivos_seguridad" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>7. Posibles anomalías e interpretación según los criterios del protocolo</span>
+                  <textarea rows="4" data-store="m3_341_anomalias" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>8. Estado de funcionamiento (normal, con observaciones o requiere atención) y recomendación segura</span>
+                  <textarea rows="3" data-store="m3_341_estado" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <div class="u-mt-16" id="integrador341DeadlineControls"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarIntegrador341" class="btn-save-response" onclick="actStd_save_integrador341()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_integrador341()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusIntegrador341" class="activity-saved-notice u-saved">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+
+              <div class="u-mt-16" id="driveDeliveryPanel-integrador341"></div>
+            </div>
+          </div>
+
+          <!-- ───────── Actividad 3.4.2 ───────── -->
+          <div class="activity mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.4.2</span>
+              <span class="activity-title">Registro de resultados de diagnóstico y sustentación</span>
+              <span class="mission-chip">Misión integradora</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> Elaborar el registro de resultados de diagnóstico del sistema computacional y sustentarlo en el aula. Duración: 3 horas independientes + 8 horas directas.</p>
+              <div class="info-box u-mt-14">
+                <div class="label">&#9200; Trabajo independiente (3 horas, ANTES de la sesión directa)</div>
+                <p>Elaboren el borrador del registro de resultados de diagnóstico con los datos del laboratorio y preparen una sustentación de máximo 8 minutos.</p>
+              </div>
+              <article class="support-card u-mt-16">
+                <h3>Instrucciones para la sesión directa</h3>
+                <ol class="u-steps">
+                  <li>Con los datos del laboratorio, elaboren el «Registro de resultados de diagnóstico del sistema computacional» con estas secciones: a) Identificación del equipo. b) Herramientas utilizadas. c) Componentes verificados. d) Resultados obtenidos. e) Evidencias de las pruebas (capturas legibles y sin datos personales). f) Interpretación técnica (qué significa cada resultado). g) Anomalías identificadas (o «no se identificaron»). h) Conclusión del funcionamiento y recomendación segura. Es un registro de las pruebas y sus resultados; no es el informe formal de mantenimiento (hoja de vida, orden de trabajo), que se trabaja en el RAP 04.</li>
+                  <li>Incluyan en cada sección las capturas o tablas del laboratorio y asegúrense de que los datos sean coherentes con las pruebas realizadas.</li>
+                  <li>Sustenten el registro ante el instructor y sus compañeros (máximo 8 minutos por equipo). Participan todos los integrantes y explican qué verificaron, qué encontraron, cómo interpretan los resultados y cuál es la conclusión sobre el funcionamiento.</li>
+                  <li>Entreguen el registro en formato digital (PDF o DOCX) con un nombre descriptivo. La sustentación no se publica en plataformas externas: se presenta en el aula.</li>
+                </ol>
+              </article>
+              <div class="gnote gnote--entrega u-mt-14"><div class="gnote__label">&#128230; &iquest;Qu&eacute; debes entregar?</div>
+                <p>Registro de resultados de diagnóstico del sistema computacional (PDF o DOCX), con las evidencias de las pruebas, y la sustentación en el aula. Se valora con la lista de chequeo de producto IE-03.</p></div>
+              <article class="notes-card u-mt-16">
+                <h3>Borrador del registro de resultados (secciones a–h)</h3>
+                <p class="intro-text u-help-note">&#9998; Campos de apoyo del portal para organizar tus respuestas: no reemplazan las instrucciones ni las evidencias de la gu&iacute;a.</p>
+                <label>
+                  <span>a) Identificación del equipo</span>
+                  <textarea rows="2" data-store="m3_342_a_identificacion" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>b) Herramientas utilizadas</span>
+                  <textarea rows="2" data-store="m3_342_b_herramientas" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>c) Componentes verificados</span>
+                  <textarea rows="2" data-store="m3_342_c_componentes" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>d) Resultados obtenidos</span>
+                  <textarea rows="4" data-store="m3_342_d_resultados" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>e) Evidencias de las pruebas (lista de capturas y tablas, sin datos personales)</span>
+                  <textarea rows="3" data-store="m3_342_e_evidencias" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>f) Interpretación técnica (qué significa cada resultado)</span>
+                  <textarea rows="4" data-store="m3_342_f_interpretacion" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>g) Anomalías identificadas (o «no se identificaron»)</span>
+                  <textarea rows="3" data-store="m3_342_g_anomalias" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>h) Conclusión del funcionamiento y recomendación segura</span>
+                  <textarea rows="3" data-store="m3_342_h_conclusion" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <div class="u-mt-16" id="registro342DeadlineControls"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarRegistro342" class="btn-save-response" onclick="actStd_save_registro342()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_registro342()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusRegistro342" class="activity-saved-notice u-saved">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+
+              <div class="u-mt-16" id="driveDeliveryPanel-registro342"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════ MATERIALES DE APOYO ═══════════════════════╗ -->
+      <div id="materiales" class="section-title">Materiales de Apoyo</div>
+      <p class="section-intro">📍 <strong>Consulta aquí</strong> los documentos de referencia y las herramientas que necesitas para las actividades de esta guía.</p>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon u-bg-teal">&#128193;</div>
+            <div>
+              <h3>Documentos y herramientas</h3>
+              <p>Material de apoyo suministrado por el instructor</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr><th>Material</th><th>Actividad</th><th>Enlace</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Manual de usuario de HWMonitor</td><td>3.3.1</td><td><a href="assets/materiales/guia6mant/HWMonitor_Manual_Usuario.pdf" target="_blank" rel="noopener">Abrir PDF</a></td></tr>
+                <tr><td>Reporte de ejemplo con HWMonitor</td><td>3.3.1</td><td><a href="assets/materiales/guia6mant/Anexo_Reporte_Ejemplo_HWMonitor.pdf" target="_blank" rel="noopener">Abrir PDF</a></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="info-box u-mt-14">
+            <div class="label">&#128295; Herramientas de diagnóstico (Actividades 3.3.1 a 3.4.1)</div>
+            <p>Descárguelas solo desde el sitio oficial: <a href="https://www.cpuid.com/softwares/cpu-z.html" target="_blank" rel="noopener">CPU-Z</a> · <a href="https://crystalmark.info/en/software/crystaldiskinfo/" target="_blank" rel="noopener">CrystalDiskInfo</a> · <a href="https://www.cpuid.com/softwares/hwmonitor.html" target="_blank" rel="noopener">HWMonitor</a> (opcional). Las herramientas de Windows (Administrador de dispositivos, Administrador de tareas, msinfo32, mdsched, Seguridad de Windows) ya vienen incluidas.</p>
+          </div>
+          <div class="info-box u-mt-14">
+            <div class="label">&#128194; Material de apoyo que entrega el instructor</div>
+            <p>Estos documentos del material de apoyo de la gu&iacute;a todav&iacute;a no est&aacute;n publicados en el portal. Sol&iacute;citalos a tu instructor:</p>
+            <ul class="u-steps-top"><li>Manual de Mantenimiento de Computadores (Hardware y Software)</li><li>Manual de Solución de Fallas — HP Compaq dc5700 (Escritorio)</li></ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════ EVIDENCIAS ═══════════════════════╗ -->
+      <div id="evidencias" class="section-title">Planteamiento de Evidencias para la Evaluaci&oacute;n</div>
+      <p class="section-intro">📍 <strong>Resumen de lo que debes entregar:</strong> usa esta sección como lista de chequeo final.</p>
+      <div class="gnote gnote--entrega"><div class="gnote__label">📦 Antes de entregar, revisa</div>
+        <ul>
+          <li>Respondiste todas las actividades que se piden como evidencia.</li>
+          <li>Tus archivos tienen tu nombre y número de ficha.</li>
+          <li>Subiste cada evidencia con el botón <em>Entregar a Drive</em> y la ves marcada como <strong>Entregada</strong> en tu control de avance.</li>
+        </ul></div>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon u-bg-blue">&#128202;</div>
+            <div>
+              <h3>Tabla de Evidencias del Proceso Formativo</h3>
+              <p>3 evidencias: conocimiento, desempe&ntilde;o y producto</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr><th>Actividad de Aprendizaje</th><th>Evidencias</th><th>Criterios</th><th>Instrumento</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>3.2.1 + 3.2.2 + 3.3.4 — Estudio de contenidos, protocolo de verificación y evaluación de conocimiento</td>
+                  <td><strong>CONOCIMIENTO:</strong> cuestionario sobre protocolos de verificación, herramientas de diagnóstico de hardware y software, interpretación de resultados, licenciamiento y seguridad durante el diagnóstico.</td>
+                  <td>Ejecuta software utilitario según requerimientos del cliente y normatividad. Verifica el funcionamiento del equipo, según el manual de operación.</td>
+                  <td>IE-01 — Cuestionario de conocimiento (con clave de respuestas del instructor)</td>
+                </tr>
+                <tr>
+                  <td>3.3.1 + 3.3.2 + 3.3.3 + 3.4.1 — Prácticas con CPU-Z, CrystalDiskInfo y herramientas de Windows, y laboratorio integrador</td>
+                  <td><strong>DESEMPEÑO:</strong> ejecución de las pruebas de diagnóstico y verificación del sistema computacional en un equipo real, aplicando el procedimiento técnico y las medidas de seguridad.</td>
+                  <td>Ejecuta software utilitario según requerimientos del cliente y normatividad. Verifica el funcionamiento del equipo, según el manual de operación.</td>
+                  <td>IE-02 — Lista de chequeo de desempeño</td>
+                </tr>
+                <tr>
+                  <td>3.4.2 — Registro de resultados de diagnóstico y sustentación</td>
+                  <td><strong>PRODUCTO:</strong> registro de resultados de diagnóstico del sistema computacional, con herramientas utilizadas, componentes verificados, resultados, evidencias, interpretación, anomalías y conclusión del funcionamiento.</td>
+                  <td>Implementa acciones correctivas según las fallas y procedimientos técnicos establecidos (en esta guía: propone y registra una acción segura, sin reparar el equipo). Verifica el funcionamiento del equipo, según el manual de operación.</td>
+                  <td>IE-03 — Lista de chequeo de producto</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════ GLOSARIO ═══════════════════════╗ -->
+      <div id="glosario" class="section-title">Glosario de T&eacute;rminos</div>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon u-bg-orange">&#128214;</div>
+            <div>
+              <h3>Conceptos clave</h3>
+              <p>16 t&eacute;rminos t&eacute;cnicos</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <dl class="glossary-list">
+            <dt>Diagnóstico</dt><dd>Proceso de identificar, mediante pruebas y herramientas, el estado de funcionamiento de un equipo y las posibles causas de una falla.</dd>
+            <dt>Verificación del funcionamiento</dt><dd>Comprobación, con un procedimiento y datos registrados, de que el equipo opera de acuerdo con lo esperado.</dd>
+            <dt>Anomalía</dt><dd>Dato o comportamiento que se aparta de lo normal esperado para el equipo y que debe registrarse y reportarse.</dd>
+            <dt>Protocolo de verificación</dt><dd>Lista ordenada de comprobaciones, con herramienta, dato por registrar y criterio de normalidad, que permite repetir una verificación de forma consistente.</dd>
+            <dt>S.M.A.R.T.</dt><dd>Sistema de autodiagnóstico de los discos que reporta indicadores de su estado de salud, como temperatura, horas de uso y sectores problemáticos.</dd>
+            <dt>CPU-Z</dt><dd>Programa gratuito que muestra información del procesador, la placa base, la memoria y los gráficos de un equipo.</dd>
+            <dt>CrystalDiskInfo</dt><dd>Programa gratuito que muestra el estado de salud, la temperatura y los atributos S.M.A.R.T. de los discos de almacenamiento.</dd>
+            <dt>Administrador de dispositivos</dt><dd>Herramienta de Windows que lista los dispositivos del equipo y señala los que presentan problemas de controlador.</dd>
+            <dt>Controlador (driver)</dt><dd>Software que permite al sistema operativo comunicarse con un componente de hardware.</dd>
+            <dt>Rendimiento</dt><dd>Medida de qué tan bien responde el equipo; se observa, por ejemplo, con el uso de CPU, memoria y disco.</dd>
+            <dt>Licenciamiento</dt><dd>Condiciones legales de uso del software; el estado de activación de Windows se consulta en Configuración &gt; Sistema &gt; Activación.</dd>
+            <dt>Software utilitario</dt><dd>Programas de apoyo, como las herramientas de diagnóstico y de seguridad, que facilitan la verificación y el mantenimiento lógico de un equipo.</dd>
+            <dt>OEM, retail y volumen</dt><dd>Tipos de licencia de Windows: OEM viene incluida con el computador, retail se compra por separado y volumen se usa para muchos equipos de una organización.</dd>
+            <dt>Captura de pantalla</dt><dd>Imagen de lo que se ve en la pantalla; en Windows se toma con las teclas Windows + Shift + S.</dd>
+            <dt>Bitácora</dt><dd>Cuaderno o documento donde el aprendiz anota apuntes, datos y observaciones de su trabajo.</dd>
+            <dt>Carpeta de evidencias</dt><dd>Carpeta del computador donde el aprendiz guarda, con nombres descriptivos, las capturas y tablas de sus prácticas.</dd>
+          </dl>
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════ REFERENCIAS ═══════════════════════╗ -->
+      <div id="referencias" class="section-title">Referentes Bibliogr&aacute;ficos</div>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon u-bg-purple">&#128279;</div>
+            <div>
+              <h3>Fuentes oficiales y normativas</h3>
+              <p>10 referencias para consulta</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <ol class="references-list u-refs">
+            <li>Servicio Nacional de Aprendizaje — SENA. <em>Diseño Curricular Técnico en Sistemas Teleinformáticos</em>, versión 233108 V1. SENA, Regional Boyacá.</li>
+            <li>Servicio Nacional de Aprendizaje — SENA. <em>Proyecto Formativo 3478260 — Alfabetización Digital, Asesoría Técnica y Ciberseguridad para la Mejora de Actividades Productivas Locales en la Zona de Influencia del CIAS</em>. Regional Boyacá.</li>
+            <li>Cisco Networking Academy. <em>IT Essentials: PC Hardware and Software (v8.0)</em>. <a href="https://www.netacad.com" target="_blank" rel="noopener">netacad.com</a></li>
+            <li>CPUID. <em>CPU-Z: System information software</em>. <a href="https://www.cpuid.com/softwares/cpu-z.html" target="_blank" rel="noopener">cpuid.com</a></li>
+            <li>Crystal Dew World. <em>CrystalDiskInfo: HDD/SSD utility software</em>. <a href="https://crystalmark.info/en/software/crystaldiskinfo/" target="_blank" rel="noopener">crystalmark.info</a></li>
+            <li>Microsoft. <em>msinfo32</em>. Microsoft Learn. <a href="https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/msinfo32" target="_blank" rel="noopener">learn.microsoft.com</a></li>
+            <li>Microsoft Support. <em>Virus and threat protection in the Windows Security app</em>. <a href="https://support.microsoft.com/windows/virus-and-threat-protection-in-the-windows-security-app-1362f4cd-d71a-b52a-0b66-c2820032b65e" target="_blank" rel="noopener">support.microsoft.com</a></li>
+            <li>Servicio Nacional de Aprendizaje — SENA. <em>Biblioteca Virtual SENA</em>. <a href="https://biblioteca.sena.edu.co" target="_blank" rel="noopener">biblioteca.sena.edu.co</a></li>
+            <li>Material de apoyo del RAP 03: Manual de Mantenimiento de Computadores (Hardware y Software); Manual de Solución de Fallas — HP Compaq dc5700 (Escritorio); HWMonitor (manual y reporte de ejemplo).</li>
+            <li>Guía de aprendizaje de referencia: Guía 4 V4 — Software de diagnóstico (Luz Mary Useche Salgado, 2021; actualizaciones 2023), de la cual se tomaron y adaptaron los contenidos del RAP 03.</li>
+          </ol>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

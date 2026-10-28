@@ -15,12 +15,12 @@
   const GUIDE_TITLES = {
     "grupo-10a-guia-01-induccion.html": "Guía 1 - Inducción | Grupo 10A",
     "grupo-10a-guia-02-herramientas-informaticas-digitales.html":
-      "Guía 2 - Operar herramientas informáticas y digitales | Grupo 10A",
+      "Guía 2 - Caracterizar herramientas informáticas según contexto tecnológico de la organización | Grupo 10A",
     "grupo-10a-guia-03-planificar-informacion.html":
       "Guía 3 - Implementar componentes | Grupo 10A",
     "grupo-10b-guia-01-induccion.html": "Guía 1 - Inducción | Grupo 10B",
     "grupo-10b-guia-02-herramientas-informaticas-digitales.html":
-      "Guía 2 - Operar herramientas informáticas y digitales | Grupo 10B",
+      "Guía 2 - Caracterizar herramientas informáticas según contexto tecnológico de la organización | Grupo 10B",
     "grupo-10b-guia-03-planificar-informacion.html":
       "Guía 3 - Implementar componentes | Grupo 10B",
     "grupo-10a-guia-04-taller-integrador.html": "Taller Integrador | Grupo 10A",
@@ -37,12 +37,24 @@
       "Guía 6 - Preparar el mantenimiento de equipos de cómputo | Grupo 10A",
     "grupo-10b-guia-06-mantener-equipos.html":
       "Guía 6 - Preparar el mantenimiento de equipos de cómputo | Grupo 10B",
+    // MANT-2026-10-22:START (generado por generar_guias_mantenimiento.py)
+    "grupo-10a-guia-07-mantenimiento-integral.html": "Guía 7 - Realizar mantenimiento integral de los sistemas de cómputo | Grupo 10A",
+    "grupo-10b-guia-07-mantenimiento-integral.html": "Guía 7 - Realizar mantenimiento integral de los sistemas de cómputo | Grupo 10B",
+    "grupo-10a-guia-08-verificar-operacion.html": "Guía 8 - Verificar la operación del sistema computacional | Grupo 10A",
+    "grupo-10b-guia-08-verificar-operacion.html": "Guía 8 - Verificar la operación del sistema computacional | Grupo 10B",
+    "santa-barbara-10a-guia-05-preparar-mantenimiento.html": "Guía 5 - Preparar el mantenimiento de equipos de cómputo | Grupo 10A",
+    "santa-barbara-10b-guia-05-preparar-mantenimiento.html": "Guía 5 - Preparar el mantenimiento de equipos de cómputo | Grupo 10B",
+    "santa-barbara-10a-guia-06-mantenimiento-integral.html": "Guía 6 - Realizar mantenimiento integral de los sistemas de cómputo | Grupo 10A",
+    "santa-barbara-10b-guia-06-mantenimiento-integral.html": "Guía 6 - Realizar mantenimiento integral de los sistemas de cómputo | Grupo 10B",
+    "santa-barbara-10a-guia-07-verificar-operacion.html": "Guía 7 - Verificar la operación del sistema computacional | Grupo 10A",
+    "santa-barbara-10b-guia-07-verificar-operacion.html": "Guía 7 - Verificar la operación del sistema computacional | Grupo 10B",
+    // MANT-2026-10-22:END
     "grupo-11a-guia-05-herramientas-informaticas-digitales.html":
-      "Guía 5 - Operar herramientas informáticas y digitales | Grupo 11A",
+      "Guía 5 - Caracterizar herramientas informáticas según contexto tecnológico de la organización | Grupo 11A",
     "grupo-11a-guia-06-planificar-informacion.html":
       "Guía 6 - Implementar componentes de las herramientas tecnológicas según procedimientos de la organización | Grupo 11A",
     "grupo-11b-guia-05-herramientas-informaticas-digitales.html":
-      "Guía 5 - Operar herramientas informáticas y digitales | Grupo 11B",
+      "Guía 5 - Caracterizar herramientas informáticas según contexto tecnológico de la organización | Grupo 11B",
     "grupo-11b-guia-06-planificar-informacion.html":
       "Guía 6 - Implementar componentes de las herramientas tecnológicas según procedimientos de la organización | Grupo 11B",
     "grupo-11a-guia-07-planificar-informacion-ciberseguridad.html":
@@ -201,6 +213,78 @@
       pageKey: "10b_guia6mant",
       stateKey: "guia_interactiva_10b_guia6mant_html",
     },
+    // MANT-2026-10-22:START (generado por generar_guias_mantenimiento.py)
+    "grupo-10a-guia-07-mantenimiento-integral.html": {
+      mode: "state-with-activity",
+      total: 47,
+      activityTotal: 8,
+      pageKey: "grupo_10a_guia_07_mantenimiento_integral_html",
+      stateKey: "guia_interactiva_grupo_10a_guia_07_mantenimiento_integral_html",
+    },
+    "grupo-10b-guia-07-mantenimiento-integral.html": {
+      mode: "state-with-activity",
+      total: 47,
+      activityTotal: 8,
+      pageKey: "grupo_10b_guia_07_mantenimiento_integral_html",
+      stateKey: "guia_interactiva_grupo_10b_guia_07_mantenimiento_integral_html",
+    },
+    "grupo-10a-guia-08-verificar-operacion.html": {
+      mode: "state-with-activity",
+      total: 68,
+      activityTotal: 10,
+      pageKey: "grupo_10a_guia_08_verificar_operacion_html",
+      stateKey: "guia_interactiva_grupo_10a_guia_08_verificar_operacion_html",
+    },
+    "grupo-10b-guia-08-verificar-operacion.html": {
+      mode: "state-with-activity",
+      total: 68,
+      activityTotal: 10,
+      pageKey: "grupo_10b_guia_08_verificar_operacion_html",
+      stateKey: "guia_interactiva_grupo_10b_guia_08_verificar_operacion_html",
+    },
+    "santa-barbara-10a-guia-05-preparar-mantenimiento.html": {
+      mode: "state-with-activity",
+      total: 41,
+      activityTotal: 8,
+      pageKey: "santa_barbara_10a_guia_05_preparar_mantenimiento_html",
+      stateKey: "guia_interactiva_santa_barbara_10a_guia_05_preparar_mantenimiento_html",
+    },
+    "santa-barbara-10b-guia-05-preparar-mantenimiento.html": {
+      mode: "state-with-activity",
+      total: 41,
+      activityTotal: 8,
+      pageKey: "santa_barbara_10b_guia_05_preparar_mantenimiento_html",
+      stateKey: "guia_interactiva_santa_barbara_10b_guia_05_preparar_mantenimiento_html",
+    },
+    "santa-barbara-10a-guia-06-mantenimiento-integral.html": {
+      mode: "state-with-activity",
+      total: 47,
+      activityTotal: 8,
+      pageKey: "santa_barbara_10a_guia_06_mantenimiento_integral_html",
+      stateKey: "guia_interactiva_santa_barbara_10a_guia_06_mantenimiento_integral_html",
+    },
+    "santa-barbara-10b-guia-06-mantenimiento-integral.html": {
+      mode: "state-with-activity",
+      total: 47,
+      activityTotal: 8,
+      pageKey: "santa_barbara_10b_guia_06_mantenimiento_integral_html",
+      stateKey: "guia_interactiva_santa_barbara_10b_guia_06_mantenimiento_integral_html",
+    },
+    "santa-barbara-10a-guia-07-verificar-operacion.html": {
+      mode: "state-with-activity",
+      total: 68,
+      activityTotal: 10,
+      pageKey: "santa_barbara_10a_guia_07_verificar_operacion_html",
+      stateKey: "guia_interactiva_santa_barbara_10a_guia_07_verificar_operacion_html",
+    },
+    "santa-barbara-10b-guia-07-verificar-operacion.html": {
+      mode: "state-with-activity",
+      total: 68,
+      activityTotal: 10,
+      pageKey: "santa_barbara_10b_guia_07_verificar_operacion_html",
+      stateKey: "guia_interactiva_santa_barbara_10b_guia_07_verificar_operacion_html",
+    },
+    // MANT-2026-10-22:END
     "grupo-11a-guia-05-herramientas-informaticas-digitales.html": {
       mode: "state-with-activity",
       total: 111,
@@ -436,6 +520,8 @@
         "grupo-10a-guia-04-planificar-informacion-ciberseguridad.html",
         "grupo-10a-guia-05-documentar-gestion-informacion.html",
         "grupo-10a-guia-06-mantener-equipos.html",
+        "grupo-10a-guia-07-mantenimiento-integral.html",
+        "grupo-10a-guia-08-verificar-operacion.html",
         "grupo-10a-guia-10-redes-rap01.html",
         "grupo-10a-guia-11-redes-rap02.html",
         "grupo-10a-guia-12-redes-rap03.html",
@@ -454,6 +540,8 @@
         "grupo-10b-guia-04-planificar-informacion-ciberseguridad.html",
         "grupo-10b-guia-05-documentar-gestion-informacion.html",
         "grupo-10b-guia-06-mantener-equipos.html",
+        "grupo-10b-guia-07-mantenimiento-integral.html",
+        "grupo-10b-guia-08-verificar-operacion.html",
         "grupo-10b-guia-10-redes-rap01.html",
         "grupo-10b-guia-11-redes-rap02.html",
         "grupo-10b-guia-12-redes-rap03.html",
@@ -465,13 +553,13 @@
       inst: "Institucion Educativa Santa Barbara",
       grupo: "10A",
       optionalModules: { pythonOnlinePractice: true, hardwareLab: true },
-      guias: ["grupo-10a-guia-01-induccion.html", "santa-barbara-10a-guia-02-redes-rap01.html", "santa-barbara-10a-guia-03-redes-rap02.html", "santa-barbara-10a-guia-04-redes-rap03.html", "santa-barbara-guia-python.html", "santa-barbara-10a-guia-04-taller-integrador.html"],
+      guias: ["grupo-10a-guia-01-induccion.html", "santa-barbara-10a-guia-02-redes-rap01.html", "santa-barbara-10a-guia-03-redes-rap02.html", "santa-barbara-10a-guia-04-redes-rap03.html", "santa-barbara-10a-guia-05-preparar-mantenimiento.html", "santa-barbara-10a-guia-06-mantenimiento-integral.html", "santa-barbara-10a-guia-07-verificar-operacion.html", "santa-barbara-guia-python.html", "santa-barbara-10a-guia-04-taller-integrador.html"],
     },
     "3441950": {
       inst: "Institucion Educativa Santa Barbara",
       grupo: "10B",
       optionalModules: { pythonOnlinePractice: true, hardwareLab: true },
-      guias: ["grupo-10b-guia-01-induccion.html", "santa-barbara-10b-guia-02-redes-rap01.html", "santa-barbara-10b-guia-03-redes-rap02.html", "santa-barbara-10b-guia-04-redes-rap03.html", "santa-barbara-guia-python.html", "santa-barbara-10b-guia-04-taller-integrador.html"],
+      guias: ["grupo-10b-guia-01-induccion.html", "santa-barbara-10b-guia-02-redes-rap01.html", "santa-barbara-10b-guia-03-redes-rap02.html", "santa-barbara-10b-guia-04-redes-rap03.html", "santa-barbara-10b-guia-05-preparar-mantenimiento.html", "santa-barbara-10b-guia-06-mantenimiento-integral.html", "santa-barbara-10b-guia-07-verificar-operacion.html", "santa-barbara-guia-python.html", "santa-barbara-10b-guia-04-taller-integrador.html"],
     },
     "3168850": {
       inst: "Institucion Educativa Santa Barbara",
@@ -718,8 +806,73 @@
     return "guia.html?g=" + encodeURIComponent(cleanFile);
   }
 
+  // ── Catalogo de presentacion de guias (2026-10-22) ─────────────────────────
+  // Nombre corto por RAP y orden global: primero las guias numeradas en orden
+  // NUMERICO (2 antes que 10), despues el Taller Integrador y al final la
+  // Practica de Python. Solo presentacion: FICHA_MAP, los nombres de archivo,
+  // los stateKey y los documentos de Firestore no cambian. El numero sale del
+  // titulo oficial (GUIDE_TITLES), asi que cada ficha conserva su numeracion.
+  const GUIDE_SHORT_NAMES = [
+    { pattern: /-induccion\.html$/, name: "Inducción" },
+    { pattern: /-herramientas-informaticas-digitales\.html$/, name: "Caracterizar herramientas informáticas" },
+    { pattern: /^grupo-1[01][ab]-guia-0[36]-planificar-informacion\.html$/, name: "Implementar componentes" },
+    { pattern: /-planificar-informacion-ciberseguridad\.html$/, name: "Planificar información de ciberseguridad" },
+    { pattern: /-documentar-gestion-informacion\.html$/, name: "Documentar gestión de información" },
+    { pattern: /-(mantener-equipos|preparar-mantenimiento)\.html$/, name: "Preparar mantenimiento" },
+    { pattern: /-mantenimiento-integral\.html$/, name: "Realizar mantenimiento integral" },
+    { pattern: /-verificar-operacion\.html$/, name: "Verificar operación del sistema" },
+    { pattern: /-redes-rap01\.html$/, name: "Definir parámetros de red" },
+    { pattern: /-redes-rap02\.html$/, name: "Comprobar conectividad de red" },
+    { pattern: /-redes-rap03\.html$/, name: "Documentar acciones de red" },
+    { pattern: /-taller-integrador\.html$/, name: "Taller Integrador", kind: "taller" },
+    { pattern: /-guia-python\.html$/, name: "Práctica de Python", kind: "python" },
+  ];
+  const GUIDE_KIND_RANK = { numbered: 0, taller: 1, python: 2, other: 3 };
+
+  function findGuideShortRule(fileName) {
+    const file = String(fileName || "");
+    return GUIDE_SHORT_NAMES.find((rule) => rule.pattern.test(file)) || null;
+  }
+
+  function getGuideKind(fileName) {
+    const rule = findGuideShortRule(fileName);
+    if (rule && rule.kind) return rule.kind;
+    return getGuideNumber(fileName) != null ? "numbered" : "other";
+  }
+
+  // Numero visible de la guia (del titulo oficial "Guia N - ..."); null para
+  // el Taller Integrador y la Practica de Python, que se muestran sin numero.
+  function getGuideNumber(fileName) {
+    const rule = findGuideShortRule(fileName);
+    if (rule && rule.kind) return null;
+    const match = String(GUIDE_TITLES[fileName] || "").match(/^Gu[ií]a\s+(\d+)/i);
+    return match ? Number(match[1]) : null;
+  }
+
+  function getGuideShortName(fileName) {
+    const rule = findGuideShortRule(fileName);
+    if (rule) return rule.name;
+    return String(GUIDE_TITLES[fileName] || fileName).replace(/^Gu[ií]a\s+\d+\s*-\s*/i, "").replace(/\s*\|\s*[^|]*$/, "").trim();
+  }
+
+  function getGuideDisplayLabel(fileName) {
+    const number = getGuideNumber(fileName);
+    const name = getGuideShortName(fileName);
+    return number == null ? name : "Guía " + number + " — " + name;
+  }
+
+  function sortGuidesForDisplay(files) {
+    return (files || [])
+      .map((file, index) => ({ file, index, kind: getGuideKind(file), number: getGuideNumber(file) }))
+      .sort((a, b) =>
+        (GUIDE_KIND_RANK[a.kind] - GUIDE_KIND_RANK[b.kind]) ||
+        ((a.number == null ? Infinity : a.number) - (b.number == null ? Infinity : b.number)) ||
+        (a.index - b.index))
+      .map((entry) => entry.file);
+  }
+
   function getGuidesForFicha(ficha) {
-    return (getFichaInfo(ficha)?.guias || []).slice();
+    return sortGuidesForDisplay(getFichaInfo(ficha)?.guias || []);
   }
 
   function getGradeFromGroup(grupo) {
@@ -1976,6 +2129,11 @@ window.portalAuth = {
     getStudentGuideProgress,
     getStudentGuideSummaries,
     getGuideTitle,
+    getGuideNumber,
+    getGuideKind,
+    getGuideShortName,
+    getGuideDisplayLabel,
+    sortGuidesForDisplay,
     getGuideHref,
     getGuidesForFicha,
     getSelectionForFicha,
@@ -4166,6 +4324,15 @@ window.portalAuth = {
   // ── Engancha logout ────────────────────────────────────────────────────
   const prevLogout = auth.logout;
   auth.logout = async function logoutWithFirebaseBridge() {
+    // Candidata 2026-10-28: el listado de respuestas guardado en IndexedDB por
+    // el panel admin no sobrevive al cierre de sesion.
+    try {
+      const db = window._firebaseDb;
+      if (db && typeof db.clearAdminListingCache === "function") db.clearAdminListingCache();
+      // Copias locales del calendario por ficha (listCached).
+      const cal = window.academicCalendarCloud;
+      if (cal && typeof cal.clearCache === "function") cal.clearCache(window.localStorage);
+    } catch (_) { /* no bloquea logout local */ }
     try {
       const b = getBridge();
       if (b && bridgeEnabled()) {

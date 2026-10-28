@@ -87,6 +87,12 @@ const PARTIALS = {
   "guia-04-ciberseguridad":    ["partials/guia-04-planificar-ciberseguridad-content.html"],
   "taller-integrador-jfk":     ["partials/taller-integrador-jfk-content.html"],
   "taller-integrador-sb":      ["partials/taller-integrador-sb-content.html"],
+  "guia-05-documentar-gestion": ["partials/guia-05-documentar-gestion-content.html"],
+  "guia-redes-rap03":          ["partials/guia-redes-rap03-content.html"],
+  // Mantenimiento 220501001: las dos guias de cada familia comparten campos (Kennedy y Santa Barbara).
+  "guia-06-mantener-equipos":  ["partials/guia-06-mantener-equipos-content.html", "partials/sb10-guia-05-preparar-mantenimiento-content.html"],
+  "guia-mant-rap02":           ["partials/guia-07-mantenimiento-integral-content.html", "partials/sb10-guia-06-mantenimiento-integral-content.html"],
+  "guia-mant-rap03":           ["partials/guia-08-verificar-operacion-content.html", "partials/sb10-guia-07-verificar-operacion-content.html"],
 };
 
 // Conjunto de campos data-store ACTUALES de una familia (estáticos + dinámicos).

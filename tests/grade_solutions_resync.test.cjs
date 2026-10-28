@@ -246,7 +246,9 @@ test("cableado del panel: boton de re-sincronizacion conectado al flujo correcto
   // por familia (una lectura+escritura por guia, no por actividad).
   assert.match(handler[0], /fieldsByFamily\[up\.family\] = Object\.assign\(fieldsByFamily\[up\.family\] \|\| \{\}, up\.solution\)/);
   assert.match(handler[0], /applyApprovedSolutionToStudentCloud\(user\.usernameKey, family, fieldsByFamily\[family\]\)/);
-  // El cache local se sincroniza con el doc COMPLETO antes de re-guardar
-  // (saveGradesToCloud reemplaza el doc entero; sin esto se pierden notas).
-  assert.match(handler[0], /setAllStudentGrades\?\.\(user\.usernameKey, all\)/);
+  // Lectura ESTRICTA (2026-10-27): si falla, se salta al aprendiz sin escribir;
+  // y lo re-embebido solo cuenta si la nube confirma la escritura.
+  assert.match(handler[0], /gradesManager\.refreshStudentGradesFromCloud\(user\.usernameKey\)/);
+  assert.match(handler[0], /await gradesManager\.flushGradesCloudSync\(user\.usernameKey\)/);
+  assert.doesNotMatch(handler[0], /db\.cloudGetGrades\(/);
 });

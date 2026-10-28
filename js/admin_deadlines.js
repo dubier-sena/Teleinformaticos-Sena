@@ -76,7 +76,7 @@
 
         return `
           <article class="activity-deadline-guide">
-            <h3>${escapeHtml(auth.getGuideTitle(fileName))}</h3>
+            <h3>${escapeHtml((typeof auth.getGuideDisplayLabel === "function" && auth.getGuideDisplayLabel(fileName)) || auth.getGuideTitle(fileName))}</h3>
             <p>Si no defines fecha, esta guia sigue funcionando como ahora. Solo se cierra la actividad cuando guardes una fecha aqui.</p>
             <div class="activity-deadline-grid">${rows}</div>
           </article>
@@ -156,7 +156,7 @@
 
       return `
         <article class="activity-deadline-guide" style="margin-bottom:2rem;">
-          <h3>${escapeHtml(auth.getGuideTitle(fileName))}</h3>
+          <h3>${escapeHtml((typeof auth.getGuideDisplayLabel === "function" && auth.getGuideDisplayLabel(fileName)) || auth.getGuideTitle(fileName))}</h3>
           <div class="answer-table-wrap" style="overflow-x:auto;">
             <table class="answer-table activities-table" style="min-width:600px;">
               <thead><tr>${headerRow}</tr></thead>

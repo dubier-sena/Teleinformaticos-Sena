@@ -381,11 +381,11 @@ const supportDocuments = [
 const supportTools = [
   {
     title: "VirtualBox 7.2.6a para Windows",
-    href: "https://drive.google.com/drive/folders/19AY6LsSHM--2VVXp4_Bzzjz2SVyAiSMc?usp=sharing",
-    type: "Drive",
+    href: "https://www.virtualbox.org/wiki/Downloads",
+    type: "Sitio oficial",
     description:
       "Instalador del hipervisor usado para practicar virtualizacion e instalaciones controladas.",
-    cta: "Abrir en Drive ↗",
+    cta: "Ir a la descarga oficial ↗",
   },
 ];
 

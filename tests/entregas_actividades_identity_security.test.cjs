@@ -141,6 +141,7 @@ function makeSandbox(urlFetchScript) {
                 fields: {
                   ficha: { stringValue: urlFetchScript.profileFicha || "" },
                   fullName: { stringValue: urlFetchScript.profileFullName || "" },
+                  validacionNombre: { stringValue: urlFetchScript.profileValidacion === undefined ? "oficial" : urlFetchScript.profileValidacion },
                 },
               });
             },
@@ -518,4 +519,22 @@ test("Fase 1 -- manipular ficha/fullName en el payload nunca cambia el destino r
   });
   assert.equal(response.ok, false);
   assert.deepEqual(driveCalls, [], "ni la carpeta reclamada ni ninguna otra debe consultarse sin perfil verificado");
+});
+
+// 2026-10-28: una cuenta nueva puede crear SU perfil con cualquier ficha (las reglas solo impiden cambiarla
+// despues). El acuerdo (cedulas de todo el grupo) exige el nombre validado por el administrador.
+test("action agreement: perfil SIN validar (cuenta nueva con ficha elegida) -> rechazado sin leer ningun archivo", () => {
+  for (const validacion of ["", "pendiente"]) {
+    const { sandbox, fileCalls } = makeSandbox({ identityEmail: "nuevo@sena-portal.local", profileStatus: 200, profileFicha: FICHA_ATACANTE_REAL, profileFullName: "Cuenta Nueva", profileValidacion: validacion });
+    const response = callDoPost(sandbox, { idToken: "token-nuevo", action: "agreement" });
+    assert.equal(response.ok, false);
+    assert.match(response.message, /pendiente de validacion/);
+    assert.deepEqual(fileCalls, [], "jamas se lee el archivo del acuerdo");
+  }
+});
+test("entregas de actividades NO exigen validacion (un aprendiz nuevo puede seguir entregando)", () => {
+  const src = require("node:fs").readFileSync(require("node:path").join(__dirname, "..", "apps-script", "entregas_actividades.gs"), "utf8");
+  const i = src.indexOf('if (action === "agreement")'), j = src.indexOf("return handleUploadDelivery(payload);");
+  assert.ok(src.slice(i, j).includes("validacionNombre"), "la exigencia vive solo dentro de la accion agreement");
+  assert.ok(!src.slice(j - 400, j).includes("validacionNombre") || src.slice(i, j).lastIndexOf("validacionNombre") < src.slice(i, j).indexOf("return handleFetchAgreementDocument"));
 });

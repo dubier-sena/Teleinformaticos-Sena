@@ -170,7 +170,7 @@
       ],
     },
     "guia-06-mantener-equipos": {
-      label: "Guía 6 — Preparar el mantenimiento de equipos de cómputo (grado 10, Kennedy)",
+      label: "Guía 6 — Preparar el mantenimiento de equipos de cómputo (grado 10, Kennedy; Guía 5 en Santa Bárbara)",
       activities: [
         { id: "caso311",             label: "3.1.1 Detectives del mantenimiento: caso Ferretería Puerto Real" },
         { id: "plenaria312",         label: "3.1.2 Socialización en plenaria" },
@@ -182,6 +182,36 @@
         { id: "planMantenimiento342", label: "3.4.2 Plan de Mantenimiento Preventivo + Sustentación" },
       ],
     },
+    // MANT-2026-10-22:START (generado por generar_guias_mantenimiento.py)
+    "guia-mant-rap02": {
+      label: "Realizar mantenimiento integral — RAP 02 de 220501001 (grado 10: Guía 7 Kennedy · Guía 6 Santa Bárbara)",
+      activities: [
+        { id: "nogal311", label: "3.1.1 Detectives del mantenimiento: caso Papelería El Nogal" },
+        { id: "plenaria312", label: "3.1.2 Socialización en plenaria" },
+        { id: "bloqueABC321", label: "3.2.1 Estudio de contenidos de mantenimiento integral (Bloques A, B y C) - Tabla resumen" },
+        { id: "inspeccionCru322", label: "3.2.2 Inspección externa e identificación de componentes CRU" },
+        { id: "fisicoCru331", label: "3.3.1 Mantenimiento preventivo físico CRU y aplicación de pasta térmica" },
+        { id: "logico332", label: "3.3.2 Mantenimiento lógico: sistema operativo y software utilitario" },
+        { id: "integrador341", label: "3.4.1 Laboratorio integrador: mantenimiento integral y disposición de RAEE" },
+        { id: "informeFinal342", label: "3.4.2 Informe técnico final y sustentación" },
+      ],
+    },
+    "guia-mant-rap03": {
+      label: "Verificar la operación del sistema — RAP 03 de 220501001 (grado 10: Guía 8 Kennedy · Guía 7 Santa Bárbara)",
+      activities: [
+        { id: "nogal311", label: "3.1.1 Qué le pasa al computador de El Nogal" },
+        { id: "plenaria312", label: "3.1.2 Socialización en plenaria" },
+        { id: "bloquesABC321", label: "3.2.1 Estudio de contenidos de diagnóstico y verificación (Bloques A, B y C) - Tabla resumen" },
+        { id: "protocolo322", label: "3.2.2 Elaboración del protocolo de verificación" },
+        { id: "cpuz331", label: "3.3.1 Procesador, memoria y características del sistema con CPU-Z" },
+        { id: "crystal332", label: "3.3.2 Estado del almacenamiento con CrystalDiskInfo" },
+        { id: "windows333", label: "3.3.3 Dispositivos, rendimiento y memoria con herramientas de Windows" },
+        { id: "ie01334", label: "3.3.4 Evaluación de conocimiento: cuestionario IE-01", mount: "#ie01334GradeMount" },
+        { id: "integrador341", label: "3.4.1 Laboratorio integrador: verificación de la operación del equipo" },
+        { id: "registro342", label: "3.4.2 Registro de resultados de diagnóstico y sustentación" },
+      ],
+    },
+    // MANT-2026-10-22:END
     "guia-08-documentar-gestion": {
       label: "Guía 8 — Documentar la gestión de la información (grado 11)",
       activities: [
@@ -405,25 +435,81 @@
     var db = window._firebaseDb;
     return db && typeof db.cloudGetGrades === "function" ? db : null;
   }
+
+  // Lectura para el lado APRENDIZ (solo pinta badges / bloquea su actividad;
+  // nunca escribe notas). Devuelve el mapa de notas, o null si NO se pudo
+  // leer -- en ese caso el llamador conserva el cache local en vez de
+  // vaciarlo. cloudGetGrades devuelve {} tambien cuando la lectura falla, asi
+  // que primero se intenta la lectura estricta; si esa falla se acepta la de
+  // cloudGetGrades (que tiene failover a la replica de Drive) solo cuando trae
+  // datos, porque su {} es ambiguo.
+  // Optimizacion 2026-10-28: las insignias (renderGradeBadges) y el bloqueo
+  // (reflectGradesIntoGuideState) pedian las notas por separado en la misma
+  // carga de la guia. Se comparte UNA lectura durante FETCH_REUSE_MS. Solo se
+  // reutilizan resultados confirmados (mapa de notas); un null (no se pudo
+  // leer) no se guarda y la siguiente llamada vuelve a consultar.
+  var FETCH_REUSE_MS = 15000;
+  var gradesFetchMemo = {};
   function fetchGradesFromCloud(usernameKey) {
+    var memo = gradesFetchMemo[usernameKey];
+    if (memo && (memo.pending || (Date.now() - memo.at) < FETCH_REUSE_MS)) return memo.promise;
+    var promise = fetchGradesFromCloudUncached(usernameKey);
+    var entry = { promise: promise, pending: true, at: 0 };
+    gradesFetchMemo[usernameKey] = entry;
+    promise.then(function (result) {
+      entry.pending = false;
+      entry.at = Date.now();
+      if (!result) delete gradesFetchMemo[usernameKey];
+    });
+    return promise;
+  }
+  function fetchGradesFromCloudUncached(usernameKey) {
     var db = gradesCloudDb();
     if (!db) return Promise.resolve(null);
-    return Promise.resolve(db.cloudGetGrades(usernameKey)).catch(function () { return null; });
+    var legacy = function () {
+      return Promise.resolve(db.cloudGetGrades(usernameKey)).then(function (all) {
+        return all && typeof all === "object" && Object.keys(all).length ? all : null;
+      });
+    };
+    var read = typeof db.cloudGetGradesStrict === "function"
+      ? Promise.resolve(db.cloudGetGradesStrict(usernameKey)).then(function (r) {
+          if (r && (r.status === "found" || r.status === "missing")) return r.grades || {};
+          return legacy();
+        })
+      : Promise.resolve(db.cloudGetGrades(usernameKey));
+    return read.catch(function () { return null; });
   }
-  // cloudSaveGrades hace un PATCH que REEMPLAZA el doc de notas completo (no
-  // un merge granular por actividad). Si el admin califica varias actividades
-  // seguidas del mismo aprendiz, cada clic disparaba su propia escritura
-  // fire-and-forget; la red no garantiza el orden de llegada, asi que una
-  // escritura mas vieja (con menos notas) podia aterrizar DESPUES de una mas
-  // nueva y pisarla -- perdiendo notas ya guardadas. Detectado 2026-07-24:
-  // calificar las 4 actividades de Guia 5 seguidas dejaba solo 2 guardadas.
-  // Se agrupan (debounce) por aprendiz en una sola escritura final con el
-  // snapshot local mas reciente (siempre completo, igual que el
-  // scheduleCloudSync/flushCloudSync que ya usan las guias del lado aprendiz).
+
+  // ── Escritura de notas (panel admin) ────────────────────────────────────────
+  // Antes: cada cambio guardaba el cache local COMPLETO del aprendiz y
+  // cloudSaveGrades REEMPLAZABA el documento de la nube con el. Si la lectura
+  // previa habia fallado, ese cache estaba vacio (cloudGetGrades devuelve {}
+  // tambien ante un error) y una sola nota nueva borraba en la nube las notas
+  // de todas las demas guias (hallazgo critico 2026-10-23; reproduccion en
+  // memory/respaldos/guias-2026-10-23/hallazgos).
+  // Ahora cada cambio es una OPERACION por actividad ({ family, set, del }) que
+  // se encola y se aplica SOBRE UNA LECTURA FRESCA Y VERIFICADA de la nube
+  // (cloudUpdateGradesStrict): lectura fallida/incompleta => cero escrituras;
+  // otro equipo escribio en medio => se relee y se reaplica; solo viajan las
+  // familias tocadas. La cola se persiste en este equipo, asi que un fallo no
+  // pierde la nota: queda pendiente y se reintenta.
+  // El debounce por aprendiz se conserva (varios clics seguidos = una
+  // escritura), igual que el ajuste del 2026-07-24 (Guia 5, 4 notas seguidas).
   var GRADES_CLOUD_SYNC_DELAY_MS = 900;
+  var GRADES_PENDING_STORAGE_KEY = "sena_portal_grades_pending_ops_v1";
+  var GRADES_RETRY_DELAYS_MS = [15000, 30000, 60000, 120000, 300000];
+  // Reintentos AUTOMATICOS por aprendiz (~24 min en total) antes de esperar a
+  // una accion del instructor ("Reintentar ahora", volver la conexion o un
+  // nuevo cambio): sin tope, un dia de cuota agotada repetia lecturas cada
+  // 5 min por cada aprendiz con cambios pendientes mientras el panel siguiera
+  // abierto. El cambio NO se descarta: sigue pendiente en este equipo.
+  var GRADES_MAX_AUTO_RETRIES = 8;
   var gradesCloudSyncTimers = {};
-  var gradesCloudSyncPending = {};
   var gradesCloudSyncInFlight = {};
+  var gradesRetryTimers = {};
+  var gradesRetryAttempts = {};
+  var gradesOpWaiters = {};
+  var gradesOpSeq = 0;
   // setTimeout/clearTimeout no existen en el sandbox minimo de vm.createContext
   // que usan varios tests de este archivo (sin browser real): sin este
   // fallback, saveGradesToCloud reventaba ahi con "setTimeout is not defined".
@@ -432,34 +518,194 @@
     : function (fn) { fn(); return 0; };
   var cancelTimeout = typeof clearTimeout === "function" ? clearTimeout : function () {};
 
+  function loadPendingGradeOps() {
+    try {
+      var parsed = readJson(localStorage.getItem(GRADES_PENDING_STORAGE_KEY), {});
+      return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+    } catch (e) { return {}; }
+  }
+  var gradesPendingOps = loadPendingGradeOps();
+
+  function persistPendingGradeOps() {
+    var clean = {};
+    Object.keys(gradesPendingOps).forEach(function (user) {
+      if (gradesPendingOps[user] && gradesPendingOps[user].length) clean[user] = gradesPendingOps[user];
+    });
+    gradesPendingOps = clean;
+    try {
+      if (Object.keys(clean).length) localStorage.setItem(GRADES_PENDING_STORAGE_KEY, JSON.stringify(clean));
+      else localStorage.removeItem(GRADES_PENDING_STORAGE_KEY);
+    } catch (e) { /* sin almacenamiento: la cola sigue en memoria */ }
+  }
+
+  function applyGradeOp(all, op) {
+    var family = Object.assign({}, all[op.family] || {});
+    Object.keys(op.set || {}).forEach(function (k) { family[k] = op.set[k]; });
+    (op.del || []).forEach(function (k) { delete family[k]; });
+    all[op.family] = family;
+    return all;
+  }
+
+  function withPendingOps(usernameKey, grades) {
+    var all = JSON.parse(JSON.stringify(grades || {}));
+    (gradesPendingOps[usernameKey] || []).forEach(function (op) { applyGradeOp(all, op); });
+    return all;
+  }
+
+  function readLocalGrades(usernameKey) {
+    var key = getGradesKey(usernameKey);
+    return key ? readJson(localStorage.getItem(key), {}) : {};
+  }
+
+  function emitGradesSyncEvent(detail) {
+    if (typeof window === "undefined" || typeof window.dispatchEvent !== "function" || typeof CustomEvent !== "function") return;
+    try { window.dispatchEvent(new CustomEvent("grades-sync-status", { detail: detail })); } catch (e) { /* no critico */ }
+  }
+
+  function describeGradesSyncFailure(result) {
+    var reason = String((result && result.reason) || "");
+    var status = String((result && result.status) || "");
+    if (status === "unsupported") return "El modulo de la nube esta desactualizado. Recargue la pagina (Ctrl+F5) antes de calificar.";
+    if (status === "conflict-exhausted") return "Otro equipo esta modificando las notas de este aprendiz al mismo tiempo.";
+    if (reason === "incomplete") return "Las notas guardadas en la nube llegaron incompletas; no se escribio nada para no perder informacion.";
+    if (reason === "http-429") return "La cuota diaria de Firestore esta agotada.";
+    if (reason === "write-budget") return "Se alcanzo el limite diario de escrituras de este equipo.";
+    if (reason === "http-401" || reason === "http-403") return "Firestore rechazo el permiso (la sesion de administrador no esta autorizada o expiro).";
+    if (reason === "network") return "No hay conexion con Firestore.";
+    if (/^http-5\d\d$/.test(reason) || reason === "http-408") return "El servidor de Firestore no respondio (falla temporal del servicio).";
+    if (reason === "unavailable") return "Firestore no esta disponible (sin sesion en la nube o en pausa tras errores).";
+    if (status === "read-failed") return "No se pudieron leer las notas actuales del aprendiz.";
+    return "No se pudo confirmar el guardado en la nube.";
+  }
+
+  function settleGradeOps(ops, outcome) {
+    ops.forEach(function (op) {
+      var waiters = gradesOpWaiters[op.id] || [];
+      delete gradesOpWaiters[op.id];
+      waiters.forEach(function (resolve) { resolve(outcome); });
+    });
+  }
+
+  function isRetryableGradesFailure(result) {
+    if (!result || result.status === "aborted" || result.status === "unsupported") return false;
+    return result.reason !== "incomplete";
+  }
+
+  function scheduleGradesRetry(usernameKey) {
+    if (gradesRetryTimers[usernameKey]) return;
+    var attempt = gradesRetryAttempts[usernameKey] || 0;
+    if (attempt >= GRADES_MAX_AUTO_RETRIES) return;
+    var delay = GRADES_RETRY_DELAYS_MS[Math.min(attempt, GRADES_RETRY_DELAYS_MS.length - 1)];
+    gradesRetryAttempts[usernameKey] = attempt + 1;
+    // Sin setTimeout real (sandbox de tests) no se programa nada: reintentar
+    // en el acto entraria en un ciclo sincrono.
+    if (typeof setTimeout !== "function") return;
+    gradesRetryTimers[usernameKey] = setTimeout(function () {
+      gradesRetryTimers[usernameKey] = null;
+      flushGradesCloudSync(usernameKey);
+    }, delay);
+  }
+
+  // -> Promise<{ ok, status, reason, message, pending }>
   function flushGradesCloudSync(usernameKey) {
     if (gradesCloudSyncTimers[usernameKey]) {
       cancelTimeout(gradesCloudSyncTimers[usernameKey]);
       gradesCloudSyncTimers[usernameKey] = null;
     }
-    var payload = gradesCloudSyncPending[usernameKey];
-    if (!payload) return;
-    var db = gradesCloudDb();
-    if (!db || typeof db.cloudSaveGrades !== "function") return;
-    if (gradesCloudSyncInFlight[usernameKey]) return; // ya hay una escritura en curso; se reintenta al terminar
-    delete gradesCloudSyncPending[usernameKey];
-    gradesCloudSyncInFlight[usernameKey] = true;
-    Promise.resolve(db.cloudSaveGrades(usernameKey, payload))
-      .catch(function () {})
+    var ops = (gradesPendingOps[usernameKey] || []).slice();
+    if (!ops.length) return Promise.resolve({ ok: true, status: "saved", reason: "no-changes", pending: 0 });
+    if (gradesCloudSyncInFlight[usernameKey]) return gradesCloudSyncInFlight[usernameKey];
+    var db = window._firebaseDb;
+    if (!db || typeof db.cloudUpdateGradesStrict !== "function") {
+      // NUNCA se cae a cloudSaveGrades: sin la lectura verificada no hay
+      // forma segura de escribir. La nota queda pendiente en este equipo.
+      var unsupported = { ok: false, status: "unsupported", reason: "no-strict-api", pending: ops.length };
+      unsupported.message = describeGradesSyncFailure(unsupported);
+      settleGradeOps(ops, unsupported);
+      emitGradesSyncEvent({ usernameKey: usernameKey, result: unsupported });
+      return Promise.resolve(unsupported);
+    }
+    var families = [];
+    ops.forEach(function (op) { if (families.indexOf(op.family) === -1) families.push(op.family); });
+    var run = Promise.resolve()
       .then(function () {
-        gradesCloudSyncInFlight[usernameKey] = false;
+        return db.cloudUpdateGradesStrict(usernameKey, function (cloudGrades) {
+          ops.forEach(function (op) { applyGradeOp(cloudGrades, op); });
+          return { grades: cloudGrades, families: families };
+        });
+      })
+      .catch(function () { return { ok: false, status: "write-failed", reason: "exception" }; })
+      .then(function (result) {
+        gradesCloudSyncInFlight[usernameKey] = null;
+        var outcome = Object.assign({}, result || { ok: false, status: "write-failed", reason: "unknown" });
+        if (outcome.ok) {
+          var sentIds = ops.map(function (op) { return op.id; });
+          gradesPendingOps[usernameKey] = (gradesPendingOps[usernameKey] || []).filter(function (op) {
+            return sentIds.indexOf(op.id) === -1;
+          });
+          persistPendingGradeOps();
+          gradesRetryAttempts[usernameKey] = 0;
+          // El cache pasa a ser la version CONFIRMADA de la nube (+ lo que siga
+          // pendiente), no lo que este equipo creia tener.
+          if (outcome.grades) {
+            rememberVerifiedGrades(usernameKey, "found", outcome.grades);
+            setLocalGradesCache(usernameKey, withPendingOps(usernameKey, outcome.grades));
+          }
+          outcome.message = "";
+        } else {
+          outcome.message = describeGradesSyncFailure(outcome);
+          if (isRetryableGradesFailure(outcome)) scheduleGradesRetry(usernameKey);
+        }
+        outcome.pending = (gradesPendingOps[usernameKey] || []).length;
+        delete outcome.grades;
+        settleGradeOps(ops, outcome);
+        emitGradesSyncEvent({ usernameKey: usernameKey, result: outcome });
         // Llegaron mas cambios mientras esta escritura estaba en vuelo: sincroniza de nuevo.
-        if (gradesCloudSyncPending[usernameKey]) flushGradesCloudSync(usernameKey);
+        if (outcome.ok && outcome.pending) flushGradesCloudSync(usernameKey);
+        return outcome;
       });
+    gradesCloudSyncInFlight[usernameKey] = run;
+    return run;
   }
 
   function flushAllPendingGradesCloudSync() {
-    Object.keys(gradesCloudSyncPending).forEach(flushGradesCloudSync);
+    Object.keys(gradesPendingOps).forEach(flushGradesCloudSync);
+  }
+
+  // Reintento manual (boton del panel / al volver la conexion).
+  function retryPendingGradesSync(usernameKey) {
+    var users = usernameKey ? [usernameKey] : Object.keys(gradesPendingOps);
+    return Promise.all(users.map(function (user) {
+      if (gradesRetryTimers[user]) { cancelTimeout(gradesRetryTimers[user]); gradesRetryTimers[user] = null; }
+      gradesRetryAttempts[user] = 0;
+      return flushGradesCloudSync(user);
+    }));
+  }
+
+  // Actividades con un cambio aun NO confirmado en la nube, como
+  // { "familia": { actividad: true } }: la grilla las marca al repintar para
+  // que una nota pendiente nunca se vea igual que una guardada.
+  function getPendingGradeActivities(usernameKey) {
+    var out = {};
+    (gradesPendingOps[usernameKey] || []).forEach(function (op) {
+      Object.keys(op.set || {}).concat(op.del || []).forEach(function (k) {
+        var act = String(k).split(":")[0];
+        out[op.family] = out[op.family] || {};
+        out[op.family][act] = true;
+      });
+    });
+    return out;
+  }
+
+  function getPendingGradesCount(usernameKey) {
+    if (usernameKey) return (gradesPendingOps[usernameKey] || []).length;
+    return Object.keys(gradesPendingOps).reduce(function (n, user) { return n + gradesPendingOps[user].length; }, 0);
   }
 
   if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
     window.addEventListener("pagehide", flushAllPendingGradesCloudSync);
     window.addEventListener("beforeunload", flushAllPendingGradesCloudSync);
+    window.addEventListener("online", function () { retryPendingGradesSync(); });
   }
   if (typeof document !== "undefined" && typeof document.addEventListener === "function") {
     document.addEventListener("visibilitychange", function () {
@@ -467,74 +713,146 @@
     });
   }
 
-  function saveGradesToCloud(usernameKey, allGrades) {
-    if (!usernameKey) return;
-    gradesCloudSyncPending[usernameKey] = allGrades;
+  // Encola una operacion, la refleja en el cache local (para que la grilla la
+  // muestre al instante) y programa la escritura. -> Promise del resultado REAL.
+  function queueGradeOp(usernameKey, family, set, del) {
+    if (!usernameKey || !family) {
+      return Promise.resolve({ ok: false, status: "aborted", reason: "invalid-args", message: "Faltan datos del aprendiz o de la guia." });
+    }
+    gradesOpSeq += 1;
+    var op = {
+      id: Date.now().toString(36) + "-" + gradesOpSeq,
+      family: String(family),
+      set: set || {},
+      del: del || [],
+      at: new Date().toISOString(),
+    };
+    if (!gradesPendingOps[usernameKey]) gradesPendingOps[usernameKey] = [];
+    gradesPendingOps[usernameKey].push(op);
+    persistPendingGradeOps();
+    setLocalGradesCache(usernameKey, applyGradeOp(readLocalGrades(usernameKey), op));
+    var done = new Promise(function (resolve) {
+      gradesOpWaiters[op.id] = (gradesOpWaiters[op.id] || []).concat([resolve]);
+    });
     if (gradesCloudSyncTimers[usernameKey]) cancelTimeout(gradesCloudSyncTimers[usernameKey]);
     gradesCloudSyncTimers[usernameKey] = scheduleTimeout(function () {
       flushGradesCloudSync(usernameKey);
     }, GRADES_CLOUD_SYNC_DELAY_MS);
+    return done;
   }
-  function setAllStudentGrades(usernameKey, allGrades) {
+
+  function setLocalGradesCache(usernameKey, allGrades) {
     var key = getGradesKey(usernameKey);
     if (key) safeSetLocal(key, JSON.stringify(allGrades || {}));
   }
 
+  // Reemplaza el cache local con datos YA VERIFICADOS de la nube. Las
+  // operaciones aun pendientes se vuelven a aplicar encima para que la grilla
+  // no "pierda" una nota que todavia no llego a la nube.
+  function setAllStudentGrades(usernameKey, allGrades) {
+    if (!allGrades || typeof allGrades !== "object" || Array.isArray(allGrades)) return;
+    setLocalGradesCache(usernameKey, withPendingOps(usernameKey, allGrades));
+  }
+
+  // Panel admin: lee la nube de forma ESTRICTA. Solo si la lectura se confirma
+  // (found / missing) se actualiza el cache. -> Promise<{ status, grades, reason, message }>
+  // status "error": no se pudo leer -- grades es null y el cache NO se toca.
+  // Optimizacion 2026-10-28: ultima lectura VERIFICADA (found/missing) por
+  // aprendiz, o la version confirmada por la nube tras una escritura exitosa.
+  // La grilla del panel la reutiliza al cambiar de guia dentro de una ficha
+  // (opts.maxAgeMs) en vez de releer los 30 documentos: cada doc de notas ya
+  // trae TODAS las guias. No afecta a la proteccion: toda escritura sigue
+  // releyendo la nube con precondicion (cloudUpdateGradesStrict). Una lectura
+  // fallida borra lo recordado (nunca se reutiliza algo no verificado).
+  var verifiedGradeReads = {};
+  function rememberVerifiedGrades(usernameKey, status, grades) {
+    verifiedGradeReads[usernameKey] = { at: Date.now(), status: status, grades: JSON.parse(JSON.stringify(grades || {})) };
+  }
+
+  function refreshStudentGradesFromCloud(usernameKey, opts) {
+    var maxAgeMs = Number(opts && opts.maxAgeMs) || 0;
+    var recent = verifiedGradeReads[usernameKey];
+    if (maxAgeMs > 0 && recent && (Date.now() - recent.at) < maxAgeMs) {
+      var reusedView = withPendingOps(usernameKey, recent.grades);
+      setLocalGradesCache(usernameKey, reusedView);
+      return Promise.resolve({ status: recent.status, grades: reusedView, reason: "", message: "", reused: true });
+    }
+    var db = window._firebaseDb;
+    if (!db || typeof db.cloudGetGradesStrict !== "function") {
+      var unsupported = { status: "error", grades: null, reason: "no-strict-api" };
+      unsupported.message = describeGradesSyncFailure({ status: "unsupported" });
+      return Promise.resolve(unsupported);
+    }
+    return Promise.resolve(db.cloudGetGradesStrict(usernameKey))
+      .catch(function () { return { status: "error", reason: "exception" }; })
+      .then(function (r) {
+        if (r && (r.status === "found" || r.status === "missing")) {
+          rememberVerifiedGrades(usernameKey, r.status, r.grades || {});
+          var view = withPendingOps(usernameKey, r.grades || {});
+          setLocalGradesCache(usernameKey, view);
+          return { status: r.status, grades: view, reason: "", message: "" };
+        }
+        delete verifiedGradeReads[usernameKey];
+        var failed = { status: "error", grades: null, reason: (r && r.reason) || "unknown" };
+        failed.message = describeGradesSyncFailure({ status: "read-failed", reason: failed.reason });
+        return failed;
+      });
+  }
+
+  // Compatibilidad: firma historica. Ya no envia el mapa completo.
+  function saveGradesToCloud(usernameKey) {
+    return flushGradesCloudSync(usernameKey);
+  }
+
   function getStudentGrades(usernameKey, guideFamily) {
-    var key = getGradesKey(usernameKey);
-    if (!key) return {};
-    var all = readJson(localStorage.getItem(key), {});
+    var all = readLocalGrades(usernameKey);
     return guideFamily ? (all[guideFamily] || {}) : all;
   }
 
+  // Reemplaza las notas de UNA familia por `gradesObj` (lo usa la carga por
+  // Excel, que ya parte de la familia leida de la nube). Las demas familias
+  // no se tocan.
   function setStudentGrades(usernameKey, guideFamily, gradesObj) {
-    var key = getGradesKey(usernameKey);
-    if (!key) return;
-    var all = readJson(localStorage.getItem(key), {});
-    all[guideFamily] = Object.assign({}, gradesObj);
-    safeSetLocal(key, JSON.stringify(all));
-    saveGradesToCloud(usernameKey, all);
+    if (!getGradesKey(usernameKey)) return Promise.resolve({ ok: false, status: "aborted", reason: "no-storage-key" });
+    var next = Object.assign({}, gradesObj);
+    var current = getStudentGrades(usernameKey, guideFamily);
+    var del = Object.keys(current).filter(function (k) { return !(k in next); });
+    return queueGradeOp(usernameKey, guideFamily, next, del);
   }
 
   function setStudentActivityGrade(usernameKey, guideFamily, activityId, grade) {
-    var key = getGradesKey(usernameKey);
-    if (!key) return;
-    var all = readJson(localStorage.getItem(key), {});
-    if (!all[guideFamily]) all[guideFamily] = {};
+    if (!getGradesKey(usernameKey)) return Promise.resolve({ ok: false, status: "aborted", reason: "no-storage-key" });
     if (grade === "" || grade === null || grade === undefined) {
-      delete all[guideFamily][activityId];
-    } else {
-      all[guideFamily][activityId] = grade;
+      return queueGradeOp(usernameKey, guideFamily, {}, [activityId]);
     }
-    safeSetLocal(key, JSON.stringify(all));
-    saveGradesToCloud(usernameKey, all);
+    var set = {};
+    set[activityId] = grade;
+    return queueGradeOp(usernameKey, guideFamily, set, []);
   }
 
   // Admin: fija la nota Y embebe (o limpia) la solucion modelo dentro del doc de notas
   // del aprendiz, en UNA sola escritura. La solucion solo se embebe cuando la nota es "A".
   // El aprendiz solo lee su propio doc, asi ve unicamente la solucion de SU actividad
   // aprobada; el banco maestro nunca llega a su cliente.
+  // -> Promise<{ ok, status, reason, message }> con el resultado REAL en la nube.
   function setStudentActivityGradeAndSolution(usernameKey, guideFamily, activityId, grade, solutionObj) {
-    var key = getGradesKey(usernameKey);
-    if (!key) return;
-    var all = readJson(localStorage.getItem(key), {});
-    if (!all[guideFamily]) all[guideFamily] = {};
+    if (!getGradesKey(usernameKey)) return Promise.resolve({ ok: false, status: "aborted", reason: "no-storage-key" });
     var solKey = activityId + ":solution";
     var gradedAtKey = activityId + ":gradedAt";
+    var set = {};
+    var del = [];
     if (grade === "" || grade === null || grade === undefined) {
-      delete all[guideFamily][activityId];
-      delete all[guideFamily][gradedAtKey];
+      del.push(activityId, gradedAtKey);
     } else {
-      all[guideFamily][activityId] = grade;
-      all[guideFamily][gradedAtKey] = new Date().toISOString();
+      set[activityId] = grade;
+      set[gradedAtKey] = new Date().toISOString();
     }
     if (grade === "A" && solutionObj && typeof solutionObj === "object" && Object.keys(solutionObj).length) {
-      all[guideFamily][solKey] = solutionObj;
+      set[solKey] = solutionObj;
     } else {
-      delete all[guideFamily][solKey];   // sin "A" => sin solucion embebida
+      del.push(solKey);   // sin "A" => sin solucion embebida
     }
-    safeSetLocal(key, JSON.stringify(all));
-    saveGradesToCloud(usernameKey, all);
+    return queueGradeOp(usernameKey, guideFamily, set, del);
   }
 
   // Admin (re-sincronizacion): embebe la solucion modelo en una nota "A" YA
@@ -542,32 +860,26 @@
   // notas puestas antes de importar el banco a Firestore, o cuya solucion
   // embebida quedo vieja porque el banco crecio despues (ej. el checklist de
   // competencias digitales agregado el jul-15).
+  // Devuelve true si encolo el cambio; el resultado en la nube se consulta con
+  // flushGradesCloudSync(usernameKey).
   function embedStudentActivitySolution(usernameKey, guideFamily, activityId, solutionObj) {
-    var key = getGradesKey(usernameKey);
-    if (!key) return false;
-    var all = readJson(localStorage.getItem(key), {});
-    var fam = all[guideFamily];
+    if (!getGradesKey(usernameKey)) return false;
+    var fam = getStudentGrades(usernameKey, guideFamily);
     if (!fam || fam[activityId] !== "A") return false;
     if (!solutionObj || typeof solutionObj !== "object" || !Object.keys(solutionObj).length) return false;
-    fam[activityId + ":solution"] = solutionObj;
-    safeSetLocal(key, JSON.stringify(all));
-    saveGradesToCloud(usernameKey, all);
+    var set = {};
+    set[activityId + ":solution"] = solutionObj;
+    queueGradeOp(usernameKey, guideFamily, set, []);
     return true;
   }
 
   function setStudentActivityObservation(usernameKey, guideFamily, activityId, obs) {
-    var key = getGradesKey(usernameKey);
-    if (!key) return;
-    var all = readJson(localStorage.getItem(key), {});
-    if (!all[guideFamily]) all[guideFamily] = {};
+    if (!getGradesKey(usernameKey)) return Promise.resolve({ ok: false, status: "aborted", reason: "no-storage-key" });
     var obsKey = activityId + ":obs";
-    if (!obs || !String(obs).trim()) {
-      delete all[guideFamily][obsKey];
-    } else {
-      all[guideFamily][obsKey] = String(obs).trim().slice(0, 500);
-    }
-    safeSetLocal(key, JSON.stringify(all));
-    saveGradesToCloud(usernameKey, all);
+    if (!obs || !String(obs).trim()) return queueGradeOp(usernameKey, guideFamily, {}, [obsKey]);
+    var set = {};
+    set[obsKey] = String(obs).trim().slice(0, 500);
+    return queueGradeOp(usernameKey, guideFamily, set, []);
   }
 
   function getStudentActivityObservation(usernameKey, guideFamily, activityId) {
@@ -718,6 +1030,18 @@
     "grupo-10b-guia-05-documentar-gestion-informacion.html": "guia-05-documentar-gestion",
     "grupo-10a-guia-06-mantener-equipos.html": "guia-06-mantener-equipos",
     "grupo-10b-guia-06-mantener-equipos.html": "guia-06-mantener-equipos",
+    // MANT-2026-10-22:START (generado por generar_guias_mantenimiento.py)
+    "grupo-10a-guia-07-mantenimiento-integral.html": "guia-mant-rap02",
+    "grupo-10b-guia-07-mantenimiento-integral.html": "guia-mant-rap02",
+    "grupo-10a-guia-08-verificar-operacion.html": "guia-mant-rap03",
+    "grupo-10b-guia-08-verificar-operacion.html": "guia-mant-rap03",
+    "santa-barbara-10a-guia-05-preparar-mantenimiento.html": "guia-06-mantener-equipos",
+    "santa-barbara-10b-guia-05-preparar-mantenimiento.html": "guia-06-mantener-equipos",
+    "santa-barbara-10a-guia-06-mantenimiento-integral.html": "guia-mant-rap02",
+    "santa-barbara-10b-guia-06-mantenimiento-integral.html": "guia-mant-rap02",
+    "santa-barbara-10a-guia-07-verificar-operacion.html": "guia-mant-rap03",
+    "santa-barbara-10b-guia-07-verificar-operacion.html": "guia-mant-rap03",
+    // MANT-2026-10-22:END
     "grupo-11a-guia-05-herramientas-informaticas-digitales.html": "guia-05-herramientas",
     "grupo-11b-guia-05-herramientas-informaticas-digitales.html": "guia-05-herramientas",
     "grupo-11a-guia-06-planificar-informacion.html": "guia-06-planificar",
@@ -960,10 +1284,10 @@
 
     var db = window._firebaseDb;
     if (!db || typeof db.cloudGetGrades !== "function") return;
-    var cloud;
-    try { cloud = await db.cloudGetGrades(session.usernameKey); }
-    catch (e) { return; }
-    var grades = (cloud && cloud[guideFamily]) || {};
+    // null = no se pudo leer: se conserva el cache (no se interpreta como "sin notas").
+    var cloud = await fetchGradesFromCloud(session.usernameKey);
+    if (!cloud) return;
+    var grades = cloud[guideFamily] || {};
 
     // Refresca el cache local con lo recien traido de la nube (igual que hace
     // renderGradeBadges) -- sin esto, applyApprovedSolutionsForFamily seguiria
@@ -988,6 +1312,13 @@
     resolveGradeValue: resolveGradeValue,
     getStudentGrades: getStudentGrades,
     setAllStudentGrades: setAllStudentGrades,
+    refreshStudentGradesFromCloud: refreshStudentGradesFromCloud,
+    applyStudentGradeChanges: queueGradeOp,
+    flushGradesCloudSync: flushGradesCloudSync,
+    retryPendingGradesSync: retryPendingGradesSync,
+    getPendingGradesCount: getPendingGradesCount,
+    getPendingGradeActivities: getPendingGradeActivities,
+    describeGradesSyncFailure: describeGradesSyncFailure,
     setStudentGrades: setStudentGrades,
     setStudentActivityGrade: setStudentActivityGrade,
     setStudentActivityGradeAndSolution: setStudentActivityGradeAndSolution,

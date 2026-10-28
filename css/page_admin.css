@@ -1455,3 +1455,159 @@ progress::-moz-progress-bar {
 .hwtrack-table td, .hwtrack-table th { white-space: nowrap; }
 .hwtrack-old { margin-top: 1.5rem; }
 #hwtrack-host, #hwtrack-host .admin-panel { min-width: 0; max-width: 100%; }
+
+/* Habilitacion de actividades: barra de filtros (auditoria 2026-10-22).
+   Antes estas clases no tenian reglas: el selector de guias crecia con el
+   titulo mas largo (977 px) y desbordaba la pagina en tableta y celular. */
+.hab-filters .toolbar-select { display: flex; flex-direction: column; gap: 4px; flex: 1 1 220px; min-width: 0; max-width: 100%; font-size: 13px; font-weight: 600; color: var(--admin-muted); }
+.hab-filters.admin-toolbar select { width: 100%; min-width: 0; max-width: 100%; min-height: var(--hit-target-min); text-overflow: ellipsis; }
+.hab-filters.admin-toolbar input { min-height: var(--hit-target-min); min-width: 0; max-width: 100%; }
+.hab-filters .btn { min-height: var(--hit-target-min); }
+/* El host es hijo de un grid: sin min-width:0 la pista crecia al ancho de la
+   tabla (808 px) y la pagina se desbordaba en celular. La tabla se desplaza
+   dentro de su propio contenedor. */
+#habilitacion-host { min-width: 0; }
+#habilitacion-host .answer-table-wrap { max-width: 100%; overflow-x: auto; }
+/* Habilitacion selectiva (2026-10-22): ficha, buscador, aprendiz, guia y
+   acciones; en celular cada control ocupa el ancho completo. */
+.hab-filters .hab-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; flex: 1 1 100%; }
+.hab-filters .hab-actions .btn { flex: 0 1 auto; }
+.hab-filters .hab-actions .btn:disabled { opacity: .55; cursor: not-allowed; }
+/* Entregas recientes bajo demanda (2026-10-22): ficha, periodo y consulta. */
+.recent-deliveries__filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; margin-bottom: 10px; }
+.recent-deliveries__filters label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600; color: var(--admin-muted); flex: 1 1 160px; min-width: 0; }
+.recent-deliveries__filters select { min-height: var(--hit-target-min); max-width: 100%; }
+.recent-deliveries__filters .admin-button { min-height: var(--hit-target-min); }
+.admin-feedback.warning { border-color: var(--color-warning-strong, #b45309); }
+/* Respuestas y Entregas bajo demanda (2026-10-22). */
+.learner-consult-status { margin: 4px 0 10px; font-size: .82rem; color: var(--admin-muted); min-height: 18px; }
+#module-respuestas .admin-toolbar .admin-button,
+#module-entregas .admin-toolbar .admin-button { min-height: var(--hit-target-min); }
+#module-respuestas .admin-toolbar .admin-button:disabled,
+#module-entregas .admin-toolbar .admin-button:disabled { opacity: .55; cursor: not-allowed; }
+#responses-table, #deliveries-table { min-width: 0; max-width: 100%; overflow-x: auto; }
+/* Hijo de grid: sin min-width:0 la pista crecia al ancho de la tabla y la
+   pagina se desbordaba en tableta/celular. La tabla se desplaza en su contenedor. */
+#module-respuestas > .admin-panel, #module-entregas > .admin-panel { min-width: 0; max-width: 100%; }
+#module-respuestas .admin-table-wrap, #module-entregas .admin-table-wrap { max-width: 100%; overflow-x: auto; }
+
+/* ── Calificaciones: estado de guardado en la nube (correccion 2026-10-27) ──
+   Una fila cuya lectura de notas fallo queda bloqueada, y una celda cuya nota
+   aun no esta confirmada en la nube se marca como pendiente o con error. */
+.grades-row-error,
+.records-row-error {
+  color: var(--color-danger-strong);
+  background: var(--color-danger-soft);
+  white-space: normal;
+}
+.grade-cell[data-sync-state="saving"] .grade-select {
+  opacity: 0.7;
+}
+.grade-cell[data-sync-state="pending"] .grade-select,
+.grade-cell[data-sync-state="error"] .grade-select {
+  outline: 2px solid var(--color-danger);
+  outline-offset: 1px;
+}
+/* Texto visible (no solo color ni tooltip, que en un telefono no se ve):
+   una nota pendiente nunca debe parecer guardada. */
+.grade-cell[data-sync-state="pending"]::after,
+.grade-cell[data-sync-state="error"]::after {
+  display: block;
+  margin-top: 4px;
+  color: var(--color-danger-strong);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.grade-cell[data-sync-state="pending"]::after {
+  content: "Pendiente: no guardada en la nube";
+}
+.grade-cell[data-sync-state="error"]::after {
+  content: "No guardada en la nube";
+}
+.grade-cell[data-sync-state="saving"]::after {
+  content: "Guardando...";
+  display: block;
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.grades-read-alert .btn,
+.grades-pending-alert .btn,
+.records-read-alert .btn,
+.records-pending-alert .btn {
+  margin-left: var(--space-2);
+  align-self: center;
+  flex-shrink: 0;
+}
+/* El motivo de una fila ilegible ocupa una celda que abarca TODAS las
+   columnas (la tabla puede medir 1800 px): sin limite quedaba en una sola
+   linea y habia que desplazar la tabla para leerlo. Se ajusta al ancho
+   visible para leerse entero sin desplazar. */
+.row-error__msg {
+  max-width: min(36rem, calc(100vw - 11rem));
+  white-space: normal;
+}
+/* Planes y Talleres: la fila ilegible ocupa todo el ancho (nombre incluido). */
+.records-row-error .row-error__msg {
+  max-width: min(40rem, calc(100vw - 6rem));
+}
+/* Marca en la columna fija del nombre (siempre visible al desplazar la tabla). */
+.grade-row-pending {
+  display: block;
+  margin-top: 4px;
+  color: var(--color-danger-strong);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+@media (max-width: 640px) {
+  /* Telefono: el boton del aviso baja a su propia linea en vez de comprimir
+     el texto y salirse por la derecha. */
+  .grades-read-alert,
+  .grades-pending-alert,
+  .records-read-alert,
+  .records-pending-alert {
+    flex-wrap: wrap;
+  }
+  .grades-read-alert .btn,
+  .grades-pending-alert .btn,
+  .records-read-alert .btn,
+  .records-pending-alert .btn {
+    margin-left: 0;
+    align-self: flex-start;
+  }
+}
+
+/* Movil: un <select> toma el ancho de su opcion mas larga (p.ej. el nombre
+   completo de una guia) y ensanchaba todo el modulo a ~640 px en un telefono de
+   390 px: la pagina quedaba desplazada y los avisos de guardado/errores
+   quedaban parcialmente fuera de pantalla (validacion visual 2026-10-27). */
+.admin-module {
+  /* Columna unica que puede encoger: con la columna implicita "auto" del grid,
+     el ancho minimo del contenido (el <select>) ensanchaba la pista. */
+  grid-template-columns: minmax(0, 1fr);
+}
+.admin-module > * {
+  min-width: 0;
+}
+.admin-module select,
+.admin-module input[type="file"] {
+  max-width: 100%;
+}
+/* Las tablas de Planes y Talleres se desplazan dentro de su contenedor (como
+   la de Calificaciones) en vez de ensanchar la pagina. */
+#mejora-grid,
+#taller-grid {
+  overflow-x: auto;
+  max-width: 100%;
+}
+/* Formularios de asignar plan/taller: su columna "auto" crecia al ancho de la
+   opcion mas larga y los campos se salian de la pantalla en el telefono. */
+.mejora-form,
+.taller-form {
+  grid-template-columns: minmax(0, 1fr);
+}
+.mejora-form label,
+.taller-form label {
+  min-width: 0;
+}

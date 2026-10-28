@@ -38,9 +38,12 @@ test("activity_grades.js: el aprendiz lee de la nube y ya NO usa el archivo semi
   assert.match(ag, /async function renderGradeBadges\(options\)/);
   assert.match(ag, /fetchGradesFromCloud\(session\.usernameKey\)/);
   assert.match(ag, /cloudGetGrades/);
-  // el admin sincroniza cada escritura a Firestore
-  assert.match(ag, /function saveGradesToCloud\(usernameKey, allGrades\)/);
-  assert.match(ag, /cloudSaveGrades/);
+  // el admin sincroniza cada escritura a Firestore -- desde 2026-10-27 como
+  // cambio por actividad sobre una lectura estricta, nunca con cloudSaveGrades
+  // (reemplazo completo del documento).
+  assert.match(ag, /function flushGradesCloudSync\(usernameKey\)/);
+  assert.match(ag, /db\.cloudUpdateGradesStrict\(usernameKey,/);
+  assert.doesNotMatch(ag, /db\.cloudSaveGrades\(/);
   // se elimino el fallback al archivo semilla publico
   assert.doesNotMatch(ag, /lookupSeedGrades/);
   assert.doesNotMatch(ag, /seedData/);

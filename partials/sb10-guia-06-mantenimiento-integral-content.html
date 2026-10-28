@@ -1,0 +1,1015 @@
+<button class="hamburger" onclick="toggleSidebar()" aria-label="Menú">&#9776;</button>
+<button class="btn-sb-expand" onclick="showSidebar()" title="Mostrar barra lateral">&#9776;</button>
+<!-- Generado por herramientas/generar_guias_mantenimiento.py (2026-10-22) desde el PDF original del
+     instructor (competencia 220501001, RAP 02). No editar a mano: editar mant_specs.py y regenerar. -->
+
+<div class="layout app-layout">
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="badge">SENA &middot; FPI</div>
+      <h2>Gu&iacute;a 6 - Realizar mantenimiento integral de los sistemas de cómputo</h2>
+      <p>Sistemas Teleinform&aacute;ticos</p>
+      <button class="btn-sb-collapse" onclick="hideSidebar()" title="Ocultar barra lateral">&#9664;</button>
+    </div>
+
+    <div class="sidebar-ficha u-hidden" id="sb-ficha-ok">
+      <div class="sf-label">Tu grupo</div>
+      <div class="sf-inst" id="sb-inst"></div>
+      <div class="sf-meta" id="sb-grupo-meta"></div>
+      <div class="sf-badge" id="sb-badge"></div>
+    </div>
+    <div class="sidebar-noficha" id="sb-ficha-warn">
+      <a href="index.html">Inicio | Seleccionar grupo / ficha</a>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span>Progreso</span>
+        <span id="progressValue">0%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <p class="progress-note">El avance se guarda localmente en este navegador.</p>
+      <button type="button" class="reset-button" id="resetProgress">Reiniciar respuestas</button>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Informaci&oacute;n</div>
+      <a class="nav-link active" href="#identificacion" onclick="setActive(this)">
+        <span class="icon">&#128203;</span> Identificaci&oacute;n
+      </a>
+      <a class="nav-link" href="#presentacion" onclick="setActive(this)">
+        <span class="icon">&#128075;</span> Presentaci&oacute;n
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Actividades</div>
+      <a class="nav-link" href="#reflexion" onclick="setActive(this)">
+        <span class="icon">&#128172;</span> 3.1 Reflexi&oacute;n Inicial
+        <span class="check">&#10003;</span>
+      </a>
+      <a class="nav-link" href="#contexto" onclick="setActive(this)">
+        <span class="icon">&#128269;</span> 3.2 Contextualizaci&oacute;n
+        <span class="check">&#10003;</span>
+      </a>
+      <a class="nav-link" href="#apropiacion" onclick="setActive(this)">
+        <span class="icon">&#128218;</span> 3.3 Apropiaci&oacute;n
+        <span class="check">&#10003;</span>
+      </a>
+      <a class="nav-link" href="#transferencia" onclick="setActive(this)">
+        <span class="icon">&#128640;</span> 3.4 Transferencia
+        <span class="check">&#10003;</span>
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Recursos</div>
+      <a class="nav-link" href="#control-avance" onclick="setActive(this)"><span class="icon">&#9989;</span> Control de avance</a>
+      <a class="nav-link" href="#materiales" onclick="setActive(this)">
+        <span class="icon">&#128193;</span> Materiales de apoyo
+      </a>
+      <a class="nav-link" href="#evidencias" onclick="setActive(this)">
+        <span class="icon">&#128202;</span> Evidencias
+      </a>
+      <a class="nav-link" href="#glosario" onclick="setActive(this)">
+        <span class="icon">&#128214;</span> Glosario
+      </a>
+      <a class="nav-link" href="#referencias" onclick="setActive(this)">
+        <span class="icon">&#128279;</span> Referencias
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Gu&iacute;a asignada</div>
+      <a class="nav-guide current" id="currentGuideNavLink" href="santa-barbara-10a-guia-06-mantenimiento-integral.html" data-current-file="santa-barbara-10a-guia-06-mantenimiento-integral.html">
+        <span class="g-icon">&#128736;</span>
+        <span class="g-info">
+          <span class="g-num">Gu&iacute;a 6</span>
+          <span class="g-name" id="currentGuideNavLabel">Realizar mantenimiento integral | 10A</span>
+        </span>
+        <span class="g-tag actual">Actual</span>
+      </a>
+    </div>
+
+    <a class="nav-home-link" href="calendario-academico-2026.html">&#128197; <span>Calendario 2026</span></a>
+    <a class="nav-home-link" href="index.html">&#127968; <span>Volver al Inicio</span></a>
+  </nav>
+
+  <div class="main app-main">
+    <div class="topbar">
+      <div class="topbar-title">
+        <strong>Gu&iacute;a 6 - Realizar mantenimiento integral de los sistemas de cómputo</strong>
+      </div>
+      <div class="topbar-meta">
+        <span class="meta-item"><span>&#9201;</span><span>88 horas</span></span>
+        <span class="meta-item"><span>&#128197;</span><span>2026</span></span>
+        <span class="meta-item"><span>&#127979;</span><span id="topbarCampus">Santa Bárbara | Grado 10</span></span>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="hero" id="inicio">
+        <div class="tag">Gu&iacute;a 6 | Fase: Ejecución</div>
+        <h1>Realizar mantenimiento integral de los sistemas de cómputo según procedimiento y manuales técnicos.</h1>
+        <p>En esta guía ejecutarás el mantenimiento preventivo físico CRU, incluida la aplicación correcta de pasta térmica, actualizarás e instalarás sistemas operativos, verificarás su licenciamiento, usarás software utilitario de diagnóstico y antivirus, y dispondrás adecuadamente los RAEE generados.</p>
+        <div class="hero-meta">
+          <div class="hero-meta-item">&#127963; SENA &mdash; Servicio Nacional de Aprendizaje</div>
+          <div class="hero-meta-item">&#128205; Competencia: Mantener equipos de c&oacute;mputo</div>
+          <div class="hero-meta-item">&#9201; 88 horas</div>
+          <div class="hero-meta-item">&#127891; C&oacute;digo: 233108 &middot; V1</div>
+        </div>
+      </div>
+
+      <div id="control-avance" class="section-title">Tu control de avance</div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon u-bg-green">&#9989;</div>
+            <div><h3>&iquest;Qu&eacute; llevas y qu&eacute; te falta?</h3><p>Se actualiza solo con tus entregas y respuestas guardadas</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div data-act-std-avance><p class="intro-text">Cargando tu avance...</p></div>
+          <div class="gnote gnote--recuerda"><div class="gnote__label">&#128161; Recuerda</div>
+            <p>Esta tabla se marca sola: <strong>Entregada</strong> cuando subes la evidencia a Drive y
+            <strong>Guardada</strong> cuando guardas tus respuestas. Lo que siga en Pendiente es lo que te falta.</p></div>
+        </div>
+      </div>
+
+      <div id="identificacion" class="section-title">Identificaci&oacute;n de la Gu&iacute;a</div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon u-bg-green">&#128203;</div>
+            <div>
+              <h3>Datos del Programa de Formaci&oacute;n</h3>
+              <p>Informaci&oacute;n oficial del programa y la competencia</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="table-scroll">
+            <table class="data-table ident-table">
+              <tbody>
+                <tr><td>Denominaci&oacute;n del Programa</td><td>T&eacute;cnico en Sistemas Teleinform&aacute;ticos</td></tr>
+                <tr><td>C&oacute;digo del Programa</td><td>233108 &middot; V1</td></tr>
+                <tr><td>Nombre del Proyecto Formativo</td><td>Alfabetización Digital, Asesoría Técnica y Ciberseguridad para la Mejora de Actividades Productivas Locales en la Zona de Influencia del CIAS.</td></tr>
+                <tr><td>Fase del Proyecto</td><td>Ejecución</td></tr>
+                <tr><td>Actividad del Proyecto</td><td>Implementar procesos de soporte técnico básico, personalización de herramientas digitales y orientación en ciberseguridad.</td></tr>
+                <tr><td>Competencia</td><td>220501001 — Mantener equipos de cómputo según procedimiento técnico.</td></tr>
+                <tr><td>Resultado de Aprendizaje</td><td>RAP 02 &mdash; Realizar mantenimiento integral de los sistemas de cómputo según procedimiento y manuales técnicos.</td></tr>
+                <tr><td>Duraci&oacute;n</td><td>88 horas</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="presentacion" class="section-title">Presentaci&oacute;n</div>
+      <p class="section-intro">📍 <strong>Empieza por aquí:</strong> conoce de qué trata la guía y qué vas a lograr. Léela completa antes de comenzar las actividades.</p>
+      <div class="gnote gnote--ruta">
+        <div class="gnote__label">🧭 ¿Cómo trabajar esta guía? Paso a paso</div>
+        <ol>
+          <li><strong>Lee la teoría</strong> de las secciones de contextualización antes de resolver las actividades.</li>
+          <li><strong>Resuelve cada actividad</strong> en orden. Escribe tus respuestas en los campos de la guía.</li>
+          <li><strong>Guarda tus respuestas</strong> con el botón de cada actividad. Tu avance queda guardado en este navegador.</li>
+          <li><strong>Entrega las evidencias</strong> que lo pidan con el botón <em>Entregar a Drive</em>. Quedan en la carpeta de tu ficha.</li>
+          <li><strong>Revisa "Tu control de avance"</strong> (arriba): te muestra qué llevas Entregado, Guardado y Pendiente.</li>
+        </ol>
+      </div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon u-bg-blue">&#128075;</div>
+            <div>
+              <h3>Bienvenida a la Gu&iacute;a</h3>
+              <p>Conoce el contexto, el alcance y las metas de este recorrido formativo</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <p class="intro-text">¡Bienvenido, aprendiz! En San Pablo de Borbur y la región de Boyacá, papelerías, misceláneas, droguerías y pequeños negocios familiares dependen cada vez más de sus computadores para facturar, llevar inventarios y comunicarse con proveedores. Sin embargo, muy pocos cuentan con un plan de mantenimiento: los equipos se intervienen solo cuando ya fallaron, casi siempre en el peor momento, y nadie sabe qué hacer con las baterías y piezas dañadas que se van acumulando. Un técnico que sabe ejecutar un mantenimiento integral — físico y lógico — y disponer correctamente los residuos electrónicos, evita paradas de operación, alarga la vida útil de los equipos y protege la información del negocio.</p>
+          <p class="intro-text">En esta guía usted desarrollará el RAP 02 de la competencia «Mantener equipos de cómputo según procedimiento técnico»: ejecutará el mantenimiento preventivo físico CRU (Customer Replaceable Unit), incluida la aplicación correcta de pasta térmica, actualizará e instalará sistemas operativos, verificará su licenciamiento y usará software utilitario de diagnóstico y antivirus, y dispondrá adecuadamente los RAEE (Residuos de Aparatos Eléctricos y Electrónicos) generados. El caso guía de esta guía es la <strong>Papelería y Miscelánea El Nogal</strong>, San Pablo de Borbur (Boyacá), un negocio familiar que nunca ha recibido mantenimiento programado en sus computadores y que además tiene una batería de portátil dañada sin saber cómo desecharla. Usted será el técnico que la ayude a resolver ambas situaciones.</p>
+          <p class="intro-text">Trabajará en cuatro momentos: primero reflexionará sobre el caso de El Nogal; luego estudiará los conceptos clave de mantenimiento integral (hardware, pasta térmica, sistemas operativos, software utilitario y RAEE) y practicará una inspección externa; después aplicará ese conocimiento ejecutando el mantenimiento físico y lógico sobre equipos reales; y finalmente realizará un laboratorio integrador sobre el equipo del caso, con disposición de RAEE y un informe técnico final que sustentará ante el instructor.</p>
+          <div class="info-box u-mt-14">
+            <div class="label">&#128737; Seguridad durante las prácticas, para cuidar a las personas, los equipos y el ambiente</div>
+            <ol class="u-steps-top">
+          <li>Trabaje solo en los equipos que el instructor le asigne y con su permiso; no abra un equipo sin la supervisión del instructor.</li>
+          <li>Antes de abrir un equipo, apáguelo y desconéctelo de la corriente; en portátiles, retire la batería solo si el manual del fabricante lo indica.</li>
+          <li>Colóquese la pulsera antiestática antes de tocar los componentes y no use joyas metálicas ni tenga las manos húmedas.</li>
+          <li>Use el aire comprimido y el alcohol isopropílico en un lugar ventilado y lejos del fuego. No deje caer ni apriete un componente.</li>
+          <li>Una batería hinchada, golpeada o con olor extraño no se manipula, no se perfora ni se tira a la basura: apártela y avise de inmediato al instructor.</li>
+          <li>Proteja los datos personales: no los muestre en fotos ni capturas de pantalla.</li>
+            </ol>
+          </div>
+          <div class="info-box green u-mt-14">
+            <div class="label">&#128204; Lo que necesitas para esta gu&iacute;a</div>
+            <p>Computador con suite ofimática (LibreOffice o Microsoft Office), acceso a internet, destornilladores de precisión, pulsera antiestática, soplador de aire comprimido, pasta térmica de repuesto y el material de apoyo suministrado por el instructor. Algunas actividades son de trabajo directo con el instructor y otras de trabajo independiente. Lea siempre las instrucciones completas antes de empezar y guarde cada evidencia con un nombre descriptivo (por ejemplo, FichaTecnica_[TuNombre]_v1.0.pdf). <strong>Sin evidencia, no hay evaluaci&oacute;n.</strong></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════ 3.1 · ACTIVIDADES DE REFLEXIÓN INICIAL ═══════════════════════╗ -->
+      <div id="reflexion" class="section-title">3.1 · Actividades de Reflexión Inicial</div>
+      <p class="section-intro">📍 <strong>Fase de reflexión inicial:</strong> activa lo que ya sabes sobre el tema. Aquí no se evalúa el acierto, sino tu participación.</p>
+      <div class="info-box blue u-mb-16">
+        <p>Activar lo que usted ya sabe sobre mantenimiento de equipos y reconocer que el mantenimiento integral no es solo hardware, antes de entrar a los conceptos técnicos. Metodología pedagógica: aprendizaje basado en problemas (ABP), con la técnica activa de lluvia de ideas en equipo. Todo el tiempo de reflexión es trabajo directo con el instructor.</p>
+      </div>
+      <div class="card open cat-reflexion">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128172;</div>
+            <div>
+              <h3>Actividades de Reflexión Inicial</h3>
+              <p>2 actividades · Duración: 2 horas directas</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <!-- ───────── Actividad 3.1.1 ───────── -->
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.1.1</span>
+              <span class="activity-title">«Detectives del mantenimiento»: el caso de El Nogal</span>
+              <span class="mission-chip">Misión de arranque</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> En grupos de 3 o 4 personas, respondan mediante lluvia de ideas (no es necesario entregar producto escrito). Duración: 1 hora directa.</p>
+              <article class="story-card u-mt-16">
+                <h3>&#128187; Caso — Papelería y Miscelánea El Nogal, San Pablo de Borbur (Boyacá)</h3>
+                <p>Este negocio familiar tiene 3 computadores: facturación, inventario y contabilidad. Nunca han recibido mantenimiento programado. Esta semana, el equipo de facturación va muy lento, tarda varios minutos en abrir el programa contable, y su disco está casi lleno; además, el propietario guarda en un cajón una batería de portátil hinchada y ya no sabe qué hacer con ella.</p>
+              </article>
+              <article class="notes-card u-mt-16">
+                <h3>Lluvia de ideas en grupo (3 o 4 personas)</h3>
+                <p class="intro-text u-help-note">&#9998; Campos de apoyo del portal para organizar tus respuestas: no reemplazan las instrucciones ni las evidencias de la gu&iacute;a.</p>
+                <p class="intro-text u-note-0">No es necesario entregar un producto escrito por el grupo: registra aquí tus propias respuestas como participante de la discusión.</p>
+                <label>
+                  <span>1. ¿Qué síntomas del computador de facturación llaman su atención? Enumere al menos 3.</span>
+                  <textarea rows="4" data-store="m2_311_sintomas" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>2. ¿Qué posibles causas técnicas (físicas o lógicas) podrían explicar cada síntoma?</span>
+                  <textarea rows="4" data-store="m2_311_causas" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>3. ¿Qué relación puede haber entre «disco casi lleno» y «el programa tarda en abrir»?</span>
+                  <textarea rows="3" data-store="m2_311_disco" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>4. ¿Por qué la batería hinchada del cajón NO debe desecharse en la basura común? ¿Qué harían con ella? (Pista: piensen en el riesgo para las personas y para el ambiente.)</span>
+                  <textarea rows="3" data-store="m2_311_bateria" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>5. ¿Alguna vez han visto un computador con síntomas parecidos en su casa, colegio o negocio familiar? ¿Qué pasó?</span>
+                  <textarea rows="3" data-store="m2_311_experiencia" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <div class="u-mt-16" id="nogal311DeadlineControls"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarNogal311" class="btn-save-response" onclick="actStd_save_nogal311()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_nogal311()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusNogal311" class="activity-saved-notice u-saved">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+            </div>
+          </div>
+
+          <!-- ───────── Actividad 3.1.2 ───────── -->
+          <div class="activity mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.1.2</span>
+              <span class="activity-title">Socialización en plenaria</span>
+              <span class="mission-chip">Misión de arranque</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> Compartir el hallazgo más preocupante de cada grupo y cerrar con una idea final en la bitácora. Duración: 1 hora directa.</p>
+              <article class="support-card u-mt-16">
+                <h3>Instrucciones</h3>
+                <ol class="u-steps">
+                  <li>Cada grupo comparte en máximo 2 minutos su síntoma más preocupante y la causa que consideran más probable.</li>
+                  <li>El instructor registra en el tablero los síntomas y agrupa las causas por tipo: físicas, lógicas o de disposición de residuos (RAEE).</li>
+                  <li>Escriba en su bitácora una idea final: ¿qué relación encuentra entre «no hacer mantenimiento integral» y «terminar con equipos lentos y residuos sin disponer»?</li>
+                </ol>
+              </article>
+              <article class="notes-card u-mt-16">
+                <h3>Bitácora de cierre</h3>
+                <p class="intro-text u-help-note">&#9998; Campos de apoyo del portal para organizar tus respuestas: no reemplazan las instrucciones ni las evidencias de la gu&iacute;a.</p>
+                <label>
+                  <span>1. Síntoma más preocupante que compartió tu grupo y la causa más probable</span>
+                  <textarea rows="3" data-store="m2_312_sintoma_grupo" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>2. Idea final: ¿qué relación encuentra entre «no hacer mantenimiento integral» y «terminar con equipos lentos y residuos sin disponer»?</span>
+                  <textarea rows="4" data-store="m2_312_reflexion" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <div class="u-mt-16" id="plenaria312DeadlineControls"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarPlenaria312" class="btn-save-response" onclick="actStd_save_plenaria312()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_plenaria312()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusPlenaria312" class="activity-saved-notice u-saved">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════ 3.2 · CONTEXTUALIZACIÓN E IDENTIFICACIÓN DE CONOCIMIENTOS ═══════════════════════╗ -->
+      <div id="contexto" class="section-title">3.2 · Contextualización e Identificación de Conocimientos</div>
+      <p class="section-intro">📍 <strong>Fase de contextualización:</strong> aquí están los conceptos y la teoría que necesitas. Estúdialos con calma.</p>
+      <div class="info-box blue u-mb-16">
+        <p>Construir la base conceptual sobre arquitectura de hardware, tipos de mantenimiento, pasta térmica, sistemas operativos, software utilitario y disposición de RAEE, y aplicarla en una primera inspección externa. Metodología pedagógica: aprendizaje colaborativo con estudio por bloques temáticos + inspección guiada.</p>
+      </div>
+      <div class="card open cat-contexto">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128269;</div>
+            <div>
+              <h3>Actividades de Contextualización</h3>
+              <p>2 actividades · Duración: 18 horas (10 directas + 8 independientes)</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <!-- ───────── Actividad 3.2.1 ───────── -->
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.2.1</span>
+              <span class="activity-title">Estudio de contenidos de mantenimiento integral (Bloques A, B y C)</span>
+              <span class="mission-chip">Misión diagnóstica</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> Estudiar en equipo de 3 los 12 temas de los Bloques A, B y C, y consolidar una tabla resumen exportada a PDF: <code>BloqueABC_RAP02_[TuNombre]_v1.0.pdf</code>. Duración: 8 horas independientes + 6 horas directas.</p>
+              <div class="info-box u-mt-14">
+                <div class="label">&#9200; Trabajo independiente (8 horas, ANTES de la sesión directa)</div>
+                <p>Estudie los temas de los Bloques A, B y C usando el material de apoyo y los manuales técnicos que le indique el instructor. Tome apuntes en su bitácora. Llegue a clase con los conceptos básicos de mantenimiento físico (incluida la pasta térmica), lógico y disposición de RAEE revisados.</p>
+              </div>
+              <div class="table-scroll u-mt-12">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th class="u-w-30">Tema (Bloque A — Arquitectura de hardware, tipos de mantenimiento y mantenimiento físico CRU)</th>
+                      <th>&iquest;Qu&eacute; debes aprender?</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>Arquitectura de hardware</td><td>Conectores y buses actuales (SATA, M.2/NVMe, PCIe, USB-C): uso y velocidad aproximada.</td></tr>
+                    <tr><td>Tipos de mantenimiento</td><td>Preventivo, correctivo y predictivo: concepto, diferencias y ejemplos aplicados a equipos de cómputo actuales.</td></tr>
+                    <tr><td>Componentes CRU</td><td>Qué es un componente CRU (Customer Replaceable Unit) y ejemplos accesibles al técnico.</td></tr>
+                    <tr><td>Electricidad estática</td><td>Qué es la ESD (Electrostatic Discharge) y qué elementos de protección se deben usar (pulsera antiestática, superficie de trabajo).</td></tr>
+                    <tr><td>Aplicación de pasta térmica</td><td>Qué es la pasta térmica, para qué sirve y cómo se retira la usada y se aplica la nueva correctamente sobre el procesador, evitando exceso o defecto.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="table-scroll u-mt-12">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th class="u-w-30">Tema (Bloque B — Mantenimiento lógico)</th>
+                      <th>&iquest;Qu&eacute; debes aprender?</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>Sistemas operativos</td><td>Instalación y tipos de licenciamiento (OEM, retail, volumen, código abierto).</td></tr>
+                    <tr><td>Actualización y herramientas del sistema</td><td>Actualización del sistema operativo (Windows Update o equivalente) y utilidades incorporadas: liberador de espacio, administrador de tareas, información del sistema.</td></tr>
+                    <tr><td>Software utilitario de diagnóstico</td><td>Herramientas de terceros para diagnóstico de hardware (por ejemplo, CPU-Z o HWMonitor) y para qué se usa cada una.</td></tr>
+                    <tr><td>Antivirus</td><td>Función del antivirus, tipos y buena práctica de mantener actualizada su base de datos de definiciones.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="table-scroll u-mt-12">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th class="u-w-30">Tema (Bloque C — Disposición de RAEE)</th>
+                      <th>&iquest;Qu&eacute; debes aprender?</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>RAEE</td><td>Qué son los Residuos de Aparatos Eléctricos y Electrónicos y por qué requieren disposición especial.</td></tr>
+                    <tr><td>Normativa vigente</td><td>Resolución 1297 de 2010 y demás normativa ambiental colombiana aplicable a la gestión de RAEE.</td></tr>
+                    <tr><td>Clasificación de residuos</td><td>Cómo separar baterías, tarjetas, cables y empaques generados durante un mantenimiento.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <article class="support-card u-mt-16">
+                <h3>Instrucciones para la sesión directa</h3>
+                <ol class="u-steps">
+                  <li>Forme un equipo de 3 personas. Repartan los 12 temas (5 del Bloque A + 4 del Bloque B + 3 del Bloque C): 4 temas por integrante.</li>
+                  <li>Durante la primera hora, cada integrante explica sus temas al equipo (5 minutos por tema) mientras los demás completan sus apuntes.</li>
+                  <li>En LibreOffice Calc o Google Sheets, construyan una tabla de 3 columnas: «Tema», «¿Para qué sirve?», «Ejemplo aplicado en El Nogal». Completen una fila por tema.</li>
+                  <li>El instructor realiza una plenaria de cierre donde cada equipo comparte su fila más importante.</li>
+                  <li>Exporten la tabla a PDF con el nombre <strong>BloqueABC_RAP02_[TuNombre]_v1.0.pdf</strong> y compártanla por el medio indicado por el instructor.</li>
+                </ol>
+              </article>
+              <div class="gnote gnote--entrega u-mt-14"><div class="gnote__label">&#128230; &iquest;Qu&eacute; debes entregar?</div>
+                <p>Tabla resumen de los Bloques A, B y C en PDF (BloqueABC_RAP02_[TuNombre]_v1.0.pdf) y apuntes previos en la bitácora. Esta actividad alimenta la Actividad 3.2.2. Al finalizar el estudio de contenidos, el instructor aplica de forma individual el cuestionario de conocimiento (instrumento IE-01).</p></div>
+              <article class="notes-card u-mt-16">
+                <h3>Registro guiado del aprendiz</h3>
+                <p class="intro-text u-help-note">&#9998; Campos de apoyo del portal para organizar tus respuestas: no reemplazan las instrucciones ni las evidencias de la gu&iacute;a.</p>
+                <label>
+                  <span>1. Reparto del equipo: temas y responsable de cada uno</span>
+                  <textarea rows="4" data-store="m2_321_reparto" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>2. Temas que estudiaste tú (4 de los 12 distribuidos en tu equipo)</span>
+                  <textarea rows="3" data-store="m2_321_temas" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>3. Tema de tu fila en la tabla resumen</span>
+                  <textarea rows="2" data-store="m2_321_tema_fila" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>4. ¿Para qué sirve?</span>
+                  <textarea rows="3" data-store="m2_321_paraque" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>5. Ejemplo aplicado en El Nogal</span>
+                  <textarea rows="4" data-store="m2_321_ejemplo" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <div class="u-mt-16" id="bloqueABC321DeadlineControls"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarBloqueABC321" class="btn-save-response" onclick="actStd_save_bloqueABC321()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_bloqueABC321()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusBloqueABC321" class="activity-saved-notice u-saved">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+
+              <div class="u-mt-16" id="driveDeliveryPanel-bloqueABC321"></div>
+            </div>
+          </div>
+
+          <!-- ───────── Actividad 3.2.2 ───────── -->
+          <div class="activity mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.2.2</span>
+              <span class="activity-title">Inspección externa e identificación de componentes CRU</span>
+              <span class="mission-chip">Misión diagnóstica</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> Inspeccionar externamente un equipo real del taller e identificar sus componentes CRU accesibles. Duración: 4 horas directas.</p>
+              <article class="support-card u-mt-16">
+                <h3>Instrucciones — sigue este orden sin saltarte pasos</h3>
+                <ol class="u-steps">
+                  <li>En equipo de máximo 4 integrantes, reciban del instructor un equipo de cómputo del taller (de escritorio, portátil o Todo en Uno, sin abrirlo todavía).</li>
+                  <li>Antes de empezar, organicen el puesto de trabajo (herramientas, pulsera antiestática y un recipiente para residuos). Luego realicen una inspección puramente externa: estado físico de la carcasa, puertos, cables, ventilación y ruidos al encender.</li>
+                  <li>Identifiquen y registren en la tabla al menos 4 componentes CRU accesibles del equipo (por ejemplo: RAM, almacenamiento, ventilador, batería).</li>
+                  <li>Redacten un informe corto (máximo 1 página) con sus conclusiones: ¿el equipo parece requerir mantenimiento físico, lógico, o ambos? Justifiquen con base en lo observado.</li>
+                </ol>
+              </article>
+              <div class="gnote gnote--entrega u-mt-14"><div class="gnote__label">&#128230; &iquest;Qu&eacute; debes entregar?</div>
+                <p>Informe corto de inspección (máximo 1 página) y tabla de componentes CRU identificados, diligenciada. Formato: PDF o DOCX.</p></div>
+              <article class="notes-card u-mt-16">
+                <h3>Informe de inspección (registro del aprendiz)</h3>
+                <p class="intro-text u-help-note">&#9998; Campos de apoyo del portal para organizar tus respuestas: no reemplazan las instrucciones ni las evidencias de la gu&iacute;a.</p>
+                <label>
+                  <span>1. Hallazgos de la inspección externa (carcasa, puertos, cables, ventilación, ruidos al encender)</span>
+                  <textarea rows="5" data-store="m2_322_hallazgos" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>2. Tabla de componentes CRU (mínimo 4): componente — ubicación en el equipo — estado observado</span>
+                  <textarea rows="5" data-store="m2_322_cru" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>3. Conclusión (máximo 1 página): ¿el equipo requiere mantenimiento físico, lógico o ambos? Justifica.</span>
+                  <textarea rows="5" data-store="m2_322_conclusion" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <div class="u-mt-16" id="inspeccionCru322DeadlineControls"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarInspeccionCru322" class="btn-save-response" onclick="actStd_save_inspeccionCru322()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_inspeccionCru322()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusInspeccionCru322" class="activity-saved-notice u-saved">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+
+              <div class="u-mt-16" id="driveDeliveryPanel-inspeccionCru322"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════ 3.3 · ACTIVIDADES DE APROPIACIÓN DEL CONOCIMIENTO ═══════════════════════╗ -->
+      <div id="apropiacion" class="section-title">3.3 · Actividades de Apropiación del Conocimiento</div>
+      <p class="section-intro">📍 <strong>Fase de apropiación:</strong> pones en práctica lo aprendido sobre equipos reales.</p>
+      <div class="info-box blue u-mb-16">
+        <p>Ejecutar el mantenimiento preventivo físico CRU, incluida la aplicación de pasta térmica, y el mantenimiento lógico completo (sistema operativo y software utilitario) sobre equipos reales, aplicando el protocolo técnico revisado en la contextualización. Metodología pedagógica: estudio de caso + práctica guiada, con trabajo independiente previo de preparación.</p>
+      </div>
+      <div class="card open cat-apropiacion">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128218;</div>
+            <div>
+              <h3>Actividades de Apropiación</h3>
+              <p>2 actividades · Duración: 48 horas (38 directas + 10 independientes)</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <article class="story-card u-mt-16">
+                <h3>&#128187; Caso — Papelería y Miscelánea El Nogal: autorización para intervenir</h3>
+                <p>Después de la inspección externa de la Actividad 3.2.2, el propietario autoriza al equipo técnico a intervenir el computador de facturación: quiere que quede físicamente limpio, con el sistema operativo actualizado y con software de respaldo instalado, para no volver a perder información.</p>
+              </article>
+          <!-- ───────── Actividad 3.3.1 ───────── -->
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.3.1</span>
+              <span class="activity-title">Mantenimiento preventivo físico CRU y aplicación de pasta térmica</span>
+              <span class="mission-chip">Misión práctica</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> Ejecutar el mantenimiento físico CRU sobre el equipo asignado y registrarlo en una ficha técnica. Duración: 6 horas independientes + 24 horas directas.</p>
+              <div class="info-box u-mt-14">
+                <div class="label">&#9200; Trabajo independiente (6 horas, ANTES de la sesión directa)</div>
+                <p>Repase el protocolo de limpieza interna y externa, las precauciones de manejo antiestático (ESD) y el procedimiento correcto de retiro y aplicación de pasta térmica, usando los manuales técnicos de fabricante recomendados por el instructor (equipos de escritorio, portátiles y Todo en Uno). Prepare una lista de los elementos de protección y herramientas que necesitará.</p>
+              </div>
+              <article class="support-card u-mt-16">
+                <h3>Instrucciones para la sesión directa</h3>
+                <ol class="u-steps">
+                  <li>Prepare su sitio de trabajo y utilice los elementos de protección adecuados (pulsera antiestática, superficie de trabajo limpia).</li>
+                  <li>Verifique que el equipo de facturación de El Nogal (o el equipo asignado por el instructor) esté apagado y desconectado de la red eléctrica antes de iniciar, y espere unos minutos antes de abrirlo.</li>
+                  <li>Realice el diagnóstico interno del equipo, identificando los componentes CRU accesibles.</li>
+                  <li>Ejecute la limpieza interna (aire comprimido/brocha antiestática) y externa del equipo, según el manual del fabricante correspondiente.</li>
+                  <li>Retire la pasta térmica usada del procesador (si el manual del fabricante lo permite) con un paño sin pelusa y alcohol isopropílico, y aplique pasta térmica nueva siguiendo el procedimiento indicado: una cantidad pequeña, centrada, sin exceso ni defecto.</li>
+                  <li>Verifique y, si es necesario, reemplace o reubique componentes CRU accesibles, registrando cada paso realizado.</li>
+                  <li>Clasifique los materiales de desecho generados durante la intervención (por ejemplo, pasta térmica usada, paños, polvo) conforme al protocolo de manejo de RAEE y de residuos del instructor.</li>
+                  <li>Registre el procedimiento completo en una ficha técnica de mantenimiento (el formato lo suministra el instructor), con fecha, componentes intervenidos y observaciones, y tome fotos del antes y el después sin mostrar datos personales.</li>
+                </ol>
+              </article>
+              <div class="gnote gnote--entrega u-mt-14"><div class="gnote__label">&#128230; &iquest;Qu&eacute; debes entregar?</div>
+                <p>Ficha técnica de mantenimiento físico diligenciada, con registro fotográfico del antes/después. Formato: PDF o DOCX.</p></div>
+              <article class="notes-card u-mt-16">
+                <h3>Registro guiado del aprendiz</h3>
+                <p class="intro-text u-help-note">&#9998; Campos de apoyo del portal para organizar tus respuestas: no reemplazan las instrucciones ni las evidencias de la gu&iacute;a.</p>
+                <label>
+                  <span>1. Preparación del sitio de trabajo y elementos de protección utilizados</span>
+                  <textarea rows="3" data-store="m2_331_preparacion" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>2. Diagnóstico interno: componentes CRU accesibles identificados</span>
+                  <textarea rows="4" data-store="m2_331_diagnostico" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>3. Limpieza interna y externa realizada (herramientas y pasos según el manual del fabricante)</span>
+                  <textarea rows="4" data-store="m2_331_limpieza" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>4. Retiro y aplicación de pasta térmica: procedimiento seguido y observaciones</span>
+                  <textarea rows="4" data-store="m2_331_pasta" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>5. Componentes CRU verificados, reemplazados o reubicados (paso a paso)</span>
+                  <textarea rows="4" data-store="m2_331_cru" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>6. Clasificación de los materiales de desecho generados (protocolo RAEE)</span>
+                  <textarea rows="3" data-store="m2_331_residuos" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>7. Ficha técnica: fecha, componentes intervenidos y observaciones</span>
+                  <textarea rows="4" data-store="m2_331_ficha" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <div class="u-mt-16" id="fisicoCru331DeadlineControls"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarFisicoCru331" class="btn-save-response" onclick="actStd_save_fisicoCru331()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_fisicoCru331()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusFisicoCru331" class="activity-saved-notice u-saved">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+
+              <div class="u-mt-16" id="driveDeliveryPanel-fisicoCru331"></div>
+            </div>
+          </div>
+
+          <!-- ───────── Actividad 3.3.2 ───────── -->
+          <div class="activity mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.3.2</span>
+              <span class="activity-title">Mantenimiento lógico: sistema operativo y software utilitario</span>
+              <span class="mission-chip">Misión práctica</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> Ejecutar el mantenimiento lógico del equipo y registrarlo en un checklist con evidencias. Duración: 4 horas independientes + 14 horas directas.</p>
+              <div class="info-box u-mt-14">
+                <div class="label">&#9200; Trabajo independiente (4 horas, ANTES de la sesión directa)</div>
+                <p>Investigue el procedimiento de actualización del sistema operativo instalado, los tipos de licenciamiento de software y el uso básico de una herramienta de diagnóstico de hardware (por ejemplo, CPU-Z o HWMonitor). Consulte el material de apoyo del instructor.</p>
+              </div>
+              <article class="support-card u-mt-16">
+                <h3>Instrucciones para la sesión directa</h3>
+                <ol class="u-steps">
+                  <li>Verifique el estado de actualizaciones del sistema operativo del equipo de facturación y aplique las actualizaciones pendientes, documentando la versión antes y después.</li>
+                  <li>Verifique el estado y tipo de licenciamiento del sistema operativo instalado (OEM, retail, volumen o código abierto); en Windows se consulta en Configuración &gt; Sistema &gt; Activación. No use activadores ni programas de páginas no oficiales.</li>
+                  <li>Instale o verifique una herramienta de software utilitario de diagnóstico de hardware (por ejemplo, CPU-Z o HWMonitor) y genere un reporte del estado del equipo.</li>
+                  <li>Instale o verifique el antivirus del equipo y confirme que su base de datos de definiciones esté actualizada.</li>
+                  <li>Utilice al menos una herramienta incorporada del sistema operativo (liberador de espacio, administrador de tareas o información del sistema) para verificar el estado general del equipo.</li>
+                  <li>Registre en un checklist (lista de tareas con una casilla por cada una) cada tarea realizada, con una captura de pantalla de cada paso (tecla Windows + Shift + S) guardada con nombre descriptivo, por ejemplo 01_Actualizaciones_[TuNombre].png.</li>
+                </ol>
+              </article>
+              <div class="gnote gnote--entrega u-mt-14"><div class="gnote__label">&#128230; &iquest;Qu&eacute; debes entregar?</div>
+                <p>Checklist de mantenimiento lógico diligenciado, con capturas de pantalla de cada tarea. Formato: PDF o DOCX.</p></div>
+              <article class="notes-card u-mt-16">
+                <h3>Checklist de mantenimiento lógico (registro del aprendiz)</h3>
+                <p class="intro-text u-help-note">&#9998; Campos de apoyo del portal para organizar tus respuestas: no reemplazan las instrucciones ni las evidencias de la gu&iacute;a.</p>
+                <label>
+                  <span>1. Actualizaciones del sistema operativo: versión antes y después</span>
+                  <textarea rows="3" data-store="m2_332_actualizaciones" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>2. Estado y tipo de licenciamiento del sistema operativo (OEM, retail, volumen o código abierto)</span>
+                  <textarea rows="3" data-store="m2_332_licencia" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>3. Herramienta de software utilitario de diagnóstico usada y resultado del reporte</span>
+                  <textarea rows="4" data-store="m2_332_utilitario" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>4. Antivirus: estado y actualización de la base de datos de definiciones</span>
+                  <textarea rows="3" data-store="m2_332_antivirus" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>5. Herramienta incorporada del sistema operativo utilizada y hallazgos</span>
+                  <textarea rows="3" data-store="m2_332_herramienta_so" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>6. Checklist: tareas realizadas y nombre de la captura que evidencia cada una</span>
+                  <textarea rows="5" data-store="m2_332_checklist" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <div class="u-mt-16" id="logico332DeadlineControls"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarLogico332" class="btn-save-response" onclick="actStd_save_logico332()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_logico332()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusLogico332" class="activity-saved-notice u-saved">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+
+              <div class="u-mt-16" id="driveDeliveryPanel-logico332"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════ 3.4 · ACTIVIDADES DE TRANSFERENCIA DEL CONOCIMIENTO ═══════════════════════╗ -->
+      <div id="transferencia" class="section-title">3.4 · Actividades de Transferencia del Conocimiento</div>
+      <p class="section-intro">📍 <strong>Fase de transferencia:</strong> aplicas todo lo aprendido en un laboratorio integrador y lo sustentas.</p>
+      <div class="info-box blue u-mb-16">
+        <p>Aplicar de forma integral y segura el mantenimiento físico (incluida la pasta térmica), el mantenimiento lógico y la disposición de RAEE sobre el equipo del caso, culminando en un informe técnico que se sustenta ante el instructor. Metodología pedagógica: estudio de caso + laboratorio integrador, con cierre mediante sustentación oral.</p>
+      </div>
+      <div class="card open cat-transferencia">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon">&#128640;</div>
+            <div>
+              <h3>Actividades de Transferencia</h3>
+              <p>2 actividades · Duración: 20 horas (16 directas + 4 independientes)</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <article class="story-card u-mt-16">
+                <h3>&#128187; Caso — Papelería y Miscelánea El Nogal: cierre del proceso</h3>
+                <p>El propietario entrega también la batería de portátil dañada que tenía guardada y pide que el mantenimiento del equipo de facturación quede completamente documentado, incluyendo qué se hizo con los residuos generados, para poder mostrarlo si algún día lo necesita.</p>
+              </article>
+          <!-- ───────── Actividad 3.4.1 ───────── -->
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.4.1</span>
+              <span class="activity-title">Laboratorio integrador: mantenimiento integral y disposición de RAEE</span>
+              <span class="mission-chip">Misión integradora</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> Ejecutar el mantenimiento integral del equipo del caso y clasificar sus residuos. Duración: 2 horas independientes + 12 horas directas.</p>
+              <div class="info-box u-mt-14">
+                <div class="label">&#9200; Trabajo independiente (2 horas, ANTES de la sesión directa)</div>
+                <p>Repase sus registros de las Actividades 3.3.1 y 3.3.2, y consulte con el instructor o el material de apoyo el protocolo institucional de clasificación y disposición de RAEE (incluida la batería dañada).</p>
+              </div>
+              <article class="support-card u-mt-16">
+                <h3>Instrucciones para la sesión directa</h3>
+                <ol class="u-steps">
+                  <li>En equipo de máximo 3 integrantes, retomen el equipo de facturación de El Nogal (o el asignado por el instructor) y documenten su estado inicial.</li>
+                  <li>Ejecuten el mantenimiento preventivo físico CRU completo, incluida la aplicación de pasta térmica, aplicando lo trabajado en la Actividad 3.3.1.</li>
+                  <li>Ejecuten el mantenimiento lógico del equipo (actualización de sistema operativo, verificación de licenciamiento, software utilitario), aplicando lo trabajado en la Actividad 3.3.2.</li>
+                  <li>Clasifiquen los residuos generados durante el proceso, incluida la batería dañada entregada por el propietario (sin manipularla: el instructor indica cómo hacerlo), según la normativa ambiental vigente (Resolución 1297 de 2010) y el protocolo institucional.</li>
+                  <li>Registren el punto o gestor autorizado de recolección de RAEE al que se dispondrían los residuos clasificados.</li>
+                  <li>Verifiquen el funcionamiento final del equipo (encendido, aplicaciones básicas, acceso a internet).</li>
+                </ol>
+              </article>
+              <div class="gnote gnote--entrega u-mt-14"><div class="gnote__label">&#128230; &iquest;Qu&eacute; debes entregar?</div>
+                <p>Registro de laboratorio integrador (estado inicial, procedimiento físico y lógico, resultados) y evidencia de la clasificación/disposición de RAEE. Formato: PDF o DOCX.</p></div>
+              <article class="notes-card u-mt-16">
+                <h3>Registro del laboratorio integrador</h3>
+                <p class="intro-text u-help-note">&#9998; Campos de apoyo del portal para organizar tus respuestas: no reemplazan las instrucciones ni las evidencias de la gu&iacute;a.</p>
+                <label>
+                  <span>1. Estado inicial del equipo</span>
+                  <textarea rows="4" data-store="m2_341_estado_inicial" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>2. Mantenimiento físico CRU realizado (incluida la pasta térmica)</span>
+                  <textarea rows="4" data-store="m2_341_fisico" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>3. Mantenimiento lógico realizado (sistema operativo, licenciamiento, software utilitario)</span>
+                  <textarea rows="4" data-store="m2_341_logico" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>4. Clasificación de los residuos generados, incluida la batería dañada (Resolución 1297 de 2010)</span>
+                  <textarea rows="4" data-store="m2_341_raee" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>5. Punto o gestor autorizado de recolección de RAEE al que se dispondrían los residuos</span>
+                  <textarea rows="2" data-store="m2_341_gestor" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>6. Verificación final del funcionamiento (encendido, aplicaciones básicas, internet)</span>
+                  <textarea rows="3" data-store="m2_341_verificacion" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <div class="u-mt-16" id="integrador341DeadlineControls"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarIntegrador341" class="btn-save-response" onclick="actStd_save_integrador341()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_integrador341()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusIntegrador341" class="activity-saved-notice u-saved">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+
+              <div class="u-mt-16" id="driveDeliveryPanel-integrador341"></div>
+            </div>
+          </div>
+
+          <!-- ───────── Actividad 3.4.2 ───────── -->
+          <div class="activity mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.4.2</span>
+              <span class="activity-title">Informe técnico final y sustentación</span>
+              <span class="mission-chip">Misión integradora</span>
+              <span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Prop&oacute;sito:</strong> Elaborar el informe técnico final del mantenimiento integral y sustentarlo ante el instructor. Duración: 2 horas independientes + 4 horas directas.</p>
+              <div class="info-box u-mt-14">
+                <div class="label">&#9200; Trabajo independiente (2 horas, ANTES de la sesión directa)</div>
+                <p>Redacten el borrador del informe técnico final con base en los registros de la Actividad 3.4.1, y preparen la sustentación oral.</p>
+              </div>
+              <article class="support-card u-mt-16">
+                <h3>Instrucciones para la sesión directa</h3>
+                <ol class="u-steps">
+                  <li>En el mismo equipo de trabajo, elaboren el informe técnico final de mantenimiento integral del equipo de El Nogal, incluyendo: diagnóstico inicial, procedimiento físico y lógico realizado, resultados, y disposición de RAEE.</li>
+                  <li>Anexen al informe la ficha técnica diligenciada en la Actividad 3.3.1 y el checklist de la Actividad 3.3.2.</li>
+                  <li>Preparen una sustentación oral de máximo 10 minutos por equipo, explicando el informe con lenguaje sencillo, como si se lo presentaran directamente al propietario del negocio. Participan todos los integrantes.</li>
+                  <li>Sustenten ante el instructor y sus compañeros. El instructor evalúa dominio técnico, claridad de la explicación y pertinencia de las recomendaciones frente al caso.</li>
+                  <li>Entreguen el informe técnico final en formato digital, incluyendo la ficha técnica y el checklist como anexos.</li>
+                </ol>
+              </article>
+              <div class="gnote gnote--entrega u-mt-14"><div class="gnote__label">&#128230; &iquest;Qu&eacute; debes entregar?</div>
+                <p>Informe técnico final completo (DOCX o PDF) con anexos de ficha técnica y checklist, y sustentación oral ante el instructor.</p></div>
+              <article class="notes-card u-mt-16">
+                <h3>Borrador del informe técnico final</h3>
+                <p class="intro-text u-help-note">&#9998; Campos de apoyo del portal para organizar tus respuestas: no reemplazan las instrucciones ni las evidencias de la gu&iacute;a.</p>
+                <label>
+                  <span>1. Diagnóstico inicial</span>
+                  <textarea rows="4" data-store="m2_342_diagnostico" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>2. Procedimiento físico y lógico realizado</span>
+                  <textarea rows="5" data-store="m2_342_procedimiento" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>3. Resultados obtenidos</span>
+                  <textarea rows="4" data-store="m2_342_resultados" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>4. Disposición de RAEE</span>
+                  <textarea rows="3" data-store="m2_342_raee" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <label>
+                  <span>5. Puntos clave y recomendaciones para la sustentación ante el propietario (máximo 10 minutos)</span>
+                  <textarea rows="4" data-store="m2_342_sustentacion" data-track placeholder="Escribe aqu&iacute; tu respuesta."></textarea>
+                </label>
+                <div class="u-mt-16" id="informeFinal342DeadlineControls"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarInformeFinal342" class="btn-save-response" onclick="actStd_save_informeFinal342()">
+                    &#128190; Guardar respuestas
+                  </button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_informeFinal342()">
+                    &#128196; Exportar a Word
+                  </button>
+                </div>
+                <div id="statusInformeFinal342" class="activity-saved-notice u-saved">
+                  &#9989; Respuestas guardadas correctamente.
+                </div>
+              </article>
+
+              <div class="u-mt-16" id="driveDeliveryPanel-informeFinal342"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════ MATERIALES DE APOYO ═══════════════════════╗ -->
+      <div id="materiales" class="section-title">Materiales de Apoyo</div>
+      <p class="section-intro">📍 <strong>Consulta aquí</strong> los documentos de referencia y las herramientas que necesitas para las actividades de esta guía.</p>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon u-bg-teal">&#128193;</div>
+            <div>
+              <h3>Documentos y herramientas</h3>
+              <p>Material de apoyo suministrado por el instructor</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr><th>Material</th><th>Actividad</th><th>Enlace</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Resolución 1297 de 2010 — Gestión de RAEE (Colombia)</td><td>3.2.1 · 3.3.1 · 3.4.1</td><td><a href="assets/materiales/guia6mant/resolucion-1297-de-2010.pdf" target="_blank" rel="noopener">Abrir PDF</a></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="info-box u-mt-14">
+            <div class="label">&#128295; Herramientas de diagnóstico de hardware (Actividad 3.3.2)</div>
+            <p>CPU-Z y HWMonitor se descargan del sitio oficial del fabricante: <a href="https://www.cpuid.com/softwares/cpu-z.html" target="_blank" rel="noopener">CPU-Z</a> · <a href="https://www.cpuid.com/softwares/hwmonitor.html" target="_blank" rel="noopener">HWMonitor</a>. No use instaladores de páginas no oficiales.</p>
+          </div>
+          <div class="info-box u-mt-14">
+            <div class="label">&#128194; Material de apoyo que entrega el instructor</div>
+            <p>Estos documentos del material de apoyo de la gu&iacute;a todav&iacute;a no est&aacute;n publicados en el portal. Sol&iacute;citalos a tu instructor:</p>
+            <ul class="u-steps-top"><li>Manual de Mantenimiento de Computadores (Hardware y Software)</li><li>Manual de Solución de Fallas — HP Compaq dc5700 (Escritorio)</li><li>Manual Equipo Todo en Uno — HP Pavilion</li><li>Manual Portátil HP — Guía del Usuario</li><li>Manual Portátil Acer Aspire E15</li></ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════ EVIDENCIAS ═══════════════════════╗ -->
+      <div id="evidencias" class="section-title">Planteamiento de Evidencias para la Evaluaci&oacute;n</div>
+      <p class="section-intro">📍 <strong>Resumen de lo que debes entregar:</strong> usa esta sección como lista de chequeo final.</p>
+      <div class="gnote gnote--entrega"><div class="gnote__label">📦 Antes de entregar, revisa</div>
+        <ul>
+          <li>Respondiste todas las actividades que se piden como evidencia.</li>
+          <li>Tus archivos tienen tu nombre y número de ficha.</li>
+          <li>Subiste cada evidencia con el botón <em>Entregar a Drive</em> y la ves marcada como <strong>Entregada</strong> en tu control de avance.</li>
+        </ul></div>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon u-bg-blue">&#128202;</div>
+            <div>
+              <h3>Tabla de Evidencias del Proceso Formativo</h3>
+              <p>3 evidencias: conocimiento, desempe&ntilde;o y producto</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr><th>Actividad de Aprendizaje</th><th>Evidencias</th><th>Criterios</th><th>Instrumento</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>3.2.1 + 3.2.2 — Estudio de contenidos e inspección externa</td>
+                  <td><strong>CONOCIMIENTO:</strong> cuestionario sobre procedimientos de mantenimiento de componentes CRU, aplicación de pasta térmica y normativa RAEE.</td>
+                  <td>Ejecuta el mantenimiento preventivo integral CRU según el diagnóstico. Utiliza los sistemas operativos y herramientas del sistema según condiciones técnicas.</td>
+                  <td>IE-01 — Cuestionario de conocimiento</td>
+                </tr>
+                <tr>
+                  <td>3.3.1 + 3.3.2 — Mantenimiento físico CRU y mantenimiento lógico del sistema</td>
+                  <td><strong>DESEMPEÑO:</strong> ejecución práctica completa del mantenimiento integral de un equipo de cómputo real en el taller: desensamble, limpieza, aplicación de pasta térmica, ensamble y verificación básica.</td>
+                  <td>Ejecuta el mantenimiento preventivo integral CRU según el diagnóstico. Utiliza los sistemas operativos y herramientas del sistema según condiciones técnicas.</td>
+                  <td>IE-02 — Lista de chequeo de desempeño</td>
+                </tr>
+                <tr>
+                  <td>3.4.1 + 3.4.2 — Laboratorio integrador y disposición de RAEE</td>
+                  <td><strong>PRODUCTO:</strong> informe técnico final de mantenimiento integral, con registro fotográfico del proceso, evidencia de disposición correcta de residuos RAEE y sustentación oral.</td>
+                  <td>Dispone los residuos RAEE en la fuente según normatividad.</td>
+                  <td>IE-03 — Lista de chequeo de producto</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════ GLOSARIO ═══════════════════════╗ -->
+      <div id="glosario" class="section-title">Glosario de T&eacute;rminos</div>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon u-bg-orange">&#128214;</div>
+            <div>
+              <h3>Conceptos clave</h3>
+              <p>15 t&eacute;rminos t&eacute;cnicos</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <dl class="glossary-list">
+            <dt>Mantenimiento preventivo</dt><dd>Conjunto de acciones programadas y realizadas de forma periódica sobre un equipo de cómputo con el fin de evitar fallas antes de que ocurran, prolongando su vida útil.</dd>
+            <dt>Mantenimiento correctivo</dt><dd>Intervención que se realiza sobre un equipo de cómputo después de que se ha presentado una falla, con el propósito de restablecer su funcionamiento normal.</dd>
+            <dt>Mantenimiento predictivo</dt><dd>Conjunto de técnicas que permiten anticipar una falla mediante el monitoreo de variables del equipo.</dd>
+            <dt>CRU (Customer Replaceable Unit)</dt><dd>Componente o unidad de un equipo de cómputo que puede ser reemplazada directamente por el usuario o técnico, sin necesidad de intervención especializada del fabricante.</dd>
+            <dt>ESD (Electrostatic Discharge)</dt><dd>Descarga electrostática que puede dañar componentes electrónicos sensibles si no se toman las precauciones adecuadas (uso de pulsera antiestática, superficies de trabajo aterrizadas).</dd>
+            <dt>NVMe / M.2</dt><dd>Interfaz y factor de forma modernos para unidades de almacenamiento de estado sólido, de mayor velocidad que las interfaces SATA tradicionales.</dd>
+            <dt>Software utilitario</dt><dd>Conjunto de programas de apoyo, como herramientas de diagnóstico de hardware y antivirus, que facilitan el mantenimiento lógico de un equipo de cómputo.</dd>
+            <dt>Pasta térmica</dt><dd>Sustancia conductora del calor que se aplica entre el procesador (o la GPU) y su disipador para mejorar la transferencia térmica; debe renovarse periódicamente como parte del mantenimiento preventivo físico.</dd>
+            <dt>RAEE</dt><dd>Residuos de Aparatos Eléctricos y Electrónicos: desechos generados por equipos electrónicos en desuso, que requieren disposición especial según normatividad ambiental vigente.</dd>
+            <dt>Diagnóstico</dt><dd>Proceso de identificar, mediante observación y pruebas, el estado de un equipo y las posibles causas de una falla.</dd>
+            <dt>Licenciamiento</dt><dd>Tipo de permiso de uso de un programa: OEM (viene incluida con el computador), retail (se compra por separado), volumen (para muchos equipos de una organización) y código abierto (de uso libre, como Linux).</dd>
+            <dt>Antivirus</dt><dd>Programa que detecta y elimina software malicioso; necesita mantener actualizada su base de definiciones.</dd>
+            <dt>Checklist</dt><dd>Lista de tareas con una casilla por cada una, que permite comprobar que no se omitió ningún paso.</dd>
+            <dt>Bitácora</dt><dd>Cuaderno o documento donde el aprendiz anota apuntes, datos y observaciones de su trabajo.</dd>
+            <dt>Captura de pantalla</dt><dd>Imagen de lo que se ve en la pantalla; en Windows se toma con las teclas Windows + Shift + S.</dd>
+          </dl>
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════ REFERENCIAS ═══════════════════════╗ -->
+      <div id="referencias" class="section-title">Referentes Bibliogr&aacute;ficos</div>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon u-bg-purple">&#128279;</div>
+            <div>
+              <h3>Fuentes oficiales y normativas</h3>
+              <p>6 referencias para consulta</p>
+            </div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <ol class="references-list u-refs">
+            <li>Cisco Networking Academy. <em>IT Essentials: PC Hardware and Software (v8.0)</em>. <a href="https://www.netacad.com" target="_blank" rel="noopener">netacad.com</a></li>
+            <li>Servicio Nacional de Aprendizaje — SENA. <em>Diseño Curricular Técnico en Sistemas Teleinformáticos</em>, versión 233108. SENA, Regional Boyacá.</li>
+            <li>Servicio Nacional de Aprendizaje — SENA. <em>Biblioteca Virtual SENA</em>. <a href="https://biblioteca.sena.edu.co" target="_blank" rel="noopener">biblioteca.sena.edu.co</a></li>
+            <li>Ministerio de Ambiente y Desarrollo Sostenible. <em>Resolución 1297 de 2010</em> sobre gestión de Residuos de Aparatos Eléctricos y Electrónicos (RAEE). Colombia. <a href="assets/materiales/guia6mant/resolucion-1297-de-2010.pdf" target="_blank" rel="noopener">Resolución 1297/2010 (PDF)</a></li>
+            <li><em>Manual de Mantenimiento de Computadores (Hardware y Software)</em>. Material de apoyo institucional para procedimientos de mantenimiento físico y lógico de equipos de cómputo.</li>
+            <li>Manuales técnicos de fabricantes de equipos de cómputo (HP, Acer) para procedimientos de mantenimiento CRU y diagnóstico de fallas.</li>
+          </ol>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

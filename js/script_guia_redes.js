@@ -131,20 +131,23 @@ const glossaryTerms = [
 // ---------------------------------------------------------------------------
 // Support materials
 // ---------------------------------------------------------------------------
+// url: recurso real verificado (Drive publico o sitio oficial). pending: el
+// recurso no existe en el material de apoyo; se muestra el aviso en vez de una
+// tarjeta que aparenta ser un enlace (auditoria 2026-10-22).
 const supportTemplates = [
-  { icon: "&#128196;", title: "Plantilla mapa mental de redes", desc: "Estructura base para el mapa mental integrador de los 5 bloques.", file: "" },
-  { icon: "&#128196;", title: "Taller IP — hoja de trabajo", desc: "Plantilla para resolver los 5 ejercicios de direccionamiento IP.", file: "" },
+  { icon: "&#128196;", title: "Plantilla mapa mental de redes", desc: "Estructura base para el mapa mental integrador de los 5 bloques.", file: "", pending: "Plantilla aún no disponible en el material de apoyo. Solicítala a tu instructor." },
+  { icon: "&#128196;", title: "Taller IP — hoja de trabajo", desc: "Plantilla para resolver los 5 ejercicios de direccionamiento IP.", file: "", pending: "Hoja de trabajo aún no disponible en el material de apoyo. Resuelve los ejercicios en la actividad de la guía." },
 ];
 
 const supportDocuments = [
-  { icon: "&#128214;", title: "Estandar TIA/EIA-568 — categorias UTP", desc: "Referencia tecnica de categorias de cable UTP y distancias maximas.", file: "" },
-  { icon: "&#128214;", title: "Tabla de clases IPv4 y rangos privados", desc: "Rangos de Clase A, B y C con mascaras por defecto y rango privado.", file: "" },
+  { icon: "&#128214;", title: "Estandar TIA/EIA-568 — categorias UTP", desc: "Referencia tecnica de categorias de cable UTP y distancias maximas.", file: "TIA568_Codigos_Colores_Cableado_UTP.pdf", url: "https://drive.google.com/file/d/1ahKBFliSEwPaV-O4mi2bqIZ4F9-RXy5K/view?usp=sharing" },
+  { icon: "&#128214;", title: "Tabla de clases IPv4 y rangos privados", desc: "Rangos de Clase A, B y C con mascaras por defecto y rango privado.", file: "Clases_IPv4_Mascaras_y_Rangos_Privados.pdf", url: "https://drive.google.com/file/d/1oHQBRxeDQwp-Qqa1RCcWKKMufc5OFUuO/view?usp=sharing" },
 ];
 
 const supportTools = [
-  { icon: "&#127918;", title: "Cisco Packet Tracer", desc: "Simulador de redes gratuito requerido para los laboratorios. Requiere registro en NetAcad.", file: "" },
-  { icon: "&#127918;", title: "Draw.io", desc: "Herramienta en linea para diagramar topologias de red. No requiere instalacion.", file: "" },
-  { icon: "&#127918;", title: "Subnet Calculator", desc: "Calculadora de subredes IP para verificar ejercicios de direccionamiento.", file: "" },
+  { icon: "&#127918;", title: "Cisco Packet Tracer", desc: "Simulador de redes gratuito requerido para los laboratorios. Requiere registro en NetAcad.", file: "PacketTracer_90_Instalacion_y_Registro.pdf", url: "https://drive.google.com/file/d/1WBwqHYMH-NbymLgpTZ1N7-nWxZt3U_cP/view?usp=sharing" },
+  { icon: "&#127918;", title: "Draw.io", desc: "Herramienta en linea para diagramar topologias de red. No requiere instalacion.", file: "", url: "https://app.diagrams.net/" },
+  { icon: "&#127918;", title: "Subnet Calculator", desc: "Calculadora de subredes IP para verificar ejercicios de direccionamiento.", file: "", pending: "Herramienta aún no incluida en el material de apoyo. Verifica tus cálculos con el método de la guía." },
 ];
 
 // ---------------------------------------------------------------------------
@@ -492,6 +495,9 @@ function renderMaterialCardRedes(item) {
       <div class="resource-info">
         <strong>${escapeHtml(item.title)}</strong>
         <p>${escapeHtml(item.desc)}</p>
+        ${item.url
+          ? `<a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">${item.file ? "Abrir en Drive" : "Abrir herramienta"} &#8599;</a>`
+          : item.pending ? `<p class="resource-meta">${escapeHtml(item.pending)}</p>` : ""}
       </div>
     </div>`;
 }
