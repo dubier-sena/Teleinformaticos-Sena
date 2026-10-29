@@ -1,0 +1,37 @@
+name: Calendario · reglas en emulador
+
+# Reglas candidatas del calendario (config/firestore.calendar-retire.rules) en Firebase Emulator Suite con Java 21.
+# Proyecto demo aislado (demo-sena-calendar), tokens sin firma y datos ficticios: nunca toca producción ni usa secretos.
+on:
+  push:
+    branches: ['calendario-**']
+  pull_request:
+    branches: [main]
+    paths: ['config/firestore.calendar-retire.rules', 'js/academic_calendar_cloud.js', 'tools/test_calendar_retire_emulator.cjs']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  emulator:
+    name: Reglas del calendario (emulador Firestore)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Candidato = transformación exacta de las reglas activas
+        run: node -e "const T=require('./tools/firestore_rules_calendar_retire.cjs'),fs=require('fs');if(T.transform(fs.readFileSync('config/firestore.deployed-c445f954.rules','utf8'))!==fs.readFileSync('config/firestore.calendar-retire.rules','utf8'))process.exit(1)"
+      - name: Retiro, restauración y regresión del calendario
+        env:
+          JAVA_TOOL_OPTIONS: -Duser.language=en -Duser.country=US
+        run: |
+          npx -y firebase-tools@13.29.1 emulators:exec --config config/firebase.emulator.calendar.json --only firestore --project demo-sena-calendar \
+            "node tools/test_calendar_retire_emulator.cjs && node tools/test_academic_calendar_cloud_emulator.cjs"
