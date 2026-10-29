@@ -15,12 +15,12 @@
   var cfg = window.SENA_CALENDAR_FIRESTORE;
   if (!cfg || !cfg.enabled) return;
 
-  var MESSAGE = "Calendario anterior en solo consulta. Las clases que ve el aprendiz se editan en el Calendario por ficha.";
+  var MESSAGE = "Histórico 2026 — Solo consulta. Es el registro original del calendario anterior, conservado para auditoría: NO es la programación vigente. La programación vigente y la que ve el aprendiz está en el Calendario oficial.";
   var TARGET = "calendario-academico-sesiones.html";
 
   function notify() {
     var chip = document.getElementById("save-chip");
-    if (chip) chip.textContent = "Solo consulta";
+    if (chip) chip.textContent = "Histórico · solo consulta";
     var notice = document.getElementById("calendar-readonly-notice");
     if (notice && typeof notice.scrollIntoView === "function") notice.scrollIntoView({ block: "nearest" });
     return false;
@@ -36,14 +36,21 @@
 
   function hide(id) {
     var el = document.getElementById(id);
-    if (el) { el.hidden = true; el.disabled = true; }
+    // display:none explícito: el estilo .hbtn del encabezado anula el atributo hidden.
+    if (el) { el.hidden = true; el.disabled = true; el.style.display = "none"; }
   }
 
   function mount() {
     hide("firebase-sync-button");
     hide("calendar-reset-button");
+    // 2026-10-29: sin indicadores de conexión ni botón «Cargar» que sugieran que este es el calendario vigente.
+    hide("firebase-load-button");
+    var sync = document.getElementById("sync-chip");
+    if (sync) { sync.hidden = true; sync.style.display = "none"; }
+    var title = document.getElementById("title");
+    if (title) title.textContent = "Histórico 2026 — Solo consulta";
     var saveBtn = document.querySelector("#modal .btn-save, .btn-save");
-    if (saveBtn) { saveBtn.hidden = true; saveBtn.disabled = true; }
+    if (saveBtn) { saveBtn.hidden = true; saveBtn.disabled = true; saveBtn.style.display = "none"; }
     var chip = document.getElementById("save-chip");
     if (chip) chip.textContent = "Solo consulta";
     if (document.getElementById("calendar-readonly-notice")) return;
@@ -55,7 +62,7 @@
     text.textContent = MESSAGE + " ";
     var link = document.createElement("a");
     link.href = TARGET;
-    link.textContent = "Abrir el Calendario por ficha";
+    link.textContent = "Ir al Calendario oficial";
     notice.appendChild(text);
     notice.appendChild(link);
     var header = document.getElementById("header");

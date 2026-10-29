@@ -226,7 +226,7 @@
     for(const f of principal.fichas){const r=await api.listCached(f,year,{storage,force});next.push(...r.docs);
      if(principal.role!=='aprendiz'){const s=await api.source(f,year);if(s)nextSources.push(...(s.data.records||[]));}}
     docs=next;sources=nextSources;notes=new Map();loadedYear=year;
-    if(![...source.options].some(o=>o.value==='cloud'))source.add(new Option('Calendario oficial (Firestore)','cloud'));source.value='cloud';document.body.classList.add('cloud-mode');const badge=document.querySelector('.local-badge');if(badge)badge.textContent='Calendario oficial';
+    if(![...source.options].some(o=>o.value==='cloud'))source.add(new Option('Calendario oficial (Firestore)','cloud'));source.value='cloud';document.body.classList.add('cloud-mode');const badge=document.querySelector('.local-badge');if(badge)badge.textContent='Calendario oficial';document.title='Calendario oficial 2026 | SENA';
     const editor=principal.role!=='aprendiz';// Editar e Historial se ofrecen en el panel de la clase seleccionada (decorate), no en la barra.
     ['cloud-new','cloud-bulk','cloud-events','cloud-retired-wrap'].forEach(id=>$(id).hidden=!editor);
     $('cloud-review-draft').hidden=!editor||!state().saved.sessions.some(s=>s.year===year&&s.status==='Programada');

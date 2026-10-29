@@ -114,10 +114,11 @@ test("el menú «Calendario» abre el calendario por ficha", () => {
   assert.doesNotMatch(shell, /calendario-academico-2026\.html" data-nav-key="calendario"/);
 });
 
-test("el inicio del admin conserva el calendario anterior como solo consulta", () => {
+test("el inicio del admin conserva el calendario anterior como histórico de solo consulta", () => {
   const html = read("index.html");
-  assert.match(html, /href="calendario-academico-sesiones\.html"[\s\S]*?Calendario 2026 \(por ficha\)/);
-  assert.match(html, /href="calendario-academico-2026\.html"[\s\S]*?Calendario anterior \(solo consulta\)/);
+  // 2026-10-29: rótulos definitivos (un solo calendario vigente + histórico separado).
+  assert.match(html, /href="calendario-academico-sesiones\.html"[\s\S]*?Calendario oficial 2026/);
+  assert.match(html, /href="calendario-academico-2026\.html\?historico=1"[\s\S]*?Histórico 2026 — Solo consulta/);
 });
 
 function loadReadonly(enabled) {
