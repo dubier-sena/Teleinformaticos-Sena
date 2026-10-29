@@ -37,7 +37,7 @@
   function hide(id) {
     var el = document.getElementById(id);
     // display:none explícito: el estilo .hbtn del encabezado anula el atributo hidden.
-    if (el) { el.hidden = true; el.disabled = true; el.style.display = "none"; }
+    if (el) { el.hidden = true; el.disabled = true; if (el.style) el.style.display = "none"; }
   }
 
   function mount() {
@@ -46,11 +46,11 @@
     // 2026-10-29: sin indicadores de conexión ni botón «Cargar» que sugieran que este es el calendario vigente.
     hide("firebase-load-button");
     var sync = document.getElementById("sync-chip");
-    if (sync) { sync.hidden = true; sync.style.display = "none"; }
+    if (sync) { sync.hidden = true; if (sync.style) sync.style.display = "none"; }
     var title = document.getElementById("title");
     if (title) title.textContent = "Histórico 2026 — Solo consulta";
     var saveBtn = document.querySelector("#modal .btn-save, .btn-save");
-    if (saveBtn) { saveBtn.hidden = true; saveBtn.disabled = true; saveBtn.style.display = "none"; }
+    if (saveBtn) { saveBtn.hidden = true; saveBtn.disabled = true; if (saveBtn.style) saveBtn.style.display = "none"; }
     var chip = document.getElementById("save-chip");
     if (chip) chip.textContent = "Solo consulta";
     if (document.getElementById("calendar-readonly-notice")) return;
