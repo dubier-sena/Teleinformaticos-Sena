@@ -95,6 +95,17 @@
 
   function byId(id) { return document.getElementById(id); }
 
+  // Con el calendario por ficha como fuente de clases, la opcion "Clase" del evento manual se
+  // desactiva: las clases se programan en calendario-academico-sesiones.html, con motivo y auditoria.
+  function syncManualClassOption(sessionsActive) {
+    var option = document.querySelector('#aa-manual-form [name=type] option[value="CLASE"]');
+    if (!option) return;
+    option.disabled = !!sessionsActive;
+    option.textContent = sessionsActive ? "Clase (se programa en Calendario por ficha)" : "Clase";
+    var select = option.parentNode;
+    if (sessionsActive && select && select.value === "CLASE") select.value = "ACTIVIDAD_ESPECIAL";
+  }
+
   function formatDateTime(event) {
     if (event.allDay && event.date) {
       var d = new Date(event.date + "T12:00:00-05:00");
@@ -260,6 +271,15 @@
     var scopedManualEvents = scopedManualRecords.reduce(function (all, r) {
       return all.concat(window.calendarioAdminManualEvents.toAgendaEvent(r));
     }, []);
+    // 2026-10-28 (fuente unica): con las clases tomadas del calendario por ficha, una "Clase" creada a
+    // mano aqui no llega al aprendiz. Las existentes se conservan y se rotulan; no se ofrecen nuevas.
+    state.classSource = adminResult.classSource || "legacy";
+    if (state.classSource === "sessions") {
+      scopedManualEvents.forEach(function (ev) {
+        if (ev && ev.type === "CLASE") ev.title = String(ev.title || "Clase") + " (solo en esta agenda; no la ve el aprendiz)";
+      });
+    }
+    syncManualClassOption(state.classSource === "sessions");
 
     state.manualRecords = manualRecords;
     state.events = (adminResult.events || []).concat(scopedManualEvents);
@@ -272,7 +292,9 @@
     if (statusEl) {
       statusEl.textContent = state.events.length + (state.events.length === 1 ? " evento" : " eventos") +
         " · Actualizado " + new Date(adminResult.generatedAt).toLocaleTimeString("es-CO", { timeZone: "America/Bogota", hour: "numeric", minute: "2-digit" }) +
-        (state.manualLoadFailed ? " · ⚠ No se pudieron cargar las clases y eventos creados a mano. Pulsa Actualizar." : "");
+        (state.manualLoadFailed ? " · ⚠ No se pudieron cargar las clases y eventos creados a mano. Pulsa Actualizar." : "") +
+        (state.classSource === "sessions" ? " · Clases del calendario por ficha (las mismas que ve el aprendiz)" : "") +
+        (state.classSource === "legacy-fallback" ? " · ⚠ No se pudo leer el calendario por ficha (" + adminResult.classSourceError + "); se muestran las clases del calendario anterior, que pueden diferir de lo que ve el aprendiz." : "");
       statusEl.setAttribute("data-kind", state.manualLoadFailed ? "warn" : "");
     }
   }

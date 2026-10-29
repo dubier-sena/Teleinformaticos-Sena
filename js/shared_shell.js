@@ -286,7 +286,9 @@
       '      </div>',
 
       // Calendario (admin only — shown by updateNavbarSession)
-      '      <a class="app-navbar__link app-navbar__admin-only" href="' + p + 'calendario-academico-2026.html" data-nav-key="calendario" style="display:none">Calendario</a>',
+            // 2026-10-28 (fuente unica): el menu abre el calendario por ficha (sesiones que ve el aprendiz);
+      // el calendario anterior queda en el inicio del admin como consulta.
+'      <a class="app-navbar__link app-navbar__admin-only" href="' + p + 'calendario-academico-sesiones.html" data-nav-key="calendario" style="display:none">Calendario</a>',
 
       // Etapa Productiva dropdown
       '      <div class="app-navbar__drop" data-nav-key="etapa">',

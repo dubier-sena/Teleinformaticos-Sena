@@ -1025,3 +1025,20 @@ tr:hover td {
     width: 100%;
   }
 }
+
+/* 2026-10-28: calendario anterior en solo consulta (js/legacy_calendar_readonly.js). */
+.calendar-readonly-notice {
+  margin: var(--space-3) var(--space-4) 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  background: var(--color-warning-soft);
+  border: 1px solid var(--color-warning);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+}
+.calendar-readonly-notice a {
+  font-weight: 600;
+  display: inline-block;
+  min-height: var(--hit-target-min);
+  line-height: var(--hit-target-min);
+}

@@ -108,7 +108,7 @@ test('mobile layout guards: year filter keeps its own row and long metric values
  assert.match(css,/\.metric strong\{[^}]*overflow-wrap:anywhere/,'"No documentadas" must not widen the page');
  const mobile=css.split('@media(max-width:640px)').slice(1).join('');
  assert.match(mobile,/\.year-field\{flex:1 1 100%\}/);assert.match(mobile,/\.year-field input\{width:100%\}/);assert.match(mobile,/\.year-field button\{flex:0 0 auto;min-width:96px/);
- const html=fs.readFileSync(path.join(__dirname,'../calendario-planificador-local.html'),'utf8');assert.match(html,/page_academic_planner\.css\?v=20261021_3/);
+ const html=fs.readFileSync(path.join(__dirname,'../calendario-planificador-local.html'),'utf8');const v=(html.match(/page_academic_planner\.css\?v=(\d{8}_\d+)/)||[])[1]||'';assert.ok(v>='20261021_3','the 390 px fix must stay cache-busted (version '+v+')');
 });
 test('learner renderer labels a finished manual deadline without claiming it is missing',()=>{
  const sc=fs.readFileSync(path.join(__dirname,'../js/student_calendar.js'),'utf8'),ui=fs.readFileSync(path.join(__dirname,'../js/academic_agenda_calendar_ui.js'),'utf8');

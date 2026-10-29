@@ -252,9 +252,34 @@
 
   // Punto de entrada. options.fichas: array opcional de numeros de ficha
   // (string) para acotar la vista; vacio/ausente = todas las fichas.
+  // 2026-10-28 (fuente unica): con el calendario seguro activo, las CLASES de la agenda salen de las
+  // sesiones por ficha (sena_portal_calendar_fichas), las mismas que ve el aprendiz. Del calendario
+  // anterior solo quedan los eventos institucionales (SENA, desplazamientos, reuniones), que no son
+  // sesiones de una ficha. Devuelve null si el calendario seguro no esta activo en esta pagina.
+  async function loadSessionClassEvents(fichas, year) {
+    var cfg = window.SENA_CALENDAR_FIRESTORE;
+    if (!cfg || !cfg.enabled || typeof window.academicCalendarConnection !== "function" || !window.academicCalendarCloud) return null;
+    var cloud = window.academicCalendarConnection();
+    var principal = await cloud.principal();
+    if (principal.role !== "admin") throw new Error("La agenda administrativa requiere el rol de administrador.");
+    var events = [];
+    for (var i = 0; i < fichas.length; i++) {
+      var listed = typeof cloud.listCached === "function"
+        ? await cloud.listCached(fichas[i], year, { storage: window.localStorage })
+        : { docs: await cloud.list(fichas[i], year) };
+      events = events.concat(window.academicCalendarCloud.agenda(listed.docs.map(function (d) { return d.data; })));
+    }
+    return events;
+  }
+
+  function onlyInstitutionalRecords(records) {
+    return records.filter(function (r) { return r && r.tipo !== "CLASE"; });
+  }
+
   async function resolveAdminAgendaContext(options) {
     var opts = options && typeof options === "object" ? options : {};
     var fichas = resolveFichaList(opts.fichas);
+    var year = Number(opts.year) || Number(new Date(Date.now() - 5 * 3600e3).toISOString().slice(0, 4));
     var ac = window.academicAgendaContext;
     var documentCatalog = (ac && ac.DOCUMENT_CATALOG) || [];
     var productiveFichas = (ac && ac.PRODUCTIVE_FICHAS) || [];
@@ -278,13 +303,28 @@
       ? withTimeout(dbApi.cloudGetCalendar("calendario_2026_admin").catch(function () { return null; }), 8000, null)
       : Promise.resolve(null);
 
-    var results = await Promise.all([productiveStageSnapshotPromise, calendarOverridesPromise, loadRoster()]);
+    var sessionClassesPromise = loadSessionClassEvents(fichas, year).then(
+      function (events) { return { events: events, error: null }; },
+      function (error) { return { events: null, error: (error && error.message) || "No se pudo leer el calendario por ficha." }; }
+    );
+
+    var results = await Promise.all([productiveStageSnapshotPromise, calendarOverridesPromise, loadRoster(), sessionClassesPromise]);
     var productiveStageSnapshot = results[0];
     var calendarOverrides = unwrapCalendarSnapshot(results[1]);
     var roster = Array.isArray(results[2]) ? results[2] : [];
+    var sessionClasses = results[3];
     var calendarRecords = Array.isArray(window.CALENDAR_2026_RECORDS) ? window.CALENDAR_2026_RECORDS : [];
+    // Con sesiones: clases del calendario por ficha + eventos institucionales del anterior. Si el
+    // calendario seguro esta activo pero no se pudo leer, se usa el anterior y se avisa (classSourceError).
+    var classSource = "legacy";
+    if (sessionClasses.events) {
+      classSource = "sessions";
+      calendarRecords = onlyInstitutionalRecords(calendarRecords);
+    } else if (sessionClasses.error) {
+      classSource = "legacy-fallback";
+    }
 
-    var allEvents = [];
+    var allEvents = sessionClasses.events ? sessionClasses.events.slice() : [];
     fichas.forEach(function (ficha) {
       var info = fichaMap[ficha] || {};
       var institucionLong = info.inst || "";
@@ -338,6 +378,8 @@
       fichaOptions: listFichaOptions(),
       fichas: fichas,
       roster: roster,
+      classSource: classSource,
+      classSourceError: sessionClasses.error,
     };
   }
 
@@ -351,6 +393,8 @@
       unwrapCalendarSnapshot: unwrapCalendarSnapshot,
       computeProductiveStageCounts: computeProductiveStageCounts,
       withTimeout: withTimeout,
+      loadSessionClassEvents: loadSessionClassEvents,
+      onlyInstitutionalRecords: onlyInstitutionalRecords,
     },
   });
 })();

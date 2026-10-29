@@ -113,7 +113,7 @@
     }
     async function history(ficha,year,id){await principal();if(identity.role==='aprendiz')fail('Historial administrativo restringido.','PERMISSION');const out=[];let page;do{const r=await call('GET',scope(ficha,year)+'/sessions/'+encodeURIComponent(id)+'/audit?pageSize=100'+(page?'&pageToken='+encodeURIComponent(page):''));out.push(...(r.documents||[]).map(document));page=r.nextPageToken;}while(page);return out;}
     const taught=d=>d.protected||['Realizada','Impartida'].includes(d.status);
-    async function save(input,before,reason,{observation}={}){
+    async function save(input,before,reason,{observation,appendObservation}={}){
       await principal();if(identity.role==='aprendiz')fail('Acceso de solo lectura.','PERMISSION');
       const next=clone(input),prefix=scope(next.ficha,next.year),id=encodeURIComponent(next.id),motive=String(reason||'').trim();
       if(!motive||motive.length>2000)fail('Indique el motivo del cambio (máximo 2000 caracteres).');
@@ -124,7 +124,8 @@
       next.revision=before?before.data.revision+1:1;next.updatedBy=identity.uid;next.mutationId=globalThis.crypto.randomUUID();validate(next);
       let note=null;
       if(before){const current=await call('GET',prefix+'/sessions/'+id,undefined,true);if(!current||current.updateTime!==before.updateTime)fail('El calendario cambió. Recargue y revise antes de guardar.','CONFLICT');note=await call('GET',prefix+'/notes/'+id,undefined,true);}
-      const notesBefore=note?document(note).data.observation:'',notesAfter=observation===undefined?notesBefore:String(observation);
+      const extra=String(appendObservation||'').trim(),notesBefore=note?document(note).data.observation:'';
+      const notesAfter=observation!==undefined?String(observation):extra?(notesBefore?notesBefore+'\n':'')+extra:notesBefore;
       if(notesAfter.length>8000)fail('Observación interna demasiado larga.');
       const full=root+prefix+'/sessions/'+id;
       const audit={revision:next.revision,actor:identity.uid,reason:motive,mutationId:next.mutationId,before:before?before.data:null,after:next,notesBefore,notesAfter};
@@ -148,6 +149,42 @@
       if(!equal(receipt.data.after,verified.data)||receipt.data.notesAfter!==notesAfter||!receipt.data.at||stored.data.revision!==next.revision||stored.data.observation!==notesAfter)fail('Verificación de historial incompleta.','READBACK');
       return {...verified,observation:notesAfter,audit:receipt.data};
     }
+    // 2026-10-29: traslado de una clase a otra ficha. Las sesiones no se borran ni cambian de ficha (sus reglas lo
+    // impiden), así que en UN SOLO commit la original pasa a Suspendida (con recibo y nota) y nace la clase nueva en
+    // la ficha destino (con su recibo, nota y día ocupado). Si algo falla no queda ninguna de las dos a medias.
+    async function transfer(before,target,reason,{observationBefore,observationTarget=''}={}){
+      await principal();if(identity.role==='aprendiz')fail('Acceso de solo lectura.','PERMISSION');
+      const motive=String(reason||'').trim();if(!motive||motive.length>2000)fail('Indique el motivo del cambio (máximo 2000 caracteres).');
+      if(!before)fail('Seleccione la clase que se traslada.');validate(before.data);
+      if(taught(before.data))fail('Una clase impartida o histórica no se traslada de ficha.');
+      const orig={...clone(before.data),status:'Suspendida',actualMinutes:null},born=clone(target);
+      if(born.ficha===orig.ficha||born.year!==orig.year)fail('El traslado debe ir a otra ficha del mismo año.');
+      if(born.origin!=='new'||born.protected||born.sourceStatuses.length||born.status!=='Programada')fail('La clase destino debe nacer programada.');
+      const pa=scope(orig.ficha,orig.year),pb=scope(born.ficha,born.year),ia=encodeURIComponent(orig.id),ib=encodeURIComponent(born.id);
+      orig.revision=before.data.revision+1;orig.updatedBy=identity.uid;orig.mutationId=globalThis.crypto.randomUUID();
+      born.revision=1;born.originalDate=born.date;born.updatedBy=identity.uid;born.mutationId=globalThis.crypto.randomUUID();validate(orig);validate(born);
+      const current=await call('GET',pa+'/sessions/'+ia,undefined,true);if(!current||current.updateTime!==before.updateTime)fail('El calendario cambió. Recargue y revise antes de guardar.','CONFLICT');
+      const note=await call('GET',pa+'/notes/'+ia,undefined,true);
+      const notesBefore=note?document(note).data.observation:'',notesAfter=observationBefore===undefined?notesBefore:String(observationBefore),bornNote=String(observationTarget);
+      if(notesAfter.length>8000||bornNote.length>8000)fail('Observación interna demasiado larga.');
+      const fa=root+pa+'/sessions/'+ia,fb=root+pb+'/sessions/'+ib;
+      const writes=[{update:{name:fa,fields:fields(orig)},currentDocument:{updateTime:before.updateTime}},
+        {update:{name:fa+'/audit/'+orig.revision,fields:fields({revision:orig.revision,actor:identity.uid,reason:motive,mutationId:orig.mutationId,before:before.data,after:orig,notesBefore,notesAfter})},updateTransforms:[{fieldPath:'at',setToServerValue:'REQUEST_TIME'}],currentDocument:{exists:false}},
+        {update:{name:root+pa+'/notes/'+ia,fields:fields({sessionId:orig.id,revision:orig.revision,observation:notesAfter})},currentDocument:note?{updateTime:note.updateTime}:{exists:false}},
+        {update:{name:fb,fields:fields(born)},currentDocument:{exists:false}},
+        {update:{name:fb+'/audit/1',fields:fields({revision:1,actor:identity.uid,reason:motive,mutationId:born.mutationId,before:null,after:born,notesBefore:'',notesAfter:bornNote})},updateTransforms:[{fieldPath:'at',setToServerValue:'REQUEST_TIME'}],currentDocument:{exists:false}},
+        {update:{name:root+pb+'/notes/'+ib,fields:fields({sessionId:born.id,revision:1,observation:bornNote})},currentDocument:{exists:false}},
+        {update:{name:root+pb+'/days/'+born.date,fields:fields({sessionId:born.id})},currentDocument:{exists:false}}];
+      try{await call('POST',':commit',{writes});}catch(e){
+        if(e.code==='PERMISSION'){const now=await call('GET',pa+'/sessions/'+ia,undefined,true).catch(()=>undefined);
+          if(now!==undefined&&(!now||now.updateTime!==before.updateTime))fail('El calendario cambió. Recargue y revise antes de guardar.','CONFLICT');
+          const day=await call('GET',pb+'/days/'+born.date,undefined,true).catch(()=>undefined);
+          if(day)fail('La ficha '+born.ficha+' ya tiene una clase el '+born.date+'. Edite esa clase en lugar de trasladar otra.','CONFLICT');}
+        if(!['PERMISSION','CONFLICT'].includes(e.code))e.message+=' Resultado no confirmado; recargue antes de reintentar.';throw e;}
+      const va=document(await call('GET',pa+'/sessions/'+ia)),vb=document(await call('GET',pb+'/sessions/'+ib));
+      if(va.data.mutationId!==orig.mutationId||vb.data.mutationId!==born.mutationId)fail('Traslado enviado, pero otra versión ya está vigente. Recargue para conciliar.','READBACK');
+      return {original:{...va,observation:notesAfter},target:{...vb,observation:bornNote}};
+    }
     async function notes(ficha,year){await principal();if(identity.role==='aprendiz')fail('Observaciones internas restringidas.','PERMISSION');const out=new Map();let page;
       do{const r=await call('GET',scope(ficha,year)+'/notes?pageSize=300'+(page?'&pageToken='+encodeURIComponent(page):''));for(const d of r.documents||[]){const n=document(d).data;out.set(n.sessionId,n.observation);}page=r.nextPageToken;}while(page);return out;}
     async function assign(uid,assignment,before){
@@ -157,7 +194,20 @@
       await call('POST',':commit',{writes:[{update:{name:root+path,fields:fields(data)},currentDocument:before?{updateTime:before.updateTime}:{exists:false}}]});
       const out=document(await call('GET',path));for(const k of ['role','active','fichas'])if(JSON.stringify(out.data[k])!==JSON.stringify(data[k]))fail('Asignación no verificada.','READBACK');return out;
     }
-    return {principal,list,listCached,clearCache,save,history,notes,assign,source:async(ficha,year)=>{await principal();if(identity.role==='aprendiz')fail('Archivo histórico restringido.');const d=await call('GET',scope(ficha,year),undefined,true);return d?document(d):null;},readAssignment:async uid=>{await principal();if(identity.role!=='admin')fail('Administración restringida.');const d=await call('GET','/sena_portal_calendar_assignments/'+encodeURIComponent(uid),undefined,true);return d?document(d):null;}};
+    // Novedades institucionales (p. ej. «Sede SENA»): un documento por año, solo administrador (regla existente de
+    // sena_portal_calendar). No las ve el aprendiz. Guardado con precondición de versión y historial en el mismo documento.
+    const eventsPath=year=>{if(!Number.isInteger(year)||year<2020||year>2100)fail('Año inválido.');return '/sena_portal_calendar/institutional_events_'+year;};
+    async function events(year){await principal();if(identity.role!=='admin')fail('Novedades institucionales restringidas.','PERMISSION');
+      const d=await call('GET',eventsPath(year),undefined,true);return d?document(d):null;}
+    async function saveEvents(year,data,before){await principal();if(identity.role!=='admin')fail('Novedades institucionales restringidas.','PERMISSION');
+      const body=clone(data);if(body.year!==year||!Array.isArray(body.events)||!Array.isArray(body.history)||body.events.length>400||body.history.length>2000)fail('Novedades inválidas.');
+      try{await call('POST',':commit',{writes:[{update:{name:root+eventsPath(year),fields:fields(body)},currentDocument:before?{updateTime:before.updateTime}:{exists:false}}]});}
+      catch(e){if(!['PERMISSION','CONFLICT'].includes(e.code))e.message+=' Resultado no confirmado; recargue antes de reintentar.';throw e;}
+      const out=document(await call('GET',eventsPath(year)));if(!equal(out.data,body))fail('Novedades no verificadas tras guardar.','READBACK');return out;}
+    // Observación interna de UNA sesión (1 lectura), para no listar todas las notas en cada apertura.
+    async function note(ficha,year,id){await principal();if(identity.role==='aprendiz')fail('Observaciones internas restringidas.','PERMISSION');
+      const d=await call('GET',scope(ficha,year)+'/notes/'+encodeURIComponent(id),undefined,true);return d?document(d).data.observation:'';}
+    return {principal,list,listCached,clearCache,save,transfer,events,saveEvents,note,history,notes,assign,source:async(ficha,year)=>{await principal();if(identity.role==='aprendiz')fail('Archivo histórico restringido.');const d=await call('GET',scope(ficha,year),undefined,true);return d?document(d):null;},readAssignment:async uid=>{await principal();if(identity.role!=='admin')fail('Administración restringida.');const d=await call('GET','/sena_portal_calendar_assignments/'+encodeURIComponent(uid),undefined,true);return d?document(d):null;}};
   }
   async function proposal(sessions,year,principal,existing=[]){
     const batch=[],days=new Set(existing.map(d=>d.data.ficha+'|'+d.data.date));
