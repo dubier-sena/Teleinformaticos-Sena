@@ -37,7 +37,8 @@ function pages(planner,learner){
  // Deliverable sources stay (guide deadlines, productive stage); the all-fichas records file and global manual events do not.
  const keep=new Set(['shared_utils','global_error_handler','portal_auth','firebase-config','firebase_auth_bridge','guide_merge_utils','firebase_db','project_integrations','drive_db','firebase_status_banner','save_status','shared_shell','activity_standard','guide_declarations','activity_deadlines','productive_stage_store','productive_stage_deadlines','academic_agenda','academic_agenda_context','academic_agenda_views','academic_agenda_calendar_ui','agenda_view_preference','student_calendar','access_guard_authenticated']);
  const student=learner.replace(/<script\b[^>]*src="([^"]+)"[^>]*><\/script>/g,(tag,url)=>{const file=url.split('/').pop().split('?')[0].replace(/\.js$/,'');return keep.has(file)||/^https:\/\/www\.gstatic\.com\/firebasejs\//.test(url)?tag:'';})
-  .replace('<title>',config+script('js/academic_calendar_cloud.js')+script('js/academic_calendar_connection.js')+'<title>');
+  // 2026-10-29: academic_calendar_cloud.js oculta las clases retiradas; versión propia para que el aprendiz no use una copia vieja.
+  .replace('<title>',config+'<script defer src="js/academic_calendar_cloud.js?v=20261029_3"></script>'+script('js/academic_calendar_connection.js')+'<title>');
  return {'calendario-academico-sesiones.html':instructor,'pages/auxiliares/calendario-aprendiz.html':student,
   'js/academic_calendar_release_config.js':"// Candidate only. Deploy together with reviewed rules, assignments and data.\nwindow.SENA_CALENDAR_FIRESTORE={enabled:true,projectId:'sena-portal'};\n"};
 }

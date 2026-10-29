@@ -68,3 +68,7 @@
 .cloud-bulk-list{max-height:260px;overflow:auto;border:1px solid var(--cal-line);border-radius:8px;padding:4px 12px}.cloud-bulk-list .check{margin:6px 0;font-weight:500}
 .cloud-detail-actions{margin:0 0 16px}.cloud-detail-actions .c-btn{flex:1 1 auto}.cloud-history li{font-size:13px}
 @media(max-width:640px){.cloud-controls .actions{display:grid;grid-template-columns:1fr 1fr}.cloud-controls .c-btn{font-size:13px;padding:8px}.cloud-block-row{grid-template-columns:1fr 1fr}.cloud-block-row button{grid-column:1/-1}.cloud-dialog{padding:16px}}
+/* 2026-10-29 · Franjas de referencia del grupo y retiro de clases. */
+.cloud-usual{border-top:1px dashed var(--cal-line);margin-top:8px;padding-top:8px}.cloud-usual:empty{display:none}.cloud-usual-title{font-size:13px;font-weight:600;color:var(--cal-ink);margin:4px 0}
+.cloud-usual .check{margin:4px 0;font-weight:500}.cloud-usual small{color:var(--cal-muted)}.cloud-show-retired{margin:0;align-self:center;font-weight:500}
+.cloud-retired-note{background:var(--cal-warning-bg);color:var(--cal-warning)!important;padding:8px 10px;border-radius:6px;width:100%}

@@ -16,6 +16,8 @@
   const fichaLabel=f=>FICHAS[f]?INSTITUTIONS[FICHAS[f].institutionId].replace('I.E. ','')+' '+FICHAS[f].grade+' · '+f:'Ficha '+f;
   const institutionOf=f=>FICHAS[f]?.institutionId||'';
   const taught=d=>!!d&&(d.protected||['Realizada','Impartida'].includes(d.status));
+  // Retirada = quitada del calendario (retiro lógico, restaurable). No ocupa su día ni cuenta para cruces.
+  const retired=d=>!!d&&d.status==='Retirada';
   const mins=t=>Number(t.slice(0,2))*60+Number(t.slice(3));
   const HHMM=/^([01]\d|2[0-3]):[0-5]\d$/;
   function fail(text,code){const e=new Error(text);if(code)e.code=code;throw e;}
@@ -33,14 +35,14 @@
   }
   const duration=bs=>bs.reduce((t,b)=>t+mins(b.end)-mins(b.start),0);
   const overlaps=(a,b)=>a.some(x=>b.some(y=>x.start<y.end&&y.start<x.end));
-  const active=d=>!['Suspendida','Cancelada'].includes(d.status);
+  const active=d=>!['Suspendida','Cancelada','Retirada'].includes(d.status);
   // Errores bloquean el guardado; advertencias se muestran en la vista previa.
   function placement(next,docs,{holidays=[],ignore=[]}={}){
     const errors=[],warnings=[],skip=new Set([next.id,...ignore]);
     const holiday=holidays.find(h=>h.date===next.date);
     if(holiday&&active(next))errors.push('El '+next.date+' es festivo ('+holiday.names.join(', ')+'). Los festivos se conservan sin clases.');
     if([0,6].includes(weekday(next.date)))warnings.push('El '+next.date+' es fin de semana.');
-    const same=docs.find(d=>!skip.has(d.id)&&d.ficha===next.ficha&&d.date===next.date);
+    const same=docs.find(d=>!skip.has(d.id)&&!retired(d)&&d.ficha===next.ficha&&d.date===next.date);
     if(same)errors.push('La ficha '+next.ficha+' ya tiene una clase el '+next.date+' ('+same.blocks.map(b=>b.start+'–'+b.end).join(', ')+'). Edite esa clase para agregarle franjas; así no se duplica.');
     if(active(next))for(const d of docs.filter(d=>!skip.has(d.id)&&d.ficha!==next.ficha&&d.date===next.date&&active(d)&&overlaps(d.blocks,next.blocks)))
       warnings.push('Cruce de horario con '+fichaLabel(d.ficha)+' ('+d.blocks.map(b=>b.start+'–'+b.end).join(', ')+').');
@@ -69,6 +71,7 @@
       return {mode:'create',next,observation:String(form.observation||''),reason,errors:[...errors,...p.errors],warnings:[...warnings,...p.warnings]};
     }
     const b=before;
+    if(retired(b))fail('Esta clase está retirada del calendario. Restáurela primero.');
     if(Number(base.date.slice(0,4))!==b.year)fail('La clase debe quedar dentro del año '+b.year+'.');
     if(form.ficha!==b.ficha){
       if(taught(b))fail('Una clase impartida o histórica no se traslada de ficha; corrija su fecha u horario en su propia ficha.');
@@ -96,7 +99,8 @@
   // op: {status?, shiftDays?, blocks?, activity?, evidence?, dueDate?, noteAppend?, reason}
   function planBulk(docs,ids,op,{holidays=[]}={}){
     const reason=String(op.reason||'').trim();if(!reason)fail('Indique el motivo del cambio; queda en el historial de cada clase.');
-    const chosen=docs.filter(d=>ids.includes(d.id));if(!chosen.length)fail('Seleccione al menos una clase.');
+    const chosen=docs.filter(d=>ids.includes(d.id)&&!retired(d));if(!chosen.length)fail('Seleccione al menos una clase.');
+    if(op.retire)return planRetire(docs,chosen.map(d=>d.id),reason);
     const shift=Number(op.shiftDays||0);if(!Number.isInteger(shift)||Math.abs(shift)>180)fail('Desplazamiento de días inválido.');
     const bs=op.blocks?blocks(op.blocks):null;
     if(op.status&&!EDITABLE.includes(op.status))fail('Estado no permitido: '+op.status+'.');
@@ -131,6 +135,37 @@
     if(order.length<pending.length)errors.push('Los cambios de fecha se cruzan entre sí (intercambio de días). Muévalos en dos pasos.');
     return {items:order,unchanged:items.length-pending.length,reason,noteAppend:String(op.noteAppend||'').trim(),errors,warnings};
   }
+  // Quitar del calendario (una o varias). Las impartidas, protegidas o ya retiradas se omiten con aviso, nunca se tocan.
+  function planRetire(docs,ids,reason){
+    const motive=String(reason||'').trim();if(!motive)fail('Indique el motivo para quitar la clase; queda en el historial.');
+    const items=[],warnings=[];
+    for(const b of docs.filter(d=>ids.includes(d.id))){
+      if(retired(b)){warnings.push(fichaLabel(b.ficha)+' '+b.date+': ya estaba retirada.');continue;}
+      if(taught(b)){warnings.push(fichaLabel(b.ficha)+' '+b.date+': clase impartida o histórica protegida; se conserva.');continue;}
+      items.push({before:b,next:{...clone(b),status:'Retirada',actualMinutes:null}});
+    }
+    if(!items.length)fail('Ninguna de las clases elegidas se puede quitar (impartidas, protegidas o ya retiradas).');
+    return {retire:true,items,unchanged:0,reason:motive,noteAppend:'',errors:[],warnings};
+  }
+  // Restaurar: vuelve Programada en su misma fecha, si ese día sigue libre para la ficha y no es festivo.
+  function planRestore(before,docs,{holidays=[],reason}={}){
+    if(!retired(before))fail('La clase no está retirada.');
+    const motive=String(reason||'').trim();if(!motive)fail('Indique el motivo de la restauración.');
+    const next={...clone(before),status:'Programada',actualMinutes:null},p=placement(next,docs,{holidays});
+    return {mode:'update',before,next,reason:motive,observation:undefined,errors:p.errors,warnings:p.warnings};
+  }
+  const WEEKDAYS=['domingos','lunes','martes','miércoles','jueves','viernes','sábados'];
+  // Franjas de referencia de una ficha: las que tienen sus clases vigentes del calendario oficial ese día de la semana
+  // (el portal no guarda otro horario oficial en la nube). Si ese día no tiene clases, se ofrecen las de otros días.
+  function usualBlocks(docs,ficha,date){
+    const wd=weekday(date),pool=docs.filter(d=>d.ficha===ficha&&!retired(d)&&!['Suspendida','Cancelada'].includes(d.status));
+    const count=list=>{const m=new Map();for(const d of list)for(const b of d.blocks){const k=b.start+'-'+b.end;m.set(k,(m.get(k)||0)+1);}
+      return [...m].map(([k,n])=>({start:k.slice(0,5),end:k.slice(6),count:n})).sort((a,b)=>a.start<b.start?-1:a.start>b.start?1:a.end<b.end?-1:1);};
+    const same=pool.filter(d=>weekday(d.date)===wd),patterns=new Map();
+    for(const d of same){const k=d.blocks.map(b=>b.start+'-'+b.end).join(',');patterns.set(k,{blocks:clone(d.blocks),count:(patterns.get(k)?.count||0)+1});}
+    const best=[...patterns.values()].sort((a,b)=>b.count-a.count)[0]||null;
+    return {weekday:WEEKDAYS[wd],sameDay:count(same),otherDays:same.length?[]:count(pool),suggested:best?best.blocks:[]};
+  }
   const FIELDS=[['ficha','Ficha',v=>fichaLabel(v)],['date','Fecha'],['blocks','Franjas',v=>v.map(b=>b.start+'–'+b.end).join(', ')],['plannedMinutes','Minutos previstos'],
     ['status','Estado'],['actualMinutes','Minutos impartidos',v=>v===null?'sin documentar':v],['activity','Actividad (la ve el aprendiz)',v=>v||'—'],
     ['evidence','Evidencia (la ve el aprendiz)',v=>v||'—'],['dueDate','Fecha límite',v=>v||'—']];
@@ -163,5 +198,5 @@
     next.history.push({at,actor:String(actor||''),reason:motive,eventId:e.id,before,after:e});
     return next;
   }
-  return {INSTITUTIONS,FICHAS,EDITABLE,EVENT_KINDS,legacyEvents,eventDoc,applyEvent,fichaLabel,institutionOf,taught,blocks,duration,placement,planSingle,planBulk,diff,addDays};
+  return {retired,planRetire,planRestore,usualBlocks,INSTITUTIONS,FICHAS,EDITABLE,EVENT_KINDS,legacyEvents,eventDoc,applyEvent,fichaLabel,institutionOf,taught,blocks,duration,placement,planSingle,planBulk,diff,addDays};
 });

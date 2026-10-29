@@ -21,6 +21,7 @@
    +'<button id="cloud-edit" class="c-btn c-btn--secondary" type="button" hidden>Editar clase seleccionada</button>'
    +'<button id="cloud-history" class="c-btn c-btn--secondary" type="button" hidden>Historial de la clase</button>'
    +'<button id="cloud-review-draft" class="c-btn c-btn--ghost" type="button" hidden>Enviar sesiones del asistente a Firestore</button>'
+   +'<label class="check cloud-show-retired" id="cloud-retired-wrap" hidden><input type="checkbox" id="cloud-show-retired"> Mostrar clases retiradas</label>'
    +'<a id="cloud-learner" hidden target="_blank" rel="noopener">Abrir vista del aprendiz en emulador</a></div><p id="cloud-month-events" class="cloud-month-events"></p>';
   document.querySelector('.quick-actions').after(host);
   const statusOptions=s=>[...new Set([...E.EDITABLE,...(s&&!E.EDITABLE.includes(s.status)?[s.status]:[])])];
@@ -33,7 +34,7 @@
    +'<label>Grupo / ficha<select id="cloud-ficha"></select></label><label>Fecha<input id="cloud-date" type="date" required></label>'
    +'<label>Estado<select id="cloud-state"></select></label><label id="cloud-minutes-wrap" hidden>Minutos impartidos (clase parcial)<input id="cloud-minutes" type="number" min="1"></label></div>'
    +'<p id="cloud-state-note" class="view-hint" hidden>Clase impartida o histórica: puede corregir fecha, horario, actividad y observación. El estado registrado se conserva.</p>'
-   +'<fieldset class="cloud-blocks"><legend>Franjas horarias</legend><div id="cloud-block-rows"></div><button id="cloud-add-block" type="button" class="c-btn c-btn--ghost">+ Agregar franja</button></fieldset>'
+   +'<fieldset class="cloud-blocks"><legend>Franjas horarias</legend><div id="cloud-block-rows"></div><button id="cloud-add-block" type="button" class="c-btn c-btn--ghost">+ Agregar franja</button><div id="cloud-usual" class="cloud-usual"></div></fieldset>'
    +'<label>Actividad programada (la ve el aprendiz)<textarea id="cloud-activity" maxlength="4000" rows="2"></textarea></label>'
    +'<details><summary>Evidencia y fecha límite (opcional)</summary><label>Evidencia o entrega (la ve el aprendiz)<textarea id="cloud-evidence" maxlength="4000" rows="2"></textarea></label><label>Fecha límite de entrega<input id="cloud-due" type="date"></label></details>'
    +'<label>Observación interna (solo instructor; el aprendiz no la ve)<textarea id="cloud-observation" maxlength="8000" rows="2"></textarea></label>'
@@ -46,6 +47,19 @@
    return row;}
   function setBlocks(list){const host=$('cloud-block-rows');host.innerHTML='';(list.length?list:[{start:'',end:''}]).forEach(b=>host.append(blockRow(b)));}
   const readBlocks=hostId=>[...$(hostId).querySelectorAll('.cloud-block-row')].map(r=>({start:r.querySelector('[data-part=start]').value,end:r.querySelector('[data-part=end]').value}));
+  // Franjas de referencia del grupo y día elegidos (las de sus clases vigentes del calendario oficial).
+  function renderUsual({apply=false}={}){const box=$('cloud-usual'),ficha=$('cloud-ficha').value,date=$('cloud-date').value;
+   if(!ficha||!/^\d{4}-\d{2}-\d{2}$/.test(date)){box.innerHTML='';return;}
+   const ref=E.usualBlocks(data(),ficha,date),list=ref.sameDay.length?ref.sameDay:ref.otherDays;
+   const key=b=>b.start+'-'+b.end,chosen=new Set((apply?ref.suggested:readBlocks('cloud-block-rows')).map(key));
+   box.innerHTML='<p class="cloud-usual-title">'+(list.length?'Franjas de '+esc(E.fichaLabel(ficha))+(ref.sameDay.length?' los '+esc(ref.weekday):' (otros días; no tiene clases los '+esc(ref.weekday)+')'):'Sin franjas de referencia para '+esc(E.fichaLabel(ficha))+'; escríbalas arriba.')+'</p>'
+    +list.map(b=>'<label class="check"><input type="checkbox" data-usual="'+esc(key(b))+'"'+(chosen.has(key(b))?' checked':'')+'> '+esc(b.start+'–'+b.end)+' <small>('+b.count+(b.count===1?' clase':' clases')+')</small></label>').join('')
+    +(list.length?'<button type="button" class="c-btn c-btn--secondary" id="cloud-usual-apply">Aplicar franjas seleccionadas</button>':'')+'<p id="cloud-usual-note" class="view-hint" role="status"></p>';
+   if(apply&&ref.suggested.length){setBlocks(ref.suggested);$('cloud-usual-note').textContent='Se cargaron las franjas habituales de este grupo. Ajústelas si es necesario.';}
+   else if(apply&&!ref.suggested.length&&list.length)$('cloud-usual-note').textContent='Este grupo no tiene un horario habitual ese día: marque las franjas o escríbalas.';}
+  function applyUsual(){const picked=[...$('cloud-usual').querySelectorAll('[data-usual]:checked')].map(x=>({start:x.dataset.usual.slice(0,5),end:x.dataset.usual.slice(6)}));
+   try{const bs=E.blocks(picked);setBlocks(bs);$('cloud-usual-note').textContent='Franjas aplicadas: '+bs.map(b=>b.start+'–'+b.end).join(', ')+'.';$('cloud-error').textContent='';}
+   catch(e){$('cloud-error').textContent=picked.length?e.message:'Marque al menos una franja.';}hideReview();}
   function syncState(){const s=$('cloud-state').value;$('cloud-minutes-wrap').hidden=s!=='Parcial';}
   function syncFichas(){const keep=pending?.before?.data.ficha;const current=$('cloud-ficha').value;$('cloud-ficha').innerHTML=fichaOptions($('cloud-institution').value,null);
    if([...$('cloud-ficha').options].some(o=>o.value===current))$('cloud-ficha').value=current;else if(keep&&E.institutionOf(keep)===$('cloud-institution').value)$('cloud-ficha').value=keep;}
@@ -57,7 +71,7 @@
    $('cloud-institution').value=s?E.institutionOf(s.ficha):(E.institutionOf(state().filterFicha)||'john-f-kennedy');syncFichas();
    if(s)$('cloud-ficha').value=s.ficha;else if(state().filterFicha&&principal.fichas.includes(state().filterFicha))$('cloud-ficha').value=state().filterFicha;
    $('cloud-ficha').disabled=!!s&&locked(s);$('cloud-institution').disabled=!!s&&locked(s);
-   $('cloud-date').value=s?.date||date||state().date;setBlocks(s?s.blocks:[]);
+   $('cloud-date').value=s?.date||date||state().date;setBlocks(s?s.blocks:[]);renderUsual({apply:!s});
    const fixed=!!s&&locked(s);$('cloud-state').innerHTML=statusOptions(s).map(x=>'<option>'+esc(x)+'</option>').join('');
    $('cloud-state').value=s?.status||'Programada';$('cloud-state').disabled=fixed||!s;$('cloud-state-note').hidden=!fixed;syncState();
    $('cloud-minutes').value=s?.status==='Parcial'?s.actualMinutes??'':'';$('cloud-activity').value=s?.activity||'';$('cloud-evidence').value=s?.evidence||'';$('cloud-due').value=s?.dueDate||'';
@@ -89,9 +103,10 @@
     if(plan.mode!=='transfer')Cloud.validate({...plan.next,revision:plan.next.revision+1,mutationId:'x',updatedBy:principal.uid});
     pending={before,plan};$('cloud-diff').innerHTML=describe(plan);$('cloud-save').hidden=plan.errors.length>0;$('cloud-review').hidden=false;$('cloud-form').hidden=true;$('cloud-review').focus();
    }catch(err){$('cloud-error').textContent=err.message;}};
-  $('cloud-form').oninput=hideReview;$('cloud-state').onchange=()=>{syncState();hideReview();};$('cloud-institution').onchange=()=>{syncFichas();hideReview();};
+  $('cloud-form').oninput=hideReview;$('cloud-state').onchange=()=>{syncState();hideReview();};$('cloud-institution').onchange=()=>{syncFichas();renderUsual({apply:true});hideReview();};
+  $('cloud-ficha').onchange=()=>{renderUsual({apply:true});hideReview();};$('cloud-date').addEventListener('change',()=>renderUsual({apply:false}));
   $('cloud-add-block').onclick=()=>{if($('cloud-block-rows').children.length<6)$('cloud-block-rows').append(blockRow());hideReview();};
-  dialog.addEventListener('click',e=>{const b=e.target.closest('[data-remove-block]');if(!b)return;const rows=$('cloud-block-rows');if(rows.children.length>1)b.closest('.cloud-block-row').remove();hideReview();});
+  dialog.addEventListener('click',e=>{if(e.target.id==='cloud-usual-apply')return applyUsual();const b=e.target.closest('[data-remove-block]');if(!b)return;const rows=$('cloud-block-rows');if(rows.children.length>1)b.closest('.cloud-block-row').remove();hideReview();});
   $('cloud-back').onclick=()=>{$('cloud-review').hidden=true;$('cloud-form').hidden=false;};
   $('cloud-close').onclick=()=>dialog.close();
   function store(d,observation){const i=docs.findIndex(x=>x.data.id===d.data.id&&x.data.ficha===d.data.ficha);const clean={data:d.data,updateTime:d.updateTime,name:d.name};if(i<0)docs.push(clean);else docs[i]=clean;if(observation!==undefined)notes.set(d.data.id,observation);}
@@ -104,13 +119,32 @@
     pending=null;dialog.close();select(selected);render();message('Cambio guardado y verificado en Firestore. Los aprendices de la ficha lo verán al abrir su calendario.');
    }catch(e){$('cloud-error').textContent=e.message+(e.code==='CONFLICT'?' Pulse «Actualizar desde Firestore» y repita el cambio.':' No se reintenta automáticamente.');}
    finally{busy=false;$('cloud-save').disabled=false;}};
+  // ── Quitar del calendario / restaurar (retiro lógico con motivo y recibo de auditoría) ──
+  const rd=document.createElement('dialog');rd.id='cloud-retire-dialog';rd.className='cloud-dialog';rd.setAttribute('aria-labelledby','cloud-retire-title');
+  rd.innerHTML='<div class="dialog-header"><h2 id="cloud-retire-title">Quitar del calendario</h2><button id="cloud-retire-close" type="button">Cerrar</button></div><div id="cloud-retire-info"></div>'
+   +'<p role="alert" id="cloud-retire-error"></p><label>Motivo (obligatorio; queda en el historial)<input id="cloud-retire-reason" maxlength="2000"></label>'
+   +'<div class="actions"><button id="cloud-retire-confirm" class="c-btn c-btn--primary" type="button">Quitar del calendario</button><button id="cloud-retire-cancel" class="c-btn c-btn--secondary" type="button">Cancelar</button></div>';
+  document.body.append(rd);let retireTarget=null;
+  function openRetire(d,mode){retireTarget={doc:d,mode};const s=d.data;$('cloud-retire-title').textContent=mode==='restore'?'Restaurar clase':'Quitar del calendario';
+   $('cloud-retire-info').innerHTML='<table class="cloud-diff-table"><tbody><tr><th scope="row">Institución</th><td>'+esc(E.INSTITUTIONS[E.institutionOf(s.ficha)]||'')+'</td></tr><tr><th scope="row">Ficha</th><td>'+esc(E.fichaLabel(s.ficha))+'</td></tr><tr><th scope="row">Fecha</th><td>'+esc(s.date)+'</td></tr><tr><th scope="row">Horario</th><td>'+esc(s.blocks.map(b=>b.start+'–'+b.end).join(', '))+'</td></tr><tr><th scope="row">Estado</th><td>'+esc(s.status)+'</td></tr></tbody></table>'
+    +(mode==='restore'?'<p>La clase vuelve al calendario como <strong>Programada</strong> en esa misma fecha y el aprendiz la verá de nuevo.</p>':'<p>La clase <strong>deja de verse</strong> para el aprendiz y en el calendario. No se borra: queda en el historial y se puede restaurar. Es distinto de «Suspender», que la muestra como cancelada.</p>');
+   $('cloud-retire-confirm').textContent=mode==='restore'?'Restaurar clase':'Quitar del calendario';$('cloud-retire-reason').value='';$('cloud-retire-error').textContent='';rd.showModal();}
+  $('cloud-retire-close').onclick=$('cloud-retire-cancel').onclick=()=>rd.close();
+  $('cloud-retire-confirm').onclick=async()=>{const t=retireTarget;if(!t||busy)return;$('cloud-retire-error').textContent='';
+   let plan;try{plan=t.mode==='restore'?E.planRestore(t.doc.data,data(),{holidays:holidays(),reason:$('cloud-retire-reason').value}):E.planRetire(data(),[t.doc.data.id],$('cloud-retire-reason').value);
+    if(plan.errors?.length)throw Error(plan.errors.join(' '));}catch(e){$('cloud-retire-error').textContent=e.message;return;}
+   const next=t.mode==='restore'?plan.next:plan.items[0].next;busy=true;$('cloud-retire-confirm').disabled=true;$('cloud-retire-error').textContent='Guardando y verificando en Firestore…';
+   try{const r=await api.save(next,t.doc,plan.reason);store(r,r.observation);rd.close();retireTarget=null;if(t.mode==='restore')select(r.data);render();
+    message(t.mode==='restore'?'Clase restaurada y verificada en Firestore.':'Clase quitada del calendario y verificada en Firestore. Puede restaurarla con «Mostrar clases retiradas».');}
+   catch(e){$('cloud-retire-error').textContent=e.message+(e.code==='CONFLICT'?' Pulse «Actualizar desde Firestore» y repita.':' No se reintenta automáticamente.');}
+   finally{busy=false;$('cloud-retire-confirm').disabled=false;}};
   // ── Edición de varias clases ──
   const bulk=document.createElement('dialog');bulk.id='cloud-bulk-dialog';bulk.className='cloud-dialog';bulk.setAttribute('aria-labelledby','cloud-bulk-title');
   bulk.innerHTML='<div class="dialog-header"><h2 id="cloud-bulk-title">Editar varias clases</h2><button id="cloud-bulk-close" type="button">Cerrar</button></div><p role="alert" id="cloud-bulk-error"></p>'
    +'<form id="cloud-bulk-form" novalidate><fieldset><legend>1. Elija las clases</legend><div class="grid"><label>Desde<input id="cloud-bulk-from" type="date"></label><label>Hasta<input id="cloud-bulk-to" type="date"></label>'
    +'<label>Institución<select id="cloud-bulk-institution"><option value="">Todas</option><option value="john-f-kennedy">'+esc(E.INSTITUTIONS['john-f-kennedy'])+'</option><option value="santa-barbara">'+esc(E.INSTITUTIONS['santa-barbara'])+'</option></select></label>'
    +'<label>Ficha<select id="cloud-bulk-ficha"></select></label></div><div id="cloud-bulk-list" class="cloud-bulk-list"></div></fieldset>'
-   +'<fieldset><legend>2. Elija el cambio (deje en blanco lo que no cambia)</legend><div class="grid"><label>Nuevo estado<select id="cloud-bulk-status"><option value="">Sin cambio</option>'+E.EDITABLE.filter(s=>s!=='Parcial').map(s=>'<option>'+s+'</option>').join('')+'</select></label>'
+   +'<fieldset><legend>2. Elija el cambio (deje en blanco lo que no cambia)</legend><div class="grid"><label>Nuevo estado<select id="cloud-bulk-status"><option value="">Sin cambio</option>'+E.EDITABLE.filter(s=>s!=='Parcial').map(s=>'<option>'+s+'</option>').join('')+'<option value="__retire">Quitar del calendario (se puede restaurar)</option></select></label>'
    +'<label>Mover días (+7 = una semana después)<input id="cloud-bulk-shift" type="number" min="-180" max="180" value="0"></label></div>'
    +'<label class="check"><input id="cloud-bulk-use-blocks" type="checkbox"> Reemplazar las franjas por:</label><div id="cloud-bulk-blocks" hidden><div class="cloud-block-row"><label>Inicio<input type="time" data-part="start"></label><label>Fin<input type="time" data-part="end"></label></div><div class="cloud-block-row"><label>Inicio 2 (opcional)<input type="time" data-part="start"></label><label>Fin 2<input type="time" data-part="end"></label></div></div>'
    +'<label class="check"><input id="cloud-bulk-use-activity" type="checkbox"> Reemplazar la actividad por:</label><textarea id="cloud-bulk-activity" rows="2" maxlength="4000" hidden></textarea>'
@@ -120,7 +154,7 @@
   document.body.append(bulk);
   let bulkPlan=null;
   function bulkCandidates(){const from=$('cloud-bulk-from').value,to=$('cloud-bulk-to').value,inst=$('cloud-bulk-institution').value,f=$('cloud-bulk-ficha').value;
-   return data().filter(d=>(!from||d.date>=from)&&(!to||d.date<=to)&&(!inst||E.institutionOf(d.ficha)===inst)&&(!f||d.ficha===f)).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:a.ficha<b.ficha?-1:1);}
+   return data().filter(d=>!E.retired(d)&&(!from||d.date>=from)&&(!to||d.date<=to)&&(!inst||E.institutionOf(d.ficha)===inst)&&(!f||d.ficha===f)).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:a.ficha<b.ficha?-1:1);}
   function renderBulkList(){const list=bulkCandidates();$('cloud-bulk-list').innerHTML=list.length?'<p><label class="check"><input type="checkbox" id="cloud-bulk-all" checked> Todas ('+list.length+')</label></p>'+list.map(d=>'<label class="check"><input type="checkbox" data-bulk-id="'+esc(d.id)+'" checked> '+esc(label(d))+' · '+esc(d.status)+(locked(d)?' · impartida':'')+'</label>').join(''):'<p>No hay clases con estos filtros.</p>';bulkPlan=null;$('cloud-bulk-review').hidden=true;}
   function openBulk(){if(!principal||principal.role==='aprendiz')return;const d=state().date,mon=E.addDays(d,-((new Date(d+'T12:00:00Z').getUTCDay()+6)%7));
    $('cloud-bulk-from').value=mon;$('cloud-bulk-to').value=E.addDays(mon,4);$('cloud-bulk-ficha').innerHTML='<option value="">Todas</option>'+fichaOptions('',null);
@@ -132,11 +166,12 @@
   bulk.addEventListener('change',e=>{if(e.target.id==='cloud-bulk-all')bulk.querySelectorAll('[data-bulk-id]').forEach(x=>{x.checked=e.target.checked;});bulkPlan=null;$('cloud-bulk-review').hidden=true;});
   $('cloud-bulk-form').onsubmit=e=>{e.preventDefault();$('cloud-bulk-error').textContent='';
    try{const ids=[...bulk.querySelectorAll('[data-bulk-id]:checked')].map(x=>x.dataset.bulkId);
-    const op={status:$('cloud-bulk-status').value||undefined,shiftDays:Number($('cloud-bulk-shift').value||0),reason:$('cloud-bulk-reason').value,noteAppend:$('cloud-bulk-note').value};
+    const retire=$('cloud-bulk-status').value==='__retire';
+    const op={retire,status:retire?undefined:$('cloud-bulk-status').value||undefined,shiftDays:Number($('cloud-bulk-shift').value||0),reason:$('cloud-bulk-reason').value,noteAppend:$('cloud-bulk-note').value};
     if($('cloud-bulk-use-blocks').checked)op.blocks=readBlocks('cloud-bulk-blocks');if($('cloud-bulk-use-activity').checked)op.activity=$('cloud-bulk-activity').value;
     bulkPlan=E.planBulk(data(),ids,op,{holidays:holidays()});
     const rows=bulkPlan.items.map(it=>{const d=E.diff(it.before,it.next);return '<li><strong>'+esc(label(it.before))+'</strong>: '+(d.length?d.map(r=>esc(r.label)+' '+esc(r.before)+' → '+esc(r.after)).join(' · '):'solo observación interna')+'</li>';}).join('');
-    $('cloud-bulk-diff').innerHTML='<p>'+bulkPlan.items.length+' clases cambiarán'+(bulkPlan.unchanged?' ('+bulkPlan.unchanged+' quedan igual)':'')+'. Cada una se guarda y verifica por separado, en este orden.</p><ol>'+rows+'</ol>'
+    $('cloud-bulk-diff').innerHTML=(bulkPlan.retire?'<p><strong>Se quitarán '+bulkPlan.items.length+' clases del calendario.</strong> Dejan de verse para el aprendiz; no se borran y cada una se puede restaurar. Revise cada una:</p>':'')+'<p>'+bulkPlan.items.length+' clases cambiarán'+(bulkPlan.unchanged?' ('+bulkPlan.unchanged+' quedan igual)':'')+'. Cada una se guarda y verifica por separado, en este orden.</p><ol>'+rows+'</ol>'
      +(bulkPlan.noteAppend?'<p>Se agrega a la observación interna: «'+esc(bulkPlan.noteAppend)+'»</p>':'')+'<p>Motivo: '+esc(bulkPlan.reason)+'</p>'
      +(bulkPlan.warnings.length?'<ul class="cloud-warnings">'+bulkPlan.warnings.map(w=>'<li>⚠ '+esc(w)+'</li>').join('')+'</ul>':'')
      +(bulkPlan.errors.length?'<ul class="cloud-errors" role="alert">'+bulkPlan.errors.map(w=>'<li>✖ '+esc(w)+'</li>').join('')+'</ul>':'');
@@ -193,7 +228,7 @@
     docs=next;sources=nextSources;notes=new Map();loadedYear=year;
     if(![...source.options].some(o=>o.value==='cloud'))source.add(new Option('Calendario oficial (Firestore)','cloud'));source.value='cloud';document.body.classList.add('cloud-mode');const badge=document.querySelector('.local-badge');if(badge)badge.textContent='Calendario oficial';
     const editor=principal.role!=='aprendiz';// Editar e Historial se ofrecen en el panel de la clase seleccionada (decorate), no en la barra.
-    ['cloud-new','cloud-bulk','cloud-events'].forEach(id=>$(id).hidden=!editor);
+    ['cloud-new','cloud-bulk','cloud-events','cloud-retired-wrap'].forEach(id=>$(id).hidden=!editor);
     $('cloud-review-draft').hidden=!editor||!state().saved.sessions.some(s=>s.year===year&&s.status==='Programada');
     $('cloud-status').textContent='Calendario oficial · '+docs.length+' clases de '+principal.fichas.length+' fichas · lo que guarde aquí lo ven los aprendices de cada ficha.';
     if(root.SENA_CALENDAR_FIRESTORE?.emulatorHost){$('cloud-learner').hidden=false;$('cloud-learner').href='pages/auxiliares/calendario-aprendiz.html?cloud=emulator&year='+year;}
@@ -221,7 +256,8 @@
   // Acciones en el panel de detalle de la clase seleccionada y en el día.
   function decorate(s,el){if(!s?.cloud||!principal||principal.role==='aprendiz'||!el)return;
    const bar=document.createElement('div');bar.className='cloud-detail-actions actions';
-   bar.innerHTML='<button type="button" class="c-btn c-btn--primary" data-cloud-act="edit">Editar esta clase</button>'+(locked(s)?'':'<button type="button" class="c-btn c-btn--secondary" data-cloud-act="suspend">Suspender</button>')+'<button type="button" class="c-btn c-btn--secondary" data-cloud-act="history">Historial</button>';
+   bar.innerHTML=E.retired(s)?'<p class="cloud-retired-note">Clase retirada del calendario: el aprendiz no la ve.</p><button type="button" class="c-btn c-btn--primary" data-cloud-act="restore">Restaurar</button><button type="button" class="c-btn c-btn--secondary" data-cloud-act="history">Historial</button>'
+    :'<button type="button" class="c-btn c-btn--primary" data-cloud-act="edit">Editar esta clase</button>'+(locked(s)?'':'<button type="button" class="c-btn c-btn--secondary" data-cloud-act="suspend">Suspender</button><button type="button" class="c-btn c-btn--secondary" data-cloud-act="retire">Quitar del calendario</button>')+'<button type="button" class="c-btn c-btn--secondary" data-cloud-act="history">Historial</button>';
    el.prepend(bar);const obs=el.querySelector('h3:last-of-type + p');
    if(!notes.has(s.id)&&obs)api.note(s.ficha,s.year,s.id).then(o=>{notes.set(s.id,o);if(state().selection===s.id&&o)obs.textContent=o;}).catch(()=>{});}
   function decorateDay(date,el){if(!principal||principal.role==='aprendiz'||!el)return;const list=evList().filter(e=>e.date===date);
@@ -229,11 +265,13 @@
    box.innerHTML=list.map(e=>'<p class="date-note">'+esc(e.title)+(e.status==='Cancelada'?' (cancelada)':'')+(e.note?' · '+esc(e.note):'')+'</p>').join('')+'<button type="button" class="c-btn c-btn--primary" data-cloud-act="new-day">+ Crear clase este día</button>';
    el.append(box);}
   document.addEventListener('click',e=>{const b=e.target.closest('[data-cloud-act]');if(!b)return;const act=b.dataset.cloudAct;
-   if(act==='edit')$('cloud-edit').click();if(act==='suspend')suspend();if(act==='history')showHistory();if(act==='new-day')open(null,{date:state().date});});
+   if(act==='edit')$('cloud-edit').click();if(act==='suspend')suspend();if(act==='history')showHistory();if(act==='new-day')open(null,{date:state().date});
+   if(act==='retire'||act==='restore'){const d=selected();if(d)openRetire(d,act);}});
   const yearInput=$('year');if(yearInput)yearInput.addEventListener('change',()=>{if(principal&&Number(yearInput.value)!==loadedYear)setTimeout(()=>reload(),0);});
   $('load-year')?.addEventListener('click',()=>{if(principal)setTimeout(()=>reload(),0);});
   // 2026-10-28: asignaciones de cuentas POSPUESTAS (migración futura). El calendario usa el perfil existente.
   if(root.SENA_CALENDAR_FIRESTORE?.enabled)setTimeout(()=>reload(),0);
-  return {reference:()=>source.value==='cloud'?docs.filter(d=>d.data.year===state().year).map(mapped):null,fichas:()=>principal?.fichas||[],reload,decorate,decorateDay,monthChanged:monthEvents};
+  $('cloud-show-retired').onchange=()=>render();
+  return {reference:()=>source.value==='cloud'?docs.filter(d=>d.data.year===state().year&&($('cloud-show-retired').checked||d.data.status!=='Retirada')).map(mapped):null,fichas:()=>principal?.fichas||[],reload,decorate,decorateDay,monthChanged:monthEvents};
  };
 })(window);

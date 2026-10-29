@@ -20,8 +20,8 @@
     if(!/^[a-zA-Z0-9_-]{1,120}$/.test(s.id)||!/^\d{6,9}$/.test(s.ficha)||!Number.isInteger(s.year)||s.year<2020||s.year>2100)fail('Identidad de sesión inválida.');
     if(Number(date(s.date).slice(0,4))!==s.year||Number(date(s.originalDate).slice(0,4))!==s.year)fail('Fecha fuera del año.');
     if(s.plannedMinutes!==duration(s.blocks)||s.actualMinutes!==null&&(!Number.isInteger(s.actualMinutes)||s.actualMinutes<0||s.actualMinutes>s.plannedMinutes))fail('Minutos inválidos.');
-    if(!['Programada','Realizada','Suspendida','Parcial','Reprogramada','Activa','Impartida','Cancelada','Recuperada','Sin programación','Estados mixtos — revisar'].includes(s.status)||s.status==='Parcial'&&!(s.actualMinutes>0&&s.actualMinutes<s.plannedMinutes)&&!(s.origin==='legacy'&&s.actualMinutes===null))fail('Estado inválido.');
-    if(['Programada','Suspendida','Reprogramada'].includes(s.status)&&s.actualMinutes!==null&&s.actualMinutes!==0)fail('Minutos incompatibles con el estado.');
+    if(!['Programada','Realizada','Suspendida','Parcial','Reprogramada','Activa','Impartida','Cancelada','Recuperada','Sin programación','Estados mixtos — revisar','Retirada'].includes(s.status)||s.status==='Parcial'&&!(s.actualMinutes>0&&s.actualMinutes<s.plannedMinutes)&&!(s.origin==='legacy'&&s.actualMinutes===null))fail('Estado inválido.');
+    if(['Programada','Suspendida','Reprogramada','Retirada'].includes(s.status)&&s.actualMinutes!==null&&s.actualMinutes!==0)fail('Minutos incompatibles con el estado.');
     if(s.status==='Realizada'&&s.actualMinutes!==null&&s.actualMinutes!==s.plannedMinutes)fail('La duración ejecutada no coincide con una sesión completa.');
     if(typeof s.activity!=='string'||s.activity.length>4000||typeof s.evidence!=='string'||s.evidence.length>4000)fail('Actividad o evidencia inválida.');
     if(typeof s.dueDate!=='string'||s.dueDate&&(Number(date(s.dueDate).slice(0,4))!==s.year||s.dueDate<s.date))fail('La fecha límite debe ser del mismo año y no anterior a la clase.');
@@ -119,7 +119,11 @@
       if(!motive||motive.length>2000)fail('Indique el motivo del cambio (máximo 2000 caracteres).');
       if(before){validate(before.data);if(before.data.id!==next.id||before.data.ficha!==next.ficha||before.data.year!==next.year)fail('Referencia de guardado incompatible.');for(const k of ['sourceStatuses','origin','protected','originalDate','curriculum'])if(JSON.stringify(next[k])!==JSON.stringify(before.data[k]))fail('Fuente histórica inmutable.');
         // Taught or historical classes can be corrected, but their recorded state is not rewritten.
-        if(taught(before.data)&&next.status!==before.data.status)fail('El estado de una clase impartida o histórica no se modifica.');}
+        if(taught(before.data)&&next.status!==before.data.status)fail('El estado de una clase impartida o histórica no se modifica.');
+        // 2026-10-29: «Retirada» = quitada del calendario (retiro lógico; nunca se borra). Solo se restaura, como Programada y en su misma fecha.
+        if(before.data.status==='Retirada'&&next.status!=='Programada')fail('Restaure la clase (queda Programada) antes de editarla.');
+        if(next.status==='Retirada'&&before.data.status!=='Retirada'&&!equal({...next,status:before.data.status,actualMinutes:before.data.actualMinutes,revision:0,mutationId:'',updatedBy:''},{...before.data,revision:0,mutationId:'',updatedBy:''}))fail('Al quitar una clase del calendario no se cambian sus demás datos.');
+        if(before.data.status==='Retirada'&&next.date!==before.data.date)fail('La clase se restaura en su misma fecha; después puede reprogramarla.');}
       else if(next.origin!=='new'||next.protected||next.sourceStatuses.length||next.status!=='Programada')fail('Las sesiones nuevas deben estar programadas.');
       next.revision=before?before.data.revision+1:1;next.updatedBy=identity.uid;next.mutationId=globalThis.crypto.randomUUID();validate(next);
       let note=null;
@@ -133,7 +137,11 @@
       const writes=[{update:{name:full,fields:fields(next)},currentDocument:before?{updateTime:before.updateTime}:{exists:false}},
         {update:{name:full+'/audit/'+next.revision,fields:fields(audit)},updateTransforms:[{fieldPath:'at',setToServerValue:'REQUEST_TIME'}],currentDocument:{exists:false}},
         {update:{name:root+prefix+'/notes/'+id,fields:fields({sessionId:next.id,revision:next.revision,observation:notesAfter})},currentDocument:note?{updateTime:note.updateTime}:{exists:false}}];
-      if(!before||next.date!==before.data.date){
+      const retiring=!!before&&next.status==='Retirada'&&before.data.status!=='Retirada',restoring=!!before&&before.data.status==='Retirada'&&next.status!=='Retirada';
+      // Una clase retirada libera su día (otra clase de la ficha puede ocuparlo); al restaurarla lo vuelve a ocupar.
+      if(retiring)writes.push({delete:root+prefix+'/days/'+before.data.date,currentDocument:{exists:true}});
+      else if(restoring)writes.push({update:{name:root+prefix+'/days/'+next.date,fields:fields({sessionId:next.id})},currentDocument:{exists:false}});
+      else if(!before||next.date!==before.data.date){
         writes.push({update:{name:root+prefix+'/days/'+next.date,fields:fields({sessionId:next.id})},currentDocument:{exists:false}});
         // The previous day is released in the same commit; the rules reject a move that keeps it occupied.
         if(before)writes.push({delete:root+prefix+'/days/'+before.data.date});
@@ -227,7 +235,8 @@
   function agenda(sessions,today=new Date(Date.now()-5*3600e3).toISOString().slice(0,10)){
     const status={Programada:'scheduled',Activa:'scheduled',Realizada:'taught',Impartida:'taught',Suspendida:'cancelled',Cancelada:'cancelled',Parcial:'partial',Reprogramada:'rescheduled',Recuperada:'recovered','Sin programación':'unplanned'};
     const label=x=>x==='Estados mixtos — revisar'?'Clase':x;
-    return sessions.flatMap(s=>{
+    // Una clase retirada del calendario no se muestra (distinta de Suspendida, que el aprendiz ve como cancelada).
+    return sessions.filter(s=>s.status!=='Retirada').flatMap(s=>{
       // Historical per-slot states are shown while the session keeps its source-derived state and original slots.
       const states=[...new Set(s.sourceStatuses.map(x=>x.state))],sourceState=states.length===1?states[0]:'Estados mixtos — revisar';
       const perSlot=s.origin==='legacy'&&s.sourceStatuses.length&&s.status===sourceState&&s.sourceStatuses.every(x=>(x.blocks||[]).every(b=>s.blocks.some(y=>y.start===b.start&&y.end===b.end)));

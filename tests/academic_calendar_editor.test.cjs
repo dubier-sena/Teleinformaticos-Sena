@@ -169,3 +169,60 @@ test('el aprendiz nunca recibe observaciones internas ni novedades',()=>{
  const learner=C.agenda([{...s(),activity:'Práctica',observation:'SECRETO'}]);assert.ok(!JSON.stringify(learner).includes('SECRETO'));
  assert.ok(!C.KEYS.includes('observation'));const learnerPage=read('pages/auxiliares/calendario-aprendiz.html');assert.doesNotMatch(learnerPage,/academic_calendar_editor|cloud_ui/);
 });
+
+// ── 2026-10-29 (2): franjas del grupo y «Quitar del calendario» (retiro lógico, restaurable) ──
+test('franjas de referencia: las del grupo ese día de la semana, la más frecuente sugerida; sin clases ese día, otros días',()=>{
+ const tue=d=>s({id:'t'+d,ficha:'3441950',date:d,originalDate:d,blocks:[{start:'07:00',end:'09:55'},{start:'14:15',end:'16:15'}]});
+ const docs=[tue('2026-11-03'),tue('2026-11-10'),s({id:'x',ficha:'3441950',date:'2026-11-17',blocks:[{start:'07:00',end:'09:55'}]}),
+  s({id:'r',ficha:'3441950',date:'2026-11-24',status:'Retirada',blocks:[{start:'10:00',end:'11:00'}]}),s({id:'o',ficha:'3441944',date:'2026-11-03',blocks:[{start:'09:00',end:'09:55'}]})];
+ const u=E.usualBlocks(docs,'3441950','2026-12-01');
+ assert.equal(u.weekday,'martes');assert.deepEqual(u.suggested,[{start:'07:00',end:'09:55'},{start:'14:15',end:'16:15'}]);
+ assert.deepEqual(u.sameDay.map(b=>b.start+'-'+b.end+'x'+b.count),['07:00-09:55x3','14:15-16:15x2'],'no incluye la retirada ni otras fichas');
+ const w=E.usualBlocks(docs,'3441950','2026-11-04');assert.equal(w.sameDay.length,0);assert.equal(w.otherDays.length,2);assert.deepEqual(w.suggested,[]);
+ assert.throws(()=>E.blocks([{start:'07:00',end:'09:55'},{start:'09:00',end:'10:00'}]),/se cruzan/,'aplicar franjas superpuestas se rechaza');
+});
+test('quitar del calendario: individual y varias; impartidas y ya retiradas se conservan; libera el día',()=>{
+ const a=s(),b=s({id:'b',ficha:'3441942',date:'2026-11-05'}),t=s({id:'t',status:'Impartida',protected:true,date:'2026-11-06'});
+ assert.throws(()=>E.planRetire([a],['s1'],' '),/motivo/);
+ const one=E.planRetire([a,b,t],['s1'],'Clase no se dicta');assert.equal(one.items.length,1);assert.equal(one.items[0].next.status,'Retirada');assert.equal(one.items[0].next.date,a.date);
+ const many=E.planBulk([a,b,t],['s1','b','t'],{retire:true,reason:'Cierre'},{holidays});
+ assert.deepEqual(many.items.map(i=>i.before.id),['s1','b']);assert.match(many.warnings.join(),/se conserva/);assert.ok(many.retire);
+ assert.throws(()=>E.planRetire([t],['t'],'r'),/Ninguna/);
+ const gone={...a,status:'Retirada'};
+ assert.deepEqual(E.placement({...a,id:'nuevo'},[gone],{holidays}).errors,[],'el día de una retirada queda libre');
+ assert.throws(()=>E.planSingle(gone,form(gone),[gone]),/Restáurela/);
+ for(const it of many.items)C.validate({...it.next,revision:1,mutationId:'v'});
+});
+test('restaurar: vuelve Programada en su fecha; si otra clase ocupó el día o es festivo, se bloquea',()=>{
+ const gone=s({status:'Retirada'});
+ const r=E.planRestore(gone,[gone],{holidays,reason:'Se dicta'});assert.equal(r.next.status,'Programada');assert.deepEqual(r.errors,[]);
+ assert.match(E.planRestore(gone,[gone,s({id:'otra'})],{holidays,reason:'x'}).errors.join(),/ya tiene una clase/);
+ assert.throws(()=>E.planRestore(s(),[],{reason:'x'}),/no está retirada/);assert.throws(()=>E.planRestore(gone,[],{reason:''}),/motivo/);
+});
+test('el aprendiz y la agenda no muestran clases retiradas; la suspendida sí (como cancelada)',()=>{
+ const ev=C.agenda([s({id:'a',status:'Retirada'}),s({id:'b',status:'Suspendida',date:'2026-11-05'}),s({id:'c',date:'2026-11-06'})]);
+ assert.deepEqual([...new Set(ev.map(e=>e.sourceId))],['b','c']);assert.equal(ev.find(e=>e.sourceId==='b').status,'cancelled');
+});
+test('Firestore: retirar libera el día con recibo; restaurar lo reocupa; retirada no se edita ni cambia de fecha',async()=>{
+ const f=fakeFirestore(seeded()),before=f.get(base+'/sessions/s1');
+ await assert.rejects(f.api.save({...before.data,status:'Retirada',activity:'otra'},before,'r'),/no se cambian sus demás datos/);
+ const r=await f.api.save({...before.data,status:'Retirada',actualMinutes:null},before,'Se quita');
+ assert.equal(r.data.status,'Retirada');assert.equal(f.get(base+'/days/2026-11-04'),null);assert.equal(f.get(base+'/sessions/s1/audit/1').data.reason,'Se quita');
+ const gone=f.get(base+'/sessions/s1');
+ await assert.rejects(f.api.save({...gone.data,activity:'x'},gone,'r'),/Restaure/);
+ await assert.rejects(f.api.save({...gone.data,status:'Programada',date:'2026-11-05'},gone,'r'),/misma fecha/);
+ const back=await f.api.save({...gone.data,status:'Programada'},gone,'Se restaura');
+ assert.equal(back.data.status,'Programada');assert.equal(f.get(base+'/days/2026-11-04').data.sessionId,'s1');assert.equal(back.data.revision,2);
+ const t=fakeFirestore({...seeded(),[base+'/sessions/s1']:s({status:'Impartida',protected:true})});
+ await assert.rejects(t.api.save({...t.get(base+'/sessions/s1').data,status:'Retirada'},t.get(base+'/sessions/s1'),'r'),/impartida/);
+});
+test('reglas candidatas: transformación mínima de las activas; borrar sesiones sigue prohibido',()=>{
+ const T=require('../tools/firestore_rules_calendar_retire.cjs'),baseRules=read('config/firestore.deployed-c445f954.rules'),cand=read('config/firestore.calendar-retire.rules');
+ assert.equal(require('node:crypto').createHash('sha256').update(baseRules).digest('hex').slice(0,8),'deda8eeb','base = reglas activas c445f954');
+ assert.equal(T.transform(baseRules),cand,'el candidato es exactamente la transformación');assert.equal(T.transform(cand),cand,'idempotente');
+ const block=x=>x.slice(x.indexOf('match /sena_portal_calendar_fichas/{ficha}/years/{year}/sessions/{id}'));
+ assert.match(block(cand),/allow delete: if false;/);assert.equal((cand.match(/allow delete: if false;/g)||[]).length,(baseRules.match(/allow delete: if false;/g)||[]).length);
+ const outside=x=>x.slice(0,x.indexOf('// ───── Calendario academico'))+x.slice(x.indexOf('// ───── Reservas de tutoria'));
+ assert.equal(outside(cand),outside(baseRules),'fuera del calendario no cambia nada');
+ assert.match(cand,/resource\.data\.status != 'Retirada' \|\| request\.resource\.data\.status == 'Programada'/);
+});
