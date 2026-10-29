@@ -234,7 +234,8 @@
     if(root.SENA_CALENDAR_FIRESTORE?.emulatorHost){$('cloud-learner').hidden=false;$('cloud-learner').href='pages/auxiliares/calendario-aprendiz.html?cloud=emulator&year='+year;}
     busy=false;if(editor)loadEvents();render();
    }catch(e){busy=false;error(e);}}
-  const mapped=d=>({...d.data,institutionId:root.academicPlannerCatalog.fichas.find(f=>f.id===d.data.ficha)?.institutionId||'',instructorId:d.data.updatedBy,history:[],readonly:true,cloud:true,sourceIds:d.data.sourceStatuses.map(x=>x.sourceId),blockSources:d.data.revision===0?d.data.sourceStatuses.flatMap(x=>x.blocks.map(block=>({block,state:x.state,sourceId:x.sourceId}))):[],observation:principal?.role!=='aprendiz'?internal(d.data):'',curriculum:{...d.data.curriculum,guides:[]}});
+  // groupLabel/institutionName: la tarjeta del calendario muestra grupo e institución, no solo el número de ficha.
+  const mapped=d=>({...d.data,groupLabel:E.fichaLabel(d.data.ficha).replace(/ · \d+$/,''),institutionName:E.INSTITUTIONS[E.institutionOf(d.data.ficha)]||'',institutionId:root.academicPlannerCatalog.fichas.find(f=>f.id===d.data.ficha)?.institutionId||'',instructorId:d.data.updatedBy,history:[],readonly:true,cloud:true,sourceIds:d.data.sourceStatuses.map(x=>x.sourceId),blockSources:d.data.revision===0?d.data.sourceStatuses.flatMap(x=>x.blocks.map(block=>({block,state:x.state,sourceId:x.sourceId}))):[],observation:principal?.role!=='aprendiz'?internal(d.data):'',curriculum:{...d.data.curriculum,guides:[]}});
   const selected=()=>docs.find(d=>d.data.id===state().selection);
   async function showHistory(){try{const d=selected();if(!d)throw Error('Seleccione una clase del calendario.');
     const history=await api.history(d.data.ficha,d.data.year,d.data.id),originals=sources.filter(r=>d.data.sourceStatuses.some(s=>s.sourceId===r.sourceId));

@@ -226,3 +226,9 @@ test('reglas candidatas: transformación mínima de las activas; borrar sesiones
  assert.equal(outside(cand),outside(baseRules),'fuera del calendario no cambia nada');
  assert.match(cand,/resource\.data\.status != 'Retirada' \|\| request\.resource\.data\.status == 'Programada'/);
 });
+test('tarjeta del calendario: todas las franjas, grupo y actividad; la semana muestra la franja de cada bloque',()=>{
+ const Cal=require('../js/academic_planner_calendar.js'),s0={...s({id:'k',ficha:'3441950',date:'2026-11-12',blocks:[{start:'07:00',end:'07:55'},{start:'09:55',end:'10:50'},{start:'14:15',end:'16:15'}],plannedMinutes:230,status:'Programada',activity:'Taller'}),groupLabel:'Santa Bárbara 10B',history:[],curriculum:{...empty,guides:[]}};
+ const html=Cal.event(s0,true);for(const f of ['07:00–07:55','09:55–10:50','14:15–16:15','Santa Bárbara 10B','Taller','3441950'])assert.ok(html.includes(f),f);
+ assert.doesNotMatch(html,/>RAP <\/span>/,'sin «RAP» vacío');assert.match(Cal.event({...s0,status:'Retirada'}),/Retirada/);
+ const cfg=P.createYear(2026);const wk=Cal.week('2026-11-12',[s0],cfg,[],'');assert.equal((wk.match(/class="week-block"/g)||[]).length,3);assert.ok(wk.includes('09:55–10:50'));
+});
