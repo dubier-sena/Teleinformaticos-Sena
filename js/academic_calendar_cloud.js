@@ -57,7 +57,7 @@
     // comprueban exactamente lo mismo en el servidor; aquí solo se evita mostrar algo que el servidor negaría.
     const VALIDATED=['oficial','duplicado_diferenciado'];
     async function principal(){
-      const uid=await auth.getUid();if(!uid||uid.includes('/'))fail('Identidad Firebase inválida.');
+      const uid=await auth.getUid();if(!uid||uid.includes('/'))fail('No hay una sesión activa con la nube. Cierre sesión, vuelva a entrar al portal y pulse «Actualizar».','AUTH');
       const hint=typeof auth.isAdminHint==='function'?!!(await auth.isAdminHint()):true;
       if(hint){const role=await call('GET','/sena_portal_roles/'+encodeURIComponent(uid),undefined,true);
         if(role&&document(role).data.role==='admin'){identity={uid,role:'admin',active:true,fichas:FICHAS.slice()};return clone(identity);}}

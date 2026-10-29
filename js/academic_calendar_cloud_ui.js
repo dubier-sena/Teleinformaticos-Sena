@@ -185,7 +185,9 @@
   // ── Conexión y carga (lecturas mínimas: copia local por ficha y solo lo cambiado desde la última apertura) ──
   function error(e){docs=[];sources=[];notes=new Map();pending=null;principal=null;source.value='draft';document.body.classList.remove('cloud-mode');render();$('cloud-status').textContent=e.message;message(e.message,true);}
   async function reload({force=false}={}){if(busy)return;busy=true;$('cloud-status').textContent='Leyendo el calendario oficial…';
-   try{api=api||root.academicCalendarConnection();principal=await api.principal();const year=state().year,next=[],nextSources=[];let storage=null;try{storage=root.localStorage;}catch{}
+   // Si el SDK de Firebase no llega (red que lo bloquea), la identidad nunca resuelve: límite y reintento posible.
+   const limit=new Promise((_,reject)=>setTimeout(()=>reject(Object.assign(Error('No se pudo conectar con el calendario oficial en 25 s. Revise la conexión y pulse «Actualizar desde Firestore».'),{code:'TIMEOUT'})),25000));
+   try{api=api||root.academicCalendarConnection();principal=await Promise.race([api.principal(),limit]);const year=state().year,next=[],nextSources=[];let storage=null;try{storage=root.localStorage;}catch{}
     for(const f of principal.fichas){const r=await api.listCached(f,year,{storage,force});next.push(...r.docs);
      if(principal.role!=='aprendiz'){const s=await api.source(f,year);if(s)nextSources.push(...(s.data.records||[]));}}
     docs=next;sources=nextSources;notes=new Map();loadedYear=year;
