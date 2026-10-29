@@ -33,5 +33,9 @@ jobs:
         env:
           JAVA_TOOL_OPTIONS: -Duser.language=en -Duser.country=US
         run: |
+          mkdir -p memory/validaciones/integracion-segura-2026-10-20
           npx -y firebase-tools@13.29.1 emulators:exec --config config/firebase.emulator.calendar.json --only firestore --project demo-sena-calendar \
             "node tools/test_calendar_retire_emulator.cjs && node tools/test_academic_calendar_cloud_emulator.cjs"
+      - name: Resultado de la regresión
+        if: always()
+        run: node -e "const r=require('./memory/validaciones/integracion-segura-2026-10-20/emulator-results.json');const l=Array.isArray(r)?r:(r.results||[]);console.log(l.filter(x=>x.pass||x.ok).length+'/'+l.length+' PASS');l.filter(x=>!(x.pass||x.ok)).forEach(x=>console.log('FAIL',JSON.stringify(x)));process.exit(l.every(x=>x.pass||x.ok)&&l.length?0:1)"
