@@ -1176,6 +1176,46 @@
     return fields.every(function (k) { return String(state[k] == null ? "" : state[k]).trim() !== ""; });
   }
 
+  // ── Procedencia de formularios (fase 3c, Codex) ──────────────────────────────
+  // Versiones anteriores podian copiar respuestas del banco al estado del aprendiz
+  // (adminApplySolutionToGuide, updatedBy "admin-grade-fill" a nivel de DOCUMENTO,
+  // sin marca por campo), bloquear formularios por aprobacion y poner nota A. Por
+  // eso campos completos + "locked" + nota A NO prueban que el aprendiz respondio.
+  // Prueba de procedencia: sello "{id}-submission" que SOLO crea el flujo legitimo
+  // de envio del aprendiz en la guia (script_guia_redes11.js, sesion de aprendiz,
+  // clic en «Guardar respuestas»), con la huella de las respuestas enviadas. Si las
+  // respuestas cambian despues del sello, la huella no coincide -> incierto.
+  function formFieldsFingerprint(state, act) {
+    var fields = Array.isArray(act && act.formFields) ? act.formFields : [];
+    var text = JSON.stringify(fields.map(function (k) { return [k, String(state && state[k] != null ? state[k] : "")]; }));
+    var h = 5381;
+    for (var i = 0; i < text.length; i++) { h = ((h << 5) + h + text.charCodeAt(i)) >>> 0; }
+    return "djb2:" + h.toString(16) + ":" + text.length;
+  }
+
+  // Sello de envio del aprendiz (lo llama la guia en el flujo legitimo de guardado).
+  function buildStudentSubmissionRecord(state, act, usernameKey) {
+    return { by: "student", usernameKey: String(usernameKey || ""), at: new Date().toISOString(), via: "guide-save", fingerprint: formFieldsFingerprint(state, act) };
+  }
+
+  //  "real"      = enviado por el aprendiz con sello valido y huella coincidente;
+  //  "uncertain" = completo y bloqueado pero SIN sello valido (historico o escrito
+  //                por administracion): procedencia no comprobable;
+  //  "missing"   = incompleto o no enviado.
+  function formEvidenceState(state, act) {
+    if (!hasRealSavedAnswers(state, act)) return "missing";
+    var rec = state[act.id + "-submission"];
+    if (rec && typeof rec === "object" && rec.by === "student" && rec.via === "guide-save" && rec.fingerprint === formFieldsFingerprint(state, act)) return "real";
+    return "uncertain";
+  }
+
+  // Verificacion documentada del instructor: solo cuenta con resultado "autentica"
+  // y una referencia de soporte. Cualquier otro registro no habilita nada.
+  function isDocumentedVerification(rec) {
+    return Boolean(rec && typeof rec === "object" && rec.result === "autentica" && rec.at && rec.by
+      && String(rec.support || "").trim().length >= 3);
+  }
+
   // Estado de la parte ARCHIVO de una evidencia:
   //  "real"      = entrega con archivo/enlace hecha por el aprendiz;
   //  "uncertain" = registro historico "delivered" sin archivo o creado por una
@@ -1206,19 +1246,19 @@
       var type = act.type || "form";
       var needsForm = type === "form" || type === "both";
       var needsFile = type === "file" || type === "both";
-      var verifiedRec = g[id + ":verified"];
-      var verified = Boolean(verifiedRec && typeof verifiedRec === "object" && verifiedRec.at);
-      var formComplete = null, fileState = null, delivered = null, needsVerification = false;
+      var verified = isDocumentedVerification(g[id + ":verified"]);
+      var formState = null, fileState = null, delivered = null, needsVerification = false;
       if (guideState) {
-        formComplete = needsForm ? hasRealSavedAnswers(guideState, act) : null;
+        formState = needsForm ? formEvidenceState(guideState, act) : null;
         fileState = needsFile ? fileEvidenceState(guideState, id) : null;
+        var formOk = !needsForm || formState === "real" || (formState === "uncertain" && verified);
         var fileOk = !needsFile || fileState === "real" || (fileState === "uncertain" && verified);
-        needsVerification = needsFile && fileState === "uncertain" && !verified;
-        delivered = (!needsForm || formComplete === true) && fileOk;
+        needsVerification = !verified && ((needsForm && formState === "uncertain") || (needsFile && fileState === "uncertain"));
+        delivered = formOk && fileOk;
       }
       return { id: id, number: act.number || "", label: act.label || id, type: type,
-        needsForm: needsForm, needsFile: needsFile, formComplete: formComplete, fileState: fileState,
-        verified: verified, needsVerification: needsVerification,
+        needsForm: needsForm, needsFile: needsFile, formState: formState, formComplete: formState === null ? null : formState !== "missing",
+        fileState: fileState, verified: verified, needsVerification: needsVerification,
         approved: g[id] === "A", failed: g[id] === "D", delivered: delivered };
     });
     var approvedCount = items.filter(function (i) { return i.approved; }).length;
@@ -1226,7 +1266,7 @@
     var verifiable = items.every(function (i) { return i.delivered !== null; });
     var toVerify = items.filter(function (i) { return i.needsVerification; }).length;
     var status;
-    if (verifiable && items.every(function (i) { return i.approved && i.delivered === true; })) status = "aprobado";
+    if (verifiable && toVerify === 0 && items.every(function (i) { return i.approved && i.delivered === true; })) status = "aprobado";
     else if (!verifiable) status = "por-verificar";
     else if (toVerify > 0) status = "pendiente-verificacion";
     else status = "pendiente";
@@ -1237,13 +1277,28 @@
   // Confirmacion del instructor de una evidencia historica de procedencia incierta.
   // Solo escribe en las NOTAS ({id}:verified = {at, by, note}); no crea ni modifica
   // entregas, respuestas ni la nota de la actividad.
-  function setStudentEvidenceVerification(usernameKey, guideFamily, activityId, note) {
+  // Registro documentado (fase 3c): instructor, fecha, referencia del soporte y
+  // resultado ("autentica" | "no-autentica"), con bitacora acumulada
+  // ({id}:verifyLog). Solo escribe en las NOTAS; nunca en la guia, las respuestas o
+  // las entregas. Sin referencia de soporte no se registra nada.
+  function setStudentEvidenceVerification(usernameKey, guideFamily, activityId, review) {
     if (!isEvidenceStrictFamily(guideFamily)) return Promise.resolve({ ok: false, status: "aborted", reason: "not-strict-family" });
+    var r = review || {};
+    var support = String(r.support || "").trim();
+    var result = r.result === "autentica" || r.result === "no-autentica" ? r.result : "";
+    if (support.length < 3 || !result || !String(r.by || "").trim()) return Promise.resolve({ ok: false, status: "aborted", reason: "missing-support" });
     if (!getGradesKey(usernameKey)) return Promise.resolve({ ok: false, status: "aborted", reason: "no-storage-key" });
+    var rec = { at: new Date().toISOString(), by: String(r.by).trim(), support: support, result: result,
+      note: String(r.note || "").trim(), reviewedFingerprint: String(r.reviewedFingerprint || "") };
+    var prev = getStudentGrades(usernameKey, guideFamily)[activityId + ":verifyLog"];
+    var log = Array.isArray(prev) ? prev.slice() : [];
+    log.push(rec);
     var set = {};
-    set[activityId + ":verified"] = { at: new Date().toISOString(), by: "instructor", note: String(note || "Evidencia autentica confirmada por el instructor.") };
+    set[activityId + ":verified"] = rec;
+    set[activityId + ":verifyLog"] = log;
     return queueGradeOp(usernameKey, guideFamily, set, []);
   }
+
 
   // Claves internas del banco (p. ej. "__criterios"): son SOLO para el instructor y
   // nunca se copian a un campo del aprendiz.
@@ -1505,6 +1560,10 @@
     REQUIRED_EVIDENCE: REQUIRED_EVIDENCE,
     evaluateRapStatus: evaluateRapStatus,
     fileEvidenceState: fileEvidenceState,
+    formEvidenceState: formEvidenceState,
+    formFieldsFingerprint: formFieldsFingerprint,
+    buildStudentSubmissionRecord: buildStudentSubmissionRecord,
+    isDocumentedVerification: isDocumentedVerification,
     setStudentEvidenceVerification: setStudentEvidenceVerification,
     hasRealFileDelivery: hasRealFileDelivery,
     isInstructorOnlyBankKey: isInstructorOnlyBankKey,

@@ -31,7 +31,7 @@
   var STUDENT_ONLY_SCRIPTS = [
     "js/activity_standard.js?v=20260822_1",
     "js/guide_declarations.js?v=20261108_1",
-    "js/activity_grades.js?v=20261108_3",
+    "js/activity_grades.js?v=20261108_4",
     "js/activity_deadlines.js?v=20261028_1",
     "js/productive_stage_store.js?v=20260825_2",
     "js/productive_stage_deadlines.js?v=20260824_1",

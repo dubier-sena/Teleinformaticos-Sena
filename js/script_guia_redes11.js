@@ -50,7 +50,7 @@
   };
 
   // Rediseno visual (fase 2): hoja de estilos propia, solo en estas guias.
-  var STYLE_HREF = "css/guia_redes11.css?v=20261108_3";
+  var STYLE_HREF = "css/guia_redes11.css?v=20261108_4";
   (function ensureStyles() {
     if (typeof document === "undefined" || !document.head || !document.createElement) return;
     if (document.querySelector('link[data-redes11-css]')) return;
@@ -274,13 +274,13 @@
     var rap = mgr.evaluateRapStatus(family, grades, state, getConfig().activities || []);
     if (!rap) { host.innerHTML = ""; return; }
     var estado = rap.status === "aprobado" ? "RAP APROBADO" : rap.status === "pendiente-verificacion" ? "RAP pendiente de verificación" : "RAP en proceso";
-    function parte(req, ok, txt) { return req ? (ok ? "&#9989; " + txt : "&#9711; Falta") : "No aplica"; }
     host.innerHTML = '<div class="r11-rap__head"><strong>Estado del RAP</strong><span class="r11-chip' + (rap.status === "aprobado" ? "" : " r11-chip--format") + '">' + esc(estado) + "</span></div>" +
       '<p class="intro-text">Evidencias oficiales completas: <strong>' + rap.delivered + "/" + rap.total + "</strong> · aprobadas: <strong>" + rap.approved + "/" + rap.total + "</strong>. Las actividades que piden formulario Y archivo necesitan las dos partes. Las demás actividades son formativas y no condicionan el RAP.</p>" +
       '<div class="table-scroll"><table class="data-table"><thead><tr><th>Evidencia oficial</th><th>Formulario</th><th>Archivo</th><th>Aprobada</th></tr></thead><tbody>' +
       rap.items.map(function (i) {
         var archivo = !i.needsFile ? "No aplica" : i.fileState === "real" ? "&#9989; Entregado" : i.fileState === "uncertain" ? (i.verified ? "&#9989; Verificado por el instructor" : "&#9888;&#65039; Pendiente de verificación") : "&#9711; Falta";
-        return "<tr><td>" + esc((i.number ? i.number + " " : "") + i.label) + "</td><td>" + parte(i.needsForm, i.formComplete, "Completo y enviado") + "</td><td>" + archivo + "</td><td>" + (i.approved ? "&#9989; Sí" : i.failed ? "&#10060; No aprobada" : "&#9711; Pendiente") + "</td></tr>";
+        var form = !i.needsForm ? "No aplica" : i.formState === "real" ? "&#9989; Enviado por usted" : i.formState === "uncertain" ? (i.verified ? "&#9989; Verificado por el instructor" : "&#9888;&#65039; Pendiente de verificación") : "&#9711; Falta";
+        return "<tr><td>" + esc((i.number ? i.number + " " : "") + i.label) + "</td><td>" + form + "</td><td>" + archivo + "</td><td>" + (i.approved ? "&#9989; Sí" : i.failed ? "&#10060; No aprobada" : "&#9711; Pendiente") + "</td></tr>";
       }).join("") + "</tbody></table></div>";
   }
 
@@ -405,9 +405,41 @@
 
   // Tras guardar (bloqueo) o cuando el admin habilita de nuevo, re-aplica el bloqueo
   // de los campos opcionales.
+  // Procedencia (fase 3c, Codex): el sello "{id}-submission" se crea SOLO aqui, en el
+  // flujo legitimo del aprendiz: sesion de aprendiz + clic en el boton «Guardar
+  // respuestas» de esa actividad + la actividad pasa de NO enviada a enviada en ese
+  // clic. Lleva la huella de las respuestas enviadas. Nada administrativo lo crea.
+  var _lockBeforeClick = {};
+  function activityForSaveButton(btn) {
+    var id = btn && btn.id;
+    if (!id) return null;
+    return (getConfig().activities || []).filter(function (a) {
+      return (a.type === "form" || a.type === "both") && a.buttonIds && a.buttonIds.save === id;
+    })[0] || null;
+  }
   document.addEventListener("click", function (event) {
     var btn = event.target && event.target.closest ? event.target.closest(".btn-save-response") : null;
-    if (btn) window.requestAnimationFrame(function () { applyOptionalLocks(); updateProgress(); });
+    var act = activityForSaveButton(btn);
+    if (act) _lockBeforeClick[act.id] = state[act.id + "-locked"] === true;
+  }, true);
+  function stampStudentSubmission(act) {
+    var mgr = window.activityGradesManager;
+    var session = portalAuth && portalAuth.getCurrentSession && portalAuth.getCurrentSession();
+    if (!act || !mgr || typeof mgr.buildStudentSubmissionRecord !== "function") return;
+    if (!session || session.role !== "student" || !session.usernameKey) return;
+    if (_lockBeforeClick[act.id] !== false || state[act.id + "-locked"] !== true) return;
+    _lockBeforeClick[act.id] = true;
+    state[act.id + "-submission"] = mgr.buildStudentSubmissionRecord(state, act, session.usernameKey);
+    saveState();
+  }
+
+  document.addEventListener("click", function (event) {
+    var btn = event.target && event.target.closest ? event.target.closest(".btn-save-response") : null;
+    if (btn) {
+      var act = activityForSaveButton(btn);
+      stampStudentSubmission(act);
+      window.requestAnimationFrame(function () { applyOptionalLocks(); updateProgress(); });
+    }
   });
   window.addEventListener("activity-deadlines-updated", function () { applyOptionalLocks(); });
   document.addEventListener("guide-delivery-registered", function () {
@@ -415,7 +447,7 @@
   });
 
   // Expuesto para pruebas.
-  window.__redes11Internals = { LEGACY: LEGACY, legacyEntries: legacyEntries, renderRapStatus: renderRapStatus };
+  window.__redes11Internals = { LEGACY: LEGACY, legacyEntries: legacyEntries, renderRapStatus: renderRapStatus, stampStudentSubmission: stampStudentSubmission };
 
   window.initGuiaRedes = initGuiaRedes11;
   window.initGuiaRedes11 = initGuiaRedes11;

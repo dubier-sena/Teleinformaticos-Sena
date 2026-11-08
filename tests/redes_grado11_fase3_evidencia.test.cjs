@@ -136,11 +136,16 @@ test("2. el panel y el servidor de datos no registran entregas por aprobar (indi
 });
 
 // ── 4. Aprobacion academica ───────────────────────────────────────────────────
-function fullEvidenceState(acts, req) {
+// Estado con entregas AUTENTICAS: formularios enviados por el aprendiz (con sello de
+// procedencia del flujo legitimo, fase 3c) y archivos reales.
+function fullEvidenceState(acts, req, mgr) {
   const st = {};
   req.forEach((id) => {
     const a = acts.find((x) => x.id === id);
-    if (a.type === "form" || a.type === "both") { st[id + "-locked"] = true; a.formFields.forEach((k) => { st[k] = "respuesta del aprendiz"; }); }
+    if (a.type === "form" || a.type === "both") {
+      st[id + "-locked"] = true; a.formFields.forEach((k) => { st[k] = "respuesta del aprendiz"; });
+      st[id + "-submission"] = plain(mgr.buildStudentSubmissionRecord(st, a, "aprendiz_prueba"));
+    }
     if (a.type === "file" || a.type === "both") st[id + "-delivery"] = { status: "delivered", savedFileName: id + ".pdf", driveUrl: "https://drive.google.com/file/d/x/view" };
   });
   return st;
@@ -157,7 +162,7 @@ test("4. RAP APROBADO solo con TODAS las evidencias oficiales completas (todas s
     const allA = {}; acts.forEach((a) => { allA[a.id] = "A"; });
     assert.equal(mgr.evaluateRapStatus(fam, allA, {}, acts).status, "pendiente", `${fam}: calificacion manual sin evidencia = pendiente`);
     assert.equal(mgr.evaluateRapStatus(fam, allA, null, acts).status, "por-verificar", "estado no leido nunca es aprobado");
-    const st = fullEvidenceState(acts, req);
+    const st = fullEvidenceState(acts, req, mgr);
     assert.equal(mgr.evaluateRapStatus(fam, allA, st, acts).status, "aprobado", `${fam}: ambas partes + aprobado = completo`);
     const formativas = acts.filter((a) => req.indexOf(a.id) === -1).map((a) => a.id);
     const soloOficiales = Object.assign({}, allA); formativas.forEach((id) => { delete soloOficiales[id]; });
@@ -176,7 +181,7 @@ test("4. actividades 'both': archivo + formulario vacio, formulario sin archivo,
     const allA = {}; acts.forEach((a) => { allA[a.id] = "A"; });
     for (const both of acts.filter((a) => a.type === "both" && req.indexOf(a.id) !== -1)) {
       probadas++;
-      const base = fullEvidenceState(acts, req);
+      const base = fullEvidenceState(acts, req, mgr);
       // archivo entregado + formulario vacio
       const s1 = Object.assign({}, base); both.formFields.forEach((k) => { s1[k] = ""; });
       const r1 = mgr.evaluateRapStatus(fam, allA, s1, acts);
@@ -200,7 +205,7 @@ test("4. evidencia historica de procedencia incierta = PENDIENTE DE VERIFICACION
   const { mgr, store } = loadGrades();
   const req = mgr.REQUIRED_EVIDENCE[fam];
   const allA = {}; acts.forEach((a) => { allA[a.id] = "A"; });
-  const st = fullEvidenceState(acts, req);
+  const st = fullEvidenceState(acts, req, mgr);
   // registro historico creado por la aprobacion (mecanismo anterior): sin archivo
   st["c11Lab341-delivery"] = { status: "delivered", submittedAt: "2026-11-07T12:00:00Z" };
   const r = mgr.evaluateRapStatus(fam, allA, st, acts);
@@ -210,14 +215,17 @@ test("4. evidencia historica de procedencia incierta = PENDIENTE DE VERIFICACION
   assert.equal(mgr.evaluateRapStatus(fam, allA, st, acts).toVerify, 2);
   // confirmacion del instructor: solo en las notas; el estado de la guia NO cambia
   const before = JSON.stringify(st);
-  const verified = Object.assign({}, allA, { "c11Lab341:verified": { at: "2026-11-08T10:00:00Z", by: "instructor" }, "c11Exploracion325:verified": { at: "2026-11-08T10:00:00Z", by: "instructor" } });
+  const doc = { at: "2026-11-08T10:00:00Z", by: "dubier", support: "Drive: archivo original revisado", result: "autentica" };
+  const verified = Object.assign({}, allA, { "c11Lab341:verified": doc, "c11Exploracion325:verified": doc });
   assert.equal(mgr.evaluateRapStatus(fam, verified, st, acts).status, "aprobado");
   assert.equal(JSON.stringify(st), before, "verificar no crea ni modifica entregas");
-  // la funcion de verificacion solo encola notas y solo en familias estrictas
-  assert.equal((await mgr.setStudentEvidenceVerification("aprendiz_prueba", "guia-02-herramientas", "x")).reason, "not-strict-family");
+  // la funcion de verificacion solo encola notas, solo en familias estrictas y solo con soporte
+  assert.equal((await mgr.setStudentEvidenceVerification("aprendiz_prueba", "guia-02-herramientas", "x", { support: "abc", result: "autentica", by: "d" })).reason, "not-strict-family");
+  assert.equal((await mgr.setStudentEvidenceVerification("aprendiz_prueba", fam, "c11Lab341", { result: "autentica", by: "d" })).reason, "missing-support", "sin soporte no registra");
   const src = read("js/activity_grades.js");
   const fn = extractFn(src, "function setStudentEvidenceVerification(");
-  assert.match(fn, /set\[activityId \+ ":verified"\] = \{ at: /);
+  assert.match(fn, /set\[activityId \+ ":verified"\] = rec;/);
+  assert.match(fn, /set\[activityId \+ ":verifyLog"\] = log;/);
   assert.doesNotMatch(fn, /-delivery|-locked|cloudSaveGuideData/);
   assert.ok(store);
 });
@@ -330,4 +338,82 @@ test("3. ensayo con el banco maestro: solo agrega las 3 familias de 11.°, sin c
   assert.deepEqual(diff.keptOnlyInCloud, []);
   const merged = m(cloud, master);
   assert.equal(s(merged), s(master), "el resultado es exactamente el banco maestro");
+});
+
+// ── Fase 3c (Codex): procedencia de formularios historicos ────────────────────
+test("3c. REGRESION del fallo historico: respuestas del banco + bloqueo + nota A NO aprueban el RAP; solo la verificacion documentada", () => {
+  const decl = loadDeclarations();
+  const fam = "guia-redes11-rap03", file = "grupo-11a-guia-11-redes-rap03.html";
+  const acts = decl[file].activities;
+  const { mgr } = loadGrades();
+  const req = mgr.REQUIRED_EVIDENCE[fam];
+  // 1. registro de la version anterior: todas las demas evidencias son autenticas
+  const st = fullEvidenceState(acts, req, mgr);
+  // 2-3. la version anterior copio respuestas MODELO del banco a un formulario oficial y lo bloqueo
+  const bankLike = { "d11Reflexion311": "respuesta modelo del banco" };
+  const refl = acts.find((a) => a.id === "d11Reflexion311");
+  delete st["d11Reflexion311-submission"];
+  refl.formFields.forEach((k) => { st[k] = bankLike.d11Reflexion311; });
+  st["d11Reflexion311-locked"] = true;
+  const notasAntes = {}; acts.forEach((a) => { notasAntes[a.id] = "A"; });       // 4. nota A en todo
+  const grades = JSON.parse(JSON.stringify(notasAntes));
+  const stateAntes = JSON.stringify(st);
+  // 5-6. NO aprobado; PENDIENTE DE VERIFICACION
+  const r = mgr.evaluateRapStatus(fam, grades, st, acts);
+  assert.notEqual(r.status, "aprobado");
+  assert.equal(r.status, "pendiente-verificacion");
+  const it = r.items.find((i) => i.id === "d11Reflexion311");
+  assert.equal(it.formState, "uncertain");
+  assert.equal(it.delivered, false);
+  // un "Verificar" sin soporte, o con resultado no autentico, no habilita nada
+  for (const bad of [{ at: "x", by: "d", result: "autentica" }, { at: "x", by: "d", support: "ok soporte", result: "no-autentica" }, { at: "x", by: "d", support: "  ", result: "autentica" }]) {
+    assert.equal(mgr.evaluateRapStatus(fam, Object.assign({}, grades, { "d11Reflexion311:verified": bad }), st, acts).status, "pendiente-verificacion", JSON.stringify(bad));
+  }
+  // 7-8. verificacion documentada con soporte autentico -> ahora si contribuye
+  const doc = { at: "2026-11-09T08:00:00Z", by: "dubier", support: "Cuaderno del aprendiz revisado en clase 09/11", result: "autentica" };
+  assert.equal(mgr.evaluateRapStatus(fam, Object.assign({}, grades, { "d11Reflexion311:verified": doc }), st, acts).status, "aprobado");
+  // ...pero solo si todo lo demas tambien se cumple
+  const sinLab = Object.assign({}, grades, { "d11Reflexion311:verified": doc, d11Protocolo341: "" });
+  assert.equal(mgr.evaluateRapStatus(fam, sinLab, st, acts).status, "pendiente");
+  // nada se modifica: notas, respuestas y archivos intactos
+  assert.equal(JSON.stringify(st), stateAntes);
+  assert.deepEqual(grades, notasAntes);
+});
+
+test("3c. sello de procedencia: entrega nueva autentica cuenta; respuestas cambiadas despues del sello o sello ajeno = incierto", () => {
+  const decl = loadDeclarations();
+  const acts = decl["grupo-11a-guia-09-redes-rap01.html"].activities;
+  const { mgr } = loadGrades();
+  const act = acts.find((a) => a.id === "b11Reflexion311");
+  const st = { "b11Reflexion311-locked": true };
+  act.formFields.forEach((k) => { st[k] = "mi respuesta"; });
+  assert.equal(mgr.formEvidenceState(st, act), "uncertain", "completo+locked sin sello = incierto");
+  st["b11Reflexion311-submission"] = plain(mgr.buildStudentSubmissionRecord(st, act, "aprendiz_prueba"));
+  assert.equal(mgr.formEvidenceState(st, act), "real", "entrega nueva autentica");
+  const alterado = Object.assign({}, st, { [act.formFields[0]]: "respuesta modelo del banco" });
+  assert.equal(mgr.formEvidenceState(alterado, act), "uncertain", "respuestas cambiadas tras el sello");
+  const ajeno = Object.assign({}, st, { "b11Reflexion311-submission": Object.assign({}, st["b11Reflexion311-submission"], { by: "admin" }) });
+  assert.equal(mgr.formEvidenceState(ajeno, act), "uncertain");
+  const sinEnviar = Object.assign({}, st, { "b11Reflexion311-locked": false });
+  assert.equal(mgr.formEvidenceState(sinEnviar, act), "missing");
+});
+
+test("3c. el sello solo lo crea la guia en el flujo del aprendiz; ninguna ruta administrativa lo escribe", () => {
+  const guide = read("js/script_guia_redes11.js");
+  const stamp = extractFn(guide, "function stampStudentSubmission(");
+  assert.match(stamp, /session\.role !== "student"/);
+  assert.match(stamp, /_lockBeforeClick\[act\.id\] !== false \|\| state\[act\.id \+ "-locked"\] !== true/);
+  assert.match(guide, /document\.addEventListener\("click", function \(event\) \{[\s\S]{0,300}_lockBeforeClick\[act\.id\] = state\[act\.id \+ "-locked"\] === true;\s*\}, true\);/);
+  for (const f of ["js/admin_usuarios.js", "js/firebase_db.js", "js/activity_standard.js"]) {
+    assert.doesNotMatch(read(f), /-submission"\]\s*=|buildStudentSubmissionRecord\(/, `${f} no crea sellos`);
+  }
+  // el panel exige soporte y resultado; registra instructor, fecha, soporte, resultado y bitacora
+  const admin = read("js/admin_usuarios.js");
+  const conf = extractFn(admin, "async function confirmEvidenceVerification(");
+  assert.match(conf, /if \(support\.length < 3 \|\| !result\)/);
+  assert.match(conf, /setStudentEvidenceVerification\(ctx\.user\.usernameKey, ctx\.family, ctx\.item\.id, \{ support, result, note, by,/);
+  assert.match(extractFn(admin, "function handleEvidenceVerification("), /Respuesta registrada/);
+  // grado 10 sin cambios en su evaluacion
+  const { mgr } = loadGrades();
+  assert.equal(mgr.evaluateRapStatus("guia-redes-rap01", {}, {}, []), null);
 });

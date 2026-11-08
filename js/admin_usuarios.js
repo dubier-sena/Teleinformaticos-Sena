@@ -3780,23 +3780,59 @@
     setFeedback("La calificacion NO se guardo en la nube: " + why + pendingGradesSuffix(result), "error");
   }
 
-  // Fase 3b (Codex): confirmacion del instructor de una evidencia historica de
-  // procedencia incierta. No crea entregas ni respuestas: solo {id}:verified en notas.
-  async function handleEvidenceVerification(btn) {
-    const usernameKey = btn.dataset.verifyUser || "";
-    const family = btn.dataset.verifyFamily || "";
-    const actId = btn.dataset.verifyActivity || "";
+  // Fase 3c (Codex): revision documentada de una evidencia de procedencia incierta.
+  // Muestra respuestas y evidencias disponibles; exige referencia del soporte
+  // autentico y resultado. Solo escribe {id}:verified + {id}:verifyLog en las NOTAS
+  // (nunca respuestas ni entregas). "No autentica" queda registrado y NO habilita nada.
+  const _rapReviewContext = {};
+  function handleEvidenceVerification(btn) {
+    const key = `${btn.dataset.verifyUser || ""}|${btn.dataset.verifyActivity || ""}`;
+    const ctx = _rapReviewContext[key];
+    if (!ctx) { setFeedback("Recargue la grilla para revisar esta evidencia.", "error"); return; }
+    const { user, item, state, act } = ctx;
     const mgr = window.activityGradesManager;
-    if (!usernameKey || !family || !actId || !mgr || typeof mgr.setStudentEvidenceVerification !== "function") return;
-    const ok = window.portalConfirm
-      ? await window.portalConfirm("¿Confirma que revisó la evidencia AUTÉNTICA de esta actividad (archivo real entregado por el aprendiz)? Esto no crea ninguna entrega; solo deja constancia de su verificación.", { title: "Verificar evidencia histórica", confirmText: "Confirmar verificación" })
-      : false;
-    if (!ok) return;
+    const fields = Array.isArray(act.formFields) ? act.formFields : [];
+    const labels = {};
+    (((act.wordExport || {}).sections) || []).forEach((sec) => { if (sec && sec.storeKey) labels[sec.storeKey] = sec.label; });
+    const answers = fields.length
+      ? `<div class="table-scroll"><table class="data-table"><thead><tr><th>Campo</th><th>Respuesta registrada</th></tr></thead><tbody>`
+        + fields.map((k) => `<tr><td>${escapeHtml(labels[k] || k)}</td><td>${escapeHtml(String(state[k] == null ? "" : state[k]))}</td></tr>`).join("") + `</tbody></table></div>`
+      : "";
+    const rec = state[item.id + "-delivery"];
+    const sub = state[item.id + "-submission"];
+    const evid = `<ul>
+        <li>Formulario: ${escapeHtml(item.needsForm ? (item.formState || "—") : "no aplica")}${sub ? " (sello de envío presente pero NO coincide con las respuestas)" : " (sin sello de envío del aprendiz)"}</li>
+        <li>Archivo: ${escapeHtml(item.needsFile ? (item.fileState || "—") : "no aplica")}${rec ? " — registro: " + escapeHtml(JSON.stringify(rec)) : ""}</li>
+      </ul>`;
+    const fp = mgr && typeof mgr.formFieldsFingerprint === "function" ? mgr.formFieldsFingerprint(state, act) : "";
+    openModal(`Verificar evidencia ${item.number || item.id}`, `${user.fullName || user.usernameKey} — procedencia no comprobable`,
+      `<p class="admin-muted">Esta evidencia no tiene procedencia comprobable (registro histórico o escrito por administración). Confírmela SOLO si revisó el soporte auténtico (archivo en Drive, cuaderno, documento entregado). Esta revisión no crea respuestas ni entregas.</p>`
+      + evid + answers
+      + `<label>Referencia del soporte auténtico (obligatoria): <input type="text" id="grade-verify-support" maxlength="300" placeholder="Ej.: archivo Drive Guia10_3.4.1_..., revisado el 09/11"></label>`
+      + `<label>Resultado: <select id="grade-verify-result"><option value="">Seleccione…</option><option value="autentica">Evidencia auténtica (cuenta para el RAP)</option><option value="no-autentica">No auténtica / sin soporte (no cuenta)</option></select></label>`
+      + `<label>Observación (opcional): <input type="text" id="grade-verify-note" maxlength="300"></label>`
+      + `<button type="button" class="btn primary grade-verify-confirm" data-verify-key="${escapeHtml(key)}" data-verify-fp="${escapeHtml(fp)}">Registrar revisión</button>`
+      + `<p id="grade-verify-msg" class="admin-muted" role="status"></p>`);
+  }
+
+  async function confirmEvidenceVerification(btn) {
+    const ctx = _rapReviewContext[btn.dataset.verifyKey || ""];
+    const msg = byId("grade-verify-msg");
+    const support = String((byId("grade-verify-support") || {}).value || "").trim();
+    const result = String((byId("grade-verify-result") || {}).value || "");
+    const note = String((byId("grade-verify-note") || {}).value || "").trim();
+    if (!ctx) { if (msg) msg.textContent = "Recargue la grilla."; return; }
+    if (support.length < 3 || !result) { if (msg) msg.textContent = "Indique la referencia del soporte y el resultado de la revisión. No se registró nada."; return; }
+    const session = auth.getCurrentSession ? auth.getCurrentSession() : null;
+    const by = (session && ((session.user && (session.user.username || session.user.fullName)) || session.usernameKey)) || "instructor";
     btn.disabled = true;
-    const res = await mgr.setStudentEvidenceVerification(usernameKey, family, actId);
-    recordAdminAuditAction({ action: "evidence-verify", target: `${usernameKey}:${family}:${actId}`, detail: (res && res.status) || "" });
-    setFeedback(res && res.ok !== false && res.status !== "error" ? "Verificación registrada." : "No se pudo registrar la verificación.", res && res.ok !== false ? "success" : "error");
-    await renderGradesGrid({ fresh: true });
+    const mgr = window.activityGradesManager;
+    const res = await mgr.setStudentEvidenceVerification(ctx.user.usernameKey, ctx.family, ctx.item.id, { support, result, note, by, reviewedFingerprint: btn.dataset.verifyFp || "" });
+    const okRes = res && res.ok !== false && res.status !== "error" && res.status !== "aborted";
+    recordAdminAuditAction({ action: "evidence-verify", target: `${ctx.user.usernameKey}:${ctx.family}:${ctx.item.id}`, detail: `${result} soporte=${support.slice(0, 60)} ${(res && res.status) || ""}` });
+    if (msg) msg.textContent = okRes ? "Revisión registrada." : "No se pudo registrar la revisión (" + ((res && res.reason) || "error") + ").";
+    btn.disabled = false;
+    if (okRes) await renderGradesGrid({ fresh: true });
   }
 
   // ── Importacion SEGURA del banco (fase 3, Codex 2026-11-08) ──────────────────
@@ -4710,7 +4746,7 @@
     const rapVerifyButtons = (user, rap) => (rap && rap.items ? rap.items.filter((i) => i.needsVerification) : [])
       .map((i) => `<button type="button" class="btn secondary grade-verify-btn" data-verify-user="${escapeHtml(user.usernameKey)}"`
         + ` data-verify-family="${escapeHtml(guideFamily)}" data-verify-activity="${escapeHtml(i.id)}"`
-        + ` title="Registro histórico sin archivo comprobable: confirme solo si revisó la evidencia auténtica">Verificar ${escapeHtml(i.number || i.id)}</button>`).join(" ");
+        + ` title="Procedencia no comprobable: revise la evidencia auténtica antes de confirmar">Verificar ${escapeHtml(i.number || i.id)}</button>`).join(" ");
     const head = "<th>Aprendiz</th>" + activities.map((a) => `<th>${escapeHtml(a.label)}`
       + (strictFamily ? (requiredIds.indexOf(a.id) !== -1
         ? ' <span class="grade-col-tag grade-col-tag--required" title="Evidencia oficial: condiciona el RAP">&#9733; Evidencia oficial</span>'
@@ -4747,6 +4783,9 @@
         + `<td class="grades-approved-cell">${approvalCellText(approved, activities.length)}`
         + (strictFamily ? (() => {
           const rap = gradesManager.evaluateRapStatus(guideFamily, g, guideStateByUser[user.usernameKey], declaredActs);
+          (rap && rap.items ? rap.items : []).filter((i) => i.needsVerification).forEach((i) => {
+            _rapReviewContext[`${user.usernameKey}|${i.id}`] = { user, item: i, state: guideStateByUser[user.usernameKey] || {}, act: declaredActs.find((a) => a.id === i.id) || { id: i.id }, family: guideFamily };
+          });
           return `<div class="grades-rap-status" data-rap-status="${escapeHtml((rap || {}).status || "")}">${escapeHtml(rapCellText(rap))}</div>`
             + (rap && rap.toVerify ? `<div class="grades-rap-verify">${rapVerifyButtons(user, rap)}</div>` : "");
         })() : "")
@@ -6594,9 +6633,13 @@
       if (obsInput) saveGradeObservation(obsInput);
     });
     // Modulo Notas: acciones del banco de comentarios (editar / eliminar).
+    byId("admin-detail-modal")?.addEventListener("click", (event) => {
+      const confirmBtn = event.target?.closest?.(".grade-verify-confirm");
+      if (confirmBtn) void confirmEvidenceVerification(confirmBtn);
+    });
     byId("module-notas")?.addEventListener("click", (event) => {
       const verifyBtn = event.target?.closest?.(".grade-verify-btn");
-      if (verifyBtn) { void handleEvidenceVerification(verifyBtn); return; }
+      if (verifyBtn) { handleEvidenceVerification(verifyBtn); return; }
       const bankBtn = event.target?.closest?.(".grade-bank-criteria-btn");
       if (bankBtn) { void openBankCriteria(bankBtn.dataset.bankFamily || "", bankBtn.dataset.bankActivity || ""); return; }
       const editBtn = event.target?.closest?.(".grade-comment-edit");
