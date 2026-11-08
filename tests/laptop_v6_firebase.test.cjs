@@ -34,7 +34,11 @@ test('V6 gateway and rule extension do not alter legacy published rules or acade
   // Previous baseline: 4898303532dfd24631d1553f85a07ea4aaf40e5806e458c4bf05249794cf58a8
   // 2026-10-28 (candidata unica): listing uses server readTime + writer-lag window, IndexedDB
   // copy limited to the admin uid and cleared on logout. Hardware Lab members unchanged.
-  'js/firebase_db.js':'cfaad28342603be8c810ab1961ede840dd22b09f846ce2f28d3fc18649f9faed',
+  // 2026-11-07 (emergencia Redes grado 11): solo se AGREGA cloudGetGradeSolutionsStrict
+  // (lectura estricta del banco de respuestas para la importacion por fusion).
+  // Hardware Lab members unchanged. Previous baseline:
+  // cfaad28342603be8c810ab1961ede840dd22b09f846ce2f28d3fc18649f9faed
+  'js/firebase_db.js':'ed45f854eff46ccaab950d45e89ae4508e7ad8b6d53257b09ce7d85c20724dfa',
   'js/hardware_lab_attempts.js':'1e36582624b3b37c2b33afb7f8c592c75ce35d22eae367d100600b2b7ee9b024',
   'js/admin_hwlab_tracking.js':'a1a4aa6e67a888a48c82a7072894f03fab68d3b7decaaeb3aeb467f388ee57f0'
  };

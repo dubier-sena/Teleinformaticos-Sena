@@ -3423,12 +3423,63 @@
     let found = false;
     ids.forEach((id) => {
       const entry = fam[id];
-      if (entry && typeof entry === "object" && Object.keys(entry).length) {
-        found = true;
-        Object.assign(combined, entry);
+      if (entry && typeof entry === "object") {
+        // Las claves que empiezan por "__" (p. ej. "__criterios") son SOLO del
+        // instructor: se ven en el visor de criterios, nunca se copian a las notas
+        // del aprendiz (EMERGENCIA 2026-11-07).
+        Object.keys(entry).forEach((key) => {
+          if (key.indexOf("__") === 0) return;
+          combined[key] = entry[key];
+          found = true;
+        });
       }
     });
     return found ? combined : null;
+  }
+
+  // Visor del banco para el INSTRUCTOR (EMERGENCIA 2026-11-07): criterios de
+  // evaluacion + respuesta esperada por campo de una actividad. Lee el banco que
+  // ya esta en memoria (Firestore, solo admin); nada de esto llega al aprendiz.
+  function bankFieldLabelsForFamily(guideFamily) {
+    const labels = {};
+    const famByFile = (window.activityGradesManager && window.activityGradesManager.GUIDE_FAMILY_BY_FILE) || {};
+    const file = Object.keys(famByFile).find((f) => famByFile[f] === guideFamily);
+    const cfg = file && window.ActivityStandard && typeof window.ActivityStandard.getConfigForGuide === "function"
+      ? window.ActivityStandard.getConfigForGuide(file) : null;
+    ((cfg && cfg.activities) || []).forEach((act) => {
+      (((act.wordExport || {}).sections) || []).forEach((sec) => {
+        if (sec && sec.storeKey) labels[sec.storeKey] = sec.label;
+      });
+    });
+    return labels;
+  }
+
+  async function openBankCriteria(guideFamily, activityId) {
+    await ensureGradeSolutionsBank();
+    const fam = (_gradeSolutionsBank || {})[guideFamily] || {};
+    const entry = fam[activityId];
+    const act = (((getGradeCatalog()[guideFamily] || {}).activities) || []).find((a) => a.id === activityId);
+    const title = "Banco de respuestas — " + ((act && act.label) || activityId);
+    if (!entry || typeof entry !== "object" || !Object.keys(entry).length) {
+      openModal(title, "Solo instructor",
+        '<p class="admin-muted">Esta actividad no tiene criterios ni respuestas en el banco de la nube. '
+        + "Si acaba de recibir el banco actualizado, use <strong>Importar a la nube</strong> en "
+        + "&laquo;Banco de respuestas&raquo;.</p>");
+      return;
+    }
+    const labels = bankFieldLabelsForFamily(guideFamily);
+    const criterios = entry.__criterios
+      ? `<div class="info-box" style="margin-bottom:12px"><div class="label">Criterios de evaluacion</div><p>${escapeHtml(entry.__criterios)}</p></div>`
+      : "";
+    const rows = Object.keys(entry).filter((k) => k.indexOf("__") !== 0).map((k) =>
+      `<tr><td>${escapeHtml(labels[k] || k)}</td><td>${escapeHtml(entry[k])}</td></tr>`).join("");
+    const table = rows
+      ? `<div class="table-scroll"><table class="data-table"><thead><tr><th>Campo</th><th>Respuesta esperada / referencia</th></tr></thead><tbody>${rows}</tbody></table></div>`
+      : '<p class="admin-muted">Actividad de entrega de archivo: se califica con los criterios (no tiene campos de texto que rellenar).</p>';
+    openModal(title, "Solo instructor — orientacion para revisar; no aprueba nada automaticamente",
+      criterios + table
+      + '<p class="admin-muted" style="margin-top:10px">La coincidencia parcial con el banco NO equivale a aprobar: '
+      + "revise el procedimiento y la evidencia del aprendiz.</p>");
   }
 
   // Resuelve el archivo de guia (HTML) del aprendiz que pertenece a una familia de
@@ -3717,6 +3768,15 @@
     setFeedback("La calificacion NO se guardo en la nube: " + why + pendingGradesSuffix(result), "error");
   }
 
+  // Fusion pura por familia (testeable): las familias del archivo reemplazan a las
+  // de la nube; las demas se conservan tal cual.
+  function mergeGradeSolutionBanks(current, incoming) {
+    const out = {};
+    Object.keys(current || {}).forEach((fam) => { out[fam] = current[fam]; });
+    Object.keys(incoming || {}).forEach((fam) => { out[fam] = incoming[fam]; });
+    return out;
+  }
+
   // Importa el banco-semilla (grade_solutions_bank.json) a Firestore (solo admin).
   async function handleGradeBankImport() {
     const fileInput = byId("grades-bank-file");
@@ -3728,8 +3788,17 @@
     if (!db || typeof db.cloudSaveGradeSolutions !== "function") { setStatus("Firestore no disponible."); return; }
     try {
       const text = await file.text();
-      const bank = JSON.parse(text);
-      if (!bank || typeof bank !== "object") throw new Error("formato invalido");
+      const incoming = JSON.parse(text);
+      if (!incoming || typeof incoming !== "object" || Array.isArray(incoming)) throw new Error("formato invalido");
+      // FUSION (EMERGENCIA 2026-11-07): antes el archivo REEMPLAZABA todo el banco de
+      // la nube, asi que importar un JSON parcial (p. ej. solo las guias nuevas)
+      // borraba las demas familias. Ahora cada familia del archivo reemplaza a su
+      // homologa y las familias que el archivo no trae se conservan. Si la lectura
+      // del banco actual falla, NO se escribe (evita pisar el banco con uno parcial).
+      if (typeof db.cloudGetGradeSolutionsStrict !== "function") throw new Error("recargue la pagina (modulo de nube desactualizado); no se guardo nada");
+      const current = await db.cloudGetGradeSolutionsStrict();
+      if (!current || typeof current !== "object") throw new Error("no se pudo leer el banco actual; no se guardo nada");
+      const bank = mergeGradeSolutionBanks(current, incoming);
       await db.cloudSaveGradeSolutions(bank);
       await ensureGradeSolutionsBank(true);
       const count = Object.values(bank).reduce((n, fam) =>
@@ -3871,7 +3940,17 @@
       const fam = famByFile[file];
       if (fam && !seen.has(fam)) { seen.add(fam); families.push(fam); }
     });
+    // Version anterior conservada para revision manual (EMERGENCIA 2026-11-07).
+    const legacy = ((window.activityGradesManager && window.activityGradesManager.LEGACY_REVIEW_FAMILIES_BY_FICHA) || {})[ficha] || [];
+    legacy.forEach((fam) => {
+      if (!seen.has(fam)) { seen.add(fam); families.push(fam); }
+    });
     return families;
+  }
+
+  function isLegacyReviewFamily(ficha, fam) {
+    const legacy = ((window.activityGradesManager && window.activityGradesManager.LEGACY_REVIEW_FAMILIES_BY_FICHA) || {})[ficha] || [];
+    return legacy.indexOf(fam) !== -1;
   }
 
   function guideFilterOptionsMarkup(ficha, selected) {
@@ -3880,7 +3959,8 @@
     const families = getGuideFamiliesForFicha(ficha).filter((fam) => catalog[fam]);
     if (!families.length) return '<option value="">Esta ficha no tiene guias con calificacion</option>';
     return '<option value="">Selecciona guia</option>' + families.map((fam) =>
-      `<option value="${escapeHtml(fam)}"${fam === selected ? " selected" : ""}>${escapeHtml(catalog[fam].label || fam)}</option>`
+      `<option value="${escapeHtml(fam)}"${fam === selected ? " selected" : ""}>${escapeHtml((catalog[fam].label || fam)
+        + (isLegacyReviewFamily(ficha, fam) ? " — VERSIÓN ANTERIOR (solo revisión manual)" : ""))}</option>`
     ).join("");
   }
 
@@ -4342,7 +4422,10 @@
         unreadable[user.usernameKey] = (r && r.message) || "No se pudieron leer las notas actuales del aprendiz.";
       }
     }));
-    const head = "<th>Aprendiz</th>" + activities.map((a) => `<th>${escapeHtml(a.label)}</th>`).join("") + "<th>Aprobadas</th>";
+    const head = "<th>Aprendiz</th>" + activities.map((a) => `<th>${escapeHtml(a.label)}`
+      + ` <button type="button" class="grade-bank-criteria-btn" data-bank-family="${escapeHtml(guideFamily)}"`
+      + ` data-bank-activity="${escapeHtml(a.id)}" title="Ver banco de respuestas y criterios (solo instructor)"`
+      + ` aria-label="Ver banco de respuestas y criterios">&#128216;</button></th>`).join("") + "<th>Aprobadas</th>";
     // resolveGradeValue cae a aliasIds: una fila fusionada (ej. matriz322+fichaCaso)
     // sigue mostrando una nota que haya quedado guardada bajo el id del alias
     // antes de la fusion, en vez de aparecer vacia.
@@ -6214,6 +6297,8 @@
     });
     // Modulo Notas: acciones del banco de comentarios (editar / eliminar).
     byId("module-notas")?.addEventListener("click", (event) => {
+      const bankBtn = event.target?.closest?.(".grade-bank-criteria-btn");
+      if (bankBtn) { void openBankCriteria(bankBtn.dataset.bankFamily || "", bankBtn.dataset.bankActivity || ""); return; }
       const editBtn = event.target?.closest?.(".grade-comment-edit");
       if (editBtn) { handleGradeCommentEdit(editBtn.dataset.commentId || ""); return; }
       const delBtn = event.target?.closest?.(".grade-comment-delete");

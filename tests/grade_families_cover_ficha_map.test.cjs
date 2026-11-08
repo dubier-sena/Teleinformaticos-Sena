@@ -164,7 +164,12 @@ ORDERS.forEach(({ label, declarationsFirst }) => {
     // familias nuevas son RAP nuevos de mantenimiento (RAP 02 y RAP 03 de
     // 220501001), cada una COMPARTIDA por Kennedy y Santa Barbara; el RAP 01 de
     // Santa Barbara reusa la familia de la Guia 6 de Kennedy.
-    assert.equal(Object.keys(mgr.GRADE_CATALOG).length, 19,
+    // 19 -> 21 (EMERGENCIA 2026-11-07, orden del instructor): las Guias 10 y 11 de
+    // Redes de GRADO 11 tienen documentos oficiales con actividades DISTINTAS a las
+    // de grado 10 (no es el mismo contenido con otra institucion), asi que tienen
+    // familia propia (guia-redes11-rap02/03). La regla "un mismo contenido comparte
+    // familia" se mantiene para todo lo demas.
+    assert.equal(Object.keys(mgr.GRADE_CATALOG).length, 21,
       "no se deben crear familias por institucion: un mismo RAP comparte familia");
     const mant = {
       "grupo-10a-guia-06-mantener-equipos.html": "guia-06-mantener-equipos",

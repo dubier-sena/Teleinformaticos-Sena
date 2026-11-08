@@ -324,6 +324,43 @@
         { id: "informeTecnico",      label: "3.4.1 Informe técnico completo de la red" },
       ],
     },
+    // EMERGENCIA 2026-11-07: Guias 10 y 11 de Redes de GRADO 11 (Santa Barbara 11A/11B)
+    // con sus actividades OFICIALES. Familia propia: antes caian en "guia-redes-rap02" /
+    // "guia-redes-rap03" (las columnas de grado 10). Las notas que ya existan bajo esas
+    // familias para aprendices de 11 NO se mueven ni se borran: quedan para revision
+    // manual (ver LEGACY_REVIEW_FAMILIES_BY_FICHA).
+    "guia-redes11-rap02": {
+      label: "Guía 10 (11.°) — Redes RAP 02: Comprobar la conectividad de la red",
+      activities: [
+        { id: "c11Reflexion311", label: "3.1.1 Reflexion inicial - Subredes en la papeleria de la senora Carmen" },
+        { id: "c11LanA321", label: "3.2.1 Bloque A - Redes LAN" },
+        { id: "c11WanB322", label: "3.2.2 Bloque B - Redes WAN" },
+        { id: "c11SubnetC323", label: "3.2.3 Bloque C - Fundamentos del subneteo" },
+        { id: "c11HerramD324", label: "3.2.4 Bloque D - Herramientas de validacion de conectividad" },
+        { id: "c11Exploracion325", label: "3.2.5 Entrega - Exploracion contextual (Bloques A-D)" },
+        { id: "c11MapaMental326", label: "3.2.6 Mapa mental integrador - LAN, WAN y subneteo" },
+        { id: "c11Pares327", label: "3.2.7 Socializacion y revision entre pares" },
+        { id: "c11Taller331", label: "3.3.1 Taller de subneteo - Red de la papeleria 192.168.20.0/24 (Ejercicios 1-5)" },
+        { id: "c11Lab341", label: "3.4.1 Laboratorio Packet Tracer - Dos subredes conectadas por router con verificacion de conectividad" },
+      ],
+    },
+    "guia-redes11-rap03": {
+      label: "Guía 11 (11.°) — Redes RAP 03: Documentar las acciones realizadas en la red",
+      activities: [
+        { id: "d11Reflexion311", label: "3.1.1 Reflexion inicial - Panaderia Dona Rosa (Duitama)" },
+        { id: "d11AtaquesA321", label: "3.2.1 Bloque A - Tipos de ataques a redes inalambricas" },
+        { id: "d11ProtocolosB322", label: "3.2.2 Bloque B - Protocolos de seguridad Wi-Fi: WEP, WPA2 y WPA3" },
+        { id: "d11AuditoriaC323", label: "3.2.3 Bloque C - Auditoria e inventario de redes inalambricas" },
+        { id: "d11PoliticaD324", label: "3.2.4 Bloque D - Estructura de una politica de seguridad para redes inalambricas" },
+        { id: "d11Contexto325", label: "3.2.5 Entrega - Contextualizacion seguridad inalambrica (4 productos, PDF)" },
+        { id: "d11Exposicion331", label: "3.3.1 Exposicion - Ataques comunes a redes inalambricas (organizador grafico)" },
+        { id: "d11Plantilla1", label: "3.3.2.1 Plantilla 1 - Inventario de redes y dispositivos inalambricos" },
+        { id: "d11Plantilla2", label: "3.3.2.2 Plantilla 2 - Registro de politicas de acceso" },
+        { id: "d11Plantilla3", label: "3.3.2.3 Plantilla 3 - Registro de auditoria y hallazgos" },
+        { id: "d11Protocolo341", label: "3.4.1 Protocolo de Politica de Seguridad Informatica para Redes Inalambricas" },
+        { id: "d11Sustentacion342", label: "3.4.2 Socializacion y sustentacion del protocolo" },
+      ],
+    },
     // Practica de Python: originalmente era UNA sola columna combinada
     // ("retoPython"), pero el usuario pidio calificar cada entrega por separado
     // (2026-07-16): 10 retos + 10 adicionales + reto integrador, igual que los
@@ -1056,6 +1093,10 @@
     "santa-barbara-10b-guia-03-redes-rap02.html": "guia-redes-rap02",
     "santa-barbara-10a-guia-04-redes-rap03.html": "guia-redes-rap03",
     "santa-barbara-10b-guia-04-redes-rap03.html": "guia-redes-rap03",
+    "grupo-11a-guia-10-redes-rap02.html": "guia-redes11-rap02",
+    "grupo-11b-guia-10-redes-rap02.html": "guia-redes11-rap02",
+    "grupo-11a-guia-11-redes-rap03.html": "guia-redes11-rap03",
+    "grupo-11b-guia-11-redes-rap03.html": "guia-redes11-rap03",
     "santa-barbara-guia-python.html": "guia-python",
     "grupo-10a-guia-04-taller-integrador.html": "taller-integrador-jfk",
     "grupo-10b-guia-04-taller-integrador.html": "taller-integrador-jfk",
@@ -1064,6 +1105,23 @@
     "grupo-11a-guia-09-taller-integrador.html": "taller-integrador-sb11",
     "grupo-11b-guia-09-taller-integrador.html": "taller-integrador-sb11",
   };
+
+  // ── Notas anteriores conservadas para revision manual (EMERGENCIA 2026-11-07) ──
+  // Hasta 2026-11-07 las Guias 10 y 11 de Redes de 11A/11B calificaban en las familias
+  // de grado 10 ("guia-redes-rap02"/"guia-redes-rap03"), con actividades que NO eran las
+  // del documento oficial de grado 11. Esas notas siguen en Firestore tal como estaban
+  // (nada se movio, borro ni aprobo): el panel las ofrece como "version anterior" SOLO
+  // para estas fichas, para que el instructor las revise a mano.
+  var LEGACY_REVIEW_FAMILIES_BY_FICHA = {
+    "3168850": ["guia-redes-rap02", "guia-redes-rap03"],
+    "3168852": ["guia-redes-rap02", "guia-redes-rap03"],
+  };
+
+  // Claves internas del banco (p. ej. "__criterios"): son SOLO para el instructor y
+  // nunca se copian a un campo del aprendiz.
+  function isInstructorOnlyBankKey(key) {
+    return String(key || "").indexOf("__") === 0;
+  }
 
   // ── Familias declaradas por la propia guía (fuente única) ───────────────────
   // Una guía que ya se registra en js/guide_declarations.js puede declarar ahí
@@ -1125,6 +1183,7 @@
       var fields = grades[activityId + ":solution"];
       if (!fields || typeof fields !== "object") return;
       Object.keys(fields).forEach(function (storeKey) {
+        if (isInstructorOnlyBankKey(storeKey)) return;  // criterios del instructor: nunca al aprendiz
         var text = fields[storeKey];
         if (text == null || String(text) === "") return;
         var matches = [];
@@ -1305,6 +1364,8 @@
   // ── API pública ──────────────────────────────────────────────────────────────
   window.activityGradesManager = {
     GRADE_CATALOG: GRADE_CATALOG,
+    LEGACY_REVIEW_FAMILIES_BY_FICHA: LEGACY_REVIEW_FAMILIES_BY_FICHA,
+    isInstructorOnlyBankKey: isInstructorOnlyBankKey,
     resolveGuideFamily: resolveGuideFamily,
     autoRenderForFile: autoRenderForFile,
     applyApprovedSolutionsForFamily: applyApprovedSolutionsForFamily,

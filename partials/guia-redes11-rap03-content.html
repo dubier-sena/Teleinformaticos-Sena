@@ -1,0 +1,538 @@
+<button class="hamburger" onclick="toggleSidebar()" aria-label="Menú">&#9776;</button>
+<button class="btn-sb-expand" onclick="showSidebar()" title="Mostrar barra lateral">&#9776;</button>
+
+<div class="layout app-layout">
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="badge">SENA · FPI</div>
+      <h2 data-no-guide-remap>Guía 11 - Documentar las acciones realizadas en la red</h2>
+      <p>Sistemas Teleinformáticos · Redes (RAP 03) · Grado 11</p>
+      <button class="btn-sb-collapse" onclick="hideSidebar()" title="Ocultar barra lateral">&#9664;</button>
+    </div>
+
+    <div class="sidebar-ficha u-hidden" id="sb-ficha-ok">
+      <div class="sf-label">Tu grupo</div>
+      <div class="sf-inst" id="sb-inst"></div>
+      <div class="sf-meta" id="sb-grupo-meta"></div>
+      <div class="sf-badge" id="sb-badge"></div>
+    </div>
+    <div class="sidebar-noficha" id="sb-ficha-warn">
+      <a href="index.html">Inicio | Seleccionar grupo / ficha</a>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span>Progreso</span>
+        <span id="progressValue">0%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <p class="progress-note">El avance se guarda en este navegador y en la nube.</p>
+      <button type="button" class="reset-button" id="resetProgress">Reiniciar respuestas</button>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Información</div>
+      <a class="nav-link active" href="#identificacion" onclick="setActive(this)"><span class="icon">&#128203;</span> Identificación</a>
+      <a class="nav-link" href="#presentacion" onclick="setActive(this)"><span class="icon">&#128075;</span> Presentación</a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Actividades</div>
+      <a class="nav-link" href="#reflexion" onclick="setActive(this)"><span class="icon">&#128172;</span> 3.1 Reflexión Inicial <span class="check">&#10003;</span></a>
+      <a class="nav-link" href="#contexto" onclick="setActive(this)"><span class="icon">&#128269;</span> 3.2 Contextualización <span class="check">&#10003;</span></a>
+      <a class="nav-link" href="#apropiacion" onclick="setActive(this)"><span class="icon">&#128218;</span> 3.3 Apropiación <span class="check">&#10003;</span></a>
+      <a class="nav-link" href="#transferencia" onclick="setActive(this)"><span class="icon">&#128640;</span> 3.4 Transferencia <span class="check">&#10003;</span></a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Recursos</div>
+      <a class="nav-link" href="#control-avance" onclick="setActive(this)"><span class="icon">&#9989;</span> Control de avance</a>
+      <a class="nav-link" href="#evidencias" onclick="setActive(this)"><span class="icon">&#128202;</span> Evidencias</a>
+      <a class="nav-link" href="#glosario" onclick="setActive(this)"><span class="icon">&#128214;</span> Glosario</a>
+      <a class="nav-link" href="#referencias" onclick="setActive(this)"><span class="icon">&#128279;</span> Referencias</a>
+    </div>
+
+    <div class="nav-section" data-no-guide-remap>
+      <div class="nav-label">Guía asignada</div>
+      <a class="nav-guide current" href="#" data-current-file="runtime-wrapper.html">
+        <span class="g-icon">&#128215;</span>
+        <span class="g-info">
+          <span class="g-num">Guía 11</span>
+          <span class="g-name">Redes RAP03</span>
+        </span>
+        <span class="g-tag actual">Actual</span>
+      </a>
+    </div>
+
+    <a class="nav-home-link" href="calendario-academico-2026.html">&#128197; <span>Calendario 2026</span></a>
+    <a class="nav-home-link" href="index.html">&#127968; <span>Volver al Inicio</span></a>
+  </nav>
+
+  <div class="main app-main">
+    <div class="topbar">
+      <div class="topbar-title" data-no-guide-remap><strong>Guía 11 - Documentar las acciones realizadas en la red</strong></div>
+      <div class="topbar-meta">
+        <span class="meta-item"><span>&#9201;</span><span data-ctx-duracion-corta>40 horas</span></span>
+        <span class="meta-item"><span>&#128197;</span><span>2026</span></span>
+        <span class="meta-item"><span>&#127979;</span><span id="topbarCampus">Santa Bárbara</span></span>
+      </div>
+    </div>
+
+    <div class="content" data-redes11-guide="guia-redes11-rap03">
+
+      <div class="hero" id="inicio">
+        <div class="tag" data-no-guide-remap>Guía 11 | Fase: <span data-ctx-fase>Análisis</span> · RAP 03 · Grado 11</div>
+        <h1>Documentar las acciones realizadas en la red</h1>
+        <p>Seguridad de redes inalámbricas: tipos de ataques Wi-Fi, protocolos WEP/WPA2/WPA3, auditoría e inventario, y elaboración del
+        Protocolo de Política de Seguridad Informática para Redes Inalámbricas de una MiPyme.</p>
+        <div class="hero-meta">
+          <div class="hero-meta-item">&#127963; SENA &mdash; Servicio Nacional de Aprendizaje</div>
+          <div class="hero-meta-item">&#128205; I.E. Santa Bárbara · 11A / 11B</div>
+          <div class="hero-meta-item">&#9201; <span data-ctx-duracion-corta>40 horas</span></div>
+          <div class="hero-meta-item">&#127891; Código: 233108 V1</div>
+        </div>
+      </div>
+      <div id="control-avance" class="section-title">Tu control de avance</div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon u-bg-green">&#9989;</div>
+            <div><h3>&iquest;Qu&eacute; llevas y qu&eacute; te falta?</h3><p>Se actualiza solo con tus entregas y respuestas guardadas</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div data-act-std-avance><p class="intro-text">Cargando tu avance...</p></div>
+          <div class="gnote gnote--recuerda"><div class="gnote__label">&#128161; Recuerda</div>
+            <p>Esta tabla se marca sola: <strong>Entregada</strong> cuando subes la evidencia a Drive y
+            <strong>Guardada</strong> cuando guardas tus respuestas. Lo que siga en Pendiente es lo que te falta.</p></div>
+        </div>
+      </div>
+      <div id="identificacion" class="section-title">Identificación de la Guía</div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon u-bg-green">&#128203;</div>
+            <div><h3>Datos del Programa de Formación</h3><p>Información oficial del programa y la competencia</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="table-scroll"><table class="data-table ident-table"><tbody><tr><td>Denominación del Programa</td><td>Sistemas Teleinformáticos</td></tr><tr><td>Código del Programa</td><td>233108 V1</td></tr><tr><td>Nombre del Proyecto Formativo</td><td>Fortalecimiento de los servicios Teleinformáticos de equipos y redes en las MiPymes de la región de Boyacá.</td></tr><tr><td>Fase del Proyecto</td><td><span data-ctx-fase>Análisis</span></td></tr><tr><td>Actividad del Proyecto</td><td>Diagnosticar el estado de la infraestructura de redes y equipos informáticos y solicitudes de servicio técnico presente en el entorno de trabajo.</td></tr><tr><td>Competencia</td><td><span data-ctx-competencia>280102129 — Evaluar red de acuerdo con procedimientos de telecomunicaciones y normativa técnica.</span></td></tr><tr><td>Resultado de Aprendizaje</td><td><span data-ctx-rap>RAP 03 — Documentar las acciones realizadas en la red de acuerdo con la normativa.</span></td></tr><tr><td>Duración</td><td><span data-ctx-duracion>40 Horas (30 horas de trabajo directo y 10 horas de trabajo independiente)</span></td></tr></tbody></table></div>
+        </div>
+      </div>
+      <div id="presentacion" class="section-title">Presentación</div>
+      <p class="section-intro">📍 <strong>Empieza por aquí:</strong> conoce de qué trata la guía y las reglas de ética y seguridad.</p>
+      <div class="gnote gnote--ruta">
+        <div class="gnote__label">🧭 ¿Cómo trabajar esta guía? Paso a paso</div>
+        <ol>
+          <li><strong>Lee cada bloque y sus recursos</strong> antes de responder.</li>
+          <li><strong>Resuelve cada actividad</strong> en orden y escribe tus respuestas en los campos de la guía.</li>
+          <li><strong>Guarda tus respuestas</strong> con el botón de cada actividad (al guardar, la actividad queda enviada).</li>
+          <li><strong>Entrega las evidencias</strong> que lo pidan con el botón <em>Entregar a Drive</em>.</li>
+          <li><strong>Revisa "Tu control de avance"</strong>: te muestra qué llevas Entregado, Guardado y Pendiente.</li>
+        </ol>
+      </div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon u-bg-blue">&#128075;</div>
+            <div><h3>Bienvenida a la Guía</h3><p>Seguridad de las redes inalámbricas en las MiPymes</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <p class="intro-text">Cordial saludo, aprendiz.</p>
+          <p class="intro-text">En los RAP anteriores aprendió a definir los parámetros de una red y a comprobar su conectividad. Ahora el
+          enfoque cambia hacia un riesgo cada vez más frecuente en las MiPymes de Boyacá: la <strong>seguridad de las redes
+          inalámbricas</strong>. Una red WiFi mal configurada no solo falla — puede ser usada por personas no autorizadas para robar
+          información, consumir el ancho de banda o incluso comprometer el punto de venta de un negocio.</p>
+          <p class="intro-text">Imagine que una panadería tiene una sola red WiFi, sin contraseña robusta, compartida entre el punto de venta
+          y los clientes. Cualquier persona en el rango de la señal puede conectarse, ver el tráfico de la red o intentar acceder al
+          sistema de ventas. El propietario no tiene ningún documento que le diga qué protocolo de seguridad usa su red, cuándo se
+          cambió la contraseña por última vez, ni qué haría si detecta un acceso no autorizado.</p>
+          <p class="intro-text">En esta guía usted aprenderá a diagnosticar el estado de seguridad de una red inalámbrica, documentar los
+          hallazgos siguiendo un procedimiento estandarizado, y elaborar un <strong>Protocolo de Política de Seguridad Informática
+          para Redes Inalámbricas</strong> basado en las recomendaciones del NIST y del Wi-Fi Alliance.</p>
+        </div>
+      </div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon u-bg-orange">&#9888;&#65039;</div>
+            <div><h3>Reglas de ética y seguridad de esta guía</h3><p>Es una guía defensiva: se aprende para proteger, no para atacar</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <ul>
+            <li>Audite únicamente una red propia, la del laboratorio o la de un negocio que le dé <strong>autorización escrita</strong>; si no cuenta con ninguna, trabaje con el caso simulado de la Panadería Doña Rosa.</li>
+            <li>Nunca intente conectarse a redes ajenas, adivinar contraseñas ni interceptar el tráfico de otras personas: en Colombia la <strong>Ley 1273 de 2009</strong> sanciona el acceso abusivo a sistemas informáticos.</li>
+            <li>Los ataques se estudian y se explican para poder defenderse; no se practican ni se simulan contra redes reales.</li>
+            <li>Proteja la información: no publique contraseñas, nombres de redes ni datos del negocio auditado en capturas, documentos o redes sociales.</li>
+            <li>Si encuentra una falla de seguridad, repórtela al instructor y al dueño de la red; no la use ni la comparta.</li>
+          </ul>
+        </div>
+      </div>
+      <div id="reflexion" class="section-title">3.1 Actividades de reflexión inicial</div>
+      <p class="section-intro">📍 Aquí no se evalúa el acierto, sino su participación.</p>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon u-bg-orange">&#128172;</div>
+            <div><h3>La Panadería Doña Rosa — Duitama</h3><p>Reflexión individual escrita + mesa redonda</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.1.1</span><span class="activity-title">Reflexión individual escrita y mesa redonda</span><span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <div class="info-box green"><div class="label">&#128221; Situación para reflexionar</div><p>La Panadería Doña Rosa, en Duitama, tiene una sola red WiFi para todo: el sistema de punto de venta, la impresora de facturas y los clientes que piden la clave para navegar mientras esperan. La contraseña es <em>"panaderia123"</em> y lleva 3 años sin cambiarse — la conoce medio barrio. Un día las ventas empiezan a fallar: el sistema se pone lento, a veces se desconecta, y la dueña sospecha que alguien más está usando su red sin permiso. Llama a un técnico, pero no tiene ningún documento que explique cómo está configurada la red ni qué tan segura es.</p></div>
+              <p class="intro-text"><strong>Paso 1 — Reflexión individual escrita.</strong> Responda con sus propias palabras:</p><article class="notes-card">
+                <label><span>1. ¿Cómo puede un negocio darse cuenta si alguien no autorizado está usando su red WiFi?</span>
+                  <textarea rows="3" data-store="g11d_311_p1" data-track></textarea></label>
+                <label><span>2. ¿Qué diferencia hay entre una red WiFi abierta y una protegida con un buen protocolo de seguridad?</span>
+                  <textarea rows="3" data-store="g11d_311_p2" data-track></textarea></label>
+                <label><span>3. ¿Ha escuchado hablar de ataques a redes WiFi? ¿Cuáles conoce o se imagina que podrían existir?</span>
+                  <textarea rows="3" data-store="g11d_311_p3" data-track></textarea></label>
+                <label><span>4. ¿Qué pasaría si alguien accede a la red WiFi del punto de venta y roba información de las ventas o de los clientes?</span>
+                  <textarea rows="3" data-store="g11d_311_p4" data-track></textarea></label>
+                <label><span>5. ¿Qué documentos o políticas cree que debería tener un negocio para proteger su red inalámbrica?</span>
+                  <textarea rows="3" data-store="g11d_311_p5" data-track></textarea></label>
+                <div class="info-box"><div class="label">&#128483; Paso 2 — Mesa redonda</div><p>Cada aprendiz comparte una respuesta (2–3 minutos). Se construye colectivamente en el tablero una lista de buenas prácticas mínimas que debería tener cualquier negocio con red WiFi.</p></div>
+                <label><span>Lista de buenas prácticas mínimas construida en la mesa redonda</span>
+                  <textarea rows="4" data-store="g11d_311_mesa" data-track></textarea></label>
+                <div id="d11Reflexion311DeadlineControls" class="u-mt-16"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardard11Reflexion311" class="btn-save-response" onclick="actStd_save_d11Reflexion311()">&#128190; Guardar respuestas</button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_d11Reflexion311()">&#128196; Exportar a Word</button>
+                </div>
+                <div id="statusd11Reflexion311" class="activity-saved-notice u-saved">&#9989; Respuestas guardadas correctamente.</div>
+                <div id="d11Reflexion311GradeMount" class="u-mt-12"></div>
+              </article>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="contexto" class="section-title">3.2 Contextualización e identificación de conocimientos</div>
+      <p class="section-intro">📍 Antes de auditar y proteger una red inalámbrica necesita conocer los tipos de ataques que la amenazan, los protocolos de seguridad disponibles y cómo se documenta correctamente su estado. Explore cada bloque, responda y elabore el producto indicado.</p>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon u-bg-purple">&#128269;</div>
+            <div><h3>Bloques A–D: seguridad de redes inalámbricas</h3><p>4 bloques + 1 entrega compilada (PDF)</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          
+          <div class="activity open">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.2.1</span><span class="activity-title">Bloque A — Tipos de ataques a redes inalámbricas</span><span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <div class="info-box green"><div class="label">&#128214; Recurso de referencia</div><p><a href="https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-153.pdf" target="_blank" rel="noopener">NIST Special Publication 800-153 — Guidelines for Securing Wireless Local Area Networks (WLANs)</a></p></div><article class="notes-card">
+                <label><span>1. ¿Qué es un “Rogue Access Point” y por qué es peligroso para una red WiFi empresarial?</span>
+                  <textarea rows="3" data-store="g11d_321_q1" data-track></textarea></label>
+                <label><span>2. ¿Qué es un ataque de “Evil Twin” y cómo podría afectar a los clientes de un negocio con WiFi para el público?</span>
+                  <textarea rows="3" data-store="g11d_321_q2" data-track></textarea></label>
+                <label><span>3. ¿Qué es un ataque de desautenticación (deauthentication) y qué efecto tiene sobre los dispositivos ya conectados?</span>
+                  <textarea rows="3" data-store="g11d_321_q3" data-track></textarea></label>
+                <div class="info-box"><div class="label">&#128221; Producto individual — Cuadro de ataques</div><p>Elabore un cuadro con al menos 4 tipos de ataques a redes inalámbricas, indicando en qué consiste cada uno y qué riesgo representa para una MiPyme.</p></div>
+                <div class="table-scroll"><table class="data-table"><thead><tr><th>Ataque</th><th>En qué consiste</th><th>Riesgo para una MiPyme</th></tr></thead><tbody><tr><td>Rogue AP</td><td><input type="text" class="r11-input" data-store="g11d_321_rogue_consiste" data-track aria-label="Rogue AP: en qué consiste"></td><td><input type="text" class="r11-input" data-store="g11d_321_rogue_riesgo" data-track aria-label="Rogue AP: riesgo para una MiPyme"></td></tr><tr><td>Evil Twin</td><td><input type="text" class="r11-input" data-store="g11d_321_eviltwin_consiste" data-track aria-label="Evil Twin: en qué consiste"></td><td><input type="text" class="r11-input" data-store="g11d_321_eviltwin_riesgo" data-track aria-label="Evil Twin: riesgo para una MiPyme"></td></tr><tr><td>Desautenticación</td><td><input type="text" class="r11-input" data-store="g11d_321_deauth_consiste" data-track aria-label="Desautenticación: en qué consiste"></td><td><input type="text" class="r11-input" data-store="g11d_321_deauth_riesgo" data-track aria-label="Desautenticación: riesgo para una MiPyme"></td></tr><tr><td>Fuerza bruta de contraseña WiFi</td><td><input type="text" class="r11-input" data-store="g11d_321_fuerza_consiste" data-track aria-label="Fuerza bruta de contraseña WiFi: en qué consiste"></td><td><input type="text" class="r11-input" data-store="g11d_321_fuerza_riesgo" data-track aria-label="Fuerza bruta de contraseña WiFi: riesgo para una MiPyme"></td></tr></tbody></table></div>
+                <div id="d11AtaquesA321DeadlineControls" class="u-mt-16"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardard11AtaquesA321" class="btn-save-response" onclick="actStd_save_d11AtaquesA321()">&#128190; Guardar respuestas</button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_d11AtaquesA321()">&#128196; Exportar a Word</button>
+                </div>
+                <div id="statusd11AtaquesA321" class="activity-saved-notice u-saved">&#9989; Respuestas guardadas correctamente.</div>
+                <div id="d11AtaquesA321GradeMount" class="u-mt-12"></div>
+              </article>
+            </div>
+          </div>
+          <div class="activity open">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.2.2</span><span class="activity-title">Bloque B — Protocolos de seguridad Wi-Fi: WEP, WPA2 y WPA3</span><span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <div class="info-box green"><div class="label">&#128214; Recurso de referencia</div><p><a href="https://www.wi-fi.org/discover-wi-fi/security" target="_blank" rel="noopener">Wi-Fi Alliance — Security (WPA3, Wi-Fi Enhanced Open, Protected Management Frames)</a></p></div><article class="notes-card">
+                <label><span>1. ¿Por qué el protocolo WEP ya no se considera seguro para ninguna red actual?</span>
+                  <textarea rows="3" data-store="g11d_322_q1" data-track></textarea></label>
+                <label><span>2. ¿Qué mejora aporta WPA3 frente a WPA2, especialmente frente a intentos de adivinar la contraseña?</span>
+                  <textarea rows="3" data-store="g11d_322_q2" data-track></textarea></label>
+                <label><span>3. ¿Qué es “Wi-Fi Enhanced Open” y en qué tipo de red (por ejemplo, la red de invitados de un negocio) se usaría?</span>
+                  <textarea rows="3" data-store="g11d_322_q3" data-track></textarea></label>
+                <div class="info-box"><div class="label">&#128221; Producto individual — Tabla comparativa</div><p>Complete la tabla comparativa de WEP, WPA2 y WPA3.</p></div>
+                <div class="table-scroll"><table class="data-table"><thead><tr><th>Protocolo</th><th>Estado actual (vigente/obsoleto)</th><th>Nivel de seguridad</th><th>Recomendación de uso para una MiPyme</th></tr></thead><tbody><tr><td>WEP</td><td><input type="text" class="r11-input" data-store="g11d_322_wep_estado" data-track aria-label="WEP: Estado actual (vigente/obsoleto)"></td><td><input type="text" class="r11-input" data-store="g11d_322_wep_nivel" data-track aria-label="WEP: Nivel de seguridad"></td><td><input type="text" class="r11-input" data-store="g11d_322_wep_recomendacion" data-track aria-label="WEP: Recomendación de uso para una MiPyme"></td></tr><tr><td>WPA2</td><td><input type="text" class="r11-input" data-store="g11d_322_wpa2_estado" data-track aria-label="WPA2: Estado actual (vigente/obsoleto)"></td><td><input type="text" class="r11-input" data-store="g11d_322_wpa2_nivel" data-track aria-label="WPA2: Nivel de seguridad"></td><td><input type="text" class="r11-input" data-store="g11d_322_wpa2_recomendacion" data-track aria-label="WPA2: Recomendación de uso para una MiPyme"></td></tr><tr><td>WPA3</td><td><input type="text" class="r11-input" data-store="g11d_322_wpa3_estado" data-track aria-label="WPA3: Estado actual (vigente/obsoleto)"></td><td><input type="text" class="r11-input" data-store="g11d_322_wpa3_nivel" data-track aria-label="WPA3: Nivel de seguridad"></td><td><input type="text" class="r11-input" data-store="g11d_322_wpa3_recomendacion" data-track aria-label="WPA3: Recomendación de uso para una MiPyme"></td></tr></tbody></table></div>
+                <div id="d11ProtocolosB322DeadlineControls" class="u-mt-16"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardard11ProtocolosB322" class="btn-save-response" onclick="actStd_save_d11ProtocolosB322()">&#128190; Guardar respuestas</button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_d11ProtocolosB322()">&#128196; Exportar a Word</button>
+                </div>
+                <div id="statusd11ProtocolosB322" class="activity-saved-notice u-saved">&#9989; Respuestas guardadas correctamente.</div>
+                <div id="d11ProtocolosB322GradeMount" class="u-mt-12"></div>
+              </article>
+            </div>
+          </div>
+          <div class="activity open">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.2.3</span><span class="activity-title">Bloque C — Auditoría e inventario de redes inalámbricas</span><span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <div class="info-box green"><div class="label">&#128214; Recurso de referencia</div><p><a href="https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-153.pdf" target="_blank" rel="noopener">NIST Special Publication 800-153 — Guidelines for Securing Wireless Local Area Networks (WLANs)</a> — sección de evaluaciones de seguridad y monitoreo continuo de WLANs.</p></div><article class="notes-card">
+                <label><span>1. ¿Qué información mínima debería registrar una MiPyme sobre su propia red WiFi?</span>
+                  <textarea rows="3" data-store="g11d_323_q1" data-track></textarea></label>
+                <label><span>2. ¿Por qué es importante documentar cuándo fue la última vez que se cambió la contraseña del WiFi?</span>
+                  <textarea rows="3" data-store="g11d_323_q2" data-track></textarea></label>
+                <label><span>3. ¿Qué diferencia hay entre la red WiFi del punto de venta y una red de invitados? ¿Por qué deberían estar separadas?</span>
+                  <textarea rows="3" data-store="g11d_323_q3" data-track></textarea></label>
+                <div class="info-box"><div class="label">&#128221; Producto individual — Modelo de ficha de auditoría</div><p>Elabore un modelo de ficha de auditoría de red inalámbrica con los campos mínimos que debería tener.</p></div>
+                <div class="table-scroll"><table class="data-table"><thead><tr><th>Campo de la ficha</th><th>Qué registra</th><th>Ejemplo</th></tr></thead><tbody><tr><td>SSID (nombre de la red)</td><td><input type="text" class="r11-input" data-store="g11d_323_ficha_ssid" data-track placeholder="Describa con sus palabras..." aria-label="SSID (nombre de la red): qué registra"></td><td>PapeleriaCarmen_WiFi</td></tr><tr><td>Protocolo de seguridad</td><td><input type="text" class="r11-input" data-store="g11d_323_ficha_protocolo" data-track placeholder="Describa con sus palabras..." aria-label="Protocolo de seguridad: qué registra"></td><td>WPA2 / WPA3</td></tr><tr><td>Fecha de última auditoría</td><td><input type="text" class="r11-input" data-store="g11d_323_ficha_fecha" data-track placeholder="Describa con sus palabras..." aria-label="Fecha de última auditoría: qué registra"></td><td>04/09/2026</td></tr><tr><td>Dispositivos autorizados</td><td><input type="text" class="r11-input" data-store="g11d_323_ficha_dispositivos" data-track placeholder="Describa con sus palabras..." aria-label="Dispositivos autorizados: qué registra"></td><td>3 PCs, 1 impresora, 2 celulares del personal</td></tr><tr><td>Responsable de la red</td><td><input type="text" class="r11-input" data-store="g11d_323_ficha_responsable" data-track placeholder="Describa con sus palabras..." aria-label="Responsable de la red: qué registra"></td><td>Nombre del propietario o encargado</td></tr><tr><td>Hallazgos / observaciones</td><td><input type="text" class="r11-input" data-store="g11d_323_ficha_hallazgos" data-track placeholder="Describa con sus palabras..." aria-label="Hallazgos / observaciones: qué registra"></td><td>Contraseña sin cambiar hace más de 1 año</td></tr></tbody></table></div>
+                <div id="d11AuditoriaC323DeadlineControls" class="u-mt-16"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardard11AuditoriaC323" class="btn-save-response" onclick="actStd_save_d11AuditoriaC323()">&#128190; Guardar respuestas</button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_d11AuditoriaC323()">&#128196; Exportar a Word</button>
+                </div>
+                <div id="statusd11AuditoriaC323" class="activity-saved-notice u-saved">&#9989; Respuestas guardadas correctamente.</div>
+                <div id="d11AuditoriaC323GradeMount" class="u-mt-12"></div>
+              </article>
+            </div>
+          </div>
+          <div class="activity open">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.2.4</span><span class="activity-title">Bloque D — Estructura de una política de seguridad informática para redes inalámbricas</span><span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <div class="info-box green"><div class="label">&#128214; Recurso de referencia</div><p><a href="https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-153.pdf" target="_blank" rel="noopener">NIST Special Publication 800-153 — Guidelines for Securing Wireless Local Area Networks (WLANs)</a> — recomendaciones de configuración estandarizada de WLANs.</p></div><article class="notes-card">
+                <label><span>1. ¿Qué diferencia hay entre una política de seguridad y un simple manual técnico?</span>
+                  <textarea rows="3" data-store="g11d_324_q1" data-track></textarea></label>
+                <label><span>2. ¿Qué elementos mínimos debe tener una política de seguridad para que sea aplicable en la práctica y no solo teórica?</span>
+                  <textarea rows="3" data-store="g11d_324_q2" data-track></textarea></label>
+                <label><span>3. ¿Por qué una política de seguridad debe incluir un plan de respuesta ante incidentes, y no solo medidas preventivas?</span>
+                  <textarea rows="3" data-store="g11d_324_q3" data-track></textarea></label>
+                <div class="info-box"><div class="label">&#128221; Producto individual — Índice comentado</div><p>Elabore un índice comentado de una política de seguridad informática para redes inalámbricas de una MiPyme. Por cada sección escriba su nombre y una frase explicando qué debe contener. <strong>Mínimo 6 secciones.</strong></p></div>
+                <label><span>Sección 1: nombre y frase explicando qué debe contener</span>
+                  <textarea rows="2" data-store="g11d_324_seccion1" data-track></textarea></label>
+                <label><span>Sección 2: nombre y frase explicando qué debe contener</span>
+                  <textarea rows="2" data-store="g11d_324_seccion2" data-track></textarea></label>
+                <label><span>Sección 3: nombre y frase explicando qué debe contener</span>
+                  <textarea rows="2" data-store="g11d_324_seccion3" data-track></textarea></label>
+                <label><span>Sección 4: nombre y frase explicando qué debe contener</span>
+                  <textarea rows="2" data-store="g11d_324_seccion4" data-track></textarea></label>
+                <label><span>Sección 5: nombre y frase explicando qué debe contener</span>
+                  <textarea rows="2" data-store="g11d_324_seccion5" data-track></textarea></label>
+                <label><span>Sección 6: nombre y frase explicando qué debe contener</span>
+                  <textarea rows="2" data-store="g11d_324_seccion6" data-track></textarea></label>
+                <label><span>Sección 7 (opcional)</span>
+                  <textarea rows="2" data-store="g11d_324_seccion7" data-track data-optional-of="d11PoliticaD324"></textarea></label>
+                <label><span>Sección 8 (opcional)</span>
+                  <textarea rows="2" data-store="g11d_324_seccion8" data-track data-optional-of="d11PoliticaD324"></textarea></label>
+                <div id="d11PoliticaD324DeadlineControls" class="u-mt-16"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardard11PoliticaD324" class="btn-save-response" onclick="actStd_save_d11PoliticaD324()">&#128190; Guardar respuestas</button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_d11PoliticaD324()">&#128196; Exportar a Word</button>
+                </div>
+                <div id="statusd11PoliticaD324" class="activity-saved-notice u-saved">&#9989; Respuestas guardadas correctamente.</div>
+                <div id="d11PoliticaD324GradeMount" class="u-mt-12"></div>
+              </article>
+            </div>
+          </div>
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.2.5</span><span class="activity-title">Entrega de los 4 productos de contextualización (PDF)</span><span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text">Compile los 4 productos (cuadro de ataques, tabla comparativa de protocolos, modelo de ficha de auditoría e índice comentado) en un solo PDF y entréguelo a Drive.</p><div class="info-box green"><div class="label">&#128206; Nombre del archivo</div><p><code>Contextualizacion_SeguridadInalambrica_NombreAprendiz_FICHA.pdf</code></p></div>
+              <div data-act-std-delivery="d11Contexto325"></div>
+              <div id="d11Contexto325GradeMount" class="u-mt-12"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="apropiacion" class="section-title">3.3 Actividades de apropiación</div>
+      <p class="section-intro">📍 Exposición con organizadores gráficos y construcción guiada de las plantillas de auditoría.</p>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon u-bg-blue">&#128218;</div>
+            <div><h3>Exposición y plantillas de auditoría</h3><p>Ataques comunes · Plantillas 1, 2 y 3</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.3.1</span><span class="activity-title">Exposición: ataques comunes a redes inalámbricas</span><span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text">Prepare una exposición de <strong>máximo 10 minutos</strong> usando organizadores gráficos (mapa conceptual, infografía o línea de tiempo) para explicar a sus compañeros los ataques a redes inalámbricas identificados en el Bloque A. La exposición debe incluir <strong>al menos un ejemplo aplicado a una MiPyme de Boyacá para cada ataque</strong>.</p>
+              <div class="table-scroll"><table class="data-table"><thead><tr><th>Ataque / organizador gráfico sugerido</th><th>Qué debe explicar</th><th>Medida de mitigación a mencionar</th></tr></thead><tbody><tr><td>Rogue Access Point</td><td>En qué consiste, cómo se instala un punto de acceso no autorizado en la red y cómo puede pasar desapercibido.</td><td>Auditoría periódica de dispositivos conectados y comparación contra el inventario autorizado.</td></tr><tr><td>Evil Twin</td><td>Cómo un atacante clona el nombre (SSID) de una red legítima para engañar a los usuarios.</td><td>Verificación del certificado/portal cautivo y uso de WPA3/Wi-Fi Enhanced Open en redes de invitados.</td></tr><tr><td>Ataque de desautenticación</td><td>Cómo se fuerza la desconexión de dispositivos legítimos, y con qué propósito suele hacerse.</td><td>Uso de Protected Management Frames (PMF), obligatorio en WPA3.</td></tr><tr><td>Fuerza bruta de contraseña WiFi</td><td>Cómo un atacante prueba múltiples contraseñas hasta acceder a la red.</td><td>Contraseñas robustas, cambio periódico y uso de SAE (Simultaneous Authentication of Equals) en WPA3.</td></tr></tbody></table></div>
+              <p class="intro-text">La exposición y el organizador gráfico utilizado forman parte del portafolio del aprendiz y serán referenciados en el Protocolo de Política de Seguridad Informática final.</p>
+              <div data-act-std-delivery="d11Exposicion331"></div>
+              <div id="d11Exposicion331GradeMount" class="u-mt-12"></div>
+            </div>
+          </div>
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.3.2</span><span class="activity-title">Plantilla de auditoría de red inalámbrica — Construcción guiada</span><span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text">Un técnico profesional no audita una red WiFi a ojo — usa plantillas estandarizadas que registran el estado real de la red. En esta actividad construirá las plantillas que usará en su Protocolo de Política de Seguridad Informática final. <strong>Recuerde: solo se audita una red propia o con autorización escrita del dueño</strong> (o el caso simulado de la Panadería Doña Rosa).</p>
+              <h4>Plantilla 1 — Inventario de redes y dispositivos inalámbricos</h4><p class="intro-text">Complete esta plantilla con las redes inalámbricas identificadas en el negocio auditado:</p><article class="notes-card">
+                <div class="table-scroll"><table class="data-table"><thead><tr><th>Red</th><th>Red / SSID</th><th>Banda (2.4/5 GHz)</th><th>Protocolo de seguridad</th><th>Dispositivo (AP/router)</th><th>Ubicación</th><th>Uso (POS/ADMIN/INVITADOS)</th></tr></thead><tbody><tr><td>Red 1 — Punto de venta</td><td><input type="text" class="r11-input" data-store="g11d_p1_pos_ssid" data-track aria-label="Red / SSID"></td><td><select class="r11-input" data-store="g11d_p1_pos_banda" data-track aria-label="Banda (2.4/5 GHz)"><option value="">Seleccione…</option><option value="2.4 GHz">2.4 GHz</option><option value="5 GHz">5 GHz</option><option value="2.4 y 5 GHz">2.4 y 5 GHz</option></select></td><td><select class="r11-input" data-store="g11d_p1_pos_protocolo" data-track aria-label="Protocolo de seguridad"><option value="">Seleccione…</option><option value="Abierta (sin cifrado)">Abierta (sin cifrado)</option><option value="WEP">WEP</option><option value="WPA">WPA</option><option value="WPA2">WPA2</option><option value="WPA2/WPA3">WPA2/WPA3</option><option value="WPA3">WPA3</option><option value="Wi-Fi Enhanced Open">Wi-Fi Enhanced Open</option></select></td><td><input type="text" class="r11-input" data-store="g11d_p1_pos_dispositivo" data-track aria-label="Dispositivo (AP/router)"></td><td><input type="text" class="r11-input" data-store="g11d_p1_pos_ubicacion" data-track aria-label="Ubicación"></td><td><select class="r11-input" data-store="g11d_p1_pos_uso" data-track aria-label="Uso (POS/ADMIN/INVITADOS)"><option value="">Seleccione…</option><option value="POS">POS</option><option value="ADMIN">ADMIN</option><option value="INVITADOS">INVITADOS</option></select></td></tr><tr><td>Red 2 — Administrativa</td><td><input type="text" class="r11-input" data-store="g11d_p1_admin_ssid" data-track aria-label="Red / SSID"></td><td><select class="r11-input" data-store="g11d_p1_admin_banda" data-track aria-label="Banda (2.4/5 GHz)"><option value="">Seleccione…</option><option value="2.4 GHz">2.4 GHz</option><option value="5 GHz">5 GHz</option><option value="2.4 y 5 GHz">2.4 y 5 GHz</option></select></td><td><select class="r11-input" data-store="g11d_p1_admin_protocolo" data-track aria-label="Protocolo de seguridad"><option value="">Seleccione…</option><option value="Abierta (sin cifrado)">Abierta (sin cifrado)</option><option value="WEP">WEP</option><option value="WPA">WPA</option><option value="WPA2">WPA2</option><option value="WPA2/WPA3">WPA2/WPA3</option><option value="WPA3">WPA3</option><option value="Wi-Fi Enhanced Open">Wi-Fi Enhanced Open</option></select></td><td><input type="text" class="r11-input" data-store="g11d_p1_admin_dispositivo" data-track aria-label="Dispositivo (AP/router)"></td><td><input type="text" class="r11-input" data-store="g11d_p1_admin_ubicacion" data-track aria-label="Ubicación"></td><td><select class="r11-input" data-store="g11d_p1_admin_uso" data-track aria-label="Uso (POS/ADMIN/INVITADOS)"><option value="">Seleccione…</option><option value="POS">POS</option><option value="ADMIN">ADMIN</option><option value="INVITADOS">INVITADOS</option></select></td></tr><tr><td>Red 3 — Invitados</td><td><input type="text" class="r11-input" data-store="g11d_p1_inv_ssid" data-track aria-label="Red / SSID"></td><td><select class="r11-input" data-store="g11d_p1_inv_banda" data-track aria-label="Banda (2.4/5 GHz)"><option value="">Seleccione…</option><option value="2.4 GHz">2.4 GHz</option><option value="5 GHz">5 GHz</option><option value="2.4 y 5 GHz">2.4 y 5 GHz</option></select></td><td><select class="r11-input" data-store="g11d_p1_inv_protocolo" data-track aria-label="Protocolo de seguridad"><option value="">Seleccione…</option><option value="Abierta (sin cifrado)">Abierta (sin cifrado)</option><option value="WEP">WEP</option><option value="WPA">WPA</option><option value="WPA2">WPA2</option><option value="WPA2/WPA3">WPA2/WPA3</option><option value="WPA3">WPA3</option><option value="Wi-Fi Enhanced Open">Wi-Fi Enhanced Open</option></select></td><td><input type="text" class="r11-input" data-store="g11d_p1_inv_dispositivo" data-track aria-label="Dispositivo (AP/router)"></td><td><input type="text" class="r11-input" data-store="g11d_p1_inv_ubicacion" data-track aria-label="Ubicación"></td><td><select class="r11-input" data-store="g11d_p1_inv_uso" data-track aria-label="Uso (POS/ADMIN/INVITADOS)"><option value="">Seleccione…</option><option value="POS">POS</option><option value="ADMIN">ADMIN</option><option value="INVITADOS">INVITADOS</option></select></td></tr></tbody></table></div>
+                <div id="d11Plantilla1DeadlineControls" class="u-mt-16"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardard11Plantilla1" class="btn-save-response" onclick="actStd_save_d11Plantilla1()">&#128190; Guardar respuestas</button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_d11Plantilla1()">&#128196; Exportar a Word</button>
+                </div>
+                <div id="statusd11Plantilla1" class="activity-saved-notice u-saved">&#9989; Respuestas guardadas correctamente.</div>
+                <div id="d11Plantilla1GradeMount" class="u-mt-12"></div>
+              </article>
+              <h4>Plantilla 2 — Registro de políticas de acceso</h4><p class="intro-text">Complete con la información de acceso de cada red identificada en la Plantilla 1:</p><article class="notes-card">
+                <div class="table-scroll"><table class="data-table"><thead><tr><th>Tipo de red</th><th>Rol / usuario autorizado</th><th>Método de autenticación</th><th>Responsable del cambio de contraseña</th><th>Frecuencia de cambio</th><th>Observaciones</th></tr></thead><tbody><tr><td>Punto de venta</td><td><input type="text" class="r11-input" data-store="g11d_p2_pos_rol" data-track aria-label="Punto de venta: Rol / usuario autorizado"></td><td><input type="text" class="r11-input" data-store="g11d_p2_pos_metodo" data-track aria-label="Punto de venta: Método de autenticación"></td><td><input type="text" class="r11-input" data-store="g11d_p2_pos_responsable" data-track aria-label="Punto de venta: Responsable del cambio de contraseña"></td><td><input type="text" class="r11-input" data-store="g11d_p2_pos_frecuencia" data-track aria-label="Punto de venta: Frecuencia de cambio"></td><td><input type="text" class="r11-input" data-store="g11d_p2_pos_obs" data-track aria-label="Punto de venta: Observaciones"></td></tr><tr><td>Administrativa</td><td><input type="text" class="r11-input" data-store="g11d_p2_admin_rol" data-track aria-label="Administrativa: Rol / usuario autorizado"></td><td><input type="text" class="r11-input" data-store="g11d_p2_admin_metodo" data-track aria-label="Administrativa: Método de autenticación"></td><td><input type="text" class="r11-input" data-store="g11d_p2_admin_responsable" data-track aria-label="Administrativa: Responsable del cambio de contraseña"></td><td><input type="text" class="r11-input" data-store="g11d_p2_admin_frecuencia" data-track aria-label="Administrativa: Frecuencia de cambio"></td><td><input type="text" class="r11-input" data-store="g11d_p2_admin_obs" data-track aria-label="Administrativa: Observaciones"></td></tr><tr><td>Invitados</td><td><input type="text" class="r11-input" data-store="g11d_p2_inv_rol" data-track aria-label="Invitados: Rol / usuario autorizado"></td><td><input type="text" class="r11-input" data-store="g11d_p2_inv_metodo" data-track aria-label="Invitados: Método de autenticación"></td><td><input type="text" class="r11-input" data-store="g11d_p2_inv_responsable" data-track aria-label="Invitados: Responsable del cambio de contraseña"></td><td><input type="text" class="r11-input" data-store="g11d_p2_inv_frecuencia" data-track aria-label="Invitados: Frecuencia de cambio"></td><td><input type="text" class="r11-input" data-store="g11d_p2_inv_obs" data-track aria-label="Invitados: Observaciones"></td></tr></tbody></table></div>
+                <div id="d11Plantilla2DeadlineControls" class="u-mt-16"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardard11Plantilla2" class="btn-save-response" onclick="actStd_save_d11Plantilla2()">&#128190; Guardar respuestas</button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_d11Plantilla2()">&#128196; Exportar a Word</button>
+                </div>
+                <div id="statusd11Plantilla2" class="activity-saved-notice u-saved">&#9989; Respuestas guardadas correctamente.</div>
+                <div id="d11Plantilla2GradeMount" class="u-mt-12"></div>
+              </article>
+              <h4>Plantilla 3 — Registro de auditoría y hallazgos</h4><p class="intro-text">Registre los hallazgos de la auditoría de seguridad realizada a la red inalámbrica del negocio. <strong>Filas 1 a 3 obligatorias</strong> (el protocolo exige al menos 3 hallazgos); las filas 4 a 10 son opcionales y quedan bloqueadas junto con la plantilla al guardar.</p><article class="notes-card">
+                <div class="table-scroll"><table class="data-table"><thead><tr><th>N.°</th><th>Fecha de auditoría</th><th>Hallazgo</th><th>Nivel de riesgo</th><th>Acción recomendada</th><th>Responsable</th></tr></thead><tbody><tr><td>1</td><td><input type="text" class="r11-input" data-store="g11d_p3_1_fecha" data-track aria-label="Hallazgo 1: Fecha de auditoría"></td><td><input type="text" class="r11-input" data-store="g11d_p3_1_hallazgo" data-track aria-label="Hallazgo 1: Hallazgo"></td><td><select class="r11-input" data-store="g11d_p3_1_riesgo" data-track aria-label="Hallazgo 1: Nivel de riesgo"><option value="">Seleccione…</option><option value="Alto">Alto</option><option value="Medio">Medio</option><option value="Bajo">Bajo</option></select></td><td><input type="text" class="r11-input" data-store="g11d_p3_1_accion" data-track aria-label="Hallazgo 1: Acción recomendada"></td><td><input type="text" class="r11-input" data-store="g11d_p3_1_responsable" data-track aria-label="Hallazgo 1: Responsable"></td></tr><tr><td>2</td><td><input type="text" class="r11-input" data-store="g11d_p3_2_fecha" data-track aria-label="Hallazgo 2: Fecha de auditoría"></td><td><input type="text" class="r11-input" data-store="g11d_p3_2_hallazgo" data-track aria-label="Hallazgo 2: Hallazgo"></td><td><select class="r11-input" data-store="g11d_p3_2_riesgo" data-track aria-label="Hallazgo 2: Nivel de riesgo"><option value="">Seleccione…</option><option value="Alto">Alto</option><option value="Medio">Medio</option><option value="Bajo">Bajo</option></select></td><td><input type="text" class="r11-input" data-store="g11d_p3_2_accion" data-track aria-label="Hallazgo 2: Acción recomendada"></td><td><input type="text" class="r11-input" data-store="g11d_p3_2_responsable" data-track aria-label="Hallazgo 2: Responsable"></td></tr><tr><td>3</td><td><input type="text" class="r11-input" data-store="g11d_p3_3_fecha" data-track aria-label="Hallazgo 3: Fecha de auditoría"></td><td><input type="text" class="r11-input" data-store="g11d_p3_3_hallazgo" data-track aria-label="Hallazgo 3: Hallazgo"></td><td><select class="r11-input" data-store="g11d_p3_3_riesgo" data-track aria-label="Hallazgo 3: Nivel de riesgo"><option value="">Seleccione…</option><option value="Alto">Alto</option><option value="Medio">Medio</option><option value="Bajo">Bajo</option></select></td><td><input type="text" class="r11-input" data-store="g11d_p3_3_accion" data-track aria-label="Hallazgo 3: Acción recomendada"></td><td><input type="text" class="r11-input" data-store="g11d_p3_3_responsable" data-track aria-label="Hallazgo 3: Responsable"></td></tr><tr><td>4</td><td><input type="text" class="r11-input" data-store="g11d_p3_4_fecha" data-track data-optional-of="d11Plantilla3" aria-label="Hallazgo 4: Fecha de auditoría"></td><td><input type="text" class="r11-input" data-store="g11d_p3_4_hallazgo" data-track data-optional-of="d11Plantilla3" aria-label="Hallazgo 4: Hallazgo"></td><td><select class="r11-input" data-store="g11d_p3_4_riesgo" data-track data-optional-of="d11Plantilla3" aria-label="Hallazgo 4: Nivel de riesgo"><option value="">Seleccione…</option><option value="Alto">Alto</option><option value="Medio">Medio</option><option value="Bajo">Bajo</option></select></td><td><input type="text" class="r11-input" data-store="g11d_p3_4_accion" data-track data-optional-of="d11Plantilla3" aria-label="Hallazgo 4: Acción recomendada"></td><td><input type="text" class="r11-input" data-store="g11d_p3_4_responsable" data-track data-optional-of="d11Plantilla3" aria-label="Hallazgo 4: Responsable"></td></tr><tr><td>5</td><td><input type="text" class="r11-input" data-store="g11d_p3_5_fecha" data-track data-optional-of="d11Plantilla3" aria-label="Hallazgo 5: Fecha de auditoría"></td><td><input type="text" class="r11-input" data-store="g11d_p3_5_hallazgo" data-track data-optional-of="d11Plantilla3" aria-label="Hallazgo 5: Hallazgo"></td><td><select class="r11-input" data-store="g11d_p3_5_riesgo" data-track data-optional-of="d11Plantilla3" aria-label="Hallazgo 5: Nivel de riesgo"><option value="">Seleccione…</option><option value="Alto">Alto</option><option value="Medio">Medio</option><option value="Bajo">Bajo</option></select></td><td><input type="text" class="r11-input" data-store="g11d_p3_5_accion" data-track data-optional-of="d11Plantilla3" aria-label="Hallazgo 5: Acción recomendada"></td><td><input type="text" class="r11-input" data-store="g11d_p3_5_responsable" data-track data-optional-of="d11Plantilla3" aria-label="Hallazgo 5: Responsable"></td></tr><tr><td>6</td><td><input type="text" class="r11-input" data-store="g11d_p3_6_fecha" data-track data-optional-of="d11Plantilla3" aria-label="Hallazgo 6: Fecha de auditoría"></td><td><input type="text" class="r11-input" data-store="g11d_p3_6_hallazgo" data-track data-optional-of="d11Plantilla3" aria-label="Hallazgo 6: Hallazgo"></td><td><select class="r11-input" data-store="g11d_p3_6_riesgo" data-track data-optional-of="d11Plantilla3" aria-label="Hallazgo 6: Nivel de riesgo"><option value="">Seleccione…</option><option value="Alto">Alto</option><option value="Medio">Medio</option><option value="Bajo">Bajo</option></select></td><td><input type="text" class="r11-input" data-store="g11d_p3_6_accion" data-track data-optional-of="d11Plantilla3" aria-label="Hallazgo 6: Acción recomendada"></td><td><input type="text" class="r11-input" data-store="g11d_p3_6_responsable" data-track data-optional-of="d11Plantilla3" aria-label="Hallazgo 6: Responsable"></td></tr><tr><td>7</td><td><input type="text" class="r11-input" data-store="g11d_p3_7_fecha" data-track data-optional-of="d11Plantilla3" aria-label="Hallazgo 7: Fecha de auditoría"></td><td><input type="text" class="r11-input" data-store="g11d_p3_7_hallazgo" data-track data-optional-of="d11Plantilla3" aria-label="Hallazgo 7: Hallazgo"></td><td><select class="r11-input" data-store="g11d_p3_7_riesgo" data-track data-optional-of="d11Plantilla3" aria-label="Hallazgo 7: Nivel de riesgo"><option value="">Seleccione…</option><option value="Alto">Alto</option><option value="Medio">Medio</option><option value="Bajo">Bajo</option></select></td><td><input type="text" class="r11-input" data-store="g11d_p3_7_accion" data-track data-optional-of="d11Plantilla3" aria-label="Hallazgo 7: Acción recomendada"></td><td><input type="text" class="r11-input" data-store="g11d_p3_7_responsable" data-track data-optional-of="d11Plantilla3" aria-label="Hallazgo 7: Responsable"></td></tr><tr><td>8</td><td><input type="text" class="r11-input" data-store="g11d_p3_8_fecha" data-track data-optional-of="d11Plantilla3" aria-label="Hallazgo 8: Fecha de auditoría"></td><td><input type="text" class="r11-input" data-store="g11d_p3_8_hallazgo" data-track data-optional-of="d11Plantilla3" aria-label="Hallazgo 8: Hallazgo"></td><td><select class="r11-input" data-store="g11d_p3_8_riesgo" data-track data-optional-of="d11Plantilla3" aria-label="Hallazgo 8: Nivel de riesgo"><option value="">Seleccione…</option><option value="Alto">Alto</option><option value="Medio">Medio</option><option value="Bajo">Bajo</option></select></td><td><input type="text" class="r11-input" data-store="g11d_p3_8_accion" data-track data-optional-of="d11Plantilla3" aria-label="Hallazgo 8: Acción recomendada"></td><td><input type="text" class="r11-input" data-store="g11d_p3_8_responsable" data-track data-optional-of="d11Plantilla3" aria-label="Hallazgo 8: Responsable"></td></tr><tr><td>9</td><td><input type="text" class="r11-input" data-store="g11d_p3_9_fecha" data-track data-optional-of="d11Plantilla3" aria-label="Hallazgo 9: Fecha de auditoría"></td><td><input type="text" class="r11-input" data-store="g11d_p3_9_hallazgo" data-track data-optional-of="d11Plantilla3" aria-label="Hallazgo 9: Hallazgo"></td><td><select class="r11-input" data-store="g11d_p3_9_riesgo" data-track data-optional-of="d11Plantilla3" aria-label="Hallazgo 9: Nivel de riesgo"><option value="">Seleccione…</option><option value="Alto">Alto</option><option value="Medio">Medio</option><option value="Bajo">Bajo</option></select></td><td><input type="text" class="r11-input" data-store="g11d_p3_9_accion" data-track data-optional-of="d11Plantilla3" aria-label="Hallazgo 9: Acción recomendada"></td><td><input type="text" class="r11-input" data-store="g11d_p3_9_responsable" data-track data-optional-of="d11Plantilla3" aria-label="Hallazgo 9: Responsable"></td></tr><tr><td>10</td><td><input type="text" class="r11-input" data-store="g11d_p3_10_fecha" data-track data-optional-of="d11Plantilla3" aria-label="Hallazgo 10: Fecha de auditoría"></td><td><input type="text" class="r11-input" data-store="g11d_p3_10_hallazgo" data-track data-optional-of="d11Plantilla3" aria-label="Hallazgo 10: Hallazgo"></td><td><select class="r11-input" data-store="g11d_p3_10_riesgo" data-track data-optional-of="d11Plantilla3" aria-label="Hallazgo 10: Nivel de riesgo"><option value="">Seleccione…</option><option value="Alto">Alto</option><option value="Medio">Medio</option><option value="Bajo">Bajo</option></select></td><td><input type="text" class="r11-input" data-store="g11d_p3_10_accion" data-track data-optional-of="d11Plantilla3" aria-label="Hallazgo 10: Acción recomendada"></td><td><input type="text" class="r11-input" data-store="g11d_p3_10_responsable" data-track data-optional-of="d11Plantilla3" aria-label="Hallazgo 10: Responsable"></td></tr></tbody></table></div>
+                <div id="d11Plantilla3DeadlineControls" class="u-mt-16"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardard11Plantilla3" class="btn-save-response" onclick="actStd_save_d11Plantilla3()">&#128190; Guardar respuestas</button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_d11Plantilla3()">&#128196; Exportar a Word</button>
+                </div>
+                <div id="statusd11Plantilla3" class="activity-saved-notice u-saved">&#9989; Respuestas guardadas correctamente.</div>
+                <div id="d11Plantilla3GradeMount" class="u-mt-12"></div>
+              </article>
+              <div class="info-box green"><div class="label">&#128204; Importante</div><p>Estas 3 plantillas completadas serán incluidas directamente en su Protocolo de Política de Seguridad Informática. Expórtelas a Word y guárdelas en formato digital desde ahora.</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="transferencia" class="section-title">3.4 Actividades de transferencia del conocimiento</div>
+      <p class="section-intro">📍 Producto final del RAP 03: el Protocolo de Política de Seguridad Informática y su sustentación.</p>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon u-bg-orange">&#128640;</div>
+            <div><h3>Protocolo de Política de Seguridad Informática</h3><p>Producto final + sustentación oral</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.4.1</span><span class="activity-title">Protocolo de Política de Seguridad Informática para Redes Inalámbricas</span><span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text">Integrará todo lo aprendido en esta guía y en las anteriores elaborando el Protocolo de Política de Seguridad Informática para Redes Inalámbricas de una MiPyme (puede usar el caso de la Panadería Doña Rosa trabajado en la reflexión inicial, u otro negocio real o simulado). <strong>Este es el producto final del RAP 03.</strong></p><div class="info-box green"><div class="label">&#128188; Escenario</div><p>Usted fue contratado como asesor técnico por una MiPyme de su región para diagnosticar el estado de seguridad de su red inalámbrica y entregar un protocolo formal que prevenga y mitigue los ataques más comunes identificados en esta guía.</p></div>
+              <h4>Estructura obligatoria del protocolo</h4><p class="intro-text">El protocolo debe tener las siguientes secciones en el orden indicado:</p>
+              <div class="table-scroll"><table class="data-table"><thead><tr><th>N.°</th><th>Sección</th><th>Contenido mínimo requerido</th></tr></thead><tbody><tr><td>1</td><td>Portada</td><td>Logo institucional (SENA), nombre del documento, nombre del negocio auditado, nombre del técnico (aprendiz), número de ficha, fecha de elaboración.</td></tr><tr><td>2</td><td>Palabras clave</td><td>Mínimo 5 términos técnicos relevantes (ej.: WPA3, auditoría inalámbrica, Rogue AP, política de seguridad, cifrado).</td></tr><tr><td>3</td><td>Introducción</td><td>Descripción del contexto: qué negocio se auditó, cuál fue el alcance del protocolo. Máximo 1 página.</td></tr><tr><td>4</td><td>Diagnóstico de la red inalámbrica actual</td><td>Plantilla 1 completada (inventario de redes y dispositivos) y descripción del estado de seguridad encontrado.</td></tr><tr><td>5</td><td>Riesgos identificados</td><td>Mínimo 3 riesgos concretos detectados, relacionados con los ataques del Bloque A, indicando su nivel de severidad.</td></tr><tr><td>6</td><td>Política de acceso y contraseñas</td><td>Plantilla 2 completada (registro de políticas de acceso) y reglas de contraseñas seguras y separación de redes (punto de venta / administrativa / invitados).</td></tr><tr><td>7</td><td>Configuración de seguridad recomendada</td><td>Protocolo Wi-Fi recomendado (WPA2 o WPA3) con justificación técnica basada en el Bloque B.</td></tr><tr><td>8</td><td>Registro de auditoría y hallazgos</td><td>Plantilla 3 completada, con al menos 3 hallazgos documentados y su acción recomendada.</td></tr><tr><td>9</td><td>Plan de respuesta a incidentes</td><td>Qué hacer si se detecta un acceso no autorizado: a quién notificar, pasos de contención y verificación posterior.</td></tr><tr><td>10</td><td>Conclusiones y bibliografía</td><td>Mínimo 3 conclusiones técnicas y mínimo 4 fuentes citadas en formato APA.</td></tr></tbody></table></div>
+              <h4>Especificaciones de formato</h4>
+              <ul>
+                <li>Fuente: Arial 11 | Interlineado: 1.15 | Márgenes: 2.5 cm todos los lados.</li>
+                <li>Extensión mínima: 6 páginas (sin contar portada ni bibliografía).</li>
+                <li>Formato de entrega: PDF.</li>
+                <li>Nombre del archivo: <code>Protocolo_SeguridadInalambrica_NombreAprendiz_FICHA.pdf</code></li>
+                <li>Las 3 plantillas (bloque de apropiación) deben incluirse completas dentro del protocolo, no solo mencionadas.</li>
+              </ul>
+              <div data-act-std-delivery="d11Protocolo341"></div>
+              <div id="d11Protocolo341GradeMount" class="u-mt-12"></div>
+            </div>
+          </div>
+          <div class="activity open">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.4.2</span><span class="activity-title">Socialización y sustentación del protocolo</span><span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Desempeño:</strong> sustentación oral (5–7 minutos) explicando el diagnóstico, los riesgos y las medidas propuestas. Prepare aquí su guion; la valoración la hace el instructor durante la sustentación.</p><article class="notes-card">
+                <label><span>Diagnóstico realizado (qué negocio, qué redes, qué estado encontró)</span>
+                  <textarea rows="3" data-store="g11d_342_diagnostico" data-track></textarea></label>
+                <label><span>Riesgos principales identificados y su severidad</span>
+                  <textarea rows="3" data-store="g11d_342_riesgos" data-track></textarea></label>
+                <label><span>Medidas propuestas y plan de respuesta a incidentes</span>
+                  <textarea rows="3" data-store="g11d_342_medidas" data-track></textarea></label>
+                <div id="d11Sustentacion342DeadlineControls" class="u-mt-16"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardard11Sustentacion342" class="btn-save-response" onclick="actStd_save_d11Sustentacion342()">&#128190; Guardar respuestas</button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_d11Sustentacion342()">&#128196; Exportar a Word</button>
+                </div>
+                <div id="statusd11Sustentacion342" class="activity-saved-notice u-saved">&#9989; Respuestas guardadas correctamente.</div>
+                <div id="d11Sustentacion342GradeMount" class="u-mt-12"></div>
+              </article>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="evidencias" class="section-title">Evidencias de aprendizaje</div>
+      <p class="section-intro">📍 Lista de chequeo final: lo que se entrega y cómo se evalúa (fase Análisis).</p>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon u-bg-blue">&#128202;</div>
+            <div><h3>Planteamiento de evidencias para la evaluación</h3><p>Actividad · evidencia · criterio · instrumento</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="table-scroll"><table class="data-table"><thead><tr><th>Actividad de aprendizaje</th><th>Evidencia</th><th>Criterio de evaluación</th><th>Técnica e instrumento</th></tr></thead><tbody><tr><td>3.1 Reflexión individual escrita + mesa redonda</td><td>Producto: respuestas en cuaderno o documento digital. Desempeño: participación en mesa redonda (2–3 min).</td><td>Identifica riesgos básicos de una red inalámbrica sin protección. Propone buenas prácticas iniciales de seguridad WiFi.</td><td>Observación y revisión. Lista de verificación LC-01.</td></tr><tr><td>3.2 Exposición con organizadores gráficos sobre ataques a redes inalámbricas (Bloques A–D)</td><td>Contextualizacion_SeguridadInalambrica_NombreAprendiz_FICHA.pdf (4 productos) + exposición oral.</td><td>Reconoce y explica ataques comunes a redes inalámbricas. Diferencia los protocolos de seguridad WEP, WPA2 y WPA3. Estructura la información técnica requerida para un protocolo de seguridad.</td><td>Evaluación de producto y exposición. Lista de verificación LC-01.</td></tr><tr><td>3.3 Construcción guiada de plantillas de auditoría de red inalámbrica</td><td>Plantillas 1, 2 y 3 completamente diligenciadas en digital.</td><td>Registra inventario, políticas de acceso y hallazgos de auditoría de forma completa, coherente y trazable.</td><td>Valoración de producto. Lista de verificación LC-02.</td></tr><tr><td>3.4 Transferencia: elaboración del Protocolo de Política de Seguridad Informática</td><td>Protocolo_SeguridadInalambrica_NombreAprendiz_FICHA.pdf (10 secciones, mínimo 6 páginas).</td><td>Documenta las acciones de diagnóstico realizadas según normativa. Presenta evidencias suficientes y conclusiones técnicas. Propone un plan de respuesta a incidentes aplicable.</td><td>Valoración de producto. Rúbrica LC-03.</td></tr><tr><td>3.4 Socialización/sustentación del protocolo</td><td>Desempeño: sustentación oral (5–7 min) explicando el diagnóstico, los riesgos y las medidas propuestas.</td><td>Sustenta técnicamente el trabajo, interpreta resultados y responde preguntas con vocabulario técnico apropiado.</td><td>Interrogatorio y exposición. Rúbrica LC-03 (sustentación).</td></tr></tbody></table></div>
+        </div>
+      </div>
+      <div id="version-anterior" class="section-title">Registros de la versión anterior de esta guía</div>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon u-bg-teal">&#128451;</div>
+            <div><h3>Respuestas y entregas conservadas</h3><p>Solo consulta: nada se borró</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <p class="intro-text">Esta guía se corrigió para que coincida con la guía oficial de grado 11. Si usted
+          ya había trabajado en la versión anterior, sus respuestas y entregas siguen guardadas y se muestran aquí
+          (solo lectura). Su instructor las revisará manualmente.</p>
+          <div data-redes11-legacy><p class="intro-text">No hay registros de la versión anterior.</p></div>
+        </div>
+      </div>
+      <div id="glosario" class="section-title">Glosario de términos</div>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon u-bg-purple">&#128214;</div>
+            <div><h3>Glosario</h3><p>Términos clave de la guía</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <dl class="glossary"><dt>SSID (Service Set Identifier)</dt><dd>Nombre público que identifica una red inalámbrica y permite a los dispositivos encontrarla y conectarse a ella.</dd><dt>WEP (Wired Equivalent Privacy)</dt><dd>Protocolo de seguridad Wi-Fi obsoleto e inseguro, vulnerable a ataques de fuerza bruta en minutos; no debe usarse en redes actuales.</dd><dt>WPA2 (Wi-Fi Protected Access 2)</dt><dd>Protocolo de seguridad Wi-Fi que reemplazó a WEP; todavía ampliamente usado, pero superado por WPA3 en protección contra adivinación de contraseñas.</dd><dt>WPA3 (Wi-Fi Protected Access 3)</dt><dd>Protocolo de seguridad Wi-Fi más reciente, con autenticación SAE y cifrado individualizado por sesión; obligatorio en dispositivos certificados Wi-Fi actuales.</dd><dt>Rogue Access Point</dt><dd>Punto de acceso inalámbrico no autorizado conectado a la red, que puede usarse para interceptar tráfico o dar acceso a personas externas.</dd><dt>Evil Twin</dt><dd>Ataque en el que se crea un punto de acceso falso con el mismo nombre (SSID) que una red legítima, para engañar a los usuarios y capturar sus datos.</dd><dt>Ataque de desautenticación</dt><dd>Técnica que fuerza la desconexión de dispositivos legítimos de una red WiFi, frecuentemente usada como paso previo a otros ataques.</dd><dt>Fuerza bruta (WiFi)</dt><dd>Método de ataque que prueba múltiples combinaciones de contraseña hasta encontrar la correcta.</dd><dt>SAE (Simultaneous Authentication of Equals)</dt><dd>Método de autenticación introducido en WPA3 que protege contra ataques de fuerza bruta fuera de línea.</dd><dt>Protected Management Frames (PMF)</dt><dd>Mecanismo que protege las tramas de gestión de la red inalámbrica contra falsificación; obligatorio en WPA3.</dd><dt>Auditoría de red</dt><dd>Proceso sistemático de revisión del estado, configuración y seguridad de una red para identificar riesgos y verificar el cumplimiento de buenas prácticas.</dd><dt>Política de seguridad informática</dt><dd>Documento formal que establece las reglas, responsabilidades y procedimientos para proteger la información y los recursos tecnológicos de una organización.</dd><dt>Red de invitados</dt><dd>Red inalámbrica separada de la red principal, destinada a visitantes o clientes, que limita su acceso a los recursos internos de la organización.</dd><dt>Cifrado</dt><dd>Proceso que transforma la información en un formato ilegible para quien no tenga la clave correcta, protegiendo la confidencialidad de los datos transmitidos.</dd><dt>Ley 1273 de 2009</dt><dd>Ley colombiana que sanciona los delitos informáticos, como el acceso abusivo a un sistema o red sin autorización.</dd><dt>Autorización escrita</dt><dd>Permiso por escrito del dueño de una red o sistema para poder revisarlo.</dd><dt>Bitácora</dt><dd>Cuaderno o documento donde el aprendiz anota apuntes, datos y observaciones de su trabajo.</dd><dt>Captura de pantalla</dt><dd>Imagen de lo que se ve en la pantalla; en Windows se toma con las teclas Windows + Shift + S.</dd></dl>
+        </div>
+      </div>
+      <div id="referencias" class="section-title">Referentes bibliográficos</div>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon u-bg-teal">&#128279;</div>
+            <div><h3>Referencias (IEEE)</h3><p>Fuentes de la guía oficial</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <ol class="references"><li>M. Souppaya y K. Scarfone, «Guidelines for Securing Wireless Local Area Networks (WLANs)», NIST Special Publication 800-153, feb. 2012. <a href="https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-153.pdf" target="_blank" rel="noopener">nvlpubs.nist.gov</a></li><li>Wi-Fi Alliance, «Security». <a href="https://www.wi-fi.org/discover-wi-fi/security" target="_blank" rel="noopener">wi-fi.org</a></li><li>ICONTEC, «NTC 1486: Documentación. Presentación de tesis, trabajos de grado y otros trabajos de investigación», 2008.</li><li>Cisco Networking Academy, «Networking Basics», Cisco Skills for All. <a href="https://skillsforall.com/course/networking-basics" target="_blank" rel="noopener">skillsforall.com</a></li></ol>
+          <p class="intro-text">Control de cambios: Dubier Orlando Millán Barbosa (Instructor Técnico, CIAS — Regional Boyacá), 04/09/2026 — Construcción de la guía RAP 03 (competencia 280102129) para grado 11, con enfoque en seguridad de redes inalámbricas, I.E. Santa Bárbara.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

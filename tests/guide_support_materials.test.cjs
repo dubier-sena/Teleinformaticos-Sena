@@ -30,7 +30,9 @@ function loadCatalog() {
 }
 
 test("las 18 rutas de Redes cargan el componente de ayuda y el material antes del loader", () => {
-  const routes = Object.values(loadRouteMap()).filter((r) => /^guia-redes-rap0[123]$/.test(r.template || ""));
+  // EMERGENCIA 2026-11-07: las 4 rutas de Redes de grado 11 (Guias 10/11) usan
+  // template propio guia-redes11-rap0N; siguen siendo 18 rutas de Redes.
+  const routes = Object.values(loadRouteMap()).filter((r) => /^guia-redes(?:11)?-rap0[123]$/.test(r.template || ""));
   assert.equal(routes.length, 18);
   for (const r of routes) {
     const names = r.scripts.map((s) => s.split("?")[0]);

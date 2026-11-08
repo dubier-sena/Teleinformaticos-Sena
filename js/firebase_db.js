@@ -1810,6 +1810,16 @@
     return doc && doc.solutions && typeof doc.solutions === "object" ? doc.solutions : {};
   }
 
+  // Lectura ESTRICTA del banco (EMERGENCIA 2026-11-07): distingue "no existe"
+  // ({}) de "no se pudo leer" (lanza). La importacion por fusion la necesita para
+  // no reemplazar el banco de la nube por uno parcial tras una lectura fallida.
+  async function cloudGetGradeSolutionsStrict() {
+    var r = await fsGetStrict(COL_GRADE_SOLUTIONS, "bank");
+    if (r.status === "missing") return {};
+    if (r.status !== "found" || !r.data) throw new Error("lectura del banco fallida (" + (r.reason || "unknown") + ")");
+    return r.data.solutions && typeof r.data.solutions === "object" ? r.data.solutions : {};
+  }
+
   async function cloudSaveGradeSolutions(solutions) {
     return fsPatch(COL_GRADE_SOLUTIONS, "bank", {
       solutions: solutions && typeof solutions === "object" ? solutions : {},
@@ -5020,6 +5030,7 @@
     cloudGetStudentSummary: cloudGetStudentSummary,
     cloudSaveStudentSummary: cloudSaveStudentSummary,
     cloudGetGradeSolutions: cloudGetGradeSolutions,
+    cloudGetGradeSolutionsStrict: cloudGetGradeSolutionsStrict,
     cloudSaveGradeSolutions: cloudSaveGradeSolutions,
     cloudGetGradeComments: cloudGetGradeComments,
     cloudSaveGradeComments: cloudSaveGradeComments,

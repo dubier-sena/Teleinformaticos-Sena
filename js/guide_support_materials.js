@@ -108,7 +108,10 @@
     root = root || document.getElementById("page-root") || document.body;
     if (!root || !context || !context.template) return 0;
     if (root.querySelector("[" + BLOCK_ATTR + "]")) return 0;
-    var groups = groupsFor(context.template, resolveFicha(context));
+    // supportTemplate (EMERGENCIA 2026-11-07): las guias de Redes de grado 11 tienen
+    // partial propio (template guia-redes11-rap0N) pero conservan el catalogo de
+    // material de apoyo de grado 11 publicado bajo guia-redes-rap0N.
+    var groups = groupsFor(context.supportTemplate || context.template, resolveFicha(context));
     if (!groups.length) return 0;
     var count = groups.reduce(function (n, g) { return n + g.items.length; }, 0);
     var block = document.createElement("div");

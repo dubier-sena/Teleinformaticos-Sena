@@ -4,7 +4,7 @@
   "schemaVersion": 1,
   "sourceHashes": {
     "js/portal_auth.js": "36eacc03a8f1f73f992fb104d2461c63b37b97707d6bcfaa9daf4665a0adcf27",
-    "js/guide_declarations.js": "d8a17ff96244a66891edb4d7a6d2e7186e2b9fd6888a9cb8761b30df0b57b2bd"
+    "js/guide_declarations.js": "25ff8d55002b570e652b3c8cf4258466dae18b7fea901c03d248d29318d55dae"
   },
   "notice": "Fuente: declaraciones del portal; no certifica catálogo curricular completo ni intensidades. Cotejo oficial pendiente. Las discrepancias se bloquean.",
   "fichas": [
@@ -435,52 +435,44 @@
           "title": "Guia 10 - Comprobar la conectividad de la red (RAP 02)",
           "activities": [
             {
-              "id": "reflexion311",
-              "label": "Reflexion inicial - Caso Ferreteria Don Misael"
+              "id": "c11Reflexion311",
+              "label": "Reflexion inicial - Subredes en la papeleria de la senora Carmen"
             },
             {
-              "id": "bloqueA321",
-              "label": "Bloque A - Router, Switch y Access Point"
+              "id": "c11LanA321",
+              "label": "Bloque A - Redes LAN"
             },
             {
-              "id": "bloqueB322",
-              "label": "Bloque B - Protocolo TCP/IP y modelo de capas"
+              "id": "c11WanB322",
+              "label": "Bloque B - Redes WAN"
             },
             {
-              "id": "bloqueC323",
-              "label": "Bloque C - Servicios DHCP, DNS y Firewall"
+              "id": "c11SubnetC323",
+              "label": "Bloque C - Fundamentos del subneteo"
             },
             {
-              "id": "bloqueD324",
-              "label": "Bloque D - IP publica vs privada y NAT"
+              "id": "c11HerramD324",
+              "label": "Bloque D - Herramientas de validacion de conectividad"
             },
             {
-              "id": "exportBloques321a324",
-              "label": "Exportar bloques A-D a Word"
+              "id": "c11Exploracion325",
+              "label": "Entrega - Exploracion contextual (Bloques A-D)"
             },
             {
-              "id": "entregaContexto325",
-              "label": "Entrega - Productos de contextualizacion (PDF)"
+              "id": "c11MapaMental326",
+              "label": "Mapa mental integrador - LAN, WAN y subneteo"
             },
             {
-              "id": "comandos331",
-              "label": "Comandos de diagnostico CLI"
+              "id": "c11Pares327",
+              "label": "Socializacion y revision entre pares"
             },
             {
-              "id": "presentacion332",
-              "label": "Presentacion tecnica de averias (5 escenarios)"
+              "id": "c11Taller331",
+              "label": "Taller de subneteo - Red de la papeleria 192.168.20.0/24 (Ejercicios 1-5)"
             },
             {
-              "id": "laboratorio341",
-              "label": "Laboratorio Packet Tracer - Red de 2 plantas + 10 pruebas"
-            },
-            {
-              "id": "caso342",
-              "label": "Laboratorio integral - Red con DHCP, DNS, AP y NAT (Packet Tracer)"
-            },
-            {
-              "id": "quiz-redes-321h-rap02",
-              "label": "Quiz de conectividad"
+              "id": "c11Lab341",
+              "label": "Laboratorio Packet Tracer - Dos subredes conectadas por router con verificacion de conectividad"
             }
           ]
         }
@@ -504,52 +496,52 @@
           "title": "Guia 11 - Documentar las acciones realizadas en la red (RAP 03)",
           "activities": [
             {
-              "id": "reflexion311",
-              "label": "Reflexion inicial - Caso consultorio medico Tunja"
+              "id": "d11Reflexion311",
+              "label": "Reflexion inicial - Panaderia Dona Rosa (Duitama)"
             },
             {
-              "id": "bloqueA321",
-              "label": "Bloque A - Estandares de documentacion: TIA-568, TIA-606 e ISO/IEC 11801"
+              "id": "d11AtaquesA321",
+              "label": "Bloque A - Tipos de ataques a redes inalambricas"
             },
             {
-              "id": "bloqueB322",
-              "label": "Bloque B - Herramientas de verificacion y certificacion de cableado"
+              "id": "d11ProtocolosB322",
+              "label": "Bloque B - Protocolos de seguridad Wi-Fi: WEP, WPA2 y WPA3"
             },
             {
-              "id": "bloqueC323",
-              "label": "Bloque C - Parametros de certificacion de cableado"
+              "id": "d11AuditoriaC323",
+              "label": "Bloque C - Auditoria e inventario de redes inalambricas"
             },
             {
-              "id": "bloqueD324",
-              "label": "Bloque D - Estructura de un informe tecnico de red"
+              "id": "d11PoliticaD324",
+              "label": "Bloque D - Estructura de una politica de seguridad para redes inalambricas"
             },
             {
-              "id": "exportBloques321a324",
-              "label": "Exportar bloques A-D a Word"
+              "id": "d11Contexto325",
+              "label": "Entrega - Contextualizacion seguridad inalambrica (4 productos, PDF)"
             },
             {
-              "id": "entregaContexto",
-              "label": "Entrega - Productos de contextualizacion (PDF)"
+              "id": "d11Exposicion331",
+              "label": "Exposicion - Ataques comunes a redes inalambricas (organizador grafico)"
             },
             {
-              "id": "demoHerramientas331",
-              "label": "Demostracion practica de herramientas de cableado"
+              "id": "d11Plantilla1",
+              "label": "Plantilla 1 - Inventario de redes y dispositivos inalambricos"
             },
             {
-              "id": "plantilla1Inventario",
-              "label": "Plantilla 1 - Inventario de dispositivos de red"
+              "id": "d11Plantilla2",
+              "label": "Plantilla 2 - Registro de politicas de acceso"
             },
             {
-              "id": "plantilla2IP",
-              "label": "Plantilla 2 - Tabla de direccionamiento IP"
+              "id": "d11Plantilla3",
+              "label": "Plantilla 3 - Registro de auditoria y hallazgos"
             },
             {
-              "id": "plantilla3Pruebas",
-              "label": "Plantilla 3 - Registro de pruebas de conectividad"
+              "id": "d11Protocolo341",
+              "label": "Protocolo de Politica de Seguridad Informatica para Redes Inalambricas"
             },
             {
-              "id": "informeTecnico",
-              "label": "Informe tecnico completo de la red"
+              "id": "d11Sustentacion342",
+              "label": "Socializacion y sustentacion del protocolo"
             }
           ]
         }
@@ -870,52 +862,44 @@
           "title": "Guia 10 - Comprobar la conectividad de la red (RAP 02)",
           "activities": [
             {
-              "id": "reflexion311",
-              "label": "Reflexion inicial - Caso Ferreteria Don Misael"
+              "id": "c11Reflexion311",
+              "label": "Reflexion inicial - Subredes en la papeleria de la senora Carmen"
             },
             {
-              "id": "bloqueA321",
-              "label": "Bloque A - Router, Switch y Access Point"
+              "id": "c11LanA321",
+              "label": "Bloque A - Redes LAN"
             },
             {
-              "id": "bloqueB322",
-              "label": "Bloque B - Protocolo TCP/IP y modelo de capas"
+              "id": "c11WanB322",
+              "label": "Bloque B - Redes WAN"
             },
             {
-              "id": "bloqueC323",
-              "label": "Bloque C - Servicios DHCP, DNS y Firewall"
+              "id": "c11SubnetC323",
+              "label": "Bloque C - Fundamentos del subneteo"
             },
             {
-              "id": "bloqueD324",
-              "label": "Bloque D - IP publica vs privada y NAT"
+              "id": "c11HerramD324",
+              "label": "Bloque D - Herramientas de validacion de conectividad"
             },
             {
-              "id": "exportBloques321a324",
-              "label": "Exportar bloques A-D a Word"
+              "id": "c11Exploracion325",
+              "label": "Entrega - Exploracion contextual (Bloques A-D)"
             },
             {
-              "id": "entregaContexto325",
-              "label": "Entrega - Productos de contextualizacion (PDF)"
+              "id": "c11MapaMental326",
+              "label": "Mapa mental integrador - LAN, WAN y subneteo"
             },
             {
-              "id": "comandos331",
-              "label": "Comandos de diagnostico CLI"
+              "id": "c11Pares327",
+              "label": "Socializacion y revision entre pares"
             },
             {
-              "id": "presentacion332",
-              "label": "Presentacion tecnica de averias (5 escenarios)"
+              "id": "c11Taller331",
+              "label": "Taller de subneteo - Red de la papeleria 192.168.20.0/24 (Ejercicios 1-5)"
             },
             {
-              "id": "laboratorio341",
-              "label": "Laboratorio Packet Tracer - Red de 2 plantas + 10 pruebas"
-            },
-            {
-              "id": "caso342",
-              "label": "Laboratorio integral - Red con DHCP, DNS, AP y NAT (Packet Tracer)"
-            },
-            {
-              "id": "quiz-redes-321h-rap02",
-              "label": "Quiz de conectividad"
+              "id": "c11Lab341",
+              "label": "Laboratorio Packet Tracer - Dos subredes conectadas por router con verificacion de conectividad"
             }
           ]
         }
@@ -939,52 +923,52 @@
           "title": "Guia 11 - Documentar las acciones realizadas en la red (RAP 03)",
           "activities": [
             {
-              "id": "reflexion311",
-              "label": "Reflexion inicial - Caso consultorio medico Tunja"
+              "id": "d11Reflexion311",
+              "label": "Reflexion inicial - Panaderia Dona Rosa (Duitama)"
             },
             {
-              "id": "bloqueA321",
-              "label": "Bloque A - Estandares de documentacion: TIA-568, TIA-606 e ISO/IEC 11801"
+              "id": "d11AtaquesA321",
+              "label": "Bloque A - Tipos de ataques a redes inalambricas"
             },
             {
-              "id": "bloqueB322",
-              "label": "Bloque B - Herramientas de verificacion y certificacion de cableado"
+              "id": "d11ProtocolosB322",
+              "label": "Bloque B - Protocolos de seguridad Wi-Fi: WEP, WPA2 y WPA3"
             },
             {
-              "id": "bloqueC323",
-              "label": "Bloque C - Parametros de certificacion de cableado"
+              "id": "d11AuditoriaC323",
+              "label": "Bloque C - Auditoria e inventario de redes inalambricas"
             },
             {
-              "id": "bloqueD324",
-              "label": "Bloque D - Estructura de un informe tecnico de red"
+              "id": "d11PoliticaD324",
+              "label": "Bloque D - Estructura de una politica de seguridad para redes inalambricas"
             },
             {
-              "id": "exportBloques321a324",
-              "label": "Exportar bloques A-D a Word"
+              "id": "d11Contexto325",
+              "label": "Entrega - Contextualizacion seguridad inalambrica (4 productos, PDF)"
             },
             {
-              "id": "entregaContexto",
-              "label": "Entrega - Productos de contextualizacion (PDF)"
+              "id": "d11Exposicion331",
+              "label": "Exposicion - Ataques comunes a redes inalambricas (organizador grafico)"
             },
             {
-              "id": "demoHerramientas331",
-              "label": "Demostracion practica de herramientas de cableado"
+              "id": "d11Plantilla1",
+              "label": "Plantilla 1 - Inventario de redes y dispositivos inalambricos"
             },
             {
-              "id": "plantilla1Inventario",
-              "label": "Plantilla 1 - Inventario de dispositivos de red"
+              "id": "d11Plantilla2",
+              "label": "Plantilla 2 - Registro de politicas de acceso"
             },
             {
-              "id": "plantilla2IP",
-              "label": "Plantilla 2 - Tabla de direccionamiento IP"
+              "id": "d11Plantilla3",
+              "label": "Plantilla 3 - Registro de auditoria y hallazgos"
             },
             {
-              "id": "plantilla3Pruebas",
-              "label": "Plantilla 3 - Registro de pruebas de conectividad"
+              "id": "d11Protocolo341",
+              "label": "Protocolo de Politica de Seguridad Informatica para Redes Inalambricas"
             },
             {
-              "id": "informeTecnico",
-              "label": "Informe tecnico completo de la red"
+              "id": "d11Sustentacion342",
+              "label": "Socializacion y sustentacion del protocolo"
             }
           ]
         }

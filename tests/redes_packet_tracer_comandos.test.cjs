@@ -214,12 +214,12 @@ test("RAP03: el bloque de apoyo lista las mismas 10 pruebas que la Plantilla 3, 
   const declarations = read("js/guide_declarations.js");
   const word = [...declarations.matchAll(/label: "(\d+)\. (PC\d): ([a-z]+ [0-9.]+) \([^"]*\)", storeKey: "g5r_p3_r(\d+)"/g)]
     .map((m) => ({ pc: m[2], cmd: m[3] }));
-  // Redes grado 11 (2026-09-22): se suma el registro de la Guia 10 de 11A/11B,
-  // que reutiliza las MISMAS 10 secciones de Word del laboratorio de RAP02.
-  assert.equal(word.length, 30, "3 registros (Santa Barbara 10, Kennedy 10 y Santa Barbara 11) x 10 secciones de Word");
+  // EMERGENCIA 2026-11-07: la Guia 11 de grado 11 ya NO reutiliza este laboratorio
+  // (su documento oficial es de seguridad inalambrica); quedan los 2 registros de
+  // grado 10 (Santa Barbara y Kennedy) x 10 secciones de Word.
+  assert.equal(word.length, 20, "2 registros (Santa Barbara 10 y Kennedy 10) x 10 secciones de Word");
   assert.deepEqual(asList(word.slice(0, 10)), asList(plantilla));
   assert.deepEqual(asList(word.slice(10, 20)), asList(plantilla));
-  assert.deepEqual(asList(word.slice(20)), asList(plantilla));
 
   // La nota de telnet usa las credenciales que ya define el laboratorio de RAP02.
   const telnetItem = lista.slice(lista.indexOf("telnet 192.168.1.1"));
@@ -234,10 +234,12 @@ test("RAP03: el bloque de apoyo lista las mismas 10 pruebas que la Plantilla 3, 
 
 test("Router y paginas de las 18 guias de redes cargan el script y el bundle regenerado", () => {
   const router = read("js/guia_router.js");
-  const entries = [...router.matchAll(/"partials\/guia-redes-rap0([123])-bundle\.js\?v=([0-9_]+)",\s*\n\s*"js\/guide_copy_commands\.js\?v=([0-9_]+)"/g)];
+  // EMERGENCIA 2026-11-07: las Guias 10/11 de grado 11 cargan su bundle propio
+  // (guia-redes11-rap0N); el total de rutas de Redes sigue siendo 18.
+  const entries = [...router.matchAll(/"partials\/guia-redes(?:11)?-rap0([123])-bundle\.js\?v=([0-9_]+)",\s*\n\s*"js\/guide_copy_commands\.js\?v=([0-9_]+)"/g)];
   // 18 = 6 de Santa Barbara 10 + 6 de Kennedy 10 + 6 de Santa Barbara 11.
   assert.equal(entries.length, 18);
-  assert.equal((router.match(/guia-redes-rap0[123]-bundle\.js/g) || []).length, 18);
+  assert.equal((router.match(/guia-redes(?:11)?-rap0[123]-bundle\.js/g) || []).length, 18);
   const version = entries[0][3];
   assert.ok(fs.existsSync(path.join(ROOT, "js/guide_copy_commands.js")));
 
@@ -254,5 +256,12 @@ test("Router y paginas de las 18 guias de redes cargan el script y el bundle reg
     ctx.window = ctx;
     vm.runInNewContext(read(`partials/guia-redes-rap${n}-bundle.js`), ctx);
     assert.ok(ctx.__PAGE_RUNTIME_PARTIALS__[src] === partial(n), `bundle RAP${n} desactualizado: regeneralo desde ${src}`);
+  }
+  for (const n of ["02", "03"]) {
+    const src = `partials/guia-redes11-rap${n}-content.html`;
+    const ctx = {};
+    ctx.window = ctx;
+    vm.runInNewContext(read(`partials/guia-redes11-rap${n}-bundle.js`), ctx);
+    assert.ok(ctx.__PAGE_RUNTIME_PARTIALS__[src] === read(src), `bundle grado 11 RAP${n} desactualizado`);
   }
 });

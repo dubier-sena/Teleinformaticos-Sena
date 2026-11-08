@@ -1,0 +1,581 @@
+<button class="hamburger" onclick="toggleSidebar()" aria-label="Menú">&#9776;</button>
+<button class="btn-sb-expand" onclick="showSidebar()" title="Mostrar barra lateral">&#9776;</button>
+
+<div class="layout app-layout">
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="badge">SENA · FPI</div>
+      <h2 data-no-guide-remap>Guía 10 - Comprobar la conectividad de la red</h2>
+      <p>Sistemas Teleinformáticos · Redes (RAP 02) · Grado 11</p>
+      <button class="btn-sb-collapse" onclick="hideSidebar()" title="Ocultar barra lateral">&#9664;</button>
+    </div>
+
+    <div class="sidebar-ficha u-hidden" id="sb-ficha-ok">
+      <div class="sf-label">Tu grupo</div>
+      <div class="sf-inst" id="sb-inst"></div>
+      <div class="sf-meta" id="sb-grupo-meta"></div>
+      <div class="sf-badge" id="sb-badge"></div>
+    </div>
+    <div class="sidebar-noficha" id="sb-ficha-warn">
+      <a href="index.html">Inicio | Seleccionar grupo / ficha</a>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span>Progreso</span>
+        <span id="progressValue">0%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <p class="progress-note">El avance se guarda en este navegador y en la nube.</p>
+      <button type="button" class="reset-button" id="resetProgress">Reiniciar respuestas</button>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Información</div>
+      <a class="nav-link active" href="#identificacion" onclick="setActive(this)"><span class="icon">&#128203;</span> Identificación</a>
+      <a class="nav-link" href="#presentacion" onclick="setActive(this)"><span class="icon">&#128075;</span> Presentación</a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Actividades</div>
+      <a class="nav-link" href="#reflexion" onclick="setActive(this)"><span class="icon">&#128172;</span> 3.1 Reflexión Inicial <span class="check">&#10003;</span></a>
+      <a class="nav-link" href="#contexto" onclick="setActive(this)"><span class="icon">&#128269;</span> 3.2 Contextualización <span class="check">&#10003;</span></a>
+      <a class="nav-link" href="#apropiacion" onclick="setActive(this)"><span class="icon">&#128218;</span> 3.3 Apropiación <span class="check">&#10003;</span></a>
+      <a class="nav-link" href="#transferencia" onclick="setActive(this)"><span class="icon">&#128640;</span> 3.4 Transferencia <span class="check">&#10003;</span></a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Recursos</div>
+      <a class="nav-link" href="#control-avance" onclick="setActive(this)"><span class="icon">&#9989;</span> Control de avance</a>
+      <a class="nav-link" href="#evidencias" onclick="setActive(this)"><span class="icon">&#128202;</span> Evidencias</a>
+      <a class="nav-link" href="#glosario" onclick="setActive(this)"><span class="icon">&#128214;</span> Glosario</a>
+      <a class="nav-link" href="#referencias" onclick="setActive(this)"><span class="icon">&#128279;</span> Referencias</a>
+    </div>
+
+    <div class="nav-section" data-no-guide-remap>
+      <div class="nav-label">Guía asignada</div>
+      <a class="nav-guide current" href="#" data-current-file="runtime-wrapper.html">
+        <span class="g-icon">&#128215;</span>
+        <span class="g-info">
+          <span class="g-num">Guía 10</span>
+          <span class="g-name">Redes RAP02</span>
+        </span>
+        <span class="g-tag actual">Actual</span>
+      </a>
+    </div>
+
+    <a class="nav-home-link" href="calendario-academico-2026.html">&#128197; <span>Calendario 2026</span></a>
+    <a class="nav-home-link" href="index.html">&#127968; <span>Volver al Inicio</span></a>
+  </nav>
+
+  <div class="main app-main">
+    <div class="topbar">
+      <div class="topbar-title" data-no-guide-remap><strong>Guía 10 - Comprobar la conectividad de la red</strong></div>
+      <div class="topbar-meta">
+        <span class="meta-item"><span>&#9201;</span><span data-ctx-duracion-corta>40 horas</span></span>
+        <span class="meta-item"><span>&#128197;</span><span>2026</span></span>
+        <span class="meta-item"><span>&#127979;</span><span id="topbarCampus">Santa Bárbara</span></span>
+      </div>
+    </div>
+
+    <div class="content" data-redes11-guide="guia-redes11-rap02">
+
+      <div class="hero" id="inicio">
+        <div class="tag" data-no-guide-remap>Guía 10 | Fase: <span data-ctx-fase>Análisis</span> · RAP 02 · Grado 11</div>
+        <h1>Comprobar la conectividad de la red</h1>
+        <p>Redes LAN y WAN, subneteo FLSM, herramientas de validación (ipconfig, ping, tracert, nslookup) y configuración y prueba de
+        dos subredes en Cisco Packet Tracer para la papelería de la señora Carmen.</p>
+        <div class="hero-meta">
+          <div class="hero-meta-item">&#127963; SENA &mdash; Servicio Nacional de Aprendizaje</div>
+          <div class="hero-meta-item">&#128205; I.E. Santa Bárbara · 11A / 11B</div>
+          <div class="hero-meta-item">&#9201; <span data-ctx-duracion-corta>40 horas</span></div>
+          <div class="hero-meta-item">&#127891; Código: 233108 V1</div>
+        </div>
+      </div>
+      <div id="control-avance" class="section-title">Tu control de avance</div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon u-bg-green">&#9989;</div>
+            <div><h3>&iquest;Qu&eacute; llevas y qu&eacute; te falta?</h3><p>Se actualiza solo con tus entregas y respuestas guardadas</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div data-act-std-avance><p class="intro-text">Cargando tu avance...</p></div>
+          <div class="gnote gnote--recuerda"><div class="gnote__label">&#128161; Recuerda</div>
+            <p>Esta tabla se marca sola: <strong>Entregada</strong> cuando subes la evidencia a Drive y
+            <strong>Guardada</strong> cuando guardas tus respuestas. Lo que siga en Pendiente es lo que te falta.</p></div>
+        </div>
+      </div>
+      <div id="identificacion" class="section-title">Identificación de la Guía</div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon u-bg-green">&#128203;</div>
+            <div><h3>Datos del Programa de Formación</h3><p>Información oficial del programa y la competencia</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="table-scroll"><table class="data-table ident-table"><tbody><tr><td>Denominación del Programa</td><td>Técnico en Sistemas Teleinformáticos.</td></tr><tr><td>Código del Programa</td><td>233108 V1</td></tr><tr><td>Nombre del Proyecto Formativo</td><td>Fortalecimiento de los Servicios Teleinformáticos de Equipos y Redes en las MiPymes de la Región de Boyacá.</td></tr><tr><td>Fase del Proyecto</td><td><span data-ctx-fase>Análisis</span></td></tr><tr><td>Actividad del Proyecto</td><td>Diagnosticar el estado de la infraestructura de redes y equipos informáticos y solicitudes de servicio técnico presente en el entorno de trabajo.</td></tr><tr><td>Competencia</td><td><span data-ctx-competencia>280102129 — Evaluar red de acuerdo con procedimientos de telecomunicaciones y normativa técnica.</span></td></tr><tr><td>Resultado de Aprendizaje</td><td><span data-ctx-rap>RAP 02 — Comprobar la conectividad de la red, de acuerdo con normativa de telecomunicaciones y orden de trabajo.</span></td></tr><tr><td>Duración</td><td><span data-ctx-duracion>40 horas</span></td></tr></tbody></table></div>
+        </div>
+      </div>
+      <div id="presentacion" class="section-title">Presentación</div>
+      <p class="section-intro">📍 <strong>Empieza por aquí:</strong> conoce de qué trata la guía y qué vas a lograr.</p>
+      <div class="gnote gnote--ruta">
+        <div class="gnote__label">🧭 ¿Cómo trabajar esta guía? Paso a paso</div>
+        <ol>
+          <li><strong>Lee cada bloque y sus recursos</strong> antes de responder.</li>
+          <li><strong>Resuelve cada actividad</strong> en orden y escribe tus respuestas en los campos de la guía.</li>
+          <li><strong>Guarda tus respuestas</strong> con el botón de cada actividad (al guardar, la actividad queda enviada).</li>
+          <li><strong>Entrega las evidencias</strong> que lo pidan con el botón <em>Entregar a Drive</em>.</li>
+          <li><strong>Revisa "Tu control de avance"</strong>: te muestra qué llevas Entregado, Guardado y Pendiente.</li>
+        </ol>
+      </div>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon u-bg-blue">&#128075;</div>
+            <div><h3>Bienvenida a la Guía</h3><p>De dividir una red a comprobar que funciona</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <p class="intro-text">Cordial saludo, aprendiz.</p>
+          <p class="intro-text">En el RAP 01 usted aprendió a clasificar los tipos de redes, identificar topologías y aplicar el
+          direccionamiento IP básico. La señora Carmen, dueña de la papelería que usted ayudó a conectar, ahora enfrenta un nuevo
+          reto: abrió una sala de atención al público independiente de su oficina administrativa y quiere que cada zona tenga su
+          propia red interna, sin perder la posibilidad de comunicarse entre ellas cuando sea necesario. Ese es exactamente el
+          problema que resuelve la creación de <strong>subredes</strong>.</p>
+          <p class="intro-text">En esta guía usted desarrollará el RAP 02: comprobará la conectividad de una red aplicando conceptos de
+          redes LAN y WAN, dividirá una red en subredes mediante cálculos de direccionamiento IP, y utilizará herramientas de
+          validación como <code>ipconfig</code>, <code>ping</code>, <code>tracert</code> y <code>nslookup</code> para verificar que
+          la red diseñada funciona correctamente. El resultado será la configuración y prueba de <strong>dos subredes en Cisco
+          Packet Tracer</strong>.</p>
+        </div>
+      </div>
+      <div id="reflexion" class="section-title">3.1 Actividades de reflexión inicial</div>
+      <p class="section-intro">📍 Aquí no se evalúa el acierto, sino su participación: responda con confianza.</p>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon u-bg-orange">&#128172;</div>
+            <div><h3>La papelería de la señora Carmen creció</h3><p>Reflexión individual escrita + socialización</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.1.1</span><span class="activity-title">Reflexión individual escrita y socialización</span><span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <div class="info-box green"><div class="label">&#128221; Situación para reflexionar</div><p>La papelería de la señora Carmen creció. Ahora tiene un área de ventas al público (caja y 2 puntos de atención) y un área administrativa (gerencia, contabilidad y bodega), en espacios separados del mismo local. Ella le pide: <em>“Necesito que cada área tenga su propia red, para que si algo falla en ventas no afecte a administración, pero que desde mi oficina pueda seguir viendo los equipos de ambas partes.”</em></p></div>
+              <p class="intro-text"><strong>Propósito:</strong> activar los conocimientos previos sobre la organización y división de redes (máximo 30 minutos). <strong>Paso 1:</strong> responda con sus propias palabras. No busque información aún: escriba lo que ya sabe o intuye a partir de lo aprendido en el RAP 01.</p><article class="notes-card">
+                <label><span>1. ¿Por qué separar la red de ventas y la red administrativa podría mejorar la organización y la seguridad de la papelería?</span>
+                  <textarea rows="4" data-store="g11c_311_p1" data-track></textarea></label>
+                <label><span>2. ¿Qué problemas podría tener la señora Carmen si mantiene los 6 equipos (3 de ventas y 3 administrativos) en una sola red sin dividir?</span>
+                  <textarea rows="4" data-store="g11c_311_p2" data-track></textarea></label>
+                <label><span>3. ¿Ha escuchado el término “subred” o “subnetting”? ¿Qué cree que significa dividir una red en subredes?</span>
+                  <textarea rows="4" data-store="g11c_311_p3" data-track></textarea></label>
+                <label><span>4. Si tuviera que repartir 254 direcciones disponibles en una red entre 2 grupos de igual tamaño, ¿cómo lo haría? Relacione su respuesta con la idea de dividir una red.</span>
+                  <textarea rows="4" data-store="g11c_311_p4" data-track></textarea></label>
+                <label><span>5. ¿Qué comando aprendió en el RAP 01 (o conoce) que permite ver la configuración IP de un equipo? ¿Para qué le serviría ahora?</span>
+                  <textarea rows="4" data-store="g11c_311_p5" data-track></textarea></label>
+                <div class="info-box"><div class="label">&#128483; Paso 2 — Socialización</div><p>El instructor modera una conversación abierta. Cada aprendiz comparte brevemente una respuesta (2–3 minutos) y entre todos se construye una primera definición grupal de “subred”.</p></div>
+                <label><span>Definición grupal de “subred” construida en la socialización</span>
+                  <textarea rows="3" data-store="g11c_311_socializacion" data-track></textarea></label>
+                <div id="c11Reflexion311DeadlineControls" class="u-mt-16"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarc11Reflexion311" class="btn-save-response" onclick="actStd_save_c11Reflexion311()">&#128190; Guardar respuestas</button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_c11Reflexion311()">&#128196; Exportar a Word</button>
+                </div>
+                <div id="statusc11Reflexion311" class="activity-saved-notice u-saved">&#9989; Respuestas guardadas correctamente.</div>
+                <div id="c11Reflexion311GradeMount" class="u-mt-12"></div>
+              </article>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="contexto" class="section-title">3.2 Contextualización e identificación de conocimientos</div>
+      <p class="section-intro">📍 <strong>Propósito:</strong> construir la base conceptual sobre redes LAN, redes WAN, fundamentos del subneteo y herramientas de validación de conectividad, necesaria para diseñar y comprobar subredes.</p>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon u-bg-purple">&#128269;</div>
+            <div><h3>Exploración visual por bloques temáticos</h3><p>4 bloques · mapa mental integrador · revisión entre pares</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <p class="intro-text">Para cada bloque encontrará un video y un recurso de apoyo. Primero observe el recurso completo, luego responda las preguntas y elabore el producto individual solicitado.</p>
+          <div class="activity open">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.2.1</span><span class="activity-title">Bloque A — Redes LAN</span><span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <div class="info-box green"><div class="label">&#127909; Video de referencia</div><p><strong>Redes LAN: características, diseño y equipos de conectividad — explicación visual</strong></p><p>&#128736; Recurso adicional: <a href="https://skillsforall.com/course/networking-basics" target="_blank" rel="noopener">Cisco Skills for All — Networking Basics, Módulo 2</a></p></div>
+              <p class="intro-text"><strong>Mientras observa, responda:</strong></p><article class="notes-card">
+                <label><span>1. ¿Qué características debe tener la red de ventas de la papelería para considerarse una LAN?</span>
+                  <textarea rows="3" data-store="g11c_321_q1" data-track></textarea></label>
+                <label><span>2. ¿Qué equipos de conectividad (switch, access point) necesitaría esa red?</span>
+                  <textarea rows="3" data-store="g11c_321_q2" data-track></textarea></label>
+                <label><span>3. ¿Qué estándar rige el cableado y la velocidad de una LAN típica?</span>
+                  <textarea rows="3" data-store="g11c_321_q3" data-track></textarea></label>
+                <div class="info-box"><div class="label">&#128221; Producto individual — Ficha técnica de una LAN</div><p>Describa: alcance, velocidad típica, equipos requeridos y un ejemplo aplicado a la papelería.</p></div>
+                <label><span>Ficha técnica — Alcance</span>
+                  <textarea rows="3" data-store="g11c_321_ficha_alcance" data-track></textarea></label>
+                <label><span>Ficha técnica — Velocidad típica</span>
+                  <textarea rows="3" data-store="g11c_321_ficha_velocidad" data-track></textarea></label>
+                <label><span>Ficha técnica — Equipos requeridos</span>
+                  <textarea rows="3" data-store="g11c_321_ficha_equipos" data-track></textarea></label>
+                <label><span>Ficha técnica — Ejemplo aplicado a la papelería</span>
+                  <textarea rows="3" data-store="g11c_321_ficha_ejemplo" data-track></textarea></label>
+                <div id="c11LanA321DeadlineControls" class="u-mt-16"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarc11LanA321" class="btn-save-response" onclick="actStd_save_c11LanA321()">&#128190; Guardar respuestas</button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_c11LanA321()">&#128196; Exportar a Word</button>
+                </div>
+                <div id="statusc11LanA321" class="activity-saved-notice u-saved">&#9989; Respuestas guardadas correctamente.</div>
+                <div id="c11LanA321GradeMount" class="u-mt-12"></div>
+              </article>
+            </div>
+          </div>
+          <div class="activity open">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.2.2</span><span class="activity-title">Bloque B — Redes WAN</span><span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <div class="info-box green"><div class="label">&#127909; Video de referencia</div><p><strong>Redes WAN: características, protocolos y equipos de conectividad — explicación visual</strong></p><p>&#128736; Recurso adicional: <a href="https://skillsforall.com/course/networking-basics" target="_blank" rel="noopener">Cisco Skills for All — Networking Basics, Módulo 3</a></p></div>
+              <p class="intro-text"><strong>Mientras observa, responda:</strong></p><article class="notes-card">
+                <label><span>1. ¿Cómo se conecta la red de la papelería con Internet? ¿Qué tipo de red es esa conexión?</span>
+                  <textarea rows="3" data-store="g11c_322_q1" data-track></textarea></label>
+                <label><span>2. ¿Qué diferencia hay entre la LAN de la papelería y la WAN que la conecta con su proveedor de Internet?</span>
+                  <textarea rows="3" data-store="g11c_322_q2" data-track></textarea></label>
+                <label><span>3. ¿Qué equipo actúa como frontera entre la LAN y la WAN?</span>
+                  <textarea rows="3" data-store="g11c_322_q3" data-track></textarea></label>
+                <div class="info-box"><div class="label">&#128221; Producto individual — Esquema LAN–router–WAN</div><p>Elabore un esquema simple que muestre la LAN de la papelería conectada a través de un router a la WAN (Internet). Dibújelo a mano o en una herramienta digital e inclúyalo en el PDF de exploración contextual (actividad 3.2.5). Aquí describa brevemente su esquema.</p></div>
+                <label><span>Descripción de su esquema (equipos, conexiones y por dónde sale a Internet)</span>
+                  <textarea rows="3" data-store="g11c_322_esquema" data-track></textarea></label>
+                <div id="c11WanB322DeadlineControls" class="u-mt-16"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarc11WanB322" class="btn-save-response" onclick="actStd_save_c11WanB322()">&#128190; Guardar respuestas</button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_c11WanB322()">&#128196; Exportar a Word</button>
+                </div>
+                <div id="statusc11WanB322" class="activity-saved-notice u-saved">&#9989; Respuestas guardadas correctamente.</div>
+                <div id="c11WanB322GradeMount" class="u-mt-12"></div>
+              </article>
+            </div>
+          </div>
+          <div class="activity open">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.2.3</span><span class="activity-title">Bloque C — Fundamentos del subneteo</span><span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <div class="info-box green"><div class="label">&#127909; Video de referencia</div><p><strong>Subnetting explicado paso a paso: por qué y cómo dividir una red</strong></p><p>&#128736; Recurso adicional: <a href="https://www.rfc-editor.org/rfc/rfc950" target="_blank" rel="noopener">RFC 950 — Internet Standard Subnetting Procedure</a></p></div>
+              <p class="intro-text"><strong>Mientras observa, responda:</strong></p><article class="notes-card">
+                <label><span>1. ¿Qué cambia en la máscara de subred cuando se “pide prestado” un bit de host?</span>
+                  <textarea rows="3" data-store="g11c_323_q1" data-track></textarea></label>
+                <label><span>2. ¿Por qué la primera y la última dirección de cada subred no se pueden asignar a un equipo?</span>
+                  <textarea rows="3" data-store="g11c_323_q2" data-track></textarea></label>
+                <label><span>3. Si divide una red /24 en 2 partes iguales, ¿qué nueva máscara resulta?</span>
+                  <textarea rows="3" data-store="g11c_323_q3" data-track></textarea></label>
+                <div class="info-box"><div class="label">&#128221; Producto individual</div><p>Explique con sus palabras, en máximo 5 líneas, qué es una subred y por qué la papelería la necesita.</p></div>
+                <label><span>Qué es una subred y por qué la papelería la necesita (máximo 5 líneas)</span>
+                  <textarea rows="3" data-store="g11c_323_explicacion" data-track></textarea></label>
+                <div id="c11SubnetC323DeadlineControls" class="u-mt-16"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarc11SubnetC323" class="btn-save-response" onclick="actStd_save_c11SubnetC323()">&#128190; Guardar respuestas</button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_c11SubnetC323()">&#128196; Exportar a Word</button>
+                </div>
+                <div id="statusc11SubnetC323" class="activity-saved-notice u-saved">&#9989; Respuestas guardadas correctamente.</div>
+                <div id="c11SubnetC323GradeMount" class="u-mt-12"></div>
+              </article>
+            </div>
+          </div>
+          <div class="activity open">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.2.4</span><span class="activity-title">Bloque D — Herramientas de validación de conectividad</span><span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <div class="info-box green"><div class="label">&#127909; Video de referencia</div><p><strong>Comandos de red en Windows: ipconfig, ping, tracert y nslookup</strong></p><p>&#128736; Recurso adicional: <a href="https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/ipconfig" target="_blank" rel="noopener">Microsoft Learn — Windows Commands (ipconfig, ping, tracert, nslookup)</a></p></div>
+              <p class="intro-text"><strong>Mientras observa, responda:</strong></p><article class="notes-card">
+                <label><span>1. ¿Qué comando usaría para confirmar en qué subred quedó configurado un equipo?</span>
+                  <textarea rows="3" data-store="g11c_324_q1" data-track></textarea></label>
+                <label><span>2. ¿Qué diferencia hay entre lo que muestra ping y lo que muestra tracert?</span>
+                  <textarea rows="3" data-store="g11c_324_q2" data-track></textarea></label>
+                <label><span>3. ¿Para qué serviría nslookup si un equipo de la papelería no puede abrir una página web?</span>
+                  <textarea rows="3" data-store="g11c_324_q3" data-track></textarea></label>
+                <div class="info-box"><div class="label">&#128221; Producto individual — <code>ipconfig /all</code></div><p>Ejecute <code>ipconfig /all</code> en su propio equipo (Windows + R → <code>cmd</code>), capture el resultado (Windows + Shift + S) e identifique dirección IP, máscara y gateway. La captura va en el PDF de exploración contextual (3.2.5).</p></div>
+                <label><span>Dirección IP de su equipo</span>
+                  <textarea rows="3" data-store="g11c_324_ip" data-track></textarea></label>
+                <label><span>Máscara de subred</span>
+                  <textarea rows="3" data-store="g11c_324_mascara" data-track></textarea></label>
+                <label><span>Puerta de enlace predeterminada (gateway)</span>
+                  <textarea rows="3" data-store="g11c_324_gateway" data-track></textarea></label>
+                <div id="c11HerramD324DeadlineControls" class="u-mt-16"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarc11HerramD324" class="btn-save-response" onclick="actStd_save_c11HerramD324()">&#128190; Guardar respuestas</button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_c11HerramD324()">&#128196; Exportar a Word</button>
+                </div>
+                <div id="statusc11HerramD324" class="activity-saved-notice u-saved">&#9989; Respuestas guardadas correctamente.</div>
+                <div id="c11HerramD324GradeMount" class="u-mt-12"></div>
+              </article>
+            </div>
+          </div>
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.2.5</span><span class="activity-title">Entrega — Exploración contextual (Bloques A–D, PDF)</span><span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text">Compile en un solo PDF los 4 productos individuales de los Bloques A–D (ficha técnica de la LAN, esquema LAN–router–WAN, explicación de subred y captura de <code>ipconfig /all</code> con IP, máscara y gateway identificados) y entréguelo a Drive.</p>
+              <div class="info-box green"><div class="label">&#128206; Nombre del archivo</div><p><code>Exploracion_Contextual_NombreAprendiz_FICHA.pdf</code></p></div>
+              <div data-act-std-delivery="c11Exploracion325"></div>
+              <div id="c11Exploracion325GradeMount" class="u-mt-12"></div>
+            </div>
+          </div>
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.2.6</span><span class="activity-title">Mapa mental integrador: LAN, WAN y subneteo</span><span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text">Después de explorar los 4 bloques, construya un mapa mental que integre los conceptos en una sola vista.</p>
+              <div class="table-scroll"><table class="data-table"><thead><tr><th>Elemento</th><th>Contenido</th></tr></thead><tbody><tr><td>Nodo central</td><td>COMPROBAR LA CONECTIVIDAD DE LA RED</td></tr><tr><td>Rama 1 — Redes LAN</td><td>Características, equipos, ejemplo (papelería — ventas).</td></tr><tr><td>Rama 2 — Redes WAN</td><td>Características, ejemplo (conexión a Internet).</td></tr><tr><td>Rama 3 — Subneteo</td><td>Máscara extendida, dirección de red, broadcast, rango de host.</td></tr><tr><td>Rama 4 — Herramientas de validación</td><td>ipconfig, ping, tracert, nslookup, con la función de cada una.</td></tr></tbody></table></div>
+              <p class="intro-text">El mapa debe mostrar <strong>al menos 2 conexiones cruzadas entre ramas</strong> (ej. subred ↔ LAN ↔ ping).</p>
+              <div class="table-scroll"><table class="data-table"><thead><tr><th>Herramienta</th><th>Tipo</th><th>Enlace</th></tr></thead><tbody><tr><td>MindMeister</td><td>En línea — colaborativo</td><td><a href="https://www.mindmeister.com" target="_blank" rel="noopener">mindmeister.com</a></td></tr><tr><td>CmapTools</td><td>Instalable — offline disponible</td><td><a href="https://cmap.ihmc.us" target="_blank" rel="noopener">cmap.ihmc.us</a></td></tr><tr><td>Canva — Mapa mental</td><td>En línea — plantillas visuales</td><td><a href="https://www.canva.com/mind-map" target="_blank" rel="noopener">canva.com/mind-map</a></td></tr><tr><td>Draw.io</td><td>En línea — muy flexible</td><td><a href="https://app.diagrams.net" target="_blank" rel="noopener">app.diagrams.net</a></td></tr></tbody></table></div>
+              <div class="info-box green"><div class="label">&#128206; Nombre del archivo</div><p><code>MapaMental_Redes_NombreAprendiz_FICHA.pdf</code></p></div>
+              <div data-act-std-delivery="c11MapaMental326"></div>
+              <div id="c11MapaMental326GradeMount" class="u-mt-12"></div>
+            </div>
+          </div>
+          <div class="activity open">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.2.7</span><span class="activity-title">Socialización y revisión entre pares</span><span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text">En equipos de 3 aprendices comparen sus mapas mentales y productos de exploración. El objetivo NO es hacer una exposición formal, sino contrastar y afinar la comprensión antes de pasar al cálculo de subredes.</p><article class="notes-card">
+                <label><span>1. Comparen sus mapas mentales e identifiquen al menos 2 diferencias significativas. Anótenlas.</span>
+                  <textarea rows="3" data-store="g11c_327_diferencias" data-track></textarea></label>
+                <label><span>2. Entre los 3, acuerden una explicación común de qué es la dirección de red y qué es la dirección de broadcast.</span>
+                  <textarea rows="3" data-store="g11c_327_red_broadcast" data-track></textarea></label>
+                <label><span>3. Identifiquen 2 conceptos que cada integrante no tenía claro e intenten resolverlos entre el equipo antes de consultar al instructor.</span>
+                  <textarea rows="3" data-store="g11c_327_conceptos" data-track></textarea></label>
+                <label><span>4. Preparen 1 pregunta técnica genuina que el equipo no pudo resolver solo para plantearla al instructor en la plenaria final.</span>
+                  <textarea rows="2" data-store="g11c_327_pregunta" data-track></textarea></label>
+                <div id="c11Pares327DeadlineControls" class="u-mt-16"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarc11Pares327" class="btn-save-response" onclick="actStd_save_c11Pares327()">&#128190; Guardar respuestas</button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_c11Pares327()">&#128196; Exportar a Word</button>
+                </div>
+                <div id="statusc11Pares327" class="activity-saved-notice u-saved">&#9989; Respuestas guardadas correctamente.</div>
+                <div id="c11Pares327GradeMount" class="u-mt-12"></div>
+              </article>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="apropiacion" class="section-title">3.3 Actividades de apropiación</div>
+      <p class="section-intro">📍 Taller de subneteo FLSM de la red de la papelería (192.168.20.0/24).</p>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon u-bg-blue">&#128218;</div>
+            <div><h3>Taller de subneteo — Red de la papelería</h3><p>5 ejercicios con procedimiento completo</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.3.1</span><span class="activity-title">Taller de subneteo (Ejercicios 1–5)</span><span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Propósito:</strong> aplicar el método de subneteo de longitud fija (FLSM) para dividir una red en dos subredes, calculando correctamente rangos de host, dirección de red y de broadcast.</p>
+              <div class="info-box green"><div class="label">&#128208; Fundamentos del subneteo (FLSM) — procedimiento para dividir una red en 2 subredes iguales</div><ol>
+                <li>Determine cuántos bits necesita prestar para obtener el número de subredes requerido: con 1 bit prestado se obtienen 2 subredes (2¹ = 2).</li>
+                <li>Sume ese bit a la máscara original: una red /24 (255.255.255.0) pasa a ser /25 (255.255.255.128) en cada subred.</li>
+                <li>Calcule el “salto” entre subredes: 256 − 128 = 128, es decir, cada subred tiene 128 direcciones.</li>
+                <li>Cada subred inicia en un múltiplo del salto (0, 128, 256…) y termina un número antes del siguiente múltiplo.</li>
+                <li>La primera dirección de cada bloque es la dirección de red; la última es la dirección de broadcast; las intermedias son direcciones de host asignables.</li>
+              </ol>
+              <p><strong>Ejemplo guiado: red 192.168.20.0/24 dividida en 2 subredes:</strong></p>
+              <ul>
+                <li>Subred 1 (Ventas): 192.168.20.0/25 — Rango de host: 192.168.20.1 a 192.168.20.126 — Broadcast: 192.168.20.127</li>
+                <li>Subred 2 (Administración): 192.168.20.128/25 — Rango de host: 192.168.20.129 a 192.168.20.254 — Broadcast: 192.168.20.255</li>
+              </ul></div>
+              <p class="intro-text">Resuelva los siguientes 5 ejercicios de forma individual, mostrando el procedimiento completo. Use como base la red <strong>192.168.20.0/24</strong>.</p>
+              <article class="notes-card">
+                <div class="r11-ejercicio"><h4>EJERCICIO 1 — Calcular la nueva máscara</h4><p class="intro-text">Si necesita dividir la red 192.168.20.0/24 en 2 subredes iguales, ¿cuántos bits debe prestar y cuál es la nueva máscara en notación decimal y en notación CIDR (/n)?</p>
+                <label><span>Bits prestados</span><input type="text" class="r11-input" data-store="g11c_331_e1_bits" data-track aria-label="Bits prestados"></label>
+                <label><span>Nueva máscara (decimal)</span><input type="text" class="r11-input" data-store="g11c_331_e1_mascara" data-track aria-label="Nueva máscara (decimal)"></label>
+                <label><span>Nueva máscara (CIDR /n)</span><input type="text" class="r11-input" data-store="g11c_331_e1_cidr" data-track aria-label="Nueva máscara (CIDR /n)"></label>
+                <label><span>Procedimiento</span>
+                  <textarea rows="3" data-store="g11c_331_e1_proc" data-track placeholder="Muestre el procedimiento paso a paso"></textarea></label></div>
+                <div class="r11-ejercicio"><h4>EJERCICIO 2 — Subred 1 (Ventas)</h4><p class="intro-text">Determine para la Subred 1: dirección de red, primera IP utilizable, última IP utilizable y dirección de broadcast.</p>
+                <label><span>Dirección de red</span><input type="text" class="r11-input" data-store="g11c_331_e2_red" data-track aria-label="Dirección de red"></label>
+                <label><span>Primera IP utilizable</span><input type="text" class="r11-input" data-store="g11c_331_e2_primera" data-track aria-label="Primera IP utilizable"></label>
+                <label><span>Última IP utilizable</span><input type="text" class="r11-input" data-store="g11c_331_e2_ultima" data-track aria-label="Última IP utilizable"></label>
+                <label><span>Dirección de broadcast</span><input type="text" class="r11-input" data-store="g11c_331_e2_broadcast" data-track aria-label="Dirección de broadcast"></label>
+                <label><span>Procedimiento</span>
+                  <textarea rows="3" data-store="g11c_331_e2_proc" data-track placeholder="Muestre el procedimiento paso a paso"></textarea></label></div>
+                <div class="r11-ejercicio"><h4>EJERCICIO 3 — Subred 2 (Administración)</h4><p class="intro-text">Determine para la Subred 2: dirección de red, primera IP utilizable, última IP utilizable y dirección de broadcast.</p>
+                <label><span>Dirección de red</span><input type="text" class="r11-input" data-store="g11c_331_e3_red" data-track aria-label="Dirección de red"></label>
+                <label><span>Primera IP utilizable</span><input type="text" class="r11-input" data-store="g11c_331_e3_primera" data-track aria-label="Primera IP utilizable"></label>
+                <label><span>Última IP utilizable</span><input type="text" class="r11-input" data-store="g11c_331_e3_ultima" data-track aria-label="Última IP utilizable"></label>
+                <label><span>Dirección de broadcast</span><input type="text" class="r11-input" data-store="g11c_331_e3_broadcast" data-track aria-label="Dirección de broadcast"></label>
+                <label><span>Procedimiento</span>
+                  <textarea rows="3" data-store="g11c_331_e3_proc" data-track placeholder="Muestre el procedimiento paso a paso"></textarea></label></div>
+                <div class="r11-ejercicio"><h4>EJERCICIO 4 — Asignación de IPs</h4><p class="intro-text">Asigne una dirección IP válida de cada subred a los siguientes equipos, dejando la primera IP de cada subred para el gateway (router). Ventas: PC_Caja, PC_Venta1, PC_Venta2. Administración: PC_Gerencia, PC_Contable, PC_Bodega.</p>
+                <label><span>Gateway (router) — Ventas</span><input type="text" class="r11-input" data-store="g11c_331_e4_gw_ventas" data-track aria-label="Gateway (router) — Ventas"></label>
+                <label><span>PC_Caja</span><input type="text" class="r11-input" data-store="g11c_331_e4_caja" data-track aria-label="PC_Caja"></label>
+                <label><span>PC_Venta1</span><input type="text" class="r11-input" data-store="g11c_331_e4_venta1" data-track aria-label="PC_Venta1"></label>
+                <label><span>PC_Venta2</span><input type="text" class="r11-input" data-store="g11c_331_e4_venta2" data-track aria-label="PC_Venta2"></label>
+                <label><span>Gateway (router) — Administración</span><input type="text" class="r11-input" data-store="g11c_331_e4_gw_admin" data-track aria-label="Gateway (router) — Administración"></label>
+                <label><span>PC_Gerencia</span><input type="text" class="r11-input" data-store="g11c_331_e4_gerencia" data-track aria-label="PC_Gerencia"></label>
+                <label><span>PC_Contable</span><input type="text" class="r11-input" data-store="g11c_331_e4_contable" data-track aria-label="PC_Contable"></label>
+                <label><span>PC_Bodega</span><input type="text" class="r11-input" data-store="g11c_331_e4_bodega" data-track aria-label="PC_Bodega"></label></div>
+                <div class="r11-ejercicio"><h4>EJERCICIO 5 — Verificación en su equipo</h4><p class="intro-text">Ejecute <code>ipconfig /all</code> en su computador, capture el resultado e indique en qué red y con qué máscara está configurado su equipo actualmente. Incluya la captura en el PDF que entrega.</p>
+                <label><span>Dirección IP de su equipo</span><input type="text" class="r11-input" data-store="g11c_331_e5_ip" data-track aria-label="Dirección IP de su equipo"></label>
+                <label><span>Máscara</span><input type="text" class="r11-input" data-store="g11c_331_e5_mascara" data-track aria-label="Máscara"></label>
+                <label><span>Red a la que pertenece (dirección de red calculada)</span><input type="text" class="r11-input" data-store="g11c_331_e5_red" data-track aria-label="Red a la que pertenece (dirección de red calculada)"></label></div>
+                <div id="c11Taller331DeadlineControls" class="u-mt-16"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarc11Taller331" class="btn-save-response" onclick="actStd_save_c11Taller331()">&#128190; Guardar respuestas</button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_c11Taller331()">&#128196; Exportar a Word</button>
+                </div>
+                <div id="statusc11Taller331" class="activity-saved-notice u-saved">&#9989; Respuestas guardadas correctamente.</div>
+                <div data-act-std-delivery="c11Taller331"></div>
+                <div id="c11Taller331GradeMount" class="u-mt-12"></div>
+              </article>
+              <div class="info-box green"><div class="label">&#128206; Nombre del archivo</div><p><code>Taller_Subneteo_NombreAprendiz_FICHA.pdf</code> (exporte a Word, agregue la captura del Ejercicio 5 y convierta a PDF).</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="transferencia" class="section-title">3.4 Actividades de transferencia del conocimiento</div>
+      <p class="section-intro">📍 Configuración y comprobación de las dos subredes de la papelería en Cisco Packet Tracer.</p>
+      <div class="card open">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon u-bg-orange">&#128640;</div>
+            <div><h3>Laboratorio — Dos subredes conectadas por router</h3><p>Diseño · direccionamiento · pruebas de conectividad</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          
+          <div class="activity open mission-card">
+            <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+              <span class="activity-num">3.4.1</span><span class="activity-title">Laboratorio: dos subredes con verificación de conectividad</span><span class="activity-toggle">&#9662;</span>
+            </div>
+            <div class="activity-body">
+              <p class="intro-text"><strong>Propósito:</strong> aplicar de manera integral el direccionamiento por subredes y las herramientas de validación, configurando y comprobando la conectividad de una red en Cisco Packet Tracer. Recuerde: el objetivo principal no es solo construir la topología, sino <strong>comprobar y documentar que la conectividad funciona</strong>.</p>
+              <div class="info-box green"><div class="label">&#128421; Escenario</div><p>La papelería de la señora Carmen necesita 2 subredes independientes: <strong>Ventas</strong> (caja y 2 puntos de atención) y <strong>Administración</strong> (gerencia, contabilidad y bodega), conectadas entre sí a través de un router para que Carmen pueda supervisar ambas desde su oficina.</p></div>
+              <h4>Paso 1 — Diseño de la red</h4>
+              <ol>
+                <li>Abra Cisco Packet Tracer y cree un nuevo proyecto.</li>
+                <li>Agregue 1 Router (genérico) y 2 Switch 2960: uno para la subred Ventas y otro para la subred Administración.</li>
+                <li>Agregue 3 PCs para Ventas: PC_Caja, PC_Venta1, PC_Venta2, y conéctelos al Switch de Ventas.</li>
+                <li>Agregue 3 PCs para Administración: PC_Gerencia, PC_Contable, PC_Bodega, y conéctelos al Switch de Administración.</li>
+                <li>Conecte cada Switch a una interfaz distinta del Router (GigabitEthernet0/0 con Ventas, GigabitEthernet0/1 con Administración) con cable recto (Copper Straight-Through).</li>
+              </ol>
+              <h4>Paso 2 — Configuración del direccionamiento IP</h4>
+              <p class="intro-text">Asigne las direcciones calculadas en el taller de subneteo (Ejercicios 2 a 4) a cada dispositivo:</p>
+              <div class="table-scroll"><table class="data-table"><thead><tr><th>Dispositivo</th><th>Dirección IP</th><th>Máscara</th></tr></thead><tbody><tr><td>Router — Gi0/0 (Ventas)</td><td>192.168.20.1</td><td>255.255.255.128</td></tr><tr><td>Router — Gi0/1 (Administración)</td><td>192.168.20.129</td><td>255.255.255.128</td></tr><tr><td>PC_Caja (gateway 192.168.20.1)</td><td>192.168.20.2</td><td>255.255.255.128</td></tr><tr><td>PC_Venta1 (gateway 192.168.20.1)</td><td>192.168.20.3</td><td>255.255.255.128</td></tr><tr><td>PC_Venta2 (gateway 192.168.20.1)</td><td>192.168.20.4</td><td>255.255.255.128</td></tr><tr><td>PC_Gerencia (gateway 192.168.20.129)</td><td>192.168.20.130</td><td>255.255.255.128</td></tr><tr><td>PC_Contable (gateway 192.168.20.129)</td><td>192.168.20.131</td><td>255.255.255.128</td></tr><tr><td>PC_Bodega (gateway 192.168.20.129)</td><td>192.168.20.132</td><td>255.255.255.128</td></tr></tbody></table></div>
+              <h4>Paso 3 — Pruebas de conectividad</h4>
+              <ol>
+                <li>Desde PC_Caja ejecute <code>ping</code> a PC_Venta1 (misma subred) y capture el resultado.</li>
+                <li>Desde PC_Caja ejecute <code>ping</code> a PC_Gerencia (subred distinta, a través del router) y capture el resultado.</li>
+                <li>Desde PC_Caja ejecute <code>tracert</code> a PC_Gerencia y verifique que el paquete pasa por el router (1 salto).</li>
+                <li>En cada PC ejecute <code>ipconfig</code> y confirme que la dirección IP, la máscara y el gateway coinciden con la tabla de asignación.</li>
+              </ol>
+              <article class="notes-card">
+                <label><span>1. Resultado del ping PC_Caja → PC_Venta1 (misma subred)</span>
+                  <textarea rows="3" data-store="g11c_341_ping_misma" data-track placeholder="Copie la salida o describa: respuestas, pérdida de paquetes, tiempos"></textarea></label>
+                <label><span>2. Resultado del ping PC_Caja → PC_Gerencia (otra subred, a través del router)</span>
+                  <textarea rows="3" data-store="g11c_341_ping_otra" data-track></textarea></label>
+                <label><span>3. Resultado del tracert PC_Caja → PC_Gerencia (¿por qué saltos pasó?)</span>
+                  <textarea rows="3" data-store="g11c_341_tracert" data-track></textarea></label>
+                <label><span>4. Verificación con ipconfig en cada PC (IP, máscara y gateway contra la tabla)</span>
+                  <textarea rows="4" data-store="g11c_341_ipconfig" data-track></textarea></label>
+                <label><span>Análisis breve: ¿qué demuestran las pruebas sobre la conectividad de las dos subredes?</span>
+                  <textarea rows="4" data-store="g11c_341_analisis" data-track></textarea></label>
+                <div id="c11Lab341DeadlineControls" class="u-mt-16"></div>
+                <div class="act-btn-group">
+                  <button type="button" id="btnGuardarc11Lab341" class="btn-save-response" onclick="actStd_save_c11Lab341()">&#128190; Guardar respuestas</button>
+                  <button type="button" class="btn-export-word" onclick="actStd_export_c11Lab341()">&#128196; Exportar a Word</button>
+                </div>
+                <div id="statusc11Lab341" class="activity-saved-notice u-saved">&#9989; Respuestas guardadas correctamente.</div>
+                <div data-act-std-delivery="c11Lab341"></div>
+                <div id="c11Lab341GradeMount" class="u-mt-12"></div>
+              </article>
+              <div class="info-box green"><div class="label">&#128206; Evidencia</div><p><code>Lab_Subredes_Carmen_NombreAprendiz_FICHA.pkt</code> + capturas de las pruebas + análisis breve (PDF). Si son varios archivos, comprímalos en un .zip.</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="evidencias" class="section-title">Evidencias de aprendizaje</div>
+      <p class="section-intro">📍 Lista de chequeo final: lo que se entrega y cómo se evalúa (fase Análisis).</p>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon u-bg-blue">&#128202;</div>
+            <div><h3>Planteamiento de evidencias para la evaluación</h3><p>Actividad · evidencia · criterio · instrumento</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <div class="table-scroll"><table class="data-table"><thead><tr><th>Actividad de aprendizaje</th><th>Evidencia</th><th>Criterio de evaluación</th><th>Técnica e instrumento</th></tr></thead><tbody><tr><td>3.1 Reflexión individual escrita + socialización (Paso 1 y 2)</td><td>Producto: respuestas en cuaderno o documento digital. Desempeño: participación en socialización (2–3 min).</td><td>Caracteriza pruebas de fallas en la red según requerimientos técnicos.</td><td>Observación y revisión. Lista de cotejo (participación y respuestas).</td></tr><tr><td>3.2 Exploración visual Bloques A–D + mapa mental integrador</td><td>Exploracion_Contextual_NombreAprendiz_FICHA.pdf + MapaMental_Redes_NombreAprendiz_FICHA.pdf</td><td>Caracteriza pruebas de fallas en la red según requerimientos técnicos. Identifica servicios y protocolos de infraestructura (DHCP, DNS, PROXY).</td><td>Evaluación de producto. Lista de chequeo (IE-01).</td></tr><tr><td>3.3 Taller de subneteo (Ejercicios 1–5) de la red 192.168.20.0/24</td><td>Taller_Subneteo_NombreAprendiz_FICHA.pdf</td><td>Efectúa pruebas de conectividad de hardware y/o software, operación de servicios y protocolos de infraestructura, disponibilidad, rendimiento y calidad, de acuerdo con normativa de telecomunicaciones, orden de trabajo, aplicando normas de SST y ambientales.</td><td>Prueba escrita/ejercicios. Lista de chequeo (IE-02).</td></tr><tr><td>3.4 Laboratorio Packet Tracer: 2 subredes + pruebas (ping, tracert, ipconfig)</td><td>Lab_Subredes_Carmen_NombreAprendiz_FICHA.pkt + capturas de pruebas + análisis breve</td><td>Valida el estado de la red de acuerdo con la conectividad, el inventario tecnológico y su disponibilidad técnica según normativa.</td><td>Observación y revisión de producto. Lista de chequeo (IE-03).</td></tr></tbody></table></div>
+        </div>
+      </div>
+      <div id="version-anterior" class="section-title">Registros de la versión anterior de esta guía</div>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon u-bg-teal">&#128451;</div>
+            <div><h3>Respuestas y entregas conservadas</h3><p>Solo consulta: nada se borró</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <p class="intro-text">Esta guía se corrigió para que coincida con la guía oficial de grado 11. Si usted
+          ya había trabajado en la versión anterior, sus respuestas y entregas siguen guardadas y se muestran aquí
+          (solo lectura). Su instructor las revisará manualmente.</p>
+          <div data-redes11-legacy><p class="intro-text">No hay registros de la versión anterior.</p></div>
+        </div>
+      </div>
+      <div id="glosario" class="section-title">Glosario de términos</div>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon u-bg-purple">&#128214;</div>
+            <div><h3>Glosario</h3><p>Términos clave de la guía</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <dl class="glossary"><dt>Subred (Subnet)</dt><dd>Porción de una red IP resultante de dividir un espacio de direccionamiento mayor mediante el préstamo de bits de host, delimitada por su propia dirección de red y de broadcast.</dd><dt>Subneteo (Subnetting)</dt><dd>Técnica de dividir una red IP en subredes más pequeñas ampliando la máscara de subred, con el fin de organizar, aislar y controlar el tráfico.</dd><dt>FLSM (Fixed Length Subnet Mask)</dt><dd>Método de subneteo en el que todas las subredes resultantes tienen el mismo tamaño (misma máscara).</dd><dt>VLSM (Variable Length Subnet Mask)</dt><dd>Método de subneteo que permite subredes de distinto tamaño según la cantidad de hosts requerida en cada una.</dd><dt>CIDR</dt><dd>Notación que expresa la máscara de subred como el número de bits en 1 (ej. /25).</dd><dt>Dirección de red</dt><dd>Primera dirección IP de una subred, usada para identificarla; no es asignable a un host.</dd><dt>Dirección de broadcast</dt><dd>Última dirección IP de una subred, usada para enviar tráfico a todos los hosts de esa subred; no es asignable a un host.</dd><dt>Rango de host</dt><dd>Conjunto de direcciones IP asignables a equipos dentro de una subred, ubicado entre la dirección de red y la de broadcast.</dd><dt>LAN (Local Area Network)</dt><dd>Red de área local que interconecta dispositivos en un espacio limitado (hogar, oficina, sede).</dd><dt>WAN (Wide Area Network)</dt><dd>Red que interconecta LANs distantes geográficamente, típicamente a través de un proveedor de servicios de telecomunicaciones.</dd><dt>DHCP</dt><dd>Protocolo que asigna automáticamente parámetros de red (IP, máscara, gateway, DNS) a los equipos cliente.</dd><dt>DNS (Domain Name System)</dt><dd>Sistema distribuido que traduce nombres de dominio a direcciones IP.</dd><dt>Proxy</dt><dd>Servidor intermediario que gestiona solicitudes entre clientes y otros servidores, aplicando control, filtrado o caché.</dd><dt>ICMP</dt><dd>Protocolo de control usado para mensajes de diagnóstico y error; herramientas como ping se basan en ICMP.</dd><dt>Ping</dt><dd>Herramienta de diagnóstico que verifica conectividad enviando mensajes ICMP Echo.</dd><dt>Tracert / traceroute</dt><dd>Herramienta que muestra la ruta (saltos) que siguen los paquetes hasta un destino.</dd><dt>Nslookup</dt><dd>Herramienta que consulta servidores DNS para verificar la resolución de nombres.</dd><dt>Ipconfig</dt><dd>Comando que muestra la configuración IP vigente de un equipo (dirección, máscara, gateway).</dd><dt>Gateway (puerta de enlace predeterminada)</dt><dd>Dirección del router por donde un equipo envía tráfico destinado a otras redes (fuera de su subred).</dd><dt>Captura de pantalla</dt><dd>Imagen de lo que se ve en la pantalla; en Windows se toma con las teclas Windows + Shift + S.</dd><dt>Packet Tracer</dt><dd>Simulador de redes de Cisco para diseñar, configurar y probar redes en el computador, sin usar equipos reales.</dd></dl>
+        </div>
+      </div>
+      <div id="referencias" class="section-title">Referentes bibliográficos</div>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this.parentElement)">
+          <div class="card-header-left">
+            <div class="card-icon u-bg-teal">&#128279;</div>
+            <div><h3>Referencias (IEEE)</h3><p>Fuentes de la guía oficial</p></div>
+          </div>
+          <span class="card-toggle">&#9662;</span>
+        </div>
+        <div class="card-body">
+          <ol class="references"><li>Cisco Networking Academy, «Networking Basics», Cisco Skills for All. <a href="https://skillsforall.com/course/networking-basics" target="_blank" rel="noopener">skillsforall.com</a></li><li>Cisco Networking Academy, «Packet Tracer», NetAcad. <a href="https://www.netacad.com/courses/packet-tracer" target="_blank" rel="noopener">netacad.com</a></li><li>J. Postel, «Internet Protocol», RFC 791, sep. 1981.</li><li>J. C. Mogul y J. Postel, «Internet Standard Subnetting Procedure», RFC 950, ago. 1985. <a href="https://www.rfc-editor.org/rfc/rfc950" target="_blank" rel="noopener">rfc-editor.org</a></li><li>T. Pummill y B. Manning, «Variable Length Subnet Table For IPv4», RFC 1878, dic. 1995.</li><li>R. Droms, «Dynamic Host Configuration Protocol», RFC 2131, mar. 1997.</li><li>P. Mockapetris, «Domain names—Concepts and facilities», RFC 1034, nov. 1987.</li><li>J. Postel, «Internet Control Message Protocol», RFC 792, sep. 1981.</li><li>Microsoft, «ipconfig», «ping», «tracert», «nslookup», Microsoft Learn (Windows Commands). <a href="https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/ipconfig" target="_blank" rel="noopener">learn.microsoft.com</a></li><li>IEEE, «IEEE Standard for Ethernet (IEEE Std 802.3)», IEEE, 2022.</li><li>Telecommunications Industry Association, «ANSI/TIA-568.2-D: Balanced Twisted-Pair Telecommunications Cabling and Components Standard», TIA, 2018.</li></ol>
+          <p class="intro-text">Control de cambios: Dubier Orlando Millán Barbosa (Instructor Técnico, CIAS — Regional Boyacá), 13/08/2026 — Actualización.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

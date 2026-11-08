@@ -3839,428 +3839,1471 @@
     ],
   });
 
-  // ── Guia 10 (Redes RAP02 - Santa Barbara grado 11) (11A + 11B) ──────────
-  // Mismas actividades que la guia de Redes de 10 (mismo partial y mismos ids):
-  // solo cambian competencia, RAP, fase y duracion, que vienen del contexto.
+  // ── Guia 10 - Comprobar la conectividad de la red (RAP 02) — Santa Barbara grado 11 (11A + 11B) ──
+  // EMERGENCIA 2026-11-07: actividades OFICIALES de grado 11 (Word oficial), con ids,
+  // campos y familia de calificacion PROPIOS. Antes reutilizaba el partial, los ids y la
+  // familia de la guia de Redes de grado 10 (actividades de otro documento). Los ids
+  // anteriores no se reutilizan: sus respuestas/entregas siguen en el mismo documento.
   register({
     files: [
       "grupo-11a-guia-10-redes-rap02.html",
-      "grupo-11b-guia-10-redes-rap02.html",
+      "grupo-11b-guia-10-redes-rap02.html"
     ],
     guideNumber: "10",
     guideTitle: "Guia 10 - Comprobar la conectividad de la red (RAP 02)",
-    gradeFamily: "guia-redes-rap02",   // ver nota en la Guia 10 (mismo contenido que Santa Barbara)
+    gradeFamily: "guia-redes11-rap02",
     stateKey: "guia_interactiva_sb_11a_guia10_redes_rap02",
     program: PROGRAM,
     competencia: "280102129 - Evaluar red de acuerdo con procedimientos de telecomunicaciones y normativa tecnica.",
     resultado: "RAP 02 - Comprobar la conectividad de la red, de acuerdo con normativa de telecomunicaciones y orden de trabajo.",
     activities: [
       {
-        id: "reflexion311", number: "3.1.1", label: "Reflexion inicial - Caso Ferreteria Don Misael",
-        shortName: "Reflexion", type: "both",
-        formFields: ["g3r_311_p1", "g3r_311_p2", "g3r_311_p3", "g3r_311_p4", "g3r_311_p5"],
-        buttonIds: { save: "btnGuardarReflexion311", status: "statusReflexion311" },
-        allowedExtensions: [".pdf", ".doc", ".docx", ".jpg", ".jpeg", ".png"],
+        id: "c11Reflexion311",
+        number: "3.1.1",
+        label: "Reflexion inicial - Subredes en la papeleria de la senora Carmen",
+        shortName: "ReflexionSubredes",
+        type: "form",
+        formFields: [
+          "g11c_311_p1",
+          "g11c_311_p2",
+          "g11c_311_p3",
+          "g11c_311_p4",
+          "g11c_311_p5",
+          "g11c_311_socializacion"
+        ],
+        buttonIds: {
+          save: "btnGuardarc11Reflexion311",
+          status: "statusc11Reflexion311"
+        },
+        wordExport: {
+          contextBox: "Situacion: la papeleria de la senora Carmen crecio. Tiene un area de ventas (caja y 2 puntos de atencion) y un area administrativa (gerencia, contabilidad y bodega). Necesita que cada area tenga su propia red, pero que desde su oficina pueda seguir viendo los equipos de ambas partes.",
+          sections: [
+            {
+              label: "1. Por que separar la red de ventas y la administrativa mejora organizacion y seguridad",
+              storeKey: "g11c_311_p1"
+            },
+            {
+              label: "2. Problemas de mantener los 6 equipos en una sola red sin dividir",
+              storeKey: "g11c_311_p2"
+            },
+            {
+              label: "3. Que cree que significa subred o subnetting",
+              storeKey: "g11c_311_p3"
+            },
+            {
+              label: "4. Como repartiria 254 direcciones entre 2 grupos de igual tamano",
+              storeKey: "g11c_311_p4"
+            },
+            {
+              label: "5. Comando para ver la configuracion IP de un equipo y para que le serviria",
+              storeKey: "g11c_311_p5"
+            },
+            {
+              label: "Paso 2. Definicion grupal de subred construida en la socializacion",
+              storeKey: "g11c_311_socializacion"
+            }
+          ]
+        }
+      },
+      {
+        id: "c11LanA321",
+        number: "3.2.1",
+        label: "Bloque A - Redes LAN",
+        shortName: "BloqueA_LAN",
+        type: "form",
+        formFields: [
+          "g11c_321_q1",
+          "g11c_321_q2",
+          "g11c_321_q3",
+          "g11c_321_ficha_alcance",
+          "g11c_321_ficha_velocidad",
+          "g11c_321_ficha_equipos",
+          "g11c_321_ficha_ejemplo"
+        ],
+        buttonIds: {
+          save: "btnGuardarc11LanA321",
+          status: "statusc11LanA321"
+        },
+        wordExport: {
+          contextBox: "Bloque A: redes LAN aplicadas a la red de ventas de la papeleria de la senora Carmen.",
+          sections: [
+            {
+              label: "1. Caracteristicas de la red de ventas para considerarse LAN",
+              storeKey: "g11c_321_q1"
+            },
+            {
+              label: "2. Equipos de conectividad que necesitaria esa red",
+              storeKey: "g11c_321_q2"
+            },
+            {
+              label: "3. Estandar que rige el cableado y la velocidad de una LAN tipica",
+              storeKey: "g11c_321_q3"
+            },
+            {
+              label: "Producto: Ficha tecnica LAN - Alcance",
+              storeKey: "g11c_321_ficha_alcance"
+            },
+            {
+              label: "Producto: Ficha tecnica LAN - Velocidad tipica",
+              storeKey: "g11c_321_ficha_velocidad"
+            },
+            {
+              label: "Producto: Ficha tecnica LAN - Equipos requeridos",
+              storeKey: "g11c_321_ficha_equipos"
+            },
+            {
+              label: "Producto: Ficha tecnica LAN - Ejemplo en la papeleria",
+              storeKey: "g11c_321_ficha_ejemplo"
+            }
+          ]
+        }
+      },
+      {
+        id: "c11WanB322",
+        number: "3.2.2",
+        label: "Bloque B - Redes WAN",
+        shortName: "BloqueB_WAN",
+        type: "form",
+        formFields: [
+          "g11c_322_q1",
+          "g11c_322_q2",
+          "g11c_322_q3",
+          "g11c_322_esquema"
+        ],
+        buttonIds: {
+          save: "btnGuardarc11WanB322",
+          status: "statusc11WanB322"
+        },
+        wordExport: {
+          contextBox: "Bloque B: redes WAN y la conexion de la papeleria con Internet.",
+          sections: [
+            {
+              label: "1. Como se conecta la red de la papeleria con Internet y que tipo de red es esa conexion",
+              storeKey: "g11c_322_q1"
+            },
+            {
+              label: "2. Diferencia entre la LAN de la papeleria y la WAN que la conecta con su proveedor",
+              storeKey: "g11c_322_q2"
+            },
+            {
+              label: "3. Equipo que actua como frontera entre la LAN y la WAN",
+              storeKey: "g11c_322_q3"
+            },
+            {
+              label: "Producto: Descripcion del esquema LAN-router-WAN",
+              storeKey: "g11c_322_esquema"
+            }
+          ]
+        }
+      },
+      {
+        id: "c11SubnetC323",
+        number: "3.2.3",
+        label: "Bloque C - Fundamentos del subneteo",
+        shortName: "BloqueC_Subneteo",
+        type: "form",
+        formFields: [
+          "g11c_323_q1",
+          "g11c_323_q2",
+          "g11c_323_q3",
+          "g11c_323_explicacion"
+        ],
+        buttonIds: {
+          save: "btnGuardarc11SubnetC323",
+          status: "statusc11SubnetC323"
+        },
+        wordExport: {
+          contextBox: "Bloque C: fundamentos del subneteo (RFC 950).",
+          sections: [
+            {
+              label: "1. Que cambia en la mascara cuando se pide prestado un bit de host",
+              storeKey: "g11c_323_q1"
+            },
+            {
+              label: "2. Por que la primera y la ultima direccion de cada subred no se asignan",
+              storeKey: "g11c_323_q2"
+            },
+            {
+              label: "3. Mascara resultante al dividir una red /24 en 2 partes iguales",
+              storeKey: "g11c_323_q3"
+            },
+            {
+              label: "Producto: Que es una subred y por que la papeleria la necesita",
+              storeKey: "g11c_323_explicacion"
+            }
+          ]
+        }
+      },
+      {
+        id: "c11HerramD324",
+        number: "3.2.4",
+        label: "Bloque D - Herramientas de validacion de conectividad",
+        shortName: "BloqueD_Herramientas",
+        type: "form",
+        formFields: [
+          "g11c_324_q1",
+          "g11c_324_q2",
+          "g11c_324_q3",
+          "g11c_324_ip",
+          "g11c_324_mascara",
+          "g11c_324_gateway"
+        ],
+        buttonIds: {
+          save: "btnGuardarc11HerramD324",
+          status: "statusc11HerramD324"
+        },
+        wordExport: {
+          contextBox: "Bloque D: herramientas de validacion de conectividad (ipconfig, ping, tracert, nslookup).",
+          sections: [
+            {
+              label: "1. Comando para confirmar en que subred quedo configurado un equipo",
+              storeKey: "g11c_324_q1"
+            },
+            {
+              label: "2. Diferencia entre lo que muestra ping y lo que muestra tracert",
+              storeKey: "g11c_324_q2"
+            },
+            {
+              label: "3. Para que serviria nslookup si un equipo no puede abrir una pagina web",
+              storeKey: "g11c_324_q3"
+            },
+            {
+              label: "Producto: Direccion IP del equipo (ipconfig /all)",
+              storeKey: "g11c_324_ip"
+            },
+            {
+              label: "Producto: Mascara de subred (ipconfig /all)",
+              storeKey: "g11c_324_mascara"
+            },
+            {
+              label: "Producto: Gateway (ipconfig /all)",
+              storeKey: "g11c_324_gateway"
+            }
+          ]
+        }
+      },
+      {
+        id: "c11Exploracion325",
+        number: "3.2.5",
+        label: "Entrega - Exploracion contextual (Bloques A-D)",
+        shortName: "ExploracionContextual",
+        type: "file",
         driveTarget: {
-          panelKey: "guia3-reflexion311",
-          deadlineActivityId: "reflexion311",
-          activityTitle: "Reflexion inicial - Caso Ferreteria Don Misael",
-          description: "Entrega tu reflexion individual escrita exportada a Word o en PDF.",
-          note: "Entrega sugerida: exporta a Word y convierte a PDF antes de subir.",
-        },
-        wordExport: {
-          contextBox: "Caso Ferreteria Don Misael (Sogamoso): 5 PC en red, impresora compartida, camara IP y punto de venta. Fallas multiples de conectividad antes de visitar el local.",
-          sections: [
-            { label: "1. Por que el PC de caja no imprime si la LAN funciona", storeKey: "g3r_311_p1" },
-            { label: "2. Diferencia entre 'no tener internet' y 'no estar en la red'", storeKey: "g3r_311_p2" },
-            { label: "3. Por que la camara IP puede desaparecer aunque el cable siga conectado", storeKey: "g3r_311_p3" },
-            { label: "4. Que revisaria primero (router, cables o PCs) y por que ese orden", storeKey: "g3r_311_p4" },
-            { label: "5. Comandos de Windows que conoce para diagnosticar", storeKey: "g3r_311_p5" },
-          ],
-        },
+          panelKey: "g11redes-rap02-3-2-5",
+          deadlineActivityId: "c11Exploracion325",
+          activityTitle: "Exploracion contextual - Bloques A a D (PDF)",
+          description: "Sube a Drive un solo PDF con los 4 productos de los Bloques A-D: ficha tecnica de la LAN, esquema LAN-router-WAN, explicacion de subred y captura de ipconfig /all con IP, mascara y gateway identificados.",
+          note: "Nombre: Exploracion_Contextual_NombreAprendiz_FICHA.pdf",
+          allowedExtensions: [
+            ".pdf"
+          ]
+        }
       },
       {
-        id: "bloqueA321", number: "3.2.1", label: "Bloque A - Router, Switch y Access Point",
-        shortName: "BloqueA", type: "form",
-        formFields: ["g3r_321_q1", "g3r_321_q2", "g3r_321_q3"],
-        buttonIds: { save: "btnGuardarBloqueA321", status: "statusBloqueA321" },
-        wordExport: {
-          contextBox: "Bloque A: dispositivos activos (router, switch, access point) en la Ferreteria Don Misael.",
-          sections: [
-            { label: "1. Que dispositivo conecta los 5 PC y cual da salida a internet", storeKey: "g3r_321_q1" },
-            { label: "2. Por que el router tiene dos interfaces IP (LAN y WAN)", storeKey: "g3r_321_q2" },
-            { label: "3. Diferencia entre puerto LAN y puerto WAN", storeKey: "g3r_321_q3" },
-          ],
-        },
-      },
-      {
-        id: "bloqueB322", number: "3.2.2", label: "Bloque B - Protocolo TCP/IP y modelo de capas",
-        shortName: "BloqueB", type: "form",
-        formFields: ["g3r_322_q1", "g3r_322_q2", "g3r_322_q3"],
-        buttonIds: { save: "btnGuardarBloqueB322", status: "statusBloqueB322" },
-        wordExport: {
-          contextBox: "Bloque B: modelo TCP/IP de 4 capas y sus protocolos.",
-          sections: [
-            { label: "1. Que hace la capa de Red y que protocolo opera en ella", storeKey: "g3r_322_q1" },
-            { label: "2. Capa de Transporte: diferencia entre TCP y UDP", storeKey: "g3r_322_q2" },
-            { label: "3. En que capa opera ICMP cuando un PC hace ping", storeKey: "g3r_322_q3" },
-          ],
-        },
-      },
-      {
-        id: "bloqueC323", number: "3.2.3", label: "Bloque C - Servicios DHCP, DNS y Firewall",
-        shortName: "BloqueC", type: "form",
-        formFields: ["g3r_323_q1", "g3r_323_q2", "g3r_323_q3"],
-        buttonIds: { save: "btnGuardarBloqueC323", status: "statusBloqueC323" },
-        wordExport: {
-          contextBox: "Bloque C: servicios de red DHCP, DNS y Firewall y su impacto en la conectividad.",
-          sections: [
-            { label: "1. Que servicio asigna IPs automaticamente y que pasa si falla", storeKey: "g3r_323_q1" },
-            { label: "2. Por que dos PC de la misma red, uno sin internet (relacion con DHCP)", storeKey: "g3r_323_q2" },
-            { label: "3. Que tiene que ver el DNS con una pagina que no carga", storeKey: "g3r_323_q3" },
-          ],
-        },
-      },
-      {
-        id: "bloqueD324", number: "3.2.4", label: "Bloque D - IP publica vs privada y NAT",
-        shortName: "BloqueD", type: "form",
-        formFields: ["g3r_324_q1", "g3r_324_q2", "g3r_324_q3"],
-        buttonIds: { save: "btnGuardarBloqueD324", status: "statusBloqueD324" },
-        wordExport: {
-          contextBox: "Bloque D: IP publica vs privada y NAT en una MiPyme.",
-          sections: [
-            { label: "1. Por que 5 PC con IP privada salen con una sola IP publica", storeKey: "g3r_324_q1" },
-            { label: "2. Que es NAT y cual dispositivo lo realiza", storeKey: "g3r_324_q2" },
-            { label: "3. Ping a 8.8.8.8 funciona pero no abre google.com: que servicio fallo", storeKey: "g3r_324_q3" },
-          ],
-        },
-      },
-      {
-        // Exportación consolidada de los 4 bloques A-D — solo Word, sin save ni Drive
-        id: "exportBloques321a324", number: "3.2.x", label: "Exportar bloques A-D a Word",
-        shortName: "BloquesFinal", type: "form",
-        formFields: [],
-        buttonIds: { save: "_btnExportConsolidado_noexiste", status: "_statusExportConsolidado_noexiste" },
-        wordExport: {
-          contextBox: "Contextualización — Ferretería Don Misael (Sogamoso): 5 PC en red, impresora compartida, cámara IP y punto de venta. Análisis de dispositivos, protocolos TCP/IP, servicios de red e IPs públicas/privadas.",
-          sections: [
-            { label: "BLOQUE A — Router, Switch y Access Point", storeKey: "" },
-            { label: "A1. Dispositivo que conecta los 5 PC y cuál da salida a internet", storeKey: "g3r_321_q1" },
-            { label: "A2. Por qué el router tiene dos interfaces IP (LAN y WAN)", storeKey: "g3r_321_q2" },
-            { label: "A3. Diferencia entre puerto LAN y puerto WAN", storeKey: "g3r_321_q3" },
-            { label: "BLOQUE B — Protocolo TCP/IP y modelo de capas", storeKey: "" },
-            { label: "B1. Qué hace la capa de Red y qué protocolo opera en ella", storeKey: "g3r_322_q1" },
-            { label: "B2. Capa de Transporte: diferencia entre TCP y UDP", storeKey: "g3r_322_q2" },
-            { label: "B3. En qué capa opera ICMP cuando un PC hace ping", storeKey: "g3r_322_q3" },
-            { label: "BLOQUE C — Servicios DHCP, DNS y Firewall", storeKey: "" },
-            { label: "C1. Qué servicio asigna IPs automáticamente y qué pasa si falla", storeKey: "g3r_323_q1" },
-            { label: "C2. Por qué dos PC de la misma red, uno sin internet (relación con DHCP)", storeKey: "g3r_323_q2" },
-            { label: "C3. Qué tiene que ver el DNS con una página que no carga", storeKey: "g3r_323_q3" },
-            { label: "BLOQUE D — IP pública vs privada y NAT", storeKey: "" },
-            { label: "D1. Por qué 5 PC con IP privada salen con una sola IP pública", storeKey: "g3r_324_q1" },
-            { label: "D2. Qué es NAT y cuál dispositivo lo realiza", storeKey: "g3r_324_q2" },
-            { label: "D3. Ping a 8.8.8.8 funciona pero no abre google.com: qué servicio falló", storeKey: "g3r_324_q3" },
-          ],
-        },
-      },
-      {
-        id: "entregaContexto325", number: "3.2.5", label: "Entrega - Productos de contextualizacion (PDF)",
-        shortName: "Contextualizacion", type: "file",
+        id: "c11MapaMental326",
+        number: "3.2.6",
+        label: "Mapa mental integrador - LAN, WAN y subneteo",
+        shortName: "MapaMentalRedes",
+        type: "file",
         driveTarget: {
-          panelKey: "g3redes-3-2-5", deadlineActivityId: "entregaContexto325",
-          activityTitle: "Contextualizacion de conectividad (PDF con los 4 productos)",
-          description: "Sube a Drive un solo PDF con los 4 productos: diagrama de red, tabla TCP/IP, analisis DHCP/DNS/Firewall y esquema NAT.",
-          note: "Nombre sugerido: Contextualizacion_Conectividad_NombreAprendiz_FICHA.pdf",
-        },
+          panelKey: "g11redes-rap02-3-2-6",
+          deadlineActivityId: "c11MapaMental326",
+          activityTitle: "Mapa mental integrador: LAN, WAN y subneteo (PDF)",
+          description: "Sube a Drive el mapa mental con nodo central COMPROBAR LA CONECTIVIDAD DE LA RED, las 4 ramas (LAN, WAN, subneteo, herramientas de validacion) y al menos 2 conexiones cruzadas entre ramas.",
+          note: "Nombre: MapaMental_Redes_NombreAprendiz_FICHA.pdf",
+          allowedExtensions: [
+            ".pdf",
+            ".png",
+            ".jpg",
+            ".jpeg"
+          ]
+        }
       },
       {
-        id: "comandos331", number: "3.3.1", label: "Comandos de diagnostico CLI",
-        shortName: "ComandosCLI", type: "form",
-        formFields: ["g3r_331_ipconfig", "g3r_331_ping_local", "g3r_331_ping_gw", "g3r_331_ping_8888", "g3r_331_ping_google", "g3r_331_tracert", "g3r_331_nslookup", "g3r_331_netstat"],
-        buttonIds: { save: "btnGuardarComandos331", status: "statusComandos331" },
+        id: "c11Pares327",
+        number: "3.2.7",
+        label: "Socializacion y revision entre pares",
+        shortName: "RevisionPares",
+        type: "form",
+        formFields: [
+          "g11c_327_diferencias",
+          "g11c_327_red_broadcast",
+          "g11c_327_conceptos",
+          "g11c_327_pregunta"
+        ],
+        buttonIds: {
+          save: "btnGuardarc11Pares327",
+          status: "statusc11Pares327"
+        },
         wordExport: {
-          contextBox: "Registro de resultados de los comandos de diagnostico ejecutados en CMD (Windows + R -> cmd).",
+          contextBox: "En equipos de 3 aprendices: comparar mapas mentales y productos de exploracion para afinar la comprension antes del calculo de subredes.",
           sections: [
-            { label: "ipconfig /all (IP/DHCP, gateway, DNS)", storeKey: "g3r_331_ipconfig" },
-            { label: "ping 127.0.0.1 (tarjeta de red propia)", storeKey: "g3r_331_ping_local" },
-            { label: "ping [gateway] (comunicacion con el router)", storeKey: "g3r_331_ping_gw" },
-            { label: "ping 8.8.8.8 (internet por IP)", storeKey: "g3r_331_ping_8888" },
-            { label: "ping google.com (internet + DNS)", storeKey: "g3r_331_ping_google" },
-            { label: "tracert 8.8.8.8 (saltos hasta el destino)", storeKey: "g3r_331_tracert" },
-            { label: "nslookup google.com (resolucion DNS)", storeKey: "g3r_331_nslookup" },
-            { label: "netstat -n (conexiones activas)", storeKey: "g3r_331_netstat" },
-          ],
-        },
+            {
+              label: "1. Dos diferencias significativas entre los mapas mentales",
+              storeKey: "g11c_327_diferencias"
+            },
+            {
+              label: "2. Explicacion comun: direccion de red y direccion de broadcast",
+              storeKey: "g11c_327_red_broadcast"
+            },
+            {
+              label: "3. Conceptos que no estaban claros y como los resolvio el equipo",
+              storeKey: "g11c_327_conceptos"
+            },
+            {
+              label: "4. Pregunta tecnica para el instructor en la plenaria",
+              storeKey: "g11c_327_pregunta"
+            }
+          ]
+        }
       },
       {
-        id: "presentacion332", number: "3.3.2", label: "Presentacion tecnica de averias (5 escenarios)",
-        shortName: "PresentacionAverias", type: "file",
-        driveTarget: {
-          panelKey: "g3redes-3-3-2", deadlineActivityId: "presentacion332",
-          activityTitle: "Presentacion de averias (minimo 15 diapositivas)",
-          description: "Sube a Drive la presentacion (PowerPoint, Canva o Google Slides, minimo 15 diapositivas) con los 5 escenarios de falla y el procedimiento de resolucion.",
-          note: "Nombre sugerido: PresentacionAverias_NombreAprendiz_FICHA",
+        id: "c11Taller331",
+        number: "3.3.1",
+        label: "Taller de subneteo - Red de la papeleria 192.168.20.0/24 (Ejercicios 1-5)",
+        shortName: "TallerSubneteo",
+        type: "both",
+        formFields: [
+          "g11c_331_e1_bits",
+          "g11c_331_e1_mascara",
+          "g11c_331_e1_cidr",
+          "g11c_331_e1_proc",
+          "g11c_331_e2_red",
+          "g11c_331_e2_primera",
+          "g11c_331_e2_ultima",
+          "g11c_331_e2_broadcast",
+          "g11c_331_e2_proc",
+          "g11c_331_e3_red",
+          "g11c_331_e3_primera",
+          "g11c_331_e3_ultima",
+          "g11c_331_e3_broadcast",
+          "g11c_331_e3_proc",
+          "g11c_331_e4_gw_ventas",
+          "g11c_331_e4_caja",
+          "g11c_331_e4_venta1",
+          "g11c_331_e4_venta2",
+          "g11c_331_e4_gw_admin",
+          "g11c_331_e4_gerencia",
+          "g11c_331_e4_contable",
+          "g11c_331_e4_bodega",
+          "g11c_331_e5_ip",
+          "g11c_331_e5_mascara",
+          "g11c_331_e5_red"
+        ],
+        buttonIds: {
+          save: "btnGuardarc11Taller331",
+          status: "statusc11Taller331"
         },
+        wordExport: {
+          contextBox: "Taller de subneteo FLSM: dividir la red 192.168.20.0/24 de la papeleria en 2 subredes iguales (Ventas y Administracion). Procedimiento completo de cada ejercicio.",
+          sections: [
+            {
+              label: "EJERCICIO 1 - CALCULAR LA NUEVA MASCARA",
+              storeKey: ""
+            },
+            {
+              label: "Bits prestados",
+              storeKey: "g11c_331_e1_bits"
+            },
+            {
+              label: "Nueva mascara (decimal)",
+              storeKey: "g11c_331_e1_mascara"
+            },
+            {
+              label: "Nueva mascara (CIDR /n)",
+              storeKey: "g11c_331_e1_cidr"
+            },
+            {
+              label: "Procedimiento",
+              storeKey: "g11c_331_e1_proc"
+            },
+            {
+              label: "EJERCICIO 2 - SUBRED 1 (VENTAS)",
+              storeKey: ""
+            },
+            {
+              label: "Direccion de red",
+              storeKey: "g11c_331_e2_red"
+            },
+            {
+              label: "Primera IP utilizable",
+              storeKey: "g11c_331_e2_primera"
+            },
+            {
+              label: "Ultima IP utilizable",
+              storeKey: "g11c_331_e2_ultima"
+            },
+            {
+              label: "Direccion de broadcast",
+              storeKey: "g11c_331_e2_broadcast"
+            },
+            {
+              label: "Procedimiento",
+              storeKey: "g11c_331_e2_proc"
+            },
+            {
+              label: "EJERCICIO 3 - SUBRED 2 (ADMINISTRACION)",
+              storeKey: ""
+            },
+            {
+              label: "Direccion de red",
+              storeKey: "g11c_331_e3_red"
+            },
+            {
+              label: "Primera IP utilizable",
+              storeKey: "g11c_331_e3_primera"
+            },
+            {
+              label: "Ultima IP utilizable",
+              storeKey: "g11c_331_e3_ultima"
+            },
+            {
+              label: "Direccion de broadcast",
+              storeKey: "g11c_331_e3_broadcast"
+            },
+            {
+              label: "Procedimiento",
+              storeKey: "g11c_331_e3_proc"
+            },
+            {
+              label: "EJERCICIO 4 - ASIGNACION DE IPS",
+              storeKey: ""
+            },
+            {
+              label: "Gateway (router) - Ventas",
+              storeKey: "g11c_331_e4_gw_ventas"
+            },
+            {
+              label: "PC_Caja",
+              storeKey: "g11c_331_e4_caja"
+            },
+            {
+              label: "PC_Venta1",
+              storeKey: "g11c_331_e4_venta1"
+            },
+            {
+              label: "PC_Venta2",
+              storeKey: "g11c_331_e4_venta2"
+            },
+            {
+              label: "Gateway (router) - Administracion",
+              storeKey: "g11c_331_e4_gw_admin"
+            },
+            {
+              label: "PC_Gerencia",
+              storeKey: "g11c_331_e4_gerencia"
+            },
+            {
+              label: "PC_Contable",
+              storeKey: "g11c_331_e4_contable"
+            },
+            {
+              label: "PC_Bodega",
+              storeKey: "g11c_331_e4_bodega"
+            },
+            {
+              label: "EJERCICIO 5 - VERIFICACION EN SU EQUIPO",
+              storeKey: ""
+            },
+            {
+              label: "Direccion IP de su equipo",
+              storeKey: "g11c_331_e5_ip"
+            },
+            {
+              label: "Mascara",
+              storeKey: "g11c_331_e5_mascara"
+            },
+            {
+              label: "Red a la que pertenece (direccion de red calculada)",
+              storeKey: "g11c_331_e5_red"
+            }
+          ]
+        },
+        driveTarget: {
+          panelKey: "g11redes-rap02-3-3-1",
+          deadlineActivityId: "c11Taller331",
+          activityTitle: "Taller de subneteo - Ejercicios 1 a 5 (PDF)",
+          description: "Exporta tus respuestas a Word, agrega la captura de ipconfig /all del Ejercicio 5, convierte a PDF y entregalo.",
+          note: "Nombre: Taller_Subneteo_NombreAprendiz_FICHA.pdf",
+          allowedExtensions: [
+            ".pdf",
+            ".doc",
+            ".docx"
+          ]
+        }
       },
       {
-        id: "laboratorio341", number: "3.4.1", label: "Laboratorio Packet Tracer - Red de 2 plantas + 10 pruebas",
-        shortName: "LabConectividad", type: "file",
-        driveTarget: {
-          panelKey: "g3redes-3-4-1", deadlineActivityId: "laboratorio341",
-          activityTitle: "Laboratorio de conectividad (.pkt + PDF con 10 pruebas)",
-          description: "Sube a Drive el archivo .pkt y el PDF con las 10 capturas de las pruebas de conectividad, organizadas y comentadas.",
-          note: "Nombre sugerido: Lab_Conectividad_NombreAprendiz_FICHA.pkt",
-          allowedExtensions: [".pkt", ".pdf", ".zip"],
+        id: "c11Lab341",
+        number: "3.4.1",
+        label: "Laboratorio Packet Tracer - Dos subredes conectadas por router con verificacion de conectividad",
+        shortName: "LabSubredesCarmen",
+        type: "both",
+        formFields: [
+          "g11c_341_ping_misma",
+          "g11c_341_ping_otra",
+          "g11c_341_tracert",
+          "g11c_341_ipconfig",
+          "g11c_341_analisis"
+        ],
+        buttonIds: {
+          save: "btnGuardarc11Lab341",
+          status: "statusc11Lab341"
         },
-      },
-      {
-        id: "caso342", number: "3.4.2",
-        label: "Laboratorio integral - Red con DHCP, DNS, AP y NAT (Packet Tracer)",
-        shortName: "LabIntegral", type: "file",
-        driveTarget: {
-          panelKey: "g3redes-3-4-2", deadlineActivityId: "caso342",
-          activityTitle: "Laboratorio integral - Red con DHCP, DNS, AP y NAT",
-          description: "Sube a Drive el archivo .pkt y el PDF con las 10 capturas de las pruebas comentadas.",
-          note: "Nombre sugerido: LabIntegral_NombreAprendiz_FICHA.pkt + PDF",
-          allowedExtensions: [".pkt", ".pdf", ".zip"],
+        wordExport: {
+          contextBox: "Laboratorio: 2 subredes de la papeleria (Ventas 192.168.20.0/25 y Administracion 192.168.20.128/25) conectadas por un router en Cisco Packet Tracer. Registro de pruebas de conectividad y analisis breve.",
+          sections: [
+            {
+              label: "1. Ping PC_Caja -> PC_Venta1 (misma subred)",
+              storeKey: "g11c_341_ping_misma"
+            },
+            {
+              label: "2. Ping PC_Caja -> PC_Gerencia (otra subred, a traves del router)",
+              storeKey: "g11c_341_ping_otra"
+            },
+            {
+              label: "3. Tracert PC_Caja -> PC_Gerencia (salto por el router)",
+              storeKey: "g11c_341_tracert"
+            },
+            {
+              label: "4. ipconfig en cada PC (IP, mascara y gateway contra la tabla)",
+              storeKey: "g11c_341_ipconfig"
+            },
+            {
+              label: "Analisis breve de los resultados",
+              storeKey: "g11c_341_analisis"
+            }
+          ]
         },
-      },
-      // Quiz autocalificado de cierre, sin numero propio en la guia (seccion
-      // aparte al final, "Quiz de conectividad"). Mismo hueco que los demas
-      // quiz del portal: nunca estuvo en el catalogo. Detectado 2026-07-23.
-      { id: "quiz-redes-321h-rap02", number: "3.5.1", label: "Quiz de conectividad", shortName: "QuizConectividad", type: "form" },
-    ],
+        driveTarget: {
+          panelKey: "g11redes-rap02-3-4-1",
+          deadlineActivityId: "c11Lab341",
+          activityTitle: "Laboratorio dos subredes - papeleria Carmen (.pkt + capturas + analisis)",
+          description: "Sube a Drive el archivo .pkt y un PDF con las capturas de las pruebas (ping misma subred, ping otra subred, tracert, ipconfig) y el analisis breve. Si son varios archivos, comprimelos en un .zip.",
+          note: "Nombre: Lab_Subredes_Carmen_NombreAprendiz_FICHA.pkt",
+          allowedExtensions: [
+            ".pkt",
+            ".pdf",
+            ".zip"
+          ]
+        }
+      }
+    ]
   });
 
-  // ── Guia 11 (Redes RAP03 - Santa Barbara grado 11) (11A + 11B) ──────────
-  // Mismas actividades que la guia de Redes de 10 (mismo partial y mismos ids):
-  // solo cambian competencia, RAP, fase y duracion, que vienen del contexto.
+  // ── Guia 11 - Documentar las acciones realizadas en la red (RAP 03) — Santa Barbara grado 11 (11A + 11B) ──
+  // EMERGENCIA 2026-11-07: actividades OFICIALES de grado 11 (Word oficial), con ids,
+  // campos y familia de calificacion PROPIOS. Antes reutilizaba el partial, los ids y la
+  // familia de la guia de Redes de grado 10 (actividades de otro documento). Los ids
+  // anteriores no se reutilizan: sus respuestas/entregas siguen en el mismo documento.
   register({
     files: [
       "grupo-11a-guia-11-redes-rap03.html",
-      "grupo-11b-guia-11-redes-rap03.html",
+      "grupo-11b-guia-11-redes-rap03.html"
     ],
     guideNumber: "11",
     guideTitle: "Guia 11 - Documentar las acciones realizadas en la red (RAP 03)",
-    gradeFamily: "guia-redes-rap03",   // ver nota en la Guia 10 (mismo contenido que Santa Barbara)
+    gradeFamily: "guia-redes11-rap03",
     stateKey: "guia_interactiva_sb_11a_guia11_redes_rap03",
     program: PROGRAM,
     competencia: "280102129 - Evaluar red de acuerdo con procedimientos de telecomunicaciones y normativa tecnica.",
     resultado: "RAP 03 - Documentar las acciones realizadas en la red de acuerdo con la normativa.",
     activities: [
       {
-        id: "reflexion311", number: "3.1.1", label: "Reflexion inicial - Caso consultorio medico Tunja",
-        shortName: "Reflexion", type: "form",
-        formFields: ["g5r_311_p1", "g5r_311_p2", "g5r_311_p3", "g5r_311_p4", "g5r_311_p5"],
-        buttonIds: { save: "btnGuardarReflexion311", status: "statusReflexion311" },
-        wordExport: {
-          contextBox: "Caso: el tecnico Juan instalo la red de un consultorio medico en Tunja (8 PC, 2 switches, 1 router, impresora de red) sin dejar documentacion. Tres meses despues, el nuevo tecnico no pudo resolver una falla sencilla por falta de registros.",
-          sections: [
-            { label: "1. Documentos que deberia haber dejado Juan (minimo 4)", storeKey: "g5r_311_p1" },
-            { label: "2. Informacion especifica a registrar de cada dispositivo", storeKey: "g5r_311_p2" },
-            { label: "3. Experiencia propia con falta de documentacion", storeKey: "g5r_311_p3" },
-            { label: "4. Diferencia entre un tecnico que documenta y uno que no, desde el cliente", storeKey: "g5r_311_p4" },
-            { label: "5. Formato o plantilla de documentacion tecnica conocido", storeKey: "g5r_311_p5" },
-          ],
+        id: "d11Reflexion311",
+        number: "3.1.1",
+        label: "Reflexion inicial - Panaderia Dona Rosa (Duitama)",
+        shortName: "ReflexionWiFi",
+        type: "form",
+        formFields: [
+          "g11d_311_p1",
+          "g11d_311_p2",
+          "g11d_311_p3",
+          "g11d_311_p4",
+          "g11d_311_p5",
+          "g11d_311_mesa"
+        ],
+        buttonIds: {
+          save: "btnGuardard11Reflexion311",
+          status: "statusd11Reflexion311"
         },
+        wordExport: {
+          contextBox: "Situacion: la Panaderia Dona Rosa (Duitama) tiene una sola red WiFi para el punto de venta, la impresora de facturas y los clientes. La contrasena es 'panaderia123', lleva 3 anos sin cambiarse y la conoce medio barrio. Las ventas fallan y no hay ningun documento sobre la red.",
+          sections: [
+            {
+              label: "1. Como puede un negocio darse cuenta si alguien no autorizado usa su red WiFi",
+              storeKey: "g11d_311_p1"
+            },
+            {
+              label: "2. Diferencia entre una red WiFi abierta y una protegida con un buen protocolo",
+              storeKey: "g11d_311_p2"
+            },
+            {
+              label: "3. Ataques a redes WiFi que conoce o se imagina",
+              storeKey: "g11d_311_p3"
+            },
+            {
+              label: "4. Que pasaria si alguien accede a la red del punto de venta y roba informacion",
+              storeKey: "g11d_311_p4"
+            },
+            {
+              label: "5. Documentos o politicas que deberia tener un negocio para proteger su red inalambrica",
+              storeKey: "g11d_311_p5"
+            },
+            {
+              label: "Paso 2. Lista de buenas practicas minimas construida en la mesa redonda",
+              storeKey: "g11d_311_mesa"
+            }
+          ]
+        }
       },
       {
-        id: "bloqueA321", number: "3.2.1", label: "Bloque A - Estandares de documentacion: TIA-568, TIA-606 e ISO/IEC 11801",
-        shortName: "BloqueA", type: "form",
-        formFields: ["g5r_321_q1", "g5r_321_q2", "g5r_321_q3"],
-        buttonIds: { save: "btnGuardarBloqueA321", status: "statusBloqueA321" },
-        wordExport: {
-          contextBox: "Bloque A: estandares TIA-568, TIA-606 e ISO/IEC 11801 que regulan la documentacion de redes.",
-          sections: [
-            { label: "1. Que establece la norma TIA-568 sobre el cableado estructurado", storeKey: "g5r_321_q1" },
-            { label: "2. Que es la norma TIA-606 y para que sirve en la documentacion", storeKey: "g5r_321_q2" },
-            { label: "3. Elementos minimos a documentar segun estos estandares", storeKey: "g5r_321_q3" },
-          ],
+        id: "d11AtaquesA321",
+        number: "3.2.1",
+        label: "Bloque A - Tipos de ataques a redes inalambricas",
+        shortName: "BloqueA_Ataques",
+        type: "form",
+        formFields: [
+          "g11d_321_q1",
+          "g11d_321_q2",
+          "g11d_321_q3",
+          "g11d_321_rogue_consiste",
+          "g11d_321_rogue_riesgo",
+          "g11d_321_eviltwin_consiste",
+          "g11d_321_eviltwin_riesgo",
+          "g11d_321_deauth_consiste",
+          "g11d_321_deauth_riesgo",
+          "g11d_321_fuerza_consiste",
+          "g11d_321_fuerza_riesgo"
+        ],
+        buttonIds: {
+          save: "btnGuardard11AtaquesA321",
+          status: "statusd11AtaquesA321"
         },
+        wordExport: {
+          contextBox: "Bloque A: tipos de ataques a redes inalambricas (NIST SP 800-153).",
+          sections: [
+            {
+              label: "1. Que es un Rogue Access Point y por que es peligroso",
+              storeKey: "g11d_321_q1"
+            },
+            {
+              label: "2. Que es un ataque Evil Twin y como afecta a los clientes",
+              storeKey: "g11d_321_q2"
+            },
+            {
+              label: "3. Que es un ataque de desautenticacion y su efecto",
+              storeKey: "g11d_321_q3"
+            },
+            {
+              label: "Cuadro - Rogue AP: en que consiste",
+              storeKey: "g11d_321_rogue_consiste"
+            },
+            {
+              label: "Cuadro - Rogue AP: riesgo para una MiPyme",
+              storeKey: "g11d_321_rogue_riesgo"
+            },
+            {
+              label: "Cuadro - Evil Twin: en que consiste",
+              storeKey: "g11d_321_eviltwin_consiste"
+            },
+            {
+              label: "Cuadro - Evil Twin: riesgo para una MiPyme",
+              storeKey: "g11d_321_eviltwin_riesgo"
+            },
+            {
+              label: "Cuadro - Desautenticaci\u00f3n: en que consiste",
+              storeKey: "g11d_321_deauth_consiste"
+            },
+            {
+              label: "Cuadro - Desautenticaci\u00f3n: riesgo para una MiPyme",
+              storeKey: "g11d_321_deauth_riesgo"
+            },
+            {
+              label: "Cuadro - Fuerza bruta de contrase\u00f1a WiFi: en que consiste",
+              storeKey: "g11d_321_fuerza_consiste"
+            },
+            {
+              label: "Cuadro - Fuerza bruta de contrase\u00f1a WiFi: riesgo para una MiPyme",
+              storeKey: "g11d_321_fuerza_riesgo"
+            }
+          ]
+        }
       },
       {
-        id: "bloqueB322", number: "3.2.2", label: "Bloque B - Herramientas de verificacion y certificacion de cableado",
-        shortName: "BloqueB", type: "form",
-        formFields: ["g5r_322_q1", "g5r_322_q2", "g5r_322_q3"],
-        buttonIds: { save: "btnGuardarBloqueB322", status: "statusBloqueB322" },
-        wordExport: {
-          contextBox: "Bloque B: tester de cable vs. certificador de cableado (p. ej. Fluke DTX-1800).",
-          sections: [
-            { label: "1. Diferencia entre tester de cable y certificador de cableado", storeKey: "g5r_322_q1" },
-            { label: "2. Parametros que mide un certificador y no un tester simple", storeKey: "g5r_322_q2" },
-            { label: "3. Resultado que genera el certificador y como se documenta", storeKey: "g5r_322_q3" },
-          ],
+        id: "d11ProtocolosB322",
+        number: "3.2.2",
+        label: "Bloque B - Protocolos de seguridad Wi-Fi: WEP, WPA2 y WPA3",
+        shortName: "BloqueB_Protocolos",
+        type: "form",
+        formFields: [
+          "g11d_322_q1",
+          "g11d_322_q2",
+          "g11d_322_q3",
+          "g11d_322_wep_estado",
+          "g11d_322_wep_nivel",
+          "g11d_322_wep_recomendacion",
+          "g11d_322_wpa2_estado",
+          "g11d_322_wpa2_nivel",
+          "g11d_322_wpa2_recomendacion",
+          "g11d_322_wpa3_estado",
+          "g11d_322_wpa3_nivel",
+          "g11d_322_wpa3_recomendacion"
+        ],
+        buttonIds: {
+          save: "btnGuardard11ProtocolosB322",
+          status: "statusd11ProtocolosB322"
         },
+        wordExport: {
+          contextBox: "Bloque B: protocolos de seguridad Wi-Fi (Wi-Fi Alliance).",
+          sections: [
+            {
+              label: "1. Por que WEP ya no se considera seguro",
+              storeKey: "g11d_322_q1"
+            },
+            {
+              label: "2. Mejora de WPA3 frente a WPA2 ante intentos de adivinar la contrasena",
+              storeKey: "g11d_322_q2"
+            },
+            {
+              label: "3. Que es Wi-Fi Enhanced Open y donde se usaria",
+              storeKey: "g11d_322_q3"
+            },
+            {
+              label: "Tabla - WEP: Estado actual (vigente/obsoleto)",
+              storeKey: "g11d_322_wep_estado"
+            },
+            {
+              label: "Tabla - WEP: Nivel de seguridad",
+              storeKey: "g11d_322_wep_nivel"
+            },
+            {
+              label: "Tabla - WEP: Recomendaci\u00f3n de uso para una MiPyme",
+              storeKey: "g11d_322_wep_recomendacion"
+            },
+            {
+              label: "Tabla - WPA2: Estado actual (vigente/obsoleto)",
+              storeKey: "g11d_322_wpa2_estado"
+            },
+            {
+              label: "Tabla - WPA2: Nivel de seguridad",
+              storeKey: "g11d_322_wpa2_nivel"
+            },
+            {
+              label: "Tabla - WPA2: Recomendaci\u00f3n de uso para una MiPyme",
+              storeKey: "g11d_322_wpa2_recomendacion"
+            },
+            {
+              label: "Tabla - WPA3: Estado actual (vigente/obsoleto)",
+              storeKey: "g11d_322_wpa3_estado"
+            },
+            {
+              label: "Tabla - WPA3: Nivel de seguridad",
+              storeKey: "g11d_322_wpa3_nivel"
+            },
+            {
+              label: "Tabla - WPA3: Recomendaci\u00f3n de uso para una MiPyme",
+              storeKey: "g11d_322_wpa3_recomendacion"
+            }
+          ]
+        }
       },
       {
-        id: "bloqueC323", number: "3.2.3", label: "Bloque C - Parametros de certificacion de cableado",
-        shortName: "BloqueC", type: "form",
-        formFields: ["g5r_323_q1", "g5r_323_q2", "g5r_323_q3"],
-        buttonIds: { save: "btnGuardarBloqueC323", status: "statusBloqueC323" },
-        wordExport: {
-          contextBox: "Bloque C: parametros de certificacion (atenuacion, NEXT, BER, longitud de cable).",
-          sections: [
-            { label: "1. Que es la atenuacion (perdida de insercion) y como afecta la red", storeKey: "g5r_323_q1" },
-            { label: "2. Que significa un test BER aprobado y su implicacion documental", storeKey: "g5r_323_q2" },
-            { label: "3. Por que registrar la longitud del cable en el informe tecnico", storeKey: "g5r_323_q3" },
-          ],
+        id: "d11AuditoriaC323",
+        number: "3.2.3",
+        label: "Bloque C - Auditoria e inventario de redes inalambricas",
+        shortName: "BloqueC_Auditoria",
+        type: "form",
+        formFields: [
+          "g11d_323_q1",
+          "g11d_323_q2",
+          "g11d_323_q3",
+          "g11d_323_ficha_ssid",
+          "g11d_323_ficha_protocolo",
+          "g11d_323_ficha_fecha",
+          "g11d_323_ficha_dispositivos",
+          "g11d_323_ficha_responsable",
+          "g11d_323_ficha_hallazgos"
+        ],
+        buttonIds: {
+          save: "btnGuardard11AuditoriaC323",
+          status: "statusd11AuditoriaC323"
         },
+        wordExport: {
+          contextBox: "Bloque C: auditoria e inventario de redes inalambricas (NIST SP 800-153, evaluaciones de seguridad y monitoreo continuo).",
+          sections: [
+            {
+              label: "1. Informacion minima que deberia registrar una MiPyme sobre su red WiFi",
+              storeKey: "g11d_323_q1"
+            },
+            {
+              label: "2. Por que documentar el ultimo cambio de contrasena del WiFi",
+              storeKey: "g11d_323_q2"
+            },
+            {
+              label: "3. Diferencia entre la red del punto de venta y una red de invitados; por que separarlas",
+              storeKey: "g11d_323_q3"
+            },
+            {
+              label: "Ficha de auditoria - SSID (nombre de la red): que registra",
+              storeKey: "g11d_323_ficha_ssid"
+            },
+            {
+              label: "Ficha de auditoria - Protocolo de seguridad: que registra",
+              storeKey: "g11d_323_ficha_protocolo"
+            },
+            {
+              label: "Ficha de auditoria - Fecha de \u00faltima auditor\u00eda: que registra",
+              storeKey: "g11d_323_ficha_fecha"
+            },
+            {
+              label: "Ficha de auditoria - Dispositivos autorizados: que registra",
+              storeKey: "g11d_323_ficha_dispositivos"
+            },
+            {
+              label: "Ficha de auditoria - Responsable de la red: que registra",
+              storeKey: "g11d_323_ficha_responsable"
+            },
+            {
+              label: "Ficha de auditoria - Hallazgos / observaciones: que registra",
+              storeKey: "g11d_323_ficha_hallazgos"
+            }
+          ]
+        }
       },
       {
-        id: "bloqueD324", number: "3.2.4", label: "Bloque D - Estructura de un informe tecnico de red",
-        shortName: "BloqueD", type: "form",
-        formFields: ["g5r_324_q1", "g5r_324_q2", "g5r_324_q3"],
-        buttonIds: { save: "btnGuardarBloqueD324", status: "statusBloqueD324" },
-        wordExport: {
-          contextBox: "Bloque D: estructura de un informe tecnico de red segun norma ICONTEC NTC 1486.",
-          sections: [
-            { label: "1. Diferencia entre informe tecnico e informe ejecutivo", storeKey: "g5r_324_q1" },
-            { label: "2. Secciones obligatorias de un informe tecnico de instalacion de red", storeKey: "g5r_324_q2" },
-            { label: "3. Evidencias graficas que debe incluir un informe tecnico de red", storeKey: "g5r_324_q3" },
-          ],
+        id: "d11PoliticaD324",
+        number: "3.2.4",
+        label: "Bloque D - Estructura de una politica de seguridad para redes inalambricas",
+        shortName: "BloqueD_Politica",
+        type: "form",
+        formFields: [
+          "g11d_324_q1",
+          "g11d_324_q2",
+          "g11d_324_q3",
+          "g11d_324_seccion1",
+          "g11d_324_seccion2",
+          "g11d_324_seccion3",
+          "g11d_324_seccion4",
+          "g11d_324_seccion5",
+          "g11d_324_seccion6"
+        ],
+        buttonIds: {
+          save: "btnGuardard11PoliticaD324",
+          status: "statusd11PoliticaD324"
         },
+        wordExport: {
+          contextBox: "Bloque D: estructura de una politica de seguridad informatica para redes inalambricas de una MiPyme (NIST SP 800-153).",
+          sections: [
+            {
+              label: "1. Diferencia entre una politica de seguridad y un manual tecnico",
+              storeKey: "g11d_324_q1"
+            },
+            {
+              label: "2. Elementos minimos para que una politica sea aplicable",
+              storeKey: "g11d_324_q2"
+            },
+            {
+              label: "3. Por que incluir un plan de respuesta ante incidentes",
+              storeKey: "g11d_324_q3"
+            },
+            {
+              label: "Indice comentado - Seccion 1",
+              storeKey: "g11d_324_seccion1"
+            },
+            {
+              label: "Indice comentado - Seccion 2",
+              storeKey: "g11d_324_seccion2"
+            },
+            {
+              label: "Indice comentado - Seccion 3",
+              storeKey: "g11d_324_seccion3"
+            },
+            {
+              label: "Indice comentado - Seccion 4",
+              storeKey: "g11d_324_seccion4"
+            },
+            {
+              label: "Indice comentado - Seccion 5",
+              storeKey: "g11d_324_seccion5"
+            },
+            {
+              label: "Indice comentado - Seccion 6",
+              storeKey: "g11d_324_seccion6"
+            },
+            {
+              label: "Indice comentado - Seccion 7 (opcional)",
+              storeKey: "g11d_324_seccion7"
+            },
+            {
+              label: "Indice comentado - Seccion 8 (opcional)",
+              storeKey: "g11d_324_seccion8"
+            }
+          ]
+        },
+        optionalFields: [
+          "g11d_324_seccion7",
+          "g11d_324_seccion8"
+        ]
       },
       {
-        // Exportacion consolidada de los 4 bloques A-D — solo Word, sin save ni Drive.
-        // Mismo truco que exportBloques321a324 en la Guia 3 (script_guia_redes_rap02).
-        id: "exportBloques321a324", number: "3.2.x", label: "Exportar bloques A-D a Word",
-        shortName: "BloquesFinal", type: "form",
-        formFields: [],
-        buttonIds: { save: "_btnExportConsolidado_noexiste", status: "_statusExportConsolidado_noexiste" },
-        wordExport: {
-          contextBox: "Contextualizacion — estandares TIA-568/606/ISO 11801, herramientas de verificacion y certificacion, parametros de certificacion y estructura de un informe tecnico de red.",
-          sections: [
-            { label: "BLOQUE A — Estandares de documentacion: TIA-568, TIA-606 e ISO/IEC 11801", storeKey: "" },
-            { label: "A1. Que establece la norma TIA-568 sobre el cableado estructurado", storeKey: "g5r_321_q1" },
-            { label: "A2. Que es la norma TIA-606 y para que sirve en la documentacion", storeKey: "g5r_321_q2" },
-            { label: "A3. Elementos minimos a documentar segun estos estandares", storeKey: "g5r_321_q3" },
-            { label: "BLOQUE B — Herramientas de verificacion y certificacion de cableado", storeKey: "" },
-            { label: "B1. Diferencia entre tester de cable y certificador de cableado", storeKey: "g5r_322_q1" },
-            { label: "B2. Parametros que mide un certificador y no un tester simple", storeKey: "g5r_322_q2" },
-            { label: "B3. Resultado que genera el certificador y como se documenta", storeKey: "g5r_322_q3" },
-            { label: "BLOQUE C — Parametros de certificacion de cableado", storeKey: "" },
-            { label: "C1. Que es la atenuacion (perdida de insercion) y como afecta la red", storeKey: "g5r_323_q1" },
-            { label: "C2. Que significa un test BER aprobado y su implicacion documental", storeKey: "g5r_323_q2" },
-            { label: "C3. Por que registrar la longitud del cable en el informe tecnico", storeKey: "g5r_323_q3" },
-            { label: "BLOQUE D — Estructura de un informe tecnico de red", storeKey: "" },
-            { label: "D1. Diferencia entre informe tecnico e informe ejecutivo", storeKey: "g5r_324_q1" },
-            { label: "D2. Secciones obligatorias de un informe tecnico de instalacion de red", storeKey: "g5r_324_q2" },
-            { label: "D3. Evidencias graficas que debe incluir un informe tecnico de red", storeKey: "g5r_324_q3" },
-          ],
-        },
-      },
-      {
-        id: "entregaContexto", number: "3.2.5", label: "Entrega - Productos de contextualizacion (PDF)",
-        shortName: "Contextualizacion", type: "file",
+        id: "d11Contexto325",
+        number: "3.2.5",
+        label: "Entrega - Contextualizacion seguridad inalambrica (4 productos, PDF)",
+        shortName: "ContextoSegInalambrica",
+        type: "file",
         driveTarget: {
-          panelKey: "g5redes-3-2-5", deadlineActivityId: "entregaContexto",
-          activityTitle: "Contextualizacion de documentacion (PDF con los 4 productos)",
-          description: "Sube a Drive un solo PDF con los 4 productos: tabla comparativa de estandares, cuadro de herramientas, tabla de parametros e indice comentado.",
-          note: "Nombre sugerido: Contextualizacion_Documentacion_NombreAprendiz_FICHA.pdf",
-        },
+          panelKey: "g11redes-rap03-3-2-5",
+          deadlineActivityId: "d11Contexto325",
+          activityTitle: "Contextualizacion seguridad inalambrica - 4 productos (PDF)",
+          description: "Sube a Drive un solo PDF con los 4 productos: cuadro de ataques, tabla WEP/WPA2/WPA3, modelo de ficha de auditoria e indice comentado de la politica.",
+          note: "Nombre: Contextualizacion_SeguridadInalambrica_NombreAprendiz_FICHA.pdf",
+          allowedExtensions: [
+            ".pdf"
+          ]
+        }
       },
       {
-        id: "demoHerramientas331", number: "3.3.1", label: "Demostracion practica de herramientas de cableado",
-        shortName: "DemoHerramientas", type: "form",
-        formFields: ["g5r_331_punchdown", "g5r_331_crimpadora", "g5r_331_tester", "g5r_331_certificador"],
-        buttonIds: { save: "btnGuardarDemoHerramientas331", status: "statusDemoHerramientas331" },
-        wordExport: {
-          contextBox: "Demostracion practica: Punch Down, crimpadora RJ-45, tester de cable y certificador de redes.",
-          sections: [
-            { label: "Punch Down — resultado y anotaciones", storeKey: "g5r_331_punchdown" },
-            { label: "Crimpadora RJ-45 — resultado y anotaciones", storeKey: "g5r_331_crimpadora" },
-            { label: "Tester de cable — resultado y anotaciones", storeKey: "g5r_331_tester" },
-            { label: "Certificador de redes — resultado y anotaciones", storeKey: "g5r_331_certificador" },
-          ],
-        },
-      },
-      {
-        id: "plantilla1Inventario", number: "3.3.2.1", label: "Plantilla 1 - Inventario de dispositivos de red",
-        shortName: "Plantilla1Inventario", type: "form",
-        formFields: [
-          "g5r_p1_r1", "g5r_p1_r2", "g5r_p1_r3", "g5r_p1_r4", "g5r_p1_r5", "g5r_p1_r6",
-          "g5r_p1_r7", "g5r_p1_r8", "g5r_p1_r9", "g5r_p1_r10", "g5r_p1_r11", "g5r_p1_r12",
-        ],
-        buttonIds: { save: "btnGuardarPlantilla1Inventario", status: "statusPlantilla1Inventario" },
-        wordExport: {
-          contextBox: "Plantilla 1 — Inventario de dispositivos de red de OccidenteServicios Ltda. (12 dispositivos: R1, S1, S2, PC0-PC7).",
-          sections: [
-            { label: "R1 — Gi0/0/0 (Router, enlace Planta 1)", storeKey: "g5r_p1_r1" },
-            { label: "R1 — Gi0/0/1 (Router, enlace Planta 2)", storeKey: "g5r_p1_r2" },
-            { label: "S1 — VLAN 1 (Switch Planta 1)", storeKey: "g5r_p1_r3" },
-            { label: "S2 — VLAN 1 (Switch Planta 2)", storeKey: "g5r_p1_r4" },
-            { label: "PC0 — Contabilidad (Planta 1)", storeKey: "g5r_p1_r5" },
-            { label: "PC1 — Gerencia (Planta 1)", storeKey: "g5r_p1_r6" },
-            { label: "PC2 — Recepcion (Planta 1)", storeKey: "g5r_p1_r7" },
-            { label: "PC3 — Soporte (Planta 1)", storeKey: "g5r_p1_r8" },
-            { label: "PC4 — Bodega (Planta 2)", storeKey: "g5r_p1_r9" },
-            { label: "PC5 — Despacho (Planta 2)", storeKey: "g5r_p1_r10" },
-            { label: "PC6 — Calidad (Planta 2)", storeKey: "g5r_p1_r11" },
-            { label: "PC7 — Sistemas (Planta 2)", storeKey: "g5r_p1_r12" },
-          ],
-        },
-      },
-      {
-        id: "plantilla2IP", number: "3.3.2.2", label: "Plantilla 2 - Tabla de direccionamiento IP",
-        shortName: "Plantilla2IP", type: "form",
-        formFields: [
-          "g5r_p2_r1", "g5r_p2_r2", "g5r_p2_r3", "g5r_p2_r4", "g5r_p2_r5", "g5r_p2_r6",
-          "g5r_p2_r7", "g5r_p2_r8", "g5r_p2_r9", "g5r_p2_r10", "g5r_p2_r11", "g5r_p2_r12",
-        ],
-        buttonIds: { save: "btnGuardarPlantilla2IP", status: "statusPlantilla2IP" },
-        wordExport: {
-          contextBox: "Plantilla 2 — Tabla de direccionamiento IP de OccidenteServicios Ltda. (192.168.1.0/24 Planta 1, 192.168.2.0/24 Planta 2).",
-          sections: [
-            { label: "R1 — Gi0/0/0", storeKey: "g5r_p2_r1" },
-            { label: "R1 — Gi0/0/1", storeKey: "g5r_p2_r2" },
-            { label: "S1 — VLAN 1", storeKey: "g5r_p2_r3" },
-            { label: "S2 — VLAN 1", storeKey: "g5r_p2_r4" },
-            { label: "PC0 — Contabilidad", storeKey: "g5r_p2_r5" },
-            { label: "PC1 — Gerencia", storeKey: "g5r_p2_r6" },
-            { label: "PC2 — Recepcion", storeKey: "g5r_p2_r7" },
-            { label: "PC3 — Soporte", storeKey: "g5r_p2_r8" },
-            { label: "PC4 — Bodega", storeKey: "g5r_p2_r9" },
-            { label: "PC5 — Despacho", storeKey: "g5r_p2_r10" },
-            { label: "PC6 — Calidad", storeKey: "g5r_p2_r11" },
-            { label: "PC7 — Sistemas", storeKey: "g5r_p2_r12" },
-          ],
-        },
-      },
-      {
-        id: "plantilla3Pruebas", number: "3.3.2.3", label: "Plantilla 3 - Registro de pruebas de conectividad",
-        shortName: "Plantilla3Pruebas", type: "form",
-        formFields: [
-          "g5r_p3_r1", "g5r_p3_r2", "g5r_p3_r3", "g5r_p3_r4", "g5r_p3_r5",
-          "g5r_p3_r6", "g5r_p3_r7", "g5r_p3_r8", "g5r_p3_r9", "g5r_p3_r10",
-        ],
-        buttonIds: { save: "btnGuardarPlantilla3Pruebas", status: "statusPlantilla3Pruebas" },
-        wordExport: {
-          contextBox: "Plantilla 3 — Registro de las 10 pruebas de conectividad de la red de OccidenteServicios Ltda. (mismas pruebas de la Guia 3).",
-          sections: [
-            { label: "1. PC0: ping 192.168.1.1 (Gateway Planta 1)", storeKey: "g5r_p3_r1" },
-            { label: "2. PC2: ping 192.168.1.13 (comunicacion PCs Planta 1)", storeKey: "g5r_p3_r2" },
-            { label: "3. PC4: ping 192.168.2.1 (Gateway Planta 2)", storeKey: "g5r_p3_r3" },
-            { label: "4. PC6: ping 192.168.2.13 (comunicacion PCs Planta 2)", storeKey: "g5r_p3_r4" },
-            { label: "5. PC0: ping 192.168.2.10 (enrutamiento Planta 1 a Planta 2)", storeKey: "g5r_p3_r5" },
-            { label: "6. PC7: ping 192.168.1.11 (enrutamiento inverso Planta 2 a Planta 1)", storeKey: "g5r_p3_r6" },
-            { label: "7. PC3: ping 192.168.1.2 (gestion del switch S1)", storeKey: "g5r_p3_r7" },
-            { label: "8. PC5: ping 192.168.2.2 (gestion del switch S2)", storeKey: "g5r_p3_r8" },
-            { label: "9. PC0: tracert 192.168.2.13 (ruta entre plantas)", storeKey: "g5r_p3_r9" },
-            { label: "10. PC4: telnet 192.168.1.1 (acceso administrativo remoto)", storeKey: "g5r_p3_r10" },
-          ],
-        },
-      },
-      {
-        id: "informeTecnico", number: "3.4.1", label: "Informe tecnico completo de la red",
-        shortName: "InformeTecnico", type: "file",
+        id: "d11Exposicion331",
+        number: "3.3.1",
+        label: "Exposicion - Ataques comunes a redes inalambricas (organizador grafico)",
+        shortName: "ExposicionAtaquesWiFi",
+        type: "file",
         driveTarget: {
-          panelKey: "g5redes-3-4-1", deadlineActivityId: "informeTecnico",
-          activityTitle: "Informe tecnico completo de la red (OccidenteServicios Ltda.)",
-          description: "Sube a Drive el informe tecnico completo en PDF (minimo 8 paginas, 10 secciones, con topologia exportada de Packet Tracer y las 3 plantillas incluidas).",
-          note: "Nombre sugerido: InformeTecnico_OccidenteServicios_NombreAprendiz_FICHA.pdf",
-          allowedExtensions: [".pdf"],
-        },
+          panelKey: "g11redes-rap03-3-3-1",
+          deadlineActivityId: "d11Exposicion331",
+          activityTitle: "Exposicion: ataques comunes a redes inalambricas (organizador grafico)",
+          description: "Sube a Drive el organizador grafico (mapa conceptual, infografia o linea de tiempo) o la presentacion que usaste en tu exposicion de maximo 10 minutos.",
+          note: "Nombre sugerido: Exposicion_AtaquesWiFi_NombreAprendiz_FICHA.pdf",
+          allowedExtensions: [
+            ".pdf",
+            ".pptx",
+            ".png",
+            ".jpg",
+            ".jpeg"
+          ]
+        }
       },
-    ],
+      {
+        id: "d11Plantilla1",
+        number: "3.3.2.1",
+        label: "Plantilla 1 - Inventario de redes y dispositivos inalambricos",
+        shortName: "Plantilla1_InventarioWiFi",
+        type: "form",
+        formFields: [
+          "g11d_p1_pos_ssid",
+          "g11d_p1_admin_ssid",
+          "g11d_p1_inv_ssid",
+          "g11d_p1_pos_banda",
+          "g11d_p1_pos_protocolo",
+          "g11d_p1_pos_dispositivo",
+          "g11d_p1_pos_ubicacion",
+          "g11d_p1_pos_uso",
+          "g11d_p1_admin_banda",
+          "g11d_p1_admin_protocolo",
+          "g11d_p1_admin_dispositivo",
+          "g11d_p1_admin_ubicacion",
+          "g11d_p1_admin_uso",
+          "g11d_p1_inv_banda",
+          "g11d_p1_inv_protocolo",
+          "g11d_p1_inv_dispositivo",
+          "g11d_p1_inv_ubicacion",
+          "g11d_p1_inv_uso"
+        ],
+        buttonIds: {
+          save: "btnGuardard11Plantilla1",
+          status: "statusd11Plantilla1"
+        },
+        wordExport: {
+          contextBox: "Plantilla 1: inventario de redes y dispositivos inalambricos del negocio auditado (red propia, del laboratorio, con autorizacion escrita o el caso simulado de la Panaderia Dona Rosa).",
+          sections: [
+            {
+              label: "Red 1 - Punto de venta - SSID",
+              storeKey: "g11d_p1_pos_ssid"
+            },
+            {
+              label: "Red 2 - Administrativa - SSID",
+              storeKey: "g11d_p1_admin_ssid"
+            },
+            {
+              label: "Red 3 - Invitados - SSID",
+              storeKey: "g11d_p1_inv_ssid"
+            },
+            {
+              label: "Red 1 - Punto de venta - Banda (2.4/5 GHz)",
+              storeKey: "g11d_p1_pos_banda"
+            },
+            {
+              label: "Red 1 - Punto de venta - Protocolo de seguridad",
+              storeKey: "g11d_p1_pos_protocolo"
+            },
+            {
+              label: "Red 1 - Punto de venta - Dispositivo (AP/router)",
+              storeKey: "g11d_p1_pos_dispositivo"
+            },
+            {
+              label: "Red 1 - Punto de venta - Ubicaci\u00f3n",
+              storeKey: "g11d_p1_pos_ubicacion"
+            },
+            {
+              label: "Red 1 - Punto de venta - Uso (POS/ADMIN/INVITADOS)",
+              storeKey: "g11d_p1_pos_uso"
+            },
+            {
+              label: "Red 2 - Administrativa - Banda (2.4/5 GHz)",
+              storeKey: "g11d_p1_admin_banda"
+            },
+            {
+              label: "Red 2 - Administrativa - Protocolo de seguridad",
+              storeKey: "g11d_p1_admin_protocolo"
+            },
+            {
+              label: "Red 2 - Administrativa - Dispositivo (AP/router)",
+              storeKey: "g11d_p1_admin_dispositivo"
+            },
+            {
+              label: "Red 2 - Administrativa - Ubicaci\u00f3n",
+              storeKey: "g11d_p1_admin_ubicacion"
+            },
+            {
+              label: "Red 2 - Administrativa - Uso (POS/ADMIN/INVITADOS)",
+              storeKey: "g11d_p1_admin_uso"
+            },
+            {
+              label: "Red 3 - Invitados - Banda (2.4/5 GHz)",
+              storeKey: "g11d_p1_inv_banda"
+            },
+            {
+              label: "Red 3 - Invitados - Protocolo de seguridad",
+              storeKey: "g11d_p1_inv_protocolo"
+            },
+            {
+              label: "Red 3 - Invitados - Dispositivo (AP/router)",
+              storeKey: "g11d_p1_inv_dispositivo"
+            },
+            {
+              label: "Red 3 - Invitados - Ubicaci\u00f3n",
+              storeKey: "g11d_p1_inv_ubicacion"
+            },
+            {
+              label: "Red 3 - Invitados - Uso (POS/ADMIN/INVITADOS)",
+              storeKey: "g11d_p1_inv_uso"
+            }
+          ]
+        }
+      },
+      {
+        id: "d11Plantilla2",
+        number: "3.3.2.2",
+        label: "Plantilla 2 - Registro de politicas de acceso",
+        shortName: "Plantilla2_PoliticasAcceso",
+        type: "form",
+        formFields: [
+          "g11d_p2_pos_rol",
+          "g11d_p2_pos_metodo",
+          "g11d_p2_pos_responsable",
+          "g11d_p2_pos_frecuencia",
+          "g11d_p2_pos_obs",
+          "g11d_p2_admin_rol",
+          "g11d_p2_admin_metodo",
+          "g11d_p2_admin_responsable",
+          "g11d_p2_admin_frecuencia",
+          "g11d_p2_admin_obs",
+          "g11d_p2_inv_rol",
+          "g11d_p2_inv_metodo",
+          "g11d_p2_inv_responsable",
+          "g11d_p2_inv_frecuencia",
+          "g11d_p2_inv_obs"
+        ],
+        buttonIds: {
+          save: "btnGuardard11Plantilla2",
+          status: "statusd11Plantilla2"
+        },
+        wordExport: {
+          contextBox: "Plantilla 2: registro de politicas de acceso de cada red identificada en la Plantilla 1.",
+          sections: [
+            {
+              label: "Punto de venta - Rol / usuario autorizado",
+              storeKey: "g11d_p2_pos_rol"
+            },
+            {
+              label: "Punto de venta - M\u00e9todo de autenticaci\u00f3n",
+              storeKey: "g11d_p2_pos_metodo"
+            },
+            {
+              label: "Punto de venta - Responsable del cambio de contrase\u00f1a",
+              storeKey: "g11d_p2_pos_responsable"
+            },
+            {
+              label: "Punto de venta - Frecuencia de cambio",
+              storeKey: "g11d_p2_pos_frecuencia"
+            },
+            {
+              label: "Punto de venta - Observaciones",
+              storeKey: "g11d_p2_pos_obs"
+            },
+            {
+              label: "Administrativa - Rol / usuario autorizado",
+              storeKey: "g11d_p2_admin_rol"
+            },
+            {
+              label: "Administrativa - M\u00e9todo de autenticaci\u00f3n",
+              storeKey: "g11d_p2_admin_metodo"
+            },
+            {
+              label: "Administrativa - Responsable del cambio de contrase\u00f1a",
+              storeKey: "g11d_p2_admin_responsable"
+            },
+            {
+              label: "Administrativa - Frecuencia de cambio",
+              storeKey: "g11d_p2_admin_frecuencia"
+            },
+            {
+              label: "Administrativa - Observaciones",
+              storeKey: "g11d_p2_admin_obs"
+            },
+            {
+              label: "Invitados - Rol / usuario autorizado",
+              storeKey: "g11d_p2_inv_rol"
+            },
+            {
+              label: "Invitados - M\u00e9todo de autenticaci\u00f3n",
+              storeKey: "g11d_p2_inv_metodo"
+            },
+            {
+              label: "Invitados - Responsable del cambio de contrase\u00f1a",
+              storeKey: "g11d_p2_inv_responsable"
+            },
+            {
+              label: "Invitados - Frecuencia de cambio",
+              storeKey: "g11d_p2_inv_frecuencia"
+            },
+            {
+              label: "Invitados - Observaciones",
+              storeKey: "g11d_p2_inv_obs"
+            }
+          ]
+        }
+      },
+      {
+        id: "d11Plantilla3",
+        number: "3.3.2.3",
+        label: "Plantilla 3 - Registro de auditoria y hallazgos",
+        shortName: "Plantilla3_HallazgosWiFi",
+        type: "form",
+        formFields: [
+          "g11d_p3_1_fecha",
+          "g11d_p3_1_hallazgo",
+          "g11d_p3_1_riesgo",
+          "g11d_p3_1_accion",
+          "g11d_p3_1_responsable",
+          "g11d_p3_2_fecha",
+          "g11d_p3_2_hallazgo",
+          "g11d_p3_2_riesgo",
+          "g11d_p3_2_accion",
+          "g11d_p3_2_responsable",
+          "g11d_p3_3_fecha",
+          "g11d_p3_3_hallazgo",
+          "g11d_p3_3_riesgo",
+          "g11d_p3_3_accion",
+          "g11d_p3_3_responsable"
+        ],
+        buttonIds: {
+          save: "btnGuardard11Plantilla3",
+          status: "statusd11Plantilla3"
+        },
+        wordExport: {
+          contextBox: "Plantilla 3: registro de auditoria y hallazgos de seguridad de la red inalambrica del negocio (minimo 3 hallazgos).",
+          sections: [
+            {
+              label: "Hallazgo 1 - Fecha de auditor\u00eda",
+              storeKey: "g11d_p3_1_fecha"
+            },
+            {
+              label: "Hallazgo 1 - Hallazgo",
+              storeKey: "g11d_p3_1_hallazgo"
+            },
+            {
+              label: "Hallazgo 1 - Nivel de riesgo",
+              storeKey: "g11d_p3_1_riesgo"
+            },
+            {
+              label: "Hallazgo 1 - Acci\u00f3n recomendada",
+              storeKey: "g11d_p3_1_accion"
+            },
+            {
+              label: "Hallazgo 1 - Responsable",
+              storeKey: "g11d_p3_1_responsable"
+            },
+            {
+              label: "Hallazgo 2 - Fecha de auditor\u00eda",
+              storeKey: "g11d_p3_2_fecha"
+            },
+            {
+              label: "Hallazgo 2 - Hallazgo",
+              storeKey: "g11d_p3_2_hallazgo"
+            },
+            {
+              label: "Hallazgo 2 - Nivel de riesgo",
+              storeKey: "g11d_p3_2_riesgo"
+            },
+            {
+              label: "Hallazgo 2 - Acci\u00f3n recomendada",
+              storeKey: "g11d_p3_2_accion"
+            },
+            {
+              label: "Hallazgo 2 - Responsable",
+              storeKey: "g11d_p3_2_responsable"
+            },
+            {
+              label: "Hallazgo 3 - Fecha de auditor\u00eda",
+              storeKey: "g11d_p3_3_fecha"
+            },
+            {
+              label: "Hallazgo 3 - Hallazgo",
+              storeKey: "g11d_p3_3_hallazgo"
+            },
+            {
+              label: "Hallazgo 3 - Nivel de riesgo",
+              storeKey: "g11d_p3_3_riesgo"
+            },
+            {
+              label: "Hallazgo 3 - Acci\u00f3n recomendada",
+              storeKey: "g11d_p3_3_accion"
+            },
+            {
+              label: "Hallazgo 3 - Responsable",
+              storeKey: "g11d_p3_3_responsable"
+            },
+            {
+              label: "Hallazgo 4 - Fecha de auditor\u00eda (opcional)",
+              storeKey: "g11d_p3_4_fecha"
+            },
+            {
+              label: "Hallazgo 4 - Hallazgo (opcional)",
+              storeKey: "g11d_p3_4_hallazgo"
+            },
+            {
+              label: "Hallazgo 4 - Nivel de riesgo (opcional)",
+              storeKey: "g11d_p3_4_riesgo"
+            },
+            {
+              label: "Hallazgo 4 - Acci\u00f3n recomendada (opcional)",
+              storeKey: "g11d_p3_4_accion"
+            },
+            {
+              label: "Hallazgo 4 - Responsable (opcional)",
+              storeKey: "g11d_p3_4_responsable"
+            },
+            {
+              label: "Hallazgo 5 - Fecha de auditor\u00eda (opcional)",
+              storeKey: "g11d_p3_5_fecha"
+            },
+            {
+              label: "Hallazgo 5 - Hallazgo (opcional)",
+              storeKey: "g11d_p3_5_hallazgo"
+            },
+            {
+              label: "Hallazgo 5 - Nivel de riesgo (opcional)",
+              storeKey: "g11d_p3_5_riesgo"
+            },
+            {
+              label: "Hallazgo 5 - Acci\u00f3n recomendada (opcional)",
+              storeKey: "g11d_p3_5_accion"
+            },
+            {
+              label: "Hallazgo 5 - Responsable (opcional)",
+              storeKey: "g11d_p3_5_responsable"
+            },
+            {
+              label: "Hallazgo 6 - Fecha de auditor\u00eda (opcional)",
+              storeKey: "g11d_p3_6_fecha"
+            },
+            {
+              label: "Hallazgo 6 - Hallazgo (opcional)",
+              storeKey: "g11d_p3_6_hallazgo"
+            },
+            {
+              label: "Hallazgo 6 - Nivel de riesgo (opcional)",
+              storeKey: "g11d_p3_6_riesgo"
+            },
+            {
+              label: "Hallazgo 6 - Acci\u00f3n recomendada (opcional)",
+              storeKey: "g11d_p3_6_accion"
+            },
+            {
+              label: "Hallazgo 6 - Responsable (opcional)",
+              storeKey: "g11d_p3_6_responsable"
+            },
+            {
+              label: "Hallazgo 7 - Fecha de auditor\u00eda (opcional)",
+              storeKey: "g11d_p3_7_fecha"
+            },
+            {
+              label: "Hallazgo 7 - Hallazgo (opcional)",
+              storeKey: "g11d_p3_7_hallazgo"
+            },
+            {
+              label: "Hallazgo 7 - Nivel de riesgo (opcional)",
+              storeKey: "g11d_p3_7_riesgo"
+            },
+            {
+              label: "Hallazgo 7 - Acci\u00f3n recomendada (opcional)",
+              storeKey: "g11d_p3_7_accion"
+            },
+            {
+              label: "Hallazgo 7 - Responsable (opcional)",
+              storeKey: "g11d_p3_7_responsable"
+            },
+            {
+              label: "Hallazgo 8 - Fecha de auditor\u00eda (opcional)",
+              storeKey: "g11d_p3_8_fecha"
+            },
+            {
+              label: "Hallazgo 8 - Hallazgo (opcional)",
+              storeKey: "g11d_p3_8_hallazgo"
+            },
+            {
+              label: "Hallazgo 8 - Nivel de riesgo (opcional)",
+              storeKey: "g11d_p3_8_riesgo"
+            },
+            {
+              label: "Hallazgo 8 - Acci\u00f3n recomendada (opcional)",
+              storeKey: "g11d_p3_8_accion"
+            },
+            {
+              label: "Hallazgo 8 - Responsable (opcional)",
+              storeKey: "g11d_p3_8_responsable"
+            },
+            {
+              label: "Hallazgo 9 - Fecha de auditor\u00eda (opcional)",
+              storeKey: "g11d_p3_9_fecha"
+            },
+            {
+              label: "Hallazgo 9 - Hallazgo (opcional)",
+              storeKey: "g11d_p3_9_hallazgo"
+            },
+            {
+              label: "Hallazgo 9 - Nivel de riesgo (opcional)",
+              storeKey: "g11d_p3_9_riesgo"
+            },
+            {
+              label: "Hallazgo 9 - Acci\u00f3n recomendada (opcional)",
+              storeKey: "g11d_p3_9_accion"
+            },
+            {
+              label: "Hallazgo 9 - Responsable (opcional)",
+              storeKey: "g11d_p3_9_responsable"
+            },
+            {
+              label: "Hallazgo 10 - Fecha de auditor\u00eda (opcional)",
+              storeKey: "g11d_p3_10_fecha"
+            },
+            {
+              label: "Hallazgo 10 - Hallazgo (opcional)",
+              storeKey: "g11d_p3_10_hallazgo"
+            },
+            {
+              label: "Hallazgo 10 - Nivel de riesgo (opcional)",
+              storeKey: "g11d_p3_10_riesgo"
+            },
+            {
+              label: "Hallazgo 10 - Acci\u00f3n recomendada (opcional)",
+              storeKey: "g11d_p3_10_accion"
+            },
+            {
+              label: "Hallazgo 10 - Responsable (opcional)",
+              storeKey: "g11d_p3_10_responsable"
+            }
+          ]
+        },
+        optionalFields: [
+          "g11d_p3_4_fecha",
+          "g11d_p3_4_hallazgo",
+          "g11d_p3_4_riesgo",
+          "g11d_p3_4_accion",
+          "g11d_p3_4_responsable",
+          "g11d_p3_5_fecha",
+          "g11d_p3_5_hallazgo",
+          "g11d_p3_5_riesgo",
+          "g11d_p3_5_accion",
+          "g11d_p3_5_responsable",
+          "g11d_p3_6_fecha",
+          "g11d_p3_6_hallazgo",
+          "g11d_p3_6_riesgo",
+          "g11d_p3_6_accion",
+          "g11d_p3_6_responsable",
+          "g11d_p3_7_fecha",
+          "g11d_p3_7_hallazgo",
+          "g11d_p3_7_riesgo",
+          "g11d_p3_7_accion",
+          "g11d_p3_7_responsable",
+          "g11d_p3_8_fecha",
+          "g11d_p3_8_hallazgo",
+          "g11d_p3_8_riesgo",
+          "g11d_p3_8_accion",
+          "g11d_p3_8_responsable",
+          "g11d_p3_9_fecha",
+          "g11d_p3_9_hallazgo",
+          "g11d_p3_9_riesgo",
+          "g11d_p3_9_accion",
+          "g11d_p3_9_responsable",
+          "g11d_p3_10_fecha",
+          "g11d_p3_10_hallazgo",
+          "g11d_p3_10_riesgo",
+          "g11d_p3_10_accion",
+          "g11d_p3_10_responsable"
+        ]
+      },
+      {
+        id: "d11Protocolo341",
+        number: "3.4.1",
+        label: "Protocolo de Politica de Seguridad Informatica para Redes Inalambricas",
+        shortName: "ProtocoloSegInalambrica",
+        type: "file",
+        driveTarget: {
+          panelKey: "g11redes-rap03-3-4-1",
+          deadlineActivityId: "d11Protocolo341",
+          activityTitle: "Protocolo de Politica de Seguridad Informatica para Redes Inalambricas (PDF)",
+          description: "Sube a Drive el protocolo en PDF con las 10 secciones obligatorias (minimo 6 paginas sin portada ni bibliografia) y las 3 plantillas completas incluidas.",
+          note: "Nombre: Protocolo_SeguridadInalambrica_NombreAprendiz_FICHA.pdf",
+          allowedExtensions: [
+            ".pdf"
+          ]
+        }
+      },
+      {
+        id: "d11Sustentacion342",
+        number: "3.4.2",
+        label: "Socializacion y sustentacion del protocolo",
+        shortName: "SustentacionProtocolo",
+        type: "form",
+        formFields: [
+          "g11d_342_diagnostico",
+          "g11d_342_riesgos",
+          "g11d_342_medidas"
+        ],
+        buttonIds: {
+          save: "btnGuardard11Sustentacion342",
+          status: "statusd11Sustentacion342"
+        },
+        wordExport: {
+          contextBox: "Sustentacion oral (5-7 minutos) del Protocolo de Politica de Seguridad Informatica: diagnostico, riesgos y medidas propuestas.",
+          sections: [
+            {
+              label: "Diagnostico realizado (resumen para la sustentacion)",
+              storeKey: "g11d_342_diagnostico"
+            },
+            {
+              label: "Riesgos principales identificados",
+              storeKey: "g11d_342_riesgos"
+            },
+            {
+              label: "Medidas propuestas y plan de respuesta",
+              storeKey: "g11d_342_medidas"
+            }
+          ]
+        }
+      }
+    ]
   });
 })();
