@@ -595,8 +595,25 @@
 
   function applyGradeOp(all, op) {
     var family = Object.assign({}, all[op.family] || {});
-    Object.keys(op.set || {}).forEach(function (k) { family[k] = op.set[k]; });
-    (op.del || []).forEach(function (k) { delete family[k]; });
+    var set = Object.assign({}, op.set || {});
+    var del = (op.del || []).slice();
+    // Correccion 2026-11-08 (Codex): en Redes 11.° volver a poner "A" sobre una
+    // actividad que YA esta en "A" (grilla o Excel) no toca nada: ni la nota, ni su
+    // fecha original (gradedAt), ni la solucion embebida. Se evalua sobre la lectura
+    // FRESCA de la nube (cloudUpdateGradesStrict), no sobre el cache local.
+    (op.keepApprovedIds || []).forEach(function (id) {
+      if (family[id] === "A" && set[id] === "A") {
+        delete set[id];
+        delete set[id + ":gradedAt"];
+        delete set[id + ":solution"];
+        del = del.filter(function (k) { return k !== id + ":gradedAt" && k !== id + ":solution"; });
+      }
+    });
+    // Agregar respuesta modelo (herramienta selectiva): solo si la actividad sigue
+    // en "A" en la nube; si no, la operacion no cambia nada.
+    if (op.requireApproved && family[op.requireApproved] !== "A") return all;
+    Object.keys(set).forEach(function (k) { family[k] = set[k]; });
+    del.forEach(function (k) { delete family[k]; });
     all[op.family] = family;
     return all;
   }
@@ -685,8 +702,15 @@
     var run = Promise.resolve()
       .then(function () {
         return db.cloudUpdateGradesStrict(usernameKey, function (cloudGrades) {
+          var before = {};
+          families.forEach(function (f) { before[f] = JSON.stringify(cloudGrades[f] === undefined ? null : cloudGrades[f]); });
           ops.forEach(function (op) { applyGradeOp(cloudGrades, op); });
-          return { grades: cloudGrades, families: families };
+          // Solo viajan las familias que REALMENTE cambiaron: una operacion que no
+          // cambia nada (A sobre A en Redes 11.°, respuesta modelo ya presente o
+          // actividad que dejo de estar en A) no reescribe el documento.
+          return { grades: cloudGrades, families: families.filter(function (f) {
+            return JSON.stringify(cloudGrades[f] === undefined ? null : cloudGrades[f]) !== before[f];
+          }) };
         });
       })
       .catch(function () { return { ok: false, status: "write-failed", reason: "exception" }; })
@@ -770,7 +794,7 @@
 
   // Encola una operacion, la refleja en el cache local (para que la grilla la
   // muestre al instante) y programa la escritura. -> Promise del resultado REAL.
-  function queueGradeOp(usernameKey, family, set, del) {
+  function queueGradeOp(usernameKey, family, set, del, extra) {
     if (!usernameKey || !family) {
       return Promise.resolve({ ok: false, status: "aborted", reason: "invalid-args", message: "Faltan datos del aprendiz o de la guia." });
     }
@@ -782,6 +806,13 @@
       del: del || [],
       at: new Date().toISOString(),
     };
+    // Redes 11.°: "A" sobre "A" conserva la calificacion y su fecha original
+    // (aplica a todas las rutas: grilla, Excel y cualquier otra que encole notas).
+    if (isEvidenceStrictFamily(family)) {
+      var keep = Object.keys(op.set).filter(function (k) { return k.indexOf(":") === -1 && op.set[k] === "A"; });
+      if (keep.length) op.keepApprovedIds = keep;
+    }
+    if (extra && extra.requireApproved) op.requireApproved = String(extra.requireApproved);
     if (!gradesPendingOps[usernameKey]) gradesPendingOps[usernameKey] = [];
     gradesPendingOps[usernameKey].push(op);
     persistPendingGradeOps();
@@ -922,6 +953,9 @@
   // Devuelve true si encolo el cambio; el resultado en la nube se consulta con
   // flushGradesCloudSync(usernameKey).
   function embedStudentActivitySolution(usernameKey, guideFamily, activityId, solutionObj) {
+    // Redes 11.°: la re-sincronizacion masiva NO las recorre (correccion 2026-11-08);
+    // solo la herramienta selectiva addModelAnswerToApprovedActivity.
+    if (isEvidenceStrictFamily(guideFamily)) return false;
     if (!getGradesKey(usernameKey)) return false;
     var fam = getStudentGrades(usernameKey, guideFamily);
     if (!fam || fam[activityId] !== "A") return false;
@@ -930,6 +964,65 @@
     set[activityId + ":solution"] = solutionObj;
     queueGradeOp(usernameKey, guideFamily, set, []);
     return true;
+  }
+
+  // ── Respuesta modelo en una actividad YA aprobada (Redes 11.°, selectiva) ──────
+  // Puras (sin red ni DOM) para poder probarlas. Solo campos con valor y nunca
+  // claves "__" (criterios internos del instructor).
+  function cleanModelSolution(solution) {
+    var clean = {};
+    Object.keys(solution && typeof solution === "object" ? solution : {}).sort().forEach(function (k) {
+      if (k.indexOf("__") === 0) return;
+      var v = solution[k];
+      if (v === undefined || v === null || (typeof v === "object") || String(v).trim() === "") return;
+      clean[k] = v;
+    });
+    return clean;
+  }
+  function sameModelSolution(a, b) {
+    return JSON.stringify(cleanModelSolution(a)) === JSON.stringify(cleanModelSolution(b))
+      && Object.keys(a || {}).length === Object.keys(cleanModelSolution(a)).length;
+  }
+  // -> { status: "not-approved" | "no-solution" | "already-present" | "ready", ... }
+  function planModelAnswerAddition(familyGrades, activityId, solution) {
+    var fam = familyGrades && typeof familyGrades === "object" ? familyGrades : {};
+    if (!activityId || fam[activityId] !== "A") return { status: "not-approved", grade: String(fam[activityId] || "") };
+    var clean = cleanModelSolution(solution);
+    if (!Object.keys(clean).length) return { status: "no-solution" };
+    var current = fam[activityId + ":solution"];
+    if (current && typeof current === "object" && sameModelSolution(current, clean)) {
+      return { status: "already-present", solution: clean };
+    }
+    return {
+      status: "ready", solution: clean,
+      replaces: !!(current && typeof current === "object" && Object.keys(current).length),
+      gradedAt: String(fam[activityId + ":gradedAt"] || ""),
+    };
+  }
+  // Tras escribir: la nota, su fecha, observaciones y TODO lo demas de la familia
+  // deben ser identicos a la lectura previa; solo cambia {actId}:solution.
+  function verifyModelAnswerAddition(beforeFam, afterFam, activityId, solution) {
+    var b = Object.assign({}, beforeFam || {}), a = Object.assign({}, afterFam || {});
+    var solKey = activityId + ":solution";
+    var got = a[solKey];
+    delete a[solKey]; delete b[solKey];
+    var keys = Object.keys(a).concat(Object.keys(b)).filter(function (k, i, all) { return all.indexOf(k) === i; });
+    var changed = keys.filter(function (k) { return JSON.stringify(a[k]) !== JSON.stringify(b[k]); });
+    var solutionOk = !!got && JSON.stringify(got) === JSON.stringify(cleanModelSolution(solution));
+    return { ok: solutionOk && !changed.length && a[activityId] === "A", solutionOk: solutionOk, changedKeys: changed };
+  }
+  // Encola SOLO {actId}:solution, condicionado a que la actividad siga en "A" en la
+  // lectura fresca de la nube. Nunca toca la nota, gradedAt, :obs ni la guia.
+  function addModelAnswerToApprovedActivity(usernameKey, guideFamily, activityId, solution) {
+    if (!isEvidenceStrictFamily(guideFamily)) {
+      return Promise.resolve({ ok: false, status: "aborted", reason: "family-not-allowed", message: "Solo para las guias de Redes de 11.°." });
+    }
+    if (!getGradesKey(usernameKey)) return Promise.resolve({ ok: false, status: "aborted", reason: "no-storage-key" });
+    var clean = cleanModelSolution(solution);
+    if (!activityId || !Object.keys(clean).length) return Promise.resolve({ ok: false, status: "aborted", reason: "no-solution" });
+    var set = {};
+    set[activityId + ":solution"] = clean;
+    return queueGradeOp(usernameKey, guideFamily, set, [], { requireApproved: activityId });
   }
 
   function setStudentActivityObservation(usernameKey, guideFamily, activityId, obs) {
@@ -1752,6 +1845,9 @@
     setStudentActivityGrade: setStudentActivityGrade,
     setStudentActivityGradeAndSolution: setStudentActivityGradeAndSolution,
     embedStudentActivitySolution: embedStudentActivitySolution,
+    planModelAnswerAddition: planModelAnswerAddition,
+    verifyModelAnswerAddition: verifyModelAnswerAddition,
+    addModelAnswerToApprovedActivity: addModelAnswerToApprovedActivity,
     setStudentActivityObservation: setStudentActivityObservation,
     getStudentActivityObservation: getStudentActivityObservation,
     getMyGrades: getMyGrades,

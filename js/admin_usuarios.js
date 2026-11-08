@@ -4104,6 +4104,10 @@
       Object.keys(grades).forEach((actId) => {
         if (actId.indexOf(":") !== -1) return;          // saltar :solution/:gradedAt/:obs
         if (grades[actId] !== "A") return;              // solo aprobadas
+        // Redes 11.° (correccion 2026-11-08): la re-sincronizacion masiva NO las
+        // recorre; su respuesta modelo se agrega solo con la herramienta selectiva
+        // «Agregar respuestas modelo a actividades aprobadas» (aprendiz + actividad).
+        if (/^guia-redes11-rap0[123]$/.test(family)) return;
         const solution = bankLookup(family, actId);
         if (!solution || typeof solution !== "object" || !Object.keys(solution).length) return;
         const current = grades[actId + ":solution"];
@@ -4190,6 +4194,164 @@
     } finally {
       if (btn) btn.disabled = false;
     }
+  }
+
+  // ── Agregar respuestas modelo a actividades aprobadas (Redes 11.°, selectiva) ──
+  // Correccion 2026-11-08 (Codex): reemplaza "volver a marcar A" (cambiaba la
+  // fecha) y la re-sincronizacion masiva (recorria todo). UN aprendiz, UNA guia,
+  // UNA actividad: lectura estricta de Firebase -> nota A -> banco de Firebase ->
+  // vista previa -> confirmacion -> solo {actId}:solution -> verificacion.
+  const MODEL_ANSWER_FICHAS = ["3168850", "3168852"];
+  const MODEL_ANSWER_FAMILIES = ["guia-redes11-rap01", "guia-redes11-rap02", "guia-redes11-rap03"];
+  let modelAnswerPlan = null;
+
+  function modelAnswerSelection() {
+    const ficha = byId("grades-model-ficha")?.value || "";
+    const usernameKey = byId("grades-model-student")?.value || "";
+    const family = byId("grades-model-guide")?.value || "";
+    const activityId = byId("grades-model-activity")?.value || "";
+    const user = (state.users || []).find((u) => u.usernameKey === usernameKey) || null;
+    const act = (((getGradeCatalog()[family] || {}).activities) || []).find((a) => a.id === activityId) || null;
+    return { ficha, usernameKey, family, activityId, user, act };
+  }
+
+  function resetModelAnswerPlan(message) {
+    modelAnswerPlan = null;
+    const btn = byId("grades-model-apply-btn");
+    if (btn) btn.disabled = true;
+    const prev = byId("grades-model-preview");
+    if (prev) prev.innerHTML = "";
+    const st = byId("grades-model-status");
+    if (st) st.textContent = message || "";
+  }
+
+  function bindModelAnswerTool() {
+    const fichaSel = byId("grades-model-ficha");
+    const studentSel = byId("grades-model-student");
+    const guideSel = byId("grades-model-guide");
+    const actSel = byId("grades-model-activity");
+    if (!fichaSel || !studentSel || !guideSel || !actSel) return;
+    fichaSel.addEventListener("change", () => {
+      const ficha = fichaSel.value;
+      const learners = MODEL_ANSWER_FICHAS.includes(ficha)
+        ? (state.users || []).filter((u) => String(u.ficha || "") === ficha)
+          .sort((a, b) => String(a.fullName || a.usernameKey).localeCompare(String(b.fullName || b.usernameKey), "es"))
+        : [];
+      studentSel.innerHTML = `<option value="">Aprendiz...</option>` + learners.map((u) =>
+        `<option value="${escapeHtml(u.usernameKey)}">${escapeHtml(u.fullName || u.usernameKey)}</option>`).join("");
+      studentSel.disabled = !learners.length;
+      resetModelAnswerPlan("");
+    });
+    guideSel.addEventListener("change", () => {
+      const family = guideSel.value;
+      const acts = MODEL_ANSWER_FAMILIES.includes(family) ? (((getGradeCatalog()[family] || {}).activities) || []) : [];
+      actSel.innerHTML = `<option value="">Actividad...</option>` + acts.map((a) =>
+        `<option value="${escapeHtml(a.id)}">${escapeHtml(a.label || a.id)}</option>`).join("");
+      actSel.disabled = !acts.length;
+      resetModelAnswerPlan("");
+    });
+    studentSel.addEventListener("change", () => resetModelAnswerPlan(""));
+    actSel.addEventListener("change", () => resetModelAnswerPlan(""));
+    byId("grades-model-preview-btn")?.addEventListener("click", handleModelAnswerPreview);
+    byId("grades-model-apply-btn")?.addEventListener("click", handleModelAnswerApply);
+  }
+
+  async function handleModelAnswerPreview() {
+    resetModelAnswerPlan("Leyendo la nota en Firebase...");
+    const setStatus = (msg) => { const st = byId("grades-model-status"); if (st) st.textContent = msg; };
+    const sel = modelAnswerSelection();
+    const db = window._firebaseDb;
+    const mgr = window.activityGradesManager;
+    if (!MODEL_ANSWER_FICHAS.includes(sel.ficha) || !sel.user || String(sel.user.ficha || "") !== sel.ficha ||
+        !MODEL_ANSWER_FAMILIES.includes(sel.family) || !sel.act) {
+      setStatus("Seleccione ficha (3168850 o 3168852), aprendiz de esa ficha, guia (RAP 01, 02 o 03) y actividad.");
+      return;
+    }
+    if (!db || typeof db.cloudGetGradesStrict !== "function" || !mgr || typeof mgr.planModelAnswerAddition !== "function") {
+      setStatus("Firebase o el modulo de notas no estan disponibles (recargue la pagina). No se cambio nada.");
+      return;
+    }
+    let read;
+    try { read = await db.cloudGetGradesStrict(sel.usernameKey); } catch (_) { read = null; }
+    if (!read || (read.status !== "found" && read.status !== "missing")) {
+      setStatus("No se pudo leer la nota en Firebase. No se cambio nada; intente mas tarde.");
+      return;
+    }
+    const before = JSON.parse(JSON.stringify(((read.grades || {})[sel.family]) || {}));
+    await ensureGradeSolutionsBank(true);   // lectura del banco en Firebase (sin modificarlo)
+    const bankFamily = (_gradeSolutionsBank || {})[sel.family];
+    if (!bankFamily || !bankFamily[sel.activityId]) {
+      setStatus("El banco de Firebase no tiene respuesta para esta actividad (o no se pudo leer). No se cambio nada.");
+      return;
+    }
+    const plan = mgr.planModelAnswerAddition(before, sel.activityId, lookupBankSolution(sel.family, sel.activityId));
+    const name = sel.user.fullName || sel.usernameKey;
+    if (plan.status === "not-approved") {
+      setStatus(`La actividad no esta Aprobada (A) en Firebase${plan.grade ? " (nota actual: " + plan.grade + ")" : " (pendiente)"}. No se agrega nada.`);
+      return;
+    }
+    if (plan.status === "no-solution") { setStatus("El banco no tiene respuestas utilizables para esta actividad. No se cambio nada."); return; }
+    if (plan.status === "already-present") { setStatus(`${name}: la respuesta modelo ya esta presente y es la vigente. Sin cambios.`); return; }
+    const rows = Object.keys(plan.solution).map((k) =>
+      `<tr><td><code>${escapeHtml(k)}</code></td><td>${escapeHtml(String(plan.solution[k]))}</td></tr>`).join("");
+    const prev = byId("grades-model-preview");
+    if (prev) {
+      prev.innerHTML = `<p><strong>Vista previa</strong> — ${escapeHtml(name)} · ${escapeHtml(sel.act.label || sel.activityId)}.<br>
+        Se agregara solo la respuesta modelo (${Object.keys(plan.solution).length} campos)${plan.replaces ? ", reemplazando la respuesta modelo anterior" : ""}.
+        Nota A y fecha de calificacion ${escapeHtml(plan.gradedAt || "(sin fecha)")} se conservan.</p>
+        <table class="grades-model-preview-table"><thead><tr><th>Campo</th><th>Respuesta modelo</th></tr></thead><tbody>${rows}</tbody></table>`;
+    }
+    modelAnswerPlan = { usernameKey: sel.usernameKey, ficha: sel.ficha, family: sel.family, activityId: sel.activityId,
+      name, label: sel.act.label || sel.activityId, before, solution: plan.solution };
+    const btn = byId("grades-model-apply-btn");
+    if (btn) btn.disabled = false;
+    setStatus("Revise la vista previa y pulse «Agregar respuesta modelo» para confirmar.");
+  }
+
+  async function handleModelAnswerApply() {
+    const plan = modelAnswerPlan;
+    const setStatus = (msg) => { const st = byId("grades-model-status"); if (st) st.textContent = msg; };
+    const sel = modelAnswerSelection();
+    if (!plan || sel.usernameKey !== plan.usernameKey || sel.family !== plan.family || sel.activityId !== plan.activityId) {
+      resetModelAnswerPlan("La seleccion cambio: genere de nuevo la vista previa.");
+      return;
+    }
+    const mgr = window.activityGradesManager;
+    const db = window._firebaseDb;
+    const confirmed = await confirmAdminAction(
+      `Agregar la respuesta modelo (${Object.keys(plan.solution).length} campos) a ${plan.name}, ${plan.label}. ` +
+      "Solo se agrega en sus notas; no cambia la nota, su fecha, observaciones, entregas ni sus respuestas. ¿Continuar?"
+    );
+    if (!confirmed) { setStatus("Cancelado. No se cambio nada."); return; }
+    const btn = byId("grades-model-apply-btn");
+    if (btn) btn.disabled = true;
+    modelAnswerPlan = null;
+    setStatus("Guardando...");
+    let saved;
+    try {
+      const pending = mgr.addModelAnswerToApprovedActivity(plan.usernameKey, plan.family, plan.activityId, plan.solution);
+      mgr.flushGradesCloudSync(plan.usernameKey);
+      saved = await pending;
+    } catch (e) { saved = { ok: false, message: e && e.message ? e.message : String(e) }; }
+    if (!saved || !saved.ok) {
+      setStatus("No se pudo guardar en Firebase: " + ((saved && saved.message) || "error desconocido") +
+        ". Las notas no se modificaron; el cambio queda pendiente y solo se aplicara si la actividad sigue en A.");
+      return;
+    }
+    let after;
+    try { after = await db.cloudGetGradesStrict(plan.usernameKey); } catch (_) { after = null; }
+    if (!after || after.status !== "found") {
+      setStatus("Guardado, pero no se pudo releer Firebase para verificarlo. Vuelva a generar la vista previa para comprobarlo.");
+      return;
+    }
+    const check = mgr.verifyModelAnswerAddition(plan.before, (after.grades || {})[plan.family], plan.activityId, plan.solution);
+    setStatus(check.ok
+      ? `Verificado en Firebase: respuesta modelo agregada a ${plan.name}. Nota, fecha y demas campos intactos.`
+      : (check.solutionOk
+        ? `Respuesta agregada, pero otros campos de la guia cambiaron entre la vista previa y la verificacion (${check.changedKeys.join(", ")}); revise si otra sesion califico al mismo tiempo.`
+        : "La verificacion NO encontro la respuesta modelo esperada en Firebase (la actividad pudo dejar de estar en A). Revise la nota."));
+    recordAdminAuditAction({ action: "grade-model-answer-add", target: plan.usernameKey,
+      detail: `${plan.family}/${plan.activityId} verificado=${check.ok}` });
   }
 
   function patchGuideState(usernameKey, guideFamily, patch) {
@@ -4496,7 +4658,7 @@
     host.innerHTML = `
       <div class="admin-section-head">
         <h2>Calificaciones</h2>
-        <p class="admin-muted">Elige ficha y guia, y marca Aprobado / No aprobado por actividad. Se guarda al instante; cada aprendiz ve solo la suya. Al aprobar una actividad vacia, se le copia la solucion del banco (excepto en las Guias 9, 10 y 11 de Redes de 11.°, donde la aprobacion nunca crea respuestas ni entregas).</p>
+        <p class="admin-muted">Elige ficha y guia, y marca Aprobado / No aprobado por actividad. Se guarda al instante; cada aprendiz ve solo la suya. Al aprobar una actividad vacia, se le copia la solucion del banco (excepto en las Guias 9, 10 y 11 de Redes de 11.°, donde la respuesta modelo solo se muestra como ayuda al aprendiz y la aprobacion nunca crea respuestas ni entregas; volver a marcar A conserva la fecha original).</p>
       </div>
       <details class="grades-bank-import">
         <summary>Banco de respuestas (sincronizar a la nube)</summary>
@@ -4513,9 +4675,32 @@
         <span id="grades-bank-status" class="admin-muted"></span>
         <div id="grades-bank-preview"></div>
         <hr>
-        <p class="admin-muted">Las actividades aprobadas ANTES de importar el banco (o antes de una ampliacion del banco) quedaron sin la solucion embebida: se ven "calificadas pero vacias". Este boton copia la solucion actual a todas esas notas "A", de todos los aprendices, sin cambiar notas ni fechas.</p>
+        <p class="admin-muted">Las actividades aprobadas ANTES de importar el banco (o antes de una ampliacion del banco) quedaron sin la solucion embebida: se ven "calificadas pero vacias". Este boton copia la solucion actual a todas esas notas "A", de todos los aprendices, sin cambiar notas ni fechas. No incluye las Guias 9, 10 y 11 de Redes de 11.° (use la opcion selectiva de abajo).</p>
         <button type="button" id="grades-resync-btn" class="btn secondary">Re-sincronizar soluciones de actividades aprobadas</button>
         <span id="grades-resync-status" class="admin-muted"></span>
+      </details>
+      <details class="grades-bank-import" id="grades-model-answers">
+        <summary>Agregar respuestas modelo a actividades aprobadas (Redes 11.°)</summary>
+        <p class="admin-muted">Para una actividad que YA esta en Aprobado (A) en las Guias 9, 10 y 11 de Redes de 11.°: lee la nota en Firebase, busca la respuesta en el banco de Firebase, muestra una vista previa y, solo con su confirmacion, agrega la respuesta modelo a las notas de ESE aprendiz. No cambia la nota, su fecha, observaciones, entregas ni el formulario del aprendiz.</p>
+        <div class="grades-bank-steps">
+          <select id="grades-model-ficha" aria-label="Ficha">
+            <option value="">Ficha...</option>
+            <option value="3168850">3168850 (11A)</option>
+            <option value="3168852">3168852 (11B)</option>
+          </select>
+          <select id="grades-model-student" aria-label="Aprendiz" disabled><option value="">Aprendiz...</option></select>
+          <select id="grades-model-guide" aria-label="Guia">
+            <option value="">Guia...</option>
+            <option value="guia-redes11-rap01">RAP 01 (Guia 9)</option>
+            <option value="guia-redes11-rap02">RAP 02 (Guia 10)</option>
+            <option value="guia-redes11-rap03">RAP 03 (Guia 11)</option>
+          </select>
+          <select id="grades-model-activity" aria-label="Actividad" disabled><option value="">Actividad...</option></select>
+          <button type="button" id="grades-model-preview-btn" class="btn secondary">Vista previa</button>
+          <button type="button" id="grades-model-apply-btn" class="btn secondary" disabled>Agregar respuesta modelo</button>
+        </div>
+        <span id="grades-model-status" class="admin-muted" role="status"></span>
+        <div id="grades-model-preview"></div>
       </details>
       <details class="grades-bank-import" id="grades-comments-bank">
         <summary>Banco de comentarios <span id="grades-comments-count" class="admin-muted"></span></summary>
@@ -4559,6 +4744,7 @@
     byId("grades-bank-analyze-btn")?.addEventListener("click", handleGradeBankAnalyze);
     byId("grades-bank-import-btn")?.addEventListener("click", handleGradeBankImport);
     byId("grades-resync-btn")?.addEventListener("click", handleSolutionResync);
+    bindModelAnswerTool();
     byId("grades-excel-download-btn")?.addEventListener("click", handleGradesExcelDownload);
     byId("grades-excel-upload-btn")?.addEventListener("click", handleGradesExcelUpload);
     byId("grade-comment-add")?.addEventListener("click", handleGradeCommentAdd);

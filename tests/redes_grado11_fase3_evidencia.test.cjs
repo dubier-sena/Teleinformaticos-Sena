@@ -88,8 +88,8 @@ test("1. calificar, Excel y re-sincronizar: la solucion va SOLO a las notas (con
   // las 3 rutas (individual 3692, Excel, resync) pasan por lookupBankSolution / applyApprovedSolutionToStudentCloud
   assert.match(extractFn(admin, "async function applyApprovedSolutionToStudentCloud("), /if \(isEvidenceStrictFamily\(guideFamily\)\) return \{ filled: 0 \};/);
   const { mgr } = loadGrades({ "guia-redes11-rap01": { b11TallerIP334: "A" } });
-  // re-sincronizacion: solo embebe en notas (consulta)
-  assert.equal(mgr.embedStudentActivitySolution("aprendiz_prueba", "guia-redes11-rap01", "b11TallerIP334", { x: "y" }), true);
+  // re-sincronizacion MASIVA: no recorre Redes 11.° (correccion 2026-11-08); solo la herramienta selectiva
+  assert.equal(mgr.embedStudentActivitySolution("aprendiz_prueba", "guia-redes11-rap01", "b11TallerIP334", { x: "y" }), false);
   // ...pero NUNCA se escriben campos de la guia: el relleno de campos sigue desactivado en 11.°
   assert.equal(mgr.applyApprovedSolutionsForFamily("guia-redes11-rap01"), false);
   assert.match(extractFn(read("js/firebase_db.js"), "async function adminApplySolutionToGuide("), /if \(isEvidenceStrictGuideFile\(fileName\)\) return/);
@@ -736,4 +736,165 @@ test("modelo: la respuesta modelo no cuenta como evidencia ni cambia el estado d
   const r = mgr.evaluateRapStatus(fam, g, {}, acts, SUBJ, TRUSTED);
   assert.equal(r.items.find((i) => i.id === "c11Taller331").evidence, "incompleta");
   assert.notEqual(r.status, "aprobado");
+});
+
+// ── Correccion 2026-11-08 (Codex NO FAVORABLE sobre 1feadb9): fecha original + alcance selectivo ──
+// Nube SIMULADA (mismo contrato que firebase_db: lectura estricta + escritura por familias cambiadas).
+function fakeCloud(docs) {
+  const cloud = { docs: plain(docs), writes: 0, failRead: false, failWrite: false };
+  cloud.db = {
+    cloudGetGradesStrict: async (u) => {
+      if (cloud.failRead) return { status: "error", grades: null, reason: "network" };
+      return cloud.docs[u] ? { status: "found", grades: plain(cloud.docs[u]), updateTime: "t" } : { status: "missing", grades: {} };
+    },
+    cloudUpdateGradesStrict: async (u, mutate) => {
+      if (cloud.failRead) return { ok: false, status: "read-failed", reason: "network" };
+      const cur = plain(cloud.docs[u] || {});
+      const next = mutate(plain(cur));
+      if (!next.families.length) return { ok: true, status: "saved", grades: cur, reason: "no-changes" };
+      if (cloud.failWrite) return { ok: false, status: "write-failed", reason: "network" };
+      const merged = Object.assign({}, cur);
+      next.families.forEach((f) => { merged[f] = next.grades[f]; });
+      cloud.docs[u] = merged; cloud.writes += 1;
+      return { ok: true, status: "saved", grades: plain(merged) };
+    },
+  };
+  return cloud;
+}
+const ORIGINAL = "2026-10-01T15:00:00.000Z";
+function approvedDocs() {
+  return {
+    aprendiz_prueba: {
+      "guia-redes11-rap02": { c11Taller331: "A", "c11Taller331:gradedAt": ORIGINAL, "c11Taller331:obs": "Buen trabajo", c11Lab341: "", c11LanA321: "D", "c11LanA321:gradedAt": ORIGINAL },
+      "guia-redes11-rap01": { b11TallerIP334: "A", "b11TallerIP334:gradedAt": ORIGINAL },
+      "guia-02-herramientas": { a: "A", "a:gradedAt": ORIGINAL },
+    },
+    otro_aprendiz_11b: { "guia-redes11-rap02": { c11Taller331: "A", "c11Taller331:gradedAt": ORIGINAL } },
+  };
+}
+const SOL = { g11c_331_e1_cidr: "/25", g11c_331_e1_mascara: "255.255.255.128", __criterios: "rubrica interna", vacio: "" };
+async function addViaTool(mgr, cloud, user, fam, act, sol) {
+  const before = (await cloud.db.cloudGetGradesStrict(user)).grades[fam] || {};
+  const plan = mgr.planModelAnswerAddition(before, act, sol);
+  const pending = mgr.addModelAnswerToApprovedActivity(user, fam, act, sol);
+  mgr.flushGradesCloudSync(user);
+  const saved = await pending;
+  const after = (await cloud.db.cloudGetGradesStrict(user)).grades || {};
+  return { before, plan, saved, after, check: mgr.verifyModelAnswerAddition(before, after[fam], act, sol) };
+}
+
+test("correccion: A existente + agregar respuesta modelo = nota, fecha original, observacion y demas campos intactos", async () => {
+  const { mgr, ctx } = loadGrades();
+  const cloud = fakeCloud(approvedDocs()); ctx.window._firebaseDb = cloud.db;
+  const r = await addViaTool(mgr, cloud, "aprendiz_prueba", "guia-redes11-rap02", "c11Taller331", SOL);
+  assert.equal(r.plan.status, "ready");
+  assert.equal(r.plan.gradedAt, ORIGINAL);
+  assert.deepEqual(plain(r.plan.solution), { g11c_331_e1_cidr: "/25", g11c_331_e1_mascara: "255.255.255.128" }, "sin __criterios ni vacios");
+  assert.equal(r.saved.ok, true);
+  const fam = r.after["guia-redes11-rap02"];
+  assert.equal(fam["c11Taller331:gradedAt"], ORIGINAL, "fecha original intacta");
+  assert.equal(fam.c11Taller331, "A");
+  assert.equal(fam["c11Taller331:obs"], "Buen trabajo");
+  assert.deepEqual(plain(fam["c11Taller331:solution"]), { g11c_331_e1_cidr: "/25", g11c_331_e1_mascara: "255.255.255.128" });
+  assert.ok(!JSON.stringify(fam).includes("rubrica interna"));
+  assert.equal(r.check.ok, true, JSON.stringify(r.check));
+  const orig = approvedDocs();
+  assert.deepEqual(plain(r.after["guia-redes11-rap01"]), orig.aprendiz_prueba["guia-redes11-rap01"], "otra guia del mismo aprendiz intacta");
+  assert.deepEqual(plain(r.after["guia-02-herramientas"]), orig.aprendiz_prueba["guia-02-herramientas"]);
+  assert.deepEqual(plain(cloud.docs.otro_aprendiz_11b), orig.otro_aprendiz_11b, "otro aprendiz / otra ficha intactos");
+  assert.equal(cloud.writes, 1);
+});
+
+test("correccion: A existente + solucion ya presente = sin cambios ni escrituras", async () => {
+  const docs = approvedDocs();
+  docs.aprendiz_prueba["guia-redes11-rap02"]["c11Taller331:solution"] = { g11c_331_e1_cidr: "/25", g11c_331_e1_mascara: "255.255.255.128" };
+  const { mgr, ctx } = loadGrades();
+  const cloud = fakeCloud(docs); ctx.window._firebaseDb = cloud.db;
+  const r = await addViaTool(mgr, cloud, "aprendiz_prueba", "guia-redes11-rap02", "c11Taller331", SOL);
+  assert.equal(r.plan.status, "already-present");
+  assert.equal(cloud.writes, 0, "una solucion identica no reescribe el documento");
+  assert.deepEqual(plain(cloud.docs), docs);
+});
+
+test("correccion: actividad pendiente o no aprobada = no se actualiza (ni aunque se fuerce la operacion)", async () => {
+  for (const act of ["c11Lab341", "c11LanA321", "c11Exploracion325"]) {
+    const { mgr, ctx } = loadGrades();
+    const cloud = fakeCloud(approvedDocs()); ctx.window._firebaseDb = cloud.db;
+    const r = await addViaTool(mgr, cloud, "aprendiz_prueba", "guia-redes11-rap02", act, SOL);
+    assert.equal(r.plan.status, "not-approved", act);
+    assert.equal(cloud.writes, 0, act);
+    assert.deepEqual(plain(cloud.docs), approvedDocs(), act);
+  }
+});
+
+test("correccion: otra ficha, otra guia u otra familia no se modifican; la re-sincronizacion masiva no recorre Redes 11.°", async () => {
+  const { mgr, ctx } = loadGrades();
+  const cloud = fakeCloud(approvedDocs()); ctx.window._firebaseDb = cloud.db;
+  const bad = await mgr.addModelAnswerToApprovedActivity("aprendiz_prueba", "guia-02-herramientas", "a", { k: "v" });
+  assert.equal(bad.ok, false); assert.equal(bad.reason, "family-not-allowed");
+  assert.equal(cloud.writes, 0);
+  const admin = read("js/admin_usuarios.js");
+  const compute = new Function("return (" + admin.match(/function computeSolutionResyncUpdates\(allGrades, bankLookup\) \{[\s\S]*?\n  \}/)[0] + ");")();
+  const ups = compute(approvedDocs().aprendiz_prueba, () => ({ k: "v" }));
+  assert.deepEqual(ups.map((u) => u.family), ["guia-02-herramientas"], "Redes 11.° fuera del recorrido masivo");
+  // la herramienta selectiva: solo 2 fichas de 11.°, solo las 3 guias, un aprendiz de ESA ficha, lectura estricta + confirmacion
+  assert.match(admin, /const MODEL_ANSWER_FICHAS = \["3168850", "3168852"\];/);
+  assert.match(admin, /const MODEL_ANSWER_FAMILIES = \["guia-redes11-rap01", "guia-redes11-rap02", "guia-redes11-rap03"\];/);
+  const preview = extractFn(admin, "async function handleModelAnswerPreview(");
+  assert.match(preview, /String\(sel\.user\.ficha \|\| ""\) !== sel\.ficha/);
+  assert.match(preview, /db\.cloudGetGradesStrict\(sel\.usernameKey\)/);
+  assert.match(preview, /ensureGradeSolutionsBank\(true\)/);
+  const apply = extractFn(admin, "async function handleModelAnswerApply(");
+  assert.match(apply, /confirmAdminAction\(/);
+  assert.match(apply, /addModelAnswerToApprovedActivity\(plan\.usernameKey, plan\.family, plan\.activityId, plan\.solution\)/);
+  assert.match(apply, /verifyModelAnswerAddition\(/);
+  assert.doesNotMatch(apply + preview, /applyApprovedSolutionToStudentCloud|adminApplySolutionToGuide|setStudentActivityGradeAndSolution|cloudSaveGradeSolutions|importGradeSolutions/, "no escribe en la guia, ni recalifica, ni toca el banco");
+});
+
+test("correccion: volver a marcar A (grilla o Excel) sobre una A existente conserva la fecha original y no escribe", async () => {
+  const { mgr, ctx } = loadGrades();
+  const cloud = fakeCloud(approvedDocs()); ctx.window._firebaseDb = cloud.db;
+  const p1 = mgr.setStudentActivityGradeAndSolution("aprendiz_prueba", "guia-redes11-rap02", "c11Taller331", "A", { g11c_331_e1_cidr: "/25" });
+  mgr.flushGradesCloudSync("aprendiz_prueba");
+  assert.equal((await p1).ok, true);
+  const p2 = mgr.applyStudentGradeChanges("aprendiz_prueba", "guia-redes11-rap01", { b11TallerIP334: "A", "b11TallerIP334:gradedAt": new Date().toISOString() }, []);
+  mgr.flushGradesCloudSync("aprendiz_prueba");
+  assert.equal((await p2).ok, true);
+  // grilla con banco no disponible: A sobre A tampoco borra la solucion ni la fecha
+  const docs = approvedDocs(); docs.aprendiz_prueba["guia-redes11-rap02"]["c11Taller331:solution"] = { x: "1" };
+  const c2 = fakeCloud(docs); ctx.window._firebaseDb = c2.db;
+  const p3 = mgr.setStudentActivityGradeAndSolution("aprendiz_prueba", "guia-redes11-rap02", "c11Taller331", "A", null);
+  mgr.flushGradesCloudSync("aprendiz_prueba");
+  assert.equal((await p3).ok, true);
+  assert.deepEqual(plain(cloud.docs), approvedDocs(), "fechas originales intactas");
+  assert.equal(cloud.writes, 0);
+  assert.deepEqual(plain(c2.docs), docs);
+  // D -> A es una calificacion NUEVA: ahi si se registra la fecha de hoy
+  ctx.window._firebaseDb = cloud.db;
+  const p4 = mgr.setStudentActivityGradeAndSolution("aprendiz_prueba", "guia-redes11-rap02", "c11LanA321", "A", null);
+  mgr.flushGradesCloudSync("aprendiz_prueba");
+  assert.equal((await p4).ok, true);
+  assert.notEqual(cloud.docs.aprendiz_prueba["guia-redes11-rap02"]["c11LanA321:gradedAt"], ORIGINAL);
+  assert.equal(cloud.docs.aprendiz_prueba["guia-redes11-rap02"]["c11Taller331:gradedAt"], ORIGINAL);
+});
+
+test("correccion: fallo de lectura o de escritura = sin perdida de datos; el reintento solo aplica si sigue en A", async () => {
+  const { mgr, ctx } = loadGrades();
+  const cloud = fakeCloud(approvedDocs()); ctx.window._firebaseDb = cloud.db;
+  cloud.failRead = true;
+  const p1 = mgr.addModelAnswerToApprovedActivity("aprendiz_prueba", "guia-redes11-rap02", "c11Taller331", SOL);
+  mgr.flushGradesCloudSync("aprendiz_prueba");
+  assert.equal((await p1).ok, false);
+  cloud.failRead = false; cloud.failWrite = true;
+  const r2 = await mgr.flushGradesCloudSync("aprendiz_prueba");
+  assert.equal(r2.ok, false);
+  assert.deepEqual(plain(cloud.docs), approvedDocs(), "nada se pierde ni se escribe a medias");
+  // entre tanto el instructor cambio la nota a D: el reintento ya no agrega nada
+  cloud.failWrite = false;
+  cloud.docs.aprendiz_prueba["guia-redes11-rap02"].c11Taller331 = "D";
+  const r3 = await mgr.flushGradesCloudSync("aprendiz_prueba");
+  assert.equal(r3.ok, true);
+  assert.equal(cloud.docs.aprendiz_prueba["guia-redes11-rap02"]["c11Taller331:solution"], undefined);
+  assert.equal(cloud.docs.aprendiz_prueba["guia-redes11-rap02"]["c11Taller331:gradedAt"], ORIGINAL);
+  assert.equal(mgr.getPendingGradesCount("aprendiz_prueba"), 0);
 });
