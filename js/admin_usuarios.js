@@ -3416,10 +3416,9 @@
   }
 
   function lookupBankSolution(guideFamily, activityId) {
-    // Fase 3 (Codex): en las Guias 9/10/11 de Redes de 11.° el banco es SOLO referencia
-    // del instructor (visor 📘). Calificar, importar notas desde Excel o re-sincronizar
-    // nunca obtienen una solucion para copiar al aprendiz.
-    if (isEvidenceStrictFamily(guideFamily)) return null;
+    // Ajuste 2026-11-08: en Redes 11.° la solucion se EMBEBE en las notas del aprendiz
+    // para consulta (sin "__criterios"), pero applyApprovedSolutionToStudentCloud y
+    // adminApplySolutionToGuide siguen bloqueados: nunca se escribe en su guia.
     const fam = (_gradeSolutionsBank || {})[guideFamily];
     if (!fam) return null;
     // Una columna con aliasIds califica tambien sus actividades gemelas: la

@@ -50,7 +50,7 @@
   };
 
   // Rediseno visual (fase 2): hoja de estilos propia, solo en estas guias.
-  var STYLE_HREF = "css/guia_redes11.css?v=20261108_7";
+  var STYLE_HREF = "css/guia_redes11.css?v=20261108_8";
   (function ensureStyles() {
     if (typeof document === "undefined" || !document.head || !document.createElement) return;
     if (document.querySelector('link[data-redes11-css]')) return;
@@ -83,7 +83,7 @@
     setState: function (next) { state = next; },
     getActor: getActor,
     periodicRefreshMs: 300000,
-    onHydrated: function () { hydrateFields(); applyOptionalLocks(); updateProgress(); renderLegacy(); },
+    onHydrated: function () { hydrateFields(); applyOptionalLocks(); updateProgress(); renderLegacy(); renderModelAnswers(); },
   });
 
   function saveState() {
@@ -250,6 +250,7 @@
       }
     });
     renderRapStatus();
+    renderModelAnswers();
     document.dispatchEvent(new CustomEvent("guide-progress-changed", { detail: { pct: pct } }));
   }
 
@@ -286,6 +287,58 @@
         var verif = i.evidence === "verificada" ? "&#9989; Verificada" : i.evidence === "nueva-verificacion" ? "&#9888;&#65039; Cambió: pendiente de nueva verificación" : i.evidence === "integridad-pendiente" ? "&#9203; Pendiente de verificación de integridad" : i.evidence === "por-verificar" ? "&#9203; Pendiente de verificación" : "—";
         return "<tr><td>" + esc((i.number ? i.number + " " : "") + i.label) + "</td><td>" + form + "</td><td>" + archivo + "</td><td>" + verif + "</td><td>" + (i.approved ? "&#9989; Sí" : i.failed ? "&#10060; No aprobada" : "&#9711; Pendiente") + "</td></tr>";
       }).join("") + "</tbody></table></div>";
+  }
+
+  // ── Respuestas modelo de actividades APROBADAS (ajuste 2026-11-08) ─────────
+  // Igual que en las demas guias, el aprendiz consulta la respuesta modelo que el
+  // instructor embebe en SUS notas al aprobar ({id}:solution). En Redes 11.° se muestra
+  // SOLO de forma visual: texto de ayuda (placeholder) en los campos VACIOS y un
+  // recuadro identificado. Nunca se escribe en el valor del campo ni en el estado del
+  // aprendiz: no es su respuesta, no es evidencia y no afecta el estado del RAP.
+  function renderModelAnswers() {
+    var mgr = window.activityGradesManager;
+    var session = portalAuth && portalAuth.getCurrentSession && portalAuth.getCurrentSession();
+    if (!mgr || typeof mgr.getStudentGrades !== "function" || !session || session.role !== "student" || !session.usernameKey) return;
+    var grades = mgr.getStudentGrades(session.usernameKey, templateName()) || {};
+    (getConfig().activities || []).forEach(function (act) {
+      var sol = grades[act.id + ":solution"];
+      var approved = grades[act.id] === "A" && sol && typeof sol === "object";
+      var labels = {};
+      (((act.wordExport || {}).sections) || []).forEach(function (sec) { if (sec && sec.storeKey) labels[sec.storeKey] = sec.label; });
+      var keys = approved ? Object.keys(sol).filter(function (k) { return k.indexOf("__") !== 0 && String(sol[k] == null ? "" : sol[k]).trim() !== ""; }) : [];
+      // campos: texto de ayuda solo si el campo esta VACIO
+      (act.formFields || []).concat(act.optionalFields || []).forEach(function (k) {
+        var el = document.querySelector('[data-store="' + k + '"]');
+        if (!el) return;
+        var has = keys.indexOf(k) !== -1;
+        var empty = String(state[k] == null ? "" : state[k]).trim() === "" && String(el.value || "").trim() === "";
+        if (has && empty && el.tagName !== "SELECT") {
+          if (!el.hasAttribute("data-r11-orig-placeholder")) el.setAttribute("data-r11-orig-placeholder", el.getAttribute("placeholder") || "");
+          el.setAttribute("placeholder", "Respuesta modelo del instructor: " + String(sol[k]));
+          el.classList.add("r11-model-hint");
+        } else if (el.hasAttribute("data-r11-orig-placeholder")) {
+          el.setAttribute("placeholder", el.getAttribute("data-r11-orig-placeholder"));
+          el.removeAttribute("data-r11-orig-placeholder");
+          el.classList.remove("r11-model-hint");
+        }
+      });
+      // recuadro de consulta dentro de la actividad
+      var holder = document.querySelector('[data-r11-model="' + act.id + '"]');
+      if (!keys.length) { if (holder) holder.remove(); return; }
+      if (!holder) {
+        var anchor = document.getElementById(act.id + "GradeMount") || document.querySelector('[data-act-std-delivery="' + act.id + '"]');
+        if (!anchor || !anchor.parentNode) return;
+        holder = document.createElement("details");
+        holder.className = "r11-model-answers";
+        holder.setAttribute("data-r11-model", act.id);
+        anchor.parentNode.insertBefore(holder, anchor.nextSibling);
+      }
+      holder.innerHTML = "<summary>&#128214; Respuesta modelo del instructor (actividad aprobada)</summary>" +
+        '<p class="intro-text">Es la respuesta de referencia del banco del instructor. <strong>No reemplaza ni se guarda como su respuesta</strong>; sus respuestas y evidencias se conservan tal como las envió.</p>' +
+        '<div class="table-scroll"><table class="data-table"><tbody>' +
+        keys.map(function (k) { return "<tr><th>" + esc(labels[k] || k) + "</th><td>" + esc(sol[k]) + "</td></tr>"; }).join("") +
+        "</tbody></table></div>";
+    });
   }
 
   // ── Version anterior (solo lectura) ──────────────────────────────────────
@@ -386,7 +439,8 @@
     });
     // Las notas de la nube llegan despues: el estado del RAP se recalcula al llegar
     // (en estas familias la nota no cambia el estado de la guia, asi que onChanged no se dispara).
-    if (pending && typeof pending.then === "function") pending.then(renderRapStatus, renderRapStatus);
+    var afterGrades = function () { renderRapStatus(); renderModelAnswers(); };
+    if (pending && typeof pending.then === "function") pending.then(afterGrades, afterGrades);
   }
 
   function initGuiaRedes11() {
@@ -451,7 +505,7 @@
   });
 
   // Expuesto para pruebas.
-  window.__redes11Internals = { LEGACY: LEGACY, legacyEntries: legacyEntries, renderRapStatus: renderRapStatus, stampStudentSubmission: stampStudentSubmission };
+  window.__redes11Internals = { LEGACY: LEGACY, legacyEntries: legacyEntries, renderRapStatus: renderRapStatus, stampStudentSubmission: stampStudentSubmission, renderModelAnswers: renderModelAnswers };
 
   window.initGuiaRedes = initGuiaRedes11;
   window.initGuiaRedes11 = initGuiaRedes11;

@@ -902,9 +902,11 @@
       set[activityId] = grade;
       set[gradedAtKey] = new Date().toISOString();
     }
-    if (isEvidenceStrictFamily(guideFamily)) {
-      // Fase 3: nunca se embebe solucion; tampoco se borra nada historico.
-    } else if (grade === "A" && solutionObj && typeof solutionObj === "object" && Object.keys(solutionObj).length) {
+    // Ajuste 2026-11-08: tambien en Redes 11.° se embebe la respuesta modelo en las
+    // NOTAS del aprendiz ({id}:solution, escritura solo-admin) para que pueda
+    // CONSULTARLA; en esas guias se muestra como ayuda visual y nunca se copia a sus
+    // campos ni a su estado (ver renderModelAnswers en script_guia_redes11.js).
+    if (grade === "A" && solutionObj && typeof solutionObj === "object" && Object.keys(solutionObj).length) {
       set[solKey] = solutionObj;
     } else {
       del.push(solKey);   // sin "A" => sin solucion embebida
@@ -920,7 +922,6 @@
   // Devuelve true si encolo el cambio; el resultado en la nube se consulta con
   // flushGradesCloudSync(usernameKey).
   function embedStudentActivitySolution(usernameKey, guideFamily, activityId, solutionObj) {
-    if (isEvidenceStrictFamily(guideFamily)) return false;   // fase 3: re-sincronizacion no aplica
     if (!getGradesKey(usernameKey)) return false;
     var fam = getStudentGrades(usernameKey, guideFamily);
     if (!fam || fam[activityId] !== "A") return false;

@@ -73,22 +73,26 @@ test("1. formulario vacio + aprobacion: la guia NO rellena campos, ni con soluci
   assert.ok(ctx.__domQueries > 0, "familias no estrictas sin cambios");
 });
 
-test("1. calificacion individual, Excel y re-sincronizacion no obtienen ni embeben soluciones", () => {
+test("1. calificar, Excel y re-sincronizar: la solucion va SOLO a las notas (consulta); nunca a la guia del aprendiz", () => {
   const admin = read("js/admin_usuarios.js");
   const ctx = {
-    _gradeSolutionsBank: { "guia-redes11-rap02": { c11Taller331: { g11c_331_e1_cidr: "/25" } }, "guia-02-herramientas": { a: { k: "v" } } },
+    _gradeSolutionsBank: { "guia-redes11-rap02": { c11Taller331: { g11c_331_e1_cidr: "/25", __criterios: "rubrica interna" } }, "guia-02-herramientas": { a: { k: "v" } } },
     getGradeCatalog: () => ({}),
     window: { activityGradesManager: { isEvidenceStrictFamily: (f) => /^guia-redes11-rap0[123]$/.test(f) } },
   };
   vm.createContext(ctx);
   vm.runInContext(extractFn(admin, "function isEvidenceStrictFamily(") + extractFn(admin, "function lookupBankSolution(") + ";this.l=lookupBankSolution;", ctx);
-  for (const fam of STRICT) assert.equal(ctx.l(fam, "c11Taller331"), null, fam);
+  // Ajuste 2026-11-08: en 11.° se obtiene la solucion para embeberla en las NOTAS (sin criterios internos)
+  assert.deepEqual(plain(ctx.l("guia-redes11-rap02", "c11Taller331")), { g11c_331_e1_cidr: "/25" });
   assert.deepEqual(plain(ctx.l("guia-02-herramientas", "a")), { k: "v" }, "otras familias conservan el banco");
   // las 3 rutas (individual 3692, Excel, resync) pasan por lookupBankSolution / applyApprovedSolutionToStudentCloud
   assert.match(extractFn(admin, "async function applyApprovedSolutionToStudentCloud("), /if \(isEvidenceStrictFamily\(guideFamily\)\) return \{ filled: 0 \};/);
   const { mgr } = loadGrades({ "guia-redes11-rap01": { b11TallerIP334: "A" } });
-  assert.equal(mgr.embedStudentActivitySolution("aprendiz_prueba", "guia-redes11-rap01", "b11TallerIP334", { x: "y" }), false, "resync no embebe");
-  assert.match(extractFn(read("js/activity_grades.js"), "function setStudentActivityGradeAndSolution("), /if \(isEvidenceStrictFamily\(guideFamily\)\) \{\s*\/\/ Fase 3: nunca se embebe solucion; tampoco se borra nada historico\.\s*\} else if/);
+  // re-sincronizacion: solo embebe en notas (consulta)
+  assert.equal(mgr.embedStudentActivitySolution("aprendiz_prueba", "guia-redes11-rap01", "b11TallerIP334", { x: "y" }), true);
+  // ...pero NUNCA se escriben campos de la guia: el relleno de campos sigue desactivado en 11.°
+  assert.equal(mgr.applyApprovedSolutionsForFamily("guia-redes11-rap01"), false);
+  assert.match(extractFn(read("js/firebase_db.js"), "async function adminApplySolutionToGuide("), /if \(isEvidenceStrictGuideFile\(fileName\)\) return/);
 });
 
 test("1. el servidor de datos rechaza escribir respuestas modelo en las 3 guias de 11.°", async () => {
@@ -654,4 +658,82 @@ test("3f.6 el portal real NO atesta identidad ni lee Drive (todo queda pendiente
   const a1 = JSON.stringify(st), a2 = JSON.stringify(notas);
   mgr.evaluateRapStatus("guia-redes11-rap02", notas, st, acts, SUBJ, TRUSTED);
   assert.equal(JSON.stringify(st), a1); assert.equal(JSON.stringify(notas), a2);
+});
+
+// ── Ajuste 2026-11-08: respuestas modelo visibles en actividades APROBADAS ─────
+// Simula la guia (DOM minimo) y comprueba que la respuesta modelo se muestra como
+// ayuda visual en campos vacios y en un recuadro, sin escribir en el estado del aprendiz.
+function runModelAnswers(gradesFam, stateInit, fieldValues) {
+  const decl = loadDeclarations();
+  const file = "grupo-11a-guia-10-redes-rap02.html";
+  const cfg = decl[file];
+  const els = {};
+  const mkEl = (key, tag) => ({
+    tagName: tag || "TEXTAREA", value: (fieldValues && fieldValues[key]) || "", attrs: { placeholder: "original" }, classes: new Set(),
+    getAttribute(n) { return n in this.attrs ? this.attrs[n] : null; }, setAttribute(n, v) { this.attrs[n] = String(v); },
+    hasAttribute(n) { return n in this.attrs; }, removeAttribute(n) { delete this.attrs[n]; },
+    classList: { add() {}, remove() {} },
+  });
+  cfg.activities.forEach((a) => (a.formFields || []).concat(a.optionalFields || []).forEach((k) => { els[k] = mkEl(k); }));
+  const inserted = [];
+  const anchors = {};
+  const store = {};
+  const usernameKey = "aprendiz_prueba";
+  store[`sena_portal:student:${usernameKey}:guide-data:guia_interactiva_grupo_11a_guia_10_redes_rap02_html`] = JSON.stringify(stateInit || {});
+  const document = {
+    addEventListener() {}, head: null, createElement: (t) => ({ tagName: t.toUpperCase(), attrs: {}, setAttribute(n, v) { this.attrs[n] = v; }, remove() { inserted.splice(inserted.indexOf(this), 1); } }),
+    querySelector: (sel) => {
+      let m = sel.match(/^\[data-store="([^"]+)"\]$/); if (m) return els[m[1]] || null;
+      m = sel.match(/^\[data-r11-model="([^"]+)"\]$/); if (m) return inserted.find((h) => h.attrs["data-r11-model"] === m[1]) || null;
+      m = sel.match(/^\[data-act-std-delivery="([^"]+)"\]$/); if (m) return null;
+      return null;
+    },
+    querySelectorAll: () => [], getElementById: (id) => { if (!/GradeMount$/.test(id)) return null; anchors[id] = anchors[id] || { parentNode: { insertBefore: (n) => { inserted.push(n); } }, nextSibling: null }; return anchors[id]; },
+  };
+  const ctx = { console, document, localStorage: { getItem: (k) => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = v; } } };
+  ctx.window = { location: { pathname: "/pages/guias/" + file }, addEventListener() {}, requestAnimationFrame: (f) => f(), __GUIDE_RUNTIME_CONTEXT__: { template: "guia-redes11-rap02" },
+    portalAuth: { getCurrentSession: () => ({ role: "student", usernameKey, user: { ficha: "3168850" } }), getScopedStorageKey: (k) => `sena_portal:student:${usernameKey}:guide-data:${k}` },
+    ActivityStandard: { getConfigForGuide: () => cfg },
+    activityGradesManager: { getStudentGrades: () => gradesFam } };
+  vm.createContext(ctx);
+  vm.runInContext(read("js/script_guia_redes11.js"), ctx);
+  ctx.window.__redes11Internals.renderModelAnswers();
+  return { els, inserted, store, key: Object.keys(store)[0] };
+}
+
+test("modelo: actividad APROBADA con campo vacio muestra la respuesta modelo como ayuda visual, sin escribir su estado", () => {
+  const sol = { g11c_331_e1_cidr: "/25", g11c_331_e1_bits: "1 bit", __criterios: "rubrica interna" };
+  const before = JSON.stringify({ g11c_331_e1_bits: "mi respuesta: 1" });
+  // el campo del aprendiz ya hidratado en la guia trae su respuesta
+  const r = runModelAnswers({ c11Taller331: "A", "c11Taller331:solution": sol }, JSON.parse(before), { g11c_331_e1_bits: "mi respuesta: 1" });
+  // campo vacio: ayuda visual con la respuesta modelo; el VALOR sigue vacio
+  assert.equal(r.els.g11c_331_e1_cidr.attrs.placeholder, "Respuesta modelo del instructor: /25");
+  assert.equal(r.els.g11c_331_e1_cidr.value, "");
+  // campo con respuesta del aprendiz: se conserva, sin ayuda superpuesta
+  assert.equal(r.els.g11c_331_e1_bits.attrs.placeholder, "original");
+  // recuadro identificado, sin criterios internos
+  const box = r.inserted.find((h) => h.attrs["data-r11-model"] === "c11Taller331");
+  assert.ok(box && /Respuesta modelo del instructor/.test(box.innerHTML) && /\/25/.test(box.innerHTML));
+  assert.ok(!/rubrica interna|__criterios/.test(box.innerHTML));
+  // el estado guardado del aprendiz no cambia
+  assert.equal(r.store[r.key], before);
+});
+
+test("modelo: actividades pendientes o no aprobadas NO muestran respuesta modelo", () => {
+  for (const grade of ["", "D", undefined]) {
+    const r = runModelAnswers({ c11Taller331: grade, "c11Taller331:solution": { g11c_331_e1_cidr: "/25" } }, {});
+    assert.equal(r.els.g11c_331_e1_cidr.attrs.placeholder, "original", String(grade));
+    assert.equal(r.inserted.length, 0);
+  }
+});
+
+test("modelo: la respuesta modelo no cuenta como evidencia ni cambia el estado del RAP", () => {
+  const decl = loadDeclarations();
+  const acts = decl["grupo-11a-guia-10-redes-rap02.html"].activities;
+  const { mgr } = loadGrades();
+  const fam = "guia-redes11-rap02";
+  const g = { c11Taller331: "A", "c11Taller331:solution": { g11c_331_e1_cidr: "/25" } };
+  const r = mgr.evaluateRapStatus(fam, g, {}, acts, SUBJ, TRUSTED);
+  assert.equal(r.items.find((i) => i.id === "c11Taller331").evidence, "incompleta");
+  assert.notEqual(r.status, "aprobado");
 });

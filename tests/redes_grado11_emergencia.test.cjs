@@ -210,7 +210,8 @@ test("banco: los criterios del instructor (__criterios) NUNCA se embeben en la n
   ctx.window = { activityGradesManager: { isEvidenceStrictFamily: (f) => /^guia-redes11-rap0[123]$/.test(f) } };
   vm.createContext(ctx);
   vm.runInContext(extractFn(admin, "function isEvidenceStrictFamily(") + extractFn(admin, "function lookupBankSolution(") + ";this.lookupBankSolution=lookupBankSolution;", ctx);
-  assert.equal(ctx.lookupBankSolution("guia-redes11-rap02", "c11Taller331"), null, "11.°: nunca se embebe");
+  // ajuste 2026-11-08: 11.° obtiene la solucion para consulta en notas, sin "__criterios"
+  assert.equal(Object.keys(JSON.parse(JSON.stringify(ctx.lookupBankSolution("guia-redes11-rap02", "c11Taller331")) || {})).some((k) => k.indexOf("__") === 0), false);
   assert.deepEqual(JSON.parse(JSON.stringify(ctx.lookupBankSolution("guia-02-herramientas", "act"))), { campo: "modelo" });
   assert.equal(ctx.lookupBankSolution("guia-02-herramientas", "soloArchivo"), null, "actividad de archivo: no embebe nada");
   // y del lado del aprendiz tampoco se aplica una clave __ (defensa en profundidad)
