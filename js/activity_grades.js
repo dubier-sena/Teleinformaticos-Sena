@@ -573,13 +573,30 @@
     : function (fn) { fn(); return 0; };
   var cancelTimeout = typeof clearTimeout === "function" ? clearTimeout : function () {};
 
+  // Correccion critica 2026-11-08: la respuesta modelo selectiva de Redes 11.° ya
+  // NO usa esta cola. Una operacion selectiva pendiente de la version anterior
+  // (28fba33, marcada con "requireApproved") se NEUTRALIZA al cargar: se descarta
+  // sin tocar ninguna otra operacion legitima, para que nunca se reejecute sola.
+  function isLegacySelectiveModelOp(op) {
+    return !!(op && typeof op === "object" && Object.prototype.hasOwnProperty.call(op, "requireApproved"));
+  }
+  var neutralizedSelectiveOps = 0;
   function loadPendingGradeOps() {
     try {
       var parsed = readJson(localStorage.getItem(GRADES_PENDING_STORAGE_KEY), {});
-      return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+      var out = {};
+      Object.keys(parsed).forEach(function (user) {
+        var list = Array.isArray(parsed[user]) ? parsed[user] : [];
+        var kept = list.filter(function (op) { return !isLegacySelectiveModelOp(op); });
+        neutralizedSelectiveOps += list.length - kept.length;
+        if (kept.length) out[user] = kept;
+      });
+      return out;
     } catch (e) { return {}; }
   }
   var gradesPendingOps = loadPendingGradeOps();
+  if (neutralizedSelectiveOps) persistPendingGradeOps();
 
   function persistPendingGradeOps() {
     var clean = {};
@@ -609,9 +626,8 @@
         del = del.filter(function (k) { return k !== id + ":gradedAt" && k !== id + ":solution"; });
       }
     });
-    // Agregar respuesta modelo (herramienta selectiva): solo si la actividad sigue
-    // en "A" en la nube; si no, la operacion no cambia nada.
-    if (op.requireApproved && family[op.requireApproved] !== "A") return all;
+    // Operacion selectiva de la version anterior: nunca se aplica (ver loadPendingGradeOps).
+    if (isLegacySelectiveModelOp(op)) return all;
     Object.keys(set).forEach(function (k) { family[k] = set[k]; });
     del.forEach(function (k) { delete family[k]; });
     all[op.family] = family;
@@ -794,7 +810,7 @@
 
   // Encola una operacion, la refleja en el cache local (para que la grilla la
   // muestre al instante) y programa la escritura. -> Promise del resultado REAL.
-  function queueGradeOp(usernameKey, family, set, del, extra) {
+  function queueGradeOp(usernameKey, family, set, del) {
     if (!usernameKey || !family) {
       return Promise.resolve({ ok: false, status: "aborted", reason: "invalid-args", message: "Faltan datos del aprendiz o de la guia." });
     }
@@ -812,7 +828,6 @@
       var keep = Object.keys(op.set).filter(function (k) { return k.indexOf(":") === -1 && op.set[k] === "A"; });
       if (keep.length) op.keepApprovedIds = keep;
     }
-    if (extra && extra.requireApproved) op.requireApproved = String(extra.requireApproved);
     if (!gradesPendingOps[usernameKey]) gradesPendingOps[usernameKey] = [];
     gradesPendingOps[usernameKey].push(op);
     persistPendingGradeOps();
@@ -954,7 +969,7 @@
   // flushGradesCloudSync(usernameKey).
   function embedStudentActivitySolution(usernameKey, guideFamily, activityId, solutionObj) {
     // Redes 11.°: la re-sincronizacion masiva NO las recorre (correccion 2026-11-08);
-    // solo la herramienta selectiva addModelAnswerToApprovedActivity.
+    // solo la herramienta selectiva (transaccion atomica, sin cola).
     if (isEvidenceStrictFamily(guideFamily)) return false;
     if (!getGradesKey(usernameKey)) return false;
     var fam = getStudentGrades(usernameKey, guideFamily);
@@ -1011,19 +1026,9 @@
     var solutionOk = !!got && JSON.stringify(got) === JSON.stringify(cleanModelSolution(solution));
     return { ok: solutionOk && !changed.length && a[activityId] === "A", solutionOk: solutionOk, changedKeys: changed };
   }
-  // Encola SOLO {actId}:solution, condicionado a que la actividad siga en "A" en la
-  // lectura fresca de la nube. Nunca toca la nota, gradedAt, :obs ni la guia.
-  function addModelAnswerToApprovedActivity(usernameKey, guideFamily, activityId, solution) {
-    if (!isEvidenceStrictFamily(guideFamily)) {
-      return Promise.resolve({ ok: false, status: "aborted", reason: "family-not-allowed", message: "Solo para las guias de Redes de 11.°." });
-    }
-    if (!getGradesKey(usernameKey)) return Promise.resolve({ ok: false, status: "aborted", reason: "no-storage-key" });
-    var clean = cleanModelSolution(solution);
-    if (!activityId || !Object.keys(clean).length) return Promise.resolve({ ok: false, status: "aborted", reason: "no-solution" });
-    var set = {};
-    set[activityId + ":solution"] = clean;
-    return queueGradeOp(usernameKey, guideFamily, set, [], { requireApproved: activityId });
-  }
+  // La ESCRITURA de la respuesta modelo selectiva NO pasa por aqui: es una
+  // transaccion atomica de un solo intento (firebase_db.cloudAddModelSolutionAtomic),
+  // sin cola persistente ni reintentos (correccion critica 2026-11-08).
 
   function setStudentActivityObservation(usernameKey, guideFamily, activityId, obs) {
     if (!getGradesKey(usernameKey)) return Promise.resolve({ ok: false, status: "aborted", reason: "no-storage-key" });
@@ -1847,7 +1852,7 @@
     embedStudentActivitySolution: embedStudentActivitySolution,
     planModelAnswerAddition: planModelAnswerAddition,
     verifyModelAnswerAddition: verifyModelAnswerAddition,
-    addModelAnswerToApprovedActivity: addModelAnswerToApprovedActivity,
+    getNeutralizedSelectiveOpsCount: function () { return neutralizedSelectiveOps; },
     setStudentActivityObservation: setStudentActivityObservation,
     getStudentActivityObservation: getStudentActivityObservation,
     getMyGrades: getMyGrades,

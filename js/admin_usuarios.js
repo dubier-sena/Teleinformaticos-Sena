@@ -4256,8 +4256,13 @@
     byId("grades-model-apply-btn")?.addEventListener("click", handleModelAnswerApply);
   }
 
+  const MODEL_ANSWER_CHANGED_MSG = "La información cambió. Vuelva a consultar la vista previa.";
+
+  // Vista previa: lectura estricta de la nota (con su version) y del banco (con su
+  // version). Registra exactamente lo mostrado; la confirmacion solo puede escribir
+  // si TODO sigue igual (transaccion atomica en firebase_db).
   async function handleModelAnswerPreview() {
-    resetModelAnswerPlan("Leyendo la nota en Firebase...");
+    resetModelAnswerPlan("Leyendo la nota y el banco en Firebase...");
     const setStatus = (msg) => { const st = byId("grades-model-status"); if (st) st.textContent = msg; };
     const sel = modelAnswerSelection();
     const db = window._firebaseDb;
@@ -4267,24 +4272,31 @@
       setStatus("Seleccione ficha (3168850 o 3168852), aprendiz de esa ficha, guia (RAP 01, 02 o 03) y actividad.");
       return;
     }
-    if (!db || typeof db.cloudGetGradesStrict !== "function" || !mgr || typeof mgr.planModelAnswerAddition !== "function") {
-      setStatus("Firebase o el modulo de notas no estan disponibles (recargue la pagina). No se cambio nada.");
+    if (!db || typeof db.cloudGetGradesStrict !== "function" || typeof db.cloudGetGradeSolutionsVersioned !== "function" ||
+        typeof db.cloudAddModelSolutionAtomic !== "function" || !mgr || typeof mgr.planModelAnswerAddition !== "function") {
+      setStatus("La actualizacion selectiva no esta disponible: falta la escritura atomica de Firebase (recargue la pagina). No se cambio nada.");
       return;
     }
-    let read;
+    let read, bank;
     try { read = await db.cloudGetGradesStrict(sel.usernameKey); } catch (_) { read = null; }
-    if (!read || (read.status !== "found" && read.status !== "missing")) {
-      setStatus("No se pudo leer la nota en Firebase. No se cambio nada; intente mas tarde.");
+    if (!read || read.status !== "found" || !read.updateTime) {
+      setStatus(read && read.status === "missing"
+        ? "El aprendiz no tiene notas en Firebase: la actividad no esta Aprobada. No se agrega nada."
+        : "No se pudo leer la nota en Firebase. No se cambio nada; intente mas tarde.");
+      return;
+    }
+    try { bank = await db.cloudGetGradeSolutionsVersioned(); } catch (_) { bank = null; }
+    if (!bank || bank.status !== "found" || !bank.updateTime) {
+      setStatus("No se pudo leer el banco en Firebase. No se cambio nada; intente mas tarde.");
       return;
     }
     const before = JSON.parse(JSON.stringify(((read.grades || {})[sel.family]) || {}));
-    await ensureGradeSolutionsBank(true);   // lectura del banco en Firebase (sin modificarlo)
-    const bankFamily = (_gradeSolutionsBank || {})[sel.family];
-    if (!bankFamily || !bankFamily[sel.activityId]) {
-      setStatus("El banco de Firebase no tiene respuesta para esta actividad (o no se pudo leer). No se cambio nada.");
+    const bankEntry = ((bank.solutions || {})[sel.family] || {})[sel.activityId];
+    if (!bankEntry) {
+      setStatus("El banco de Firebase no tiene respuesta para esta actividad. No se cambio nada.");
       return;
     }
-    const plan = mgr.planModelAnswerAddition(before, sel.activityId, lookupBankSolution(sel.family, sel.activityId));
+    const plan = mgr.planModelAnswerAddition(before, sel.activityId, bankEntry);
     const name = sel.user.fullName || sel.usernameKey;
     if (plan.status === "not-approved") {
       setStatus(`La actividad no esta Aprobada (A) en Firebase${plan.grade ? " (nota actual: " + plan.grade + ")" : " (pendiente)"}. No se agrega nada.`);
@@ -4301,57 +4313,77 @@
         Nota A y fecha de calificacion ${escapeHtml(plan.gradedAt || "(sin fecha)")} se conservan.</p>
         <table class="grades-model-preview-table"><thead><tr><th>Campo</th><th>Respuesta modelo</th></tr></thead><tbody>${rows}</tbody></table>`;
     }
-    modelAnswerPlan = { usernameKey: sel.usernameKey, ficha: sel.ficha, family: sel.family, activityId: sel.activityId,
-      name, label: sel.act.label || sel.activityId, before, solution: plan.solution };
+    const prevSol = before[sel.activityId + ":solution"];
+    modelAnswerPlan = {
+      usernameKey: sel.usernameKey, ficha: sel.ficha, family: sel.family, activityId: sel.activityId,
+      name, label: sel.act.label || sel.activityId, before,
+      expected: {
+        gradesUpdateTime: read.updateTime,
+        bankUpdateTime: bank.updateTime,
+        gradedAt: String(before[sel.activityId + ":gradedAt"] || ""),
+        previousSolution: prevSol === undefined ? null : JSON.parse(JSON.stringify(prevSol)),
+        solution: plan.solution,
+      },
+    };
     const btn = byId("grades-model-apply-btn");
     if (btn) btn.disabled = false;
     setStatus("Revise la vista previa y pulse «Agregar respuesta modelo» para confirmar.");
   }
 
+  // Confirmacion: UN intento atomico. La autorizacion de la vista previa se consume
+  // antes de escribir (no se reutiliza). Sin cola, sin reintentos automaticos.
   async function handleModelAnswerApply() {
     const plan = modelAnswerPlan;
     const setStatus = (msg) => { const st = byId("grades-model-status"); if (st) st.textContent = msg; };
     const sel = modelAnswerSelection();
-    if (!plan || sel.usernameKey !== plan.usernameKey || sel.family !== plan.family || sel.activityId !== plan.activityId) {
-      resetModelAnswerPlan("La seleccion cambio: genere de nuevo la vista previa.");
+    if (!plan || sel.usernameKey !== plan.usernameKey || sel.family !== plan.family || sel.activityId !== plan.activityId ||
+        sel.ficha !== plan.ficha || !sel.user || String(sel.user.ficha || "") !== plan.ficha) {
+      resetModelAnswerPlan(MODEL_ANSWER_CHANGED_MSG);
       return;
     }
     const mgr = window.activityGradesManager;
     const db = window._firebaseDb;
     const confirmed = await confirmAdminAction(
-      `Agregar la respuesta modelo (${Object.keys(plan.solution).length} campos) a ${plan.name}, ${plan.label}. ` +
+      `Agregar la respuesta modelo (${Object.keys(plan.expected.solution).length} campos) a ${plan.name}, ${plan.label}. ` +
       "Solo se agrega en sus notas; no cambia la nota, su fecha, observaciones, entregas ni sus respuestas. ¿Continuar?"
     );
-    if (!confirmed) { setStatus("Cancelado. No se cambio nada."); return; }
-    const btn = byId("grades-model-apply-btn");
-    if (btn) btn.disabled = true;
-    modelAnswerPlan = null;
-    setStatus("Guardando...");
-    let saved;
+    if (modelAnswerPlan !== plan) { setStatus(MODEL_ANSWER_CHANGED_MSG); return; }
+    if (!confirmed) { resetModelAnswerPlan("Cancelado. No se cambio nada."); return; }
+    resetModelAnswerPlan("Guardando (una sola operacion atomica)...");   // autorizacion consumida
+    let res;
     try {
-      const pending = mgr.addModelAnswerToApprovedActivity(plan.usernameKey, plan.family, plan.activityId, plan.solution);
-      mgr.flushGradesCloudSync(plan.usernameKey);
-      saved = await pending;
-    } catch (e) { saved = { ok: false, message: e && e.message ? e.message : String(e) }; }
-    if (!saved || !saved.ok) {
-      setStatus("No se pudo guardar en Firebase: " + ((saved && saved.message) || "error desconocido") +
-        ". Las notas no se modificaron; el cambio queda pendiente y solo se aplicara si la actividad sigue en A.");
+      res = await db.cloudAddModelSolutionAtomic(plan.usernameKey, plan.family, plan.activityId, plan.expected);
+    } catch (e) { res = { status: "uncertain", reason: "exception" }; }
+    const status = (res && res.status) || "uncertain";
+    recordAdminAuditAction({ action: "grade-model-answer-add", target: plan.usernameKey,
+      detail: `${plan.family}/${plan.activityId} resultado=${status}${res && res.reason ? " (" + res.reason + ")" : ""}` });
+    if (status === "changed") { setStatus(MODEL_ANSWER_CHANGED_MSG); return; }
+    if (status === "already-present") { setStatus(`${plan.name}: la respuesta modelo ya estaba presente. Sin cambios.`); return; }
+    if (status === "error") {
+      setStatus("No se guardo en Firebase (" + ((res && res.reason) || "error") + "). No queda ningun intento pendiente: " +
+        "si todavia hace falta, genere una nueva vista previa y confirme de nuevo.");
       return;
     }
+    // ok o incierto: consultar el estado REAL; nunca se reescribe automaticamente.
+    if (status === "uncertain") setStatus("Resultado incierto (sin respuesta de Firebase). Consultando el estado actual...");
     let after;
     try { after = await db.cloudGetGradesStrict(plan.usernameKey); } catch (_) { after = null; }
     if (!after || after.status !== "found") {
-      setStatus("Guardado, pero no se pudo releer Firebase para verificarlo. Vuelva a generar la vista previa para comprobarlo.");
+      setStatus((status === "ok" ? "Guardado, pero no" : "No") + " se pudo releer Firebase para comprobarlo. No se reintentara solo: " +
+        "genere una nueva vista previa para ver el estado actual.");
       return;
     }
-    const check = mgr.verifyModelAnswerAddition(plan.before, (after.grades || {})[plan.family], plan.activityId, plan.solution);
-    setStatus(check.ok
-      ? `Verificado en Firebase: respuesta modelo agregada a ${plan.name}. Nota, fecha y demas campos intactos.`
-      : (check.solutionOk
-        ? `Respuesta agregada, pero otros campos de la guia cambiaron entre la vista previa y la verificacion (${check.changedKeys.join(", ")}); revise si otra sesion califico al mismo tiempo.`
-        : "La verificacion NO encontro la respuesta modelo esperada en Firebase (la actividad pudo dejar de estar en A). Revise la nota."));
-    recordAdminAuditAction({ action: "grade-model-answer-add", target: plan.usernameKey,
-      detail: `${plan.family}/${plan.activityId} verificado=${check.ok}` });
+    const check = mgr.verifyModelAnswerAddition(plan.before, (after.grades || {})[plan.family], plan.activityId, plan.expected.solution);
+    if (typeof mgr.setAllStudentGrades === "function") { try { mgr.setAllStudentGrades(plan.usernameKey, after.grades || {}); } catch (_) { /* cache best-effort */ } }
+    if (check.ok) {
+      setStatus(`Verificado en Firebase: respuesta modelo agregada a ${plan.name}. Nota, fecha y demas campos intactos.`);
+    } else if (check.solutionOk) {
+      setStatus(`La respuesta modelo esta en Firebase, pero otros campos de la guia cambiaron despues (${check.changedKeys.join(", ")}); revise si otra sesion califico.`);
+    } else {
+      setStatus(status === "uncertain"
+        ? "La operacion NO se aplico. No se reintentara sola: si todavia hace falta, genere una nueva vista previa y confirme de nuevo."
+        : "La verificacion NO encontro la respuesta modelo esperada en Firebase. Genere una nueva vista previa.");
+    }
   }
 
   function patchGuideState(usernameKey, guideFamily, patch) {

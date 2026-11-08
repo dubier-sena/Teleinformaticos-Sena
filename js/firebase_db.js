@@ -1831,6 +1831,139 @@
     return { status: "found", solutions: sol, updateTime: r.updateTime, reason: "" };
   }
 
+  // ── Respuesta modelo en UNA actividad aprobada de Redes 11.° (correccion critica
+  // 2026-11-08, Codex NO FAVORABLE sobre 28fba33) ─────────────────────────────
+  // Una sola TRANSACCION de Firestore (beginTransaction -> batchGet en la
+  // transaccion -> commit en la transaccion con precondicion de version). Dentro
+  // de ella se comprueba, sobre lo leido en la propia transaccion, que todo siga
+  // EXACTAMENTE como en la vista previa: version del documento de notas, nota A,
+  // fecha de calificacion, solucion existente, identidad, version del banco y la
+  // respuesta autorizada. Cualquier diferencia => rollback y CERO escrituras.
+  // Sin cola, sin reintentos, sin respaldo a Drive ni ningun otro escritor
+  // posterior: cada llamada es una accion expresa del instructor.
+  // -> { status: "ok"|"changed"|"already-present"|"error"|"uncertain", reason, updateTime }
+  var MODEL_ANSWER_FAMILY_RE = /^guia-redes11-rap0[123]$/;
+  function modelAnswerStable(v) {
+    if (v === undefined || v === null) return "null";
+    if (typeof v !== "object") return JSON.stringify(v);
+    return "{" + Object.keys(v).sort().map(function (k) { return JSON.stringify(k) + ":" + modelAnswerStable(v[k]); }).join(",") + "}";
+  }
+  function cleanModelAnswerEntry(entry) {
+    var clean = {};
+    Object.keys(entry && typeof entry === "object" ? entry : {}).forEach(function (k) {
+      if (k.indexOf("__") === 0) return;
+      var v = entry[k];
+      if (v === undefined || v === null || typeof v === "object" || String(v).trim() === "") return;
+      clean[k] = v;
+    });
+    return clean;
+  }
+  async function cloudAddModelSolutionAtomic(usernameKey, family, activityId, expected) {
+    var exp = expected || {};
+    if (!usernameKey || !MODEL_ANSWER_FAMILY_RE.test(String(family || "")) || !activityId || String(activityId).indexOf(":") !== -1) {
+      return { status: "error", reason: "invalid-args" };
+    }
+    if (!exp.gradesUpdateTime || !exp.bankUpdateTime || !exp.solution || typeof exp.solution !== "object") {
+      return { status: "error", reason: "missing-preview" };
+    }
+    var authorized = cleanModelAnswerEntry(exp.solution);
+    if (!Object.keys(authorized).length || modelAnswerStable(authorized) !== modelAnswerStable(exp.solution)) {
+      return { status: "error", reason: "invalid-solution" };
+    }
+    if (shouldBlockCloudWrites()) return { status: "error", reason: "write-budget" };
+    if (!(await canCallFirestore(COL_GRADES, true))) return { status: "error", reason: "unavailable" };
+    var root = "projects/" + FIREBASE_PROJECT_ID + "/databases/(default)/documents/";
+    var gradesName = root + COL_GRADES + "/" + usernameKey;
+    var bankName = root + COL_GRADE_SOLUTIONS + "/bank";
+    var tx = "";
+    async function post(op, body) {
+      return fetchWithTimeout(BASE_URL + ":" + op + "?key=" + FIREBASE_API_KEY, {
+        method: "POST",
+        headers: await authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify(body),
+      }, API_TIMEOUT_MS);
+    }
+    async function rollback() {
+      if (!tx) return;
+      try { await post("rollback", { transaction: tx }); } catch (_) { /* la transaccion expira sola sin escribir */ }
+    }
+    async function abort(status, reason) { await rollback(); return { status: status, reason: reason }; }
+    // 1) Abrir la transaccion. Cualquier fallo aqui es CIERTO: nada se escribio.
+    try {
+      var begin = await post("beginTransaction", { options: { readWrite: {} } });
+      if (!begin.ok) {
+        if (isAuthRejection(begin.status)) markFirestoreRejection();
+        return { status: "error", reason: "begin-http-" + begin.status };
+      }
+      tx = ((await begin.json()) || {}).transaction || "";
+    } catch (e) { return { status: "error", reason: "begin-network" }; }
+    if (!tx) return { status: "error", reason: "begin-no-transaction" };
+    // 2) Leer DENTRO de la transaccion las notas del aprendiz y el banco.
+    var docs = {};
+    try {
+      var res = await post("batchGet", { documents: [gradesName, bankName], transaction: tx });
+      if (!res.ok) return abort("error", "read-http-" + res.status);
+      var rows = await res.json();
+      registerFirestoreOperation("read", 2);
+      (Array.isArray(rows) ? rows : []).forEach(function (r) {
+        if (r && r.found && r.found.name) docs[r.found.name.split("/documents/")[1]] = r.found;
+      });
+    } catch (e) { return abort("error", "read-network"); }
+    var gDoc = docs[COL_GRADES + "/" + usernameKey];
+    var bDoc = docs[COL_GRADE_SOLUTIONS + "/bank"];
+    if (!gDoc || !bDoc) return abort("changed", "doc-missing");
+    if (gDoc.updateTime !== exp.gradesUpdateTime) return abort("changed", "grades-version");
+    if (bDoc.updateTime !== exp.bankUpdateTime) return abort("changed", "bank-version");
+    var gData = stripFsMeta(fromFsDoc(gDoc) || {});
+    var bData = stripFsMeta(fromFsDoc(bDoc) || {});
+    if (gData.usernameKey !== undefined && gData.usernameKey !== usernameKey) return abort("changed", "identity");
+    var famGrades = gData.grades && gData.grades[family];
+    if (!isPlainGradesObject(famGrades)) return abort("changed", "family-missing");
+    if (famGrades[activityId] !== "A") return abort("changed", "grade");
+    if (String(famGrades[activityId + ":gradedAt"] || "") !== String(exp.gradedAt || "")) return abort("changed", "gradedAt");
+    var current = famGrades[activityId + ":solution"];
+    if (modelAnswerStable(current === undefined ? null : current) !== modelAnswerStable(exp.previousSolution === undefined ? null : exp.previousSolution)) {
+      return abort("changed", "solution");
+    }
+    var bankEntry = ((bData.solutions || {})[family] || {})[activityId];
+    if (modelAnswerStable(cleanModelAnswerEntry(bankEntry)) !== modelAnswerStable(authorized)) return abort("changed", "bank-solution");
+    if (modelAnswerStable(current === undefined ? null : current) === modelAnswerStable(authorized)) return abort("already-present", "same");
+    // 3) Escribir SOLO la familia (con la solucion agregada), en la transaccion y
+    //    con precondicion de version. Nada de reintentos.
+    var nextFamily = JSON.parse(JSON.stringify(famGrades));
+    nextFamily[activityId + ":solution"] = authorized;
+    var gradesField = {};
+    gradesField[family] = nextFamily;
+    var commitRes;
+    try {
+      commitRes = await post("commit", {
+        transaction: tx,
+        writes: [{
+          update: { name: gradesName, fields: toFsDoc({ grades: gradesField, updatedAt: new Date().toISOString() }).fields },
+          updateMask: { fieldPaths: ["grades." + escapeFirestoreFieldPath(family), "updatedAt"] },
+          currentDocument: { updateTime: exp.gradesUpdateTime },
+        }],
+      });
+    } catch (e) {
+      // La peticion salio y no hubo respuesta: puede haberse aplicado o no.
+      return { status: "uncertain", reason: "commit-network" };
+    }
+    if (commitRes.ok) {
+      registerFirestoreOperation("write", 1);
+      markFirestoreSuccess();
+      var committed = null;
+      try { committed = await commitRes.json(); } catch (_) { committed = null; }
+      var wr = committed && committed.writeResults && committed.writeResults[0];
+      return { status: "ok", reason: "", updateTime: (wr && wr.updateTime) || (committed && committed.commitTime) || "" };
+    }
+    if ((commitRes.status === 400 || commitRes.status === 409 || commitRes.status === 412) && (await isStrictPreconditionConflict(commitRes))) {
+      return { status: "changed", reason: "commit-conflict" };
+    }
+    if (isAuthRejection(commitRes.status)) markFirestoreRejection();
+    if (commitRes.status >= 500) return { status: "uncertain", reason: "commit-http-" + commitRes.status };
+    return { status: "error", reason: "commit-http-" + commitRes.status };
+  }
+
   async function cloudSaveGradeSolutionsStrict(solutions, precondition) {
     if (!solutions || typeof solutions !== "object" || Array.isArray(solutions)) return { status: "error", updateTime: "", reason: "invalid-args" };
     var pre = precondition || {};
@@ -5067,6 +5200,7 @@
     cloudGetGradeSolutions: cloudGetGradeSolutions,
     cloudGetGradeSolutionsStrict: cloudGetGradeSolutionsStrict,
     cloudGetGradeSolutionsVersioned: cloudGetGradeSolutionsVersioned,
+    cloudAddModelSolutionAtomic: cloudAddModelSolutionAtomic,
     cloudSaveGradeSolutionsStrict: cloudSaveGradeSolutionsStrict,
     cloudSaveGradeSolutions: cloudSaveGradeSolutions,
     cloudGetGradeComments: cloudGetGradeComments,
