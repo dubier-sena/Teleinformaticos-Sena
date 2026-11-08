@@ -190,10 +190,15 @@
 [data-redes11-guide] .r11-rap { margin-top: var(--r11-gap); padding: var(--r11-gap); border: 1px solid var(--r11-border); border-left: 4px solid var(--r11-brand); border-radius: var(--r11-radius); background: var(--surface-1, #fff); }
 [data-redes11-guide] .r11-rap__head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
 
-/* Respuestas modelo del instructor (solo visual, nunca valor del campo) */
-[data-redes11-guide] .r11-model-hint::placeholder { color: var(--color-info-strong, #0d47a1); font-style: italic; opacity: 1; }
-[data-redes11-guide] .r11-model-answers { margin-top: var(--space-3, 12px); border: 1px solid var(--color-info, #1565c0); border-left-width: 4px; border-radius: var(--radius-sm, 8px); background: var(--color-info-soft, #e3f2fd); padding: 8px 12px; }
-[data-redes11-guide] .r11-model-answers summary { cursor: pointer; font-weight: var(--weight-semibold, 600); color: var(--color-info-strong, #0d47a1); }
+/* Actividad aprobada (como Guia 8): contenido legible, de solo lectura. */
+[data-redes11-guide] .r11-approved,
+[data-redes11-guide] .r11-approved:disabled {
+  color: var(--text-body, #1e2f24);
+  -webkit-text-fill-color: var(--text-body, #1e2f24);
+  background: var(--surface-2, #f5faf7);
+  opacity: 1 !important;
+  cursor: default;
+}
 
 /* ── E. Movil y pantallas pequenas ───────────────────────────────────────── */
 @media (max-width: 640px) {

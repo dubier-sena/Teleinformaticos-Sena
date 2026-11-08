@@ -660,71 +660,109 @@ test("3f.6 el portal real NO atesta identidad ni lee Drive (todo queda pendiente
   assert.equal(JSON.stringify(st), a1); assert.equal(JSON.stringify(notas), a2);
 });
 
-// ── Ajuste 2026-11-08: respuestas modelo visibles en actividades APROBADAS ─────
-// Simula la guia (DOM minimo) y comprueba que la respuesta modelo se muestra como
-// ayuda visual en campos vacios y en un recuadro, sin escribir en el estado del aprendiz.
-function runModelAnswers(gradesFam, stateInit, fieldValues) {
+// ── Ajuste 2026-11-08 (vista como Guia 8): actividades APROBADAS ───────────────
+// Simula la guia (DOM minimo). Con nota A: los campos VACIOS muestran la respuesta del
+// banco como contenido normal (sin prefijo ni placeholder), todos quedan bloqueados, y
+// NADA se escribe en el estado del aprendiz. Avance por actividad (A cuenta completa).
+function runModelAnswers(gradesFam, stateInit, opts) {
+  const o = opts || {};
   const decl = loadDeclarations();
   const file = "grupo-11a-guia-10-redes-rap02.html";
   const cfg = decl[file];
   const els = {};
   const mkEl = (key, tag) => ({
-    tagName: tag || "TEXTAREA", value: (fieldValues && fieldValues[key]) || "", attrs: { placeholder: "original" }, classes: new Set(),
+    tagName: tag || "TEXTAREA", value: "", disabled: false, readOnly: false, attrs: { placeholder: "original" }, cls: new Set(),
     getAttribute(n) { return n in this.attrs ? this.attrs[n] : null; }, setAttribute(n, v) { this.attrs[n] = String(v); },
     hasAttribute(n) { return n in this.attrs; }, removeAttribute(n) { delete this.attrs[n]; },
-    classList: { add() {}, remove() {} },
+    get classList() { const c = this.cls; return { add: (x) => c.add(x), remove: (x) => c.delete(x), contains: (x) => c.has(x) }; },
   });
   cfg.activities.forEach((a) => (a.formFields || []).concat(a.optionalFields || []).forEach((k) => { els[k] = mkEl(k); }));
-  const inserted = [];
-  const anchors = {};
+  const buttons = {};
+  cfg.activities.forEach((a) => { if (a.buttonIds && a.buttonIds.save) buttons[a.buttonIds.save] = { disabled: false, textContent: "Guardar respuestas", attrs: {}, setAttribute(n, v) { this.attrs[n] = v; }, hasAttribute(n) { return n in this.attrs; }, removeAttribute(n) { delete this.attrs[n]; } }; });
   const store = {};
   const usernameKey = "aprendiz_prueba";
-  store[`sena_portal:student:${usernameKey}:guide-data:guia_interactiva_grupo_11a_guia_10_redes_rap02_html`] = JSON.stringify(stateInit || {});
+  const stateKey = `sena_portal:student:${usernameKey}:guide-data:guia_interactiva_grupo_11a_guia_10_redes_rap02_html`;
+  store[stateKey] = JSON.stringify(stateInit || {});
+  const progressWrites = [];
   const document = {
-    addEventListener() {}, head: null, createElement: (t) => ({ tagName: t.toUpperCase(), attrs: {}, setAttribute(n, v) { this.attrs[n] = v; }, remove() { inserted.splice(inserted.indexOf(this), 1); } }),
-    querySelector: (sel) => {
-      let m = sel.match(/^\[data-store="([^"]+)"\]$/); if (m) return els[m[1]] || null;
-      m = sel.match(/^\[data-r11-model="([^"]+)"\]$/); if (m) return inserted.find((h) => h.attrs["data-r11-model"] === m[1]) || null;
-      m = sel.match(/^\[data-act-std-delivery="([^"]+)"\]$/); if (m) return null;
-      return null;
-    },
-    querySelectorAll: () => [], getElementById: (id) => { if (!/GradeMount$/.test(id)) return null; anchors[id] = anchors[id] || { parentNode: { insertBefore: (n) => { inserted.push(n); } }, nextSibling: null }; return anchors[id]; },
+    addEventListener() {}, dispatchEvent() {}, head: null,
+    createElement: (t) => ({ tagName: t.toUpperCase(), attrs: {}, setAttribute(n, v) { this.attrs[n] = v; } }),
+    querySelector: (sel) => { const m = sel.match(/^\[data-store="([^"]+)"\]$/); return m ? (els[m[1]] || null) : null; },
+    querySelectorAll: () => [], getElementById: (id) => buttons[id] || null,
   };
-  const ctx = { console, document, localStorage: { getItem: (k) => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = v; } } };
+  const ctx = { console, document, setTimeout: () => 0, CustomEvent: function (t, i) { this.type = t; this.detail = i && i.detail; }, Event: function (t) { this.type = t; },
+    localStorage: { getItem: (k) => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = v; } } };
   ctx.window = { location: { pathname: "/pages/guias/" + file }, addEventListener() {}, requestAnimationFrame: (f) => f(), __GUIDE_RUNTIME_CONTEXT__: { template: "guia-redes11-rap02" },
-    portalAuth: { getCurrentSession: () => ({ role: "student", usernameKey, user: { ficha: "3168850" } }), getScopedStorageKey: (k) => `sena_portal:student:${usernameKey}:guide-data:${k}` },
+    GuideCloudSync: { loadLocal: (k) => JSON.parse(store[k] || "{}"), createStore: () => null },
+    portalAuth: { getCurrentSession: () => ({ role: "student", usernameKey, user: { ficha: "3168850" } }), getScopedStorageKey: (k) => `sena_portal:student:${usernameKey}:guide-data:${k}`,
+      writeGuideProgress: (f, p) => progressWrites.push(Object.assign({ file: f }, p)) },
     ActivityStandard: { getConfigForGuide: () => cfg },
     activityGradesManager: { getStudentGrades: () => gradesFam } };
   vm.createContext(ctx);
   vm.runInContext(read("js/script_guia_redes11.js"), ctx);
-  ctx.window.__redes11Internals.renderModelAnswers();
-  return { els, inserted, store, key: Object.keys(store)[0] };
+  // la guia ya hidrato los campos desde el estado del aprendiz
+  Object.keys(stateInit || {}).forEach((k) => { if (els[k] && typeof stateInit[k] === "string") els[k].value = stateInit[k]; });
+  if (o.progress) ctx.window.__redes11Internals.updateProgress(); else ctx.window.__redes11Internals.renderModelAnswers();
+  return { els, buttons, store, key: stateKey, cfg, progressWrites, internals: ctx.window.__redes11Internals };
 }
 
-test("modelo: actividad APROBADA con campo vacio muestra la respuesta modelo como ayuda visual, sin escribir su estado", () => {
+test("modelo (como Guia 8): actividad APROBADA con campo vacio muestra la respuesta del banco como contenido normal y bloquea; el estado no cambia", () => {
   const sol = { g11c_331_e1_cidr: "/25", g11c_331_e1_bits: "1 bit", __criterios: "rubrica interna" };
   const before = JSON.stringify({ g11c_331_e1_bits: "mi respuesta: 1" });
-  // el campo del aprendiz ya hidratado en la guia trae su respuesta
-  const r = runModelAnswers({ c11Taller331: "A", "c11Taller331:solution": sol }, JSON.parse(before), { g11c_331_e1_bits: "mi respuesta: 1" });
-  // campo vacio: ayuda visual con la respuesta modelo; el VALOR sigue vacio
-  assert.equal(r.els.g11c_331_e1_cidr.attrs.placeholder, "Respuesta modelo del instructor: /25");
-  assert.equal(r.els.g11c_331_e1_cidr.value, "");
-  // campo con respuesta del aprendiz: se conserva, sin ayuda superpuesta
-  assert.equal(r.els.g11c_331_e1_bits.attrs.placeholder, "original");
-  // recuadro identificado, sin criterios internos
-  const box = r.inserted.find((h) => h.attrs["data-r11-model"] === "c11Taller331");
-  assert.ok(box && /Respuesta modelo del instructor/.test(box.innerHTML) && /\/25/.test(box.innerHTML));
-  assert.ok(!/rubrica interna|__criterios/.test(box.innerHTML));
-  // el estado guardado del aprendiz no cambia
+  const r = runModelAnswers({ c11Taller331: "A", "c11Taller331:solution": sol }, JSON.parse(before));
+  const cidr = r.els.g11c_331_e1_cidr;
+  assert.equal(cidr.value, "/25", "contenido completo dentro del campo, sin prefijo");
+  assert.equal(cidr.attrs.placeholder, "original", "no se usa placeholder");
+  assert.ok(cidr.disabled && cidr.readOnly && cidr.cls.has("r11-approved"), "bloqueado para edicion");
+  assert.equal(cidr.attrs["data-r11-model"], "1");
+  // respuesta autentica del aprendiz: se conserva, bloqueada
+  assert.equal(r.els.g11c_331_e1_bits.value, "mi respuesta: 1");
+  assert.ok(r.els.g11c_331_e1_bits.disabled && !("data-r11-model" in r.els.g11c_331_e1_bits.attrs));
+  // campo sin solucion en el banco: queda vacio (no se inventa) pero bloqueado
+  const otro = r.cfg.activities.find((a) => a.id === "c11Taller331").formFields.find((k) => !(k in sol));
+  assert.equal(r.els[otro].value, ""); assert.ok(r.els[otro].disabled);
+  // boton de guardar de la actividad aprobada deshabilitado
+  const saveId = r.cfg.activities.find((a) => a.id === "c11Taller331").buttonIds.save;
+  if (saveId) assert.ok(r.buttons[saveId].disabled && /aprobada/i.test(r.buttons[saveId].textContent));
+  // ningun criterio interno, y el estado guardado no cambia
+  assert.ok(!Object.values(r.els).some((e) => /rubrica interna/.test(e.value)));
   assert.equal(r.store[r.key], before);
 });
 
-test("modelo: actividades pendientes o no aprobadas NO muestran respuesta modelo", () => {
+test("modelo: actividades pendientes o no aprobadas NO muestran solucion ni se bloquean", () => {
   for (const grade of ["", "D", undefined]) {
     const r = runModelAnswers({ c11Taller331: grade, "c11Taller331:solution": { g11c_331_e1_cidr: "/25" } }, {});
-    assert.equal(r.els.g11c_331_e1_cidr.attrs.placeholder, "original", String(grade));
-    assert.equal(r.inserted.length, 0);
+    assert.equal(r.els.g11c_331_e1_cidr.value, "", String(grade));
+    assert.ok(!r.els.g11c_331_e1_cidr.disabled && !r.els.g11c_331_e1_cidr.readOnly, "pendiente: el aprendiz puede responder");
   }
+});
+
+test("modelo: aprobada SIN solucion embebida (anterior al ajuste): se bloquea y no se inventa contenido", () => {
+  const r = runModelAnswers({ c11Taller331: "A" }, {});
+  const f = r.cfg.activities.find((a) => a.id === "c11Taller331").formFields;
+  assert.ok(f.every((k) => r.els[k].value === "" && r.els[k].disabled));
+});
+
+test("avance por actividad: A cuenta completa; proporcional; todas A = 100 % sin RAP aprobado; la solucion mostrada no suma", () => {
+  const decl = loadDeclarations();
+  const acts = decl["grupo-11a-guia-10-redes-rap02.html"].activities;
+  const none = runModelAnswers({}, {}, { progress: true });
+  assert.equal(none.progressWrites.pop().percent, 0);
+  const one = runModelAnswers({ c11Taller331: "A", "c11Taller331:solution": { g11c_331_e1_cidr: "/25" } }, {}, { progress: true });
+  const w1 = one.progressWrites.pop();
+  assert.equal(w1.total, acts.length);
+  assert.equal(w1.percent, Math.round(100 / acts.length), "una A entre varias = proporcional");
+  const all = {}; acts.forEach((a) => { all[a.id] = "A"; });
+  const full = runModelAnswers(all, {}, { progress: true });
+  assert.equal(full.progressWrites.pop().percent, 100);
+  // el RAP sigue sin aprobarse sin evidencias verificadas
+  const { mgr } = loadGrades();
+  assert.notEqual(mgr.evaluateRapStatus("guia-redes11-rap02", all, {}, acts, SUBJ, TRUSTED).status, "aprobado");
+  // el aprendiz llena una actividad de formulario: avanza por su estado legitimo
+  const form = acts.find((a) => a.type === "form" && (a.formFields || []).length);
+  const st = {}; form.formFields.forEach((k) => { st[k] = "x"; });
+  const own = runModelAnswers({}, st, { progress: true });
+  assert.equal(own.progressWrites.pop().percent, Math.round(100 / acts.length));
 });
 
 test("modelo: la respuesta modelo no cuenta como evidencia ni cambia el estado del RAP", () => {
@@ -823,3 +861,15 @@ test("correccion: volver a marcar A (grilla o Excel) sobre una A existente conse
   assert.equal(cloud.docs.aprendiz_prueba["guia-redes11-rap02"]["c11Taller331:gradedAt"], ORIGINAL);
 });
 
+
+test("inicio y panel: las 6 guias de Redes 11.° usan la clave REAL de estado de script_guia_redes11.js", () => {
+  const home = read("js/portal_home.js");
+  for (const g of ["11a", "11b"]) for (const [n, r] of [["09", "rap01"], ["10", "rap02"], ["11", "rap03"]]) {
+    const file = `grupo-${g}-guia-${n}-redes-${r}.html`;
+    const real = "guia_interactiva_" + file.replace(/[^a-z0-9]+/g, "_");   // PAGE_KEY de script_guia_redes11.js
+    assert.ok(home.includes(`"${file}": "${real}"`), file);
+  }
+  // el control de avance y la lista de pendientes cuentan la nota A solo en familias estrictas
+  assert.match(read("js/activity_standard.js"), /strictAv && _getStudentGradeForActivity\(pageFile, act\.id\) === "A"/);
+  assert.match(home, /if \(strictGrades && strictGrades\[act\.id\] === "A"\) return;/);
+});

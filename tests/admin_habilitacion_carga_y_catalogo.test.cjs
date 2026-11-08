@@ -452,7 +452,7 @@ test("panel admin: versiones de cache-bust actualizadas", () => {
   // 2026-10-28 (candidata unica): proteccion + optimizaciones + guias en un solo paquete; todos los
   // recursos modificados del panel llevan el mismo sufijo nuevo (antes 20261022_3 / 20261027_x).
   assert.match(html, /js\/admin_habilitacion\.js\?v=20261028_1/);
-  assert.match(html, /js\/admin_usuarios\.js\?v=20261108_11/);
+  assert.match(html, /js\/admin_usuarios\.js\?v=20261108_12/);
   assert.match(html, /js\/firebase_db\.js\?v=20261108_11/);
   assert.match(html, /js\/activity_grades\.js\?v=20261108_10/);
   assert.match(html, /css\/page_admin\.css\?v=20261028_1/);

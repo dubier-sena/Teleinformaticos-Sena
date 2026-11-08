@@ -50,7 +50,7 @@
   };
 
   // Rediseno visual (fase 2): hoja de estilos propia, solo en estas guias.
-  var STYLE_HREF = "css/guia_redes11.css?v=20261108_8";
+  var STYLE_HREF = "css/guia_redes11.css?v=20261108_12";
   (function ensureStyles() {
     if (typeof document === "undefined" || !document.head || !document.createElement) return;
     if (document.querySelector('link[data-redes11-css]')) return;
@@ -120,7 +120,7 @@
     if (!target || !target.matches || !target.matches("[data-store]")) return;
     var key = target.getAttribute("data-store");
     if (!key) return;
-    if (target.disabled) return;
+    if (target.disabled || target.readOnly || target.hasAttribute("data-r11-approved")) return;
     state[key] = target.value;
     saveState();
   }
@@ -214,37 +214,70 @@
   }
 
   // ── Progreso ─────────────────────────────────────────────────────────────
-  function requiredFields() {
-    var out = [];
-    (getConfig().activities || []).forEach(function (a) {
-      (a.formFields || []).forEach(function (k) { out.push(k); });
-    });
-    return out;
+  // Ajuste 2026-11-08 (coherente con la Guia 8): avance POR ACTIVIDAD. Una actividad
+  // aprobada (nota A del instructor) cuenta completa; las demas avanzan por su estado
+  // LEGITIMO (campos que escribio el aprendiz, entrega real a Drive). Las respuestas
+  // modelo que se muestran en pantalla nunca cuentan: no estan en el estado.
+  // Es avance de actividades, NO el juicio del RAP (ver renderRapStatus).
+  function studentGrades() {
+    var mgr = window.activityGradesManager;
+    var session = portalAuth && portalAuth.getCurrentSession && portalAuth.getCurrentSession();
+    if (!mgr || typeof mgr.getStudentGrades !== "function" || !session || session.role !== "student" || !session.usernameKey) return {};
+    return mgr.getStudentGrades(session.usernameKey, templateName()) || {};
+  }
+
+  function isDelivered(id) {
+    var d = state[id + "-delivery"];
+    return Boolean(d && typeof d === "object" && d.status === "delivered");
+  }
+
+  function activityFraction(act, grades) {
+    if (grades[act.id] === "A") return 1;
+    var fields = act.formFields || [];
+    var formPart = fields.length
+      ? fields.filter(function (k) { return String(state[k] == null ? "" : state[k]).trim().length > 0; }).length / fields.length
+      : 0;
+    if (act.type === "file") return isDelivered(act.id) ? 1 : 0;
+    if (act.type === "both") return (formPart + (isDelivered(act.id) ? 1 : 0)) / 2;
+    return formPart;
+  }
+
+  function activityDone(act, grades) {
+    if (grades[act.id] === "A") return true;
+    if (act.type === "file") return isDelivered(act.id);
+    if (act.type === "both") return Boolean(state[act.id + "-locked"]) && isDelivered(act.id);
+    return Boolean(state[act.id + "-locked"]);
+  }
+
+  function computeProgress(grades) {
+    var acts = getConfig().activities || [];
+    var completed = acts.reduce(function (sum, a) { return sum + activityFraction(a, grades); }, 0);
+    var total = acts.length;
+    return { completed: completed, total: total, percent: total > 0 ? Math.round((completed / total) * 100) : 0 };
   }
 
   var SECTION_BY_PREFIX = { "3.1": "reflexion", "3.2": "contexto", "3.3": "apropiacion", "3.4": "transferencia" };
 
   function updateProgress() {
-    var fields = requiredFields();
-    var filled = fields.filter(function (k) { return String(state[k] || "").trim().length > 0; }).length;
-    var total = fields.length;
-    var pct = total > 0 ? Math.round((filled / total) * 100) : 0;
+    var grades = studentGrades();
+    var prog = computeProgress(grades);
+    var pct = prog.percent;
     var bar = document.getElementById("progressBar");
     var lbl = document.getElementById("progressValue");
     if (bar) bar.style.width = pct + "%";
     if (lbl) lbl.textContent = pct + "%";
-    if (portalAuth && portalAuth.writeGuideProgress) {
-      portalAuth.writeGuideProgress(PAGE_FILE, { completed: filled, total: total, percent: pct });
+    if (portalAuth && portalAuth.writeGuideProgress && prog.total > 0) {
+      portalAuth.writeGuideProgress(PAGE_FILE, { completed: prog.completed, total: prog.total, percent: pct });
     }
     var bySection = {};
     (getConfig().activities || []).forEach(function (a) {
       var sect = SECTION_BY_PREFIX[String(a.number || "").slice(0, 3)];
       if (!sect) return;
-      (bySection[sect] = bySection[sect] || []).push(a.id + "-locked");
+      (bySection[sect] = bySection[sect] || []).push(a);
     });
     document.querySelectorAll(".nav-link .check").forEach(function (c) { c.classList.remove("done"); });
     Object.keys(bySection).forEach(function (sect) {
-      if (bySection[sect].every(function (k) { return state[k]; })) {
+      if (bySection[sect].every(function (a) { return activityDone(a, grades); })) {
         var link = document.querySelector('.nav-link[href="#' + sect + '"] .check');
         if (link) link.classList.add("done");
       }
@@ -289,56 +322,91 @@
       }).join("") + "</tbody></table></div>";
   }
 
-  // ── Respuestas modelo de actividades APROBADAS (ajuste 2026-11-08) ─────────
-  // Igual que en las demas guias, el aprendiz consulta la respuesta modelo que el
-  // instructor embebe en SUS notas al aprobar ({id}:solution). En Redes 11.° se muestra
-  // SOLO de forma visual: texto de ayuda (placeholder) en los campos VACIOS y un
-  // recuadro identificado. Nunca se escribe en el valor del campo ni en el estado del
-  // aprendiz: no es su respuesta, no es evidencia y no afecta el estado del RAP.
+  // ── Actividades APROBADAS: respuesta del banco visible y bloqueo (como Guia 8) ──
+  // Ajuste 2026-11-08. Con nota A, los campos de la actividad quedan bloqueados y los
+  // que el aprendiz dejo VACIOS muestran, como texto normal, la respuesta autorizada que
+  // el instructor embebio en SUS notas ({id}:solution). Es SOLO presentacion:
+  //   * el valor se pone en el control, nunca en `state` (no se guarda, no se exporta a
+  //     Word, no cuenta como evidencia ni para el RAP);
+  //   * el control queda deshabilitado, asi que ningun evento lo guarda;
+  //   * las respuestas propias del aprendiz se conservan tal cual;
+  //   * sin nota A (pendiente o D) no se muestra nada y el bloqueo se retira.
+  // Si una actividad aprobada no tiene solucion embebida (aprobada antes del ajuste),
+  // se bloquea igual pero no se inventa contenido.
+  function fieldKeysOf(act) {
+    return (act.formFields || []).concat(act.optionalFields || []);
+  }
+
+  function setModelValue(el, text) {
+    if (el.tagName === "SELECT") {
+      var match = Array.prototype.filter.call(el.options || [], function (o) {
+        return String(o.value) === text || String(o.textContent || "").trim() === text;
+      })[0];
+      if (!match) return false;
+      el.value = match.value;
+      return true;
+    }
+    el.value = text;
+    return true;
+  }
+
   function renderModelAnswers() {
     var mgr = window.activityGradesManager;
     var session = portalAuth && portalAuth.getCurrentSession && portalAuth.getCurrentSession();
     if (!mgr || typeof mgr.getStudentGrades !== "function" || !session || session.role !== "student" || !session.usernameKey) return;
-    var grades = mgr.getStudentGrades(session.usernameKey, templateName()) || {};
+    var grades = studentGrades();
+    var released = false;
     (getConfig().activities || []).forEach(function (act) {
-      var sol = grades[act.id + ":solution"];
-      var approved = grades[act.id] === "A" && sol && typeof sol === "object";
-      var labels = {};
-      (((act.wordExport || {}).sections) || []).forEach(function (sec) { if (sec && sec.storeKey) labels[sec.storeKey] = sec.label; });
-      var keys = approved ? Object.keys(sol).filter(function (k) { return k.indexOf("__") !== 0 && String(sol[k] == null ? "" : sol[k]).trim() !== ""; }) : [];
-      // campos: texto de ayuda solo si el campo esta VACIO
-      (act.formFields || []).concat(act.optionalFields || []).forEach(function (k) {
+      var approved = grades[act.id] === "A";
+      var sol = approved && grades[act.id + ":solution"] && typeof grades[act.id + ":solution"] === "object" ? grades[act.id + ":solution"] : {};
+      fieldKeysOf(act).forEach(function (k) {
         var el = document.querySelector('[data-store="' + k + '"]');
         if (!el) return;
-        var has = keys.indexOf(k) !== -1;
-        var empty = String(state[k] == null ? "" : state[k]).trim() === "" && String(el.value || "").trim() === "";
-        if (has && empty && el.tagName !== "SELECT") {
-          if (!el.hasAttribute("data-r11-orig-placeholder")) el.setAttribute("data-r11-orig-placeholder", el.getAttribute("placeholder") || "");
-          el.setAttribute("placeholder", "Respuesta modelo del instructor: " + String(sol[k]));
-          el.classList.add("r11-model-hint");
-        } else if (el.hasAttribute("data-r11-orig-placeholder")) {
-          el.setAttribute("placeholder", el.getAttribute("data-r11-orig-placeholder"));
-          el.removeAttribute("data-r11-orig-placeholder");
-          el.classList.remove("r11-model-hint");
+        var own = String(state[k] == null ? "" : state[k]);
+        if (approved) {
+          var model = k.indexOf("__") === 0 || sol[k] == null ? "" : String(sol[k]).trim();
+          if (own.trim() === "" && model && setModelValue(el, model)) {
+            el.setAttribute("data-r11-model", "1");
+            el.setAttribute("title", "Respuesta del banco del instructor (actividad aprobada; no es una respuesta guardada por usted)");
+          } else if (el.hasAttribute("data-r11-model")) {
+            el.removeAttribute("data-r11-model");
+            el.removeAttribute("title");
+            el.value = own;
+          }
+          // readOnly ademas de disabled: los bloqueos genericos (ActivityStandard y fechas
+          // limite) solo alternan `disabled`; readOnly y data-r11-approved se mantienen.
+          el.disabled = true;
+          el.readOnly = true;
+          el.setAttribute("data-r11-approved", "1");
+          el.classList.add("r11-approved");
+        } else if (el.hasAttribute("data-r11-approved")) {
+          if (el.hasAttribute("data-r11-model")) { el.value = own; el.removeAttribute("data-r11-model"); el.removeAttribute("title"); }
+          el.removeAttribute("data-r11-approved");
+          el.classList.remove("r11-approved");
+          el.readOnly = false;
+          el.disabled = Boolean(state[act.id + "-locked"]);
+          released = true;
         }
       });
-      // recuadro de consulta dentro de la actividad
-      var holder = document.querySelector('[data-r11-model="' + act.id + '"]');
-      if (!keys.length) { if (holder) holder.remove(); return; }
-      if (!holder) {
-        var anchor = document.getElementById(act.id + "GradeMount") || document.querySelector('[data-act-std-delivery="' + act.id + '"]');
-        if (!anchor || !anchor.parentNode) return;
-        holder = document.createElement("details");
-        holder.className = "r11-model-answers";
-        holder.setAttribute("data-r11-model", act.id);
-        anchor.parentNode.insertBefore(holder, anchor.nextSibling);
+      var btn = act.buttonIds && act.buttonIds.save ? document.getElementById(act.buttonIds.save) : null;
+      if (btn) {
+        if (approved) {
+          btn.disabled = true;
+          btn.setAttribute("data-r11-approved", "1");
+          btn.textContent = "✅ Actividad aprobada";
+        } else if (btn.hasAttribute("data-r11-approved")) {
+          btn.removeAttribute("data-r11-approved");
+          released = true;
+        }
       }
-      holder.innerHTML = "<summary>&#128214; Respuesta modelo del instructor (actividad aprobada)</summary>" +
-        '<p class="intro-text">Es la respuesta de referencia del banco del instructor. <strong>No reemplaza ni se guarda como su respuesta</strong>; sus respuestas y evidencias se conservan tal como las envió.</p>' +
-        '<div class="table-scroll"><table class="data-table"><tbody>' +
-        keys.map(function (k) { return "<tr><th>" + esc(labels[k] || k) + "</th><td>" + esc(sol[k]) + "</td></tr>"; }).join("") +
-        "</tbody></table></div>";
+      var old = document.querySelector('[data-r11-model="' + act.id + '"]');
+      if (old) old.remove();
     });
+    // Sin nota A: ActivityStandard vuelve a aplicar su propio bloqueo y la fecha limite.
+    if (released && !renderModelAnswers._releasing && typeof window.dispatchEvent === "function") {
+      renderModelAnswers._releasing = true;
+      try { window.dispatchEvent(new Event("activity-deadlines-updated")); } finally { renderModelAnswers._releasing = false; }
+    }
   }
 
   // ── Version anterior (solo lectura) ──────────────────────────────────────
@@ -439,7 +507,12 @@
     });
     // Las notas de la nube llegan despues: el estado del RAP se recalcula al llegar
     // (en estas familias la nota no cambia el estado de la guia, asi que onChanged no se dispara).
-    var afterGrades = function () { renderRapStatus(); renderModelAnswers(); };
+    var afterGrades = function () {
+      updateProgress();   // avance + estado del RAP + vista de aprobadas con las notas ya leidas
+      if (window.ActivityStandard && typeof window.ActivityStandard.renderAvancePanel === "function" && document.querySelector("[data-act-std-avance]")) {
+        window.ActivityStandard.renderAvancePanel({ getGuideDataFile: function () { return PAGE_FILE; }, getState: function () { return state; } });
+      }
+    };
     if (pending && typeof pending.then === "function") pending.then(afterGrades, afterGrades);
   }
 
@@ -499,13 +572,18 @@
       window.requestAnimationFrame(function () { applyOptionalLocks(); updateProgress(); });
     }
   });
-  window.addEventListener("activity-deadlines-updated", function () { applyOptionalLocks(); });
+  window.addEventListener("activity-deadlines-updated", function () {
+    applyOptionalLocks();
+    // Despues de que ActivityStandard y las fechas limite re-apliquen su bloqueo, se
+    // re-aplica el de las actividades aprobadas (no reescribe nada del estado).
+    if (!renderModelAnswers._releasing) setTimeout(renderModelAnswers, 0);
+  });
   document.addEventListener("guide-delivery-registered", function () {
     window.requestAnimationFrame(function () { updateProgress(); });
   });
 
   // Expuesto para pruebas.
-  window.__redes11Internals = { LEGACY: LEGACY, legacyEntries: legacyEntries, renderRapStatus: renderRapStatus, stampStudentSubmission: stampStudentSubmission, renderModelAnswers: renderModelAnswers };
+  window.__redes11Internals = { LEGACY: LEGACY, legacyEntries: legacyEntries, renderRapStatus: renderRapStatus, stampStudentSubmission: stampStudentSubmission, renderModelAnswers: renderModelAnswers, computeProgress: computeProgress, updateProgress: updateProgress };
 
   window.initGuiaRedes = initGuiaRedes11;
   window.initGuiaRedes11 = initGuiaRedes11;

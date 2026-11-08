@@ -1480,9 +1480,14 @@
     try { state = stateCtx.getState ? stateCtx.getState() : null; } catch (_) {}
 
     var done = 0;
+    var mgrAv = window.activityGradesManager;
+    var famAv = mgrAv && mgrAv.GUIDE_FAMILY_BY_FILE ? mgrAv.GUIDE_FAMILY_BY_FILE[String(pageFile || "")] : "";
+    // Redes 11.° (familias estrictas): la aprobacion no escribe el estado de la guia,
+    // asi que una actividad "Aprobada" se cuenta como hecha por su nota (2026-11-08).
+    var strictAv = Boolean(famAv && typeof mgrAv.isEvidenceStrictFamily === "function" && mgrAv.isEvidenceStrictFamily(famAv));
     var rows = activities.map(function (act) {
       var info = getActivityDeliveryInfo(act, state);
-      if (info.kind !== "pending") done += 1;
+      if (info.kind !== "pending" || (strictAv && _getStudentGradeForActivity(pageFile, act.id) === "A")) done += 1;
       var fecha = "";
       if (info.when) {
         try {

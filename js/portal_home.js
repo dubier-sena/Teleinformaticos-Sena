@@ -29,7 +29,7 @@
   //    registra guias en ActivityStandard apenas carga y necesita que
   //    activity_standard.js ya haya corrido.
   var STUDENT_ONLY_SCRIPTS = [
-    "js/activity_standard.js?v=20260822_1",
+    "js/activity_standard.js?v=20261108_12",
     "js/guide_declarations.js?v=20261108_1",
     "js/activity_grades.js?v=20261108_10",
     "js/activity_deadlines.js?v=20261028_1",
@@ -233,6 +233,14 @@
     "grupo-11b-guia-08-documentar-gestion-informacion.html": "guia_interactiva_11b_guia8_html",
     "grupo-11b-guia-09-taller-integrador.html": "guia_interactiva_11b_guia9_html",
     "santa-barbara-10b-guia-02-redes-rap01.html": "guia_interactiva_sb_10b_redes_html",
+    // Redes 11.° (Guias 9-11): la guia guarda bajo "guia_interactiva_" + archivo
+    // (script_guia_redes11.js), no bajo el stateKey declarado (2026-11-08).
+    "grupo-11a-guia-09-redes-rap01.html": "guia_interactiva_grupo_11a_guia_09_redes_rap01_html",
+    "grupo-11b-guia-09-redes-rap01.html": "guia_interactiva_grupo_11b_guia_09_redes_rap01_html",
+    "grupo-11a-guia-10-redes-rap02.html": "guia_interactiva_grupo_11a_guia_10_redes_rap02_html",
+    "grupo-11b-guia-10-redes-rap02.html": "guia_interactiva_grupo_11b_guia_10_redes_rap02_html",
+    "grupo-11a-guia-11-redes-rap03.html": "guia_interactiva_grupo_11a_guia_11_redes_rap03_html",
+    "grupo-11b-guia-11-redes-rap03.html": "guia_interactiva_grupo_11b_guia_11_redes_rap03_html",
   };
   function guideState(file, usernameKey) {
     var std = window.ActivityStandard;
@@ -371,11 +379,19 @@
     var state = guideState(file, usernameKey);
     var seenNumbers = {};
     var pending = [];
+    // Redes 11.° (familias estrictas): una actividad con nota A no es pendiente aunque
+    // la aprobacion no haya escrito el estado de la guia (2026-11-08).
+    var mgr = window.activityGradesManager;
+    var family = mgr && mgr.GUIDE_FAMILY_BY_FILE ? mgr.GUIDE_FAMILY_BY_FILE[file] : "";
+    var strictGrades = family && typeof mgr.isEvidenceStrictFamily === "function" && mgr.isEvidenceStrictFamily(family) && typeof mgr.getStudentGrades === "function"
+      ? (mgr.getStudentGrades(usernameKey, family) || {})
+      : null;
     activities.forEach(function (act) {
       if (act.number) {
         if (seenNumbers[act.number]) return;
         seenNumbers[act.number] = true;
       }
+      if (strictGrades && strictGrades[act.id] === "A") return;
       var info = std.getActivityDeliveryInfo(act, state);
       if (info.kind === "pending") {
         pending.push(act.label || act.shortName || act.id);

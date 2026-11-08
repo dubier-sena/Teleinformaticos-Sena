@@ -1128,6 +1128,13 @@
       "grupo-11b-guia-07-planificar-informacion-ciberseguridad.html": "guia_interactiva_11b_guia7_html",
       "grupo-11b-guia-08-documentar-gestion-informacion.html": "guia_interactiva_11b_guia8_html",
       "grupo-11b-guia-09-taller-integrador.html": "guia_interactiva_11b_guia9_html",
+      // Redes 11.° (Guias 9-11): clave real de script_guia_redes11.js (2026-11-08).
+      "grupo-11a-guia-09-redes-rap01.html": "guia_interactiva_grupo_11a_guia_09_redes_rap01_html",
+      "grupo-11b-guia-09-redes-rap01.html": "guia_interactiva_grupo_11b_guia_09_redes_rap01_html",
+      "grupo-11a-guia-10-redes-rap02.html": "guia_interactiva_grupo_11a_guia_10_redes_rap02_html",
+      "grupo-11b-guia-10-redes-rap02.html": "guia_interactiva_grupo_11b_guia_10_redes_rap02_html",
+      "grupo-11a-guia-11-redes-rap03.html": "guia_interactiva_grupo_11a_guia_11_redes_rap03_html",
+      "grupo-11b-guia-11-redes-rap03.html": "guia_interactiva_grupo_11b_guia_11_redes_rap03_html",
     };
     // Los alias con clave COMPLETA ("guia_...") son la fuente de verdad real del
     // localStorage de la guia (ver STORAGE_KEY en script_induccion.js y
