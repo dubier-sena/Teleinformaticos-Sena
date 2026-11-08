@@ -4202,6 +4202,14 @@
   // UNA actividad: lectura estricta de Firebase -> nota A -> banco de Firebase ->
   // vista previa -> confirmacion -> solo {actId}:solution -> verificacion.
   const MODEL_ANSWER_FICHAS = ["3168850", "3168852"];
+  // Correccion final 2026-11-08: BLOQUEADA. No hay en Firebase una fuente autoritativa
+  // (solo-admin y versionada) de la relacion aprendiz-ficha; state.users, localStorage,
+  // sena_portal_users y sena_portal_user_index no la acreditan (el aprendiz puede
+  // reescribir su ficha). Ver cloudAddModelSolutionAtomic en firebase_db.js.
+  const MODEL_ANSWER_SELECTIVE_BLOCKED = true;
+  const MODEL_ANSWER_BLOCKED_MSG = "Actualizacion selectiva deshabilitada: Firebase no tiene una fuente autoritativa " +
+    "de la relacion aprendiz-ficha con la que verificarla de forma segura. No se escribe nada. " +
+    "Las respuestas modelo siguen apareciendo al aprobar una actividad nueva.";
   const MODEL_ANSWER_FAMILIES = ["guia-redes11-rap01", "guia-redes11-rap02", "guia-redes11-rap03"];
   let modelAnswerPlan = null;
 
@@ -4231,6 +4239,13 @@
     const guideSel = byId("grades-model-guide");
     const actSel = byId("grades-model-activity");
     if (!fichaSel || !studentSel || !guideSel || !actSel) return;
+    if (MODEL_ANSWER_SELECTIVE_BLOCKED) {
+      [fichaSel, studentSel, guideSel, actSel, byId("grades-model-preview-btn"), byId("grades-model-apply-btn")]
+        .forEach((el) => { if (el) el.disabled = true; });
+      const st = byId("grades-model-status");
+      if (st) st.textContent = MODEL_ANSWER_BLOCKED_MSG;
+      return;
+    }
     fichaSel.addEventListener("change", () => {
       const ficha = fichaSel.value;
       const learners = MODEL_ANSWER_FICHAS.includes(ficha)
@@ -4262,6 +4277,7 @@
   // version). Registra exactamente lo mostrado; la confirmacion solo puede escribir
   // si TODO sigue igual (transaccion atomica en firebase_db).
   async function handleModelAnswerPreview() {
+    if (MODEL_ANSWER_SELECTIVE_BLOCKED) { resetModelAnswerPlan(MODEL_ANSWER_BLOCKED_MSG); return; }
     resetModelAnswerPlan("Leyendo la nota y el banco en Firebase...");
     const setStatus = (msg) => { const st = byId("grades-model-status"); if (st) st.textContent = msg; };
     const sel = modelAnswerSelection();
@@ -4333,6 +4349,7 @@
   // Confirmacion: UN intento atomico. La autorizacion de la vista previa se consume
   // antes de escribir (no se reutiliza). Sin cola, sin reintentos automaticos.
   async function handleModelAnswerApply() {
+    if (MODEL_ANSWER_SELECTIVE_BLOCKED) { resetModelAnswerPlan(MODEL_ANSWER_BLOCKED_MSG); return; }
     const plan = modelAnswerPlan;
     const setStatus = (msg) => { const st = byId("grades-model-status"); if (st) st.textContent = msg; };
     const sel = modelAnswerSelection();
@@ -4357,6 +4374,7 @@
     const status = (res && res.status) || "uncertain";
     recordAdminAuditAction({ action: "grade-model-answer-add", target: plan.usernameKey,
       detail: `${plan.family}/${plan.activityId} resultado=${status}${res && res.reason ? " (" + res.reason + ")" : ""}` });
+    if (status === "blocked") { setStatus(MODEL_ANSWER_BLOCKED_MSG); return; }
     if (status === "changed") { setStatus(MODEL_ANSWER_CHANGED_MSG); return; }
     if (status === "already-present") { setStatus(`${plan.name}: la respuesta modelo ya estaba presente. Sin cambios.`); return; }
     if (status === "error") {
@@ -4712,7 +4730,8 @@
         <span id="grades-resync-status" class="admin-muted"></span>
       </details>
       <details class="grades-bank-import" id="grades-model-answers">
-        <summary>Agregar respuestas modelo a actividades aprobadas (Redes 11.°)</summary>
+        <summary>Agregar respuestas modelo a actividades aprobadas (Redes 11.°) — deshabilitada</summary>
+        <p class="admin-muted"><strong>Deshabilitada:</strong> Firebase no tiene una fuente autoritativa de la relacion aprendiz-ficha para verificar esta actualizacion de forma segura. No escribe nada.</p>
         <p class="admin-muted">Para una actividad que YA esta en Aprobado (A) en las Guias 9, 10 y 11 de Redes de 11.°: lee la nota en Firebase, busca la respuesta en el banco de Firebase, muestra una vista previa y, solo con su confirmacion, agrega la respuesta modelo a las notas de ESE aprendiz. No cambia la nota, su fecha, observaciones, entregas ni el formulario del aprendiz.</p>
         <div class="grades-bank-steps">
           <select id="grades-model-ficha" aria-label="Ficha">

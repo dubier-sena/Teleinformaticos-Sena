@@ -149,7 +149,12 @@ function memStorage(initial) {
   return { getItem: (k) => (map.has(k) ? map.get(k) : null), setItem: (k, v) => map.set(k, String(v)), removeItem: (k) => map.delete(k), dump: () => Object.fromEntries(map) };
 }
 
-function loadDevice(fake, localStorage) {
+// La actualizacion selectiva esta BLOQUEADA en el codigo publicado (sin fuente
+// autoritativa aprendiz-ficha). Para seguir probando la transaccion conservada, SOLO
+// en esta prueba se expone la implementacion interna en lugar del envoltorio bloqueado.
+const EXPORT_LINE = "cloudAddModelSolutionAtomic: cloudAddModelSolutionAtomic,";
+function loadDevice(fake, localStorage, opts) {
+  const shipped = Boolean(opts && opts.shipped);
   const timers = [];
   const w = {
     PORTAL_FIREBASE_CONFIG: { enabled: true, projectId: "test-project", apiKey: "test-key" },
@@ -167,7 +172,14 @@ function loadDevice(fake, localStorage) {
   };
   w.fetch = fake.fetchImpl;
   vm.createContext(sandbox);
-  for (const f of ["guide_merge_utils.js", "firebase_db.js", "activity_grades.js"]) vm.runInContext(fs.readFileSync(path.join(ROOT, "js", f), "utf8"), sandbox);
+  for (const f of ["guide_merge_utils.js", "firebase_db.js", "activity_grades.js"]) {
+    let src = fs.readFileSync(path.join(ROOT, "js", f), "utf8");
+    if (f === "firebase_db.js" && !shipped) {
+      assert.equal(src.split(EXPORT_LINE).length, 2, "export unico de cloudAddModelSolutionAtomic");
+      src = src.replace(EXPORT_LINE, "cloudAddModelSolutionAtomic: addModelSolutionTransaction,");
+    }
+    vm.runInContext(src, sandbox);
+  }
   return { db: w._firebaseDb, mgr: w.activityGradesManager, timers, localStorage };
 }
 
@@ -413,7 +425,58 @@ test("el panel usa SOLO la transaccion atomica: sin cola, sin reintentos y autor
   assert.match(apply, /La información cambió\. Vuelva a consultar la vista previa\.|MODEL_ANSWER_CHANGED_MSG/);
   assert.match(admin, /const MODEL_ANSWER_CHANGED_MSG = "La información cambió\. Vuelva a consultar la vista previa\.";/);
   const dbSrc = fs.readFileSync(path.join(ROOT, "js", "firebase_db.js"), "utf8");
-  const fnStart = dbSrc.indexOf("async function cloudAddModelSolutionAtomic(");
-  const fn = dbSrc.slice(fnStart, dbSrc.indexOf("\n  async function cloudSaveGradeSolutionsStrict(", fnStart));
+  const fnStart = dbSrc.indexOf("async function addModelSolutionTransaction(");
+  const fn = dbSrc.slice(fnStart, dbSrc.indexOf("// BLOQUEADA (correccion final", fnStart));
+  assert.ok(fn.length > 2000, "transaccion conservada");
   assert.doesNotMatch(fn, /backupWriteToDrive|recordPendingFirestorePromote|driveDb|setTimeout|strictRetryDelay|for \(var attempt/, "sin respaldo diferido ni reintentos");
+});
+
+// ── Correccion final 2026-11-08: identidad y ficha (dictamen de Codex sobre 7102485) ──
+// No existe fuente autoritativa aprendiz-ficha => la actualizacion selectiva queda
+// BLOQUEADA en todos los casos (incluso el "correcto"): cero peticiones, cero escrituras.
+test("identidad-ficha: no hay fuente autoritativa; el propio aprendiz puede reescribir su ficha (reglas vigentes)", () => {
+  const rules = fs.readFileSync(path.join(ROOT, "firestore.rules"), "utf8");
+  const users = rules.slice(rules.indexOf("match /sena_portal_users/{usernameKey}"), rules.indexOf("match /sena_portal_user_auth/"));
+  assert.match(users, /allow create, update: if isAdmin\(\) \|\| isOwnerByUsernameKey\(usernameKey\);/, "sena_portal_users.ficha escribible por el aprendiz");
+  const index = rules.slice(rules.indexOf("match /sena_portal_user_index/{uid}"));
+  assert.match(index.slice(0, 200), /allow read, write: if signedIn\(\) && \(request\.auth\.uid == uid \|\| isAdmin\(\)\);/, "user_index.ficha escribible por el aprendiz");
+  // si algun dia las reglas cambian, esta prueba avisa para revisar el bloqueo
+});
+
+test("identidad-ficha: el codigo publicado BLOQUEA toda actualizacion selectiva sin tocar la red (ficha correcta, trasladado, cambiada tras la vista previa, inexistente, sin vinculo)", async () => {
+  const docs = seedDocs();
+  const fake = makeFirestore(docs);
+  const dev = loadDevice(fake, memStorage(), { shipped: true });
+  const p = await preview(dev);
+  assert.equal(p.plan.status, "ready", "la vista previa sigue siendo solo lectura");
+  const before = fake.log.length;
+  const cases = [
+    [USER, FAM, ACT, p.expected],                                    // aprendiz en la ficha correcta
+    [OTHER, FAM, ACT, p.expected],                                   // trasladado / otra ficha
+    ["no.existe", FAM, ACT, p.expected],                             // usuario inexistente
+    ["", FAM, ACT, p.expected],                                      // identidad incompleta
+    [USER, FAM, ACT, Object.assign({}, p.expected, { gradesUpdateTime: "otra" })], // version cambiada
+  ];
+  for (const c of cases) {
+    const r = await dev.db.cloudAddModelSolutionAtomic(...c);
+    assert.equal(r.status, "blocked", JSON.stringify(c.slice(0, 2)));
+    assert.equal(r.reason, "sin-fuente-autoritativa-aprendiz-ficha");
+  }
+  assert.equal(fake.log.length, before, "ninguna peticion a Firestore");
+  assert.equal(fake.commits(), 0);
+  assert.deepEqual(fake.data("sena_portal_grades/" + USER), docs["sena_portal_grades/" + USER]);
+  assert.deepEqual(fake.data("sena_portal_grades/" + OTHER), docs["sena_portal_grades/" + OTHER]);
+  assert.equal(dev.mgr.getPendingGradesCount(), 0);
+});
+
+test("identidad-ficha: el panel deshabilita la herramienta (controles, vista previa y confirmacion) y lo explica", () => {
+  const admin = fs.readFileSync(path.join(ROOT, "js", "admin_usuarios.js"), "utf8");
+  assert.match(admin, /const MODEL_ANSWER_SELECTIVE_BLOCKED = true;/);
+  const bind = admin.slice(admin.indexOf("function bindModelAnswerTool("), admin.indexOf("async function handleModelAnswerPreview("));
+  assert.match(bind, /if \(MODEL_ANSWER_SELECTIVE_BLOCKED\) \{[\s\S]*el\.disabled = true[\s\S]*return;\s*\}/);
+  const preview = admin.slice(admin.indexOf("async function handleModelAnswerPreview("), admin.indexOf("async function handleModelAnswerApply("));
+  assert.match(preview.slice(0, 200), /if \(MODEL_ANSWER_SELECTIVE_BLOCKED\) \{ resetModelAnswerPlan\(MODEL_ANSWER_BLOCKED_MSG\); return; \}/);
+  const apply = admin.slice(admin.indexOf("async function handleModelAnswerApply("));
+  assert.match(apply.slice(0, 200), /if \(MODEL_ANSWER_SELECTIVE_BLOCKED\) \{ resetModelAnswerPlan\(MODEL_ANSWER_BLOCKED_MSG\); return; \}/);
+  assert.match(admin, /fuente autoritativa de la relacion aprendiz-ficha/);
 });

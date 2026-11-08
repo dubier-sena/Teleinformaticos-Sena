@@ -1858,7 +1858,7 @@
     });
     return clean;
   }
-  async function cloudAddModelSolutionAtomic(usernameKey, family, activityId, expected) {
+  async function addModelSolutionTransaction(usernameKey, family, activityId, expected) {
     var exp = expected || {};
     if (!usernameKey || !MODEL_ANSWER_FAMILY_RE.test(String(family || "")) || !activityId || String(activityId).indexOf(":") !== -1) {
       return { status: "error", reason: "invalid-args" };
@@ -1962,6 +1962,20 @@
     if (isAuthRejection(commitRes.status)) markFirestoreRejection();
     if (commitRes.status >= 500) return { status: "uncertain", reason: "commit-http-" + commitRes.status };
     return { status: "error", reason: "commit-http-" + commitRes.status };
+  }
+
+  // BLOQUEADA (correccion final 2026-11-08, dictamen de Codex sobre 7102485): en
+  // Firebase NO existe una fuente AUTORITATIVA de la relacion aprendiz-ficha que pueda
+  // leerse dentro de la transaccion. sena_portal_users/{usernameKey}.ficha y
+  // sena_portal_user_index/{uid}.ficha los puede reescribir el PROPIO aprendiz
+  // (firestore.rules: "create, update: if isAdmin() || isOwnerByUsernameKey" y
+  // "read, write: if ... request.auth.uid == uid"), y el documento de notas no guarda
+  // la ficha. Sin esa garantia la actualizacion selectiva NO escribe nada. La
+  // transaccion (addModelSolutionTransaction) se conserva intacta para habilitarla
+  // cuando exista una fuente solo-admin y versionada (no se crea durante la emergencia).
+  var MODEL_ANSWER_SELECTIVE_BLOCK_REASON = "sin-fuente-autoritativa-aprendiz-ficha";
+  async function cloudAddModelSolutionAtomic() {
+    return { status: "blocked", reason: MODEL_ANSWER_SELECTIVE_BLOCK_REASON };
   }
 
   async function cloudSaveGradeSolutionsStrict(solutions, precondition) {

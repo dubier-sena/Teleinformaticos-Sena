@@ -44,7 +44,10 @@ test('V6 gateway and rule extension do not alter legacy published rules or acade
   // 2026-11-08 (Redes 11.° respuestas modelo, correccion critica): solo se AGREGA
   // cloudAddModelSolutionAtomic (transaccion de un intento, sin cola ni Drive).
   // Hardware Lab members unchanged. Previous baseline: 248f5f9da2ff8f6b2670dfea8f084f751fba5688936c942a21627f71fe43b0c0
-  'js/firebase_db.js':'135a194917a0c6cc32b1007da196058f3114ee403885bf3689ca4d7ab3ded379',
+  // 2026-11-08 (correccion final): cloudAddModelSolutionAtomic queda BLOQUEADA (sin fuente
+  // autoritativa aprendiz-ficha); la transaccion se conserva como addModelSolutionTransaction.
+  // Hardware Lab members unchanged. Previous baseline: 135a194917a0c6cc32b1007da196058f3114ee403885bf3689ca4d7ab3ded379
+  'js/firebase_db.js':'35baf82382e97ee51c9370b121d26c1900616cc7ca035e3b581596240752e4da',
   'js/hardware_lab_attempts.js':'1e36582624b3b37c2b33afb7f8c592c75ce35d22eae367d100600b2b7ee9b024',
   'js/admin_hwlab_tracking.js':'a1a4aa6e67a888a48c82a7072894f03fab68d3b7decaaeb3aeb467f388ee57f0'
  };
