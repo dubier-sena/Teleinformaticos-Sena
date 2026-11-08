@@ -1321,20 +1321,50 @@
   //   "verificada"        -> verificacion documentada de la version ACTUAL.
   // GUARDADO / ENVIADO (sello del navegador) / ENTREGADO (registro del cliente) son
   // informativos; solo "verificada" + nota A cuentan para el RAP.
-  // Revision valida SOLO si coincide su identidad completa con el aprendiz/ficha/
-  // familia/actividad consultados (fase 3e). subject = { usernameKey, ficha, uid }.
+  // ── Fase 3f (Codex): fuentes CONFIABLES de identidad e integridad ─────────────
+  // La revision del instructor solo acredita si:
+  //  - IDENTIDAD: el aprendiz consultado trae un UID de Firebase ATESTADO por una
+  //    fuente confiable (subject.identityVerified === true, subject.uid) y la revision
+  //    se registro con ese mismo UID. Nombre, ficha, familia o actividad NO prueban
+  //    identidad. Hoy el portal publicado NO tiene una vinculacion confiable
+  //    usuario->UID consultable por el panel (la de LOOP 1 no esta desplegada), por lo
+  //    que los llamadores NO atestan identidad y toda revision queda PENDIENTE.
+  //  - INTEGRIDAD DE ARCHIVOS: la version actual del archivo (revisionId y, si
+  //    existe, sha256) debe venir de una lectura AUTENTICADA de Drive
+  //    (trusted.driveFiles[fileId]) y coincidir con la revisada. El portal NO tiene
+  //    hoy esa lectura (el Apps Script no expone revisiones/checksums y no se
+  //    modifica en esta emergencia): todo archivo queda "integridad pendiente".
+  //    Nunca se aceptan ID, enlace, fecha, tamano o texto escrito a mano.
   function reviewMatchesIdentity(rec, subject, family, activityId) {
     if (!rec || !subject) return false;
-    if (!subject.usernameKey || !subject.ficha) return false;
-    if (String(rec.usernameKey || "") !== String(subject.usernameKey)) return false;
-    if (String(rec.ficha || "") !== String(subject.ficha)) return false;
+    if (subject.identityVerified !== true || !subject.uid) return false;
+    if (!rec.uid || String(rec.uid) !== String(subject.uid)) return false;
+    if (!subject.usernameKey || String(rec.usernameKey || "") !== String(subject.usernameKey)) return false;
+    if (!subject.ficha || String(rec.ficha || "") !== String(subject.ficha)) return false;
     if (String(rec.family || "") !== String(family)) return false;
     if (String(rec.activityId || "") !== String(activityId)) return false;
-    if (rec.uid || subject.uid) { if (!rec.uid || !subject.uid || String(rec.uid) !== String(subject.uid)) return false; }
     return true;
   }
 
-  function evaluateRapStatus(family, grades, guideState, declaredActivities, subject) {
+  // Integridad del archivo segun una lectura autenticada de Drive (inyectada).
+  //   "comprobada" | "cambio" | "no-comprobable"
+  function driveIntegrity(rec, fileId, trusted) {
+    var files = trusted && trusted.driveFiles;
+    var cur = fileId && files && files[fileId];
+    if (!cur || !cur.revisionId) return "no-comprobable";
+    if (!rec || rec.reviewedFileId !== fileId || rec.reviewedDriveRevisionId !== cur.revisionId) return "cambio";
+    if (cur.sha256 && rec.reviewedDriveSha256 !== cur.sha256) return "cambio";
+    return "comprobada";
+  }
+
+  // Estados por evidencia oficial (fase 3d):
+  //   "incompleta"        -> falta alguna parte exigida (formulario o archivo);
+  //   "por-verificar"     -> completa, sin verificacion documentada del instructor;
+  //   "nueva-verificacion"-> verificada antes, pero la evidencia CAMBIO despues;
+  //   "verificada"        -> verificacion documentada de la version ACTUAL.
+  // GUARDADO / ENVIADO (sello del navegador) / ENTREGADO (registro del cliente) son
+  // informativos; solo "verificada" + nota A cuentan para el RAP.
+  function evaluateRapStatus(family, grades, guideState, declaredActivities, subject, trusted) {
     var required = REQUIRED_EVIDENCE[String(family || "")] || null;
     if (!required) return null;
     var byId = {};
@@ -1349,24 +1379,29 @@
       // Documentada Y de este aprendiz/ficha/familia/actividad; si no, no existe.
       var documented = isDocumentedVerification(rec) && reviewMatchesIdentity(rec, subject, family, id);
       var formState = null, fileState = null, evidence = null, delivered = null, needsVerification = false, reverify = false, verified = false;
+      var identityPending = !(subject && subject.identityVerified === true && subject.uid);
+      var integrity = null;
       if (guideState) {
         formState = needsForm ? formEvidenceState(guideState, act) : null;   // missing | uncertain | real (informativo)
         fileState = needsFile ? fileEvidenceState(guideState, id) : null;    // missing | uncertain | real (informativo)
         var complete = (!needsForm || formState !== "missing") && (!needsFile || fileState !== "missing");
         var version = evidenceVersion(guideState, act);
         var fileId = needsFile ? driveFileIdentity(guideState, id) : "";
-        // Archivo: la revision debe ser del MISMO archivo real de Drive y registrar la
-        // revision observada por el instructor en Drive.
-        var fileMatch = !needsFile || (Boolean(fileId) && rec && rec.reviewedFileId === fileId && String(rec.reviewedFileRevision || "").trim().length > 0);
-        verified = complete && documented && rec.reviewedVersion === version && fileMatch;
-        reverify = complete && documented && !verified;
-        evidence = !complete ? "incompleta" : verified ? "verificada" : reverify ? "nueva-verificacion" : "por-verificar";
+        integrity = needsFile ? driveIntegrity(rec, fileId, trusted) : null;
+        var fileOk = !needsFile || integrity === "comprobada";
+        verified = complete && documented && rec.reviewedVersion === version && fileOk;
+        // "nueva verificacion": hubo una revision valida de esta identidad pero la
+        // version de respuestas o el archivo (comprobado en Drive) cambiaron.
+        reverify = complete && documented && !verified && (rec.reviewedVersion !== version || integrity === "cambio");
+        evidence = !complete ? "incompleta" : verified ? "verificada" : reverify ? "nueva-verificacion"
+          : (needsFile && integrity === "no-comprobable") ? "integridad-pendiente" : "por-verificar";
         needsVerification = complete && !verified;
         delivered = verified;
       }
       return { id: id, number: act.number || "", label: act.label || id, type: type,
         needsForm: needsForm, needsFile: needsFile, formState: formState, formComplete: formState === null ? null : formState !== "missing",
         fileState: fileState, evidence: evidence, verified: verified, reverify: reverify, needsVerification: needsVerification,
+        identityPending: identityPending, integrity: integrity,
         approved: g[id] === "A", failed: g[id] === "D", delivered: delivered };
     });
     var approvedCount = items.filter(function (i) { return i.approved; }).length;
@@ -1382,8 +1417,12 @@
     else if (toReverify > 0) status = "pendiente-nueva-verificacion";
     else if (toVerify > 0) status = "pendiente-verificacion";
     else status = "pendiente";
+    // Bloqueos de infraestructura (informativos para el panel y el aprendiz).
+    var blockers = [];
+    if (items.some(function (i) { return i.identityPending; })) blockers.push("identidad");
+    if (items.some(function (i) { return i.integrity === "no-comprobable"; })) blockers.push("integridad-drive");
     return { family: family, items: items, total: items.length, approved: approvedCount, delivered: deliveredCount,
-      toVerify: toVerify, toReverify: toReverify, incomplete: incomplete, verifiable: verifiable, status: status };
+      toVerify: toVerify, toReverify: toReverify, incomplete: incomplete, verifiable: verifiable, status: status, blockers: blockers };
   }
 
   // Confirmacion del instructor de una evidencia historica de procedencia incierta.
@@ -1403,13 +1442,14 @@
     var reviewedVersion = String(r.reviewedVersion || "");
     if (!/^ev2:sha256:[0-9a-f]{64}$/.test(reviewedVersion)) return Promise.resolve({ ok: false, status: "aborted", reason: "missing-version" });
     if (!String(r.ficha || "").trim()) return Promise.resolve({ ok: false, status: "aborted", reason: "missing-ficha" });
-    if (r.needsFile && (!String(r.reviewedFileId || "").trim() || !String(r.reviewedFileRevision || "").trim())) {
-      return Promise.resolve({ ok: false, status: "aborted", reason: "missing-file-revision" });
-    }
+    // Fase 3f: ningun dato de archivo escrito a mano; solo lo que entregue una lectura
+    // autenticada de Drive (r.trustedDrive = { fileId, revisionId, sha256 }).
+    var td = r.trustedDrive && typeof r.trustedDrive === "object" ? r.trustedDrive : null;
     var rec = { at: new Date().toISOString(), by: String(r.by).trim(), support: support, result: result,
       note: String(r.note || "").trim(), usernameKey: String(usernameKey), ficha: String(r.ficha).trim(), uid: String(r.uid || ""),
       family: String(guideFamily), activityId: String(activityId), reviewedVersion: reviewedVersion,
-      reviewedFileId: String(r.reviewedFileId || ""), reviewedFileRevision: String(r.reviewedFileRevision || "").trim(),
+      reviewedFileId: td ? String(td.fileId || "") : "", reviewedDriveRevisionId: td ? String(td.revisionId || "") : "",
+      reviewedDriveSha256: td ? String(td.sha256 || "") : "", identitySource: String(r.identitySource || "ninguna"),
       reviewedFile: r.reviewedFile && typeof r.reviewedFile === "object" ? r.reviewedFile : null };
     var prev = getStudentGrades(usernameKey, guideFamily)[activityId + ":verifyLog"];
     var log = Array.isArray(prev) ? prev.slice() : [];
@@ -1687,6 +1727,7 @@
     sha256Hex: sha256Hex,
     driveFileIdentity: driveFileIdentity,
     reviewMatchesIdentity: reviewMatchesIdentity,
+    driveIntegrity: driveIntegrity,
     buildStudentSubmissionRecord: buildStudentSubmissionRecord,
     isDocumentedVerification: isDocumentedVerification,
     setStudentEvidenceVerification: setStudentEvidenceVerification,

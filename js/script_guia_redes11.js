@@ -50,7 +50,7 @@
   };
 
   // Rediseno visual (fase 2): hoja de estilos propia, solo en estas guias.
-  var STYLE_HREF = "css/guia_redes11.css?v=20261108_6";
+  var STYLE_HREF = "css/guia_redes11.css?v=20261108_7";
   (function ensureStyles() {
     if (typeof document === "undefined" || !document.head || !document.createElement) return;
     if (document.querySelector('link[data-redes11-css]')) return;
@@ -272,7 +272,8 @@
     var family = templateName();
     var grades = session && session.usernameKey && typeof mgr.getStudentGrades === "function" ? mgr.getStudentGrades(session.usernameKey, family) : {};
     var u = (session && session.user) || {};
-    var subject = { usernameKey: (session && session.usernameKey) || "", ficha: String(u.ficha || getGuideSelection().ficha || ""), uid: String(u.uid || "") };
+    // Fase 3f: la sesion del navegador no atesta identidad -> identityVerified:false.
+    var subject = { usernameKey: (session && session.usernameKey) || "", ficha: String(u.ficha || getGuideSelection().ficha || ""), uid: String(u.uid || ""), identityVerified: false };
     var rap = mgr.evaluateRapStatus(family, grades, state, getConfig().activities || [], subject);
     if (!rap) { host.innerHTML = ""; return; }
     var estado = rap.status === "aprobado" ? "RAP APROBADO" : rap.status === "pendiente-nueva-verificacion" ? "RAP pendiente de nueva verificación" : rap.status === "pendiente-verificacion" ? "RAP pendiente de verificación" : "RAP en proceso";
@@ -282,7 +283,7 @@
       rap.items.map(function (i) {
         var archivo = !i.needsFile ? "No aplica" : i.fileState === "missing" ? "&#9711; Falta" : "&#128228; Entregado";
         var form = !i.needsForm ? "No aplica" : i.formState === "missing" ? "&#9711; Falta (complete y envíe)" : "&#128190; Enviado";
-        var verif = i.evidence === "verificada" ? "&#9989; Verificada" : i.evidence === "nueva-verificacion" ? "&#9888;&#65039; Cambió: pendiente de nueva verificación" : i.evidence === "por-verificar" ? "&#9203; Pendiente de verificación" : "—";
+        var verif = i.evidence === "verificada" ? "&#9989; Verificada" : i.evidence === "nueva-verificacion" ? "&#9888;&#65039; Cambió: pendiente de nueva verificación" : i.evidence === "integridad-pendiente" ? "&#9203; Pendiente de verificación de integridad" : i.evidence === "por-verificar" ? "&#9203; Pendiente de verificación" : "—";
         return "<tr><td>" + esc((i.number ? i.number + " " : "") + i.label) + "</td><td>" + form + "</td><td>" + archivo + "</td><td>" + verif + "</td><td>" + (i.approved ? "&#9989; Sí" : i.failed ? "&#10060; No aprobada" : "&#9711; Pendiente") + "</td></tr>";
       }).join("") + "</tbody></table></div>";
   }
