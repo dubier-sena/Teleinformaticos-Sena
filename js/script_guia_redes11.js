@@ -50,7 +50,7 @@
   };
 
   // Rediseno visual (fase 2): hoja de estilos propia, solo en estas guias.
-  var STYLE_HREF = "css/guia_redes11.css?v=20261108_4";
+  var STYLE_HREF = "css/guia_redes11.css?v=20261108_5";
   (function ensureStyles() {
     if (typeof document === "undefined" || !document.head || !document.createElement) return;
     if (document.querySelector('link[data-redes11-css]')) return;
@@ -273,14 +273,15 @@
     var grades = session && session.usernameKey && typeof mgr.getStudentGrades === "function" ? mgr.getStudentGrades(session.usernameKey, family) : {};
     var rap = mgr.evaluateRapStatus(family, grades, state, getConfig().activities || []);
     if (!rap) { host.innerHTML = ""; return; }
-    var estado = rap.status === "aprobado" ? "RAP APROBADO" : rap.status === "pendiente-verificacion" ? "RAP pendiente de verificación" : "RAP en proceso";
+    var estado = rap.status === "aprobado" ? "RAP APROBADO" : rap.status === "pendiente-nueva-verificacion" ? "RAP pendiente de nueva verificación" : rap.status === "pendiente-verificacion" ? "RAP pendiente de verificación" : "RAP en proceso";
     host.innerHTML = '<div class="r11-rap__head"><strong>Estado del RAP</strong><span class="r11-chip' + (rap.status === "aprobado" ? "" : " r11-chip--format") + '">' + esc(estado) + "</span></div>" +
-      '<p class="intro-text">Evidencias oficiales completas: <strong>' + rap.delivered + "/" + rap.total + "</strong> · aprobadas: <strong>" + rap.approved + "/" + rap.total + "</strong>. Las actividades que piden formulario Y archivo necesitan las dos partes. Las demás actividades son formativas y no condicionan el RAP.</p>" +
-      '<div class="table-scroll"><table class="data-table"><thead><tr><th>Evidencia oficial</th><th>Formulario</th><th>Archivo</th><th>Aprobada</th></tr></thead><tbody>' +
+      '<p class="intro-text">Evidencias oficiales verificadas por el instructor: <strong>' + rap.delivered + "/" + rap.total + "</strong> · aprobadas: <strong>" + rap.approved + "/" + rap.total + "</strong>. Guardar o enviar desde la guía no basta: el instructor verifica cada evidencia (si después la cambia, debe verificarse de nuevo). Las actividades que piden formulario Y archivo necesitan las dos partes. Las demás son formativas.</p>" +
+      '<div class="table-scroll"><table class="data-table"><thead><tr><th>Evidencia oficial</th><th>Formulario</th><th>Archivo</th><th>Verificación</th><th>Aprobada</th></tr></thead><tbody>' +
       rap.items.map(function (i) {
-        var archivo = !i.needsFile ? "No aplica" : i.fileState === "real" ? "&#9989; Entregado" : i.fileState === "uncertain" ? (i.verified ? "&#9989; Verificado por el instructor" : "&#9888;&#65039; Pendiente de verificación") : "&#9711; Falta";
-        var form = !i.needsForm ? "No aplica" : i.formState === "real" ? "&#9989; Enviado por usted" : i.formState === "uncertain" ? (i.verified ? "&#9989; Verificado por el instructor" : "&#9888;&#65039; Pendiente de verificación") : "&#9711; Falta";
-        return "<tr><td>" + esc((i.number ? i.number + " " : "") + i.label) + "</td><td>" + form + "</td><td>" + archivo + "</td><td>" + (i.approved ? "&#9989; Sí" : i.failed ? "&#10060; No aprobada" : "&#9711; Pendiente") + "</td></tr>";
+        var archivo = !i.needsFile ? "No aplica" : i.fileState === "missing" ? "&#9711; Falta" : "&#128228; Entregado";
+        var form = !i.needsForm ? "No aplica" : i.formState === "missing" ? "&#9711; Falta (complete y envíe)" : "&#128190; Enviado";
+        var verif = i.evidence === "verificada" ? "&#9989; Verificada" : i.evidence === "nueva-verificacion" ? "&#9888;&#65039; Cambió: pendiente de nueva verificación" : i.evidence === "por-verificar" ? "&#9203; Pendiente de verificación" : "—";
+        return "<tr><td>" + esc((i.number ? i.number + " " : "") + i.label) + "</td><td>" + form + "</td><td>" + archivo + "</td><td>" + verif + "</td><td>" + (i.approved ? "&#9989; Sí" : i.failed ? "&#10060; No aprobada" : "&#9711; Pendiente") + "</td></tr>";
       }).join("") + "</tbody></table></div>";
   }
 

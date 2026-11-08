@@ -1216,6 +1216,34 @@
       && String(rec.support || "").trim().length >= 3);
   }
 
+  // ── Fase 3d (Codex): version exacta de la evidencia ───────────────────────────
+  // Nada que escriba el navegador (campos, "locked", sello "-submission", registro
+  // de entrega) acredita por si solo autoria ni entrega: la infraestructura actual
+  // no tiene un registro de recepcion del lado del servidor que el panel pueda
+  // consultar (el Apps Script guarda el archivo en Drive, pero el registro vive en el
+  // estado del aprendiz). Solucion conservadora: toda evidencia oficial requiere una
+  // VERIFICACION del instructor (doc de notas, escritura solo-admin) vinculada a la
+  // VERSION EXACTA revisada. Si cambia cualquier parte obligatoria, la verificacion
+  // deja de acreditar la version actual ("pendiente de nueva verificacion").
+  function evidenceVersion(state, act) {
+    var type = (act && act.type) || "form";
+    var parts = {};
+    if (type === "form" || type === "both") {
+      var fields = Array.isArray(act.formFields) ? act.formFields : [];
+      parts.form = fields.map(function (k) { return [k, String(state && state[k] != null ? state[k] : "")]; });
+    }
+    if (type === "file" || type === "both") {
+      var rec = state && state[act.id + "-delivery"];
+      parts.file = rec && typeof rec === "object"
+        ? [String(rec.status || ""), String(rec.savedFileName || ""), String(rec.driveUrl || ""), String(rec.fileId || ""), String(rec.fileUrl || ""), String(rec.submittedAt || "")]
+        : null;
+    }
+    var text = JSON.stringify(parts);
+    var h = 5381;
+    for (var i = 0; i < text.length; i++) { h = ((h << 5) + h + text.charCodeAt(i)) >>> 0; }
+    return "ev1:" + h.toString(16) + ":" + text.length;
+  }
+
   // Estado de la parte ARCHIVO de una evidencia:
   //  "real"      = entrega con archivo/enlace hecha por el aprendiz;
   //  "uncertain" = registro historico "delivered" sin archivo o creado por una
@@ -1235,6 +1263,13 @@
   // Un registro de procedencia incierta queda "pendiente de verificacion" hasta que
   // el instructor confirme la evidencia autentica ({id}:verified en las notas; NO
   // crea ninguna entrega). La nota "A" sola nunca cuenta como entrega.
+  // Estados por evidencia oficial (fase 3d):
+  //   "incompleta"        -> falta alguna parte exigida (formulario o archivo);
+  //   "por-verificar"     -> completa, sin verificacion documentada del instructor;
+  //   "nueva-verificacion"-> verificada antes, pero la evidencia CAMBIO despues;
+  //   "verificada"        -> verificacion documentada de la version ACTUAL.
+  // GUARDADO / ENVIADO (sello del navegador) / ENTREGADO (registro del cliente) son
+  // informativos; solo "verificada" + nota A cuentan para el RAP.
   function evaluateRapStatus(family, grades, guideState, declaredActivities) {
     var required = REQUIRED_EVIDENCE[String(family || "")] || null;
     if (!required) return null;
@@ -1246,32 +1281,40 @@
       var type = act.type || "form";
       var needsForm = type === "form" || type === "both";
       var needsFile = type === "file" || type === "both";
-      var verified = isDocumentedVerification(g[id + ":verified"]);
-      var formState = null, fileState = null, delivered = null, needsVerification = false;
+      var rec = g[id + ":verified"];
+      var documented = isDocumentedVerification(rec);
+      var formState = null, fileState = null, evidence = null, delivered = null, needsVerification = false, reverify = false, verified = false;
       if (guideState) {
-        formState = needsForm ? formEvidenceState(guideState, act) : null;
-        fileState = needsFile ? fileEvidenceState(guideState, id) : null;
-        var formOk = !needsForm || formState === "real" || (formState === "uncertain" && verified);
-        var fileOk = !needsFile || fileState === "real" || (fileState === "uncertain" && verified);
-        needsVerification = !verified && ((needsForm && formState === "uncertain") || (needsFile && fileState === "uncertain"));
-        delivered = formOk && fileOk;
+        formState = needsForm ? formEvidenceState(guideState, act) : null;   // missing | uncertain | real (informativo)
+        fileState = needsFile ? fileEvidenceState(guideState, id) : null;    // missing | uncertain | real (informativo)
+        var complete = (!needsForm || formState !== "missing") && (!needsFile || fileState !== "missing");
+        var version = evidenceVersion(guideState, act);
+        verified = complete && documented && rec.reviewedVersion === version;
+        reverify = complete && documented && rec.reviewedVersion !== version;
+        evidence = !complete ? "incompleta" : verified ? "verificada" : reverify ? "nueva-verificacion" : "por-verificar";
+        needsVerification = complete && !verified;
+        delivered = verified;
       }
       return { id: id, number: act.number || "", label: act.label || id, type: type,
         needsForm: needsForm, needsFile: needsFile, formState: formState, formComplete: formState === null ? null : formState !== "missing",
-        fileState: fileState, verified: verified, needsVerification: needsVerification,
+        fileState: fileState, evidence: evidence, verified: verified, reverify: reverify, needsVerification: needsVerification,
         approved: g[id] === "A", failed: g[id] === "D", delivered: delivered };
     });
     var approvedCount = items.filter(function (i) { return i.approved; }).length;
     var deliveredCount = items.filter(function (i) { return i.delivered === true; }).length;
     var verifiable = items.every(function (i) { return i.delivered !== null; });
     var toVerify = items.filter(function (i) { return i.needsVerification; }).length;
+    var toReverify = items.filter(function (i) { return i.reverify; }).length;
+    var incomplete = items.filter(function (i) { return i.evidence === "incompleta"; }).length;
     var status;
-    if (verifiable && toVerify === 0 && items.every(function (i) { return i.approved && i.delivered === true; })) status = "aprobado";
+    if (verifiable && items.every(function (i) { return i.approved && i.verified; })) status = "aprobado";
     else if (!verifiable) status = "por-verificar";
+    else if (incomplete > 0) status = "pendiente";
+    else if (toReverify > 0) status = "pendiente-nueva-verificacion";
     else if (toVerify > 0) status = "pendiente-verificacion";
     else status = "pendiente";
     return { family: family, items: items, total: items.length, approved: approvedCount, delivered: deliveredCount,
-      toVerify: toVerify, verifiable: verifiable, status: status };
+      toVerify: toVerify, toReverify: toReverify, incomplete: incomplete, verifiable: verifiable, status: status };
   }
 
   // Confirmacion del instructor de una evidencia historica de procedencia incierta.
@@ -1288,8 +1331,11 @@
     var result = r.result === "autentica" || r.result === "no-autentica" ? r.result : "";
     if (support.length < 3 || !result || !String(r.by || "").trim()) return Promise.resolve({ ok: false, status: "aborted", reason: "missing-support" });
     if (!getGradesKey(usernameKey)) return Promise.resolve({ ok: false, status: "aborted", reason: "no-storage-key" });
+    var reviewedVersion = String(r.reviewedVersion || "");
+    if (!reviewedVersion) return Promise.resolve({ ok: false, status: "aborted", reason: "missing-version" });
     var rec = { at: new Date().toISOString(), by: String(r.by).trim(), support: support, result: result,
-      note: String(r.note || "").trim(), reviewedFingerprint: String(r.reviewedFingerprint || "") };
+      note: String(r.note || "").trim(), usernameKey: String(usernameKey), family: String(guideFamily), activityId: String(activityId),
+      reviewedVersion: reviewedVersion, reviewedFile: r.reviewedFile && typeof r.reviewedFile === "object" ? r.reviewedFile : null };
     var prev = getStudentGrades(usernameKey, guideFamily)[activityId + ":verifyLog"];
     var log = Array.isArray(prev) ? prev.slice() : [];
     log.push(rec);
@@ -1562,6 +1608,7 @@
     fileEvidenceState: fileEvidenceState,
     formEvidenceState: formEvidenceState,
     formFieldsFingerprint: formFieldsFingerprint,
+    evidenceVersion: evidenceVersion,
     buildStudentSubmissionRecord: buildStudentSubmissionRecord,
     isDocumentedVerification: isDocumentedVerification,
     setStudentEvidenceVerification: setStudentEvidenceVerification,

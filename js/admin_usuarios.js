@@ -3801,12 +3801,16 @@
     const rec = state[item.id + "-delivery"];
     const sub = state[item.id + "-submission"];
     const evid = `<ul>
-        <li>Formulario: ${escapeHtml(item.needsForm ? (item.formState || "—") : "no aplica")}${sub ? " (sello de envío presente pero NO coincide con las respuestas)" : " (sin sello de envío del aprendiz)"}</li>
+        <li>Formulario: ${escapeHtml(item.needsForm ? (item.formState || "—") : "no aplica")}${item.formState === "real" ? " (sello de envío del navegador coincide; informativo, no acredita)" : sub ? " (sello del navegador NO coincide con las respuestas)" : " (sin sello de envío del aprendiz)"}</li>
         <li>Archivo: ${escapeHtml(item.needsFile ? (item.fileState || "—") : "no aplica")}${rec ? " — registro: " + escapeHtml(JSON.stringify(rec)) : ""}</li>
       </ul>`;
-    const fp = mgr && typeof mgr.formFieldsFingerprint === "function" ? mgr.formFieldsFingerprint(state, act) : "";
-    openModal(`Verificar evidencia ${item.number || item.id}`, `${user.fullName || user.usernameKey} — procedencia no comprobable`,
-      `<p class="admin-muted">Esta evidencia no tiene procedencia comprobable (registro histórico o escrito por administración). Confírmela SOLO si revisó el soporte auténtico (archivo en Drive, cuaderno, documento entregado). Esta revisión no crea respuestas ni entregas.</p>`
+    // Fase 3d: la revision queda vinculada a la VERSION EXACTA mostrada aqui.
+    ctx.reviewedVersion = mgr && typeof mgr.evidenceVersion === "function" ? mgr.evidenceVersion(state, act) : "";
+    ctx.reviewedFile = rec && typeof rec === "object"
+      ? { savedFileName: rec.savedFileName || "", driveUrl: rec.driveUrl || "", fileId: rec.fileId || "", submittedAt: rec.submittedAt || "" } : null;
+    const fp = ctx.reviewedVersion;
+    openModal(`Verificar evidencia ${item.number || item.id}`, `${user.fullName || user.usernameKey} — ${item.reverify ? "la evidencia CAMBIÓ desde la última verificación" : "evidencia sin verificar"}`,
+      `<p class="admin-muted">Lo que guarda el navegador del aprendiz (respuestas, envío, registro de entrega) no acredita por sí solo la entrega. Confirme SOLO si revisó el soporte auténtico de ESTA versión (archivo en Drive, cuaderno, documento entregado). La verificación queda vinculada a esta versión: si la evidencia cambia, deberá verificarse de nuevo. No crea respuestas ni entregas.</p>`
       + evid + answers
       + `<label>Referencia del soporte auténtico (obligatoria): <input type="text" id="grade-verify-support" maxlength="300" placeholder="Ej.: archivo Drive Guia10_3.4.1_..., revisado el 09/11"></label>`
       + `<label>Resultado: <select id="grade-verify-result"><option value="">Seleccione…</option><option value="autentica">Evidencia auténtica (cuenta para el RAP)</option><option value="no-autentica">No auténtica / sin soporte (no cuenta)</option></select></label>`
@@ -3827,7 +3831,7 @@
     const by = (session && ((session.user && (session.user.username || session.user.fullName)) || session.usernameKey)) || "instructor";
     btn.disabled = true;
     const mgr = window.activityGradesManager;
-    const res = await mgr.setStudentEvidenceVerification(ctx.user.usernameKey, ctx.family, ctx.item.id, { support, result, note, by, reviewedFingerprint: btn.dataset.verifyFp || "" });
+    const res = await mgr.setStudentEvidenceVerification(ctx.user.usernameKey, ctx.family, ctx.item.id, { support, result, note, by, reviewedVersion: ctx.reviewedVersion || "", reviewedFile: ctx.reviewedFile || null });
     const okRes = res && res.ok !== false && res.status !== "error" && res.status !== "aborted";
     recordAdminAuditAction({ action: "evidence-verify", target: `${ctx.user.usernameKey}:${ctx.family}:${ctx.item.id}`, detail: `${result} soporte=${support.slice(0, 60)} ${(res && res.status) || ""}` });
     if (msg) msg.textContent = okRes ? "Revisión registrada." : "No se pudo registrar la revisión (" + ((res && res.reason) || "error") + ").";
@@ -4738,15 +4742,16 @@
       if (!rap) return "—";
       const estado = rap.status === "aprobado" ? "RAP APROBADO"
         : rap.status === "por-verificar" ? "RAP: verificar entregas (no se pudo leer la guía)"
-          : rap.status === "pendiente-verificacion" ? "RAP pendiente de verificación" : "RAP pendiente";
-      return `Evidencias oficiales: ${rap.approved}/${rap.total} aprobadas · ${rap.verifiable ? rap.delivered : "?"}/${rap.total} entregadas completas — ${estado}`;
+          : rap.status === "pendiente-nueva-verificacion" ? "RAP pendiente de NUEVA verificación (la evidencia cambió)"
+            : rap.status === "pendiente-verificacion" ? "RAP pendiente de verificación" : "RAP pendiente";
+      return `Evidencias oficiales: ${rap.approved}/${rap.total} aprobadas · ${rap.verifiable ? rap.delivered : "?"}/${rap.total} verificadas (versión vigente) — ${estado}`;
     };
     // Evidencias historicas de procedencia incierta: el instructor puede CONFIRMAR una
     // evidencia autentica (solo marca {id}:verified en las notas; no crea entregas).
     const rapVerifyButtons = (user, rap) => (rap && rap.items ? rap.items.filter((i) => i.needsVerification) : [])
       .map((i) => `<button type="button" class="btn secondary grade-verify-btn" data-verify-user="${escapeHtml(user.usernameKey)}"`
         + ` data-verify-family="${escapeHtml(guideFamily)}" data-verify-activity="${escapeHtml(i.id)}"`
-        + ` title="Procedencia no comprobable: revise la evidencia auténtica antes de confirmar">Verificar ${escapeHtml(i.number || i.id)}</button>`).join(" ");
+        + ` title="Revise la evidencia auténtica de la versión actual antes de confirmar">${i.reverify ? "Verificar de nuevo" : "Verificar"} ${escapeHtml(i.number || i.id)}</button>`).join(" ");
     const head = "<th>Aprendiz</th>" + activities.map((a) => `<th>${escapeHtml(a.label)}`
       + (strictFamily ? (requiredIds.indexOf(a.id) !== -1
         ? ' <span class="grade-col-tag grade-col-tag--required" title="Evidencia oficial: condiciona el RAP">&#9733; Evidencia oficial</span>'
