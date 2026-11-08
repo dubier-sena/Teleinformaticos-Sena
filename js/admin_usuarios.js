@@ -3780,6 +3780,25 @@
     setFeedback("La calificacion NO se guardo en la nube: " + why + pendingGradesSuffix(result), "error");
   }
 
+  // Fase 3b (Codex): confirmacion del instructor de una evidencia historica de
+  // procedencia incierta. No crea entregas ni respuestas: solo {id}:verified en notas.
+  async function handleEvidenceVerification(btn) {
+    const usernameKey = btn.dataset.verifyUser || "";
+    const family = btn.dataset.verifyFamily || "";
+    const actId = btn.dataset.verifyActivity || "";
+    const mgr = window.activityGradesManager;
+    if (!usernameKey || !family || !actId || !mgr || typeof mgr.setStudentEvidenceVerification !== "function") return;
+    const ok = window.portalConfirm
+      ? await window.portalConfirm("¿Confirma que revisó la evidencia AUTÉNTICA de esta actividad (archivo real entregado por el aprendiz)? Esto no crea ninguna entrega; solo deja constancia de su verificación.", { title: "Verificar evidencia histórica", confirmText: "Confirmar verificación" })
+      : false;
+    if (!ok) return;
+    btn.disabled = true;
+    const res = await mgr.setStudentEvidenceVerification(usernameKey, family, actId);
+    recordAdminAuditAction({ action: "evidence-verify", target: `${usernameKey}:${family}:${actId}`, detail: (res && res.status) || "" });
+    setFeedback(res && res.ok !== false && res.status !== "error" ? "Verificación registrada." : "No se pudo registrar la verificación.", res && res.ok !== false ? "success" : "error");
+    await renderGradesGrid({ fresh: true });
+  }
+
   // ── Importacion SEGURA del banco (fase 3, Codex 2026-11-08) ──────────────────
   // Dos pasos: (1) ANALIZAR: lee el banco de la nube con su version, descarga un
   // respaldo verificable (SHA-256), y muestra respuestas nuevas, modificadas y
@@ -3849,15 +3868,27 @@
     return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
   }
 
-  function downloadTextFile(name, text) {
-    const blob = new Blob([text], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
-  }
-
   let _bankImportPlan = null;
+  // Respaldo de la nube generado en el paso 1. Solo queda "verified" cuando el
+  // instructor vuelve a SELECCIONAR el archivo descargado y su SHA-256 coincide.
+  let _bankBackup = null;
+
+  function bankStatus(msg) { const el = byId("grades-bank-status"); if (el) el.textContent = msg; }
+  function setBankButtons() {
+    const verifyBtn = byId("grades-bank-verify-btn");
+    const analyzeBtn = byId("grades-bank-analyze-btn");
+    const importBtn = byId("grades-bank-import-btn");
+    if (verifyBtn) verifyBtn.disabled = !_bankBackup;
+    if (analyzeBtn) analyzeBtn.disabled = !(_bankBackup && _bankBackup.verified);
+    if (importBtn) importBtn.disabled = !_bankImportPlan;
+  }
+  function invalidateBank(reason) {
+    _bankBackup = null; _bankImportPlan = null;
+    const link = byId("grades-bank-backup-link"); if (link) { link.hidden = true; link.removeAttribute("href"); }
+    const prev = byId("grades-bank-preview"); if (prev) prev.innerHTML = "";
+    setBankButtons();
+    if (reason) bankStatus(reason);
+  }
 
   function renderBankImportPreview(diff, extra) {
     const host = byId("grades-bank-preview");
@@ -3876,92 +3907,139 @@
     </div>`;
   }
 
-  // Paso 1: analizar (NO escribe nada en la nube).
-  async function handleGradeBankAnalyze() {
-    const fileInput = byId("grades-bank-file");
-    const statusEl = byId("grades-bank-status");
-    const setStatus = (msg) => { if (statusEl) statusEl.textContent = msg; };
-    _bankImportPlan = null;
-    const importBtn = byId("grades-bank-import-btn");
-    if (importBtn) importBtn.disabled = true;
-    const file = fileInput && fileInput.files && fileInput.files[0];
-    if (!file) { setStatus("Elige el archivo grade_solutions_bank.json primero."); return; }
+  // Pura salvo el hash (inyectable): verifica que el texto seleccionado sea EXACTAMENTE
+  // el respaldo generado: JSON valido, mismo SHA-256, misma version y mismo contenido.
+  async function verifyBankBackupText(text, expected, hashFn) {
+    if (typeof text !== "string" || !text.length) return { ok: false, reason: "vacio" };
+    let parsed;
+    try { parsed = JSON.parse(text); } catch (_) { return { ok: false, reason: "json-invalido" }; }
+    if (!parsed || typeof parsed !== "object" || !parsed.solutions || typeof parsed.solutions !== "object") return { ok: false, reason: "estructura-invalida" };
+    const hash = await hashFn(text);
+    if (hash !== expected.hash) return { ok: false, reason: "sha256-distinto" };
+    if (String(parsed.cloudUpdateTime || "") !== String(expected.updateTime || "")) return { ok: false, reason: "version-distinta" };
+    if (stableStringify(parsed.solutions) !== stableStringify(expected.solutions)) return { ok: false, reason: "contenido-distinto" };
+    return { ok: true, reason: "" };
+  }
+
+  // Paso 1: generar respaldo de la nube (lectura versionada; NO escribe nada).
+  async function handleGradeBankBackup() {
+    invalidateBank("");
     const db = window._firebaseDb;
     if (!db || typeof db.cloudGetGradeSolutionsVersioned !== "function" || typeof db.cloudSaveGradeSolutionsStrict !== "function") {
-      setStatus("Recargue la página (módulo de nube desactualizado). No se analizó nada."); return;
+      bankStatus("Recargue la página (módulo de nube desactualizado). Importación bloqueada."); return;
     }
     try {
-      const text = await file.text();
-      const incoming = JSON.parse(text);
-      if (!incoming || typeof incoming !== "object" || Array.isArray(incoming)) throw new Error("formato inválido");
-      const fileHash = await sha256Hex(text);
       const cloud = await db.cloudGetGradeSolutionsVersioned();
-      if (!cloud || (cloud.status !== "found" && cloud.status !== "missing")) {
-        setStatus("No se pudo leer el banco actual de la nube: importación bloqueada (no se escribió nada)."); return;
+      if (!cloud || (cloud.status !== "found" && cloud.status !== "missing")) { invalidateBank("No se pudo leer el banco de la nube: importación bloqueada."); return; }
+      const text = JSON.stringify({ exportedAt: new Date().toISOString(), cloudUpdateTime: cloud.updateTime || "", cloudStatus: cloud.status, solutions: cloud.solutions }, null, 2);
+      const hash = await sha256Hex(text);
+      const name = "grade_solutions_bank.RESPALDO_NUBE_" + (cloud.updateTime || "vacio").replace(/[^0-9A-Za-z]+/g, "") + ".json";
+      _bankBackup = { text, hash, name, updateTime: cloud.updateTime || "", status: cloud.status, solutions: cloud.solutions, verified: false };
+      const link = byId("grades-bank-backup-link");
+      if (link) {
+        if (link.href && link.href.indexOf("blob:") === 0) URL.revokeObjectURL(link.href);
+        link.href = URL.createObjectURL(new Blob([text], { type: "application/json" }));
+        link.download = name; link.hidden = false;
+        link.textContent = "Descargar respaldo (" + name + ")";
       }
-      // Respaldo verificable ANTES de cualquier escritura.
-      const backupObj = { exportedAt: new Date().toISOString(), cloudUpdateTime: cloud.updateTime || "", cloudStatus: cloud.status, solutions: cloud.solutions };
-      const backupText = JSON.stringify(backupObj, null, 2);
-      const backupHash = await sha256Hex(backupText);
-      const reparsed = JSON.parse(backupText);
-      const backupVerified = stableStringify(reparsed.solutions) === stableStringify(cloud.solutions)
-        && (await sha256Hex(backupText)) === backupHash;
-      const backupName = "grade_solutions_bank.RESPALDO_NUBE_" + (cloud.updateTime || "vacio").replace(/[^0-9A-Za-z]+/g, "") + ".json";
-      downloadTextFile(backupName, backupText);
-      const diff = diffGradeBanks(cloud.solutions, incoming);
-      let blocked = "";
-      if (!backupVerified) blocked = "no se pudo verificar el respaldo";
-      else if (diff.modifiedFields.length) blocked = diff.modifiedFields.length + " respuesta(s) del archivo difieren de la nube; revíselas antes de importar";
-      else if (!diff.addedFields.length) blocked = "no hay respuestas nuevas que importar";
-      const merged = mergeGradeBanksByField(cloud.solutions, incoming);
-      _bankImportPlan = blocked ? null : {
-        fileHash, backupHash, backupName,
-        precondition: cloud.status === "found" ? { expectedUpdateTime: cloud.updateTime } : { mustNotExist: true },
-        merged, mergedHash: await sha256Hex(stableStringify(merged)), added: diff.addedFields.length,
-      };
-      renderBankImportPreview(diff, { backupName, backupHash, backupVerified, blocked });
-      if (importBtn) importBtn.disabled = !_bankImportPlan;
-      setStatus(blocked ? "Análisis completo: importación bloqueada." : `Análisis completo: ${diff.addedFields.length} respuesta(s) nuevas. Respaldo descargado.`);
-      recordAdminAuditAction({ action: "grade-bank-analyze", target: "bank", detail: `nuevas=${diff.addedFields.length} modificadas=${diff.modifiedFields.length} respaldo=${backupHash.slice(0, 16)}` });
+      setBankButtons();
+      bankStatus(`Respaldo generado (versión ${cloud.updateTime || "sin banco"}, SHA-256 ${hash.slice(0, 16)}…). Descárguelo, guárdelo y selecciónelo abajo para verificarlo: sin esa verificación no se puede importar.`);
+      recordAdminAuditAction({ action: "grade-bank-backup", target: "bank", detail: hash.slice(0, 16) });
     } catch (e) {
-      setStatus("Error al analizar: " + (e && e.message ? e.message : e) + " (no se escribió nada).");
+      invalidateBank("Error al generar el respaldo: " + (e && e.message ? e.message : e) + ". Importación bloqueada.");
     }
   }
 
-  // Paso 2: importar el plan analizado (escritura condicionada + verificacion posterior).
+  // Paso 2: verificar el respaldo GUARDADO (el instructor lo vuelve a seleccionar).
+  async function handleGradeBankVerifyBackup() {
+    _bankImportPlan = null;
+    if (!_bankBackup) { bankStatus("Primero genere el respaldo de la nube."); setBankButtons(); return; }
+    _bankBackup.verified = false;
+    const input = byId("grades-bank-backup-file");
+    const file = input && input.files && input.files[0];
+    if (!file) { setBankButtons(); bankStatus("Seleccione el archivo de respaldo que descargó. Importación bloqueada."); return; }
+    try {
+      const res = await verifyBankBackupText(await file.text(), _bankBackup, sha256Hex);
+      _bankBackup.verified = res.ok;
+      setBankButtons();
+      bankStatus(res.ok
+        ? `Respaldo verificado: el archivo guardado coincide exactamente (SHA-256 ${_bankBackup.hash.slice(0, 16)}…). Ya puede analizar el banco maestro.`
+        : `El respaldo NO es válido (${res.reason}). Importación bloqueada: vuelva a descargarlo y selecciónelo.`);
+    } catch (e) {
+      setBankButtons(); bankStatus("No se pudo leer el respaldo seleccionado. Importación bloqueada.");
+    }
+  }
+
+  // Paso 3: analizar el archivo maestro contra el respaldo verificado (NO escribe).
+  async function handleGradeBankAnalyze() {
+    _bankImportPlan = null;
+    if (!(_bankBackup && _bankBackup.verified)) { setBankButtons(); bankStatus("Falta un respaldo verificado. Importación bloqueada."); return; }
+    const fileInput = byId("grades-bank-file");
+    const file = fileInput && fileInput.files && fileInput.files[0];
+    if (!file) { setBankButtons(); bankStatus("Elija el archivo maestro grade_solutions_bank.json."); return; }
+    const db = window._firebaseDb;
+    try {
+      const text = await file.text();
+      let incoming;
+      try { incoming = JSON.parse(text); } catch (_) { incoming = null; }
+      if (!incoming || typeof incoming !== "object" || Array.isArray(incoming)) { setBankButtons(); bankStatus("El archivo maestro no es un JSON válido. Importación bloqueada."); return; }
+      // la nube debe seguir en la version respaldada
+      const now = await db.cloudGetGradeSolutionsVersioned();
+      if (!now || (now.status !== "found" && now.status !== "missing") || (now.updateTime || "") !== _bankBackup.updateTime) {
+        invalidateBank("El banco de la nube cambió o no se pudo leer después del respaldo: genere un respaldo nuevo. Importación bloqueada."); return;
+      }
+      const diff = diffGradeBanks(_bankBackup.solutions, incoming);
+      let blocked = "";
+      if (diff.modifiedFields.length) blocked = diff.modifiedFields.length + " respuesta(s) del archivo difieren de la nube (conflicto)";
+      else if (!diff.addedFields.length) blocked = "no hay respuestas nuevas que importar";
+      const merged = mergeGradeBanksByField(_bankBackup.solutions, incoming);
+      _bankImportPlan = blocked ? null : {
+        fileHash: await sha256Hex(text), backupHash: _bankBackup.hash, backupName: _bankBackup.name,
+        updateTime: _bankBackup.updateTime,
+        precondition: _bankBackup.status === "found" ? { expectedUpdateTime: _bankBackup.updateTime } : { mustNotExist: true },
+        merged, mergedHash: await sha256Hex(stableStringify(merged)), added: diff.addedFields.length,
+      };
+      renderBankImportPreview(diff, { backupName: _bankBackup.name, backupHash: _bankBackup.hash, backupVerified: true, blocked });
+      setBankButtons();
+      bankStatus(blocked ? "Análisis completo: importación bloqueada (" + blocked + ")." : `Análisis completo: ${diff.addedFields.length} respuesta(s) nuevas, 0 conflictos.`);
+      recordAdminAuditAction({ action: "grade-bank-analyze", target: "bank", detail: `nuevas=${diff.addedFields.length} modificadas=${diff.modifiedFields.length} respaldo=${_bankBackup.hash.slice(0, 16)}` });
+    } catch (e) {
+      _bankImportPlan = null; setBankButtons();
+      bankStatus("Error al analizar: " + (e && e.message ? e.message : e) + ". Importación bloqueada.");
+    }
+  }
+
+  // Paso 4: importar (re-verifica version, escritura condicionada y verificacion posterior).
   async function handleGradeBankImport() {
-    const statusEl = byId("grades-bank-status");
-    const setStatus = (msg) => { if (statusEl) statusEl.textContent = msg; };
     const plan = _bankImportPlan;
-    if (!plan) { setStatus("Primero pulse «Analizar»: la importación requiere un análisis sin conflictos y un respaldo verificado."); return; }
+    if (!plan || !(_bankBackup && _bankBackup.verified)) { setBankButtons(); bankStatus("La importación requiere respaldo verificado y análisis sin conflictos."); return; }
     const db = window._firebaseDb;
     try {
       const fileInput = byId("grades-bank-file");
       const file = fileInput && fileInput.files && fileInput.files[0];
-      if (!file || (await sha256Hex(await file.text())) !== plan.fileHash) {
-        _bankImportPlan = null;
-        setStatus("El archivo cambió desde el análisis: vuelva a analizar."); return;
+      if (!file || (await sha256Hex(await file.text())) !== plan.fileHash) { _bankImportPlan = null; setBankButtons(); bankStatus("El archivo maestro cambió desde el análisis: vuelva a analizar."); return; }
+      const now = await db.cloudGetGradeSolutionsVersioned();
+      if (!now || (now.status !== "found" && now.status !== "missing") || (now.updateTime || "") !== plan.updateTime) {
+        invalidateBank("El banco de la nube cambió (o no se pudo leer) antes de escribir: no se escribió nada. Genere un respaldo nuevo."); return;
       }
       const res = await db.cloudSaveGradeSolutionsStrict(plan.merged, plan.precondition);
       if (!res || res.status !== "ok") {
-        _bankImportPlan = null;
-        const btn = byId("grades-bank-import-btn"); if (btn) btn.disabled = true;
-        setStatus(res && res.status === "conflict"
-          ? "El banco de la nube cambió después del análisis: no se escribió nada. Vuelva a analizar."
+        invalidateBank(res && res.status === "conflict"
+          ? "El banco de la nube cambió durante la escritura: no se escribió nada. Genere un respaldo nuevo."
           : "No se pudo guardar (" + ((res && res.reason) || "error") + "). No se escribió nada.");
         return;
       }
       const check = await db.cloudGetGradeSolutionsVersioned();
       const verified = check && check.status === "found" && (await sha256Hex(stableStringify(check.solutions))) === plan.mergedHash;
-      _bankImportPlan = null;
-      const btn = byId("grades-bank-import-btn"); if (btn) btn.disabled = true;
+      const backupName = plan.backupName;
+      invalidateBank("");
       await ensureGradeSolutionsBank(true);
-      setStatus(verified
-        ? `Banco importado y verificado: ${plan.added} respuesta(s) nuevas. Respaldo previo: ${plan.backupName}.`
-        : "Se escribió el banco pero la verificación posterior NO coincide: revise y use el respaldo descargado si es necesario.");
+      bankStatus(verified
+        ? `Banco importado y verificado: ${plan.added} respuesta(s) nuevas. Respaldo previo verificado: ${backupName}.`
+        : "Se escribió el banco pero la verificación posterior NO coincide: revise y restaure con el respaldo verificado si es necesario.");
       recordAdminAuditAction({ action: "grade-bank-import", target: "bank", detail: `nuevas=${plan.added} verificado=${verified} respaldo=${plan.backupHash.slice(0, 16)}` });
     } catch (e) {
-      setStatus("Error al importar: " + (e && e.message ? e.message : e));
+      invalidateBank("Error al importar: " + (e && e.message ? e.message : e) + ". Importación bloqueada.");
     }
   }
 
@@ -4375,10 +4453,16 @@
       </div>
       <details class="grades-bank-import">
         <summary>Banco de respuestas (sincronizar a la nube)</summary>
-        <p class="admin-muted">Sube <code>grade_solutions_bank.json</code> (solo el admin lo puede leer). <strong>1. Analizar</strong> lee la nube, descarga un respaldo verificable y muestra respuestas nuevas, modificadas y conservadas; <strong>2. Importar</strong> solo se habilita si no hay conflictos, agrega campo a campo (nunca borra) y falla si la nube cambio desde el analisis. En las Guias 9, 10 y 11 de Redes de 11.° el banco es solo referencia del instructor (📘): aprobar NO copia respuestas ni registra entregas.</p>
+        <p class="admin-muted">Sube <code>grade_solutions_bank.json</code> (solo el admin lo puede leer). Pasos: <strong>1.</strong> generar y descargar el respaldo de la nube; <strong>2.</strong> volver a seleccionar ese archivo para verificar su SHA-256; <strong>3.</strong> analizar el banco maestro (nuevas, modificadas, conservadas); <strong>4.</strong> importar: solo sin conflictos, agrega campo a campo (nunca borra) y falla si la nube cambio. En las Guias 9, 10 y 11 de Redes de 11.° el banco es solo referencia del instructor (📘): aprobar NO copia respuestas ni registra entregas.</p>
         <input type="file" id="grades-bank-file" accept=".json">
-        <button type="button" id="grades-bank-analyze-btn" class="btn secondary">1. Analizar (respaldo + diferencias)</button>
-        <button type="button" id="grades-bank-import-btn" class="btn secondary" disabled>2. Importar a la nube</button>
+        <div class="grades-bank-steps">
+          <button type="button" id="grades-bank-backup-btn" class="btn secondary">1. Generar respaldo de la nube</button>
+          <a id="grades-bank-backup-link" class="btn secondary" hidden>Descargar respaldo</a>
+          <label>2. Seleccione el respaldo descargado: <input type="file" id="grades-bank-backup-file" accept=".json"></label>
+          <button type="button" id="grades-bank-verify-btn" class="btn secondary" disabled>Verificar respaldo</button>
+          <button type="button" id="grades-bank-analyze-btn" class="btn secondary" disabled>3. Analizar banco maestro</button>
+          <button type="button" id="grades-bank-import-btn" class="btn secondary" disabled>4. Importar a la nube</button>
+        </div>
         <span id="grades-bank-status" class="admin-muted"></span>
         <div id="grades-bank-preview"></div>
         <hr>
@@ -4423,6 +4507,8 @@
     // la grilla arme sus desplegables; si tarda, renderGradesGrid lo vuelve a
     // esperar, asi que nunca se pinta una celda con el banco a medias.
     ensureGradeCommentsBank().then(renderGradeCommentBank).catch(() => renderGradeCommentBank());
+    byId("grades-bank-backup-btn")?.addEventListener("click", handleGradeBankBackup);
+    byId("grades-bank-verify-btn")?.addEventListener("click", handleGradeBankVerifyBackup);
     byId("grades-bank-analyze-btn")?.addEventListener("click", handleGradeBankAnalyze);
     byId("grades-bank-import-btn")?.addEventListener("click", handleGradeBankImport);
     byId("grades-resync-btn")?.addEventListener("click", handleSolutionResync);
@@ -4615,9 +4701,16 @@
     const rapCellText = (rap) => {
       if (!rap) return "—";
       const estado = rap.status === "aprobado" ? "RAP APROBADO"
-        : rap.status === "por-verificar" ? "RAP: verificar entregas (no se pudo leer la guía)" : "RAP pendiente";
-      return `Evidencias oficiales: ${rap.approved}/${rap.total} aprobadas · ${rap.verifiable ? rap.delivered : "?"}/${rap.total} entregadas — ${estado}`;
+        : rap.status === "por-verificar" ? "RAP: verificar entregas (no se pudo leer la guía)"
+          : rap.status === "pendiente-verificacion" ? "RAP pendiente de verificación" : "RAP pendiente";
+      return `Evidencias oficiales: ${rap.approved}/${rap.total} aprobadas · ${rap.verifiable ? rap.delivered : "?"}/${rap.total} entregadas completas — ${estado}`;
     };
+    // Evidencias historicas de procedencia incierta: el instructor puede CONFIRMAR una
+    // evidencia autentica (solo marca {id}:verified en las notas; no crea entregas).
+    const rapVerifyButtons = (user, rap) => (rap && rap.items ? rap.items.filter((i) => i.needsVerification) : [])
+      .map((i) => `<button type="button" class="btn secondary grade-verify-btn" data-verify-user="${escapeHtml(user.usernameKey)}"`
+        + ` data-verify-family="${escapeHtml(guideFamily)}" data-verify-activity="${escapeHtml(i.id)}"`
+        + ` title="Registro histórico sin archivo comprobable: confirme solo si revisó la evidencia auténtica">Verificar ${escapeHtml(i.number || i.id)}</button>`).join(" ");
     const head = "<th>Aprendiz</th>" + activities.map((a) => `<th>${escapeHtml(a.label)}`
       + (strictFamily ? (requiredIds.indexOf(a.id) !== -1
         ? ' <span class="grade-col-tag grade-col-tag--required" title="Evidencia oficial: condiciona el RAP">&#9733; Evidencia oficial</span>'
@@ -4652,7 +4745,11 @@
       const rowPending = Object.keys(pendingActs).length ? GRADE_ROW_PENDING_MARKUP : "";
       return `<tr data-grade-row="${escapeHtml(user.usernameKey)}"><td>${escapeHtml(user.fullName)}${rowPending}</td>${cells}`
         + `<td class="grades-approved-cell">${approvalCellText(approved, activities.length)}`
-        + (strictFamily ? `<div class="grades-rap-status" data-rap-status="${escapeHtml((gradesManager.evaluateRapStatus(guideFamily, g, guideStateByUser[user.usernameKey], declaredActs) || {}).status || "")}">${escapeHtml(rapCellText(gradesManager.evaluateRapStatus(guideFamily, g, guideStateByUser[user.usernameKey], declaredActs)))}</div>` : "")
+        + (strictFamily ? (() => {
+          const rap = gradesManager.evaluateRapStatus(guideFamily, g, guideStateByUser[user.usernameKey], declaredActs);
+          return `<div class="grades-rap-status" data-rap-status="${escapeHtml((rap || {}).status || "")}">${escapeHtml(rapCellText(rap))}</div>`
+            + (rap && rap.toVerify ? `<div class="grades-rap-verify">${rapVerifyButtons(user, rap)}</div>` : "");
+        })() : "")
         + `</td></tr>`;
     }).join("");
     const scrollHintEl = byId("grades-scroll-hint");
@@ -6498,6 +6595,8 @@
     });
     // Modulo Notas: acciones del banco de comentarios (editar / eliminar).
     byId("module-notas")?.addEventListener("click", (event) => {
+      const verifyBtn = event.target?.closest?.(".grade-verify-btn");
+      if (verifyBtn) { void handleEvidenceVerification(verifyBtn); return; }
       const bankBtn = event.target?.closest?.(".grade-bank-criteria-btn");
       if (bankBtn) { void openBankCriteria(bankBtn.dataset.bankFamily || "", bankBtn.dataset.bankActivity || ""); return; }
       const editBtn = event.target?.closest?.(".grade-comment-edit");

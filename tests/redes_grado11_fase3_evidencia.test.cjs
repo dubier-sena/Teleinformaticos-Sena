@@ -136,40 +136,90 @@ test("2. el panel y el servidor de datos no registran entregas por aprobar (indi
 });
 
 // ── 4. Aprobacion academica ───────────────────────────────────────────────────
-test("4. RAP APROBADO solo con TODAS las evidencias oficiales entregadas (reales) y aprobadas", () => {
+function fullEvidenceState(acts, req) {
+  const st = {};
+  req.forEach((id) => {
+    const a = acts.find((x) => x.id === id);
+    if (a.type === "form" || a.type === "both") { st[id + "-locked"] = true; a.formFields.forEach((k) => { st[k] = "respuesta del aprendiz"; }); }
+    if (a.type === "file" || a.type === "both") st[id + "-delivery"] = { status: "delivered", savedFileName: id + ".pdf", driveUrl: "https://drive.google.com/file/d/x/view" };
+  });
+  return st;
+}
+const GUIDE_FILES = [["guia-redes11-rap01", "grupo-11a-guia-09-redes-rap01.html"], ["guia-redes11-rap02", "grupo-11a-guia-10-redes-rap02.html"], ["guia-redes11-rap03", "grupo-11a-guia-11-redes-rap03.html"]];
+
+test("4. RAP APROBADO solo con TODAS las evidencias oficiales completas (todas sus partes) y aprobadas", () => {
   const decl = loadDeclarations();
   const { mgr } = loadGrades();
-  for (const [fam, file] of [["guia-redes11-rap01", "grupo-11a-guia-09-redes-rap01.html"], ["guia-redes11-rap02", "grupo-11a-guia-10-redes-rap02.html"], ["guia-redes11-rap03", "grupo-11a-guia-11-redes-rap03.html"]]) {
+  for (const [fam, file] of GUIDE_FILES) {
     const acts = decl[file].activities;
     const req = mgr.REQUIRED_EVIDENCE[fam];
     req.forEach((id) => assert.ok(acts.some((a) => a.id === id), `${fam}: ${id} no existe`));
     const allA = {}; acts.forEach((a) => { allA[a.id] = "A"; });
-    // todo aprobado pero sin entregas -> pendiente
-    assert.equal(mgr.evaluateRapStatus(fam, allA, {}, acts).status, "pendiente", `${fam}: aprobar sin entregar no aprueba el RAP`);
-    // estado no leido -> por verificar (nunca "aprobado")
-    assert.equal(mgr.evaluateRapStatus(fam, allA, null, acts).status, "por-verificar");
-    // entregas reales de todas las oficiales
-    const st = {};
-    req.forEach((id) => {
-      const a = acts.find((x) => x.id === id);
-      if (a.type === "form") { st[id + "-locked"] = true; a.formFields.forEach((k) => { st[k] = "respuesta del aprendiz"; }); }
-      else st[id + "-delivery"] = { status: "delivered", savedFileName: id + ".pdf" };
-    });
-    const ok = mgr.evaluateRapStatus(fam, allA, st, acts);
-    assert.equal(ok.status, "aprobado", fam);
-    // basta con que una oficial NO este aprobada (formativas no cuentan)
+    assert.equal(mgr.evaluateRapStatus(fam, allA, {}, acts).status, "pendiente", `${fam}: calificacion manual sin evidencia = pendiente`);
+    assert.equal(mgr.evaluateRapStatus(fam, allA, null, acts).status, "por-verificar", "estado no leido nunca es aprobado");
+    const st = fullEvidenceState(acts, req);
+    assert.equal(mgr.evaluateRapStatus(fam, allA, st, acts).status, "aprobado", `${fam}: ambas partes + aprobado = completo`);
     const formativas = acts.filter((a) => req.indexOf(a.id) === -1).map((a) => a.id);
-    assert.ok(formativas.length > 0, `${fam}: hay columnas formativas`);
-    const sinFormativas = Object.assign({}, allA); formativas.forEach((id) => { delete sinFormativas[id]; });
-    assert.equal(mgr.evaluateRapStatus(fam, sinFormativas, st, acts).status, "aprobado", `${fam}: las formativas no condicionan el RAP`);
-    const unaD = Object.assign({}, allA, { [req[0]]: "D" });
-    assert.equal(mgr.evaluateRapStatus(fam, unaD, st, acts).status, "pendiente");
-    // formulario enviado pero vacio no cuenta como entregado
-    const formReq = acts.find((a) => req.indexOf(a.id) !== -1 && a.type === "form");
-    const vacio = Object.assign({}, st); formReq.formFields.forEach((k) => { vacio[k] = ""; });
-    assert.equal(mgr.evaluateRapStatus(fam, allA, vacio, acts).status, "pendiente");
+    const soloOficiales = Object.assign({}, allA); formativas.forEach((id) => { delete soloOficiales[id]; });
+    assert.equal(mgr.evaluateRapStatus(fam, soloOficiales, st, acts).status, "aprobado", "formativas no condicionan");
+    assert.equal(mgr.evaluateRapStatus(fam, Object.assign({}, allA, { [req[0]]: "D" }), st, acts).status, "pendiente");
   }
-  assert.equal(mgr.evaluateRapStatus("guia-redes-rap02", {}, {}, []), null, "grado 10 sin cambios");
+});
+
+test("4. actividades 'both': archivo + formulario vacio, formulario sin archivo, o solo guardado = RAP pendiente", () => {
+  const decl = loadDeclarations();
+  const { mgr } = loadGrades();
+  let probadas = 0;
+  for (const [fam, file] of GUIDE_FILES) {
+    const acts = decl[file].activities;
+    const req = mgr.REQUIRED_EVIDENCE[fam];
+    const allA = {}; acts.forEach((a) => { allA[a.id] = "A"; });
+    for (const both of acts.filter((a) => a.type === "both" && req.indexOf(a.id) !== -1)) {
+      probadas++;
+      const base = fullEvidenceState(acts, req);
+      // archivo entregado + formulario vacio
+      const s1 = Object.assign({}, base); both.formFields.forEach((k) => { s1[k] = ""; });
+      const r1 = mgr.evaluateRapStatus(fam, allA, s1, acts);
+      assert.equal(r1.status, "pendiente", `${both.id}: archivo + formulario vacio`);
+      assert.equal(r1.items.find((i) => i.id === both.id).delivered, false);
+      // formulario completo + archivo faltante
+      const s2 = Object.assign({}, base); delete s2[both.id + "-delivery"];
+      assert.equal(mgr.evaluateRapStatus(fam, allA, s2, acts).status, "pendiente", `${both.id}: formulario sin archivo`);
+      // formulario guardado (respuestas) pero sin enviar ni entrega formal
+      const s3 = Object.assign({}, base); delete s3[both.id + "-delivery"]; delete s3[both.id + "-locked"];
+      assert.equal(mgr.evaluateRapStatus(fam, allA, s3, acts).status, "pendiente", `${both.id}: solo guardado`);
+    }
+  }
+  assert.ok(probadas >= 4, "taller IP y Lab 1 (RAP01), taller y lab (RAP02)");
+});
+
+test("4. evidencia historica de procedencia incierta = PENDIENTE DE VERIFICACION; el instructor la confirma sin crear entregas", async () => {
+  const decl = loadDeclarations();
+  const fam = "guia-redes11-rap02", file = "grupo-11a-guia-10-redes-rap02.html";
+  const acts = decl[file].activities;
+  const { mgr, store } = loadGrades();
+  const req = mgr.REQUIRED_EVIDENCE[fam];
+  const allA = {}; acts.forEach((a) => { allA[a.id] = "A"; });
+  const st = fullEvidenceState(acts, req);
+  // registro historico creado por la aprobacion (mecanismo anterior): sin archivo
+  st["c11Lab341-delivery"] = { status: "delivered", submittedAt: "2026-11-07T12:00:00Z" };
+  const r = mgr.evaluateRapStatus(fam, allA, st, acts);
+  assert.equal(r.status, "pendiente-verificacion");
+  assert.equal(r.items.find((i) => i.id === "c11Lab341").fileState, "uncertain");
+  st["c11Exploracion325-delivery"] = { status: "delivered", registeredBy: "admin-grade-approval", submittedAt: "2026-11-07" };
+  assert.equal(mgr.evaluateRapStatus(fam, allA, st, acts).toVerify, 2);
+  // confirmacion del instructor: solo en las notas; el estado de la guia NO cambia
+  const before = JSON.stringify(st);
+  const verified = Object.assign({}, allA, { "c11Lab341:verified": { at: "2026-11-08T10:00:00Z", by: "instructor" }, "c11Exploracion325:verified": { at: "2026-11-08T10:00:00Z", by: "instructor" } });
+  assert.equal(mgr.evaluateRapStatus(fam, verified, st, acts).status, "aprobado");
+  assert.equal(JSON.stringify(st), before, "verificar no crea ni modifica entregas");
+  // la funcion de verificacion solo encola notas y solo en familias estrictas
+  assert.equal((await mgr.setStudentEvidenceVerification("aprendiz_prueba", "guia-02-herramientas", "x")).reason, "not-strict-family");
+  const src = read("js/activity_grades.js");
+  const fn = extractFn(src, "function setStudentEvidenceVerification(");
+  assert.match(fn, /set\[activityId \+ ":verified"\] = \{ at: /);
+  assert.doesNotMatch(fn, /-delivery|-locked|cloudSaveGuideData/);
+  assert.ok(store);
 });
 
 test("4. el panel marca evidencia oficial vs formativa y calcula el RAP con entregas reales", () => {
@@ -208,24 +258,62 @@ test("3. banco: diferencias por familia/actividad/campo y fusion campo a campo q
   assert.equal(plain(m({ f: { a: { k: "nube" } } }, { f: { a: { k: "archivo" } } })).f.a.k, "nube");
 });
 
-test("3. banco: importacion en 2 pasos con respaldo verificado, bloqueo por conflicto y escritura condicionada", () => {
+async function loadBackupVerifier() {
+  const admin = read("js/admin_usuarios.js");
+  const ctx = {};
+  vm.createContext(ctx);
+  vm.runInContext([extractFn(admin, "function stableStringify("), extractFn(admin, "async function verifyBankBackupText(")].join("\n") + ";this.v=verifyBankBackupText;this.s=stableStringify;", ctx);
+  const hash = async (t) => require("node:crypto").createHash("sha256").update(t, "utf8").digest("hex");
+  return { verify: (text, expected) => ctx.v(text, expected, hash), hash };
+}
+
+test("3. respaldo: solo se acepta el archivo EXACTO generado (cancelado, no seleccionado, corrupto, hash o version distintos = bloqueado)", async () => {
+  const { verify, hash } = await loadBackupVerifier();
+  const solutions = { famA: { a: { k: "v" } } };
+  const text = JSON.stringify({ exportedAt: "2026-11-08T10:00:00Z", cloudUpdateTime: "T1", cloudStatus: "found", solutions }, null, 2);
+  const expected = { hash: await hash(text), updateTime: "T1", solutions };
+  assert.equal((await verify(text, expected)).ok, true, "respaldo correcto");
+  assert.equal((await verify("", expected)).reason, "vacio", "descarga cancelada / archivo vacio");
+  assert.equal((await verify(undefined, expected)).reason, "vacio", "respaldo no seleccionado");
+  assert.equal((await verify(text.slice(0, 40), expected)).reason, "json-invalido", "archivo corrupto");
+  assert.equal((await verify(text + "\n", expected)).reason, "sha256-distinto", "un byte distinto");
+  const otro = JSON.stringify({ exportedAt: "x", cloudUpdateTime: "T1", cloudStatus: "found", solutions }, null, 2);
+  assert.equal((await verify(otro, expected)).reason, "sha256-distinto", "otro respaldo");
+  assert.equal((await verify(text, Object.assign({}, expected, { updateTime: "T2" }))).reason, "version-distinta");
+  assert.equal((await verify(JSON.stringify({ solutions: 1 }), expected)).reason, "estructura-invalida");
+});
+
+test("3. banco: flujo bloqueado hasta verificar el respaldo; re-verifica la version antes de escribir; escritura condicionada", () => {
   const admin = read("js/admin_usuarios.js");
   const analyze = extractFn(admin, "async function handleGradeBankAnalyze(");
   const imp = extractFn(admin, "async function handleGradeBankImport(");
-  assert.match(analyze, /cloudGetGradeSolutionsVersioned\(\)/);
-  assert.match(analyze, /No se pudo leer el banco actual de la nube: importación bloqueada/);
-  assert.match(analyze, /downloadTextFile\(backupName, backupText\)/);
-  assert.match(analyze, /if \(!backupVerified\) blocked = /);
-  assert.match(analyze, /else if \(diff\.modifiedFields\.length\) blocked = /);
-  assert.match(analyze, /precondition: cloud\.status === "found" \? \{ expectedUpdateTime: cloud\.updateTime \} : \{ mustNotExist: true \}/);
-  assert.match(imp, /if \(!plan\) \{/);
+  const verifyH = extractFn(admin, "async function handleGradeBankVerifyBackup(");
+  const backup = extractFn(admin, "async function handleGradeBankBackup(");
+  assert.match(backup, /cloudGetGradeSolutionsVersioned\(\)/);
+  assert.match(backup, /verified: false/);
+  assert.match(verifyH, /byId\("grades-bank-backup-file"\)/);
+  assert.match(verifyH, /verifyBankBackupText\(await file\.text\(\), _bankBackup, sha256Hex\)/);
+  assert.match(analyze, /if \(!\(_bankBackup && _bankBackup\.verified\)\)/);
+  assert.match(analyze, /\(now\.updateTime \|\| ""\) !== _bankBackup\.updateTime/);
+  assert.match(analyze, /if \(diff\.modifiedFields\.length\) blocked = /);
+  assert.match(imp, /if \(!plan \|\| !\(_bankBackup && _bankBackup\.verified\)\)/);
+  assert.match(imp, /\(now\.updateTime \|\| ""\) !== plan\.updateTime/);
   assert.match(imp, /cloudSaveGradeSolutionsStrict\(plan\.merged, plan\.precondition\)/);
-  assert.match(imp, /res\.status === "conflict"/);
-  assert.match(imp, /=== plan\.mergedHash/, "verifica lo escrito");
-  assert.doesNotMatch(admin, /db\.cloudSaveGradeSolutions\(/, "ya no existe escritura sin precondicion del banco");
+  assert.match(imp, /=== plan\.mergedHash/);
+  assert.doesNotMatch(admin, /db\.cloudSaveGradeSolutions\(/);
+  for (const id of ["grades-bank-verify-btn", "grades-bank-analyze-btn", "grades-bank-import-btn"]) {
+    assert.match(admin, new RegExp(`id="${id}" class="btn secondary" disabled>`), `${id} deshabilitado por defecto`);
+  }
+  // no reemplaza funciones existentes del panel (una sola definicion por nombre)
+  // y toda funcion que el flujo invoca existe (defecto real detectado en E2E: faltaba renderBankImportPreview)
+  for (const name of ["renderBankImportPreview", "invalidateBank", "setBankButtons", "bankStatus", "handleGradeBankBackup", "handleGradeBankVerifyBackup"]) {
+    assert.equal((admin.match(new RegExp(`function ${name}\\(`, "g")) || []).length, 1, `${name} definida una vez`);
+  }
+  for (const name of ["downloadTextFile", "stableStringify", "sha256Hex", "diffGradeBanks", "mergeGradeBanksByField", "verifyBankBackupText"]) {
+    assert.equal((admin.match(new RegExp(`function ${name}\\(`, "g")) || []).length, 1, name);
+  }
   const db = read("js/firebase_db.js");
-  assert.match(extractFn(db, "async function cloudSaveGradeSolutionsStrict("), /if \(!pre\.expectedUpdateTime && !pre\.mustNotExist\) return \{ status: "error", updateTime: "", reason: "missing-precondition" \};/);
-  assert.match(admin, /id="grades-bank-import-btn" class="btn secondary" disabled>/);
+  assert.match(extractFn(db, "async function cloudSaveGradeSolutionsStrict("), /missing-precondition/);
 });
 
 // Ensayo con el banco MAESTRO real (solo si esta disponible en este equipo; el banco

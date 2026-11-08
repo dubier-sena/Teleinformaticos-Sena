@@ -1176,9 +1176,25 @@
     return fields.every(function (k) { return String(state[k] == null ? "" : state[k]).trim() !== ""; });
   }
 
-  // Estado academico por evidencia oficial y del RAP. Pura (sin red ni DOM).
-  // grades: notas de la familia; guideState: estado de la guia del aprendiz (o null
-  // si no se pudo leer); declaredActivities: actividades de guide_declarations.
+  // Estado de la parte ARCHIVO de una evidencia:
+  //  "real"      = entrega con archivo/enlace hecha por el aprendiz;
+  //  "uncertain" = registro historico "delivered" sin archivo o creado por una
+  //                aprobacion (mecanismos anteriores): procedencia NO comprobable;
+  //  "missing"   = sin registro.
+  function fileEvidenceState(state, actId) {
+    var rec = state && state[actId + "-delivery"];
+    if (!rec || typeof rec !== "object" || rec.status !== "delivered") return "missing";
+    return hasRealFileDelivery(state, actId) ? "real" : "uncertain";
+  }
+
+  // Estado academico por evidencia oficial y del RAP (fase 3b, Codex). Pura.
+  // Cada evidencia exige SUS partes segun el tipo declarado:
+  //   form -> formulario completo y enviado por el aprendiz;
+  //   file -> archivo entregado de verdad;
+  //   both -> AMBAS (un archivo no prueba el formulario ni al reves).
+  // Un registro de procedencia incierta queda "pendiente de verificacion" hasta que
+  // el instructor confirme la evidencia autentica ({id}:verified en las notas; NO
+  // crea ninguna entrega). La nota "A" sola nunca cuenta como entrega.
   function evaluateRapStatus(family, grades, guideState, declaredActivities) {
     var required = REQUIRED_EVIDENCE[String(family || "")] || null;
     if (!required) return null;
@@ -1187,21 +1203,46 @@
     var g = grades || {};
     var items = required.map(function (id) {
       var act = byId[id] || { id: id, type: "form" };
-      var approved = g[id] === "A";
-      var delivered = null;   // null = no verificable (estado no leido)
+      var type = act.type || "form";
+      var needsForm = type === "form" || type === "both";
+      var needsFile = type === "file" || type === "both";
+      var verifiedRec = g[id + ":verified"];
+      var verified = Boolean(verifiedRec && typeof verifiedRec === "object" && verifiedRec.at);
+      var formComplete = null, fileState = null, delivered = null, needsVerification = false;
       if (guideState) {
-        delivered = act.type === "form" ? hasRealSavedAnswers(guideState, act) : hasRealFileDelivery(guideState, id);
+        formComplete = needsForm ? hasRealSavedAnswers(guideState, act) : null;
+        fileState = needsFile ? fileEvidenceState(guideState, id) : null;
+        var fileOk = !needsFile || fileState === "real" || (fileState === "uncertain" && verified);
+        needsVerification = needsFile && fileState === "uncertain" && !verified;
+        delivered = (!needsForm || formComplete === true) && fileOk;
       }
-      return { id: id, number: act.number || "", label: act.label || id, type: act.type || "form", approved: approved, delivered: delivered, failed: g[id] === "D" };
+      return { id: id, number: act.number || "", label: act.label || id, type: type,
+        needsForm: needsForm, needsFile: needsFile, formComplete: formComplete, fileState: fileState,
+        verified: verified, needsVerification: needsVerification,
+        approved: g[id] === "A", failed: g[id] === "D", delivered: delivered };
     });
     var approvedCount = items.filter(function (i) { return i.approved; }).length;
     var deliveredCount = items.filter(function (i) { return i.delivered === true; }).length;
     var verifiable = items.every(function (i) { return i.delivered !== null; });
+    var toVerify = items.filter(function (i) { return i.needsVerification; }).length;
     var status;
     if (verifiable && items.every(function (i) { return i.approved && i.delivered === true; })) status = "aprobado";
-    else if (!verifiable && approvedCount === items.length) status = "por-verificar";
+    else if (!verifiable) status = "por-verificar";
+    else if (toVerify > 0) status = "pendiente-verificacion";
     else status = "pendiente";
-    return { family: family, items: items, total: items.length, approved: approvedCount, delivered: deliveredCount, verifiable: verifiable, status: status };
+    return { family: family, items: items, total: items.length, approved: approvedCount, delivered: deliveredCount,
+      toVerify: toVerify, verifiable: verifiable, status: status };
+  }
+
+  // Confirmacion del instructor de una evidencia historica de procedencia incierta.
+  // Solo escribe en las NOTAS ({id}:verified = {at, by, note}); no crea ni modifica
+  // entregas, respuestas ni la nota de la actividad.
+  function setStudentEvidenceVerification(usernameKey, guideFamily, activityId, note) {
+    if (!isEvidenceStrictFamily(guideFamily)) return Promise.resolve({ ok: false, status: "aborted", reason: "not-strict-family" });
+    if (!getGradesKey(usernameKey)) return Promise.resolve({ ok: false, status: "aborted", reason: "no-storage-key" });
+    var set = {};
+    set[activityId + ":verified"] = { at: new Date().toISOString(), by: "instructor", note: String(note || "Evidencia autentica confirmada por el instructor.") };
+    return queueGradeOp(usernameKey, guideFamily, set, []);
   }
 
   // Claves internas del banco (p. ej. "__criterios"): son SOLO para el instructor y
@@ -1463,6 +1504,8 @@
     isEvidenceStrictFamily: isEvidenceStrictFamily,
     REQUIRED_EVIDENCE: REQUIRED_EVIDENCE,
     evaluateRapStatus: evaluateRapStatus,
+    fileEvidenceState: fileEvidenceState,
+    setStudentEvidenceVerification: setStudentEvidenceVerification,
     hasRealFileDelivery: hasRealFileDelivery,
     isInstructorOnlyBankKey: isInstructorOnlyBankKey,
     resolveGuideFamily: resolveGuideFamily,
