@@ -3808,10 +3808,18 @@
     ctx.reviewedVersion = mgr && typeof mgr.evidenceVersion === "function" ? mgr.evidenceVersion(state, act) : "";
     ctx.reviewedFile = rec && typeof rec === "object"
       ? { savedFileName: rec.savedFileName || "", driveUrl: rec.driveUrl || "", fileId: rec.fileId || "", submittedAt: rec.submittedAt || "" } : null;
+    // Fase 3e: el archivo se vincula a su ID REAL de Drive y a la revision que el
+    // instructor observe en Drive (el portal no puede leer revisiones ni checksums).
+    ctx.currentFileId = item.needsFile && mgr && typeof mgr.driveFileIdentity === "function" ? mgr.driveFileIdentity(state, item.id) : "";
     const fp = ctx.reviewedVersion;
     openModal(`Verificar evidencia ${item.number || item.id}`, `${user.fullName || user.usernameKey} — ${item.reverify ? "la evidencia CAMBIÓ desde la última verificación" : "evidencia sin verificar"}`,
       `<p class="admin-muted">Lo que guarda el navegador del aprendiz (respuestas, envío, registro de entrega) no acredita por sí solo la entrega. Confirme SOLO si revisó el soporte auténtico de ESTA versión (archivo en Drive, cuaderno, documento entregado). La verificación queda vinculada a esta versión: si la evidencia cambia, deberá verificarse de nuevo. No crea respuestas ni entregas.</p>`
       + evid + answers
+      + (item.needsFile
+        ? `<p class="admin-muted"><strong>Archivo:</strong> abra el archivo en Drive (los archivos entregados quedan en el Drive institucional; el aprendiz solo tiene lectura). El portal NO puede leer revisiones ni checksums de Drive: escriba el ID del archivo que revisó y la revisión que observa en Drive (Archivo → Información / Gestionar versiones). ID registrado por la entrega: <code>${escapeHtml(ctx.currentFileId || "(sin ID válido)")}</code>${ctx.currentFileId ? ` · <a href="https://drive.google.com/file/d/${encodeURIComponent(ctx.currentFileId)}/view" target="_blank" rel="noopener">Abrir en Drive</a>` : ""}</p>`
+          + `<label>ID del archivo revisado en Drive (obligatorio): <input type="text" id="grade-verify-fileid" maxlength="120"></label>`
+          + `<label>Revisión observada en Drive (obligatoria; p. ej. «Versión del 09/11/2026 08:14 · tamaño 1,2 MB»): <input type="text" id="grade-verify-revision" maxlength="200"></label>`
+        : "")
       + `<label>Referencia del soporte auténtico (obligatoria): <input type="text" id="grade-verify-support" maxlength="300" placeholder="Ej.: archivo Drive Guia10_3.4.1_..., revisado el 09/11"></label>`
       + `<label>Resultado: <select id="grade-verify-result"><option value="">Seleccione…</option><option value="autentica">Evidencia auténtica (cuenta para el RAP)</option><option value="no-autentica">No auténtica / sin soporte (no cuenta)</option></select></label>`
       + `<label>Observación (opcional): <input type="text" id="grade-verify-note" maxlength="300"></label>`
@@ -3827,11 +3835,21 @@
     const note = String((byId("grade-verify-note") || {}).value || "").trim();
     if (!ctx) { if (msg) msg.textContent = "Recargue la grilla."; return; }
     if (support.length < 3 || !result) { if (msg) msg.textContent = "Indique la referencia del soporte y el resultado de la revisión. No se registró nada."; return; }
+    const reviewedFileId = String((byId("grade-verify-fileid") || {}).value || "").trim();
+    const reviewedFileRevision = String((byId("grade-verify-revision") || {}).value || "").trim();
+    if (ctx.item.needsFile) {
+      if (!ctx.currentFileId) { if (msg) msg.textContent = "La entrega no tiene un ID de archivo de Drive válido: no se puede verificar el archivo. No se registró nada."; return; }
+      if (reviewedFileId !== ctx.currentFileId) { if (msg) msg.textContent = "El ID del archivo revisado no coincide con el archivo entregado. No se registró nada."; return; }
+      if (!reviewedFileRevision) { if (msg) msg.textContent = "Indique la revisión observada en Drive. No se registró nada."; return; }
+    }
     const session = auth.getCurrentSession ? auth.getCurrentSession() : null;
     const by = (session && ((session.user && (session.user.username || session.user.fullName)) || session.usernameKey)) || "instructor";
     btn.disabled = true;
     const mgr = window.activityGradesManager;
-    const res = await mgr.setStudentEvidenceVerification(ctx.user.usernameKey, ctx.family, ctx.item.id, { support, result, note, by, reviewedVersion: ctx.reviewedVersion || "", reviewedFile: ctx.reviewedFile || null });
+    const res = await mgr.setStudentEvidenceVerification(ctx.user.usernameKey, ctx.family, ctx.item.id, {
+      support, result, note, by, reviewedVersion: ctx.reviewedVersion || "", reviewedFile: ctx.reviewedFile || null,
+      ficha: ctx.subject.ficha, uid: ctx.subject.uid, needsFile: Boolean(ctx.item.needsFile),
+      reviewedFileId: ctx.item.needsFile ? reviewedFileId : "", reviewedFileRevision: ctx.item.needsFile ? reviewedFileRevision : "" });
     const okRes = res && res.ok !== false && res.status !== "error" && res.status !== "aborted";
     recordAdminAuditAction({ action: "evidence-verify", target: `${ctx.user.usernameKey}:${ctx.family}:${ctx.item.id}`, detail: `${result} soporte=${support.slice(0, 60)} ${(res && res.status) || ""}` });
     if (msg) msg.textContent = okRes ? "Revisión registrada." : "No se pudo registrar la revisión (" + ((res && res.reason) || "error") + ").";
@@ -4787,9 +4805,10 @@
       return `<tr data-grade-row="${escapeHtml(user.usernameKey)}"><td>${escapeHtml(user.fullName)}${rowPending}</td>${cells}`
         + `<td class="grades-approved-cell">${approvalCellText(approved, activities.length)}`
         + (strictFamily ? (() => {
-          const rap = gradesManager.evaluateRapStatus(guideFamily, g, guideStateByUser[user.usernameKey], declaredActs);
+          const rapSubject = { usernameKey: user.usernameKey, ficha: String(user.ficha || ""), uid: String(user.uid || "") };
+          const rap = gradesManager.evaluateRapStatus(guideFamily, g, guideStateByUser[user.usernameKey], declaredActs, rapSubject);
           (rap && rap.items ? rap.items : []).filter((i) => i.needsVerification).forEach((i) => {
-            _rapReviewContext[`${user.usernameKey}|${i.id}`] = { user, item: i, state: guideStateByUser[user.usernameKey] || {}, act: declaredActs.find((a) => a.id === i.id) || { id: i.id }, family: guideFamily };
+            _rapReviewContext[`${user.usernameKey}|${i.id}`] = { user, subject: rapSubject, item: i, state: guideStateByUser[user.usernameKey] || {}, act: declaredActs.find((a) => a.id === i.id) || { id: i.id }, family: guideFamily };
           });
           return `<div class="grades-rap-status" data-rap-status="${escapeHtml((rap || {}).status || "")}">${escapeHtml(rapCellText(rap))}</div>`
             + (rap && rap.toVerify ? `<div class="grades-rap-verify">${rapVerifyButtons(user, rap)}</div>` : "");

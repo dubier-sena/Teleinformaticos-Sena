@@ -50,7 +50,7 @@
   };
 
   // Rediseno visual (fase 2): hoja de estilos propia, solo en estas guias.
-  var STYLE_HREF = "css/guia_redes11.css?v=20261108_5";
+  var STYLE_HREF = "css/guia_redes11.css?v=20261108_6";
   (function ensureStyles() {
     if (typeof document === "undefined" || !document.head || !document.createElement) return;
     if (document.querySelector('link[data-redes11-css]')) return;
@@ -271,7 +271,9 @@
     var session = portalAuth && portalAuth.getCurrentSession && portalAuth.getCurrentSession();
     var family = templateName();
     var grades = session && session.usernameKey && typeof mgr.getStudentGrades === "function" ? mgr.getStudentGrades(session.usernameKey, family) : {};
-    var rap = mgr.evaluateRapStatus(family, grades, state, getConfig().activities || []);
+    var u = (session && session.user) || {};
+    var subject = { usernameKey: (session && session.usernameKey) || "", ficha: String(u.ficha || getGuideSelection().ficha || ""), uid: String(u.uid || "") };
+    var rap = mgr.evaluateRapStatus(family, grades, state, getConfig().activities || [], subject);
     if (!rap) { host.innerHTML = ""; return; }
     var estado = rap.status === "aprobado" ? "RAP APROBADO" : rap.status === "pendiente-nueva-verificacion" ? "RAP pendiente de nueva verificación" : rap.status === "pendiente-verificacion" ? "RAP pendiente de verificación" : "RAP en proceso";
     host.innerHTML = '<div class="r11-rap__head"><strong>Estado del RAP</strong><span class="r11-chip' + (rap.status === "aprobado" ? "" : " r11-chip--format") + '">' + esc(estado) + "</span></div>" +

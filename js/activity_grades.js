@@ -1225,24 +1225,75 @@
   // VERIFICACION del instructor (doc de notas, escritura solo-admin) vinculada a la
   // VERSION EXACTA revisada. Si cambia cualquier parte obligatoria, la verificacion
   // deja de acreditar la version actual ("pendiente de nueva verificacion").
+  // SHA-256 sincrono (UTF-8) — fase 3e: reemplaza la huella de 32 bits (colisiones
+  // reproducidas por Codex: "ab" vs "bA"). Implementacion estandar FIPS 180-4.
+  function sha256Hex(str) {
+    var K = [0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+    var bytes = unescape(encodeURIComponent(String(str)));
+    var bitLen = bytes.length * 8;
+    var words = [];
+    for (var i = 0; i < bytes.length; i++) words[i >> 2] |= (bytes.charCodeAt(i) & 0xff) << (24 - (i % 4) * 8);
+    words[bytes.length >> 2] |= 0x80 << (24 - (bytes.length % 4) * 8);
+    var n = (((bytes.length + 8) >> 6) + 1) * 16;
+    for (var z = 0; z < n; z++) words[z] = words[z] | 0;
+    words[n - 2] = Math.floor(bitLen / 0x100000000);
+    words[n - 1] = bitLen >>> 0;
+    var H = [0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+    var W = new Array(64);
+    function rotr(x, r) { return (x >>> r) | (x << (32 - r)); }
+    for (var off = 0; off < n; off += 16) {
+      for (var t = 0; t < 64; t++) {
+        if (t < 16) W[t] = words[off + t];
+        else {
+          var s0 = rotr(W[t - 15], 7) ^ rotr(W[t - 15], 18) ^ (W[t - 15] >>> 3);
+          var s1 = rotr(W[t - 2], 17) ^ rotr(W[t - 2], 19) ^ (W[t - 2] >>> 10);
+          W[t] = (W[t - 16] + s0 + W[t - 7] + s1) | 0;
+        }
+      }
+      var a = H[0], b = H[1], c = H[2], d = H[3], e = H[4], f = H[5], g = H[6], h = H[7];
+      for (var r = 0; r < 64; r++) {
+        var S1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25);
+        var ch = (e & f) ^ (~e & g);
+        var t1 = (h + S1 + ch + K[r] + W[r]) | 0;
+        var S0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22);
+        var mj = (a & b) ^ (a & c) ^ (b & c);
+        var t2 = (S0 + mj) | 0;
+        h = g; g = f; f = e; e = (d + t1) | 0; d = c; c = b; b = a; a = (t1 + t2) | 0;
+      }
+      H[0] = (H[0] + a) | 0; H[1] = (H[1] + b) | 0; H[2] = (H[2] + c) | 0; H[3] = (H[3] + d) | 0;
+      H[4] = (H[4] + e) | 0; H[5] = (H[5] + f) | 0; H[6] = (H[6] + g) | 0; H[7] = (H[7] + h) | 0;
+    }
+    return H.map(function (v) { return ("00000000" + (v >>> 0).toString(16)).slice(-8); }).join("");
+  }
+
+  // ID REAL del archivo en Drive (lo devuelve el Apps Script al subir: fileId).
+  // Si el registro trae fileId y una URL de Drive con OTRO id, la identidad es invalida.
+  function driveFileIdentity(state, actId) {
+    var rec = state && state[actId + "-delivery"];
+    if (!rec || typeof rec !== "object") return "";
+    var fromUrl = "";
+    var m = String(rec.driveUrl || rec.fileUrl || "").match(/\/d\/([A-Za-z0-9_-]{10,})/) || String(rec.driveUrl || "").match(/[?&]id=([A-Za-z0-9_-]{10,})/);
+    if (m) fromUrl = m[1];
+    var id = String(rec.fileId || "");
+    if (id && fromUrl && id !== fromUrl) return "";
+    return id || fromUrl;
+  }
+
+  // Version exacta de la evidencia (fase 3e): SHA-256 sobre una representacion
+  // CANONICA (JSON de pares [nombre, valor] en el orden declarado de los campos
+  // obligatorios + ID real del archivo de Drive). Garantiza integridad frente a
+  // cambios; NO acredita autoria ni entrega por si sola.
   function evidenceVersion(state, act) {
     var type = (act && act.type) || "form";
-    var parts = {};
+    var canon = { v: "ev2", activityId: String(act && act.id || "") };
     if (type === "form" || type === "both") {
       var fields = Array.isArray(act.formFields) ? act.formFields : [];
-      parts.form = fields.map(function (k) { return [k, String(state && state[k] != null ? state[k] : "")]; });
+      canon.form = fields.map(function (k) { return [String(k), String(state && state[k] != null ? state[k] : "")]; });
     }
-    if (type === "file" || type === "both") {
-      var rec = state && state[act.id + "-delivery"];
-      parts.file = rec && typeof rec === "object"
-        ? [String(rec.status || ""), String(rec.savedFileName || ""), String(rec.driveUrl || ""), String(rec.fileId || ""), String(rec.fileUrl || ""), String(rec.submittedAt || "")]
-        : null;
-    }
-    var text = JSON.stringify(parts);
-    var h = 5381;
-    for (var i = 0; i < text.length; i++) { h = ((h << 5) + h + text.charCodeAt(i)) >>> 0; }
-    return "ev1:" + h.toString(16) + ":" + text.length;
+    if (type === "file" || type === "both") canon.fileId = driveFileIdentity(state, act.id);
+    return "ev2:sha256:" + sha256Hex(JSON.stringify(canon));
   }
+
 
   // Estado de la parte ARCHIVO de una evidencia:
   //  "real"      = entrega con archivo/enlace hecha por el aprendiz;
@@ -1270,7 +1321,20 @@
   //   "verificada"        -> verificacion documentada de la version ACTUAL.
   // GUARDADO / ENVIADO (sello del navegador) / ENTREGADO (registro del cliente) son
   // informativos; solo "verificada" + nota A cuentan para el RAP.
-  function evaluateRapStatus(family, grades, guideState, declaredActivities) {
+  // Revision valida SOLO si coincide su identidad completa con el aprendiz/ficha/
+  // familia/actividad consultados (fase 3e). subject = { usernameKey, ficha, uid }.
+  function reviewMatchesIdentity(rec, subject, family, activityId) {
+    if (!rec || !subject) return false;
+    if (!subject.usernameKey || !subject.ficha) return false;
+    if (String(rec.usernameKey || "") !== String(subject.usernameKey)) return false;
+    if (String(rec.ficha || "") !== String(subject.ficha)) return false;
+    if (String(rec.family || "") !== String(family)) return false;
+    if (String(rec.activityId || "") !== String(activityId)) return false;
+    if (rec.uid || subject.uid) { if (!rec.uid || !subject.uid || String(rec.uid) !== String(subject.uid)) return false; }
+    return true;
+  }
+
+  function evaluateRapStatus(family, grades, guideState, declaredActivities, subject) {
     var required = REQUIRED_EVIDENCE[String(family || "")] || null;
     if (!required) return null;
     var byId = {};
@@ -1282,15 +1346,20 @@
       var needsForm = type === "form" || type === "both";
       var needsFile = type === "file" || type === "both";
       var rec = g[id + ":verified"];
-      var documented = isDocumentedVerification(rec);
+      // Documentada Y de este aprendiz/ficha/familia/actividad; si no, no existe.
+      var documented = isDocumentedVerification(rec) && reviewMatchesIdentity(rec, subject, family, id);
       var formState = null, fileState = null, evidence = null, delivered = null, needsVerification = false, reverify = false, verified = false;
       if (guideState) {
         formState = needsForm ? formEvidenceState(guideState, act) : null;   // missing | uncertain | real (informativo)
         fileState = needsFile ? fileEvidenceState(guideState, id) : null;    // missing | uncertain | real (informativo)
         var complete = (!needsForm || formState !== "missing") && (!needsFile || fileState !== "missing");
         var version = evidenceVersion(guideState, act);
-        verified = complete && documented && rec.reviewedVersion === version;
-        reverify = complete && documented && rec.reviewedVersion !== version;
+        var fileId = needsFile ? driveFileIdentity(guideState, id) : "";
+        // Archivo: la revision debe ser del MISMO archivo real de Drive y registrar la
+        // revision observada por el instructor en Drive.
+        var fileMatch = !needsFile || (Boolean(fileId) && rec && rec.reviewedFileId === fileId && String(rec.reviewedFileRevision || "").trim().length > 0);
+        verified = complete && documented && rec.reviewedVersion === version && fileMatch;
+        reverify = complete && documented && !verified;
         evidence = !complete ? "incompleta" : verified ? "verificada" : reverify ? "nueva-verificacion" : "por-verificar";
         needsVerification = complete && !verified;
         delivered = verified;
@@ -1332,10 +1401,16 @@
     if (support.length < 3 || !result || !String(r.by || "").trim()) return Promise.resolve({ ok: false, status: "aborted", reason: "missing-support" });
     if (!getGradesKey(usernameKey)) return Promise.resolve({ ok: false, status: "aborted", reason: "no-storage-key" });
     var reviewedVersion = String(r.reviewedVersion || "");
-    if (!reviewedVersion) return Promise.resolve({ ok: false, status: "aborted", reason: "missing-version" });
+    if (!/^ev2:sha256:[0-9a-f]{64}$/.test(reviewedVersion)) return Promise.resolve({ ok: false, status: "aborted", reason: "missing-version" });
+    if (!String(r.ficha || "").trim()) return Promise.resolve({ ok: false, status: "aborted", reason: "missing-ficha" });
+    if (r.needsFile && (!String(r.reviewedFileId || "").trim() || !String(r.reviewedFileRevision || "").trim())) {
+      return Promise.resolve({ ok: false, status: "aborted", reason: "missing-file-revision" });
+    }
     var rec = { at: new Date().toISOString(), by: String(r.by).trim(), support: support, result: result,
-      note: String(r.note || "").trim(), usernameKey: String(usernameKey), family: String(guideFamily), activityId: String(activityId),
-      reviewedVersion: reviewedVersion, reviewedFile: r.reviewedFile && typeof r.reviewedFile === "object" ? r.reviewedFile : null };
+      note: String(r.note || "").trim(), usernameKey: String(usernameKey), ficha: String(r.ficha).trim(), uid: String(r.uid || ""),
+      family: String(guideFamily), activityId: String(activityId), reviewedVersion: reviewedVersion,
+      reviewedFileId: String(r.reviewedFileId || ""), reviewedFileRevision: String(r.reviewedFileRevision || "").trim(),
+      reviewedFile: r.reviewedFile && typeof r.reviewedFile === "object" ? r.reviewedFile : null };
     var prev = getStudentGrades(usernameKey, guideFamily)[activityId + ":verifyLog"];
     var log = Array.isArray(prev) ? prev.slice() : [];
     log.push(rec);
@@ -1609,6 +1684,9 @@
     formEvidenceState: formEvidenceState,
     formFieldsFingerprint: formFieldsFingerprint,
     evidenceVersion: evidenceVersion,
+    sha256Hex: sha256Hex,
+    driveFileIdentity: driveFileIdentity,
+    reviewMatchesIdentity: reviewMatchesIdentity,
     buildStudentSubmissionRecord: buildStudentSubmissionRecord,
     isDocumentedVerification: isDocumentedVerification,
     setStudentEvidenceVerification: setStudentEvidenceVerification,

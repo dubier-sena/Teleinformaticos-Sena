@@ -146,18 +146,25 @@ function fullEvidenceState(acts, req, mgr) {
       st[id + "-locked"] = true; a.formFields.forEach((k) => { st[k] = "respuesta del aprendiz"; });
       st[id + "-submission"] = plain(mgr.buildStudentSubmissionRecord(st, a, "aprendiz_prueba"));
     }
-    if (a.type === "file" || a.type === "both") st[id + "-delivery"] = { status: "delivered", savedFileName: id + ".pdf", driveUrl: "https://drive.google.com/file/d/x/view" };
+    if (a.type === "file" || a.type === "both") { const fid = "1DriveFileId_" + id; st[id + "-delivery"] = { status: "delivered", savedFileName: id + ".pdf", fileId: fid, driveUrl: "https://drive.google.com/file/d/" + fid + "/view" }; }
   });
   return st;
 }
 const GUIDE_FILES = [["guia-redes11-rap01", "grupo-11a-guia-09-redes-rap01.html"], ["guia-redes11-rap02", "grupo-11a-guia-10-redes-rap02.html"], ["guia-redes11-rap03", "grupo-11a-guia-11-redes-rap03.html"]];
 
 // Verificacion documentada del instructor de la VERSION ACTUAL de cada evidencia (fase 3d).
-function verifyAll(mgr, acts, ids, st, grades) {
+// Identidad del aprendiz consultado (fase 3e).
+const SUBJ = { usernameKey: "aprendiz_prueba", ficha: "3168850", uid: "" };
+function verifyAll(mgr, acts, ids, st, grades, fam) {
+  const family = fam || Object.keys(mgr.REQUIRED_EVIDENCE).find((f) => mgr.REQUIRED_EVIDENCE[f].indexOf(ids[0]) !== -1);
   const out = Object.assign({}, grades);
   ids.forEach((id) => {
     const a = acts.find((x) => x.id === id);
-    out[id + ":verified"] = { at: "2026-11-09T08:00:00Z", by: "dubier", support: "Soporte autentico revisado: " + id, result: "autentica", reviewedVersion: mgr.evidenceVersion(st, a) };
+    const needsFile = a.type === "file" || a.type === "both";
+    out[id + ":verified"] = { at: "2026-11-09T08:00:00Z", by: "dubier", support: "Soporte autentico revisado: " + id, result: "autentica",
+      usernameKey: SUBJ.usernameKey, ficha: SUBJ.ficha, uid: SUBJ.uid, family, activityId: id,
+      reviewedVersion: mgr.evidenceVersion(st, a),
+      reviewedFileId: needsFile ? mgr.driveFileIdentity(st, id) : "", reviewedFileRevision: needsFile ? "Version del 09/11/2026 08:14" : "" };
   });
   return out;
 }
@@ -170,16 +177,16 @@ test("4. RAP APROBADO solo con TODAS las evidencias oficiales completas, verific
     const req = mgr.REQUIRED_EVIDENCE[fam];
     req.forEach((id) => assert.ok(acts.some((a) => a.id === id), `${fam}: ${id} no existe`));
     const allA = {}; acts.forEach((a) => { allA[a.id] = "A"; });
-    assert.equal(mgr.evaluateRapStatus(fam, allA, {}, acts).status, "pendiente", `${fam}: calificacion manual sin evidencia = pendiente`);
-    assert.equal(mgr.evaluateRapStatus(fam, allA, null, acts).status, "por-verificar", "estado no leido nunca es aprobado");
+    assert.equal(mgr.evaluateRapStatus(fam, allA, {}, acts, SUBJ).status, "pendiente", `${fam}: calificacion manual sin evidencia = pendiente`);
+    assert.equal(mgr.evaluateRapStatus(fam, allA, null, acts, SUBJ).status, "por-verificar", "estado no leido nunca es aprobado");
     const st = fullEvidenceState(acts, req, mgr);
-    assert.equal(mgr.evaluateRapStatus(fam, allA, st, acts).status, "pendiente-verificacion", `${fam}: completo sin verificacion del instructor = pendiente de verificacion`);
+    assert.equal(mgr.evaluateRapStatus(fam, allA, st, acts, SUBJ).status, "pendiente-verificacion", `${fam}: completo sin verificacion del instructor = pendiente de verificacion`);
     const ok = verifyAll(mgr, acts, req, st, allA);
-    assert.equal(mgr.evaluateRapStatus(fam, ok, st, acts).status, "aprobado", `${fam}: completo + verificado + aprobado`);
+    assert.equal(mgr.evaluateRapStatus(fam, ok, st, acts, SUBJ).status, "aprobado", `${fam}: completo + verificado + aprobado`);
     const formativas = acts.filter((a) => req.indexOf(a.id) === -1).map((a) => a.id);
     const soloOficiales = Object.assign({}, ok); formativas.forEach((id) => { delete soloOficiales[id]; });
-    assert.equal(mgr.evaluateRapStatus(fam, soloOficiales, st, acts).status, "aprobado", "formativas no condicionan");
-    assert.notEqual(mgr.evaluateRapStatus(fam, Object.assign({}, ok, { [req[0]]: "D" }), st, acts).status, "aprobado");
+    assert.equal(mgr.evaluateRapStatus(fam, soloOficiales, st, acts, SUBJ).status, "aprobado", "formativas no condicionan");
+    assert.notEqual(mgr.evaluateRapStatus(fam, Object.assign({}, ok, { [req[0]]: "D" }), st, acts, SUBJ).status, "aprobado");
   }
 });
 
@@ -196,12 +203,12 @@ test("4. actividades 'both': archivo + formulario vacio, formulario sin archivo,
       const base = fullEvidenceState(acts, req, mgr);
       // archivo entregado + formulario vacio
       const s1 = Object.assign({}, base); both.formFields.forEach((k) => { s1[k] = ""; });
-      const r1 = mgr.evaluateRapStatus(fam, allA, s1, acts);
+      const r1 = mgr.evaluateRapStatus(fam, allA, s1, acts, SUBJ);
       assert.equal(r1.status, "pendiente", `${both.id}: archivo + formulario vacio`);
       assert.equal(r1.items.find((i) => i.id === both.id).delivered, false);
       // formulario completo + archivo faltante
       const s2 = Object.assign({}, base); delete s2[both.id + "-delivery"];
-      assert.equal(mgr.evaluateRapStatus(fam, allA, s2, acts).status, "pendiente", `${both.id}: formulario sin archivo`);
+      assert.equal(mgr.evaluateRapStatus(fam, allA, s2, acts, SUBJ).status, "pendiente", `${both.id}: formulario sin archivo`);
       // formulario guardado (respuestas) pero sin enviar ni entrega formal
       const s3 = Object.assign({}, base); delete s3[both.id + "-delivery"]; delete s3[both.id + "-locked"];
       assert.equal(mgr.evaluateRapStatus(fam, allA, s3, acts).status, "pendiente", `${both.id}: solo guardado`);
@@ -219,19 +226,29 @@ test("4. evidencia historica de procedencia incierta = PENDIENTE DE VERIFICACION
   const allA = {}; acts.forEach((a) => { allA[a.id] = "A"; });
   const st = fullEvidenceState(acts, req, mgr);
   st["c11Lab341-delivery"] = { status: "delivered", submittedAt: "2026-11-07T12:00:00Z" };   // historico: sin archivo
-  const r = mgr.evaluateRapStatus(fam, allA, st, acts);
+  const r = mgr.evaluateRapStatus(fam, allA, st, acts, SUBJ);
   assert.equal(r.status, "pendiente-verificacion");
   assert.equal(r.items.find((i) => i.id === "c11Lab341").fileState, "uncertain");
   const before = JSON.stringify(st);
-  assert.equal(mgr.evaluateRapStatus(fam, verifyAll(mgr, acts, req, st, allA), st, acts).status, "aprobado");
+  // Fase 3e: un registro historico SIN ID real de Drive no se puede vincular a ningun
+  // archivo: aunque el instructor registre una revision, sigue sin verificarse (limitacion
+  // explicita; hace falta una entrega real con fileId). El resto si se puede verificar.
+  const conRev = verifyAll(mgr, acts, req, st, allA, fam);
+  const r2 = mgr.evaluateRapStatus(fam, conRev, st, acts, SUBJ);
+  assert.notEqual(r2.status, "aprobado");
+  assert.equal(r2.items.find((i) => i.id === "c11Lab341").verified, false);
+  assert.equal(r2.items.filter((i) => i.verified).length, req.length - 1);
+  // con una entrega real (fileId de Drive) y su revision, si cuenta
+  const st2 = fullEvidenceState(acts, req, mgr);
+  assert.equal(mgr.evaluateRapStatus(fam, verifyAll(mgr, acts, req, st2, allA, fam), st2, acts, SUBJ).status, "aprobado");
   assert.equal(JSON.stringify(st), before, "verificar no crea ni modifica entregas");
-  assert.equal((await mgr.setStudentEvidenceVerification("aprendiz_prueba", "guia-02-herramientas", "x", { support: "abc", result: "autentica", by: "d", reviewedVersion: "v" })).reason, "not-strict-family");
-  assert.equal((await mgr.setStudentEvidenceVerification("aprendiz_prueba", fam, "c11Lab341", { result: "autentica", by: "d", reviewedVersion: "v" })).reason, "missing-support", "sin soporte no registra");
+  assert.equal((await mgr.setStudentEvidenceVerification("aprendiz_prueba", "guia-02-herramientas", "x", { support: "abc", result: "autentica", by: "d", reviewedVersion: "ev2:sha256:" + "0".repeat(64), ficha: "3168850" })).reason, "not-strict-family");
+  assert.equal((await mgr.setStudentEvidenceVerification("aprendiz_prueba", fam, "c11Lab341", { result: "autentica", by: "d", reviewedVersion: "ev2:sha256:" + "0".repeat(64), ficha: "3168850" })).reason, "missing-support", "sin soporte no registra");
   assert.equal((await mgr.setStudentEvidenceVerification("aprendiz_prueba", fam, "c11Lab341", { support: "abc", result: "autentica", by: "d" })).reason, "missing-version", "sin version revisada no registra");
   const fn = extractFn(read("js/activity_grades.js"), "function setStudentEvidenceVerification(");
   assert.match(fn, /set\[activityId \+ ":verified"\] = rec;/);
   assert.match(fn, /set\[activityId \+ ":verifyLog"\] = log;/);
-  assert.match(fn, /reviewedVersion: reviewedVersion, reviewedFile:/);
+  assert.match(fn, /reviewedVersion: reviewedVersion,\s*reviewedFileId: String\(r\.reviewedFileId/);
   assert.doesNotMatch(fn, /-delivery|-locked|cloudSaveGuideData/);
 });
 
@@ -239,8 +256,8 @@ test("4. el panel marca evidencia oficial vs formativa y calcula el RAP con entr
   const admin = read("js/admin_usuarios.js");
   assert.match(admin, /&#9733; Evidencia oficial/);
   assert.match(admin, />Formativa<\/span>/);
-  assert.match(admin, /gradesManager\.evaluateRapStatus\(guideFamily, g, guideStateByUser\[user\.usernameKey\], declaredActs\)/);
-  assert.match(read("js/script_guia_redes11.js"), /mgr\.evaluateRapStatus\(family, grades, state, getConfig\(\)\.activities \|\| \[\]\)/);
+  assert.match(admin, /gradesManager\.evaluateRapStatus\(guideFamily, g, guideStateByUser\[user\.usernameKey\], declaredActs, rapSubject\)/);
+  assert.match(read("js/script_guia_redes11.js"), /mgr\.evaluateRapStatus\(family, grades, state, getConfig\(\)\.activities \|\| \[\], subject\)/);
 });
 
 // ── 3. Banco ──────────────────────────────────────────────────────────────────
@@ -361,16 +378,16 @@ test("3c. REGRESION del fallo historico: respuestas del banco + bloqueo + nota A
   const otras = req.filter((id) => id !== "d11Reflexion311");
   const grades = verifyAll(mgr, acts, otras, st, notasAntes);   // todo lo demas verificado
   const stateAntes = JSON.stringify(st);
-  const r = mgr.evaluateRapStatus(fam, grades, st, acts);
+  const r = mgr.evaluateRapStatus(fam, grades, st, acts, SUBJ);
   assert.equal(r.status, "pendiente-verificacion");
   assert.equal(r.items.find((i) => i.id === "d11Reflexion311").delivered, false);
   for (const bad of [{ at: "x", by: "d", result: "autentica" }, { at: "x", by: "d", support: "ok soporte", result: "no-autentica" }, { at: "x", by: "d", support: "  ", result: "autentica" }]) {
     const v = Object.assign({}, bad, { reviewedVersion: mgr.evidenceVersion(st, refl) });
-    assert.equal(mgr.evaluateRapStatus(fam, Object.assign({}, grades, { "d11Reflexion311:verified": v }), st, acts).status, "pendiente-verificacion", JSON.stringify(bad));
+    assert.equal(mgr.evaluateRapStatus(fam, Object.assign({}, grades, { "d11Reflexion311:verified": v }), st, acts, SUBJ).status, "pendiente-verificacion", JSON.stringify(bad));
   }
   const ok = verifyAll(mgr, acts, ["d11Reflexion311"], st, grades);
-  assert.equal(mgr.evaluateRapStatus(fam, ok, st, acts).status, "aprobado");
-  assert.notEqual(mgr.evaluateRapStatus(fam, Object.assign({}, ok, { d11Protocolo341: "" }), st, acts).status, "aprobado");
+  assert.equal(mgr.evaluateRapStatus(fam, ok, st, acts, SUBJ).status, "aprobado");
+  assert.notEqual(mgr.evaluateRapStatus(fam, Object.assign({}, ok, { d11Protocolo341: "" }), st, acts, SUBJ).status, "aprobado");
   assert.equal(JSON.stringify(st), stateAntes);
 });
 
@@ -385,13 +402,13 @@ test("3d. CASO A: formulario completo + sello local valido + nota A, sin verific
   const allA = {}; acts.forEach((a) => { allA[a.id] = "A"; });
   const act = acts.find((a) => a.id === "b11Reflexion311");
   assert.equal(mgr.formEvidenceState(st, act), "real", "el sello del navegador coincide");
-  const r = mgr.evaluateRapStatus(fam, allA, st, acts);
+  const r = mgr.evaluateRapStatus(fam, allA, st, acts, SUBJ);
   assert.notEqual(r.status, "aprobado", "un sello del cliente no acredita entrega");
   assert.equal(r.status, "pendiente-verificacion");
   assert.equal(r.delivered, 0);
   // un aprendiz que fabrica en su navegador un registro de entrega con archivo y un sello tampoco aprueba
   const forjado = Object.assign({}, st, { "b11Lab1Estrella341-delivery": { status: "delivered", savedFileName: "falso.pkt", driveUrl: "https://drive.google.com/file/d/falso/view" } });
-  assert.notEqual(mgr.evaluateRapStatus(fam, allA, forjado, acts).status, "aprobado");
+  assert.notEqual(mgr.evaluateRapStatus(fam, allA, forjado, acts, SUBJ).status, "aprobado");
 });
 
 test("3d. CASO B: evidencia verificada y modificada despues (respuesta o archivo) = PENDIENTE DE NUEVA VERIFICACION", () => {
@@ -403,18 +420,18 @@ test("3d. CASO B: evidencia verificada y modificada despues (respuesta o archivo
   const st = fullEvidenceState(acts, req, mgr);
   const allA = {}; acts.forEach((a) => { allA[a.id] = "A"; });
   const grades = verifyAll(mgr, acts, req, st, allA);
-  assert.equal(mgr.evaluateRapStatus(fam, grades, st, acts).status, "aprobado");
+  assert.equal(mgr.evaluateRapStatus(fam, grades, st, acts, SUBJ).status, "aprobado");
   const taller = acts.find((a) => a.id === "c11Taller331");
   // cambio de una respuesta exigida
   const s1 = Object.assign({}, st, { [taller.formFields[0]]: "respuesta cambiada despues de la revision" });
-  const r1 = mgr.evaluateRapStatus(fam, grades, s1, acts);
+  const r1 = mgr.evaluateRapStatus(fam, grades, s1, acts, SUBJ);
   assert.equal(r1.status, "pendiente-nueva-verificacion");
   const it = r1.items.find((i) => i.id === "c11Taller331");
   assert.equal(it.evidence, "nueva-verificacion");
   assert.equal(it.verified, false);
   // cambio del archivo exigido
   const s2 = Object.assign({}, st, { "c11Lab341-delivery": { status: "delivered", savedFileName: "Lab_v2.pkt", driveUrl: "https://drive.google.com/file/d/v2/view" } });
-  assert.equal(mgr.evaluateRapStatus(fam, grades, s2, acts).status, "pendiente-nueva-verificacion");
+  assert.equal(mgr.evaluateRapStatus(fam, grades, s2, acts, SUBJ).status, "pendiente-nueva-verificacion");
   // el historial y la nota anterior se conservan
   assert.equal(grades["c11Taller331"], "A");
   assert.ok(grades["c11Taller331:verified"].support);
@@ -431,9 +448,9 @@ test("3d. CASO C: nueva verificacion documentada de la nueva version = vuelve a 
   const grades = verifyAll(mgr, acts, req, st, allA);
   const taller = acts.find((a) => a.id === "c11Taller331");
   const s1 = Object.assign({}, st, { [taller.formFields[0]]: "nueva version" });
-  assert.equal(mgr.evaluateRapStatus(fam, grades, s1, acts).status, "pendiente-nueva-verificacion");
+  assert.equal(mgr.evaluateRapStatus(fam, grades, s1, acts, SUBJ).status, "pendiente-nueva-verificacion");
   const re = verifyAll(mgr, acts, ["c11Taller331"], s1, grades);
-  assert.equal(mgr.evaluateRapStatus(fam, re, s1, acts).status, "aprobado");
+  assert.equal(mgr.evaluateRapStatus(fam, re, s1, acts, SUBJ).status, "aprobado");
 });
 
 test("3c. el sello solo lo crea la guia en el flujo del aprendiz; ninguna ruta administrativa lo escribe", () => {
@@ -449,9 +466,93 @@ test("3c. el sello solo lo crea la guia en el flujo del aprendiz; ninguna ruta a
   const admin = read("js/admin_usuarios.js");
   const conf = extractFn(admin, "async function confirmEvidenceVerification(");
   assert.match(conf, /if \(support\.length < 3 \|\| !result\)/);
-  assert.match(conf, /setStudentEvidenceVerification\(ctx\.user\.usernameKey, ctx\.family, ctx\.item\.id, \{ support, result, note, by,/);
+  assert.match(conf, /setStudentEvidenceVerification\(ctx\.user\.usernameKey, ctx\.family, ctx\.item\.id, \{\s*support, result, note, by,/);
+  assert.match(conf, /reviewedFileId !== ctx\.currentFileId/);
+  assert.match(conf, /ficha: ctx\.subject\.ficha, uid: ctx\.subject\.uid/);
   assert.match(extractFn(admin, "function handleEvidenceVerification("), /Respuesta registrada/);
   // grado 10 sin cambios en su evaluacion
   const { mgr } = loadGrades();
   assert.equal(mgr.evaluateRapStatus("guia-redes-rap01", {}, {}, []), null);
+});
+
+// ── Fase 3e (Codex): integridad SHA-256, archivo real de Drive e identidad de la revision ──
+test("3e. huella SHA-256 canonica: 'ab' vs 'bA' (colision de la huella de 32 bits) ahora difieren; coincide con SHA-256 estandar", () => {
+  const { mgr } = loadGrades();
+  const crypto = require("node:crypto");
+  for (const t of ["", "ab", "bA", "ñandú 🎲 192.168.20.0/25", "x".repeat(5000)]) {
+    assert.equal(mgr.sha256Hex(t), crypto.createHash("sha256").update(t, "utf8").digest("hex"), JSON.stringify(t.slice(0, 12)));
+  }
+  const act = { id: "c11Reflexion311", type: "form", formFields: ["k"] };
+  assert.notEqual(mgr.evidenceVersion({ k: "ab" }, act), mgr.evidenceVersion({ k: "bA" }, act));
+  assert.match(mgr.evidenceVersion({ k: "ab" }, act), /^ev2:sha256:[0-9a-f]{64}$/);
+  // nombres de campo incluidos: mismo valor en otro campo -> otra version
+  const two = { id: "x", type: "form", formFields: ["a", "b"] };
+  assert.notEqual(mgr.evidenceVersion({ a: "1", b: "" }, two), mgr.evidenceVersion({ a: "", b: "1" }, two));
+  // la revision anterior con la huella vieja (ev1) deja de valer
+  const decl = loadDeclarations();
+  const acts = decl["grupo-11a-guia-10-redes-rap02.html"].activities;
+  const req = mgr.REQUIRED_EVIDENCE["guia-redes11-rap02"];
+  const st = fullEvidenceState(acts, req, mgr);
+  const allA = {}; acts.forEach((a) => { allA[a.id] = "A"; });
+  const g = verifyAll(mgr, acts, req, st, allA, "guia-redes11-rap02");
+  const refl = acts.find((a) => a.id === "c11Reflexion311");
+  const s1 = Object.assign({}, st); s1[refl.formFields[0]] = "ab"; const g1 = verifyAll(mgr, acts, ["c11Reflexion311"], s1, g, "guia-redes11-rap02");
+  const s2 = Object.assign({}, s1); s2[refl.formFields[0]] = "bA";
+  assert.equal(mgr.evaluateRapStatus("guia-redes11-rap02", g1, s1, acts, SUBJ).status, "aprobado");
+  assert.equal(mgr.evaluateRapStatus("guia-redes11-rap02", g1, s2, acts, SUBJ).status, "pendiente-nueva-verificacion", "ab -> bA invalida la revision");
+});
+
+test("3e. identidad completa: revision de otro aprendiz, ficha, familia, actividad o UID nunca habilita", () => {
+  const decl = loadDeclarations();
+  const fam = "guia-redes11-rap01";
+  const acts = decl["grupo-11a-guia-09-redes-rap01.html"].activities;
+  const { mgr } = loadGrades();
+  const req = mgr.REQUIRED_EVIDENCE[fam];
+  const st = fullEvidenceState(acts, req, mgr);
+  const allA = {}; acts.forEach((a) => { allA[a.id] = "A"; });
+  const g = verifyAll(mgr, acts, req, st, allA, fam);
+  assert.equal(mgr.evaluateRapStatus(fam, g, st, acts, SUBJ).status, "aprobado");
+  const id = "b11Reflexion311";
+  for (const [campo, valor] of [["usernameKey", "otro_aprendiz"], ["ficha", "3168852"], ["family", "guia-redes11-rap02"], ["activityId", "b11Pares327"], ["uid", "uid-ajeno"]]) {
+    const bad = JSON.parse(JSON.stringify(g)); bad[id + ":verified"][campo] = valor;
+    const r = mgr.evaluateRapStatus(fam, bad, st, acts, SUBJ);
+    assert.notEqual(r.status, "aprobado", campo);
+    assert.equal(r.items.find((i) => i.id === id).verified, false, campo);
+  }
+  // sin identidad del consultado no se acepta ninguna revision
+  assert.notEqual(mgr.evaluateRapStatus(fam, g, st, acts).status, "aprobado");
+  assert.notEqual(mgr.evaluateRapStatus(fam, g, st, acts, { usernameKey: "aprendiz_prueba" }).status, "aprobado");
+  // UID: si el perfil lo tiene, debe coincidir
+  const conUid = verifyAll(mgr, acts, req, st, allA, fam);
+  Object.keys(conUid).filter((k) => /:verified$/.test(k)).forEach((k) => { conUid[k].uid = "uid-1"; });
+  assert.equal(mgr.evaluateRapStatus(fam, conUid, st, acts, Object.assign({}, SUBJ, { uid: "uid-1" })).status, "aprobado");
+  assert.notEqual(mgr.evaluateRapStatus(fam, conUid, st, acts, Object.assign({}, SUBJ, { uid: "uid-2" })).status, "aprobado");
+});
+
+test("3e. archivo: la revision exige el MISMO ID real de Drive y la revision observada; IDs contradictorios no se verifican", async () => {
+  const decl = loadDeclarations();
+  const fam = "guia-redes11-rap02";
+  const acts = decl["grupo-11a-guia-10-redes-rap02.html"].activities;
+  const { mgr } = loadGrades();
+  const req = mgr.REQUIRED_EVIDENCE[fam];
+  const st = fullEvidenceState(acts, req, mgr);
+  const allA = {}; acts.forEach((a) => { allA[a.id] = "A"; });
+  const g = verifyAll(mgr, acts, req, st, allA, fam);
+  assert.equal(mgr.evaluateRapStatus(fam, g, st, acts, SUBJ).status, "aprobado");
+  const sinRev = JSON.parse(JSON.stringify(g)); sinRev["c11Lab341:verified"].reviewedFileRevision = "";
+  assert.notEqual(mgr.evaluateRapStatus(fam, sinRev, st, acts, SUBJ).status, "aprobado", "sin revision de Drive");
+  const otroArchivo = JSON.parse(JSON.stringify(g)); otroArchivo["c11Lab341:verified"].reviewedFileId = "1OtroArchivoDistinto";
+  assert.notEqual(mgr.evaluateRapStatus(fam, otroArchivo, st, acts, SUBJ).status, "aprobado", "otro archivo");
+  // nueva entrega (otro archivo real) -> pendiente de nueva verificacion aunque nombre y fecha no cambien
+  const s2 = Object.assign({}, st, { "c11Lab341-delivery": Object.assign({}, st["c11Lab341-delivery"], { fileId: "1ArchivoNuevoDistinto", driveUrl: "https://drive.google.com/file/d/1ArchivoNuevoDistinto/view" }) });
+  assert.equal(mgr.evaluateRapStatus(fam, g, s2, acts, SUBJ).status, "pendiente-nueva-verificacion");
+  // fileId y URL contradictorios -> sin identidad valida
+  const s3 = Object.assign({}, st, { "c11Lab341-delivery": Object.assign({}, st["c11Lab341-delivery"], { driveUrl: "https://drive.google.com/file/d/1UrlDeOtroArchivo/view" }) });
+  assert.equal(mgr.driveFileIdentity(s3, "c11Lab341"), "");
+  assert.notEqual(mgr.evaluateRapStatus(fam, g, s3, acts, SUBJ).status, "aprobado");
+  // el registro exige ficha, version SHA-256 y, para archivos, ID + revision
+  const base = { support: "soporte ok", result: "autentica", by: "d", reviewedVersion: "ev2:sha256:" + "a".repeat(64), ficha: "3168850" };
+  assert.equal((await mgr.setStudentEvidenceVerification("aprendiz_prueba", fam, "c11Lab341", Object.assign({}, base, { reviewedVersion: "ev1:abc" }))).reason, "missing-version");
+  assert.equal((await mgr.setStudentEvidenceVerification("aprendiz_prueba", fam, "c11Lab341", Object.assign({}, base, { ficha: "" }))).reason, "missing-ficha");
+  assert.equal((await mgr.setStudentEvidenceVerification("aprendiz_prueba", fam, "c11Lab341", Object.assign({}, base, { needsFile: true, reviewedFileId: "1X" }))).reason, "missing-file-revision");
 });
