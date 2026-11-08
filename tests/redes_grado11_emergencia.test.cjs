@@ -204,23 +204,30 @@ test("banco: los criterios del instructor (__criterios) NUNCA se embeben en la n
     },
     getGradeCatalog: () => ({ "guia-redes11-rap02": { activities: [{ id: "c11Taller331" }, { id: "c11Lab341Solo" }] } }),
   };
+  // Fase 3 (Codex): en las familias de 11.° el banco ya NO se embebe nunca (solo 📘);
+  // para las demas familias se sigue filtrando "__criterios".
+  ctx._gradeSolutionsBank["guia-02-herramientas"] = { act: { campo: "modelo", __criterios: "solo instructor" }, soloArchivo: { __criterios: "rubrica" } };
+  ctx.window = { activityGradesManager: { isEvidenceStrictFamily: (f) => /^guia-redes11-rap0[123]$/.test(f) } };
   vm.createContext(ctx);
-  vm.runInContext(extractFn(admin, "function lookupBankSolution(") + ";this.lookupBankSolution=lookupBankSolution;", ctx);
-  assert.deepEqual(JSON.parse(JSON.stringify(ctx.lookupBankSolution("guia-redes11-rap02", "c11Taller331"))), { g11c_331_e1_cidr: "/25" });
-  assert.equal(ctx.lookupBankSolution("guia-redes11-rap02", "c11Lab341Solo"), null, "actividad de archivo: no embebe nada");
+  vm.runInContext(extractFn(admin, "function isEvidenceStrictFamily(") + extractFn(admin, "function lookupBankSolution(") + ";this.lookupBankSolution=lookupBankSolution;", ctx);
+  assert.equal(ctx.lookupBankSolution("guia-redes11-rap02", "c11Taller331"), null, "11.°: nunca se embebe");
+  assert.deepEqual(JSON.parse(JSON.stringify(ctx.lookupBankSolution("guia-02-herramientas", "act"))), { campo: "modelo" });
+  assert.equal(ctx.lookupBankSolution("guia-02-herramientas", "soloArchivo"), null, "actividad de archivo: no embebe nada");
   // y del lado del aprendiz tampoco se aplica una clave __ (defensa en profundidad)
   assert.match(read("js/activity_grades.js"), /if \(isInstructorOnlyBankKey\(storeKey\)\) return;/);
 });
 
-test("banco: la importacion FUSIONA por familia y no borra familias que el archivo no trae", () => {
+test("banco: la importacion conserva familias y respuestas que el archivo no trae (fusion campo a campo)", () => {
+  // Fase 3 (Codex): la fusion por FAMILIA (07-nov) se reemplazo por fusion campo a
+  // campo con analisis previo, respaldo y escritura condicionada (ver
+  // tests/redes_grado11_fase3_evidencia.test.cjs).
   const admin = read("js/admin_usuarios.js");
   const ctx = {};
   vm.createContext(ctx);
-  vm.runInContext(extractFn(admin, "function mergeGradeSolutionBanks(") + ";this.m=mergeGradeSolutionBanks;", ctx);
-  const out = JSON.parse(JSON.stringify(ctx.m({ "guia-01": { a: { x: "1" } }, "guia-redes11-rap02": { old: {} } }, { "guia-redes11-rap02": { nuevo: { y: "2" } } })));
-  assert.deepEqual(out, { "guia-01": { a: { x: "1" } }, "guia-redes11-rap02": { nuevo: { y: "2" } } });
-  assert.match(admin, /cloudGetGradeSolutionsStrict/);
-  assert.match(read("js/firebase_db.js"), /async function cloudGetGradeSolutionsStrict\(\)[\s\S]{0,400}throw new Error/);
+  vm.runInContext(extractFn(admin, "function mergeGradeBanksByField(") + ";this.m=mergeGradeBanksByField;", ctx);
+  const out = JSON.parse(JSON.stringify(ctx.m({ "guia-01": { a: { x: "1" } }, "guia-redes11-rap02": { old: { o: "1" } } }, { "guia-redes11-rap02": { nuevo: { y: "2" } } })));
+  assert.deepEqual(out, { "guia-01": { a: { x: "1" } }, "guia-redes11-rap02": { old: { o: "1" }, nuevo: { y: "2" } } });
+  assert.match(admin, /cloudGetGradeSolutionsVersioned/);
   // el banco nunca se publica en el repositorio
   assert.match(read(".gitignore"), /^grade_solutions_bank\.json$/m);
   for (const g of Object.values(GUIAS)) assert.ok(!read(g.partial).includes("__criterios"));

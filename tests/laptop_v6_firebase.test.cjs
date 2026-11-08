@@ -38,7 +38,10 @@ test('V6 gateway and rule extension do not alter legacy published rules or acade
   // (lectura estricta del banco de respuestas para la importacion por fusion).
   // Hardware Lab members unchanged. Previous baseline:
   // cfaad28342603be8c810ab1961ede840dd22b09f846ce2f28d3fc18649f9faed
-  'js/firebase_db.js':'ed45f854eff46ccaab950d45e89ae4508e7ad8b6d53257b09ce7d85c20724dfa',
+  // 2026-11-08 (emergencia Redes 11.° fase 3): se AGREGAN isEvidenceStrictGuideFile
+  // (bloquea relleno/entrega por aprobacion en 11.°) y lectura/escritura versionada
+  // del banco. Hardware Lab members unchanged. Previous baseline: ed45f854eff46ccaab950d45e89ae4508e7ad8b6d53257b09ce7d85c20724dfa
+  'js/firebase_db.js':'248f5f9da2ff8f6b2670dfea8f084f751fba5688936c942a21627f71fe43b0c0',
   'js/hardware_lab_attempts.js':'1e36582624b3b37c2b33afb7f8c592c75ce35d22eae367d100600b2b7ee9b024',
   'js/admin_hwlab_tracking.js':'a1a4aa6e67a888a48c82a7072894f03fab68d3b7decaaeb3aeb467f388ee57f0'
  };

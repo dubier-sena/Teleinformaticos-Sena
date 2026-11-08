@@ -902,7 +902,9 @@
       set[activityId] = grade;
       set[gradedAtKey] = new Date().toISOString();
     }
-    if (grade === "A" && solutionObj && typeof solutionObj === "object" && Object.keys(solutionObj).length) {
+    if (isEvidenceStrictFamily(guideFamily)) {
+      // Fase 3: nunca se embebe solucion; tampoco se borra nada historico.
+    } else if (grade === "A" && solutionObj && typeof solutionObj === "object" && Object.keys(solutionObj).length) {
       set[solKey] = solutionObj;
     } else {
       del.push(solKey);   // sin "A" => sin solucion embebida
@@ -918,6 +920,7 @@
   // Devuelve true si encolo el cambio; el resultado en la nube se consulta con
   // flushGradesCloudSync(usernameKey).
   function embedStudentActivitySolution(usernameKey, guideFamily, activityId, solutionObj) {
+    if (isEvidenceStrictFamily(guideFamily)) return false;   // fase 3: re-sincronizacion no aplica
     if (!getGradesKey(usernameKey)) return false;
     var fam = getStudentGrades(usernameKey, guideFamily);
     if (!fam || fam[activityId] !== "A") return false;
@@ -1137,6 +1140,70 @@
     "3168852": ["guia-redes-rap01", "guia-redes-rap02", "guia-redes-rap03"],
   };
 
+  // ── Familias con EVIDENCIA ESTRICTA (EMERGENCIA fase 3, 2026-11-08, Codex) ──
+  // En las Guias 9/10/11 de Redes de grado 11 aprobar una actividad NO genera,
+  // completa ni sustituye respuestas del aprendiz (el banco es solo referencia del
+  // instructor) y NO registra entregas: la aprobacion manual no es una entrega
+  // documental. Las demas familias conservan su comportamiento historico.
+  var EVIDENCE_STRICT_FAMILIES = { "guia-redes11-rap01": true, "guia-redes11-rap02": true, "guia-redes11-rap03": true };
+  function isEvidenceStrictFamily(family) {
+    return EVIDENCE_STRICT_FAMILIES[String(family || "")] === true;
+  }
+
+  // Evidencias OFICIALES que condicionan el RAP (tabla «Planteamiento de evidencias»
+  // de cada Word). El resto de columnas son formativas/de seguimiento.
+  var REQUIRED_EVIDENCE = {
+    "guia-redes11-rap01": ["b11Reflexion311", "b11Exploracion325", "b11MapaMental326", "b11TallerIP334", "b11Lab1Estrella341"],
+    "guia-redes11-rap02": ["c11Reflexion311", "c11Exploracion325", "c11MapaMental326", "c11Taller331", "c11Lab341"],
+    "guia-redes11-rap03": ["d11Reflexion311", "d11Contexto325", "d11Exposicion331", "d11Plantilla1", "d11Plantilla2", "d11Plantilla3", "d11Protocolo341", "d11Sustentacion342"],
+  };
+
+  // Entrega REAL de un archivo: registro "delivered" con archivo o enlace de Drive y
+  // que NO lo haya creado una aprobacion del instructor.
+  function hasRealFileDelivery(state, actId) {
+    var rec = state && state[actId + "-delivery"];
+    if (!rec || typeof rec !== "object" || rec.status !== "delivered") return false;
+    if (rec.registeredBy === "admin-grade-approval") return false;
+    return Boolean(rec.savedFileName || rec.driveUrl || rec.fileUrl || rec.fileId);
+  }
+
+  // Respuesta REAL guardada: actividad enviada (locked) con TODOS sus campos
+  // obligatorios respondidos por el aprendiz.
+  function hasRealSavedAnswers(state, act) {
+    if (!state || !act || state[act.id + "-locked"] !== true) return false;
+    var fields = Array.isArray(act.formFields) ? act.formFields : [];
+    if (!fields.length) return false;
+    return fields.every(function (k) { return String(state[k] == null ? "" : state[k]).trim() !== ""; });
+  }
+
+  // Estado academico por evidencia oficial y del RAP. Pura (sin red ni DOM).
+  // grades: notas de la familia; guideState: estado de la guia del aprendiz (o null
+  // si no se pudo leer); declaredActivities: actividades de guide_declarations.
+  function evaluateRapStatus(family, grades, guideState, declaredActivities) {
+    var required = REQUIRED_EVIDENCE[String(family || "")] || null;
+    if (!required) return null;
+    var byId = {};
+    (declaredActivities || []).forEach(function (a) { byId[a.id] = a; });
+    var g = grades || {};
+    var items = required.map(function (id) {
+      var act = byId[id] || { id: id, type: "form" };
+      var approved = g[id] === "A";
+      var delivered = null;   // null = no verificable (estado no leido)
+      if (guideState) {
+        delivered = act.type === "form" ? hasRealSavedAnswers(guideState, act) : hasRealFileDelivery(guideState, id);
+      }
+      return { id: id, number: act.number || "", label: act.label || id, type: act.type || "form", approved: approved, delivered: delivered, failed: g[id] === "D" };
+    });
+    var approvedCount = items.filter(function (i) { return i.approved; }).length;
+    var deliveredCount = items.filter(function (i) { return i.delivered === true; }).length;
+    var verifiable = items.every(function (i) { return i.delivered !== null; });
+    var status;
+    if (verifiable && items.every(function (i) { return i.approved && i.delivered === true; })) status = "aprobado";
+    else if (!verifiable && approvedCount === items.length) status = "por-verificar";
+    else status = "pendiente";
+    return { family: family, items: items, total: items.length, approved: approvedCount, delivered: deliveredCount, verifiable: verifiable, status: status };
+  }
+
   // Claves internas del banco (p. ej. "__criterios"): son SOLO para el instructor y
   // nunca se copian a un campo del aprendiz.
   function isInstructorOnlyBankKey(key) {
@@ -1188,6 +1255,9 @@
   // Si el aprendiz YA respondió, su respuesta se respeta (no se sobrescribe).
   // El relleno dispara `input`/`change` para que la guía guarde y sincronice como siempre.
   function applyApprovedSolutionsForFamily(family) {
+    // Fase 3: en familias de evidencia estricta NUNCA se rellenan campos del aprendiz
+    // (ni con soluciones ya embebidas en notas antiguas).
+    if (isEvidenceStrictFamily(family)) return false;
     var auth = window.portalAuth;
     var session = auth && auth.getCurrentSession ? auth.getCurrentSession() : null;
     if (!session || session.role !== "student" || !session.usernameKey) return false;
@@ -1330,7 +1400,12 @@
         var idsToFlag = [act.id].concat(Array.isArray(act.aliasIds) ? act.aliasIds : []);
         idsToFlag.forEach(function (flagId) {
           var type = typeById[flagId] || "form";
-          if (type === "file") {
+          if (isEvidenceStrictFamily(guideFamily)) {
+            // Fase 3: la aprobacion no fabrica entregas ni da por enviado un
+            // formulario: el estado de la guia solo cambia por acciones reales del
+            // aprendiz (guardar/entregar). La nota se muestra aparte (insignia y
+            // control de avance).
+          } else if (type === "file") {
             if (!state[flagId + "-delivery"] || state[flagId + "-delivery"].status !== "delivered") {
               state[flagId + "-delivery"] = {
                 status: "delivered",
@@ -1385,6 +1460,10 @@
   window.activityGradesManager = {
     GRADE_CATALOG: GRADE_CATALOG,
     LEGACY_REVIEW_FAMILIES_BY_FICHA: LEGACY_REVIEW_FAMILIES_BY_FICHA,
+    isEvidenceStrictFamily: isEvidenceStrictFamily,
+    REQUIRED_EVIDENCE: REQUIRED_EVIDENCE,
+    evaluateRapStatus: evaluateRapStatus,
+    hasRealFileDelivery: hasRealFileDelivery,
     isInstructorOnlyBankKey: isInstructorOnlyBankKey,
     resolveGuideFamily: resolveGuideFamily,
     autoRenderForFile: autoRenderForFile,

@@ -3409,7 +3409,17 @@
     return _gradeSolutionsBank;
   }
 
+  function isEvidenceStrictFamily(guideFamily) {
+    const mgr = window.activityGradesManager;
+    return Boolean(mgr && typeof mgr.isEvidenceStrictFamily === "function" && mgr.isEvidenceStrictFamily(guideFamily))
+      || /^guia-redes11-rap0[123]$/.test(String(guideFamily || ""));
+  }
+
   function lookupBankSolution(guideFamily, activityId) {
+    // Fase 3 (Codex): en las Guias 9/10/11 de Redes de 11.° el banco es SOLO referencia
+    // del instructor (visor 📘). Calificar, importar notas desde Excel o re-sincronizar
+    // nunca obtienen una solucion para copiar al aprendiz.
+    if (isEvidenceStrictFamily(guideFamily)) return null;
     const fam = (_gradeSolutionsBank || {})[guideFamily];
     if (!fam) return null;
     // Una columna con aliasIds califica tambien sus actividades gemelas: la
@@ -3535,6 +3545,7 @@
   }
 
   async function applyApprovedSolutionToStudentCloud(usernameKey, guideFamily, solution) {
+    if (isEvidenceStrictFamily(guideFamily)) return { filled: 0 };   // fase 3: nunca rellena respuestas
     const db = window._firebaseDb;
     if (!db || typeof db.adminApplySolutionToGuide !== "function" || !solution) return { filled: 0 };
     const fileName = resolveStudentGuideFileForFamily(usernameKey, guideFamily);
@@ -3590,6 +3601,7 @@
   }
 
   async function applyDeliveryFallbackToStudentCloud(usernameKey, guideFamily, activityId) {
+    if (isEvidenceStrictFamily(guideFamily)) return { filled: 0 };   // fase 3: aprobar no es entregar
     const db = window._firebaseDb;
     if (!db || typeof db.adminMarkActivityDelivered !== "function") return { filled: 0 };
     const fileName = resolveStudentGuideFileForFamily(usernameKey, guideFamily);
@@ -3768,43 +3780,186 @@
     setFeedback("La calificacion NO se guardo en la nube: " + why + pendingGradesSuffix(result), "error");
   }
 
-  // Fusion pura por familia (testeable): las familias del archivo reemplazan a las
-  // de la nube; las demas se conservan tal cual.
-  function mergeGradeSolutionBanks(current, incoming) {
-    const out = {};
-    Object.keys(current || {}).forEach((fam) => { out[fam] = current[fam]; });
-    Object.keys(incoming || {}).forEach((fam) => { out[fam] = incoming[fam]; });
+  // ── Importacion SEGURA del banco (fase 3, Codex 2026-11-08) ──────────────────
+  // Dos pasos: (1) ANALIZAR: lee el banco de la nube con su version, descarga un
+  // respaldo verificable (SHA-256), y muestra respuestas nuevas, modificadas y
+  // conservadas; (2) IMPORTAR: solo si el analisis no tiene conflictos y el respaldo
+  // se verifico, escribe la fusion CAMPO A CAMPO condicionada a la version leida.
+  // Nunca reemplaza familias ni actividades completas y nunca borra respuestas.
+
+  // JSON con claves ordenadas (estable) para hashes y comparaciones.
+  function stableStringify(value) {
+    if (Array.isArray(value)) return "[" + value.map(stableStringify).join(",") + "]";
+    if (value && typeof value === "object") {
+      return "{" + Object.keys(value).sort().map((k) => JSON.stringify(k) + ":" + stableStringify(value[k])).join(",") + "}";
+    }
+    return JSON.stringify(value === undefined ? null : value);
+  }
+
+  // Diferencias por familia/actividad/campo (pura). cloud = banco actual; incoming = archivo.
+  function diffGradeBanks(cloud, incoming) {
+    const out = { addedFamilies: [], addedActivities: [], addedFields: [], modifiedFields: [], unchangedFields: 0, keptOnlyInCloud: [] };
+    const c = cloud || {}, f = incoming || {};
+    Object.keys(f).forEach((fam) => {
+      const cf = c[fam];
+      if (!cf || typeof cf !== "object") out.addedFamilies.push(fam);
+      Object.keys(f[fam] || {}).forEach((act) => {
+        const ca = cf && cf[act];
+        if (cf && (!ca || typeof ca !== "object")) out.addedActivities.push(fam + "/" + act);
+        Object.keys((f[fam] || {})[act] || {}).forEach((key) => {
+          const nv = f[fam][act][key];
+          if (!ca || !Object.prototype.hasOwnProperty.call(ca, key)) out.addedFields.push(fam + "/" + act + "/" + key);
+          else if (stableStringify(ca[key]) !== stableStringify(nv)) out.modifiedFields.push(fam + "/" + act + "/" + key);
+          else out.unchangedFields += 1;
+        });
+      });
+    });
+    // Lo que esta en la nube y NO en el archivo: "potencialmente eliminado" en un
+    // reemplazo; aqui se CONSERVA siempre (la fusion es campo a campo).
+    Object.keys(c).forEach((fam) => {
+      Object.keys(c[fam] || {}).forEach((act) => {
+        Object.keys((c[fam] || {})[act] || {}).forEach((key) => {
+          const fa = f[fam] && f[fam][act];
+          if (!fa || !Object.prototype.hasOwnProperty.call(fa, key)) out.keptOnlyInCloud.push(fam + "/" + act + "/" + key);
+        });
+      });
+    });
     return out;
   }
 
-  // Importa el banco-semilla (grade_solutions_bank.json) a Firestore (solo admin).
-  async function handleGradeBankImport() {
+  // Fusion campo a campo (pura): agrega lo nuevo del archivo, conserva TODO lo de la
+  // nube. Los campos modificados son conflicto y bloquean la importacion antes de
+  // llegar aqui; si llegaran, gana la nube (nunca se pierde informacion existente).
+  function mergeGradeBanksByField(cloud, incoming) {
+    const out = JSON.parse(JSON.stringify(cloud || {}));
+    Object.keys(incoming || {}).forEach((fam) => {
+      out[fam] = out[fam] && typeof out[fam] === "object" ? out[fam] : {};
+      Object.keys(incoming[fam] || {}).forEach((act) => {
+        out[fam][act] = out[fam][act] && typeof out[fam][act] === "object" ? out[fam][act] : {};
+        Object.keys(incoming[fam][act] || {}).forEach((key) => {
+          if (!Object.prototype.hasOwnProperty.call(out[fam][act], key)) out[fam][act][key] = incoming[fam][act][key];
+        });
+      });
+    });
+    return out;
+  }
+
+  async function sha256Hex(text) {
+    const buf = await window.crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
+  }
+
+  function downloadTextFile(name, text) {
+    const blob = new Blob([text], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+
+  let _bankImportPlan = null;
+
+  function renderBankImportPreview(diff, extra) {
+    const host = byId("grades-bank-preview");
+    if (!host) return;
+    const list = (arr) => arr.length
+      ? "<ul>" + arr.slice(0, 40).map((x) => `<li><code>${escapeHtml(x)}</code></li>`).join("") + (arr.length > 40 ? `<li>… y ${arr.length - 40} más</li>` : "") + "</ul>"
+      : "<p class=\"admin-muted\">Ninguna.</p>";
+    host.innerHTML = `<div class="grades-bank-preview">
+      <p><strong>Respaldo de la nube:</strong> ${escapeHtml(extra.backupName)} · SHA-256 <code>${escapeHtml(extra.backupHash.slice(0, 16))}…</code> · ${extra.backupVerified ? "verificado" : "NO verificado"}</p>
+      <p><strong>Familias nuevas:</strong> ${diff.addedFamilies.length} · <strong>Actividades nuevas:</strong> ${diff.addedActivities.length} · <strong>Respuestas nuevas:</strong> ${diff.addedFields.length} · <strong>Modificadas (conflicto):</strong> ${diff.modifiedFields.length} · <strong>Sin cambio:</strong> ${diff.unchangedFields} · <strong>Solo en la nube (se conservan):</strong> ${diff.keptOnlyInCloud.length}</p>
+      <details><summary>Familias nuevas</summary>${list(diff.addedFamilies)}</details>
+      <details><summary>Respuestas nuevas</summary>${list(diff.addedFields)}</details>
+      <details ${diff.modifiedFields.length ? "open" : ""}><summary>Respuestas modificadas (bloquean la importación)</summary>${list(diff.modifiedFields)}</details>
+      <details><summary>Solo en la nube (se conservan, no se borran)</summary>${list(diff.keptOnlyInCloud)}</details>
+      <p><strong>${extra.blocked ? "IMPORTACIÓN BLOQUEADA: " + escapeHtml(extra.blocked) : "Listo para importar (se escribirá solo si la nube sigue en la versión analizada)."}</strong></p>
+    </div>`;
+  }
+
+  // Paso 1: analizar (NO escribe nada en la nube).
+  async function handleGradeBankAnalyze() {
     const fileInput = byId("grades-bank-file");
     const statusEl = byId("grades-bank-status");
-    const file = fileInput && fileInput.files && fileInput.files[0];
     const setStatus = (msg) => { if (statusEl) statusEl.textContent = msg; };
+    _bankImportPlan = null;
+    const importBtn = byId("grades-bank-import-btn");
+    if (importBtn) importBtn.disabled = true;
+    const file = fileInput && fileInput.files && fileInput.files[0];
     if (!file) { setStatus("Elige el archivo grade_solutions_bank.json primero."); return; }
     const db = window._firebaseDb;
-    if (!db || typeof db.cloudSaveGradeSolutions !== "function") { setStatus("Firestore no disponible."); return; }
+    if (!db || typeof db.cloudGetGradeSolutionsVersioned !== "function" || typeof db.cloudSaveGradeSolutionsStrict !== "function") {
+      setStatus("Recargue la página (módulo de nube desactualizado). No se analizó nada."); return;
+    }
     try {
       const text = await file.text();
       const incoming = JSON.parse(text);
-      if (!incoming || typeof incoming !== "object" || Array.isArray(incoming)) throw new Error("formato invalido");
-      // FUSION (EMERGENCIA 2026-11-07): antes el archivo REEMPLAZABA todo el banco de
-      // la nube, asi que importar un JSON parcial (p. ej. solo las guias nuevas)
-      // borraba las demas familias. Ahora cada familia del archivo reemplaza a su
-      // homologa y las familias que el archivo no trae se conservan. Si la lectura
-      // del banco actual falla, NO se escribe (evita pisar el banco con uno parcial).
-      if (typeof db.cloudGetGradeSolutionsStrict !== "function") throw new Error("recargue la pagina (modulo de nube desactualizado); no se guardo nada");
-      const current = await db.cloudGetGradeSolutionsStrict();
-      if (!current || typeof current !== "object") throw new Error("no se pudo leer el banco actual; no se guardo nada");
-      const bank = mergeGradeSolutionBanks(current, incoming);
-      await db.cloudSaveGradeSolutions(bank);
+      if (!incoming || typeof incoming !== "object" || Array.isArray(incoming)) throw new Error("formato inválido");
+      const fileHash = await sha256Hex(text);
+      const cloud = await db.cloudGetGradeSolutionsVersioned();
+      if (!cloud || (cloud.status !== "found" && cloud.status !== "missing")) {
+        setStatus("No se pudo leer el banco actual de la nube: importación bloqueada (no se escribió nada)."); return;
+      }
+      // Respaldo verificable ANTES de cualquier escritura.
+      const backupObj = { exportedAt: new Date().toISOString(), cloudUpdateTime: cloud.updateTime || "", cloudStatus: cloud.status, solutions: cloud.solutions };
+      const backupText = JSON.stringify(backupObj, null, 2);
+      const backupHash = await sha256Hex(backupText);
+      const reparsed = JSON.parse(backupText);
+      const backupVerified = stableStringify(reparsed.solutions) === stableStringify(cloud.solutions)
+        && (await sha256Hex(backupText)) === backupHash;
+      const backupName = "grade_solutions_bank.RESPALDO_NUBE_" + (cloud.updateTime || "vacio").replace(/[^0-9A-Za-z]+/g, "") + ".json";
+      downloadTextFile(backupName, backupText);
+      const diff = diffGradeBanks(cloud.solutions, incoming);
+      let blocked = "";
+      if (!backupVerified) blocked = "no se pudo verificar el respaldo";
+      else if (diff.modifiedFields.length) blocked = diff.modifiedFields.length + " respuesta(s) del archivo difieren de la nube; revíselas antes de importar";
+      else if (!diff.addedFields.length) blocked = "no hay respuestas nuevas que importar";
+      const merged = mergeGradeBanksByField(cloud.solutions, incoming);
+      _bankImportPlan = blocked ? null : {
+        fileHash, backupHash, backupName,
+        precondition: cloud.status === "found" ? { expectedUpdateTime: cloud.updateTime } : { mustNotExist: true },
+        merged, mergedHash: await sha256Hex(stableStringify(merged)), added: diff.addedFields.length,
+      };
+      renderBankImportPreview(diff, { backupName, backupHash, backupVerified, blocked });
+      if (importBtn) importBtn.disabled = !_bankImportPlan;
+      setStatus(blocked ? "Análisis completo: importación bloqueada." : `Análisis completo: ${diff.addedFields.length} respuesta(s) nuevas. Respaldo descargado.`);
+      recordAdminAuditAction({ action: "grade-bank-analyze", target: "bank", detail: `nuevas=${diff.addedFields.length} modificadas=${diff.modifiedFields.length} respaldo=${backupHash.slice(0, 16)}` });
+    } catch (e) {
+      setStatus("Error al analizar: " + (e && e.message ? e.message : e) + " (no se escribió nada).");
+    }
+  }
+
+  // Paso 2: importar el plan analizado (escritura condicionada + verificacion posterior).
+  async function handleGradeBankImport() {
+    const statusEl = byId("grades-bank-status");
+    const setStatus = (msg) => { if (statusEl) statusEl.textContent = msg; };
+    const plan = _bankImportPlan;
+    if (!plan) { setStatus("Primero pulse «Analizar»: la importación requiere un análisis sin conflictos y un respaldo verificado."); return; }
+    const db = window._firebaseDb;
+    try {
+      const fileInput = byId("grades-bank-file");
+      const file = fileInput && fileInput.files && fileInput.files[0];
+      if (!file || (await sha256Hex(await file.text())) !== plan.fileHash) {
+        _bankImportPlan = null;
+        setStatus("El archivo cambió desde el análisis: vuelva a analizar."); return;
+      }
+      const res = await db.cloudSaveGradeSolutionsStrict(plan.merged, plan.precondition);
+      if (!res || res.status !== "ok") {
+        _bankImportPlan = null;
+        const btn = byId("grades-bank-import-btn"); if (btn) btn.disabled = true;
+        setStatus(res && res.status === "conflict"
+          ? "El banco de la nube cambió después del análisis: no se escribió nada. Vuelva a analizar."
+          : "No se pudo guardar (" + ((res && res.reason) || "error") + "). No se escribió nada.");
+        return;
+      }
+      const check = await db.cloudGetGradeSolutionsVersioned();
+      const verified = check && check.status === "found" && (await sha256Hex(stableStringify(check.solutions))) === plan.mergedHash;
+      _bankImportPlan = null;
+      const btn = byId("grades-bank-import-btn"); if (btn) btn.disabled = true;
       await ensureGradeSolutionsBank(true);
-      const count = Object.values(bank).reduce((n, fam) =>
-        n + Object.values(fam || {}).reduce((m, act) => m + Object.keys(act || {}).length, 0), 0);
-      setStatus(`Banco guardado en la nube: ${count} respuestas.`);
-      recordAdminAuditAction({ action: "grade-bank-import", target: "bank", detail: String(count) });
+      setStatus(verified
+        ? `Banco importado y verificado: ${plan.added} respuesta(s) nuevas. Respaldo previo: ${plan.backupName}.`
+        : "Se escribió el banco pero la verificación posterior NO coincide: revise y use el respaldo descargado si es necesario.");
+      recordAdminAuditAction({ action: "grade-bank-import", target: "bank", detail: `nuevas=${plan.added} verificado=${verified} respaldo=${plan.backupHash.slice(0, 16)}` });
     } catch (e) {
       setStatus("Error al importar: " + (e && e.message ? e.message : e));
     }
@@ -3977,7 +4132,16 @@
     const selects = row.querySelectorAll("select.grade-select");
     const approved = Array.from(selects).filter((s) => s.value === "A").length;
     const cell = row.querySelector(".grades-approved-cell");
-    if (cell) cell.textContent = approvalCellText(approved, selects.length);
+    if (!cell) return;
+    const rap = cell.querySelector(".grades-rap-status");
+    cell.textContent = approvalCellText(approved, selects.length);
+    if (rap) {
+      // Fase 3: el estado del RAP depende de entregas reales; tras cambiar una nota
+      // se marca para recalcular con «Actualizar» (no se infiere de la nota sola).
+      rap.textContent = "Nota cambiada: recargue la grilla para recalcular el estado del RAP.";
+      rap.setAttribute("data-rap-status", "por-recalcular");
+      cell.appendChild(rap);
+    }
   }
 
   // ── Banco de comentarios de calificacion ────────────────────────────────────
@@ -4207,14 +4371,16 @@
     host.innerHTML = `
       <div class="admin-section-head">
         <h2>Calificaciones</h2>
-        <p class="admin-muted">Elige ficha y guia, y marca Aprobado / No aprobado por actividad. Se guarda al instante; cada aprendiz ve solo la suya. Al aprobar una actividad vacia, se le copia la solucion del banco.</p>
+        <p class="admin-muted">Elige ficha y guia, y marca Aprobado / No aprobado por actividad. Se guarda al instante; cada aprendiz ve solo la suya. Al aprobar una actividad vacia, se le copia la solucion del banco (excepto en las Guias 9, 10 y 11 de Redes de 11.°, donde la aprobacion nunca crea respuestas ni entregas).</p>
       </div>
       <details class="grades-bank-import">
         <summary>Banco de respuestas (sincronizar a la nube)</summary>
-        <p class="admin-muted">Sube <code>grade_solutions_bank.json</code> para guardar el banco en Firestore (solo el admin lo puede leer). El aprendiz nunca ve el banco; al aprobar se le copia unicamente la respuesta de su actividad.</p>
+        <p class="admin-muted">Sube <code>grade_solutions_bank.json</code> (solo el admin lo puede leer). <strong>1. Analizar</strong> lee la nube, descarga un respaldo verificable y muestra respuestas nuevas, modificadas y conservadas; <strong>2. Importar</strong> solo se habilita si no hay conflictos, agrega campo a campo (nunca borra) y falla si la nube cambio desde el analisis. En las Guias 9, 10 y 11 de Redes de 11.° el banco es solo referencia del instructor (📘): aprobar NO copia respuestas ni registra entregas.</p>
         <input type="file" id="grades-bank-file" accept=".json">
-        <button type="button" id="grades-bank-import-btn" class="btn secondary">Importar a la nube</button>
+        <button type="button" id="grades-bank-analyze-btn" class="btn secondary">1. Analizar (respaldo + diferencias)</button>
+        <button type="button" id="grades-bank-import-btn" class="btn secondary" disabled>2. Importar a la nube</button>
         <span id="grades-bank-status" class="admin-muted"></span>
+        <div id="grades-bank-preview"></div>
         <hr>
         <p class="admin-muted">Las actividades aprobadas ANTES de importar el banco (o antes de una ampliacion del banco) quedaron sin la solucion embebida: se ven "calificadas pero vacias". Este boton copia la solucion actual a todas esas notas "A", de todos los aprendices, sin cambiar notas ni fechas.</p>
         <button type="button" id="grades-resync-btn" class="btn secondary">Re-sincronizar soluciones de actividades aprobadas</button>
@@ -4257,6 +4423,7 @@
     // la grilla arme sus desplegables; si tarda, renderGradesGrid lo vuelve a
     // esperar, asi que nunca se pinta una celda con el banco a medias.
     ensureGradeCommentsBank().then(renderGradeCommentBank).catch(() => renderGradeCommentBank());
+    byId("grades-bank-analyze-btn")?.addEventListener("click", handleGradeBankAnalyze);
     byId("grades-bank-import-btn")?.addEventListener("click", handleGradeBankImport);
     byId("grades-resync-btn")?.addEventListener("click", handleSolutionResync);
     byId("grades-excel-download-btn")?.addEventListener("click", handleGradesExcelDownload);
@@ -4422,10 +4589,42 @@
         unreadable[user.usernameKey] = (r && r.message) || "No se pudieron leer las notas actuales del aprendiz.";
       }
     }));
+    // Fase 3 (Codex): en las Guias 9/10/11 de Redes de 11.° se distingue la evidencia
+    // OFICIAL (condiciona el RAP) de la actividad formativa, y el estado del RAP se
+    // calcula con entregas REALES (estado de la guia) + aprobacion, nunca con la nota sola.
+    const strictFamily = isEvidenceStrictFamily(guideFamily);
+    const requiredIds = strictFamily ? ((gradesManager && gradesManager.REQUIRED_EVIDENCE && gradesManager.REQUIRED_EVIDENCE[guideFamily]) || []) : [];
+    const guideStateByUser = {};
+    let declaredActs = [];
+    if (strictFamily) {
+      const db = window._firebaseDb;
+      await Promise.all(students.map(async (user) => {
+        if (unreadable[user.usernameKey]) return;
+        const fileName = resolveStudentGuideFileForFamily(user.usernameKey, guideFamily);
+        if (!declaredActs.length && fileName && window.ActivityStandard && typeof window.ActivityStandard.getConfigForGuide === "function") {
+          declaredActs = ((window.ActivityStandard.getConfigForGuide(fileName) || {}).activities) || [];
+        }
+        try {
+          const snap = fileName && db && typeof db.cloudGetGuideData === "function"
+            ? await db.cloudGetGuideData(getStudentCloudScope(user.usernameKey), fileName) : null;
+          const st = snap && (snap.state || snap.data);
+          guideStateByUser[user.usernameKey] = st && typeof st === "object" ? st : null;
+        } catch (_) { guideStateByUser[user.usernameKey] = null; }
+      }));
+    }
+    const rapCellText = (rap) => {
+      if (!rap) return "—";
+      const estado = rap.status === "aprobado" ? "RAP APROBADO"
+        : rap.status === "por-verificar" ? "RAP: verificar entregas (no se pudo leer la guía)" : "RAP pendiente";
+      return `Evidencias oficiales: ${rap.approved}/${rap.total} aprobadas · ${rap.verifiable ? rap.delivered : "?"}/${rap.total} entregadas — ${estado}`;
+    };
     const head = "<th>Aprendiz</th>" + activities.map((a) => `<th>${escapeHtml(a.label)}`
+      + (strictFamily ? (requiredIds.indexOf(a.id) !== -1
+        ? ' <span class="grade-col-tag grade-col-tag--required" title="Evidencia oficial: condiciona el RAP">&#9733; Evidencia oficial</span>'
+        : ' <span class="grade-col-tag" title="Seguimiento formativo: no condiciona el RAP">Formativa</span>') : "")
       + ` <button type="button" class="grade-bank-criteria-btn" data-bank-family="${escapeHtml(guideFamily)}"`
       + ` data-bank-activity="${escapeHtml(a.id)}" title="Ver banco de respuestas y criterios (solo instructor)"`
-      + ` aria-label="Ver banco de respuestas y criterios">&#128216;</button></th>`).join("") + "<th>Aprobadas</th>";
+      + ` aria-label="Ver banco de respuestas y criterios">&#128216;</button></th>`).join("") + (strictFamily ? "<th>Aprobadas (todas) · Estado del RAP</th>" : "<th>Aprobadas</th>");
     // resolveGradeValue cae a aliasIds: una fila fusionada (ej. matriz322+fichaCaso)
     // sigue mostrando una nota que haya quedado guardada bajo el id del alias
     // antes de la fusion, en vez de aparecer vacia.
@@ -4452,7 +4651,9 @@
       const approved = activities.filter((a) => resolveGrade(g, a) === "A").length;
       const rowPending = Object.keys(pendingActs).length ? GRADE_ROW_PENDING_MARKUP : "";
       return `<tr data-grade-row="${escapeHtml(user.usernameKey)}"><td>${escapeHtml(user.fullName)}${rowPending}</td>${cells}`
-        + `<td class="grades-approved-cell">${approvalCellText(approved, activities.length)}</td></tr>`;
+        + `<td class="grades-approved-cell">${approvalCellText(approved, activities.length)}`
+        + (strictFamily ? `<div class="grades-rap-status" data-rap-status="${escapeHtml((gradesManager.evaluateRapStatus(guideFamily, g, guideStateByUser[user.usernameKey], declaredActs) || {}).status || "")}">${escapeHtml(rapCellText(gradesManager.evaluateRapStatus(guideFamily, g, guideStateByUser[user.usernameKey], declaredActs)))}</div>` : "")
+        + `</td></tr>`;
     }).join("");
     const scrollHintEl = byId("grades-scroll-hint");
     if (scrollHintEl) scrollHintEl.hidden = activities.length <= 5;

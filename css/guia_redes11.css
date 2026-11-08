@@ -186,6 +186,10 @@
 /* Panel de entrega (shared_drive_delivery) integrado en la zona: sin caja duplicada */
 [data-redes11-guide] .r11-evidence .drive-submit-box { margin: 8px 0 0; padding: 0; border: 0; background: transparent; box-shadow: none; }
 
+/* Estado del RAP (fase 3) */
+[data-redes11-guide] .r11-rap { margin-top: var(--r11-gap); padding: var(--r11-gap); border: 1px solid var(--r11-border); border-left: 4px solid var(--r11-brand); border-radius: var(--r11-radius); background: var(--surface-1, #fff); }
+[data-redes11-guide] .r11-rap__head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+
 /* ── E. Movil y pantallas pequenas ───────────────────────────────────────── */
 @media (max-width: 640px) {
   [data-redes11-guide] .r11-meta { grid-template-columns: 1fr; }

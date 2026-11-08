@@ -1820,6 +1820,27 @@
     return r.data.solutions && typeof r.data.solutions === "object" ? r.data.solutions : {};
   }
 
+  // Fase 3 (Codex, 2026-11-08): lectura VERSIONADA del banco (updateTime) y escritura
+  // CONDICIONADA a esa version (o a que no exista). Si otra sesion cambio el banco
+  // entre el analisis y la importacion, la escritura responde "conflict" y no pisa nada.
+  async function cloudGetGradeSolutionsVersioned() {
+    var r = await fsGetStrict(COL_GRADE_SOLUTIONS, "bank", { noCooldown: true });
+    if (r.status === "missing") return { status: "missing", solutions: {}, updateTime: "", reason: "" };
+    if (r.status !== "found" || !r.data || !r.updateTime) return { status: "error", solutions: null, updateTime: "", reason: r.reason || "incomplete" };
+    var sol = r.data.solutions && typeof r.data.solutions === "object" ? r.data.solutions : {};
+    return { status: "found", solutions: sol, updateTime: r.updateTime, reason: "" };
+  }
+
+  async function cloudSaveGradeSolutionsStrict(solutions, precondition) {
+    if (!solutions || typeof solutions !== "object" || Array.isArray(solutions)) return { status: "error", updateTime: "", reason: "invalid-args" };
+    var pre = precondition || {};
+    if (!pre.expectedUpdateTime && !pre.mustNotExist) return { status: "error", updateTime: "", reason: "missing-precondition" };
+    return fsCommitStrict(COL_GRADE_SOLUTIONS, "bank", {
+      solutions: solutions,
+      updatedAt: new Date().toISOString(),
+    }, Object.assign({}, pre, { noCooldown: true }));
+  }
+
   async function cloudSaveGradeSolutions(solutions) {
     return fsPatch(COL_GRADE_SOLUTIONS, "bank", {
       solutions: solutions && typeof solutions === "object" ? solutions : {},
@@ -3669,7 +3690,19 @@
   // abrirla). Requiere sesion admin: las reglas de Firestore permiten a isAdmin()
   // escribir el doc de cualquier aprendiz. `fields` = { "<data-store>": valor } (la
   // solucion de UNA actividad). Respeta lo que el aprendiz ya haya respondido.
+  // Fase 3 (Codex, 2026-11-08): Guias 9/10/11 de Redes de grado 11. Ninguna ruta de
+  // administracion puede escribir respuestas modelo ni entregas en su estado: la
+  // aprobacion manual no es una respuesta del aprendiz ni una entrega documental.
+  function isEvidenceStrictGuideFile(fileName) {
+    var f = String(fileName || "").toLowerCase();
+    if (/^grupo-11[ab]-guia-(09|10|11)-redes-rap0[123]\.html$/.test(f)) return true;
+    var mgr = window.activityGradesManager;
+    var fam = mgr && typeof mgr.resolveGuideFamily === "function" ? mgr.resolveGuideFamily(f) : "";
+    return Boolean(fam && mgr && typeof mgr.isEvidenceStrictFamily === "function" && mgr.isEvidenceStrictFamily(fam));
+  }
+
   async function adminApplySolutionToGuide(usernameKey, fileName, fields) {
+    if (isEvidenceStrictGuideFile(fileName)) return { ok: true, filled: 0, skipped: "evidence-strict" };
     var key = String(usernameKey || "").trim().toLowerCase();
     if (!key || !fileName || !plainObject(fields)) return { ok: false, filled: 0 };
     var scopeKey = "student:" + key;
@@ -3747,6 +3780,7 @@
   // fue el instructor quien la registro (no una subida real por Drive). No pisa
   // una entrega real ya existente. Pedido explicito del usuario 2026-07-03.
   async function adminMarkActivityDelivered(usernameKey, fileName, activityId) {
+    if (isEvidenceStrictGuideFile(fileName)) return { ok: true, filled: 0, skipped: "evidence-strict" };
     var key = String(usernameKey || "").trim().toLowerCase();
     if (!key || !fileName || !activityId) return { ok: false, filled: 0 };
     var scopeKey = "student:" + key;
@@ -5018,6 +5052,7 @@
     guideDataFileName: guideDataFileName,
     adminApplySolutionToGuide: adminApplySolutionToGuide,
     adminMarkActivityDelivered: adminMarkActivityDelivered,
+    isEvidenceStrictGuideFile: isEvidenceStrictGuideFile,
     cloudGetGrades: cloudGetGrades,
     cloudSaveGrades: cloudSaveGrades,
     // Calificar: lectura estricta + escritura por familia con precondicion.
@@ -5031,6 +5066,8 @@
     cloudSaveStudentSummary: cloudSaveStudentSummary,
     cloudGetGradeSolutions: cloudGetGradeSolutions,
     cloudGetGradeSolutionsStrict: cloudGetGradeSolutionsStrict,
+    cloudGetGradeSolutionsVersioned: cloudGetGradeSolutionsVersioned,
+    cloudSaveGradeSolutionsStrict: cloudSaveGradeSolutionsStrict,
     cloudSaveGradeSolutions: cloudSaveGradeSolutions,
     cloudGetGradeComments: cloudGetGradeComments,
     cloudSaveGradeComments: cloudSaveGradeComments,

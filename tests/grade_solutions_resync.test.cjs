@@ -170,7 +170,12 @@ function extractLookupBankSolution() {
   const script = read(path.join("js", "admin_usuarios.js"));
   const fnMatch = script.match(/function lookupBankSolution\(guideFamily, activityId\) \{[\s\S]*?\n  \}/);
   assert.ok(fnMatch, "no se encontro lookupBankSolution en admin_usuarios.js");
-  return new Function("_gradeSolutionsBank", "getGradeCatalog", "return (" + fnMatch[0] + ");");
+  // Fase 3 (2026-11-08): lookupBankSolution consulta isEvidenceStrictFamily (las
+  // familias de Redes de 11.° nunca reciben solucion). Se inyecta la regla real
+  // de esa funcion (por nombre de familia) para probar las demas familias.
+  const strict = (fam) => /^guia-redes11-rap0[123]$/.test(String(fam || ""));
+  const factory = new Function("_gradeSolutionsBank", "getGradeCatalog", "isEvidenceStrictFamily", "return (" + fnMatch[0] + ");");
+  return (bank, catalog) => factory(bank, catalog, strict);
 }
 
 test("catalogo: la columna de la Actividad 9 declara como alias sus 4 sub-actividades", () => {

@@ -50,7 +50,7 @@
   };
 
   // Rediseno visual (fase 2): hoja de estilos propia, solo en estas guias.
-  var STYLE_HREF = "css/guia_redes11.css?v=20261108_1";
+  var STYLE_HREF = "css/guia_redes11.css?v=20261108_2";
   (function ensureStyles() {
     if (typeof document === "undefined" || !document.head || !document.createElement) return;
     if (document.querySelector('link[data-redes11-css]')) return;
@@ -249,7 +249,37 @@
         if (link) link.classList.add("done");
       }
     });
+    renderRapStatus();
     document.dispatchEvent(new CustomEvent("guide-progress-changed", { detail: { pct: pct } }));
+  }
+
+  // ── Estado del RAP (fase 3, Codex) ────────────────────────────────────────
+  // Distingue evidencias OFICIALES (condicionan el RAP) de actividades formativas, y
+  // entrega real de aprobacion. El RAP solo figura APROBADO si todas las evidencias
+  // oficiales estan entregadas (archivo real o respuestas guardadas) y aprobadas.
+  function renderRapStatus() {
+    var mgr = window.activityGradesManager;
+    var avance = document.querySelector("[data-act-std-avance]");
+    if (!avance || !mgr || typeof mgr.evaluateRapStatus !== "function") return;
+    var host = document.querySelector("[data-redes11-rap]");
+    if (!host) {
+      host = document.createElement("div");
+      host.setAttribute("data-redes11-rap", "");
+      host.className = "r11-rap";
+      avance.parentNode.insertBefore(host, avance.nextSibling);
+    }
+    var session = portalAuth && portalAuth.getCurrentSession && portalAuth.getCurrentSession();
+    var family = templateName();
+    var grades = session && session.usernameKey && typeof mgr.getStudentGrades === "function" ? mgr.getStudentGrades(session.usernameKey, family) : {};
+    var rap = mgr.evaluateRapStatus(family, grades, state, getConfig().activities || []);
+    if (!rap) { host.innerHTML = ""; return; }
+    var estado = rap.status === "aprobado" ? "RAP APROBADO" : "RAP en proceso";
+    host.innerHTML = '<div class="r11-rap__head"><strong>Estado del RAP</strong><span class="r11-chip' + (rap.status === "aprobado" ? "" : " r11-chip--format") + '">' + esc(estado) + "</span></div>" +
+      '<p class="intro-text">Evidencias oficiales: <strong>' + rap.delivered + "/" + rap.total + "</strong> entregadas · <strong>" + rap.approved + "/" + rap.total + "</strong> aprobadas. Las demás actividades son formativas (seguimiento) y no condicionan el RAP.</p>" +
+      '<div class="table-scroll"><table class="data-table"><thead><tr><th>Evidencia oficial</th><th>Entregada</th><th>Aprobada</th></tr></thead><tbody>' +
+      rap.items.map(function (i) {
+        return "<tr><td>" + esc((i.number ? i.number + " " : "") + i.label) + "</td><td>" + (i.delivered ? "&#9989; Sí" : "&#9711; No") + "</td><td>" + (i.approved ? "&#9989; Sí" : i.failed ? "&#10060; No aprobada" : "&#9711; Pendiente") + "</td></tr>";
+      }).join("") + "</tbody></table></div>";
   }
 
   // ── Version anterior (solo lectura) ──────────────────────────────────────
@@ -334,19 +364,23 @@
   function reflectGrades() {
     var mgr = window.activityGradesManager;
     if (!mgr || typeof mgr.reflectGradesIntoGuideState !== "function") return;
-    mgr.reflectGradesIntoGuideState({
+    var pending = mgr.reflectGradesIntoGuideState({
       guideFamily: templateName(),
       pageFile: PAGE_FILE,
       getState: function () { return state; },
       onChanged: function () {
         saveState();
         applyOptionalLocks();
+        renderRapStatus();
         if (window.ActivityStandard && typeof window.ActivityStandard.renderAvancePanel === "function" && document.querySelector("[data-act-std-avance]")) {
           window.ActivityStandard.renderAvancePanel({ getGuideDataFile: function () { return PAGE_FILE; }, getState: function () { return state; } });
         }
         if (typeof window.dispatchEvent === "function") window.dispatchEvent(new Event("activity-deadlines-updated"));
       },
     });
+    // Las notas de la nube llegan despues: el estado del RAP se recalcula al llegar
+    // (en estas familias la nota no cambia el estado de la guia, asi que onChanged no se dispara).
+    if (pending && typeof pending.then === "function") pending.then(renderRapStatus, renderRapStatus);
   }
 
   function initGuiaRedes11() {
@@ -379,7 +413,7 @@
   });
 
   // Expuesto para pruebas.
-  window.__redes11Internals = { LEGACY: LEGACY, legacyEntries: legacyEntries };
+  window.__redes11Internals = { LEGACY: LEGACY, legacyEntries: legacyEntries, renderRapStatus: renderRapStatus };
 
   window.initGuiaRedes = initGuiaRedes11;
   window.initGuiaRedes11 = initGuiaRedes11;
