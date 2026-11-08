@@ -3756,87 +3756,894 @@
   });
 
 
-  // ── Guia 9 (Redes RAP01 - Santa Barbara grado 11) (11A + 11B) ──────────
-  // Mismas actividades que la guia de Redes de 10 (mismo partial y mismos ids):
-  // solo cambian competencia, RAP, fase y duracion, que vienen del contexto.
+  // ── Guia 9 - Definir los parametros y recursos de la red (RAP 01) — Santa Barbara grado 11 (11A + 11B) ──
+  // EMERGENCIA 2026-11-07: actividades OFICIALES de grado 11 (Word oficial), con ids,
+  // campos y familia de calificacion PROPIOS. Antes reutilizaba el partial, los ids y la
+  // familia de la guia de Redes de grado 10 (actividades de otro documento). Los ids
+  // anteriores no se reutilizan: sus respuestas/entregas siguen en el mismo documento.
   register({
     files: [
       "grupo-11a-guia-09-redes-rap01.html",
-      "grupo-11b-guia-09-redes-rap01.html",
+      "grupo-11b-guia-09-redes-rap01.html"
     ],
     guideNumber: "9",
-    guideTitle: "Guia 9 - Definir parametros y recursos de la red (RAP 01)",
-    // Reutiliza la familia de calificacion de Santa Barbara: el contenido, el
-    // partial y los ids de actividad son los MISMOS (esta guia es la copia de
-    // santa-barbara-*-guia-02-redes-rap01.html). Asi hereda el catalogo, el
-    // banco de respuestas modelo y el banco de planes de mejoramiento ya
-    // existentes, sin duplicar nada.
-    gradeFamily: "guia-redes-rap01",
+    guideTitle: "Guia 9 - Definir los parametros y recursos de la red (RAP 01)",
+    gradeFamily: "guia-redes11-rap01",
     stateKey: "guia_interactiva_sb_11a_guia09_redes_rap01",
     program: PROGRAM,
     competencia: "280102129 - Evaluar red de acuerdo con procedimientos de telecomunicaciones y normativa tecnica.",
     resultado: "RAP 01 - Definir los parametros y recursos de la red de acuerdo con normativa de telecomunicaciones.",
-    // Sin cloudFileNames: estas guias NO declaran alias corto en
-    // script_guia_redes.js, asi que su documento en Firestore es el propio
-    // pageFile. Declarar aqui un alias que el script no produce dejaria al
-    // panel de habilitacion leyendo un documento inexistente.
     activities: [
-      { id: "reflexion311",     number: "3.1.1", label: "Reflexion individual",     shortName: "Reflexion",     type: "form" },
-      // El applier a medida de reflexion311 (ver script_guia_redes.js) bloquea
-      // esta actividad bajo la llave "reflexion-socializacion-locked", NO bajo
-      // "socializacion311-locked" (la convencion generica {id}-locked). Sin
-      // legacyLockKeys, el panel "Tus actividades de esta guia" (activity_standard.js)
-      // la mostraba "Pendiente" para siempre aunque el contenido ya estuviera
-      // guardado y bloqueado. Detectado 2026-07-23.
-      { id: "socializacion311", number: "3.1.1", label: "Socializacion",            shortName: "Socializacion", type: "form", legacyLockKeys: ["reflexion-socializacion-locked"] },
-      // "Exploracion Visual por Bloques Tematicos" (Actividad 3.2.1 en el export
-      // Word): 5 bloques independientes, cada uno con su propio boton Guardar/
-      // lock (guardarBloqueA..E en script_guia_redes.js). Numeracion 3.2.1.1..5
-      // para no chocar con el "3.2.1" ya usado (de forma inconsistente) por ip1.
-      { id: "bloqueA", number: "3.2.1.1", label: "Bloque A - Tipos de redes: LAN, MAN y WAN", shortName: "BloqueA", type: "form" },
-      { id: "bloqueB", number: "3.2.1.2", label: "Bloque B - Topologias de red",              shortName: "BloqueB", type: "form" },
-      { id: "bloqueC", number: "3.2.1.3", label: "Bloque C - Medios de transmision",          shortName: "BloqueC", type: "form" },
-      { id: "bloqueD", number: "3.2.1.4", label: "Bloque D - Dispositivos de interconexion",  shortName: "BloqueD", type: "form" },
-      { id: "bloqueE", number: "3.2.1.5", label: "Bloque E - Modelo OSI y TCP/IP",            shortName: "BloqueE", type: "form" },
-      // Entrega de solo archivo (mapa mental en PNG/PDF, sin campos de texto).
-      // Antes era un boton de sharedAppsScriptDelivery.openDeliveryModal suelto
-      // (sin panelKey) sin ningun rastro en el catalogo ni en el state: no se
-      // podia calificar ni mostraba confirmacion de entrega. Se agrego panelKey
-      // "mapaMental322" al boton + candado/confirmacion propios en
-      // script_guia_redes.js (applyMapaMental322Lock). Agregado 2026-07-23.
-      { id: "mapaMental322", number: "3.2.2", label: "Mapa mental integrador de fundamentos de redes", shortName: "MapaMental", type: "file" },
-      // Quiz autocalificado (numero real "3.2.1.H", no numerico -> se usa
-      // "3.2.1.6" para el conteo de entregables). Al aprobar sin intento real
-      // se copia un intento completo desde el banco (ver activity_grades.js).
-      { id: "quiz-redes-321h", number: "3.2.1.6", label: "Quiz individual de fundamentos de redes", shortName: "QuizFundamentos", type: "form" },
-      // Numeros reales confirmados por el propio HTML (activity-num badges),
-      // js/redes_quiz_bank.js (topic:"3.3.1/2/3") y los exports Word con
-      // activityNumber propio (script_guia_redes.js): ip1=3.3.1, ip2=3.3.2,
-      // ip3=3.3.3. Las etiquetas anteriores (3.2.1/3.2.2/3.2.3) eran
-      // incorrectas (no visibles para el aprendiz, pero rompian el conteo de
-      // "Tus actividades de esta guia" al no coincidir con nada real, y mi
-      // primer intento de agregar ip2 con "3.2.2" chocaba ademas con el
-      // numero real de "Mapa mental integrador de fundamentos de redes",
-      // que no esta en este catalogo). Taller IP - Ejercicios 1-5 son 5
-      // columnas calificables por separado (igual que bloqueA-E) pero
-      // comparten el numero real "3.3.4" (un solo badge en el HTML para
-      // los 5 ejercicios) -- se subnumeran 3.3.4.1..5, mismo patron que
-      // 3.2.1.1..5 para bloqueA-E. Corregido 2026-07-23.
-      { id: "ip1",              number: "3.3.1", label: "Bloque IP 1",              shortName: "BloqueIP1",     type: "form" },
-      { id: "ip2",              number: "3.3.2", label: "Bloque IP 2 - Clases de IP", shortName: "BloqueIP2",   type: "form" },
-      { id: "ip3",              number: "3.3.3", label: "Bloque IP 3",              shortName: "BloqueIP3",     type: "form" },
-      { id: "taller-ip-ej1",    number: "3.3.4.1", label: "Taller IP - Ejercicio 1",  shortName: "TallerIP1",     type: "form" },
-      { id: "taller-ip-ej2",    number: "3.3.4.2", label: "Taller IP - Ejercicio 2",  shortName: "TallerIP2",     type: "form" },
-      { id: "taller-ip-ej3",    number: "3.3.4.3", label: "Taller IP - Ejercicio 3",  shortName: "TallerIP3",     type: "form" },
-      { id: "taller-ip-ej4",    number: "3.3.4.4", label: "Taller IP - Ejercicio 4",  shortName: "TallerIP4",     type: "form" },
-      { id: "taller-ip-ej5",    number: "3.3.4.5", label: "Taller IP - Ejercicio 5",  shortName: "TallerIP5",     type: "form" },
-      // Quiz autocalificado (numero real "3.3.H", no numerico -> se usa "3.3.9").
-      { id: "quiz-redes-33h",   number: "3.3.9", label: "Quiz individual de parametros de red", shortName: "QuizIP", type: "form" },
-      { id: "lab1",             number: "3.4.1", label: "Laboratorio 1 - Topologia estrella", shortName: "LabEstrella", type: "file" },
-      { id: "lab2",             number: "3.4.2", label: "Laboratorio 2 - Topologia arbol",    shortName: "LabArbol",    type: "file" },
-      { id: "lab3",             number: "3.4.3", label: "Laboratorio 3 - Red hibrida",        shortName: "LabHibrida",  type: "file" },
-      { id: "social",           number: "3.5.1", label: "Socializacion final",                shortName: "SocialFinal", type: "form" },
-    ],
+      {
+        id: "b11Reflexion311",
+        number: "3.1.1",
+        label: "Reflexion inicial - La papeleria de la senora Carmen (Tunja)",
+        shortName: "ReflexionRedes",
+        type: "form",
+        formFields: [
+          "g11b_311_p1",
+          "g11b_311_p2",
+          "g11b_311_p3",
+          "g11b_311_p4",
+          "g11b_311_p5",
+          "g11b_311_socializacion"
+        ],
+        buttonIds: {
+          save: "btnGuardarb11Reflexion311",
+          status: "statusb11Reflexion311"
+        },
+        wordExport: {
+          contextBox: "Situacion: la senora Carmen tiene una papeleria en Tunja con 3 computadores, una impresora y un punto de venta. No pueden compartir archivos, la impresora solo funciona en un equipo y los inventarios se llevan en papel. Un tecnico le dice que necesita una red.",
+          sections: [
+            {
+              label: "1. Como le explicaria a la senora Carmen que es una red y para que sirve",
+              storeKey: "g11b_311_p1"
+            },
+            {
+              label: "2. Beneficios concretos de tener los 3 computadores en red",
+              storeKey: "g11b_311_p2"
+            },
+            {
+              label: "3. Redes que utiliza en su vida cotidiana (minimo 5 ejemplos)",
+              storeKey: "g11b_311_p3"
+            },
+            {
+              label: "4. Que necesita una red para funcionar",
+              storeKey: "g11b_311_p4"
+            },
+            {
+              label: "5. Problemas de red que ha tenido y su posible causa",
+              storeKey: "g11b_311_p5"
+            },
+            {
+              label: "Paso 2. Aporte a la socializacion (idea principal compartida)",
+              storeKey: "g11b_311_socializacion"
+            }
+          ]
+        }
+      },
+      {
+        id: "b11TiposA321",
+        number: "3.2.1",
+        label: "Bloque A - Tipos de redes: LAN, MAN y WAN",
+        shortName: "BloqueA_TiposRed",
+        type: "form",
+        formFields: [
+          "g11b_321_q1",
+          "g11b_321_q2",
+          "g11b_321_q3",
+          "g11b_321_ej_lan",
+          "g11b_321_ej_man",
+          "g11b_321_ej_wan"
+        ],
+        buttonIds: {
+          save: "btnGuardarb11TiposA321",
+          status: "statusb11TiposA321"
+        },
+        wordExport: {
+          contextBox: "Bloque A: tipos de redes LAN, MAN y WAN.",
+          sections: [
+            {
+              label: "1. Que tipo de red tiene la papeleria de Carmen y por que",
+              storeKey: "g11b_321_q1"
+            },
+            {
+              label: "2. Que red usa el SENA para conectar todas sus regionales",
+              storeKey: "g11b_321_q2"
+            },
+            {
+              label: "3. Diferencia LAN y WAN en velocidad y costo",
+              storeKey: "g11b_321_q3"
+            },
+            {
+              label: "Esquema - Ejemplo LAN (Boyaca)",
+              storeKey: "g11b_321_ej_lan"
+            },
+            {
+              label: "Esquema - Ejemplo MAN (Boyaca)",
+              storeKey: "g11b_321_ej_man"
+            },
+            {
+              label: "Esquema - Ejemplo WAN (Boyaca)",
+              storeKey: "g11b_321_ej_wan"
+            }
+          ]
+        }
+      },
+      {
+        id: "b11TopologiasB322",
+        number: "3.2.2",
+        label: "Bloque B - Topologias de red",
+        shortName: "BloqueB_Topologias",
+        type: "form",
+        formFields: [
+          "g11b_322_q1",
+          "g11b_322_q2",
+          "g11b_322_q3",
+          "g11b_322_bus_ventaja",
+          "g11b_322_bus_desventaja",
+          "g11b_322_estrella_ventaja",
+          "g11b_322_estrella_desventaja",
+          "g11b_322_arbol_ventaja",
+          "g11b_322_arbol_desventaja",
+          "g11b_322_anillo_ventaja",
+          "g11b_322_anillo_desventaja"
+        ],
+        buttonIds: {
+          save: "btnGuardarb11TopologiasB322",
+          status: "statusb11TopologiasB322"
+        },
+        wordExport: {
+          contextBox: "Bloque B: topologias de red (bus, estrella, arbol, anillo).",
+          sections: [
+            {
+              label: "1. Por que la topologia estrella es la mas usada en oficinas y MiPymes",
+              storeKey: "g11b_322_q1"
+            },
+            {
+              label: "2. Que ocurre si se dana el switch central en una estrella",
+              storeKey: "g11b_322_q2"
+            },
+            {
+              label: "3. Cuando elegiria la topologia arbol en lugar de la estrella",
+              storeKey: "g11b_322_q3"
+            },
+            {
+              label: "Topologia Bus - ventaja",
+              storeKey: "g11b_322_bus_ventaja"
+            },
+            {
+              label: "Topologia Bus - desventaja",
+              storeKey: "g11b_322_bus_desventaja"
+            },
+            {
+              label: "Topologia Estrella - ventaja",
+              storeKey: "g11b_322_estrella_ventaja"
+            },
+            {
+              label: "Topologia Estrella - desventaja",
+              storeKey: "g11b_322_estrella_desventaja"
+            },
+            {
+              label: "Topologia \u00c1rbol - ventaja",
+              storeKey: "g11b_322_arbol_ventaja"
+            },
+            {
+              label: "Topologia \u00c1rbol - desventaja",
+              storeKey: "g11b_322_arbol_desventaja"
+            },
+            {
+              label: "Topologia Anillo - ventaja",
+              storeKey: "g11b_322_anillo_ventaja"
+            },
+            {
+              label: "Topologia Anillo - desventaja",
+              storeKey: "g11b_322_anillo_desventaja"
+            }
+          ]
+        }
+      },
+      {
+        id: "b11MediosC323",
+        number: "3.2.3",
+        label: "Bloque C - Medios de transmision",
+        shortName: "BloqueC_Medios",
+        type: "form",
+        formFields: [
+          "g11b_323_q1",
+          "g11b_323_q2",
+          "g11b_323_q3",
+          "g11b_323_utp_velocidad",
+          "g11b_323_utp_distancia",
+          "g11b_323_utp_costo",
+          "g11b_323_utp_interferencia",
+          "g11b_323_utp_uso",
+          "g11b_323_fibra_velocidad",
+          "g11b_323_fibra_distancia",
+          "g11b_323_fibra_costo",
+          "g11b_323_fibra_interferencia",
+          "g11b_323_fibra_uso",
+          "g11b_323_wifi_velocidad",
+          "g11b_323_wifi_distancia",
+          "g11b_323_wifi_costo",
+          "g11b_323_wifi_interferencia",
+          "g11b_323_wifi_uso"
+        ],
+        buttonIds: {
+          save: "btnGuardarb11MediosC323",
+          status: "statusb11MediosC323"
+        },
+        wordExport: {
+          contextBox: "Bloque C: medios de transmision (UTP, fibra optica, Wi-Fi) y estandar TIA/EIA-568.",
+          sections: [
+            {
+              label: "1. Por que el cable Cat6 es mejor que el Cat5e",
+              storeKey: "g11b_323_q1"
+            },
+            {
+              label: "2. Cuando instalaria fibra optica en lugar de UTP en una MiPyme",
+              storeKey: "g11b_323_q2"
+            },
+            {
+              label: "3. Distancia maxima de un cable UTP y que pasa si se supera",
+              storeKey: "g11b_323_q3"
+            },
+            {
+              label: "Tabla - UTP: Velocidad m\u00e1xima",
+              storeKey: "g11b_323_utp_velocidad"
+            },
+            {
+              label: "Tabla - UTP: Distancia m\u00e1xima",
+              storeKey: "g11b_323_utp_distancia"
+            },
+            {
+              label: "Tabla - UTP: Costo aproximado",
+              storeKey: "g11b_323_utp_costo"
+            },
+            {
+              label: "Tabla - UTP: Interferencia",
+              storeKey: "g11b_323_utp_interferencia"
+            },
+            {
+              label: "Tabla - UTP: Cu\u00e1ndo usarlo en una MiPyme",
+              storeKey: "g11b_323_utp_uso"
+            },
+            {
+              label: "Tabla - Fibra \u00f3ptica: Velocidad m\u00e1xima",
+              storeKey: "g11b_323_fibra_velocidad"
+            },
+            {
+              label: "Tabla - Fibra \u00f3ptica: Distancia m\u00e1xima",
+              storeKey: "g11b_323_fibra_distancia"
+            },
+            {
+              label: "Tabla - Fibra \u00f3ptica: Costo aproximado",
+              storeKey: "g11b_323_fibra_costo"
+            },
+            {
+              label: "Tabla - Fibra \u00f3ptica: Interferencia",
+              storeKey: "g11b_323_fibra_interferencia"
+            },
+            {
+              label: "Tabla - Fibra \u00f3ptica: Cu\u00e1ndo usarlo en una MiPyme",
+              storeKey: "g11b_323_fibra_uso"
+            },
+            {
+              label: "Tabla - Wi-Fi: Velocidad m\u00e1xima",
+              storeKey: "g11b_323_wifi_velocidad"
+            },
+            {
+              label: "Tabla - Wi-Fi: Distancia m\u00e1xima",
+              storeKey: "g11b_323_wifi_distancia"
+            },
+            {
+              label: "Tabla - Wi-Fi: Costo aproximado",
+              storeKey: "g11b_323_wifi_costo"
+            },
+            {
+              label: "Tabla - Wi-Fi: Interferencia",
+              storeKey: "g11b_323_wifi_interferencia"
+            },
+            {
+              label: "Tabla - Wi-Fi: Cu\u00e1ndo usarlo en una MiPyme",
+              storeKey: "g11b_323_wifi_uso"
+            }
+          ]
+        }
+      },
+      {
+        id: "b11DispositivosD324",
+        number: "3.2.4",
+        label: "Bloque D - Dispositivos de interconexion",
+        shortName: "BloqueD_Dispositivos",
+        type: "form",
+        formFields: [
+          "g11b_324_q1",
+          "g11b_324_q2",
+          "g11b_324_q3",
+          "g11b_324_hub_capa",
+          "g11b_324_hub_funcion",
+          "g11b_324_hub_uso",
+          "g11b_324_switch_capa",
+          "g11b_324_switch_funcion",
+          "g11b_324_switch_uso",
+          "g11b_324_router_capa",
+          "g11b_324_router_funcion",
+          "g11b_324_router_uso",
+          "g11b_324_ap_capa",
+          "g11b_324_ap_funcion",
+          "g11b_324_ap_uso"
+        ],
+        buttonIds: {
+          save: "btnGuardarb11DispositivosD324",
+          status: "statusb11DispositivosD324"
+        },
+        wordExport: {
+          contextBox: "Bloque D: dispositivos de interconexion (hub, switch, router, access point).",
+          sections: [
+            {
+              label: "1. Por que el hub ya no se usa en redes modernas",
+              storeKey: "g11b_324_q1"
+            },
+            {
+              label: "2. En que capa OSI opera el switch y en cual el router",
+              storeKey: "g11b_324_q2"
+            },
+            {
+              label: "3. Cuando necesita un router y cuando basta con un switch",
+              storeKey: "g11b_324_q3"
+            },
+            {
+              label: "Cuadro - Hub: Capa OSI",
+              storeKey: "g11b_324_hub_capa"
+            },
+            {
+              label: "Cuadro - Hub: Funci\u00f3n principal",
+              storeKey: "g11b_324_hub_funcion"
+            },
+            {
+              label: "Cuadro - Hub: Cu\u00e1ndo usarlo",
+              storeKey: "g11b_324_hub_uso"
+            },
+            {
+              label: "Cuadro - Switch: Capa OSI",
+              storeKey: "g11b_324_switch_capa"
+            },
+            {
+              label: "Cuadro - Switch: Funci\u00f3n principal",
+              storeKey: "g11b_324_switch_funcion"
+            },
+            {
+              label: "Cuadro - Switch: Cu\u00e1ndo usarlo",
+              storeKey: "g11b_324_switch_uso"
+            },
+            {
+              label: "Cuadro - Router: Capa OSI",
+              storeKey: "g11b_324_router_capa"
+            },
+            {
+              label: "Cuadro - Router: Funci\u00f3n principal",
+              storeKey: "g11b_324_router_funcion"
+            },
+            {
+              label: "Cuadro - Router: Cu\u00e1ndo usarlo",
+              storeKey: "g11b_324_router_uso"
+            },
+            {
+              label: "Cuadro - Access Point: Capa OSI",
+              storeKey: "g11b_324_ap_capa"
+            },
+            {
+              label: "Cuadro - Access Point: Funci\u00f3n principal",
+              storeKey: "g11b_324_ap_funcion"
+            },
+            {
+              label: "Cuadro - Access Point: Cu\u00e1ndo usarlo",
+              storeKey: "g11b_324_ap_uso"
+            }
+          ]
+        }
+      },
+      {
+        id: "b11Exploracion325",
+        number: "3.2.5",
+        label: "Entrega - Exploracion contextual (Bloques A-D)",
+        shortName: "ExploracionContextualRedes",
+        type: "file",
+        driveTarget: {
+          panelKey: "g11redes-rap01-3-2-5",
+          deadlineActivityId: "b11Exploracion325",
+          activityTitle: "Exploracion contextual - Bloques A a D (PDF)",
+          description: "Sube un solo PDF con los productos de los bloques A-D, cada uno con encabezado del bloque: esquema LAN/MAN/WAN, 4 topologias, tabla de medios y cuadro de dispositivos.",
+          note: "Nombre: Exploracion_Contextual_NombreAprendiz_FICHA.pdf",
+          allowedExtensions: [
+            ".pdf"
+          ]
+        }
+      },
+      {
+        id: "b11MapaMental326",
+        number: "3.2.6",
+        label: "Mapa mental integrador de fundamentos de redes",
+        shortName: "MapaMentalFundamentos",
+        type: "file",
+        driveTarget: {
+          panelKey: "g11redes-rap01-3-2-6",
+          deadlineActivityId: "b11MapaMental326",
+          activityTitle: "Mapa mental integrador de fundamentos de redes",
+          description: "Sube el mapa mental (nodo central REDES INFORMATICAS, 5 ramas y al menos 2 conexiones cruzadas) como PDF o PNG.",
+          note: "Nombre: MapaMental_Redes_NombreAprendiz_FICHA.pdf",
+          allowedExtensions: [
+            ".pdf",
+            ".png",
+            ".jpg",
+            ".jpeg"
+          ]
+        }
+      },
+      {
+        id: "b11Pares327",
+        number: "3.2.7",
+        label: "Socializacion y revision entre pares",
+        shortName: "RevisionParesRedes",
+        type: "form",
+        formFields: [
+          "g11b_327_diferencias",
+          "g11b_327_eleccion",
+          "g11b_327_conceptos",
+          "g11b_327_pregunta"
+        ],
+        buttonIds: {
+          save: "btnGuardarb11Pares327",
+          status: "statusb11Pares327"
+        },
+        wordExport: {
+          contextBox: "En equipos de 3 aprendices: comparar mapas mentales y productos de exploracion, discutir criterios y consolidar una vision comun.",
+          sections: [
+            {
+              label: "1. Tres diferencias significativas entre los mapas",
+              storeKey: "g11b_327_diferencias"
+            },
+            {
+              label: "2. Representacion mas completa por rama y justificacion tecnica",
+              storeKey: "g11b_327_eleccion"
+            },
+            {
+              label: "3. Conceptos que no estaban claros y como se resolvieron",
+              storeKey: "g11b_327_conceptos"
+            },
+            {
+              label: "4. Pregunta tecnica para el instructor",
+              storeKey: "g11b_327_pregunta"
+            }
+          ]
+        }
+      },
+      {
+        id: "b11Ipv4Bloque331",
+        number: "3.3.1",
+        label: "Bloque 1 - Estructura de una direccion IPv4",
+        shortName: "Bloque1_IPv4",
+        type: "form",
+        formFields: [
+          "g11b_331_q1",
+          "g11b_331_q2",
+          "g11b_331_q3",
+          "g11b_331_red",
+          "g11b_331_host"
+        ],
+        buttonIds: {
+          save: "btnGuardarb11Ipv4Bloque331",
+          status: "statusb11Ipv4Bloque331"
+        },
+        wordExport: {
+          contextBox: "Exploracion visual - direccionamiento IP, Bloque 1: estructura de una direccion IPv4.",
+          sections: [
+            {
+              label: "1. Que representa cada numero de una IP",
+              storeKey: "g11b_331_q1"
+            },
+            {
+              label: "2. Que significa parte de red y parte de host",
+              storeKey: "g11b_331_q2"
+            },
+            {
+              label: "3. Por que no puede haber dos dispositivos con la misma IP",
+              storeKey: "g11b_331_q3"
+            },
+            {
+              label: "Producto - Octetos de RED de 192.168.1.45/255.255.255.0",
+              storeKey: "g11b_331_red"
+            },
+            {
+              label: "Producto - Octetos de HOST",
+              storeKey: "g11b_331_host"
+            }
+          ]
+        }
+      },
+      {
+        id: "b11ClasesBloque332",
+        number: "3.3.2",
+        label: "Bloque 2 - Clases de direcciones IP y direcciones privadas",
+        shortName: "Bloque2_ClasesIP",
+        type: "form",
+        formFields: [
+          "g11b_332_q1",
+          "g11b_332_q2",
+          "g11b_332_q3",
+          "g11b_332_a_mascara",
+          "g11b_332_a_hosts",
+          "g11b_332_a_uso",
+          "g11b_332_b_mascara",
+          "g11b_332_b_hosts",
+          "g11b_332_b_uso",
+          "g11b_332_c_mascara",
+          "g11b_332_c_hosts",
+          "g11b_332_c_uso"
+        ],
+        buttonIds: {
+          save: "btnGuardarb11ClasesBloque332",
+          status: "statusb11ClasesBloque332"
+        },
+        wordExport: {
+          contextBox: "Exploracion visual - direccionamiento IP, Bloque 2: clases de IP y direcciones privadas.",
+          sections: [
+            {
+              label: "1. Como saber la clase por el primer numero",
+              storeKey: "g11b_332_q1"
+            },
+            {
+              label: "2. Por que las MiPymes casi siempre usan Clase C",
+              storeKey: "g11b_332_q2"
+            },
+            {
+              label: "3. Que son las direcciones privadas",
+              storeKey: "g11b_332_q3"
+            },
+            {
+              label: "Clase A - M\u00e1scara por defecto",
+              storeKey: "g11b_332_a_mascara"
+            },
+            {
+              label: "Clase A - Hosts posibles",
+              storeKey: "g11b_332_a_hosts"
+            },
+            {
+              label: "Clase A - Uso t\u00edpico",
+              storeKey: "g11b_332_a_uso"
+            },
+            {
+              label: "Clase B - M\u00e1scara por defecto",
+              storeKey: "g11b_332_b_mascara"
+            },
+            {
+              label: "Clase B - Hosts posibles",
+              storeKey: "g11b_332_b_hosts"
+            },
+            {
+              label: "Clase B - Uso t\u00edpico",
+              storeKey: "g11b_332_b_uso"
+            },
+            {
+              label: "Clase C - M\u00e1scara por defecto",
+              storeKey: "g11b_332_c_mascara"
+            },
+            {
+              label: "Clase C - Hosts posibles",
+              storeKey: "g11b_332_c_hosts"
+            },
+            {
+              label: "Clase C - Uso t\u00edpico",
+              storeKey: "g11b_332_c_uso"
+            }
+          ]
+        }
+      },
+      {
+        id: "b11ParametrosBloque333",
+        number: "3.3.3",
+        label: "Bloque 3 - Parametros de red: IP, mascara, gateway y DNS",
+        shortName: "Bloque3_Parametros",
+        type: "form",
+        formFields: [
+          "g11b_333_q1",
+          "g11b_333_q2",
+          "g11b_333_q3",
+          "g11b_333_diagrama"
+        ],
+        buttonIds: {
+          save: "btnGuardarb11ParametrosBloque333",
+          status: "statusb11ParametrosBloque333"
+        },
+        wordExport: {
+          contextBox: "Exploracion visual - direccionamiento IP, Bloque 3: parametros de red.",
+          sections: [
+            {
+              label: "1. Que pasaria si configura mal el gateway",
+              storeKey: "g11b_333_q1"
+            },
+            {
+              label: "2. Para que sirve el DNS",
+              storeKey: "g11b_333_q2"
+            },
+            {
+              label: "3. Puede funcionar en red local sin DNS",
+              storeKey: "g11b_333_q3"
+            },
+            {
+              label: "Producto - Descripcion del diagrama (donde actua IP, mascara, gateway y DNS)",
+              storeKey: "g11b_333_diagrama"
+            }
+          ]
+        }
+      },
+      {
+        id: "b11TallerIP334",
+        number: "3.3.4",
+        label: "Taller de ejercicios de direccionamiento IP (Ejercicios 1-5)",
+        shortName: "TallerIP",
+        type: "both",
+        formFields: [
+          "g11b_334_e1a_clase",
+          "g11b_334_e1b_clase",
+          "g11b_334_e1c_clase",
+          "g11b_334_e1d_clase",
+          "g11b_334_e1a_mascara",
+          "g11b_334_e1b_mascara",
+          "g11b_334_e1c_mascara",
+          "g11b_334_e1d_mascara",
+          "g11b_334_e2_clase",
+          "g11b_334_e2_redhost",
+          "g11b_334_e2_hosts",
+          "g11b_334_e2_privada",
+          "g11b_334_e3_caja",
+          "g11b_334_e3_admin",
+          "g11b_334_e3_bodega",
+          "g11b_334_e3_pos",
+          "g11b_334_e3_gerencia",
+          "g11b_334_e3_ventas",
+          "g11b_334_e3_impresora",
+          "g11b_334_e3_camara",
+          "g11b_334_e3_justificacion",
+          "g11b_334_e4_ipv4",
+          "g11b_334_e4_mascara",
+          "g11b_334_e4_gateway",
+          "g11b_334_e4_dns",
+          "g11b_334_e5_lucia_clase",
+          "g11b_334_e5_transporte_clase",
+          "g11b_334_e5_corporacion_clase",
+          "g11b_334_e5_lucia_just",
+          "g11b_334_e5_transporte_just",
+          "g11b_334_e5_corporacion_just"
+        ],
+        buttonIds: {
+          save: "btnGuardarb11TallerIP334",
+          status: "statusb11TallerIP334"
+        },
+        wordExport: {
+          contextBox: "Taller de direccionamiento IP (5 ejercicios individuales con procedimiento). Incluir la captura de ipconfig /all del Ejercicio 4.",
+          sections: [
+            {
+              label: "EJERCICIO 1 - IDENTIFICAR CLASES",
+              storeKey: ""
+            },
+            {
+              label: "Ej1 a) 10.5.20.1 - clase",
+              storeKey: "g11b_334_e1a_clase"
+            },
+            {
+              label: "Ej1 b) 172.20.0.1 - clase",
+              storeKey: "g11b_334_e1b_clase"
+            },
+            {
+              label: "Ej1 c) 192.168.1.50 - clase",
+              storeKey: "g11b_334_e1c_clase"
+            },
+            {
+              label: "Ej1 d) 200.14.5.3 - clase",
+              storeKey: "g11b_334_e1d_clase"
+            },
+            {
+              label: "Ej1 a) 10.5.20.1 - mascara",
+              storeKey: "g11b_334_e1a_mascara"
+            },
+            {
+              label: "Ej1 b) 172.20.0.1 - mascara",
+              storeKey: "g11b_334_e1b_mascara"
+            },
+            {
+              label: "Ej1 c) 192.168.1.50 - mascara",
+              storeKey: "g11b_334_e1c_mascara"
+            },
+            {
+              label: "Ej1 d) 200.14.5.3 - mascara",
+              storeKey: "g11b_334_e1d_mascara"
+            },
+            {
+              label: "EJERCICIO 2 - ANALIZAR 192.168.10.45/24",
+              storeKey: ""
+            },
+            {
+              label: "Ej2 - Clase",
+              storeKey: "g11b_334_e2_clase"
+            },
+            {
+              label: "Ej2 - Parte de red y parte de host",
+              storeKey: "g11b_334_e2_redhost"
+            },
+            {
+              label: "Ej2 - Hosts posibles",
+              storeKey: "g11b_334_e2_hosts"
+            },
+            {
+              label: "Ej2 - Privada o publica y por que",
+              storeKey: "g11b_334_e2_privada"
+            },
+            {
+              label: "EJERCICIO 3 - FERRETERIA EL TORNILLO",
+              storeKey: ""
+            },
+            {
+              label: "Ej3 - Computador 1 - Caja",
+              storeKey: "g11b_334_e3_caja"
+            },
+            {
+              label: "Ej3 - Computador 2 - Administraci\u00f3n",
+              storeKey: "g11b_334_e3_admin"
+            },
+            {
+              label: "Ej3 - Computador 3 - Bodega",
+              storeKey: "g11b_334_e3_bodega"
+            },
+            {
+              label: "Ej3 - Computador 4 - Punto de Venta",
+              storeKey: "g11b_334_e3_pos"
+            },
+            {
+              label: "Ej3 - Computador 5 - Gerencia",
+              storeKey: "g11b_334_e3_gerencia"
+            },
+            {
+              label: "Ej3 - Computador 6 - Ventas",
+              storeKey: "g11b_334_e3_ventas"
+            },
+            {
+              label: "Ej3 - Impresora de red",
+              storeKey: "g11b_334_e3_impresora"
+            },
+            {
+              label: "Ej3 - C\u00e1mara IP",
+              storeKey: "g11b_334_e3_camara"
+            },
+            {
+              label: "Ej3 - Justificacion de la IP inicial",
+              storeKey: "g11b_334_e3_justificacion"
+            },
+            {
+              label: "EJERCICIO 4 - IPCONFIG /ALL",
+              storeKey: ""
+            },
+            {
+              label: "Ej4 - Direcci\u00f3n IPv4: para que sirve",
+              storeKey: "g11b_334_e4_ipv4"
+            },
+            {
+              label: "Ej4 - M\u00e1scara de subred: para que sirve",
+              storeKey: "g11b_334_e4_mascara"
+            },
+            {
+              label: "Ej4 - Puerta de enlace predeterminada (Gateway): para que sirve",
+              storeKey: "g11b_334_e4_gateway"
+            },
+            {
+              label: "Ej4 - Servidores DNS: para que sirve",
+              storeKey: "g11b_334_e4_dns"
+            },
+            {
+              label: "EJERCICIO 5 - CLASE PARA CADA EMPRESA",
+              storeKey: ""
+            },
+            {
+              label: "Ej5 - Miscel\u00e1nea Luc\u00eda - Tunja: clase",
+              storeKey: "g11b_334_e5_lucia_clase"
+            },
+            {
+              label: "Ej5 - Empresa de transporte regional: clase",
+              storeKey: "g11b_334_e5_transporte_clase"
+            },
+            {
+              label: "Ej5 - Corporaci\u00f3n con sedes en todo el pa\u00eds: clase",
+              storeKey: "g11b_334_e5_corporacion_clase"
+            },
+            {
+              label: "Ej5 - Miscel\u00e1nea Luc\u00eda - Tunja: justificacion",
+              storeKey: "g11b_334_e5_lucia_just"
+            },
+            {
+              label: "Ej5 - Empresa de transporte regional: justificacion",
+              storeKey: "g11b_334_e5_transporte_just"
+            },
+            {
+              label: "Ej5 - Corporaci\u00f3n con sedes en todo el pa\u00eds: justificacion",
+              storeKey: "g11b_334_e5_corporacion_just"
+            }
+          ]
+        },
+        driveTarget: {
+          panelKey: "g11redes-rap01-3-3-4",
+          deadlineActivityId: "b11TallerIP334",
+          activityTitle: "Taller de direccionamiento IP - Ejercicios 1 a 5 (PDF)",
+          description: "Exporta tus respuestas a Word, agrega la captura de ipconfig /all del Ejercicio 4 y los productos de los bloques 1-3, convierte a PDF y entregalo.",
+          note: "Nombre: Taller_IP_NombreAprendiz_FICHA.pdf",
+          allowedExtensions: [
+            ".pdf",
+            ".doc",
+            ".docx"
+          ]
+        }
+      },
+      {
+        id: "b11Lab1Estrella341",
+        number: "3.4.1",
+        label: "Laboratorio 1 - Red topologia estrella con direccionamiento IP (Packet Tracer)",
+        shortName: "Lab1EstrellaCarmen",
+        type: "both",
+        formFields: [
+          "g11b_341_ping_pc1_pc6",
+          "g11b_341_ping_pc3_pc4",
+          "g11b_341_broadcast",
+          "g11b_341_analisis"
+        ],
+        optionalFields: [
+          "g11b_341_ping_extra"
+        ],
+        buttonIds: {
+          save: "btnGuardarb11Lab1Estrella341",
+          status: "statusb11Lab1Estrella341"
+        },
+        wordExport: {
+          contextBox: "Laboratorio 1: papeleria de la senora Carmen, topologia estrella con Switch 2960, 6 PCs y Access Point; red 192.168.10.0/24, gateway 192.168.10.1, DNS 8.8.8.8.",
+          sections: [
+            {
+              label: "1. Ping PC1_Caja -> PC6_Gerencia (192.168.10.15)",
+              storeKey: "g11b_341_ping_pc1_pc6"
+            },
+            {
+              label: "2. Ping PC3_Bodega -> PC4_Punto1",
+              storeKey: "g11b_341_ping_pc3_pc4"
+            },
+            {
+              label: "3. Ping broadcast desde PC2_Admin (192.168.10.255): respuesta y por que",
+              storeKey: "g11b_341_broadcast"
+            },
+            {
+              label: "Analisis breve: funcionaron todos? por que?",
+              storeKey: "g11b_341_analisis"
+            },
+            {
+              label: "Ping adicional (si el instructor lo solicita)",
+              storeKey: "g11b_341_ping_extra"
+            }
+          ]
+        },
+        driveTarget: {
+          panelKey: "g11redes-rap01-3-4-1",
+          deadlineActivityId: "b11Lab1Estrella341",
+          activityTitle: "Laboratorio 1 - Topologia estrella papeleria Carmen (.pkt + capturas + analisis)",
+          description: "Sube el archivo .pkt y las capturas de los pings con el analisis breve (PDF o imagenes). Si son varios archivos, comprimelos en un .zip.",
+          note: "Nombre: Lab1_EstrellaCarmen_NombreAprendiz_FICHA.pkt",
+          allowedExtensions: [
+            ".pkt",
+            ".pdf",
+            ".png",
+            ".jpg",
+            ".jpeg",
+            ".zip"
+          ]
+        }
+      }
+    ]
   });
 
   // ── Guia 10 - Comprobar la conectividad de la red (RAP 02) — Santa Barbara grado 11 (11A + 11B) ──

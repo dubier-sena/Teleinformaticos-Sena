@@ -41,6 +41,7 @@ const PARES = [
   { rap: "03", base: "sb-redes-rap03-10a", grado11: ["sb11-redes-rap03-11a", "sb11-redes-rap03-11b"], guia: "11" },
 ];
 const PROPIOS = {
+  "01": { template: "guia-redes11-rap01", partial: "partials/guia-redes11-rap01-content.html", family: "guia-redes11-rap01", prefix: "g11b_" },
   "02": { template: "guia-redes11-rap02", partial: "partials/guia-redes11-rap02-content.html", family: "guia-redes11-rap02", prefix: "g11c_" },
   "03": { template: "guia-redes11-rap03", partial: "partials/guia-redes11-rap03-content.html", family: "guia-redes11-rap03", prefix: "g11d_" },
 };
@@ -65,15 +66,10 @@ function loadDeclarations() {
   return byFile;
 }
 
-test("Guia 9 (RAP 01) de grado 11 sigue reutilizando EL MISMO partial que Santa Barbara 10", () => {
-  const ctx = loadContexts();
-  const { base, grado11 } = PARES[0];
-  for (const key of grado11) assert.equal(ctx[key].partialPath, ctx[base].partialPath, key);
-});
-
 test("Guias 10 y 11 de grado 11 usan su partial OFICIAL propio, distinto del de grado 10", () => {
   const ctx = loadContexts();
-  for (const { rap, base, grado11 } of PARES.slice(1)) {
+  // EMERGENCIA fase 2 (2026-11-08): la Guia 9 (RAP 01) tambien tiene partial oficial propio.
+  for (const { rap, base, grado11 } of PARES) {
     for (const key of grado11) {
       assert.equal(ctx[key].template, PROPIOS[rap].template, key);
       assert.equal(ctx[key].partialPath, PROPIOS[rap].partial, key);
@@ -87,9 +83,10 @@ test("Guias 10 y 11 de grado 11 usan su partial OFICIAL propio, distinto del de 
 
 test("grado 11 (Guias 10/11) no comparte ids de actividad, campos ni familia con grado 10", () => {
   const decl = loadDeclarations();
-  for (const rap of ["02", "03"]) {
+  const G11 = { "01": "09", "02": "10", "03": "11" };
+  for (const rap of ["01", "02", "03"]) {
     const g10 = decl[`santa-barbara-10a-guia-0${Number(rap) + 1}-redes-rap${rap}.html`];
-    const g11 = decl[`grupo-11a-guia-1${rap === "02" ? "0" : "1"}-redes-rap${rap}.html`];
+    const g11 = decl[`grupo-11a-guia-${G11[rap]}-redes-rap${rap}.html`];
     assert.ok(g10 && g11, rap);
     assert.equal(g11.gradeFamily, PROPIOS[rap].family);
     assert.notEqual(g11.gradeFamily, g10.gradeFamily);
@@ -102,10 +99,10 @@ test("grado 11 (Guias 10/11) no comparte ids de actividad, campos ni familia con
         assert.ok(k.startsWith(PROPIOS[rap].prefix), `campo ${k} sin prefijo de grado 11`);
       }
       const pk = a.driveTarget && a.driveTarget.panelKey;
-      if (pk) assert.ok(/^g11redes-rap0[23]-/.test(pk), `panelKey ${pk} de grado 11`);
+      if (pk) assert.ok(/^g11redes-rap0[123]-/.test(pk), `panelKey ${pk} de grado 11`);
     }
     // 11A y 11B comparten declaracion pero el estado se separa por pageFile (y por ficha en Drive)
-    assert.deepEqual(g11.files.slice().sort(), [`grupo-11a-guia-1${rap === "02" ? "0" : "1"}-redes-rap${rap}.html`, `grupo-11b-guia-1${rap === "02" ? "0" : "1"}-redes-rap${rap}.html`]);
+    assert.deepEqual(g11.files.slice().sort(), [`grupo-11a-guia-${G11[rap]}-redes-rap${rap}.html`, `grupo-11b-guia-${G11[rap]}-redes-rap${rap}.html`]);
   }
 });
 

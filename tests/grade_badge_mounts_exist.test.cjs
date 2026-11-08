@@ -58,6 +58,7 @@ const FAMILY_TO_FILES = {
   "guia-redes-rap02": ["partials/guia-redes-rap02-content.html"],
   "guia-redes-rap03": ["partials/guia-redes-rap03-content.html"],
   // EMERGENCIA 2026-11-07: Guias 10/11 de Redes de grado 11 con partial propio.
+  "guia-redes11-rap01": ["partials/guia-redes11-rap01-content.html"],
   "guia-redes11-rap02": ["partials/guia-redes11-rap02-content.html"],
   "guia-redes11-rap03": ["partials/guia-redes11-rap03-content.html"],
   "guia-python": ["partials/guia-python-content.html"],

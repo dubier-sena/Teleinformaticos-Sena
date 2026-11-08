@@ -41,12 +41,34 @@ function loadGrades() {
 }
 
 const GUIAS = {
+  rap01: { file: "grupo-11a-guia-09-redes-rap01.html", fileB: "grupo-11b-guia-09-redes-rap01.html", partial: "partials/guia-redes11-rap01-content.html", family: "guia-redes11-rap01" },
   rap02: { file: "grupo-11a-guia-10-redes-rap02.html", fileB: "grupo-11b-guia-10-redes-rap02.html", partial: "partials/guia-redes11-rap02-content.html", family: "guia-redes11-rap02" },
   rap03: { file: "grupo-11a-guia-11-redes-rap03.html", fileB: "grupo-11b-guia-11-redes-rap03.html", partial: "partials/guia-redes11-rap03-content.html", family: "guia-redes11-rap03" },
 };
 
 // Textos tomados literalmente de los Word oficiales (preguntas, ejercicios, productos y evidencias).
 const OFICIAL = {
+  rap01: [
+    "La señora Carmen tiene una papelería en Tunja con 3 computadores, una impresora y un punto de venta.",
+    "¿Cómo le explicaría a la señora Carmen qué es una red y para qué sirve, en términos sencillos?",
+    "Dé al menos 5 ejemplos específicos.",
+    "BLOQUE A — Tipos de redes: LAN, MAN y WAN".replace("BLOQUE A", "Bloque A"),
+    "¿Qué red usa el SENA para conectar todas sus regionales?",
+    "¿Qué ocurre si se daña el switch central en una topología estrella?",
+    "¿Cuál es la distancia máxima de un cable UTP y qué pasa si se supera?",
+    "¿En qué capa del modelo OSI opera el switch? ¿Y el router?",
+    "REDES INFORMÁTICAS", "Rama 5 — Modelo OSI",
+    "identifique al menos 3 diferencias significativas",
+    "¿Por qué no puede haber dos dispositivos con la misma IP en la misma red?",
+    "¿Qué son las direcciones privadas y por qué no se pueden usar en internet directamente?",
+    "¿Puede un computador funcionar en red local sin tener configurado el DNS? ¿Por qué?",
+    "10.5.20.1", "172.20.0.1", "200.14.5.3", "192.168.10.45", "La Ferretería El Tornillo",
+    "Miscelánea Lucía — Tunja", "Corporación con sedes en todo el país",
+    "PC1_Caja, PC2_Admin, PC3_Bodega, PC4_Punto1, PC5_Punto2, PC6_Gerencia", "192.168.10.255",
+    "Exploracion_Contextual_NombreAprendiz_FICHA.pdf", "MapaMental_Redes_NombreAprendiz_FICHA.pdf",
+    "Taller_IP_NombreAprendiz_FICHA.pdf", "Lab1_EstrellaCarmen_NombreAprendiz_FICHA.pkt",
+    "Lista de chequeo + guía de respuestas (clave de solución)",
+  ],
   rap02: [
     "¿Por qué separar la red de ventas y la red administrativa podría mejorar la organización y la seguridad de la papelería?",
     "¿Qué problemas podría tener la señora Carmen si mantiene los 6 equipos (3 de ventas y 3 administrativos) en una sola red sin dividir?",
@@ -152,8 +174,8 @@ test("calificaciones: familia propia por guia, una columna por actividad y mapeo
 test("notas anteriores de 11A/11B (familias de grado 10) se ofrecen SOLO para revision manual de esas fichas", () => {
   const mgr = loadGrades();
   assert.deepEqual(JSON.parse(JSON.stringify(mgr.LEGACY_REVIEW_FAMILIES_BY_FICHA)), {
-    "3168850": ["guia-redes-rap02", "guia-redes-rap03"],
-    "3168852": ["guia-redes-rap02", "guia-redes-rap03"],
+    "3168850": ["guia-redes-rap01", "guia-redes-rap02", "guia-redes-rap03"],
+    "3168852": ["guia-redes-rap01", "guia-redes-rap02", "guia-redes-rap03"],
   });
   const admin = read("js/admin_usuarios.js");
   assert.match(admin, /VERSIÓN ANTERIOR \(solo revisión manual\)/);
@@ -226,7 +248,7 @@ test("preservacion: la version anterior se lista en solo lectura y los ids nuevo
   // ids de la version anterior y nuevos son disjuntos
   const decl = loadDeclarations();
   for (const [tpl, legacy] of Object.entries(LEGACY)) {
-    const file = tpl.endsWith("rap02") ? GUIAS.rap02.file : GUIAS.rap03.file;
+    const file = GUIAS[tpl.slice(-5)].file;
     const nuevos = decl[file].activities.map((a) => a.id);
     assert.deepEqual(nuevos.filter((id) => legacy.ids.includes(id)), [], tpl);
   }
@@ -234,39 +256,45 @@ test("preservacion: la version anterior se lista en solo lectura y los ids nuevo
 
 test("el documento de la guia (pageFile/stateKey) es el MISMO: no se pierden respuestas ni entregas", () => {
   const decl = loadDeclarations();
+  assert.equal(decl[GUIAS.rap01.file].stateKey, "guia_interactiva_sb_11a_guia09_redes_rap01");
   assert.equal(decl[GUIAS.rap02.file].stateKey, "guia_interactiva_sb_11a_guia10_redes_rap02");
   assert.equal(decl[GUIAS.rap03.file].stateKey, "guia_interactiva_sb_11a_guia11_redes_rap03");
   const w = {};
   new Function("window", read("data/guide_contexts_bundle.js"))(w);
-  for (const [key, file] of [["sb11-redes-rap02-11a", GUIAS.rap02.file], ["sb11-redes-rap02-11b", GUIAS.rap02.fileB], ["sb11-redes-rap03-11a", GUIAS.rap03.file], ["sb11-redes-rap03-11b", GUIAS.rap03.fileB]]) {
+  for (const [key, file] of [["sb11-redes-rap01-11a", GUIAS.rap01.file], ["sb11-redes-rap01-11b", GUIAS.rap01.fileB], ["sb11-redes-rap02-11a", GUIAS.rap02.file], ["sb11-redes-rap02-11b", GUIAS.rap02.fileB], ["sb11-redes-rap03-11a", GUIAS.rap03.file], ["sb11-redes-rap03-11b", GUIAS.rap03.fileB]]) {
     const c = w.__GUIDE_RUNTIME_CONTEXTS__[key];
     assert.equal(c.pageFile, file);
     assert.equal(c.cloudFileName, file, "mismo documento en la nube");
     assert.equal(c.ficha, key.endsWith("11a") ? "3168850" : "3168852", "separacion 11A/11B");
-    assert.equal(c.supportTemplate, key.includes("rap02") ? "guia-redes-rap02" : "guia-redes-rap03");
+    assert.equal(c.supportTemplate, "guia-redes-rap0" + key.match(/rap0(\d)/)[1]);
+    assert.ok(!c.quizRedesUrl && !c.quizIpUrl, `${key}: el Word oficial no incluye quiz`);
   }
   const json = JSON.parse(read("data/guide_contexts.json"));
   // (el bundle trae contextos de otras guias que el JSON no repite: solo se comparan los 4 de grado 11)
-  for (const k of ["sb11-redes-rap02-11a", "sb11-redes-rap02-11b", "sb11-redes-rap03-11a", "sb11-redes-rap03-11b"]) {
+  for (const k of ["sb11-redes-rap01-11a", "sb11-redes-rap01-11b", "sb11-redes-rap02-11a", "sb11-redes-rap02-11b", "sb11-redes-rap03-11a", "sb11-redes-rap03-11b"]) {
     assert.deepEqual(json[k], w.__GUIDE_RUNTIME_CONTEXTS__[k], `contexto ${k} igual en json y bundle`);
   }
 });
 
 test("rutas y paginas de 11A/11B cargan el script y el bundle de grado 11; grado 10 sigue con los suyos", () => {
   const router = read("js/guia_router.js");
-  for (const key of ["11a-guia-10-redes-rap02", "11b-guia-10-redes-rap02", "11a-guia-11-redes-rap03", "11b-guia-11-redes-rap03"]) {
+  for (const key of ["11a-guia-9-redes-rap01", "11b-guia-9-redes-rap01", "11a-guia-10-redes-rap02", "11b-guia-10-redes-rap02", "11a-guia-11-redes-rap03", "11b-guia-11-redes-rap03"]) {
     const i = router.indexOf(`"${key}": {`);
     const blk = router.slice(i, router.indexOf("\n    },\n", i));
-    assert.match(blk, /template: "guia-redes11-rap0[23]"/);
+    assert.match(blk, /template: "guia-redes11-rap0[123]"/);
     assert.match(blk, /"js\/script_guia_redes11\.js\?v=/);
-    assert.match(blk, /"partials\/guia-redes11-rap0[23]-bundle\.js\?v=/);
-    assert.doesNotMatch(blk, /script_guia_redes_rap0|guia-redes-rap0[23]-bundle/);
+    assert.match(blk, /"partials\/guia-redes11-rap0[123]-bundle\.js\?v=/);
+    assert.match(blk, /"js\/guide_cloud_sync\.js\?v=/);
+    assert.doesNotMatch(blk, /script_guia_redes(_rap0[23])?\.js|guia-redes-rap0[123]-bundle/);
   }
-  for (const f of [GUIAS.rap02.file, GUIAS.rap02.fileB, GUIAS.rap03.file, GUIAS.rap03.fileB]) {
-    const html = read(`pages/guias/${f}`);
-    assert.match(html, /template: "guia-redes11-rap0[23]"/);
-    assert.match(html, /js\/script_guia_redes11\.js\?v=/);
-    assert.match(html, /partials\/guia-redes11-rap0[23]-bundle\.js\?v=/);
+  for (const g of Object.values(GUIAS)) {
+    for (const f of [g.file, g.fileB]) {
+      const html = read(`pages/guias/${f}`);
+      assert.match(html, /template: "guia-redes11-rap0[123]"/);
+      assert.match(html, /js\/script_guia_redes11\.js\?v=/);
+      assert.match(html, /js\/guide_cloud_sync\.js\?v=/, `${f}: sin GuideCloudSync no se sincroniza con la nube`);
+      assert.match(html, /partials\/guia-redes11-rap0[123]-bundle\.js\?v=/);
+    }
   }
   for (const f of ["santa-barbara-10a-guia-03-redes-rap02.html", "grupo-10b-guia-12-redes-rap03.html"]) {
     assert.match(read(`pages/guias/${f}`), /script_guia_redes_rap0[23]\.js/);
@@ -287,4 +315,50 @@ test("grado 10 sin cambios academicos: partials y scripts de Redes identicos a p
 
 test("material de apoyo de grado 11 se conserva via supportTemplate", () => {
   assert.match(read("js/guide_support_materials.js"), /groupsFor\(context\.supportTemplate \|\| context\.template, /);
+});
+
+// ── Fase 2 (2026-11-08): rediseno visual de las 3 guias ─────────────────────
+test("rediseno: Guia 10 Ej. 4 en dos grupos (Subred Ventas / Subred Administracion) con campos IP compactos", () => {
+  const html = read(GUIAS.rap02.partial);
+  const i = html.indexOf('class="r11-subnets"');
+  assert.ok(i > 0, "sin los dos grupos de subred");
+  const zona = html.slice(i, html.indexOf("</section>", i));
+  const ventas = zona.slice(zona.indexOf("Subred Ventas"), zona.indexOf("Subred Administración"));
+  const admin = zona.slice(zona.indexOf("Subred Administración"));
+  for (const k of ["gw_ventas", "caja", "venta1", "venta2"]) assert.match(ventas, new RegExp(`class="r11-input r11-input--ip"[^>]*data-store="g11c_331_e4_${k}"`));
+  for (const k of ["gw_admin", "gerencia", "contable", "bodega"]) assert.match(admin, new RegExp(`data-store="g11c_331_e4_${k}"`));
+});
+
+test("rediseno: zonas de evidencia muestran producto y formatos IGUALES a los que acepta la entrega", () => {
+  const decl = loadDeclarations();
+  for (const g of Object.values(GUIAS)) {
+    const html = read(g.partial);
+    for (const a of decl[g.file].activities.filter((x) => x.driveTarget)) {
+      const at = html.indexOf(`data-act-std-delivery="${a.id}"`);
+      const sec = html.lastIndexOf('<section class="r11-evidence"', at);
+      assert.ok(at > 0 && sec > 0 && html.indexOf("</section>", sec) > at, `${a.id}: sin zona de evidencia propia`);
+      const m = html.slice(sec, at).match(/data-r11-formats="([^"]*)"/);
+      assert.equal(m[1], a.driveTarget.allowedExtensions.join(","), `${a.id}: formatos mostrados != aceptados`);
+    }
+  }
+});
+
+test("rediseno: tarjetas con proposito/producto, botones diferenciados y hoja de estilos solo en grado 11", () => {
+  for (const g of Object.values(GUIAS)) {
+    const html = read(g.partial);
+    assert.ok((html.match(/class="r11-meta"/g) || []).length >= 8, `${g.partial}: tarjetas sin proposito/producto`);
+    assert.ok(html.includes("r11-actions"));
+  }
+  const css = read("css/guia_redes11.css");
+  assert.ok(!/^[^\/\s@}][^{]*\{/m.test(css.replace(/\[data-redes11-guide\][^{]*\{/g, "").replace(/@media[^{]*\{/g, "").replace(/^\s*}\s*$/gm, "")), "todo selector acotado a [data-redes11-guide]");
+  assert.match(css, /@media \(max-width: 640px\)/);
+  assert.match(read("js/script_guia_redes11.js"), /css\/guia_redes11\.css\?v=/);
+});
+
+test("Guia 9: las actividades antiguas extra (bloque E, quizzes, labs 2 y 3, socializacion final) ya no son evaluables", () => {
+  const mgr = loadGrades();
+  const cols = JSON.parse(JSON.stringify(mgr.GRADE_CATALOG["guia-redes11-rap01"].activities.map((a) => a.id)));
+  for (const viejo of ["bloqueE", "quiz-redes-321h", "quiz-redes-33h", "lab2", "lab3", "social"]) assert.ok(!cols.includes(viejo), viejo);
+  assert.equal(cols.length, 13);
+  assert.ok(cols.includes("b11Lab1Estrella341") && cols.includes("b11TallerIP334"));
 });

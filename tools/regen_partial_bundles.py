@@ -37,6 +37,7 @@ ALL_PAIRS = [
     ("partials/guia-redes-rap01-content.html",    "partials/guia-redes-rap01-bundle.js"),
     ("partials/guia-redes-rap02-content.html",    "partials/guia-redes-rap02-bundle.js"),
     ("partials/guia-redes-rap03-content.html",    "partials/guia-redes-rap03-bundle.js"),
+    ("partials/guia-redes11-rap01-content.html",  "partials/guia-redes11-rap01-bundle.js"),
     ("partials/guia-redes11-rap02-content.html",  "partials/guia-redes11-rap02-bundle.js"),
     ("partials/guia-redes11-rap03-content.html",  "partials/guia-redes11-rap03-bundle.js"),
     ("partials/guia-python-content.html",         "partials/guia-python-bundle.js"),

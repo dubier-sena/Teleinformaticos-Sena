@@ -20,6 +20,17 @@
 
   // Version anterior de cada guia: ids de actividad y prefijo de campos que usaba.
   var LEGACY = {
+    // Guia 9 (fase 2, 2026-11-08): la version anterior la manejaba script_guia_redes.js
+    // (compartido con 10.) con decenas de claves dinamicas; se muestra en modo
+    // "foreign": toda clave que NO pertenezca a la version oficial actual.
+    "guia-redes11-rap01": {
+      family: "guia-redes-rap01",
+      mode: "foreign",
+      prefix: "",
+      ids: ["reflexion311", "socializacion311", "bloqueA", "bloqueB", "bloqueC", "bloqueD", "bloqueE", "mapaMental322",
+        "quiz-redes-321h", "ip1", "ip2", "ip3", "taller-ip-ej1", "taller-ip-ej2", "taller-ip-ej3", "taller-ip-ej4",
+        "taller-ip-ej5", "quiz-redes-33h", "lab1", "lab2", "lab3", "social"],
+    },
     "guia-redes11-rap02": {
       family: "guia-redes-rap02",
       prefix: "g3r_",
@@ -37,6 +48,18 @@
   var DRIVE_FOLDERS = {
     // Mismas carpetas de ficha que js/project_integrations.js (fichaDriveFolders).
   };
+
+  // Rediseno visual (fase 2): hoja de estilos propia, solo en estas guias.
+  var STYLE_HREF = "css/guia_redes11.css?v=20261108_1";
+  (function ensureStyles() {
+    if (typeof document === "undefined" || !document.head || !document.createElement) return;
+    if (document.querySelector('link[data-redes11-css]')) return;
+    var link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = STYLE_HREF;
+    link.setAttribute("data-redes11-css", "1");
+    document.head.appendChild(link);
+  })();
 
   var portalAuth = window.portalAuth || null;
   var LEGACY_STORAGE_KEY = "guia_interactiva_" + PAGE_KEY;
@@ -170,6 +193,24 @@
     });
     if (!targets.length) return;
     window.sharedDriveDelivery.appendDriveDeliveryPanels({ targets: targets, onDriveClick: openDriveFolder });
+    placeDeliveryPanelsInEvidenceZones();
+  }
+
+  // Rediseno (fase 2): shared_drive_delivery agrega el panel de entrega al final de
+  // la actividad; aqui se MUEVE (mismo nodo, mismos eventos y estados) dentro de su
+  // zona de evidencias para que producto, formatos, botones y estado queden juntos.
+  function placeDeliveryPanelsInEvidenceZones() {
+    var byPanel = {};
+    (getConfig().activities || []).forEach(function (a) {
+      if (a.driveTarget && a.driveTarget.panelKey) byPanel[a.driveTarget.panelKey] = a.id;
+    });
+    document.querySelectorAll("[data-drive-panel]").forEach(function (panel) {
+      var actId = byPanel[panel.getAttribute("data-drive-panel")];
+      if (!actId) return;
+      var holder = document.querySelector('.r11-evidence [data-act-std-delivery="' + actId + '"]');
+      if (!holder || holder.parentNode.contains(panel)) return;
+      holder.parentNode.insertBefore(panel, holder);
+    });
   }
 
   // ── Progreso ─────────────────────────────────────────────────────────────
@@ -218,24 +259,47 @@
     });
   }
 
-  function legacyEntries(st, legacy) {
+  // currentKeys: claves de la version oficial actual (campos + ids de actividad). En
+  // modo "foreign" se muestra todo lo demas (salvo metadatos internos).
+  function legacyEntries(st, legacy, currentKeys) {
     var rows = [];
+    var cur = currentKeys || { fields: {}, ids: [] };
     Object.keys(st || {}).sort().forEach(function (key) {
-      var isField = key.indexOf(legacy.prefix) === 0;
-      var isActKey = legacy.ids.some(function (id) { return key === id + "-locked" || key.indexOf(id + "-delivery") === 0; });
+      var isField, isActKey;
+      if (legacy.mode === "foreign") {
+        if (key.charAt(0) === "_" || cur.fields[key]) return;
+        if (cur.ids.some(function (id) { return key === id || key.indexOf(id + "-") === 0 || key.indexOf(id + ":") === 0; })) return;
+        isField = true; isActKey = false;
+      } else {
+        isField = legacy.prefix && key.indexOf(legacy.prefix) === 0;
+        isActKey = legacy.ids.some(function (id) { return key === id + "-locked" || key.indexOf(id + "-delivery") === 0; });
+      }
       if (!isField && !isActKey) return;
       var v = st[key];
       if (v == null || v === "" || v === false) return;
-      rows.push({ key: key, value: typeof v === "object" ? JSON.stringify(v) : String(v) });
+      var text = typeof v === "object" ? JSON.stringify(v) : String(v);
+      if (/^data:image\//.test(text)) text = "[imagen guardada en este navegador]";
+      else if (text.length > 400) text = text.slice(0, 400) + "…";
+      rows.push({ key: key, value: text });
     });
     return rows;
+  }
+
+  function currentKeys() {
+    var fields = {};
+    var ids = [];
+    (getConfig().activities || []).forEach(function (a) {
+      ids.push(a.id);
+      (a.formFields || []).concat(a.optionalFields || []).forEach(function (k) { fields[k] = true; });
+    });
+    return { fields: fields, ids: ids };
   }
 
   function renderLegacy() {
     var host = document.querySelector("[data-redes11-legacy]");
     var legacy = LEGACY[templateName()];
     if (!host || !legacy) return;
-    var rows = legacyEntries(state, legacy);
+    var rows = legacyEntries(state, legacy, currentKeys());
     if (!rows.length) {
       host.innerHTML = '<p class="intro-text">No hay registros de la versión anterior en esta cuenta.</p>';
       return;

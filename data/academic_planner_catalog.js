@@ -4,7 +4,7 @@
   "schemaVersion": 1,
   "sourceHashes": {
     "js/portal_auth.js": "36eacc03a8f1f73f992fb104d2461c63b37b97707d6bcfaa9daf4665a0adcf27",
-    "js/guide_declarations.js": "25ff8d55002b570e652b3c8cf4258466dae18b7fea901c03d248d29318d55dae"
+    "js/guide_declarations.js": "5171cbc35874425448824b99cffbef113cc5d689f1956b9e050f4d454661cdbb"
   },
   "notice": "Fuente: declaraciones del portal; no certifica catálogo curricular completo ni intensidades. Cotejo oficial pendiente. Las discrepancias se bloquean.",
   "fichas": [
@@ -323,95 +323,59 @@
       "guides": [
         {
           "file": "grupo-11a-guia-09-redes-rap01.html",
-          "title": "Guia 9 - Definir parametros y recursos de la red (RAP 01)",
+          "title": "Guia 9 - Definir los parametros y recursos de la red (RAP 01)",
           "activities": [
             {
-              "id": "reflexion311",
-              "label": "Reflexion individual"
+              "id": "b11Reflexion311",
+              "label": "Reflexion inicial - La papeleria de la senora Carmen (Tunja)"
             },
             {
-              "id": "socializacion311",
-              "label": "Socializacion"
-            },
-            {
-              "id": "bloqueA",
+              "id": "b11TiposA321",
               "label": "Bloque A - Tipos de redes: LAN, MAN y WAN"
             },
             {
-              "id": "bloqueB",
+              "id": "b11TopologiasB322",
               "label": "Bloque B - Topologias de red"
             },
             {
-              "id": "bloqueC",
+              "id": "b11MediosC323",
               "label": "Bloque C - Medios de transmision"
             },
             {
-              "id": "bloqueD",
+              "id": "b11DispositivosD324",
               "label": "Bloque D - Dispositivos de interconexion"
             },
             {
-              "id": "bloqueE",
-              "label": "Bloque E - Modelo OSI y TCP/IP"
+              "id": "b11Exploracion325",
+              "label": "Entrega - Exploracion contextual (Bloques A-D)"
             },
             {
-              "id": "mapaMental322",
+              "id": "b11MapaMental326",
               "label": "Mapa mental integrador de fundamentos de redes"
             },
             {
-              "id": "quiz-redes-321h",
-              "label": "Quiz individual de fundamentos de redes"
+              "id": "b11Pares327",
+              "label": "Socializacion y revision entre pares"
             },
             {
-              "id": "ip1",
-              "label": "Bloque IP 1"
+              "id": "b11Ipv4Bloque331",
+              "label": "Bloque 1 - Estructura de una direccion IPv4"
             },
             {
-              "id": "ip2",
-              "label": "Bloque IP 2 - Clases de IP"
+              "id": "b11ClasesBloque332",
+              "label": "Bloque 2 - Clases de direcciones IP y direcciones privadas"
             },
             {
-              "id": "ip3",
-              "label": "Bloque IP 3"
+              "id": "b11ParametrosBloque333",
+              "label": "Bloque 3 - Parametros de red: IP, mascara, gateway y DNS"
             },
             {
-              "id": "taller-ip-ej1",
-              "label": "Taller IP - Ejercicio 1"
+              "id": "b11TallerIP334",
+              "label": "Taller de ejercicios de direccionamiento IP (Ejercicios 1-5)"
             },
             {
-              "id": "taller-ip-ej2",
-              "label": "Taller IP - Ejercicio 2"
-            },
-            {
-              "id": "taller-ip-ej3",
-              "label": "Taller IP - Ejercicio 3"
-            },
-            {
-              "id": "taller-ip-ej4",
-              "label": "Taller IP - Ejercicio 4"
-            },
-            {
-              "id": "taller-ip-ej5",
-              "label": "Taller IP - Ejercicio 5"
-            },
-            {
-              "id": "quiz-redes-33h",
-              "label": "Quiz individual de parametros de red"
-            },
-            {
-              "id": "lab1",
-              "label": "Laboratorio 1 - Topologia estrella"
-            },
-            {
-              "id": "lab2",
-              "label": "Laboratorio 2 - Topologia arbol"
-            },
-            {
-              "id": "lab3",
-              "label": "Laboratorio 3 - Red hibrida"
-            },
-            {
-              "id": "social",
-              "label": "Socializacion final"
+              "id": "b11Lab1Estrella341",
+              "label": "Laboratorio 1 - Red topologia estrella con direccionamiento IP (Packet Tracer)"
             }
           ]
         }
@@ -750,95 +714,59 @@
       "guides": [
         {
           "file": "grupo-11b-guia-09-redes-rap01.html",
-          "title": "Guia 9 - Definir parametros y recursos de la red (RAP 01)",
+          "title": "Guia 9 - Definir los parametros y recursos de la red (RAP 01)",
           "activities": [
             {
-              "id": "reflexion311",
-              "label": "Reflexion individual"
+              "id": "b11Reflexion311",
+              "label": "Reflexion inicial - La papeleria de la senora Carmen (Tunja)"
             },
             {
-              "id": "socializacion311",
-              "label": "Socializacion"
-            },
-            {
-              "id": "bloqueA",
+              "id": "b11TiposA321",
               "label": "Bloque A - Tipos de redes: LAN, MAN y WAN"
             },
             {
-              "id": "bloqueB",
+              "id": "b11TopologiasB322",
               "label": "Bloque B - Topologias de red"
             },
             {
-              "id": "bloqueC",
+              "id": "b11MediosC323",
               "label": "Bloque C - Medios de transmision"
             },
             {
-              "id": "bloqueD",
+              "id": "b11DispositivosD324",
               "label": "Bloque D - Dispositivos de interconexion"
             },
             {
-              "id": "bloqueE",
-              "label": "Bloque E - Modelo OSI y TCP/IP"
+              "id": "b11Exploracion325",
+              "label": "Entrega - Exploracion contextual (Bloques A-D)"
             },
             {
-              "id": "mapaMental322",
+              "id": "b11MapaMental326",
               "label": "Mapa mental integrador de fundamentos de redes"
             },
             {
-              "id": "quiz-redes-321h",
-              "label": "Quiz individual de fundamentos de redes"
+              "id": "b11Pares327",
+              "label": "Socializacion y revision entre pares"
             },
             {
-              "id": "ip1",
-              "label": "Bloque IP 1"
+              "id": "b11Ipv4Bloque331",
+              "label": "Bloque 1 - Estructura de una direccion IPv4"
             },
             {
-              "id": "ip2",
-              "label": "Bloque IP 2 - Clases de IP"
+              "id": "b11ClasesBloque332",
+              "label": "Bloque 2 - Clases de direcciones IP y direcciones privadas"
             },
             {
-              "id": "ip3",
-              "label": "Bloque IP 3"
+              "id": "b11ParametrosBloque333",
+              "label": "Bloque 3 - Parametros de red: IP, mascara, gateway y DNS"
             },
             {
-              "id": "taller-ip-ej1",
-              "label": "Taller IP - Ejercicio 1"
+              "id": "b11TallerIP334",
+              "label": "Taller de ejercicios de direccionamiento IP (Ejercicios 1-5)"
             },
             {
-              "id": "taller-ip-ej2",
-              "label": "Taller IP - Ejercicio 2"
-            },
-            {
-              "id": "taller-ip-ej3",
-              "label": "Taller IP - Ejercicio 3"
-            },
-            {
-              "id": "taller-ip-ej4",
-              "label": "Taller IP - Ejercicio 4"
-            },
-            {
-              "id": "taller-ip-ej5",
-              "label": "Taller IP - Ejercicio 5"
-            },
-            {
-              "id": "quiz-redes-33h",
-              "label": "Quiz individual de parametros de red"
-            },
-            {
-              "id": "lab1",
-              "label": "Laboratorio 1 - Topologia estrella"
-            },
-            {
-              "id": "lab2",
-              "label": "Laboratorio 2 - Topologia arbol"
-            },
-            {
-              "id": "lab3",
-              "label": "Laboratorio 3 - Red hibrida"
-            },
-            {
-              "id": "social",
-              "label": "Socializacion final"
+              "id": "b11Lab1Estrella341",
+              "label": "Laboratorio 1 - Red topologia estrella con direccionamiento IP (Packet Tracer)"
             }
           ]
         }

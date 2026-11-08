@@ -22,46 +22,34 @@
     "quizIpUrl": "pages/auxiliares/santa-barbara-10b-guia-02-redes-ip-quiz.html"
   },
   "sb11-redes-rap01-11a": {
-    "template": "guia-redes-rap01",
-    "partialPath": "partials/guia-redes-rap01-content.html",
+    "template": "guia-redes11-rap01",
+    "partialPath": "partials/guia-redes11-rap01-content.html",
     "pageFile": "grupo-11a-guia-09-redes-rap01.html",
     "inst": "Institucion Educativa Santa Barbara",
     "grupo": "11A",
     "ficha": "3168850",
     "cloudFileName": "grupo-11a-guia-09-redes-rap01.html",
-    "quizRedesUrl": "pages/auxiliares/grupo-11a-guia-09-redes-rap01-quiz.html",
-    "quizIpUrl": "pages/auxiliares/grupo-11a-guia-09-redes-ip-quiz.html",
-    "guideNumberMap": {
-      "2": "9",
-      "3": "10",
-      "4": "11"
-    },
     "competencia": "280102129 — Evaluar red de acuerdo con procedimientos de telecomunicaciones y normativa técnica.",
     "rap": "RAP 01 — Definir los parámetros y recursos de la red de acuerdo con normativa de telecomunicaciones.",
     "fase": "Análisis",
     "duracion": "60 horas (45 horas de formación directa y 15 horas de trabajo independiente)",
-    "duracionCorta": "60 horas"
+    "duracionCorta": "60 horas",
+    "supportTemplate": "guia-redes-rap01"
   },
   "sb11-redes-rap01-11b": {
-    "template": "guia-redes-rap01",
-    "partialPath": "partials/guia-redes-rap01-content.html",
+    "template": "guia-redes11-rap01",
+    "partialPath": "partials/guia-redes11-rap01-content.html",
     "pageFile": "grupo-11b-guia-09-redes-rap01.html",
     "inst": "Institucion Educativa Santa Barbara",
     "grupo": "11B",
     "ficha": "3168852",
     "cloudFileName": "grupo-11b-guia-09-redes-rap01.html",
-    "quizRedesUrl": "pages/auxiliares/grupo-11b-guia-09-redes-rap01-quiz.html",
-    "quizIpUrl": "pages/auxiliares/grupo-11b-guia-09-redes-ip-quiz.html",
-    "guideNumberMap": {
-      "2": "9",
-      "3": "10",
-      "4": "11"
-    },
     "competencia": "280102129 — Evaluar red de acuerdo con procedimientos de telecomunicaciones y normativa técnica.",
     "rap": "RAP 01 — Definir los parámetros y recursos de la red de acuerdo con normativa de telecomunicaciones.",
     "fase": "Análisis",
     "duracion": "60 horas (45 horas de formación directa y 15 horas de trabajo independiente)",
-    "duracionCorta": "60 horas"
+    "duracionCorta": "60 horas",
+    "supportTemplate": "guia-redes-rap01"
   },
   "sb11-redes-rap02-11a": {
     "template": "guia-redes11-rap02",

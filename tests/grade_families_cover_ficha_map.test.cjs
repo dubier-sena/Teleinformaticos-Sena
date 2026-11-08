@@ -169,7 +169,9 @@ ORDERS.forEach(({ label, declarationsFirst }) => {
     // de grado 10 (no es el mismo contenido con otra institucion), asi que tienen
     // familia propia (guia-redes11-rap02/03). La regla "un mismo contenido comparte
     // familia" se mantiene para todo lo demas.
-    assert.equal(Object.keys(mgr.GRADE_CATALOG).length, 21,
+    // 21 -> 22 (EMERGENCIA fase 2, 2026-11-08): la Guia 9 (RAP 01) de grado 11 tambien
+    // tiene documento oficial propio -> familia guia-redes11-rap01.
+    assert.equal(Object.keys(mgr.GRADE_CATALOG).length, 22,
       "no se deben crear familias por institucion: un mismo RAP comparte familia");
     const mant = {
       "grupo-10a-guia-06-mantener-equipos.html": "guia-06-mantener-equipos",

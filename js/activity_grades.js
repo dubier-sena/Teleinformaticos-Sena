@@ -329,6 +329,24 @@
     // "guia-redes-rap03" (las columnas de grado 10). Las notas que ya existan bajo esas
     // familias para aprendices de 11 NO se mueven ni se borran: quedan para revision
     // manual (ver LEGACY_REVIEW_FAMILIES_BY_FICHA).
+    "guia-redes11-rap01": {
+      label: "Guía 9 (11.°) — Redes RAP 01: Definir los parámetros y recursos de la red",
+      activities: [
+        { id: "b11Reflexion311", label: "3.1.1 Reflexion inicial - La papeleria de la senora Carmen (Tunja)" },
+        { id: "b11TiposA321", label: "3.2.1 Bloque A - Tipos de redes: LAN, MAN y WAN" },
+        { id: "b11TopologiasB322", label: "3.2.2 Bloque B - Topologias de red" },
+        { id: "b11MediosC323", label: "3.2.3 Bloque C - Medios de transmision" },
+        { id: "b11DispositivosD324", label: "3.2.4 Bloque D - Dispositivos de interconexion" },
+        { id: "b11Exploracion325", label: "3.2.5 Entrega - Exploracion contextual (Bloques A-D)" },
+        { id: "b11MapaMental326", label: "3.2.6 Mapa mental integrador de fundamentos de redes" },
+        { id: "b11Pares327", label: "3.2.7 Socializacion y revision entre pares" },
+        { id: "b11Ipv4Bloque331", label: "3.3.1 Bloque 1 - Estructura de una direccion IPv4" },
+        { id: "b11ClasesBloque332", label: "3.3.2 Bloque 2 - Clases de direcciones IP y direcciones privadas" },
+        { id: "b11ParametrosBloque333", label: "3.3.3 Bloque 3 - Parametros de red: IP, mascara, gateway y DNS" },
+        { id: "b11TallerIP334", label: "3.3.4 Taller de ejercicios de direccionamiento IP (Ejercicios 1-5)" },
+        { id: "b11Lab1Estrella341", label: "3.4.1 Laboratorio 1 - Red topologia estrella con direccionamiento IP (Packet Tracer)" },
+      ],
+    },
     "guia-redes11-rap02": {
       label: "Guía 10 (11.°) — Redes RAP 02: Comprobar la conectividad de la red",
       activities: [
@@ -1093,6 +1111,8 @@
     "santa-barbara-10b-guia-03-redes-rap02.html": "guia-redes-rap02",
     "santa-barbara-10a-guia-04-redes-rap03.html": "guia-redes-rap03",
     "santa-barbara-10b-guia-04-redes-rap03.html": "guia-redes-rap03",
+    "grupo-11a-guia-09-redes-rap01.html": "guia-redes11-rap01",
+    "grupo-11b-guia-09-redes-rap01.html": "guia-redes11-rap01",
     "grupo-11a-guia-10-redes-rap02.html": "guia-redes11-rap02",
     "grupo-11b-guia-10-redes-rap02.html": "guia-redes11-rap02",
     "grupo-11a-guia-11-redes-rap03.html": "guia-redes11-rap03",
@@ -1113,8 +1133,8 @@
   // (nada se movio, borro ni aprobo): el panel las ofrece como "version anterior" SOLO
   // para estas fichas, para que el instructor las revise a mano.
   var LEGACY_REVIEW_FAMILIES_BY_FICHA = {
-    "3168850": ["guia-redes-rap02", "guia-redes-rap03"],
-    "3168852": ["guia-redes-rap02", "guia-redes-rap03"],
+    "3168850": ["guia-redes-rap01", "guia-redes-rap02", "guia-redes-rap03"],
+    "3168852": ["guia-redes-rap01", "guia-redes-rap02", "guia-redes-rap03"],
   };
 
   // Claves internas del banco (p. ej. "__criterios"): son SOLO para el instructor y

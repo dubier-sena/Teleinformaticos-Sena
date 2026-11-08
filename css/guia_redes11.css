@@ -1,0 +1,212 @@
+/* css/guia_redes11.css — Rediseno visual de las Guias 9, 10 y 11 de Redes de grado 11
+   (Santa Barbara 11A/11B). EMERGENCIA 2026-11-08 (fase 2).
+   Solo presentacion: todos los selectores estan acotados a [data-redes11-guide] y
+   no cambian ningun data-store, id ni logica de guardado/entrega.
+   Lo carga js/script_guia_redes11.js (ensureStyles) solo en estas guias. */
+
+[data-redes11-guide] {
+  --r11-gap: var(--space-4, 16px);
+  --r11-radius: var(--radius-md, 12px);
+  --r11-border: var(--border-soft, #dfe7e2);
+  --r11-brand: var(--brand-700, #1b5e20);
+  --r11-brand-soft: var(--color-success-soft, #e8f5e9);
+  --r11-info: var(--color-info, #1565c0);
+  --r11-info-soft: var(--color-info-soft, #e3f2fd);
+}
+
+/* ── A. Tarjeta de actividad: numero, nombre, proposito y producto ───────── */
+[data-redes11-guide] .r11-activity {
+  border: 1px solid var(--r11-border);
+  border-radius: var(--r11-radius);
+  box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, .06));
+  overflow: hidden;
+}
+[data-redes11-guide] .r11-activity > .activity-header .activity-num {
+  background: var(--r11-brand);
+  color: var(--text-on-brand, #fff);
+  border-radius: var(--radius-pill, 999px);
+  padding: 2px 10px;
+  font-weight: var(--weight-bold, 700);
+}
+[data-redes11-guide] .r11-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-2, 8px) var(--r11-gap);
+  margin: 0 0 var(--r11-gap);
+  padding: var(--space-3, 12px) var(--r11-gap);
+  background: var(--surface-2, #f6f8f7);
+  border-left: 4px solid var(--r11-brand);
+  border-radius: var(--radius-sm, 8px);
+}
+[data-redes11-guide] .r11-meta__item { display: flex; flex-direction: column; gap: 2px; font-size: var(--font-size-sm, .9rem); }
+[data-redes11-guide] .r11-meta__k {
+  font-size: var(--font-size-xs, .75rem);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide, .04em);
+  color: var(--text-muted, #5f6b66);
+  font-weight: var(--weight-bold, 700);
+}
+
+/* Pasos numerados */
+[data-redes11-guide] .r11-steps { counter-reset: r11step; list-style: none; padding: 0; margin: var(--space-2, 8px) 0 var(--r11-gap); }
+[data-redes11-guide] .r11-steps > li {
+  counter-increment: r11step;
+  position: relative;
+  padding: 6px 0 6px 40px;
+  min-height: 30px;
+}
+[data-redes11-guide] .r11-steps > li::before {
+  content: counter(r11step);
+  position: absolute; left: 0; top: 4px;
+  width: 28px; height: 28px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--r11-brand-soft); color: var(--r11-brand);
+  font-weight: var(--weight-bold, 700); font-size: var(--font-size-sm, .9rem);
+}
+
+/* ── B. Formularios segun el tipo de ejercicio ───────────────────────────── */
+[data-redes11-guide] .r11-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: var(--space-3, 12px) var(--r11-gap);
+  margin: var(--space-2, 8px) 0 var(--r11-gap);
+}
+[data-redes11-guide] .r11-grid--2 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+[data-redes11-guide] .r11-grid--3 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+[data-redes11-guide] .r11-grid > label,
+[data-redes11-guide] .r11-field { display: flex; flex-direction: column; gap: 6px; margin: 0; }
+[data-redes11-guide] .r11-field--wide { grid-column: 1 / -1; }
+[data-redes11-guide] .r11-field__label {
+  font-size: var(--font-size-sm, .88rem);
+  font-weight: var(--weight-semibold, 600);
+  color: var(--text-strong, #1d2b24);
+}
+[data-redes11-guide] .r11-input {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: var(--hit-target-min, 44px);
+  padding: 8px 12px;
+  border: 1px solid var(--border-medium, #c9d6cf);
+  border-radius: var(--radius-sm, 8px);
+  font: inherit;
+  font-size: var(--font-size-input, 16px); /* 16px evita el zoom automatico en iOS */
+  background: var(--surface-1, #fff);
+  color: var(--text-body, #24312b);
+  transition: border-color var(--motion-fast, .15s), box-shadow var(--motion-fast, .15s);
+}
+[data-redes11-guide] textarea.r11-input { min-height: 84px; resize: vertical; }
+[data-redes11-guide] .r11-input:focus { outline: none; border-color: var(--r11-brand); box-shadow: var(--shadow-focus, 0 0 0 3px rgba(46, 125, 50, .25)); }
+[data-redes11-guide] .r11-input:disabled { background: var(--surface-2, #f3f5f4); color: var(--text-muted, #5f6b66); }
+[data-redes11-guide] .r11-input--ip {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  letter-spacing: .02em;
+  max-width: 220px;
+}
+
+/* Tablas editables compactas (dispositivos, cuadros comparativos, plantillas) */
+[data-redes11-guide] .table-scroll .data-table td .r11-input,
+[data-redes11-guide] .r11-device-table .r11-input { min-height: 40px; padding: 6px 10px; }
+[data-redes11-guide] .r11-device-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--r11-border);
+  border-radius: var(--radius-sm, 8px);
+  overflow: hidden;
+  margin: var(--space-2, 8px) 0 var(--r11-gap);
+}
+[data-redes11-guide] .r11-device-table th,
+[data-redes11-guide] .r11-device-table td { padding: 8px 10px; border-bottom: 1px solid var(--r11-border); text-align: left; vertical-align: middle; }
+[data-redes11-guide] .r11-device-table thead th {
+  background: var(--surface-2, #f3f6f4);
+  font-size: var(--font-size-xs, .78rem);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide, .04em);
+  color: var(--text-muted, #5f6b66);
+}
+[data-redes11-guide] .r11-device-table tbody th { font-weight: var(--weight-semibold, 600); white-space: nowrap; }
+[data-redes11-guide] .r11-device-table tbody tr:last-child > * { border-bottom: 0; }
+
+/* Ejercicios como sub-tarjetas */
+[data-redes11-guide] .r11-exercise {
+  border: 1px solid var(--r11-border);
+  border-radius: var(--r11-radius);
+  padding: var(--r11-gap);
+  margin: 0 0 var(--r11-gap);
+  background: var(--surface-1, #fff);
+}
+[data-redes11-guide] .r11-exercise__head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+[data-redes11-guide] .r11-exercise__head h4 { margin: 0; font-size: var(--font-size-md, 1.02rem); }
+[data-redes11-guide] .r11-exercise__n {
+  background: var(--r11-info-soft); color: var(--r11-info);
+  border-radius: var(--radius-pill, 999px); padding: 3px 10px;
+  font-size: var(--font-size-xs, .78rem); font-weight: var(--weight-bold, 700); white-space: nowrap;
+}
+[data-redes11-guide] .r11-exercise__q { margin: 0 0 var(--space-3, 12px); color: var(--text-body, #24312b); }
+
+/* ── C. Taller de subneteo: dos grupos diferenciados ─────────────────────── */
+[data-redes11-guide] .r11-subnets { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--r11-gap); }
+[data-redes11-guide] .r11-subnet { border: 1px solid var(--r11-border); border-radius: var(--r11-radius); overflow: hidden; }
+[data-redes11-guide] .r11-subnet:first-child { border-top: 4px solid var(--r11-brand); }
+[data-redes11-guide] .r11-subnet:last-child { border-top: 4px solid var(--r11-info); }
+[data-redes11-guide] .r11-subnet__head { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 12px; background: var(--surface-2, #f6f8f7); }
+[data-redes11-guide] .r11-subnet .r11-device-table { margin: 0; border: 0; border-radius: 0; }
+
+/* Chips */
+[data-redes11-guide] .r11-chip {
+  display: inline-flex; align-items: center;
+  padding: 2px 10px; border-radius: var(--radius-pill, 999px);
+  background: var(--r11-brand-soft); color: var(--r11-brand);
+  font-size: var(--font-size-xs, .78rem); font-weight: var(--weight-semibold, 600);
+  margin: 2px 4px 2px 0;
+}
+[data-redes11-guide] .r11-chip--format { background: var(--r11-info-soft); color: var(--r11-info); font-family: ui-monospace, Menlo, Consolas, monospace; }
+
+/* ── D. Zona de entrega de evidencias ────────────────────────────────────── */
+[data-redes11-guide] .r11-evidence {
+  margin: var(--r11-gap) 0;
+  border: 1px dashed var(--r11-info);
+  border-radius: var(--r11-radius);
+  background: linear-gradient(180deg, var(--r11-info-soft), var(--surface-1, #fff) 90px);
+  padding: var(--r11-gap);
+}
+[data-redes11-guide] .r11-evidence__head { display: flex; gap: 12px; align-items: center; }
+[data-redes11-guide] .r11-evidence__head strong { display: block; color: var(--r11-info); text-transform: uppercase; font-size: var(--font-size-xs, .78rem); letter-spacing: var(--tracking-wide, .04em); }
+[data-redes11-guide] .r11-evidence__title { display: block; font-weight: var(--weight-semibold, 600); color: var(--text-strong, #1d2b24); }
+[data-redes11-guide] .r11-evidence__icon { font-size: 1.6rem; line-height: 1; }
+[data-redes11-guide] .r11-evidence__facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px var(--r11-gap); margin: 12px 0 8px; }
+[data-redes11-guide] .r11-evidence__facts dt { font-size: var(--font-size-xs, .75rem); text-transform: uppercase; color: var(--text-muted, #5f6b66); font-weight: var(--weight-bold, 700); }
+[data-redes11-guide] .r11-evidence__facts dd { margin: 2px 0 0; overflow-wrap: anywhere; }
+[data-redes11-guide] .r11-evidence__help { font-size: var(--font-size-sm, .88rem); color: var(--text-body, #24312b); margin: 0 0 8px; }
+
+/* Botones claramente diferenciados: guardar / exportar / entregar */
+[data-redes11-guide] .r11-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: var(--space-3, 12px); }
+[data-redes11-guide] .r11-actions > button { min-height: var(--hit-target-min, 44px); flex: 1 1 200px; }
+[data-redes11-guide] .r11-evidence .drive-action-group button { min-height: var(--hit-target-min, 44px); }
+/* Panel de entrega (shared_drive_delivery) integrado en la zona: sin caja duplicada */
+[data-redes11-guide] .r11-evidence .drive-submit-box { margin: 8px 0 0; padding: 0; border: 0; background: transparent; box-shadow: none; }
+
+/* ── E. Movil y pantallas pequenas ───────────────────────────────────────── */
+@media (max-width: 640px) {
+  [data-redes11-guide] .r11-meta { grid-template-columns: 1fr; }
+  [data-redes11-guide] .r11-grid,
+  [data-redes11-guide] .r11-grid--2,
+  [data-redes11-guide] .r11-grid--3 { grid-template-columns: 1fr; }
+  [data-redes11-guide] .r11-input--ip { max-width: none; }
+  [data-redes11-guide] .r11-exercise { padding: 12px; }
+  [data-redes11-guide] .r11-device-table thead { display: none; }
+  [data-redes11-guide] .r11-device-table tr { display: grid; grid-template-columns: 1fr; padding: 8px 10px; border-bottom: 1px solid var(--r11-border); }
+  [data-redes11-guide] .r11-device-table tbody tr:last-child { border-bottom: 0; }
+  [data-redes11-guide] .r11-device-table th,
+  [data-redes11-guide] .r11-device-table td { border: 0; padding: 4px 0; white-space: normal; }
+  [data-redes11-guide] .r11-actions > button { flex-basis: 100%; }
+  [data-redes11-guide] .r11-device-table td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 4px;
+    font-size: var(--font-size-xs, .75rem);
+    font-weight: var(--weight-bold, 700);
+    text-transform: uppercase;
+    color: var(--text-muted, #5f6b66);
+  }
+}
