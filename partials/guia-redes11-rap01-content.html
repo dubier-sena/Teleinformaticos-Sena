@@ -562,6 +562,342 @@
           </div>
         </div>
       </div>
+      <section id="r11-practicas-complementarias" aria-label="Prácticas complementarias opcionales">
+<h3>Prácticas complementarias opcionales en Packet Tracer</h3>
+<div class="activity open mission-card r11-activity r11-complementary" data-r11-complementary-lab="2">
+  <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+    <span class="activity-num">Opcional 2</span><span class="activity-title">Laboratorio 2 — Topología de árbol</span><span class="activity-toggle">&#9662;</span>
+  </div>
+  <div class="activity-body">
+    <div class="info-box"><strong>Práctica complementaria opcional.</strong> No añade calificaciones, no modifica el avance ni el RAP oficial y no requiere entrega en el portal. Desarróllela en Packet Tracer y conserve su archivo y capturas como material de práctica.</div>
+    <div class="r11-exercise">
+                <p class="intro-text">
+                  <strong>Escenario:</strong> La empresa &ldquo;Boyc&aacute;Tech S.A.S.&rdquo; tiene 3 departamentos distribuidos en 2 pisos.
+                  En el piso 1 est&aacute;n <strong>Administraci&oacute;n</strong> y <strong>Ventas</strong>; en el piso 2 est&aacute; <strong>Bodega</strong>.
+                  Cada departamento tiene su propio switch y todos deben conectarse a un <strong>switch central</strong>, formando una topolog&iacute;a &aacute;rbol.
+                </p>
+                <div class="r11-grid">
+                  <div class="r11-exercise">
+                    <strong class="r11-complementary__heading">Objetivo del laboratorio</strong>
+                    <span>Construir una <strong>red en topolog&iacute;a &aacute;rbol</strong>, configurar el direccionamiento IP por departamentos y comprobar conectividad con <code>ping</code> y <code>tracert</code>.</span>
+                  </div>
+                  <div class="r11-exercise">
+                    <strong class="r11-complementary__heading">Lo que vas a construir</strong>
+                    <span>1 switch central, 3 switches departamentales, 11 PCs y una red base <strong>192.168.1.0/24</strong> con gateway <strong>192.168.1.1</strong>.</span>
+                  </div>
+                  <div class="r11-exercise">
+                    <strong class="r11-complementary__heading">Producto de práctica</strong>
+                    <span>4 capturas sugeridas, an&aacute;lisis corto en la gu&iacute;a y archivo final <code>.pkt</code> del laboratorio.</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="checklist-card compact-card">
+                <h3>Equipos y recursos que debes agregar</h3>
+                <div class="r11-grid">
+                  <div class="r11-exercise">
+                    <strong class="r11-complementary__heading">1 Switch Central</strong>
+                    <span>Ub&iacute;calo como ra&iacute;z del &aacute;rbol para enlazar los tres departamentos.</span>
+                  </div>
+                  <div class="r11-exercise">
+                    <strong class="r11-complementary__heading">3 Switches departamentales</strong>
+                    <span>Uno para Administraci&oacute;n, uno para Ventas y uno para Bodega.</span>
+                  </div>
+                  <div class="r11-exercise">
+                    <strong class="r11-complementary__heading">11 PCs</strong>
+                    <span>4 en Administraci&oacute;n, 4 en Ventas y 3 en Bodega.</span>
+                  </div>
+                  <div class="r11-exercise">
+                    <strong class="r11-complementary__heading">Cable Copper Straight-Through</strong>
+                    <span>Conecta cada PC a su switch de departamento y luego cada switch al central.</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="checklist-card compact-card">
+                <h3>Pasos guiados en Packet Tracer</h3>
+                <div class="r11-grid">
+                  <div class="r11-exercise">
+                    <strong class="r11-complementary__heading">1. Organiza los pisos y departamentos</strong>
+                    <span>Distribuye visualmente Administraci&oacute;n y Ventas en el piso 1, y Bodega en el piso 2 para que la topolog&iacute;a quede clara.</span>
+                  </div>
+                  <div class="r11-exercise">
+                    <strong class="r11-complementary__heading">2. Conecta la topolog&iacute;a &aacute;rbol</strong>
+                    <span>Cada switch departamental debe salir hacia el switch central. Esa relaci&oacute;n ra&iacute;z-rama es la clave del laboratorio.</span>
+                  </div>
+                  <div class="r11-exercise">
+                    <strong class="r11-complementary__heading">3. Configura las IPs por departamento</strong>
+                    <span>Asigna las direcciones de la tabla respetando rangos, m&aacute;scara <code>255.255.255.0</code> y gateway <code>192.168.1.1</code> (PC &rarr; <strong>Desktop</strong> &rarr; <strong>IP Configuration</strong> &rarr; <strong>Static</strong>). Los switches no necesitan configuraci&oacute;n.</span>
+                  </div>
+                  <div class="r11-exercise">
+                    <strong class="r11-complementary__heading">4. Ejecuta pruebas y analiza</strong>
+                    <span>Realiza <code>ping</code> y <code>tracert</code> desde PC &rarr; <strong>Desktop</strong> &rarr; <strong>Command Prompt</strong>, guarda los pantallazos y explica qu&eacute; ocurri&oacute; en cada caso.</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="checklist-card compact-card">
+                <h3>Tabla de direccionamiento sugerida</h3>
+                <p>Red base: <strong>192.168.1.0/24</strong> &nbsp;|&nbsp; Gateway: <strong>192.168.1.1</strong> &nbsp;|&nbsp; M&aacute;scara: <strong>255.255.255.0</strong></p>
+                <div class="table-scroll">
+                  <table class="data-table">
+                    <thead>
+                      <tr><th>Departamento</th><th>Equipo</th><th>Direcci&oacute;n IP</th><th>M&aacute;scara</th><th>Gateway</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr><td>Administraci&oacute;n</td><td>Admin_PC1</td><td>192.168.1.10</td><td>255.255.255.0</td><td>192.168.1.1</td></tr>
+                      <tr><td>Administraci&oacute;n</td><td>Admin_PC2</td><td>192.168.1.11</td><td>255.255.255.0</td><td>192.168.1.1</td></tr>
+                      <tr><td>Administraci&oacute;n</td><td>Admin_PC3</td><td>192.168.1.12</td><td>255.255.255.0</td><td>192.168.1.1</td></tr>
+                      <tr><td>Administraci&oacute;n</td><td>Admin_PC4</td><td>192.168.1.13</td><td>255.255.255.0</td><td>192.168.1.1</td></tr>
+                      <tr><td>Ventas</td><td>Ventas_PC1</td><td>192.168.1.20</td><td>255.255.255.0</td><td>192.168.1.1</td></tr>
+                      <tr><td>Ventas</td><td>Ventas_PC2</td><td>192.168.1.21</td><td>255.255.255.0</td><td>192.168.1.1</td></tr>
+                      <tr><td>Ventas</td><td>Ventas_PC3</td><td>192.168.1.22</td><td>255.255.255.0</td><td>192.168.1.1</td></tr>
+                      <tr><td>Ventas</td><td>Ventas_PC4</td><td>192.168.1.23</td><td>255.255.255.0</td><td>192.168.1.1</td></tr>
+                      <tr><td>Bodega</td><td>Bodega_PC1</td><td>192.168.1.30</td><td>255.255.255.0</td><td>192.168.1.1</td></tr>
+                      <tr><td>Bodega</td><td>Bodega_PC2</td><td>192.168.1.31</td><td>255.255.255.0</td><td>192.168.1.1</td></tr>
+                      <tr><td>Bodega</td><td>Bodega_PC3</td><td>192.168.1.32</td><td>255.255.255.0</td><td>192.168.1.1</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="info-box">
+                  <p><strong>Tip para el aprendiz:</strong> la topolog&iacute;a es &aacute;rbol en lo f&iacute;sico, pero todos los PCs siguen en la misma red <code>192.168.1.0/24</code>. Ten esto presente al interpretar <code>ping</code> y <code>tracert</code>.</p>
+                </div>
+              </div>
+
+              <div class="checklist-card compact-card">
+                <h3>Pruebas de la práctica</h3>
+                <p class="cmd-lead">Se ejecutan en cada PC &rarr; <strong>Desktop</strong> &rarr; <strong>Command Prompt</strong>, <strong>un comando a la vez</strong>.</p>
+                <ol class="note-list">
+                  <li>Desde <strong>Admin_PC1</strong> ejecuta <code>ping 192.168.1.11</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.1.11">Copiar</button> para verificar conectividad dentro del mismo departamento.</li>
+                  <li>Desde <strong>Ventas_PC1</strong> ejecuta <code>ping 192.168.1.30</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.1.30">Copiar</button> para probar conectividad hacia Bodega.</li>
+                  <li>Desde <strong>Admin_PC1</strong> ejecuta <code>tracert 192.168.1.30</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="tracert 192.168.1.30">Copiar</button> y analiza cu&aacute;ntos saltos aparecen.</li>
+                  <li>Desde cualquier PC ejecuta <code>tracert 8.8.8.8</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="tracert 8.8.8.8">Copiar</button> y explica qu&eacute; ocurre con una ruta externa.</li>
+                </ol>
+              </div>
+
+              <div class="info-box">
+                <div class="label">Modalidad</div>
+                <p>Este laboratorio es trabajo <strong>aut&oacute;nomo en casa</strong>. Debes dejar la topolog&iacute;a organizada, conservar las capturas y el archivo <code>.pkt</code> cuando termines.</p>
+              </div>
+    <h4>Preguntas para su cuaderno de práctica</h4>
+    <ol><li>Resultado del ping entre equipos del mismo departamento. &iquest;Funcion&oacute;? &iquest;Qu&eacute; demuestra?</li><li>Resultado del ping entre departamentos distintos. &iquest;Funcion&oacute;? &iquest;Por qu&eacute;?</li><li>An&aacute;lisis del <code>tracert</code> entre Administraci&oacute;n y Bodega. &iquest;Cu&aacute;ntos saltos viste y qu&eacute; interpretas?</li><li>An&aacute;lisis del <code>tracert</code> hacia 8.8.8.8. &iquest;Qu&eacute; ocurri&oacute; y qu&eacute; conclusi&oacute;n sacas?</li></ol>
+    <p>Material reutilizado de la Guía de Redes RAP 01 de grado 10. Los formularios y entregas de esa guía permanecen en su versión original.</p>
+  </div>
+</div>
+<div class="activity open mission-card r11-activity r11-complementary" data-r11-complementary-lab="3">
+  <div class="activity-header" onclick="toggleActivity(this.parentElement)">
+    <span class="activity-num">Opcional 3</span><span class="activity-title">Laboratorio 3 — Topología híbrida estrella-árbol</span><span class="activity-toggle">&#9662;</span>
+  </div>
+  <div class="activity-body">
+    <div class="info-box"><strong>Práctica complementaria opcional.</strong> No añade calificaciones, no modifica el avance ni el RAP oficial y no requiere entrega en el portal. Desarróllela en Packet Tracer y conserve su archivo y capturas como material de práctica.</div>
+    <div class="r11-exercise">
+                <p class="intro-text">
+                  <strong>Escenario:</strong> Una instituci&oacute;n educativa tiene tres zonas: <strong>Bloque Acad&eacute;mico</strong>,
+                  <strong>Bloque Administrativo</strong> y <strong>Biblioteca</strong>. Dentro de cada zona los equipos se conectan
+                  en <strong>estrella</strong> a un switch local, y esos switches se enlazan a un <strong>switch central</strong>,
+                  formando la parte <strong>&aacute;rbol</strong> del dise&ntilde;o. Los enlaces entre bloques usan <strong>fibra &oacute;ptica</strong>,
+                  las conexiones internas usan <strong>UTP</strong> y los dispositivos m&oacute;viles se conectan por <strong>Wi-Fi</strong>.
+                </p>
+                <div class="r11-grid">
+                  <div class="r11-exercise">
+                    <strong class="r11-complementary__heading">Objetivo del laboratorio</strong>
+                    <span>Construir una red h&iacute;brida <strong>estrella + &aacute;rbol</strong>, identificar d&oacute;nde se usa <strong>fibra &oacute;ptica</strong>, <strong>UTP</strong> y <strong>Wi-Fi</strong>, y verificar conectividad entre zonas cableadas e inal&aacute;mbricas.</span>
+                  </div>
+                  <div class="r11-exercise">
+                    <strong class="r11-complementary__heading">Lo que vas a construir</strong>
+                    <span>1 router, 1 switch central, 3 switches de bloque, 10 PCs, 1 impresora, 2 access point y 2 clientes Wi-Fi sobre la red <strong>192.168.20.0/24</strong>.</span>
+                  </div>
+                  <div class="r11-exercise">
+                    <strong class="r11-complementary__heading">Producto de práctica</strong>
+                    <span>5 capturas sugeridas, an&aacute;lisis corto en la gu&iacute;a y archivo final <code>.pkt</code> del laboratorio.</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="checklist-card compact-card">
+                <h3>Equipos y recursos que debes agregar</h3>
+                <div class="r11-grid">
+                  <div class="r11-exercise">
+                    <strong class="r11-complementary__heading">1 Router/Gateway</strong>
+                    <span>Define el gateway com&uacute;n de la red y sirve como punto de salida del dise&ntilde;o.</span>
+                  </div>
+                  <div class="r11-exercise">
+                    <strong class="r11-complementary__heading">1 Switch central</strong>
+                    <span>Act&uacute;a como n&uacute;cleo del &aacute;rbol y conecta los tres bloques.</span>
+                  </div>
+                  <div class="r11-exercise">
+                    <strong class="r11-complementary__heading">3 Switches de bloque</strong>
+                    <span>Uno para el Bloque Acad&eacute;mico, uno para el Administrativo y uno para Biblioteca.</span>
+                  </div>
+                  <div class="r11-exercise">
+                    <strong class="r11-complementary__heading">10 PCs + 1 impresora</strong>
+                    <span>Representan equipos cableados en las tres zonas de la sede educativa.</span>
+                  </div>
+                  <div class="r11-exercise">
+                    <strong class="r11-complementary__heading">2 Access Point</strong>
+                    <span>Permiten el acceso Wi-Fi en el Bloque Acad&eacute;mico y la Biblioteca.</span>
+                  </div>
+                  <div class="r11-exercise">
+                    <strong class="r11-complementary__heading">2 clientes Wi-Fi</strong>
+                    <span>Usa laptops o dispositivos m&oacute;viles para probar la conectividad inal&aacute;mbrica.</span>
+                  </div>
+                  <div class="r11-exercise">
+                    <strong class="r11-complementary__heading">Fibra &oacute;ptica</strong>
+                    <span>&Uacute;sala en los enlaces troncales entre el switch central y los switches de bloque.</span>
+                  </div>
+                  <div class="r11-exercise">
+                    <strong class="r11-complementary__heading">Cable Copper Straight-Through</strong>
+                    <span>&Uacute;salo para las conexiones internas entre switches, PCs, impresora y access point.</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="checklist-card compact-card">
+                <h3>Pasos guiados en Packet Tracer</h3>
+                <div class="r11-grid">
+                  <div class="r11-exercise">
+                    <strong class="r11-complementary__heading">1. Organiza la sede educativa</strong>
+                    <span>Ubica visualmente el Bloque Acad&eacute;mico, el Administrativo y la Biblioteca para que se entienda la red por zonas.</span>
+                  </div>
+                  <div class="r11-exercise">
+                    <strong class="r11-complementary__heading">2. Construye la parte &aacute;rbol</strong>
+                    <span>Conecta cada switch de bloque al switch central con fibra &oacute;ptica para representar la troncal de la sede.</span>
+                  </div>
+                  <div class="r11-exercise">
+                    <strong class="r11-complementary__heading">3. Construye la parte estrella</strong>
+                    <span>Conecta los equipos de cada zona a su switch local con cable UTP y vincula los access point correspondientes.</span>
+                  </div>
+                  <div class="r11-exercise">
+                    <strong class="r11-complementary__heading">4. Configura IPs y Wi-Fi</strong>
+                    <span>Asigna direcciones seg&uacute;n la tabla, configura el gateway y conecta los clientes inal&aacute;mbricos al AP correcto. <em>(Comandos y pasos en <strong>Configuraci&oacute;n de apoyo en Packet Tracer</strong>, m&aacute;s abajo.)</em></span>
+                  </div>
+                  <div class="r11-exercise">
+                    <strong class="r11-complementary__heading">5. Ejecuta pruebas y analiza</strong>
+                    <span>Guarda pantallazos de la topolog&iacute;a, pruebas de ping e informaci&oacute;n IP, y explica c&oacute;mo conviven las dos topolog&iacute;as.</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="checklist-card compact-card">
+                <h3>Tabla de direccionamiento sugerida</h3>
+                <p>Red base: <strong>192.168.20.0/24</strong> &nbsp;|&nbsp; Gateway: <strong>192.168.20.1</strong> &nbsp;|&nbsp; M&aacute;scara: <strong>255.255.255.0</strong></p>
+                <div class="table-scroll">
+                  <table class="data-table">
+                    <thead>
+                      <tr><th>Zona</th><th>Equipo</th><th>Direcci&oacute;n IP</th><th>M&aacute;scara</th><th>Gateway</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr><td>Bloque Acad&eacute;mico</td><td>Academico_PC1</td><td>192.168.20.10</td><td>255.255.255.0</td><td>192.168.20.1</td></tr>
+                      <tr><td>Bloque Acad&eacute;mico</td><td>Academico_PC2</td><td>192.168.20.11</td><td>255.255.255.0</td><td>192.168.20.1</td></tr>
+                      <tr><td>Bloque Acad&eacute;mico</td><td>Academico_PC3</td><td>192.168.20.12</td><td>255.255.255.0</td><td>192.168.20.1</td></tr>
+                      <tr><td>Bloque Acad&eacute;mico</td><td>Academico_PC4</td><td>192.168.20.13</td><td>255.255.255.0</td><td>192.168.20.1</td></tr>
+                      <tr><td>Bloque Administrativo</td><td>Admin_PC1</td><td>192.168.20.20</td><td>255.255.255.0</td><td>192.168.20.1</td></tr>
+                      <tr><td>Bloque Administrativo</td><td>Admin_PC2</td><td>192.168.20.21</td><td>255.255.255.0</td><td>192.168.20.1</td></tr>
+                      <tr><td>Bloque Administrativo</td><td>Admin_PC3</td><td>192.168.20.22</td><td>255.255.255.0</td><td>192.168.20.1</td></tr>
+                      <tr><td>Biblioteca</td><td>Biblioteca_PC1</td><td>192.168.20.30</td><td>255.255.255.0</td><td>192.168.20.1</td></tr>
+                      <tr><td>Biblioteca</td><td>Biblioteca_PC2</td><td>192.168.20.31</td><td>255.255.255.0</td><td>192.168.20.1</td></tr>
+                      <tr><td>Biblioteca</td><td>Biblioteca_PC3</td><td>192.168.20.32</td><td>255.255.255.0</td><td>192.168.20.1</td></tr>
+                      <tr><td>Biblioteca</td><td>Impresora</td><td>192.168.20.29</td><td>255.255.255.0</td><td>192.168.20.1</td></tr>
+                      <tr><td>Wi-Fi</td><td>AP_Academico</td><td>192.168.20.40</td><td>255.255.255.0</td><td>192.168.20.1</td></tr>
+                      <tr><td>Wi-Fi</td><td>AP_Biblioteca</td><td>192.168.20.41</td><td>255.255.255.0</td><td>192.168.20.1</td></tr>
+                      <tr><td>Wi-Fi</td><td>Cliente_WiFi_1</td><td>192.168.20.50</td><td>255.255.255.0</td><td>192.168.20.1</td></tr>
+                      <tr><td>Wi-Fi</td><td>Cliente_WiFi_2</td><td>192.168.20.51</td><td>255.255.255.0</td><td>192.168.20.1</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="info-box">
+                  <p><strong>Tip para el aprendiz:</strong> dentro de cada bloque la forma de conexi&oacute;n es <code>estrella</code>, pero los switches de bloque se unen al switch central formando la parte <code>&aacute;rbol</code>. Los enlaces entre bloques usan <code>fibra &oacute;ptica</code> y las conexiones internas usan <code>UTP</code>.</p>
+                </div>
+              </div>
+
+              <!-- Material de apoyo Lab 3 (revisión de laboratorios Packet Tracer, sep-2026): el laboratorio
+                   pide un router como gateway 192.168.20.1, enlaces de fibra y clientes Wi-Fi, pero no traía
+                   los comandos del router ni cómo lograr esos enlaces y asociaciones en Packet Tracer. -->
+              <div class="checklist-card compact-card cmd-scope cmd-card" data-cmd-scope>
+                <h3>&#128203; Configuraci&oacute;n de apoyo en Packet Tracer</h3>
+                <p class="cmd-lead">Todo lo que necesitas para que los equipos de la tabla funcionen. Haz primero la parte f&iacute;sica (dispositivos y cables) y despu&eacute;s la configuraci&oacute;n.</p>
+
+                <h4 class="cmd-h4">1. Router / Gateway &mdash; 192.168.20.1</h4>
+                <p class="cmd-lead">Con&eacute;ctalo al <strong>switch central</strong> con cable <strong>Copper Straight-Through</strong>. Abre el router &rarr; pesta&ntilde;a <strong>CLI</strong> (si pregunta <em>initial configuration dialog? [yes/no]</em> responde <code>no</code>) y pega el bloque del <strong>modelo que agregaste</strong>. El nombre de la interfaz cambia seg&uacute;n el modelo.</p>
+                <div class="cmd-block" data-cmd-block>
+                  <div class="cmd-block__head">
+                    <span class="cmd-block__device">Router 4321 / 4331 &mdash; CLI<small>Interfaz GigabitEthernet0/0/0 hacia el switch central</small></span>
+                    <button type="button" class="cmd-block__copy" data-copy-commands>[ Copiar comandos ]</button>
+                  </div>
+<pre class="cmd-block__code">enable
+configure terminal
+interface GigabitEthernet0/0/0
+ ip address 192.168.20.1 255.255.255.0
+ no shutdown
+ exit
+end
+write memory</pre>
+                </div>
+                <div class="cmd-block" data-cmd-block>
+                  <div class="cmd-block__head">
+                    <span class="cmd-block__device">Router 2911 / 1941 &mdash; CLI<small>Interfaz GigabitEthernet0/0 hacia el switch central</small></span>
+                    <button type="button" class="cmd-block__copy" data-copy-commands>[ Copiar comandos ]</button>
+                  </div>
+<pre class="cmd-block__code">enable
+configure terminal
+interface GigabitEthernet0/0
+ ip address 192.168.20.1 255.255.255.0
+ no shutdown
+ exit
+end
+write memory</pre>
+                  <p class="cmd-block__note">Comprueba en el router con <code>show ip interface brief</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="show ip interface brief">Copiar</button>: la interfaz debe quedar <strong>up/up</strong> con la IP 192.168.20.1. Si cableaste otro puerto, cambia el nombre de la interfaz en la l&iacute;nea <code>interface</code>.</p>
+                </div>
+
+                <h4 class="cmd-h4">2. Enlaces de fibra &oacute;ptica (switch central &harr; switches de bloque)</h4>
+                <ol class="cmd-steps">
+                  <li>Los switches 2960 de Packet Tracer no traen puertos de fibra. Para el central y los de bloque usa <strong>Switch-PT</strong> (Network Devices &rarr; Switches).</li>
+                  <li>Switch &rarr; pesta&ntilde;a <strong>Physical</strong> &rarr; <strong>apaga</strong> el switch con su bot&oacute;n de encendido.</li>
+                  <li>Arrastra un m&oacute;dulo de fibra <strong>PT-SWITCH-NM-1FGE</strong> (Gigabit) o <strong>PT-SWITCH-NM-1FFE</strong> (Fast Ethernet) a una ranura vac&iacute;a. Si no hay ranuras libres, retira primero un m&oacute;dulo de cobre <strong>PT-SWITCH-NM-1CFE</strong> que no vayas a usar.</li>
+                  <li>Vuelve a <strong>encender</strong> el switch.</li>
+                  <li>El switch central necesita <strong>3</strong> puertos de fibra (uno por bloque) y cada switch de bloque <strong>1</strong>. Deja suficientes puertos de cobre para sus PCs, impresora y access point.</li>
+                  <li>Une cada par de puertos de fibra con el cable <strong>Fiber</strong> (naranja). PCs, impresora y AP van con <strong>Copper Straight-Through</strong>.</li>
+                </ol>
+
+                <h4 class="cmd-h4">3. Access points y clientes Wi-Fi</h4>
+                <ol class="cmd-steps">
+                  <li>Agrega <strong>AccessPoint-PT</strong> en el Bloque Acad&eacute;mico y en la Biblioteca. Conecta su <strong>Port 0</strong> al switch de su bloque con Copper Straight-Through.</li>
+                  <li>AP &rarr; <strong>Config</strong> &rarr; <strong>Port 1</strong> &rarr; escribe un <strong>SSID</strong> por zona (por ejemplo <code>Academico</code> y <code>Biblioteca</code>). Si activas <strong>WPA2-PSK</strong>, usa la misma clave en el cliente.</li>
+                  <li>El AccessPoint-PT trabaja como puente y <strong>no tiene campo de IP</strong>: las direcciones .40 y .41 de la tabla quedan como registro de documentaci&oacute;n. <em>(Si en su lugar usas un WRT300N, as&iacute;gnale esa IP en <strong>GUI &rarr; Setup</strong>, pon <strong>DHCP Server: Disabled</strong> y conecta el switch a un puerto Ethernet 1&ndash;4, no al puerto Internet.)</em></li>
+                  <li>Cliente Wi-Fi (Laptop-PT) &rarr; <strong>Physical</strong>: <strong>apaga</strong> el equipo, retira la tarjeta cableada, instala la tarjeta <strong>WPC300N</strong> y vuelve a encenderlo.</li>
+                  <li>Cliente &rarr; <strong>Desktop</strong> &rarr; <strong>PC Wireless</strong> &rarr; <strong>Connect</strong> &rarr; elige el SSID del AP de su zona &rarr; <strong>Connect</strong> (y la clave, si la configuraste).</li>
+                  <li>Cliente &rarr; <strong>Desktop</strong> &rarr; <strong>IP Configuration</strong> &rarr; <strong>Static</strong>: <code>192.168.20.50</code> o <code>.51</code>, m&aacute;scara <code>255.255.255.0</code>, gateway <code>192.168.20.1</code>.</li>
+                </ol>
+
+                <h4 class="cmd-h4">4. PCs e impresora</h4>
+                <ul class="cmd-steps cmd-steps--disc">
+                  <li>PCs: <strong>Desktop</strong> &rarr; <strong>IP Configuration</strong> &rarr; <strong>Static</strong> &rarr; IP, m&aacute;scara y gateway de la tabla.</li>
+                  <li>Impresora (Printer-PT): <strong>Config</strong> &rarr; <strong>Settings</strong> (Global) &rarr; Gateway <code>192.168.20.1</code>; <strong>Config</strong> &rarr; <strong>FastEthernet0</strong> &rarr; <strong>Static</strong> &rarr; <code>192.168.20.29</code> / <code>255.255.255.0</code>.</li>
+                  <li>Pruebas: en el PC o cliente &rarr; <strong>Desktop</strong> &rarr; <strong>Command Prompt</strong>, <strong>un comando a la vez</strong> (botones <em>Copiar</em> de la lista de pruebas).</li>
+                </ul>
+              </div>
+
+              <div class="checklist-card compact-card">
+                <h3>Pruebas de la práctica</h3>
+                <p class="cmd-lead">Se ejecutan en el equipo indicado &rarr; <strong>Desktop</strong> &rarr; <strong>Command Prompt</strong>, <strong>un comando a la vez</strong>.</p>
+                <ol class="note-list">
+                  <li>Desde <strong>Academico_PC1</strong> ejecuta <code>ping 192.168.20.20</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.20.20">Copiar</button> para verificar conectividad entre bloques.</li>
+                  <li>Desde <strong>Cliente_WiFi_1</strong> ejecuta <code>ping 192.168.20.30</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ping 192.168.20.30">Copiar</button> para probar conectividad desde Wi-Fi hacia un equipo cableado.</li>
+                  <li>Ejecuta <code>ipconfig</code><button type="button" class="cmd-copy-one" data-copy-commands data-copy-text="ipconfig">Copiar</button> en un equipo cableado y verifica IP, m&aacute;scara y gateway.</li>
+                  <li>Comprueba los par&aacute;metros del cliente inal&aacute;mbrico o su conectividad una vez asociado al access point.</li>
+                </ol>
+              </div>
+
+              <div class="info-box">
+                <div class="label">Modalidad</div>
+                <p>Este laboratorio es trabajo <strong>aut&oacute;nomo</strong>. Debes dejar clara la combinaci&oacute;n de topolog&iacute;as, evidenciar el uso de fibra, cableado y Wi-Fi, y conservar el archivo <code>.pkt</code> al finalizar.</p>
+              </div>
+    <h4>Preguntas para su cuaderno de práctica</h4>
+    <ol><li>&iquest;D&oacute;nde aparece la topolog&iacute;a estrella y qu&eacute; elementos la evidencian?</li><li>&iquest;D&oacute;nde aparece la topolog&iacute;a &aacute;rbol y qu&eacute; equipos la forman?</li><li>Resultado del ping entre bloques. &iquest;Funcion&oacute; y qu&eacute; demuestra sobre la conectividad de la sede?</li><li>Resultado del ping desde Wi-Fi hacia un equipo cableado. &iquest;Qu&eacute; observaste?</li><li>&iquest;Por qu&eacute; se usa fibra &oacute;ptica entre bloques y UTP/Wi-Fi dentro de la sede?</li></ol>
+    <p>Material reutilizado de la Guía de Redes RAP 01 de grado 10. Los formularios y entregas de esa guía permanecen en su versión original.</p>
+  </div>
+</div>
+</section>
       <div id="evidencias" class="section-title">Evidencias de aprendizaje</div>
       <p class="section-intro">📍 Lista de chequeo final: lo que se entrega y cómo se evalúa (fase Análisis).</p>
       <div class="card">

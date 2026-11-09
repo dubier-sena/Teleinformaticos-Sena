@@ -50,7 +50,7 @@
   };
 
   // Rediseno visual (fase 2): hoja de estilos propia, solo en estas guias.
-  var STYLE_HREF = "css/guia_redes11.css?v=20261108_12";
+  var STYLE_HREF = "css/guia_redes11.css?v=20261109_2";
   (function ensureStyles() {
     if (typeof document === "undefined" || !document.head || !document.createElement) return;
     if (document.querySelector('link[data-redes11-css]')) return;

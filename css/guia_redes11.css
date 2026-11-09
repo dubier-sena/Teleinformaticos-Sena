@@ -19,7 +19,7 @@
   border: 1px solid var(--r11-border);
   border-radius: var(--r11-radius);
   box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, .06));
-  overflow: hidden;
+  overflow: visible;
 }
 [data-redes11-guide] .r11-activity > .activity-header .activity-num {
   background: var(--r11-brand);
@@ -224,3 +224,76 @@
     color: var(--text-muted, #5f6b66);
   }
 }
+
+/* Listas ordinarias: el reset global elimina su sangria. Reservar el espacio
+   del marcador DENTRO de la lista; nunca recortar el contenido para ocultarlo. */
+[data-redes11-guide] .activity-body {
+  min-width: 0;
+  font-size: .9375rem;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+[data-redes11-guide] ul:not(.r11-steps),
+[data-redes11-guide] ol:not(.r11-steps) {
+  margin-block: .75em 1em;
+  margin-inline: 0;
+  padding-inline-start: 2em;
+  padding-inline-end: 0;
+  list-style-position: outside;
+}
+[data-redes11-guide] ul:not(.r11-steps) { list-style-type: disc; }
+[data-redes11-guide] ol:not(.r11-steps) { list-style-type: decimal; }
+[data-redes11-guide] ul:not(.r11-steps) > li,
+[data-redes11-guide] ol:not(.r11-steps) > li {
+  padding: 0;
+  margin-block: .4em;
+  line-height: 1.65;
+}
+[data-redes11-guide] li::marker { font-size: 1em; font-weight: 600; }
+[data-redes11-guide] li > :is(ul, ol) { margin-block: .5em; }
+[data-redes11-guide] .activity-body > :is(h3, h4) {
+  margin-block: 1.25em .5em;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+[data-redes11-guide] .activity-body > p { margin-block: .6em .85em; }
+[data-redes11-guide] .activity-header { border-radius: var(--r11-radius) var(--r11-radius) 0 0; }
+[data-redes11-guide] .activity-title { min-width: 0; overflow-wrap: anywhere; }
+[data-redes11-guide] .r11-meta__item,
+[data-redes11-guide] .r11-grid > label,
+[data-redes11-guide] .r11-evidence__head > div { min-width: 0; overflow-wrap: anywhere; }
+[data-redes11-guide] code { white-space: normal; overflow-wrap: anywhere; }
+[data-redes11-guide] pre { max-width: 100%; overflow-x: auto; }
+[data-redes11-guide] pre code { white-space: pre; overflow-wrap: normal; }
+[data-redes11-guide] .table-scroll { min-width: 0; max-width: 100%; overflow-x: auto; }
+[data-redes11-guide] :is(.data-table, .r11-device-table) :is(th, td) {
+  vertical-align: top;
+  line-height: 1.5;
+}
+[data-redes11-guide] .r11-input { min-width: 0; max-width: 100%; }
+[data-redes11-guide] .r11-complementary { margin-block: var(--r11-gap); }
+[data-redes11-guide] .r11-complementary .activity-num { flex-shrink: 0; }
+[data-redes11-guide] .r11-complementary svg { max-width: 100%; height: auto; }
+@media (max-width: 640px) {
+  [data-redes11-guide] .activity-body { font-size: .9375rem; }
+}
+
+/* Tablas anchas: conservar las columnas legibles mediante desplazamiento real. */
+[data-redes11-guide] .table-scroll > .data-table { min-width: 32rem; }
+[data-redes11-guide] .r11-complementary__heading { display: block; margin-block-end: .4em; }
+[data-redes11-guide] .r11-complementary__copy { display: block; }
+[data-redes11-guide] .r11-complementary .activity-body > div { margin-block: 1rem; }
+[data-redes11-guide] .r11-complementary pre { padding: 12px; background: var(--surface-2, #f6f8f7); border-radius: var(--radius-sm, 8px); }
+@media (max-width: 640px) {
+  [data-redes11-guide] .table-scroll::before {
+    content: "Desliza para ver todas las columnas";
+    display: block;
+    margin-block-end: .5em;
+    color: var(--text-muted, #5f6b66);
+    font-size: .75rem;
+  }
+}
+
+[data-redes11-guide] .data-table :is(th, td) { overflow-wrap: normal; word-break: normal; }
+[data-redes11-guide] .data-table :is(th, td):first-child { min-width: 5.5rem; }
+[data-redes11-guide] .data-table .r11-input { min-width: 8rem; }
