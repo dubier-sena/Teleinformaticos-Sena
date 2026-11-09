@@ -4740,11 +4740,20 @@
         auth.getGuidesForFicha(user.ficha || "").forEach(function (fileName) {
           var progressKey = fileNameToKey(fileName);
           var entry = progressByUser[user.usernameKey] && progressByUser[user.usernameKey][progressKey];
-          if (entry && Number(entry.total) > 0) return;
+          if (entry && Number(entry.total) > 0 && !_requireGuideMergeUtils().isRedes11Guide(fileName)) return;
           guideDataRequests.push({ user: user, usernameKey: user.usernameKey, fileName: fileName, progressKey: progressKey });
         });
       });
 
+      var redesGrades = {};
+      var redesGradeFailures = {};
+      var redesUsers = cloudUsers.filter(function (u) { return auth.getGuidesForFicha(u.ficha || "").some(_requireGuideMergeUtils().isRedes11Guide); });
+      // Lectura estricta: un fallo no equivale a un aprendiz sin notas.
+      await Promise.all(redesUsers.map(async function (u) {
+        var r = await cloudGetGradesStrict(u.usernameKey);
+        if (r.status !== "found" && r.status !== "missing") { redesGradeFailures[u.usernameKey] = true; return; }
+        redesGrades[u.usernameKey] = r.grades || {};
+      }));
       lastStudentsProgressLoad = { status: "ok", reason: "", guideDataDocs: 0, at: new Date().toISOString() };
       if (guideDataRequests.length) {
         var listed = await cloudListAllGuideDataDocs({ force: forceNextProgressListing });
@@ -4755,7 +4764,16 @@
           lastStudentsProgressLoad.guideDataDocs = listed.docs.progress.size + listed.docs.guideState.size;
           guideDataRequests.forEach(function (item) {
             var snap = guideSnapshotFromListing(listed.docs, item.usernameKey, item.user.uid || "", item.fileName);
-            if (!snap) return;
+            var isRedes = _requireGuideMergeUtils().isRedes11Guide(item.fileName);
+            if (!snap && !isRedes) return;
+            snap = snap || { state: {}, updatedAt: "" };
+            if (isRedes) {
+              if (redesGradeFailures[item.usernameKey]) return;
+              var fam = "guia-redes11-rap" + item.fileName.match(/rap(0[123])/)[1];
+              var redesProgress = _requireGuideMergeUtils().redes11Progress(item.fileName, snap.state, (redesGrades[item.usernameKey] || {})[fam]);
+              if (redesProgress) progressByUser[item.usernameKey][item.progressKey] = Object.assign(redesProgress, { updatedAt: snap.updatedAt });
+              return;
+            }
             var states = [snap.state];
             var newest = snap.updatedAt;
             var answers = {};
@@ -4775,6 +4793,11 @@
             progressByUser[item.usernameKey][item.progressKey] = derived;
           });
         }
+      }
+
+      if (Object.keys(redesGradeFailures).length) {
+        lastStudentsProgressLoad.status = "incomplete";
+        lastStudentsProgressLoad.reason = "redes11-grades-unavailable";
       }
 
       // Construir el array final con avance por guia

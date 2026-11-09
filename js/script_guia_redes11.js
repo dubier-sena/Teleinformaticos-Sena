@@ -226,34 +226,12 @@
     return mgr.getStudentGrades(session.usernameKey, templateName()) || {};
   }
 
-  function isDelivered(id) {
-    var d = state[id + "-delivery"];
-    return Boolean(d && typeof d === "object" && d.status === "delivered");
-  }
-
-  function activityFraction(act, grades) {
-    if (grades[act.id] === "A") return 1;
-    var fields = act.formFields || [];
-    var formPart = fields.length
-      ? fields.filter(function (k) { return String(state[k] == null ? "" : state[k]).trim().length > 0; }).length / fields.length
-      : 0;
-    if (act.type === "file") return isDelivered(act.id) ? 1 : 0;
-    if (act.type === "both") return (formPart + (isDelivered(act.id) ? 1 : 0)) / 2;
-    return formPart;
-  }
-
   function activityDone(act, grades) {
-    if (grades[act.id] === "A") return true;
-    if (act.type === "file") return isDelivered(act.id);
-    if (act.type === "both") return Boolean(state[act.id + "-locked"]) && isDelivered(act.id);
-    return Boolean(state[act.id + "-locked"]);
+    return window.guideMergeUtils.redes11ActivityProgress(act, state, grades[act.id]).complete;
   }
 
   function computeProgress(grades) {
-    var acts = getConfig().activities || [];
-    var completed = acts.reduce(function (sum, a) { return sum + activityFraction(a, grades); }, 0);
-    var total = acts.length;
-    return { completed: completed, total: total, percent: total > 0 ? Math.round((completed / total) * 100) : 0 };
+    return window.guideMergeUtils.redes11Progress(PAGE_FILE, state, grades) || { completed: 0, total: 0, percent: 0 };
   }
 
   var SECTION_BY_PREFIX = { "3.1": "reflexion", "3.2": "contexto", "3.3": "apropiacion", "3.4": "transferencia" };
@@ -282,6 +260,7 @@
         if (link) link.classList.add("done");
       }
     });
+    if (window.ActivityStandard && window.ActivityStandard.renderAvancePanel) window.ActivityStandard.renderAvancePanel(getStateCtx());
     renderRapStatus();
     renderModelAnswers();
     document.dispatchEvent(new CustomEvent("guide-progress-changed", { detail: { pct: pct } }));

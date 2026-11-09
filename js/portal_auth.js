@@ -1300,6 +1300,15 @@
   }
 
   function getStudentGuideProgressLocal(usernameKey, fileName) {
+    const utils = window.guideMergeUtils;
+    if (utils && utils.isRedes11Guide(fileName)) {
+      const st = readJson(getStudentStorageKeyLocal(usernameKey, "guia_interactiva_" + fileName.replace(/[^a-z0-9]+/g, "_"), { area: "guide-data" }), {});
+      const mgr = window.activityGradesManager;
+      const family = mgr && mgr.GUIDE_FAMILY_BY_FILE[fileName];
+      const grades = family && mgr.getStudentGrades ? mgr.getStudentGrades(usernameKey, family) : {};
+      const progress = utils.redes11Progress(fileName, st, grades);
+      if (progress) return buildProgressResult(fileName, progress.completed, progress.total, progress.source, "");
+    }
     const meta = readGuideProgressMetaLocal(usernameKey, fileName);
     if (meta && typeof meta === "object") {
       return buildProgressResult(
@@ -1781,6 +1790,15 @@
   }
 
   function getStudentGuideProgress(usernameKey, fileName) {
+    const utils = window.guideMergeUtils;
+    if (utils && utils.isRedes11Guide(fileName)) {
+      const st = readJson(getStudentStorageKey(usernameKey, "guia_interactiva_" + fileName.replace(/[^a-z0-9]+/g, "_"), { area: "guide-data" }), {});
+      const mgr = window.activityGradesManager;
+      const family = mgr && mgr.GUIDE_FAMILY_BY_FILE[fileName];
+      const grades = family && mgr.getStudentGrades ? mgr.getStudentGrades(usernameKey, family) : {};
+      const progress = utils.redes11Progress(fileName, st, grades);
+      if (progress) return buildProgressResult(fileName, progress.completed, progress.total, progress.source, "");
+    }
     const meta = readGuideProgressMeta(usernameKey, fileName);
     if (meta && typeof meta === "object") {
       return buildProgressResult(

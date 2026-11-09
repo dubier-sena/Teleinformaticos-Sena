@@ -53,9 +53,39 @@
     }).length;
   }
 
+  // Regla unica de avance de Redes 11. No interpreta marcas editables como permisos.
+  function isRedes11Guide(file) {
+    return /^grupo-11[ab]-guia-(09-redes-rap01|10-redes-rap02|11-redes-rap03)\.html$/.test(String(file || ""));
+  }
+
+  function redes11ActivityProgress(act, state, grade) {
+    state = state || {};
+    var fields = act.formFields || [];
+    var filled = fields.filter(function (k) { return String(state[k] == null ? "" : state[k]).trim() !== ""; }).length;
+    var formDone = fields.length > 0 && filled === fields.length;
+    var rec = state[act.id + "-delivery"];
+    var fileDone = Boolean(rec && rec.status === "delivered" && rec.registeredBy !== "admin-grade-approval" &&
+      (rec.savedFileName || rec.driveUrl || rec.fileUrl || rec.fileId));
+    var complete = act.type === "file" ? fileDone : act.type === "both" ? formDone && fileDone : formDone || grade === "A";
+    var partial = filled > 0 || fileDone;
+    return { complete: complete, status: grade === "A" ? "aprobada" : complete ? "completada" : partial ? "en-proceso" : "pendiente" };
+  }
+
+  function redes11Progress(file, state, grades) {
+    if (!isRedes11Guide(file)) return null;
+    var std = typeof window !== "undefined" && window.ActivityStandard;
+    var cfg = std && std.getConfigForGuide(file);
+    if (!cfg || !cfg.activities || !cfg.activities.length) return null;
+    grades = grades || {};
+    var completed = cfg.activities.filter(function (a) { return redes11ActivityProgress(a, state, grades[a.id]).complete; }).length;
+    return { completed: completed, total: cfg.activities.length, percent: Math.round(100 * completed / cfg.activities.length), source: "redes11-activities-v1" };
+  }
+
   function deriveProgressFromGuideDataDoc(fileName, doc) {
     var snapshot = readSnapshotPayload(doc);
     var state = snapshotState(snapshot);
+    var redes = redes11Progress(fileName, state, doc && doc.redes11Grades);
+    if (redes) return Object.assign(redes, { updatedAt: (snapshot && snapshot.updatedAt) || "" });
     var completedFromState = countMeaningfulGuideValues(state);
     if (completedFromState <= 0) return null;
 
@@ -182,6 +212,9 @@
   }
 
   return {
+    isRedes11Guide: isRedes11Guide,
+    redes11ActivityProgress: redes11ActivityProgress,
+    redes11Progress: redes11Progress,
     readSnapshotPayload: readSnapshotPayload,
     plainObject: plainObject,
     snapshotState: snapshotState,

@@ -37,7 +37,7 @@ function makeFirestore(store, fail) {
   const calls = { list: 0, batch: 0, batchNames: [], runQuery: 0, runQueryDocs: 0, get: 0 };
   async function fetchImpl(url, options) {
     const kind = url.includes(":batchGet") ? "batch" : url.includes(":runQuery") ? "runQuery" : (options && options.method) || "GET";
-    if (fail) { const forced = await fail(kind); if (forced) return forced; }
+    if (fail) { const forced = await fail(kind, url); if (forced) return forced; }
     if (kind === "batch") {
       calls.batch += 1;
       const body = JSON.parse(options.body);
@@ -73,7 +73,7 @@ function makeFirestore(store, fail) {
     }
     calls.get += 1;
     const key = rel.slice(0, slash) + "/" + decodeURIComponent(rel.slice(slash + 1));
-    return store.has(key) ? json({ name: PREFIX + key, fields: toFields(store.get(key)) }) : json({}, 404);
+    return store.has(key) ? json({ name: PREFIX + key, fields: toFields(store.get(key)), updateTime: "2026-11-09T12:00:00Z" }) : json({}, 404);
   }
   return { fetchImpl, calls };
 }
@@ -81,7 +81,7 @@ function makeFirestore(store, fail) {
 const GUIDES = { F1: ["g1.html", "g2.html", "g3.html"], F2: ["g1.html", "g4.html"] };
 const CONFIG = { "g1.html": { total: 10 }, "g2.html": { total: 10 }, "g3.html": { total: 4 }, "g4.html": { total: 5 } };
 
-function load(fetchImpl) {
+function load(fetchImpl, withRedes) {
   const map = new Map();
   const localStorage = { getItem: (k) => (map.has(k) ? map.get(k) : null), setItem: (k, v) => map.set(k, String(v)), removeItem: (k) => map.delete(k) };
   const windowObj = {
@@ -101,6 +101,11 @@ function load(fetchImpl) {
   windowObj.fetch = fetchImpl;
   vm.createContext(sandbox);
   vm.runInContext(fs.readFileSync(path.join(ROOT, "js", "guide_merge_utils.js"), "utf8"), sandbox);
+  if (withRedes) {
+    sandbox.document = { querySelector: () => null, querySelectorAll: () => [], addEventListener() {}, head: null };
+    vm.runInContext(fs.readFileSync(path.join(ROOT, "js", "activity_standard.js"), "utf8"), sandbox);
+    vm.runInContext(fs.readFileSync(path.join(ROOT, "js", "guide_declarations.js"), "utf8"), sandbox);
+  }
   vm.runInContext(fs.readFileSync(path.join(ROOT, "js", "firebase_db.js"), "utf8"), sandbox);
   return { auth: windowObj.portalAuth, db: windowObj._firebaseDb };
 }
@@ -292,4 +297,43 @@ test("estados para indicadores/Reportes desde el ULTIMO listado: 0 lecturas, leg
   assert.ok(by["maria.o'neil|g4.html"], "id con caracteres especiales");
   assert.ok(!by["luis|g1.html"] && !by["ana.perez|g3.html"], "sin datos: no se inventa");
   assert.strictEqual(out.entries.length, 3);
+});
+
+// Redes 11: misma regla, incluso si hay metadatos del contrato antiguo.
+const R11 = "grupo-11a-guia-10-redes-rap02.html";
+GUIDES.F11 = [R11]; CONFIG[R11] = { total: 104 };
+function redesSeed(state, grades) {
+  const store = new Map([
+    ["sena_portal_users/ficticio", { usernameKey: "ficticio", fullName: "Ficticio", ficha: "F11", uid: "u-ficticio" }],
+    ["sena_portal_progress/ficticio", { grupo_11a_guia_10_redes_rap02_html: { completed: 104, total: 104 } }],
+    ["sena_portal_progress/__guide_data__:uid:u-ficticio:grupo_11a_guia_10_redes_rap02_html", snap(state)],
+  ]);
+  if (grades) store.set("sena_portal_grades/ficticio", { grades });
+  return store;
+}
+test("Redes 11 admin: parcial y candado no cuentan; reemplaza 104/104 antiguo por actividades reales", async () => {
+  const fsm = makeFirestore(redesSeed({ g11c_311_p1: "parcial", "c11Reflexion311-locked": true, reabierta: true }, {}));
+  const { auth } = load(fsm.fetchImpl, true);
+  const users = await auth.fetchStudentsWithProgress();
+  assert.notEqual(users, "LOCAL");
+  const g = guide(users[0], R11);
+  assert.equal(g.completed, 0); assert.equal(g.total, 10); assert.equal(g.percent, 0);
+});
+test("Redes 11 admin: A sin archivo no completa both; A de formulario si cuenta, sin crear evidencia", async () => {
+  const store = redesSeed({}, { "guia-redes11-rap02": { c11Reflexion311: "A", c11Taller331: "A" } });
+  const fsm = makeFirestore(store); const { auth } = load(fsm.fetchImpl, true);
+  const users = await auth.fetchStudentsWithProgress();
+  assert.notEqual(users, "LOCAL");
+  assert.equal(guide(users[0], R11).completed, 1);
+  assert.equal(guide(users[0], R11).percent, 10);
+});
+test("Redes 11 admin: fallo de lectura de notas conserva metadatos con aviso, sin inventar ausencia", async () => {
+  const store = redesSeed({}, {});
+  const fsm = makeFirestore(store, (kind, url) => kind === "GET" && url.includes("sena_portal_grades/") ? json({}, 403) : null);
+  const { auth, db } = load(fsm.fetchImpl, true);
+  const users = await auth.fetchStudentsWithProgress();
+  assert.notEqual(users, "LOCAL");
+  assert.equal(db.getLastStudentsProgressLoad().status, "incomplete");
+  assert.equal(db.getLastStudentsProgressLoad().reason, "redes11-grades-unavailable");
+  assert.equal(guide(users[0], R11).total, 104, "ultimo dato conservado, con aviso de incompleto");
 });

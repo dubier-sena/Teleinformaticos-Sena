@@ -339,6 +339,12 @@
       });
     });
     const deliveries = collectDeliveries();
+    const utils = window.guideMergeUtils;
+    const isRedes = (file) => Boolean(utils && utils.isRedes11Guide(file));
+    const otherActivities = activities.filter((a) => !isRedes(a.fileName));
+    const otherDeliveries = deliveries.filter((d) => !isRedes(d.fileName));
+    const redesPending = state.users.reduce((sum, user) => sum + (progressForUser(user).guides || [])
+      .filter((g) => isRedes(g.fileName)).reduce((n, g) => n + Math.max(0, g.total - g.completed), 0), 0);
     return {
       learners: state.users.length,
       activeLearners: state.users.filter((user) => !isInactive(user)).length,
@@ -346,7 +352,7 @@
       guides: guideFiles.length,
       activities: activities.length,
       deliveries: deliveries.length,
-      pending: activities.length ? Math.max(0, activities.length * Math.max(1, state.users.length) - deliveries.length) : 0,
+      pending: redesPending + (otherActivities.length ? Math.max(0, otherActivities.length * Math.max(1, state.users.length) - otherDeliveries.length) : 0),
       expired: dueItems.filter((item) => item.state === "closed").length,
     };
   }
@@ -2123,6 +2129,10 @@
     const fileName = button.dataset.guideFile;
     const activityId = button.dataset.activityId;
     const user = getUser(usernameKey);
+    if (/^grupo-11[ab]-guia-(09-redes-rap01|10-redes-rap02|11-redes-rap03)\.html$/.test(fileName)) {
+      setFeedback("Reapertura de Redes 11 no disponible en esta versión. Conserve la nota y la entrega; documente la corrección y revise la evidencia por el procedimiento académico manual. No se ha cambiado ningún registro.", "error");
+      return;
+    }
     const stateKey = getGuideStateKey(fileName);
     if (!usernameKey || !fileName || !activityId || !stateKey) {
       setFeedback("No fue posible identificar la actividad a reabrir.", "error");
@@ -3002,6 +3012,11 @@
     const usernameKey = button.dataset.habUnlock;
     const guideFile = button.dataset.habGuide;
     const activityId = button.dataset.habActivity;
+    if (/^grupo-11[ab]-guia-(09-redes-rap01|10-redes-rap02|11-redes-rap03)\.html$/.test(guideFile)) {
+      setFeedback("Reapertura de Redes 11 no disponible en esta versión. Conserve la nota y la entrega; documente la corrección y revise la evidencia por el procedimiento académico manual. No se ha cambiado ningún registro.", "error");
+      return;
+    }
+
     const activity = { id: activityId };
     const stateKey = button.dataset.habStateKey;
     const activityLabel = button.dataset.habLabel;

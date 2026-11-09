@@ -1487,7 +1487,8 @@
     var strictAv = Boolean(famAv && typeof mgrAv.isEvidenceStrictFamily === "function" && mgrAv.isEvidenceStrictFamily(famAv));
     var rows = activities.map(function (act) {
       var info = getActivityDeliveryInfo(act, state);
-      if (info.kind !== "pending" || (strictAv && _getStudentGradeForActivity(pageFile, act.id) === "A")) done += 1;
+      var progressInfo = strictAv ? window.guideMergeUtils.redes11ActivityProgress(act, state, _getStudentGradeForActivity(pageFile, act.id)) : null;
+      if (progressInfo ? progressInfo.complete : info.kind !== "pending") done += 1;
       var fecha = "";
       if (info.when) {
         try {
@@ -1498,7 +1499,11 @@
         ((act.driveTarget && act.driveTarget.activityTitle) || act.label || "Actividad");
       var grade = _getStudentGradeForActivity(pageFile, act.id);
       var estado, cls;
-      if (grade === "A") {
+      if (progressInfo) {
+        estado = progressInfo.status === "aprobada" ? "&#9989; Aprobada" + (progressInfo.complete ? "" : " · Evidencia pendiente") :
+          progressInfo.status === "completada" ? "&#9989; Completada" : progressInfo.status === "en-proceso" ? "&#9203; En proceso" : "&#9711; Pendiente";
+        cls = progressInfo.complete ? "estado--ok" : "estado--pend";
+      } else if (grade === "A") {
         estado = "&#9989; Aprobada";
         cls = "estado--ok";
       } else if (grade === "D") {

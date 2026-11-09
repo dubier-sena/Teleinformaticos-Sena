@@ -29,7 +29,7 @@
   //    registra guias en ActivityStandard apenas carga y necesita que
   //    activity_standard.js ya haya corrido.
   var STUDENT_ONLY_SCRIPTS = [
-    "js/activity_standard.js?v=20261108_12",
+    "js/activity_standard.js?v=20261109_1",
     "js/guide_declarations.js?v=20261108_1",
     "js/activity_grades.js?v=20261108_10",
     "js/activity_deadlines.js?v=20261028_1",
@@ -391,7 +391,10 @@
         if (seenNumbers[act.number]) return;
         seenNumbers[act.number] = true;
       }
-      if (strictGrades && strictGrades[act.id] === "A") return;
+      if (strictGrades) {
+        if (!window.guideMergeUtils.redes11ActivityProgress(act, state, strictGrades[act.id]).complete) pending.push(act.label || act.shortName || act.id);
+        return;
+      }
       var info = std.getActivityDeliveryInfo(act, state);
       if (info.kind === "pending") {
         pending.push(act.label || act.shortName || act.id);

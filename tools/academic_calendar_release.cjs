@@ -19,7 +19,7 @@ function prepare(input,catalog){
  return {schemaVersion:1,preparedOnly:true,productionWrites:0,requiredAdminUid:input.adminUid,source:p.source,integrity:p.integrity,comparison,documents,assignments:{source:'Administración institucional verificada, nunca el perfil editable',accounts:[],requiredFields:['uid','role','active','fichas'],status:'PENDIENTE de cuentas verificadas y autorización; no se inventan UID'}};
 }
 function pages(planner,learner){
- const version='20261021_3',script=f=>'<script defer src="'+f+'?v='+version+'"></script>',blocking=f=>'<script src="'+f+'?v='+version+'"></script>';
+ const version='20261021_3',script=f=>'<script defer src="'+f+'?v='+version+'"></script>',blocking=f=>'<script src="'+f+'?v='+(f==='js/portal_auth.js'?'20261109_1':version)+'"></script>';
  const config=script('js/academic_calendar_release_config.js');
  const auth=['js/firebase-config.js','https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js','https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js','js/firebase_auth_bridge.js'].map(script).join('\n');
  // Prepublication audit 2026-10-21: the planner is an instructor page and must be gated like every admin page.

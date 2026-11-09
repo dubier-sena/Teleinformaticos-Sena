@@ -3,7 +3,7 @@
   const catalog = {
   "schemaVersion": 1,
   "sourceHashes": {
-    "js/portal_auth.js": "36eacc03a8f1f73f992fb104d2461c63b37b97707d6bcfaa9daf4665a0adcf27",
+    "js/portal_auth.js": "3af77aa2bee3104d601d2aadca7ada492353317b28aadf9ae70552b8aad30090",
     "js/guide_declarations.js": "5171cbc35874425448824b99cffbef113cc5d689f1956b9e050f4d454661cdbb"
   },
   "notice": "Fuente: declaraciones del portal; no certifica catálogo curricular completo ni intensidades. Cotejo oficial pendiente. Las discrepancias se bloquean.",

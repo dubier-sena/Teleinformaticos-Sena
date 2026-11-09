@@ -699,6 +699,7 @@ function runModelAnswers(gradesFam, stateInit, opts) {
     ActivityStandard: { getConfigForGuide: () => cfg },
     activityGradesManager: { getStudentGrades: () => gradesFam } };
   vm.createContext(ctx);
+  vm.runInContext(read("js/guide_merge_utils.js"), ctx);
   vm.runInContext(read("js/script_guia_redes11.js"), ctx);
   // la guia ya hidrato los campos desde el estado del aprendiz
   Object.keys(stateInit || {}).forEach((k) => { if (els[k] && typeof stateInit[k] === "string") els[k].value = stateInit[k]; });
@@ -743,18 +744,18 @@ test("modelo: aprobada SIN solucion embebida (anterior al ajuste): se bloquea y 
   assert.ok(f.every((k) => r.els[k].value === "" && r.els[k].disabled));
 });
 
-test("avance por actividad: A cuenta completa; proporcional; todas A = 100 % sin RAP aprobado; la solucion mostrada no suma", () => {
+test("avance por actividad: A de formulario cuenta; A no reemplaza archivos requeridos; la solucion mostrada no suma", () => {
   const decl = loadDeclarations();
   const acts = decl["grupo-11a-guia-10-redes-rap02.html"].activities;
   const none = runModelAnswers({}, {}, { progress: true });
   assert.equal(none.progressWrites.pop().percent, 0);
-  const one = runModelAnswers({ c11Taller331: "A", "c11Taller331:solution": { g11c_331_e1_cidr: "/25" } }, {}, { progress: true });
+  const one = runModelAnswers({ c11Reflexion311: "A" }, {}, { progress: true });
   const w1 = one.progressWrites.pop();
   assert.equal(w1.total, acts.length);
   assert.equal(w1.percent, Math.round(100 / acts.length), "una A entre varias = proporcional");
   const all = {}; acts.forEach((a) => { all[a.id] = "A"; });
   const full = runModelAnswers(all, {}, { progress: true });
-  assert.equal(full.progressWrites.pop().percent, 100);
+  assert.equal(full.progressWrites.pop().percent, Math.round(100 * acts.filter((a) => a.type === "form").length / acts.length));
   // el RAP sigue sin aprobarse sin evidencias verificadas
   const { mgr } = loadGrades();
   assert.notEqual(mgr.evaluateRapStatus("guia-redes11-rap02", all, {}, acts, SUBJ, TRUSTED).status, "aprobado");
@@ -870,6 +871,6 @@ test("inicio y panel: las 6 guias de Redes 11.° usan la clave REAL de estado de
     assert.ok(home.includes(`"${file}": "${real}"`), file);
   }
   // el control de avance y la lista de pendientes cuentan la nota A solo en familias estrictas
-  assert.match(read("js/activity_standard.js"), /strictAv && _getStudentGradeForActivity\(pageFile, act\.id\) === "A"/);
-  assert.match(home, /if \(strictGrades && strictGrades\[act\.id\] === "A"\) return;/);
+  assert.match(read("js/activity_standard.js"), /redes11ActivityProgress\(act, state, _getStudentGradeForActivity\(pageFile, act\.id\)\)/);
+  assert.match(home, /redes11ActivityProgress\(act, state, strictGrades\[act\.id\]\)/);
 });
